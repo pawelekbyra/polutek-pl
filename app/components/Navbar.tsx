@@ -35,7 +35,7 @@ const Navbar = () => {
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
              onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-neutral-100 rounded-md transition-colors shrink-0"
+             className="p-2 hover:bg-neutral-100 rounded-full transition-colors shrink-0"
            >
               <X size={20} />
            </button>
@@ -46,7 +46,7 @@ const Navbar = () => {
                 placeholder="Szukaj"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-9 bg-white border border-neutral-300 rounded-md px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
               />
            </form>
         </div>
@@ -66,10 +66,10 @@ const Navbar = () => {
                   placeholder="Szukaj"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-9 bg-white border border-neutral-300 rounded-l-md px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-neutral-400"
+                  className="w-full h-9 bg-white border border-neutral-300 rounded-l-full pl-6 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-neutral-400"
                 />
               </div>
-              <button type="submit" className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-md px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600" title="Szukaj">
+              <button type="submit" className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-full px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600" title="Szukaj">
                 <Search size={18} />
               </button>
             </form>
@@ -79,13 +79,13 @@ const Navbar = () => {
             <div className="flex items-center gap-1 sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-neutral-100 rounded-md transition-colors"
+                  className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
                 >
                     <Search size={20} className="text-neutral-600" />
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white rounded-md px-1 sm:px-2 py-1 border border-neutral-300 h-9">
+            <div className="flex gap-1 items-center bg-white rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
@@ -114,7 +114,7 @@ const Navbar = () => {
 
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-md transition-all shadow-sm active:scale-95 border border-neutral-300">
+                <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all shadow-sm active:scale-95 border border-neutral-300">
                   <LogIn size={14} className="sm:w-4 sm:h-4 text-neutral-900" />
                   <span className="hidden sm:inline">{t.signIn}</span>
                 </button>
