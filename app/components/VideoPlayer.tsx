@@ -187,18 +187,23 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 /* Ensure controls are styled professionally with smooth animations */
                 .vidstack-player-container .vds-controls {
                     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-                    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s !important;
+                    visibility: visible;
                 }
 
                 /* Smooth slide-down animation when controls hide */
                 .vidstack-player-container .vds-player:not([data-controls-visible]) .vds-controls {
                     opacity: 0 !important;
-                    transform: translateY(20px) !important;
+                    visibility: hidden !important;
+                    transform: translateY(10px) !important;
+                    pointer-events: none !important;
                 }
 
                 .vidstack-player-container .vds-player[data-controls-visible] .vds-controls {
                     opacity: 1 !important;
+                    visibility: visible !important;
                     transform: translateY(0) !important;
+                    pointer-events: auto !important;
                 }
             `}</style>
         </div>
