@@ -483,14 +483,14 @@ export default function AdminPanel() {
                     <input
                         value={creatorForm.name}
                         onChange={e => setCreatorForm({...creatorForm, name: e.target.value})}
-                        placeholder="np. POLUTEK.PL"
+                        placeholder="np. POLUTEK.COM"
                         className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-black uppercase text-lg transition-all"
                         required
                     />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Slug Kanału (polutek.pl/@slug)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Slug Kanału (polutek.com/@slug)</label>
                     <input
                         value={creatorForm.slug}
                         onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})}
@@ -540,7 +540,7 @@ export default function AdminPanel() {
                   <input
                     value={emailTemplate.subjectPl}
                     onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})}
-                    placeholder="np. Witaj w POLUTEK.PL!"
+                    placeholder="np. Witaj w POLUTEK.COM!"
                     className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-bold text-sm transition-all"
                     required
                   />
@@ -563,7 +563,7 @@ export default function AdminPanel() {
                   <input
                     value={emailTemplate.subjectEn}
                     onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})}
-                    placeholder="e.g. Welcome to POLUTEK.PL!"
+                    placeholder="e.g. Welcome to POLUTEK.COM!"
                     className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-bold text-sm transition-all"
                     required
                   />
