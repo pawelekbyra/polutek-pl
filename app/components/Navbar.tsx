@@ -89,7 +89,7 @@ const Navbar = () => {
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded transition-all",
+                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
                     language === 'pl' ? "bg-white shadow-sm text-neutral-900 border border-neutral-300" : "text-neutral-400 hover:text-neutral-600"
                   )}
                 >
@@ -98,7 +98,7 @@ const Navbar = () => {
                 <button
                   onClick={() => { if (setLanguage) setLanguage('en'); }}
                   className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded transition-all",
+                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
                     language === 'en' ? "bg-white shadow-sm text-neutral-900 border border-neutral-300" : "text-neutral-400 hover:text-neutral-600"
                   )}
                 >

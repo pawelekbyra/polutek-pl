@@ -370,7 +370,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{comment.authorName}</span>
                         <span className="text-[11px] text-[#606060] leading-none">
                             {isClient && comment.createdAt && !isNaN(new Date(comment.createdAt).getTime())
-                            ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl })
+                            ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
                             : isClient ? 'niedawno' : ''}
                         </span>
                     </div>
@@ -440,7 +440,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                           <span className="font-bold text-[#0f0f0f] text-[11px] leading-none">{reply.authorName}</span>
                           <span className="text-[10px] text-[#606060] leading-none">
                             {isClient && reply.createdAt && !isNaN(new Date(reply.createdAt).getTime())
-                              ? formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: pl })
+                              ? formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
                               : t.justNow}
                           </span>
                         </div>

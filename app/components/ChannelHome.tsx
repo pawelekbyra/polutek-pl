@@ -156,7 +156,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
                     {video.publishedAt && (
                         <>
                             <span>•</span>
-                            <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: language === 'pl' ? pl : undefined }) : ''}</span>
+                            <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: language === 'pl' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
                         </>
                     )}
                  </div>

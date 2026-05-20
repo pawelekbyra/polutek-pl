@@ -86,7 +86,7 @@ export default function ChannelVideoCard({ video, userTotalPaid, isLoggedIn }: C
                                 {video.publishedAt && (
                                     <>
                                         <span>•</span>
-                                        <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: t.currency === 'PLN' ? pl : undefined }) : ''}</span>
+                                        <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: t.currency === 'PLN' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
                                     </>
                                 )}
                             </div>
