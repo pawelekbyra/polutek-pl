@@ -11,6 +11,7 @@ import { ChevronDown, Trophy } from './icons';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from './CheckoutForm';
+import { Checkbox } from 'flowbite-react';
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -265,14 +266,13 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
             {/* Terms below the button, no absolute positioning */}
             <div className="flex justify-center">
               <label className="flex items-center gap-2 cursor-pointer group opacity-40 hover:opacity-100 transition-opacity">
-                <input
-                  type="checkbox"
+                <Checkbox
+                  id="accept-terms"
                   checked={isTermsAccepted}
                   onChange={(e) => {
                     setIsTermsAccepted(e.target.checked);
                     if (e.target.checked) setShowTermsError(false);
                   }}
-                  className="checkbox checkbox-xs border border-neutral-300 rounded checked:!bg-blue-600 checked:!border-blue-600 transition-all"
                 />
                 <span className="text-neutral-500 font-sans font-medium text-[10px] tracking-tight transition-colors">
                   {language === 'pl' ? (

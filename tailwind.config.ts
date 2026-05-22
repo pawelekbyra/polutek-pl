@@ -3,6 +3,7 @@ import type { Config } from "tailwindcss"
 const config = {
   content: [
     './app/**/*.{ts,tsx}',
+    'node_modules/flowbite-react/lib/esm/**/*.js',
   ],
   theme: {
     extend: {
@@ -48,26 +49,8 @@ const config = {
   plugins: [
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
-    require("daisyui"),
+    require("flowbite/plugin"),
   ],
-  daisyui: {
-    themes: [
-      {
-        polutek: {
-          "primary": "#3b82f6",
-          "secondary": "#8b5cf6",
-          "accent": "#f59e0b",
-          "neutral": "#1a1a1a",
-          "base-100": "#FDFBF7",
-          "info": "#3abff8",
-          "success": "#36d399",
-          "warning": "#fbbd23",
-          "error": "#f87272",
-        },
-      },
-      "light",
-    ],
-  },
 } satisfies Config
 
 export default config

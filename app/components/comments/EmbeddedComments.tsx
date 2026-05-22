@@ -9,6 +9,7 @@ import { SignInButton, useAuth, useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
+import { Button } from 'flowbite-react';
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -488,13 +489,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
         {hasNextPage && (
           <div className="pt-6 flex justify-center">
-            <button
+            <Button
+              color="gray"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="btn btn-ghost text-[#1a1a1a]/40 font-black uppercase tracking-widest text-[10px] hover:bg-transparent hover:text-primary transition-colors"
+              className="font-bold uppercase tracking-widest text-[10px]"
             >
               {isFetchingNextPage ? <Loader2 className="animate-spin" /> : 'Pokaż więcej'}
-            </button>
+            </Button>
           </div>
         )}
       </div>

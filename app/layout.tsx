@@ -15,9 +15,9 @@ export const metadata = { title: "POLUTEK.PL", description: "A secret project th
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="polutek" className={`${inter.variable} ${outfit.variable} ${jakarta.variable} ${gluten.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
-      <body className="font-sans bg-base-100 text-neutral min-h-screen relative" suppressHydrationWarning>
-        <Suspense fallback={<div className="min-h-screen bg-[#FDFBF7]" />}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jakarta.variable} ${gluten.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+      <body className="font-sans bg-gray-50 text-gray-900 min-h-screen relative" suppressHydrationWarning>
+        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
           <Providers>
             <ClerkLocalizationProvider>
               <Suspense fallback={null}>

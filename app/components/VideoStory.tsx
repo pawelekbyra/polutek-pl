@@ -10,7 +10,7 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
   const { t } = useLanguage();
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 font-serif">
-      <div className="card bg-white border-2 border-[#1a1a1a]/10 rounded-[2rem] p-8 shadow-lg overflow-hidden group">
+      <div className="bg-white border-2 border-gray-100 rounded-[2rem] p-8 shadow-lg overflow-hidden group">
         <div className="space-y-6">
           <h2 className="text-3xl font-black text-[#1a1a1a] mb-8 border-b-2 border-[#1a1a1a]/10 pb-6 uppercase tracking-tighter italic">
             {t.noMoneyHowTitle}
