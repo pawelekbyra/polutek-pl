@@ -26,7 +26,7 @@ The platform is built with future growth and high performance in mind:
 - **Payments**: [Stripe](https://stripe.com/)
 - **Storage**: [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
 - **Email**: [Resend](https://resend.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Flowbite](https://flowbite.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
 
 ## Getting Started
 
