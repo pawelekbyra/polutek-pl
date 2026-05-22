@@ -14,7 +14,7 @@ interface ReferralModalProps {
 export default function ReferralModal({ isOpen, onClose, referralCode, referralPoints }: ReferralModalProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
-  const referralLink = `https://polutek.pl/?ref=${referralCode}`;
+  const referralLink = `https://polutek.com/?ref=${referralCode}`;
   const progress = Math.min((referralPoints / 5) * 100, 100);
   const missingCount = Math.max(5 - referralPoints, 0);
 

@@ -468,13 +468,13 @@ export default function AdminPanel() {
                           id="creatorName"
                           value={creatorForm.name}
                           onChange={e => setCreatorForm({...creatorForm, name: e.target.value})}
-                          placeholder="np. POLUTEK.PL"
+                          placeholder="np. POLUTEK.COM"
                           required
                       />
                   </div>
 
                   <div className="space-y-1">
-                      <Label htmlFor="channelSlug">Slug Kanału (polutek.pl/@slug)</Label>
+                      <Label htmlFor="channelSlug">Slug Kanału (polutek.com/@slug)</Label>
                       <TextInput
                           id="channelSlug"
                           value={creatorForm.slug}
@@ -528,7 +528,7 @@ export default function AdminPanel() {
                       id="subjectPl"
                       value={emailTemplate.subjectPl}
                       onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})}
-                      placeholder="np. Witaj w POLUTEK.PL!"
+                      placeholder="np. Witaj w POLUTEK.COM!"
                       required
                     />
                   </div>
@@ -553,7 +553,7 @@ export default function AdminPanel() {
                       id="subjectEn"
                       value={emailTemplate.subjectEn}
                       onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})}
-                      placeholder="e.g. Welcome to POLUTEK.PL!"
+                      placeholder="e.g. Welcome to POLUTEK.COM!"
                       required
                     />
                   </div>
