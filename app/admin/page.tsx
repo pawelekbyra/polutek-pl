@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft } from "@/app/components/icons";
 import { formatCount } from "@/lib/utils";
+import { Button, Table, TableHead, TableHeadCell, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, Label, TextInput, Textarea, Select, Checkbox, Card } from "flowbite-react";
 
 export default function AdminPanel() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -233,115 +234,103 @@ export default function AdminPanel() {
   }
 
   if (!isAdmin || isLoading) {
-    return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-serif">Weryfikacja dostępu...</div>;
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Weryfikacja dostępu...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1a1a1a] font-serif p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
       <div className="max-w-6xl mx-auto space-y-12">
-        <header className="flex justify-between items-end border-b-2 border-[#1a1a1a] pb-6">
+        <header className="flex justify-between items-end border-b border-gray-200 pb-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black uppercase tracking-tighter italic">Panel Twórcy</h1>
-            <p className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a]/40 italic">Dostęp Administratora // Zweryfikowano: {adminEmail}</p>
+            <h1 className="text-4xl font-bold tracking-tight">Panel Twórcy</h1>
+            <p className="text-sm text-gray-500">Dostęp Administratora // Zweryfikowano: {adminEmail}</p>
           </div>
           <div className="flex gap-4">
-            <Link
-              href="/"
-              className="btn btn-sm rounded-none border-2 border-[#1a1a1a] bg-white text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-all font-black uppercase tracking-widest px-6 shadow-brutalist-sm"
-            >
+            <Button color="light" as={Link} href="/">
               <ArrowLeft size={16} className="mr-2" /> Powrót do aplikacji
-            </Link>
-            <button
-              onClick={handleCreateNew}
-              className="btn btn-sm rounded-none border-2 border-[#1a1a1a] bg-white text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-all font-black uppercase tracking-widest px-6 shadow-brutalist-sm"
-            >
+            </Button>
+            <Button color="blue" onClick={handleCreateNew}>
               <Plus size={16} className="mr-2" /> Nowy Film
-            </button>
+            </Button>
           </div>
         </header>
 
-        {isEditing && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white border-2 border-[#1a1a1a] p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative shadow-2xl">
-              <button onClick={() => setIsEditing(false)} className="absolute top-4 right-4 p-2 hover:bg-[#1a1a1a]/5 rounded-full">
-                <X size={24} />
-              </button>
-              <h3 className="text-2xl font-black uppercase tracking-tight italic mb-8">{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</h3>
+        <Modal show={isEditing} onClose={() => setIsEditing(false)} size="2xl">
+          <ModalHeader>{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</ModalHeader>
+          <ModalBody>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Tytuł</label>
-                    <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-bold uppercase text-sm transition-all" required />
+                    <Label htmlFor="title">Tytuł</Label>
+                    <TextInput id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Slug (URL)</label>
-                    <input value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" required />
+                    <Label htmlFor="slug">Slug (URL)</Label>
+                    <TextInput id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Opis</label>
-                  <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-serif text-sm transition-all h-24" />
+                  <Label htmlFor="description">Opis</Label>
+                  <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">URL Wideo</label>
-                    <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" required />
+                    <Label htmlFor="videoUrl">URL Wideo</Label>
+                    <TextInput id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">URL Miniaturki</label>
-                    <input value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" required />
+                    <Label htmlFor="thumbnailUrl">URL Miniaturki</Label>
+                    <TextInput id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Czas trwania (np. 12:45)</label>
-                    <input value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" />
+                    <Label htmlFor="duration">Czas trwania (np. 12:45)</Label>
+                    <TextInput id="duration" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Poziom Dostępu</label>
-                    <select value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-black uppercase text-xs transition-all">
+                    <Label htmlFor="tier">Poziom Dostępu</Label>
+                    <Select id="tier" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
                       <option value="PUBLIC">Publiczny</option>
                       <option value="LOGGED_IN">Zalogowani</option>
                       <option value="VIP1">Patron (5 PLN+)</option>
                       <option value="VIP2">Sponsor (10 PLN+)</option>
-                    </select>
+                    </Select>
                   </div>
                   <div className="space-y-1 flex items-center gap-3 pt-6">
-                       <input
-                        type="checkbox"
+                       <Checkbox
+                        id="isMainFeatured"
                         checked={formData.isMainFeatured}
                         onChange={e => setFormData({...formData, isMainFeatured: e.target.checked})}
-                        className="w-5 h-5 accent-[#1a1a1a]"
                        />
-                       <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]">Hero Video</label>
+                       <Label htmlFor="isMainFeatured">Hero Video</Label>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Polubienia</label>
-                    <input type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" />
+                    <Label htmlFor="likes">Polubienia</Label>
+                    <TextInput id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Dislajki</label>
-                    <input type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" />
+                    <Label htmlFor="dislikes">Dislajki</Label>
+                    <TextInput id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Wyświetlenia</label>
-                    <input type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-3 font-mono text-sm transition-all" />
+                    <Label htmlFor="views">Wyświetlenia</Label>
+                    <TextInput id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
                   </div>
                 </div>
 
-                <button type="submit" className="btn btn-block bg-[#1a1a1a] text-white hover:bg-primary border-none rounded-none h-14 font-black uppercase tracking-[0.2em] shadow-brutalist">
+                <Button type="submit" color="blue" fullSized size="xl">
                   Zapisz Zmiany
-                </button>
+                </Button>
               </form>
-            </div>
-          </div>
-        )}
+          </ModalBody>
+        </Modal>
 
         <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard title="Wszystkie Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video size={20} />} />
@@ -350,239 +339,242 @@ export default function AdminPanel() {
           <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star size={20} />} />
         </section>
 
-        <div className="flex border-b-2 border-[#1a1a1a]/10">
-            <button
-                onClick={() => setActiveTab('videos')}
-                className={`px-8 py-4 font-black uppercase tracking-widest text-sm transition-all border-b-2 -mb-[2px] ${activeTab === 'videos' ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-[#1a1a1a]/30 hover:text-[#1a1a1a]'}`}
-            >
-                Materiały
-            </button>
-            <button
-                onClick={() => setActiveTab('stats')}
-                className={`px-8 py-4 font-black uppercase tracking-widest text-sm transition-all border-b-2 -mb-[2px] ${activeTab === 'stats' ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-[#1a1a1a]/30 hover:text-[#1a1a1a]'}`}
-            >
-                Finanse
-            </button>
-            <button
-                onClick={() => setActiveTab('channel')}
-                className={`px-8 py-4 font-black uppercase tracking-widest text-sm transition-all border-b-2 -mb-[2px] ${activeTab === 'channel' ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-[#1a1a1a]/30 hover:text-[#1a1a1a]'}`}
-            >
-                Ustawienia Kanału
-            </button>
-            <button
-                onClick={() => setActiveTab('email')}
-                className={`px-8 py-4 font-black uppercase tracking-widest text-sm transition-all border-b-2 -mb-[2px] ${activeTab === 'email' ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-[#1a1a1a]/30 hover:text-[#1a1a1a]'}`}
-            >
-                E-mail
-            </button>
+        <div className="border-b border-gray-200">
+          <div className="flex space-x-8">
+            {[
+              { id: 'videos', label: 'Materiały' },
+              { id: 'stats', label: 'Finanse' },
+              { id: 'channel', label: 'Ustawienia Kanału' },
+              { id: 'email', label: 'E-mail' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {activeTab === 'videos' ? (
           <section className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-black uppercase tracking-tight italic">Zarządzaj Materiałami</h2>
+              <h2 className="text-2xl font-bold">Zarządzaj Materiałami</h2>
             </div>
-            <div className="bg-white border-2 border-[#1a1a1a] shadow-brutalist overflow-hidden">
-              <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#1a1a1a] text-white uppercase text-[10px] font-black tracking-widest">
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Tytuł</th>
-                  <th className="p-4">Dostęp</th>
-                  <th className="p-4">Statystyki</th>
-                  <th className="p-4 text-right">Akcje</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1a1a1a]/10">
-                {videos.map((vid) => (
-                  <tr key={vid.id} className="hover:bg-[#1a1a1a]/5 transition-colors group">
-                    <td className="p-4">
-                       {vid.isMainFeatured ? (
-                         <span className="bg-primary text-white text-[8px] font-black uppercase px-2 py-1 rounded">Hero</span>
-                       ) : (
-                         <span className="bg-[#1a1a1a]/10 text-[#1a1a1a]/40 text-[8px] font-black uppercase px-2 py-1 rounded">Lista</span>
-                       )}
-                    </td>
-                    <td className="p-4">
-                      <div className="font-bold text-sm uppercase tracking-tight">{vid.title}</div>
-                      <div className="text-[10px] text-[#1a1a1a]/40 font-mono">/{vid.slug}</div>
-                    </td>
-                    <td className="p-4">
-                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 border-2 flex items-center gap-1 w-fit ${
-                         vid.tier === 'VIP2' ? 'border-yellow-500 text-yellow-600' :
-                         vid.tier === 'VIP1' ? 'border-blue-500 text-blue-600' : 'border-[#1a1a1a]/20 text-[#1a1a1a]/40'
-                       }`}>
-                         {vid.tier === 'PUBLIC' ? <Globe size={10} /> : vid.tier === 'LOGGED_IN' ? <Lock size={10} /> : <ShieldCheck size={10} />}
-                         {vid.tier}
-                       </span>
-                    </td>
-                    <td className="p-4 font-mono text-[10px] space-x-3">
-                       <span className="text-[#1a1a1a]/60">L: {vid.likesCount}</span>
-                       <span className="text-[#1a1a1a]/60">D: {vid.dislikesCount}</span>
-                       <span className="text-[#1a1a1a]/60">V: {vid.views}</span>
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                       <button onClick={() => handleEdit(vid)} className="p-2 hover:bg-[#1a1a1a] hover:text-white transition-colors border border-transparent hover:border-[#1a1a1a]"><Edit size={16} /></button>
-                       <button onClick={() => handleDelete(vid.id)} className="p-2 hover:bg-error hover:text-white transition-colors border border-transparent hover:border-error"><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+            <div className="overflow-x-auto">
+              <Table hoverable>
+                <TableHead>
+                  <TableHeadCell>Status</TableHeadCell>
+                  <TableHeadCell>Tytuł</TableHeadCell>
+                  <TableHeadCell>Dostęp</TableHeadCell>
+                  <TableHeadCell>Statystyki</TableHeadCell>
+                  <TableHeadCell className="text-right">Akcje</TableHeadCell>
+                </TableHead>
+                <TableBody className="divide-y">
+                  {videos.map((vid) => (
+                    <TableRow key={vid.id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                      <TableCell>
+                        {vid.isMainFeatured ? (
+                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Hero</span>
+                        ) : (
+                          <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Lista</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-gray-900">{vid.title}</div>
+                        <div className="text-xs text-gray-500">/{vid.slug}</div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded border ${
+                          vid.tier === 'VIP2' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                          vid.tier === 'VIP1' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                        }`}>
+                          {vid.tier === 'PUBLIC' ? <Globe size={10} /> : vid.tier === 'LOGGED_IN' ? <Lock size={10} /> : <ShieldCheck size={10} />}
+                          {vid.tier}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500 space-x-3">
+                        <span>L: {vid.likesCount}</span>
+                        <span>D: {vid.dislikesCount}</span>
+                        <span>V: {vid.views}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button color="light" size="xs" onClick={() => handleEdit(vid)}><Edit size={16} /></Button>
+                          <Button color="failure" size="xs" onClick={() => handleDelete(vid.id)}><Trash2 size={16} /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </section>
         ) : activeTab === 'stats' ? (
-            <section className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <section className="space-y-8">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black uppercase tracking-tight italic">Historia Wpłat</h2>
-                    <p className="text-xs text-[#1a1a1a]/40 font-bold uppercase">Ostatnie 10 udanych transakcji w systemie Stripe.</p>
+                    <h2 className="text-2xl font-bold">Historia Wpłat</h2>
+                    <p className="text-xs text-gray-500">Ostatnie 10 udanych transakcji w systemie Stripe.</p>
                 </div>
 
-                <div className="bg-white border-2 border-[#1a1a1a] shadow-brutalist overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-[#1a1a1a] text-white uppercase text-[10px] font-black tracking-widest">
-                                <th className="p-4">Użytkownik</th>
-                                <th className="p-4">Kwota</th>
-                                <th className="p-4">Status</th>
-                                <th className="p-4 text-right">Data</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#1a1a1a]/10">
+                <div className="overflow-x-auto">
+                    <Table hoverable>
+                        <TableHead>
+                            <TableHeadCell>Użytkownik</TableHeadCell>
+                            <TableHeadCell>Kwota</TableHeadCell>
+                            <TableHeadCell>Status</TableHeadCell>
+                            <TableHeadCell className="text-right">Data</TableHeadCell>
+                        </TableHead>
+                        <TableBody className="divide-y text-gray-900">
                             {stats?.recentTransactions?.map((tx: any) => (
-                                <tr key={tx.id} className="hover:bg-[#1a1a1a]/5 transition-colors">
-                                    <td className="p-4 font-mono text-xs">{tx.user?.email}</td>
-                                    <td className="p-4 font-black">{tx.amount.toFixed(2)} {tx.currency}</td>
-                                    <td className="p-4">
-                                        <span className="bg-success/10 text-success text-[8px] font-black uppercase px-2 py-1 rounded">Zakończono</span>
-                                    </td>
-                                    <td className="p-4 text-right font-mono text-[10px] text-[#1a1a1a]/40">
+                                <TableRow key={tx.id} className="bg-white">
+                                    <TableCell className="font-mono text-xs">{tx.user?.email}</TableCell>
+                                    <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
+                                    <TableCell>
+                                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Zakończono</span>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-gray-500">
                                         {mounted ? new Date(tx.createdAt).toLocaleString('pl-PL') : ''}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
                             {(!stats?.recentTransactions || stats.recentTransactions.length === 0) && (
-                                <tr>
-                                    <td colSpan={4} className="p-12 text-center text-[#1a1a1a]/20 font-black uppercase italic">Brak zarejestrowanych wpłat</td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={4} className="p-12 text-center text-gray-400">Brak zarejestrowanych wpłat</TableCell>
+                                </TableRow>
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </section>
         ) : activeTab === 'channel' ? (
-          <section className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <section className="max-w-2xl space-y-8">
              <div className="space-y-1">
-                <h2 className="text-2xl font-black uppercase tracking-tight italic">Tożsamość Kanału</h2>
-                <p className="text-xs text-[#1a1a1a]/40 font-bold uppercase">Aktualizuj dane widoczne dla Twoich widzów.</p>
+                <h2 className="text-2xl font-bold">Tożsamość Kanału</h2>
+                <p className="text-xs text-gray-500">Aktualizuj dane widoczne dla Twoich widzów.</p>
              </div>
 
-             <form onSubmit={handleCreatorSubmit} className="space-y-6 bg-white border-2 border-[#1a1a1a] p-8 shadow-brutalist">
-                <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Nazwa Twórcy</label>
-                    <input
-                        value={creatorForm.name}
-                        onChange={e => setCreatorForm({...creatorForm, name: e.target.value})}
-                        placeholder="np. POLUTEK.PL"
-                        className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-black uppercase text-lg transition-all"
-                        required
-                    />
-                </div>
+             <Card>
+               <form onSubmit={handleCreatorSubmit} className="space-y-6">
+                  <div className="space-y-1">
+                      <Label htmlFor="creatorName">Nazwa Twórcy</Label>
+                      <TextInput
+                          id="creatorName"
+                          value={creatorForm.name}
+                          onChange={e => setCreatorForm({...creatorForm, name: e.target.value})}
+                          placeholder="np. POLUTEK.PL"
+                          required
+                      />
+                  </div>
 
-                <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Slug Kanału (polutek.pl/@slug)</label>
-                    <input
-                        value={creatorForm.slug}
-                        onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})}
-                        placeholder="np. polutek"
-                        className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-mono text-sm transition-all"
-                        required
-                    />
-                </div>
+                  <div className="space-y-1">
+                      <Label htmlFor="channelSlug">Slug Kanału (polutek.pl/@slug)</Label>
+                      <TextInput
+                          id="channelSlug"
+                          value={creatorForm.slug}
+                          onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})}
+                          placeholder="np. polutek"
+                          required
+                      />
+                  </div>
 
-                <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Biografia Kanału</label>
-                    <textarea
-                        value={creatorForm.bio}
-                        onChange={e => setCreatorForm({...creatorForm, bio: e.target.value})}
-                        placeholder="Napisz coś o swoim kanale..."
-                        className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-serif text-base transition-all h-32 leading-relaxed"
-                    />
-                </div>
+                  <div className="space-y-1">
+                      <Label htmlFor="channelBio">Biografia Kanału</Label>
+                      <Textarea
+                          id="channelBio"
+                          value={creatorForm.bio}
+                          onChange={e => setCreatorForm({...creatorForm, bio: e.target.value})}
+                          placeholder="Napisz coś o swoim kanale..."
+                          rows={4}
+                      />
+                  </div>
 
-                <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">URL Bannera Kanału</label>
-                    <input
-                        value={creatorForm.bannerUrl}
-                        onChange={e => setCreatorForm({...creatorForm, bannerUrl: e.target.value})}
-                        placeholder="https://..."
-                        className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-mono text-sm transition-all"
-                    />
-                </div>
+                  <div className="space-y-1">
+                      <Label htmlFor="bannerUrl">URL Bannera Kanału</Label>
+                      <TextInput
+                          id="bannerUrl"
+                          value={creatorForm.bannerUrl}
+                          onChange={e => setCreatorForm({...creatorForm, bannerUrl: e.target.value})}
+                          placeholder="https://..."
+                      />
+                  </div>
 
-                <button type="submit" className="btn btn-block bg-[#1a1a1a] text-white hover:bg-primary border-none rounded-none h-14 font-black uppercase tracking-[0.2em] shadow-brutalist transition-all active:translate-x-1 active:translate-y-1 active:shadow-none">
-                    Aktualizuj Ustawienia Kanału
-                </button>
-             </form>
+                  <Button type="submit" color="blue" fullSized size="xl">
+                      Aktualizuj Ustawienia Kanału
+                  </Button>
+               </form>
+             </Card>
           </section>
         ) : (
-          <section className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <section className="max-w-2xl space-y-8">
             <div className="space-y-1">
-              <h2 className="text-2xl font-black uppercase tracking-tight italic">E-mail Powitalny</h2>
-              <p className="text-xs text-[#1a1a1a]/40 font-bold uppercase">Edytuj wiadomość, którą otrzymują nowi użytkownicy.</p>
+              <h2 className="text-2xl font-bold">E-mail Powitalny</h2>
+              <p className="text-xs text-gray-500">Edytuj wiadomość, którą otrzymują nowi użytkownicy.</p>
             </div>
 
-            <form onSubmit={handleEmailTemplateSubmit} className="space-y-8 bg-white border-2 border-[#1a1a1a] p-8 shadow-brutalist">
-              <div className="space-y-4">
-                <h3 className="text-sm font-black uppercase border-b border-[#1a1a1a]/10 pb-2">Wersja Polska</h3>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Temat</label>
-                  <input
-                    value={emailTemplate.subjectPl}
-                    onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})}
-                    placeholder="np. Witaj w POLUTEK.PL!"
-                    className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-bold text-sm transition-all"
-                    required
-                  />
+            <Card>
+              <form onSubmit={handleEmailTemplateSubmit} className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold border-b pb-2">Wersja Polska</h3>
+                  <div className="space-y-1">
+                    <Label htmlFor="subjectPl">Temat</Label>
+                    <TextInput
+                      id="subjectPl"
+                      value={emailTemplate.subjectPl}
+                      onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})}
+                      placeholder="np. Witaj w POLUTEK.PL!"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bodyPl">Treść (HTML)</Label>
+                    <Textarea
+                      id="bodyPl"
+                      value={emailTemplate.bodyPl}
+                      onChange={e => setEmailTemplate({...emailTemplate, bodyPl: e.target.value})}
+                      rows={6}
+                      className="font-mono text-xs"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Treść (HTML)</label>
-                  <textarea
-                    value={emailTemplate.bodyPl}
-                    onChange={e => setEmailTemplate({...emailTemplate, bodyPl: e.target.value})}
-                    className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-mono text-xs transition-all h-40 leading-relaxed"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-4 pt-4">
-                <h3 className="text-sm font-black uppercase border-b border-[#1a1a1a]/10 pb-2">English Version</h3>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Subject</label>
-                  <input
-                    value={emailTemplate.subjectEn}
-                    onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})}
-                    placeholder="e.g. Welcome to POLUTEK.PL!"
-                    className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-bold text-sm transition-all"
-                    required
-                  />
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-bold border-b pb-2">English Version</h3>
+                  <div className="space-y-1">
+                    <Label htmlFor="subjectEn">Subject</Label>
+                    <TextInput
+                      id="subjectEn"
+                      value={emailTemplate.subjectEn}
+                      onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})}
+                      placeholder="e.g. Welcome to POLUTEK.PL!"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bodyEn">Body (HTML)</Label>
+                    <Textarea
+                      id="bodyEn"
+                      value={emailTemplate.bodyEn}
+                      onChange={e => setEmailTemplate({...emailTemplate, bodyEn: e.target.value})}
+                      rows={6}
+                      className="font-mono text-xs"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40">Body (HTML)</label>
-                  <textarea
-                    value={emailTemplate.bodyEn}
-                    onChange={e => setEmailTemplate({...emailTemplate, bodyEn: e.target.value})}
-                    className="w-full bg-[#1a1a1a]/5 border-2 border-transparent focus:border-[#1a1a1a] outline-none p-4 font-mono text-xs transition-all h-40 leading-relaxed"
-                    required
-                  />
-                </div>
-              </div>
 
-              <button type="submit" className="btn btn-block bg-[#1a1a1a] text-white hover:bg-primary border-none rounded-none h-14 font-black uppercase tracking-[0.2em] shadow-brutalist transition-all">
-                Aktualizuj Szablony E-mail
-              </button>
-            </form>
+                <Button type="submit" color="blue" fullSized size="xl">
+                  Aktualizuj Szablony E-mail
+                </Button>
+              </form>
+            </Card>
           </section>
         )}
       </div>
@@ -592,13 +584,15 @@ export default function AdminPanel() {
 
 function StatCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="bg-white border-2 border-[#1a1a1a] p-6 shadow-brutalist hover:-translate-y-1 transition-transform">
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-[#1a1a1a] text-white">{icon}</div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/30">Live Data</div>
+    <Card className="hover:shadow-lg transition-shadow">
+      <div className="flex justify-between items-start">
+        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">{icon}</div>
+        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Live Data</div>
       </div>
-      <div className="text-3xl font-black italic mb-1">{value}</div>
-      <div className="text-xs font-bold uppercase tracking-widest text-[#1a1a1a]/60">{title}</div>
-    </div>
+      <div className="mt-4">
+        <div className="text-3xl font-bold text-gray-900">{value}</div>
+        <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">{title}</div>
+      </div>
+    </Card>
   );
 }
