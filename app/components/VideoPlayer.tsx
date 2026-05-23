@@ -120,8 +120,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
                     }}
                     className="w-full h-full"
-                    hideControlsOnMouseLeave
-                    controlsDelay={0}
+                    controlsDelay={100}
                 >
                     <MediaProvider>
                         <Poster
@@ -190,23 +189,23 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 /* Ensure controls are styled professionally with smooth animations */
                 .vidstack-player-container .vds-controls {
                     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-                    transition: opacity 0.1s ease, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.1s !important;
+                    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
                     visibility: visible;
                 }
 
                 /* Smooth slide-down animation when controls hide */
                 .vidstack-player-container .vds-player:not([data-controls-visible]) .vds-controls {
-                    opacity: 0 !important;
-                    visibility: hidden !important;
-                    transform: translateY(10px) !important;
-                    pointer-events: none !important;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(8px);
+                    pointer-events: none;
                 }
 
                 .vidstack-player-container .vds-player[data-controls-visible] .vds-controls {
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                    transform: translateY(0) !important;
-                    pointer-events: auto !important;
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0);
+                    pointer-events: auto;
                 }
             `}</style>
         </div>
