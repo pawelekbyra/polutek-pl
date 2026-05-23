@@ -2,10 +2,27 @@
 
 import React from 'react';
 
-const VideoPlaylist = ({ videos, currentVideoId, onVideoSelect }: any) => {
+const VideoPlaylist = ({ videos = [], currentVideoId, onVideoSelect, videoTitle }: any) => {
+  if (videoTitle) {
+    return (
+      <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-6 text-center space-y-4">
+          <p className="text-sm text-neutral-500 font-medium italic">
+             Chcesz wesprzeć twórcę przy okazji oglądania <br />
+             <span className="font-bold text-neutral-900">&quot;{videoTitle}&quot;</span>?
+          </p>
+          <a
+            href="/zrzutka"
+            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-md"
+          >
+            PRZEJDŹ DO ZRZUTKI
+          </a>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col space-y-3 w-full">
-      <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a] mb-2">
         Kolejne filmy
       </h3>
       

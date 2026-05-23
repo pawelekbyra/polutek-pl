@@ -1,13 +1,11 @@
 import React from 'react';
 import { Video } from '../types/video';
-import { useLanguage } from './LanguageContext';
 
 interface VideoStoryProps {
   video: Video;
 }
 
 const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
-  const t = useLanguage();
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="p-6 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-transparent dark:border-white/5 shadow-sm transition-colors">
