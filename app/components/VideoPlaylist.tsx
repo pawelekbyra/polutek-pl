@@ -1,16 +1,12 @@
 "use client";
 
 import React from 'react';
-import { useLanguage } from './LanguageContext';
-import { useRouter } from 'next/navigation';
 
 const VideoPlaylist = ({ videos, currentVideoId, onVideoSelect }: any) => {
-  const t = useLanguage();
-  
   return (
     <div className="flex flex-col space-y-3 w-full">
       <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-        {t['playlist.title'] || 'Kolejne filmy'}
+        Kolejne filmy
       </h3>
       
       <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">

@@ -21,7 +21,7 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
           </div>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 italic">
-            {t['video.noDescription'] || 'Brak opisu dla tego filmu.'}
+            Brak opisu dla tego filmu.
           </p>
         )}
       </div>
