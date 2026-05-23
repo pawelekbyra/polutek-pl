@@ -30,12 +30,12 @@ const Navbar = () => {
 
   const isAdmin = user?.primaryEmailAddress?.emailAddress === 'pawel.perfect@gmail.com';
   return (
-    <div className="flex items-center bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50 border-b border-white/10 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    <div className="flex items-center bg-black sticky top-0 z-50 border-b border-zinc-800 px-4 lg:px-8 h-16 min-h-16 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
              onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-white/10 rounded-full transition-colors shrink-0 text-white"
+             className="p-2 hover:bg-zinc-900 rounded-full transition-colors shrink-0 text-zinc-400"
            >
               <X size={20} />
            </button>
@@ -46,7 +46,7 @@ const Navbar = () => {
                 placeholder="Szukaj"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-9 bg-white/5 border border-white/10 rounded-full px-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all"
+                className="w-full h-10 bg-zinc-900 border-none rounded-full px-5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600/40 transition-all"
               />
            </form>
         </div>
@@ -54,43 +54,43 @@ const Navbar = () => {
         <>
           <div className="flex items-center shrink-0">
             <Link href="/" className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95">
-              <BrandName className="text-[1.1rem] md:text-[1.3rem] text-white" variant="handwriting" />
+              <BrandName className="text-[1.2rem] md:text-[1.4rem] text-white" variant="handwriting" />
             </Link>
           </div>
 
-          <div className="flex-1 max-w-[540px] hidden md:flex mx-4 min-w-0">
-            <form onSubmit={handleSearch} className="flex w-full">
+          <div className="flex-1 max-w-[600px] hidden md:flex mx-8 min-w-0">
+            <form onSubmit={handleSearch} className="flex w-full group">
               <div className="relative flex-1 flex items-center min-w-0">
                 <input
                   type="text"
                   placeholder="Szukaj"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-9 bg-white/5 border border-white/10 rounded-l-full pl-6 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all placeholder:text-zinc-500"
+                  className="w-full h-10 bg-zinc-900 border border-zinc-800 rounded-l-full pl-6 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600/40 focus:border-transparent transition-all placeholder:text-zinc-500 group-hover:bg-zinc-800/50"
                 />
               </div>
-              <button type="submit" className="h-9 bg-white/10 border border-white/10 border-l-0 rounded-r-full px-5 hover:bg-white/20 transition-colors shrink-0 flex items-center justify-center text-zinc-400" title="Szukaj">
+              <button type="submit" className="h-10 bg-zinc-800 border border-zinc-800 border-l-0 rounded-r-full px-6 hover:bg-zinc-700 transition-colors shrink-0 flex items-center justify-center text-zinc-400" title="Szukaj">
                 <Search size={18} />
               </button>
             </form>
           </div>
 
-          <div className="flex items-center justify-end gap-1 md:gap-3">
+          <div className="flex items-center justify-end gap-2 md:gap-4">
             <div className="flex items-center gap-1 sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="p-2 hover:bg-zinc-900 rounded-full transition-colors"
                 >
-                    <Search size={20} className="text-zinc-400" />
+                    <Search size={22} className="text-zinc-400" />
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white/5 rounded-full px-1 sm:px-2 py-1 border border-white/10 h-9">
+            <div className="flex gap-1 items-center bg-zinc-900 rounded-full px-1.5 py-1.5 h-10">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
-                    language === 'pl' ? "bg-white text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
+                    "text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full transition-all",
+                    language === 'pl' ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                   )}
                 >
                   PL
@@ -98,8 +98,8 @@ const Navbar = () => {
                 <button
                   onClick={() => { if (setLanguage) setLanguage('en'); }}
                   className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
-                    language === 'en' ? "bg-white text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
+                    "text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full transition-all",
+                    language === 'en' ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                   )}
                 >
                   EN
@@ -107,15 +107,15 @@ const Navbar = () => {
             </div>
 
             {isAdmin && (
-              <Link href="/admin" className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors whitespace-nowrap px-2">
-                Admin
+              <Link href="/admin" className="text-xs font-black uppercase tracking-tighter text-zinc-500 hover:text-blue-500 transition-colors whitespace-nowrap px-2">
+                ADMIN
               </Link>
             )}
 
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="bg-white text-zinc-950 hover:bg-zinc-200 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all active:scale-95 border border-white/10">
-                  <LogIn size={14} className="sm:w-4 sm:h-4 text-zinc-950" />
+                <button className="bg-white text-black hover:bg-zinc-200 font-black text-[10px] sm:text-xs uppercase tracking-tight flex items-center gap-1 sm:gap-2 px-4 sm:px-6 h-10 rounded-full transition-all active:scale-95">
+                  <LogIn size={14} className="sm:w-4 sm:h-4 text-black" />
                   <span className="hidden sm:inline">{t.signIn}</span>
                 </button>
               </SignInButton>
