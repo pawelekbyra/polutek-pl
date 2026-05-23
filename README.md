@@ -1,9 +1,9 @@
-# POLUTEK.PL - Private VOD & Donation Platform
+# POLUTEK.COM - Private VOD & Donation Platform
 
 A modern, responsive media platform for exclusive content, built with Next.js 14, Tailwind CSS, and Prisma. This project is designed with a professional "YouTube-style" aesthetic and features a permanent content locking mechanism for supporters based on lifetime donation value.
 
 ## Project Vision
-POLUTEK.PL is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
+POLUTEK.COM is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
 
 ### Key Concept: Reward for Support
 - **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant lifetime access as a token of gratitude.

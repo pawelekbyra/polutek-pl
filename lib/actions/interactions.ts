@@ -97,7 +97,7 @@ export async function toggleVideoLike(videoId: string) {
           update: {}, // No updates needed, just ensure existence
           create: {
               id: userId!,
-              email: `user_${userId}@polutek.pl`, // Fallback email
+              email: `user_${userId}@polutek.com`, // Fallback email
               language: "pl",
               role: "USER"
           }
@@ -178,7 +178,7 @@ export async function toggleVideoDislike(videoId: string) {
           update: {},
           create: {
               id: userId!,
-              email: `user_${userId}@polutek.pl`,
+              email: `user_${userId}@polutek.com`,
               language: "pl",
               role: "USER"
           }
