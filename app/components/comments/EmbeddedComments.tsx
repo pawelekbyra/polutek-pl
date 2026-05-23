@@ -9,7 +9,7 @@ import { SignInButton, useAuth, useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
-import { Button } from 'flowbite-react';
+import { Button } from '@/components/ui/button';
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -246,7 +246,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl bg-white p-0 rounded-none border-none font-serif">
+    <div className="space-y-6 max-w-4xl bg-white p-0 rounded-none border-none">
       <div className="flex items-center justify-between mb-0">
          <h3 className="text-[18px] font-bold text-[#0f0f0f] leading-none uppercase tracking-tighter">
             {comments.length} {getCommentsLabel(comments.length)}
@@ -326,25 +326,19 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
           {(isInputFocused || newComment.trim() || replyTo) && canComment && (
             <div className="flex justify-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-               <button
+               <Button
+                 variant="ghost"
                  onClick={() => {setNewComment(''); setReplyTo(null); setIsInputFocused(false);}}
-                 className="text-[14px] font-bold text-[#0f0f0f] hover:bg-[#dbeafe] px-4 py-2 rounded-md transition-all"
                >
                    {t.cancel}
-               </button>
+               </Button>
 
-                <button
+                <Button
                   onClick={handleSubmit}
                   disabled={!newComment.trim() || postMutation.isPending}
-                  className={cn(
-                      "px-4 py-2 rounded-md text-[14px] font-bold transition-all",
-                      newComment.trim()
-                          ? "bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90"
-                          : "bg-[#eff6ff] text-[#0f0f0f]/40 cursor-not-allowed border border-[#e9eef6]"
-                  )}
                 >
                   {postMutation.isPending ? <Loader2 className="animate-spin" size={14} /> : (replyTo ? t.reply : t.comment)}
-                </button>
+                </Button>
             </div>
           )}
         </div>
@@ -380,7 +374,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                           onClick={() => confirm(t.deleteComment) && deleteMutation.mutate(comment.id)}
                           className="opacity-0 group-hover/comment:opacity-40 hover:!opacity-100 transition-opacity p-1"
                         >
-                            <Trash2 size={12} className="text-error" />
+                            <Trash2 size={12} className="text-destructive" />
                         </button>
                     )}
                 </div>
@@ -450,7 +444,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                               onClick={() => confirm(t.deleteComment) && deleteMutation.mutate(reply.id)}
                               className="opacity-0 group-hover/reply:opacity-40 hover:!opacity-100 transition-opacity p-1"
                             >
-                                <Trash2 size={10} className="text-error" />
+                                <Trash2 size={10} className="text-destructive" />
                             </button>
                         )}
                       </div>
@@ -490,10 +484,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {hasNextPage && (
           <div className="pt-6 flex justify-center">
             <Button
-              color="gray"
+              variant="outline"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="font-bold uppercase tracking-widest text-[10px]"
             >
               {isFetchingNextPage ? <Loader2 className="animate-spin" /> : 'Pokaż więcej'}
             </Button>

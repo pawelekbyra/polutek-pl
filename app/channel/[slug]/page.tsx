@@ -45,7 +45,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
     ...v,
     creator: {
       id: creator.id,
-      name: creator.slug === 'polutek' ? 'POLUTEK.COM' : creator.name,
+      name: creator.slug === 'polutek' ? 'POLUTEK.PL' : creator.name,
       slug: creator.slug,
       bio: creator.bio,
       imageUrl: ownerAvatar,
@@ -55,9 +55,9 @@ export default async function ChannelPage({ params }: { params: { slug: string }
     }
   }));
 
-  const displayName = creator.slug === 'polutek' ? 'POLUTEK.COM' : creator.name;
+  const displayName = creator.slug === 'polutek' ? 'POLUTEK.PL' : creator.name;
   const displayBio = creator.slug === 'polutek'
-    ? "Oficjalna platforma POLUTEK.COM. Ekskluzywne materiały VOD i niezależne śledztwa."
+    ? "Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa."
     : (creator.bio || "Witamy na oficjalnym kanale.");
 
   return (

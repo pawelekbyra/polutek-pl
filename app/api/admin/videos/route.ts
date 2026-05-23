@@ -75,7 +75,7 @@ export async function POST(req: Request) {
           creator = await tx.creator.create({
             data: {
               userId: user.id,
-              name: "POLUTEK.COM",
+              name: "POLUTEK.PL",
               slug: "polutek",
             }
           });

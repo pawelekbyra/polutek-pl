@@ -124,7 +124,7 @@ export class UserService {
         if (role === 'ADMIN') {
             await tx.creator.updateMany({
                 where: { slug: 'polutek' },
-                data: { name: 'POLUTEK.COM', userId: id }
+                data: { name: 'POLUTEK.PL', userId: id }
             });
         }
 
@@ -205,11 +205,11 @@ export class UserService {
   static async ensureAdminUser() {
     return await prisma.user.upsert({
         where: { email: UserService.ADMIN_EMAIL },
-        update: { role: 'ADMIN', name: "POLUTEK.COM" },
+        update: { role: 'ADMIN', name: "POLUTEK.PL" },
         create: {
             id: `admin_${Date.now()}`,
             email: UserService.ADMIN_EMAIL,
-            name: "POLUTEK.COM",
+            name: "POLUTEK.PL",
             role: 'ADMIN',
             language: "pl",
             referralCode: 'admin'
