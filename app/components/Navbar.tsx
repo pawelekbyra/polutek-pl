@@ -48,7 +48,7 @@ export default function Navbar() {
   return (
     <>
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white shadow-sm border-b border-gray-100' : 'bg-white border-b border-gray-200'
+        isScrolled ? 'bg-white shadow-sm' : 'bg-white'
       }`}>
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-[72px] flex items-center justify-between gap-4 md:gap-8">
           
@@ -107,7 +107,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3">
                   {isLoaded && user && (
                     <div className="flex items-center gap-3">
-                      {Boolean(user.publicMetadata?.isCreator) && (
+                      {user.publicMetadata?.isCreator && (
                          <Link href="/admin" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
                            Panel Twórcy
                          </Link>
@@ -120,7 +120,7 @@ export default function Navbar() {
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:text-blue-600 transition-colors">
-                        <LogIn className="w-4 h-4" />
+                    <LogIn className="w-4 h-4" />
                     <span className="hidden lg:inline">Zaloguj się</span>
                   </button>
                 </SignInButton>
