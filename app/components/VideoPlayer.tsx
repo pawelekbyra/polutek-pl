@@ -120,6 +120,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
                     }}
                     className="w-full h-full"
+                    hideControlsOnMouseLeave
+                    controlsDelay={0}
                 >
                     <MediaProvider>
                         <Poster
@@ -149,16 +151,17 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
-                    --slider-track-height: 3px;
+                    --slider-track-height: 2px;
                     --slider-thumb-size: 12px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
                     margin-bottom: -4px !important;
                     z-index: 20;
+                    width: 100% !important;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
-                    --slider-track-height: 5px;
+                    --slider-track-height: 4px;
                 }
 
                 /* Tighten the layout of control groups to match YouTube's proportions */
@@ -187,7 +190,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 /* Ensure controls are styled professionally with smooth animations */
                 .vidstack-player-container .vds-controls {
                     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-                    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s !important;
+                    transition: opacity 0.1s ease, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.1s !important;
                     visibility: visible;
                 }
 
