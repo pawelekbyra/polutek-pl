@@ -12,12 +12,12 @@ async function main() {
     where: { email: ADMIN_EMAIL },
     update: {
       role: SystemRole.ADMIN,
-      name: "POLUTEK.PL",
+      name: "POLUTEK.COM",
     },
     create: {
       id: "user_admin_001", // Placeholder ID, will be synced by Clerk
       email: ADMIN_EMAIL,
-      name: "POLUTEK.PL",
+      name: "POLUTEK.COM",
       role: SystemRole.ADMIN,
     },
   });
@@ -26,16 +26,16 @@ async function main() {
   const creator = await prisma.creator.upsert({
     where: { slug: 'polutek' },
     update: {
-      name: 'POLUTEK.PL',
-      bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      name: 'POLUTEK.COM',
+      bio: 'Oficjalna platforma POLUTEK.COM. Ekskluzywne materiały VOD i niezależne śledztwa.',
       bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
       subscribersCount: 400,
     },
     create: {
       userId: adminUser.id,
       slug: 'polutek',
-      name: 'POLUTEK.PL',
-      bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      name: 'POLUTEK.COM',
+      bio: 'Oficjalna platforma POLUTEK.COM. Ekskluzywne materiały VOD i niezależne śledztwa.',
       bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
       subscribersCount: 400,
       isApproved: true,
@@ -149,38 +149,38 @@ async function main() {
   const templates = [
     {
       name: 'WELCOME',
-      subjectPl: 'Witaj w POLUTEK.PL!',
-      bodyPl: '<h1>Siema!</h1><p>Dzięki za dołączenie do naszej społeczności. Cieszymy się, że tu jesteś.</p><p>Ekipa POLUTEK.PL</p>',
-      subjectEn: 'Welcome to POLUTEK.PL!',
-      bodyEn: '<h1>Hey there!</h1><p>Thanks for joining our community. We are glad to have you here.</p><p>POLUTEK.PL Team</p>'
+      subjectPl: 'Witaj w POLUTEK.COM!',
+      bodyPl: '<h1>Siema!</h1><p>Dzięki za dołączenie do naszej społeczności. Cieszymy się, że tu jesteś.</p><p>Ekipa POLUTEK.COM</p>',
+      subjectEn: 'Welcome to POLUTEK.COM!',
+      bodyEn: '<h1>Hey there!</h1><p>Thanks for joining our community. We are glad to have you here.</p><p>POLUTEK.COM Team</p>'
     },
     {
       name: 'ACCOUNT_DELETED',
-      subjectPl: 'Twoje konto zostało usunięte - POLUTEK.PL',
-      bodyPl: '<h1>Cześć,</h1><p>Potwierdzamy, że Twoje konto w POLUTEK.PL zostało pomyślnie usunięte. Przykro nam, że odchodzisz.</p><p>Ekipa POLUTEK.PL</p>',
-      subjectEn: 'Your account has been deleted - POLUTEK.PL',
-      bodyEn: '<h1>Hi,</h1><p>We confirm that your account at POLUTEK.PL has been successfully deleted. We are sorry to see you go.</p><p>POLUTEK.PL Team</p>'
+      subjectPl: 'Twoje konto zostało usunięte - POLUTEK.COM',
+      bodyPl: '<h1>Cześć,</h1><p>Potwierdzamy, że Twoje konto w POLUTEK.COM zostało pomyślnie usunięte. Przykro nam, że odchodzisz.</p><p>Ekipa POLUTEK.COM</p>',
+      subjectEn: 'Your account has been deleted - POLUTEK.COM',
+      bodyEn: '<h1>Hi,</h1><p>We confirm that your account at POLUTEK.COM has been successfully deleted. We are sorry to see you go.</p><p>POLUTEK.COM Team</p>'
     },
     {
       name: 'PASSWORD_CHANGED',
-      subjectPl: 'Twoje hasło zostało zmienione - POLUTEK.PL',
-      bodyPl: '<h1>Cześć,</h1><p>Twoje hasło do konta POLUTEK.PL zostało właśnie zmienione. Jeśli to nie Ty, skontaktuj się z nami jak najszybciej.</p><p>Ekipa POLUTEK.PL</p>',
-      subjectEn: 'Your password has been changed - POLUTEK.PL',
-      bodyEn: '<h1>Hi,</h1><p>Your POLUTEK.PL account password has just been changed. If this wasn\'t you, please contact us immediately.</p><p>POLUTEK.PL Team</p>'
+      subjectPl: 'Twoje hasło zostało zmienione - POLUTEK.COM',
+      bodyPl: '<h1>Cześć,</h1><p>Twoje hasło do konta POLUTEK.COM zostało właśnie zmienione. Jeśli to nie Ty, skontaktuj się z nami jak najszybciej.</p><p>Ekipa POLUTEK.COM</p>',
+      subjectEn: 'Your password has been changed - POLUTEK.COM',
+      bodyEn: '<h1>Hi,</h1><p>Your POLUTEK.COM account password has just been changed. If this wasn\'t you, please contact us immediately.</p><p>POLUTEK.COM Team</p>'
     },
     {
       name: 'THANK_YOU_DONATION',
       subjectPl: 'Dziękujemy za wsparcie {{amount}} {{currency}}!',
-      bodyPl: '<h1>Dziękujemy za Twoje wsparcie!</h1><p>Otrzymaliśmy Twoją wpłatę w wysokości {{amount}} {{currency}}.</p><p>Dzięki Tobie możemy tworzyć więcej niezależnych materiałów.</p><p>Pozdrawiamy,<br/>Zespół POLUTEK.PL</p>',
+      bodyPl: '<h1>Dziękujemy za Twoje wsparcie!</h1><p>Otrzymaliśmy Twoją wpłatę w wysokości {{amount}} {{currency}}.</p><p>Dzięki Tobie możemy tworzyć więcej niezależnych materiałów.</p><p>Pozdrawiamy,<br/>Zespół POLUTEK.COM</p>',
       subjectEn: 'Thank you for your support {{amount}} {{currency}}!',
-      bodyEn: '<h1>Thank you for your support!</h1><p>We have received your donation of {{amount}} {{currency}}.</p><p>Thanks to you, we can create more independent content.</p><p>Best regards,<br/>POLUTEK.PL Team</p>'
+      bodyEn: '<h1>Thank you for your support!</h1><p>We have received your donation of {{amount}} {{currency}}.</p><p>Thanks to you, we can create more independent content.</p><p>Best regards,<br/>POLUTEK.COM Team</p>'
     },
     {
       name: 'BECOME_PATRON',
-      subjectPl: 'Witaj w gronie Patronów POLUTEK.PL!',
-      bodyPl: '<h1>Gratulacje!</h1><p>Twoje łączne wsparcie przekroczyło próg i właśnie zostałeś Patronem POLUTEK.PL.</p><p>Od teraz masz dostęp do ekskluzywnych materiałów w Strefie Patrona.</p><p>Dziękujemy za Twoje zaufanie,<br/>Zespół POLUTEK.PL</p>',
-      subjectEn: 'Welcome to the Patrons of POLUTEK.PL!',
-      bodyEn: '<h1>Congratulations!</h1><p>Your total support has exceeded the threshold and you have just become a Patron of POLUTEK.PL.</p><p>You now have access to exclusive content in the Patrons\' Zone.</p><p>Thank you for your trust,<br/>POLUTEK.PL Team</p>'
+      subjectPl: 'Witaj w gronie Patronów POLUTEK.COM!',
+      bodyPl: '<h1>Gratulacje!</h1><p>Twoje łączne wsparcie przekroczyło próg i właśnie zostałeś Patronem POLUTEK.COM.</p><p>Od teraz masz dostęp do ekskluzywnych materiałów w Strefie Patrona.</p><p>Dziękujemy za Twoje zaufanie,<br/>Zespół POLUTEK.COM</p>',
+      subjectEn: 'Welcome to the Patrons of POLUTEK.COM!',
+      bodyEn: '<h1>Congratulations!</h1><p>Your total support has exceeded the threshold and you have just become a Patron of POLUTEK.COM.</p><p>You now have access to exclusive content in the Patrons\' Zone.</p><p>Thank you for your trust,<br/>POLUTEK.COM Team</p>'
     }
   ];
 

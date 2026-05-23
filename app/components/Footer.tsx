@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 const Footer = () => {
   return (
-    <footer className="py-12 px-8 bg-blue-50/50 border-t border-blue-100 flex flex-col justify-center items-center gap-4">
-      <span className="font-brand font-black text-[14px] uppercase tracking-[0.4em] text-blue-900/40 hover:text-blue-900 transition-all cursor-default">
-        WWW.POLUTEK.PL
+    <footer className="py-6 px-8 bg-white border-t border-neutral-300 flex justify-center items-center">
+      <span className="font-brand font-black text-[12px] uppercase tracking-[0.3em] opacity-40">
+        WWW.POLUTEK.COM
       </span>
     </footer>
   );

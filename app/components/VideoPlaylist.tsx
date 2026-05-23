@@ -188,9 +188,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
 
   return (
     <div className="space-y-4 px-2 relative scroll-mt-20" id="donations">
-        <div className="bg-blue-50/50 backdrop-blur-xl border border-blue-100 p-6 shadow-sm relative overflow-hidden rounded-2xl">
+        <div className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl">
           <div className="space-y-4 relative z-10">
-            <h3 className="text-xl font-sans font-black text-blue-950 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-center">
+            <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-center">
               {t.supportArtist}
               <Trophy size={32} className="text-neutral-900" />
             </h3>
@@ -235,7 +235,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                       const val = e.target.value;
                       setAmount(val === '' ? '' : parseInt(val));
                     }}
-                    className="w-full bg-white/60 border border-blue-100 rounded-xl py-4 px-12 font-mono text-3xl font-black text-blue-950 text-center focus:ring-2 focus:ring-blue-500/40 focus:border-transparent outline-none transition-all placeholder:text-blue-100"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
                     placeholder={String(minAmount)}
                   />
                 </div>
@@ -364,7 +364,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                 {/* Footer attribution */}
                 <div className="relative z-10 flex justify-between items-center">
                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-300">
-                      POLUTEK.PL &copy; {new Date().getFullYear()}
+                      POLUTEK.COM &copy; {new Date().getFullYear()}
                    </p>
                    <div className="flex gap-4 opacity-20">
                       <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Secure Payment</span>
@@ -532,11 +532,11 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                   [ Zamknij ]
                 </button>
                 <div className="prose prose-sm prose-neutral">
-                  <h1 className="text-2xl font-black uppercase tracking-tighter mb-8 border-b-2 border-[#1a1a1a]/10 pb-4">Regulamin Serwisu POLUTEK.PL</h1>
+                  <h1 className="text-2xl font-black uppercase tracking-tighter mb-8 border-b-2 border-[#1a1a1a]/10 pb-4">Regulamin Serwisu POLUTEK.COM</h1>
                   <section className="space-y-6 text-[#1a1a1a]">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Charakter platformy</h2>
-                      <p>Serwis POLUTEK.PL jest prywatną, autorską platformą wideo. Platforma działa w modelu dożywotniego patronatu. Dostęp do treści cyfrowych jest uzależniony od łącznej kwoty wsparcia przekazanego twórcy.</p>
+                      <p>Serwis POLUTEK.COM jest prywatną, autorską platformą wideo. Platforma działa w modelu dożywotniego patronatu. Dostęp do treści cyfrowych jest uzależniony od łącznej kwoty wsparcia przekazanego twórcy.</p>
                     </div>
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">2. Model wsparcia i dostęp do treści</h2>
@@ -571,11 +571,11 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                   <section className="space-y-6 text-[#1a1a1a]">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Dane osobowe i logowanie</h2>
-                      <p>Dla bezpieczeństwa i wygody użytkowników, POLUTEK.PL korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>. Clerk zarządza procesem rejestracji, logowania oraz danymi profilowymi użytkowników.</p>
+                      <p>Dla bezpieczeństwa i wygody użytkowników, POLUTEK.COM korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>. Clerk zarządza procesem rejestracji, logowania oraz danymi profilowymi użytkowników.</p>
                     </div>
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">2. Płatności i bezpieczeństwo finansowe</h2>
-                      <p>Wszystkie operacje finansowe (darowizny, napiwki) są procesowane wyłącznie przez <strong>Stripe</strong>. POLUTEK.PL nie przechowuje ani nie ma bezpośredniego dostępu do danych kart płatniczych.</p>
+                      <p>Wszystkie operacje finansowe (darowizny, napiwki) są procesowane wyłącznie przez <strong>Stripe</strong>. POLUTEK.COM nie przechowuje ani nie ma bezpośredniego dostępu do danych kart płatniczych.</p>
                     </div>
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">3. Przetwarzanie i wykorzystanie danych</h2>
