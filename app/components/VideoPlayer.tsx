@@ -50,16 +50,16 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     alt={video.title}
                     className="w-full h-full object-cover opacity-90 transition duration-700 group-hover/player:scale-105"
                 />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={cn(
-                        "bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10 transition-all duration-500",
-                        variant === 'hero'
-                            ? "w-16 h-16 md:w-24 md:h-24 shadow-2xl group-hover/player:scale-110 group-hover/player:bg-black/90"
-                            : "w-10 h-10 shadow-lg group-hover/player:scale-110 opacity-60 group-hover/player:opacity-100"
-                    )}>
-                        <Play className={cn("text-white", variant === 'hero' ? "w-8 h-8 md:w-12 md:h-12 ml-1" : "w-5 h-5 ml-0.5")} />
+                {variant === 'hero' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className={cn(
+                            "bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10 transition-all duration-500",
+                            "w-16 h-16 md:w-24 md:h-24 shadow-2xl group-hover/player:scale-110 group-hover/player:bg-black/90"
+                        )}>
+                            <Play className="text-white w-8 h-8 md:w-12 md:h-12 ml-1" />
+                        </div>
                     </div>
-                </div>
+                )}
                 {!videoUrl && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/player:opacity-100 transition-opacity">
                         <span className="text-white font-mono text-[10px] uppercase tracking-widest bg-black/60 px-4 py-2 border border-white/20">
