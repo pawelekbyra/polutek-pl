@@ -30,12 +30,12 @@ const Navbar = () => {
 
   const isAdmin = user?.primaryEmailAddress?.emailAddress === 'pawel.perfect@gmail.com';
   return (
-    <div className="flex items-center bg-black sticky top-0 z-50 border-b border-zinc-800 px-4 lg:px-8 h-16 min-h-16 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    <div className="flex items-center bg-zinc-950/60 backdrop-blur-xl sticky top-0 z-50 border-b border-white/5 px-4 lg:px-8 h-16 min-h-16 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
              onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-zinc-900 rounded-full transition-colors shrink-0 text-zinc-400"
+             className="p-2 hover:bg-white/10 rounded-full transition-colors shrink-0 text-white"
            >
               <X size={20} />
            </button>
@@ -46,7 +46,7 @@ const Navbar = () => {
                 placeholder="Szukaj"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-10 bg-zinc-900 border-none rounded-full px-5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600/40 transition-all"
+                className="w-full h-10 bg-white/5 border border-white/10 rounded-full px-5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
               />
            </form>
         </div>
@@ -66,10 +66,10 @@ const Navbar = () => {
                   placeholder="Szukaj"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-10 bg-zinc-900 border border-zinc-800 rounded-l-full pl-6 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600/40 focus:border-transparent transition-all placeholder:text-zinc-500 group-hover:bg-zinc-800/50"
+                  className="w-full h-10 bg-white/5 border border-white/10 rounded-l-full pl-6 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-transparent transition-all placeholder:text-zinc-500 group-hover:bg-white/10"
                 />
               </div>
-              <button type="submit" className="h-10 bg-zinc-800 border border-zinc-800 border-l-0 rounded-r-full px-6 hover:bg-zinc-700 transition-colors shrink-0 flex items-center justify-center text-zinc-400" title="Szukaj">
+              <button type="submit" className="h-10 bg-white/10 border border-white/10 border-l-0 rounded-r-full px-6 hover:bg-white/20 transition-colors shrink-0 flex items-center justify-center text-zinc-400" title="Szukaj">
                 <Search size={18} />
               </button>
             </form>
@@ -79,18 +79,18 @@ const Navbar = () => {
             <div className="flex items-center gap-1 sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-zinc-900 rounded-full transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
                     <Search size={22} className="text-zinc-400" />
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-zinc-900 rounded-full px-1.5 py-1.5 h-10">
+            <div className="flex gap-1 items-center bg-white/5 rounded-full px-1.5 py-1.5 h-10 border border-white/5">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
                     "text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full transition-all",
-                    language === 'pl' ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                    language === 'pl' ? "bg-white text-zinc-950 shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                   )}
                 >
                   PL
@@ -99,7 +99,7 @@ const Navbar = () => {
                   onClick={() => { if (setLanguage) setLanguage('en'); }}
                   className={cn(
                     "text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full transition-all",
-                    language === 'en' ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                    language === 'en' ? "bg-white text-zinc-950 shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                   )}
                 >
                   EN
