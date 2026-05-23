@@ -7,12 +7,9 @@ interface VideoStoryProps {
 }
 
 const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
-  const { t } = useLanguage();
+  const t = useLanguage();
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Zmieniono klasę tła z jasnego szarego na ciemniejszy/subtelniejszy 
-        (np. bg-zinc-900 dla dark mode, bg-slate-50 dla light mode) 
-      */}
       <div className="p-6 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-transparent dark:border-white/5 shadow-sm transition-colors">
         <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
           {video.title}
@@ -24,7 +21,7 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
           </div>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 italic">
-            {t('video.noDescription', 'Brak opisu dla tego filmu.')}
+            {t['video.noDescription'] || 'Brak opisu dla tego filmu.'}
           </p>
         )}
       </div>
