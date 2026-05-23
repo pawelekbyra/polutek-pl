@@ -185,6 +185,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
               </div>
               <VideoPlaylist
                  videoTitle={selectedVideo.title}
+                 creatorId={selectedVideo.creatorId}
               />
           </div>
         );

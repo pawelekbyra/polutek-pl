@@ -45,6 +45,7 @@ const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
               videoId={video.id}
               videoSlug={video.slug}
               videoTitle={video.title}
+              creatorId={video.creatorId}
             />
           </div>
         )}
