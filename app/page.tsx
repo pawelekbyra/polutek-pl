@@ -7,6 +7,7 @@ import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './zrzutka/CampaignContent';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
+import BottomBar from './components/BottomBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +66,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   } : null;
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+    <div className="min-h-screen bg-blue-50/20 text-neutral-900 font-sans pb-20 md:pb-0">
       <Navbar />
       <main className="relative">
         <ChannelHome
@@ -76,6 +77,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
         />
       </main>
       <Footer />
+      <BottomBar />
     </div>
   );
 }
