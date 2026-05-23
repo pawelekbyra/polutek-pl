@@ -31,7 +31,6 @@ const Navbar = () => {
   const isAdmin = user?.primaryEmailAddress?.emailAddress === 'pawel.perfect@gmail.com';
 
   return (
-    // Zmieniono bg-white/80 na bg-neutral-50/80 dla subtelnego przyciemnienia
     <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
@@ -107,6 +106,9 @@ const Navbar = () => {
                   EN
                 </button>
             </div>
+
+            {/* Pionowy separator */}
+            <div className="h-6 w-px bg-neutral-300 mx-1" aria-hidden="true" />
 
             {isAdmin && (
               <Link href="/admin" className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-neutral-900 transition-colors whitespace-nowrap px-2">
