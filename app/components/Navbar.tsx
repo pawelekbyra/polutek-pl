@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Globe, LogIn, Trophy, Star, X } from "./icons";
+import { Search, LogIn, X } from "./icons";
 import { useLanguage } from './LanguageContext';
 import { cn } from '@/lib/utils';
 import BrandName from './BrandName';
@@ -29,25 +29,27 @@ const Navbar = () => {
   };
 
   const isAdmin = user?.primaryEmailAddress?.emailAddress === 'pawel.perfect@gmail.com';
+
   return (
-    <div className="flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    // Zmieniono bg-white/80 na bg-neutral-50/80 dla subtelnego przyciemnienia
+    <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
              onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-neutral-100 rounded-full transition-colors shrink-0"
+             className="p-2 hover:bg-neutral-200 rounded-full transition-colors shrink-0"
            >
-              <X size={20} />
+             <X size={20} />
            </button>
            <form onSubmit={handleSearch} className="flex-1 flex">
-              <input
-                type="text"
-                autoFocus
-                placeholder="Szukaj"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-              />
+             <input
+               type="text"
+               autoFocus
+               placeholder="Szukaj"
+               value={searchValue}
+               onChange={(e) => setSearchValue(e.target.value)}
+               className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+             />
            </form>
         </div>
       ) : (
@@ -79,13 +81,13 @@ const Navbar = () => {
             <div className="flex items-center gap-1 sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-neutral-200 rounded-full transition-colors"
                 >
                     <Search size={20} className="text-neutral-600" />
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
+            <div className="flex gap-1 items-center bg-white/50 rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
