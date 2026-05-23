@@ -3,7 +3,7 @@ import { Video } from "@/app/types/video";
 
 export const DEFAULT_CREATOR = {
   id: "creator_polutek_default",
-  name: "POLUTEK.COM",
+  name: "POLUTEK.PL",
   slug: "polutek",
   bio: "Oficjalny kanał Pawła Polutka. Ekskluzywne materiały VOD i niezależne śledztwa.",
   bannerUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",

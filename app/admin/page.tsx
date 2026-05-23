@@ -6,7 +6,17 @@ import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft } from "@/app/components/icons";
 import { formatCount } from "@/lib/utils";
-import { Button, Table, TableHead, TableHeadCell, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, Label, TextInput, Textarea, Select, Checkbox, Card } from "flowbite-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminPanel() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -134,7 +144,6 @@ export default function AdminPanel() {
   }
 
   const handleEdit = (vid: any) => {
-    setIsEditing(true);
     setFormData({
       id: vid.id,
       title: vid.title,
@@ -149,10 +158,10 @@ export default function AdminPanel() {
       views: vid.views,
       isMainFeatured: vid.isMainFeatured
     });
+    setIsEditing(true);
   };
 
   const handleCreateNew = () => {
-    setIsEditing(true);
     setFormData({
       id: "",
       title: "",
@@ -167,6 +176,7 @@ export default function AdminPanel() {
       views: 0,
       isMainFeatured: false
     });
+    setIsEditing(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -234,349 +244,280 @@ export default function AdminPanel() {
   }
 
   if (!isAdmin || isLoading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Weryfikacja dostępu...</div>;
+    return <div className="min-h-screen bg-background flex items-center justify-center">Weryfikacja dostępu...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-8">
-      <div className="max-w-6xl mx-auto space-y-12">
-        <header className="flex justify-between items-end border-b border-gray-200 pb-6">
+    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b pb-6 gap-4">
           <div className="space-y-1">
             <h1 className="text-4xl font-bold tracking-tight">Panel Twórcy</h1>
-            <p className="text-sm text-gray-500">Dostęp Administratora // Zweryfikowano: {adminEmail}</p>
+            <p className="text-sm text-muted-foreground">Dostęp Administratora // {adminEmail}</p>
           </div>
-          <div className="flex gap-4">
-            <Button color="light" as={Link} href="/">
-              <ArrowLeft size={16} className="mr-2" /> Powrót do aplikacji
+          <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Powrót
+              </Link>
             </Button>
-            <Button color="blue" onClick={handleCreateNew}>
-              <Plus size={16} className="mr-2" /> Nowy Film
+            <Button onClick={handleCreateNew}>
+              <Plus className="mr-2 h-4 w-4" /> Nowy Film
             </Button>
           </div>
         </header>
 
-        <Modal show={isEditing} onClose={() => setIsEditing(false)} size="2xl">
-          <ModalHeader>{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</ModalHeader>
-          <ModalBody>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
+        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="title">Tytuł</Label>
-                    <TextInput id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                    <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Label htmlFor="slug">Slug (URL)</Label>
-                    <TextInput id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
+                    <Input id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
                   </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <Label htmlFor="description">Opis</Label>
                   <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="videoUrl">URL Wideo</Label>
-                    <TextInput id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
+                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Label htmlFor="thumbnailUrl">URL Miniaturki</Label>
-                    <TextInput id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
+                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="duration">Czas trwania (np. 12:45)</Label>
-                    <TextInput id="duration" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} />
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">Czas trwania</Label>
+                    <Input id="duration" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div className="space-y-2">
                     <Label htmlFor="tier">Poziom Dostępu</Label>
-                    <Select id="tier" value={formData.tier} onChange={e => setFormData({...formData, tier: e.target.value})}>
-                      <option value="PUBLIC">Publiczny</option>
-                      <option value="LOGGED_IN">Zalogowani</option>
-                      <option value="VIP1">Patron (5 PLN+)</option>
-                      <option value="VIP2">Sponsor (10 PLN+)</option>
+                    <Select value={formData.tier} onValueChange={(v) => setFormData({...formData, tier: v || "PUBLIC"})}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Wybierz poziom" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="PUBLIC">Publiczny</SelectItem>
+                            <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
+                            <SelectItem value="VIP1">Patron (5 PLN+)</SelectItem>
+                            <SelectItem value="VIP2">Sponsor (10 PLN+)</SelectItem>
+                        </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1 flex items-center gap-3 pt-6">
+                  <div className="flex items-center space-x-2 pt-8">
                        <Checkbox
                         id="isMainFeatured"
                         checked={formData.isMainFeatured}
-                        onChange={e => setFormData({...formData, isMainFeatured: e.target.checked})}
+                        onCheckedChange={(checked) => setFormData({...formData, isMainFeatured: !!checked})}
                        />
                        <Label htmlFor="isMainFeatured">Hero Video</Label>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="likes">Polubienia</Label>
-                    <TextInput id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
+                    <Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Label htmlFor="dislikes">Dislajki</Label>
-                    <TextInput id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} />
+                    <Input id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Label htmlFor="views">Wyświetlenia</Label>
-                    <TextInput id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
+                    <Input id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
                   </div>
                 </div>
 
-                <Button type="submit" color="blue" fullSized size="xl">
+                <Button type="submit" className="w-full">
                   Zapisz Zmiany
                 </Button>
               </form>
-          </ModalBody>
-        </Modal>
+          </DialogContent>
+        </Dialog>
 
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard title="Wszystkie Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video size={20} />} />
-          <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus size={20} />} />
-          <StatCard title="Przychód" value={`${stats?.totalRevenue?.toFixed(2) || "0.00"} PLN`} icon={<BarChart3 size={20} />} />
-          <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star size={20} />} />
-        </section>
-
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-8">
-            {[
-              { id: 'videos', label: 'Materiały' },
-              { id: 'stats', label: 'Finanse' },
-              { id: 'channel', label: 'Ustawienia Kanału' },
-              { id: 'email', label: 'E-mail' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video className="h-4 w-4" />} />
+          <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus className="h-4 w-4" />} />
+          <StatCard title="Przychód" value={`${stats?.totalRevenue?.toFixed(2) || "0.00"} PLN`} icon={<BarChart3 className="h-4 w-4" />} />
+          <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star className="h-4 w-4" />} />
         </div>
 
-        {activeTab === 'videos' ? (
-          <section className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Zarządzaj Materiałami</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <Table hoverable>
-                <TableHead>
-                  <TableHeadCell>Status</TableHeadCell>
-                  <TableHeadCell>Tytuł</TableHeadCell>
-                  <TableHeadCell>Dostęp</TableHeadCell>
-                  <TableHeadCell>Statystyki</TableHeadCell>
-                  <TableHeadCell className="text-right">Akcje</TableHeadCell>
-                </TableHead>
-                <TableBody className="divide-y">
-                  {videos.map((vid) => (
-                    <TableRow key={vid.id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                      <TableCell>
-                        {vid.isMainFeatured ? (
-                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Hero</span>
-                        ) : (
-                          <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Lista</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-bold text-gray-900">{vid.title}</div>
-                        <div className="text-xs text-gray-500">/{vid.slug}</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded border ${
-                          vid.tier === 'VIP2' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                          vid.tier === 'VIP1' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}>
-                          {vid.tier === 'PUBLIC' ? <Globe size={10} /> : vid.tier === 'LOGGED_IN' ? <Lock size={10} /> : <ShieldCheck size={10} />}
-                          {vid.tier}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500 space-x-3">
-                        <span>L: {vid.likesCount}</span>
-                        <span>D: {vid.dislikesCount}</span>
-                        <span>V: {vid.views}</span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button color="light" size="xs" onClick={() => handleEdit(vid)}><Edit size={16} /></Button>
-                          <Button color="failure" size="xs" onClick={() => handleDelete(vid.id)}><Trash2 size={16} /></Button>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="videos">Materiały</TabsTrigger>
+                <TabsTrigger value="stats">Finanse</TabsTrigger>
+                <TabsTrigger value="channel">Kanał</TabsTrigger>
+                <TabsTrigger value="email">E-mail</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="videos" className="space-y-4 pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Zarządzaj Materiałami</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Tytuł</TableHead>
+                                        <TableHead>Dostęp</TableHead>
+                                        <TableHead>Statystyki</TableHead>
+                                        <TableHead className="text-right">Akcje</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {videos.map((vid) => (
+                                        <TableRow key={vid.id}>
+                                            <TableCell>
+                                                {vid.isMainFeatured ? (
+                                                    <Badge>Hero</Badge>
+                                                ) : (
+                                                    <Badge variant="secondary">Lista</Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="font-medium">{vid.title}</div>
+                                                <div className="text-xs text-muted-foreground">/{vid.slug}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="gap-1">
+                                                    {vid.tier === 'PUBLIC' ? <Globe className="h-3 w-3" /> : vid.tier === 'LOGGED_IN' ? <Lock className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />}
+                                                    {vid.tier}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                L:{vid.likesCount} D:{vid.dislikesCount} V:{vid.views}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(vid)}><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(vid.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
-        ) : activeTab === 'stats' ? (
-            <section className="space-y-8">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold">Historia Wpłat</h2>
-                    <p className="text-xs text-gray-500">Ostatnie 10 udanych transakcji w systemie Stripe.</p>
-                </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
 
-                <div className="overflow-x-auto">
-                    <Table hoverable>
-                        <TableHead>
-                            <TableHeadCell>Użytkownik</TableHeadCell>
-                            <TableHeadCell>Kwota</TableHeadCell>
-                            <TableHeadCell>Status</TableHeadCell>
-                            <TableHeadCell className="text-right">Data</TableHeadCell>
-                        </TableHead>
-                        <TableBody className="divide-y text-gray-900">
-                            {stats?.recentTransactions?.map((tx: any) => (
-                                <TableRow key={tx.id} className="bg-white">
-                                    <TableCell className="font-mono text-xs">{tx.user?.email}</TableCell>
-                                    <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
-                                    <TableCell>
-                                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Zakończono</span>
-                                    </TableCell>
-                                    <TableCell className="text-right text-xs text-gray-500">
-                                        {mounted ? new Date(tx.createdAt).toLocaleString('pl-PL') : ''}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {(!stats?.recentTransactions || stats.recentTransactions.length === 0) && (
+            <TabsContent value="stats" className="space-y-4 pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Historia Wpłat</CardTitle>
+                        <CardDescription>Ostatnie 10 udanych transakcji Stripe.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={4} className="p-12 text-center text-gray-400">Brak zarejestrowanych wpłat</TableCell>
+                                    <TableHead>Użytkownik</TableHead>
+                                    <TableHead>Kwota</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Data</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </section>
-        ) : activeTab === 'channel' ? (
-          <section className="max-w-2xl space-y-8">
-             <div className="space-y-1">
-                <h2 className="text-2xl font-bold">Tożsamość Kanału</h2>
-                <p className="text-xs text-gray-500">Aktualizuj dane widoczne dla Twoich widzów.</p>
-             </div>
+                            </TableHeader>
+                            <TableBody>
+                                {stats?.recentTransactions?.map((tx: any) => (
+                                    <TableRow key={tx.id}>
+                                        <TableCell className="font-mono text-xs">{tx.user?.email}</TableCell>
+                                        <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
+                                        <TableCell><Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Sukces</Badge></TableCell>
+                                        <TableCell className="text-right text-xs text-muted-foreground">
+                                            {mounted ? new Date(tx.createdAt).toLocaleString('pl-PL') : ''}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
 
-             <Card>
-               <form onSubmit={handleCreatorSubmit} className="space-y-6">
-                  <div className="space-y-1">
-                      <Label htmlFor="creatorName">Nazwa Twórcy</Label>
-                      <TextInput
-                          id="creatorName"
-                          value={creatorForm.name}
-                          onChange={e => setCreatorForm({...creatorForm, name: e.target.value})}
-                          placeholder="np. POLUTEK.COM"
-                          required
-                      />
-                  </div>
+            <TabsContent value="channel" className="max-w-2xl pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Tożsamość Kanału</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleCreatorSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="creatorName">Nazwa Twórcy</Label>
+                                <Input id="creatorName" value={creatorForm.name} onChange={e => setCreatorForm({...creatorForm, name: e.target.value})} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="channelSlug">Slug (@)</Label>
+                                <Input id="channelSlug" value={creatorForm.slug} onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="channelBio">Biografia</Label>
+                                <Textarea id="channelBio" value={creatorForm.bio} onChange={e => setCreatorForm({...creatorForm, bio: e.target.value})} rows={4} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="bannerUrl">Banner URL</Label>
+                                <Input id="bannerUrl" value={creatorForm.bannerUrl} onChange={e => setCreatorForm({...creatorForm, bannerUrl: e.target.value})} />
+                            </div>
+                            <Button type="submit" className="w-full">Aktualizuj</Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </TabsContent>
 
-                  <div className="space-y-1">
-                      <Label htmlFor="channelSlug">Slug Kanału (polutek.com/@slug)</Label>
-                      <TextInput
-                          id="channelSlug"
-                          value={creatorForm.slug}
-                          onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})}
-                          placeholder="np. polutek"
-                          required
-                      />
-                  </div>
-
-                  <div className="space-y-1">
-                      <Label htmlFor="channelBio">Biografia Kanału</Label>
-                      <Textarea
-                          id="channelBio"
-                          value={creatorForm.bio}
-                          onChange={e => setCreatorForm({...creatorForm, bio: e.target.value})}
-                          placeholder="Napisz coś o swoim kanale..."
-                          rows={4}
-                      />
-                  </div>
-
-                  <div className="space-y-1">
-                      <Label htmlFor="bannerUrl">URL Bannera Kanału</Label>
-                      <TextInput
-                          id="bannerUrl"
-                          value={creatorForm.bannerUrl}
-                          onChange={e => setCreatorForm({...creatorForm, bannerUrl: e.target.value})}
-                          placeholder="https://..."
-                      />
-                  </div>
-
-                  <Button type="submit" color="blue" fullSized size="xl">
-                      Aktualizuj Ustawienia Kanału
-                  </Button>
-               </form>
-             </Card>
-          </section>
-        ) : (
-          <section className="max-w-2xl space-y-8">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-bold">E-mail Powitalny</h2>
-              <p className="text-xs text-gray-500">Edytuj wiadomość, którą otrzymują nowi użytkownicy.</p>
-            </div>
-
-            <Card>
-              <form onSubmit={handleEmailTemplateSubmit} className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold border-b pb-2">Wersja Polska</h3>
-                  <div className="space-y-1">
-                    <Label htmlFor="subjectPl">Temat</Label>
-                    <TextInput
-                      id="subjectPl"
-                      value={emailTemplate.subjectPl}
-                      onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})}
-                      placeholder="np. Witaj w POLUTEK.COM!"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="bodyPl">Treść (HTML)</Label>
-                    <Textarea
-                      id="bodyPl"
-                      value={emailTemplate.bodyPl}
-                      onChange={e => setEmailTemplate({...emailTemplate, bodyPl: e.target.value})}
-                      rows={6}
-                      className="font-mono text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4">
-                  <h3 className="text-sm font-bold border-b pb-2">English Version</h3>
-                  <div className="space-y-1">
-                    <Label htmlFor="subjectEn">Subject</Label>
-                    <TextInput
-                      id="subjectEn"
-                      value={emailTemplate.subjectEn}
-                      onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})}
-                      placeholder="e.g. Welcome to POLUTEK.COM!"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="bodyEn">Body (HTML)</Label>
-                    <Textarea
-                      id="bodyEn"
-                      value={emailTemplate.bodyEn}
-                      onChange={e => setEmailTemplate({...emailTemplate, bodyEn: e.target.value})}
-                      rows={6}
-                      className="font-mono text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" color="blue" fullSized size="xl">
-                  Aktualizuj Szablony E-mail
-                </Button>
-              </form>
-            </Card>
-          </section>
-        )}
+            <TabsContent value="email" className="max-w-2xl pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>E-mail Powitalny</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleEmailTemplateSubmit} className="space-y-6">
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-sm border-b pb-1">Wersja Polska</h3>
+                                <div className="space-y-2">
+                                    <Label>Temat</Label>
+                                    <Input value={emailTemplate.subjectPl} onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Treść (HTML)</Label>
+                                    <Textarea value={emailTemplate.bodyPl} onChange={e => setEmailTemplate({...emailTemplate, bodyPl: e.target.value})} rows={6} className="font-mono text-xs" required />
+                                </div>
+                            </div>
+                            <div className="space-y-4 pt-4">
+                                <h3 className="font-semibold text-sm border-b pb-1">English Version</h3>
+                                <div className="space-y-2">
+                                    <Label>Subject</Label>
+                                    <Input value={emailTemplate.subjectEn} onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Body (HTML)</Label>
+                                    <Textarea value={emailTemplate.bodyEn} onChange={e => setEmailTemplate({...emailTemplate, bodyEn: e.target.value})} rows={6} className="font-mono text-xs" required />
+                                </div>
+                            </div>
+                            <Button type="submit" className="w-full">Zapisz Szablony</Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -584,15 +525,14 @@ export default function AdminPanel() {
 
 function StatCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start">
-        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">{icon}</div>
-        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Live Data</div>
-      </div>
-      <div className="mt-4">
-        <div className="text-3xl font-bold text-gray-900">{value}</div>
-        <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">{title}</div>
-      </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="text-muted-foreground">{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
     </Card>
   );
 }

@@ -91,7 +91,7 @@ export class ContentService {
       const adminData = slug === 'polutek' ? await this.getAdminData() : null;
 
       if (slug === 'polutek' && creator) {
-        creator.name = 'POLUTEK.COM';
+        creator.name = 'POLUTEK.PL';
         // Force sync user data if available from admin lookup
         if (adminData) {
             if (!creator.user) (creator as any).user = adminData;
