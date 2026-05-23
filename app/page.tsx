@@ -7,7 +7,6 @@ import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './zrzutka/CampaignContent';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
-
 export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {

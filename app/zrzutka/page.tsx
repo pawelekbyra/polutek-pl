@@ -6,7 +6,6 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './CampaignContent';
 import Navbar from '../components/Navbar';
-
 export const dynamic = 'force-dynamic';
 
 export default async function ZrzutkaPage() {
