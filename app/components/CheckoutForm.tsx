@@ -34,7 +34,7 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement options={{ layout: 'accordion' }} />
+      <PaymentElement options={{ layout: 'tabs' }} />
       {errorMessage && <div className="text-red-500 font-medium text-[11px] text-center mt-3">{errorMessage}</div>}
       <button
         type="submit"

@@ -179,6 +179,26 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       );
 
       // Rule: Donate section always appears after the 2nd item (index 1) in the visual list
+      if (i === 1) {
+        acc.push(
+          <div key="donate" className="pt-4 pb-0">
+              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+              </div>
+              <VideoPlaylist
+                 videoTitle={selectedVideo.title}
+                 creatorId={selectedVideo.creatorId}
+              />
+          </div>
+        );
+        acc.push(
+          <div key="patron-header" className="pt-4">
+              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+              </div>
+          </div>
+        );
+      }
 
       return acc;
   }, []);
@@ -253,22 +273,32 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             </div>
           </div>
 
-          <aside className="hidden lg:block lg:col-span-4 space-y-6">
-            <div className="space-y-2">
-                <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-                </div>
-                <VideoPlaylist
-                   videoTitle={selectedVideo?.title}
-                   creatorId={selectedVideo?.creatorId}
-                />
-            </div>
-
+          <aside className="hidden lg:block lg:col-span-4 space-y-2">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
               <div className="flex items-center gap-3">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
                   {searchQuery ? (language === 'pl' ? 'Wyniki wyszukiwania' : 'Search Results') : t.materials}
                 </h3>
+              </div>
+              <div className="flex gap-5 mb-[-2px]">
+                <button
+                  onClick={() => { if (setLanguage) setLanguage('pl'); }}
+                  className={cn(
+                    "text-xs font-bold tracking-widest uppercase transition-all",
+                    language === 'pl' ? "text-primary border-b-2 border-primary pb-0.5" : "text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
+                  )}
+                >
+                  PL
+                </button>
+                <button
+                  onClick={() => { if (setLanguage) setLanguage('en'); }}
+                  className={cn(
+                    "text-xs font-bold tracking-widest uppercase transition-all",
+                    language === 'en' ? "text-primary border-b-2 border-primary pb-0.5" : "text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
+                  )}
+                >
+                  EN
+                </button>
               </div>
             </div>
             {playlistItems.length > 0 ? (
