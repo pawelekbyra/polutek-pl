@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], display: 'swap', variabl
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-space-grotesk' });
 const gluten = Gluten({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-gluten' });
 
-export const metadata = { title: "POLUTEK.COM", description: "A secret project that aims to change something big." };
+export const metadata = { title: "POLUTEK.PL", description: "A secret project that aims to change something big." };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

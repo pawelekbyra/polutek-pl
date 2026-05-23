@@ -356,7 +356,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
 
                 <div className="relative z-10 flex justify-between items-center mt-auto">
                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-300">
-                      POLUTEK.COM &copy; {new Date().getFullYear()}
+                      POLUTEK.PL &copy; {new Date().getFullYear()}
                    </p>
                 </div>
              </div>
@@ -377,7 +377,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                 <div className="md:hidden w-full px-6 py-6 flex justify-between items-center shrink-0 relative z-20 border-b border-neutral-100 bg-white">
                    <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-black text-xs">P</div>
-                      <h3 className="text-lg font-brand font-black uppercase tracking-tighter">POLUTEK<span className="text-neutral-400">.COM</span></h3>
+                      <h3 className="text-lg font-brand font-black uppercase tracking-tighter">POLUTEK<span className="text-neutral-400">.PL</span></h3>
                    </div>
 
                    <Button
@@ -465,13 +465,13 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
         <Dialog open={isRegulaminOpen} onOpenChange={setIsRegulaminOpen}>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter border-b pb-4">Regulamin Serwisu POLUTEK.COM</DialogTitle>
+                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter border-b pb-4">Regulamin Serwisu POLUTEK.PL</DialogTitle>
                 </DialogHeader>
                 <div className="prose prose-sm prose-neutral max-w-none">
                   <section className="space-y-6 text-foreground">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Charakter platformy</h2>
-                      <p>Serwis POLUTEK.COM jest prywatną, autorską platformą wideo. Platforma działa w modelu dożywotniego patronatu.</p>
+                      <p>Serwis POLUTEK.PL jest prywatną, autorską platformą wideo. Platforma działa w modelu dożywotniego patronatu.</p>
                     </div>
                   </section>
                 </div>
@@ -488,7 +488,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                   <section className="space-y-6 text-foreground">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Dane osobowe i logowanie</h2>
-                      <p>Dla bezpieczeństwa i wygody użytkowników, POLUTEK.COM korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>.</p>
+                      <p>Dla bezpieczeństwa i wygody użytkowników, POLUTEK.PL korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>.</p>
                     </div>
                   </section>
                 </div>
