@@ -78,12 +78,12 @@ const VideoPlaylist = ({
   if (videoTitle) {
     if (isSuccess) {
       return (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 shadow-sm mb-6 text-center space-y-3 animate-in zoom-in-95 duration-500">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-md">
-                  <Check size={20} className="text-white" />
+          <div className="bg-white border border-neutral-200 rounded-xl p-8 shadow-md mb-6 text-center space-y-6 animate-in zoom-in-95 duration-500">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <Check size={24} className="text-white" />
               </div>
-              <h3 className="font-bold text-green-900">Dziękujemy za wsparcie!</h3>
-              <p className="text-xs text-green-700 leading-relaxed">Twoja wpłata została pomyślnie przetworzona. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>
+              <h3 className="text-2xl font-bold tracking-tight">Dziękujemy!</h3>
+              <p className="text-sm text-neutral-500 leading-relaxed italic">Twoja wpłata została pomyślnie przetworzona. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>
               <button
                 onClick={() => {
                     setIsSuccess(false);
@@ -91,7 +91,7 @@ const VideoPlaylist = ({
                     url.searchParams.delete('success');
                     window.history.replaceState({}, '', url.toString());
                 }}
-                className="text-[10px] font-bold text-green-800 uppercase tracking-widest hover:underline"
+                className="w-full bg-charcoal text-white py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all hover:bg-black active:scale-95"
               >
                 Zamknij
               </button>
@@ -101,49 +101,54 @@ const VideoPlaylist = ({
 
     if (clientSecret) {
         return (
-            <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold text-sm uppercase tracking-tight">Dokończ wpłatę</h3>
+            <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-xl font-bold tracking-tight">Dokończ wpłatę</h2>
                     <button
                         onClick={() => setClientSecret(null)}
-                        className="text-[10px] font-bold text-neutral-400 hover:text-neutral-900 uppercase tracking-widest transition-colors"
+                        className="w-8 h-8 border border-neutral-200 rounded-full flex items-center justify-center hover:bg-neutral-50 transition-colors text-xl"
                     >
-                        Anuluj
+                        ×
                     </button>
                 </div>
-                <div className="bg-neutral-50 rounded-lg p-4 mb-6 border border-neutral-100">
-                    <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Kwota wsparcia:</span>
-                        <span className="font-bold text-lg">{selectedAmount} PLN</span>
+                <div className="bg-neutral-50 rounded-lg p-5 mb-8 border border-neutral-200">
+                    <div className="flex justify-between items-baseline">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Kwota wsparcia:</span>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-bold tracking-tighter">{selectedAmount}</span>
+                            <span className="text-sm font-medium text-neutral-400">PLN</span>
+                        </div>
                     </div>
                 </div>
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { colorPrimary: '#2563eb', colorBackground: '#ffffff', colorText: '#171717', borderRadius: '8px' } } }}>
-                    <CheckoutForm returnUrl={`${window.location.origin}${window.location.pathname}?success=true`} />
-                </Elements>
+                <div className="bg-white border border-neutral-200 p-6 shadow-sm rounded-xl">
+                    <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { colorPrimary: '#2563eb', colorBackground: '#ffffff', colorText: '#171717', borderRadius: '8px' } } }}>
+                        <CheckoutForm returnUrl={`${window.location.origin}${window.location.pathname}?success=true`} />
+                    </Elements>
+                </div>
             </div>
         );
     }
 
     return (
-      <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-6 space-y-6 animate-in fade-in duration-500">
-          <div className="text-center space-y-2">
-            <h3 className="font-bold text-base tracking-tight italic">Twoje wsparcie ma znaczenie</h3>
-            <p className="text-[11px] text-neutral-500 leading-relaxed italic">
-                Wspieraj rozwój projektów POLUTEK.PL dobrowolnym napiwkiem. <br />
-                Dziękuję za zaufanie!
-            </p>
+      <div className="bg-white border border-neutral-200 p-6 shadow-md rounded-xl space-y-6 animate-in fade-in duration-500">
+          <div className="space-y-4">
+             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Wesprzyj Twórcę</p>
+             <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold tracking-tighter text-neutral-900">{selectedAmount || '0'}</span>
+                <span className="text-lg font-medium text-neutral-400">PLN</span>
+             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-              {[10, 20, 50, 100].map((amt) => (
+              {[20, 50, 150, 500].map((amt) => (
                   <button
                     key={amt}
                     onClick={() => setSelectedAmount(amt)}
                     className={cn(
                         "py-3 rounded-lg border font-bold text-sm transition-all",
                         selectedAmount === amt
-                            ? "bg-blue-600 border-blue-600 text-white shadow-md scale-[1.02]"
-                            : "bg-white border-neutral-200 text-neutral-600 hover:border-blue-400 hover:bg-blue-50/50"
+                            ? "bg-blue-600 border-blue-600 text-white shadow-md"
+                            : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-blue-600 hover:bg-white"
                     )}
                   >
                       {amt} PLN
@@ -151,32 +156,34 @@ const VideoPlaylist = ({
               ))}
           </div>
 
-          <div className="relative group">
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                <span className="text-[10px] font-bold text-neutral-400">PLN</span>
-              </div>
-              <input
-                type="number"
-                min="10"
-                value={selectedAmount}
-                onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : parseInt(e.target.value))}
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-3 px-4 text-sm font-bold text-neutral-900 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
-                placeholder="Inna kwota"
-              />
-          </div>
+          <div className="space-y-4 pt-4 border-t border-neutral-100">
+            <div className="relative group">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <span className="text-sm font-semibold text-neutral-400">PLN</span>
+                </div>
+                <input
+                  type="number"
+                  min="10"
+                  value={selectedAmount}
+                  onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-3 px-4 text-lg font-semibold text-neutral-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                  placeholder="10"
+                />
+            </div>
 
-          <button
-            onClick={() => handleSupport(Number(selectedAmount))}
-            disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}
-            className="w-full bg-charcoal text-white py-4 rounded-xl font-bold text-[10px] tracking-[0.2em] uppercase transition-all hover:bg-black active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={16} /> : <>WYŚLIJ NAPIWEK <ArrowRight size={14} /></>}
-          </button>
+            <button
+              onClick={() => handleSupport(Number(selectedAmount))}
+              disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}
+              className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold text-sm uppercase tracking-wider transition-colors hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
+            >
+              {isLoading ? <Loader2 className="animate-spin mx-auto" /> : 'WESPRZYJ PROJEKT'}
+            </button>
+          </div>
       </div>
     );
   }
 
-  // Standard Playlist view (if no videoTitle)
+  // Standard Playlist view
   return (
     <div className="flex flex-col space-y-3 w-full">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a] mb-2">

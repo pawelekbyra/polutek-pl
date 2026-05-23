@@ -31,11 +31,11 @@ interface ChannelHomeProps {
 
 import { useSearchParams } from 'next/navigation';
 
-export default function ChannelHome({ mainVideo, allVideos, currentVideoId, userProfile }: ChannelHomeProps) {
+export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId, userProfile }: ChannelHomeProps) {
   const { t, language, setLanguage } = useLanguage();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
-  const selectedVideo = allVideos.find(v => v.id === currentVideoId) || mainVideo;
+  const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
 
@@ -43,8 +43,10 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
 
   useEffect(() => {
     setMounted(true);
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, [selectedVideo.id]);
+    if (selectedVideo?.id) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [selectedVideo?.id]);
 
   const prefetchVideoComments = (vidId: string) => {
     queryClient.prefetchInfiniteQuery({
@@ -73,7 +75,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
       const bIsLoggedInGated = b.tier === 'LOGGED_IN';
 
       // If we're on the main video, we want a LOGGED_IN video at index 1
-      if (selectedVideo.id === mainVideo.id) {
+      if (selectedVideo?.id === mainVideo?.id) {
           if (aIsLoggedInGated && !bIsLoggedInGated) return -1;
           if (!aIsLoggedInGated && bIsLoggedInGated) return 1;
       }
@@ -177,26 +179,6 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
       );
 
       // Rule: Donate section always appears after the 2nd item (index 1) in the visual list
-      if (i === 1) {
-        acc.push(
-          <div key="donate" className="pt-4 pb-0">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-              </div>
-              <VideoPlaylist
-                 videoTitle={selectedVideo.title}
-                 creatorId={selectedVideo.creatorId}
-              />
-          </div>
-        );
-        acc.push(
-          <div key="patron-header" className="pt-4">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
-                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-              </div>
-          </div>
-        );
-      }
 
       return acc;
   }, []);
@@ -271,7 +253,17 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
             </div>
           </div>
 
-          <aside className="hidden lg:block lg:col-span-4 space-y-2">
+          <aside className="hidden lg:block lg:col-span-4 space-y-6">
+            <div className="space-y-2">
+                <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+                </div>
+                <VideoPlaylist
+                   videoTitle={selectedVideo?.title}
+                   creatorId={selectedVideo?.creatorId}
+                />
+            </div>
+
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
               <div className="flex items-center gap-3">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">

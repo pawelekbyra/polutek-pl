@@ -37,9 +37,9 @@ const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
       </div>
 
       <div className="min-h-[400px]">
-        {activeTab === 'story' && <VideoStory video={video} />}
+        {activeTab === 'story' && video && <VideoStory video={video} />}
 
-        {activeTab === 'donations' && (
+        {activeTab === 'donations' && video && (
           <div className="max-w-xl mx-auto">
             <VideoPlaylist
               videoId={video.id}
