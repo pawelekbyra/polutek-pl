@@ -107,7 +107,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
             onMouseEnter={() => prefetchVideoComments(video.id)}
             className={cn(
               "group flex gap-2 p-1 rounded-lg transition-colors relative",
-              isCurrent ? "bg-neutral-100" : "hover:bg-neutral-200"
+              isCurrent ? "bg-blue-100/50" : "hover:bg-blue-100/30"
             )}
           >
             <Link
@@ -115,7 +115,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
                scroll={false}
                className="absolute inset-0 z-0"
             />
-            <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
+            <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-blue-200/50">
               <Link
                 href={`/?v=${video.id}`}
                 scroll={false}
@@ -201,7 +201,7 @@ export default function ChannelHome({ mainVideo, allVideos, currentVideoId, user
   }, []);
 
   return (
-    <main className="bg-neutral-50 min-h-screen">
+    <main className="bg-blue-50/20 min-h-screen">
       <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-6 py-6">
 
 

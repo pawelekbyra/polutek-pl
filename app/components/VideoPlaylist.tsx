@@ -188,9 +188,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
 
   return (
     <div className="space-y-4 px-2 relative scroll-mt-20" id="donations">
-        <div className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl">
+        <div className="bg-blue-50/50 backdrop-blur-xl border border-blue-100 p-6 shadow-sm relative overflow-hidden rounded-2xl">
           <div className="space-y-4 relative z-10">
-            <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-center">
+            <h3 className="text-xl font-sans font-black text-blue-950 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-center">
               {t.supportArtist}
               <Trophy size={32} className="text-neutral-900" />
             </h3>
@@ -235,7 +235,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle }) => {
                       const val = e.target.value;
                       setAmount(val === '' ? '' : parseInt(val));
                     }}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
+                    className="w-full bg-white/60 border border-blue-100 rounded-xl py-4 px-12 font-mono text-3xl font-black text-blue-950 text-center focus:ring-2 focus:ring-blue-500/40 focus:border-transparent outline-none transition-all placeholder:text-blue-100"
                     placeholder={String(minAmount)}
                   />
                 </div>

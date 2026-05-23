@@ -30,12 +30,12 @@ const Navbar = () => {
 
   const isAdmin = user?.primaryEmailAddress?.emailAddress === 'pawel.perfect@gmail.com';
   return (
-    <div className="flex items-center bg-blue-50/70 backdrop-blur-xl sticky top-0 z-50 border-b border-blue-100 px-4 lg:px-8 h-16 min-h-16 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    <div className="flex items-center bg-blue-100/50 backdrop-blur-2xl sticky top-0 z-50 border-b border-blue-200/50 px-4 lg:px-8 h-16 min-h-16 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
              onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-blue-100 rounded-full transition-colors shrink-0 text-blue-900"
+             className="p-2 hover:bg-blue-200/30 rounded-full transition-colors shrink-0 text-blue-900"
            >
               <X size={20} />
            </button>
@@ -46,7 +46,7 @@ const Navbar = () => {
                 placeholder="Szukaj"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-10 bg-white border border-blue-100 rounded-full px-5 text-sm text-blue-950 placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full h-10 bg-white border border-blue-200 rounded-full px-5 text-sm text-blue-950 placeholder:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
               />
            </form>
         </div>
@@ -66,10 +66,10 @@ const Navbar = () => {
                   placeholder="Szukaj"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-10 bg-white/80 border border-blue-100 rounded-l-full pl-6 pr-4 text-sm text-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-transparent transition-all placeholder:text-blue-300 group-hover:bg-white"
+                  className="w-full h-10 bg-white/70 border border-blue-200 rounded-l-full pl-6 pr-4 text-sm text-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-transparent transition-all placeholder:text-blue-300 group-hover:bg-white"
                 />
               </div>
-              <button type="submit" className="h-10 bg-blue-50 border border-blue-100 border-l-0 rounded-r-full px-6 hover:bg-blue-100 transition-colors shrink-0 flex items-center justify-center text-blue-600" title="Szukaj">
+              <button type="submit" className="h-10 bg-blue-100/50 border border-blue-200 border-l-0 rounded-r-full px-6 hover:bg-blue-200/50 transition-colors shrink-0 flex items-center justify-center text-blue-600" title="Szukaj">
                 <Search size={18} />
               </button>
             </form>
@@ -79,13 +79,13 @@ const Navbar = () => {
             <div className="flex items-center gap-1 sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+                  className="p-2 hover:bg-blue-100/50 rounded-full transition-colors"
                 >
                     <Search size={22} className="text-blue-600" />
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white/50 rounded-full px-1.5 py-1.5 h-10 border border-blue-100">
+            <div className="flex gap-1 items-center bg-blue-100/30 rounded-full px-1.5 py-1.5 h-10 border border-blue-200/50">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
