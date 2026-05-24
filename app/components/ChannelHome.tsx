@@ -109,7 +109,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             onMouseEnter={() => prefetchVideoComments(video.id)}
             className={cn(
               "group flex gap-2 p-1 rounded-lg transition-colors relative",
-              isCurrent ? "bg-neutral-100" : "hover:bg-neutral-200"
+              isCurrent ? "bg-neutral-200 hover:bg-neutral-100" : "hover:bg-neutral-200"
             )}
           >
             <Link

@@ -243,7 +243,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
 
         {/* DESCRIPTION BOX */}
-        <div className="mt-3 bg-neutral-100 rounded-xl p-4 transition-colors cursor-pointer border border-transparent hover:bg-neutral-200/50" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="mt-3 bg-neutral-200 rounded-xl p-4 transition-colors cursor-pointer border border-transparent hover:bg-neutral-300/50" onClick={() => setIsExpanded(!isExpanded)}>
            <div className="flex flex-wrap gap-x-2 gap-y-1 mb-1">
               <span className="text-[14px] font-semibold text-[#0f0f0f]">
                  {mounted ? video.views.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}
