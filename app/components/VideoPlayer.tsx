@@ -153,18 +153,19 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
                     --slider-track-height: 1px;
-                    --slider-thumb-size: 6px;
+                    --slider-thumb-size: 0px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
-                    margin-bottom: -2px !important;
+                    margin-bottom: -4px !important;
                     z-index: 20;
-                    width: calc(100% - 12px) !important;
-                    margin-left: 6px !important;
-                    margin-right: 6px !important;
+                    width: 100% !important;
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
-                    --slider-track-height: 2px;
+                    --slider-track-height: 3px;
+                    --slider-thumb-size: 8px;
                 }
 
                 /* Tighten the layout of control groups to match YouTube's proportions */
@@ -178,7 +179,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Specifically target the progress bar container group */
                 .vidstack-player-container .vds-controls-group:has(.vds-slider[data-type="progress"]) {
-                    padding: 0 6px !important;
+                    padding: 0 !important;
                     margin-bottom: -4px !important;
                 }
 
