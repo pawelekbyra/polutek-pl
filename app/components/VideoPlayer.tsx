@@ -122,7 +122,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
                     }}
                     className="w-full h-full"
-                    controlsDelay={5000}
+                    controlsDelay={7000}
                 >
                     <MediaProvider>
                         <Poster
@@ -158,9 +158,9 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     --slider-thumb-bg: #3b82f6;
                     margin-bottom: -5px !important;
                     z-index: 20;
-                    width: calc(100% - 4px) !important;
-                    margin-left: 2px !important;
-                    margin-right: 2px !important;
+                    width: 100% !important;
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
