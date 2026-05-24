@@ -54,6 +54,11 @@ export class PaymentService {
         userId,
         creatorId,
       },
+      payment_method_options: {
+        link: {
+          display: 'never',
+        },
+      },
     } as any);
 
     return session;
