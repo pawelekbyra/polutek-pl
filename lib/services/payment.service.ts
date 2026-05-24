@@ -34,7 +34,7 @@ export class PaymentService {
     const stripe = getStripe();
 
     const session = await stripe.checkout.sessions.create({
-      // Omit payment_method_types to enable automatic payment methods
+      payment_method_types: ['card', 'blik', 'p24'],
       line_items: [
         {
           price_data: {
@@ -82,9 +82,7 @@ export class PaymentService {
         userId,
         creatorId,
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card', 'blik', 'p24'],
     });
 
     return paymentIntent;
