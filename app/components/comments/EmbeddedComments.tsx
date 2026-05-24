@@ -278,7 +278,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="flex gap-5 items-start mb-10 pb-6 border-b border-neutral-100">
+      <div className="flex gap-5 items-start mb-10">
         <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
            <img
              src={userProfile?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
