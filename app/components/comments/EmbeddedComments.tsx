@@ -246,18 +246,21 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl bg-white p-0 rounded-none border-none">
-      <div className="flex items-center justify-between mb-0">
-         <h3 className="text-[18px] font-bold text-[#0f0f0f] leading-none uppercase tracking-tighter">
-            {comments.length} {getCommentsLabel(comments.length)}
-         </h3>
+    <div className="space-y-8 max-w-4xl bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm my-8">
+      <div className="flex items-center justify-between mb-4">
+         <div className="flex items-center gap-3">
+            <MessageSquare size={20} className="text-blue-600" />
+            <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
+                {comments.length} {getCommentsLabel(comments.length)}
+            </h3>
+         </div>
 
          <div className="flex gap-4">
             <button
               onClick={() => setSortBy('top')}
               className={cn(
-                "text-[12px] font-bold uppercase tracking-widest transition-all",
-                sortBy === 'top' ? "text-primary border-b-2 border-primary" : "text-[#1a1a1a]/40 hover:text-[#1a1a1a]/60"
+                "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
+                sortBy === 'top' ? "text-blue-600 border-blue-600" : "text-neutral-400 border-transparent hover:text-neutral-600"
               )}
             >
               {language === 'pl' ? 'Najlepsze' : 'Top'}
@@ -265,8 +268,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <button
               onClick={() => setSortBy('newest')}
               className={cn(
-                "text-[12px] font-bold uppercase tracking-widest transition-all",
-                sortBy === 'newest' ? "text-primary border-b-2 border-primary" : "text-[#1a1a1a]/40 hover:text-[#1a1a1a]/60"
+                "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
+                sortBy === 'newest' ? "text-blue-600 border-blue-600" : "text-neutral-400 border-transparent hover:text-neutral-600"
               )}
             >
               {language === 'pl' ? 'Najnowsze' : 'Newest'}
@@ -275,7 +278,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="flex gap-4 items-start mb-8">
+      <div className="flex gap-5 items-start mb-10 bg-neutral-50 p-5 rounded-xl border border-neutral-100">
         <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6]">
            <img
              src={userProfile?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
@@ -416,7 +419,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
             {/* NESTED REPLIES */}
             {comment.replies && comment.replies.length > 0 && (
-              <div className="pl-12 space-y-3">
+              <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
                 {comment.replies.map((reply: any) => (
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
                     <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">

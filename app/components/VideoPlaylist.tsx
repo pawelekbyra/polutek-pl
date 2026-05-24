@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
 import ReferralModal from './ReferralModal';
 import BrandName from './BrandName';
-import { ChevronDown, Trophy, Loader2, X } from './icons';
+import { ChevronDown, Trophy, Loader2, X, Star, Gem } from './icons';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from './CheckoutForm';
@@ -323,40 +323,71 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           <div className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-white flex flex-col md:flex-row overflow-hidden">
 
              {/* Left Column (Summary - Desktop) */}
-             <div className="hidden md:flex md:w-[45%] bg-neutral-50 text-neutral-900 flex-col justify-start px-10 md:px-12 lg:px-20 pt-1 pb-10 relative overflow-hidden h-full border-r border-neutral-200">
-                <div className="relative z-10">
-                   <div className="flex flex-col">
-                      <span className="inline-block w-fit px-3 py-0.5 bg-blue-600/10 rounded text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 leading-none">Premium Access</span>
-                      <h1 className="text-5xl lg:text-6xl font-brand font-black uppercase tracking-tighter leading-[0.85] mt-6">
-                        Zostań <br /> Patronem
+             <div className="hidden md:flex md:w-[45%] bg-neutral-900 text-white flex-col justify-center px-10 md:px-12 lg:px-20 py-20 relative overflow-hidden h-full">
+                {/* Background Decoration */}
+                <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900 rounded-full blur-[120px]" />
+                </div>
+
+                <div className="relative z-10 space-y-12">
+                   <div className="space-y-6">
+                      <span className="inline-block px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-blue-600/20">
+                        {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
+                      </span>
+                      <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-tighter leading-[0.8] mb-4">
+                        {language === 'pl' ? <>Zostań <br /> Patronem</> : <>Become a <br /> Patron</>}
                       </h1>
-                      <p className="text-base text-neutral-500 font-medium italic max-w-md">
-                        &quot;{videoTitle || "Wsparcie twórcy"}&quot;
+                      <div className="h-1 w-20 bg-blue-600 rounded-full" />
+                      <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-neutral-800 pl-6 py-2">
+                        &quot;{videoTitle || (language === 'pl' ? "Wsparcie twórcy" : "Creator Support")}&quot;
                       </p>
                    </div>
 
-                   <div className="space-y-6">
-                      <div className="flex items-baseline gap-3 border-b border-neutral-200 pb-6 mb-6">
-                         <span className="text-4xl lg:text-5xl font-mono font-black tracking-tighter">{amount}</span>
-                         <span className="text-xl font-mono text-neutral-300">{selectedCurrency}</span>
+                   <div className="space-y-8">
+                      <div className="flex items-baseline gap-4">
+                         <span className="text-6xl lg:text-7xl font-mono font-black tracking-tighter text-blue-500">{amount}</span>
+                         <span className="text-2xl font-mono text-neutral-600 font-bold">{selectedCurrency}</span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-8">
-                         <div className="flex items-start gap-5">
-                            <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center shrink-0 mt-1">
-                               <span className="text-white text-xs font-black">✓</span>
+                      <div className="space-y-6">
+                         <div className="flex items-start gap-5 group">
+                            <div className="w-10 h-10 bg-neutral-800 rounded-2xl flex items-center justify-center shrink-0 border border-neutral-700 group-hover:border-blue-500 transition-colors duration-500">
+                               <Star size={20} className="text-blue-500" />
                             </div>
-                            <div className="space-y-1.5">
-                               <p className="text-sm font-black uppercase tracking-widest">Dożywotni Dostęp</p>
-                               <p className="text-sm text-neutral-500 leading-relaxed">Wszystkie obecne i przyszłe materiały premium bez żadnych limitów czasowych.</p>
+                            <div className="space-y-1">
+                               <p className="text-sm font-black uppercase tracking-widest text-white">
+                                {language === 'pl' ? 'Dożywotni Dostęp' : 'Lifetime Access'}
+                               </p>
+                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
+                                {language === 'pl'
+                                    ? 'Wszystkie obecne i przyszłe materiały premium bez limitów.'
+                                    : 'All current and future premium materials without limits.'}
+                               </p>
+                            </div>
+                         </div>
+
+                         <div className="flex items-start gap-5 group">
+                            <div className="w-10 h-10 bg-neutral-800 rounded-2xl flex items-center justify-center shrink-0 border border-neutral-700 group-hover:border-blue-500 transition-colors duration-500">
+                               <Gem size={20} className="text-blue-500" />
+                            </div>
+                            <div className="space-y-1">
+                               <p className="text-sm font-black uppercase tracking-widest text-white">
+                                {language === 'pl' ? 'Unikalna Ranga' : 'Unique Rank'}
+                               </p>
+                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
+                                {language === 'pl'
+                                    ? 'Specjalne wyróżnienie Twojego profilu w komentarzach.'
+                                    : 'Special recognition for your profile in comments.'}
+                               </p>
                             </div>
                          </div>
                       </div>
                    </div>
                 </div>
 
-                <div className="relative z-10 flex justify-between items-center mt-auto">
-                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-300">
+                <div className="absolute bottom-10 left-10 lg:left-20 z-10">
+                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-700">
                       POLUTEK.PL &copy; {new Date().getFullYear()}
                    </p>
                 </div>
@@ -397,30 +428,40 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                 <div className="flex-1 flex flex-col items-center justify-start px-6 md:px-12 lg:px-16 pt-1 pb-10 relative z-10 overflow-y-auto">
                    <div className="w-full max-w-[480px]">
                       {isSuccess ? (
-                        <div className="text-center space-y-8 py-10 animate-in fade-in zoom-in-95 duration-500">
-                           <div className="w-20 h-20 bg-green-500 rounded-md flex items-center justify-center mx-auto shadow-2xl shadow-green-500/20 text-white text-4xl">
-                              ✓
+                        <div className="text-center space-y-10 py-12 animate-in fade-in zoom-in-95 duration-700">
+                           <div className="relative mx-auto w-24 h-24">
+                                <div className="absolute inset-0 bg-green-500 rounded-3xl rotate-12 opacity-20 animate-pulse" />
+                                <div className="absolute inset-0 bg-green-500 rounded-3xl -rotate-12 opacity-20 animate-pulse delay-75" />
+                                <div className="relative w-full h-full bg-green-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-green-500/40 text-white text-4xl font-black">
+                                    ✓
+                                </div>
                            </div>
-                           <div className="space-y-2">
-                              <h1 className="text-3xl font-brand font-black uppercase tracking-tighter">
-                                {language === 'pl' ? 'Dziękujemy!' : 'Thank you!'}
+
+                           <div className="space-y-4">
+                              <h1 className="text-4xl font-brand font-black uppercase tracking-tighter text-neutral-900">
+                                {language === 'pl' ? 'Wielkie dzięki!' : 'Big thanks!'}
                               </h1>
-                              <p className="text-base text-muted-foreground font-medium italic">
+                              <p className="text-lg text-neutral-500 font-medium italic leading-relaxed max-w-sm mx-auto">
                                 {language === 'pl'
-                                  ? 'Twój napiwek został pomyślnie przekazany.'
-                                  : 'Your tip has been successfully received.'}
+                                  ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Razem budujemy POLUTEK.PL!'
+                                  : 'Your support has been successfully registered. Together we build POLUTEK.PL!'}
                               </p>
                            </div>
 
-                           <Button
-                             onClick={() => {
-                               setIsCheckoutModalOpen(false);
-                               router.replace(window.location.pathname);
-                             }}
-                             className="w-full h-14 uppercase tracking-widest text-xs"
-                           >
-                             {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
-                           </Button>
+                           <div className="pt-4">
+                               <Button
+                                 onClick={() => {
+                                   setIsCheckoutModalOpen(false);
+                                   router.replace(window.location.pathname);
+                                 }}
+                                 className="w-full h-16 rounded-2xl bg-neutral-900 hover:bg-black text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all duration-300"
+                               >
+                                 {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
+                               </Button>
+                               <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-neutral-300">
+                                 {isSyncing ? (language === 'pl' ? 'Synchronizacja profilu...' : 'Syncing profile...') : (language === 'pl' ? 'Profil zaktualizowany' : 'Profile updated')}
+                               </p>
+                           </div>
                         </div>
                       ) : (
                         <div className="flex flex-col pt-10">
@@ -429,7 +470,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                              <p className="text-sm text-muted-foreground">Bezpieczna transakcja obsługiwana przez Stripe.</p>
                           </div>
 
-                          <div className="bg-white border border-neutral-200 p-8 shadow-md rounded-[2.5rem] mb-6">
+                          <div className="bg-white border border-neutral-200 p-8 shadow-md rounded-[2.5rem] mb-6 ring-8 ring-neutral-50">
                                 {stripePromise && clientSecret ? (
                                   <Elements stripe={stripePromise} options={{
                                     clientSecret,
@@ -439,8 +480,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                                         colorPrimary: '#2563eb',
                                         colorBackground: '#ffffff',
                                         colorText: '#171717',
-                                        borderRadius: '8px',
-                                        fontFamily: 'var(--font-jakarta)',
+                                        borderRadius: '12px',
+                                        fontFamily: 'var(--font-brand)',
                                       }
                                     }
                                   }}>
