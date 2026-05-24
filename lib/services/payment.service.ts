@@ -54,6 +54,11 @@ export class PaymentService {
         userId,
         creatorId,
       },
+      payment_method_options: {
+        link: {
+          enabled: false,
+        },
+      },
     } as any);
 
     return session;
@@ -83,6 +88,11 @@ export class PaymentService {
         creatorId,
       },
       payment_method_types: ['card', 'blik', 'p24'],
+      payment_method_options: {
+        link: {
+          enabled: false,
+        },
+      },
     });
 
     return paymentIntent;

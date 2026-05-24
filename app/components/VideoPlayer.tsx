@@ -152,7 +152,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
-                    --slider-track-height: 1px;
+                    --slider-track-height: 0.5px;
                     --slider-thumb-size: 0px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
@@ -164,7 +164,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
-                    --slider-track-height: 3px;
+                    --slider-track-height: 2px;
                     --slider-thumb-size: 8px;
                 }
 
