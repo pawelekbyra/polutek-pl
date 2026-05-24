@@ -37,8 +37,12 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="min-h-[200px]">
         <PaymentElement options={{
-          layout: 'accordion',
+          layout: {
+            type: 'tabs',
+            defaultCollapsed: false,
+          },
           business: { name: 'POLUTEK.PL' },
+          paymentMethodOrder: ['blik', 'card', 'p24']
         }} />
       </div>
 
