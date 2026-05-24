@@ -247,7 +247,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   return (
     <div className="space-y-8 max-w-4xl bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm my-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
          <div className="flex items-center gap-3">
             <MessageSquare size={20} className="text-blue-600" />
             <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
