@@ -122,7 +122,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
                     }}
                     className="w-full h-full"
-                    controlsDelay={3000}
+                    controlsDelay={5000}
                 >
                     <MediaProvider>
                         <Poster
@@ -152,13 +152,15 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
-                    --slider-track-height: 1.5px;
-                    --slider-thumb-size: 10px;
+                    --slider-track-height: 1px;
+                    --slider-thumb-size: 8px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
                     margin-bottom: -5px !important;
                     z-index: 20;
-                    width: 100% !important;
+                    width: calc(100% - 4px) !important;
+                    margin-left: 2px !important;
+                    margin-right: 2px !important;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
