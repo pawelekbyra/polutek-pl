@@ -42,7 +42,7 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
             defaultCollapsed: false,
           },
           business: { name: 'POLUTEK.PL' },
-          paymentMethodOrder: ['blik', 'card', 'p24']
+          paymentMethodOrder: ['card', 'blik', 'p24', 'apple_pay', 'google_pay']
         }} />
       </div>
 
