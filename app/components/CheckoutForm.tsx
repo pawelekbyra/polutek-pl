@@ -37,7 +37,7 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="min-h-[200px]">
         <PaymentElement options={{
-          layout: 'tabs',
+          layout: 'accordion',
           business: { name: 'POLUTEK.PL' },
         }} />
       </div>
