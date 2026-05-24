@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
 import ReferralModal from './ReferralModal';
 import BrandName from './BrandName';
-import { ChevronDown, Trophy, Loader2, X, Star, Gem } from './icons';
+import { ChevronDown, Trophy, Loader2, X, Star, Gem, Shield } from './icons';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from './CheckoutForm';
@@ -470,7 +470,10 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                              <p className="text-sm text-muted-foreground">Bezpieczna transakcja obsługiwana przez Stripe.</p>
                           </div>
 
-                          <div className="bg-white border border-neutral-200 p-8 shadow-md rounded-[2.5rem] mb-6 ring-8 ring-neutral-50">
+                          <div className="bg-white border border-neutral-200 p-8 shadow-md rounded-[2.5rem] mb-6 ring-8 ring-neutral-50 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                                    <Shield size={120} />
+                                </div>
                                 {stripePromise && clientSecret ? (
                                   <Elements stripe={stripePromise} options={{
                                     clientSecret,

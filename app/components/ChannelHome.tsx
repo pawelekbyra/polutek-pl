@@ -280,26 +280,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                   {searchQuery ? (language === 'pl' ? 'Wyniki wyszukiwania' : 'Search Results') : t.materials}
                 </h3>
               </div>
-              <div className="flex gap-5 mb-[-2px]">
-                <button
-                  onClick={() => { if (setLanguage) setLanguage('pl'); }}
-                  className={cn(
-                    "text-xs font-bold tracking-widest uppercase transition-all",
-                    language === 'pl' ? "text-primary border-b-2 border-primary pb-0.5" : "text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
-                  )}
-                >
-                  PL
-                </button>
-                <button
-                  onClick={() => { if (setLanguage) setLanguage('en'); }}
-                  className={cn(
-                    "text-xs font-bold tracking-widest uppercase transition-all",
-                    language === 'en' ? "text-primary border-b-2 border-primary pb-0.5" : "text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
-                  )}
-                >
-                  EN
-                </button>
-              </div>
             </div>
             {playlistItems.length > 0 ? (
                 <>

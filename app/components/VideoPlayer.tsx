@@ -79,11 +79,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 alt={video.title}
                 className="w-full h-full object-cover opacity-60"
             />
-            <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-16 h-16 md:w-24 md:h-24 bg-black/80 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/10">
-                    <Play className="text-white w-8 h-8 md:w-12 md:h-12 ml-1" />
+            {variant === 'hero' && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 md:w-24 md:h-24 bg-black/80 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/10">
+                        <Play className="text-white w-8 h-8 md:w-12 md:h-12 ml-1" />
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 
@@ -120,7 +122,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
                     }}
                     className="w-full h-full"
-                    controlsDelay={100}
+                    controlsDelay={3000}
                 >
                     <MediaProvider>
                         <Poster
@@ -150,17 +152,17 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
-                    --slider-track-height: 2px;
-                    --slider-thumb-size: 12px;
+                    --slider-track-height: 1.5px;
+                    --slider-thumb-size: 10px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
-                    margin-bottom: -4px !important;
+                    margin-bottom: -5px !important;
                     z-index: 20;
                     width: 100% !important;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
-                    --slider-track-height: 4px;
+                    --slider-track-height: 3px;
                 }
 
                 /* Tighten the layout of control groups to match YouTube's proportions */
@@ -175,7 +177,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 /* Specifically target the progress bar container group */
                 .vidstack-player-container .vds-controls-group:has(.vds-slider[data-type="progress"]) {
                     padding: 0 !important;
-                    margin-bottom: -2px !important;
+                    margin-bottom: -4px !important;
                 }
 
                 /* Mobile responsiveness */
