@@ -115,7 +115,6 @@ export default async function ChannelPage({ params }: { params: { slug: string }
                  initialSubscribersCount={creator.subscribersCount || 0}
                  initialIsSubscribed={isSubscribed}
                />
-               <Link href={userId ? "/#donations" : "/"} className="bg-[#000000]/5 hover:bg-[#000000]/10 rounded-md px-6 h-9 font-bold text-[14px] transition-all uppercase tracking-widest flex items-center mb-5 border border-neutral-200">Wspieraj</Link>
             </div>
           </div>
         </div>
