@@ -152,6 +152,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             )}
 
             <style jsx global>{`
+                .artplayer-container {
+                    --art-theme: #2563eb;
+                }
+
                 .artplayer-container .art-video-player video,
                 .artplayer-container .art-poster {
                     object-fit: cover !important;
@@ -171,7 +175,29 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     align-items: center;
                     cursor: pointer;
                     padding: 0 !important;
-                    margin-bottom: -1px !important;
+                    margin-bottom: 0 !important;
+                }
+
+                .artplayer-container .art-controls {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 0 12px !important;
+                    height: 44px !important;
+                }
+
+                .artplayer-container .art-controls-left,
+                .artplayer-container .art-controls-right {
+                    display: flex !important;
+                    align-items: center !important;
+                    height: 100% !important;
+                    gap: 4px !important;
+                }
+
+                .artplayer-container .art-control {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    height: 100% !important;
                 }
 
                 .artplayer-container .art-control-progress-inner {
@@ -186,7 +212,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 .artplayer-container .art-progress-indicator {
                     width: 14px !important;
                     height: 14px !important;
-                    background: hsl(221.2 83.2% 53.3%) !important;
+                    background: #2563eb !important;
                     background-image: none !important;
                     border: none !important;
                     opacity: 0 !important;
@@ -195,18 +221,22 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     transform: translateY(0) !important;
                     z-index: 10 !important;
                     box-shadow: none !important;
+                    filter: none !important;
                 }
 
                 .artplayer-container .art-control-progress:hover .art-progress-indicator {
                     opacity: 1 !important;
                 }
 
-                .artplayer-container .art-progress-played {
-                    background: hsl(221.2 83.2% 53.3%) !important;
+                .artplayer-container .art-progress-played,
+                .artplayer-container .art-progress-played:after {
+                    background: #2563eb !important;
                     background-image: none !important;
                     opacity: 1 !important;
                     box-shadow: none !important;
                     filter: none !important;
+                    border: none !important;
+                    backdrop-filter: none !important;
                 }
 
                 .artplayer-container .art-control-pip {
