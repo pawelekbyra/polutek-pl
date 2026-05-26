@@ -269,10 +269,11 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
 
             {/* Terms below the button */}
             <div className="flex justify-center">
-              <label className="flex items-center gap-2 cursor-pointer group opacity-40 hover:opacity-100 transition-opacity">
+              <label className="flex items-center gap-2 cursor-pointer group transition-opacity">
                 <Checkbox
                   id="accept-terms"
                   checked={isTermsAccepted}
+                  className="border-neutral-300"
                   onCheckedChange={(checked) => {
                     setIsTermsAccepted(!!checked);
                     if (checked) setShowTermsError(false);
