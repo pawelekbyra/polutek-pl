@@ -51,10 +51,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 playbackRate: true,
                 aspectRatio: false,
                 fullscreen: true,
-                fullscreenWeb: true,
+                fullscreenWeb: false,
                 mutex: true,
                 playsInline: true,
-                theme: '#3b82f6',
+                theme: '#2563eb',
                 lang: 'pl',
                 moreVideoAttr: {
                     style: {
@@ -186,7 +186,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 .artplayer-container .art-progress-indicator {
                     width: 14px !important;
                     height: 14px !important;
-                    background: #3b82f6 !important;
+                    background: #2563eb !important;
                     border: none !important;
                     opacity: 0 !important;
                     transition: opacity 0.2s ease-in-out !important;
@@ -200,7 +200,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 }
 
                 .artplayer-container .art-progress-played {
-                    background: #3b82f6 !important;
+                    background: #2563eb !important;
                 }
 
                 .artplayer-container .art-progress-highlight {
