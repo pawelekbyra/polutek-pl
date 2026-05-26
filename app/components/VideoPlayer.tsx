@@ -152,7 +152,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* Custom progress bar - matching site's blue and repositioned lower */
                 .vidstack-player-container .vds-slider[data-type="progress"] {
-                    --slider-track-height: 1px;
+                    --slider-track-height: 3px;
                     --slider-thumb-size: 0px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
@@ -161,11 +161,18 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     width: 100% !important;
                     margin-left: 0 !important;
                     margin-right: 0 !important;
+                    transition: all 0.2s ease-in-out;
                 }
 
                 .vidstack-player-container .vds-slider[data-type="progress"]:hover {
-                    --slider-track-height: 3px;
-                    --slider-thumb-size: 8px;
+                    --slider-track-height: 8px;
+                    --slider-thumb-size: 12px;
+                }
+
+                /* Smooth transition for the thumb and track */
+                .vidstack-player-container .vds-slider-track,
+                .vidstack-player-container .vds-slider-thumb {
+                    transition: height 0.2s ease-in-out, width 0.2s ease-in-out, transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
                 }
 
                 /* Tighten the layout of control groups to match YouTube's proportions */
