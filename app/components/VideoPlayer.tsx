@@ -14,6 +14,7 @@ interface VideoPlayerProps {
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
     const { videoUrl } = useVideoAccess();
+    const posterUrl = video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const artRef = useRef<HTMLDivElement>(null);
@@ -38,7 +39,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             playerInstance.current = new Artplayer({
                 container: artRef.current,
                 url: videoUrl,
-                poster: video.thumbnailUrl,
+                poster: posterUrl,
                 volume: 0.7,
                 muted: variant === 'hero',
                 autoplay: variant === 'hero',
@@ -55,9 +56,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 playsInline: true,
                 theme: '#3b82f6',
                 lang: 'pl',
-                icons: {
-                    state: '<img width="100" height="100" src="/logo.png" style="opacity: 0.8">',
-                },
                 moreVideoAttr: {
                     style: {
                         objectFit: 'cover',
@@ -92,7 +90,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 )}
 
                 <img
-                    src={video.thumbnailUrl}
+                    src={posterUrl}
                     alt={video.title}
                     className="w-full h-full object-cover opacity-90 transition duration-700 group-hover/player:scale-105"
                 />
@@ -121,7 +119,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     if (!isMounted) return (
         <div className="relative w-full aspect-video bg-black overflow-hidden flex items-center justify-center cursor-pointer rounded-lg">
             <img
-                src={video.thumbnailUrl}
+                src={posterUrl}
                 alt={video.title}
                 className="w-full h-full object-cover opacity-60"
             />
