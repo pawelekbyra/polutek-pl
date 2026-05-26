@@ -150,31 +150,31 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     border-radius: 8px;
                 }
 
-                /* Custom progress bar - Vidstack specific Time Slider styling */
-                .vidstack-player-container vds-time-slider {
-                    --slider-track-height: 3px;
-                    --slider-thumb-size: 12px;
+                /* Wymuszenie wyglądu paska a'la YouTube dla Vidstack */
+                .vidstack-player-container .vds-time-slider {
+                    --slider-track-height: 3px !important; /* Domyślnie chudy pasek */
+                    --slider-thumb-opacity: 0 !important; /* Całkowicie ukryta kropka */
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
-                    --slider-thumb-opacity: 0;
                     margin-bottom: -4px !important;
                     z-index: 20;
                     width: 100% !important;
                     margin-left: 0 !important;
                     margin-right: 0 !important;
-                    transition: all 0.2s ease-in-out;
                 }
 
-                .vidstack-player-container vds-time-slider[data-hover],
-                .vidstack-player-container vds-time-slider[data-dragging] {
-                    --slider-track-height: 8px;
-                    --slider-thumb-opacity: 1;
+                /* Stan paska po najechaniu myszką lub podczas przeciągania suwaka */
+                .vidstack-player-container .vds-time-slider:hover,
+                .vidstack-player-container .vds-time-slider[data-pointing],
+                .vidstack-player-container .vds-time-slider[data-dragging] {
+                    --slider-track-height: 6px !important; /* Pasek płynnie rośnie */
+                    --slider-thumb-opacity: 1 !important; /* Kropka się pojawia */
                 }
 
-                /* Smooth transition for the thumb and track elements within Vidstack */
-                .vidstack-player-container .vds-slider-track,
-                .vidstack-player-container .vds-slider-thumb {
-                    transition: height 0.2s ease-in-out, width 0.2s ease-in-out, transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
+                /* Wymuszenie płynności dla ścieżki i kropki */
+                .vidstack-player-container .vds-time-slider .vds-slider-track,
+                .vidstack-player-container .vds-time-slider .vds-slider-thumb {
+                    transition: all 0.2s ease-in-out !important;
                 }
 
                 /* Tighten the layout of control groups to match YouTube's proportions */
