@@ -181,17 +181,28 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 .artplayer-container .art-controls {
                     display: flex !important;
                     align-items: center !important;
-                    padding: 0 12px !important;
-                    height: 40px !important;
+                    padding: 0 !important;
+                    height: 48px !important;
                     margin: 0 !important;
+                    width: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
                 }
 
-                .artplayer-container .art-controls-left,
+                .artplayer-container .art-controls-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    height: 100% !important;
+                    padding-left: 0 !important;
+                    margin-left: 0 !important;
+                }
+
                 .artplayer-container .art-controls-right {
                     display: flex !important;
                     align-items: center !important;
                     height: 100% !important;
-                    gap: 4px !important;
+                    padding-right: 0 !important;
+                    margin-right: 0 !important;
                 }
 
                 .artplayer-container .art-control {
@@ -199,7 +210,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     align-items: center !important;
                     justify-content: center !important;
                     height: 100% !important;
-                    padding: 0 6px !important;
+                    padding: 0 2px !important;
+                    margin: 0 !important;
                 }
 
                 .artplayer-container .art-control-progress-inner {
