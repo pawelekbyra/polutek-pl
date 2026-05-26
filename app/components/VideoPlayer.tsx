@@ -44,7 +44,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 autoplay: variant === 'hero',
                 pip: true,
                 autoSize: false,
-                screenshot: true,
+                screenshot: false,
                 setting: true,
                 loop: false,
                 playbackRate: true,
