@@ -150,12 +150,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     border-radius: 8px;
                 }
 
-                /* Custom progress bar - matching site's blue and repositioned lower */
-                .vidstack-player-container .vds-slider[data-type="progress"] {
+                /* Custom progress bar - Vidstack specific Time Slider styling */
+                .vidstack-player-container vds-time-slider {
                     --slider-track-height: 3px;
-                    --slider-thumb-size: 0px;
+                    --slider-thumb-size: 12px;
                     --slider-active-track-bg: #3b82f6;
                     --slider-thumb-bg: #3b82f6;
+                    --slider-thumb-opacity: 0;
                     margin-bottom: -4px !important;
                     z-index: 20;
                     width: 100% !important;
@@ -164,12 +165,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     transition: all 0.2s ease-in-out;
                 }
 
-                .vidstack-player-container .vds-slider[data-type="progress"]:hover {
+                .vidstack-player-container vds-time-slider[data-hover],
+                .vidstack-player-container vds-time-slider[data-dragging] {
                     --slider-track-height: 8px;
-                    --slider-thumb-size: 12px;
+                    --slider-thumb-opacity: 1;
                 }
 
-                /* Smooth transition for the thumb and track */
+                /* Smooth transition for the thumb and track elements within Vidstack */
                 .vidstack-player-container .vds-slider-track,
                 .vidstack-player-container .vds-slider-thumb {
                     transition: height 0.2s ease-in-out, width 0.2s ease-in-out, transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
