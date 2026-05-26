@@ -43,7 +43,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 volume: 0.7,
                 muted: variant === 'hero',
                 autoplay: variant === 'hero',
-                pip: true,
+                pip: false,
                 autoSize: false,
                 screenshot: false,
                 setting: true,
