@@ -1,18 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useVideoAccess } from './PremiumWrapper';
 import { Video as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle } from './icons';
-
-// Vidstack Imports
-import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
-import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
-
-// Vidstack Styles
-import '@vidstack/react/player/styles/default/theme.css';
-import '@vidstack/react/player/styles/default/layouts/video.css';
+import Artplayer from 'artplayer';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -23,14 +16,62 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const { videoUrl } = useVideoAccess();
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const artRef = useRef<HTMLDivElement>(null);
+    const playerInstance = useRef<Artplayer | null>(null);
 
     useEffect(() => {
-        // Small timeout to ensure the DOM and context are ready
-        const timer = setTimeout(() => {
-            setIsMounted(true);
-        }, 100);
-        return () => clearTimeout(timer);
+        setIsMounted(true);
+        return () => {
+            if (playerInstance.current) {
+                playerInstance.current.destroy(false);
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        if (isMounted && artRef.current && videoUrl && variant !== 'thumbnail') {
+            // Clean up previous instance
+            if (playerInstance.current) {
+                playerInstance.current.destroy(false);
+            }
+
+            playerInstance.current = new Artplayer({
+                container: artRef.current,
+                url: videoUrl,
+                poster: video.thumbnailUrl,
+                volume: 0.7,
+                muted: variant === 'hero',
+                autoplay: variant === 'hero',
+                pip: true,
+                autoSize: true,
+                screenshot: true,
+                setting: true,
+                loop: false,
+                playbackRate: true,
+                aspectRatio: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                mutex: true,
+                playsInline: true,
+                theme: '#3b82f6',
+                lang: 'pl',
+                icons: {
+                    state: '<img width="100" height="100" src="/logo.png" style="opacity: 0.8">',
+                },
+            });
+
+            playerInstance.current.on('error', (error) => {
+                console.error('[Artplayer] Error:', error);
+                setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
+            });
+
+            return () => {
+                if (playerInstance.current) {
+                    playerInstance.current.destroy(false);
+                }
+            };
+        }
+    }, [isMounted, videoUrl, variant, video.thumbnailUrl, video.title]);
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail' || !videoUrl) {
@@ -90,7 +131,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     );
 
     return (
-        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group shadow-2xl vidstack-player-container">
+        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group shadow-2xl artplayer-container">
             {loadError ? (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
                     <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
@@ -104,122 +145,66 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     </button>
                 </div>
             ) : (
-                <MediaPlayer
-                    title={video.title}
-                    src={videoUrl}
-                    poster={video.thumbnailUrl}
-                    load="visible"
-                    autoPlay={variant === 'hero'}
-                    muted={variant === 'hero'}
-                    playsInline
-                    key={videoUrl} // Force re-mount on URL change to prevent state carryover
-                    onCanPlay={() => {
-                        console.log('[Vidstack] Video is ready to play');
-                        setLoadError(null);
-                    }}
-                    onError={(detail) => {
-                        console.error('[Vidstack] Load Error:', detail);
-                        setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
-                    }}
-                    className="w-full h-full"
-                    controlsDelay={7000}
-                >
-                    <MediaProvider>
-                        <Poster
-                            className="vds-poster"
-                            src={video.thumbnailUrl}
-                            alt={video.title}
-                        />
-                    </MediaProvider>
-                    <DefaultVideoLayout
-                        icons={defaultLayoutIcons}
-                        noModal
-                    />
-                </MediaPlayer>
+                <div ref={artRef} className="w-full h-full" />
             )}
 
             <style jsx global>{`
-                /* Brand Theme Overrides - Scoped to container and matching site's #3b82f6 blue */
-                .vidstack-player-container {
-                    --video-brand: #3b82f6;
-                    --video-focus: #3b82f6;
-                }
-
-                .vidstack-player-container .vds-player {
-                    background-color: #000;
+                .artplayer-container .art-video-player {
                     border-radius: 8px;
+                    overflow: hidden;
                 }
 
-                /* Wymuszenie wyglądu paska a'la YouTube dla Vidstack */
-                .vidstack-player-container .vds-time-slider {
-                    --slider-track-height: 3px !important; /* Domyślnie chudy pasek */
-                    --slider-thumb-opacity: 0 !important; /* Całkowicie ukryta kropka */
-                    --slider-active-track-bg: #3b82f6;
-                    --slider-thumb-bg: #3b82f6;
-                    margin-bottom: -4px !important;
-                    z-index: 20;
-                    width: 100% !important;
-                    margin-left: 0 !important;
-                    margin-right: 0 !important;
-                }
-
-                /* Stan paska po najechaniu myszką lub podczas przeciągania suwaka */
-                .vidstack-player-container .vds-time-slider:hover,
-                .vidstack-player-container .vds-time-slider[data-pointing],
-                .vidstack-player-container .vds-time-slider[data-dragging] {
-                    --slider-track-height: 6px !important; /* Pasek płynnie rośnie */
-                    --slider-thumb-opacity: 1 !important; /* Kropka się pojawia */
-                }
-
-                /* Wymuszenie płynności dla ścieżki i kropki */
-                .vidstack-player-container .vds-time-slider .vds-slider-track,
-                .vidstack-player-container .vds-time-slider .vds-slider-thumb {
-                    transition: all 0.2s ease-in-out !important;
-                }
-
-                /* Tighten the layout of control groups to match YouTube's proportions */
-                .vidstack-player-container .vds-controls {
-                    padding-bottom: 8px !important;
-                }
-
-                .vidstack-player-container .vds-controls-group {
-                    padding: 0 16px !important;
-                }
-
-                /* Specifically target the progress bar container group */
-                .vidstack-player-container .vds-controls-group:has(.vds-slider[data-type="progress"]) {
+                /* YouTube-like Progress Bar for Artplayer */
+                .artplayer-container .art-control-progress {
+                    height: 14px !important;
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
                     padding: 0 !important;
-                    margin-bottom: -4px !important;
+                }
+
+                .artplayer-container .art-control-progress-inner {
+                    height: 3px !important;
+                    transition: height 0.2s ease-in-out !important;
+                }
+
+                .artplayer-container .art-control-progress:hover .art-control-progress-inner {
+                    height: 8px !important;
+                }
+
+                .artplayer-container .art-progress-indicator {
+                    width: 14px !important;
+                    height: 14px !important;
+                    background: #3b82f6 !important;
+                    border: none !important;
+                    opacity: 0 !important;
+                    transition: opacity 0.2s ease-in-out !important;
+                    margin-top: 0 !important;
+                    transform: translateY(0) !important;
+                    z-index: 10 !important;
+                }
+
+                .artplayer-container .art-control-progress:hover .art-progress-indicator {
+                    opacity: 1 !important;
+                }
+
+                .artplayer-container .art-progress-played {
+                    background: #3b82f6 !important;
+                }
+
+                .artplayer-container .art-progress-highlight {
+                    background: rgba(255, 255, 255, 0.3) !important;
+                }
+
+                .artplayer-container .art-progress-loaded {
+                    background: rgba(255, 255, 255, 0.2) !important;
                 }
 
                 /* Mobile responsiveness */
                 @media (max-width: 640px) {
-                    .vidstack-player-container,
-                    .vidstack-player-container .vds-player {
+                    .artplayer-container .art-video-player {
                         border-radius: 0;
                     }
-                }
-
-                /* Ensure controls are styled professionally with smooth animations */
-                .vidstack-player-container .vds-controls {
-                    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-                    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-                    visibility: visible;
-                }
-
-                /* Smooth slide-down animation when controls hide */
-                .vidstack-player-container .vds-player:not([data-controls-visible]) .vds-controls {
-                    opacity: 0;
-                    visibility: hidden;
-                    transform: translateY(8px);
-                    pointer-events: none;
-                }
-
-                .vidstack-player-container .vds-player[data-controls-visible] .vds-controls {
-                    opacity: 1;
-                    visibility: visible;
-                    transform: translateY(0);
-                    pointer-events: auto;
                 }
             `}</style>
         </div>
