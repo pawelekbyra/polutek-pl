@@ -170,7 +170,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 /* YouTube-like Progress Bar for Artplayer */
                 .artplayer-container .art-control-progress {
-                    height: 12px !important;
+                    height: 14px !important;
                     display: flex;
                     align-items: center;
                     cursor: pointer;
@@ -182,7 +182,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     display: flex !important;
                     align-items: center !important;
                     padding: 0 12px !important;
-                    height: 44px !important;
+                    height: 40px !important;
+                    margin: 0 !important;
                 }
 
                 .artplayer-container .art-controls-left,
@@ -198,6 +199,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     align-items: center !important;
                     justify-content: center !important;
                     height: 100% !important;
+                    padding: 0 6px !important;
                 }
 
                 .artplayer-container .art-control-progress-inner {
