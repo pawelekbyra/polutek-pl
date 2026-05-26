@@ -43,12 +43,12 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 muted: variant === 'hero',
                 autoplay: variant === 'hero',
                 pip: true,
-                autoSize: true,
+                autoSize: false,
                 screenshot: true,
                 setting: true,
                 loop: false,
                 playbackRate: true,
-                aspectRatio: true,
+                aspectRatio: false,
                 fullscreen: true,
                 fullscreenWeb: true,
                 mutex: true,
@@ -57,6 +57,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 lang: 'pl',
                 icons: {
                     state: '<img width="100" height="100" src="/logo.png" style="opacity: 0.8">',
+                },
+                moreVideoAttr: {
+                    style: {
+                        objectFit: 'cover',
+                        width: '100%',
+                        height: '100%',
+                    } as any,
                 },
             });
 
@@ -71,7 +78,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 }
             };
         }
-    }, [isMounted, videoUrl, variant, video.thumbnailUrl, video.title]);
+    }, [isMounted, videoUrl, variant, video.thumbnailUrl, video.title, loadError]);
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail' || !videoUrl) {
@@ -138,10 +145,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     <h3 className="text-white font-bold text-lg mb-2">Błąd ładowania filmu</h3>
                     <p className="text-neutral-400 text-sm max-w-md">{loadError}</p>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => setLoadError(null)}
                         className="mt-6 px-6 py-2 bg-white text-black rounded-md font-bold text-sm hover:bg-neutral-200 transition-colors"
                     >
-                        Odśwież stronę
+                        Spróbuj ponownie
                     </button>
                 </div>
             ) : (
@@ -149,6 +156,19 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             )}
 
             <style jsx global>{`
+                .artplayer-container div:first-child,
+                .artplayer-container .artplayer-app,
+                .artplayer-container .art-video-player,
+                .artplayer-container .art-poster,
+                .artplayer-container .art-video,
+                .artplayer-container .art-video-player video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+
                 .artplayer-container .art-video-player {
                     border-radius: 8px;
                     overflow: hidden;
