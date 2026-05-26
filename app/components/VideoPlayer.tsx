@@ -201,6 +201,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
                 .artplayer-container .art-progress-played {
                     background: #2563eb !important;
+                    background-image: none !important;
+                    opacity: 1 !important;
                 }
 
                 .artplayer-container .art-progress-highlight {
