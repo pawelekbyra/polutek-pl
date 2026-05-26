@@ -61,8 +61,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 moreVideoAttr: {
                     style: {
                         objectFit: 'cover',
-                        width: '100%',
-                        height: '100%',
                     } as any,
                 },
             });
@@ -156,31 +154,26 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             )}
 
             <style jsx global>{`
-                .artplayer-container div:first-child,
-                .artplayer-container .artplayer-app,
-                .artplayer-container .art-video-player,
-                .artplayer-container .art-poster,
-                .artplayer-container .art-video,
-                .artplayer-container .art-video-player video {
-                    width: 100% !important;
-                    height: 100% !important;
+                .artplayer-container .art-video-player video,
+                .artplayer-container .art-poster {
                     object-fit: cover !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
                 }
 
-                .artplayer-container .art-video-player {
+                .artplayer-container .artplayer-app {
                     border-radius: 8px;
                     overflow: hidden;
+                    width: 100% !important;
+                    height: 100% !important;
                 }
 
                 /* YouTube-like Progress Bar for Artplayer */
                 .artplayer-container .art-control-progress {
-                    height: 14px !important;
+                    height: 12px !important;
                     display: flex;
                     align-items: center;
                     cursor: pointer;
                     padding: 0 !important;
+                    margin-bottom: -1px !important;
                 }
 
                 .artplayer-container .art-control-progress-inner {
