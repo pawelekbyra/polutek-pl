@@ -412,9 +412,14 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                 </Button>
 
                 <div className="md:hidden w-full px-6 py-6 flex justify-between items-center shrink-0 relative z-20 border-b border-neutral-100 bg-white">
-                   <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-black text-xs">P</div>
-                      <h3 className="text-lg font-brand font-black uppercase tracking-tighter">POLUTEK<span className="text-neutral-400">.PL</span></h3>
+                   <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 leading-none mb-1">
+                        {language === 'pl' ? 'Kwota napiwku' : 'Tip amount'}
+                      </span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-mono font-black text-neutral-900">{amount}</span>
+                        <span className="text-sm font-mono font-bold text-neutral-400">{selectedCurrency}</span>
+                      </div>
                    </div>
 
                    <Button
