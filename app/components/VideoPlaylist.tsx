@@ -324,22 +324,23 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           <div className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-white flex flex-col md:flex-row overflow-hidden">
 
              {/* Left Column (Summary - Desktop) */}
-             <div className="hidden md:flex md:w-[45%] bg-neutral-900 text-white flex-col justify-center px-10 md:px-12 lg:px-20 py-20 relative overflow-hidden h-full">
+             <div className="hidden md:flex md:w-[45%] bg-[#050505] text-white flex-col justify-center px-10 md:px-12 lg:px-20 py-20 relative overflow-hidden h-full border-r border-white/[0.05]">
                 {/* Background Decoration */}
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
                     <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full blur-[120px]" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900 rounded-full blur-[120px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
                 </div>
 
                 <div className="relative z-10 space-y-12">
                    <div className="space-y-6">
-                      <span className="inline-block px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-blue-600/20">
+                      <span className="inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.3em]">
                         {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
                       </span>
-                      <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-tighter leading-[0.8] mb-4">
+                      <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-[-0.05em] leading-[0.9] mb-4">
                         {language === 'pl' ? <>Zostań <br /> Patronem</> : <>Become a <br /> Patron</>}
                       </h1>
-                      <div className="h-1 w-20 bg-blue-600 rounded-full" />
+                      <div className="h-1 w-20 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)]" />
                       <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-neutral-800 pl-6 py-2">
                         &quot;{videoTitle || (language === 'pl' ? "Wsparcie twórcy" : "Creator Support")}&quot;
                       </p>
@@ -352,15 +353,15 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                       </div>
 
                       <div className="space-y-6">
-                         <div className="flex items-start gap-5 group">
-                            <div className="w-10 h-10 bg-neutral-800 rounded-2xl flex items-center justify-center shrink-0 border border-neutral-700 group-hover:border-blue-500 transition-colors duration-500">
-                               <Star size={20} className="text-blue-500" />
+                         <div className="flex items-start gap-5 group hover:bg-white/[0.03] p-4 -ml-4 rounded-3xl transition-all duration-500 hover:scale-[1.02]">
+                            <div className="w-12 h-12 bg-white/[0.03] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.08] group-hover:border-blue-500/50 transition-colors duration-500 shadow-xl">
+                               <Star size={22} className="text-blue-500" />
                             </div>
                             <div className="space-y-1">
                                <p className="text-sm font-black uppercase tracking-widest text-white">
                                 {language === 'pl' ? 'Dożywotni Dostęp' : 'Lifetime Access'}
                                </p>
-                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
+                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs font-medium">
                                 {language === 'pl'
                                     ? 'Wszystkie obecne i przyszłe materiały premium bez limitów.'
                                     : 'All current and future premium materials without limits.'}
@@ -368,15 +369,15 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                             </div>
                          </div>
 
-                         <div className="flex items-start gap-5 group">
-                            <div className="w-10 h-10 bg-neutral-800 rounded-2xl flex items-center justify-center shrink-0 border border-neutral-700 group-hover:border-blue-500 transition-colors duration-500">
-                               <Gem size={20} className="text-blue-500" />
+                         <div className="flex items-start gap-5 group hover:bg-white/[0.03] p-4 -ml-4 rounded-3xl transition-all duration-500 hover:scale-[1.02]">
+                            <div className="w-12 h-12 bg-white/[0.03] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.08] group-hover:border-blue-500/50 transition-colors duration-500 shadow-xl">
+                               <Gem size={22} className="text-blue-500" />
                             </div>
                             <div className="space-y-1">
                                <p className="text-sm font-black uppercase tracking-widest text-white">
                                 {language === 'pl' ? 'Unikalna Ranga' : 'Unique Rank'}
                                </p>
-                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
+                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs font-medium">
                                 {language === 'pl'
                                     ? 'Specjalne wyróżnienie Twojego profilu w komentarzach.'
                                     : 'Special recognition for your profile in comments.'}
