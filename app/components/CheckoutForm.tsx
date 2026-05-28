@@ -40,10 +40,8 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
       <div className="min-h-[200px]">
         <PaymentElement options={{
           layout: {
-            type: 'accordion',
+            type: 'tabs',
             defaultCollapsed: false,
-            radios: 'always',
-            visibleAccordionItemsCount: 0
           },
           business: { name: 'POLUTEK.PL' },
           paymentMethodOrder: ['card', 'blik', 'p24', 'apple_pay', 'google_pay'],
