@@ -334,34 +334,37 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
 
                 <div className="relative z-10 space-y-12">
                    <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-700 delay-100 fill-mode-both">
-                      <span className="inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.3em]">
-                        {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
-                      </span>
-                      <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-[-0.05em] leading-[0.9] mb-4">
+                      <div className="relative inline-block overflow-hidden rounded-full group">
+                        <span className="relative z-10 inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em]">
+                          {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
+                        </span>
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shimmer" />
+                      </div>
+                      <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-[-0.05em] leading-[0.9] mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
                         {language === 'pl' ? <>Zostań <br /> Patronem</> : <>Become a <br /> Patron</>}
                       </h1>
-                      <div className="h-1 w-20 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)]" />
-                      <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-neutral-800 pl-6 py-2">
+                      <div className="h-1.5 w-24 bg-blue-600 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.8)]" />
+                      <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-blue-600/30 pl-6 py-2">
                         &quot;{videoTitle || (language === 'pl' ? "Wsparcie twórcy" : "Creator Support")}&quot;
                       </p>
                    </div>
 
                    <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-700 delay-300 fill-mode-both">
-                      <div className="flex items-baseline gap-4">
-                         <span className="text-6xl lg:text-7xl font-mono font-black tracking-tighter text-blue-500">{amount}</span>
-                         <span className="text-2xl font-mono text-neutral-600 font-bold">{selectedCurrency}</span>
+                      <div className="flex items-baseline gap-4 group cursor-default">
+                         <span className="text-7xl lg:text-8xl font-mono font-black tracking-tighter text-white drop-shadow-[0_0_30px_rgba(37,99,235,0.3)] transition-all duration-500 group-hover:scale-105 group-hover:text-blue-500">{amount}</span>
+                         <span className="text-2xl font-mono text-neutral-500 font-bold group-hover:text-neutral-300 transition-colors">{selectedCurrency}</span>
                       </div>
 
                       <div className="space-y-6">
-                         <div className="flex items-start gap-5 group hover:bg-white/[0.03] p-4 -ml-4 rounded-3xl transition-all duration-500 hover:scale-[1.02]">
-                            <div className="w-12 h-12 bg-white/[0.03] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.08] group-hover:border-blue-500/50 transition-colors duration-500 shadow-xl">
-                               <Star size={22} className="text-blue-500" />
+                         <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                            <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                               <Star size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
                             </div>
-                            <div className="space-y-1">
-                               <p className="text-sm font-black uppercase tracking-widest text-white">
+                            <div className="space-y-1.5">
+                               <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
                                 {language === 'pl' ? 'Dożywotni Dostęp' : 'Lifetime Access'}
                                </p>
-                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs font-medium">
+                               <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
                                 {language === 'pl'
                                     ? 'Wszystkie obecne i przyszłe materiały premium bez limitów.'
                                     : 'All current and future premium materials without limits.'}
@@ -369,15 +372,15 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                             </div>
                          </div>
 
-                         <div className="flex items-start gap-5 group hover:bg-white/[0.03] p-4 -ml-4 rounded-3xl transition-all duration-500 hover:scale-[1.02]">
-                            <div className="w-12 h-12 bg-white/[0.03] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.08] group-hover:border-blue-500/50 transition-colors duration-500 shadow-xl">
-                               <Gem size={22} className="text-blue-500" />
+                         <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                            <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                               <Gem size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
                             </div>
-                            <div className="space-y-1">
-                               <p className="text-sm font-black uppercase tracking-widest text-white">
+                            <div className="space-y-1.5">
+                               <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
                                 {language === 'pl' ? 'Unikalna Ranga' : 'Unique Rank'}
                                </p>
-                               <p className="text-sm text-neutral-500 leading-relaxed max-w-xs font-medium">
+                               <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
                                 {language === 'pl'
                                     ? 'Specjalne wyróżnienie Twojego profilu w komentarzach.'
                                     : 'Special recognition for your profile in comments.'}

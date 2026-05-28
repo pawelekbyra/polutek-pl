@@ -19,6 +19,8 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
 
     setIsLoading(true);
 
+    // We use confirmPayment but we need to ensure Link is not interfering.
+    // Actually, setting fields.billingDetails.email to 'never' in PaymentElement is the key.
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
@@ -45,7 +47,13 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
           paymentMethodOrder: ['card', 'blik', 'p24', 'apple_pay', 'google_pay'],
           wallets: {
             applePay: 'auto',
-            googlePay: 'auto'
+            googlePay: 'auto',
+            link: 'never'
+          },
+          fields: {
+            billingDetails: {
+              email: 'never'
+            }
           }
         }} />
       </div>
