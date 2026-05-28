@@ -56,11 +56,23 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 playsInline: true,
                 theme: '#2563eb',
                 lang: 'pl',
+                subtitleOffset: true,
                 moreVideoAttr: {
                     style: {
                         objectFit: 'cover',
                     } as any,
                 },
+                controls: [
+                    {
+                        position: 'right',
+                        html: '<span style="font-weight: bold; font-size: 14px;">CC</span>',
+                        tooltip: 'Napisy',
+                        click: function () {
+                            const art = this as any;
+                            art.subtitle.show = !art.subtitle.show;
+                        },
+                    },
+                ],
             });
 
             playerInstance.current.on('error', (error) => {
