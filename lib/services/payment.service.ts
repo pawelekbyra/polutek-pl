@@ -88,11 +88,6 @@ export class PaymentService {
         creatorId,
       },
       payment_method_types: ['card', 'blik', 'p24'],
-      payment_method_options: {
-        link: {
-          enabled: false,
-        },
-      } as any,
     });
 
     return paymentIntent;

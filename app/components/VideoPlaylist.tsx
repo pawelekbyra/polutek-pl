@@ -333,7 +333,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                 </div>
 
                 <div className="relative z-10 space-y-12">
-                   <div className="space-y-6">
+                   <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-700 delay-100 fill-mode-both">
                       <span className="inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.3em]">
                         {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
                       </span>
@@ -346,7 +346,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
                       </p>
                    </div>
 
-                   <div className="space-y-8">
+                   <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-700 delay-300 fill-mode-both">
                       <div className="flex items-baseline gap-4">
                          <span className="text-6xl lg:text-7xl font-mono font-black tracking-tighter text-blue-500">{amount}</span>
                          <span className="text-2xl font-mono text-neutral-600 font-bold">{selectedCurrency}</span>
