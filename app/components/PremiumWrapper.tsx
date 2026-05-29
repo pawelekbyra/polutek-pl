@@ -147,7 +147,7 @@ function CustomAuthTrigger({ children }: { children: React.ReactNode }) {
 
 function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: AccessTier, isLoggedIn: boolean, variant: 'default' | 'thumbnail' }) {
   const { t } = useLanguage();
-  const isVIPGated = requiredTier === "VIP1" || requiredTier === "VIP2";
+  const isVIPGated = requiredTier === "PATRON";
   const isThumbnail = variant === 'thumbnail';
 
   return (

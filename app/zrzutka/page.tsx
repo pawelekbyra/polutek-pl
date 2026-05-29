@@ -41,6 +41,7 @@ export default async function ZrzutkaPage() {
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
     totalPaid: userDb?.totalPaid || 0,
+    isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralCount: userDb?.referralCount || 0
   } : null;

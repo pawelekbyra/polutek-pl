@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { getClerkClient } from '@/lib/clerk';
+import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -168,23 +169,32 @@ export class PaymentService {
           },
         });
 
-        // 2. Update user's total paid
+        // 2. Check if this payment grants Patron status
+        const threshold = currency.toUpperCase() === 'PLN' ? MIN_PATRON_AMOUNT_PLN : MIN_PATRON_AMOUNT;
+        const existingUser = await tx.user.findUnique({ where: { id: userId } });
+
+        const grantsPatron = amount >= threshold;
+        const willBePatron = !!(existingUser?.isPatron || grantsPatron);
+        const becamePatronNow = !existingUser?.isPatron && grantsPatron;
+
+        // 3. Update user's total paid and Patron status
         const user = await tx.user.update({
           where: { id: userId },
           data: {
             totalPaid: { increment: amount },
+            isPatron: willBePatron,
+            patronSince: becamePatronNow ? new Date() : undefined
           },
         });
 
-        // 3. Sync VIP status to Clerk
-        await this.syncClerkVipStatus(user.id, user.totalPaid);
+        // 4. Sync status to Clerk
+        await this.syncClerkVipStatus(user.id, user.totalPaid, user.isPatron);
 
-        // 4. Send emails
+        // 5. Send emails
         const language = (user.language as 'pl' | 'en') || 'pl';
         await EmailService.sendDonationThankYouEmail(user.email, amount, currency, language);
 
-        // If they just became a Patron (crossed VIP1 threshold)
-        if (user.totalPaid >= 5 && (user.totalPaid - amount) < 5) {
+        if (becamePatronNow) {
           await EmailService.sendBecomePatronEmail(user.email, language);
         }
       });
@@ -195,23 +205,19 @@ export class PaymentService {
     }
   }
 
-  private static async syncClerkVipStatus(userId: string, totalPaid: number) {
+  private static async syncClerkVipStatus(userId: string, totalPaid: number, isPatron: boolean) {
     try {
       const client = await getClerkClient();
-      let role = 'USER';
-      if (totalPaid >= 10) {
-        role = 'VIP2';
-      } else if (totalPaid >= 5) {
-        role = 'VIP1';
-      }
+      let role = isPatron ? 'PATRON' : 'USER';
 
       await client.users.updateUserMetadata(userId, {
         publicMetadata: {
           role,
           totalPaid,
+          isPatron,
         },
       });
-      console.log(`[PaymentService] Synced Clerk VIP status for ${userId}: ${role} (${totalPaid})`);
+      console.log(`[PaymentService] Synced Clerk status for ${userId}: ${role} (${totalPaid}, isPatron: ${isPatron})`);
     } catch (error) {
       console.error('[PaymentService] Error syncing VIP status to Clerk:', error);
     }

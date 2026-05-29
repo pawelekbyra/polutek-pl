@@ -94,13 +94,11 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const playlistItems = sortedVideos.reduce((acc: any[], video, i) => {
       const isCurrent = video.id === selectedVideo.id;
       const isLoggedIn = !!userProfile;
-      const hasVIP1 = (userProfile?.totalPaid || 0) >= 5;
-      const hasVIP2 = (userProfile?.totalPaid || 0) >= 10;
+      const isPatron = (userProfile as any)?.isPatron || (userProfile as any)?.referralCount >= 5;
 
       const hasAccess = video.tier === 'PUBLIC' ||
                         (video.tier === 'LOGGED_IN' && isLoggedIn) ||
-                        (video.tier === 'VIP1' && hasVIP1) ||
-                        (video.tier === 'VIP2' && hasVIP2) ||
+                        (video.tier === 'PATRON' && isPatron) ||
                         video.isMainFeatured;
 
       acc.push(

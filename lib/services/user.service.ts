@@ -87,6 +87,7 @@ export class UserService {
             totalPaid: existingByEmail ? { increment: existingByEmail.totalPaid } : undefined,
             referralCount: existingByEmail ? { increment: existingByEmail.referralCount } : undefined,
             referralPoints: existingByEmail ? { increment: existingByEmail.referralPoints } : undefined,
+            isPatron: existingByEmail?.isPatron ? true : undefined,
           },
           create: {
             id,
@@ -101,6 +102,8 @@ export class UserService {
             totalPaid: existingByEmail?.totalPaid || 0,
             referralCount: existingByEmail?.referralCount || 0,
             referralPoints: existingByEmail?.referralPoints || 0,
+            isPatron: existingByEmail?.isPatron || false,
+            patronSince: existingByEmail?.patronSince || null,
           }
         });
 

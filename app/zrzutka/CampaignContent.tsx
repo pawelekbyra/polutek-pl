@@ -30,11 +30,11 @@ interface CampaignContentProps {
 const REWARDS = [
   {
     id: 'reward_1',
-    amount: 50,
-    title: 'Wspierający',
+    amount: 20,
+    title: 'Zostań Patronem',
     description: 'Twoje imię pojawi się w napisach końcowych mojego projektu. Dziękuję za zaufanie!',
     icon: <Heart className="text-red-500" size={24} />,
-    perks: ['Imię w napisach', 'Podziękowanie e-mail', 'Dożywotni Patron (Tier 1)']
+    perks: ['Status Patrona na zawsze', 'Imię w napisach', 'Podziękowanie e-mail']
   },
   {
     id: 'reward_2',
@@ -42,7 +42,7 @@ const REWARDS = [
     title: 'Mecenas Projektu',
     description: 'Dostęp do ekskluzywnych nagrań zza kulis powstawania projektu oraz wcześniejszy dostęp do materiałów.',
     icon: <Star className="text-amber-500" size={24} />,
-    perks: ['Wszystko z Tier 1', 'Nagrania Behind-the-scenes', 'Wcześniejszy dostęp', 'Dożywotni Patron (Tier 2)']
+    perks: ['Status Patrona na zawsze', 'Nagrania Behind-the-scenes', 'Wcześniejszy dostęp']
   },
   {
     id: 'reward_3',
@@ -50,7 +50,7 @@ const REWARDS = [
     title: 'Partner Strategiczny',
     description: 'Zaproszenie na zamknięte spotkanie online, gdzie omówię szczegóły projektu i odpowiem na Twoje pytania.',
     icon: <Gem className="text-blue-500" size={24} />,
-    perks: ['Wszystko z Tier 2', 'Spotkanie online Q&A', 'Dostęp do Discorda VIP', 'Limitowana koszulka projektu']
+    perks: ['Status Patrona na zawsze', 'Spotkanie online Q&A', 'Dostęp do Discorda VIP']
   }
 ];
 
@@ -113,6 +113,13 @@ export default function CampaignContent({
     if (!amount || amount < 10) {
       alert(language === 'pl' ? "Minimalna kwota to 10 PLN" : "Minimum amount is 10 PLN");
       return;
+    }
+
+    if (amount >= 20 && !userProfile?.isPatron) {
+      const msg = language === 'pl'
+        ? "Świetnie! Ta wpłata odblokuje Ci dożywotni status Patrona."
+        : "Great! This donation will unlock lifetime Patron status.";
+      console.log(msg);
     }
 
     try {
@@ -242,6 +249,11 @@ export default function CampaignContent({
                                     placeholder="10"
                                 />
                                 </div>
+                                {selectedAmount !== '' && selectedAmount < 20 && !userProfile?.isPatron && (
+                                  <p className="text-[10px] text-amber-600 font-medium px-1">
+                                    Wpłać min. 20 PLN, aby zostać Patronem.
+                                  </p>
+                                )}
                                 <button
                                 onClick={() => handleSupport(Number(selectedAmount))}
                                 disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}
@@ -324,6 +336,11 @@ export default function CampaignContent({
                         placeholder="10"
                       />
                     </div>
+                    {selectedAmount !== '' && selectedAmount < 20 && !userProfile?.isPatron && (
+                      <p className="text-[10px] text-amber-600 font-medium px-1">
+                        Wpłać min. 20 PLN, aby zostać Patronem.
+                      </p>
+                    )}
                     <button
                       onClick={() => handleSupport(Number(selectedAmount))}
                       disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}

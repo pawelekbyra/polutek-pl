@@ -28,8 +28,7 @@ export default function RegulaminPage() {
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>GUEST:</strong> Dostęp do materiałów publicznych. Brak możliwości komentowania.</li>
               <li><strong>LOGGED_IN:</strong> Możliwość komentowania, lajkowania i dostępu do podstawowych materiałów dla zalogowanych (Suma wpłat: 0 PLN).</li>
-              <li><strong>VIP1:</strong> Dożywotni dostęp do materiałów poziomu VIP1 (Suma wpłat: ≥ 5 PLN).</li>
-              <li><strong>VIP2:</strong> Dożywotni dostęp do wszystkich materiałów premium poziomu VIP2 (Suma wpłat: ≥ 10 PLN).</li>
+              <li><strong>PATRON:</strong> Dożywotni status Patrona i dostęp do wszystkich materiałów premium (Wymagana jednorazowa wpłata powyżej aktualnego progu, np. ≥ 20 PLN).</li>
             </ul>
           </section>
 

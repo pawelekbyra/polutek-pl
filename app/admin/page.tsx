@@ -314,8 +314,7 @@ export default function AdminPanel() {
                         <SelectContent>
                             <SelectItem value="PUBLIC">Publiczny</SelectItem>
                             <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                            <SelectItem value="VIP1">Patron (5 PLN+)</SelectItem>
-                            <SelectItem value="VIP2">Sponsor (10 PLN+)</SelectItem>
+                            <SelectItem value="PATRON">Patron</SelectItem>
                         </SelectContent>
                     </Select>
                   </div>
