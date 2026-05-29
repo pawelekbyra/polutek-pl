@@ -17,6 +17,8 @@ async function fix() {
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "language" TEXT DEFAULT 'en';`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "stripeCustomerId" TEXT;`,
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isPatron" BOOLEAN NOT NULL DEFAULT false;`,
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "patronSince" TIMESTAMP(3);`,
     `CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");`,
     `DO $$
      BEGIN

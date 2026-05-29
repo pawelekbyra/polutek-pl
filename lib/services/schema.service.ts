@@ -21,6 +21,8 @@ export class SchemaService {
             "referredById" TEXT,
             "stripeCustomerId" TEXT,
             "imageUrl" TEXT,
+            "isPatron" BOOLEAN NOT NULL DEFAULT false,
+            "patronSince" TIMESTAMP(3),
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -39,6 +41,8 @@ export class SchemaService {
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "language" TEXT DEFAULT 'en';`,
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;`,
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "stripeCustomerId" TEXT;`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isPatron" BOOLEAN NOT NULL DEFAULT false;`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "patronSince" TIMESTAMP(3);`,
 
         // Index and Constraints
         `CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");`,
