@@ -17,6 +17,7 @@ interface EmbeddedCommentsProps {
     email: string;
     imageUrl?: string | null;
     totalPaid?: number;
+    isPatron?: boolean;
     role?: string;
     referralCount?: number;
   } | null;
@@ -39,12 +40,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     email: user?.primaryEmailAddress?.emailAddress || '',
     imageUrl: user?.imageUrl || null,
     totalPaid: (user?.publicMetadata?.totalPaid as number) || 0,
+    isPatron: (user?.publicMetadata?.isPatron as boolean) || false,
     role: (user?.publicMetadata?.role as string) || 'USER',
     referralCount: (user?.publicMetadata?.referralCount as number) || 0
   } : null);
 
-  const isPatronGated = videoTier === "VIP1" || videoTier === "VIP2";
-  const isPatron = (userProfile?.totalPaid || 0) >= 5 || (userProfile?.referralCount || 0) >= 5 || userProfile?.role === 'ADMIN' || userProfile?.email === 'pawel.perfect@gmail.com';
+  const isPatronGated = videoTier === "PATRON";
+  const isPatron = userProfile?.isPatron || (userProfile?.referralCount || 0) >= 5 || userProfile?.role === 'ADMIN' || userProfile?.email === 'pawel.perfect@gmail.com';
   const canComment = !!userProfile && (!isPatronGated || isPatron);
 
   const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');

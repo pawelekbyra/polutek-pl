@@ -18,6 +18,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalPaid: user.totalPaid,
+      isPatron: user.isPatron,
       language: user.language
     });
   } catch (error) {

@@ -7,7 +7,7 @@ POLUTEK.PL is a private service. It serves as a central hub for exclusive media 
 
 ### Key Concept: Reward for Support
 - **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant lifetime access as a token of gratitude.
-- **Lifetime Value (LTV)**: Access is determined by the total historical sum of donations (e.g., €5 for VIP1, €10 for VIP2).
+- **Lifetime Value (LTV)**: Access is determined by the historical Patron status (granted after a single donation above the current threshold, e.g., 20 PLN).
 - **Public Discovery**: One primary featured video is always public, serving as a gateway to the platform.
 
 ## Architecture & Scalability

@@ -24,6 +24,8 @@ model User {
   referrals        User[]              @relation("UserReferrals")
   stripeCustomerId String?             @unique
   imageUrl         String?
+  isPatron         Boolean             @default(false)
+  patronSince      DateTime?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
@@ -202,8 +204,7 @@ model CommentDislike {
 enum AccessTier {
   PUBLIC    // Everyone
   LOGGED_IN // Minimum: Logged in (Clerk mail)
-  VIP1      // Minimum: totalPaid >= 5 EUR
-  VIP2      // Minimum: totalPaid >= 10 EUR
+  PATRON    // Minimum: isPatron status granted
 }
 
 enum SystemRole {

@@ -26,13 +26,14 @@ export default function ChannelVideoCard({ video, userTotalPaid, isLoggedIn }: C
         setMounted(true);
     }, []);
 
-    const hasVIP1 = userTotalPaid >= 5;
-    const hasVIP2 = userTotalPaid >= 10;
+    // NOTE: In the future, we might want to pass isPatron as a prop directly
+    // For now, we'll use userTotalPaid >= 5 as a fallback if isPatron is not passed,
+    // but the system should ideally rely on the isPatron flag.
+    const isPatron = userTotalPaid >= 5;
 
     const hasAccess = video.tier === 'PUBLIC' ||
                       (video.tier === 'LOGGED_IN' && isLoggedIn) ||
-                      (video.tier === 'VIP1' && hasVIP1) ||
-                      (video.tier === 'VIP2' && hasVIP2) ||
+                      (video.tier === 'PATRON' && isPatron) ||
                       video.isMainFeatured;
 
     return (

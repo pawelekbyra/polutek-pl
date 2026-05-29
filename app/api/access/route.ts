@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
         hasAccess: false,
         userTotalPaid: 0,
-        requiredTier: 'VIP1',
+        requiredTier: 'PATRON',
         videoUrl: null,
         error: "Access check partially failed. Check DB connectivity."
     });
