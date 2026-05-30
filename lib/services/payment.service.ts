@@ -114,15 +114,6 @@ export class PaymentService {
         currency: session.currency?.toUpperCase() || 'EUR',
         stripeId: session.id,
       });
-    } else if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      await this.fulfillOrder({
-        userId: paymentIntent.metadata?.userId,
-        creatorId: paymentIntent.metadata?.creatorId,
-        amount: (paymentIntent.amount_received || 0) / 100,
-        currency: paymentIntent.currency?.toUpperCase() || 'EUR',
-        stripeId: paymentIntent.id,
-      });
     }
   }
 
@@ -146,7 +137,7 @@ export class PaymentService {
     }
 
     try {
-      await prisma.$transaction(async (tx) => {
+      const { user, becamePatronNow } = await prisma.$transaction(async (tx) => {
         // 1. Create transaction record
         // RELIABILITY: Rely on unique constraint for stripeSessionId to prevent race conditions.
         // Even if findFirst fails to catch it, .create will throw P2002.
@@ -165,7 +156,7 @@ export class PaymentService {
             // P2002 is Unique constraint failed
             if (e.code === 'P2002') {
                 console.log(`[PaymentService] Transaction ${stripeId} already exists (P2002). Skipping.`);
-                return;
+                throw new Error('ALREADY_FULFILLED');
             }
             throw e;
         }
@@ -188,19 +179,23 @@ export class PaymentService {
           },
         });
 
-        // 4. Sync status to Clerk
-        await this.syncClerkVipStatus(user.id, user.totalPaid, user.isPatron);
-
-        // 5. Send emails
-        const language = (user.language as 'pl' | 'en') || 'pl';
-        await EmailService.sendDonationThankYouEmail(user.email, amount, currency, language);
-
-        if (becamePatronNow) {
-          await EmailService.sendBecomePatronEmail(user.email, language);
-        }
+        return { user, becamePatronNow };
       });
+
+      // 4. Sync status to Clerk (POZA transakcją)
+      await this.syncClerkVipStatus(user.id, user.totalPaid, user.isPatron);
+
+      // 5. Send emails
+      const language = (user.language as 'pl' | 'en') || 'pl';
+      await EmailService.sendDonationThankYouEmail(user.email, amount, currency, language);
+
+      if (becamePatronNow) {
+        await EmailService.sendBecomePatronEmail(user.email, language);
+      }
+
       console.log(`[PaymentService] Order fulfilled for user ${userId}: ${amount} ${currency}`);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'ALREADY_FULFILLED') return;
       console.error('[PaymentService] Error fulfilling order:', error);
       throw error;
     }

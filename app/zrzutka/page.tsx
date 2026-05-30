@@ -10,7 +10,7 @@ import Navbar from '../components/Navbar';
 export const dynamic = 'force-dynamic';
 
 export default async function ZrzutkaPage() {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   let userDb = null;
   if (userId) {

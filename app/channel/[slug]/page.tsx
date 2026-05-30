@@ -32,7 +32,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
     );
   }
 
-  const { userId } = auth();
+  const { userId } = await auth();
   const userDb = userId ? await UserService.getOrCreateUser(userId).catch(() => null) : null;
   const isSubscribed = (userId && creator) ? await UserService.isSubscribed(userId, creator.id).catch(() => false) : false;
 

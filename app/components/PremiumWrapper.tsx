@@ -77,7 +77,9 @@ export default function PremiumWrapper({
         if (!response.ok) throw new Error(`Server returned ${response.status}`);
         const data = await response.json();
         setHasAccess(data.hasAccess);
-        setVideoUrl(data.videoUrl);
+        if (data.hasAccess) {
+          setVideoUrl(`/api/media/${videoId}`);
+        }
         if (data.requiredTier) setDbTier(data.requiredTier);
       } catch (error) {
         console.error("Error checking video access:", error);

@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import crypto from 'crypto';
-import { SchemaService } from './schema.service';
 import { ADMIN_EMAIL } from '../constants';
 
 export class UserService {
@@ -91,7 +90,7 @@ export class UserService {
             imageUrl,
             role,
             language: language || 'en',
-            referralCode: Math.random().toString(36).substring(2, 10),
+            referralCode: crypto.randomBytes(6).toString('hex'),
             referredById: referrerId,
             totalPaid: existingByEmail?.totalPaid || 0,
             referralCount: existingByEmail?.referralCount || 0,

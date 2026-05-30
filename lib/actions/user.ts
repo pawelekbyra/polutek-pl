@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function updateUserLanguage(language: 'en' | 'pl') {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) return { error: "AUTH_REQUIRED" };
 
   try {

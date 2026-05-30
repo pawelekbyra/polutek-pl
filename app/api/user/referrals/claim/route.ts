@@ -11,10 +11,6 @@ export async function POST(req: Request) {
     const { referralCode } = await req.json();
     if (!referralCode) return NextResponse.json({ error: "Referral code is required" }, { status: 400 });
 
-    const currentUser = await UserService.getOrCreateUser(userId);
-    if (!currentUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-    if (currentUser.referredById) return NextResponse.json({ error: "User already referred" }, { status: 400 });
-
     const referrer = await prisma.user.findFirst({
       where: { OR: [{ referralCode: referralCode }, { id: referralCode }] }
     });
@@ -23,18 +19,48 @@ export async function POST(req: Request) {
     if (referrer.id === userId) return NextResponse.json({ error: "Cannot refer yourself" }, { status: 400 });
 
     const updatedReferrer = await prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: userId }, data: { referredById: referrer.id } });
-      const updated = await tx.user.update({ where: { id: referrer.id }, data: { referralPoints: { increment: 1 } } });
+      // 1. Odczyt z blokadą wewnątrz transakcji:
+      const currentUserInTx = await tx.user.findUnique({
+        where: { id: userId },
+        select: { referredById: true }
+      });
 
-      if (updated.referralPoints >= 5 && updated.totalPaid < 5) {
-          await tx.user.update({ where: { id: referrer.id }, data: { totalPaid: 5 } });
-          const client = await clerkClient();
-          await client.users.updateUserMetadata(referrer.id, {
-              publicMetadata: { language: updated.language, isPatron: true, unlockedViaReferral: true }
+      if (!currentUserInTx) throw new Error('USER_NOT_FOUND');
+      if (currentUserInTx.referredById) throw new Error('ALREADY_REFERRED');
+
+      // 2. Update użytkownika i referrera
+      await tx.user.update({ where: { id: userId }, data: { referredById: referrer.id } });
+
+      const updated = await tx.user.update({
+        where: { id: referrer.id },
+        data: { referralPoints: { increment: 1 } },
+        select: { id: true, referralPoints: true, totalPaid: true, language: true, isPatron: true }
+      });
+
+      // 3. Przyznanie statusu Patrona jeśli próg przekroczony
+      if (!updated.isPatron && updated.referralPoints >= 5) {
+          await tx.user.update({
+            where: { id: referrer.id },
+            data: { isPatron: true, patronSince: new Date() }
           });
+          // Note: we update the returned object as well to reflect state for sync
+          updated.isPatron = true;
       }
+
       return updated;
     });
+
+    // 4. Clerk sync POZA transakcją
+    if (updatedReferrer.isPatron) {
+        try {
+            const client = await clerkClient();
+            await client.users.updateUserMetadata(updatedReferrer.id, {
+                publicMetadata: { language: updatedReferrer.language, isPatron: true, unlockedViaReferral: true }
+            });
+        } catch (syncErr) {
+            console.error("[Referral Sync] Clerk metadata update failed:", syncErr);
+        }
+    }
 
     return NextResponse.json({ success: true, referrerId: updatedReferrer.id, newPoints: updatedReferrer.referralPoints });
   } catch (err: any) {
