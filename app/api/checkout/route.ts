@@ -1,17 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { PaymentService } from '@/lib/services/payment.service';
-import { UserService } from '@/lib/services/user.service';
-import { z } from 'zod';
+import { POST as createIntentPost } from './create-intent/route';
 
 export const dynamic = 'force-dynamic';
 
-const checkoutSchema = z.object({
-  amount: z.number().positive(),
-  currency: z.string().length(3).toUpperCase(),
-  title: z.string().min(1),
-  creatorId: z.string().optional(),
-});
 export const revalidate = 0;
 
 export async function GET() {
@@ -22,61 +13,5 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    let userId: string | null = null;
-    try {
-        const authData = await auth();
-        userId = authData.userId;
-    } catch (e: any) {
-        console.error("[Checkout] Clerk Handshake Failed:", e.message);
-        return NextResponse.json({
-            error: "CLERK_ERROR",
-            message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API CLERK_SECRET_KEY i NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY w panelu Vercel. Muszą pochodzić z tego samego projektu."
-        }, { status: 500 });
-    }
-
-    if (!userId) {
-      return NextResponse.json({
-        error: "Unauthorized",
-        message: "Twoja sesja wygasła. Zaloguj się ponownie, aby dokonać wpłaty."
-      }, { status: 401 });
-    }
-
-    // Lazy Sync Fallback via Service
-    await UserService.getOrCreateUser(userId);
-
-    const body = await req.json();
-    const result = checkoutSchema.safeParse(body);
-
-    if (!result.success) {
-      return NextResponse.json({ error: "Invalid request data", details: result.error.flatten() }, { status: 400 });
-    }
-
-    const { amount, currency, title, creatorId } = result.data;
-    const minAmount = currency === 'PLN' ? 20 : 5;
-
-    if (amount < minAmount) {
-      return NextResponse.json({ error: `Minimum parameters (min. ${minAmount} ${currency})` }, { status: 400 });
-    }
-
-    const payment = await PaymentService.createPayment({
-      userId,
-      amount,
-      currency,
-      title,
-      creatorId,
-    });
-
-    // In a real scenario we'd create a Checkout Session here if we wanted to support it,
-    // but the plan says consolidate flow. Let's redirect to a client-side payment page or
-    // return the clientSecret for Payment Element.
-    return NextResponse.json({ clientSecret: payment.clientSecret });
-  } catch (error: unknown) {
-    console.error("[STRIPE_CHECKOUT_ERROR]", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({
-      error: "Internal Error",
-      message
-    }, { status: 500 });
-  }
+  return createIntentPost(req);
 }

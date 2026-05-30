@@ -15,9 +15,31 @@ export class ReferralService {
             select: { referredById: true }
         });
 
-        if (existing?.referredById) {
+        if (!existing) {
+            throw new Error("Referred user not found");
+        }
+
+        if (existing.referredById) {
             throw new Error("User already referred");
         }
+
+        const existingReferral = await tx.referral.findUnique({
+            where: { referredId }
+        });
+
+        if (existingReferral) {
+            throw new Error("User already referred");
+        }
+
+        const referral = await tx.referral.create({
+            data: {
+                referrerId,
+                referredId,
+                status: 'CLAIMED',
+                source: 'link',
+                claimedAt: new Date()
+            }
+        });
 
         // Update referred user
         await tx.user.update({
@@ -48,6 +70,7 @@ export class ReferralService {
                 data: {
                     userId: referrerId,
                     source: PatronGrantSource.REFERRAL,
+                    referralId: referral.id,
                     reason: 'Referral goal reached (5)'
                 }
             });

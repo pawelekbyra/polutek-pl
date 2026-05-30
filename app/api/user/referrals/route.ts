@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await UserService.getOrCreateUser(userId);
     return NextResponse.json({
-      referralCount: user?.referralPoints || 0,
+      referralCount: user?.referralCount || 0,
       referralPoints: user?.referralPoints || 0,
       referralCode: user?.referralCode || userId
     });

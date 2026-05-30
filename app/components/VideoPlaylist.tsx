@@ -1,5 +1,6 @@
 "use client";
 
+import { MIN_PAYMENT_BY_CURRENCY, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
@@ -49,7 +50,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const [referralData, setReferralData] = useState<{ count: number, points: number, code: string | null }>({ count: 0, points: 0, code: null });
 
-  const minAmount = selectedCurrency === 'PLN' ? 20 : 5;
+  const minAmount = MIN_PAYMENT_BY_CURRENCY[(selectedCurrency.toUpperCase() as SupportedCurrency)] ?? MIN_PAYMENT_BY_CURRENCY.PLN;
   const getSuggestedAmount = useCallback((curr: string) => {
     if (curr === 'PLN') return 25;
     return 10;

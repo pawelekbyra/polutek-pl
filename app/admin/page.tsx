@@ -65,18 +65,27 @@ export default function AdminPanel() {
     bodyEn: ""
   });
 
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "pawel.perfect@gmail.com";
-
   useEffect(() => {
-    if (userLoaded && authLoaded) {
-      if (user?.primaryEmailAddress?.emailAddress !== adminEmail) {
-        router.push("/");
-      } else {
-        setIsAdmin(true);
-        fetchAll();
-      }
+    if (!userLoaded || !authLoaded) return;
+
+    if (!user) {
+      router.push("/");
+      return;
     }
-  }, [user, userLoaded, authLoaded, router, adminEmail]);
+
+    const checkAdmin = async () => {
+      const res = await fetch("/api/admin/stats", { cache: "no-store" });
+      if (!res.ok) {
+        router.push("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      fetchAll();
+    };
+
+    checkAdmin();
+  }, [user, userLoaded, authLoaded, router]);
 
   const fetchAll = async () => {
     setIsLoading(true);
@@ -253,7 +262,7 @@ export default function AdminPanel() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b pb-6 gap-4">
           <div className="space-y-1">
             <h1 className="text-4xl font-bold tracking-tight">Panel Twórcy</h1>
-            <p className="text-sm text-muted-foreground">Dostęp Administratora // {adminEmail}</p>
+            <p className="text-sm text-muted-foreground">Dostęp Administratora // rola ADMIN</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" asChild>
