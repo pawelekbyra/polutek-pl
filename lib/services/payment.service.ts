@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { getClerkClient } from '@/lib/clerk';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
-import { PaymentStatus, PatronGrantSource } from '@prisma/client';
+import { PaymentStatus, PatronGrantSource, Prisma } from '@prisma/client';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -76,17 +76,10 @@ export class PaymentService {
       throw new Error(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
 
-    // Idempotency check
+    // Idempotency check. Persist the event only after successful handling so
+    // Stripe retries are not suppressed when processing fails partway through.
     const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
     if (existingEvent) return;
-
-    await prisma.stripeEvent.create({
-      data: {
-        id: event.id,
-        type: event.type,
-        payload: event as any,
-      }
-    });
 
     switch (event.type) {
       case 'payment_intent.succeeded': {
@@ -96,7 +89,7 @@ export class PaymentService {
       }
       case 'payment_intent.payment_failed': {
         const intent = event.data.object as Stripe.PaymentIntent;
-        await prisma.payment.update({
+        await prisma.payment.updateMany({
             where: { stripeIntentId: intent.id },
             data: { status: PaymentStatus.FAILED }
         });
@@ -110,6 +103,25 @@ export class PaymentService {
       }
       default:
         console.log(`Unhandled Stripe event type: ${event.type}`);
+    }
+
+    await this.markEventProcessed(event);
+  }
+
+  private static async markEventProcessed(event: Stripe.Event) {
+    try {
+      await prisma.stripeEvent.create({
+        data: {
+          id: event.id,
+          type: event.type,
+          payload: event as any,
+        }
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return;
+      }
+      throw error;
     }
   }
 
