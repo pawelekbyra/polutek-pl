@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 }
 
 const creatorSchema = z.object({
-  id: z.string().uuid().optional().nullable(),
+  id: z.string().optional().nullable(),
   name: z.string().min(1).max(100),
   bio: z.string().max(1000).optional().nullable(),
   slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),

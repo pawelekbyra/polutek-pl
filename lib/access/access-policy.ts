@@ -15,10 +15,19 @@ export type AccessDecision = {
 
 export class AccessPolicy {
   static async canViewVideo(userId: string | null | undefined, videoId: string): Promise<AccessDecision> {
-    const video = await prisma.video.findUnique({
+    let video = await prisma.video.findUnique({
       where: { id: videoId },
       include: { creator: true }
     });
+
+    if (!video) {
+        // Fallback for demo/dev if DB is empty
+        const { INITIAL_VIDEOS } = await import('../data/initial-content');
+        const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);
+        if (fallback) {
+            video = fallback as any;
+        }
+    }
 
     if (!video) return { allowed: false, reason: "NOT_FOUND" };
 

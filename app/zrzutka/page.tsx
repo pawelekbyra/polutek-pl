@@ -43,7 +43,7 @@ export default async function ZrzutkaPage() {
     totalPaid: (userDb?.totalPaidMinor || 0) / 100,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
-    referralCount: userDb?.referralPoints || 0
+    referralPoints: userDb?.referralPoints || 0
   } : null;
 
   return (

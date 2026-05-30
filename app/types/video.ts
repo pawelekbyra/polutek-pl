@@ -30,3 +30,26 @@ export interface Video {
   updatedAt?: Date | string;
   creator?: Creator;
 }
+
+export interface PublicVideoDTO {
+  id: string;
+  creatorId: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  thumbnailUrl: string;
+  duration?: string | null;
+  tier: AccessTier;
+  views: number;
+  likesCount: number;
+  dislikesCount: number;
+  isMainFeatured: boolean;
+  publishedAt?: Date | string | null;
+  creator?: Creator;
+}
+
+export interface PlaybackDTO {
+  playbackUrl: string;
+  expiresAt?: string;
+  contentType?: string;
+}

@@ -98,8 +98,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
       const hasAccess = video.tier === 'PUBLIC' ||
                         (video.tier === 'LOGGED_IN' && isLoggedIn) ||
-                        (video.tier === 'PATRON' && isPatron) ||
-                        video.isMainFeatured;
+                        (video.tier === 'PATRON' && isPatron);
 
       acc.push(
           <div
