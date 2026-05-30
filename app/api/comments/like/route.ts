@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+        const authData = await auth();
       userId = authData.userId;
   } catch (e) {
       return NextResponse.json({
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, liked: true, disliked: false });
         }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[COMMENT_LIKE_ERROR]', error);
     return NextResponse.json({ success: false, message: 'Wystąpił błąd podczas oceniania komentarza.' }, { status: 500 });
   }

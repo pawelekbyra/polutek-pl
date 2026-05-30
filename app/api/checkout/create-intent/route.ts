@@ -2,8 +2,16 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { PaymentService } from '@/lib/services/payment.service';
 import { UserService } from '@/lib/services/user.service';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const checkoutSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().length(3).toUpperCase(),
+  title: z.string().min(1),
+  creatorId: z.string().uuid().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,10 +28,17 @@ export async function POST(req: NextRequest) {
     await UserService.getOrCreateUser(userId);
 
     const body = await req.json();
-    const { amount, currency, title, creatorId } = body;
+    const result = checkoutSchema.safeParse(body);
 
-    if (!amount || amount < 10) {
-      return NextResponse.json({ error: `Minimum parameters (min. 10 ${currency || 'PLN'})` }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json({ error: "Invalid request data", details: result.error.flatten() }, { status: 400 });
+    }
+
+    const { amount, currency, title, creatorId } = result.data;
+    const minAmount = currency === 'PLN' ? 20 : 5;
+
+    if (amount < minAmount) {
+      return NextResponse.json({ error: `Minimum parameters (min. ${minAmount} ${currency})` }, { status: 400 });
     }
 
     const paymentIntent = await PaymentService.createPaymentIntent({
@@ -31,15 +46,16 @@ export async function POST(req: NextRequest) {
       amount,
       currency,
       title,
-      creatorId,
+      creatorId: creatorId || "",
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[STRIPE_INTENT_ERROR]", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({
       error: "Internal Error",
-      message: error.message || "Unknown error"
+      message
     }, { status: 500 });
   }
 }

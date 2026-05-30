@@ -1,20 +1,11 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { verifyAdmin } from '@/lib/auth-utils';
+import { ADMIN_EMAIL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_EMAIL = "pawel.perfect@gmail.com";
-
-async function verifyAdmin() {
-  const user = await currentUser();
-  if (!user || user.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
-    return false;
-  }
-  return true;
-}
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -24,12 +15,13 @@ export async function GET() {
         include: { user: true }
     });
     return NextResponse.json(creator);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -64,8 +56,9 @@ export async function POST(req: Request) {
         });
         return NextResponse.json(created);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ADMIN_CREATOR_POST_ERROR]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

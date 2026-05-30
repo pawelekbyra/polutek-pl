@@ -148,26 +148,27 @@ export class PaymentService {
     try {
       await prisma.$transaction(async (tx) => {
         // 1. Create transaction record
-        // Prevent duplicate fulfillment by checking stripeId
-        const existing = await tx.transaction.findFirst({
-            where: { stripeSessionId: stripeId }
-        });
-
-        if (existing) {
-            console.log(`[PaymentService] Transaction ${stripeId} already fulfilled.`);
-            return;
+        // RELIABILITY: Rely on unique constraint for stripeSessionId to prevent race conditions.
+        // Even if findFirst fails to catch it, .create will throw P2002.
+        try {
+            await tx.transaction.create({
+              data: {
+                userId,
+                creatorId,
+                amount,
+                currency,
+                stripeSessionId: stripeId,
+                status: 'COMPLETED',
+              },
+            });
+        } catch (e: any) {
+            // P2002 is Unique constraint failed
+            if (e.code === 'P2002') {
+                console.log(`[PaymentService] Transaction ${stripeId} already exists (P2002). Skipping.`);
+                return;
+            }
+            throw e;
         }
-
-        await tx.transaction.create({
-          data: {
-            userId,
-            creatorId,
-            amount,
-            currency,
-            stripeSessionId: stripeId,
-            status: 'COMPLETED',
-          },
-        });
 
         // 2. Check if this payment grants Patron status
         const threshold = currency.toUpperCase() === 'PLN' ? MIN_PATRON_AMOUNT_PLN : MIN_PATRON_AMOUNT;
@@ -216,7 +217,7 @@ export class PaymentService {
           totalPaid,
           isPatron,
         },
-      });
+      } as any);
       console.log(`[PaymentService] Synced Clerk status for ${userId}: ${role} (${totalPaid}, isPatron: ${isPatron})`);
     } catch (error) {
       console.error('[PaymentService] Error syncing VIP status to Clerk:', error);

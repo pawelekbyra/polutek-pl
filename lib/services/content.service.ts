@@ -1,8 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { AccessTier } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
-
-const ADMIN_EMAIL = "pawel.perfect@gmail.com";
+import { ADMIN_EMAIL } from '../constants';
 
 export class ContentService {
   /**
@@ -29,7 +28,7 @@ export class ContentService {
       }
 
       return video;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[GET_VIDEO_BY_ID_ERROR]", e);
       return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
     }
@@ -115,7 +114,7 @@ export class ContentService {
       }
 
       return creator;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
       if (slug === 'polutek') {
         return {
@@ -175,7 +174,7 @@ export class ContentService {
       }
 
       return { hasAccess: false, userTotalPaid: user.totalPaid, requiredTier: video.tier, videoUrl: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[GET_VIDEO_ACCESS_ERROR]", error);
       // Fallback check against initial data for public access
       const v = INITIAL_VIDEOS.find(vid => vid.id === videoId);
@@ -211,9 +210,10 @@ export class ContentService {
           imageUrl: data.imageUrl
         }
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[CREATE_COMMENT_ERROR]", e);
-      throw new Error(`Failed to create comment: ${e.message}`);
+      const message = e instanceof Error ? e.message : String(e);
+      throw new Error(`Failed to create comment: ${message}`);
     }
   }
 
@@ -237,7 +237,7 @@ export class ContentService {
 
       if (videos.length === 0) return INITIAL_VIDEOS;
       return videos;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       return INITIAL_VIDEOS;
     }
@@ -263,7 +263,7 @@ export class ContentService {
 
       if (!video) return INITIAL_VIDEOS[0];
       return video;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       return INITIAL_VIDEOS[0];
     }

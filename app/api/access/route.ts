@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+      const authData = await auth();
       userId = authData.userId;
   } catch (e) {
       console.warn("[Access] Clerk Handshake failure during access check. Proceeding as guest.");
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   try {
     const access = await ContentService.getVideoAccess(userId, videoId);
     return NextResponse.json(access);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ACCESS_API_ERROR]", error);
     // Extreme fallback: restrict access but don't crash
     return NextResponse.json({

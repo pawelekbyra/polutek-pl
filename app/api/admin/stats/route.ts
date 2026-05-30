@@ -1,20 +1,10 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { verifyAdmin } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_EMAIL = "pawel.perfect@gmail.com";
-
-async function verifyAdmin() {
-  const user = await currentUser();
-  if (!user || user.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
-    return false;
-  }
-  return true;
-}
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -41,7 +31,8 @@ export async function GET() {
         totalRevenue,
         recentTransactions
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

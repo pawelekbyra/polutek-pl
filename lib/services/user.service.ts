@@ -2,9 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { SchemaService } from './schema.service';
+import { ADMIN_EMAIL } from '../constants';
 
 export class UserService {
-  static readonly ADMIN_EMAIL = "pawel.perfect@gmail.com";
+  static readonly ADMIN_EMAIL = ADMIN_EMAIL;
 
   /**
    * Primary entry point for ensuring a user exists and is up to date.
@@ -35,16 +36,9 @@ export class UserService {
       const referrerId = unsafeMeta.referrerId || null;
 
       return await this.syncUser(clerkUserId, email, name, imageUrl, referrerId, language, username);
-    } catch (e: any) {
-      console.error("[UserService.getOrCreateUser]", e.message);
-
-      // AUTO-HEALING: If database columns are missing, trigger a comprehensive heal
-      if (e.message?.includes("does not exist") || e.code === 'P2021') {
-          console.log("[UserService] Missing columns detected. Healing database schema...");
-          await SchemaService.ensureSchema();
-          // One-time retry after healing
-          return await prisma.user.findUnique({ where: { id: clerkUserId } });
-      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error("[UserService.getOrCreateUser]", message);
       throw e;
     }
   }
@@ -138,15 +132,17 @@ export class UserService {
                     where: { id: referrerId },
                     data: { referralCount: { increment: 1 } }
                 });
-            } catch (re: any) {
-              console.warn("[UserService] Failed to increment referral counter", re.message);
+            } catch (re: unknown) {
+              const message = re instanceof Error ? re.message : String(re);
+              console.warn("[UserService] Failed to increment referral counter", message);
             }
         }
 
         return user;
       }, { timeout: 15000 }); // Extended timeout for migrations
-    } catch (err: any) {
-       console.error("[UserService.syncUser] Error:", err.message);
+    } catch (err: unknown) {
+       const message = err instanceof Error ? err.message : String(err);
+       console.error("[UserService.syncUser] Error:", message);
        throw err;
     }
   }
@@ -170,7 +166,7 @@ export class UserService {
           return { isSubscribed: true };
         }
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[TOGGLE_SUBSCRIPTION_ERROR]", e);
       throw e;
     }

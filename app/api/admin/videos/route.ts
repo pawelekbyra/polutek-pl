@@ -1,20 +1,28 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { verifyAdmin } from '@/lib/auth-utils';
+import { ADMIN_EMAIL } from '@/lib/constants';
+import { z } from 'zod';
+import { AccessTier } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_EMAIL = "pawel.perfect@gmail.com";
+const videoSchema = z.object({
+  id: z.string().uuid().optional().nullable(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().optional().nullable(),
+  videoUrl: z.string().url(),
+  thumbnailUrl: z.string().url(),
+  duration: z.string().optional().nullable(),
+  tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
+  likesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
+  dislikesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
+  views: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
+  isMainFeatured: z.boolean().default(false),
+});
 
-async function verifyAdmin() {
-  const user = await currentUser();
-  if (!user || user.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
-    return false;
-  }
-  return true;
-}
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -27,13 +35,19 @@ export async function GET() {
   return NextResponse.json(videos);
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await req.json();
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, likesCount, dislikesCount, views, isMainFeatured } = body;
+  const result = videoSchema.safeParse(body);
+
+  if (!result.success) {
+    return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
+  }
+
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, likesCount, dislikesCount, views, isMainFeatured } = result.data;
 
   try {
     if (id) {
@@ -48,9 +62,9 @@ export async function POST(req: Request) {
             thumbnailUrl,
             duration,
             tier,
-            likesCount: parseInt(likesCount) || 0,
-            dislikesCount: parseInt(dislikesCount) || 0,
-            views: parseInt(views) || 0,
+            likesCount,
+            dislikesCount,
+            views,
             isMainFeatured: !!isMainFeatured
           }
         });
@@ -91,9 +105,9 @@ export async function POST(req: Request) {
             thumbnailUrl,
             duration,
             tier: tier || 'PUBLIC',
-            likesCount: parseInt(likesCount) || 0,
-            dislikesCount: parseInt(dislikesCount) || 0,
-            views: parseInt(views) || 0,
+            likesCount,
+            dislikesCount,
+            views,
             isMainFeatured: !!isMainFeatured
           }
         });
@@ -109,13 +123,14 @@ export async function POST(req: Request) {
 
       return NextResponse.json(created);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_POST_ERROR]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -132,8 +147,9 @@ export async function DELETE(req: Request) {
       where: { id }
     });
     return NextResponse.json(deleted);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

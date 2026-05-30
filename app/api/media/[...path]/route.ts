@@ -7,13 +7,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
-  const { userId } = auth();
+  const { userId } = await auth();
   const { searchParams } = new URL(req.url);
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const videoId = searchParams.get('videoId');
 
   if (!videoId) {
@@ -22,6 +17,7 @@ export async function GET(
 
   const video = await prisma.video.findUnique({
     where: { id: videoId },
+    select: { videoUrl: true }
   });
 
   if (!video) {
@@ -29,5 +25,6 @@ export async function GET(
   }
 
   // Securely stream the gated content from Vercel Blob
+  // getGatedBlobResponse internally verifies user access tier via ContentService.getVideoAccess
   return getGatedBlobResponse(userId, videoId, video.videoUrl);
 }
