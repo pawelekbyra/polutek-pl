@@ -37,6 +37,5 @@ export async function GET(
   }
 
   // Securely stream the gated content from Vercel Blob
-  // getGatedBlobResponse internally verifies user access tier via ContentService.getVideoAccess
-  return getGatedBlobResponse(userId, videoId, video.videoUrl);
+  return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
 }

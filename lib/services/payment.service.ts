@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { getClerkClient } from '@/lib/clerk';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
+import { PaymentStatus, PatronGrantSource } from '@prisma/client';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -13,190 +14,170 @@ function getStripe() {
 }
 
 export class PaymentService {
-  static async createCheckoutSession({
+  static async createPayment({
     userId,
     amount,
     currency,
     title,
     creatorId,
-    successUrl,
-    cancelUrl,
   }: {
     userId: string;
     amount: number;
     currency: string;
     title: string;
     creatorId?: string;
-    successUrl: string;
-    cancelUrl: string;
   }) {
     const stripe = getStripe();
+    const amountMinor = Math.round(amount * 100);
 
-    const session = await stripe.checkout.sessions.create({
-      automatic_payment_methods: { enabled: true },
-      line_items: [
-        {
-          price_data: {
-            currency: currency.toLowerCase(),
-            product_data: {
-              name: title,
-            },
-            unit_amount: Math.round(amount * 100),
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
+    const payment = await prisma.payment.create({
+      data: {
         userId,
-        creatorId: creatorId || null,
-      },
-    } as any);
-
-    return session;
-  }
-
-  static async createPaymentIntent({
-    userId,
-    amount,
-    currency,
-    title,
-    creatorId,
-  }: {
-    userId: string;
-    amount: number;
-    currency: string;
-    title: string;
-    creatorId?: string;
-  }) {
-    const stripe = getStripe();
+        creatorId,
+        amountMinor,
+        currency: currency.toUpperCase(),
+        status: PaymentStatus.PENDING,
+      }
+    });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
+      amount: amountMinor,
       currency: currency.toLowerCase(),
       description: title,
       metadata: {
         userId,
-        creatorId: creatorId || null,
+        paymentId: payment.id,
+        ...(creatorId ? { creatorId } : {}),
       },
       automatic_payment_methods: { enabled: true },
-    } as any);
+    });
 
-    return paymentIntent;
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { stripeIntentId: paymentIntent.id }
+    });
+
+    return {
+        id: payment.id,
+        clientSecret: paymentIntent.client_secret
+    };
   }
 
   static async handleWebhook(body: string, sig: string) {
     const stripe = getStripe();
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    if (!endpointSecret) {
-      throw new Error('STRIPE_WEBHOOK_SECRET is missing');
-    }
+    if (!endpointSecret) throw new Error('STRIPE_WEBHOOK_SECRET is missing');
 
     let event: Stripe.Event;
-
     try {
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
-    } catch (err: any) {
-      throw new Error(`Webhook Error: ${err.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      await this.fulfillOrder({
-        userId: session.metadata?.userId,
-        creatorId: session.metadata?.creatorId,
-        amount: (session.amount_total || 0) / 100,
-        currency: session.currency?.toUpperCase() || 'EUR',
-        stripeId: session.id,
-      });
+    // Idempotency check
+    const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
+    if (existingEvent) return;
+
+    await prisma.stripeEvent.create({
+      data: {
+        id: event.id,
+        type: event.type,
+        payload: event as any,
+      }
+    });
+
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        await this.fulfillPayment(intent);
+        break;
+      }
+      case 'payment_intent.payment_failed': {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        await prisma.payment.update({
+            where: { stripeIntentId: intent.id },
+            data: { status: PaymentStatus.FAILED }
+        });
+        break;
+      }
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        // Legacy/Future Checkout Session support
+        // ... implementation if needed
+        break;
+      }
+      default:
+        console.log(`Unhandled Stripe event type: ${event.type}`);
     }
   }
 
-  private static async fulfillOrder({
-    userId,
-    creatorId,
-    amount,
-    currency,
-    stripeId,
-  }: {
-    userId?: string;
-    creatorId?: string;
-    amount: number;
-    currency: string;
-    stripeId: string;
-  }) {
+  private static async fulfillPayment(intent: Stripe.PaymentIntent) {
+    const paymentId = intent.metadata.paymentId;
+    const userId = intent.metadata.userId;
 
-    if (!userId) {
-      console.error('[PaymentService] Missing userId in session metadata');
+    if (!paymentId || !userId) {
+      console.error('[PaymentService] Missing metadata in intent', intent.id);
       return;
     }
 
     try {
       const { user, becamePatronNow } = await prisma.$transaction(async (tx) => {
-        // 1. Create transaction record
-        // RELIABILITY: Rely on unique constraint for stripeSessionId to prevent race conditions.
-        // Even if findFirst fails to catch it, .create will throw P2002.
-        try {
-            await tx.transaction.create({
-              data: {
-                userId,
-                creatorId,
-                amount,
-                currency,
-                stripeSessionId: stripeId,
-                status: 'COMPLETED',
-              },
-            });
-        } catch (e: any) {
-            // P2002 is Unique constraint failed
-            if (e.code === 'P2002') {
-                console.log(`[PaymentService] Transaction ${stripeId} already exists (P2002). Skipping.`);
-                throw new Error('ALREADY_FULFILLED');
-            }
-            throw e;
-        }
+        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+        if (!payment || payment.status === PaymentStatus.SUCCEEDED) return { user: null, becamePatronNow: false };
 
-        // 2. Check if this payment grants Patron status
-        const threshold = currency.toUpperCase() === 'PLN' ? MIN_PATRON_AMOUNT_PLN : MIN_PATRON_AMOUNT;
+        const updatedPayment = await tx.payment.update({
+          where: { id: paymentId },
+          data: { status: PaymentStatus.SUCCEEDED }
+        });
+
+        const thresholdMinor = updatedPayment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
         const existingUser = await tx.user.findUnique({ where: { id: userId } });
 
         if (!existingUser) throw new Error('USER_NOT_FOUND');
 
-        const grantsPatron = (existingUser.totalPaid + amount) >= threshold;
-        const willBePatron = existingUser.isPatron || grantsPatron;
+        const grantsPatron = (existingUser.totalPaidMinor + updatedPayment.amountMinor) >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
-        // 3. Update user's total paid and Patron status
         const user = await tx.user.update({
           where: { id: userId },
           data: {
-            totalPaid: { increment: amount },
-            isPatron: willBePatron,
+            totalPaidMinor: { increment: updatedPayment.amountMinor },
+            isPatron: existingUser.isPatron || grantsPatron,
             patronSince: becamePatronNow ? new Date() : undefined
           },
         });
 
+        if (becamePatronNow) {
+            await tx.patronGrant.create({
+                data: {
+                    userId,
+                    source: PatronGrantSource.PAYMENT,
+                    paymentId: updatedPayment.id,
+                    reason: 'One-time payment threshold reached'
+                }
+            });
+        }
+
         return { user, becamePatronNow };
       });
 
-      // 4. Sync status to Clerk (POZA transakcją)
-      await this.syncClerkVipStatus(user.id, user.totalPaid, user.isPatron);
+      if (!user) return;
 
-      // 5. Send emails
+      await this.syncClerkVipStatus(user.id, user.totalPaidMinor / 100, user.isPatron);
+
       const language = (user.language as 'pl' | 'en') || 'pl';
-      await EmailService.sendDonationThankYouEmail(user.email, amount, currency, language);
+      const amount = intent.amount / 100;
+      await EmailService.sendDonationThankYouEmail(user.email, amount, intent.currency.toUpperCase(), language);
 
       if (becamePatronNow) {
         await EmailService.sendBecomePatronEmail(user.email, language);
       }
 
-      console.log(`[PaymentService] Order fulfilled for user ${userId}: ${amount} ${currency}`);
-    } catch (error: any) {
-      if (error.message === 'ALREADY_FULFILLED') return;
-      console.error('[PaymentService] Error fulfilling order:', error);
+      console.log(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);
+    } catch (error) {
+      console.error('[PaymentService] Error fulfilling payment:', error);
       throw error;
     }
   }
@@ -212,8 +193,7 @@ export class PaymentService {
           totalPaid,
           isPatron,
         },
-      } as any);
-      console.log(`[PaymentService] Synced Clerk status for ${userId}: ${role} (${totalPaid}, isPatron: ${isPatron})`);
+      });
     } catch (error) {
       console.error('[PaymentService] Error syncing VIP status to Clerk:', error);
     }

@@ -25,16 +25,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { hasAccess, requiredTier, userTotalPaid } = await ContentService.getVideoAccess(userId, videoId);
-    return NextResponse.json({ hasAccess, requiredTier, userTotalPaid });
+    const { hasAccess, requiredTier, reason } = await ContentService.getVideoAccess(userId, videoId);
+    return NextResponse.json({ hasAccess, requiredTier, reason });
   } catch (error: unknown) {
     console.error("[ACCESS_API_ERROR]", error);
     // Extreme fallback: restrict access but don't crash
     return NextResponse.json({
         hasAccess: false,
-        userTotalPaid: 0,
         requiredTier: 'PATRON',
-        videoUrl: null,
+        reason: 'SYSTEM_ERROR',
         error: "Access check partially failed. Check DB connectivity."
     });
   }

@@ -32,7 +32,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
 
-  if (userId) {
+  if (userId && mainVideo) {
     const targetVideoId = videoId || mainVideo.id;
     const [like, dislike] = await Promise.all([
       prisma.videoLike.findUnique({
@@ -57,7 +57,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: userDb?.totalPaid || 0,
+    totalPaid: (userDb?.totalPaidMinor || 0) / 100,
     role: userDb?.role || 'USER',
     referralCount: userDb?.referralPoints || 0,
     initialInteraction,

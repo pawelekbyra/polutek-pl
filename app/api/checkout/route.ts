@@ -59,19 +59,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum parameters (min. ${minAmount} ${currency})` }, { status: 400 });
     }
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-
-    const session = await PaymentService.createCheckoutSession({
+    const payment = await PaymentService.createPayment({
       userId,
       amount,
       currency,
       title,
-      creatorId: creatorId || undefined,
-      successUrl: `${appUrl}/?success=true`,
-      cancelUrl: `${appUrl}/?canceled=true`,
+      creatorId,
     });
 
-    return NextResponse.json({ url: session.url });
+    // In a real scenario we'd create a Checkout Session here if we wanted to support it,
+    // but the plan says consolidate flow. Let's redirect to a client-side payment page or
+    // return the clientSecret for Payment Element.
+    return NextResponse.json({ clientSecret: payment.clientSecret });
   } catch (error: unknown) {
     console.error("[STRIPE_CHECKOUT_ERROR]", error);
     const message = error instanceof Error ? error.message : "Unknown error";

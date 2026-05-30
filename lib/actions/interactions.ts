@@ -4,63 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { UserService } from "@/lib/services/user.service";
 import { revalidatePath } from "next/cache";
-import { INITIAL_VIDEOS, DEFAULT_CREATOR } from "@/lib/data/initial-content";
-
-/**
- * Ensures a video and its creator exist in the DB before an interaction.
- * Useful for "auto-healing" when using fallback data on a fresh DB.
- */
-async function ensureContentExists(videoId: string) {
-  try {
-    const video = await prisma.video.findUnique({ where: { id: videoId } });
-    if (!video) {
-        console.log(`[Interaction] Auto-healing: Video ${videoId} missing from DB. Creating from fallback.`);
-        const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);
-        if (!fallback) return;
-
-        // 1. Ensure Creator exists
-        let creator = await prisma.creator.findUnique({ where: { slug: DEFAULT_CREATOR.slug } });
-        if (!creator) {
-            // Find or create admin user to link the creator to
-            const adminUser = await UserService.ensureAdminUser().catch(() => null);
-            if (!adminUser) throw new Error("Could not create admin user for auto-healing.");
-
-            creator = await prisma.creator.create({
-                data: {
-                    id: DEFAULT_CREATOR.id,
-                    userId: adminUser.id,
-                    slug: DEFAULT_CREATOR.slug,
-                    name: DEFAULT_CREATOR.name,
-                    bio: DEFAULT_CREATOR.bio,
-                    isApproved: true
-                }
-            });
-        }
-
-        // 2. Create Video
-        await prisma.video.create({
-            data: {
-                id: fallback.id,
-                creatorId: creator.id,
-                title: fallback.title,
-                slug: fallback.slug,
-                description: fallback.description,
-                videoUrl: fallback.videoUrl,
-                thumbnailUrl: fallback.thumbnailUrl,
-                duration: fallback.duration,
-                tier: fallback.tier,
-                isMainFeatured: fallback.isMainFeatured,
-                views: fallback.views,
-                likesCount: fallback.likesCount,
-                dislikesCount: fallback.dislikesCount || 0,
-                publishedAt: new Date()
-            }
-        });
-    }
-  } catch (e: any) {
-    console.error("[Interaction] Auto-healing failed:", e.message);
-  }
-}
+import { AccessPolicy } from "@/lib/access/access-policy";
 
 /**
  * Toggles a 'Like' on a video.
@@ -77,10 +21,10 @@ export async function toggleVideoLike(videoId: string) {
 
   if (!userId) return { error: "AUTH_REQUIRED" };
 
-  try {
-    // 0. Auto-healing check
-    await ensureContentExists(videoId);
+  const decision = await AccessPolicy.canReactToVideo(userId, videoId);
+  if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
 
+  try {
     // 1. Sync/Fetch user record
     try {
         await UserService.getOrCreateUser(userId);
@@ -153,8 +97,10 @@ export async function toggleVideoDislike(videoId: string) {
 
   if (!userId) return { error: "AUTH_REQUIRED" };
 
+  const decision = await AccessPolicy.canReactToVideo(userId, videoId);
+  if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
+
   try {
-    await ensureContentExists(videoId);
     try {
         await UserService.getOrCreateUser(userId);
     } catch (err: any) {

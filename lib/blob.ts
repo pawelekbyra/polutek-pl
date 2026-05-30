@@ -1,19 +1,19 @@
 import { get } from "@vercel/blob";
-import { ContentService } from "./services/content.service";
+import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 
 /**
  * Serves a private Vercel Blob file as a stream.
- * Access is restricted based on the user's totalPaid amount.
  */
 export async function getGatedBlobResponse(
   userId: string | null,
   videoId: string,
-  blobUrl: string
+  blobUrl: string,
+  headers?: Headers
 ) {
-  const { hasAccess } = await ContentService.getVideoAccess(userId, videoId);
+  const decision = await AccessPolicy.canViewVideo(userId, videoId);
 
-  if (!hasAccess) {
+  if (!decision.allowed) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
@@ -24,17 +24,24 @@ export async function getGatedBlobResponse(
       return new NextResponse('Not found', { status: 404 });
     }
 
-    const response = await fetch(result.blob.url);
+    const range = headers?.get('range');
+    const response = await fetch(result.blob.url, {
+        headers: range ? { Range: range } : {}
+    });
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 206) {
       return new NextResponse('Error fetching content', { status: response.status });
     }
 
+    const resHeaders = new Headers();
+    ['Content-Type', 'Content-Length', 'Content-Range', 'Accept-Ranges'].forEach(h => {
+        const val = response.headers.get(h);
+        if (val) resHeaders.set(h, val);
+    });
+
     return new NextResponse(response.body, {
-      headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
-        'Content-Disposition': response.headers.get('Content-Disposition') || 'attachment',
-      },
+      status: response.status,
+      headers: resHeaders,
     });
   } catch (error) {
     console.error('Error accessing gated Blob:', error);

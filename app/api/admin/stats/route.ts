@@ -12,24 +12,33 @@ export async function GET(req: NextRequest) {
   try {
     const totalUsers = await prisma.user.count();
     const totalVideos = await prisma.video.count();
-    const totalRevenueResult = await prisma.transaction.aggregate({
-        where: { status: 'COMPLETED' },
-        _sum: { amount: true }
-    });
-    const totalRevenue = totalRevenueResult._sum.amount || 0;
 
-    const recentTransactions = await prisma.transaction.findMany({
-        where: { status: 'COMPLETED' },
+    // Admin revenue grouped by currency
+    const revenueByCurrency = await prisma.payment.groupBy({
+        by: ['currency'],
+        where: { status: 'SUCCEEDED' },
+        _sum: { amountMinor: true }
+    });
+
+    const recentPayments = await prisma.payment.findMany({
+        where: { status: 'SUCCEEDED' },
         orderBy: { createdAt: 'desc' },
         take: 10,
-        include: { user: { select: { email: true } } }
+        include: {
+            user: {
+                select: {
+                    email: true,
+                    name: true
+                }
+            }
+        }
     });
 
     return NextResponse.json({
         totalUsers,
         totalVideos,
-        totalRevenue,
-        recentTransactions
+        revenueByCurrency,
+        recentPayments
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

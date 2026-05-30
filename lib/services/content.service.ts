@@ -16,21 +16,17 @@ export class ContentService {
           creator: {
             include: {
               user: {
-                select: { imageUrl: true, email: true }
+                select: { imageUrl: true, email: true, name: true, username: true }
               }
             }
           }
         }
       });
 
-      if (!video) {
-        return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
-      }
-
       return video;
     } catch (e: unknown) {
       console.error("[GET_VIDEO_BY_ID_ERROR]", e);
-      return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
+      return null;
     }
   }
 
@@ -104,24 +100,9 @@ export class ContentService {
         }
       }
 
-      if (!creator && slug === 'polutek') {
-        return {
-            ...DEFAULT_CREATOR,
-            imageUrl: adminData?.imageUrl || null,
-            user: adminData,
-            videos: INITIAL_VIDEOS
-        };
-      }
-
       return creator;
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (slug === 'polutek') {
-        return {
-            ...DEFAULT_CREATOR,
-            videos: INITIAL_VIDEOS
-        };
-      }
       return null;
     }
   }
@@ -130,55 +111,13 @@ export class ContentService {
    * Evaluates if a user has access to a specific video.
    */
   static async getVideoAccess(userId: string | null, videoId: string) {
-    try {
-      const video = await this.getVideoById(videoId);
-
-      if (!video) {
-        return { hasAccess: false, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC };
-      }
-
-      if (video.tier === AccessTier.PUBLIC) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier };
-      }
-
-      if (!userId) {
-        return { hasAccess: false, userTotalPaid: 0, requiredTier: video.tier };
-      }
-
-      if (video.tier === AccessTier.LOGGED_IN) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier };
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { totalPaid: true, referralPoints: true, role: true, email: true, isPatron: true }
-      });
-
-      if (!user) {
-        return { hasAccess: false, userTotalPaid: 0, requiredTier: video.tier };
-      }
-
-      if (user.role === 'ADMIN' || user.email === ADMIN_EMAIL) {
-        return { hasAccess: true, userTotalPaid: user.totalPaid, requiredTier: video.tier };
-      }
-
-      if (video.tier === AccessTier.PATRON) {
-        const hasAccess = user.isPatron || user.referralPoints >= 5;
-        return { hasAccess, userTotalPaid: user.totalPaid, referralCount: user.referralPoints, requiredTier: video.tier };
-      }
-
-      return { hasAccess: false, userTotalPaid: user.totalPaid, requiredTier: video.tier };
-    } catch (error: unknown) {
-      console.error("[GET_VIDEO_ACCESS_ERROR]", error);
-      // Fallback check against initial data for public access
-      const v = INITIAL_VIDEOS.find(vid => vid.id === videoId);
-      const isPublic = v?.tier === AccessTier.PUBLIC || v?.isMainFeatured;
-      return {
-        hasAccess: !!isPublic,
-        userTotalPaid: 0,
-        requiredTier: v?.tier || AccessTier.PUBLIC
-      };
-    }
+    const { AccessPolicy } = await import('../access/access-policy');
+    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    return {
+        hasAccess: decision.allowed,
+        reason: decision.reason,
+        requiredTier: decision.requiredTier
+    };
   }
 
   /**
@@ -228,16 +167,15 @@ export class ContentService {
         orderBy: { createdAt: 'desc' }
       });
 
-      if (videos.length === 0) return INITIAL_VIDEOS;
       return videos;
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      return INITIAL_VIDEOS;
+      return [];
     }
   }
 
   /**
-   * Fetches the main featured video from the database, falling back to initial content.
+   * Fetches the main featured video from the database.
    */
   static async getMainFeaturedVideo() {
     try {
@@ -254,11 +192,10 @@ export class ContentService {
         }
       });
 
-      if (!video) return INITIAL_VIDEOS[0];
       return video;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      return INITIAL_VIDEOS[0];
+      return null;
     }
   }
 }
