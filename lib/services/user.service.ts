@@ -78,7 +78,6 @@ export class UserService {
             role,
             language,
             totalPaid: existingByEmail ? { increment: existingByEmail.totalPaid } : undefined,
-            referralCount: existingByEmail ? { increment: existingByEmail.referralCount } : undefined,
             referralPoints: existingByEmail ? { increment: existingByEmail.referralPoints } : undefined,
             isPatron: existingByEmail?.isPatron ? true : undefined,
           },
@@ -93,7 +92,6 @@ export class UserService {
             referralCode: crypto.randomBytes(6).toString('hex'),
             referredById: referrerId,
             totalPaid: existingByEmail?.totalPaid || 0,
-            referralCount: existingByEmail?.referralCount || 0,
             referralPoints: existingByEmail?.referralPoints || 0,
             isPatron: existingByEmail?.isPatron || false,
             patronSince: existingByEmail?.patronSince || null,
@@ -129,7 +127,7 @@ export class UserService {
             try {
                 await tx.user.update({
                     where: { id: referrerId },
-                    data: { referralCount: { increment: 1 } }
+                    data: { referralPoints: { increment: 1 } }
                 });
             } catch (re: unknown) {
               const message = re instanceof Error ? re.message : String(re);

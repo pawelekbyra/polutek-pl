@@ -59,7 +59,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     imageUrl: user?.imageUrl || null,
     totalPaid: userDb?.totalPaid || 0,
     role: userDb?.role || 'USER',
-    referralCount: userDb?.referralCount || 0,
+    referralCount: userDb?.referralPoints || 0,
     initialInteraction,
     initialIsSubscribed
   } : null;

@@ -137,10 +137,6 @@ export class ContentService {
         return { hasAccess: false, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC };
       }
 
-      if (video.isMainFeatured) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC };
-      }
-
       if (video.tier === AccessTier.PUBLIC) {
         return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier };
       }
@@ -155,7 +151,7 @@ export class ContentService {
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { totalPaid: true, referralCount: true, role: true, email: true, isPatron: true }
+        select: { totalPaid: true, referralPoints: true, role: true, email: true, isPatron: true }
       });
 
       if (!user) {
@@ -167,8 +163,8 @@ export class ContentService {
       }
 
       if (video.tier === AccessTier.PATRON) {
-        const hasAccess = user.isPatron || user.referralCount >= 5;
-        return { hasAccess, userTotalPaid: user.totalPaid, referralCount: user.referralCount, requiredTier: video.tier };
+        const hasAccess = user.isPatron || user.referralPoints >= 5;
+        return { hasAccess, userTotalPaid: user.totalPaid, referralCount: user.referralPoints, requiredTier: video.tier };
       }
 
       return { hasAccess: false, userTotalPaid: user.totalPaid, requiredTier: video.tier };
