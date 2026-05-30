@@ -32,7 +32,7 @@ const Navbar = () => {
   const isAdmin = user?.primaryEmailAddress?.emailAddress === adminEmail;
 
   return (
-    <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    <div className="sticky top-0 z-50 flex h-16 min-h-16 w-full max-w-full items-center justify-between gap-2 overflow-hidden border-b border-white/70 bg-white/80 px-4 font-sans shadow-sm shadow-neutral-900/5 backdrop-blur-xl md:gap-4 lg:px-8">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
            <button
@@ -68,10 +68,10 @@ const Navbar = () => {
                   placeholder="Szukaj"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-9 bg-white border border-neutral-300 rounded-l-full pl-6 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-neutral-400"
+                  className="h-10 w-full rounded-l-full border border-neutral-200 bg-white/90 pl-6 pr-4 text-sm shadow-inner transition-all placeholder:text-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-600/10"
                 />
               </div>
-              <button type="submit" className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-full px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600" title="Szukaj">
+              <button type="submit" className="flex h-10 shrink-0 items-center justify-center rounded-r-full border border-l-0 border-neutral-200 bg-neutral-950 px-5 text-white transition-all hover:bg-blue-700" title="Szukaj">
                 <Search size={18} />
               </button>
             </form>
@@ -87,7 +87,7 @@ const Navbar = () => {
                 </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white/50 rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
+            <div className="flex h-10 items-center gap-1 rounded-full border border-neutral-200 bg-white/70 px-1 py-1 shadow-sm sm:px-2">
                 <button
                   onClick={() => { if (setLanguage) setLanguage('pl'); }}
                   className={cn(
@@ -119,8 +119,8 @@ const Navbar = () => {
 
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all shadow-sm active:scale-95 border border-neutral-300">
-                  <LogIn size={14} className="sm:w-4 sm:h-4 text-neutral-900" />
+                <button className="flex h-10 items-center gap-1 rounded-full border border-neutral-900 bg-neutral-950 px-2.5 text-[10px] font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-blue-700 active:scale-95 sm:gap-2 sm:px-4 sm:text-xs">
+                  <LogIn size={14} className="text-white sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">{t.signIn}</span>
                 </button>
               </SignInButton>

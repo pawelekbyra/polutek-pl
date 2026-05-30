@@ -147,18 +147,18 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   );
 
   return (
-    <section className="bg-transparent">
+    <section className="rounded-[2rem] border border-white/70 bg-white/75 p-2.5 shadow-2xl shadow-neutral-900/10 backdrop-blur-xl sm:p-4">
       <div className="w-full">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-neutral-400 mb-3 group bg-black">
+        <div className="relative aspect-video w-full overflow-hidden rounded-[1.5rem] border border-neutral-900/10 bg-black shadow-2xl shadow-neutral-900/20 mb-4 group ring-1 ring-white/30">
           <PremiumWrapper videoId={video.id} videoUrl={video.videoUrl} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} />
           </PremiumWrapper>
         </div>
 
         {/* INFO SECTION */}
-        <div className="space-y-3 pt-3">
-          <h2 className="text-[20px] font-bold text-[#0f0f0f] tracking-tight leading-[1.2]">
+        <div className="space-y-4 px-1 pb-1 pt-2 sm:px-2">
+          <h2 className="text-[22px] font-black leading-[1.12] tracking-tight text-neutral-950 sm:text-[28px]">
              {video.slug === 'independency-2024'
               ? (userId ? (
                 <>{t.welcomeOn} <BrandName /></>
@@ -170,7 +170,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             <div className="flex items-center gap-2 md:gap-3 min-w-0 w-full lg:w-auto">
                <Link
                  href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                 className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
+                 className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white bg-white shadow-md ring-1 ring-neutral-200 transition-opacity hover:opacity-80"
                >
                   <img
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.email || video.creator?.name || 'POLUTEK'}`}
@@ -184,11 +184,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <div className="min-w-0 flex flex-col flex-1 lg:flex-none">
                   <Link
                     href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                    className="font-bold text-[#0f0f0f] text-[16px] leading-tight truncate block hover:underline"
+                    className="block truncate text-[16px] font-extrabold leading-tight text-neutral-950 hover:underline"
                   >
                     {video.creator?.name || 'Anonimowy Twórca'}
                   </Link>
-                  <span className="text-[12px] text-[#606060] whitespace-nowrap">
+                  <span className="whitespace-nowrap text-[12px] font-medium text-neutral-500">
                      {mounted ? formatCount(video.creator?.subscribersCount || 0) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
@@ -201,12 +201,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className="flex items-center gap-2 w-full lg:w-auto">
-               <div className="flex items-center bg-white rounded-full h-9 flex-[3] lg:flex-none overflow-hidden border border-neutral-400">
+               <div className="flex h-10 flex-[3] items-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100/80 shadow-inner lg:flex-none">
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "flex items-center justify-center gap-2 pl-4 pr-3 h-full flex-1 hover:bg-neutral-100 transition-colors border-r border-neutral-400 relative active:bg-neutral-200",
+                        "flex h-full flex-1 items-center justify-center gap-2 border-r border-neutral-200 pl-4 pr-3 transition-colors hover:bg-white relative active:bg-neutral-200",
                         optimisticState.isLiked && "text-blue-600",
                         isPending && "opacity-50"
                     )}
@@ -219,7 +219,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "flex items-center justify-center px-4 h-full flex-none hover:bg-neutral-100 transition-colors active:bg-neutral-200",
+                        "flex h-full flex-none items-center justify-center px-4 transition-colors hover:bg-white active:bg-neutral-200",
                         optimisticState.isDisliked && "text-red-600",
                         isPending && "opacity-50"
                     )}
@@ -230,12 +230,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </div>
                <button
                  onClick={handleShare}
-                 className="flex items-center justify-center gap-2 px-4 h-9 bg-white hover:bg-neutral-100 rounded-full transition-colors flex-[2] lg:flex-none border border-neutral-400 active:scale-95"
+                 className="flex h-10 flex-[2] items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white px-4 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow-md active:scale-95 lg:flex-none"
                >
                   <Share2 size={16} />
                   <span className="text-[13px] font-bold">{t.share}</span>
                </button>
-               <button className="w-9 h-9 flex items-center justify-center bg-white hover:bg-neutral-100 rounded-full transition-colors shrink-0 border border-neutral-400 active:scale-95">
+               <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow-md active:scale-95">
                   <MoreHorizontal size={16} />
                </button>
             </div>
@@ -243,7 +243,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
 
         {/* DESCRIPTION BOX */}
-        <div className="mt-3 bg-[#ebebeb] rounded-xl p-4 transition-colors cursor-pointer border border-transparent hover:bg-[#e2e2e2]" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="mt-4 cursor-pointer rounded-[1.25rem] border border-neutral-200/80 bg-gradient-to-br from-neutral-100 to-white p-4 shadow-inner transition-colors hover:from-neutral-50 hover:to-white" onClick={() => setIsExpanded(!isExpanded)}>
            <div className="flex flex-wrap gap-x-2 gap-y-1 mb-1">
               <span className="text-[14px] font-semibold text-[#0f0f0f]">
                  {mounted ? video.views.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}

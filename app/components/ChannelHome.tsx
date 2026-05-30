@@ -106,8 +106,10 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             key={video.id}
             onMouseEnter={() => prefetchVideoComments(video.id)}
             className={cn(
-              "group flex gap-2 p-1 rounded-lg transition-colors relative cursor-pointer",
-              isCurrent ? "bg-[#ebebeb]" : "hover:bg-[#ebebeb]"
+              "group flex gap-3 rounded-2xl border p-2.5 transition-all duration-200 relative cursor-pointer overflow-hidden",
+              isCurrent
+                ? "border-blue-200 bg-blue-50/90 shadow-sm ring-1 ring-blue-100"
+                : "border-transparent bg-white/60 hover:-translate-y-0.5 hover:border-neutral-200 hover:bg-white hover:shadow-md"
             )}
           >
             <Link
@@ -115,7 +117,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                scroll={false}
                className="absolute inset-0 z-0"
             />
-            <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
+            <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-xl bg-black relative z-10 group/thumb border border-white/70 shadow-sm">
               <Link
                 href={`/?v=${video.id}`}
                 scroll={false}
@@ -125,7 +127,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                  <VideoPlayer video={video} variant="thumbnail" />
               </PremiumWrapper>
               {video.duration && (
-                <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
+                <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md z-30 pointer-events-none">
                    {video.duration}
                 </div>
               )}
@@ -136,7 +138,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                 scroll={false}
                 className="hover:opacity-80 transition-opacity"
               >
-                <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
+                <h4 className="text-[14px] font-bold text-neutral-950 line-clamp-2 leading-[1.25] tracking-tight group-hover:text-blue-700 transition-colors">
                    {video.slug === 'independency-2024'
                     ? (isLoggedIn ? (
                         <>{t.welcomeOn} <BrandName /></>
@@ -144,7 +146,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                     : video.title}
                 </h4>
               </Link>
-              <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
+              <div className="text-[12px] text-neutral-500 flex flex-col mt-0.5">
                  <Link
                    href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
                    className="hover:text-[#0f0f0f] transition-colors hover:underline w-fit relative z-20"
@@ -163,13 +165,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
               </div>
               {mounted && (
                 hasAccess ? (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary mt-0.5">
+                  <span className="w-fit rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-700 mt-1">
                     {video.tier === 'PUBLIC' ? t.publicStatus : t.unlockedStatus}
                   </span>
                 ) : video.tier === 'LOGGED_IN' ? (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">{t.loginToWatchShort}</span>
+                  <span className="w-fit rounded-full bg-sky-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-sky-700 mt-1">{t.loginToWatchShort}</span>
                 ) : (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">{t.becomePatron}</span>
+                  <span className="w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700 mt-1">{t.becomePatron}</span>
                 )
               )}
             </div>
@@ -180,7 +182,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       if (i === 1) {
         acc.push(
           <div key="donate" className="pt-4 pb-0">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+              <div className="flex justify-between items-end border-b border-neutral-200/70 pb-2 mb-3">
                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
               </div>
               <VideoPlaylist
@@ -191,7 +193,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         );
         acc.push(
           <div key="patron-header" className="pt-4">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+              <div className="flex justify-between items-end border-b border-neutral-200/70 pb-2 mb-2">
                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
               </div>
           </div>
@@ -202,12 +204,12 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   }, []);
 
   return (
-    <main className="bg-neutral-50 min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-6 py-6">
+    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.16),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#f5f1ea_100%)]">
+      <div className="mx-auto max-w-[1400px] px-3 py-4 sm:px-4 md:px-6 lg:px-8 lg:py-8">
 
 
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-8">
+        <div className="grid grid-cols-12 gap-5 lg:gap-8">
+          <div className="col-span-12 lg:col-span-8 xl:col-span-8">
             <Hero
               video={selectedVideo}
               initialInteraction={userProfile?.initialInteraction}
@@ -244,7 +246,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                  />
                ) : (
                  <div className="space-y-2">
-                    <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                    <div className="flex justify-between items-end border-b border-neutral-200/70 pb-2 mb-3">
                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
                     </div>
                     {playlistItems}
@@ -252,7 +254,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                       <div className="px-2 pt-4 border-t border-neutral-300 mt-4">
                         <Link
                           href="/"
-                          className="bg-white border border-neutral-300 rounded-md py-2 text-sm font-medium hover:bg-neutral-50 transition-all font-bold uppercase tracking-widest italic"
+                          className="inline-flex rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-bold uppercase tracking-widest italic shadow-sm transition-all hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow"
                         >
                           {language === 'pl' ? '← Wróć do wszystkich' : '← Back to all'}
                         </Link>
@@ -271,8 +273,9 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             </div>
           </div>
 
-          <aside className="hidden lg:block lg:col-span-4 space-y-2">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-4">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[2rem] border border-white/70 bg-white/70 p-3 shadow-xl shadow-neutral-900/5 backdrop-blur-xl">
+            <div className="flex justify-between items-end border-b border-neutral-200/70 pb-2 mb-2">
               <div className="flex items-center gap-3">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
                   {searchQuery ? (language === 'pl' ? 'Wyniki wyszukiwania' : 'Search Results') : t.materials}
@@ -286,7 +289,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                     <div className="pt-4 border-t border-neutral-300 mt-4">
                       <Link
                         href="/"
-                        className="bg-white border border-neutral-300 rounded-md py-2 text-sm font-medium hover:bg-neutral-50 transition-all font-bold uppercase tracking-widest italic"
+                        className="inline-flex rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-bold uppercase tracking-widest italic shadow-sm transition-all hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow"
                       >
                         {language === 'pl' ? '← Wróć do listy' : '← Back to list'}
                       </Link>
@@ -300,12 +303,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                     </p>
                     <Link
                       href="/"
-                      className="bg-white border border-neutral-300 rounded-md py-2 text-sm font-medium hover:bg-neutral-50 transition-all font-bold uppercase tracking-widest italic px-6"
+                      className="inline-flex rounded-full border border-neutral-300 bg-white px-6 py-2 text-sm font-bold uppercase tracking-widest italic shadow-sm transition-all hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow"
                     >
                       {t.showAll}
                     </Link>
                 </div>
             )}
+            </div>
           </aside>
         </div>
       </div>
