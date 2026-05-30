@@ -20,19 +20,19 @@ export default async function ZrzutkaPage() {
   const adminData = await ContentService.getAdminData();
   const creator = await ContentService.getCreatorBySlug('polutek');
 
-  const transactions = await prisma.transaction.findMany({
+  const payments = await prisma.payment.findMany({
     where: {
       creatorId: creator?.id,
-      status: 'COMPLETED'
+      status: 'SUCCEEDED'
     },
     select: {
-      amount: true,
+      amountMinor: true,
       currency: true
     }
   }).catch(() => []);
 
-  const totalRaised = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-  const supportersCount = transactions.length;
+  const totalRaised = payments.reduce((sum, p) => sum + (p.amountMinor / 100), 0);
+  const supportersCount = payments.length;
 
   const user = await currentUser();
   const userProfile = userId ? {
@@ -40,7 +40,7 @@ export default async function ZrzutkaPage() {
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: userDb?.totalPaid || 0,
+    totalPaid: (userDb?.totalPaidMinor || 0) / 100,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralCount: userDb?.referralPoints || 0

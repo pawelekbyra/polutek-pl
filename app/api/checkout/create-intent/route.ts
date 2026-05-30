@@ -41,15 +41,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum parameters (min. ${minAmount} ${currency})` }, { status: 400 });
     }
 
-    const paymentIntent = await PaymentService.createPaymentIntent({
+    const payment = await PaymentService.createPayment({
       userId,
       amount,
       currency,
       title,
-      creatorId: creatorId || undefined,
+      creatorId,
     });
 
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    return NextResponse.json({
+        clientSecret: payment.clientSecret,
+        paymentId: payment.id
+    });
   } catch (error: unknown) {
     console.error("[STRIPE_INTENT_ERROR]", error);
     const message = error instanceof Error ? error.message : "Unknown error";

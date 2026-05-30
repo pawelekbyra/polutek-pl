@@ -8,10 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:push:force": "prisma db push --accept-data-loss",
     "db:seed": "prisma db seed",
     "db:verify": "npx ts-node scripts/verify_db.ts",
     "db:setup": "npm run db:push && npm run db:seed",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate"
   },
   "dependencies": {

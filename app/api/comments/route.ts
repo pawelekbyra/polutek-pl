@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
+import { AccessPolicy } from '@/lib/access/access-policy';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,9 @@ export async function GET(request: NextRequest) {
   const videoId = searchParams.get('videoId');
   const sortBy = searchParams.get('sortBy') || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
-  const limit = parseInt(searchParams.get('limit') || '20', 10);
+
+  const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
+  const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 50);
 
   if (!videoId) {
     return NextResponse.json({ success: false, message: 'videoId is required' }, { status: 400 });
@@ -42,6 +45,16 @@ export async function GET(request: NextRequest) {
       const authData = await auth();
       userId = authData.userId;
   } catch (e) {}
+
+  // Access control check
+  const decision = await AccessPolicy.canViewVideo(userId, videoId);
+  if (!decision.allowed) {
+      return NextResponse.json({
+          success: false,
+          message: decision.reason,
+          requiredTier: decision.requiredTier
+      }, { status: 403 });
+  }
 
   try {
     let internalUserId = null;
@@ -65,11 +78,11 @@ export async function GET(request: NextRequest) {
         orderBy,
         include: {
             author: {
-                select: { id: true, email: true, name: true, username: true, imageUrl: true }
+                select: { id: true, name: true, username: true, imageUrl: true }
             },
             replies: {
                 include: {
-                    author: { select: { id: true, email: true, name: true, username: true, imageUrl: true } },
+                    author: { select: { id: true, name: true, username: true, imageUrl: true } },
                     _count: { select: { likes: true, dislikes: true } }
                 },
                 orderBy: { createdAt: 'asc' }
@@ -110,14 +123,14 @@ export async function GET(request: NextRequest) {
             ...r,
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
-            authorName: r.author?.username || r.author?.name || r.author?.email?.split('@')[0] || "Użytkownik",
+            authorName: r.author?.username || r.author?.name || "Użytkownik",
         }));
 
         return {
             ...c,
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
-            authorName: c.author?.username || c.author?.name || c.author?.email?.split('@')[0] || "Użytkownik",
+            authorName: c.author?.username || c.author?.name || "Użytkownik",
             replies,
         };
     });
@@ -163,6 +176,19 @@ export async function POST(request: NextRequest) {
 
     const { videoId, text, parentId, imageUrl } = result.data;
 
+    // Access control check
+    const decision = await AccessPolicy.canComment(userId, videoId);
+    if (!decision.allowed) {
+        return NextResponse.json({ success: false, message: decision.reason }, { status: 403 });
+    }
+
+    if (parentId) {
+        const parent = await prisma.comment.findUnique({ where: { id: parentId }, select: { videoId: true } });
+        if (!parent || parent.videoId !== videoId) {
+            return NextResponse.json({ success: false, message: "Invalid parent comment" }, { status: 400 });
+        }
+    }
+
     const newComment = await prisma.comment.create({
         data: {
             videoId,
@@ -172,7 +198,7 @@ export async function POST(request: NextRequest) {
             imageUrl: imageUrl || null,
         },
         include: {
-            author: { select: { id: true, email: true, name: true, username: true, imageUrl: true } },
+            author: { select: { id: true, name: true, username: true, imageUrl: true } },
             _count: { select: { likes: true, dislikes: true, replies: true } }
         }
     });
@@ -183,7 +209,7 @@ export async function POST(request: NextRequest) {
             ...newComment,
             isLiked: false,
             isDisliked: false,
-            authorName: newComment.author?.username || newComment.author?.name || newComment.author?.email?.split('@')[0] || "Użytkownik",
+            authorName: newComment.author?.username || newComment.author?.name || "Użytkownik",
             replies: [],
         }
     }, { status: 201 });

@@ -15,7 +15,7 @@ model User {
   isDeleted        Boolean             @default(false)
   role             SystemRole          @default(USER)
   language         String              @default("en")
-  totalPaid        Float               @default(0) // Lifetime sum of all payments
+  totalPaidMinor   Int                 @default(0) // Lifetime sum of all payments in minor units
   referralCode     String              @unique @default(cuid())
   referralPoints   Int                 @default(0)
   referralCount    Int                 @default(0)
@@ -35,29 +35,88 @@ model User {
   commentDislikes  CommentDislike[]
   videoLikes       VideoLike[]
   videoDislikes    VideoDislike[]
-  transactions     Transaction[]
+  payments         Payment[]
+  patronGrants     PatronGrant[]
+  referralsSent    Referral[]          @relation("ReferralReferrer")
+  referralReceived Referral?           @relation("ReferralReferred")
   subscriptions    Subscription[]
 
   @@index([email])
 }
 
-model Transaction {
-  id               String   @id @default(uuid())
-  userId           String
-  creatorId        String?  // Made optional for now to not break existing data if any, but should be mandatory in logic
-  amount           Float
-  currency         String   @default("EUR")
-  stripeSessionId  String   @unique
-  status           String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+}
 
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  creator          Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+model Payment {
+  id              String        @id @default(uuid())
+  userId          String
+  creatorId       String?
+  stripeIntentId  String?       @unique
+  stripeSessionId String?       @unique
+  amountMinor     Int
+  currency        String
+  status          PaymentStatus @default(PENDING)
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  creator         Creator?      @relation(fields: [creatorId], references: [id])
 
   @@index([userId])
   @@index([creatorId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+  payload     Json?
+}
+
+enum PatronGrantSource {
+  PAYMENT
+  REFERRAL
+  ADMIN
+  LEGACY
+}
+
+model PatronGrant {
+  id            String            @id @default(uuid())
+  userId        String
+  source        PatronGrantSource
+  paymentId     String?
+  referralId    String?
+  grantedById   String?
+  reason        String?
+  createdAt     DateTime          @default(now())
+  revokedAt     DateTime?
+
+  user          User              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model Creator {
@@ -74,7 +133,7 @@ model Creator {
   updatedAt        DateTime  @updatedAt
   user             User      @relation(fields: [userId], references: [id])
   videos           Video[]
-  transactions     Transaction[]
+  payments         Payment[]
   comments         Comment[]
   subscriptions    Subscription[]
 }
@@ -99,7 +158,7 @@ model Video {
   title         String
   slug          String    @unique
   description   String?
-  videoUrl      String
+  videoUrl      String    // Legacy field
   thumbnailUrl  String
   duration      String?   // e.g. "12:45"
   tier          AccessTier @default(PUBLIC)
@@ -115,9 +174,57 @@ model Video {
   comments      Comment[]
   videoLikes    VideoLike[]
   videoDislikes VideoDislike[]
+  asset         VideoAsset?
 
   @@index([creatorId])
   @@index([slug])
+}
+
+enum StorageProvider {
+  R2
+  S3
+  VERCEL_BLOB
+}
+
+model VideoAsset {
+  id          String          @id @default(uuid())
+  videoId     String          @unique
+  provider    StorageProvider
+  objectKey   String
+  bucket      String?
+  mimeType    String?
+  sizeBytes   Int?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  video       Video           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([provider])
+}
+
+enum ReferralStatus {
+  PENDING
+  CLAIMED
+  REJECTED
+  CANCELED
+}
+
+model Referral {
+  id          String         @id @default(uuid())
+  referrerId  String
+  referredId  String         @unique
+  status      ReferralStatus @default(PENDING)
+  source      String?
+  claimedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  referrer   User @relation("ReferralReferrer", fields: [referrerId], references: [id])
+  referred   User @relation("ReferralReferred", fields: [referredId], references: [id])
+
+  @@unique([referrerId, referredId])
+  @@index([referrerId])
+  @@index([status])
 }
 
 model VideoLike {

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { currentUser, clerkClient } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
 
@@ -43,31 +43,13 @@ export class UserService {
   }
 
   /**
-   * Atomic synchronization logic. Handles upserts and email conflict migrations.
+   * Atomic synchronization logic.
    */
   static async syncUser(id: string, email: string, name?: string | null, imageUrl?: string | null, referrerId?: string | null, language?: string, username?: string | null) {
-    const role = email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase() ? 'ADMIN' : 'USER';
+    const isAdmin = email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase();
 
     try {
       return await prisma.$transaction(async (tx) => {
-        // 1. Resolve potential email conflicts (Clerk ID change or duplicate accounts)
-        const existingByEmail = await tx.user.findFirst({
-          where: { email: { equals: email, mode: 'insensitive' }, id: { not: id } }
-        });
-
-        if (existingByEmail) {
-          console.log(`[UserService] Migrating data for ${email} from ${existingByEmail.id} to ${id}`);
-          // Temporarily rename conflict to free up the email unique constraint
-          await tx.user.update({
-            where: { id: existingByEmail.id },
-            data: {
-              email: `old_${existingByEmail.id}_${Date.now()}@temp.temp`,
-              stripeCustomerId: null
-            }
-          });
-        }
-
-        // 2. Main Upsert
         const user = await tx.user.upsert({
           where: { id },
           update: {
@@ -75,11 +57,7 @@ export class UserService {
             name,
             username,
             imageUrl,
-            role,
             language,
-            totalPaid: existingByEmail ? { increment: existingByEmail.totalPaid } : undefined,
-            referralPoints: existingByEmail ? { increment: existingByEmail.referralPoints } : undefined,
-            isPatron: existingByEmail?.isPatron ? true : undefined,
           },
           create: {
             id,
@@ -87,56 +65,21 @@ export class UserService {
             name,
             username,
             imageUrl,
-            role,
+            role: isAdmin ? 'ADMIN' : 'USER',
             language: language || 'en',
             referralCode: crypto.randomBytes(6).toString('hex'),
-            referredById: referrerId,
-            totalPaid: existingByEmail?.totalPaid || 0,
-            referralPoints: existingByEmail?.referralPoints || 0,
-            isPatron: existingByEmail?.isPatron || false,
-            patronSince: existingByEmail?.patronSince || null,
           }
         });
 
-        // 3. Migrate relations if conflict existed
-        if (existingByEmail) {
-            await tx.creator.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.comment.updateMany({ where: { authorId: existingByEmail.id }, data: { authorId: id } });
-            await tx.subscription.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.transaction.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.videoLike.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.videoDislike.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.commentLike.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.commentDislike.updateMany({ where: { userId: existingByEmail.id }, data: { userId: id } });
-            await tx.user.updateMany({ where: { referredById: existingByEmail.id }, data: { referredById: id } });
-
-            // Delete old record after re-linking everything
-            await tx.user.delete({ where: { id: existingByEmail.id } });
-        }
-
-        // 4. Admin specific profile sync
-        if (role === 'ADMIN') {
+        if (isAdmin) {
             await tx.creator.updateMany({
                 where: { slug: 'polutek' },
                 data: { name: 'POLUTEK.PL', userId: id }
             });
         }
 
-        // 5. Handle referral counter for NEW registrations
-        if (!existingByEmail && referrerId) {
-            try {
-                await tx.user.update({
-                    where: { id: referrerId },
-                    data: { referralPoints: { increment: 1 } }
-                });
-            } catch (re: unknown) {
-              const message = re instanceof Error ? re.message : String(re);
-              console.warn("[UserService] Failed to increment referral counter", message);
-            }
-        }
-
         return user;
-      }, { timeout: 15000 }); // Extended timeout for migrations
+      }, { timeout: 15000 });
     } catch (err: unknown) {
        const message = err instanceof Error ? err.message : String(err);
        console.error("[UserService.syncUser] Error:", message);

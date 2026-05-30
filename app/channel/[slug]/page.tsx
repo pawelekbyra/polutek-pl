@@ -137,7 +137,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
               key={video.id}
               video={video}
               isLoggedIn={!!userId}
-              userTotalPaid={userDb?.totalPaid || 0}
+              userTotalPaid={(userDb?.totalPaidMinor || 0) / 100}
             />
           ))}
         </div>

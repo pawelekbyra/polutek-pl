@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      totalPaid: user.totalPaid,
+      totalPaid: user.totalPaidMinor / 100,
       isPatron: user.isPatron,
       language: user.language
     });
