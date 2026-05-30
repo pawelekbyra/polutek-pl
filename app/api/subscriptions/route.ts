@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+        const authData = await auth();
       userId = authData.userId;
   } catch (e) {
       return NextResponse.json({ isSubscribed: false, error: "Handshake failed" });
@@ -26,9 +26,10 @@ export async function GET(req: NextRequest) {
   try {
     const isSubscribed = await UserService.isSubscribed(userId, creatorId);
     return NextResponse.json({ isSubscribed });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[SUBSCRIPTION_GET_ERROR]", error);
-    return NextResponse.json({ isSubscribed: false, error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ isSubscribed: false, error: message }, { status: 500 });
   }
 }
 
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+        const authData = await auth();
       userId = authData.userId;
   } catch (e) {
       return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
@@ -58,9 +59,10 @@ export async function POST(req: NextRequest) {
 
     const result = await UserService.toggleSubscription(userId, creatorId);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[SUBSCRIPTION_POST_ERROR]", error);
-    if (error.message?.includes("DATABASE_TABLES_MISSING")) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("DATABASE_TABLES_MISSING")) {
         return NextResponse.json({ error: "DATABASE_ERROR" }, { status: 503 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

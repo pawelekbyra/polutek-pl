@@ -65,7 +65,7 @@ export default function AdminPanel() {
     bodyEn: ""
   });
 
-  const adminEmail = "pawel.perfect@gmail.com";
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "pawel.perfect@gmail.com";
 
   useEffect(() => {
     if (userLoaded && authLoaded) {
@@ -76,7 +76,7 @@ export default function AdminPanel() {
         fetchAll();
       }
     }
-  }, [user, userLoaded, authLoaded, router]);
+  }, [user, userLoaded, authLoaded, router, adminEmail]);
 
   const fetchAll = async () => {
     setIsLoading(true);

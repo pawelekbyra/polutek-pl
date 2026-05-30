@@ -1,14 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { currentUser } from '@clerk/nextjs/server';
+import { verifyAdmin } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_EMAIL = "pawel.perfect@gmail.com";
-
-export async function GET() {
-  const user = await currentUser();
-  if (user?.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
+export async function GET(req: NextRequest) {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -49,9 +46,8 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
-  const user = await currentUser();
-  if (user?.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
+export async function POST(req: NextRequest) {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

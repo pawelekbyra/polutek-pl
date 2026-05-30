@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(req: Request) {
-  const { userId } = auth();
+export async function PATCH(req: NextRequest) {
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -39,6 +39,6 @@ export async function PATCH(req: Request) {
 
 // Keep POST for backward compatibility during migration if needed,
 // but it should also use the new field and logic.
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     return PATCH(req);
 }

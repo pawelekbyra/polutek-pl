@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const { userId } = auth();
+export async function GET(req: NextRequest) {
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
