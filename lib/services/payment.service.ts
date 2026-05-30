@@ -9,9 +9,7 @@ function getStripe() {
   if (!key) {
     throw new Error('STRIPE_SECRET_KEY is missing');
   }
-  return new Stripe(key, {
-    apiVersion: '2024-04-10' as any,
-  });
+  return new Stripe(key);
 }
 
 export class PaymentService {
@@ -28,7 +26,7 @@ export class PaymentService {
     amount: number;
     currency: string;
     title: string;
-    creatorId: string;
+    creatorId?: string;
     successUrl: string;
     cancelUrl: string;
   }) {
@@ -53,7 +51,7 @@ export class PaymentService {
       cancel_url: cancelUrl,
       metadata: {
         userId,
-        creatorId,
+        creatorId: creatorId || null,
       },
     } as any);
 
@@ -71,7 +69,7 @@ export class PaymentService {
     amount: number;
     currency: string;
     title: string;
-    creatorId: string;
+    creatorId?: string;
   }) {
     const stripe = getStripe();
 
@@ -81,7 +79,7 @@ export class PaymentService {
       description: title,
       metadata: {
         userId,
-        creatorId,
+        creatorId: creatorId || null,
       },
       automatic_payment_methods: { enabled: true },
     } as any);
@@ -165,9 +163,11 @@ export class PaymentService {
         const threshold = currency.toUpperCase() === 'PLN' ? MIN_PATRON_AMOUNT_PLN : MIN_PATRON_AMOUNT;
         const existingUser = await tx.user.findUnique({ where: { id: userId } });
 
-        const grantsPatron = amount >= threshold;
-        const willBePatron = !!(existingUser?.isPatron || grantsPatron);
-        const becamePatronNow = !existingUser?.isPatron && grantsPatron;
+        if (!existingUser) throw new Error('USER_NOT_FOUND');
+
+        const grantsPatron = (existingUser.totalPaid + amount) >= threshold;
+        const willBePatron = existingUser.isPatron || grantsPatron;
+        const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
         // 3. Update user's total paid and Patron status
         const user = await tx.user.update({

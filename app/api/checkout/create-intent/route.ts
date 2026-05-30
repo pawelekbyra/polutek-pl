@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       amount,
       currency,
       title,
-      creatorId: creatorId || "",
+      creatorId: creatorId || undefined,
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });

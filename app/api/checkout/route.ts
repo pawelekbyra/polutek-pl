@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       amount,
       currency,
       title,
-      creatorId: creatorId || "",
+      creatorId: creatorId || undefined,
       successUrl: `${appUrl}/?success=true`,
       cancelUrl: `${appUrl}/?canceled=true`,
     });

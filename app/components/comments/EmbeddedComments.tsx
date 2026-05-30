@@ -19,7 +19,7 @@ interface EmbeddedCommentsProps {
     totalPaid?: number;
     isPatron?: boolean;
     role?: string;
-    referralCount?: number;
+    referralPoints?: number;
   } | null;
   videoId: string;
   videoTier?: AccessTier;
@@ -42,12 +42,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     totalPaid: (user?.publicMetadata?.totalPaid as number) || 0,
     isPatron: (user?.publicMetadata?.isPatron as boolean) || false,
     role: (user?.publicMetadata?.role as string) || 'USER',
-    referralCount: (user?.publicMetadata?.referralCount as number) || 0
+    referralPoints: (user?.publicMetadata?.referralPoints as number) || 0
   } : null);
 
   const isPatronGated = videoTier === "PATRON";
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'pawel.perfect@gmail.com';
-  const isPatron = userProfile?.isPatron || (userProfile?.referralCount || 0) >= 5 || userProfile?.role === 'ADMIN' || userProfile?.email === adminEmail;
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@polutek.pl';
+  const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN' || userProfile?.email === adminEmail;
   const canComment = !!userProfile && (!isPatronGated || isPatron);
 
   const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');

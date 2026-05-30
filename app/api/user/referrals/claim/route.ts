@@ -34,17 +34,19 @@ export async function POST(req: Request) {
       const updated = await tx.user.update({
         where: { id: referrer.id },
         data: { referralPoints: { increment: 1 } },
-        select: { id: true, referralPoints: true, totalPaid: true, language: true, isPatron: true }
+        select: { id: true, referralPoints: true, totalPaid: true, language: true, isPatron: true, patronSince: true }
       });
 
       // 3. Przyznanie statusu Patrona jeśli próg przekroczony
       if (!updated.isPatron && updated.referralPoints >= 5) {
+          const now = new Date();
           await tx.user.update({
             where: { id: referrer.id },
-            data: { isPatron: true, patronSince: new Date() }
+            data: { isPatron: true, patronSince: now }
           });
           // Note: we update the returned object as well to reflect state for sync
           updated.isPatron = true;
+          (updated as any).patronSince = now;
       }
 
       return updated;
