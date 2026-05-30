@@ -7,10 +7,10 @@ import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
-  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET || process.env.CLERK_SIGNINING_WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    throw new Error('Please add CLERK_WEBHOOK_SECRET or CLERK_SIGNINING_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local');
+    throw new Error('Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local');
   }
 
   const headerPayload = headers();
@@ -56,8 +56,10 @@ export async function POST(req: Request) {
 
       if (eventType === 'user.created') {
         console.log(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
-        // Send welcome email in user's language
-        await EmailService.sendWelcomeEmail(email, user.language as 'pl' | 'en' || 'pl');
+        // Send welcome email without blocking Clerk webhook delivery.
+        EmailService.sendWelcomeEmail(email, user.language as 'pl' | 'en' || 'pl').catch((error) => {
+          console.error('[ClerkWebhook] Failed to send welcome email:', error);
+        });
       }
     }
   }
@@ -72,8 +74,10 @@ export async function POST(req: Request) {
                   select: { email: true, language: true }
               });
 
-              await UserService.softDeleteUser(id);
-              console.log(`User ${id} soft-deleted/anonymized via webhook.`);
+              if (user) {
+                  await UserService.softDeleteUser(id);
+                  console.log(`User ${id} soft-deleted/anonymized via webhook.`);
+              }
 
               if (user && user.email && !user.email.startsWith('deleted_')) {
                   await EmailService.sendAccountDeletedEmail(user.email, user.language as 'pl' | 'en' || 'pl');

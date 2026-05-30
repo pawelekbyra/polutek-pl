@@ -13,12 +13,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const creator = await prisma.creator.findFirst({
-        include: { user: true }
+        include: {
+          user: {
+            select: { id: true, email: true, name: true, imageUrl: true }
+          }
+        }
     });
     return NextResponse.json(creator);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[ADMIN_CREATOR_GET_ERROR]", error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -66,14 +70,14 @@ export async function POST(req: NextRequest) {
                 name,
                 bio,
                 slug,
-                bannerUrl
+                bannerUrl,
+                isApproved: true
             }
         });
         return NextResponse.json(created);
     }
   } catch (error: unknown) {
     console.error("[ADMIN_CREATOR_POST_ERROR]", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

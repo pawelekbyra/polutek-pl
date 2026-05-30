@@ -92,13 +92,22 @@ export class UserService {
       await this.getOrCreateUser(userId);
 
       return await prisma.$transaction(async (tx) => {
+        const creator = await tx.creator.findUnique({
+          where: { id: creatorId },
+          select: { id: true, isApproved: true },
+        });
+
+        if (!creator || !creator.isApproved) {
+          throw new Error('CREATOR_NOT_FOUND');
+        }
+
         const existing = await tx.subscription.findUnique({
           where: { userId_creatorId: { userId, creatorId } }
         });
 
         if (existing) {
           await tx.subscription.delete({ where: { id: existing.id } });
-          await tx.creator.update({ where: { id: creatorId }, data: { subscribersCount: { decrement: 1 } } });
+          await tx.creator.updateMany({ where: { id: creatorId, subscribersCount: { gt: 0 } }, data: { subscribersCount: { decrement: 1 } } });
           return { isSubscribed: false };
         } else {
           await tx.subscription.create({ data: { userId, creatorId } });

@@ -46,8 +46,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   } : null);
 
   const isPatronGated = videoTier === "PATRON";
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@polutek.pl';
-  const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN' || userProfile?.email === adminEmail;
+  const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN';
   const canComment = !!userProfile && (!isPatronGated || isPatron);
 
   const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');

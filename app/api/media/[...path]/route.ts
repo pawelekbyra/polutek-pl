@@ -33,7 +33,7 @@ export async function GET(
         return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl);
+    return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers);
   }
 
   // Securely stream the gated content from Vercel Blob

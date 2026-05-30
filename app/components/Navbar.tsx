@@ -28,8 +28,7 @@ const Navbar = () => {
     }
   };
 
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'pawel.perfect@gmail.com';
-  const isAdmin = user?.primaryEmailAddress?.emailAddress === adminEmail;
+  const isAdmin = user?.publicMetadata?.role === 'ADMIN';
 
   return (
     <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">

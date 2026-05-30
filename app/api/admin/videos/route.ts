@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 
 const videoSchema = z.object({
   id: z.string().optional().nullable(),
-  title: z.string().min(1),
-  slug: z.string().min(1),
-  description: z.string().optional().nullable(),
+  title: z.string().min(1).max(160),
+  slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/),
+  description: z.string().max(5000).optional().nullable(),
   videoUrl: z.string().url(),
   thumbnailUrl: z.string().url(),
   duration: z.string().optional().nullable(),
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
               userId: user.id,
               name: "POLUTEK.PL",
               slug: "polutek",
+              isApproved: true,
             }
           });
         }
@@ -125,8 +126,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_POST_ERROR]", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
