@@ -44,8 +44,8 @@ export async function toggleVideoLike(videoId: string) {
 
       if (existingDislike) {
         await tx.videoDislike.delete({ where: { id: existingDislike.id } });
-        await tx.video.update({
-          where: { id: videoId },
+        await tx.video.updateMany({
+          where: { id: videoId, dislikesCount: { gt: 0 } },
           data: { dislikesCount: { decrement: 1 } }
         });
       }
@@ -56,8 +56,8 @@ export async function toggleVideoLike(videoId: string) {
 
       if (existingLike) {
         await tx.videoLike.delete({ where: { id: existingLike.id } });
-        await tx.video.update({
-          where: { id: videoId },
+        await tx.video.updateMany({
+          where: { id: videoId, likesCount: { gt: 0 } },
           data: { likesCount: { decrement: 1 } }
         });
         return { liked: false, disliked: false };
@@ -119,8 +119,8 @@ export async function toggleVideoDislike(videoId: string) {
 
       if (existingLike) {
         await tx.videoLike.delete({ where: { id: existingLike.id } });
-        await tx.video.update({
-          where: { id: videoId },
+        await tx.video.updateMany({
+          where: { id: videoId, likesCount: { gt: 0 } },
           data: { likesCount: { decrement: 1 } }
         });
       }
@@ -131,8 +131,8 @@ export async function toggleVideoDislike(videoId: string) {
 
       if (existingDislike) {
         await tx.videoDislike.delete({ where: { id: existingDislike.id } });
-        await tx.video.update({
-          where: { id: videoId },
+        await tx.video.updateMany({
+          where: { id: videoId, dislikesCount: { gt: 0 } },
           data: { dislikesCount: { decrement: 1 } }
         });
         return { liked: false, disliked: false };

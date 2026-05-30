@@ -3,6 +3,13 @@ import { AccessTier } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 
+function allowDemoFallbacks() {
+  // Keep the current app resilient by default: existing deployments may not have
+  // fully seeded content yet. Production can opt out explicitly once the DB is
+  // guaranteed to be ready.
+  return process.env.ENABLE_DEMO_FALLBACKS !== 'false';
+}
+
 export class ContentService {
   /**
    * Retrieves a single video by ID, including creator information.
@@ -24,13 +31,13 @@ export class ContentService {
       });
 
       if (!video) {
-        return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
+        return allowDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
       }
 
       return video;
     } catch (e: unknown) {
       console.error("[GET_VIDEO_BY_ID_ERROR]", e);
-      return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
+      return allowDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
     }
   }
 
@@ -104,7 +111,7 @@ export class ContentService {
         }
       }
 
-      if (!creator && slug === 'polutek') {
+      if (!creator && slug === 'polutek' && allowDemoFallbacks()) {
         return {
             ...DEFAULT_CREATOR,
             imageUrl: adminData?.imageUrl || null,
@@ -116,7 +123,7 @@ export class ContentService {
       return creator;
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (slug === 'polutek') {
+      if (slug === 'polutek' && allowDemoFallbacks()) {
         return {
             ...DEFAULT_CREATOR,
             videos: INITIAL_VIDEOS
@@ -186,11 +193,12 @@ export class ContentService {
         orderBy: { createdAt: 'desc' }
       });
 
-      if (videos.length === 0) return INITIAL_VIDEOS;
+      if (videos.length === 0 && allowDemoFallbacks()) return INITIAL_VIDEOS;
       return videos;
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      return INITIAL_VIDEOS;
+      if (allowDemoFallbacks()) return INITIAL_VIDEOS;
+      throw new Error('CONTENT_UNAVAILABLE');
     }
   }
 
@@ -212,11 +220,12 @@ export class ContentService {
         }
       });
 
-      if (!video) return INITIAL_VIDEOS[0];
+      if (!video && allowDemoFallbacks()) return INITIAL_VIDEOS[0];
       return video;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      return INITIAL_VIDEOS[0];
+      if (allowDemoFallbacks()) return INITIAL_VIDEOS[0];
+      throw new Error('CONTENT_UNAVAILABLE');
     }
   }
 }

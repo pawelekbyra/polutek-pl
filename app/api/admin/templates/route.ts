@@ -1,8 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin } from '@/lib/auth-utils';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const templateSchema = z.object({
+  subjectPl: z.string().min(1).max(150),
+  bodyPl: z.string().min(1).max(50_000),
+  subjectEn: z.string().min(1).max(150),
+  bodyEn: z.string().min(1).max(50_000),
+});
 
 export async function GET(req: NextRequest) {
   if (!(await verifyAdmin())) {
@@ -53,7 +61,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { subjectPl, bodyPl, subjectEn, bodyEn } = data;
+    const result = templateSchema.safeParse(data);
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
+    }
+
+    const { subjectPl, bodyPl, subjectEn, bodyEn } = result.data;
 
     const updated = await prisma.emailTemplate.upsert({
       where: { name: 'WELCOME' },

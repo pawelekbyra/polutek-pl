@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
+import { AccessPolicy } from '@/lib/access/access-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,14 @@ export async function POST(request: NextRequest) {
 
     if (!commentId) {
       return NextResponse.json({ success: false, message: 'Brak ID komentarza.' }, { status: 400 });
+    }
+
+    const decision = await AccessPolicy.canReactToComment(userId, commentId);
+    if (!decision.allowed) {
+      return NextResponse.json(
+        { success: false, message: decision.reason, requiredTier: decision.requiredTier },
+        { status: 403 }
+      );
     }
 
     return await prisma.$transaction(async (tx) => {

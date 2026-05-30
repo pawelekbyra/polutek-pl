@@ -76,17 +76,10 @@ export class PaymentService {
       throw new Error(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
 
-    // Idempotency check
+    // Idempotency check. Persist the event only after the handler finishes so
+    // Stripe retries are not swallowed when fulfillment fails midway.
     const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
     if (existingEvent) return;
-
-    await prisma.stripeEvent.create({
-      data: {
-        id: event.id,
-        type: event.type,
-        payload: event as any,
-      }
-    });
 
     switch (event.type) {
       case 'payment_intent.succeeded': {
@@ -103,14 +96,20 @@ export class PaymentService {
         break;
       }
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        // Legacy/Future Checkout Session support
-        // ... implementation if needed
+        // Legacy/Future Checkout Session support.
         break;
       }
       default:
         console.log(`Unhandled Stripe event type: ${event.type}`);
     }
+
+    await prisma.stripeEvent.create({
+      data: {
+        id: event.id,
+        type: event.type,
+        payload: event as any,
+      }
+    });
   }
 
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {
@@ -137,7 +136,7 @@ export class PaymentService {
 
         if (!existingUser) throw new Error('USER_NOT_FOUND');
 
-        const grantsPatron = (existingUser.totalPaidMinor + updatedPayment.amountMinor) >= thresholdMinor;
+        const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
         const user = await tx.user.update({
@@ -155,7 +154,7 @@ export class PaymentService {
                     userId,
                     source: PatronGrantSource.PAYMENT,
                     paymentId: updatedPayment.id,
-                    reason: 'One-time payment threshold reached'
+                    reason: 'Single payment threshold reached'
                 }
             });
         }

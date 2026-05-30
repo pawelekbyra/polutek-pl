@@ -2,16 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { PaymentService } from '@/lib/services/payment.service';
 import { UserService } from '@/lib/services/user.service';
-import { z } from 'zod';
+import { checkoutSchema, validatePaymentAmount } from '@/lib/payments/checkout.schema';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const checkoutSchema = z.object({
-  amount: z.number().positive(),
-  currency: z.string().length(3).toUpperCase(),
-  title: z.string().min(1),
-  creatorId: z.string().optional(),
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,10 +30,21 @@ export async function POST(req: NextRequest) {
     }
 
     const { amount, currency, title, creatorId } = result.data;
-    const minAmount = currency === 'PLN' ? 20 : 5;
+    const amountError = validatePaymentAmount(amount, currency);
 
-    if (amount < minAmount) {
-      return NextResponse.json({ error: `Minimum parameters (min. ${minAmount} ${currency})` }, { status: 400 });
+    if (amountError) {
+      return NextResponse.json({ error: amountError }, { status: 400 });
+    }
+
+    if (creatorId) {
+      const creator = await prisma.creator.findUnique({
+        where: { id: creatorId },
+        select: { id: true, slug: true, isApproved: true },
+      });
+
+      if (!creator || (!creator.isApproved && creator.slug !== 'polutek')) {
+        return NextResponse.json({ error: 'Invalid creator' }, { status: 400 });
+      }
     }
 
     const payment = await PaymentService.createPayment({

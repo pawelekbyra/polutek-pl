@@ -38,6 +38,7 @@ export async function getGatedBlobResponse(
         const val = response.headers.get(h);
         if (val) resHeaders.set(h, val);
     });
+    resHeaders.set('Cache-Control', 'private, no-store');
 
     return new NextResponse(response.body, {
       status: response.status,

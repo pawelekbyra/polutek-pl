@@ -111,14 +111,13 @@ export class EmailService {
       // Simple variable replacement
       if (variables) {
         Object.entries(variables).forEach(([key, value]) => {
-          const placeholder = new RegExp(`{{${key}}}`, 'g');
-          subject = subject.replace(placeholder, value);
-          html = html.replace(placeholder, value);
+          subject = subject.split(`{{${key}}}`).join(value);
+          html = html.split(`{{${key}}}`).join(value);
         });
       }
 
       const { data, error } = await resend.emails.send({
-        from: 'POLUTEK.PL <no-reply@polutek.pl>',
+        from: process.env.EMAIL_FROM || 'POLUTEK.PL <no-reply@polutek.pl>',
         to: [toEmail],
         subject: subject,
         html: html,

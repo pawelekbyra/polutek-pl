@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
                 select: { id: true, name: true, username: true, imageUrl: true }
             },
             replies: {
+                take: 3,
                 include: {
                     author: { select: { id: true, name: true, username: true, imageUrl: true } },
                     _count: { select: { likes: true, dislikes: true } }
@@ -242,7 +243,15 @@ export async function DELETE(request: NextRequest) {
 
         const comment = await prisma.comment.findUnique({ where: { id: commentId } });
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
-        if (comment.authorId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+        const actor = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true }
+        });
+        const isOwner = comment.authorId === userId;
+        const isAdmin = actor?.role === "ADMIN";
+
+        if (!isOwner && !isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         await prisma.comment.delete({ where: { id: commentId } });
         return NextResponse.json({ success: true });

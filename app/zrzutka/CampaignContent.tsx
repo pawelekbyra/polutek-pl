@@ -1,5 +1,6 @@
 "use client";
 
+import { MIN_PAYMENT_BY_CURRENCY } from '@/lib/constants';
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../components/LanguageContext';
 import { Trophy, Users, Heart, Star, Gem, Check, ArrowRight, Loader2, ChevronDown, LogIn } from '../components/icons';
@@ -110,8 +111,9 @@ export default function CampaignContent({
       return;
     }
 
-    if (!amount || amount < 10) {
-      alert(language === 'pl' ? "Minimalna kwota to 10 PLN" : "Minimum amount is 10 PLN");
+    const minAmount = MIN_PAYMENT_BY_CURRENCY.PLN;
+    if (!amount || amount < minAmount) {
+      alert(language === 'pl' ? `Minimalna kwota to ${minAmount} PLN` : `Minimum amount is ${minAmount} PLN`);
       return;
     }
 
