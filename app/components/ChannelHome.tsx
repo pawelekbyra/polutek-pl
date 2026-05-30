@@ -91,6 +91,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       return 0;
   });
 
+  let lastWasPatron = false;
   const playlistItems = sortedVideos.reduce((acc: any[], video, i) => {
       const isCurrent = video.id === selectedVideo.id;
       const isLoggedIn = !!userProfile;
@@ -99,6 +100,28 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       const hasAccess = video.tier === 'PUBLIC' ||
                         (video.tier === 'LOGGED_IN' && isLoggedIn) ||
                         (video.tier === 'PATRON' && isPatron);
+
+      const isPatronTier = video.tier === 'PATRON';
+
+      // Dynamic header logic based on tier transitions
+      if (isPatronTier && !lastWasPatron) {
+        acc.push(
+          <div key={`patron-header-${i}`} className="pt-4">
+              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+              </div>
+          </div>
+        );
+      } else if (!isPatronTier && lastWasPatron) {
+        acc.push(
+          <div key={`public-header-${i}`} className="pt-4">
+              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+              </div>
+          </div>
+        );
+      }
+      lastWasPatron = isPatronTier;
 
       acc.push(
           <div
@@ -186,13 +209,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                  videoTitle={selectedVideo.title}
                  creatorId={selectedVideo.creatorId}
               />
-          </div>
-        );
-        acc.push(
-          <div key="patron-header" className="pt-4">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
-                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-              </div>
           </div>
         );
       }
