@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const access = await ContentService.getVideoAccess(userId, videoId);
-    return NextResponse.json(access);
+    const { hasAccess, requiredTier, userTotalPaid } = await ContentService.getVideoAccess(userId, videoId);
+    return NextResponse.json({ hasAccess, requiredTier, userTotalPaid });
   } catch (error: unknown) {
     console.error("[ACCESS_API_ERROR]", error);
     // Extreme fallback: restrict access but don't crash

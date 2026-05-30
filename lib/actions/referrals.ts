@@ -2,10 +2,11 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import crypto from 'crypto';
 
 export async function checkReferralStatus() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return { isLoggedIn: false };
 
     const user = await prisma.user.findUnique({
@@ -25,7 +26,7 @@ export async function checkReferralStatus() {
 
 export async function getReferralData() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return { error: "AUTH_REQUIRED" };
 
     let user = await prisma.user.findUnique({
@@ -38,7 +39,7 @@ export async function getReferralData() {
         try {
             user = await prisma.user.update({
                 where: { id: userId },
-                data: { referralCode: Math.random().toString(36).substring(2, 10) },
+                data: { referralCode: crypto.randomBytes(6).toString('hex') },
                 select: { referralCode: true, referralPoints: true, id: true }
             });
         } catch (e) {

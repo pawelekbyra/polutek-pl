@@ -46,12 +46,8 @@ export async function GET(request: NextRequest) {
   try {
     let internalUserId = null;
     if (userId) {
-        try {
-            const user = await UserService.getOrCreateUser(userId);
-            internalUserId = user?.id;
-        } catch (e) {
-            console.error("User sync failed during GET comments:", e);
-        }
+        const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+        internalUserId = user?.id ?? null;
     }
 
     const orderBy: Prisma.CommentOrderByWithRelationInput | Prisma.CommentOrderByWithRelationInput[] = sortBy === 'top'

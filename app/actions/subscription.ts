@@ -36,7 +36,7 @@ async function ensureCreatorExists(creatorId: string) {
 export async function toggleSubscriptionAction(creatorId: string) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+      const authData = await auth();
       userId = authData.userId;
   } catch (e: any) {
       console.error("[Subscription] Clerk Handshake Failed:", e.message);
@@ -63,7 +63,7 @@ export async function toggleSubscriptionAction(creatorId: string) {
 export async function getSubscriptionStatusAction(creatorId: string) {
     let userId: string | null = null;
     try {
-        const authData = auth();
+        const authData = await auth();
         userId = authData.userId;
     } catch (e) {
         return { isSubscribed: false };

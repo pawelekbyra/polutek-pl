@@ -1,21 +1,22 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { ADMIN_EMAIL } from "./constants";
 
-export async function verifyAdmin() {
+export async function isAdmin(): Promise<boolean> {
   try {
+    const { userId } = await auth();
+    if (!userId) return false;
     const user = await currentUser();
-    if (!user) return false;
-
-    const email = user.primaryEmailAddress?.emailAddress;
+    const email = user?.primaryEmailAddress?.emailAddress;
     return email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-  } catch (error) {
-    console.error("[verifyAdmin] Auth error:", error);
+  } catch {
     return false;
   }
 }
 
+export async function verifyAdmin() {
+  return isAdmin();
+}
+
 export async function isAdminRequest() {
-  const { userId } = await auth();
-  if (!userId) return false;
-  return verifyAdmin();
+  return isAdmin();
 }

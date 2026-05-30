@@ -68,7 +68,7 @@ async function ensureContentExists(videoId: string) {
 export async function toggleVideoLike(videoId: string) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+      const authData = await auth();
       userId = authData.userId;
   } catch (e: any) {
       console.error("[Interaction] Clerk Handshake Failed:", e.message);
@@ -153,7 +153,7 @@ export async function toggleVideoLike(videoId: string) {
 export async function toggleVideoDislike(videoId: string) {
   let userId: string | null = null;
   try {
-      const authData = auth();
+      const authData = await auth();
       userId = authData.userId;
   } catch (e: any) {
       console.error("[Interaction] Clerk Handshake Failed:", e.message);

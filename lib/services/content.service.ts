@@ -134,25 +134,23 @@ export class ContentService {
       const video = await this.getVideoById(videoId);
 
       if (!video) {
-        return { hasAccess: false, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC, videoUrl: null };
+        return { hasAccess: false, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC };
       }
 
-      const videoUrl = video.videoUrl;
-
       if (video.isMainFeatured) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC, videoUrl };
+        return { hasAccess: true, userTotalPaid: 0, requiredTier: AccessTier.PUBLIC };
       }
 
       if (video.tier === AccessTier.PUBLIC) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier, videoUrl };
+        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier };
       }
 
       if (!userId) {
-        return { hasAccess: false, userTotalPaid: 0, requiredTier: video.tier, videoUrl: null };
+        return { hasAccess: false, userTotalPaid: 0, requiredTier: video.tier };
       }
 
       if (video.tier === AccessTier.LOGGED_IN) {
-        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier, videoUrl };
+        return { hasAccess: true, userTotalPaid: 0, requiredTier: video.tier };
       }
 
       const user = await prisma.user.findUnique({
@@ -165,15 +163,15 @@ export class ContentService {
       }
 
       if (user.role === 'ADMIN' || user.email === ADMIN_EMAIL) {
-        return { hasAccess: true, userTotalPaid: user.totalPaid, requiredTier: video.tier, videoUrl };
+        return { hasAccess: true, userTotalPaid: user.totalPaid, requiredTier: video.tier };
       }
 
       if (video.tier === AccessTier.PATRON) {
         const hasAccess = user.isPatron || user.referralCount >= 5;
-        return { hasAccess, userTotalPaid: user.totalPaid, referralCount: user.referralCount, requiredTier: video.tier, videoUrl: hasAccess ? videoUrl : null };
+        return { hasAccess, userTotalPaid: user.totalPaid, referralCount: user.referralCount, requiredTier: video.tier };
       }
 
-      return { hasAccess: false, userTotalPaid: user.totalPaid, requiredTier: video.tier, videoUrl: null };
+      return { hasAccess: false, userTotalPaid: user.totalPaid, requiredTier: video.tier };
     } catch (error: unknown) {
       console.error("[GET_VIDEO_ACCESS_ERROR]", error);
       // Fallback check against initial data for public access
@@ -182,8 +180,7 @@ export class ContentService {
       return {
         hasAccess: !!isPublic,
         userTotalPaid: 0,
-        requiredTier: v?.tier || AccessTier.PUBLIC,
-        videoUrl: isPublic ? v?.videoUrl : null
+        requiredTier: v?.tier || AccessTier.PUBLIC
       };
     }
   }

@@ -11,7 +11,7 @@ import Navbar from './components/Navbar';
 export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {
-  const { userId } = auth();
+  const { userId } = await auth();
   const videoId = searchParams.v;
   const searchQuery = searchParams.q;
 

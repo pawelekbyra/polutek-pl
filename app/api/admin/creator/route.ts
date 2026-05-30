@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyAdmin } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +22,27 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const creatorSchema = z.object({
+  id: z.string().uuid().optional().nullable(),
+  name: z.string().min(1).max(100),
+  bio: z.string().max(1000).optional().nullable(),
+  slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+  bannerUrl: z.string().url().optional().nullable(),
+});
+
 export async function POST(req: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await req.json();
-  const { id, name, bio, slug, bannerUrl } = body;
+  const result = creatorSchema.safeParse(body);
+
+  if (!result.success) {
+    return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
+  }
+
+  const { id, name, bio, slug, bannerUrl } = result.data;
 
   try {
     if (id) {

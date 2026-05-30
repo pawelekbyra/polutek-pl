@@ -8,8 +8,10 @@ export async function GET(
   { params }: { params: { path: string[] } }
 ) {
   const { userId } = await auth();
-  const { searchParams } = new URL(req.url);
-  const videoId = searchParams.get('videoId');
+
+  // Extract videoId from the path params instead of searchParams for cleaner /api/media/[videoId] pattern
+  // path[0] will be the videoId if called as /api/media/VIDEO_ID
+  const videoId = params.path[0];
 
   if (!videoId) {
     return NextResponse.json({ error: 'Bad Request: videoId is required' }, { status: 400 });
@@ -21,7 +23,17 @@ export async function GET(
   });
 
   if (!video) {
-    return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    // Try by slug if ID not found (optional fallback)
+    const videoBySlug = await prisma.video.findUnique({
+        where: { slug: videoId },
+        select: { id: true, videoUrl: true }
+    });
+
+    if (!videoBySlug) {
+        return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
+    return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl);
   }
 
   // Securely stream the gated content from Vercel Blob
