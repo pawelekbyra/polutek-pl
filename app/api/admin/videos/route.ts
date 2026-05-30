@@ -8,7 +8,7 @@ import { AccessTier } from '@prisma/client';
 export const dynamic = 'force-dynamic';
 
 const videoSchema = z.object({
-  id: z.string().uuid().optional().nullable(),
+  id: z.string().optional().nullable(),
   title: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().optional().nullable(),

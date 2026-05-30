@@ -23,10 +23,14 @@ export class ContentService {
         }
       });
 
+      if (!video) {
+        return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
+      }
+
       return video;
     } catch (e: unknown) {
       console.error("[GET_VIDEO_BY_ID_ERROR]", e);
-      return null;
+      return INITIAL_VIDEOS.find(v => v.id === videoId) || null;
     }
   }
 
@@ -100,9 +104,24 @@ export class ContentService {
         }
       }
 
+      if (!creator && slug === 'polutek') {
+        return {
+            ...DEFAULT_CREATOR,
+            imageUrl: adminData?.imageUrl || null,
+            user: adminData,
+            videos: INITIAL_VIDEOS
+        };
+      }
+
       return creator;
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
+      if (slug === 'polutek') {
+        return {
+            ...DEFAULT_CREATOR,
+            videos: INITIAL_VIDEOS
+        };
+      }
       return null;
     }
   }
@@ -167,10 +186,11 @@ export class ContentService {
         orderBy: { createdAt: 'desc' }
       });
 
+      if (videos.length === 0) return INITIAL_VIDEOS;
       return videos;
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      return [];
+      return INITIAL_VIDEOS;
     }
   }
 
@@ -192,10 +212,11 @@ export class ContentService {
         }
       });
 
+      if (!video) return INITIAL_VIDEOS[0];
       return video;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      return null;
+      return INITIAL_VIDEOS[0];
     }
   }
 }

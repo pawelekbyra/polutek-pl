@@ -52,7 +52,7 @@ export default function PremiumWrapper({
   }, []);
 
   const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTier);
-  const isPublic = isMainFeatured || effectiveTier === "PUBLIC";
+  const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
   useEffect(() => {

@@ -9,9 +9,9 @@ import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 
 const postCommentSchema = z.object({
-  videoId: z.string().uuid(),
+  videoId: z.string(),
   text: z.string().max(2000).optional(),
-  parentId: z.string().uuid().optional().nullable(),
+  parentId: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
 }).refine(data => data.text || data.imageUrl, {
   message: "Either text or imageUrl must be provided",

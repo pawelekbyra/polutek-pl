@@ -14,11 +14,12 @@ import BrandName from './BrandName';
 
 interface ChannelVideoCardProps {
     video: Video;
-    userTotalPaid: number;
     isLoggedIn: boolean;
+    isPatron?: boolean;
+    referralPoints?: number;
 }
 
-export default function ChannelVideoCard({ video, userTotalPaid, isLoggedIn }: ChannelVideoCardProps) {
+export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPatron, referralPoints = 0 }: ChannelVideoCardProps) {
     const { t } = useLanguage();
     const [mounted, setMounted] = useState(false);
 
@@ -26,15 +27,11 @@ export default function ChannelVideoCard({ video, userTotalPaid, isLoggedIn }: C
         setMounted(true);
     }, []);
 
-    // NOTE: In the future, we might want to pass isPatron as a prop directly
-    // For now, we'll use userTotalPaid >= 5 as a fallback if isPatron is not passed,
-    // but the system should ideally rely on the isPatron flag.
-    const isPatron = userTotalPaid >= 5;
+    const isPatron = propIsPatron || referralPoints >= 5;
 
     const hasAccess = video.tier === 'PUBLIC' ||
                       (video.tier === 'LOGGED_IN' && isLoggedIn) ||
-                      (video.tier === 'PATRON' && isPatron) ||
-                      video.isMainFeatured;
+                      (video.tier === 'PATRON' && isPatron);
 
     return (
         <div className="group cursor-pointer flex flex-col">

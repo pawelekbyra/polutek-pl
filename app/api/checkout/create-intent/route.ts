@@ -10,7 +10,7 @@ const checkoutSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().length(3).toUpperCase(),
   title: z.string().min(1),
-  creatorId: z.string().uuid().optional(),
+  creatorId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {

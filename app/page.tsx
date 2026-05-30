@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   const creator = await ContentService.getCreatorBySlug('polutek');
 
   // Always show the standard video player view on homepage
-  const allVideos = await ContentService.getAllVideos();
+  const allVideos = (await ContentService.getAllVideos()) || [];
   const mainVideo = await ContentService.getMainFeaturedVideo();
 
   const user = await currentUser();
@@ -58,8 +58,9 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
     totalPaid: (userDb?.totalPaidMinor || 0) / 100,
+    isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
-    referralCount: userDb?.referralPoints || 0,
+    referralPoints: userDb?.referralPoints || 0,
     initialInteraction,
     initialIsSubscribed
   } : null;
