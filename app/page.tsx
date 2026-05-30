@@ -65,13 +65,28 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     initialIsSubscribed
   } : null;
 
+  if (!mainVideo && allVideos.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+        <Navbar />
+        <main className="max-w-3xl mx-auto px-6 py-20 text-center">
+          <h1 className="text-2xl font-bold mb-4">Brak materiałów</h1>
+          <p className="text-neutral-600 mb-8">
+            Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
+          </p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
       <Navbar />
       <main className="relative">
         <ChannelHome
-          mainVideo={mainVideo as any}
-          allVideos={allVideos as any}
+          mainVideo={mainVideo}
+          allVideos={allVideos}
           currentVideoId={videoId}
           userProfile={userProfile as any}
         />

@@ -13,6 +13,10 @@ export type AccessDecision = {
   requiredTier?: AccessTier;
 };
 
+function allowDemoFallbacks() {
+  return process.env.ENABLE_DEMO_FALLBACKS === 'true' || process.env.NODE_ENV !== 'production';
+}
+
 export class AccessPolicy {
   static async canViewVideo(userId: string | null | undefined, videoId: string): Promise<AccessDecision> {
     let video = await prisma.video.findUnique({
@@ -20,7 +24,7 @@ export class AccessPolicy {
       include: { creator: true }
     });
 
-    if (!video) {
+    if (!video && allowDemoFallbacks()) {
         // Fallback for demo/dev if DB is empty
         const { INITIAL_VIDEOS } = await import('../data/initial-content');
         const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);

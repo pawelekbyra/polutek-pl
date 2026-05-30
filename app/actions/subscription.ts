@@ -10,6 +10,8 @@ import { DEFAULT_CREATOR } from '@/lib/data/initial-content';
  * Ensures a creator exists in the DB before subscribing.
  */
 async function ensureCreatorExists(creatorId: string) {
+    if (process.env.NODE_ENV === 'production') return;
+
     try {
         const creator = await prisma.creator.findUnique({ where: { id: creatorId } });
         if (!creator && creatorId === DEFAULT_CREATOR.id) {

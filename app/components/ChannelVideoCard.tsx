@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MoreVertical } from './icons';
 import { cn } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
-import { Video } from '@/app/types/video';
+import { PublicVideoDTO } from '@/app/types/video';
 import VideoPlayer from './VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -13,7 +13,7 @@ import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
 
 interface ChannelVideoCardProps {
-    video: Video;
+    video: PublicVideoDTO;
     isLoggedIn: boolean;
     isPatron?: boolean;
     referralPoints?: number;
@@ -40,7 +40,6 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                 <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
                     <PremiumWrapper
                         videoId={video.id}
-                        videoUrl={video.videoUrl}
                         requiredTier={video.tier}
                         isMainFeatured={video.isMainFeatured}
                         variant="thumbnail"

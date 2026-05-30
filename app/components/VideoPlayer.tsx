@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useVideoAccess } from './PremiumWrapper';
-import { Video as VideoType } from '@/app/types/video';
+import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle } from './icons';
 import Artplayer from 'artplayer';

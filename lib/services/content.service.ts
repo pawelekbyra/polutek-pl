@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier } from '@prisma/client';
+import { AccessTier, Creator, Video } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
+import { PublicVideoDTO, PublicCreatorDTO } from '@/app/types/video';
 
 function allowDemoFallbacks() {
   return process.env.ENABLE_DEMO_FALLBACKS === 'true' || process.env.NODE_ENV !== 'production';
@@ -74,10 +75,45 @@ export class ContentService {
   }
 
   /**
+   * Maps a database creator to a PublicCreatorDTO.
+   */
+  private static mapToPublicCreatorDTO(creator: any): PublicCreatorDTO {
+    return {
+        id: creator.id,
+        name: creator.name,
+        slug: creator.slug,
+        imageUrl: creator.imageUrl || creator.user?.imageUrl || null,
+        subscribersCount: creator.subscribersCount || 0,
+    };
+  }
+
+  /**
+   * Maps a database video to a PublicVideoDTO.
+   */
+  private static mapToPublicVideoDTO(video: any): PublicVideoDTO {
+    return {
+        id: video.id,
+        creatorId: video.creatorId,
+        title: video.title,
+        slug: video.slug,
+        description: video.description,
+        thumbnailUrl: video.thumbnailUrl,
+        duration: video.duration,
+        tier: video.tier,
+        views: video.views,
+        likesCount: video.likesCount,
+        dislikesCount: video.dislikesCount,
+        isMainFeatured: video.isMainFeatured,
+        publishedAt: video.publishedAt,
+        creator: video.creator ? this.mapToPublicCreatorDTO(video.creator) : undefined,
+    };
+  }
+
+  /**
    * Retrieves a creator by their unique slug.
    * Falls back to default creator for 'polutek' if not found.
    */
-  static async getCreatorBySlug(slug: string) {
+  static async getCreatorBySlug(slug: string): Promise<any | null> {
     try {
       const creator = await prisma.creator.findUnique({
         where: { slug },
@@ -113,8 +149,12 @@ export class ContentService {
             ...DEFAULT_CREATOR,
             imageUrl: adminData?.imageUrl || null,
             user: adminData,
-            videos: INITIAL_VIDEOS
+            videos: (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v))
         };
+      }
+
+      if (creator) {
+          (creator as any).videos = (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }));
       }
 
       return creator;
@@ -175,7 +215,7 @@ export class ContentService {
   /**
    * Fetches all videos from the database, falling back to initial content.
    */
-  static async getAllVideos() {
+  static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({
         include: {
@@ -190,19 +230,21 @@ export class ContentService {
         orderBy: { createdAt: 'desc' }
       });
 
-      if (videos.length === 0 && allowDemoFallbacks()) return INITIAL_VIDEOS;
-      return videos;
+      if (videos.length === 0 && allowDemoFallbacks()) {
+          return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
+      }
+      return videos.map(v => this.mapToPublicVideoDTO(v));
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      if (allowDemoFallbacks()) return INITIAL_VIDEOS;
-      throw new Error('CONTENT_UNAVAILABLE');
+      if (allowDemoFallbacks()) return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
+      return [];
     }
   }
 
   /**
    * Fetches the main featured video from the database.
    */
-  static async getMainFeaturedVideo() {
+  static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
       const video = await prisma.video.findFirst({
         where: { isMainFeatured: true },
@@ -217,12 +259,12 @@ export class ContentService {
         }
       });
 
-      if (!video && allowDemoFallbacks()) return INITIAL_VIDEOS[0];
-      return video;
+      if (!video && allowDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      return video ? this.mapToPublicVideoDTO(video) : null;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      if (allowDemoFallbacks()) return INITIAL_VIDEOS[0];
-      throw new Error('CONTENT_UNAVAILABLE');
+      if (allowDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      return null;
     }
   }
 }

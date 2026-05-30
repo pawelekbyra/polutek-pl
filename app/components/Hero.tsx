@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useOptimistic, useState, useEffect, useTransition } from 'react';
-import { Video } from '../types/video';
+import { PublicVideoDTO } from '../types/video';
 import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal } from './icons';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn, formatCount } from '@/lib/utils';
@@ -14,7 +14,7 @@ import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
 
 interface HeroProps {
-  video: Video;
+  video: PublicVideoDTO;
   initialInteraction?: { liked: boolean; disliked: boolean };
   initialIsSubscribed?: boolean;
 }
@@ -151,7 +151,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       <div className="w-full">
         {/* FEATURED MEDIA */}
         <div className="relative aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-neutral-400 mb-3 group bg-black">
-          <PremiumWrapper videoId={video.id} videoUrl={video.videoUrl} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
+          <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} />
           </PremiumWrapper>
         </div>
@@ -173,7 +173,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
                >
                   <img
-                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.email || video.creator?.name || 'POLUTEK'}`}
+                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || 'POLUTEK'}`}
                     alt={video.creator?.name}
                     className={cn(
                       "w-full h-full",

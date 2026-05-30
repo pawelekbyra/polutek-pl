@@ -37,6 +37,7 @@ model User {
   videoLikes       VideoLike[]
   videoDislikes    VideoDislike[]
   payments         Payment[]
+  paymentTotals    UserPaymentTotal[]
   patronGrants     PatronGrant[]
   referralsSent    Referral[]          @relation("ReferralReferrer")
   referralReceived Referral?           @relation("ReferralReferred")
@@ -75,11 +76,21 @@ model Payment {
   @@index([createdAt])
 }
 
+enum StripeEventStatus {
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
 model StripeEvent {
-  id          String   @id
+  id          String            @id
   type        String
-  processedAt DateTime @default(now())
+  status      StripeEventStatus @default(PROCESSING)
   payload     Json?
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 enum PatronGrantSource {
@@ -318,6 +329,17 @@ enum AccessTier {
 enum SystemRole {
   ADMIN
   USER
+}
+
+model UserPaymentTotal {
+  id          String @id @default(uuid())
+  userId      String
+  currency    String
+  amountMinor Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
 }
 
 model EmailTemplate {

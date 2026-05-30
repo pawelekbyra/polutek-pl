@@ -1,9 +1,9 @@
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
-import { getClerkClient } from '@/lib/clerk';
+import { UserAccessService } from './user-access.service';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
-import { PaymentStatus, PatronGrantSource } from '@prisma/client';
+import { PaymentStatus, PatronGrantSource, StripeEventStatus } from '@prisma/client';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -76,40 +76,73 @@ export class PaymentService {
       throw new Error(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
 
-    // Idempotency check. Persist the event only after the handler finishes so
-    // Stripe retries are not swallowed when fulfillment fails midway.
+    // Idempotency check
     const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
-    if (existingEvent) return;
-
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const intent = event.data.object as Stripe.PaymentIntent;
-        await this.fulfillPayment(intent);
-        break;
-      }
-      case 'payment_intent.payment_failed': {
-        const intent = event.data.object as Stripe.PaymentIntent;
-        await prisma.payment.update({
-            where: { stripeIntentId: intent.id },
-            data: { status: PaymentStatus.FAILED }
-        });
-        break;
-      }
-      case 'checkout.session.completed': {
-        // Legacy/Future Checkout Session support.
-        break;
-      }
-      default:
-        console.log(`Unhandled Stripe event type: ${event.type}`);
+    if (existingEvent) {
+        if (existingEvent.status === StripeEventStatus.PROCESSED) {
+            console.log(`[PaymentService] Event ${event.id} already processed.`);
+            return;
+        }
+        if (existingEvent.status === StripeEventStatus.PROCESSING) {
+            console.log(`[PaymentService] Event ${event.id} is currently being processed.`);
+            return;
+        }
+        // If FAILED, we allow re-processing
     }
 
-    await prisma.stripeEvent.create({
-      data: {
-        id: event.id,
-        type: event.type,
-        payload: event as any,
-      }
+    // Create or update event to PROCESSING
+    await prisma.stripeEvent.upsert({
+        where: { id: event.id },
+        create: {
+            id: event.id,
+            type: event.type,
+            status: StripeEventStatus.PROCESSING,
+            payload: event as any
+        },
+        update: {
+            status: StripeEventStatus.PROCESSING,
+            error: null
+        }
     });
+
+    try {
+        switch (event.type) {
+            case 'payment_intent.succeeded': {
+                const intent = event.data.object as Stripe.PaymentIntent;
+                await this.fulfillPayment(intent);
+                break;
+            }
+            case 'payment_intent.payment_failed': {
+                const intent = event.data.object as Stripe.PaymentIntent;
+                await prisma.payment.update({
+                    where: { stripeIntentId: intent.id },
+                    data: { status: PaymentStatus.FAILED }
+                });
+                break;
+            }
+            default:
+                console.log(`Unhandled Stripe event type: ${event.type}`);
+        }
+
+        // Mark as PROCESSED
+        await prisma.stripeEvent.update({
+            where: { id: event.id },
+            data: {
+                status: StripeEventStatus.PROCESSED,
+                processedAt: new Date()
+            }
+        });
+    } catch (error: any) {
+        console.error(`[PaymentService] Error handling event ${event.id}:`, error);
+        await prisma.stripeEvent.update({
+            where: { id: event.id },
+            data: {
+                status: StripeEventStatus.FAILED,
+                error: error.message || String(error)
+            }
+        });
+        throw error; // Throw so Stripe can retry
+    }
   }
 
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {
@@ -136,13 +169,27 @@ export class PaymentService {
 
         if (!existingUser) throw new Error('USER_NOT_FOUND');
 
+        // Multi-currency handling: Update UserPaymentTotal
+        await tx.userPaymentTotal.upsert({
+            where: { userId_currency: { userId, currency: updatedPayment.currency } },
+            create: {
+                userId,
+                currency: updatedPayment.currency,
+                amountMinor: updatedPayment.amountMinor
+            },
+            update: {
+                amountMinor: { increment: updatedPayment.amountMinor }
+            }
+        });
+
+        // Determine Patron status based on this single payment threshold
         const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
         const user = await tx.user.update({
           where: { id: userId },
           data: {
-            totalPaidMinor: { increment: updatedPayment.amountMinor },
+            totalPaidMinor: { increment: updatedPayment.amountMinor }, // Diagnostics/Legacy
             isPatron: existingUser.isPatron || grantsPatron,
             patronSince: becamePatronNow ? new Date() : undefined
           },
@@ -164,7 +211,7 @@ export class PaymentService {
 
       if (!user) return;
 
-      await this.syncClerkVipStatus(user.id, user.totalPaidMinor / 100, user.isPatron);
+      await UserAccessService.syncClerkAccess(user.id, user.isPatron, user.totalPaidMinor / 100);
 
       const language = (user.language as 'pl' | 'en') || 'pl';
       const amount = intent.amount / 100;
@@ -178,23 +225,6 @@ export class PaymentService {
     } catch (error) {
       console.error('[PaymentService] Error fulfilling payment:', error);
       throw error;
-    }
-  }
-
-  private static async syncClerkVipStatus(userId: string, totalPaid: number, isPatron: boolean) {
-    try {
-      const client = await getClerkClient();
-      let role = isPatron ? 'PATRON' : 'USER';
-
-      await client.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          role,
-          totalPaid,
-          isPatron,
-        },
-      });
-    } catch (error) {
-      console.error('[PaymentService] Error syncing VIP status to Clerk:', error);
     }
   }
 }
