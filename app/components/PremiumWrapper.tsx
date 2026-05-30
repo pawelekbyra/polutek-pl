@@ -26,7 +26,6 @@ export const useVideoAccess = () => useContext(VideoAccessContext);
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
-  videoUrl?: string;
   requiredTier?: AccessTier;
   isMainFeatured?: boolean;
   variant?: 'default' | 'thumbnail';
@@ -35,14 +34,13 @@ interface PremiumWrapperProps {
 export default function PremiumWrapper({
   children,
   videoId,
-  videoUrl: directUrl,
   requiredTier: initialTier,
   isMainFeatured,
   variant = 'default'
 }: PremiumWrapperProps) {
   const { userId, isLoaded } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(directUrl || null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [dbTier, setDbTier] = useState<AccessTier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -57,9 +55,11 @@ export default function PremiumWrapper({
 
   useEffect(() => {
     async function checkAccess() {
+      const mediaUrl = `/api/media/${videoId}`;
+
       if (isPublic) {
         setHasAccess(true);
-        if (directUrl) setVideoUrl(directUrl);
+        setVideoUrl(mediaUrl);
         setIsLoading(false);
         return;
       }
@@ -78,7 +78,7 @@ export default function PremiumWrapper({
         const data = await response.json();
         setHasAccess(data.hasAccess);
         if (data.hasAccess) {
-          setVideoUrl(`/api/media/${videoId}`);
+          setVideoUrl(mediaUrl);
         }
         if (data.requiredTier) setDbTier(data.requiredTier);
       } catch (error) {
@@ -90,7 +90,7 @@ export default function PremiumWrapper({
     }
 
     checkAccess();
-  }, [userId, isLoaded, videoId, isPublic, directUrl]);
+  }, [userId, isLoaded, videoId, isPublic]);
 
   if (!mounted) {
     return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;

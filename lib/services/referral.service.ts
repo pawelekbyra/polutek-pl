@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { PatronGrantSource } from '@prisma/client';
+import { UserAccessService } from './user-access.service';
 
 export class ReferralService {
   static async claimReferral(referrerId: string, referredId: string) {
@@ -58,7 +59,7 @@ export class ReferralService {
 
         // Grant Patron if threshold reached (5 points)
         if (referrer.referralPoints >= 5 && !referrer.isPatron) {
-            await tx.user.update({
+            const updatedReferrer = await tx.user.update({
                 where: { id: referrerId },
                 data: {
                     isPatron: true,
@@ -74,6 +75,9 @@ export class ReferralService {
                     reason: 'Referral goal reached (5)'
                 }
             });
+
+            // Sync to Clerk
+            await UserAccessService.syncClerkAccess(referrerId, true, updatedReferrer.totalPaidMinor / 100);
         }
 
         return { success: true };

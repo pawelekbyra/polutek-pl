@@ -31,6 +31,14 @@ export interface Video {
   creator?: Creator;
 }
 
+export interface PublicCreatorDTO {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+  subscribersCount: number;
+}
+
 export interface PublicVideoDTO {
   id: string;
   creatorId: string;
@@ -45,7 +53,7 @@ export interface PublicVideoDTO {
   dislikesCount: number;
   isMainFeatured: boolean;
   publishedAt?: Date | string | null;
-  creator?: Creator;
+  creator?: PublicCreatorDTO;
 }
 
 export interface PlaybackDTO {

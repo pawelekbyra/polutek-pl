@@ -6,7 +6,7 @@ import VideoPlaylist from './VideoPlaylist';
 import PremiumWrapper from './PremiumWrapper';
 import VideoPlayer from './VideoPlayer';
 import EmbeddedComments from './comments/EmbeddedComments';
-import { Video } from '../types/video';
+import { Video, PublicVideoDTO } from '../types/video';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -16,8 +16,8 @@ import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
 
 interface ChannelHomeProps {
-  mainVideo: Video;
-  allVideos: Video[];
+  mainVideo: PublicVideoDTO | null;
+  allVideos: PublicVideoDTO[];
   currentVideoId?: string;
   userProfile?: {
     id: string;
@@ -48,6 +48,19 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     }
   }, [selectedVideo?.id]);
 
+  if (!selectedVideo) {
+    return (
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-20 text-center">
+            <h1 className="text-2xl font-bold mb-4">{language === 'pl' ? 'Brak filmu' : 'No video found'}</h1>
+            <p className="text-neutral-600">
+                {language === 'pl'
+                    ? 'Nie znaleziono wybranego filmu lub filmu głównego.'
+                    : 'The selected video or the main featured video could not be found.'}
+            </p>
+        </div>
+    );
+  }
+
   const prefetchVideoComments = (vidId: string) => {
     queryClient.prefetchInfiniteQuery({
         queryKey: ['comments', vidId],
@@ -65,7 +78,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   // 1. Current (selected) video always first
   // 2. LOGGED_IN video (with "nie masz psychy sie zalogować" overlay) second
   // 3. Other videos (PUBLIC first, then VIP)
-  const sortedVideos = [...allVideos].sort((a, b) => {
+  const sortedVideos = [...(allVideos || [])].sort((a, b) => {
       // Rule 1: Selected video first
       if (a.id === selectedVideo.id) return -1;
       if (b.id === selectedVideo.id) return 1;
@@ -75,7 +88,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       const bIsLoggedInGated = b.tier === 'LOGGED_IN';
 
       // If we're on the main video, we want a LOGGED_IN video at index 1
-      if (selectedVideo?.id === mainVideo?.id) {
+      if (selectedVideo.id === mainVideo?.id) {
           if (aIsLoggedInGated && !bIsLoggedInGated) return -1;
           if (!aIsLoggedInGated && bIsLoggedInGated) return 1;
       }
@@ -120,7 +133,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                 scroll={false}
                 className="absolute inset-0 z-20"
               />
-              <PremiumWrapper videoId={video.id} videoUrl={video.videoUrl} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
+              <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
                  <VideoPlayer video={video} variant="thumbnail" />
               </PremiumWrapper>
               {video.duration && (
