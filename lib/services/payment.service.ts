@@ -124,6 +124,17 @@ export class PaymentService {
                 await this.fulfillPayment(intent);
                 break;
             }
+            case 'charge.refunded': {
+                const charge = event.data.object as Stripe.Charge;
+                await this.handleRefund(charge);
+                break;
+            }
+            case 'charge.dispute.created':
+            case 'charge.dispute.closed': {
+                const dispute = event.data.object as Stripe.Dispute;
+                await this.handleDispute(dispute);
+                break;
+            }
             case 'payment_intent.payment_failed': {
                 const intent = event.data.object as Stripe.PaymentIntent;
                 const { count } = await prisma.payment.updateMany({
@@ -164,6 +175,54 @@ export class PaymentService {
     }
   }
 
+  private static async handleRefund(charge: Stripe.Charge) {
+    const paymentId = charge.metadata?.paymentId;
+    if (!paymentId) return;
+
+    console.log(`[PaymentService] Handling refund for payment ${paymentId}`);
+
+    await prisma.$transaction(async (tx) => {
+        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+        if (!payment || payment.status === PaymentStatus.REFUNDED) return;
+
+        await tx.payment.update({
+            where: { id: paymentId },
+            data: { status: PaymentStatus.REFUNDED }
+        });
+
+        // Revoke associated grants
+        await tx.patronGrant.updateMany({
+            where: { paymentId: payment.id, revokedAt: null },
+            data: { revokedAt: new Date(), reason: 'Payment refunded' }
+        });
+
+        // Recalculate status
+        await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+    });
+  }
+
+  private static async handleDispute(dispute: Stripe.Dispute) {
+    // Find payment by stripeIntentId if it matches dispute.payment_intent
+    const stripeIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
+    if (!stripeIntentId) return;
+
+    const payment = await prisma.payment.findUnique({ where: { stripeIntentId } });
+    if (!payment) return;
+
+    console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
+
+    if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
+        await prisma.$transaction(async (tx) => {
+            // Revoke grants for lost disputes or as a precaution
+            await tx.patronGrant.updateMany({
+                where: { paymentId: payment.id, revokedAt: null },
+                data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
+            });
+            await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        });
+    }
+  }
+
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {
     const paymentId = intent.metadata.paymentId;
     const userId = intent.metadata.userId;
@@ -175,13 +234,19 @@ export class PaymentService {
 
     try {
       const { user, becamePatronNow } = await prisma.$transaction(async (tx) => {
-        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
-        if (!payment || payment.status === PaymentStatus.SUCCEEDED) return { user: null, becamePatronNow: false };
-
-        const updatedPayment = await tx.payment.update({
-          where: { id: paymentId },
-          data: { status: PaymentStatus.SUCCEEDED }
+        // Atomic update to prevent double fulfillment
+        const { count } = await tx.payment.updateMany({
+            where: { id: paymentId, status: PaymentStatus.PENDING },
+            data: { status: PaymentStatus.SUCCEEDED }
         });
+
+        if (count === 0) {
+            console.log(`[PaymentService] Payment ${paymentId} already fulfilled or not found.`);
+            return { user: null, becamePatronNow: false };
+        }
+
+        const updatedPayment = await tx.payment.findUnique({ where: { id: paymentId } });
+        if (!updatedPayment) throw new Error('PAYMENT_RECORD_LOST');
 
         const thresholdMinor = updatedPayment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
         const existingUser = await tx.user.findUnique({ where: { id: userId } });
