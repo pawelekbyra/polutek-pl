@@ -104,6 +104,9 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       return 0;
   });
 
+  let hasInjectedPatronHeader = false;
+  let hasInjectedMaterialsHeader = false;
+
   const playlistItems = sortedVideos.reduce((acc: any[], video, i) => {
       const isCurrent = video.id === selectedVideo.id;
       const isLoggedIn = !!userProfile;
@@ -112,6 +115,30 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       const hasAccess = video.tier === 'PUBLIC' ||
                         (video.tier === 'LOGGED_IN' && isLoggedIn) ||
                         (video.tier === 'PATRON' && isPatron);
+
+      // Inject Materials header at the very top if not searching
+      if (!searchQuery && !hasInjectedMaterialsHeader && video.tier !== 'PATRON') {
+          acc.push(
+              <div key="materials-header" className="pb-2">
+                  <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+                  </div>
+              </div>
+          );
+          hasInjectedMaterialsHeader = true;
+      }
+
+      // Inject Patron Zone header if we hit a Patron video
+      if (!searchQuery && !hasInjectedPatronHeader && video.tier === 'PATRON') {
+          acc.push(
+              <div key="patron-header" className="pt-4">
+                  <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+                  </div>
+              </div>
+          );
+          hasInjectedPatronHeader = true;
+      }
 
       acc.push(
           <div
@@ -201,13 +228,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
               />
           </div>
         );
-        acc.push(
-          <div key="patron-header" className="pt-4">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
-                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-              </div>
-          </div>
-        );
       }
 
       return acc;
@@ -284,13 +304,15 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
           </div>
 
           <aside className="hidden lg:block lg:col-span-4 space-y-2">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
-              <div className="flex items-center gap-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-                  {searchQuery ? (language === 'pl' ? 'Wyniki wyszukiwania' : 'Search Results') : t.materials}
-                </h3>
-              </div>
-            </div>
+            {searchQuery && (
+                <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-0">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
+                      {language === 'pl' ? 'Wyniki wyszukiwania' : 'Search Results'}
+                    </h3>
+                  </div>
+                </div>
+            )}
             {playlistItems.length > 0 ? (
                 <>
                   {playlistItems}
