@@ -1,5 +1,6 @@
 import React from 'react';
 import Footer from './components/Footer';
+import { PublicVideoDTO } from '@/app/types/video';
 import { ContentService } from '@/lib/services/content.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
@@ -22,7 +23,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   const creator = await ContentService.getCreatorBySlug('polutek');
 
   // Always show the standard video player view on homepage
-  let allVideos: any[] = [];
+  let allVideos: PublicVideoDTO[] = [];
   let mainVideo = null;
   let contentError = null;
 
@@ -31,7 +32,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     mainVideo = await ContentService.getMainFeaturedVideo();
   } catch (e: unknown) {
     console.error("[HOME_CONTENT_LOAD_ERROR]", e);
-    contentError = (e as Error).message || String(e);
+    contentError = ((e as Error).message || String(e)) || String(e);
   }
 
   const user = await currentUser();
