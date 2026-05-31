@@ -1,4 +1,4 @@
-import { AccessTier } from "@prisma/client";
+import { AccessTier, VideoStatus } from "@prisma/client";
 import { InternalVideoDTO as Video } from "@/app/types/video";
 
 export const DEFAULT_CREATOR = {
@@ -22,6 +22,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "10:00",
     tier: AccessTier.PUBLIC,
     isMainFeatured: false,
+    status: VideoStatus.PUBLISHED,
     views: 1250400,
     likesCount: 45000,
     dislikesCount: 120,
@@ -39,6 +40,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "04:12",
     tier: AccessTier.PUBLIC,
     isMainFeatured: true,
+    status: VideoStatus.PUBLISHED,
     views: 1250400,
     likesCount: 45000,
     dislikesCount: 120,
@@ -56,6 +58,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "15:30",
     tier: AccessTier.LOGGED_IN,
     isMainFeatured: false,
+    status: VideoStatus.PUBLISHED,
     views: 85000,
     likesCount: 12000,
     dislikesCount: 50,
@@ -73,6 +76,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "22:15",
     tier: AccessTier.PATRON,
     isMainFeatured: false,
+    status: VideoStatus.PUBLISHED,
     views: 15000,
     likesCount: 3000,
     dislikesCount: 10,
@@ -90,6 +94,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "45:00",
     tier: AccessTier.PATRON,
     isMainFeatured: false,
+    status: VideoStatus.PUBLISHED,
     views: 5000,
     likesCount: 1500,
     dislikesCount: 5,
@@ -107,6 +112,7 @@ export const INITIAL_VIDEOS: Video[] = [
     duration: "32:10",
     tier: AccessTier.PATRON,
     isMainFeatured: false,
+    status: VideoStatus.PUBLISHED,
     views: 12000,
     likesCount: 2500,
     dislikesCount: 15,

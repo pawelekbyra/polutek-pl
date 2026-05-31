@@ -1,4 +1,4 @@
-import { AccessTier } from "@prisma/client";
+import { AccessTier, VideoStatus } from "@prisma/client";
 
 export interface Creator {
   id: string;
@@ -26,6 +26,7 @@ export interface InternalVideoDTO {
   thumbnailUrl: string;
   duration?: string | null;
   tier: AccessTier;
+  status: VideoStatus;
   views: number;
   likesCount: number;
   dislikesCount: number;
@@ -60,6 +61,7 @@ export interface PublicVideoDTO {
   thumbnailUrl: string;
   duration?: string | null;
   tier: AccessTier;
+  status: VideoStatus;
   views: number;
   likesCount: number;
   dislikesCount: number;
