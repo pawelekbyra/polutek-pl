@@ -74,6 +74,11 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
           <p className="text-neutral-600 mb-8">
             Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
           </p>
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 inline-block">
+              Wskazówka: Ustaw <strong>ENABLE_DEMO_FALLBACKS=true</strong> w pliku .env, aby zobaczyć przykładowe materiały.
+            </div>
+          )}
         </main>
         <Footer />
       </div>
