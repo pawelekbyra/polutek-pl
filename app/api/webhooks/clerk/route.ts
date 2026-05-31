@@ -5,7 +5,75 @@ import { NextResponse } from 'next/server';
 import { UserService } from '@/lib/services/user.service';
 import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
-import { Prisma, StripeEventStatus } from '@prisma/client';
+import { Prisma, WebhookEventStatus } from '@prisma/client';
+import { shouldProcessClerkEvent } from '@/lib/webhooks/clerk-idempotency';
+
+type SupportedLanguage = 'pl' | 'en';
+type ClerkPublicMetadata = {
+  language?: unknown;
+  preferredLanguage?: unknown;
+  isPatron?: unknown;
+  role?: unknown;
+  totalPaid?: unknown;
+};
+type ClerkUnsafeMetadata = {
+  referrerId?: unknown;
+  language?: unknown;
+  preferredLanguage?: unknown;
+};
+
+type ClerkUserWebhookData = {
+  id?: string;
+  email_addresses?: Array<{ email_address?: string }>;
+  image_url?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  unsafe_metadata?: unknown;
+  public_metadata?: unknown;
+};
+
+function getUserWebhookData(data: unknown): ClerkUserWebhookData {
+  return getMetadataObject(data) as ClerkUserWebhookData;
+}
+
+function isSupportedLanguage(value: unknown): value is SupportedLanguage {
+  return value === 'pl' || value === 'en';
+}
+
+function getMetadataObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function getString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function resolveLanguage(publicMetadata: ClerkPublicMetadata, unsafeMetadata: ClerkUnsafeMetadata): SupportedLanguage {
+  const candidates = [
+    publicMetadata.language,
+    publicMetadata.preferredLanguage,
+    unsafeMetadata.language,
+    unsafeMetadata.preferredLanguage,
+  ];
+  return candidates.find(isSupportedLanguage) || 'pl';
+}
+
+function safeErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/(sk_(live|test)_[A-Za-z0-9_\-]+|whsec_[A-Za-z0-9_\-]+|Bearer\s+[A-Za-z0-9._\-]+)/g, '[redacted]').slice(0, 1000);
+}
+
+function getSafePayload(evt: WebhookEvent): Prisma.InputJsonValue {
+  const data = getMetadataObject(evt.data);
+  return {
+    type: evt.type,
+    data: {
+      id: getString(data.id),
+      user_id: getString(data.user_id),
+    },
+  };
+}
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -41,61 +109,59 @@ export async function POST(req: Request) {
   }
 
   const existingEvent = await prisma.clerkEvent.findUnique({ where: { id: svix_id } });
-  if (existingEvent?.status === StripeEventStatus.PROCESSED || existingEvent?.status === StripeEventStatus.PROCESSING) {
-    console.log(`[ClerkWebhook] Event ${svix_id} already received with status ${existingEvent.status}.`);
-    return NextResponse.json({ success: true });
+  if (!shouldProcessClerkEvent(existingEvent)) {
+    const duplicate = existingEvent?.status === WebhookEventStatus.PROCESSED;
+    const processing = existingEvent?.status === WebhookEventStatus.PROCESSING;
+    console.log(`[ClerkWebhook] Event ${svix_id} already received with status ${existingEvent?.status}.`);
+    return NextResponse.json({ success: true, duplicate, processing });
   }
 
   try {
-    if (existingEvent?.status === StripeEventStatus.FAILED) {
-      await prisma.clerkEvent.update({
-        where: { id: svix_id },
-        data: {
-          type: evt.type,
-          status: StripeEventStatus.PROCESSING,
-          error: null,
-          payload: evt as unknown as Prisma.InputJsonValue,
-        },
-      });
-    } else {
-      await prisma.clerkEvent.create({
-        data: {
-          id: svix_id,
-          type: evt.type,
-          status: StripeEventStatus.PROCESSING,
-          payload: evt as unknown as Prisma.InputJsonValue,
-        },
-      });
-    }
+    await prisma.clerkEvent.upsert({
+      where: { id: svix_id },
+      create: {
+        id: svix_id,
+        type: evt.type,
+        status: WebhookEventStatus.PROCESSING,
+        payload: getSafePayload(evt),
+      },
+      update: {
+        type: evt.type,
+        status: WebhookEventStatus.PROCESSING,
+        error: null,
+        payload: getSafePayload(evt),
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       console.log(`[ClerkWebhook] Event ${svix_id} was inserted concurrently; skipping duplicate.`);
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, processing: true });
     }
 
     throw error;
   }
 
   try {
-    const eventType = evt.type;
+    const eventType: string = evt.type;
 
     if (eventType === 'user.created' || eventType === 'user.updated') {
-      const { id, email_addresses, image_url, first_name, last_name, username, unsafe_metadata, public_metadata } = evt.data;
+      const userData = getUserWebhookData(evt.data);
+      const { id, email_addresses = [], image_url, first_name, last_name, username } = userData;
+      const unsafeMetadata = getMetadataObject(userData.unsafe_metadata) as ClerkUnsafeMetadata;
+      const publicMetadata = getMetadataObject(userData.public_metadata) as ClerkPublicMetadata;
       const email = email_addresses[0]?.email_address;
       const name = `${first_name || ''} ${last_name || ''}`.trim() || null;
-      const referrerId = unsafe_metadata?.referrerId as string | undefined;
-
-      // Extract language from metadata (public takes precedence, then unsafe, then default 'en')
-      const userLanguage = (public_metadata?.language || public_metadata?.preferredLanguage || unsafe_metadata?.language || unsafe_metadata?.preferredLanguage || 'en') as string;
+      const referrerId = getString(unsafeMetadata.referrerId);
+      const userLanguage = resolveLanguage(publicMetadata, unsafeMetadata);
 
       if (id && email) {
-        const user = await UserService.syncUser(id, email, name, image_url, referrerId, userLanguage, username);
+        const user = await UserService.syncUser(id, email, name, image_url, referrerId, userLanguage, username || undefined);
         console.log(`User ${id} synced via webhook. Referrer: ${referrerId || 'None'}, Language: ${userLanguage}`);
 
         if (eventType === 'user.created') {
           console.log(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
           // Send welcome email without blocking Clerk webhook delivery.
-          EmailService.sendWelcomeEmail(email, user.language as 'pl' | 'en' || 'pl').catch((error) => {
+          EmailService.sendWelcomeEmail(email, isSupportedLanguage(user.language) ? user.language : 'pl').catch((error) => {
             console.error('[ClerkWebhook] Failed to send welcome email:', error);
           });
         }
@@ -117,22 +183,22 @@ export async function POST(req: Request) {
             }
 
             if (user && user.email && !user.email.startsWith('deleted_')) {
-                await EmailService.sendAccountDeletedEmail(user.email, user.language as 'pl' | 'en' || 'pl');
+                await EmailService.sendAccountDeletedEmail(user.email, isSupportedLanguage(user.language) ? user.language : 'pl');
             }
         }
     }
 
     // Use the dedicated password update event if configured in Clerk
-    if (eventType as string === 'password.updated') {
-        const data = evt.data as { user_id?: string };
-        const userId = data.user_id;
+    if (eventType === 'password.updated') {
+        const data = getMetadataObject(evt.data);
+        const userId = getString(data.user_id);
         if (userId) {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 select: { email: true, language: true }
             });
             if (user?.email) {
-                await EmailService.sendPasswordChangedEmail(user.email, user.language as 'pl' | 'en' || 'pl');
+                await EmailService.sendPasswordChangedEmail(user.email, isSupportedLanguage(user.language) ? user.language : 'pl');
             }
         }
     }
@@ -140,8 +206,9 @@ export async function POST(req: Request) {
     await prisma.clerkEvent.update({
       where: { id: svix_id },
       data: {
-        status: StripeEventStatus.PROCESSED,
+        status: WebhookEventStatus.PROCESSED,
         processedAt: new Date(),
+        error: null,
       },
     });
 
@@ -151,8 +218,8 @@ export async function POST(req: Request) {
     await prisma.clerkEvent.update({
       where: { id: svix_id },
       data: {
-        status: StripeEventStatus.FAILED,
-        error: error instanceof Error ? error.message : String(error),
+        status: WebhookEventStatus.FAILED,
+        error: safeErrorMessage(error),
       },
     });
     return NextResponse.json({ success: false }, { status: 500 });

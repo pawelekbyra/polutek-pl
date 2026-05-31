@@ -7,6 +7,7 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
+import { isAllowedMediaUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,19 +15,7 @@ const postCommentSchema = z.object({
   videoId: z.string(),
   text: z.string().trim().min(1).max(2000).optional(),
   parentId: z.string().optional().nullable(),
-  imageUrl: z.string().url().refine((url) => {
-    try {
-      const { hostname } = new URL(url);
-      const allowed = [
-        process.env.MEDIA_BUCKET_HOST,
-        process.env.NEXT_PUBLIC_R2_PUBLIC_HOST,
-        'public.blob.vercel-storage.com',
-      ].filter(Boolean) as string[];
-      return allowed.some(h => hostname === h || hostname.endsWith(`.${h}`));
-    } catch {
-      return false;
-    }
-  }, "Zablokowany host obrazka").optional().nullable(),
+  imageUrl: z.string().url().refine((url) => isAllowedMediaUrl(url), "Zablokowany host obrazka").optional().nullable(),
 }).refine(data => data.text || data.imageUrl, {
   message: "Treść komentarza lub obrazek jest wymagany",
   path: ["text"]
@@ -53,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
       const authData = await auth();
       userId = authData.userId;
-  } catch (e) {}
+  } catch {}
 
   // Access control check
   const decision = await AccessPolicy.canViewVideo(userId, videoId);
@@ -130,7 +119,7 @@ export async function GET(request: NextRequest) {
 
     const commentsWithStatus = comments.map(c => {
         const isDeleted = !!c.deletedAt;
-        const replies = c.replies.map((r: any) => ({
+        const replies = c.replies.map((r) => ({
             ...r,
             text: r.deletedAt ? "Komentarz usunięty" : r.text,
             author: r.deletedAt ? null : r.author,
@@ -162,7 +151,7 @@ export async function POST(request: NextRequest) {
   try {
       const authData = await auth();
       userId = authData.userId;
-  } catch (e) {
+  } catch {
       return NextResponse.json({
           success: false,
           error: "CLERK_ERROR",
@@ -258,7 +247,7 @@ export async function DELETE(request: NextRequest) {
     try {
         const authData = await auth();
         userId = authData.userId;
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
     }
 

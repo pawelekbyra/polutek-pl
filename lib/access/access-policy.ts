@@ -1,6 +1,23 @@
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { flags } from '../feature-flags';
+
+
+type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
+  id: string;
+  tier: AccessTier;
+  status: VideoStatus;
+  publishedAt: Date | null;
+};
+
+function mapFallbackVideoToAccessVideo(fallback: { id: string; tier?: AccessTier; status?: VideoStatus; publishedAt?: Date | string | null }): AccessVideo {
+  return {
+    id: fallback.id,
+    tier: fallback.tier ?? AccessTier.PUBLIC,
+    status: fallback.status ?? VideoStatus.PUBLISHED,
+    publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : new Date(0),
+  };
+}
 
 export type AccessDecision = {
   allowed: boolean;
@@ -16,7 +33,7 @@ export type AccessDecision = {
 
 export class AccessPolicy {
   static async canViewVideo(userId: string | null | undefined, videoId: string): Promise<AccessDecision> {
-    let video = await prisma.video.findUnique({
+    let video: AccessVideo | null = await prisma.video.findUnique({
       where: { id: videoId },
       include: { creator: true }
     });
@@ -26,7 +43,7 @@ export class AccessPolicy {
         const { INITIAL_VIDEOS } = await import('../data/initial-content');
         const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);
         if (fallback) {
-            video = fallback as any;
+            video = mapFallbackVideoToAccessVideo(fallback);
         }
     }
 

@@ -2,33 +2,46 @@ import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 
-const DEFAULT_ALLOWED_MEDIA_HOSTS = [
-    'public.blob.vercel-storage.com',
-    'vercel-storage.com',
-    'r2.cloudflarestorage.com',
-    'r2.dev',
-    'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev',
-];
+type MediaHostEnv = Record<string, string | undefined>;
 
-const ALLOWED_MEDIA_HOSTS = [
-    ...DEFAULT_ALLOWED_MEDIA_HOSTS,
-    ...[process.env.MEDIA_BUCKET_HOST, process.env.NEXT_PUBLIC_R2_PUBLIC_HOST]
-        .filter((host): host is string => !!host)
-        .map(host => host.trim().toLowerCase())
-        .filter(Boolean),
-    ...(process.env.MEDIA_PROXY_ALLOWED_HOSTS || '')
+export function parseMediaHosts(value?: string | null): string[] {
+    if (!value) return [];
+
+    return value
         .split(',')
-        .map(host => host.trim().toLowerCase())
-        .filter(Boolean),
-];
+        .map((host) => host.trim().toLowerCase())
+        .filter(Boolean)
+        .map((host) => {
+            try {
+                return new URL(host).hostname.toLowerCase();
+            } catch {
+                return host.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+            }
+        })
+        .filter(Boolean);
+}
 
-function isHostAllowed(url: string) {
+export function getAllowedMediaHosts(env: MediaHostEnv = process.env) {
+    return new Set([
+        ...parseMediaHosts(env.MEDIA_BUCKET_HOST),
+        ...parseMediaHosts(env.NEXT_PUBLIC_R2_PUBLIC_HOST),
+        ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
+        ...parseMediaHosts(env.ALLOWED_MEDIA_HOSTS),
+    ]);
+}
+
+export function isAllowedMediaUrl(rawUrl: string, env: MediaHostEnv = process.env) {
+    let url: URL;
+
     try {
-        const { hostname } = new URL(url);
-        return ALLOWED_MEDIA_HOSTS.includes(hostname.toLowerCase());
+        url = new URL(rawUrl);
     } catch {
         return false;
     }
+
+    if (url.protocol !== 'https:') return false;
+
+    return getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
 }
 
 function getValidatedRange(headers?: Headers) {
@@ -48,6 +61,16 @@ function getValidatedRange(headers?: Headers) {
     return { error: false as const, value: `bytes=${startRaw}-${endRaw}` };
 }
 
+function isConfiguredVercelBlobUrl(rawUrl: string) {
+    try {
+        const hostname = new URL(rawUrl).hostname.toLowerCase();
+        const blobHosts = new Set(parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST));
+        return blobHosts.has(hostname);
+    } catch {
+        return false;
+    }
+}
+
 /**
  * Serves a private Vercel Blob or external file as a gated stream.
  */
@@ -63,8 +86,13 @@ export async function getGatedBlobResponse(
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  if (!isHostAllowed(blobUrl)) {
-    console.error(`[MediaProxy] Blocked unauthorized host: ${blobUrl}`);
+  if (!isAllowedMediaUrl(blobUrl)) {
+    try {
+      const hostname = new URL(blobUrl).hostname.toLowerCase();
+      console.error(`[MediaProxy] Blocked unauthorized media host: ${hostname}`);
+    } catch {
+      console.error('[MediaProxy] Blocked malformed media URL.');
+    }
     return new NextResponse('Unauthorized Media Host', { status: 403 });
   }
 
@@ -74,7 +102,7 @@ export async function getGatedBlobResponse(
   }
 
   try {
-    const isVercelBlob = blobUrl.includes('public.blob.vercel-storage.com') || blobUrl.includes('vercel-storage.com');
+    const isVercelBlob = isConfiguredVercelBlobUrl(blobUrl);
     let targetUrl = blobUrl;
 
     if (isVercelBlob) {
@@ -85,14 +113,15 @@ export async function getGatedBlobResponse(
         targetUrl = result.blob.url;
     }
 
-    console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range?.value || 'none'})`);
+    const targetHost = new URL(targetUrl).hostname.toLowerCase();
+    console.log(`[MediaProxy] Fetching configured media host: ${targetHost} (Range: ${range?.value || 'none'})`);
 
     const response = await fetch(targetUrl, {
         headers: range?.value ? { Range: range.value } : {}
     });
 
     if (!response.ok && response.status !== 206) {
-        console.error(`[MediaProxy] Upstream error: ${response.status} ${response.statusText} for ${targetUrl}`);
+        console.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText} from ${targetHost}`);
       return new NextResponse('Error fetching content', { status: response.status });
     }
 
@@ -108,7 +137,7 @@ export async function getGatedBlobResponse(
       headers: resHeaders,
     });
   } catch (error) {
-    console.error('Error accessing gated Blob:', error);
+    console.error('Error accessing gated media:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
