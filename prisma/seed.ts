@@ -1,8 +1,12 @@
-import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/client';
+import { PrismaClient, SystemRole, VideoStatus } from '@prisma/client';
+import { createSeedVideosData, DEFAULT_SEED_MEDIA_URL, DEFAULT_SEED_THUMBNAIL_URL } from './seed-data';
 
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
+const SEED_MEDIA_URL = process.env.SEED_MEDIA_URL || DEFAULT_SEED_MEDIA_URL;
+const SEED_THUMBNAIL_URL = process.env.SEED_THUMBNAIL_URL || DEFAULT_SEED_THUMBNAIL_URL;
+const SEED_BANNER_URL = process.env.SEED_BANNER_URL || null;
 
 async function main() {
   console.log('Starting seeding...');
@@ -28,7 +32,7 @@ async function main() {
     update: {
       name: 'POLUTEK.PL',
       bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+      bannerUrl: SEED_BANNER_URL,
       subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
@@ -38,7 +42,7 @@ async function main() {
       slug: 'polutek',
       name: 'POLUTEK.PL',
       bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+      bannerUrl: SEED_BANNER_URL,
       subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
@@ -46,73 +50,7 @@ async function main() {
   });
 
   // 3. Define Videos
-  const videosData = [
-    {
-      title: 'Wuthering Heights - Kate Bush Cover',
-      slug: 'wuthering-heights-cover',
-      description: 'Moja interpretacja klasycznego utworu Kate Bush. Nagrane w jednym ujęciu, aby oddać surowość i emocje tej kompozycji.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: '/wuthering.jpg',
-      duration: '04:12',
-      tier: AccessTier.PUBLIC,
-      isMainFeatured: true,
-      views: 1250400,
-      likesCount: 45000,
-      dislikesCount: 120,
-    },
-    {
-      title: 'Nie masz psychy się zalogować',
-      slug: 'independency-2024',
-      description: 'W tym odcinku analizuję, dlaczego twórcy muszą szukać alternatywnych dróg finansowania poza wielkimi korporacjami.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4', // Reusing asset for seed
-      thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2659&auto=format&fit=crop',
-      duration: '15:30',
-      tier: AccessTier.LOGGED_IN,
-      isMainFeatured: false,
-      views: 85000,
-      likesCount: 12000,
-      dislikesCount: 50,
-    },
-    {
-      title: 'Mój setup do nagrywania śledztw',
-      slug: 'setup-tour',
-      description: 'Pokazuję sprzęt, którego używam do tworzenia moich materiałów. Od kamer po mikrofony i oświetlenie.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2670&auto=format&fit=crop',
-      duration: '22:15',
-      tier: AccessTier.PATRON,
-      isMainFeatured: false,
-      views: 15000,
-      likesCount: 3000,
-      dislikesCount: 10,
-    },
-    {
-      title: 'Niepublikowane materiały z ostatniego śledztwa',
-      slug: 'unreleased-investigation',
-      description: 'Tylko dla Patronów. Nagrania, które nie weszły do głównego materiału ze względu na ich kontrowersyjną naturę.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2670&auto=format&fit=crop',
-      duration: '45:00',
-      tier: AccessTier.PATRON,
-      isMainFeatured: false,
-      views: 5000,
-      likesCount: 1500,
-      dislikesCount: 5,
-    },
-    {
-      title: 'Q&A: Odpowiedzi na Wasze najtrudniejsze pytania',
-      slug: 'qa-session-1',
-      description: 'Odpowiadam na pytania przesłane przez moich wspierających. Nic nie jest poza granicami.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2670&auto=format&fit=crop',
-      duration: '32:10',
-      tier: AccessTier.PATRON,
-      isMainFeatured: false,
-      views: 12000,
-      likesCount: 2500,
-      dislikesCount: 15,
-    }
-  ];
+  const videosData = createSeedVideosData({ mediaUrl: SEED_MEDIA_URL, thumbnailUrl: SEED_THUMBNAIL_URL });
 
   for (const v of videosData) {
     await prisma.video.upsert({

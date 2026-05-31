@@ -23,7 +23,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
 
   // Always show the standard video player view on homepage
   const allVideos = (await ContentService.getAllVideos()) || [];
-  const mainVideo = await ContentService.getMainFeaturedVideo();
+  const featuredVideo = await ContentService.getMainFeaturedVideo();
+  const mainVideo = featuredVideo || allVideos[0] || null;
 
   const user = await currentUser();
 
@@ -86,7 +87,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
           mainVideo={mainVideo}
           allVideos={allVideos}
           currentVideoId={videoId}
-          userProfile={userProfile as any}
+          userProfile={userProfile}
         />
       </main>
       <Footer />

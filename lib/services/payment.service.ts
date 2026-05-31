@@ -3,7 +3,86 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
-import { PaymentStatus, PatronGrantSource, StripeEventStatus, Prisma } from '@prisma/client';
+import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
+
+
+type RefundCalculationInput = {
+  amountMinor: number;
+  refundedAmountMinor?: number | null;
+};
+
+export function calculateRefundAdjustment(payment: RefundCalculationInput, reportedRefundedMinor: number) {
+  const previousRefunded = Math.max(0, payment.refundedAmountMinor ?? 0);
+  const cappedRefunded = Math.max(0, Math.min(reportedRefundedMinor, payment.amountMinor));
+  const deltaRefundMinor = Math.max(0, cappedRefunded - previousRefunded);
+  const status = cappedRefunded >= payment.amountMinor
+    ? PaymentStatus.REFUNDED
+    : cappedRefunded > 0
+      ? PaymentStatus.PARTIALLY_REFUNDED
+      : undefined;
+
+  return {
+    previousRefunded,
+    newRefundedAmountMinor: cappedRefunded,
+    deltaRefundMinor,
+    isFullRefund: cappedRefunded >= payment.amountMinor,
+    status,
+  };
+}
+
+
+export function calculateChargebackAdjustment(payment: RefundCalculationInput) {
+  const refundedAmountMinor = Math.max(0, Math.min(payment.refundedAmountMinor ?? 0, payment.amountMinor));
+  return {
+    refundedAmountMinor,
+    remainingNetMinor: Math.max(0, payment.amountMinor - refundedAmountMinor),
+  };
+}
+
+function normalizePaymentTotals(paymentTotals: Array<{ currency: string; amountMinor: number }>) {
+  const totalPLN = paymentTotals.find(t => t.currency === 'PLN')?.amountMinor || 0;
+  const totalEUR = paymentTotals.find(t => t.currency === 'EUR')?.amountMinor || 0;
+  return (totalPLN / 100) + (totalEUR / 100 * 4.3);
+}
+
+async function decrementUserNetPaymentTotals(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  currency: string,
+  deltaMinor: number,
+) {
+  if (deltaMinor <= 0) return;
+
+  const [user, total] = await Promise.all([
+    tx.user.findUnique({ where: { id: userId }, select: { totalPaidMinor: true } }),
+    tx.userPaymentTotal.findUnique({ where: { userId_currency: { userId, currency } }, select: { amountMinor: true } }),
+  ]);
+
+  if (user) {
+    await tx.user.update({
+      where: { id: userId },
+      data: { totalPaidMinor: Math.max(0, user.totalPaidMinor - deltaMinor) },
+    });
+  }
+
+  if (total) {
+    await tx.userPaymentTotal.update({
+      where: { userId_currency: { userId, currency } },
+      data: { amountMinor: Math.max(0, total.amountMinor - deltaMinor) },
+    });
+  }
+}
+
+
+function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
+  return {
+    id: event.id,
+    type: event.type,
+    created: event.created,
+    livemode: event.livemode,
+    object: event.object,
+  };
+}
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -111,12 +190,12 @@ export class PaymentService {
     // Idempotency check
     const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
     if (existingEvent) {
-        if (existingEvent.status === StripeEventStatus.PROCESSED) {
+        if (existingEvent.status === WebhookEventStatus.PROCESSED) {
             console.log(`[PaymentService] Event ${event.id} already processed.`);
             return;
         }
 
-        if (existingEvent.status === StripeEventStatus.PROCESSING) {
+        if (existingEvent.status === WebhookEventStatus.PROCESSING) {
             const STALE_PROCESSING_MINUTES = 10;
             const now = new Date();
             const updatedAt = existingEvent.updatedAt || now;
@@ -140,11 +219,11 @@ export class PaymentService {
         create: {
             id: event.id,
             type: event.type,
-            status: StripeEventStatus.PROCESSING,
-            payload: event as unknown as Prisma.InputJsonValue
+            status: WebhookEventStatus.PROCESSING,
+            payload: getSafeStripeEventPayload(event)
         },
         update: {
-            status: StripeEventStatus.PROCESSING,
+            status: WebhookEventStatus.PROCESSING,
             error: null
         }
     });
@@ -192,17 +271,17 @@ export class PaymentService {
         await prisma.stripeEvent.update({
             where: { id: event.id },
             data: {
-                status: StripeEventStatus.PROCESSED,
+                status: WebhookEventStatus.PROCESSED,
                 processedAt: new Date()
             }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error(`[PaymentService] Error handling event ${event.id}:`, error);
         await prisma.stripeEvent.update({
             where: { id: event.id },
             data: {
-                status: StripeEventStatus.FAILED,
-                error: error.message || String(error)
+                status: WebhookEventStatus.FAILED,
+                error: error instanceof Error ? error.message : String(error)
             }
         });
         throw error; // Throw so Stripe can retry
@@ -215,7 +294,7 @@ export class PaymentService {
       ? charge.payment_intent
       : charge.payment_intent?.id;
 
-    console.log(`[PaymentService] Handling refund. paymentId=${paymentId}, intentId=${stripeIntentId}`);
+    console.log(`[PaymentService] Handling refund. paymentId=${paymentId || 'none'}, intentId=${stripeIntentId || 'none'}`);
 
     return await prisma.$transaction(async (tx) => {
         const payment = paymentId
@@ -224,19 +303,32 @@ export class PaymentService {
             ? await tx.payment.findUnique({ where: { stripeIntentId } })
             : null;
 
-        if (!payment || payment.status === PaymentStatus.REFUNDED) return null;
+        if (!payment) return null;
 
-        const refundedMinor = charge.amount_refunded || 0;
-        const isFullRefund = refundedMinor >= payment.amountMinor || (charge.refunded && refundedMinor >= charge.amount);
+        const reportedRefundedMinor = charge.amount_refunded || 0;
+        const refund = calculateRefundAdjustment(payment, reportedRefundedMinor);
+
+        if (!refund.status) return null;
 
         await tx.payment.update({
             where: { id: payment.id },
-            data: { status: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED }
+            data: {
+                refundedAmountMinor: refund.newRefundedAmountMinor,
+                status: refund.status,
+            }
         });
 
-        if (!isFullRefund) {
-            console.log(`[PaymentService] Payment ${payment.id} partially refunded (${refundedMinor}/${payment.amountMinor}); retaining grants.`);
-            return null;
+        await decrementUserNetPaymentTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
+
+        if (!refund.isFullRefund) {
+            console.log(`[PaymentService] Payment ${payment.id} partially refunded (${refund.newRefundedAmountMinor}/${payment.amountMinor}); retaining grants.`);
+            const user = await tx.user.findUnique({
+                where: { id: payment.userId },
+                include: { paymentTotals: true },
+            });
+            return user
+                ? { userId: payment.userId, isPatron: user.isPatron, normalizedTotal: normalizePaymentTotals(user.paymentTotals) }
+                : null;
         }
 
         // Revoke associated grants only after a full refund.
@@ -245,11 +337,11 @@ export class PaymentService {
             data: { revokedAt: new Date(), reason: 'Payment fully refunded' }
         });
 
-        // Recalculate status
+        // Recalculate status after grant revocation and total correction.
         const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
         return { userId: payment.userId, isPatron, normalizedTotal };
     });
-  }
+}
 
   private static async handleDispute(dispute: Stripe.Dispute) {
     const stripeIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
@@ -262,16 +354,29 @@ export class PaymentService {
 
     if (dispute.status === 'lost') {
         return await prisma.$transaction(async (tx) => {
+            const currentPayment = await tx.payment.findUnique({ where: { id: payment.id } });
+            if (!currentPayment) return null;
+
+            if (currentPayment.status === PaymentStatus.CHARGEBACK_LOST) {
+                const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(currentPayment.userId, tx);
+                return { userId: currentPayment.userId, isPatron, normalizedTotal };
+            }
+
+            const chargeback = calculateChargebackAdjustment(currentPayment);
+
             await tx.payment.update({
-                where: { id: payment.id },
+                where: { id: currentPayment.id },
                 data: { status: PaymentStatus.CHARGEBACK_LOST }
             });
+
+            await decrementUserNetPaymentTotals(tx, currentPayment.userId, currentPayment.currency, chargeback.remainingNetMinor);
+
             await tx.patronGrant.updateMany({
-                where: { paymentId: payment.id, revokedAt: null },
+                where: { paymentId: currentPayment.id, revokedAt: null },
                 data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
             });
-            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
-            return { userId: payment.userId, isPatron, normalizedTotal };
+            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(currentPayment.userId, tx);
+            return { userId: currentPayment.userId, isPatron, normalizedTotal };
         });
     }
 

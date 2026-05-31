@@ -66,6 +66,26 @@ npx prisma migrate deploy
 ```
 *Note: Production deployments must use `prisma migrate deploy` to ensure database schema consistency. Hard delete of production data is discouraged; prefer status updates (e.g., `VideoStatus.ARCHIVED`).*
 
+
+### Local content bootstrap: making the homepage show materials
+The homepage reads real database videos through `ContentService.getAllVideos()` and `getMainFeaturedVideo()`. Demo fallback data remains opt-in and non-production only: set `ENABLE_DEMO_FALLBACKS=true` only for local/demo development if you intentionally want in-memory demo content.
+
+Recommended local flow:
+
+```bash
+npm ci
+npx prisma generate
+npx prisma migrate dev
+npm run db:seed
+npm run dev
+```
+
+`npm run db:seed` creates the `polutek` creator as approved/primary and creates published videos with `publishedAt` set, including one main featured public video. To make seeded videos playable through the hardened media proxy, configure `SEED_MEDIA_URL` to an HTTPS URL on an exact host listed in `ALLOWED_MEDIA_HOSTS`/`MEDIA_BUCKET_HOST`/`NEXT_PUBLIC_R2_PUBLIC_HOST`/`NEXT_PUBLIC_BLOB_PUBLIC_HOST`. Without that, the seeded records are still visible on the homepage for development, but playback is intentionally blocked by the media proxy until a controlled media host is configured.
+
+Admin-created videos appear on the homepage when they are saved with status `PUBLISHED`. The backend sets `publishedAt` automatically for newly published videos and attaches new videos to an approved creator; `DRAFT` and `ARCHIVED` videos remain hidden publicly.
+
+Use `npx prisma db push` only for local prototyping. Production deployments must use `npx prisma migrate deploy`.
+
 ### Testing
 Run unit tests with Vitest:
 ```bash
@@ -86,3 +106,46 @@ npm test
 
 ## Legal
 The platform operates on a donation basis. All "Tips" or "Donations" are voluntary contributions to the creator, not payments for services or products. Detailed terms are available on the `/regulamin` page.
+
+## Production hardening requirements
+
+### Rate limiting
+`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required in production. If either value is missing with `NODE_ENV=production`, the application fails fast instead of falling back to an in-memory limiter. The in-memory limiter exists only for local development and tests because serverless memory is per-instance and resets on cold starts.
+
+`/api/media/:videoId` is rate-limited per authenticated user (or client IP for guests) and per media id. The limit is intentionally higher than comment limits to allow normal video player `Range` requests while still bounding streaming costs.
+
+### Media host allowlist
+The media proxy is not a generic image or URL proxy. It accepts only exact HTTPS hosts configured through:
+
+```env
+MEDIA_BUCKET_HOST=
+NEXT_PUBLIC_R2_PUBLIC_HOST=
+NEXT_PUBLIC_BLOB_PUBLIC_HOST=
+ALLOWED_MEDIA_HOSTS=
+```
+
+Configure concrete bucket/CDN hosts such as `my-bucket.example.r2.dev` or `media.example.com`; do not configure broad provider domains such as `r2.dev`, `r2.cloudflarestorage.com`, or `vercel-storage.com`. Subdomains are not implicitly trusted—add each required host explicitly.
+
+### Refund and dispute policy
+Payments store `refundedAmountMinor` so refund webhooks are idempotent by amount. A repeated Stripe refund event does not subtract totals twice.
+
+- Partial refund: payment status becomes `PARTIALLY_REFUNDED`, `User.totalPaidMinor` and `UserPaymentTotal.amountMinor` are reduced to net paid totals, and patron grants are retained.
+- Full refund: payment status becomes `REFUNDED`, net totals are reduced, and patron grants tied to that payment are revoked.
+- Lost chargeback/dispute: payment status becomes `CHARGEBACK_LOST`, remaining net payment totals are reduced, and patron grants tied to that payment are revoked.
+
+Clerk `publicMetadata.totalPaid` is synchronized from net normalized payment totals after refund/dispute handling.
+
+### Clerk webhook idempotency
+`ClerkEvent` records webhook delivery ids and prevents duplicate side effects. `PROCESSED` events are skipped, `FAILED` events can be retried, and `PROCESSING` events are retried after a five-minute staleness timeout so a crashed worker cannot block an event forever.
+
+### Production deploy order
+Use this order for deployments:
+
+```bash
+npm ci
+npx prisma generate
+npx prisma migrate deploy
+npm run build
+```
+
+Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, Upstash Redis REST URL/token, exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.

@@ -4,6 +4,19 @@ import { getGatedBlobResponse } from '@/lib/blob';
 import { prisma } from '@/lib/prisma';
 import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
+import { rateLimit } from '@/lib/rate-limit';
+import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
+
+function rateLimitedResponse() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'RATE_LIMITED',
+      message: 'Za dużo żądań. Spróbuj ponownie za chwilę.',
+    },
+    { status: 429 },
+  );
+}
 
 export async function GET(
   req: NextRequest,
@@ -17,6 +30,16 @@ export async function GET(
 
   if (!videoId) {
     return NextResponse.json({ error: 'Bad Request: videoId is required' }, { status: 400 });
+  }
+
+  const mediaRateLimit = await rateLimit({
+    key: buildMediaRateLimitKey({ userId, ip: getMediaClientIp(req), mediaId: videoId }),
+    limit: 240,
+    windowMs: 60_000,
+  });
+
+  if (!mediaRateLimit.success) {
+    return rateLimitedResponse();
   }
 
   const video = await prisma.video.findUnique({
@@ -45,6 +68,6 @@ export async function GET(
     return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers);
   }
 
-  // Securely stream the gated content from Vercel Blob
+  // Securely stream the gated content from configured media storage
   return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
 }

@@ -1,9 +1,64 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, Creator, Video, VideoStatus } from '@prisma/client';
+import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 import { flags } from '../feature-flags';
+
+
+
+export function buildPublishedVideoWhere(now = new Date()): Prisma.VideoWhereInput {
+  return {
+    status: VideoStatus.PUBLISHED,
+    OR: [
+      { publishedAt: null },
+      { publishedAt: { lte: now } },
+    ],
+  };
+}
+
+export function buildVisibleVideoWhere(now = new Date()): Prisma.VideoWhereInput {
+  return {
+    ...buildPublishedVideoWhere(now),
+    creator: {
+      isApproved: true,
+    },
+  };
+}
+
+export function buildMainFeaturedVideoWhere(now = new Date()): Prisma.VideoWhereInput {
+  return {
+    ...buildVisibleVideoWhere(now),
+    isMainFeatured: true,
+  };
+}
+
+type PublicCreatorInput = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+  user?: { imageUrl?: string | null } | null;
+  subscribersCount?: number | null;
+};
+
+type PublicVideoInput = {
+  id: string;
+  creatorId?: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  thumbnailUrl: string;
+  duration?: string | null;
+  tier: AccessTier;
+  status?: VideoStatus;
+  views?: number;
+  likesCount?: number;
+  dislikesCount?: number;
+  isMainFeatured?: boolean;
+  publishedAt?: Date | string | null;
+  creator?: PublicCreatorInput | null;
+};
 
 export class ContentService {
   /**
@@ -74,7 +129,7 @@ export class ContentService {
   /**
    * Maps a database creator to a PublicCreatorDTO.
    */
-  private static mapToPublicCreatorDTO(creator: any): PublicCreatorDTO {
+  private static mapToPublicCreatorDTO(creator: PublicCreatorInput): PublicCreatorDTO {
     return {
         id: creator.id,
         name: creator.name,
@@ -87,22 +142,22 @@ export class ContentService {
   /**
    * Maps a database video to a PublicVideoDTO.
    */
-  private static mapToPublicVideoDTO(video: any): PublicVideoDTO {
+  private static mapToPublicVideoDTO(video: PublicVideoInput): PublicVideoDTO {
     return {
         id: video.id,
-        creatorId: video.creatorId,
+        creatorId: video.creatorId ?? '',
         title: video.title,
         slug: video.slug,
         description: video.description,
         thumbnailUrl: video.thumbnailUrl,
         duration: video.duration,
         tier: video.tier,
-        status: video.status,
-        views: video.views,
-        likesCount: video.likesCount,
-        dislikesCount: video.dislikesCount,
-        isMainFeatured: video.isMainFeatured,
-        publishedAt: video.publishedAt,
+        status: video.status ?? VideoStatus.PUBLISHED,
+        views: video.views ?? 0,
+        likesCount: video.likesCount ?? 0,
+        dislikesCount: video.dislikesCount ?? 0,
+        isMainFeatured: video.isMainFeatured ?? false,
+        publishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
         creator: video.creator ? this.mapToPublicCreatorDTO(video.creator) : undefined,
     };
   }
@@ -120,7 +175,11 @@ export class ContentService {
             select: { imageUrl: true, email: true }
           },
           videos: {
-            orderBy: { createdAt: 'desc' }
+            where: buildPublishedVideoWhere(),
+            orderBy: [
+              { publishedAt: 'desc' },
+              { createdAt: 'desc' },
+            ]
           }
         }
       });
@@ -129,7 +188,7 @@ export class ContentService {
 
       if (slug === 'polutek' && creator) {
         // Map data strictly to prevent leakage
-        const videos = (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }));
+        const videos = (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator }));
 
         return {
             id: creator.id,
@@ -154,7 +213,7 @@ export class ContentService {
             bio: DEFAULT_CREATOR.bio,
             userId: undefined,
             subscribersCount: 1250000,
-            videos: (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v))
+            videos: INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v))
         };
       }
 
@@ -169,7 +228,7 @@ export class ContentService {
           bio: creator.bio,
           userId: creator.userId,
           subscribersCount: creator.subscribersCount || 0,
-          videos: (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }))
+          videos: (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator }))
       };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
@@ -231,10 +290,7 @@ export class ContentService {
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({
-        where: {
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
-        },
+        where: buildVisibleVideoWhere(),
         include: {
           creator: {
             include: {
@@ -244,16 +300,19 @@ export class ContentService {
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: [
+          { publishedAt: 'desc' },
+          { createdAt: 'desc' },
+        ]
       });
 
       if (videos.length === 0 && flags.demoFallbacks) {
-          return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
+          return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
       }
       return videos.map(v => this.mapToPublicVideoDTO(v));
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      if (flags.demoFallbacks) return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
+      if (flags.demoFallbacks) return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
       return [];
     }
   }
@@ -264,11 +323,7 @@ export class ContentService {
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
       const video = await prisma.video.findFirst({
-        where: {
-            isMainFeatured: true,
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
-        },
+        where: buildMainFeaturedVideoWhere(),
         include: {
           creator: {
             include: {

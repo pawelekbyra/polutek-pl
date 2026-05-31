@@ -92,17 +92,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
-        let creator = await tx.creator.findFirst();
+        let creator = await tx.creator.findFirst({
+          where: { isApproved: true },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        });
         if (!creator) {
           const user = await tx.user.findFirst({ where: { email: ADMIN_EMAIL } });
           if (!user) throw new Error('Admin user not found in DB.');
 
-          creator = await tx.creator.create({
-            data: {
+          creator = await tx.creator.upsert({
+            where: { slug: "polutek" },
+            update: {
+              isApproved: true,
+              isPrimary: true,
+            },
+            create: {
               userId: user.id,
               name: "POLUTEK.PL",
               slug: "polutek",
               isApproved: true,
+              isPrimary: true,
             }
           });
         }

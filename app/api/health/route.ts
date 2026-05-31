@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
+import { buildMainFeaturedVideoWhere, buildVisibleVideoWhere } from '@/lib/services/content.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +24,12 @@ export async function GET(req: Request) {
         where: { isPrimary: true, isApproved: true }
     });
 
-    const mainFeaturedVideoExists = await prisma.video.findFirst({
-        where: {
-            isMainFeatured: true,
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
-        }
-    });
+    const [allVideoCount, publishedVideoCount, visibleVideoCount, mainFeaturedVideoExists] = await Promise.all([
+        prisma.video.count(),
+        prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }),
+        prisma.video.count({ where: buildVisibleVideoWhere() }),
+        prisma.video.findFirst({ where: buildMainFeaturedVideoWhere() }),
+    ]);
 
     return NextResponse.json({
         ok: true,
@@ -42,9 +42,18 @@ export async function GET(req: Request) {
             STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
         },
         content: {
+            allVideoCount,
+            publishedVideoCount,
+            visibleVideoCount,
             approvedCreatorExists: !!approvedCreatorExists,
             primaryCreatorExists: !!primaryCreatorExists,
-            mainFeaturedVideoExists: !!mainFeaturedVideoExists
+            mainFeaturedVideoExists: !!mainFeaturedVideoExists,
+            mediaHostsConfigured: Boolean(
+                process.env.MEDIA_BUCKET_HOST ||
+                process.env.NEXT_PUBLIC_R2_PUBLIC_HOST ||
+                process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST ||
+                process.env.ALLOWED_MEDIA_HOSTS
+            ),
         }
     });
   } catch (error) {
