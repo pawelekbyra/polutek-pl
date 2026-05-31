@@ -53,6 +53,9 @@ enum PaymentStatus {
   FAILED
   CANCELED
   REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+  CHARGEBACK_LOST
 }
 
 model Payment {
@@ -62,6 +65,7 @@ model Payment {
   stripeIntentId  String?       @unique
   stripeSessionId String?       @unique
   amountMinor     Int
+  amountRefundedMinor Int     @default(0)
   currency        String
   status          PaymentStatus @default(PENDING)
   metadata        Json?
@@ -377,4 +381,12 @@ model EmailTemplate {
   subjectEn String
   bodyEn    String   @db.Text
   updatedAt DateTime @updatedAt
+}
+
+model ClerkEvent {
+  id          String   @id // svix-id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([type])
 }

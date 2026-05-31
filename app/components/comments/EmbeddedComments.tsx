@@ -73,6 +73,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         url.searchParams.append('sortBy', sortBy);
         if (pageParam) url.searchParams.append('cursor', pageParam as string);
         const res = await fetch(url.toString());
+        if (!res.ok) throw new Error('Failed to fetch comments');
         return res.json();
     },
     initialPageParam: '',
@@ -91,6 +92,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ videoId, text, parentId }),
             headers: { 'Content-Type': 'application/json' }
         });
+        if (!res.ok) throw new Error('Failed to post comment');
         return res.json();
     },
     onSuccess: () => {
@@ -107,6 +109,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
+        if (!res.ok) throw new Error('Failed to like comment');
         return res.json();
     },
     onMutate: async (commentId) => {
@@ -165,6 +168,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
+        if (!res.ok) throw new Error('Failed to dislike comment');
         return res.json();
     },
     onMutate: async (commentId) => {
@@ -221,6 +225,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         const res = await fetch(`/api/comments?id=${commentId}`, {
             method: 'DELETE',
         });
+        if (!res.ok) throw new Error('Failed to delete comment');
         return res.json();
     },
     onSuccess: () => {

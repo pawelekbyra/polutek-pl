@@ -215,7 +215,10 @@ export class PaymentService {
       ? charge.payment_intent
       : charge.payment_intent?.id;
 
-    console.log(`[PaymentService] Handling refund. paymentId=${paymentId}, intentId=${stripeIntentId}`);
+    const totalRefundedByStripe = charge.amount_refunded; // cumulative in minor units
+    const isFullRefund = charge.refunded;
+
+    console.log(`[PaymentService] Handling refund. paymentId=${paymentId}, intentId=${stripeIntentId}, totalRefunded=${totalRefundedByStripe}, full=${isFullRefund}`);
 
     return await prisma.$transaction(async (tx) => {
         const payment = paymentId
@@ -226,18 +229,52 @@ export class PaymentService {
 
         if (!payment || payment.status === PaymentStatus.REFUNDED) return null;
 
+        // Stripe's amount_refunded is cumulative. We need the delta to update totals correctly.
+        const previousRefunded = payment.amountRefundedMinor || 0;
+        const refundDelta = totalRefundedByStripe - previousRefunded;
+
+        if (refundDelta <= 0) {
+            console.log(`[PaymentService] No new refund amount to process for payment ${payment.id}`);
+            return null;
+        }
+
+        const newStatus = isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
+
         await tx.payment.update({
             where: { id: payment.id },
-            data: { status: PaymentStatus.REFUNDED }
+            data: {
+                status: newStatus,
+                amountRefundedMinor: totalRefundedByStripe
+            }
         });
 
-        // Revoke associated grants
-        await tx.patronGrant.updateMany({
-            where: { paymentId: payment.id, revokedAt: null },
-            data: { revokedAt: new Date(), reason: 'Payment refunded' }
+        // Update UserPaymentTotal by decrementing the refund delta
+        await tx.userPaymentTotal.update({
+            where: { userId_currency: { userId: payment.userId, currency: payment.currency } },
+            data: { amountMinor: { decrement: refundDelta } }
         });
 
-        // Recalculate status
+        // Update global totalPaidMinor as well
+        await tx.user.update({
+            where: { id: payment.userId },
+            data: { totalPaidMinor: { decrement: refundDelta } }
+        });
+
+        // Check if the remaining amount still qualifies for Patron status
+        // A single payment grants Patron if it meets the threshold.
+        // If it was partially refunded, we check the remaining amount of THIS payment.
+        const remainingAmount = payment.amountMinor - totalRefundedByStripe;
+        const thresholdMinor = payment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
+
+        if (remainingAmount < thresholdMinor) {
+            // Revoke associated grants
+            await tx.patronGrant.updateMany({
+                where: { paymentId: payment.id, revokedAt: null },
+                data: { revokedAt: new Date(), reason: isFullRefund ? 'Payment fully refunded' : 'Remaining payment amount below threshold after partial refund' }
+            });
+        }
+
+        // Recalculate overall status based on remaining valid grants
         const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
         return { userId: payment.userId, isPatron, normalizedTotal };
     });
@@ -252,16 +289,37 @@ export class PaymentService {
 
     console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
 
-    if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
-        return await prisma.$transaction(async (tx) => {
+    const newStatus = dispute.status === 'lost' ? PaymentStatus.CHARGEBACK_LOST : PaymentStatus.DISPUTED;
+
+    return await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+            where: { id: payment.id },
+            data: { status: newStatus }
+        });
+
+        if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
             await tx.patronGrant.updateMany({
                 where: { paymentId: payment.id, revokedAt: null },
                 data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
             });
-            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
-            return { userId: payment.userId, isPatron, normalizedTotal };
-        });
-    }
+
+            // If lost, we should also subtract from totals
+            if (dispute.status === 'lost') {
+                const disputeAmount = dispute.amount;
+                await tx.userPaymentTotal.update({
+                    where: { userId_currency: { userId: payment.userId, currency: payment.currency } },
+                    data: { amountMinor: { decrement: disputeAmount } }
+                });
+                await tx.user.update({
+                    where: { id: payment.userId },
+                    data: { totalPaidMinor: { decrement: disputeAmount } }
+                });
+            }
+        }
+
+        const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        return { userId: payment.userId, isPatron, normalizedTotal };
+    });
   }
 
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {

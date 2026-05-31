@@ -4,14 +4,57 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
+import { Redis } from '@upstash/redis';
+
 /**
- * In-memory rate limiter with support for persistent store adapter.
- * For production, consider using a Redis-backed adapter.
+ * Rate limiter store adapter.
  */
 interface RateLimitStore {
     get(key: string): Promise<{ count: number; resetAt: number } | null>;
     set(key: string, value: { count: number; resetAt: number }): Promise<void>;
     increment(key: string): Promise<{ count: number; resetAt: number }>;
+}
+
+class RedisStore implements RateLimitStore {
+    private redis: Redis;
+
+    constructor() {
+        this.redis = new Redis({
+            url: process.env.UPSTASH_REDIS_REST_URL!,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+        });
+    }
+
+    async get(key: string) {
+        return await this.redis.get<{ count: number; resetAt: number }>(`ratelimit:${key}`);
+    }
+
+    async set(key: string, value: { count: number; resetAt: number }) {
+        // Set with expiry based on resetAt
+        const px = Math.max(0, value.resetAt - Date.now());
+        await this.redis.set(`ratelimit:${key}`, value, { px });
+    }
+
+    async increment(key: string) {
+        // Use a more robust approach: fetch and update, but handle missing record gracefully.
+        // For true atomicity with Upstash/Redis, a Lua script or INCR would be better,
+        // but given the existing interface, we'll ensure it doesn't throw.
+        const record = await this.get(key);
+        if (!record) {
+            // This shouldn't happen if called correctly by rateLimit(), but let's be safe.
+            const newRecord = { count: 1, resetAt: Date.now() + 60000 }; // Fallback 1m
+            await this.set(key, newRecord);
+            return newRecord;
+        }
+
+        record.count += 1;
+        const px = Math.max(0, record.resetAt - Date.now());
+        if (px > 0) {
+            await this.redis.set(`ratelimit:${key}`, record, { px });
+        }
+
+        return record;
+    }
 }
 
 class MemoryStore implements RateLimitStore {
@@ -33,7 +76,9 @@ class MemoryStore implements RateLimitStore {
     }
 }
 
-const store: RateLimitStore = new MemoryStore();
+// Use RedisStore in production, MemoryStore in development/fallback
+const isRedisConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+const store: RateLimitStore = isRedisConfigured ? new RedisStore() : new MemoryStore();
 
 export async function rateLimit({ key, limit, windowMs }: RateLimitOptions) {
   const now = Date.now();

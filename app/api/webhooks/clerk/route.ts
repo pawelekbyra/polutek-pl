@@ -39,6 +39,16 @@ export async function POST(req: Request) {
     return new Response('Error occured', { status: 400 });
   }
 
+  // Idempotency check
+  const existingEvent = await prisma.clerkEvent.findUnique({
+    where: { id: svix_id }
+  });
+
+  if (existingEvent) {
+    console.log(`[ClerkWebhook] Event ${svix_id} already processed.`);
+    return NextResponse.json({ success: true, duplicated: true });
+  }
+
   const eventType = evt.type;
 
   if (eventType === 'user.created' || eventType === 'user.updated') {
@@ -102,6 +112,14 @@ export async function POST(req: Request) {
           }
       }
   }
+
+  // Record the event as processed
+  await prisma.clerkEvent.create({
+    data: {
+      id: svix_id,
+      type: eventType,
+    }
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -8,15 +8,13 @@ const ALLOWED_MEDIA_HOSTS = [
     'r2.cloudflarestorage.com',
     'r2.dev',
     'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev', // Specific R2 bucket from initial-content
-    'unsplash.com',
-    'images.unsplash.com',
-    'polutek.pl'
 ];
 
 function isHostAllowed(url: string) {
     try {
         const { hostname } = new URL(url);
-        return ALLOWED_MEDIA_HOSTS.some(allowed => hostname === allowed || hostname.endsWith(`.${allowed}`));
+        // Strict allowlist check
+        return ALLOWED_MEDIA_HOSTS.includes(hostname);
     } catch {
         return false;
     }
@@ -55,6 +53,13 @@ export async function getGatedBlobResponse(
     }
 
     const range = headers?.get('range');
+
+    // Validate Range header to prevent proxy abuse
+    if (range && !/^bytes=\d*-\d*$/.test(range)) {
+        console.error(`[MediaProxy] Invalid Range header: ${range}`);
+        return new NextResponse('Invalid Range header', { status: 400 });
+    }
+
     console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range || 'none'})`);
 
     const response = await fetch(targetUrl, {
