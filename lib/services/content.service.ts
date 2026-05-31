@@ -324,7 +324,8 @@ export class ContentService {
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (flags.demoFallbacks) return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
-      return [];
+      // Re-throw so the page knows it was an error, not just an empty DB
+      throw e;
     }
   }
 

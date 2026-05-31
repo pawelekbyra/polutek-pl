@@ -1,71 +1,97 @@
 import { PrismaClient, VideoStatus } from '@prisma/client';
-import { explainVideoVisibility } from '../lib/services/content.visibility';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("--- DIAGNOSTYKA TREŚCI STRONY GŁÓWNEJ ---");
+  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI ===");
+
+  const now = new Date();
+  console.log(`Czas serwera: ${now.toISOString()}`);
 
   const dbUrl = process.env.DATABASE_URL || "unknown";
   const safeUrl = dbUrl.replace(/:[^:@]+@/, ":****@");
-  console.log(`Database URL: ${safeUrl}`);
-
-  const creators = await prisma.creator.findMany();
-  console.log(`Liczba creatorów: ${creators.length}`);
-  console.log(`Liczba approved creatorów: ${creators.filter(c => c.isApproved).length}`);
-  console.log(`Liczba primary creatorów: ${creators.filter(c => c.isPrimary).length}`);
-
-  const videos = await prisma.video.findMany({
-    include: {
-      creator: true
-    }
-  });
-
-  console.log(`Liczba filmów ogółem: ${videos.length}`);
-
-  const statusCounts = videos.reduce((acc, v) => {
-    acc[v.status] = (acc[v.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  console.log("Filmy per status:", statusCounts);
-
-  const now = new Date();
-  console.log("Data 'now':", now.toISOString());
-
-  console.log("\nPierwsze 20 filmów i ich status widoczności:");
-  const first20 = videos.slice(0, 20);
-  first20.forEach(v => {
-    const explanation = explainVideoVisibility(v, now);
-    console.log(`- ID: ${v.id}
-  Tytuł: ${v.title}
-  Slug: ${v.slug}
-  Status: ${v.status}
-  PublishedAt: ${v.publishedAt?.toISOString() || 'null'}
-  Creator: ${v.creator?.slug} (Approved: ${v.creator?.isApproved}, Primary: ${v.creator?.isPrimary})
-  Visible: ${explanation.visible} ${explanation.visible ? "" : "(" + explanation.reasons.join(", ") + ")"}
-`);
-  });
-
-  const visibleVideos = videos.filter(v => explainVideoVisibility(v, now).visible);
-  console.log(`\nŁączna liczba filmów widocznych publicznie: ${visibleVideos.length}`);
+  console.log(`Baza: ${safeUrl}`);
 
   try {
-      // Import the actual service to compare results
-      const { ContentService } = await import('../lib/services/content.service');
-      const allVideos = await ContentService.getAllVideos();
-      const mainVideo = await ContentService.getMainFeaturedVideo();
-      console.log(`\nContentService.getAllVideos() returned: ${allVideos.length} videos`);
-      console.log(`ContentService.getMainFeaturedVideo() returned: ${mainVideo ? mainVideo.title : "null"}`);
-  } catch (e) {
-      console.warn("\nCould not run ContentService checks in script (likely missing environment/clerk config)");
+    const allVideosCount = await prisma.video.count();
+    const publishedVideosCount = await prisma.video.count({ where: { status: VideoStatus.PUBLISHED } });
+    const approvedCreatorsCount = await prisma.creator.count({ where: { isApproved: true } });
+    const primaryCreatorsCount = await prisma.creator.count({ where: { isPrimary: true } });
+
+    const approvedCreatorVideosCount = await prisma.video.count({
+      where: {
+        status: VideoStatus.PUBLISHED,
+        creator: { isApproved: true }
+      }
+    });
+
+    const publishWindowVideosCount = await prisma.video.count({
+      where: {
+        status: VideoStatus.PUBLISHED,
+        creator: { isApproved: true },
+        OR: [
+          { publishedAt: null },
+          { publishedAt: { lte: now } }
+        ]
+      }
+    });
+
+    console.log(`\n--- Liczniki ---`);
+    console.log(`Wszystkie filmy (allVideosCount): ${allVideosCount}`);
+    console.log(`Filmy PUBLISHED: ${publishedVideosCount}`);
+    console.log(`Zatwierdzeni twórcy: ${approvedCreatorsCount}`);
+    console.log(`Główni twórcy (isPrimary): ${primaryCreatorsCount}`);
+    console.log(`Filmy PUBLISHED + Approved Creator: ${approvedCreatorVideosCount}`);
+    console.log(`Filmy w oknie publikacji (publishWindowVideosCount): ${publishWindowVideosCount}`);
+
+    console.log(`\n--- Szczegóły pierwszych 50 filmów ---`);
+    const videos = await prisma.video.findMany({
+      take: 50,
+      include: { creator: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    videos.forEach((v, i) => {
+      const reasons: string[] = [];
+      if (v.status !== VideoStatus.PUBLISHED) reasons.push(`status is ${v.status}`);
+      if (!v.creator) reasons.push("missing creator");
+      else if (!v.creator.isApproved) reasons.push("creator is not approved");
+
+      const pubAt = v.publishedAt ? new Date(v.publishedAt) : null;
+      if (pubAt && pubAt > now) reasons.push(`publishedAt is in the future (${pubAt.toISOString()})`);
+
+      if (!v.thumbnailUrl) reasons.push("missing thumbnailUrl");
+      if (!v.slug) reasons.push("missing slug");
+
+      const isVisible = reasons.length === 0;
+      console.log(`${i+1}. [${isVisible ? 'WIDOCZNY' : 'UKRYTY'}] "${v.title}" (${v.slug})`);
+      if (!isVisible) {
+          console.log(`   Powody: ${reasons.join(", ")}`);
+      }
+    });
+
+    console.log(`\n--- Wyniki ContentService ---`);
+    try {
+        const { ContentService } = await import('../lib/services/content.service');
+        const allVideos = await ContentService.getAllVideos();
+        const mainVideo = await ContentService.getMainFeaturedVideo();
+
+        console.log(`ContentService.getAllVideos() count: ${allVideos.length}`);
+        console.log(`ContentService.getMainFeaturedVideo(): ${mainVideo ? mainVideo.title : 'NULL'}`);
+
+        if (publishWindowVideosCount > 0 && allVideos.length === 0) {
+            console.log("\n!!! ALARM: Dane w DB są poprawne, ale ContentService zwraca pustą listę !!!");
+        }
+    } catch (err: any) {
+        console.log(`BŁĄD ContentService: ${err.name} - ${err.message}`);
+        if (err.code) console.log(`Prisma code: ${err.code}`);
+    }
+
+  } catch (err: any) {
+    console.error("BŁĄD KRYTYCZNY DIAGNOSTYKI:", err.message);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main();
