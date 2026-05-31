@@ -83,9 +83,21 @@ export class PaymentService {
             console.log(`[PaymentService] Event ${event.id} already processed.`);
             return;
         }
+
         if (existingEvent.status === StripeEventStatus.PROCESSING) {
-            console.log(`[PaymentService] Event ${event.id} is currently being processed.`);
-            return;
+            const STALE_PROCESSING_MINUTES = 10;
+            const now = new Date();
+            const updatedAt = existingEvent.updatedAt || now;
+            const diffMs = now.getTime() - updatedAt.getTime();
+            const diffMins = diffMs / (1000 * 60);
+
+            if (diffMins < STALE_PROCESSING_MINUTES) {
+                console.log(`[PaymentService] Event ${event.id} is currently being processed and is fresh.`);
+                return;
+            }
+
+            console.log(`[PaymentService] Event ${event.id} was stuck in PROCESSING. Retrying.`);
+            // We allow re-processing of stale events
         }
         // If FAILED, we allow re-processing
     }
@@ -114,12 +126,19 @@ export class PaymentService {
             }
             case 'payment_intent.payment_failed': {
                 const intent = event.data.object as Stripe.PaymentIntent;
-                await prisma.payment.update({
+                const { count } = await prisma.payment.updateMany({
                     where: { stripeIntentId: intent.id },
                     data: { status: PaymentStatus.FAILED }
                 });
+                if (count === 0) {
+                    console.warn(`[PaymentService] No payment record found for failed intent: ${intent.id}`);
+                }
                 break;
             }
+            // TODO: Decide and implement patron revocation policy for:
+            // - charge.refunded
+            // - charge.dispute.created
+            // - charge.dispute.closed
             default:
                 console.log(`Unhandled Stripe event type: ${event.type}`);
         }

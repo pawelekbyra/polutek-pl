@@ -1,8 +1,8 @@
 import React from 'react';
-import { Video } from '../types/video';
+import { PublicVideoDTO } from '../types/video';
 
 interface VideoStoryProps {
-  video: Video;
+  video: PublicVideoDTO;
 }
 
 const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {

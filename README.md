@@ -1,7 +1,7 @@
 # POLUTEK.PL - Private VOD & Donation Platform
 
 ## Important for AI coding agents
-Before changing code, read `PROJECT_CONTEXT.md`.
+Before changing code, read `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, and `DEPLOY_CHECKLIST.md`.
 This project should be developed according to product behavior, not only technical stack.
 
 A modern, responsive media platform for exclusive content, built with Next.js 14, Tailwind CSS, and Prisma. This project is designed with a professional "YouTube-style" aesthetic and features a permanent content locking mechanism for supporters based on lifetime donation value.
@@ -10,17 +10,17 @@ A modern, responsive media platform for exclusive content, built with Next.js 14
 POLUTEK.PL is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
 
 ### Key Concept: Reward for Support
-- **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant lifetime access as a token of gratitude.
-- **Lifetime Value (LTV)**: Access is determined by the historical Patron status (granted after a single donation above the current threshold, e.g., 20 PLN).
+- **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant permanent access as a token of gratitude.
+- **Patron Status**: Patron status is currently granted by a single qualifying donation. Payment totals are tracked per currency for diagnostics and future use.
 - **Public Discovery**: One primary featured video is always public, serving as a gateway to the platform.
 
 ## Architecture & Scalability
 The platform is built with future growth and high performance in mind:
 
-- **Multi-Tenancy**: The database schema (Prisma) is designed for multiple creators. Every video, comment, and transaction is linked to a `creatorId`.
+- **Multi-Tenancy**: The current production scenario is one primary channel. The data model prepares for selected users to create channels in the future, but full multi-creator onboarding is not implemented yet.
 - **Clean Architecture**: Business logic is decoupled from API routes into a dedicated Service Layer (`lib/services/`), facilitating testing and maintainability.
 - **Connection Pooling**: Optimized for serverless environments using connection pooling to prevent database exhaustion.
-- **High-Performance VOD**: Designed for adaptive streaming (HLS/DASH) to ensure smooth playback across all devices and bandwidth conditions.
+- **Secure VOD Delivery**: Secure media delivery through `/api/media/:videoId` with access checks and range-request support. HLS/DASH can be added later.
 - **Social Features**: Multi-level threaded comments, image attachments, and likes for high community engagement.
 
 ## Technology Stack

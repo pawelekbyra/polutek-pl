@@ -6,10 +6,16 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './CampaignContent';
 import Navbar from '../components/Navbar';
+import { flags } from '@/lib/feature-flags';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ZrzutkaPage() {
+  if (!flags.campaignPage) {
+    notFound();
+  }
+
   const { userId } = await auth();
 
   let userDb = null;

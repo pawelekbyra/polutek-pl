@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Video } from '../types/video';
+import { PublicVideoDTO } from '../types/video';
 import VideoStory from './VideoStory';
 import VideoPlaylist from './VideoPlaylist';
 import EmbeddedComments from './comments/EmbeddedComments';

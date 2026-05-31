@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { checkReferralStatus } from '@/lib/actions/referrals';
+import { logger } from '@/lib/logger';
 
 export default function ReferralTracker() {
   const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ export default function ReferralTracker() {
         const expires = new Date();
         expires.setDate(expires.getDate() + 30);
         document.cookie = `clerk_referrer_id=${ref}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
-        console.log(`[ReferralTracker] Saved referrer ID/Code: ${ref}`);
+        logger.debug(`[ReferralTracker] Saved referrer ID/Code: ${ref}`);
       } catch (e) {
         console.error("[ReferralTracker] Cookie error:", e);
       }
@@ -45,7 +46,7 @@ export default function ReferralTracker() {
             const status = await checkReferralStatus();
 
             if (status.isLoggedIn && !status.hasReferrer) {
-              console.log(`[ReferralTracker] Attempting to claim referral: ${refValue}`);
+              logger.debug(`[ReferralTracker] Attempting to claim referral: ${refValue}`);
 
               const response = await fetch('/api/user/referrals/claim', {
                 method: 'POST',
@@ -54,7 +55,7 @@ export default function ReferralTracker() {
               });
 
               if (response.ok) {
-                console.log(`[ReferralTracker] Referral claimed successfully!`);
+                logger.debug(`[ReferralTracker] Referral claimed successfully!`);
                 document.cookie = "clerk_referrer_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
               } else {
                 const error = await response.json().catch(() => ({}));

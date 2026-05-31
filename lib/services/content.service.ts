@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, Creator, Video } from '@prisma/client';
+import { AccessTier, Creator, Video, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
-import { PublicVideoDTO, PublicCreatorDTO } from '@/app/types/video';
+import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 
 function allowDemoFallbacks() {
   return process.env.ENABLE_DEMO_FALLBACKS === 'true' || process.env.NODE_ENV !== 'production';
@@ -113,7 +113,7 @@ export class ContentService {
    * Retrieves a creator by their unique slug.
    * Falls back to default creator for 'polutek' if not found.
    */
-  static async getCreatorBySlug(slug: string): Promise<any | null> {
+  static async getCreatorBySlug(slug: string): Promise<PublicCreatorPageDTO | null> {
     try {
       const creator = await prisma.creator.findUnique({
         where: { slug },
@@ -130,34 +130,49 @@ export class ContentService {
       const adminData = slug === 'polutek' ? await this.getAdminData() : null;
 
       if (slug === 'polutek' && creator) {
-        creator.name = 'POLUTEK.PL';
-        // Force sync user data if available from admin lookup
-        if (adminData) {
-            if (!creator.user) (creator as any).user = adminData;
-            else {
-                // Prioritize fresh data from admin lookup
-                if (adminData.imageUrl) (creator as any).user.imageUrl = adminData.imageUrl;
-                if (adminData.email) (creator as any).user.email = adminData.email;
-            }
-            // Explicitly set creator image from user image
-            if (creator.user?.imageUrl) (creator as any).imageUrl = creator.user.imageUrl;
-        }
+        // Map data strictly to prevent leakage
+        const videos = (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }));
+
+        return {
+            id: creator.id,
+            name: 'POLUTEK.PL',
+            slug: creator.slug,
+            imageUrl: adminData?.imageUrl || creator.imageUrl || creator.user?.imageUrl || null,
+            bannerUrl: creator.bannerUrl,
+            bio: creator.bio,
+            userId: creator.userId,
+            subscribersCount: creator.subscribersCount || 0,
+            videos
+        };
       }
 
       if (!creator && slug === 'polutek' && allowDemoFallbacks()) {
         return {
-            ...DEFAULT_CREATOR,
+            id: DEFAULT_CREATOR.id,
+            name: 'POLUTEK.PL',
+            slug: DEFAULT_CREATOR.slug,
             imageUrl: adminData?.imageUrl || null,
-            user: adminData,
+            bannerUrl: null,
+            bio: DEFAULT_CREATOR.bio,
+            userId: undefined,
+            subscribersCount: 1250000,
             videos: (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v))
         };
       }
 
-      if (creator) {
-          (creator as any).videos = (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }));
-      }
+      if (!creator) return null;
 
-      return creator;
+      return {
+          id: creator.id,
+          name: creator.name,
+          slug: creator.slug,
+          imageUrl: creator.imageUrl || creator.user?.imageUrl || null,
+          bannerUrl: creator.bannerUrl,
+          bio: creator.bio,
+          userId: creator.userId,
+          subscribersCount: creator.subscribersCount || 0,
+          videos: (creator.videos || []).map((v: any) => this.mapToPublicVideoDTO({ ...v, creator }))
+      };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
       if (slug === 'polutek' && allowDemoFallbacks()) {
@@ -218,6 +233,10 @@ export class ContentService {
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({
+        where: {
+            status: VideoStatus.PUBLISHED,
+            publishedAt: { lte: new Date() }
+        },
         include: {
           creator: {
             include: {
@@ -247,7 +266,11 @@ export class ContentService {
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
       const video = await prisma.video.findFirst({
-        where: { isMainFeatured: true },
+        where: {
+            isMainFeatured: true,
+            status: VideoStatus.PUBLISHED,
+            publishedAt: { lte: new Date() }
+        },
         include: {
           creator: {
             include: {
