@@ -6,7 +6,7 @@ export const flags = {
 
   /**
    * Whether to allow INITIAL_VIDEOS fallback.
-   * Opt-in required. Recommended only for development.
+   * Strictly opt-in and NOT allowed in production.
    */
   demoFallbacks:
     process.env.NODE_ENV !== "production" &&

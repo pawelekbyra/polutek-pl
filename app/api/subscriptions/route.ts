@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '@/lib/services/user.service';
+import { rateLimit } from '@/lib/rate-limit';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,28 +10,26 @@ export const dynamic = 'force-dynamic';
  * API Route for checking subscription status.
  */
 export async function GET(req: NextRequest) {
-  let userId: string | null = null;
   try {
-        const authData = await auth();
-      userId = authData.userId;
-  } catch (e) {
-      return NextResponse.json({ isSubscribed: false, error: "Handshake failed" });
-  }
+    let userId: string | null = null;
+    try {
+          const authData = await auth();
+        userId = authData.userId;
+    } catch (e) {
+        return NextResponse.json({ isSubscribed: false, error: "Handshake failed" });
+    }
 
-  const { searchParams } = new URL(req.url);
-  const creatorId = searchParams.get('creatorId');
+    const { searchParams } = new URL(req.url);
+    const creatorId = searchParams.get('creatorId');
 
-  if (!userId || !creatorId) {
-    return NextResponse.json({ isSubscribed: false });
-  }
+    if (!userId || !creatorId) {
+      return NextResponse.json({ isSubscribed: false });
+    }
 
-  try {
     const isSubscribed = await UserService.isSubscribed(userId, creatorId);
     return NextResponse.json({ isSubscribed });
   } catch (error: unknown) {
-    console.error("[SUBSCRIPTION_GET_ERROR]", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ isSubscribed: false, error: message }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -37,19 +37,30 @@ export async function GET(req: NextRequest) {
  * API Route for toggling subscription status.
  */
 export async function POST(req: NextRequest) {
-  let userId: string | null = null;
   try {
-        const authData = await auth();
-      userId = authData.userId;
-  } catch (e) {
-      return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
-  }
+    let userId: string | null = null;
+    try {
+          const authData = await auth();
+        userId = authData.userId;
+    } catch (e) {
+        return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
+    }
 
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  try {
+    // Rate limiting for subscription toggle
+    const rateLimitResult = await rateLimit({
+      key: `subscription-toggle:${userId}`,
+      limit: 10,
+      windowMs: 60 * 1000
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
     const { creatorId } = body;
 
@@ -60,11 +71,6 @@ export async function POST(req: NextRequest) {
     const result = await UserService.toggleSubscription(userId, creatorId);
     return NextResponse.json(result);
   } catch (error: unknown) {
-    console.error("[SUBSCRIPTION_POST_ERROR]", error);
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("DATABASE_TABLES_MISSING")) {
-        return NextResponse.json({ error: "DATABASE_ERROR" }, { status: 503 });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

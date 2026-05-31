@@ -14,7 +14,7 @@ function isHostAllowed(url: string) {
         const { hostname, protocol } = new URL(url);
         if (protocol !== 'https:') return false;
 
-        // Exact match against whitelist
+        // Exact match against whitelist for security
         return ALLOWED_MEDIA_HOSTS.includes(hostname);
     } catch {
         return false;
@@ -55,7 +55,7 @@ export async function getGatedBlobResponse(
 
     const range = headers?.get('range');
 
-    // Validate Range header format
+    // Validate Range header format (RFC 7233)
     if (range && !/^bytes=\d*-\d*$/.test(range)) {
         console.error(`[MediaProxy] Blocked invalid range header: ${range}`);
         return new NextResponse('Requested Range Not Satisfiable', { status: 416 });

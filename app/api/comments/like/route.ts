@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,34 +13,34 @@ export const dynamic = 'force-dynamic';
  * Mutually exclusive with 'Dislike'.
  */
 export async function POST(request: NextRequest) {
-  let userId: string | null = null;
   try {
-        const authData = await auth();
-      userId = authData.userId;
-  } catch (e) {
-      return NextResponse.json({
-          success: false,
-          error: "CLERK_ERROR",
-          message: 'Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w panelu Vercel.'
-      }, { status: 500 });
-  }
+    let userId: string | null = null;
+    try {
+          const authData = await auth();
+        userId = authData.userId;
+    } catch (e) {
+        return NextResponse.json({
+            success: false,
+            error: "CLERK_ERROR",
+            message: 'Błąd weryfikacji sesji.'
+        }, { status: 500 });
+    }
 
-  if (!userId) {
-    return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
-  }
+    if (!userId) {
+      return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
+    }
 
-  // Rate Limiting: 60 reactions per minute
-  const rateLimitResult = await rateLimit({
-      key: `reactions:${userId}`,
-      limit: 60,
-      windowMs: 60 * 1000
-  });
+    // Rate Limiting: 60 reactions per minute
+    const rateLimitResult = await rateLimit({
+        key: `reactions:${userId}`,
+        limit: 60,
+        windowMs: 60 * 1000
+    });
 
-  if (!rateLimitResult.success) {
-      return NextResponse.json({ success: false, message: "Zbyt wiele reakcji. Odczekaj chwilę." }, { status: 429 });
-  }
+    if (!rateLimitResult.success) {
+        return NextResponse.json({ success: false, message: "Zbyt wiele reakcji. Odczekaj chwilę." }, { status: 429 });
+    }
 
-  try {
     await UserService.getOrCreateUser(userId);
 
     const { commentId } = await request.json();
@@ -59,24 +60,23 @@ export async function POST(request: NextRequest) {
     return await prisma.$transaction(async (tx) => {
         // 1. Remove existing dislike if any
         await tx.commentDislike.deleteMany({
-            where: { userId, commentId }
+            where: { userId: userId!, commentId }
         });
 
         // 2. Toggle Like
         const existingLike = await tx.commentLike.findUnique({
-            where: { userId_commentId: { userId, commentId } }
+            where: { userId_commentId: { userId: userId!, commentId } }
         });
 
         if (existingLike) {
             await tx.commentLike.delete({ where: { id: existingLike.id } });
             return NextResponse.json({ success: true, liked: false, disliked: false });
         } else {
-            await tx.commentLike.create({ data: { userId, commentId } });
+            await tx.commentLike.create({ data: { userId: userId!, commentId } });
             return NextResponse.json({ success: true, liked: true, disliked: false });
         }
     });
   } catch (error: unknown) {
-    console.error('[COMMENT_LIKE_ERROR]', error);
-    return NextResponse.json({ success: false, message: 'Wystąpił błąd podczas oceniania komentarza.' }, { status: 500 });
+    return handleApiError(error);
   }
 }
