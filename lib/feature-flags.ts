@@ -6,12 +6,10 @@ export const flags = {
 
   /**
    * Whether to allow INITIAL_VIDEOS fallback.
-   * In production: Strictly opt-in via ENABLE_DEMO_FALLBACKS=true.
-   * In development: Active by default unless ENABLE_DEMO_FALLBACKS=false.
+   * Default: true (recommended only for dev/demo).
+   * Disable in production by setting ENABLE_DEMO_FALLBACKS=false.
    */
-  demoFallbacks: process.env.NODE_ENV === "production"
-    ? process.env.ENABLE_DEMO_FALLBACKS === "true"
-    : process.env.ENABLE_DEMO_FALLBACKS !== "false",
+  demoFallbacks: process.env.ENABLE_DEMO_FALLBACKS !== "false",
 
   /**
    * Future multi-creator support.

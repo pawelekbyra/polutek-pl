@@ -4,7 +4,6 @@ import { ContentService } from '@/lib/services/content.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
-import CampaignContent from './zrzutka/CampaignContent';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
 
@@ -20,7 +19,6 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     userDb = await UserService.getOrCreateUser(userId).catch(() => null);
   }
 
-  const adminData = await ContentService.getAdminData();
   const creator = await ContentService.getCreatorBySlug('polutek');
 
   // Always show the standard video player view on homepage
@@ -37,17 +35,17 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     const [like, dislike] = await Promise.all([
       prisma.videoLike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
-      }),
+      }).catch(() => null),
       prisma.videoDislike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
-      })
+      }).catch(() => null)
     ]);
     initialInteraction = { liked: !!like, disliked: !!dislike };
 
     if (creator?.id) {
       const sub = await prisma.subscription.findUnique({
         where: { userId_creatorId: { userId, creatorId: creator.id } }
-      });
+      }).catch(() => null);
       initialIsSubscribed = !!sub;
     }
   }
@@ -74,11 +72,6 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
           <p className="text-neutral-600 mb-8">
             Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
           </p>
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 inline-block">
-              Wskazówka: Ustaw <strong>ENABLE_DEMO_FALLBACKS=true</strong> w pliku .env, aby zobaczyć przykładowe materiały.
-            </div>
-          )}
         </main>
         <Footer />
       </div>
