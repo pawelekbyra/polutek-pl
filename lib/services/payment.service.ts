@@ -30,19 +30,24 @@ export function calculateRefundAdjustment(payment: RefundCalculationInput, repor
   };
 }
 
+
+export function calculateChargebackNetAdjustment(payment: RefundCalculationInput) {
+  return Math.max(0, payment.amountMinor - Math.max(0, payment.refundedAmountMinor ?? 0));
+}
+
 function normalizePaymentTotals(paymentTotals: Array<{ currency: string; amountMinor: number }>) {
   const totalPLN = paymentTotals.find(t => t.currency === 'PLN')?.amountMinor || 0;
   const totalEUR = paymentTotals.find(t => t.currency === 'EUR')?.amountMinor || 0;
   return (totalPLN / 100) + (totalEUR / 100 * 4.3);
 }
 
-async function decrementUserTotalsForRefund(
+async function decrementUserNetPaymentTotals(
   tx: Prisma.TransactionClient,
   userId: string,
   currency: string,
-  deltaRefundMinor: number,
+  deltaMinor: number,
 ) {
-  if (deltaRefundMinor <= 0) return;
+  if (deltaMinor <= 0) return;
 
   const [user, total] = await Promise.all([
     tx.user.findUnique({ where: { id: userId }, select: { totalPaidMinor: true } }),
@@ -52,16 +57,37 @@ async function decrementUserTotalsForRefund(
   if (user) {
     await tx.user.update({
       where: { id: userId },
-      data: { totalPaidMinor: Math.max(0, user.totalPaidMinor - deltaRefundMinor) },
+      data: { totalPaidMinor: Math.max(0, user.totalPaidMinor - deltaMinor) },
     });
   }
 
   if (total) {
     await tx.userPaymentTotal.update({
       where: { userId_currency: { userId, currency } },
-      data: { amountMinor: Math.max(0, total.amountMinor - deltaRefundMinor) },
+      data: { amountMinor: Math.max(0, total.amountMinor - deltaMinor) },
     });
   }
+}
+
+export async function applyLostChargeback(
+  tx: Prisma.TransactionClient,
+  payment: { id: string; userId: string; currency: string; amountMinor: number; refundedAmountMinor?: number | null },
+  disputeStatus: string,
+) {
+  await tx.payment.update({
+    where: { id: payment.id },
+    data: { status: PaymentStatus.CHARGEBACK_LOST },
+  });
+  await decrementUserNetPaymentTotals(
+    tx,
+    payment.userId,
+    payment.currency,
+    calculateChargebackNetAdjustment(payment),
+  );
+  await tx.patronGrant.updateMany({
+    where: { paymentId: payment.id, revokedAt: null },
+    data: { revokedAt: new Date(), reason: `Payment disputed: ${disputeStatus}` },
+  });
 }
 
 
@@ -309,7 +335,7 @@ export class PaymentService {
             }
         });
 
-        await decrementUserTotalsForRefund(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
+        await decrementUserNetPaymentTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
 
         if (!refund.isFullRefund) {
             console.log(`[PaymentService] Payment ${payment.id} partially refunded (${refund.newRefundedAmountMinor}/${payment.amountMinor}); retaining grants.`);
@@ -345,14 +371,7 @@ export class PaymentService {
 
     if (dispute.status === 'lost') {
         return await prisma.$transaction(async (tx) => {
-            await tx.payment.update({
-                where: { id: payment.id },
-                data: { status: PaymentStatus.CHARGEBACK_LOST }
-            });
-            await tx.patronGrant.updateMany({
-                where: { paymentId: payment.id, revokedAt: null },
-                data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
-            });
+            await applyLostChargeback(tx, payment, dispute.status);
             const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
             return { userId: payment.userId, isPatron, normalizedTotal };
         });

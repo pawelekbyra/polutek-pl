@@ -26,6 +26,18 @@ describe('AccessPolicy', () => {
   });
 
   describe('canViewVideo', () => {
+
+    it('allows legacy PUBLIC videos with null publishedAt when status is PUBLISHED', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: null,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo(null, 'v1');
+      expect(decision.allowed).toBe(true);
+    });
     it('allows access to PUBLIC videos even if not logged in', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',

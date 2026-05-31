@@ -59,7 +59,7 @@ export default async function ZrzutkaPage() {
         <CampaignContent
           adminData={adminData}
           creator={creator}
-          userProfile={userProfile as any}
+          userProfile={userProfile}
           totalRaised={totalRaised}
           supportersCount={supportersCount}
         />

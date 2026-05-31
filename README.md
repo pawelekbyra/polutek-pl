@@ -56,15 +56,39 @@ npm run dev
 ```
 
 ### Database Migrations
-For local development:
+For local development, create/apply migrations with:
 ```bash
-npx prisma migrate dev --name hardening
+npm run db:migrate:dev
 ```
-For production environments:
+For production environments, deploy checked-in migrations only:
 ```bash
-npx prisma migrate deploy
+npm run db:migrate:deploy
+# equivalent: npx prisma migrate deploy
 ```
+`npm run db:push` / `npx prisma db push` is reserved for local prototyping only and must not be used for production deploys.
+
 *Note: Production deployments must use `prisma migrate deploy` to ensure database schema consistency. Hard delete of production data is discouraged; prefer status updates (e.g., `VideoStatus.ARCHIVED`).*
+
+### Local content for the homepage
+The homepage reads real `PUBLISHED` videos from the database. Demo fallback data remains opt-in only and is not enabled by omission. To get visible materials locally, use one of these paths:
+
+1. Seed development data:
+   ```bash
+   npm run db:migrate:dev
+   npm run db:seed
+   ```
+   The seed creates an approved primary `polutek` creator and published videos with `publishedAt` set. By default it uses `/wuthering.jpg` for thumbnails and `https://media.localhost.invalid/demo-video.mp4` as a placeholder media URL. For playable local media through `/api/media/:videoId`, set exact hosts before seeding/running the app, for example:
+   ```env
+   SEED_MEDIA_URL=https://media.example.test/demo-video.mp4
+   SEED_THUMBNAIL_URL=/wuthering.jpg
+   ALLOWED_MEDIA_HOSTS=media.example.test
+   ```
+2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved `polutek` creator.
+3. For local/demo development only, explicitly opt in to fallback content:
+   ```env
+   ENABLE_DEMO_FALLBACKS=true
+   ```
+   Do not rely on this in production.
 
 ### Testing
 Run unit tests with Vitest:
@@ -111,7 +135,7 @@ Payments store `refundedAmountMinor` so refund webhooks are idempotent by amount
 
 - Partial refund: payment status becomes `PARTIALLY_REFUNDED`, `User.totalPaidMinor` and `UserPaymentTotal.amountMinor` are reduced to net paid totals, and patron grants are retained.
 - Full refund: payment status becomes `REFUNDED`, net totals are reduced, and patron grants tied to that payment are revoked.
-- Lost chargeback/dispute: payment status becomes `CHARGEBACK_LOST` and patron grants tied to that payment are revoked.
+- Lost chargeback/dispute: payment status becomes `CHARGEBACK_LOST`, the remaining net paid amount (`amountMinor - refundedAmountMinor`) is removed from `User.totalPaidMinor` and `UserPaymentTotal.amountMinor`, and patron grants tied to that payment are revoked.
 
 Clerk `publicMetadata.totalPaid` is synchronized from net normalized payment totals after refund/dispute handling.
 
