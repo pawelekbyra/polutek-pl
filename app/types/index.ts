@@ -1,4 +1,4 @@
-import { AccessTier, SystemRole } from "@prisma/client";
+import { AccessTier, SystemRole, VideoStatus } from "@prisma/client";
 
 export interface UserProfile {
   id: string;
@@ -59,6 +59,7 @@ export interface InternalVideoDTO {
   thumbnailUrl: string;
   duration?: string | null;
   tier: AccessTier;
+  status: VideoStatus;
   views: number;
   likesCount: number;
   dislikesCount: number;

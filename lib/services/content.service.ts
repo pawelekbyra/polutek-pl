@@ -3,10 +3,7 @@ import { AccessTier, Creator, Video, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
-
-function allowDemoFallbacks() {
-  return process.env.ENABLE_DEMO_FALLBACKS === 'true' || process.env.NODE_ENV !== 'production';
-}
+import { flags } from '../feature-flags';
 
 export class ContentService {
   /**
@@ -29,13 +26,13 @@ export class ContentService {
       });
 
       if (!video) {
-        return allowDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
+        return flags.demoFallbacks ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
       }
 
       return video;
     } catch (e: unknown) {
       console.error("[GET_VIDEO_BY_ID_ERROR]", e);
-      return allowDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
+      return flags.demoFallbacks ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
     }
   }
 
@@ -100,6 +97,7 @@ export class ContentService {
         thumbnailUrl: video.thumbnailUrl,
         duration: video.duration,
         tier: video.tier,
+        status: video.status,
         views: video.views,
         likesCount: video.likesCount,
         dislikesCount: video.dislikesCount,
@@ -146,7 +144,7 @@ export class ContentService {
         };
       }
 
-      if (!creator && slug === 'polutek' && allowDemoFallbacks()) {
+      if (!creator && slug === 'polutek' && flags.demoFallbacks) {
         return {
             id: DEFAULT_CREATOR.id,
             name: 'POLUTEK.PL',
@@ -175,7 +173,7 @@ export class ContentService {
       };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (slug === 'polutek' && allowDemoFallbacks()) {
+      if (slug === 'polutek' && flags.demoFallbacks) {
         return {
             ...DEFAULT_CREATOR,
             videos: INITIAL_VIDEOS
@@ -249,13 +247,13 @@ export class ContentService {
         orderBy: { createdAt: 'desc' }
       });
 
-      if (videos.length === 0 && allowDemoFallbacks()) {
+      if (videos.length === 0 && flags.demoFallbacks) {
           return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
       }
       return videos.map(v => this.mapToPublicVideoDTO(v));
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      if (allowDemoFallbacks()) return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
+      if (flags.demoFallbacks) return (INITIAL_VIDEOS as any[]).map(v => this.mapToPublicVideoDTO(v));
       return [];
     }
   }
@@ -282,11 +280,11 @@ export class ContentService {
         }
       });
 
-      if (!video && allowDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      if (!video && flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       return video ? this.mapToPublicVideoDTO(video) : null;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      if (allowDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       return null;
     }
   }
