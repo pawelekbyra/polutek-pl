@@ -3,6 +3,8 @@ import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/clien
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
+const seedMediaUrl = process.env.SEED_MEDIA_URL || "https://media.localhost.invalid/demo-video.mp4";
+const seedThumbnailUrl = process.env.SEED_THUMBNAIL_URL || "/wuthering.jpg";
 
 async function main() {
   console.log('Starting seeding...');
@@ -28,7 +30,7 @@ async function main() {
     update: {
       name: 'POLUTEK.PL',
       bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+      bannerUrl: null,
       subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
@@ -38,7 +40,7 @@ async function main() {
       slug: 'polutek',
       name: 'POLUTEK.PL',
       bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+      bannerUrl: null,
       subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
@@ -51,7 +53,7 @@ async function main() {
       title: 'Wuthering Heights - Kate Bush Cover',
       slug: 'wuthering-heights-cover',
       description: 'Moja interpretacja klasycznego utworu Kate Bush. Nagrane w jednym ujęciu, aby oddać surowość i emocje tej kompozycji.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
+      videoUrl: seedMediaUrl,
       thumbnailUrl: '/wuthering.jpg',
       duration: '04:12',
       tier: AccessTier.PUBLIC,
@@ -64,8 +66,8 @@ async function main() {
       title: 'Nie masz psychy się zalogować',
       slug: 'independency-2024',
       description: 'W tym odcinku analizuję, dlaczego twórcy muszą szukać alternatywnych dróg finansowania poza wielkimi korporacjami.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4', // Reusing asset for seed
-      thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2659&auto=format&fit=crop',
+      videoUrl: seedMediaUrl,
+      thumbnailUrl: seedThumbnailUrl,
       duration: '15:30',
       tier: AccessTier.LOGGED_IN,
       isMainFeatured: false,
@@ -77,8 +79,8 @@ async function main() {
       title: 'Mój setup do nagrywania śledztw',
       slug: 'setup-tour',
       description: 'Pokazuję sprzęt, którego używam do tworzenia moich materiałów. Od kamer po mikrofony i oświetlenie.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2670&auto=format&fit=crop',
+      videoUrl: seedMediaUrl,
+      thumbnailUrl: seedThumbnailUrl,
       duration: '22:15',
       tier: AccessTier.PATRON,
       isMainFeatured: false,
@@ -90,8 +92,8 @@ async function main() {
       title: 'Niepublikowane materiały z ostatniego śledztwa',
       slug: 'unreleased-investigation',
       description: 'Tylko dla Patronów. Nagrania, które nie weszły do głównego materiału ze względu na ich kontrowersyjną naturę.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2670&auto=format&fit=crop',
+      videoUrl: seedMediaUrl,
+      thumbnailUrl: seedThumbnailUrl,
       duration: '45:00',
       tier: AccessTier.PATRON,
       isMainFeatured: false,
@@ -103,8 +105,8 @@ async function main() {
       title: 'Q&A: Odpowiedzi na Wasze najtrudniejsze pytania',
       slug: 'qa-session-1',
       description: 'Odpowiadam na pytania przesłane przez moich wspierających. Nic nie jest poza granicami.',
-      videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2670&auto=format&fit=crop',
+      videoUrl: seedMediaUrl,
+      thumbnailUrl: seedThumbnailUrl,
       duration: '32:10',
       tier: AccessTier.PATRON,
       isMainFeatured: false,

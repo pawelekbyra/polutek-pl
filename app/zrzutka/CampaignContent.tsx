@@ -15,15 +15,30 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutForm from '../components/CheckoutForm';
 import { cn } from '@/lib/utils';
+import { AccessTier, SystemRole, VideoStatus } from '@prisma/client';
+import { PublicCreatorPageDTO, PublicVideoDTO } from '../types/video';
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null;
 
+type CampaignUserProfile = {
+  id: string;
+  email: string;
+  name?: string | null;
+  imageUrl?: string | null;
+  totalPaid: number;
+  isPatron: boolean;
+  role: SystemRole | 'USER';
+  referralPoints: number;
+  initialInteraction?: { liked: boolean; disliked: boolean };
+  initialIsSubscribed?: boolean;
+};
+
 interface CampaignContentProps {
-  adminData: any;
-  creator: any;
-  userProfile: any;
+  adminData: { imageUrl?: string | null; email?: string | null };
+  creator: PublicCreatorPageDTO | null;
+  userProfile: CampaignUserProfile | null;
   totalRaised: number;
   supportersCount: number;
 }
@@ -158,22 +173,26 @@ export default function CampaignContent({
 
   if (!mounted) return null;
 
-  const dummyCampaignVideo = {
+  const dummyCampaignVideo: PublicVideoDTO = {
     id: 'crowdfunding_zrzutka',
     title: 'I rise money for my secret project',
     description: `Witajcie! Przez ostatnie miesiące pracowałem w ukryciu nad czymś, co może całkowicie zmienić sposób, w jaki postrzegacie niezależne dziennikarstwo i śledztwa w sieci.\n\n"Secret Project" to rozbudowana platforma, która pozwoli nam wszystkim dotrzeć do prawdy tam, gdzie inni wolą milczeć. Potrzebuję Waszego wsparcia, aby sfinalizować produkcję i zabezpieczyć infrastrukturę.\n\nKampania autorstwa POLUTEK.PL`,
     thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
     creatorId: initialCreator?.id || '',
     creator: {
-      ...initialCreator,
+      id: initialCreator?.id || 'polutek',
+      slug: initialCreator?.slug || 'polutek',
+      imageUrl: initialCreator?.imageUrl || null,
       name: 'POLUTEK.PL',
       subscribersCount: initialCreator?.subscribersCount || 1250000
     },
     slug: 'campaign-video',
-    tier: 'PUBLIC',
+    tier: AccessTier.PUBLIC,
     views: 1250400,
     likesCount: 45000,
     dislikesCount: 120,
+    status: VideoStatus.PUBLISHED,
+    isMainFeatured: false,
     publishedAt: new Date().toISOString()
   };
 
@@ -183,7 +202,7 @@ export default function CampaignContent({
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <Hero
-              video={dummyCampaignVideo as any}
+              video={dummyCampaignVideo}
               initialInteraction={userProfile?.initialInteraction}
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />

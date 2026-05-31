@@ -86,7 +86,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
           mainVideo={mainVideo}
           allVideos={allVideos}
           currentVideoId={videoId}
-          userProfile={userProfile as any}
+          userProfile={userProfile}
         />
       </main>
       <Footer />

@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
-        let creator = await tx.creator.findFirst();
+        let creator = await tx.creator.findUnique({ where: { slug: "polutek" } });
         if (!creator) {
           const user = await tx.user.findFirst({ where: { email: ADMIN_EMAIL } });
           if (!user) throw new Error('Admin user not found in DB.');
@@ -103,7 +103,13 @@ export async function POST(req: NextRequest) {
               name: "POLUTEK.PL",
               slug: "polutek",
               isApproved: true,
+              isPrimary: true,
             }
+          });
+        } else if (!creator.isApproved || !creator.isPrimary) {
+          creator = await tx.creator.update({
+            where: { id: creator.id },
+            data: { isApproved: true, isPrimary: true },
           });
         }
 

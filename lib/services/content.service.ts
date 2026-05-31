@@ -1,10 +1,31 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 import { flags } from '../feature-flags';
 
+const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
+  OR: [
+    { publishedAt: null },
+    { publishedAt: { lte: now } },
+  ],
+});
+
+export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhereInput {
+  return {
+    status: VideoStatus.PUBLISHED,
+    creator: {
+      isApproved: true,
+    },
+    ...visiblePublishedAtFilter(now),
+  };
+}
+
+export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
+  { publishedAt: 'desc' },
+  { createdAt: 'desc' },
+];
 
 type PublicCreatorInput = {
   id: string;
@@ -148,7 +169,14 @@ export class ContentService {
             select: { imageUrl: true, email: true }
           },
           videos: {
-            orderBy: { createdAt: 'desc' }
+            where: {
+              status: VideoStatus.PUBLISHED,
+              OR: [
+                { publishedAt: null },
+                { publishedAt: { lte: new Date() } },
+              ],
+            },
+            orderBy: publicVideoOrderBy,
           }
         }
       });
@@ -259,10 +287,7 @@ export class ContentService {
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({
-        where: {
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
-        },
+        where: buildPublicVideoWhere(),
         include: {
           creator: {
             include: {
@@ -272,7 +297,7 @@ export class ContentService {
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: publicVideoOrderBy
       });
 
       if (videos.length === 0 && flags.demoFallbacks) {
@@ -293,9 +318,8 @@ export class ContentService {
     try {
       const video = await prisma.video.findFirst({
         where: {
+            ...buildPublicVideoWhere(),
             isMainFeatured: true,
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
         },
         include: {
           creator: {
@@ -308,8 +332,22 @@ export class ContentService {
         }
       });
 
-      if (!video && flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
-      return video ? this.mapToPublicVideoDTO(video) : null;
+      const selectedVideo = video ?? await prisma.video.findFirst({
+        where: buildPublicVideoWhere(),
+        include: {
+          creator: {
+            include: {
+              user: {
+                select: { imageUrl: true, email: true }
+              }
+            }
+          }
+        },
+        orderBy: publicVideoOrderBy,
+      });
+
+      if (!selectedVideo && flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      return selectedVideo ? this.mapToPublicVideoDTO(selectedVideo) : null;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);

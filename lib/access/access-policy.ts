@@ -51,8 +51,7 @@ export class AccessPolicy {
 
     // 1. Check Publication Status
     const isPublished = video.status === VideoStatus.PUBLISHED &&
-                        video.publishedAt &&
-                        video.publishedAt <= new Date();
+                        (!video.publishedAt || video.publishedAt <= new Date());
 
     if (!isPublished) {
         // Only Admins can see non-published content
