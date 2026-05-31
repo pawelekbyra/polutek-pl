@@ -15,7 +15,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
-    "content:diagnose": "npx tsx scripts/diagnose-home-content.ts"
+    "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
+    "content:fix:polutek": "npx tsx scripts/fix-polutek-content.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

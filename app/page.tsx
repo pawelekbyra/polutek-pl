@@ -22,8 +22,17 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   const creator = await ContentService.getCreatorBySlug('polutek');
 
   // Always show the standard video player view on homepage
-  const allVideos = (await ContentService.getAllVideos()) || [];
-  const mainVideo = await ContentService.getMainFeaturedVideo();
+  let allVideos: any[] = [];
+  let mainVideo = null;
+  let contentError = null;
+
+  try {
+    allVideos = (await ContentService.getAllVideos()) || [];
+    mainVideo = await ContentService.getMainFeaturedVideo();
+  } catch (e: any) {
+    console.error("[HOME_CONTENT_LOAD_ERROR]", e);
+    contentError = e.message || String(e);
+  }
 
   const user = await currentUser();
 
@@ -63,23 +72,49 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     initialIsSubscribed
   } : null;
 
-  if (!mainVideo && (!allVideos || allVideos.length === 0)) {
+    if (!mainVideo && (!allVideos || allVideos.length === 0)) {
     return (
       <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">Brak materiałów</h1>
-          {process.env.DEBUG_HOME_CONTENT === "true" && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded text-left text-xs font-mono text-red-800">
-              <p className="font-bold mb-2">DEBUG INFO (Visible only with DEBUG_HOME_CONTENT=true):</p>
-              <p>mainVideo: {mainVideo ? "Found" : "Null"}</p>
-              <p>allVideos count: {allVideos.length}</p>
-              <p>Check &quot;npm run content:diagnose&quot; for database status.</p>
-            </div>
-          )}
           <p className="text-neutral-600 mb-8">
             Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
           </p>
+
+          {(process.env.DEBUG_HOME_CONTENT === "true" || contentError) && (
+            <div className="mt-8 p-6 bg-white border border-neutral-200 rounded-xl shadow-sm text-left font-sans text-sm">
+              <h2 className="text-red-600 font-bold mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                DIAGNOSTYKA (Widoczna tylko w trybie debug)
+              </h2>
+              <div className="space-y-1 text-neutral-700">
+                {contentError ? (
+                  <p className="text-red-600 font-medium bg-red-50 p-2 rounded">BŁĄD: {contentError}</p>
+                ) : (
+                  <p className="text-green-600">Query zakończone sukcesem (200 OK).</p>
+                )}
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-neutral-100">
+                  <div>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">Main Video</p>
+                    <p className="font-mono">{mainVideo ? "Wczytany" : "NULL"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">All Videos</p>
+                    <p className="font-mono">{allVideos.length}</p>
+                  </div>
+                </div>
+                <div className="mt-6 bg-neutral-900 text-neutral-300 p-4 rounded-lg font-mono text-xs">
+                  <p className="mb-2 text-neutral-500"># Spróbuj naprawić dane:</p>
+                  <p className="text-blue-400">npm run content:diagnose</p>
+                  <p className="text-blue-400">npm run content:fix:polutek</p>
+                </div>
+                <p className="mt-4 text-xs text-neutral-400 italic">
+                  Jeśli liczniki powyżej są równe 0, problem leży w bazie danych (brak opublikowanych filmów lub zatwierdzonych twórców).
+                </p>
+              </div>
+            </div>
+          )}
         </main>
         <Footer />
       </div>
