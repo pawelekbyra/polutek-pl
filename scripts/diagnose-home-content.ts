@@ -3,7 +3,7 @@ import { PrismaClient, VideoStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI (v2) ===");
+  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI (v3) ===");
 
   const now = new Date();
   console.log(`Czas serwera: ${now.toISOString()}`);
@@ -13,27 +13,27 @@ async function main() {
   console.log(`Baza: ${safeUrl}`);
 
   try {
-    // Stage 1: Basic Counts with robustness for missing columns
+    // Stage 1: Basic Counts with robustness
     let allVideosCount = 0;
-    try { allVideosCount = await prisma.video.count(); } catch (e: unknown) {
-        console.log("BŁĄD przy Video.count():", (e as Error).message);
-        console.log("ROOT CAUSE: Tabela 'Video' może nie istnieć lub schemat jest nieaktualny.");
-        console.log("ROZWIĄZANIE: npx prisma migrate deploy lub npx prisma db push");
+    try { allVideosCount = await prisma.video.count(); } catch (e: any) {
+        console.log("BŁĄD przy Video.count():", e.message);
+        console.log("ROOT CAUSE: Tabela 'Video' może nie istnieć lub schemat jest krytycznie nieaktualny.");
+        console.log("ROZWIĄZANIE: npm run db:fix:schema lub npx prisma db push");
         return;
     }
 
     let publishedVideosCount = 0;
     try { publishedVideosCount = await prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }); }
-    catch (e: unknown) {
-        console.log("BŁĄD przy liczeniu PUBLISHED:", (e as Error).message);
-        if ((e as Error).message.includes("column Video.status does not exist")) {
+    catch (e: any) {
+        console.log("BŁĄD przy liczeniu PUBLISHED:", e.message);
+        if (e.message.includes("status")) {
             console.log("ROOT CAUSE: Kolumna 'status' nie istnieje w tabeli Video.");
-            console.log("ROZWIĄZANIE: npx prisma migrate deploy");
+            console.log("ROZWIĄZANIE: npm run db:fix:schema");
         }
     }
 
-    const approvedCreatorsCount = await prisma.creator.count({ where: { isApproved: true } });
-    const primaryCreatorsCount = await prisma.creator.count({ where: { isPrimary: true } });
+    const approvedCreatorsCount = await prisma.creator.count({ where: { isApproved: true } }).catch(() => 0);
+    const primaryCreatorsCount = await prisma.creator.count({ where: { isPrimary: true } }).catch(() => 0);
 
     let approvedCreatorVideosCount = 0;
     try {
@@ -72,11 +72,11 @@ async function main() {
       take: 50,
       include: { creator: true },
       orderBy: { createdAt: 'desc' }
-    });
+    }).catch(() => []);
 
     videos.forEach((v, i) => {
       const reasons: string[] = [];
-      if (v.status !== VideoStatus.PUBLISHED) reasons.push(`status is ${v.status}`);
+      if ((v as any).status !== VideoStatus.PUBLISHED) reasons.push(`status is ${(v as any).status}`);
 
       if (!v.creator) {
           reasons.push("missing creator");
@@ -112,11 +112,11 @@ async function main() {
             console.log("\n!!! ALARM: Dane w DB są poprawne (widoczne), ale ContentService zwraca pustą listę !!!");
             console.log("Sprawdź buildPublicVideoWhere() w lib/services/content.service.ts");
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         console.log(`BŁĄD przy ContentService:`);
-        console.log(`  Name: ${(err as Error).name}`);
-        console.log(`  Message: ${(err as Error).message}`);
-        if ((err as any).code) console.log(`  Prisma code: ${(err as any).code}`);
+        console.log(`  Name: ${err.name}`);
+        console.log(`  Message: ${err.message}`);
+        if (err.code) console.log(`  Prisma code: ${err.code}`);
     }
 
     if (publishWindowVideosCount === 0) {
@@ -126,18 +126,18 @@ async function main() {
             console.log("ROZWIĄZANIE: npm run db:setup:dev");
         } else if (publishedVideosCount === 0) {
             console.log("ROOT CAUSE: Żaden film nie ma statusu PUBLISHED.");
-            console.log("ROZWIĄZANIE: Zmień status filmu w panelu admina lub użyj npm run content:fix:polutek");
+            console.log("ROZWIĄZANIE: npm run content:fix:polutek");
         } else if (approvedCreatorVideosCount === 0) {
             console.log("ROOT CAUSE: Creatorzy nie są zatwierdzeni (isApproved=false).");
             console.log("ROZWIĄZANIE: npm run content:fix:polutek");
-        } else if (publishWindowVideosCount === 0) {
-            console.log("ROOT CAUSE: Wszystkie filmy mają datę publikacji w przyszłości.");
-            console.log("ROZWIĄZANIE: npx prisma migrate deploy (uruchomi backfill dat)");
+        } else {
+            console.log("ROOT CAUSE: Nieznany błąd filtracji (prawdopodobnie daty lub brak wymaganych pól).");
+            console.log("ROZWIĄZANIE: Sprawdź powyższe powody dla 50 filmów.");
         }
     }
 
-  } catch (err: unknown) {
-    console.error("BŁĄD KRYTYCZNY DIAGNOSTYKI:", (err as Error).message);
+  } catch (err: any) {
+    console.error("BŁĄD KRYTYCZNY DIAGNOSTYKI:", err.message);
   } finally {
     await prisma.$disconnect();
   }
