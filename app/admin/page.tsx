@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft } from "@/app/components/icons";
-import { formatCount } from "@/lib/utils";
+import { formatCount, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -44,6 +44,7 @@ export default function AdminPanel() {
     thumbnailUrl: "",
     duration: "",
     tier: "PUBLIC",
+    status: "PUBLISHED",
     likesCount: 0,
     dislikesCount: 0,
     views: 0,
@@ -162,6 +163,7 @@ export default function AdminPanel() {
       thumbnailUrl: vid.thumbnailUrl,
       duration: vid.duration || "",
       tier: vid.tier,
+      status: vid.status || "PUBLISHED",
       likesCount: vid.likesCount,
       dislikesCount: vid.dislikesCount || 0,
       views: vid.views,
@@ -180,6 +182,7 @@ export default function AdminPanel() {
       thumbnailUrl: "",
       duration: "",
       tier: "PUBLIC",
+      status: "PUBLISHED",
       likesCount: 0,
       dislikesCount: 0,
       views: 0,
@@ -327,7 +330,24 @@ export default function AdminPanel() {
                         </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-2 pt-8">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status Publikacji</Label>
+                    <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v || "PUBLISHED"})}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Wybierz status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="DRAFT">Draft</SelectItem>
+                            <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
+                            <SelectItem value="UNLISTED">Niepubliczny</SelectItem>
+                            <SelectItem value="ARCHIVED">Zarchiwizowany</SelectItem>
+                        </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2 pt-4">
                        <Checkbox
                         id="isMainFeatured"
                         checked={formData.isMainFeatured}
@@ -362,7 +382,11 @@ export default function AdminPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video className="h-4 w-4" />} />
           <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus className="h-4 w-4" />} />
-          <StatCard title="Przychód" value={`${stats?.totalRevenue?.toFixed(2) || "0.00"} PLN`} icon={<BarChart3 className="h-4 w-4" />} />
+          <StatCard
+            title="Przychód (PLN)"
+            value={`${stats?.revenueByCurrency?.find((r: any) => r.currency === 'PLN')?.amount?.toFixed(2) || "0.00"} PLN`}
+            icon={<BarChart3 className="h-4 w-4" />}
+          />
           <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star className="h-4 w-4" />} />
         </div>
 
@@ -384,6 +408,7 @@ export default function AdminPanel() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead>Ekspozycja</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Tytuł</TableHead>
                                         <TableHead>Dostęp</TableHead>
@@ -396,10 +421,22 @@ export default function AdminPanel() {
                                         <TableRow key={vid.id}>
                                             <TableCell>
                                                 {vid.isMainFeatured ? (
-                                                    <Badge>Hero</Badge>
+                                                    <Badge className="bg-blue-600">Hero</Badge>
                                                 ) : (
                                                     <Badge variant="secondary">Lista</Badge>
                                                 )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={vid.status === 'PUBLISHED' ? 'default' : 'outline'}
+                                                    className={cn(
+                                                        vid.status === 'DRAFT' && "text-muted-foreground border-dashed",
+                                                        vid.status === 'ARCHIVED' && "bg-red-100 text-red-700",
+                                                        vid.status === 'PUBLISHED' && "bg-green-100 text-green-700 hover:bg-green-100"
+                                                    )}
+                                                >
+                                                    {vid.status}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-medium">{vid.title}</div>
@@ -446,9 +483,9 @@ export default function AdminPanel() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {stats?.recentTransactions?.map((tx: any) => (
+                                {stats?.recentPayments?.map((tx: any) => (
                                     <TableRow key={tx.id}>
-                                        <TableCell className="font-mono text-xs">{tx.user?.email}</TableCell>
+                                        <TableCell className="font-mono text-xs">{tx.userEmail}</TableCell>
                                         <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
                                         <TableCell><Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Sukces</Badge></TableCell>
                                         <TableCell className="text-right text-xs text-muted-foreground">

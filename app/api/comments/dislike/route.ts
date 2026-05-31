@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,17 @@ export async function POST(request: NextRequest) {
 
   if (!userId) {
     return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
+  }
+
+  // Rate Limiting: 60 reactions per minute
+  const rateLimitResult = await rateLimit({
+      key: `reactions:${userId}`,
+      limit: 60,
+      windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, message: "Zbyt wiele reakcji. Odczekaj chwilę." }, { status: 429 });
   }
 
   try {

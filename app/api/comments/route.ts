@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
+import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -120,18 +121,23 @@ export async function GET(request: NextRequest) {
     }
 
     const commentsWithStatus = comments.map(c => {
+        const isDeleted = !!c.deletedAt;
         const replies = c.replies.map((r: any) => ({
             ...r,
+            text: r.deletedAt ? "Komentarz usunięty" : r.text,
+            author: r.deletedAt ? null : r.author,
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
-            authorName: r.author?.username || r.author?.name || "Użytkownik",
+            authorName: r.deletedAt ? "Użytkownik" : (r.author?.username || r.author?.name || "Użytkownik"),
         }));
 
         return {
             ...c,
+            text: isDeleted ? "Komentarz usunięty" : c.text,
+            author: isDeleted ? null : c.author,
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
-            authorName: c.author?.username || c.author?.name || "Użytkownik",
+            authorName: isDeleted ? "Użytkownik" : (c.author?.username || c.author?.name || "Użytkownik"),
             replies,
         };
     });
@@ -163,6 +169,17 @@ export async function POST(request: NextRequest) {
 
   if (!userId) {
     return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
+  }
+
+  // Rate Limiting
+  const rateLimitResult = await rateLimit({
+      key: `comments:${userId}`,
+      limit: 5,
+      windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę." }, { status: 429 });
   }
 
   try {
@@ -253,7 +270,15 @@ export async function DELETE(request: NextRequest) {
 
         if (!isOwner && !isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-        await prisma.comment.delete({ where: { id: commentId } });
+        await prisma.comment.update({
+            where: { id: commentId },
+            data: {
+                deletedAt: new Date(),
+                deletedById: userId,
+                text: "",
+                imageUrl: null
+            }
+        });
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);

@@ -18,11 +18,15 @@ export const checkoutSchema = z.object({
   amount: z.number()
     .positive()
     .refine((value) => Number.isFinite(value), 'Amount must be finite')
-    .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-8, 'Amount must have at most two decimal places'),
+    .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-8, 'Amount must have at most two decimal places')
+    .optional(),
   amountMinor: z.number().int().positive().optional(),
   currency: currencySchema,
   title: z.string().min(1).max(120),
   creatorId: z.string().uuid().optional(),
+}).refine(data => data.amount !== undefined || data.amountMinor !== undefined, {
+  message: "Either amount or amountMinor must be provided",
+  path: ["amount"]
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

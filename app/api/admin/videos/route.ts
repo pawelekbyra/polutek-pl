@@ -2,8 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyAdmin } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { AccessTier } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
+import { writeAuditLog } from '@/lib/services/audit.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +18,7 @@ const videoSchema = z.object({
   thumbnailUrl: z.string().url(),
   duration: z.string().optional().nullable(),
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
+  status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
   likesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
   dislikesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
   views: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
@@ -23,7 +26,8 @@ const videoSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const adminCheck = await verifyAdmin();
+  if (!adminCheck) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -47,11 +51,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, likesCount, dislikesCount, views, isMainFeatured } = result.data;
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, likesCount, dislikesCount, views, isMainFeatured } = result.data;
 
   try {
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
+        const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true } });
+        const publishedAt = (status === VideoStatus.PUBLISHED && !currentVideo?.publishedAt) ? new Date() : undefined;
+
         const video = await tx.video.update({
           where: { id },
           data: {
@@ -62,6 +69,8 @@ export async function POST(req: NextRequest) {
             thumbnailUrl,
             duration,
             tier,
+            status,
+            publishedAt,
             likesCount,
             dislikesCount,
             views,
@@ -76,6 +85,14 @@ export async function POST(req: NextRequest) {
           });
         }
         return video;
+      });
+
+      await writeAuditLog({
+          actorUserId: (await auth()).userId,
+          action: "VIDEO_UPDATED",
+          targetType: "Video",
+          targetId: id,
+          metadata: { title, status, tier, isMainFeatured }
       });
 
       return NextResponse.json(updated);
@@ -106,6 +123,8 @@ export async function POST(req: NextRequest) {
             thumbnailUrl,
             duration,
             tier: tier || 'PUBLIC',
+            status: status || VideoStatus.PUBLISHED,
+            publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
             likesCount,
             dislikesCount,
             views,
@@ -120,6 +139,14 @@ export async function POST(req: NextRequest) {
           });
         }
         return video;
+      });
+
+      await writeAuditLog({
+          actorUserId: (await auth()).userId,
+          action: "VIDEO_CREATED",
+          targetType: "Video",
+          targetId: created.id,
+          metadata: { title, status, tier, isMainFeatured }
       });
 
       return NextResponse.json(created);
@@ -146,6 +173,15 @@ export async function DELETE(req: NextRequest) {
     const deleted = await prisma.video.delete({
       where: { id }
     });
+
+    await writeAuditLog({
+        actorUserId: (await auth()).userId,
+        action: "VIDEO_DELETED",
+        targetType: "Video",
+        targetId: id,
+        metadata: { title: deleted.title }
+    });
+
     return NextResponse.json(deleted);
   } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);

@@ -1,4 +1,4 @@
-import { PrismaClient, AccessTier, SystemRole } from '@prisma/client';
+import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -30,6 +30,8 @@ async function main() {
       bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
       bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
       subscribersCount: 400,
+      isApproved: true,
+      isPrimary: true,
     },
     create: {
       userId: adminUser.id,
@@ -39,6 +41,7 @@ async function main() {
       bannerUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
       subscribersCount: 400,
       isApproved: true,
+      isPrimary: true,
     },
   });
 
@@ -125,6 +128,7 @@ async function main() {
         views: v.views,
         likesCount: v.likesCount,
         dislikesCount: v.dislikesCount,
+        status: VideoStatus.PUBLISHED,
         publishedAt: new Date(),
       },
       create: {
@@ -137,6 +141,7 @@ async function main() {
         duration: v.duration,
         tier: v.tier,
         isMainFeatured: v.isMainFeatured,
+        status: VideoStatus.PUBLISHED,
         views: v.views,
         likesCount: v.likesCount,
         dislikesCount: v.dislikesCount,

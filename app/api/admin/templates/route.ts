@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin } from '@/lib/auth-utils';
 import { z } from 'zod';
+import { writeAuditLog } from '@/lib/services/audit.service';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +75,14 @@ export async function POST(req: NextRequest) {
       where: { name: 'WELCOME' },
       update: { subjectPl, bodyPl, subjectEn, bodyEn },
       create: { name: 'WELCOME', subjectPl, bodyPl, subjectEn, bodyEn }
+    });
+
+    await writeAuditLog({
+        actorUserId: (await auth()).userId,
+        action: "TEMPLATE_UPDATED",
+        targetType: "EmailTemplate",
+        targetId: updated.id,
+        metadata: { name: updated.name }
     });
 
     return NextResponse.json(updated);

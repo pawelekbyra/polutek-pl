@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { VideoStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,16 @@ export async function GET() {
         where: { isApproved: true }
     });
 
+    const primaryCreatorExists = await prisma.creator.findFirst({
+        where: { isPrimary: true, isApproved: true }
+    });
+
     const mainFeaturedVideoExists = await prisma.video.findFirst({
-        where: { isMainFeatured: true }
+        where: {
+            isMainFeatured: true,
+            status: VideoStatus.PUBLISHED,
+            publishedAt: { lte: new Date() }
+        }
     });
 
     // 4. Basic env checks (values hidden)
@@ -34,6 +43,7 @@ export async function GET() {
         env,
         content: {
             approvedCreatorExists: !!approvedCreatorExists,
+            primaryCreatorExists: !!primaryCreatorExists,
             mainFeaturedVideoExists: !!mainFeaturedVideoExists
         }
     });
