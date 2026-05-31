@@ -14,7 +14,8 @@
     "db:setup:dev": "npm run db:push && npm run db:seed",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "content:diagnose": "npx tsx scripts/diagnose-home-content.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

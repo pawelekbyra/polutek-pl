@@ -69,6 +69,14 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">Brak materiałów</h1>
+          {process.env.DEBUG_HOME_CONTENT === "true" && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded text-left text-xs font-mono text-red-800">
+              <p className="font-bold mb-2">DEBUG INFO (Visible only with DEBUG_HOME_CONTENT=true):</p>
+              <p>mainVideo: {mainVideo ? "Found" : "Null"}</p>
+              <p>allVideos count: {allVideos.length}</p>
+              <p>Check &quot;npm run content:diagnose&quot; for database status.</p>
+            </div>
+          )}
           <p className="text-neutral-600 mb-8">
             Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
           </p>
