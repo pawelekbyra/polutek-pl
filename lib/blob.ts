@@ -7,8 +7,10 @@ const ALLOWED_MEDIA_HOSTS = [
     'vercel-storage.com',
     'r2.cloudflarestorage.com',
     'r2.dev',
-    'unsplash.com', // For initial content images if proxied
-    'images.unsplash.com'
+    'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev', // Specific R2 bucket from initial-content
+    'unsplash.com',
+    'images.unsplash.com',
+    'polutek.pl'
 ];
 
 function isHostAllowed(url: string) {
@@ -53,11 +55,14 @@ export async function getGatedBlobResponse(
     }
 
     const range = headers?.get('range');
+    console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range || 'none'})`);
+
     const response = await fetch(targetUrl, {
         headers: range ? { Range: range } : {}
     });
 
     if (!response.ok && response.status !== 206) {
+        console.error(`[MediaProxy] Upstream error: ${response.status} ${response.statusText} for ${targetUrl}`);
       return new NextResponse('Error fetching content', { status: response.status });
     }
 
