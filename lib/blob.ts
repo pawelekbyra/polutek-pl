@@ -18,14 +18,19 @@ export async function getGatedBlobResponse(
   }
 
   try {
-    const result = await get(blobUrl, { access: 'private' });
+    const isVercelBlob = blobUrl.includes('public.blob.vercel-storage.com') || blobUrl.includes('vercel-storage.com');
+    let targetUrl = blobUrl;
 
-    if (!result) {
-      return new NextResponse('Not found', { status: 404 });
+    if (isVercelBlob) {
+        const result = await get(blobUrl, { access: 'private' });
+        if (!result) {
+            return new NextResponse('Not found', { status: 404 });
+        }
+        targetUrl = result.blob.url;
     }
 
     const range = headers?.get('range');
-    const response = await fetch(result.blob.url, {
+    const response = await fetch(targetUrl, {
         headers: range ? { Range: range } : {}
     });
 
