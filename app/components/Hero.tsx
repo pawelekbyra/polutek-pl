@@ -71,7 +71,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         try {
             logger.debug("[Hero] Toggling LIKE for video:", video.id);
             addOptimisticAction('LIKE');
-            const result = await toggleVideoLike(video.id) as any;
+            const result = await toggleVideoLike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
                 console.error("[Hero] LIKE Action failed:", result.error, result.message);
@@ -121,7 +121,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         try {
             logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
             addOptimisticAction('DISLIKE');
-            const result = await toggleVideoDislike(video.id) as any;
+            const result = await toggleVideoDislike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
                 console.error("[Hero] DISLIKE Action failed:", result.error, result.message);

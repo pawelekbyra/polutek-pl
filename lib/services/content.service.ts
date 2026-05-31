@@ -12,6 +12,23 @@ const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   ],
 });
 
+
+export interface PublicVisibilityVideo {
+  status: VideoStatus;
+  publishedAt: Date | string | null;
+  creator: {
+    isApproved: boolean;
+  };
+}
+
+export function isPubliclyVisibleVideo(video: PublicVisibilityVideo, now: Date = new Date()): boolean {
+  return (
+    video.status === VideoStatus.PUBLISHED &&
+    video.creator.isApproved &&
+    (video.publishedAt === null || new Date(video.publishedAt) <= now)
+  );
+}
+
 export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhereInput {
   return {
     status: VideoStatus.PUBLISHED,
