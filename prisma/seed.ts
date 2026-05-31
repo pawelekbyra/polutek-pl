@@ -7,6 +7,15 @@ const seedMediaUrl = process.env.SEED_MEDIA_URL || "https://media.localhost.inva
 const seedThumbnailUrl = process.env.SEED_THUMBNAIL_URL || "/wuthering.jpg";
 
 async function main() {
+  // AUTO_FIX_DEV_CONTENT support
+  if (process.env.AUTO_FIX_DEV_CONTENT === "true" && process.env.NODE_ENV !== "production") {
+    console.log("AUTO_FIX_DEV_CONTENT: Ensuring polutek creator is approved...");
+    await prisma.creator.updateMany({
+        where: { slug: 'polutek' },
+        data: { isApproved: true, isPrimary: true }
+    });
+  }
+
   console.log('Starting seeding...');
 
   // 1. Create or update the Admin User

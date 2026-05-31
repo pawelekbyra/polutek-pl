@@ -29,9 +29,9 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   try {
     allVideos = (await ContentService.getAllVideos()) || [];
     mainVideo = await ContentService.getMainFeaturedVideo();
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("[HOME_CONTENT_LOAD_ERROR]", e);
-    contentError = e.message || String(e);
+    contentError = (e as Error).message || String(e);
   }
 
   const user = await currentUser();
@@ -110,7 +110,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
                   <p className="text-blue-400">npm run content:fix:polutek</p>
                 </div>
                 <p className="mt-4 text-xs text-neutral-400 italic">
-                  Jeśli liczniki powyżej są równe 0, problem leży w bazie danych (brak opublikowanych filmów lub zatwierdzonych twórców).
+                  Jeśli liczniki powyżej są równe 0, problem leży w danych (brak opublikowanych filmów lub zatwierdzonych twórców).
                 </p>
               </div>
             </div>

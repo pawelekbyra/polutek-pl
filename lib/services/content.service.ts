@@ -376,7 +376,7 @@ export class ContentService {
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
-      return null;
+      throw e;
     }
   }
 }
