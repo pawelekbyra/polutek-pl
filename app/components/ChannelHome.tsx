@@ -104,8 +104,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       return 0;
   });
 
-  let hasInjectedPatronHeader = false;
-  let hasInjectedMaterialsHeader = false;
+  let lastWasPatron: boolean | null = null;
 
   const playlistItems = sortedVideos.reduce((acc: any[], video, i) => {
       const isCurrent = video.id === selectedVideo.id;
@@ -116,29 +115,29 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                         (video.tier === 'LOGGED_IN' && isLoggedIn) ||
                         (video.tier === 'PATRON' && isPatron);
 
-      // Inject Materials header at the very top if not searching
-      if (!searchQuery && !hasInjectedMaterialsHeader && video.tier !== 'PATRON') {
-          acc.push(
-              <div key="materials-header" className="pb-2">
-                  <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-                  </div>
-              </div>
-          );
-          hasInjectedMaterialsHeader = true;
-      }
+      const isPatronTier = video.tier === 'PATRON';
 
-      // Inject Patron Zone header if we hit a Patron video
-      if (!searchQuery && !hasInjectedPatronHeader && video.tier === 'PATRON') {
-          acc.push(
-              <div key="patron-header" className="pt-4">
-                  <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+      // Explicit header injection based on tier transition
+      if (!searchQuery) {
+          if (isPatronTier && lastWasPatron !== true) {
+              acc.push(
+                  <div key={`patron-header-${i}`} className="pt-4">
+                      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+                      </div>
                   </div>
-              </div>
-          );
-          hasInjectedPatronHeader = true;
+              );
+          } else if (!isPatronTier && lastWasPatron !== false) {
+              acc.push(
+                  <div key={`materials-header-${i}`} className="pb-2 pt-2">
+                      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+                      </div>
+                  </div>
+              );
+          }
       }
+      lastWasPatron = isPatronTier;
 
       acc.push(
           <div

@@ -9,7 +9,8 @@ const ALLOWED_MEDIA_HOSTS = [
     'r2.dev',
     'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev', // Specific R2 bucket from initial-content
     'unsplash.com',
-    'images.unsplash.com'
+    'images.unsplash.com',
+    'polutek.pl'
 ];
 
 function isHostAllowed(url: string) {
