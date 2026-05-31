@@ -7,7 +7,7 @@ import VideoPlaylist from './VideoPlaylist';
 import EmbeddedComments from './comments/EmbeddedComments';
 
 interface VideoTabsProps {
-  video: Video;
+  video: PublicVideoDTO;
 }
 
 const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {

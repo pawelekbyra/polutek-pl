@@ -1,4 +1,4 @@
-import { AccessTier } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export type AccessDecision = {
@@ -34,6 +34,28 @@ export class AccessPolicy {
     }
 
     if (!video) return { allowed: false, reason: "NOT_FOUND" };
+
+    // 1. Check Publication Status
+    const isPublished = video.status === VideoStatus.PUBLISHED &&
+                        video.publishedAt &&
+                        video.publishedAt <= new Date();
+
+    if (!isPublished) {
+        // Only Admins can see non-published content
+        if (userId) {
+            const actor = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { role: true, isDeleted: true }
+            });
+            if (actor?.role === 'ADMIN' && !actor?.isDeleted) {
+                // Admin allowed to see drafts/archives
+            } else {
+                return { allowed: false, reason: "NOT_FOUND" };
+            }
+        } else {
+            return { allowed: false, reason: "NOT_FOUND" };
+        }
+    }
 
     // Public videos are always allowed
     if (video.tier === AccessTier.PUBLIC) return { allowed: true };

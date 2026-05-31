@@ -34,11 +34,27 @@ export async function GET(req: NextRequest) {
         }
     });
 
+    const revenueDTO = revenueByCurrency.map(r => ({
+        currency: r.currency,
+        amountMinor: r._sum.amountMinor || 0,
+        amount: (r._sum.amountMinor || 0) / 100
+    }));
+
+    const paymentsDTO = recentPayments.map(p => ({
+        id: p.id,
+        amountMinor: p.amountMinor,
+        amount: p.amountMinor / 100,
+        currency: p.currency,
+        status: p.status,
+        createdAt: p.createdAt,
+        userEmail: p.user?.email
+    }));
+
     return NextResponse.json({
         totalUsers,
         totalVideos,
-        revenueByCurrency,
-        recentPayments
+        revenueByCurrency: revenueDTO,
+        recentPayments: paymentsDTO
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

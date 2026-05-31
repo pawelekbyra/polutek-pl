@@ -3,6 +3,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyAdmin } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { z } from 'zod';
+import { writeAuditLog } from '@/lib/services/audit.service';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +56,15 @@ export async function POST(req: NextRequest) {
         where: { id },
         data: { name, bio, slug, bannerUrl }
       });
+
+      await writeAuditLog({
+          actorUserId: (await auth()).userId,
+          action: "CREATOR_UPDATED",
+          targetType: "Creator",
+          targetId: id,
+          metadata: { name, slug }
+      });
+
       return NextResponse.json(updated);
     } else {
         const adminUser = await prisma.user.findFirst({

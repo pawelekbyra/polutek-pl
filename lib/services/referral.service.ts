@@ -8,11 +8,7 @@ export class ReferralService {
       throw new Error("Self-referral is not allowed");
     }
 
-    let syncAfterTransaction: null | {
-      userId: string;
-      isPatron: boolean;
-      totalPaid: number;
-    } = null;
+    let syncData: any = null;
 
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -82,7 +78,7 @@ export class ReferralService {
                 }
             });
 
-            syncAfterTransaction = {
+            syncData = {
                 userId: referrerId,
                 isPatron: true,
                 totalPaid: updatedReferrer.totalPaidMinor / 100
@@ -93,11 +89,11 @@ export class ReferralService {
       });
 
       // Sync to Clerk outside transaction
-      if (syncAfterTransaction) {
+      if (syncData) {
           await UserAccessService.syncClerkAccess(
-              syncAfterTransaction.userId,
-              syncAfterTransaction.isPatron,
-              syncAfterTransaction.totalPaid
+              syncData.userId,
+              syncData.isPatron,
+              syncData.totalPaid
           ).catch(err => {
               console.error("[ReferralService] Clerk sync failed after transaction:", err);
           });

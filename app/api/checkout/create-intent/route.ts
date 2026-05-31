@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { PaymentService } from '@/lib/services/payment.service';
 import { UserService } from '@/lib/services/user.service';
+import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema, validatePaymentAmount } from '@/lib/payments/checkout.schema';
 import { prisma } from '@/lib/prisma';
 
@@ -19,6 +20,20 @@ export async function POST(req: NextRequest) {
       }, { status: 401 });
     }
 
+    // Rate Limiting: 10 intents per 10 mins
+    const rateLimitResult = await rateLimit({
+        key: `checkout:${userId}`,
+        limit: 10,
+        windowMs: 10 * 60 * 1000
+    });
+
+    if (!rateLimitResult.success) {
+        return NextResponse.json({
+            error: "Too many requests",
+            message: "Zbyt wiele prób płatności. Spróbuj ponownie za 10 minut."
+        }, { status: 429 });
+    }
+
     // Lazy Sync Fallback via Service
     await UserService.getOrCreateUser(userId);
 
@@ -30,7 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { amount, amountMinor: inputAmountMinor, currency, title, creatorId } = result.data;
-    const amountError = validatePaymentAmount(amount, currency);
+    const finalAmount = inputAmountMinor ? inputAmountMinor / 100 : (amount as number);
+
+    const amountError = validatePaymentAmount(finalAmount, currency);
 
     if (amountError) {
       return NextResponse.json({ error: amountError }, { status: 400 });
@@ -49,7 +66,7 @@ export async function POST(req: NextRequest) {
 
     const payment = await PaymentService.createPayment({
       userId,
-      amount: inputAmountMinor ? inputAmountMinor / 100 : amount,
+      amount: finalAmount,
       currency,
       title,
       creatorId,
