@@ -51,7 +51,7 @@ export default function SubscribeButton({
         setIsSubscribed(!prevSubscribed);
         startTransition(async () => {
             try {
-                const result = await toggleSubscriptionAction(creatorId) as any;
+                const result = await toggleSubscriptionAction(creatorId)  as { success: boolean; error?: string; message?: string };
                 if (result.error) setIsSubscribed(prevSubscribed);
             } catch (err) {
                 setIsSubscribed(prevSubscribed);

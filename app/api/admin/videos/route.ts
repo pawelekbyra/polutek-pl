@@ -15,7 +15,15 @@ const videoSchema = z.object({
   slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/),
   description: z.string().max(5000).optional().nullable(),
   videoUrl: z.string().url(),
-  thumbnailUrl: z.string().url(),
+  thumbnailUrl: z.string().refine((value) => {
+    if (value.startsWith("/")) return true;
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }, { message: "Invalid URL or local path" }),
   duration: z.string().optional().nullable(),
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),

@@ -63,7 +63,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     initialIsSubscribed
   } : null;
 
-  if (!mainVideo && allVideos.length === 0) {
+  if (!mainVideo && (!allVideos || allVideos.length === 0)) {
     return (
       <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
         <Navbar />
