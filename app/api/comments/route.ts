@@ -6,16 +6,29 @@ import { UserService } from '@/lib/services/user.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
 const postCommentSchema = z.object({
   videoId: z.string(),
-  text: z.string().max(2000).optional(),
+  text: z.string().trim().min(1).max(2000).optional(),
   parentId: z.string().optional().nullable(),
-  imageUrl: z.string().url().optional().nullable(),
+  imageUrl: z.string().url().refine((url) => {
+    try {
+      const { hostname } = new URL(url);
+      const allowed = [
+        process.env.MEDIA_BUCKET_HOST,
+        process.env.NEXT_PUBLIC_R2_PUBLIC_HOST,
+        'public.blob.vercel-storage.com',
+      ].filter(Boolean) as string[];
+      return allowed.some(h => hostname === h || hostname.endsWith(`.${h}`));
+    } catch {
+      return false;
+    }
+  }, "Zablokowany host obrazka").optional().nullable(),
 }).refine(data => data.text || data.imageUrl, {
-  message: "Either text or imageUrl must be provided",
+  message: "Treść komentarza lub obrazek jest wymagany",
   path: ["text"]
 });
 
@@ -34,11 +47,6 @@ export async function GET(request: NextRequest) {
 
   if (!videoId) {
     return NextResponse.json({ success: false, message: 'videoId is required' }, { status: 400 });
-  }
-
-  if (!process.env.DATABASE_URL) {
-    console.error("[GET_COMMENTS] DATABASE_URL is missing.");
-    return NextResponse.json({ success: true, comments: [], nextCursor: null, warning: "System offline." });
   }
 
   let userId: string | null = null;
@@ -145,12 +153,7 @@ export async function GET(request: NextRequest) {
     const nextCursor = comments.length === limit ? comments[limit - 1].id : null;
     return NextResponse.json({ success: true, comments: commentsWithStatus, nextCursor });
   } catch (error: unknown) {
-    console.error('[GET_COMMENTS_API_ERROR]', error);
-    // P2021: Table missing - return success but empty state to avoid frontend crash
-    if ((error as any).code === 'P2021' || (error as any).message?.includes("P2021")) {
-        return NextResponse.json({ success: true, comments: [], nextCursor: null, warning: "Database not initialized. Run 'npx prisma db push'." });
-    }
-    return NextResponse.json({ success: false, message: 'Błąd podczas pobierania komentarzy.' }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -163,7 +166,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
           success: false,
           error: "CLERK_ERROR",
-          message: 'Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API CLERK_SECRET_KEY i NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY w panelu Vercel.'
+          message: 'Błąd weryfikacji sesji.'
       }, { status: 500 });
   }
 
@@ -201,9 +204,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (parentId) {
-        const parent = await prisma.comment.findUnique({ where: { id: parentId }, select: { videoId: true } });
+        const parent = await prisma.comment.findUnique({
+          where: { id: parentId },
+          select: { videoId: true, parentId: true, deletedAt: true }
+        });
+
         if (!parent || parent.videoId !== videoId) {
-            return NextResponse.json({ success: false, message: "Invalid parent comment" }, { status: 400 });
+            return NextResponse.json({ success: false, message: "Nieprawidłowy komentarz nadrzędny." }, { status: 400 });
+        }
+
+        // Prevent nesting deeper than 1 level
+        if (parent.parentId) {
+            return NextResponse.json({ success: false, message: "Nie można odpowiadać na odpowiedzi." }, { status: 400 });
+        }
+
+        // Prevent replying to deleted comments
+        if (parent.deletedAt) {
+          return NextResponse.json({ success: false, message: "Nie można odpowiadać na usunięty komentarz." }, { status: 400 });
         }
     }
 
@@ -232,12 +249,7 @@ export async function POST(request: NextRequest) {
         }
     }, { status: 201 });
   } catch (error: unknown) {
-    console.error('[POST_COMMENT_API_ERROR]', error);
-    if ((error as any).code === 'P2021') {
-        return NextResponse.json({ success: false, message: "Baza danych nie jest gotowa (P2021)." }, { status: 503 });
-    }
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -281,7 +293,6 @@ export async function DELETE(request: NextRequest) {
         });
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        return NextResponse.json({ error: message }, { status: 500 });
+        return handleApiError(error);
     }
 }

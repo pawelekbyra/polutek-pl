@@ -270,7 +270,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                   </div>
                 </div>
             )}
-            {playlistItems.length > 0 ? (
+            {(sortedVideos.length > 0 || !searchQuery) ? (
                 <>
                   {playlistItems}
                   {searchQuery && (

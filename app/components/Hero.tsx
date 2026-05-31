@@ -7,6 +7,7 @@ import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
+import Image from 'next/image';
 import SubscribeButton from './SubscribeButton';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
@@ -171,13 +172,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             <div className="flex items-center gap-2 md:gap-3 min-w-0 w-full lg:w-auto">
                <Link
                  href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                 className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity"
+                 className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
                >
-                  <img
+                  <Image
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || 'POLUTEK'}`}
-                    alt={video.creator?.name}
+                    alt={video.creator?.name || 'Creator'}
+                    fill
                     className={cn(
-                      "w-full h-full",
                       video.creator?.slug === 'polutek' ? "object-contain p-1.5" : "object-cover"
                     )}
                   />

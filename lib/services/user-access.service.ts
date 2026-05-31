@@ -12,7 +12,8 @@ export class UserAccessService {
         where: {
             userId,
             revokedAt: null
-        }
+        },
+        orderBy: { createdAt: 'asc' }
     });
 
     const isPatron = !!activeGrant;
@@ -22,13 +23,17 @@ export class UserAccessService {
         data: {
             isPatron,
             patronSince: isPatron ? (activeGrant.createdAt) : null
+        },
+        include: {
+          paymentTotals: true
         }
     });
 
-    // Sync to Clerk
-    await this.syncClerkAccess(userId, isPatron, user.totalPaidMinor / 100);
+    const totalPLN = user.paymentTotals.find((t: any) => t.currency === 'PLN')?.amountMinor || 0;
+    const totalEUR = user.paymentTotals.find((t: any) => t.currency === 'EUR')?.amountMinor || 0;
+    const normalizedTotal = (totalPLN / 100) + (totalEUR / 100 * 4.3);
 
-    return isPatron;
+    return { isPatron, normalizedTotal };
   }
 
   /**
@@ -51,7 +56,6 @@ export class UserAccessService {
       console.log(`[UserAccessService] Synced Clerk access for user ${userId}: isPatron=${isPatron}, role=${role}`);
     } catch (error) {
       console.error(`[UserAccessService] Error syncing Clerk access for user ${userId}:`, error);
-      // We don't throw here to avoid failing the main operation if only Clerk sync fails
     }
   }
 }

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
-import { PaymentStatus, PatronGrantSource, StripeEventStatus } from '@prisma/client';
+import { PaymentStatus, PatronGrantSource, StripeEventStatus, Prisma } from '@prisma/client';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -14,21 +14,52 @@ function getStripe() {
 }
 
 export class PaymentService {
+  private static async getOrCreateStripeCustomer(userId: string, email: string) {
+    const stripe = getStripe();
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true }
+    });
+
+    if (user?.stripeCustomerId) {
+      return user.stripeCustomerId;
+    }
+
+    const customer = await stripe.customers.create({
+      email,
+      metadata: { userId }
+    });
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId: customer.id }
+    });
+
+    return customer.id;
+  }
+
   static async createPayment({
     userId,
-    amount,
+    amountMinor,
     currency,
     title,
     creatorId,
   }: {
     userId: string;
-    amount: number;
+    amountMinor: number;
     currency: string;
     title: string;
     creatorId?: string;
   }) {
     const stripe = getStripe();
-    const amountMinor = Math.round(amount * 100);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true }
+    });
+
+    if (!user) throw new Error('USER_NOT_FOUND');
+
+    const stripeCustomerId = await this.getOrCreateStripeCustomer(userId, user.email);
 
     const payment = await prisma.payment.create({
       data: {
@@ -43,6 +74,7 @@ export class PaymentService {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountMinor,
       currency: currency.toLowerCase(),
+      customer: stripeCustomerId,
       description: title,
       metadata: {
         userId,
@@ -109,7 +141,7 @@ export class PaymentService {
             id: event.id,
             type: event.type,
             status: StripeEventStatus.PROCESSING,
-            payload: event as any
+            payload: event as unknown as Prisma.InputJsonValue
         },
         update: {
             status: StripeEventStatus.PROCESSING,
@@ -126,13 +158,19 @@ export class PaymentService {
             }
             case 'charge.refunded': {
                 const charge = event.data.object as Stripe.Charge;
-                await this.handleRefund(charge);
+                const syncData = await this.handleRefund(charge);
+                if (syncData) {
+                    await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
+                }
                 break;
             }
             case 'charge.dispute.created':
             case 'charge.dispute.closed': {
                 const dispute = event.data.object as Stripe.Dispute;
-                await this.handleDispute(dispute);
+                const syncData = await this.handleDispute(dispute);
+                if (syncData) {
+                    await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
+                }
                 break;
             }
             case 'payment_intent.payment_failed': {
@@ -146,10 +184,6 @@ export class PaymentService {
                 }
                 break;
             }
-            // TODO: Decide and implement patron revocation policy for:
-            // - charge.refunded
-            // - charge.dispute.created
-            // - charge.dispute.closed
             default:
                 console.log(`Unhandled Stripe event type: ${event.type}`);
         }
@@ -177,16 +211,23 @@ export class PaymentService {
 
   private static async handleRefund(charge: Stripe.Charge) {
     const paymentId = charge.metadata?.paymentId;
-    if (!paymentId) return;
+    const stripeIntentId = typeof charge.payment_intent === 'string'
+      ? charge.payment_intent
+      : charge.payment_intent?.id;
 
-    console.log(`[PaymentService] Handling refund for payment ${paymentId}`);
+    console.log(`[PaymentService] Handling refund. paymentId=${paymentId}, intentId=${stripeIntentId}`);
 
-    await prisma.$transaction(async (tx) => {
-        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
-        if (!payment || payment.status === PaymentStatus.REFUNDED) return;
+    return await prisma.$transaction(async (tx) => {
+        const payment = paymentId
+          ? await tx.payment.findUnique({ where: { id: paymentId } })
+          : stripeIntentId
+            ? await tx.payment.findUnique({ where: { stripeIntentId } })
+            : null;
+
+        if (!payment || payment.status === PaymentStatus.REFUNDED) return null;
 
         await tx.payment.update({
-            where: { id: paymentId },
+            where: { id: payment.id },
             data: { status: PaymentStatus.REFUNDED }
         });
 
@@ -197,12 +238,12 @@ export class PaymentService {
         });
 
         // Recalculate status
-        await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        return { userId: payment.userId, isPatron, normalizedTotal };
     });
   }
 
   private static async handleDispute(dispute: Stripe.Dispute) {
-    // Find payment by stripeIntentId if it matches dispute.payment_intent
     const stripeIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
     if (!stripeIntentId) return;
 
@@ -212,13 +253,13 @@ export class PaymentService {
     console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
 
     if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
-        await prisma.$transaction(async (tx) => {
-            // Revoke grants for lost disputes or as a precaution
+        return await prisma.$transaction(async (tx) => {
             await tx.patronGrant.updateMany({
                 where: { paymentId: payment.id, revokedAt: null },
                 data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
             });
-            await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            return { userId: payment.userId, isPatron, normalizedTotal };
         });
     }
   }
@@ -233,8 +274,7 @@ export class PaymentService {
     }
 
     try {
-      const { user, becamePatronNow } = await prisma.$transaction(async (tx) => {
-        // Atomic update to prevent double fulfillment
+      const result = await prisma.$transaction(async (tx) => {
         const { count } = await tx.payment.updateMany({
             where: { id: paymentId, status: PaymentStatus.PENDING },
             data: { status: PaymentStatus.SUCCEEDED }
@@ -242,19 +282,28 @@ export class PaymentService {
 
         if (count === 0) {
             console.log(`[PaymentService] Payment ${paymentId} already fulfilled or not found.`);
-            return { user: null, becamePatronNow: false };
+            return null;
         }
 
         const updatedPayment = await tx.payment.findUnique({ where: { id: paymentId } });
         if (!updatedPayment) throw new Error('PAYMENT_RECORD_LOST');
 
+        if (updatedPayment.amountMinor !== intent.amount) {
+            throw new Error(`PAYMENT_AMOUNT_MISMATCH: Expected ${updatedPayment.amountMinor}, got ${intent.amount}`);
+        }
+        if (updatedPayment.currency.toLowerCase() !== intent.currency.toLowerCase()) {
+            throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${updatedPayment.currency}, got ${intent.currency}`);
+        }
+
         const thresholdMinor = updatedPayment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
-        const existingUser = await tx.user.findUnique({ where: { id: userId } });
+        const existingUser = await tx.user.findUnique({
+            where: { id: userId },
+            include: { paymentTotals: true }
+        });
 
         if (!existingUser) throw new Error('USER_NOT_FOUND');
 
-        // Multi-currency handling: Update UserPaymentTotal
-        await tx.userPaymentTotal.upsert({
+        const updatedTotal = await tx.userPaymentTotal.upsert({
             where: { userId_currency: { userId, currency: updatedPayment.currency } },
             create: {
                 userId,
@@ -266,17 +315,17 @@ export class PaymentService {
             }
         });
 
-        // Determine Patron status based on this single payment threshold
         const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
         const user = await tx.user.update({
           where: { id: userId },
           data: {
-            totalPaidMinor: { increment: updatedPayment.amountMinor }, // Diagnostics/Legacy
+            totalPaidMinor: { increment: updatedPayment.amountMinor },
             isPatron: existingUser.isPatron || grantsPatron,
             patronSince: becamePatronNow ? new Date() : undefined
           },
+          include: { paymentTotals: true }
         });
 
         if (becamePatronNow) {
@@ -290,12 +339,20 @@ export class PaymentService {
             });
         }
 
-        return { user, becamePatronNow };
+        const totals = user.paymentTotals.map(t =>
+            t.currency === updatedPayment.currency ? updatedTotal : t
+        );
+        const totalPLN = totals.find(t => t.currency === 'PLN')?.amountMinor || 0;
+        const totalEUR = totals.find(t => t.currency === 'EUR')?.amountMinor || 0;
+        const normalizedTotal = (totalPLN / 100) + (totalEUR / 100 * 4.3);
+
+        return { user, becamePatronNow, normalizedTotal };
       });
 
-      if (!user) return;
+      if (!result) return;
+      const { user, becamePatronNow, normalizedTotal } = result;
 
-      await UserAccessService.syncClerkAccess(user.id, user.isPatron, user.totalPaidMinor / 100);
+      await UserAccessService.syncClerkAccess(user.id, user.isPatron, normalizedTotal);
 
       const language = (user.language as 'pl' | 'en') || 'pl';
       const amount = intent.amount / 100;

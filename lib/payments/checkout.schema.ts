@@ -12,41 +12,33 @@ export const currencySchema = z.preprocess(
 );
 
 /**
- * TODO: Transition full checkout flow to amountMinor (integers).
+ * Checkout flow uses amountMinor (integers) to avoid float precision issues.
  */
 export const checkoutSchema = z.object({
-  amount: z.number()
-    .positive()
-    .refine((value) => Number.isFinite(value), 'Amount must be finite')
-    .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-8, 'Amount must have at most two decimal places')
-    .optional(),
-  amountMinor: z.number().int().positive().optional(),
+  amountMinor: z.number().int().positive(),
   currency: currencySchema,
   title: z.string().min(1).max(120),
-  creatorId: z.string().uuid().optional(),
-}).refine(data => data.amount !== undefined || data.amountMinor !== undefined, {
-  message: "Either amount or amountMinor must be provided",
-  path: ["amount"]
+  creatorId: z.string().optional(), // Allow non-UUID for fallbacks/demo
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 
-export function getPaymentLimits(currency: SupportedCurrency) {
+export function getPaymentLimitsMinor(currency: SupportedCurrency) {
   return {
-    minAmount: MIN_PAYMENT_BY_CURRENCY[currency],
-    maxAmount: MAX_PAYMENT_BY_CURRENCY[currency],
+    minAmountMinor: MIN_PAYMENT_BY_CURRENCY[currency] * 100,
+    maxAmountMinor: MAX_PAYMENT_BY_CURRENCY[currency] * 100,
   };
 }
 
-export function validatePaymentAmount(amount: number, currency: SupportedCurrency) {
-  const { minAmount, maxAmount } = getPaymentLimits(currency);
+export function validatePaymentAmountMinor(amountMinor: number, currency: SupportedCurrency) {
+  const { minAmountMinor, maxAmountMinor } = getPaymentLimitsMinor(currency);
 
-  if (amount < minAmount) {
-    return `Minimum parameters (min. ${minAmount} ${currency})`;
+  if (amountMinor < minAmountMinor) {
+    return `Kwota jest zbyt niska (min. ${minAmountMinor / 100} ${currency})`;
   }
 
-  if (amount > maxAmount) {
-    return `Maximum parameters (max. ${maxAmount} ${currency})`;
+  if (amountMinor > maxAmountMinor) {
+    return `Kwota jest zbyt wysoka (max. ${maxAmountMinor / 100} ${currency})`;
   }
 
   return null;

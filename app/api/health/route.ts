@@ -4,7 +4,7 @@ import { VideoStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     // 1. App response check (implicit)
 
@@ -28,24 +28,32 @@ export async function GET() {
         }
     });
 
-    // 4. Basic env checks (values hidden)
-    const env = {
-        DATABASE_URL: !!process.env.DATABASE_URL,
-        DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
-        CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
-        STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
-        STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
-    };
+    // 4. Detailed checks (only if token is valid or in dev)
+    const authHeader = req.headers.get('x-health-token');
+    const isAuthorized = authHeader === process.env.HEALTHCHECK_TOKEN;
 
+    if (isAuthorized) {
+        return NextResponse.json({
+            ok: true,
+            database: "ok",
+            env: {
+                DATABASE_URL: !!process.env.DATABASE_URL,
+                DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
+                CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
+                STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+                STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
+            },
+            content: {
+                approvedCreatorExists: !!approvedCreatorExists,
+                primaryCreatorExists: !!primaryCreatorExists,
+                mainFeaturedVideoExists: !!mainFeaturedVideoExists
+            }
+        });
+    }
+
+    // Default public response
     return NextResponse.json({
-        ok: true,
-        database: "ok",
-        env,
-        content: {
-            approvedCreatorExists: !!approvedCreatorExists,
-            primaryCreatorExists: !!primaryCreatorExists,
-            mainFeaturedVideoExists: !!mainFeaturedVideoExists
-        }
+        ok: true
     });
   } catch (error: any) {
     console.error("[HEALTH_CHECK_ERROR]", error);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
@@ -101,9 +102,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 opacity-0 group-hover/player:opacity-100 transition-opacity duration-500" />
                 )}
 
-                <img
+                <Image
                     src={posterUrl}
-                    alt={video.title}
+                    alt={video.title || 'Video poster'}
+                    fill
                     className="w-full h-full object-cover opacity-90 transition duration-700 group-hover/player:scale-105"
                 />
                 {variant === 'hero' && (
@@ -130,9 +132,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     // Hydration guard
     if (!isMounted) return (
         <div className="relative w-full aspect-video bg-black overflow-hidden flex items-center justify-center cursor-pointer rounded-lg">
-            <img
+            <Image
                 src={posterUrl}
-                alt={video.title}
+                alt={video.title || 'Video poster'}
+                fill
                 className="w-full h-full object-cover opacity-60"
             />
             {variant === 'hero' && (

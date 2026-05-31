@@ -159,7 +159,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: Number(amount),
+            amountMinor: Number(amount) * 100,
             currency: selectedCurrency.toUpperCase(),
             title: videoTitle || "Tip The Guy / Patron",
             creatorId: creatorId
