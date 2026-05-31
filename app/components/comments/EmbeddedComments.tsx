@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Heart, MessageSquare, ArrowUp, Loader2, Smile, ImageIcon, CornerDownRight, ThumbsUp, ThumbsDown, MoreVertical, Trash2, Lock, Star, Gem } from '../icons';
@@ -10,20 +10,48 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
 import { Button } from '@/components/ui/button';
+import { parseJsonResponse } from '@/lib/client/api';
 
 
-async function parseJsonResponse(res: Response) {
-  const data = await res.json().catch(() => null);
+type ClerkCommentMetadata = {
+  totalPaid?: unknown;
+  isPatron?: unknown;
+  role?: unknown;
+  referralPoints?: unknown;
+};
 
-  if (!res.ok) {
-    const message = data && typeof data === 'object' && 'error' in data
-      ? String(data.error)
-      : `Request failed with status ${res.status}`;
-    throw new Error(message);
-  }
-
-  return data;
+function numberMetadata(value: unknown, fallback = 0) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
+
+function booleanMetadata(value: unknown, fallback = false) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function stringMetadata(value: unknown, fallback: string) {
+  return typeof value === 'string' && value ? value : fallback;
+}
+
+type CommentCounts = { likes: number; dislikes: number; replies?: number };
+type CommentView = {
+  id: string;
+  authorId?: string;
+  authorName?: string;
+  author?: { imageUrl?: string | null; slug?: string | null; email?: string | null } | null;
+  text: string;
+  createdAt?: string | Date;
+  isLiked?: boolean;
+  isDisliked?: boolean;
+  _count?: CommentCounts;
+  replies?: CommentView[];
+};
+
+type CommentsPage = {
+  comments: CommentView[];
+  nextCursor?: string | null;
+};
+
+type CommentsData = InfiniteData<CommentsPage>;
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -49,14 +77,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
 
+  const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
   const userProfile = propUserProfile || (isSignedIn ? {
     id: userId!,
     email: user?.primaryEmailAddress?.emailAddress || '',
     imageUrl: user?.imageUrl || null,
-    totalPaid: (user?.publicMetadata?.totalPaid as number) || 0,
-    isPatron: (user?.publicMetadata?.isPatron as boolean) || false,
-    role: (user?.publicMetadata?.role as string) || 'USER',
-    referralPoints: (user?.publicMetadata?.referralPoints as number) || 0
+    totalPaid: numberMetadata(metadata.totalPaid),
+    isPatron: booleanMetadata(metadata.isPatron),
+    role: stringMetadata(metadata.role, 'USER'),
+    referralPoints: numberMetadata(metadata.referralPoints)
   } : null);
 
   const isPatronGated = videoTier === "PATRON";
@@ -87,10 +116,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         url.searchParams.append('sortBy', sortBy);
         if (pageParam) url.searchParams.append('cursor', pageParam as string);
         const res = await fetch(url.toString());
-        return parseJsonResponse(res);
+        return parseJsonResponse<CommentsPage>(res);
     },
     initialPageParam: '',
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!videoId,
   });
 
@@ -127,10 +156,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
         const previousData = queryClient.getQueryData(['comments', videoId, sortBy]);
 
-        queryClient.setQueryData(['comments', videoId, sortBy], (old: any) => {
+        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy], (old) => {
             if (!old) return old;
 
-            const updateComment = (c: any) => {
+            const updateComment = (c: CommentView): CommentView => {
                 if (c.id === commentId) {
                     const wasLiked = c.isLiked;
                     const wasDisliked = c.isDisliked;
@@ -139,9 +168,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         isLiked: !wasLiked,
                         isDisliked: false,
                         _count: {
-                            ...c._count,
-                            likes: wasLiked ? Math.max(0, c._count.likes - 1) : c._count.likes + 1,
-                            dislikes: wasDisliked ? Math.max(0, c._count.dislikes - 1) : c._count.dislikes
+                            ...(c._count ?? { likes: 0, dislikes: 0 }),
+                            likes: wasLiked ? Math.max(0, (c._count?.likes ?? 0) - 1) : (c._count?.likes ?? 0) + 1,
+                            dislikes: wasDisliked ? Math.max(0, (c._count?.dislikes ?? 0) - 1) : (c._count?.dislikes ?? 0)
                         }
                     };
                 }
@@ -153,7 +182,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
             return {
                 ...old,
-                pages: old.pages.map((page: any) => ({
+                pages: old.pages.map((page) => ({
                     ...page,
                     comments: page.comments.map(updateComment)
                 }))
@@ -185,10 +214,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
         const previousData = queryClient.getQueryData(['comments', videoId, sortBy]);
 
-        queryClient.setQueryData(['comments', videoId, sortBy], (old: any) => {
+        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy], (old) => {
             if (!old) return old;
 
-            const updateComment = (c: any) => {
+            const updateComment = (c: CommentView): CommentView => {
                 if (c.id === commentId) {
                     const wasLiked = c.isLiked;
                     const wasDisliked = c.isDisliked;
@@ -197,9 +226,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         isLiked: false,
                         isDisliked: !wasDisliked,
                         _count: {
-                            ...c._count,
-                            likes: wasLiked ? Math.max(0, c._count.likes - 1) : c._count.likes,
-                            dislikes: wasDisliked ? Math.max(0, c._count.dislikes - 1) : c._count.dislikes + 1
+                            ...(c._count ?? { likes: 0, dislikes: 0 }),
+                            likes: wasLiked ? Math.max(0, (c._count?.likes ?? 0) - 1) : (c._count?.likes ?? 0),
+                            dislikes: wasDisliked ? Math.max(0, (c._count?.dislikes ?? 0) - 1) : (c._count?.dislikes ?? 0) + 1
                         }
                     };
                 }
@@ -211,7 +240,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
             return {
                 ...old,
-                pages: old.pages.map((page: any) => ({
+                pages: old.pages.map((page) => ({
                     ...page,
                     comments: page.comments.map(updateComment)
                 }))
@@ -365,7 +394,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       {/* Comments List */}
       <div className="space-y-6">
-        {comments.map((comment: any) => (
+        {comments.map((comment) => (
           <div key={comment.id} className="space-y-3">
             <div className="flex gap-3 items-start group/comment">
                <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
@@ -436,7 +465,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             {/* NESTED REPLIES */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                {comment.replies.map((reply: any) => (
+                {comment.replies.map((reply) => (
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
                     <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
                        <img

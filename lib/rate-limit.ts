@@ -9,11 +9,11 @@ interface RateLimitRecord {
   resetAt: number;
 }
 
-interface RateLimitStore {
+export interface RateLimitStore {
   hit(key: string, windowMs: number): Promise<RateLimitRecord>;
 }
 
-class MemoryStore implements RateLimitStore {
+export class MemoryStore implements RateLimitStore {
   private cache = new Map<string, RateLimitRecord>();
 
   async hit(key: string, windowMs: number) {
@@ -31,7 +31,7 @@ class MemoryStore implements RateLimitStore {
   }
 }
 
-class UpstashRedisStore implements RateLimitStore {
+export class UpstashRedisStore implements RateLimitStore {
   constructor(
     private readonly restUrl: string,
     private readonly token: string,
@@ -61,7 +61,7 @@ class UpstashRedisStore implements RateLimitStore {
   }
 
   async hit(key: string, windowMs: number) {
-    const redisKey = `rate-limit:${key}`;
+    const redisKey = getRateLimitRedisKey(key);
     const count = Number(await this.command<number>(['INCR', redisKey]));
 
     if (count === 1) {
@@ -76,25 +76,49 @@ class UpstashRedisStore implements RateLimitStore {
   }
 }
 
-function createStore(): RateLimitStore {
-  const restUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+type RateLimitEnv = Record<string, string | undefined>;
+
+export type RateLimitStoreKind = 'memory' | 'upstash';
+
+export function getRateLimitRedisKey(key: string) {
+  return `rate-limit:${key}`;
+}
+
+export function resolveRateLimitStoreKind(env: RateLimitEnv = process.env): RateLimitStoreKind {
+  const restUrl = env.UPSTASH_REDIS_REST_URL;
+  const token = env.UPSTASH_REDIS_REST_TOKEN;
 
   if (restUrl && token) {
-    return new UpstashRedisStore(restUrl, token);
+    return 'upstash';
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    console.warn('[RateLimit] UPSTASH_REDIS_REST_URL/TOKEN missing; falling back to per-instance memory rate limiting.');
+  if (env.NODE_ENV === 'production') {
+    throw new Error('[RateLimit] Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
   }
 
+  return 'memory';
+}
+
+export function createRateLimitStore(env: RateLimitEnv = process.env): RateLimitStore {
+  const kind = resolveRateLimitStoreKind(env);
+
+  if (kind === 'upstash') {
+    return new UpstashRedisStore(env.UPSTASH_REDIS_REST_URL!, env.UPSTASH_REDIS_REST_TOKEN!);
+  }
+
+  console.warn('[RateLimit] Using in-memory rate limit store. This is allowed only outside production.');
   return new MemoryStore();
 }
 
-const store: RateLimitStore = createStore();
+let store: RateLimitStore | null = null;
+
+function getStore() {
+  store ??= createRateLimitStore();
+  return store;
+}
 
 export async function rateLimit({ key, limit, windowMs }: RateLimitOptions) {
-  const record = await store.hit(key, windowMs);
+  const record = await getStore().hit(key, windowMs);
 
   if (record.count > limit) {
     return { success: false, remaining: 0 };

@@ -65,6 +65,7 @@ model Payment {
   stripeIntentId  String?       @unique
   stripeSessionId String?       @unique
   amountMinor     Int
+  refundedAmountMinor Int       @default(0)
   currency        String
   status          PaymentStatus @default(PENDING)
   metadata        Json?
@@ -80,16 +81,16 @@ model Payment {
   @@index([createdAt])
 }
 
-enum StripeEventStatus {
+enum WebhookEventStatus {
   PROCESSING
   PROCESSED
   FAILED
 }
 
 model StripeEvent {
-  id          String            @id
+  id          String             @id
   type        String
-  status      StripeEventStatus @default(PROCESSING)
+  status      WebhookEventStatus @default(PROCESSING)
   payload     Json?
   error       String?
   processedAt DateTime?
@@ -98,9 +99,9 @@ model StripeEvent {
 }
 
 model ClerkEvent {
-  id          String            @id
+  id          String             @id
   type        String
-  status      StripeEventStatus @default(PROCESSING)
+  status      WebhookEventStatus @default(PROCESSING)
   payload     Json?
   error       String?
   processedAt DateTime?
