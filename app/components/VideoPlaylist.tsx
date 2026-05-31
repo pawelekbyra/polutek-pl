@@ -1,3 +1,4 @@
+import { PublicVideoDTO } from '../types/video';
 "use client";
 
 import { MIN_PAYMENT_BY_CURRENCY, type SupportedCurrency } from '@/lib/constants';
@@ -24,7 +25,7 @@ interface VideoPlaylistProps {
   videoSlug?: string;
   videoTitle?: string;
   creatorId?: string;
-  videos?: any[];
+  videos?: PublicVideoDTO[];
   onVideoSelect?: (id: string) => void;
   currentVideoId?: string;
 }

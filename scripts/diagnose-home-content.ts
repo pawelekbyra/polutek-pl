@@ -1,9 +1,14 @@
 import { PrismaClient, VideoStatus } from '@prisma/client';
+import { explainVideoVisibility } from '../lib/services/content.visibility';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("--- DIAGNOSTYKA TREŚCI STRONY GŁÓWNEJ ---");
+
+  const dbUrl = process.env.DATABASE_URL || "unknown";
+  const safeUrl = dbUrl.replace(/:[^:@]+@/, ":****@");
+  console.log(`Database URL: ${safeUrl}`);
 
   const creators = await prisma.creator.findMany();
   console.log(`Liczba creatorów: ${creators.length}`);
@@ -27,39 +32,33 @@ async function main() {
   const now = new Date();
   console.log("Data 'now':", now.toISOString());
 
-  const first10 = videos.slice(0, 10);
-  console.log("\nPierwsze 10 filmów:");
-  first10.forEach(v => {
-    const isPubliclyVisible =
-      v.status === VideoStatus.PUBLISHED &&
-      v.creator.isApproved &&
-      (v.publishedAt === null || v.publishedAt <= now);
-
+  console.log("\nPierwsze 20 filmów i ich status widoczności:");
+  const first20 = videos.slice(0, 20);
+  first20.forEach(v => {
+    const explanation = explainVideoVisibility(v, now);
     console.log(`- ID: ${v.id}
   Tytuł: ${v.title}
   Slug: ${v.slug}
   Status: ${v.status}
   PublishedAt: ${v.publishedAt?.toISOString() || 'null'}
-  Creator: ${v.creator.name} (Approved: ${v.creator.isApproved}, Primary: ${v.creator.isPrimary})
-  Tier: ${v.tier}
-  Publicly Visible: ${isPubliclyVisible}
+  Creator: ${v.creator?.slug} (Approved: ${v.creator?.isApproved}, Primary: ${v.creator?.isPrimary})
+  Visible: ${explanation.visible} ${explanation.visible ? "" : "(" + explanation.reasons.join(", ") + ")"}
 `);
   });
 
-  const homeVideosQuery = await prisma.video.findMany({
-    where: {
-      status: VideoStatus.PUBLISHED,
-      creator: {
-        isApproved: true,
-      },
-      OR: [
-        { publishedAt: null },
-        { publishedAt: { lte: now } },
-      ],
-    }
-  });
+  const visibleVideos = videos.filter(v => explainVideoVisibility(v, now).visible);
+  console.log(`\nŁączna liczba filmów widocznych publicznie: ${visibleVideos.length}`);
 
-  console.log(`\nLiczba filmów które powinny być na Home (wg query): ${homeVideosQuery.length}`);
+  try {
+      // Import the actual service to compare results
+      const { ContentService } = await import('../lib/services/content.service');
+      const allVideos = await ContentService.getAllVideos();
+      const mainVideo = await ContentService.getMainFeaturedVideo();
+      console.log(`\nContentService.getAllVideos() returned: ${allVideos.length} videos`);
+      console.log(`ContentService.getMainFeaturedVideo() returned: ${mainVideo ? mainVideo.title : "null"}`);
+  } catch (e) {
+      console.warn("\nCould not run ContentService checks in script (likely missing environment/clerk config)");
+  }
 }
 
 main()

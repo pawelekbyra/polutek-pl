@@ -4,6 +4,7 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 import { flags } from '../feature-flags';
+import { isPubliclyVisibleVideo } from './content.visibility';
 
 const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -21,13 +22,6 @@ export interface PublicVisibilityVideo {
   };
 }
 
-export function isPubliclyVisibleVideo(video: PublicVisibilityVideo, now: Date = new Date()): boolean {
-  return (
-    video.status === VideoStatus.PUBLISHED &&
-    video.creator.isApproved &&
-    (video.publishedAt === null || new Date(video.publishedAt) <= now)
-  );
-}
 
 export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhereInput {
   return {
@@ -317,6 +311,12 @@ export class ContentService {
         orderBy: publicVideoOrderBy
       });
 
+      if (process.env.DEBUG_HOME_CONTENT === "true") {
+        console.log("[HOME_CONTENT_DEBUG] getAllVideos", {
+          foundInDb: videos.length,
+          demoFallbacksEnabled: flags.demoFallbacks
+        });
+      }
       if (videos.length === 0 && flags.demoFallbacks) {
           return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
       }
@@ -363,6 +363,13 @@ export class ContentService {
         orderBy: publicVideoOrderBy,
       });
 
+      if (process.env.DEBUG_HOME_CONTENT === "true") {
+        console.log("[HOME_CONTENT_DEBUG] getMainFeaturedVideo", {
+          featuredFound: !!video,
+          fallbackFound: !!selectedVideo,
+          demoFallbacksEnabled: flags.demoFallbacks
+        });
+      }
       if (!selectedVideo && flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       return selectedVideo ? this.mapToPublicVideoDTO(selectedVideo) : null;
     } catch (e: unknown) {
