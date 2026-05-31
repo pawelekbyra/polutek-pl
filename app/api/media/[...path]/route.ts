@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getGatedBlobResponse } from '@/lib/blob';
 import { prisma } from '@/lib/prisma';
+import { flags } from '@/lib/feature-flags';
+import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 
 export async function GET(
   req: NextRequest,
@@ -30,6 +32,13 @@ export async function GET(
     });
 
     if (!videoBySlug) {
+        // Final fallback to initial videos if demo content is enabled
+        if (flags.demoFallbacks) {
+            const fallback = INITIAL_VIDEOS.find(v => v.id === videoId || v.slug === videoId);
+            if (fallback) {
+                return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers);
+            }
+        }
         return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 

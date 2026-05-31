@@ -2,8 +2,26 @@ import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 
+const ALLOWED_MEDIA_HOSTS = [
+    'public.blob.vercel-storage.com',
+    'vercel-storage.com',
+    'r2.cloudflarestorage.com',
+    'r2.dev',
+    'unsplash.com', // For initial content images if proxied
+    'images.unsplash.com'
+];
+
+function isHostAllowed(url: string) {
+    try {
+        const { hostname } = new URL(url);
+        return ALLOWED_MEDIA_HOSTS.some(allowed => hostname === allowed || hostname.endsWith(`.${allowed}`));
+    } catch {
+        return false;
+    }
+}
+
 /**
- * Serves a private Vercel Blob file as a stream.
+ * Serves a private Vercel Blob or external file as a gated stream.
  */
 export async function getGatedBlobResponse(
   userId: string | null,
@@ -17,15 +35,25 @@ export async function getGatedBlobResponse(
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  try {
-    const result = await get(blobUrl, { access: 'private' });
+  if (!isHostAllowed(blobUrl)) {
+    console.error(`[MediaProxy] Blocked unauthorized host: ${blobUrl}`);
+    return new NextResponse('Unauthorized Media Host', { status: 403 });
+  }
 
-    if (!result) {
-      return new NextResponse('Not found', { status: 404 });
+  try {
+    const isVercelBlob = blobUrl.includes('public.blob.vercel-storage.com') || blobUrl.includes('vercel-storage.com');
+    let targetUrl = blobUrl;
+
+    if (isVercelBlob) {
+        const result = await get(blobUrl, { access: 'private' });
+        if (!result) {
+            return new NextResponse('Not found', { status: 404 });
+        }
+        targetUrl = result.blob.url;
     }
 
     const range = headers?.get('range');
-    const response = await fetch(result.blob.url, {
+    const response = await fetch(targetUrl, {
         headers: range ? { Range: range } : {}
     });
 
