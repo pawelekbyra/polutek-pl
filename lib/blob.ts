@@ -2,24 +2,50 @@ import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 
-const ALLOWED_MEDIA_HOSTS = [
+const DEFAULT_ALLOWED_MEDIA_HOSTS = [
     'public.blob.vercel-storage.com',
     'vercel-storage.com',
     'r2.cloudflarestorage.com',
     'r2.dev',
-    'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev', // Specific R2 bucket from initial-content
-    'unsplash.com',
-    'images.unsplash.com',
-    'polutek.pl'
+    'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev',
+];
+
+const ALLOWED_MEDIA_HOSTS = [
+    ...DEFAULT_ALLOWED_MEDIA_HOSTS,
+    ...[process.env.MEDIA_BUCKET_HOST, process.env.NEXT_PUBLIC_R2_PUBLIC_HOST]
+        .filter((host): host is string => !!host)
+        .map(host => host.trim().toLowerCase())
+        .filter(Boolean),
+    ...(process.env.MEDIA_PROXY_ALLOWED_HOSTS || '')
+        .split(',')
+        .map(host => host.trim().toLowerCase())
+        .filter(Boolean),
 ];
 
 function isHostAllowed(url: string) {
     try {
         const { hostname } = new URL(url);
-        return ALLOWED_MEDIA_HOSTS.some(allowed => hostname === allowed || hostname.endsWith(`.${allowed}`));
+        return ALLOWED_MEDIA_HOSTS.includes(hostname.toLowerCase());
     } catch {
         return false;
     }
+}
+
+function getValidatedRange(headers?: Headers) {
+    const range = headers?.get('range');
+    if (!range) return null;
+
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+    if (!match) return { error: true as const };
+
+    const [, startRaw, endRaw] = match;
+    if (!startRaw && !endRaw) return { error: true as const };
+
+    if (startRaw && endRaw && Number(startRaw) > Number(endRaw)) {
+        return { error: true as const };
+    }
+
+    return { error: false as const, value: `bytes=${startRaw}-${endRaw}` };
 }
 
 /**
@@ -42,6 +68,11 @@ export async function getGatedBlobResponse(
     return new NextResponse('Unauthorized Media Host', { status: 403 });
   }
 
+  const range = getValidatedRange(headers);
+  if (range?.error) {
+    return new NextResponse('Invalid Range header', { status: 416 });
+  }
+
   try {
     const isVercelBlob = blobUrl.includes('public.blob.vercel-storage.com') || blobUrl.includes('vercel-storage.com');
     let targetUrl = blobUrl;
@@ -54,11 +85,10 @@ export async function getGatedBlobResponse(
         targetUrl = result.blob.url;
     }
 
-    const range = headers?.get('range');
-    console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range || 'none'})`);
+    console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range?.value || 'none'})`);
 
     const response = await fetch(targetUrl, {
-        headers: range ? { Range: range } : {}
+        headers: range?.value ? { Range: range.value } : {}
     });
 
     if (!response.ok && response.status !== 206) {
