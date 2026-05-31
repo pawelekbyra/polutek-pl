@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { UserService } from "@/lib/services/user.service";
 import { revalidatePath } from "next/cache";
 import { AccessPolicy } from "@/lib/access/access-policy";
+import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * Toggles a 'Like' on a video.
@@ -16,10 +17,21 @@ export async function toggleVideoLike(videoId: string) {
       userId = authData.userId;
   } catch (e: any) {
       console.error("[Interaction] Clerk Handshake Failed:", e.message);
-      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
+      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji." };
   }
 
   if (!userId) return { error: "AUTH_REQUIRED" };
+
+  // Rate limiting for reactions
+  const rateLimitResult = await rateLimit({
+    key: `video-reaction:${userId}`,
+    limit: 10,
+    windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+    return { error: "TOO_MANY_REQUESTS", message: "Zbyt wiele reakcji. Spróbuj za chwilę." };
+  }
 
   const decision = await AccessPolicy.canReactToVideo(userId, videoId);
   if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
@@ -30,7 +42,7 @@ export async function toggleVideoLike(videoId: string) {
         await UserService.getOrCreateUser(userId);
     } catch (err: any) {
         console.error("[Interaction] UserService sync issue:", err.message);
-        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
+        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -75,10 +87,7 @@ export async function toggleVideoLike(videoId: string) {
     return result;
   } catch (error: any) {
     console.error("[TOGGLE_LIKE_ERROR]", error);
-    if (error.code === 'P2021' || error.message?.includes("DATABASE_TABLES_MISSING") || error.message?.includes("P2021")) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma db push' w swoim środowisku." };
-    }
-    return { error: "INTERNAL_ERROR", message: error.message };
+    return { error: "INTERNAL_ERROR", message: "Wystąpił błąd." };
   }
 }
 
@@ -92,10 +101,21 @@ export async function toggleVideoDislike(videoId: string) {
       userId = authData.userId;
   } catch (e: any) {
       console.error("[Interaction] Clerk Handshake Failed:", e.message);
-      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
+      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji." };
   }
 
   if (!userId) return { error: "AUTH_REQUIRED" };
+
+  // Rate limiting for reactions
+  const rateLimitResult = await rateLimit({
+    key: `video-reaction:${userId}`,
+    limit: 10,
+    windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+    return { error: "TOO_MANY_REQUESTS", message: "Zbyt wiele reakcji. Spróbuj za chwilę." };
+  }
 
   const decision = await AccessPolicy.canReactToVideo(userId, videoId);
   if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
@@ -105,7 +125,7 @@ export async function toggleVideoDislike(videoId: string) {
         await UserService.getOrCreateUser(userId);
     } catch (err: any) {
         console.error("[Interaction] UserService sync issue:", err.message);
-        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
+        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -150,9 +170,6 @@ export async function toggleVideoDislike(videoId: string) {
     return result;
   } catch (error: any) {
     console.error("[TOGGLE_DISLIKE_ERROR]", error);
-    if (error.code === 'P2021' || error.message?.includes("DATABASE_TABLES_MISSING") || error.message?.includes("P2021")) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma db push' w swoim środowisku." };
-    }
-    return { error: "INTERNAL_ERROR", message: error.message };
+    return { error: "INTERNAL_ERROR", message: "Wystąpił błąd." };
   }
 }

@@ -132,7 +132,7 @@ export default function CampaignContent({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amountMinor: Number(amount) * 100,
+            amountMinor: Math.round(Number(amount) * 100),
             currency: 'pln',
             title: `Wsparcie projektu: I rise money for my secret project`,
             creatorId: initialCreator?.id

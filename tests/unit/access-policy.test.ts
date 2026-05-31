@@ -125,5 +125,24 @@ describe('AccessPolicy', () => {
       const decision = await AccessPolicy.canViewVideo('u1', 'v1');
       expect(decision.allowed).toBe(true);
     });
+
+    it('denies access to ARCHIVED videos for normal users', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.ARCHIVED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isDeleted: false,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('NOT_FOUND');
+    });
   });
 });

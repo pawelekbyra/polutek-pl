@@ -11,6 +11,7 @@ import { UserService } from '@/lib/services/user.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import BrandName from '@/app/components/BrandName';
+import Image from 'next/image';
 import { cn, formatCount } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
         <div className="w-full aspect-[6/1] bg-neutral-200 relative overflow-hidden rounded-none md:rounded-xl border border-black/5">
            {creator.bannerUrl ? (
-             <img src={creator.bannerUrl} alt={displayName} className="w-full h-full object-cover" />
+             <Image src={creator.bannerUrl} alt={displayName} fill className="object-cover" />
            ) : (
              <>
                <div className="absolute inset-0 bg-gradient-to-r from-neutral-300 to-neutral-400 opacity-50" />
@@ -84,12 +85,12 @@ export default async function ChannelPage({ params }: { params: { slug: string }
       {/* CHANNEL HEADER */}
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <div className="w-24 h-24 md:w-40 md:h-40 rounded-full border border-neutral-200 overflow-hidden bg-[#1a1a1a]/5 shrink-0 shadow-sm">
-             <img
+          <div className="w-24 h-24 md:w-40 md:h-40 rounded-full border border-neutral-200 overflow-hidden bg-[#1a1a1a]/5 shrink-0 shadow-sm relative">
+             <Image
                src={ownerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerEmail || displayName}`}
-               alt={displayName}
+               alt={displayName || 'Channel avatar'}
+               fill
                className={cn(
-                 "w-full h-full",
                  params.slug === 'polutek' ? "object-contain p-2" : "object-cover"
                )}
              />

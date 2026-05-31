@@ -3,20 +3,19 @@ import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 
 const ALLOWED_MEDIA_HOSTS = [
+    process.env.MEDIA_BUCKET_HOST,
+    process.env.NEXT_PUBLIC_R2_PUBLIC_HOST,
+    process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST,
     'public.blob.vercel-storage.com',
-    'vercel-storage.com',
-    'r2.cloudflarestorage.com',
-    'r2.dev',
-    'pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev', // Specific R2 bucket from initial-content
-    'unsplash.com',
-    'images.unsplash.com',
-    'polutek.pl'
-];
+].filter(Boolean) as string[];
 
 function isHostAllowed(url: string) {
     try {
-        const { hostname } = new URL(url);
-        return ALLOWED_MEDIA_HOSTS.some(allowed => hostname === allowed || hostname.endsWith(`.${allowed}`));
+        const { hostname, protocol } = new URL(url);
+        if (protocol !== 'https:') return false;
+
+        // Exact match against whitelist
+        return ALLOWED_MEDIA_HOSTS.includes(hostname);
     } catch {
         return false;
     }
@@ -55,6 +54,13 @@ export async function getGatedBlobResponse(
     }
 
     const range = headers?.get('range');
+
+    // Validate Range header format
+    if (range && !/^bytes=\d*-\d*$/.test(range)) {
+        console.error(`[MediaProxy] Blocked invalid range header: ${range}`);
+        return new NextResponse('Requested Range Not Satisfiable', { status: 416 });
+    }
+
     console.log(`[MediaProxy] Fetching: ${targetUrl} (Range: ${range || 'none'})`);
 
     const response = await fetch(targetUrl, {

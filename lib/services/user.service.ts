@@ -61,20 +61,22 @@ export class UserService {
       return await prisma.$transaction(async (tx) => {
         const existingUser = await tx.user.findUnique({
           where: { id },
-          select: { role: true }
+          select: { role: true, email: true }
         });
 
         // Role determination:
         // 1. If Clerk metadata says ADMIN, trust it.
         // 2. If it's a new user and email matches ADMIN_EMAIL, bootstrap as ADMIN.
-        // 3. Otherwise keep existing role or default to USER.
+        // 3. If user exists and is already ADMIN, keep it.
+        // 4. Otherwise default to USER.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
         if (clerkRole === 'ADMIN') {
           targetRole = 'ADMIN';
-        } else if (existingUser) {
-          targetRole = existingUser.role;
-        } else if (email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
+        } else if (existingUser?.role === 'ADMIN') {
+          targetRole = 'ADMIN';
+        } else if (!existingUser && email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
+          // Bootstrap FIRST admin by email ONLY if user doesn't exist yet
           targetRole = 'ADMIN';
         }
 

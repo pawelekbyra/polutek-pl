@@ -16,8 +16,8 @@ export async function POST(req: Request) {
     await PaymentService.handleWebhook(body, sig);
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`Webhook Error: ${message}`);
-    return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
+    console.error(`[STRIPE_WEBHOOK_ERROR]`, err);
+    // Return a generic error message to Stripe
+    return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
 }

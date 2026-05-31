@@ -68,9 +68,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         position: 'right',
                         html: '<span style="font-weight: bold; font-size: 14px;">CC</span>',
                         tooltip: 'Napisy',
-                        click: function () {
-                            const art = this as any;
-                            art.subtitle.show = !art.subtitle.show;
+                        click: function (this: Artplayer) {
+                            this.subtitle.show = !this.subtitle.show;
                         },
                     },
                 ],

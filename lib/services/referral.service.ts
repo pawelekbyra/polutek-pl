@@ -8,10 +8,11 @@ export class ReferralService {
       throw new Error("Self-referral is not allowed");
     }
 
-    let syncData: any = null;
+    let syncData: { userId: string; isPatron: boolean; totalPaid: number } | null = null;
 
     try {
       const result = await prisma.$transaction(async (tx) => {
+        let internalSyncData: { userId: string; isPatron: boolean; totalPaid: number } | null = null;
         // Check if already referred
         const existing = await tx.user.findUnique({
             where: { id: referredId },
@@ -78,15 +79,17 @@ export class ReferralService {
                 }
             });
 
-            syncData = {
+            internalSyncData = {
                 userId: referrerId,
                 isPatron: true,
                 totalPaid: updatedReferrer.totalPaidMinor / 100
             };
         }
 
-        return { success: true };
+        return { success: true, syncData: internalSyncData };
       });
+
+      syncData = result.syncData;
 
       // Sync to Clerk outside transaction
       if (syncData) {

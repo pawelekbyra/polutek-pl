@@ -194,11 +194,11 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
               {isVIPGated ? (
                 <div className="flex flex-col items-center">
                     <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-amber-500">
-                        {(t as any).patronZoneLine1}
+                        {t.patronZoneLine1 as string}
                     </span>
                     <div className="h-px w-24 md:w-48 bg-white/10 my-1 md:my-2" />
                     <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-white">
-                        {(t as any).patronZoneLine2}
+                        {t.patronZoneLine2 as string}
                     </span>
 
                     <div className={cn(isThumbnail && "invisible")}>

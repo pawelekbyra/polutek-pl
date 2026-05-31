@@ -5,6 +5,7 @@ import { plPL } from '@clerk/localizations';
 import { useLanguage } from './LanguageContext';
 import { updateUserLanguage } from '@/lib/actions/user';
 import React, { useEffect, useState } from 'react';
+import { ClerkPublicMetadata } from '../types/clerk';
 
 function LocalizationLogic({ children }: { children: React.ReactNode }) {
   const { language, setLanguage, isInitialized } = useLanguage();
@@ -15,7 +16,7 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoaded && user && isInitialized && !syncedOnce) {
       try {
-        const metadata = user.publicMetadata as any;
+        const metadata = user.publicMetadata as ClerkPublicMetadata;
         const dbLang = (metadata.language || metadata.preferredLanguage) as 'pl' | 'en';
         if (dbLang && dbLang !== language) {
           setLanguage(dbLang, true);

@@ -71,9 +71,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         try {
             logger.debug("[Hero] Toggling LIKE for video:", video.id);
             addOptimisticAction('LIKE');
-            const result = await toggleVideoLike(video.id) as any;
+            const result = await toggleVideoLike(video.id);
 
-            if (result.error) {
+            if (result && 'error' in result) {
                 console.error("[Hero] LIKE Action failed:", result.error, result.message);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
@@ -121,9 +121,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         try {
             logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
             addOptimisticAction('DISLIKE');
-            const result = await toggleVideoDislike(video.id) as any;
+            const result = await toggleVideoDislike(video.id);
 
-            if (result.error) {
+            if (result && 'error' in result) {
                 console.error("[Hero] DISLIKE Action failed:", result.error, result.message);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();

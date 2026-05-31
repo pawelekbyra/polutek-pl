@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { ContentService } from '@/lib/services/content.service';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,23 @@ export async function GET(req: NextRequest) {
       error: 'INVALID_INPUT',
       message: 'Video ID is required'
     }, { status: 400 });
+  }
+
+  // Rate limiting for access checks
+  const identifier = userId || req.headers.get('x-forwarded-for') || 'anonymous';
+  const rateLimitResult = await rateLimit({
+    key: `access-check:${identifier}`,
+    limit: 60,
+    windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json({
+        hasAccess: false,
+        requiredTier: 'PATRON',
+        reason: 'TOO_MANY_REQUESTS',
+        message: "Zbyt wiele zapytań. Spróbuj za chwilę."
+    }, { status: 429 });
   }
 
   try {

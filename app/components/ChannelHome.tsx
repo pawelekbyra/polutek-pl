@@ -24,6 +24,9 @@ interface ChannelHomeProps {
     email: string;
     imageUrl?: string | null;
     totalPaid: number;
+    isPatron?: boolean;
+    role?: string;
+    referralPoints?: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
   } | null;
@@ -93,7 +96,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const renderVideoItem = (video: PublicVideoDTO) => {
     const isCurrent = video.id === selectedVideo.id;
     const isLoggedIn = !!userProfile;
-    const isPatron = (userProfile as any)?.isPatron || (userProfile as any)?.referralPoints >= 5;
+    const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN';
     const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
 
     return (

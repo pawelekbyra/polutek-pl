@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, Creator, Video, VideoStatus } from '@prisma/client';
+import { Creator, Video, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
@@ -176,8 +176,8 @@ export class ContentService {
       if (slug === 'polutek' && flags.demoFallbacks) {
         return {
             ...DEFAULT_CREATOR,
-            videos: INITIAL_VIDEOS
-        };
+            videos: INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v))
+        } as any;
       }
       return null;
     }

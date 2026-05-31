@@ -4,6 +4,7 @@ export type ClerkPublicMetadata = {
   isPatron?: boolean;
   role?: "USER" | "ADMIN" | "PATRON";
   totalPaid?: number;
+  referralPoints?: number;
 };
 
 export type ClerkUnsafeMetadata = {

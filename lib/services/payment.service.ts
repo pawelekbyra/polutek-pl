@@ -129,9 +129,7 @@ export class PaymentService {
             }
 
             console.log(`[PaymentService] Event ${event.id} was stuck in PROCESSING. Retrying.`);
-            // We allow re-processing of stale events
         }
-        // If FAILED, we allow re-processing
     }
 
     // Create or update event to PROCESSING
@@ -164,10 +162,15 @@ export class PaymentService {
                 }
                 break;
             }
-            case 'charge.dispute.created':
+            case 'charge.dispute.created': {
+                const dispute = event.data.object as Stripe.Dispute;
+                await this.handleDisputeUpdate(dispute, PaymentStatus.DISPUTED);
+                break;
+            }
             case 'charge.dispute.closed': {
                 const dispute = event.data.object as Stripe.Dispute;
-                const syncData = await this.handleDispute(dispute);
+                const status = dispute.status === 'lost' ? PaymentStatus.CHARGEBACK_LOST : PaymentStatus.SUCCEEDED;
+                const syncData = await this.handleDisputeUpdate(dispute, status);
                 if (syncData) {
                     await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
                 }
@@ -175,13 +178,10 @@ export class PaymentService {
             }
             case 'payment_intent.payment_failed': {
                 const intent = event.data.object as Stripe.PaymentIntent;
-                const { count } = await prisma.payment.updateMany({
+                await prisma.payment.updateMany({
                     where: { stripeIntentId: intent.id },
                     data: { status: PaymentStatus.FAILED }
                 });
-                if (count === 0) {
-                    console.warn(`[PaymentService] No payment record found for failed intent: ${intent.id}`);
-                }
                 break;
             }
             default:
@@ -209,6 +209,10 @@ export class PaymentService {
     }
   }
 
+  /**
+   * Handles refunds (full or partial).
+   * Policy: Full refund revokes Patron access. Partial refund does not.
+   */
   private static async handleRefund(charge: Stripe.Charge) {
     const paymentId = charge.metadata?.paymentId;
     const stripeIntentId = typeof charge.payment_intent === 'string'
@@ -224,44 +228,62 @@ export class PaymentService {
             ? await tx.payment.findUnique({ where: { stripeIntentId } })
             : null;
 
-        if (!payment || payment.status === PaymentStatus.REFUNDED) return null;
+        if (!payment) return null;
+
+        const isFullRefund = charge.amount_refunded >= charge.amount;
+        const newStatus = isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
 
         await tx.payment.update({
             where: { id: payment.id },
-            data: { status: PaymentStatus.REFUNDED }
+            data: { status: newStatus }
         });
 
-        // Revoke associated grants
-        await tx.patronGrant.updateMany({
-            where: { paymentId: payment.id, revokedAt: null },
-            data: { revokedAt: new Date(), reason: 'Payment refunded' }
-        });
+        if (isFullRefund) {
+            // Revoke associated grants ONLY for full refunds
+            await tx.patronGrant.updateMany({
+                where: { paymentId: payment.id, revokedAt: null },
+                data: { revokedAt: new Date(), reason: 'Payment fully refunded' }
+            });
 
-        // Recalculate status
-        const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
-        return { userId: payment.userId, isPatron, normalizedTotal };
+            // Recalculate status
+            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            return { userId: payment.userId, isPatron, normalizedTotal };
+        }
+
+        return null;
     });
   }
 
-  private static async handleDispute(dispute: Stripe.Dispute) {
+  /**
+   * Handles dispute updates.
+   * Policy: Lost disputes/chargebacks revoke Patron access.
+   */
+  private static async handleDisputeUpdate(dispute: Stripe.Dispute, status: PaymentStatus) {
     const stripeIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
-    if (!stripeIntentId) return;
+    if (!stripeIntentId) return null;
 
     const payment = await prisma.payment.findUnique({ where: { stripeIntentId } });
-    if (!payment) return;
+    if (!payment) return null;
 
-    console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
+    console.log(`[PaymentService] Handling dispute update (${dispute.status}) for payment ${payment.id} -> ${status}`);
 
-    if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
-        return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+            where: { id: payment.id },
+            data: { status }
+        });
+
+        if (status === PaymentStatus.CHARGEBACK_LOST) {
             await tx.patronGrant.updateMany({
                 where: { paymentId: payment.id, revokedAt: null },
-                data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
+                data: { revokedAt: new Date(), reason: `Chargeback lost: ${dispute.id}` }
             });
             const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
             return { userId: payment.userId, isPatron, normalizedTotal };
-        });
-    }
+        }
+
+        return null;
+    });
   }
 
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {
@@ -276,7 +298,7 @@ export class PaymentService {
     try {
       const result = await prisma.$transaction(async (tx) => {
         const { count } = await tx.payment.updateMany({
-            where: { id: paymentId, status: PaymentStatus.PENDING },
+            where: { id: paymentId, status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] } },
             data: { status: PaymentStatus.SUCCEEDED }
         });
 
@@ -323,7 +345,7 @@ export class PaymentService {
           data: {
             totalPaidMinor: { increment: updatedPayment.amountMinor },
             isPatron: existingUser.isPatron || grantsPatron,
-            patronSince: becamePatronNow ? new Date() : undefined
+            patronSince: (existingUser.isPatron || grantsPatron) ? (existingUser.patronSince || new Date()) : null
           },
           include: { paymentTotals: true }
         });

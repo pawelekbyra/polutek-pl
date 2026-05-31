@@ -1,16 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
+import { rateLimit } from '@/lib/rate-limit';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limit user sync to prevent Clerk API abuse
+    const rateLimitResult = await rateLimit({
+      key: `user-sync:${userId}`,
+      limit: 5,
+      windowMs: 60 * 1000
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const user = await UserService.getOrCreateUser(userId);
     if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -22,7 +35,6 @@ export async function GET(req: NextRequest) {
       language: user.language
     });
   } catch (error) {
-    console.error('[USER_SYNC_API_ERROR]', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return handleApiError(error);
   }
 }

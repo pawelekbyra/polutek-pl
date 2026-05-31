@@ -6,33 +6,29 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
-    // 1. App response check (implicit)
-
-    // 2. Prisma basic query
-    await prisma.$queryRaw`SELECT 1`;
-
-    // 3. Basic content checks
-    const approvedCreatorExists = await prisma.creator.findFirst({
-        where: { isApproved: true }
-    });
-
-    const primaryCreatorExists = await prisma.creator.findFirst({
-        where: { isPrimary: true, isApproved: true }
-    });
-
-    const mainFeaturedVideoExists = await prisma.video.findFirst({
-        where: {
-            isMainFeatured: true,
-            status: VideoStatus.PUBLISHED,
-            publishedAt: { lte: new Date() }
-        }
-    });
-
-    // 4. Detailed checks (only if token is valid or in dev)
     const authHeader = req.headers.get('x-health-token');
-    const isAuthorized = authHeader === process.env.HEALTHCHECK_TOKEN;
+    const isAuthorized = authHeader && authHeader === process.env.HEALTHCHECK_TOKEN;
 
     if (isAuthorized) {
+        // Detailed checks for authorized requests
+        await prisma.$queryRaw`SELECT 1`;
+
+        const approvedCreatorExists = await prisma.creator.findFirst({
+            where: { isApproved: true }
+        });
+
+        const primaryCreatorExists = await prisma.creator.findFirst({
+            where: { isPrimary: true, isApproved: true }
+        });
+
+        const mainFeaturedVideoExists = await prisma.video.findFirst({
+            where: {
+                isMainFeatured: true,
+                status: VideoStatus.PUBLISHED,
+                publishedAt: { lte: new Date() }
+            }
+        });
+
         return NextResponse.json({
             ok: true,
             database: "ok",
@@ -51,16 +47,16 @@ export async function GET(req: Request) {
         });
     }
 
-    // Default public response
+    // Minimal public response
     return NextResponse.json({
         ok: true
     });
   } catch (error: any) {
     console.error("[HEALTH_CHECK_ERROR]", error);
+    // Even on error, don't leak details publicly
     return NextResponse.json({
         ok: false,
-        database: "error",
-        message: "System is having trouble connecting to the database or internal services."
+        message: "System diagnostic failed."
     }, { status: 500 });
   }
 }

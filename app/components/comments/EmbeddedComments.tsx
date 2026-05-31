@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import { ClerkPublicMetadata } from '../../types/clerk';
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -23,6 +25,16 @@ interface EmbeddedCommentsProps {
   } | null;
   videoId: string;
   videoTier?: AccessTier;
+}
+
+async function parseApiResponse(res: Response) {
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok || data?.success === false) {
+    throw new Error(data?.message || data?.error || "Request failed");
+  }
+
+  return data;
 }
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
@@ -39,10 +51,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     id: userId!,
     email: user?.primaryEmailAddress?.emailAddress || '',
     imageUrl: user?.imageUrl || null,
-    totalPaid: (user?.publicMetadata?.totalPaid as number) || 0,
-    isPatron: (user?.publicMetadata?.isPatron as boolean) || false,
-    role: (user?.publicMetadata?.role as string) || 'USER',
-    referralPoints: (user?.publicMetadata?.referralPoints as number) || 0
+    totalPaid: (user?.publicMetadata as ClerkPublicMetadata)?.totalPaid || 0,
+    isPatron: (user?.publicMetadata as ClerkPublicMetadata)?.isPatron || false,
+    role: (user?.publicMetadata as ClerkPublicMetadata)?.role || 'USER',
+    referralPoints: (user?.publicMetadata as ClerkPublicMetadata)?.referralPoints || 0
   } : null);
 
   const isPatronGated = videoTier === "PATRON";
@@ -91,7 +103,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ videoId, text, parentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseApiResponse(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -107,7 +119,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseApiResponse(res);
     },
     onMutate: async (commentId) => {
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -165,7 +177,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseApiResponse(res);
     },
     onMutate: async (commentId) => {
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -221,7 +233,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         const res = await fetch(`/api/comments?id=${commentId}`, {
             method: 'DELETE',
         });
-        return res.json();
+        return parseApiResponse(res);
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -281,10 +293,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       {/* Input Area */}
       <div className="flex gap-5 items-start mb-10">
-        <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
-           <img
+        <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1 relative">
+           <Image
              src={userProfile?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
              alt="Avatar"
+             fill
              className="w-full h-full object-cover"
            />
         </div>
@@ -354,12 +367,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {comments.map((comment: any) => (
           <div key={comment.id} className="space-y-3">
             <div className="flex gap-3 items-start group/comment">
-               <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
-                  <img
+               <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0 relative">
+                  <Image
                     src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
                     alt="Avatar"
+                    fill
                     className={cn(
-                      "w-full h-full",
                       comment.author?.slug === 'polutek' ? "object-contain p-1" : "object-cover"
                     )}
                   />
@@ -424,12 +437,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
                 {comment.replies.map((reply: any) => (
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
-                    <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
-                       <img
+                    <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0 relative">
+                       <Image
                          src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
                          alt="Avatar"
+                         fill
                          className={cn(
-                           "w-full h-full",
                            reply.author?.slug === 'polutek' ? "object-contain p-1" : "object-cover"
                          )}
                        />

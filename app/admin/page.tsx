@@ -45,9 +45,6 @@ export default function AdminPanel() {
     duration: "",
     tier: "PUBLIC",
     status: "PUBLISHED",
-    likesCount: 0,
-    dislikesCount: 0,
-    views: 0,
     isMainFeatured: false
   });
 
@@ -164,9 +161,6 @@ export default function AdminPanel() {
       duration: vid.duration || "",
       tier: vid.tier,
       status: vid.status || "PUBLISHED",
-      likesCount: vid.likesCount,
-      dislikesCount: vid.dislikesCount || 0,
-      views: vid.views,
       isMainFeatured: vid.isMainFeatured
     });
     setIsEditing(true);
@@ -183,9 +177,6 @@ export default function AdminPanel() {
       duration: "",
       tier: "PUBLIC",
       status: "PUBLISHED",
-      likesCount: 0,
-      dislikesCount: 0,
-      views: 0,
       isMainFeatured: false
     });
     setIsEditing(true);
@@ -357,20 +348,6 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="likes">Polubienia</Label>
-                    <Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dislikes">Dislajki</Label>
-                    <Input id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="views">Wyświetlenia</Label>
-                    <Input id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
-                  </div>
-                </div>
 
                 <Button type="submit" className="w-full">
                   Zapisz Zmiany

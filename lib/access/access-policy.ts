@@ -1,4 +1,4 @@
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus, Video, Creator } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { flags } from '../feature-flags';
 
@@ -26,7 +26,7 @@ export class AccessPolicy {
         const { INITIAL_VIDEOS } = await import('../data/initial-content');
         const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);
         if (fallback) {
-            video = fallback as any;
+            video = fallback as unknown as (Video & { creator: Creator });
         }
     }
 
