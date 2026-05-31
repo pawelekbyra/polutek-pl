@@ -75,162 +75,120 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   };
 
   // CUSTOM SORTING LOGIC:
-  // 1. Current (selected) video always first
-  // 2. LOGGED_IN video (with "nie masz psychy sie zalogować" overlay) second
-  // 3. Other videos (PUBLIC first, then VIP)
+  // 1. PUBLIC videos
+  // 2. LOGGED_IN videos
+  // 3. PATRON videos
   const sortedVideos = [...(allVideos || [])].sort((a, b) => {
-      // Rule 1: Selected video first
-      if (a.id === selectedVideo.id) return -1;
-      if (b.id === selectedVideo.id) return 1;
-
-      // Rule 2: "LOGGED_IN" video (with paywall overlay) second
-      const aIsLoggedInGated = a.tier === 'LOGGED_IN';
-      const bIsLoggedInGated = b.tier === 'LOGGED_IN';
-
-      // If we're on the main video, we want a LOGGED_IN video at index 1
-      if (selectedVideo.id === mainVideo?.id) {
-          if (aIsLoggedInGated && !bIsLoggedInGated) return -1;
-          if (!aIsLoggedInGated && bIsLoggedInGated) return 1;
-      }
-
-      // Rule 3: PUBLIC videos first among others
-      const aIsPublic = a.tier === 'PUBLIC' || a.isMainFeatured;
-      const bIsPublic = b.tier === 'PUBLIC' || b.isMainFeatured;
-
-      if (aIsPublic && !bIsPublic) return -1;
-      if (!aIsPublic && bIsPublic) return 1;
-
-      // Default: keep existing order (createdAt desc)
+      const tierScore = {
+          'PUBLIC': 0,
+          'LOGGED_IN': 1,
+          'PATRON': 2
+      };
+      const scoreA = tierScore[a.tier] ?? 0;
+      const scoreB = tierScore[b.tier] ?? 0;
+      if (scoreA !== scoreB) return scoreA - scoreB;
       return 0;
   });
 
-  let lastWasPatron: boolean | null = null;
+  const renderVideoItem = (video: PublicVideoDTO) => {
+    const isCurrent = video.id === selectedVideo.id;
+    const isLoggedIn = !!userProfile;
+    const isPatron = (userProfile as any)?.isPatron || (userProfile as any)?.referralPoints >= 5;
+    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
 
-  const playlistItems = sortedVideos.reduce((acc: any[], video, i) => {
-      const isCurrent = video.id === selectedVideo.id;
-      const isLoggedIn = !!userProfile;
-      const isPatron = (userProfile as any)?.isPatron || (userProfile as any)?.referralPoints >= 5;
-
-      const hasAccess = video.tier === 'PUBLIC' ||
-                        (video.tier === 'LOGGED_IN' && isLoggedIn) ||
-                        (video.tier === 'PATRON' && isPatron);
-
-      const isPatronTier = video.tier === 'PATRON';
-
-      // Explicit header injection based on tier transition
-      if (!searchQuery) {
-          if (isPatronTier && lastWasPatron !== true) {
-              acc.push(
-                  <div key={`patron-header-${i}`} className="pt-4">
-                      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-                      </div>
-                  </div>
-              );
-          } else if (!isPatronTier && lastWasPatron !== false) {
-              acc.push(
-                  <div key={`materials-header-${i}`} className="pb-2 pt-2">
-                      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
-                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-                      </div>
-                  </div>
-              );
-          }
-      }
-      lastWasPatron = isPatronTier;
-
-      acc.push(
-          <div
-            key={video.id}
-            onMouseEnter={() => prefetchVideoComments(video.id)}
-            className={cn(
-              "group flex gap-2 p-1 rounded-lg transition-colors relative cursor-pointer",
-              isCurrent ? "bg-[#ebebeb]" : "hover:bg-[#ebebeb]"
-            )}
-          >
-            <Link
-               href={`/?v=${video.id}`}
-               scroll={false}
-               className="absolute inset-0 z-0"
-            />
-            <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
-              <Link
-                href={`/?v=${video.id}`}
-                scroll={false}
-                className="absolute inset-0 z-20"
-              />
-              <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
-                 <VideoPlayer video={video} variant="thumbnail" />
-              </PremiumWrapper>
-              {video.duration && (
-                <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
-                   {video.duration}
-                </div>
-              )}
+    return (
+      <div
+        key={video.id}
+        onMouseEnter={() => prefetchVideoComments(video.id)}
+        className={cn(
+          "group flex gap-2 p-1 rounded-lg transition-colors relative cursor-pointer",
+          isCurrent ? "bg-[#ebebeb]" : "hover:bg-[#ebebeb]"
+        )}
+      >
+        <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-0" />
+        <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
+          <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-20" />
+          <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
+             <VideoPlayer video={video} variant="thumbnail" />
+          </PremiumWrapper>
+          {video.duration && (
+            <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
+               {video.duration}
             </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
-              <Link
-                href={`/?v=${video.id}`}
-                scroll={false}
-                className="hover:opacity-80 transition-opacity"
-              >
-                <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
-                   {video.slug === 'independency-2024'
-                    ? (isLoggedIn ? (
-                        <>{t.welcomeOn} <BrandName /></>
-                    ) : t.independencyTitle)
-                    : video.title}
-                </h4>
-              </Link>
-              <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
-                 <Link
-                   href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                   className="hover:text-[#0f0f0f] transition-colors hover:underline w-fit relative z-20"
-                 >
-                   {video.creator?.name || 'Anonimowy Twórca'}
-                 </Link>
-                 <div className="flex items-center gap-1">
-                    <span>{mounted ? video.views?.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}</span>
-                    {video.publishedAt && (
-                        <>
-                            <span>•</span>
-                            <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: language === 'pl' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
-                        </>
-                    )}
-                 </div>
-              </div>
-              {mounted && (
-                hasAccess ? (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary mt-0.5">
-                    {video.tier === 'PUBLIC' ? t.publicStatus : t.unlockedStatus}
-                  </span>
-                ) : video.tier === 'LOGGED_IN' ? (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">{t.loginToWatchShort}</span>
-                ) : (
-                  <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">{t.becomePatron}</span>
-                )
-              )}
+          )}
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
+          <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
+            <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
+               {video.slug === 'independency-2024' ? (isLoggedIn ? <>{t.welcomeOn} <BrandName /></> : t.independencyTitle) : video.title}
+            </h4>
+          </Link>
+          <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
+             <Link href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"} className="hover:text-[#0f0f0f] transition-colors hover:underline w-fit relative z-20">
+               {video.creator?.name || 'Anonimowy Twórca'}
+             </Link>
+             <div className="flex items-center gap-1">
+                <span>{mounted ? video.views?.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}</span>
+                {video.publishedAt && (
+                    <>
+                        <span>•</span>
+                        <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: language === 'pl' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
+                    </>
+                )}
+             </div>
+          </div>
+          {mounted && (
+            hasAccess ? (
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary mt-0.5">
+                {video.tier === 'PUBLIC' ? t.publicStatus : t.unlockedStatus}
+              </span>
+            ) : video.tier === 'LOGGED_IN' ? (
+              <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">{t.loginToWatchShort}</span>
+            ) : (
+              <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">{t.becomePatron}</span>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const publicAndRegisteredVideos = sortedVideos.filter(v => v.tier !== 'PATRON');
+  const patronVideos = sortedVideos.filter(v => v.tier === 'PATRON');
+
+  const playlistItems = (
+    <>
+      {/* SECTION: MATERIALS */}
+      {!searchQuery && (
+        <div className="pb-2 pt-2">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
             </div>
-          </div>
-      );
+        </div>
+      )}
+      {publicAndRegisteredVideos.map(renderVideoItem)}
 
-      // Rule: Donate section always appears after the 2nd item (index 1) in the visual list
-      if (i === 1) {
-        acc.push(
-          <div key="donate" className="pt-4 pb-0">
-              <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-              </div>
-              <VideoPlaylist
-                 videoTitle={selectedVideo.title}
-                 creatorId={selectedVideo.creatorId}
-              />
-          </div>
-        );
-      }
+      {/* SECTION: DONATE (STRIPE GATE) */}
+      {!searchQuery && (
+        <div className="pt-4 pb-0">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+            </div>
+            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
+        </div>
+      )}
 
-      return acc;
-  }, []);
+      {/* SECTION: PATRON ZONE */}
+      {!searchQuery && patronVideos.length > 0 && (
+        <div className="pt-4">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+            </div>
+        </div>
+      )}
+      {patronVideos.map(renderVideoItem)}
+    </>
+  );
 
   return (
     <main className="bg-neutral-50 min-h-screen">
