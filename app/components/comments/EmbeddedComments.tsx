@@ -11,6 +11,20 @@ import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
 import { Button } from '@/components/ui/button';
 
+
+async function parseJsonResponse(res: Response) {
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const message = data && typeof data === 'object' && 'error' in data
+      ? String(data.error)
+      : `Request failed with status ${res.status}`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
 interface EmbeddedCommentsProps {
   userProfile?: {
     id: string;
@@ -73,7 +87,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         url.searchParams.append('sortBy', sortBy);
         if (pageParam) url.searchParams.append('cursor', pageParam as string);
         const res = await fetch(url.toString());
-        return res.json();
+        return parseJsonResponse(res);
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -91,7 +105,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ videoId, text, parentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseJsonResponse(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -107,7 +121,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -165,7 +179,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             body: JSON.stringify({ commentId }),
             headers: { 'Content-Type': 'application/json' }
         });
-        return res.json();
+        return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
         await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
@@ -221,7 +235,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         const res = await fetch(`/api/comments?id=${commentId}`, {
             method: 'DELETE',
         });
-        return res.json();
+        return parseJsonResponse(res);
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });

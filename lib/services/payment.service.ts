@@ -226,15 +226,23 @@ export class PaymentService {
 
         if (!payment || payment.status === PaymentStatus.REFUNDED) return null;
 
+        const refundedMinor = charge.amount_refunded || 0;
+        const isFullRefund = refundedMinor >= payment.amountMinor || (charge.refunded && refundedMinor >= charge.amount);
+
         await tx.payment.update({
             where: { id: payment.id },
-            data: { status: PaymentStatus.REFUNDED }
+            data: { status: isFullRefund ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED }
         });
 
-        // Revoke associated grants
+        if (!isFullRefund) {
+            console.log(`[PaymentService] Payment ${payment.id} partially refunded (${refundedMinor}/${payment.amountMinor}); retaining grants.`);
+            return null;
+        }
+
+        // Revoke associated grants only after a full refund.
         await tx.patronGrant.updateMany({
             where: { paymentId: payment.id, revokedAt: null },
-            data: { revokedAt: new Date(), reason: 'Payment refunded' }
+            data: { revokedAt: new Date(), reason: 'Payment fully refunded' }
         });
 
         // Recalculate status
@@ -252,8 +260,12 @@ export class PaymentService {
 
     console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
 
-    if (dispute.status === 'lost' || dispute.status === 'warning_needs_response') {
+    if (dispute.status === 'lost') {
         return await prisma.$transaction(async (tx) => {
+            await tx.payment.update({
+                where: { id: payment.id },
+                data: { status: PaymentStatus.CHARGEBACK_LOST }
+            });
             await tx.patronGrant.updateMany({
                 where: { paymentId: payment.id, revokedAt: null },
                 data: { revokedAt: new Date(), reason: `Payment disputed: ${dispute.status}` }
@@ -262,6 +274,11 @@ export class PaymentService {
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
     }
+
+    await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.DISPUTED }
+    });
   }
 
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {

@@ -5,13 +5,16 @@ import { VideoStatus } from '@prisma/client';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-  try {
-    // 1. App response check (implicit)
+  const authHeader = req.headers.get('x-health-token');
+  const isAuthorized = !!process.env.HEALTHCHECK_TOKEN && authHeader === process.env.HEALTHCHECK_TOKEN;
 
-    // 2. Prisma basic query
+  if (!isAuthorized) {
+    return NextResponse.json({ ok: true });
+  }
+
+  try {
     await prisma.$queryRaw`SELECT 1`;
 
-    // 3. Basic content checks
     const approvedCreatorExists = await prisma.creator.findFirst({
         where: { isApproved: true }
     });
@@ -28,34 +31,23 @@ export async function GET(req: Request) {
         }
     });
 
-    // 4. Detailed checks (only if token is valid or in dev)
-    const authHeader = req.headers.get('x-health-token');
-    const isAuthorized = authHeader === process.env.HEALTHCHECK_TOKEN;
-
-    if (isAuthorized) {
-        return NextResponse.json({
-            ok: true,
-            database: "ok",
-            env: {
-                DATABASE_URL: !!process.env.DATABASE_URL,
-                DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
-                CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
-                STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
-                STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
-            },
-            content: {
-                approvedCreatorExists: !!approvedCreatorExists,
-                primaryCreatorExists: !!primaryCreatorExists,
-                mainFeaturedVideoExists: !!mainFeaturedVideoExists
-            }
-        });
-    }
-
-    // Default public response
     return NextResponse.json({
-        ok: true
+        ok: true,
+        database: "ok",
+        env: {
+            DATABASE_URL: !!process.env.DATABASE_URL,
+            DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
+            CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
+            STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+            STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
+        },
+        content: {
+            approvedCreatorExists: !!approvedCreatorExists,
+            primaryCreatorExists: !!primaryCreatorExists,
+            mainFeaturedVideoExists: !!mainFeaturedVideoExists
+        }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[HEALTH_CHECK_ERROR]", error);
     return NextResponse.json({
         ok: false,
