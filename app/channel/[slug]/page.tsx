@@ -3,7 +3,7 @@ import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
-import { Video } from '@/app/types/video';
+import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import { Search } from '@/app/components/icons';
 import { ContentService } from '@/lib/services/content.service';
@@ -16,7 +16,7 @@ import { cn, formatCount } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export default async function ChannelPage({ params }: { params: { slug: string } }) {
-  const creator = await ContentService.getCreatorBySlug(params.slug) as (any & { videos: any[] });
+  const creator = await ContentService.getCreatorBySlug(params.slug);
 
   if (!creator) {
     return (
@@ -38,19 +38,16 @@ export default async function ChannelPage({ params }: { params: { slug: string }
 
   // Check if current user is the owner of this channel
   const isOwner = userDb && userDb.id === creator.userId;
-  const ownerAvatar = (params.slug === 'polutek') ? '/nowe.png' : (isOwner ? userDb.imageUrl : (creator.user?.imageUrl || creator.imageUrl || null));
-  const ownerEmail = isOwner ? userDb.email : (creator.user?.email || null);
+  const ownerAvatar = (params.slug === 'polutek') ? '/nowe.png' : (isOwner ? userDb.imageUrl : (creator.imageUrl || null));
+  const ownerEmail = isOwner ? userDb.email : null;
 
-  const allVideos: Video[] = (creator.videos || []).map((v: any) => ({
+  const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
     ...v,
     creator: {
       id: creator.id,
       name: creator.slug === 'polutek' ? 'POLUTEK.PL' : creator.name,
       slug: creator.slug,
-      bio: creator.bio,
       imageUrl: ownerAvatar,
-      email: ownerEmail,
-      bannerUrl: creator.bannerUrl,
       subscribersCount: creator.subscribersCount || 0
     }
   }));

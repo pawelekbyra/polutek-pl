@@ -6,7 +6,7 @@ import VideoPlaylist from './VideoPlaylist';
 import PremiumWrapper from './PremiumWrapper';
 import VideoPlayer from './VideoPlayer';
 import EmbeddedComments from './comments/EmbeddedComments';
-import { Video, PublicVideoDTO } from '../types/video';
+import { PublicVideoDTO } from '../types/video';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';

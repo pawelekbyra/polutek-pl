@@ -19,3 +19,18 @@ POLUTEK.PL is a video platform inspired by YouTube, built to host exclusive cont
 - **Media Security**: Never expose direct storage URLs (`videoUrl`) to the public frontend. Use the `PublicVideoDTO` for all public-facing data.
 - **Maintain Product Identity**: Do not transform the project into a simple landing page or a traditional crowdfunding site. It must remain a functional VOD platform.
 - **Defensive Rendering**: The UI should handle missing data (e.g., no featured video, empty database) gracefully without crashing.
+
+## Source of truth rules
+
+- Public UI must use `PublicVideoDTO`.
+- Public UI must never receive `videoUrl`.
+- `/api/media/:videoId` is the only public playback path.
+- DB is the source of truth for user role and patron status.
+- Clerk metadata is a cache/sync layer, not the primary source of truth.
+- Stripe webhook is the source of truth for successful payments.
+- Demo fallback content is allowed only in development or when `ENABLE_DEMO_FALLBACKS=true`.
+- The campaign page is experimental and hidden behind `ENABLE_CAMPAIGN_PAGE`.
+
+## Patron access policy
+
+Currently, a qualifying one-time donation grants patron access. This should be treated as lifetime patron access unless product requirements change.

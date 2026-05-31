@@ -44,7 +44,12 @@ export interface CommentWithAuthor {
   replies: CommentWithAuthor[];
 }
 
-export interface Video {
+/**
+ * Internal/admin-only video shape.
+ * Do not use this type in public frontend components.
+ * Public UI must use PublicVideoDTO.
+ */
+export interface InternalVideoDTO {
   id: string;
   creatorId: string;
   title: string;

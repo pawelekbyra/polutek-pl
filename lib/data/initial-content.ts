@@ -1,5 +1,5 @@
 import { AccessTier } from "@prisma/client";
-import { Video } from "@/app/types/video";
+import { InternalVideoDTO as Video } from "@/app/types/video";
 
 export const DEFAULT_CREATOR = {
   id: "creator_polutek_default",

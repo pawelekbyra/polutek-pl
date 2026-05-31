@@ -12,6 +12,7 @@ import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
 import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
+import { logger } from '@/lib/logger';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -67,7 +68,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     startTransition(async () => {
         try {
-            console.log("[Hero] Toggling LIKE for video:", video.id);
+            logger.debug("[Hero] Toggling LIKE for video:", video.id);
             addOptimisticAction('LIKE');
             const result = await toggleVideoLike(video.id) as any;
 
@@ -83,7 +84,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
                 }
             } else {
-                console.log("[Hero] LIKE Action success:", result);
+                logger.debug("[Hero] LIKE Action success:", result);
             }
         } catch (error: any) {
             console.error("[Hero] Transition error during LIKE:", error);
@@ -117,7 +118,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     startTransition(async () => {
         try {
-            console.log("[Hero] Toggling DISLIKE for video:", video.id);
+            logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
             addOptimisticAction('DISLIKE');
             const result = await toggleVideoDislike(video.id) as any;
 
@@ -133,7 +134,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
                 }
             } else {
-                console.log("[Hero] DISLIKE Action success:", result);
+                logger.debug("[Hero] DISLIKE Action success:", result);
             }
         } catch (error: any) {
             console.error("[Hero] Transition error during DISLIKE:", error);

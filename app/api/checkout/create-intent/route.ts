@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request data", details: result.error.flatten() }, { status: 400 });
     }
 
-    const { amount, currency, title, creatorId } = result.data;
+    const { amount, amountMinor: inputAmountMinor, currency, title, creatorId } = result.data;
     const amountError = validatePaymentAmount(amount, currency);
 
     if (amountError) {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     const payment = await PaymentService.createPayment({
       userId,
-      amount,
+      amount: inputAmountMinor ? inputAmountMinor / 100 : amount,
       currency,
       title,
       creatorId,

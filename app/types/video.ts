@@ -11,7 +11,12 @@ export interface Creator {
   subscribersCount: number;
 }
 
-export interface Video {
+/**
+ * Internal/admin-only video shape.
+ * Do not use this type in public frontend components.
+ * Public UI must use PublicVideoDTO.
+ */
+export interface InternalVideoDTO {
   id: string;
   creatorId: string;
   title: string;
@@ -38,6 +43,13 @@ export interface PublicCreatorDTO {
   imageUrl?: string | null;
   subscribersCount: number;
 }
+
+export type PublicCreatorPageDTO = PublicCreatorDTO & {
+  bio?: string | null;
+  bannerUrl?: string | null;
+  userId?: string;
+  videos: PublicVideoDTO[];
+};
 
 export interface PublicVideoDTO {
   id: string;

@@ -27,6 +27,7 @@ model User {
   imageUrl         String?
   isPatron         Boolean             @default(false)
   patronSince      DateTime?
+  canCreateChannel Boolean             @default(false)
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
@@ -140,6 +141,7 @@ model Creator {
   bannerUrl        String?
   subscribersCount Int       @default(0)
   isApproved       Boolean   @default(false)
+  isPrimary        Boolean   @default(false)
   stripeConnectId  String?   @unique
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -178,6 +180,7 @@ model Video {
   likesCount    Int       @default(0)
   dislikesCount Int       @default(0)
   isMainFeatured Boolean  @default(false) // This video is the "One Hero Video" on homepage
+  status        VideoStatus @default(DRAFT)
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -187,6 +190,7 @@ model Video {
   videoLikes    VideoLike[]
   videoDislikes VideoDislike[]
   asset         VideoAsset?
+  videoViews    VideoView[]
 
   @@index([creatorId])
   @@index([slug])
@@ -286,6 +290,8 @@ model Comment {
   likes      CommentLike[]
   dislikes   CommentDislike[]
 
+  deletedAt  DateTime?
+  deletedById String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -324,6 +330,27 @@ enum AccessTier {
   PUBLIC    // Everyone
   LOGGED_IN // Minimum: Logged in (Clerk mail)
   PATRON    // Minimum: isPatron status granted
+}
+
+enum VideoStatus {
+  DRAFT
+  PUBLISHED
+  UNLISTED
+  ARCHIVED
+}
+
+model VideoView {
+  id        String   @id @default(uuid())
+  videoId   String
+  userId    String?
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId])
+  @@index([userId])
+  @@index([ipHash])
 }
 
 enum SystemRole {

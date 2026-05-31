@@ -86,7 +86,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 }
             };
         }
-    }, [isMounted, videoUrl, variant, video.thumbnailUrl, video.title, loadError]);
+    }, [isMounted, videoUrl, variant, posterUrl, video.id]);
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail' || !videoUrl) {
