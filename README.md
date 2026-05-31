@@ -11,7 +11,7 @@ POLUTEK.PL is a private service. It serves as a central hub for exclusive media 
 
 ### Key Concept: Reward for Support
 - **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant permanent access as a token of gratitude.
-- **Patron Status**: Patron status is currently granted by a single qualifying donation. Payment totals are tracked per currency for diagnostics and future use.
+- **Patron Status**: Patron status is currently granted by a single qualifying donation. Payment totals are tracked per currency (`UserPaymentTotal`) which is the primary source of truth for total value.
 - **Public Discovery**: One primary featured video is always public, serving as a gateway to the platform.
 
 ## Architecture & Scalability
@@ -64,7 +64,13 @@ For production environments:
 ```bash
 npx prisma migrate deploy
 ```
-*Note: If migrations are not yet committed to the repository, you can use `npx prisma db push` for development environments, but `migrate deploy` is the standard for production.*
+*Note: Production deployments must use `prisma migrate deploy` to ensure database schema consistency. Hard delete of production data is discouraged; prefer status updates (e.g., `VideoStatus.ARCHIVED`).*
+
+### Testing
+Run unit tests with Vitest:
+```bash
+npm test
+```
 
 ## Verification Checklist
 1. [ ] Homepage loads correctly with a featured video.

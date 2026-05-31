@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
   const videoId = searchParams.get('videoId');
 
   if (!videoId) {
-    return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
+    return NextResponse.json({
+      error: 'INVALID_INPUT',
+      message: 'Video ID is required'
+    }, { status: 400 });
   }
 
   try {
@@ -34,7 +37,7 @@ export async function GET(req: NextRequest) {
         hasAccess: false,
         requiredTier: 'PATRON',
         reason: 'SYSTEM_ERROR',
-        error: "Access check partially failed. Check DB connectivity."
+        message: "Wystąpił błąd podczas sprawdzania dostępu."
     });
   }
 }

@@ -21,7 +21,11 @@ export function handleApiError(error: unknown) {
     );
   }
 
-  const message = error instanceof Error ? error.message : 'Internal Server Error';
+  const isDev = process.env.NODE_ENV === 'development';
+  const message = (isDev && error instanceof Error)
+    ? error.message
+    : 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.';
+
   return NextResponse.json(
     { error: 'INTERNAL_ERROR', message },
     { status: 500 }

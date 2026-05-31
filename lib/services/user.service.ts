@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
+import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 
 export class UserService {
   static readonly ADMIN_EMAIL = ADMIN_EMAIL;
@@ -29,12 +30,13 @@ export class UserService {
       const username = clerkUser.username || null;
 
       // Metadata extraction
-      const publicMeta = clerkUser.publicMetadata as any;
-      const unsafeMeta = clerkUser.unsafeMetadata as any;
+      const publicMeta = clerkUser.publicMetadata as ClerkPublicMetadata;
+      const unsafeMeta = clerkUser.unsafeMetadata as ClerkUnsafeMetadata;
       const language = publicMeta.language || publicMeta.preferredLanguage || unsafeMeta.language || unsafeMeta.preferredLanguage || 'en';
       const referrerId = unsafeMeta.referrerId || null;
+      const clerkRole = publicMeta.role;
 
-      return await this.syncUser(clerkUserId, email, name, imageUrl, referrerId, language, username);
+      return await this.syncUser(clerkUserId, email, name, imageUrl, referrerId, language, username, clerkRole);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       console.error("[UserService.getOrCreateUser]", message);
@@ -45,11 +47,37 @@ export class UserService {
   /**
    * Atomic synchronization logic.
    */
-  static async syncUser(id: string, email: string, name?: string | null, imageUrl?: string | null, referrerId?: string | null, language?: string, username?: string | null) {
-    const isAdmin = email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase();
-
+  static async syncUser(
+    id: string,
+    email: string,
+    name?: string | null,
+    imageUrl?: string | null,
+    referrerId?: string | null,
+    language?: string,
+    username?: string | null,
+    clerkRole?: string | null
+  ) {
     try {
       return await prisma.$transaction(async (tx) => {
+        const existingUser = await tx.user.findUnique({
+          where: { id },
+          select: { role: true }
+        });
+
+        // Role determination:
+        // 1. If Clerk metadata says ADMIN, trust it.
+        // 2. If it's a new user and email matches ADMIN_EMAIL, bootstrap as ADMIN.
+        // 3. Otherwise keep existing role or default to USER.
+        let targetRole: 'ADMIN' | 'USER' = 'USER';
+
+        if (clerkRole === 'ADMIN') {
+          targetRole = 'ADMIN';
+        } else if (existingUser) {
+          targetRole = existingUser.role;
+        } else if (email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
+          targetRole = 'ADMIN';
+        }
+
         const user = await tx.user.upsert({
           where: { id },
           update: {
@@ -58,6 +86,7 @@ export class UserService {
             username,
             imageUrl,
             language,
+            role: targetRole,
           },
           create: {
             id,
@@ -65,13 +94,13 @@ export class UserService {
             name,
             username,
             imageUrl,
-            role: isAdmin ? 'ADMIN' : 'USER',
+            role: targetRole,
             language: language || 'en',
             referralCode: crypto.randomBytes(6).toString('hex'),
           }
         });
 
-        if (isAdmin) {
+        if (targetRole === 'ADMIN') {
             await tx.creator.updateMany({
                 where: { slug: 'polutek' },
                 data: { name: 'POLUTEK.PL', userId: id }

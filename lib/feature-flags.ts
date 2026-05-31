@@ -5,10 +5,10 @@ export const flags = {
   campaignPage: process.env.ENABLE_CAMPAIGN_PAGE === "true",
 
   /**
-   * Whether to allow INITIAL_VIDEOS fallback in production.
-   * Default: true (unless explicitly disabled)
+   * Whether to allow INITIAL_VIDEOS fallback.
+   * Opt-in required. Recommended only for development.
    */
-  demoFallbacks: process.env.ENABLE_DEMO_FALLBACKS !== "false" && process.env.ENABLE_DEMO_FALLBACKS !== "0",
+  demoFallbacks: process.env.ENABLE_DEMO_FALLBACKS === "true",
 
   /**
    * Future multi-creator support.

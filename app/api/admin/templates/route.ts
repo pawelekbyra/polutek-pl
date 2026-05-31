@@ -4,6 +4,7 @@ import { verifyAdmin } from '@/lib/auth-utils';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
+import sanitizeHtml from 'sanitize-html';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,10 +72,32 @@ export async function POST(req: NextRequest) {
 
     const { subjectPl, bodyPl, subjectEn, bodyEn } = result.data;
 
+    const sanitizeOptions = {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['div', 'h1', 'h2', 'br', 'span', 'section']),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        '*': ['style']
+      }
+    };
+
+    const cleanBodyPl = sanitizeHtml(bodyPl, sanitizeOptions);
+    const cleanBodyEn = sanitizeHtml(bodyEn, sanitizeOptions);
+
     const updated = await prisma.emailTemplate.upsert({
       where: { name: 'WELCOME' },
-      update: { subjectPl, bodyPl, subjectEn, bodyEn },
-      create: { name: 'WELCOME', subjectPl, bodyPl, subjectEn, bodyEn }
+      update: {
+        subjectPl,
+        bodyPl: cleanBodyPl,
+        subjectEn,
+        bodyEn: cleanBodyEn
+      },
+      create: {
+        name: 'WELCOME',
+        subjectPl,
+        bodyPl: cleanBodyPl,
+        subjectEn,
+        bodyEn: cleanBodyEn
+      }
     });
 
     await writeAuditLog({

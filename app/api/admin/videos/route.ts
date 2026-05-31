@@ -19,9 +19,6 @@ const videoSchema = z.object({
   duration: z.string().optional().nullable(),
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
-  likesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
-  dislikesCount: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
-  views: z.union([z.number(), z.string()]).transform(v => parseInt(v.toString()) || 0).default(0),
   isMainFeatured: z.boolean().default(false),
 });
 
@@ -51,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, likesCount, dislikesCount, views, isMainFeatured } = result.data;
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured } = result.data;
 
   try {
     if (id) {
@@ -71,9 +68,6 @@ export async function POST(req: NextRequest) {
             tier,
             status,
             publishedAt,
-            likesCount,
-            dislikesCount,
-            views,
             isMainFeatured: !!isMainFeatured
           }
         });
@@ -125,9 +119,6 @@ export async function POST(req: NextRequest) {
             tier: tier || 'PUBLIC',
             status: status || VideoStatus.PUBLISHED,
             publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
-            likesCount,
-            dislikesCount,
-            views,
             isMainFeatured: !!isMainFeatured
           }
         });
@@ -170,13 +161,14 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const deleted = await prisma.video.delete({
-      where: { id }
+    const deleted = await prisma.video.update({
+      where: { id },
+      data: { status: VideoStatus.ARCHIVED }
     });
 
     await writeAuditLog({
         actorUserId: (await auth()).userId,
-        action: "VIDEO_DELETED",
+        action: "VIDEO_ARCHIVED",
         targetType: "Video",
         targetId: id,
         metadata: { title: deleted.title }

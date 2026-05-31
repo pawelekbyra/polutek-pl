@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PaymentService } from '@/lib/services/payment.service';
 import { UserService } from '@/lib/services/user.service';
 import { rateLimit } from '@/lib/rate-limit';
-import { checkoutSchema, validatePaymentAmount } from '@/lib/payments/checkout.schema';
+import { checkoutSchema, validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
 import { prisma } from '@/lib/prisma';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,13 +42,16 @@ export async function POST(req: NextRequest) {
     const result = checkoutSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: "Invalid request data", details: result.error.flatten() }, { status: 400 });
+      return NextResponse.json({
+        error: "INVALID_INPUT",
+        message: "Nieprawidłowe dane.",
+        details: result.error.flatten()
+      }, { status: 400 });
     }
 
-    const { amount, amountMinor: inputAmountMinor, currency, title, creatorId } = result.data;
-    const finalAmount = inputAmountMinor ? inputAmountMinor / 100 : (amount as number);
+    const { amountMinor, currency, title, creatorId } = result.data;
 
-    const amountError = validatePaymentAmount(finalAmount, currency);
+    const amountError = validatePaymentAmountMinor(amountMinor, currency);
 
     if (amountError) {
       return NextResponse.json({ error: amountError }, { status: 400 });
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     const payment = await PaymentService.createPayment({
       userId,
-      amount: finalAmount,
+      amountMinor,
       currency,
       title,
       creatorId,
@@ -77,11 +81,6 @@ export async function POST(req: NextRequest) {
         paymentId: payment.id
     });
   } catch (error: unknown) {
-    console.error("[STRIPE_INTENT_ERROR]", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({
-      error: "Internal Error",
-      message
-    }, { status: 500 });
+    return handleApiError(error);
   }
 }

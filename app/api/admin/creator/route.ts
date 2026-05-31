@@ -75,15 +75,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Admin user not found in DB.' }, { status: 400 });
         }
 
-        const created = await prisma.creator.create({
-            data: {
-                userId: adminUser.id,
-                name,
-                bio,
-                slug,
-                bannerUrl,
-                isApproved: true
-            }
+        const created = await prisma.$transaction(async (tx) => {
+            const firstCreator = await tx.creator.findFirst();
+            const isPrimary = !firstCreator;
+
+            const newCreator = await tx.creator.create({
+                data: {
+                    userId: adminUser.id,
+                    name,
+                    bio,
+                    slug,
+                    bannerUrl,
+                    isApproved: true,
+                    isPrimary
+                }
+            });
+
+            return newCreator;
         });
         return NextResponse.json(created);
     }
