@@ -75,11 +75,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.allVideosCount = allVideos.length;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load all videos", getSafeErrorInfo(e));
-      // If demo fallbacks are enabled, ContentService.getAllVideos() should already handle it.
-      // We re-throw only if it's a critical DB error and no videos were returned.
-      if (allVideos.length === 0) {
-        throw e;
-      }
+      // Totally resilient: never re-throw. ContentService should handle demo fallbacks.
     }
 
     // 3. Load Main Video
