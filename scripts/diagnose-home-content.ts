@@ -3,7 +3,7 @@ import { PrismaClient, VideoStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI (v4) ===");
+  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI (v5) ===");
 
   const now = new Date();
   console.log(`Czas serwera: ${now.toISOString()}`);
@@ -13,7 +13,6 @@ async function main() {
   console.log(`Baza: ${safeUrl}`);
 
   try {
-    // Stage 1: Basic Counts with robustness
     const counters = {
         allVideos: 0,
         published: 0,
@@ -21,48 +20,48 @@ async function main() {
         primaryCreators: 0,
         approvedCreatorVideos: 0,
         publishWindow: 0,
+        exactHomeQuery: 0,
     };
 
-    try { counters.allVideos = await prisma.video.count(); } catch (e: any) {
-        console.log("!!! BŁĄD przy Video.count():", e.message);
-    }
+    const safeCount = async (where?: any) => {
+      try {
+        return await (where ? prisma.video.count({ where }) : prisma.video.count());
+      } catch (e: any) {
+        console.error(`[DIAGNOSE_ERROR] Count failed: ${e.message}`);
+        return -1;
+      }
+    };
 
-    try { counters.published = await prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }); }
-    catch (e: any) {
-        console.log("!!! BŁĄD przy liczeniu PUBLISHED:", e.message);
-    }
-
-    try { counters.approvedCreators = await prisma.creator.count({ where: { isApproved: true } }); } catch (e: any) {}
-    try { counters.primaryCreators = await prisma.creator.count({ where: { isPrimary: true } }); } catch (e: any) {}
-
-    try {
-        counters.approvedCreatorVideos = await prisma.video.count({
-          where: {
-            status: VideoStatus.PUBLISHED,
-            creator: { isApproved: true }
-          }
-        });
-    } catch (e) {}
+    counters.allVideos = await safeCount();
+    counters.published = await safeCount({ status: VideoStatus.PUBLISHED });
 
     try {
-        counters.publishWindow = await prisma.video.count({
-          where: {
-            status: VideoStatus.PUBLISHED,
-            creator: { isApproved: true },
-            OR: [
-              { publishedAt: null },
-              { publishedAt: { lte: now } }
-            ]
-          }
-        });
-    } catch (e) {}
+      counters.approvedCreators = await prisma.creator.count({ where: { isApproved: true } });
+      counters.primaryCreators = await prisma.creator.count({ where: { isPrimary: true } });
+    } catch (e: any) {
+      console.error(`[DIAGNOSE_ERROR] Creator count failed: ${e.message}`);
+    }
+
+    counters.approvedCreatorVideos = await safeCount({
+      status: VideoStatus.PUBLISHED,
+      creator: { isApproved: true }
+    });
+
+    counters.publishWindow = await safeCount({
+      status: VideoStatus.PUBLISHED,
+      creator: { isApproved: true },
+      OR: [
+        { publishedAt: null },
+        { publishedAt: { lte: now } }
+      ]
+    });
 
     console.log(`\n--- Liczniki Etapowe ---`);
     console.log(`1. Wszystkie filmy (allVideosCount): ${counters.allVideos}`);
     console.log(`2. Filmy PUBLISHED: ${counters.published}`);
-    console.log(`3. Zatwierdzeni twórcy: ${counters.approvedCreators}`);
-    console.log(`4. Główni twórcy (isPrimary): ${counters.primaryCreators}`);
-    console.log(`5. Filmy PUBLISHED + Approved Creator: ${counters.approvedCreatorVideos}`);
+    console.log(`3. Zatwierdzeni twórcy (approvedCreatorsCount): ${counters.approvedCreators}`);
+    console.log(`4. Główni twórcy (primaryCreatorsCount): ${counters.primaryCreators}`);
+    console.log(`5. Filmy PUBLISHED + Approved Creator (approvedCreatorVideosCount): ${counters.approvedCreatorVideos}`);
     console.log(`6. Filmy w oknie publikacji (publishWindow): ${counters.publishWindow} (FINALNA WIDOCZNOŚĆ)`);
 
     console.log(`\n--- Szczegóły pierwszych 50 filmów ---`);
@@ -79,16 +78,30 @@ async function main() {
 
     videos.forEach((v, i) => {
       const reasons: string[] = [];
-      if (v.status !== VideoStatus.PUBLISHED) reasons.push(`status is ${v.status}`);
-      if (!v.creator) reasons.push("missing creator");
-      else if (!v.creator.isApproved) reasons.push("creator is not approved");
+      const vStatus = v.status;
+      const vTier = v.tier;
+      const vPublishedAt = v.publishedAt ? new Date(v.publishedAt) : null;
+      const cSlug = v.creator?.slug || 'MISSING';
+      const cApproved = v.creator?.isApproved || false;
+      const cPrimary = v.creator?.isPrimary || false;
 
-      const pubAt = v.publishedAt ? new Date(v.publishedAt) : null;
-      if (pubAt && pubAt > now) reasons.push(`publishedAt is in the future (${pubAt.toISOString()})`);
+      if (vStatus === VideoStatus.DRAFT) reasons.push(`status is DRAFT`);
+      else if (vStatus === VideoStatus.ARCHIVED) reasons.push(`status is ARCHIVED`);
+      else if (vStatus !== VideoStatus.PUBLISHED) reasons.push(`status is ${vStatus}`);
+
+      if (!v.creator) reasons.push("missing creator");
+      else if (!cApproved) reasons.push("creator is not approved");
+
+      if (vPublishedAt && vPublishedAt > now) reasons.push(`publishedAt is in the future (${vPublishedAt.toISOString()})`);
+      if (!v.slug) reasons.push("missing slug");
+      if (!v.title) reasons.push("missing title");
+      if (!v.thumbnailUrl) reasons.push("missing thumbnailUrl");
 
       const isVisible = reasons.length === 0;
-      console.log(`${i+1}. [${isVisible ? 'WIDOCZNY' : 'UKRYTY'}] "${v.title}" (${v.slug})`);
-      if (!isVisible) console.log(`   Powody: ${reasons.join(", ")}`);
+      console.log(`${String(i+1).padStart(2, ' ')}. [${isVisible ? 'WIDOCZNY' : 'UKRYTY'}] "${v.title}" (${v.slug})`);
+      console.log(`    [ID: ${v.id}] [Status: ${vStatus}] [Tier: ${vTier}] [PubAt: ${vPublishedAt?.toISOString() || 'NULL'}]`);
+      console.log(`    [Creator: ${cSlug}] [Approved: ${cApproved}] [Primary: ${cPrimary}]`);
+      if (!isVisible) console.log(`    Powody: ${reasons.join(", ")}`);
     });
 
     console.log(`\n--- Runtime ContentService Check ---`);
@@ -101,6 +114,7 @@ async function main() {
         console.log(`ContentService.getMainFeaturedVideo(): ${mainVideo ? mainVideo.title : 'NULL'}`);
     } catch (err: any) {
         console.log(`BŁĄD przy ContentService: ${err.name} - ${err.message}`);
+        console.log(`Prisma Code: ${err.code || 'N/A'}`);
     }
 
     if (counters.publishWindow === 0) {

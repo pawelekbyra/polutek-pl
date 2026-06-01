@@ -5,11 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("=== NAPRAWA TREŚCI TWÓRCY: POLUTEK ===");
 
-  const autoFix = process.env.AUTO_FIX_DEV_CONTENT === "true" && process.env.NODE_ENV !== "production";
-  if (autoFix) {
-      console.log("Tryb AUTO_FIX_DEV_CONTENT aktywny.");
-  }
-
   try {
     const polutek = await prisma.creator.findUnique({ where: { slug: 'polutek' } });
 
@@ -25,13 +20,20 @@ async function main() {
     console.log(`Liczba widocznych filmów przed naprawą: ${initialVisible}`);
 
     console.log("Zatwierdzanie twórcy...");
-    const hasPrimary = await prisma.creator.findFirst({ where: { isPrimary: true, id: { not: polutek.id } } });
+    // Check if any other creator is primary
+    const otherPrimary = await prisma.creator.findFirst({
+      where: {
+        isPrimary: true,
+        id: { not: polutek.id }
+      }
+    });
 
     await prisma.creator.update({
       where: { id: polutek.id },
       data: {
         isApproved: true,
-        isPrimary: polutek.isPrimary || !hasPrimary
+        // Set as primary only if it already was or if no one else is primary
+        isPrimary: polutek.isPrimary || !otherPrimary
       }
     });
 
@@ -57,7 +59,7 @@ async function main() {
     const finalVisible = await countVisible();
     console.log(`\nStan końcowy:`);
     console.log(`- isApproved: true`);
-    console.log(`- isPrimary: ${polutek.isPrimary || !hasPrimary}`);
+    console.log(`- isPrimary: ${polutek.isPrimary || !otherPrimary}`);
     console.log(`- Widoczne filmy po naprawie: ${finalVisible}`);
 
     if (finalVisible > 0) {
