@@ -40,6 +40,22 @@ This project uses Prisma with PostgreSQL. It requires two database connection st
 - `DATABASE_URL_UNPOOLED`: Should be a direct/unpooled connection string. This is used by Prisma for migrations and other direct database operations.
   - *Note: If your environment does not provide a separate direct URL, you can temporarily set `DATABASE_URL_UNPOOLED` to the same value as `DATABASE_URL`, but a dedicated direct URL is recommended for production.*
 
+### Neon DB Configuration Example
+```env
+# Recommended for most uses (pooled)
+DATABASE_URL="postgresql://[user]:[password]@[host]-pooler.[region].aws.neon.tech/[db_name]?sslmode=require"
+
+# For migrations and direct access (unpooled)
+DATABASE_URL_UNPOOLED="postgresql://[user]:[password]@[host].[region].aws.neon.tech/[db_name]?sslmode=require"
+
+# Host parameters
+PGHOST="[host]-pooler.[region].aws.neon.tech"
+PGHOST_UNPOOLED="[host].[region].aws.neon.tech"
+PGUSER="[user]"
+PGDATABASE="[db_name]"
+PGPASSWORD="[password]"
+```
+
 ## Getting Started
 
 ### Prerequisites
