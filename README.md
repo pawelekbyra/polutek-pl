@@ -169,3 +169,17 @@ npm run build
 ```
 
 Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, Upstash Redis REST URL/token, exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.
+
+### Upstash Redis / Vercel KV
+Required in Production for `/api/media` and `/api/checkout/create-intent`. Without these, endpoints will return a controlled 503 error.
+
+```env
+UPSTASH_REDIS_REST_URL="https://your-host.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your-token"
+
+# Optional Vercel KV Aliases
+KV_REST_API_URL="https://your-host.upstash.io"
+KV_REST_API_TOKEN="your-token"
+KV_REST_API_READ_ONLY_TOKEN="your-readonly-token"
+KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
+```

@@ -14,7 +14,7 @@ const BrandName: React.FC<BrandNameProps> = ({ className, dotPlClassName, varian
       isClassic ? "font-brand font-black tracking-tighter uppercase" : "font-handwriting font-bold uppercase",
       className
     )}>
-      Paweł<span className={cn("text-primary", dotPlClassName)}> Perfect</span>
+      POLUTEK<span className={cn("text-primary", dotPlClassName)}>.PL</span>
     </span>
   );
 };

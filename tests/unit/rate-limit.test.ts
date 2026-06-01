@@ -9,7 +9,7 @@ describe('rate limit store config', () => {
 
   it('throws in production when Upstash envs are missing', () => {
     expect(() => resolveRateLimitStoreKind({ NODE_ENV: 'production' })).toThrow(
-      'Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN',
+      'Production rate limit requires Upstash Redis environment variables.'
     );
   });
 

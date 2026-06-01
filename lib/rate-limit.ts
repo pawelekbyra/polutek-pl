@@ -80,6 +80,15 @@ type RateLimitEnv = Record<string, string | undefined>;
 
 export type RateLimitStoreKind = 'memory' | 'upstash';
 
+export class RateLimitConfigurationError extends Error {
+  code = "RATE_LIMIT_CONFIGURATION_ERROR";
+
+  constructor() {
+    super("Production rate limit requires Upstash Redis environment variables.");
+    this.name = "RateLimitConfigurationError";
+  }
+}
+
 export function getRateLimitRedisKey(key: string) {
   return `rate-limit:${key}`;
 }
@@ -93,7 +102,7 @@ export function resolveRateLimitStoreKind(env: RateLimitEnv = process.env): Rate
   }
 
   if (env.NODE_ENV === 'production') {
-    throw new Error('[RateLimit] Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
+    throw new RateLimitConfigurationError();
   }
 
   return 'memory';

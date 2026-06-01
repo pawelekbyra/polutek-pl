@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { writeAuditLog } from './audit.service';
+import { getSafeErrorInfo } from '../errors';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
 import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
 
@@ -408,7 +409,7 @@ export class PaymentService {
         actorUserId: userId,
         metadata: {
           emailType: type === 'DONATION' ? "donation_thank_you" : "become_patron",
-          error: error instanceof Error ? error.message : String(error),
+          error: getSafeErrorInfo(error),
         },
       });
     }

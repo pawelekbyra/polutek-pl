@@ -1,5 +1,6 @@
 import { ContentService } from "./content.service";
 import { PublicVideoDTO, PublicCreatorPageDTO } from "@/app/types/video";
+import { getSafeErrorInfo } from "../errors";
 
 export type HomeContentDebugInfo = {
   creatorSuccess: boolean;
@@ -30,17 +31,6 @@ export type HomeContentLoadResult =
       publicMessage: string;
       debug?: HomeContentDebugInfo;
     };
-
-function getSafeErrorInfo(error: unknown) {
-  return {
-    name: error instanceof Error ? error.name : "UnknownError",
-    message: error instanceof Error ? error.message : "Unknown error",
-    prismaCode:
-      typeof error === "object" && error && "code" in error
-        ? String((error as { code?: unknown }).code)
-        : undefined,
-  };
-}
 
 export async function loadHomeContent(): Promise<HomeContentLoadResult> {
   const debug: HomeContentDebugInfo = {
