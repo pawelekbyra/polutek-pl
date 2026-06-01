@@ -2,9 +2,6 @@
 CREATE INDEX "Payment_userId_status_idx" ON "Payment"("userId", "status");
 
 -- CreateIndex
-CREATE INDEX "Payment_stripeIntentId_idx" ON "Payment"("stripeIntentId");
-
--- CreateIndex
 CREATE INDEX "PatronGrant_userId_revokedAt_idx" ON "PatronGrant"("userId", "revokedAt");
 
 -- CreateIndex
