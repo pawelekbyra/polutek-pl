@@ -3,31 +3,15 @@ import { PrismaClient, VideoStatus, AccessTier } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("=== NAPRAWA I POPULACJA TREŚCI MVP: Paweł Perfect ===");
+  console.log("=== NAPRAWA I POPULACJA TREŚCI: POLUTEK.PL ===");
 
   try {
     let polutek = await prisma.creator.findUnique({ where: { slug: 'polutek' } });
 
     if (!polutek) {
-      console.log("Nie znaleziono twórcy o slugu 'polutek'. Próba znalezienia admina...");
-      const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-
-      if (!admin) {
-        console.log("BŁĄD: Brak admina w bazie. Uruchom najpierw npm run db:seed");
-        return;
-      }
-
-      console.log(`Tworzenie twórcy 'polutek' (Paweł Perfect) dla admina ${admin.email}...`);
-      polutek = await prisma.creator.create({
-        data: {
-          slug: 'polutek',
-          name: 'Paweł Perfect',
-          userId: admin.id,
-          isApproved: true,
-          isPrimary: true,
-          subscribersCount: 1250000
-        }
-      });
+      console.log("Nie znaleziono twórcy o slugu 'polutek'.");
+      console.log("Upewnij się, że uruchomiono npm run db:seed.");
+      return;
     }
 
     console.log(`Znaleziono twórcę: ${polutek.name} (ID: ${polutek.id})`);
@@ -36,10 +20,10 @@ async function main() {
     await prisma.creator.update({
       where: { id: polutek.id },
       data: {
-        name: 'Paweł Perfect',
+        name: 'POLUTEK.PL',
         isApproved: true,
         isPrimary: true,
-        subscribersCount: 1250000
+        subscribersCount: 400
       }
     });
 
@@ -105,12 +89,12 @@ async function main() {
     }
 
     const finalVisible = await countVisible();
-    console.log(`\nStan końcowy MVP:`);
-    console.log(`- Nazwa twórcy: Paweł Perfect`);
+    console.log(`\nStan końcowy:`);
+    console.log(`- Nazwa twórcy: POLUTEK.PL`);
     console.log(`- Widoczne filmy: ${finalVisible}`);
 
     if (finalVisible > 0) {
-        console.log("\nSUKCES: Baza została zasilona materiałami MVP. Strona główna powinna teraz wyświetlać Paweł Perfect & Wuthering Heights.");
+        console.log("\nSUKCES: Baza została zasilona materiałami. Strona główna powinna działać.");
     } else {
         console.log("\nUWAGA: Nadal brak widocznych filmów. Sprawdź npm run content:diagnose");
     }

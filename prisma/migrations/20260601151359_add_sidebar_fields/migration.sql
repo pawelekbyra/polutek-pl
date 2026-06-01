@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Video" ADD COLUMN "showInSidebar" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN "sidebarOrder" INTEGER NOT NULL DEFAULT 0;

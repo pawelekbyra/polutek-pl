@@ -80,20 +80,47 @@ type RateLimitEnv = Record<string, string | undefined>;
 
 export type RateLimitStoreKind = 'memory' | 'upstash';
 
+export function resolveRedisRestEnv(env: RateLimitEnv = process.env) {
+  const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
+  const token = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
+
+  const source =
+    env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+      ? "upstash"
+      : env.KV_REST_API_URL && env.KV_REST_API_TOKEN
+        ? "vercel-kv"
+        : "missing";
+
+  const missing = [
+    ...(!url ? ["UPSTASH_REDIS_REST_URL or KV_REST_API_URL"] : []),
+    ...(!token ? ["UPSTASH_REDIS_REST_TOKEN or KV_REST_API_TOKEN"] : []),
+  ];
+
+  return { url, token, source, missing };
+}
+
+export class RateLimitConfigurationError extends Error {
+  code = "RATE_LIMIT_CONFIGURATION_ERROR";
+
+  constructor() {
+    super("Production rate limit requires Upstash Redis environment variables.");
+    this.name = "RateLimitConfigurationError";
+  }
+}
+
 export function getRateLimitRedisKey(key: string) {
   return `rate-limit:${key}`;
 }
 
 export function resolveRateLimitStoreKind(env: RateLimitEnv = process.env): RateLimitStoreKind {
-  const restUrl = env.UPSTASH_REDIS_REST_URL;
-  const token = env.UPSTASH_REDIS_REST_TOKEN;
+  const { source } = resolveRedisRestEnv(env);
 
-  if (restUrl && token) {
+  if (source !== 'missing') {
     return 'upstash';
   }
 
   if (env.NODE_ENV === 'production') {
-    throw new Error('[RateLimit] Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
+    throw new RateLimitConfigurationError();
   }
 
   return 'memory';
@@ -103,7 +130,9 @@ export function createRateLimitStore(env: RateLimitEnv = process.env): RateLimit
   const kind = resolveRateLimitStoreKind(env);
 
   if (kind === 'upstash') {
-    return new UpstashRedisStore(env.UPSTASH_REDIS_REST_URL!, env.UPSTASH_REDIS_REST_TOKEN!);
+    const { url, token, source } = resolveRedisRestEnv(env);
+    console.info("[RateLimit] Using Redis REST store", { source });
+    return new UpstashRedisStore(url!, token!);
   }
 
   console.warn('[RateLimit] Using in-memory rate limit store. This is allowed only outside production.');

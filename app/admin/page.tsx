@@ -48,7 +48,9 @@ export default function AdminPanel() {
     likesCount: 0,
     dislikesCount: 0,
     views: 0,
-    isMainFeatured: false
+    isMainFeatured: false,
+    showInSidebar: true,
+    sidebarOrder: 0
   });
 
   const [creatorForm, setCreatorForm] = useState({
@@ -167,7 +169,9 @@ export default function AdminPanel() {
       likesCount: vid.likesCount,
       dislikesCount: vid.dislikesCount || 0,
       views: vid.views,
-      isMainFeatured: vid.isMainFeatured
+      isMainFeatured: vid.isMainFeatured,
+      showInSidebar: vid.showInSidebar ?? true,
+      sidebarOrder: vid.sidebarOrder || 0
     });
     setIsEditing(true);
   };
@@ -186,7 +190,9 @@ export default function AdminPanel() {
       likesCount: 0,
       dislikesCount: 0,
       views: 0,
-      isMainFeatured: false
+      isMainFeatured: false,
+      showInSidebar: true,
+      sidebarOrder: 0
     });
     setIsEditing(true);
   };
@@ -346,18 +352,30 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                  <div className="flex items-center space-x-2">
                        <Checkbox
                         id="isMainFeatured"
                         checked={formData.isMainFeatured}
                         onCheckedChange={(checked) => setFormData({...formData, isMainFeatured: !!checked})}
                        />
-                       <Label htmlFor="isMainFeatured">Hero Video</Label>
+                       <Label htmlFor="isMainFeatured">Hero Video (Home Main)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                       <Checkbox
+                        id="showInSidebar"
+                        checked={formData.showInSidebar}
+                        onCheckedChange={(checked) => setFormData({...formData, showInSidebar: !!checked})}
+                       />
+                       <Label htmlFor="showInSidebar">Pokaż w bocznym pasku</Label>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sidebarOrder">Kolejność w pasku</Label>
+                    <Input id="sidebarOrder" type="number" value={formData.sidebarOrder} onChange={e => setFormData({...formData, sidebarOrder: parseInt(e.target.value) || 0})} />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="likes">Polubienia</Label>
                     <Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
@@ -420,11 +438,14 @@ export default function AdminPanel() {
                                     {videos.map((vid) => (
                                         <TableRow key={vid.id}>
                                             <TableCell>
-                                                {vid.isMainFeatured ? (
-                                                    <Badge className="bg-blue-600">Hero</Badge>
-                                                ) : (
-                                                    <Badge variant="secondary">Lista</Badge>
-                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                    {vid.isMainFeatured && <Badge className="bg-blue-600">Hero</Badge>}
+                                                    {vid.showInSidebar ? (
+                                                        <Badge variant="secondary">Pasek #{vid.sidebarOrder}</Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="opacity-50 text-[10px]">Ukryty</Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

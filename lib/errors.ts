@@ -31,3 +31,18 @@ export function handleApiError(error: unknown) {
     { status: 500 }
   );
 }
+
+export function getSafeErrorInfo(error: unknown) {
+  const isError = error instanceof Error;
+  const name = isError ? error.name : "UnknownError";
+  const rawMessage = isError ? error.message : String(error);
+
+  // Basic sanitization: strip potentially sensitive connection details if they look like URLs
+  const safeMessage = rawMessage.replace(/postgresql:\/\/[^@]+@/, "postgresql://****@");
+
+  return {
+    name,
+    message: safeMessage,
+    prismaCode: typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code) : undefined,
+  };
+}

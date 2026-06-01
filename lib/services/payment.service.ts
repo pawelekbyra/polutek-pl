@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { writeAuditLog } from './audit.service';
+import { getSafeErrorInfo } from '../errors';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
 import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
 
@@ -75,10 +76,13 @@ export async function applyLostChargeback(
   payment: { id: string; userId: string; currency: string; amountMinor: number; refundedAmountMinor?: number | null },
   disputeStatus: string,
 ) {
-  await tx.payment.update({
-    where: { id: payment.id },
+  const { count } = await tx.payment.updateMany({
+    where: { id: payment.id, status: { not: PaymentStatus.CHARGEBACK_LOST } },
     data: { status: PaymentStatus.CHARGEBACK_LOST },
   });
+
+  if (count === 0) return;
+
   await decrementUserNetPaymentTotals(
     tx,
     payment.userId,
@@ -205,46 +209,50 @@ export class PaymentService {
       throw new Error(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
 
-    // Idempotency check
-    const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
-    if (existingEvent) {
-        if (existingEvent.status === WebhookEventStatus.PROCESSED) {
-            console.log(`[PaymentService] Event ${event.id} already processed.`);
-            return;
-        }
+    try {
+        // Atomic attempt to record event as PROCESSING
+        await prisma.stripeEvent.create({
+            data: {
+                id: event.id,
+                type: event.type,
+                status: WebhookEventStatus.PROCESSING,
+                payload: getSafeStripeEventPayload(event)
+            }
+        });
+    } catch (err: any) {
+        // P2002: Unique constraint failed (event already exists)
+        if (err.code === 'P2002') {
+            const existingEvent = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
+            if (!existingEvent) return; // Should not happen
 
-        if (existingEvent.status === WebhookEventStatus.PROCESSING) {
-            const STALE_PROCESSING_MINUTES = 10;
-            const now = new Date();
-            const updatedAt = existingEvent.updatedAt || now;
-            const diffMs = now.getTime() - updatedAt.getTime();
-            const diffMins = diffMs / (1000 * 60);
-
-            if (diffMins < STALE_PROCESSING_MINUTES) {
-                console.log(`[PaymentService] Event ${event.id} is currently being processed and is fresh.`);
+            if (existingEvent.status === WebhookEventStatus.PROCESSED) {
+                console.log(`[PaymentService] Event ${event.id} already processed.`);
                 return;
             }
 
-            console.log(`[PaymentService] Event ${event.id} was stuck in PROCESSING. Retrying.`);
-            // We allow re-processing of stale events
-        }
-        // If FAILED, we allow re-processing
-    }
+            if (existingEvent.status === WebhookEventStatus.PROCESSING) {
+                const STALE_PROCESSING_MINUTES = 10;
+                const now = new Date();
+                const updatedAt = existingEvent.updatedAt || now;
+                const diffMs = now.getTime() - updatedAt.getTime();
+                const diffMins = diffMs / (1000 * 60);
 
-    // Create or update event to PROCESSING
-    await prisma.stripeEvent.upsert({
-        where: { id: event.id },
-        create: {
-            id: event.id,
-            type: event.type,
-            status: WebhookEventStatus.PROCESSING,
-            payload: getSafeStripeEventPayload(event)
-        },
-        update: {
-            status: WebhookEventStatus.PROCESSING,
-            error: null
+                if (diffMins < STALE_PROCESSING_MINUTES) {
+                    console.log(`[PaymentService] Event ${event.id} is currently being processed and is fresh.`);
+                    return;
+                }
+                console.log(`[PaymentService] Event ${event.id} was stuck in PROCESSING. Retrying.`);
+            }
+
+            // Allow retry for FAILED or stale PROCESSING
+            await prisma.stripeEvent.update({
+                where: { id: event.id },
+                data: { status: WebhookEventStatus.PROCESSING, error: null }
+            });
+        } else {
+            throw err;
         }
-    });
+    }
 
     try {
         switch (event.type) {
@@ -408,7 +416,7 @@ export class PaymentService {
         actorUserId: userId,
         metadata: {
           emailType: type === 'DONATION' ? "donation_thank_you" : "become_patron",
-          error: error instanceof Error ? error.message : String(error),
+          error: getSafeErrorInfo(error),
         },
       });
     }
