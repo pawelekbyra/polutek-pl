@@ -72,18 +72,21 @@ npm run db:migrate:deploy
 ### Local content for the homepage
 The homepage reads real `PUBLISHED` videos from the database. Demo fallback data remains opt-in only and is not enabled by omission. To get visible materials locally, use one of these paths:
 
-1. Seed development data:
+1. **Seed MVP Content (Paweł Perfect)**:
+   This is the recommended path for the initial setup. It initializes the "Paweł Perfect" channel and populates the main featured video.
    ```bash
+   # 1. Ensure migrations are applied
    npm run db:migrate:dev
+
+   # 2. Run the main seed script
    npm run db:seed
+
+   # 3. Run the content fix script to ensure MVP branding
+   npm run content:fix:polutek
    ```
-   The seed creates an approved primary `polutek` creator and published videos with `publishedAt` set. By default it uses `/wuthering.jpg` for thumbnails and `https://media.localhost.invalid/demo-video.mp4` as a placeholder media URL. For playable local media through `/api/media/:videoId`, set exact hosts before seeding/running the app, for example:
-   ```env
-   SEED_MEDIA_URL=https://media.example.test/demo-video.mp4
-   SEED_THUMBNAIL_URL=/wuthering.jpg
-   ALLOWED_MEDIA_HOSTS=media.example.test
-   ```
-2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved `polutek` creator.
+   The seed creates the primary `polutek` creator named "Paweł Perfect" and sets "Wuthering Heights" as the main featured video using its R2 URL.
+
+2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved creator.
 3. For local/demo development only, explicitly opt in to fallback content:
    ```env
    ENABLE_DEMO_FALLBACKS=true
