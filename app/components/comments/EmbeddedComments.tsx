@@ -401,10 +401,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   <img
                     src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
                     alt="Avatar"
-                    className={cn(
-                      "w-full h-full",
-                      comment.author?.slug === 'polutek' ? "object-contain p-1" : "object-cover"
-                    )}
+                    className="w-full h-full object-cover"
                   />
                </div>
               <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
@@ -471,10 +468,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                        <img
                          src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
                          alt="Avatar"
-                         className={cn(
-                           "w-full h-full",
-                           reply.author?.slug === 'polutek' ? "object-contain p-1" : "object-cover"
-                         )}
+                         className="w-full h-full object-cover"
                        />
                     </div>
                     <div className="flex-1 space-y-0.5 pt-0.5">

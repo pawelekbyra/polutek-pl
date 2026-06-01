@@ -103,7 +103,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         <div className="absolute bottom-10 left-10 lg:left-20 z-10">
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-700">
-            POLUTEK.PL &copy; {new Date().getFullYear()}
+            Paweł Perfect &copy; {new Date().getFullYear()}
           </p>
         </div>
       </div>
@@ -157,8 +157,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </h1>
                   <p className="text-lg text-neutral-500 font-medium italic leading-relaxed max-w-sm mx-auto">
                     {language === 'pl'
-                      ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Razem budujemy POLUTEK.PL!'
-                      : 'Your support has been successfully registered. Together we build POLUTEK.PL!'}
+                      ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Razem budujemy tę platformę!'
+                      : 'Your support has been successfully registered. Together we build this platform!'}
                   </p>
                 </div>
 

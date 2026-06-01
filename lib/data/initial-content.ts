@@ -18,7 +18,7 @@ export const INITIAL_VIDEOS: Video[] = [
     slug: "wuthering-heights-cover",
     description: "Moja interpretacja klasycznego utworu Kate Bush. Nagrane w jednym ujęciu, aby oddać surowość i emocje tej kompozycji.",
     videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4",
-    thumbnailUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+    thumbnailUrl: "/wuthering.jpg",
     duration: "04:12",
     tier: AccessTier.PUBLIC,
     isMainFeatured: true,

@@ -49,7 +49,7 @@ async function main() {
         slug: 'wuthering-heights-cover',
         title: 'Wuthering Heights - Kate Bush Cover',
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+        thumbnailUrl: '/wuthering.jpg',
         isMainFeatured: true,
         tier: AccessTier.PUBLIC,
         views: 1250400,

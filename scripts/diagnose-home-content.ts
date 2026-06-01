@@ -3,7 +3,7 @@ import { PrismaClient, VideoStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("=== POLUTEK.PL DIAGNOSTYKA TREŚCI (v5) ===");
+  console.log("=== PAWEŁ PERFECT DIAGNOSTYKA TREŚCI (v5) ===");
 
   const now = new Date();
   console.log(`Czas serwera: ${now.toISOString()}`);

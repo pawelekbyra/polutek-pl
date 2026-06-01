@@ -38,24 +38,22 @@ export default async function ChannelPage({ params }: { params: { slug: string }
 
   // Check if current user is the owner of this channel
   const isOwner = userDb && userDb.id === creator.userId;
-  const ownerAvatar = (params.slug === 'polutek') ? '/nowe.png' : (isOwner ? userDb.imageUrl : (creator.imageUrl || null));
+  const ownerAvatar = isOwner ? userDb.imageUrl : (creator.imageUrl || null);
   const ownerEmail = isOwner ? userDb.email : null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
     ...v,
     creator: {
       id: creator.id,
-      name: creator.slug === 'polutek' ? 'POLUTEK.PL' : creator.name,
+      name: creator.name,
       slug: creator.slug,
       imageUrl: ownerAvatar,
       subscribersCount: creator.subscribersCount || 0
     }
   }));
 
-  const displayName = creator.slug === 'polutek' ? 'POLUTEK.PL' : creator.name;
-  const displayBio = creator.slug === 'polutek'
-    ? "Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa."
-    : (creator.bio || "Witamy na oficjalnym kanale.");
+  const displayName = creator.name;
+  const displayBio = creator.bio || "Witamy na oficjalnym kanale.";
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#0f0f0f] font-serif">
@@ -70,11 +68,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
              <>
                <div className="absolute inset-0 bg-gradient-to-r from-neutral-300 to-neutral-400 opacity-50" />
                <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                  {creator.slug === 'polutek' ? (
-                    <BrandName className="text-[10vw] rotate-2" dotPlClassName="text-primary" />
-                  ) : (
-                    <span className="text-[10vw] font-black uppercase tracking-tighter rotate-2">{displayName}</span>
-                  )}
+                  <span className="text-[10vw] font-black uppercase tracking-tighter rotate-2">{displayName}</span>
                </div>
              </>
            )}
@@ -88,15 +82,12 @@ export default async function ChannelPage({ params }: { params: { slug: string }
              <img
                src={ownerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerEmail || displayName}`}
                alt={displayName}
-               className={cn(
-                 "w-full h-full",
-                 params.slug === 'polutek' ? "object-contain p-2" : "object-cover"
-               )}
+               className="w-full h-full object-cover"
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
             <h1 className="text-[36px] font-black leading-tight tracking-tight uppercase mb-1">
-              {creator.slug === 'polutek' ? <BrandName /> : displayName}
+              {displayName}
             </h1>
             <div className="text-[14px] text-[#606060] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
                <span className="font-bold text-[#0f0f0f]">@{creator.slug}</span>

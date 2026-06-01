@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
           creator = await tx.creator.create({
             data: {
               userId: user.id,
-              name: "POLUTEK.PL",
+              name: "Paweł Perfect",
               slug: "polutek",
               isApproved: true,
               isPrimary: true,

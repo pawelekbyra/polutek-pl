@@ -200,7 +200,7 @@ export class ContentService {
 
         return {
             id: creator.id,
-            name: 'POLUTEK.PL',
+            name: creator.name,
             slug: creator.slug,
             imageUrl: adminData?.imageUrl || creator.user?.imageUrl || null,
             bannerUrl: creator.bannerUrl,
@@ -214,7 +214,7 @@ export class ContentService {
       if (!creator && slug === 'polutek' && flags.demoFallbacks) {
         return {
             id: DEFAULT_CREATOR.id,
-            name: 'POLUTEK.PL',
+            name: DEFAULT_CREATOR.name,
             slug: DEFAULT_CREATOR.slug,
             imageUrl: adminData?.imageUrl || null,
             bannerUrl: null,

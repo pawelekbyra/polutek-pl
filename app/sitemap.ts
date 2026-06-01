@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { ContentService } from '@/lib/services/content.service';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polutek.pl';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pawelperfect.pl';
 
   // Base routes
   const routes = [
