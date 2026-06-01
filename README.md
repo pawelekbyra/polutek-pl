@@ -1,4 +1,4 @@
-# POLUTEK.PL - Private VOD & Donation Platform
+# Paweł Perfect - Private VOD & Donation Platform
 
 ## Important for AI coding agents
 Before changing code, read `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, and `DEPLOY_CHECKLIST.md`.
@@ -7,7 +7,7 @@ This project should be developed according to product behavior, not only technic
 A modern, responsive media platform for exclusive content, built with Next.js 14, Tailwind CSS, and Prisma. This project is designed with a professional "YouTube-style" aesthetic and features a permanent content locking mechanism for supporters based on lifetime donation value.
 
 ## Project Vision
-POLUTEK.PL is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
+Paweł Perfect is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
 
 ### Key Concept: Reward for Support
 - **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant permanent access as a token of gratitude.
@@ -88,18 +88,21 @@ npm run db:migrate:deploy
 ### Local content for the homepage
 The homepage reads real `PUBLISHED` videos from the database. Demo fallback data remains opt-in only and is not enabled by omission. To get visible materials locally, use one of these paths:
 
-1. Seed development data:
+1. **Seed MVP Content (Paweł Perfect)**:
+   This is the recommended path for the initial setup. It initializes the "Paweł Perfect" channel and populates the main featured video.
    ```bash
+   # 1. Ensure migrations are applied
    npm run db:migrate:dev
+
+   # 2. Run the main seed script
    npm run db:seed
+
+   # 3. Run the content fix script to ensure MVP branding
+   npm run content:fix:polutek
    ```
-   The seed creates an approved primary `polutek` creator and published videos with `publishedAt` set. By default it uses `/wuthering.jpg` for thumbnails and `https://media.localhost.invalid/demo-video.mp4` as a placeholder media URL. For playable local media through `/api/media/:videoId`, set exact hosts before seeding/running the app, for example:
-   ```env
-   SEED_MEDIA_URL=https://media.example.test/demo-video.mp4
-   SEED_THUMBNAIL_URL=/wuthering.jpg
-   ALLOWED_MEDIA_HOSTS=media.example.test
-   ```
-2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved `polutek` creator.
+   The seed creates the primary `polutek` creator named "Paweł Perfect" and sets "Wuthering Heights" as the main featured video using its R2 URL.
+
+2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved creator.
 3. For local/demo development only, explicitly opt in to fallback content:
    ```env
    ENABLE_DEMO_FALLBACKS=true

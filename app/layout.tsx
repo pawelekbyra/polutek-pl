@@ -13,8 +13,8 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variab
 const gluten = Gluten({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-gluten' });
 
 export const metadata = {
-  title: "POLUTEK.PL - Niezależna Platforma VOD",
-  description: "POLUTEK.PL — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi."
+  title: "Paweł Perfect - Niezależna Platforma VOD",
+  description: "Paweł Perfect — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

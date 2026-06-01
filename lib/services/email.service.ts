@@ -21,51 +21,51 @@ const EMAIL_DICTIONARY: Record<string, {
 }> = {
   WELCOME: {
     pl: {
-      subject: 'Witaj w POLUTEK.PL!',
+      subject: 'Witaj u Paweł Perfect!',
       html: '<h1>Siema!</h1><p>Dzięki za dołączenie do naszej społeczności. Cieszymy się, że tu jesteś!</p>'
     },
     en: {
-      subject: 'Welcome to POLUTEK.PL!',
+      subject: 'Welcome to Paweł Perfect!',
       html: '<h1>Hey!</h1><p>Thanks for joining our community. We are glad to have you here!</p>'
     }
   },
   ACCOUNT_DELETED: {
     pl: {
-      subject: 'Twoje konto zostało usunięte - POLUTEK.PL',
+      subject: 'Twoje konto zostało usunięte - Paweł Perfect',
       html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>'
     },
     en: {
-      subject: 'Your account has been deleted - POLUTEK.PL',
+      subject: 'Your account has been deleted - Paweł Perfect',
       html: '<h1>Account Deletion Confirmation</h1><p>Your data has been successfully removed from our system. We will miss you!</p>'
     }
   },
   PASSWORD_CHANGED: {
     pl: {
-      subject: 'Hasło zostało zmienione - POLUTEK.PL',
+      subject: 'Hasło zostało zmienione - Paweł Perfect',
       html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>'
     },
     en: {
-      subject: 'Password Changed - POLUTEK.PL',
+      subject: 'Password Changed - Paweł Perfect',
       html: '<h1>Account Security</h1><p>Your password has just been updated. If this was not you, please contact us immediately.</p>'
     }
   },
   THANK_YOU_DONATION: {
     pl: {
-      subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
+      subject: 'Dziękujemy za wsparcie! - Paweł Perfect',
       html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>'
     },
     en: {
-      subject: 'Thank you for your support! - POLUTEK.PL',
+      subject: 'Thank you for your support! - Paweł Perfect',
       html: '<h1>Big thanks!</h1><p>We received your tip of {{amount}} {{currency}}. Your support allows us to create more content!</p>'
     }
   },
   BECOME_PATRON: {
     pl: {
-      subject: 'Zostałeś Patronem! - POLUTEK.PL',
+      subject: 'Zostałeś Patronem! - Paweł Perfect',
       html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>'
     },
     en: {
-      subject: 'You are now a Patron! - POLUTEK.PL',
+      subject: 'You are now a Patron! - Paweł Perfect',
       html: '<h1>Welcome to the Patrons circle!</h1><p>Thank you for your trust. You now have access to exclusive materials in the Patrons Zone.</p>'
     }
   }
@@ -117,7 +117,7 @@ export class EmailService {
       }
 
       const { data, error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'POLUTEK.PL <no-reply@polutek.pl>',
+        from: process.env.EMAIL_FROM || 'Paweł Perfect <no-reply@polutek.pl>',
         to: [toEmail],
         subject: subject,
         html: html,

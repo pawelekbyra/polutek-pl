@@ -175,12 +175,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
                >
                   <Image
-                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || 'POLUTEK'}`}
+                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || 'PAWEŁ PERFECT'}`}
                     alt={video.creator?.name || 'Creator'}
                     fill
-                    className={cn(
-                      video.creator?.slug === 'polutek' ? "object-contain p-1.5" : "object-cover"
-                    )}
+                    className="object-cover"
                   />
                </Link>
                <div className="min-w-0 flex flex-col flex-1 lg:flex-none">

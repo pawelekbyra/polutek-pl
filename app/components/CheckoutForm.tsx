@@ -43,7 +43,7 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
             type: 'tabs',
             defaultCollapsed: false,
           },
-          business: { name: 'POLUTEK.PL' },
+          business: { name: 'Paweł Perfect' },
           paymentMethodOrder: ['card', 'blik', 'p24', 'apple_pay', 'google_pay'],
           wallets: {
             applePay: 'auto',

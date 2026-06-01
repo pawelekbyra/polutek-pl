@@ -1,7 +1,7 @@
 # PROJECT_CONTEXT.md
 
 ## Overview
-POLUTEK.PL is a video platform inspired by YouTube, built to host exclusive content and support creators through a donation-based model.
+Paweł Perfect is a video platform inspired by YouTube, built to host exclusive content and support creators through a donation-based model.
 
 ## Product Logic
 1. **YouTube-style Experience**: The platform is a video-first experience. The homepage features a main highlighted video and a list of other materials.
