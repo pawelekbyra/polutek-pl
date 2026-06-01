@@ -46,13 +46,16 @@ describe('loadHomeContent', () => {
     }
   });
 
-  it('returns empty status instead of error when a fetch error occurs (resilience)', async () => {
+  it('returns error status when a fatal fetch error occurs', async () => {
     vi.mocked(ContentService.getAllVideos).mockRejectedValue(new Error('DB Connection Failed'));
 
     const result = await loadHomeContent();
 
-    // Now resilient: failures return empty state to allow page rendering with fix instructions
-    expect(result.status).toBe('empty');
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.publicMessage).toContain('Nie udało się wczytać materiałów');
+      expect(result.debug?.stage).toBe('loading_all_videos');
+    }
   });
 
   it('returns ready status even if creator fetch fails (not fatal)', async () => {

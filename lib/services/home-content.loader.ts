@@ -64,7 +64,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.creatorSuccess = true;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
-      // Creator failure might not be fatal if we still have videos, but usually it is for polutek
+      // Creator failure is logged but we continue to try and load videos
     }
 
     // 2. Load All Videos
@@ -75,7 +75,14 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.allVideosCount = allVideos.length;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load all videos", getSafeErrorInfo(e));
-      // Totally resilient: never re-throw. ContentService should handle demo fallbacks.
+      // Critical error: if query itself fails (e.g. DB connection), we return ERROR state
+      // unless demo fallbacks were enabled and handled inside ContentService.
+      // If ContentService didn't catch it and return INITIAL_VIDEOS, we must report error.
+      return {
+        status: "error",
+        publicMessage: "Nie udało się wczytać materiałów. Spróbuj odświeżyć stronę później.",
+        debug,
+      };
     }
 
     // 3. Load Main Video

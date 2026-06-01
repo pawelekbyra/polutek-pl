@@ -9,25 +9,9 @@ async function main() {
     let polutek = await prisma.creator.findUnique({ where: { slug: 'polutek' } });
 
     if (!polutek) {
-      console.log("Nie znaleziono twórcy o slugu 'polutek'. Próba znalezienia admina...");
-      const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-
-      if (!admin) {
-        console.log("BŁĄD: Brak admina w bazie. Uruchom najpierw npm run db:seed");
-        return;
-      }
-
-      console.log(`Tworzenie twórcy 'polutek' (Paweł Perfect) dla admina ${admin.email}...`);
-      polutek = await prisma.creator.create({
-        data: {
-          slug: 'polutek',
-          name: 'Paweł Perfect',
-          userId: admin.id,
-          isApproved: true,
-          isPrimary: true,
-          subscribersCount: 1250000
-        }
-      });
+      console.log("Nie znaleziono twórcy o slugu 'polutek'.");
+      console.log("Uruchom najpierw npm run db:seed aby utworzyć profil twórcy.");
+      return;
     }
 
     console.log(`Znaleziono twórcę: ${polutek.name} (ID: ${polutek.id})`);
