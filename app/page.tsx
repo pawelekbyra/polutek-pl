@@ -3,6 +3,7 @@ import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
 import { ContentService } from '@/lib/services/content.service';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
+import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -12,13 +13,30 @@ import Navbar from './components/Navbar';
 export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {
-  const { userId } = await auth();
+  let authData = { userId: null as string | null };
+  try {
+    authData = await auth();
+  } catch (e) {
+    console.error("[HOME_AUTH_ERROR]", e);
+  }
+  const userId = authData.userId;
+
   const videoId = searchParams.v;
   const searchQuery = searchParams.q;
 
   let userDb = null;
   if (userId) {
-    userDb = await UserService.getOrCreateUser(userId).catch(() => null);
+    userDb = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { paymentTotals: true }
+    }).catch(() => null);
+
+    if (!userDb) {
+      userDb = await UserService.getOrCreateUser(userId).catch((e) => {
+        console.error("[HOME_USER_FETCH_ERROR]", e);
+        return null;
+      });
+    }
   }
 
   const content = await loadHomeContent();
@@ -27,7 +45,12 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
       ? content
       : { creator: null, allVideos: [] as PublicVideoDTO[], mainVideo: null };
 
-  const user = await currentUser();
+  let user = null;
+  try {
+    user = await currentUser();
+  } catch (e) {
+    console.error("[HOME_CURRENT_USER_ERROR]", e);
+  }
 
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
@@ -57,7 +80,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: (userDb?.totalPaidMinor || 0) / 100,
+    // Use normalized totals from UserPaymentTotal if userDb is present
+    totalPaid: userDb ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
