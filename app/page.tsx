@@ -32,10 +32,15 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     }).catch(() => null);
 
     if (!userDb) {
-      userDb = await UserService.getOrCreateUser(userId).catch((e) => {
+      // If UserService.getOrCreateUser is called, it might not return paymentTotals by default.
+      // Re-fetch to ensure relations are present for type safety and normalized totals.
+      await UserService.getOrCreateUser(userId).catch((e) => {
         console.error("[HOME_USER_FETCH_ERROR]", e);
-        return null;
       });
+      userDb = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { paymentTotals: true }
+      }).catch(() => null);
     }
   }
 
@@ -81,7 +86,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
-    totalPaid: userDb ? normalizePaymentTotals(userDb.paymentTotals) : 0,
+    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
