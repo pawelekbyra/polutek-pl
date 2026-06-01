@@ -28,6 +28,8 @@ const videoSchema = z.object({
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
   isMainFeatured: z.boolean().default(false),
+  showInSidebar: z.boolean().default(true),
+  sidebarOrder: z.number().int().default(0),
 });
 
 export async function GET(req: NextRequest) {
@@ -56,7 +58,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured } = result.data;
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
+
+  // Enforce featured video constraints: must be PUBLIC and PUBLISHED
+  if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
+    return NextResponse.json({
+        error: 'Hero video must be PUBLIC and PUBLISHED'
+    }, { status: 400 });
+  }
 
   try {
     if (id) {
@@ -76,7 +85,9 @@ export async function POST(req: NextRequest) {
             tier,
             status,
             publishedAt,
-            isMainFeatured: !!isMainFeatured
+            isMainFeatured: !!isMainFeatured,
+            showInSidebar: !!showInSidebar,
+            sidebarOrder: Number(sidebarOrder) || 0,
           }
         });
 
@@ -133,7 +144,9 @@ export async function POST(req: NextRequest) {
             tier: tier || 'PUBLIC',
             status: status || VideoStatus.PUBLISHED,
             publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
-            isMainFeatured: !!isMainFeatured
+            isMainFeatured: !!isMainFeatured,
+            showInSidebar: !!showInSidebar,
+            sidebarOrder: Number(sidebarOrder) || 0,
           }
         });
 

@@ -26,6 +26,8 @@ export interface PublicVisibilityVideo {
 export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhereInput {
   return {
     status: VideoStatus.PUBLISHED,
+    showInSidebar: true,
+    tier: { not: 'ADMIN' as AccessTier },
     creator: {
       isApproved: true,
     },
@@ -34,6 +36,7 @@ export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhere
 }
 
 export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
+  { sidebarOrder: 'asc' },
   { publishedAt: 'desc' },
   { createdAt: 'desc' },
 ];
@@ -200,7 +203,7 @@ export class ContentService {
 
         return {
             id: creator.id,
-            name: 'POLUTEK.PL',
+            name: creator.name || 'POLUTEK.PL',
             slug: creator.slug,
             imageUrl: adminData?.imageUrl || creator.user?.imageUrl || null,
             bannerUrl: creator.bannerUrl,
@@ -214,7 +217,7 @@ export class ContentService {
       if (!creator && slug === 'polutek' && flags.demoFallbacks) {
         return {
             id: DEFAULT_CREATOR.id,
-            name: 'POLUTEK.PL',
+            name: DEFAULT_CREATOR.name || 'POLUTEK.PL',
             slug: DEFAULT_CREATOR.slug,
             imageUrl: adminData?.imageUrl || null,
             bannerUrl: null,
@@ -336,8 +339,9 @@ export class ContentService {
     try {
       const video = await prisma.video.findFirst({
         where: {
-            ...buildPublicVideoWhere(),
-            isMainFeatured: true,
+          ...buildPublicVideoWhere(),
+          isMainFeatured: true,
+          tier: AccessTier.PUBLIC,
         },
         include: {
           creator: {
@@ -351,7 +355,10 @@ export class ContentService {
       });
 
       const selectedVideo = video ?? await prisma.video.findFirst({
-        where: buildPublicVideoWhere(),
+        where: {
+          ...buildPublicVideoWhere(),
+          tier: AccessTier.PUBLIC,
+        },
         include: {
           creator: {
             include: {

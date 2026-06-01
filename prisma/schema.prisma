@@ -200,6 +200,8 @@ model Video {
   likesCount    Int       @default(0)
   dislikesCount Int       @default(0)
   isMainFeatured Boolean  @default(false) // This video is the "One Hero Video" on homepage
+  showInSidebar  Boolean  @default(true)
+  sidebarOrder   Int      @default(0)
   status        VideoStatus @default(DRAFT)
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
