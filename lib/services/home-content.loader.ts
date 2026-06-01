@@ -75,7 +75,11 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.allVideosCount = allVideos.length;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load all videos", getSafeErrorInfo(e));
-      throw e; // Fatal for home content
+      // If demo fallbacks are enabled, ContentService.getAllVideos() should already handle it.
+      // We re-throw only if it's a critical DB error and no videos were returned.
+      if (allVideos.length === 0) {
+        throw e;
+      }
     }
 
     // 3. Load Main Video
@@ -86,7 +90,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.mainVideoId = mainVideo?.id || null;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load main video", getSafeErrorInfo(e));
-      // Not necessarily fatal if allVideos worked, but we'll log it
+      // Not necessarily fatal if allVideos worked
     }
 
     if (process.env.DEBUG_HOME_CONTENT === "true") {
