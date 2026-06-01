@@ -190,10 +190,10 @@ KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
 ## 🗺️ Roadmapa Refaktoryzacji i Rozwoju (Kraufanding)
 
 ### 🔴 Faza 0: P0 – Ochrona Kapitału, Infrastruktura i Bezpieczeństwo (KRYTYCZNE)
-- [ ] **Wdrożenie systemu migracji bazy danych (Prisma)**
-- [ ] **Naprawa idempotencji dla Chargebacków (Stripe)**
-- [ ] **Krytyczne Testy: Główne przepływy PaymentService**
-- [ ] **Krytyczne Testy: Macierz dostępu /api/media**
+- [x] **Wdrożenie systemu migracji bazy danych (Prisma)**
+- [x] **Naprawa idempotencji dla Chargebacków (Stripe)**
+- [x] **Krytyczne Testy: Główne przepływy PaymentService**
+- [x] **Krytyczne Testy: Macierz dostępu /api/media**
 
 ### 🟡 Faza 1: P1 – Logika Biznesowa, Prewencja Błędów i Operacyjność (WYSOKI PRIORYTET)
 - [ ] **Centralizacja kalkulacji walutowych i wyciągnięcie hardcodowanego kursu (4.3)**
