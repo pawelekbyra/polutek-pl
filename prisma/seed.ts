@@ -5,19 +5,19 @@ const prisma = new PrismaClient();
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
 
 async function main() {
-  console.log('Starting seeding for Paweł Perfect MVP...');
+  console.log('Starting seeding for POLUTEK.PL...');
 
   // 1. Create or update the Admin User
   const adminUser = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
       role: SystemRole.ADMIN,
-      name: "Paweł Perfect",
+      name: "POLUTEK.PL",
     },
     create: {
       id: "user_admin_001",
       email: ADMIN_EMAIL,
-      name: "Paweł Perfect",
+      name: "POLUTEK.PL",
       role: SystemRole.ADMIN,
     },
   });
@@ -26,18 +26,18 @@ async function main() {
   const creator = await prisma.creator.upsert({
     where: { slug: 'polutek' },
     update: {
-      name: 'Paweł Perfect',
-      bio: 'Oficjalna platforma Paweł Perfect. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      subscribersCount: 1250000,
+      name: 'POLUTEK.PL',
+      bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
     },
     create: {
       userId: adminUser.id,
       slug: 'polutek',
-      name: 'Paweł Perfect',
-      bio: 'Oficjalna platforma Paweł Perfect. Ekskluzywne materiały VOD i niezależne śledztwa.',
-      subscribersCount: 1250000,
+      name: 'POLUTEK.PL',
+      bio: 'Oficjalna platforma POLUTEK.PL. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      subscribersCount: 400,
       isApproved: true,
       isPrimary: true,
     },
