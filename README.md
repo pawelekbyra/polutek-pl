@@ -186,3 +186,27 @@ KV_REST_API_TOKEN="your-token"
 # Optional Vercel KV Aliases
 KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
 ```
+
+## 🗺️ Roadmapa Refaktoryzacji i Rozwoju (Kraufanding)
+
+### 🔴 Faza 0: P0 – Ochrona Kapitału, Infrastruktura i Bezpieczeństwo (KRYTYCZNE)
+- [ ] **Wdrożenie systemu migracji bazy danych (Prisma)**
+- [ ] **Naprawa idempotencji dla Chargebacków (Stripe)**
+- [ ] **Krytyczne Testy: Główne przepływy PaymentService**
+- [ ] **Krytyczne Testy: Macierz dostępu /api/media**
+
+### 🟡 Faza 1: P1 – Logika Biznesowa, Prewencja Błędów i Operacyjność (WYSOKI PRIORYTET)
+- [ ] **Centralizacja kalkulacji walutowych i wyciągnięcie hardcodowanego kursu (4.3)**
+- [ ] **System Logowania Strukturalnego (Structured Logging)**
+- [ ] **Wdrożenie Content Security Policy (CSP)**
+- [ ] **Referral Service: Obsługa błędu Race Condition (P2002)**
+- [ ] **Poprawa zależności produkcyjnych: sanitize-html**
+
+### 🟢 Faza 2: P2 – Dług Techniczny, Bezpieczeństwo Architektury, Czystość Kodu (UTRZYMYWALNOŚĆ)
+- [ ] **Uporządkowanie źródła prawdy dla roli ADMIN**
+- [ ] **Czystki w Aliasach Autoryzacyjnych**
+- [ ] **Kontrakt dla Komentarzy (Plaintext vs Rich Text)**
+- [ ] **Refaktor Panelu Administracyjnego & Pozbycie się any**
+- [ ] **Poprawa Statystyk Finansowych (Net Revenue) w Adminie**
+- [ ] **Sprzątanie Legacy Fields w DB**
+- [ ] **Poprawa wycieku abstrakcji w Proxy Mediów**
