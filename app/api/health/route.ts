@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
 import { buildPublicVideoWhere } from '@/lib/services/content.service';
 import { getAllowedMediaHosts } from '@/lib/blob';
+import { resolveRedisRestEnv } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,14 +50,14 @@ export async function GET(req: Request) {
             UPSTASH_REDIS_REST_URL: !!process.env.UPSTASH_REDIS_REST_URL,
             UPSTASH_REDIS_REST_TOKEN: !!process.env.UPSTASH_REDIS_REST_TOKEN,
         },
-        rateLimit: {
-            provider: "upstash",
-            configured: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
-            missing: [
-                ...(!process.env.UPSTASH_REDIS_REST_URL ? ["UPSTASH_REDIS_REST_URL"] : []),
-                ...(!process.env.UPSTASH_REDIS_REST_TOKEN ? ["UPSTASH_REDIS_REST_TOKEN"] : []),
-            ]
-        },
+        rateLimit: (() => {
+            const { source, missing } = resolveRedisRestEnv();
+            return {
+                configured: source !== 'missing',
+                source,
+                missing
+            };
+        })(),
         content: {
             allVideosCount,
             publishedVideosCount,
