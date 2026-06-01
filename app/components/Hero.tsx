@@ -87,7 +87,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             } else {
                 logger.debug("[Hero] LIKE Action success:", result);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("[Hero] Transition error during LIKE:", error);
             alert("Błąd serwera podczas polubienia. Sprawdź połączenie.");
         }
@@ -137,7 +137,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             } else {
                 logger.debug("[Hero] DISLIKE Action success:", result);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("[Hero] Transition error during DISLIKE:", error);
             alert("Błąd serwera podczas oceny. Sprawdź połączenie.");
         }

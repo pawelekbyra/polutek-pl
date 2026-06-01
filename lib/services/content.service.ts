@@ -246,7 +246,7 @@ export class ContentService {
             videos: INITIAL_VIDEOS
         };
       }
-      return null;
+      throw e;
     }
   }
 
