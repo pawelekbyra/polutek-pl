@@ -18,7 +18,7 @@ type ClerkPublicMetadata = {
   totalPaid?: number;
 };
 
-function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
+export function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
   const totalPLN = paymentTotals.find((t) => t.currency === 'PLN')?.amountMinor || 0;
   const totalEUR = paymentTotals.find((t) => t.currency === 'EUR')?.amountMinor || 0;
   return (totalPLN / 100) + (totalEUR / 100 * 4.3);
