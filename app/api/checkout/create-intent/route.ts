@@ -6,7 +6,6 @@ import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema, validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
-import { RateLimitConfigurationError, resolveRedisRestEnv } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,20 +81,6 @@ export async function POST(req: NextRequest) {
         paymentId: payment.id
     });
   } catch (error: unknown) {
-    if (error instanceof RateLimitConfigurationError) {
-        const { missing } = resolveRedisRestEnv();
-        console.error("[RATE_LIMIT_CONFIG_ERROR]", {
-            route: "/api/checkout/create-intent",
-            missing,
-        });
-        return NextResponse.json(
-            {
-                error: "SERVICE_CONFIGURATION_ERROR",
-                message: "Płatności są chwilowo niedostępne."
-            },
-            { status: 503 }
-        );
-    }
     return handleApiError(error);
   }
 }

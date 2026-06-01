@@ -176,14 +176,14 @@ export default function CampaignContent({
   const dummyCampaignVideo: PublicVideoDTO = {
     id: 'crowdfunding_zrzutka',
     title: 'I rise money for my secret project',
-    description: `Witajcie! Przez ostatnie miesiące pracowałem w ukryciu nad czymś, co może całkowicie zmienić sposób, w jaki postrzegacie niezależne dziennikarstwo i śledztwa w sieci.\n\n"Secret Project" to rozbudowana platforma, która pozwoli nam wszystkim dotrzeć do prawdy tam, gdzie inni wolą milczeć. Potrzebuję Waszego wsparcia, aby sfinalizować produkcję i zabezpieczyć infrastrukturę.\n\nKampania autorstwa Paweł Perfect`,
+    description: `Witajcie! Przez ostatnie miesiące pracowałem w ukryciu nad czymś, co może całkowicie zmienić sposób, w jaki postrzegacie niezależne dziennikarstwo i śledztwa w sieci.\n\n"Secret Project" to rozbudowana platforma, która pozwoli nam wszystkim dotrzeć do prawdy tam, gdzie inni wolą milczeć. Potrzebuję Waszego wsparcia, aby sfinalizować produkcję i zabezpieczyć infrastrukturę.\n\nKampania autorstwa POLUTEK.PL`,
     thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
     creatorId: initialCreator?.id || '',
     creator: {
       id: initialCreator?.id || 'polutek',
       slug: initialCreator?.slug || 'polutek',
       imageUrl: initialCreator?.imageUrl || null,
-      name: 'Paweł Perfect',
+      name: 'POLUTEK.PL',
       subscribersCount: initialCreator?.subscribersCount || 1250000
     },
     slug: 'campaign-video',

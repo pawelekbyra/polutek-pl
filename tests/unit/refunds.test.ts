@@ -38,7 +38,7 @@ describe('refund amount adjustments', () => {
 describe('lost chargeback adjustments', () => {
   it('updates status, revokes grant, and subtracts only remaining net amount', async () => {
     const tx = {
-      payment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      payment: { update: vi.fn().mockResolvedValue({}) },
       patronGrant: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       user: {
         findUnique: vi.fn().mockResolvedValue({ totalPaidMinor: 2000 }),
@@ -59,8 +59,8 @@ describe('lost chargeback adjustments', () => {
     }, 'lost');
 
     expect(calculateChargebackNetAdjustment({ amountMinor: 2000, refundedAmountMinor: 500 })).toBe(1500);
-    expect(tx.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 'payment_1', status: { not: PaymentStatus.CHARGEBACK_LOST } },
+    expect(tx.payment.update).toHaveBeenCalledWith({
+      where: { id: 'payment_1' },
       data: { status: PaymentStatus.CHARGEBACK_LOST },
     });
     expect(tx.user.update).toHaveBeenCalledWith({

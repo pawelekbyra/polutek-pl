@@ -13,7 +13,7 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic' })
       isClassic ? "font-brand font-black tracking-tighter uppercase" : "font-handwriting font-bold uppercase",
       className
     )}>
-      PAWEŁ PERFECT
+      POLUTEK<span className="text-primary">.PL</span>
     </span>
   );
 };

@@ -6,7 +6,6 @@ import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
-import { RateLimitConfigurationError, resolveRedisRestEnv } from '@/lib/rate-limit';
 
 function rateLimitedResponse() {
   return NextResponse.json(
@@ -23,7 +22,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
-  try {
   const { userId } = await auth();
 
   // Extract videoId from the path params instead of searchParams for cleaner /api/media/[videoId] pattern
@@ -72,21 +70,4 @@ export async function GET(
 
   // Securely stream the gated content from configured media storage
   return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
-  } catch (error: unknown) {
-    if (error instanceof RateLimitConfigurationError) {
-        const { missing } = resolveRedisRestEnv();
-        console.error("[RATE_LIMIT_CONFIG_ERROR]", {
-            route: "/api/media/[...path]",
-            missing,
-        });
-        return NextResponse.json(
-            {
-                error: "SERVICE_CONFIGURATION_ERROR",
-                message: "Odtwarzanie materiału jest chwilowo niedostępne."
-            },
-            { status: 503 }
-        );
-    }
-    throw error;
-  }
 }

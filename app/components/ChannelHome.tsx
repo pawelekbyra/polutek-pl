@@ -77,19 +77,18 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   };
 
   // CUSTOM SORTING LOGIC:
-  // 1. PUBLIC videos
-  // 2. LOGGED_IN videos
-  // 3. PATRON videos
+  // 1. sidebarOrder (desc)
+  // 2. publishedAt (desc)
   const sortedVideos = [...(allVideos || [])].sort((a, b) => {
-      const tierScore = {
-          'PUBLIC': 0,
-          'LOGGED_IN': 1,
-          'PATRON': 2
-      };
-      const scoreA = tierScore[a.tier] ?? 0;
-      const scoreB = tierScore[b.tier] ?? 0;
-      if (scoreA !== scoreB) return scoreA - scoreB;
-      return 0;
+      // 1. sidebarOrder
+      const orderA = a.sidebarOrder ?? 0;
+      const orderB = b.sidebarOrder ?? 0;
+      if (orderA !== orderB) return orderB - orderA;
+
+      // 2. publishedAt
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateB - dateA;
   });
 
   const renderVideoItem = (video: PublicVideoDTO) => {

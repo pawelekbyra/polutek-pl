@@ -31,6 +31,7 @@ export interface InternalVideoDTO {
   likesCount: number;
   dislikesCount: number;
   isMainFeatured: boolean;
+  sidebarOrder?: number;
   publishedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -66,6 +67,7 @@ export interface PublicVideoDTO {
   likesCount: number;
   dislikesCount: number;
   isMainFeatured: boolean;
+  sidebarOrder?: number;
   publishedAt?: Date | string | null;
   creator?: PublicCreatorDTO;
 }

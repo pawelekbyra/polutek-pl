@@ -1,4 +1,16 @@
--- AlterTable
-ALTER TABLE "AuditLog" ADD COLUMN "actorUserId" TEXT;
--- CreateIndex
-CREATE INDEX "AuditLog_actorUserId_idx" ON "AuditLog"("actorUserId");
+ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'PARTIALLY_REFUNDED';
+ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'DISPUTED';
+ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'CHARGEBACK_LOST';
+
+CREATE TABLE "ClerkEvent" (
+    "id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "status" "StripeEventStatus" NOT NULL DEFAULT 'PROCESSING',
+    "payload" JSONB,
+    "error" TEXT,
+    "processedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ClerkEvent_pkey" PRIMARY KEY ("id")
+);
