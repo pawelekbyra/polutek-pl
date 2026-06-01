@@ -69,12 +69,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     startTransition(async () => {
         try {
-            logger.debug("[Hero] Toggling LIKE for video:", video.id);
+            logger.debug({ videoId: video.id }, "Toggling LIKE for video");
             addOptimisticAction('LIKE');
             const result = await toggleVideoLike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
-                console.error("[Hero] LIKE Action failed:", result.error, result.message);
+                logger.error({ error: result.error, message: result.message, videoId: video.id }, "LIKE Action failed");
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -85,10 +85,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
                 }
             } else {
-                logger.debug("[Hero] LIKE Action success:", result);
+                logger.debug({ result }, "LIKE Action success");
             }
         } catch (error: unknown) {
-            console.error("[Hero] Transition error during LIKE:", error);
+            logger.error({ error }, "Transition error during LIKE");
             alert("Błąd serwera podczas polubienia. Sprawdź połączenie.");
         }
     });
@@ -119,12 +119,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     startTransition(async () => {
         try {
-            logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
+            logger.debug({ videoId: video.id }, "Toggling DISLIKE for video");
             addOptimisticAction('DISLIKE');
             const result = await toggleVideoDislike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
-                console.error("[Hero] DISLIKE Action failed:", result.error, result.message);
+                logger.error({ error: result.error, message: result.message, videoId: video.id }, "DISLIKE Action failed");
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -135,10 +135,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
                 }
             } else {
-                logger.debug("[Hero] DISLIKE Action success:", result);
+                logger.debug({ result }, "DISLIKE Action success");
             }
         } catch (error: unknown) {
-            console.error("[Hero] Transition error during DISLIKE:", error);
+            logger.error({ error }, "Transition error during DISLIKE");
             alert("Błąd serwera podczas oceny. Sprawdź połączenie.");
         }
     });

@@ -1,10 +1,26 @@
-export const logger = {
-  debug: (...args: unknown[]) => {
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[DEBUG]", ...args);
-    }
+import pino from 'pino';
+
+const isDev = process.env.NODE_ENV === 'development';
+
+export const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: isDev
+    ? {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          ignore: 'pid,hostname',
+        },
+      }
+    : undefined,
+  base: {
+    env: process.env.NODE_ENV,
   },
-  info: (...args: unknown[]) => console.info("[INFO]", ...args),
-  warn: (...args: unknown[]) => console.warn("[WARN]", ...args),
-  error: (...args: unknown[]) => console.error("[ERROR]", ...args),
-};
+});
+
+/**
+ * Creates a child logger with specific context.
+ */
+export function getContextLogger(context: Record<string, unknown>) {
+  return logger.child(context);
+}

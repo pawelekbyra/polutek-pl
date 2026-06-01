@@ -48,6 +48,10 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://images.unsplash.com https://api.dicebear.com https://*.clerk.com https://*.stripe.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://api.stripe.com https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev; frame-src 'self' https://js.stripe.com https://clerk.com; media-src 'self' blob: https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev;",
           }
         ],
       },

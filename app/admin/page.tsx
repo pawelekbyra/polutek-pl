@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { AdminVideoDTO } from "../types/video";
 
 export default function AdminPanel() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -28,7 +29,7 @@ export default function AdminPanel() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  const [videos, setVideos] = useState<any[]>([]);
+  const [videos, setVideos] = useState<AdminVideoDTO[]>([]);
   const [creator, setCreator] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -155,7 +156,7 @@ export default function AdminPanel() {
     }
   }
 
-  const handleEdit = (vid: any) => {
+  const handleEdit = (vid: AdminVideoDTO) => {
     setFormData({
       id: vid.id,
       title: vid.title,
@@ -504,7 +505,7 @@ export default function AdminPanel() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {stats?.recentPayments?.map((tx: any) => (
+                                {stats?.recentPayments?.map((tx: { id: string; userEmail: string; amount: number; currency: string; createdAt: string }) => (
                                     <TableRow key={tx.id}>
                                         <TableCell className="font-mono text-xs">{tx.userEmail}</TableCell>
                                         <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>

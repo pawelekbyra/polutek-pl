@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { prisma } from '@/lib/prisma';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { normalizePaymentTotalsToPln } from '@/lib/payments/payment-totals';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      totalPaid: normalizePaymentTotals(user.paymentTotals),
+      totalPaid: normalizePaymentTotalsToPln(user.paymentTotals),
       isPatron: user.isPatron,
       language: user.language
     });

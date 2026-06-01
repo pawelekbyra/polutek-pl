@@ -18,4 +18,10 @@ export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   USD: 1000,
 };
 
+if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_EMAIL) {
+  throw new Error("ADMIN_EMAIL environment variable is required in production.");
+}
+
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
+
+export const DISPLAY_EUR_TO_PLN_RATE = Number(process.env.DISPLAY_EUR_TO_PLN_RATE ?? "4.3");

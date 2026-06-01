@@ -18,7 +18,7 @@ model User {
   language         String              @default("en")
   // Legacy mixed-currency aggregate. Do not use for patron eligibility or financial reporting.
   // Use UserPaymentTotal per currency or normalized totals instead.
-  totalPaidMinor   Int                 @default(0)
+  legacyTotalPaidMinor_DoNotUse Int @default(0) @map("totalPaidMinor")
   referralCode     String              @unique @default(cuid())
   referralPoints   Int                 @default(0)
   referralCount    Int                 @default(0)

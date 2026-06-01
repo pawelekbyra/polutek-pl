@@ -16,6 +16,34 @@ export interface Creator {
  * Do not use this type in public frontend components.
  * Public UI must use PublicVideoDTO.
  */
+export type AdminVideoDTO = {
+  id: string;
+  creatorId: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  videoUrl: string;
+  thumbnailUrl: string;
+  duration?: string | null;
+  tier: AccessTier;
+  status: VideoStatus;
+  views: number;
+  likesCount: number;
+  dislikesCount: number;
+  isMainFeatured: boolean;
+  showInSidebar: boolean;
+  sidebarOrder: number;
+  publishedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  creator?: Creator;
+  _count?: {
+    videoLikes: number;
+    videoDislikes: number;
+    comments: number;
+  };
+};
+
 export interface InternalVideoDTO {
   id: string;
   creatorId: string;

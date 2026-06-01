@@ -4,6 +4,7 @@ import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { writeAuditLog } from './audit.service';
 import { getSafeErrorInfo } from '../errors';
+import { logger } from '../logger';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
 import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
 
@@ -52,14 +53,14 @@ async function decrementUserNetPaymentTotals(
   if (deltaMinor <= 0) return;
 
   const [user, total] = await Promise.all([
-    tx.user.findUnique({ where: { id: userId }, select: { totalPaidMinor: true } }),
+    tx.user.findUnique({ where: { id: userId }, select: { legacyTotalPaidMinor_DoNotUse: true } }),
     tx.userPaymentTotal.findUnique({ where: { userId_currency: { userId, currency } }, select: { amountMinor: true } }),
   ]);
 
   if (user) {
     await tx.user.update({
       where: { id: userId },
-      data: { totalPaidMinor: Math.max(0, user.totalPaidMinor - deltaMinor) },
+      data: { legacyTotalPaidMinor_DoNotUse: Math.max(0, user.legacyTotalPaidMinor_DoNotUse - deltaMinor) },
     });
   }
 
@@ -320,7 +321,7 @@ export class PaymentService {
       ? charge.payment_intent
       : charge.payment_intent?.id;
 
-    console.log(`[PaymentService] Handling refund. paymentId=${paymentId || 'none'}, intentId=${stripeIntentId || 'none'}`);
+    logger.info({ paymentId, stripeIntentId }, "Handling Stripe refund");
 
     return await prisma.$transaction(async (tx) => {
         const payment = paymentId
@@ -379,6 +380,7 @@ export class PaymentService {
     console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
 
     if (dispute.status === 'lost') {
+        logger.info({ paymentId: payment.id, disputeStatus: dispute.status }, "Dispute lost, applying chargeback");
         return await prisma.$transaction(async (tx) => {
             await applyLostChargeback(tx, payment, dispute.status);
             const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
@@ -480,7 +482,7 @@ export class PaymentService {
         const user = await tx.user.update({
           where: { id: userId },
           data: {
-            totalPaidMinor: { increment: updatedPayment.amountMinor },
+            legacyTotalPaidMinor_DoNotUse: { increment: updatedPayment.amountMinor },
             isPatron: existingUser.isPatron || grantsPatron,
             patronSince: becamePatronNow ? new Date() : undefined
           },
@@ -541,7 +543,7 @@ export class PaymentService {
 
       console.log(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);
     } catch (error) {
-      console.error('[PaymentService] Error fulfilling payment:', error);
+      logger.error({ error: getSafeErrorInfo(error), paymentId, userId }, "Error fulfilling payment");
       throw error;
     }
   }

@@ -65,14 +65,13 @@ export class UserService {
         });
 
         // Role determination:
-        // 1. If Clerk metadata says ADMIN, trust it.
+        // 1. Database (local User.role) is the primary Source of Truth.
         // 2. If it's a new user and email matches ADMIN_EMAIL, bootstrap as ADMIN.
         // 3. Otherwise keep existing role or default to USER.
+        // Clerk publicMetadata.role is ignored for promotion to prevent hijacking.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
-        if (clerkRole === 'ADMIN') {
-          targetRole = 'ADMIN';
-        } else if (existingUser) {
+        if (existingUser) {
           targetRole = existingUser.role;
         } else if (email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
           targetRole = 'ADMIN';

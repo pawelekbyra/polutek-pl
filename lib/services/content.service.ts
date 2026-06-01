@@ -337,11 +337,21 @@ export class ContentService {
    */
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
+      // For hero video, we ignore showInSidebar=true from buildPublicVideoWhere
+      const baseWhere = {
+        status: VideoStatus.PUBLISHED,
+        creator: { isApproved: true },
+        tier: AccessTier.PUBLIC,
+        OR: [
+          { publishedAt: null },
+          { publishedAt: { lte: new Date() } },
+        ],
+      };
+
       const video = await prisma.video.findFirst({
         where: {
-          ...buildPublicVideoWhere(),
+          ...baseWhere,
           isMainFeatured: true,
-          tier: AccessTier.PUBLIC,
         },
         include: {
           creator: {
@@ -355,10 +365,7 @@ export class ContentService {
       });
 
       const selectedVideo = video ?? await prisma.video.findFirst({
-        where: {
-          ...buildPublicVideoWhere(),
-          tier: AccessTier.PUBLIC,
-        },
+        where: baseWhere,
         include: {
           creator: {
             include: {

@@ -41,7 +41,7 @@ describe('lost chargeback adjustments', () => {
       payment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       patronGrant: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       user: {
-        findUnique: vi.fn().mockResolvedValue({ totalPaidMinor: 2000 }),
+        findUnique: vi.fn().mockResolvedValue({ legacyTotalPaidMinor_DoNotUse: 2000 }),
         update: vi.fn().mockResolvedValue({}),
       },
       userPaymentTotal: {
@@ -65,7 +65,7 @@ describe('lost chargeback adjustments', () => {
     });
     expect(tx.user.update).toHaveBeenCalledWith({
       where: { id: 'user_1' },
-      data: { totalPaidMinor: 500 },
+      data: { legacyTotalPaidMinor_DoNotUse: 500 },
     });
     expect(tx.userPaymentTotal.update).toHaveBeenCalledWith({
       where: { userId_currency: { userId: 'user_1', currency: 'PLN' } },

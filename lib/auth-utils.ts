@@ -43,10 +43,3 @@ export async function isAdmin(): Promise<boolean> {
   }
 }
 
-export async function verifyAdmin() {
-  return isAdmin();
-}
-
-export async function isAdminRequest() {
-  return isAdmin();
-}

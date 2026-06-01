@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
-import { PatronGrantSource } from '@prisma/client';
-import { UserAccessService, normalizePaymentTotals } from './user-access.service';
+import { PatronGrantSource, Prisma } from '@prisma/client';
+import { UserAccessService } from './user-access.service';
+import { normalizePaymentTotalsToPln } from '../payments/payment-totals';
 
 type ClerkSyncData = {
   userId: string;
@@ -88,7 +89,7 @@ export class ReferralService {
             syncData.current = {
                 userId: referrerId,
                 isPatron: true,
-                totalPaid: normalizePaymentTotals(updatedReferrer.paymentTotals)
+                totalPaid: normalizePaymentTotalsToPln(updatedReferrer.paymentTotals)
             };
         }
 
@@ -109,6 +110,9 @@ export class ReferralService {
 
       return result;
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new Error("User already referred");
+      }
       console.error("[REFERRAL_CLAIM_ERROR]", error);
       throw error;
     }

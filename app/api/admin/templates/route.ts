@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/lib/auth-utils';
+import { requireAdmin } from '@/lib/auth-utils';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
@@ -16,7 +16,9 @@ const templateSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) {
+  try {
+    await requireAdmin();
+  } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -58,7 +60,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin())) {
+  try {
+    await requireAdmin();
+  } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -73,10 +77,17 @@ export async function POST(req: NextRequest) {
     const { subjectPl, bodyPl, subjectEn, bodyEn } = result.data;
 
     const sanitizeOptions = {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['div', 'h1', 'h2', 'br', 'span', 'section']),
+      allowedTags: ['div', 'h1', 'h2', 'p', 'br', 'span', 'section', 'a', 'strong', 'em', 'ul', 'ol', 'li'],
       allowedAttributes: {
-        ...sanitizeHtml.defaults.allowedAttributes,
-        '*': ['style']
+        'a': ['href', 'style', 'target'],
+        'div': ['style'],
+        'h1': ['style'],
+        'h2': ['style'],
+        'p': ['style'],
+        'span': ['style'],
+        'section': ['style'],
+        'strong': ['style'],
+        'em': ['style'],
       }
     };
 

@@ -1,6 +1,9 @@
 import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
+import { prisma } from './prisma';
+import { flags } from './feature-flags';
+import { INITIAL_VIDEOS } from './data/initial-content';
 
 type MediaHostEnv = Record<string, string | undefined>;
 
@@ -73,19 +76,48 @@ function isConfiguredVercelBlobUrl(rawUrl: string) {
 
 /**
  * Serves a private Vercel Blob or external file as a gated stream.
+ * Resolves the video from DB/Fallbacks and enforces AccessPolicy.
  */
 export async function getGatedBlobResponse(
   userId: string | null,
-  videoId: string,
-  blobUrl: string,
+  videoIdOrSlug: string,
   headers?: Headers
 ) {
-  const decision = await AccessPolicy.canViewVideo(userId, videoId);
+  // 1. Resolve Video and Stream URL
+  const video = await prisma.video.findFirst({
+    where: {
+      OR: [
+        { id: videoIdOrSlug },
+        { slug: videoIdOrSlug }
+      ]
+    },
+    select: { id: true, videoUrl: true }
+  });
+
+  let resolvedVideoId = video?.id;
+  let blobUrl = video?.videoUrl;
+
+  // Fallback for demo content
+  if (!resolvedVideoId && flags.demoFallbacks) {
+    const fallback = INITIAL_VIDEOS.find(v => v.id === videoIdOrSlug || v.slug === videoIdOrSlug);
+    if (fallback) {
+      resolvedVideoId = fallback.id;
+      blobUrl = fallback.videoUrl;
+    }
+  }
+
+  if (!resolvedVideoId || !blobUrl) {
+    return new NextResponse('Video not found', { status: 404 });
+  }
+
+  // 2. Enforce Access Policy
+  const decision = await AccessPolicy.canViewVideo(userId, resolvedVideoId);
 
   if (!decision.allowed) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
+  // 3. Validate Media Host Whitelist
   if (!isAllowedMediaUrl(blobUrl)) {
     try {
       const hostname = new URL(blobUrl).hostname.toLowerCase();

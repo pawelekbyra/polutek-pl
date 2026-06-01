@@ -8,6 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
 import { isAllowedMediaUrl } from '@/lib/blob';
+import sanitizeHtml from 'sanitize-html';
 
 export const dynamic = 'force-dynamic';
 
@@ -184,7 +185,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
     }
 
-    const { videoId, text, parentId, imageUrl } = result.data;
+    const { videoId, text: rawText, parentId, imageUrl } = result.data;
+
+    // Comments are treated as plaintext. Sanitize HTML by removing all tags.
+    const text = rawText ? sanitizeHtml(rawText, {
+        allowedTags: [],
+        allowedAttributes: {},
+    }) : "";
 
     // Access control check
     const decision = await AccessPolicy.canComment(userId, videoId);

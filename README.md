@@ -196,11 +196,11 @@ KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
 - [x] **Krytyczne Testy: Macierz dostępu /api/media**
 
 ### 🟡 Faza 1: P1 – Logika Biznesowa, Prewencja Błędów i Operacyjność (WYSOKI PRIORYTET)
-- [ ] **Centralizacja kalkulacji walutowych i wyciągnięcie hardcodowanego kursu (4.3)**
-- [ ] **System Logowania Strukturalnego (Structured Logging)**
-- [ ] **Wdrożenie Content Security Policy (CSP)**
-- [ ] **Referral Service: Obsługa błędu Race Condition (P2002)**
-- [ ] **Poprawa zależności produkcyjnych: sanitize-html**
+- [x] **Centralizacja kalkulacji walutowych i wyciągnięcie hardcodowanego kursu (4.3)**
+- [x] **System Logowania Strukturalnego (Structured Logging)**
+- [x] **Wdrożenie Content Security Policy (CSP)**
+- [x] **Referral Service: Obsługa błędu Race Condition (P2002)**
+- [x] **Poprawa zależności produkcyjnych: sanitize-html**
 
 ### 🟢 Faza 2: P2 – Dług Techniczny, Bezpieczeństwo Architektury, Czystość Kodu (UTRZYMYWALNOŚĆ)
 - [ ] **Uporządkowanie źródła prawdy dla roli ADMIN**

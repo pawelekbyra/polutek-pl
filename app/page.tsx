@@ -3,7 +3,7 @@ import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
 import { ContentService } from '@/lib/services/content.service';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { normalizePaymentTotalsToPln } from '@/lib/payments/payment-totals';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -86,7 +86,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
-    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
+    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotalsToPln(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,

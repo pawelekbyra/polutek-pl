@@ -12,17 +12,13 @@ type PaymentTotal = {
 
 type ClerkRole = 'USER' | 'ADMIN' | 'PATRON';
 
+import { normalizePaymentTotalsToPln } from '../payments/payment-totals';
+
 type ClerkPublicMetadata = {
   role: ClerkRole;
   isPatron: boolean;
   totalPaid?: number;
 };
-
-export function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
-  const totalPLN = paymentTotals.find((t) => t.currency === 'PLN')?.amountMinor || 0;
-  const totalEUR = paymentTotals.find((t) => t.currency === 'EUR')?.amountMinor || 0;
-  return (totalPLN / 100) + (totalEUR / 100 * 4.3);
-}
 
 export class UserAccessService {
   /**
@@ -52,7 +48,7 @@ export class UserAccessService {
         }
     });
 
-    return { isPatron, normalizedTotal: normalizePaymentTotals(user.paymentTotals) };
+    return { isPatron, normalizedTotal: normalizePaymentTotalsToPln(user.paymentTotals) };
   }
 
   /**

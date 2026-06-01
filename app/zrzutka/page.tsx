@@ -2,7 +2,7 @@ import React from 'react';
 import Footer from '../components/Footer';
 import { ContentService } from '@/lib/services/content.service';
 import { prisma } from '@/lib/prisma';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { normalizePaymentTotalsToPln } from '@/lib/payments/payment-totals';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './CampaignContent';
@@ -58,7 +58,7 @@ export default async function ZrzutkaPage() {
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
+    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotalsToPln(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0
