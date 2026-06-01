@@ -106,14 +106,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
           <p className="text-neutral-600 mb-8">
             {isError
               ? content.publicMessage
-              : 'Baza filmów jest aktualnie pusta lub twórca nie został jeszcze zatwierdzony.'}
+              : 'Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.'}
           </p>
-
-          {!isError && process.env.DEBUG_HOME_CONTENT === 'true' && (
-            <div className="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-lg text-blue-800 text-sm">
-              Uruchom <code className="font-bold">npm run content:fix:polutek</code> aby zasilić bazę filmami.
-            </div>
-          )}
 
           {process.env.DEBUG_HOME_CONTENT === 'true' && content.debug && (
             <div className="mt-8 p-6 bg-white border border-neutral-200 rounded-xl shadow-sm text-left font-sans text-sm">

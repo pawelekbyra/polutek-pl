@@ -126,7 +126,7 @@ const Navbar = () => {
             </SignedOut>
             <SignedIn>
               <div className="flex items-center gap-2">
-                <UserButton />
+                <UserButton afterSignOutUrl="/" />
               </div>
             </SignedIn>
           </div>

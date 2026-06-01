@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUNDED', 'PARTIALLY_REFUNDED', 'DISPUTED', 'CHARGEBACK_LOST');
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUNDED');
 
 -- CreateEnum
-CREATE TYPE "WebhookEventStatus" AS ENUM ('PROCESSING', 'PROCESSED', 'FAILED');
+CREATE TYPE "StripeEventStatus" AS ENUM ('PROCESSING', 'PROCESSED', 'FAILED');
 
 -- CreateEnum
 CREATE TYPE "PatronGrantSource" AS ENUM ('PAYMENT', 'REFERRAL', 'ADMIN', 'LEGACY');
@@ -55,7 +55,6 @@ CREATE TABLE "Payment" (
     "stripeIntentId" TEXT,
     "stripeSessionId" TEXT,
     "amountMinor" INTEGER NOT NULL,
-    "refundedAmountMinor" INTEGER NOT NULL DEFAULT 0,
     "currency" TEXT NOT NULL,
     "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "metadata" JSONB,
@@ -69,7 +68,7 @@ CREATE TABLE "Payment" (
 CREATE TABLE "StripeEvent" (
     "id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "status" "WebhookEventStatus" NOT NULL DEFAULT 'PROCESSING',
+    "status" "StripeEventStatus" NOT NULL DEFAULT 'PROCESSING',
     "payload" JSONB,
     "error" TEXT,
     "processedAt" TIMESTAMP(3),
@@ -77,20 +76,6 @@ CREATE TABLE "StripeEvent" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "StripeEvent_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ClerkEvent" (
-    "id" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "status" "WebhookEventStatus" NOT NULL DEFAULT 'PROCESSING',
-    "payload" JSONB,
-    "error" TEXT,
-    "processedAt" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ClerkEvent_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -397,7 +382,8 @@ CREATE INDEX "VideoDislike_userId_idx" ON "VideoDislike"("userId");
 -- CreateIndex
 CREATE UNIQUE INDEX "VideoDislike_userId_videoId_key" ON "VideoDislike"("userId", "videoId");
 
--- CreateIndex INDEX "Comment_videoId_idx" ON "Comment"("videoId");
+-- CreateIndex
+CREATE INDEX "Comment_videoId_idx" ON "Comment"("videoId");
 
 -- CreateIndex
 CREATE INDEX "Comment_parentId_idx" ON "Comment"("parentId");

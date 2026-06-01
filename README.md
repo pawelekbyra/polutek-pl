@@ -40,22 +40,6 @@ This project uses Prisma with PostgreSQL. It requires two database connection st
 - `DATABASE_URL_UNPOOLED`: Should be a direct/unpooled connection string. This is used by Prisma for migrations and other direct database operations.
   - *Note: If your environment does not provide a separate direct URL, you can temporarily set `DATABASE_URL_UNPOOLED` to the same value as `DATABASE_URL`, but a dedicated direct URL is recommended for production.*
 
-### Neon DB Configuration Example
-```env
-# Recommended for most uses (pooled)
-DATABASE_URL="postgresql://[user]:[password]@[host]-pooler.[region].aws.neon.tech/[db_name]?sslmode=require"
-
-# For migrations and direct access (unpooled)
-DATABASE_URL_UNPOOLED="postgresql://[user]:[password]@[host].[region].aws.neon.tech/[db_name]?sslmode=require"
-
-# Host parameters
-PGHOST="[host]-pooler.[region].aws.neon.tech"
-PGHOST_UNPOOLED="[host].[region].aws.neon.tech"
-PGUSER="[user]"
-PGDATABASE="[db_name]"
-PGPASSWORD="[password]"
-```
-
 ## Getting Started
 
 ### Prerequisites
@@ -84,6 +68,13 @@ npm run db:migrate:deploy
 `npm run db:push` / `npx prisma db push` is reserved for local prototyping only and must not be used for production deploys.
 
 *Note: Production deployments must use `prisma migrate deploy` to ensure database schema consistency. Hard delete of production data is discouraged; prefer status updates (e.g., `VideoStatus.ARCHIVED`).*
+
+### Creator Studio v1 Features
+The admin panel at `/admin` includes several enhancements for content management:
+- **Scoped Hero Videos**: Toggling a video as "Hero" (isMainFeatured) only unsets other featured videos for the **same creator**, supporting multi-creator environments.
+- **Manual Sidebar Ordering**: Use the `sidebarOrder` field to manually prioritize videos in the sidebar. Sorting follows `sidebarOrder` (desc), then `publishedAt` (desc).
+- **Smart Creator Selection**: New videos are automatically assigned to the primary creator (`isPrimary: true`) or the `polutek` fallback.
+- **Safety Constraints**: The system prevents setting non-public or non-published videos as the main featured material.
 
 ### Local content for the homepage
 The homepage reads real `PUBLISHED` videos from the database. Demo fallback data remains opt-in only and is not enabled by omission. To get visible materials locally, use one of these paths:
@@ -172,44 +163,3 @@ npm run build
 ```
 
 Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, Upstash Redis REST URL/token, exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.
-
-### Upstash Redis / Vercel KV
-Required in Production for `/api/media` and `/api/checkout/create-intent`. Without these, endpoints will return a controlled 503 error.
-Note: Read-only tokens (e.g. `KV_REST_API_READ_ONLY_TOKEN`) do not provide the necessary write permissions for rate limiting.
-
-```env
-# Option A: direct Upstash names
-UPSTASH_REDIS_REST_URL="https://your-host.upstash.io"
-UPSTASH_REDIS_REST_TOKEN="your-token"
-
-# Option B: Vercel KV / Vercel Marketplace names
-KV_REST_API_URL="https://your-host.upstash.io"
-KV_REST_API_TOKEN="your-token"
-
-# Optional Vercel KV Aliases
-KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
-```
-
-## 🗺️ Roadmapa Refaktoryzacji i Rozwoju (Kraufanding)
-
-### 🔴 Faza 0: P0 – Ochrona Kapitału, Infrastruktura i Bezpieczeństwo (KRYTYCZNE)
-- [x] **Wdrożenie systemu migracji bazy danych (Prisma)**
-- [x] **Naprawa idempotencji dla Chargebacków (Stripe)**
-- [x] **Krytyczne Testy: Główne przepływy PaymentService**
-- [x] **Krytyczne Testy: Macierz dostępu /api/media**
-
-### 🟡 Faza 1: P1 – Logika Biznesowa, Prewencja Błędów i Operacyjność (WYSOKI PRIORYTET)
-- [ ] **Centralizacja kalkulacji walutowych i wyciągnięcie hardcodowanego kursu (4.3)**
-- [ ] **System Logowania Strukturalnego (Structured Logging)**
-- [ ] **Wdrożenie Content Security Policy (CSP)**
-- [ ] **Referral Service: Obsługa błędu Race Condition (P2002)**
-- [ ] **Poprawa zależności produkcyjnych: sanitize-html**
-
-### 🟢 Faza 2: P2 – Dług Techniczny, Bezpieczeństwo Architektury, Czystość Kodu (UTRZYMYWALNOŚĆ)
-- [ ] **Uporządkowanie źródła prawdy dla roli ADMIN**
-- [ ] **Czystki w Aliasach Autoryzacyjnych**
-- [ ] **Kontrakt dla Komentarzy (Plaintext vs Rich Text)**
-- [ ] **Refaktor Panelu Administracyjnego & Pozbycie się any**
-- [ ] **Poprawa Statystyk Finansowych (Net Revenue) w Adminie**
-- [ ] **Sprzątanie Legacy Fields w DB**
-- [ ] **Poprawa wycieku abstrakcji w Proxy Mediów**

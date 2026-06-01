@@ -1,6 +1,5 @@
 import { ContentService } from "./content.service";
 import { PublicVideoDTO, PublicCreatorPageDTO } from "@/app/types/video";
-import { getSafeErrorInfo } from "../errors";
 
 export type HomeContentDebugInfo = {
   creatorSuccess: boolean;
@@ -32,6 +31,17 @@ export type HomeContentLoadResult =
       debug?: HomeContentDebugInfo;
     };
 
+function getSafeErrorInfo(error: unknown) {
+  return {
+    name: error instanceof Error ? error.name : "UnknownError",
+    message: error instanceof Error ? error.message : "Unknown error",
+    prismaCode:
+      typeof error === "object" && error && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : undefined,
+  };
+}
+
 export async function loadHomeContent(): Promise<HomeContentLoadResult> {
   const debug: HomeContentDebugInfo = {
     creatorSuccess: false,
@@ -54,7 +64,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.creatorSuccess = true;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
-      // Creator failure is logged but we continue to try and load videos
+      // Creator failure might not be fatal if we still have videos, but usually it is for polutek
     }
 
     // 2. Load All Videos
@@ -65,14 +75,11 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.allVideosCount = allVideos.length;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load all videos", getSafeErrorInfo(e));
-      // Critical error: if query itself fails (e.g. DB connection), we return ERROR state
-      // unless demo fallbacks were enabled and handled inside ContentService.
-      // If ContentService didn't catch it and return INITIAL_VIDEOS, we must report error.
-      return {
-        status: "error",
-        publicMessage: "Nie udało się wczytać materiałów. Spróbuj odświeżyć stronę później.",
-        debug,
-      };
+      // If demo fallbacks are enabled, ContentService.getAllVideos() should already handle it.
+      // We re-throw only if it's a critical DB error and no videos were returned.
+      if (allVideos.length === 0) {
+        throw e;
+      }
     }
 
     // 3. Load Main Video

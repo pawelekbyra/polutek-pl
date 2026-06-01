@@ -28,7 +28,6 @@ const videoSchema = z.object({
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
   isMainFeatured: z.boolean().default(false),
-  showInSidebar: z.boolean().default(true),
   sidebarOrder: z.number().int().default(0),
 });
 
@@ -58,19 +57,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, sidebarOrder } = result.data;
 
-  // Enforce featured video constraints: must be PUBLIC and PUBLISHED
+  // Validation: Only PUBLIC and PUBLISHED videos can be main featured
   if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
-    return NextResponse.json({
-        error: 'Hero video must be PUBLIC and PUBLISHED'
-    }, { status: 400 });
+    return NextResponse.json({ error: "Only public and published videos can be featured as Hero." }, { status: 400 });
   }
 
   try {
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
-        const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true } });
+        const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true, creatorId: true } });
         const publishedAt = (status === VideoStatus.PUBLISHED && !currentVideo?.publishedAt) ? new Date() : undefined;
 
         const video = await tx.video.update({
@@ -86,14 +83,16 @@ export async function POST(req: NextRequest) {
             status,
             publishedAt,
             isMainFeatured: !!isMainFeatured,
-            showInSidebar: !!showInSidebar,
-            sidebarOrder: Number(sidebarOrder) || 0,
+            sidebarOrder
           }
         });
 
         if (isMainFeatured) {
           await tx.video.updateMany({
-            where: { id: { not: id } },
+            where: {
+              id: { not: id },
+              creatorId: currentVideo?.creatorId
+            },
             data: { isMainFeatured: false }
           });
         }
@@ -111,10 +110,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
-        let creator = await tx.creator.findUnique({ where: { slug: "polutek" } });
+        // Find primary creator first
+        let creator = await tx.creator.findFirst({ where: { isPrimary: true } });
+
+        if (!creator) {
+          // Fallback to polutek slug
+          creator = await tx.creator.findUnique({ where: { slug: "polutek" } });
+        }
+
         if (!creator) {
           const user = await tx.user.findFirst({ where: { email: ADMIN_EMAIL } });
-          if (!user) throw new Error('Admin user not found in DB.');
+          if (!user) throw new Error('Admin user not found in DB. Check ADMIN_EMAIL env.');
 
           creator = await tx.creator.create({
             data: {
@@ -125,10 +131,10 @@ export async function POST(req: NextRequest) {
               isPrimary: true,
             }
           });
-        } else if (!creator.isApproved || !creator.isPrimary) {
+        } else if (!creator.isApproved) {
           creator = await tx.creator.update({
             where: { id: creator.id },
-            data: { isApproved: true, isPrimary: true },
+            data: { isApproved: true },
           });
         }
 
@@ -145,14 +151,16 @@ export async function POST(req: NextRequest) {
             status: status || VideoStatus.PUBLISHED,
             publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
             isMainFeatured: !!isMainFeatured,
-            showInSidebar: !!showInSidebar,
-            sidebarOrder: Number(sidebarOrder) || 0,
+            sidebarOrder
           }
         });
 
         if (isMainFeatured) {
           await tx.video.updateMany({
-            where: { id: { not: video.id } },
+            where: {
+              id: { not: video.id },
+              creatorId: creator.id
+            },
             data: { isMainFeatured: false }
           });
         }
