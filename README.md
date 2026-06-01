@@ -172,14 +172,17 @@ Required production environment groups: database URLs, Clerk keys and webhook se
 
 ### Upstash Redis / Vercel KV
 Required in Production for `/api/media` and `/api/checkout/create-intent`. Without these, endpoints will return a controlled 503 error.
+Note: Read-only tokens (e.g. `KV_REST_API_READ_ONLY_TOKEN`) do not provide the necessary write permissions for rate limiting.
 
 ```env
+# Option A: direct Upstash names
 UPSTASH_REDIS_REST_URL="https://your-host.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-token"
 
-# Optional Vercel KV Aliases
+# Option B: Vercel KV / Vercel Marketplace names
 KV_REST_API_URL="https://your-host.upstash.io"
 KV_REST_API_TOKEN="your-token"
-KV_REST_API_READ_ONLY_TOKEN="your-readonly-token"
+
+# Optional Vercel KV Aliases
 KV_URL="rediss://default:your-token@your-host.upstash.io:6379"
 ```

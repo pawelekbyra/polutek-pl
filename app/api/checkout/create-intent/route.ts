@@ -6,7 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema, validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
-import { RateLimitConfigurationError } from '@/lib/rate-limit';
+import { RateLimitConfigurationError, resolveRedisRestEnv } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,9 +83,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     if (error instanceof RateLimitConfigurationError) {
+        const { missing } = resolveRedisRestEnv();
         console.error("[RATE_LIMIT_CONFIG_ERROR]", {
             route: "/api/checkout/create-intent",
-            missing: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
+            missing,
         });
         return NextResponse.json(
             {

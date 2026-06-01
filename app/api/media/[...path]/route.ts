@@ -6,7 +6,7 @@ import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
-import { RateLimitConfigurationError } from '@/lib/rate-limit';
+import { RateLimitConfigurationError, resolveRedisRestEnv } from '@/lib/rate-limit';
 
 function rateLimitedResponse() {
   return NextResponse.json(
@@ -74,9 +74,10 @@ export async function GET(
   return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
   } catch (error: unknown) {
     if (error instanceof RateLimitConfigurationError) {
+        const { missing } = resolveRedisRestEnv();
         console.error("[RATE_LIMIT_CONFIG_ERROR]", {
             route: "/api/media/[...path]",
-            missing: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
+            missing,
         });
         return NextResponse.json(
             {
