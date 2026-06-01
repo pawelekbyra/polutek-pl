@@ -2,6 +2,7 @@ import React from 'react';
 import Footer from '../components/Footer';
 import { ContentService } from '@/lib/services/content.service';
 import { prisma } from '@/lib/prisma';
+import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import CampaignContent from './CampaignContent';
@@ -20,7 +21,18 @@ export default async function ZrzutkaPage() {
 
   let userDb = null;
   if (userId) {
-    userDb = await UserService.getOrCreateUser(userId).catch(() => null);
+    userDb = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { paymentTotals: true }
+    }).catch(() => null);
+
+    if (!userDb) {
+      await UserService.getOrCreateUser(userId).catch(() => null);
+      userDb = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { paymentTotals: true }
+      }).catch(() => null);
+    }
   }
 
   const adminData = await ContentService.getAdminData();
@@ -46,7 +58,7 @@ export default async function ZrzutkaPage() {
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: (userDb?.totalPaidMinor || 0) / 100,
+    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0

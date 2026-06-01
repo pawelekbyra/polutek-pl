@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
+import { prisma } from '@/lib/prisma';
+import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +13,20 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const user = await UserService.getOrCreateUser(userId);
+    // Ensure user exists
+    await UserService.getOrCreateUser(userId);
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { paymentTotals: true }
+    });
+
     if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({
-      totalPaid: user.totalPaidMinor / 100,
+      totalPaid: normalizePaymentTotals(user.paymentTotals),
       isPatron: user.isPatron,
       language: user.language
     });

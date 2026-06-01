@@ -78,7 +78,6 @@ model Payment {
   creator         Creator?      @relation(fields: [creatorId], references: [id])
 
   @@index([userId, status])
-  @@index([stripeIntentId])
   @@index([userId])
   @@index([creatorId])
   @@index([status])
