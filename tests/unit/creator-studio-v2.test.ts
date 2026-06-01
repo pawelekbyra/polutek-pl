@@ -128,4 +128,46 @@ describe('Creator Studio V2 - Constraints and Logic', () => {
       data: { isMainFeatured: false }
     });
   });
+
+  it('should block setting isMainFeatured for ARCHIVED status', async () => {
+    const req = new NextRequest('http://localhost/api/admin/videos', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Archived Video',
+        slug: 'archived-video',
+        videoUrl: 'http://test.com/video.mp4',
+        thumbnailUrl: 'http://test.com/thumb.jpg',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.ARCHIVED,
+        isMainFeatured: true
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain('Only public and published');
+  });
+
+  it('should block setting isMainFeatured for UNLISTED status', async () => {
+    const req = new NextRequest('http://localhost/api/admin/videos', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Unlisted Video',
+        slug: 'unlisted-video',
+        videoUrl: 'http://test.com/video.mp4',
+        thumbnailUrl: 'http://test.com/thumb.jpg',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.UNLISTED,
+        isMainFeatured: true
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain('Only public and published');
+  });
 });
