@@ -1,6 +1,7 @@
 import { getClerkClient } from '@/lib/clerk';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { writeAuditLog } from './audit.service';
 
 type DbClient = typeof prisma | Prisma.TransactionClient;
 
@@ -59,20 +60,44 @@ export class UserAccessService {
    * Clerk metadata is used for quick frontend checks, while DB is the source of truth.
    */
   static async syncClerkAccess(userId: string, isPatron: boolean, totalPaid?: number) {
-    try {
-      const client = await getClerkClient();
-      const role: ClerkRole = isPatron ? 'PATRON' : 'USER';
-      const publicMetadata: ClerkPublicMetadata = {
-        role,
-        isPatron,
-        ...(totalPaid !== undefined ? { totalPaid } : {}),
-      };
+    const role: ClerkRole = isPatron ? 'PATRON' : 'USER';
+    const publicMetadata: ClerkPublicMetadata = {
+      role,
+      isPatron,
+      ...(totalPaid !== undefined ? { totalPaid } : {}),
+    };
 
-      await client.users.updateUserMetadata(userId, { publicMetadata });
+    const retry = async (attempts = 3) => {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const client = await getClerkClient();
+          await client.users.updateUserMetadata(userId, { publicMetadata });
+          console.log(`[UserAccessService] Synced Clerk access for user ${userId}: isPatron=${isPatron}, role=${role} (attempt ${i + 1})`);
+          return true;
+        } catch (error) {
+          console.error(`[UserAccessService] Error syncing Clerk access for user ${userId} (attempt ${i + 1}):`, error);
+          if (i < attempts - 1) {
+            const delay = 250 * Math.pow(3, i);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+      return false;
+    };
 
-      console.log(`[UserAccessService] Synced Clerk access for user ${userId}: isPatron=${isPatron}, role=${role}`);
-    } catch (error) {
-      console.error(`[UserAccessService] Error syncing Clerk access for user ${userId}:`, error);
+    const success = await retry();
+    if (!success) {
+      console.error(`[UserAccessService] Final failure syncing Clerk access for user ${userId}`);
+      await writeAuditLog({
+        action: "CLERK_SYNC_FAILED",
+        targetType: "User",
+        targetId: userId,
+        metadata: {
+          isPatron,
+          totalPaid,
+          role
+        }
+      });
     }
   }
 }

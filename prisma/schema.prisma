@@ -16,7 +16,9 @@ model User {
   isDeleted        Boolean             @default(false)
   role             SystemRole          @default(USER)
   language         String              @default("en")
-  totalPaidMinor   Int                 @default(0) // Lifetime sum of all payments in minor units
+  // Legacy mixed-currency aggregate. Do not use for patron eligibility or financial reporting.
+  // Use UserPaymentTotal per currency or normalized totals instead.
+  totalPaidMinor   Int                 @default(0)
   referralCode     String              @unique @default(cuid())
   referralPoints   Int                 @default(0)
   referralCount    Int                 @default(0)
@@ -75,6 +77,8 @@ model Payment {
   user            User          @relation(fields: [userId], references: [id])
   creator         Creator?      @relation(fields: [creatorId], references: [id])
 
+  @@index([userId, status])
+  @@index([stripeIntentId])
   @@index([userId])
   @@index([creatorId])
   @@index([status])
@@ -129,6 +133,8 @@ model PatronGrant {
 
   user          User              @relation(fields: [userId], references: [id])
 
+  @@index([userId, revokedAt])
+  @@index([paymentId])
   @@index([userId])
   @@index([createdAt])
 }
@@ -207,6 +213,9 @@ model Video {
   asset         VideoAsset?
   videoViews    VideoView[]
 
+  @@index([status, publishedAt])
+  @@index([status, createdAt])
+  @@index([creatorId, status])
   @@index([creatorId])
   @@index([slug])
 }
@@ -310,6 +319,8 @@ model Comment {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@index([videoId, createdAt])
+  @@index([parentId, createdAt])
   @@index([videoId])
   @@index([parentId])
   @@index([creatorId])

@@ -259,17 +259,26 @@ export async function DELETE(request: NextRequest) {
 
         if (!commentId) return NextResponse.json({ error: "Bad request" }, { status: 400 });
 
-        const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+        const comment = await prisma.comment.findUnique({
+          where: { id: commentId },
+          include: { video: { select: { creatorId: true } } }
+        });
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
         const actor = await prisma.user.findUnique({
           where: { id: userId },
-          select: { role: true }
+          include: { creators: { select: { id: true } } }
         });
         const isOwner = comment.authorId === userId;
         const isAdmin = actor?.role === "ADMIN";
+        const isVideoCreator = actor?.creators.some(c => c.id === comment.video.creatorId);
 
-        if (!isOwner && !isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        if (!isOwner && !isAdmin && !isVideoCreator) {
+            return NextResponse.json({
+              error: "Forbidden",
+              message: "Comment deletion is limited to author, video creator and admin."
+            }, { status: 403 });
+        }
 
         await prisma.comment.update({
             where: { id: commentId },

@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
+import { writeAuditLog } from './audit.service';
 import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN } from '../constants';
 import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
 
@@ -383,6 +384,36 @@ export class PaymentService {
     });
   }
 
+  private static async sendPaymentEmailSafely(
+    type: 'DONATION' | 'PATRON',
+    email: string,
+    amount: number,
+    currency: string,
+    language: 'pl' | 'en',
+    userId: string,
+    paymentId: string
+  ): Promise<void> {
+    try {
+      if (type === 'DONATION') {
+        await EmailService.sendDonationThankYouEmail(email, amount, currency, language);
+      } else {
+        await EmailService.sendBecomePatronEmail(email, language);
+      }
+    } catch (error) {
+      console.error(`[${type}_EMAIL_FAILED]`, error);
+      await writeAuditLog({
+        action: "EMAIL_SEND_FAILED",
+        targetType: "Payment",
+        targetId: paymentId,
+        actorUserId: userId,
+        metadata: {
+          emailType: type === 'DONATION' ? "donation_thank_you" : "become_patron",
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  }
+
   private static async fulfillPayment(intent: Stripe.PaymentIntent) {
     const paymentId = intent.metadata.paymentId;
     const userId = intent.metadata.userId;
@@ -434,6 +465,7 @@ export class PaymentService {
             }
         });
 
+        // Patron status is granted by a single qualifying donation, not by cumulative lifetime total.
         const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
@@ -475,10 +507,28 @@ export class PaymentService {
 
       const language = (user.language as 'pl' | 'en') || 'pl';
       const amount = intent.amount / 100;
-      await EmailService.sendDonationThankYouEmail(user.email, amount, intent.currency.toUpperCase(), language);
+
+      // Emails are side effects, send them safely outside transaction
+      await this.sendPaymentEmailSafely(
+        'DONATION',
+        user.email,
+        amount,
+        intent.currency.toUpperCase(),
+        language,
+        user.id,
+        paymentId
+      );
 
       if (becamePatronNow) {
-        await EmailService.sendBecomePatronEmail(user.email, language);
+        await this.sendPaymentEmailSafely(
+          'PATRON',
+          user.email,
+          amount,
+          intent.currency.toUpperCase(),
+          language,
+          user.id,
+          paymentId
+        );
       }
 
       console.log(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);

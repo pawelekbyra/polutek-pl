@@ -2,6 +2,7 @@ import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
 import { ContentService } from '@/lib/services/content.service';
+import { loadHomeContent } from '@/lib/services/home-content.loader';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -20,20 +21,11 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     userDb = await UserService.getOrCreateUser(userId).catch(() => null);
   }
 
-  const creator = await ContentService.getCreatorBySlug('polutek');
-
-  // Always show the standard video player view on homepage
-  let allVideos: PublicVideoDTO[] = [];
-  let mainVideo = null;
-  let contentError = null;
-
-  try {
-    allVideos = (await ContentService.getAllVideos()) || [];
-    mainVideo = await ContentService.getMainFeaturedVideo();
-  } catch (e: unknown) {
-    console.error("[HOME_CONTENT_LOAD_ERROR]", e);
-    contentError = ((e as Error).message || String(e)) || String(e);
-  }
+  const content = await loadHomeContent();
+  const { creator, allVideos, mainVideo } =
+    content.status !== 'error'
+      ? content
+      : { creator: null, allVideos: [] as PublicVideoDTO[], mainVideo: null };
 
   const user = await currentUser();
 
@@ -73,47 +65,52 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     initialIsSubscribed
   } : null;
 
-    if (!mainVideo && (!allVideos || allVideos.length === 0)) {
+  if (content.status === 'error' || content.status === 'empty') {
+    const isError = content.status === 'error';
     return (
       <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
-          <h1 className="text-2xl font-bold mb-4">Brak materiałów</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {isError ? 'Błąd wczytywania' : 'Brak materiałów'}
+          </h1>
           <p className="text-neutral-600 mb-8">
-            Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.
+            {isError
+              ? content.publicMessage
+              : 'Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.'}
           </p>
 
-          {(process.env.DEBUG_HOME_CONTENT === "true" || contentError) && (
+          {process.env.DEBUG_HOME_CONTENT === 'true' && content.debug && (
             <div className="mt-8 p-6 bg-white border border-neutral-200 rounded-xl shadow-sm text-left font-sans text-sm">
-              <h2 className="text-red-600 font-bold mb-2 flex items-center gap-2">
-                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+              <h2 className="text-blue-600 font-bold mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
                 DIAGNOSTYKA (Widoczna tylko w trybie debug)
               </h2>
               <div className="space-y-1 text-neutral-700">
-                {contentError ? (
-                  <p className="text-red-600 font-medium bg-red-50 p-2 rounded">BŁĄD: {contentError}</p>
-                ) : (
-                  <p className="text-green-600">Query zakończone sukcesem (200 OK).</p>
-                )}
+                <p className="text-xs uppercase text-neutral-400 font-bold mb-2">Stage: {content.debug.stage}</p>
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-neutral-100">
                   <div>
-                    <p className="text-xs uppercase text-neutral-400 font-bold">Main Video</p>
-                    <p className="font-mono">{mainVideo ? "Wczytany" : "NULL"}</p>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">Creator Status</p>
+                    <p className="font-mono text-xs">{content.debug.creatorSuccess ? 'OK' : 'FAIL'}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase text-neutral-400 font-bold">All Videos</p>
-                    <p className="font-mono">{allVideos.length}</p>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">Videos Status</p>
+                    <p className="font-mono text-xs">{content.debug.allVideosSuccess ? 'OK' : 'FAIL'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">Main Video</p>
+                    <p className="font-mono text-xs">{content.debug.mainVideoId || 'NULL'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-400 font-bold">All Videos Count</p>
+                    <p className="font-mono text-xs">{content.debug.allVideosCount}</p>
                   </div>
                 </div>
                 <div className="mt-6 bg-neutral-900 text-neutral-300 p-4 rounded-lg font-mono text-xs">
                   <p className="mb-2 text-neutral-500"># Spróbuj naprawić dane:</p>
                   <p className="text-blue-400">npm run content:diagnose</p>
-                  <p className="text-blue-400">npm run db:fix:schema</p>
                   <p className="text-blue-400">npm run content:fix:polutek</p>
                 </div>
-                <p className="mt-4 text-xs text-neutral-400 italic">
-                  Jeśli liczniki powyżej są równe 0, problem leży w danych (brak opublikowanych filmów lub zatwierdzonych twórców).
-                </p>
               </div>
             </div>
           )}
