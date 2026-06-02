@@ -10,10 +10,11 @@ import { PublicVideoDTO } from '../types/video';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
+import { useSearchParams } from 'next/navigation';
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -31,9 +32,6 @@ interface ChannelHomeProps {
     role?: string;
   } | null;
 }
-
-import { useSearchParams } from 'next/navigation';
-
 
 const PREMIERE_DATE = new Date('2026-10-13T00:00:00');
 
