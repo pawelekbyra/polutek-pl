@@ -73,10 +73,31 @@ export async function POST(req: NextRequest) {
     const { subjectPl, bodyPl, subjectEn, bodyEn } = result.data;
 
     const sanitizeOptions = {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['div', 'h1', 'h2', 'br', 'span', 'section']),
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['div', 'h1', 'h2', 'h3', 'br', 'span', 'section', 'table', 'tr', 'td', 'th', 'ul', 'ol', 'li']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
-        '*': ['style']
+        'div': ['style'],
+        'span': ['style'],
+        'p': ['style'],
+        'a': ['style', 'href'],
+        'h1': ['style'],
+        'h2': ['style'],
+        'h3': ['style'],
+        'table': ['style'],
+        'tr': ['style'],
+        'td': ['style'],
+        'th': ['style'],
+        'ul': ['style'],
+        'ol': ['style'],
+        'li': ['style'],
+        'strong': ['style'],
+        'em': ['style'],
+        'img': ['style', 'src', 'alt', 'width', 'height']
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+      allowedSchemesByTag: {
+        a: ['http', 'https', 'mailto'],
+        img: ['http', 'https']
       }
     };
 
