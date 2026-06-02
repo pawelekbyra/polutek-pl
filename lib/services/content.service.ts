@@ -298,28 +298,47 @@ export class ContentService {
   /**
    * Fetches all videos from the database for sidebar/listing, falling back to initial content.
    * Filters by showInSidebar=true and specific allowed tiers.
+   * Includes defensive handling for missing showInSidebar column (P2022).
    */
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
-    try {
-      const videos = await prisma.video.findMany({
-        where: {
-          ...buildPublicVideoWhere(),
-          showInSidebar: true,
-          tier: {
-            in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
-          }
-        },
-        include: {
-          creator: {
-            include: {
-              user: {
-                select: { imageUrl: true, email: true }
-              }
+    const query = {
+      where: {
+        ...buildPublicVideoWhere(),
+        showInSidebar: true,
+        tier: {
+          in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
+        }
+      },
+      include: {
+        creator: {
+          include: {
+            user: {
+              select: { imageUrl: true, email: true }
             }
           }
-        },
-        orderBy: publicVideoOrderBy
-      });
+        }
+      },
+      orderBy: publicVideoOrderBy
+    };
+
+    try {
+      let videos;
+      try {
+        videos = await prisma.video.findMany(query as any);
+      } catch (e: any) {
+        if (e.code === 'P2022' && e.message.includes('showInSidebar')) {
+          console.warn("[DEFENSIVE_QUERY] Column showInSidebar missing. Retrying without filter.");
+          // Retry without showInSidebar filter
+          const fallbackWhere = { ...query.where };
+          delete (fallbackWhere as any).showInSidebar;
+          videos = await prisma.video.findMany({
+            ...query,
+            where: fallbackWhere
+          });
+        } else {
+          throw e;
+        }
+      }
 
       if (process.env.DEBUG_HOME_CONTENT === "true") {
         console.log("[HOME_CONTENT_DEBUG] getAllVideos", {
@@ -336,7 +355,6 @@ export class ContentService {
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (flags.demoFallbacks) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
-      // Re-throw so the page knows it was an error, not just an empty DB
       throw e;
     }
   }

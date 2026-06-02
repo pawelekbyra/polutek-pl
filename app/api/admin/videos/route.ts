@@ -38,12 +38,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const videos = await prisma.video.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
-  });
+  try {
+    const videos = await prisma.video.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
+    });
 
-  return NextResponse.json(videos);
+    return NextResponse.json(videos);
+  } catch (e: any) {
+    if (e.code === 'P2022') {
+      console.warn("[ADMIN_VIDEO_GET] P2022 detected. Schema out of sync.");
+      // Fallback for admin to at least see list without showInSidebar column if it's the one missing
+      const videos = await prisma.video.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
+      } as any);
+      return NextResponse.json(videos);
+    }
+    throw e;
+  }
 }
 
 export async function POST(req: NextRequest) {
