@@ -34,7 +34,7 @@ export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhere
 }
 
 export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
-  { sidebarOrder: 'desc' },
+  { sidebarOrder: 'asc' },
   { publishedAt: 'desc' },
   { createdAt: 'desc' },
 ];
@@ -296,12 +296,19 @@ export class ContentService {
   }
 
   /**
-   * Fetches all videos from the database, falling back to initial content.
+   * Fetches all videos from the database for sidebar/listing, falling back to initial content.
+   * Filters by showInSidebar=true and specific allowed tiers.
    */
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({
-        where: buildPublicVideoWhere(),
+        where: {
+          ...buildPublicVideoWhere(),
+          showInSidebar: true,
+          tier: {
+            in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
+          }
+        },
         include: {
           creator: {
             include: {
@@ -321,12 +328,14 @@ export class ContentService {
         });
       }
       if (videos.length === 0 && flags.demoFallbacks) {
-          return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
+          return INITIAL_VIDEOS
+            .filter(v => (v.tier as string) !== 'ADMIN')
+            .map(v => this.mapToPublicVideoDTO(v));
       }
       return videos.map(v => this.mapToPublicVideoDTO(v));
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
-      if (flags.demoFallbacks) return INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v));
+      if (flags.demoFallbacks) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
       // Re-throw so the page knows it was an error, not just an empty DB
       throw e;
     }
@@ -334,12 +343,14 @@ export class ContentService {
 
   /**
    * Fetches the main featured video from the database.
+   * Strictly PUBLIC + PUBLISHED.
    */
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
       const video = await prisma.video.findFirst({
         where: {
             ...buildPublicVideoWhere(),
+            tier: AccessTier.PUBLIC,
             isMainFeatured: true,
         },
         include: {
@@ -354,7 +365,10 @@ export class ContentService {
       });
 
       const selectedVideo = video ?? await prisma.video.findFirst({
-        where: buildPublicVideoWhere(),
+        where: {
+          ...buildPublicVideoWhere(),
+          tier: AccessTier.PUBLIC,
+        },
         include: {
           creator: {
             include: {
@@ -374,7 +388,10 @@ export class ContentService {
           demoFallbacksEnabled: flags.demoFallbacks
         });
       }
-      if (!selectedVideo && flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      if (!selectedVideo && flags.demoFallbacks) {
+        const fallback = INITIAL_VIDEOS.find(v => v.tier === AccessTier.PUBLIC && v.status === VideoStatus.PUBLISHED) || INITIAL_VIDEOS[0];
+        return this.mapToPublicVideoDTO(fallback);
+      }
       return selectedVideo ? this.mapToPublicVideoDTO(selectedVideo) : null;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
