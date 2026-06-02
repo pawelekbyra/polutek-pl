@@ -154,35 +154,28 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     );
   };
 
-  const topPublicVideo = sortedVideos.find(v => v.tier === 'PUBLIC');
-  const topLoggedInVideo = sortedVideos.find(v => v.tier === 'LOGGED_IN');
-  const patronVideos = sortedVideos.filter(v => v.tier === 'PATRON');
+  const sidebarVideos = sortedVideos.filter(v =>
+    v.status === 'PUBLISHED' && ['PUBLIC', 'LOGGED_IN', 'PATRON'].includes(v.tier)
+  );
+  const freeMaterialVideos = [
+    sidebarVideos.find(v => v.tier === 'PUBLIC'),
+    sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
+  ].filter((video): video is PublicVideoDTO => Boolean(video));
+  const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
 
   const playlistItems = (
     <>
-      {/* SECTION 1: PUBLIC TEASER */}
-      {!searchQuery && topPublicVideo && (
+      {/* SECTION 1: FREE MATERIALS */}
+      {!searchQuery && freeMaterialVideos.length > 0 && (
         <div className="space-y-2">
           <div className="pb-1 border-b border-neutral-100">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
           </div>
-          {renderVideoItem(topPublicVideo)}
+          {freeMaterialVideos.map(renderVideoItem)}
         </div>
       )}
 
-      {/* SECTION 2: LOGGED-IN TEASER */}
-      {!searchQuery && topLoggedInVideo && (
-        <div className="pt-4 space-y-2">
-          <div className="pb-1 border-b border-neutral-100">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-              {language === 'pl' ? 'Dla społeczności' : 'For community'}
-            </h3>
-          </div>
-          {renderVideoItem(topLoggedInVideo)}
-        </div>
-      )}
-
-      {/* SECTION 3: DONATE (STRIPE GATE) */}
+      {/* SECTION 2: DONATE (STRIPE GATE) */}
       {!searchQuery && (
         <div className="pt-6 pb-0">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
@@ -192,7 +185,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         </div>
       )}
 
-      {/* SECTION 4: PATRON ZONE */}
+      {/* SECTION 3: PATRON ZONE */}
       {!searchQuery && patronVideos.length > 0 && (
         <div className="pt-6 space-y-2">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
@@ -203,7 +196,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       )}
 
       {/* Search results fallback */}
-      {searchQuery && sortedVideos.map(renderVideoItem)}
+      {searchQuery && sidebarVideos.map(renderVideoItem)}
     </>
   );
 
@@ -287,7 +280,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                   </div>
                 </div>
             )}
-            {(sortedVideos.length > 0 || !searchQuery) ? (
+            {(sidebarVideos.length > 0 || !searchQuery) ? (
                 <>
                   {playlistItems}
                   {searchQuery && (
