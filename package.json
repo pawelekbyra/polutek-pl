@@ -13,7 +13,7 @@
     "db:verify": "npx ts-node scripts/verify_db.ts",
     "db:setup:dev": "npm run db:push && npm run db:seed",
     "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "npx prisma migrate deploy",
     "postinstall": "prisma generate",
     "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
     "content:fix:polutek": "npx tsx scripts/fix-polutek-content.ts",
