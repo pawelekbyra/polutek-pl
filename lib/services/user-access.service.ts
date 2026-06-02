@@ -2,8 +2,14 @@ import { getClerkClient } from '@/lib/clerk';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { writeAuditLog } from './audit.service';
+import { DISPLAY_EUR_TO_PLN_RATE } from '../constants';
 
 type DbClient = typeof prisma | Prisma.TransactionClient;
+
+type PaymentTotal = {
+  currency: string;
+  amountMinor: number;
+};
 
 type ClerkRole = 'USER' | 'ADMIN' | 'PATRON';
 
@@ -12,6 +18,12 @@ type ClerkPublicMetadata = {
   isPatron: boolean;
   totalPaid?: number;
 };
+
+export function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
+  const totalPLN = paymentTotals.find((t) => t.currency === 'PLN')?.amountMinor || 0;
+  const totalEUR = paymentTotals.find((t) => t.currency === 'EUR')?.amountMinor || 0;
+  return (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
+}
 
 export class UserAccessService {
   /**
@@ -30,15 +42,18 @@ export class UserAccessService {
 
     const isPatron = !!activeGrant;
 
-    await db.user.update({
+    const user = await db.user.update({
         where: { id: userId },
         data: {
             isPatron,
             patronSince: isPatron ? (activeGrant.createdAt) : null
+        },
+        include: {
+          paymentTotals: true
         }
     });
 
-    return { isPatron, normalizedTotal: 0 };
+    return { isPatron, normalizedTotal: normalizePaymentTotals(user.paymentTotals) };
   }
 
   /**
