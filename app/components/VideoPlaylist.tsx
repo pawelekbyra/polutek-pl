@@ -28,9 +28,10 @@ interface VideoPlaylistProps {
   videos?: PublicVideoDTO[];
   onVideoSelect?: (id: string) => void;
   currentVideoId?: string;
+  isPatron?: boolean;
 }
 
-const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) => {
+const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, isPatron = false }) => {
   const { t, language } = useLanguage();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
@@ -210,6 +211,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           onSupport={onSupport}
           onOpenRegulamin={() => setIsRegulaminOpen(true)}
           onOpenPolityka={() => setIsPolitykaOpen(true)}
+          isPatron={isPatron}
         />
 
         <ReferralInfo
