@@ -41,18 +41,18 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   onOpenPolityka,
 }) => {
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-orange-300/50 bg-[#160f2e] bg-[radial-gradient(circle_at_18%_10%,rgba(249,115,22,0.34),transparent_32%),radial-gradient(circle_at_86%_18%,rgba(132,204,22,0.28),transparent_28%),radial-gradient(circle_at_50%_105%,rgba(124,58,237,0.38),transparent_42%)] p-6 text-center text-white shadow-[0_24px_60px_rgba(22,15,46,0.28),0_0_36px_rgba(249,115,22,0.22)]">
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-lime-300/25 blur-2xl" aria-hidden="true" />
-      <div className="absolute -bottom-12 -left-10 h-36 w-36 rounded-full bg-orange-400/30 blur-2xl" aria-hidden="true" />
-      <div className="absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-lime-200/80 to-transparent" aria-hidden="true" />
+    <div className="relative overflow-hidden rounded-[2rem] border border-[#d8c3a2] bg-[#fff7e8] bg-[radial-gradient(circle_at_16%_0%,rgba(181,139,88,0.24),transparent_30%),radial-gradient(circle_at_88%_16%,rgba(47,111,85,0.18),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.78),rgba(246,232,208,0.62))] p-6 text-center text-[#173b34] shadow-[0_22px_55px_rgba(60,42,27,0.16)]">
+      <div className="absolute -right-10 top-8 h-24 w-24 rounded-full border border-[#b58b58]/25 bg-[#f2d6a2]/35" aria-hidden="true" />
+      <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-[#2f6f55]/10" aria-hidden="true" />
+      <div className="absolute bottom-0 left-0 h-2 w-full bg-[repeating-linear-gradient(90deg,#173b34_0_18px,#b58b58_18px_36px,#efe0c6_36px_54px)] opacity-80" aria-hidden="true" />
       <div className="space-y-4 relative z-10">
-        <h3 className="text-xl font-sans font-black uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-white">
-          <span className="-rotate-2 rounded-2xl bg-gradient-to-r from-orange-400 via-amber-200 to-lime-300 px-4 py-1.5 text-[#160f2e] shadow-[0_0_22px_rgba(249,115,22,0.36)]">{t.supportArtist}</span>
-          <Trophy size={32} className="text-lime-300 drop-shadow-[0_0_14px_rgba(190,242,100,0.7)]" />
+        <h3 className="text-xl font-sans font-black uppercase tracking-tight flex flex-wrap items-center justify-center gap-2 text-[#173b34]">
+          <span className="-rotate-1 rounded-[1.25rem] border border-[#173b34]/10 bg-white/65 px-4 py-1.5 shadow-[0_8px_0_rgba(181,139,88,0.18)] backdrop-blur">{t.supportArtist}</span>
+          <Trophy size={32} className="text-[#b58b58] drop-shadow-[0_3px_0_rgba(23,59,52,0.16)]" />
         </h3>
 
         <div className="space-y-3 text-center">
-          <p className="font-sans text-[13px] leading-relaxed text-orange-50/80 whitespace-pre-wrap">
+          <p className="font-sans text-[13px] leading-relaxed text-[#4b635c] whitespace-pre-wrap">
             {t.donationDescription}
           </p>
 
@@ -63,7 +63,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           )}
 
           <div className="space-y-2 pt-2">
-            <label className="block text-xs font-black uppercase tracking-[0.18em] text-lime-200/85">
+            <label className="block text-xs font-black uppercase tracking-[0.18em] text-[#8a4f2c]">
               {language === 'pl' ? `Kwota wsparcia (Min ${minAmount}.00 ${selectedCurrency})` : `Transaction amount (Min ${minAmount}.00 ${selectedCurrency})`}
             </label>
             <div className="relative group">
@@ -71,7 +71,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 <select
                   value={selectedCurrency}
                   onChange={(e) => onCurrencyChange(e.target.value)}
-                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-orange-100/80 outline-none transition-colors focus:text-lime-100 focus:ring-0 cursor-pointer appearance-none"
+                  className="h-full cursor-pointer appearance-none border-none bg-transparent pr-8 pl-4 font-mono text-xl font-black text-[#8a4f2c] outline-none transition-colors focus:text-[#173b34] focus:ring-0"
                   aria-label="Select Currency"
                 >
                   {availableCurrencies.map(curr => (
@@ -88,7 +88,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 step="1"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full rounded-2xl border border-orange-200/80 bg-gradient-to-r from-white via-orange-50 to-lime-50 py-4 px-12 text-center font-mono text-3xl font-black text-[#160f2e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_0_24px_rgba(249,115,22,0.18)] outline-none transition-all placeholder:text-orange-200 focus:border-transparent focus:ring-2 focus:ring-lime-300"
+                className="w-full rounded-[1.35rem] border border-[#d7c4a5] bg-white/85 py-4 px-12 text-center font-mono text-3xl font-black text-[#173b34] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_0_rgba(181,139,88,0.12)] outline-none transition-all placeholder:text-[#d7c4a5] focus:border-transparent focus:ring-2 focus:ring-[#b58b58]"
                 placeholder={String(minAmount)}
               />
             </div>
@@ -104,7 +104,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           type="button"
           onClick={onSupport}
           disabled={isLoading || amount === '' || amount < minAmount}
-          className="h-12 w-full bg-gradient-to-r from-orange-500 via-amber-300 to-lime-400 text-sm font-black uppercase tracking-[0.18em] text-[#160f2e] shadow-[0_0_22px_rgba(249,115,22,0.45),0_0_34px_rgba(132,204,22,0.25)] hover:scale-[1.01] hover:shadow-[0_0_28px_rgba(249,115,22,0.6),0_0_44px_rgba(132,204,22,0.35)]"
+          className="h-12 w-full bg-[#173b34] text-sm font-black uppercase tracking-[0.18em] text-[#fff7e8] shadow-[0_10px_0_rgba(181,139,88,0.28)] hover:-translate-y-0.5 hover:bg-[#214d43] hover:shadow-[0_12px_0_rgba(181,139,88,0.34)]"
           size="lg"
         >
           {isLoading ? (
@@ -122,23 +122,23 @@ const SupportBox: React.FC<SupportBoxProps> = ({
             <Checkbox
               id="accept-terms"
               checked={isTermsAccepted}
-              className="border-orange-200/70 bg-white/10"
+              className="border-[#b58b58]/60 bg-white/70"
               onCheckedChange={onTermsChange}
             />
-            <span className="text-orange-50/70 font-sans font-medium text-[10px] tracking-tight transition-colors">
+            <span className="text-[#4b635c] font-sans font-medium text-[10px] tracking-tight transition-colors">
               {language === 'pl' ? (
                 <>
                   Akceptuję{' '}
-                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-lime-200">Regulamin</button>
+                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-[#173b34]">Regulamin</button>
                   {' '}i{' '}
-                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-lime-200">Politykę Prywatności</button>
+                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-[#173b34]">Politykę Prywatności</button>
                 </>
               ) : (
                 <>
                   I accept the{' '}
-                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-lime-200">Terms</button>
+                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-[#173b34]">Terms</button>
                   {' '}and{' '}
-                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-lime-200">Privacy Policy</button>
+                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-[#173b34]">Privacy Policy</button>
                 </>
               )}
             </span>

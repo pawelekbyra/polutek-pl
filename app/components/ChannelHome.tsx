@@ -179,14 +179,11 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       {/* SECTION 2: DONATE (STRIPE GATE) */}
       {!searchQuery && (
         <div className="pt-6 pb-0">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-orange-300/50 pb-2">
-                <h3 className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-                    <span className="bg-gradient-to-r from-orange-500 via-violet-600 to-lime-500 bg-clip-text font-black text-transparent">{t.donate}</span>
-                    <span
-                      className="relative inline-flex items-center gap-1.5 rounded-full border border-lime-300/80 bg-[#160f2e] px-3 py-1 font-mono text-[10px] font-black tracking-[0.2em] text-lime-100 shadow-[0_0_18px_rgba(132,204,22,0.55),0_0_28px_rgba(249,115,22,0.35)]"
-                      style={{ textShadow: '0 0 7px rgba(190, 242, 100, 0.95), 0 0 18px rgba(249, 115, 22, 0.75)' }}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(190,242,100,1)]" aria-hidden="true" />
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#d7c4a5] pb-2">
+                <h3 className="flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-[#173b34]">
+                    <span>{t.donate}</span>
+                    <span className="inline-flex -rotate-1 items-center gap-1.5 rounded-full border border-[#b58b58]/50 bg-[#fff7e8] px-3 py-1 font-mono text-[10px] font-black tracking-[0.18em] text-[#8a4f2c] shadow-[0_6px_0_rgba(23,59,52,0.08)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#2f6f55]" aria-hidden="true" />
                       Open 24.h
                     </span>
                 </h3>
