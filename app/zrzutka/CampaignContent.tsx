@@ -127,8 +127,9 @@ export default function CampaignContent({
     }
 
     const minAmount = MIN_PAYMENT_BY_CURRENCY.PLN;
-    if (!amount || amount < minAmount) {
-      alert(language === 'pl' ? `Minimalna kwota to ${minAmount} PLN` : `Minimum amount is ${minAmount} PLN`);
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount < minAmount) {
+      alert(language === 'pl' ? `Wpisz kwotę minimum ${minAmount} PLN.` : `Enter at least ${minAmount} PLN.`);
       return;
     }
 
@@ -139,6 +140,21 @@ export default function CampaignContent({
       console.log(msg);
     }
 
+    const checkoutBody: {
+      amountMinor: number;
+      currency: string;
+      title: string;
+      creatorId?: string;
+    } = {
+      amountMinor: Math.round(numericAmount * 100),
+      currency: 'pln',
+      title: `Wsparcie projektu: I rise money for my secret project`,
+    };
+
+    if (initialCreator?.id) {
+      checkoutBody.creatorId = initialCreator.id;
+    }
+
     try {
       setIsLoading(true);
       setSelectedAmount(amount);
@@ -146,12 +162,7 @@ export default function CampaignContent({
       const response = await fetch('/api/checkout/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amountMinor: Number(amount) * 100,
-            currency: 'pln',
-            title: `Wsparcie projektu: I rise money for my secret project`,
-            creatorId: initialCreator?.id
-          }),
+          body: JSON.stringify(checkoutBody),
           cache: 'no-store'
       });
 
