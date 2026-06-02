@@ -51,6 +51,7 @@ async function main() {
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
         thumbnailUrl: '/wuthering.jpg',
         isMainFeatured: true,
+        showInSidebar: true,
         tier: AccessTier.PUBLIC,
         views: 1250400,
         likesCount: 45000
@@ -61,6 +62,7 @@ async function main() {
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/historia-powstania-osady-natury-zew-w-gruncie-ruchu-stefan.mp4',
         thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
         isMainFeatured: false,
+        showInSidebar: true,
         tier: AccessTier.LOGGED_IN
       },
       {
@@ -69,6 +71,7 @@ async function main() {
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/intencja-swiadomosc-sprawczosci-michal-kicinski-qa-festiwal-wibracje.mp4',
         thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2659&auto=format&fit=crop',
         isMainFeatured: false,
+        showInSidebar: true,
         tier: AccessTier.PATRON
       }
     ];
@@ -83,6 +86,7 @@ async function main() {
           videoUrl: v.videoUrl,
           thumbnailUrl: v.thumbnailUrl,
           isMainFeatured: v.isMainFeatured,
+          showInSidebar: v.showInSidebar,
           status: VideoStatus.PUBLISHED,
           publishedAt: new Date(),
           views: v.views,
@@ -95,6 +99,7 @@ async function main() {
           videoUrl: v.videoUrl,
           thumbnailUrl: v.thumbnailUrl,
           isMainFeatured: v.isMainFeatured,
+          showInSidebar: v.showInSidebar ?? true,
           tier: v.tier,
           status: VideoStatus.PUBLISHED,
           publishedAt: new Date(),
