@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { POST } from '@/app/api/admin/videos/route';
 import { AccessTier, VideoStatus, SystemRole } from '@prisma/client';
 import { NextRequest } from 'next/server';
+import { resetVideoPresentationColumnsEnsureForTests } from '@/lib/db/video-schema-heal';
 
 // Mock auth and admin check
 vi.mock('@/lib/auth-utils', () => ({
@@ -23,6 +24,9 @@ describe('Creator Studio V2 - Constraints and Logic', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetVideoPresentationColumnsEnsureForTests();
+    vi.spyOn(prisma, '$queryRaw').mockResolvedValue([{ column_name: 'showInSidebar' }, { column_name: 'sidebarOrder' }] as never);
+    vi.spyOn(prisma, '$executeRawUnsafe').mockResolvedValue(0 as never);
   });
 
   it('should block setting isMainFeatured for PATRON tier', async () => {

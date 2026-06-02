@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyAdmin } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
@@ -38,6 +39,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  await ensureVideoPresentationColumns();
+
   const videos = await prisma.video.findMany({
     orderBy: { createdAt: 'desc' },
     include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
@@ -66,6 +69,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureVideoPresentationColumns();
+
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
         const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true, creatorId: true } });
@@ -199,6 +204,8 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    await ensureVideoPresentationColumns();
+
     const deleted = await prisma.video.update({
       where: { id },
       data: { status: VideoStatus.ARCHIVED }

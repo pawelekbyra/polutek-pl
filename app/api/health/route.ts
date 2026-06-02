@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
 import { buildPublicVideoWhere } from '@/lib/services/content.service';
 import { getAllowedMediaHosts } from '@/lib/blob';
+import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
 
   try {
     await prisma.$queryRaw`SELECT 1`;
+    await ensureVideoPresentationColumns();
 
     const approvedCreatorExists = await prisma.creator.findFirst({
         where: { isApproved: true }
