@@ -65,17 +65,14 @@ export class UserService {
         });
 
         // Role determination:
-        // 1. If Clerk metadata says ADMIN, trust it.
-        // 2. If it's a new user and email matches ADMIN_EMAIL, bootstrap as ADMIN.
-        // 3. Otherwise keep existing role or default to USER.
+        // 1. If Clerk metadata says ADMIN or email matches ADMIN_EMAIL, trust it.
+        // 2. Otherwise keep existing role or default to USER.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
-        if (clerkRole === 'ADMIN') {
+        if (clerkRole === 'ADMIN' || email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
           targetRole = 'ADMIN';
         } else if (existingUser) {
           targetRole = existingUser.role;
-        } else if (email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
-          targetRole = 'ADMIN';
         }
 
         const user = await tx.user.upsert({

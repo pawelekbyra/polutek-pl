@@ -107,6 +107,12 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     return { status: "ready", creator, allVideos, mainVideo, debug };
   } catch (error) {
     const safeInfo = getSafeErrorInfo(error);
+
+    // Specific handling for missing columns (P2022) to help with production debugging
+    if (safeInfo.prismaCode === "P2022") {
+      console.error("[CRITICAL_DB_ERROR] Database schema is out of sync. Missing column. Run 'npx prisma migrate deploy'.", safeInfo);
+    }
+
     console.error("[HOME_CONTENT_LOAD_ERROR] Global failure", {
       stage: debug.stage,
       ...safeInfo,
