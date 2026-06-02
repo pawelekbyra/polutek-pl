@@ -38,7 +38,7 @@ type CommentView = {
   id: string;
   authorId?: string;
   authorName?: string;
-  author?: { imageUrl?: string | null; slug?: string | null; email?: string | null; isPatron?: boolean; referralPoints?: number; role?: string | null } | null;
+  author?: { name?: string | null; username?: string | null; imageUrl?: string | null; slug?: string | null; email?: string | null; isPatron?: boolean; referralPoints?: number; role?: string | null } | null;
   text: string;
   createdAt?: string | Date;
   isLiked?: boolean;
@@ -63,6 +63,8 @@ interface EmbeddedCommentsProps {
     isPatron?: boolean;
     role?: string;
     referralPoints?: number;
+    name?: string | null;
+    username?: string | null;
   } | null;
   videoId: string;
   videoTier?: AccessTier;
@@ -79,14 +81,18 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
+  const clerkDisplayName = user?.username || user?.fullName || user?.firstName || user?.primaryEmailAddress?.emailAddress || null;
+  const clerkImageUrl = user?.imageUrl || null;
   const userProfile = propUserProfile || (isSignedIn ? {
     id: userId!,
     email: user?.primaryEmailAddress?.emailAddress || '',
-    imageUrl: user?.imageUrl || null,
+    imageUrl: clerkImageUrl,
     totalPaid: numberMetadata(metadata.totalPaid),
     isPatron: booleanMetadata(metadata.isPatron),
     role: stringMetadata(metadata.role, 'USER'),
-    referralPoints: numberMetadata(metadata.referralPoints)
+    referralPoints: numberMetadata(metadata.referralPoints),
+    name: user?.fullName || user?.firstName || null,
+    username: user?.username || null
   } : null);
 
   const { isPatronGated, isPatronLike, canComment } = getCommentAccessState(userProfile, videoTier);
@@ -278,6 +284,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     postMutation.mutate({ text: newComment, parentId: replyTo || undefined });
   };
 
+  const getAuthorName = (comment: CommentView) => {
+    if (comment.authorId === userId && clerkDisplayName) return clerkDisplayName;
+    return comment.author?.username || comment.author?.name || comment.authorName || (language === 'pl' ? 'Użytkownik' : 'User');
+  };
+
+  const getAuthorAvatar = (comment: CommentView) => {
+    if (comment.authorId === userId && clerkImageUrl) return clerkImageUrl;
+    return comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email || comment.authorId || comment.authorName || 'Guest'}`;
+  };
+
   const hasVipLook = (author?: CommentView['author'] | null) => isPatronLikeUser(author);
 
   const avatarFrameClass = (vip: boolean, sizeClass: string) => cn(
@@ -344,7 +360,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           <div className="flex shrink-0 flex-col items-center gap-1">
             <div className={avatarFrameClass(isCurrentUserVip, "w-10 h-10 mt-1")}>
                <img
-                 src={userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
+                 src={clerkImageUrl || userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
                  alt="Avatar"
                  className="w-full h-full object-cover"
                />
@@ -423,7 +439,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                <div className="flex shrink-0 flex-col items-center gap-1">
                  <div className={avatarFrameClass(hasVipLook(comment.author), "w-9 h-9")}>
                     <img
-                      src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
+                      src={getAuthorAvatar(comment)}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
@@ -435,7 +451,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-1.5 leading-none">
-                        <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{comment.authorName}</span>
+                        <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{getAuthorName(comment)}</span>
                         <span className="text-[11px] text-[#606060] leading-none">
                             {isClient && comment.createdAt && !isNaN(new Date(comment.createdAt).getTime())
                             ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
@@ -495,7 +511,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     <div className="flex shrink-0 flex-col items-center gap-1">
                       <div className={avatarFrameClass(hasVipLook(reply.author), "w-6 h-6")}>
                          <img
-                           src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
+                           src={getAuthorAvatar(reply)}
                            alt="Avatar"
                            className="w-full h-full object-cover"
                          />
@@ -507,7 +523,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     <div className="flex-1 space-y-0.5 pt-0.5">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-1.5 leading-none">
-                          <span className="font-bold text-[#0f0f0f] text-[11px] leading-none">{reply.authorName}</span>
+                          <span className="font-bold text-[#0f0f0f] text-[11px] leading-none">{getAuthorName(reply)}</span>
                           <span className="text-[10px] text-[#606060] leading-none">
                             {isClient && reply.createdAt && !isNaN(new Date(reply.createdAt).getTime())
                               ? formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')

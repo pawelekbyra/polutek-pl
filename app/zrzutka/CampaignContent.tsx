@@ -1,6 +1,6 @@
 "use client";
 
-import { MIN_PAYMENT_BY_CURRENCY } from '@/lib/constants';
+import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../components/LanguageContext';
 import { Trophy, Users, Heart, Star, Gem, Check, ArrowRight, Loader2, ChevronDown, LogIn } from '../components/icons';
@@ -88,6 +88,7 @@ export default function CampaignContent({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | ''>(50);
+  const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>('PLN');
   const [activeTab, setActiveTab] = useState<'support' | 'comments'>('support');
 
   useEffect(() => {
@@ -119,21 +120,23 @@ export default function CampaignContent({
   const progress = Math.min(Math.round((initialRaised / goal) * 100), 100);
   const amountRemaining = Math.max(goal - initialRaised, 0);
 
-  const handleSupport = async (amount: number) => {
+  const availableCurrencies = [...SUPPORTED_CURRENCIES];
+  const minAmount = MIN_PAYMENT_BY_CURRENCY[selectedCurrency];
+
+  const handleSupport = async (amount: number | '') => {
     if (!userId) {
       alert(language === 'pl' ? "Zaloguj się, aby wesprzeć projekt." : "Please sign in to support the project.");
       openSignIn();
       return;
     }
 
-    const minAmount = MIN_PAYMENT_BY_CURRENCY.PLN;
     const numericAmount = Number(amount);
-    if (!Number.isFinite(numericAmount) || numericAmount < minAmount) {
-      alert(language === 'pl' ? `Wpisz kwotę minimum ${minAmount} PLN.` : `Enter at least ${minAmount} PLN.`);
+    if (amount === '' || !Number.isFinite(numericAmount) || numericAmount < minAmount) {
+      alert(language === 'pl' ? `Wpisz kwotę minimum ${minAmount} ${selectedCurrency}.` : `Enter at least ${minAmount} ${selectedCurrency}.`);
       return;
     }
 
-    if (amount >= 20 && !userProfile?.isPatron) {
+    if (numericAmount >= minAmount && !userProfile?.isPatron) {
       const msg = language === 'pl'
         ? "Świetnie! Ta wpłata odblokuje Ci dożywotni status Patrona."
         : "Great! This donation will unlock lifetime Patron status.";
@@ -147,7 +150,7 @@ export default function CampaignContent({
       creatorId?: string;
     } = {
       amountMinor: Math.round(numericAmount * 100),
-      currency: 'pln',
+      currency: selectedCurrency,
       title: `Wsparcie projektu: I rise money for my secret project`,
     };
 
@@ -157,7 +160,7 @@ export default function CampaignContent({
 
     try {
       setIsLoading(true);
-      setSelectedAmount(amount);
+      setSelectedAmount(numericAmount);
 
       const response = await fetch('/api/checkout/create-intent', {
           method: 'POST',
@@ -267,27 +270,36 @@ export default function CampaignContent({
 
                             <div className="space-y-4 pt-4 border-t border-neutral-100">
                                 <div className="relative group">
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                                    <span className="text-sm font-semibold text-neutral-400">PLN</span>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <select
+                                      value={selectedCurrency}
+                                      onChange={(e) => setSelectedCurrency(e.target.value as SupportedCurrency)}
+                                      className="bg-transparent border-none pr-6 pl-2 text-sm font-semibold text-neutral-400 outline-none cursor-pointer appearance-none"
+                                      aria-label="Wybierz walutę"
+                                    >
+                                      {availableCurrencies.map((currency) => (
+                                        <option key={currency} value={currency}>{currency}</option>
+                                      ))}
+                                    </select>
                                 </div>
                                 <input
                                     type="number"
-                                    min="10"
+                                    min={minAmount}
                                     step="1"
                                     value={selectedAmount}
-                                    onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                    onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : Number(e.target.value))}
                                     className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-3 px-4 text-lg font-semibold text-neutral-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-                                    placeholder="10"
+                                    placeholder={String(minAmount)}
                                 />
                                 </div>
-                                {selectedAmount !== '' && selectedAmount < 20 && !userProfile?.isPatron && (
+                                {selectedAmount !== '' && selectedAmount < minAmount && !userProfile?.isPatron && (
                                   <p className="text-[10px] text-amber-600 font-medium px-1">
-                                    Wpłać min. 20 PLN, aby zostać Patronem.
+                                    Wpłać min. {minAmount} {selectedCurrency}, aby zostać Patronem.
                                   </p>
                                 )}
                                 <button
                                 onClick={() => handleSupport(Number(selectedAmount))}
-                                disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}
+                                disabled={isLoading || selectedAmount === '' || Number(selectedAmount) < minAmount}
                                 className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold text-sm uppercase tracking-wider transition-colors hover:bg-blue-700 disabled:opacity-50"
                                 >
                                 {isLoading ? <Loader2 className="animate-spin mx-auto" /> : 'WESPRZYJ PROJEKT'}
@@ -303,7 +315,7 @@ export default function CampaignContent({
                                 <div key={reward.id} className="group bg-white border border-neutral-200 p-5 shadow-sm rounded-xl hover:border-blue-600 transition-all">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="p-2 bg-neutral-50 rounded-lg border border-neutral-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">{reward.icon}</div>
-                                        <span className="text-xl font-bold">{reward.amount} <span className="text-xs font-normal text-neutral-400">PLN</span></span>
+                                        <span className="text-xl font-bold">{reward.amount} <span className="text-xs font-normal text-neutral-400">{selectedCurrency}</span></span>
                                     </div>
                                     <h3 className="text-base font-bold tracking-tight mb-2 group-hover:text-blue-600 transition-colors">{reward.title}</h3>
                                     <p className="text-xs text-neutral-500 mb-6 leading-relaxed">{reward.description}</p>
@@ -354,27 +366,36 @@ export default function CampaignContent({
 
                   <div className="space-y-4 pt-4 border-t border-neutral-100">
                     <div className="relative group">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-sm font-semibold text-neutral-400">PLN</span>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <select
+                          value={selectedCurrency}
+                          onChange={(e) => setSelectedCurrency(e.target.value as SupportedCurrency)}
+                          className="bg-transparent border-none pr-6 pl-2 text-sm font-semibold text-neutral-400 outline-none cursor-pointer appearance-none"
+                          aria-label="Wybierz walutę"
+                        >
+                          {availableCurrencies.map((currency) => (
+                            <option key={currency} value={currency}>{currency}</option>
+                          ))}
+                        </select>
                       </div>
                       <input
                         type="number"
-                        min="10"
+                        min={minAmount}
                         step="1"
                         value={selectedAmount}
-                        onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : parseInt(e.target.value))}
+                        onChange={(e) => setSelectedAmount(e.target.value === '' ? '' : Number(e.target.value))}
                         className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-3 px-4 text-lg font-semibold text-neutral-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-                        placeholder="10"
+                        placeholder={String(minAmount)}
                       />
                     </div>
-                    {selectedAmount !== '' && selectedAmount < 20 && !userProfile?.isPatron && (
+                    {selectedAmount !== '' && selectedAmount < minAmount && !userProfile?.isPatron && (
                       <p className="text-[10px] text-amber-600 font-medium px-1">
-                        Wpłać min. 20 PLN, aby zostać Patronem.
+                        Wpłać min. {minAmount} {selectedCurrency}, aby zostać Patronem.
                       </p>
                     )}
                     <button
                       onClick={() => handleSupport(Number(selectedAmount))}
-                      disabled={isLoading || !selectedAmount || Number(selectedAmount) < 10}
+                      disabled={isLoading || selectedAmount === '' || Number(selectedAmount) < minAmount}
                       className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold text-sm uppercase tracking-wider transition-colors hover:bg-blue-700 disabled:opacity-50"
                     >
                       {isLoading ? <Loader2 className="animate-spin mx-auto" /> : 'WESPRZYJ PROJEKT'}
@@ -390,7 +411,7 @@ export default function CampaignContent({
                      <div key={reward.id} className="group bg-white border border-neutral-200 p-5 shadow-sm rounded-xl hover:border-blue-600 transition-all">
                         <div className="flex justify-between items-start mb-4">
                            <div className="p-2 bg-neutral-50 rounded-lg border border-neutral-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">{reward.icon}</div>
-                           <span className="text-xl font-bold">{reward.amount} <span className="text-xs font-normal text-neutral-400">PLN</span></span>
+                           <span className="text-xl font-bold">{reward.amount} <span className="text-xs font-normal text-neutral-400">{selectedCurrency}</span></span>
                         </div>
                         <h3 className="text-base font-bold tracking-tight mb-2 group-hover:text-blue-600 transition-colors">{reward.title}</h3>
                         <p className="text-xs text-neutral-500 mb-6 leading-relaxed">{reward.description}</p>
@@ -416,7 +437,7 @@ export default function CampaignContent({
                    <h1 className="text-4xl font-bold tracking-tighter mb-8">Zostań <br /> Mecenasem</h1>
                    <div className="flex items-baseline gap-2 border-b border-neutral-200 pb-6 mb-6">
                       <span className="text-5xl font-bold tracking-tighter">{selectedAmount}</span>
-                      <span className="text-xl font-medium text-neutral-400">PLN</span>
+                      <span className="text-xl font-medium text-neutral-400">{selectedCurrency}</span>
                    </div>
                    <p className="text-base text-neutral-500 italic">&quot;I rise money for my secret project&quot;</p>
                 </div>

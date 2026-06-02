@@ -3,9 +3,25 @@ import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
 import { writeAuditLog } from './audit.service';
-import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN, DISPLAY_EUR_TO_PLN_RATE } from '../constants';
+import { DISPLAY_EUR_TO_PLN_RATE, MIN_PATRON_BY_CURRENCY, type SupportedCurrency } from '../constants';
 import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
 
+
+
+export function getPatronThresholdMinor(currency: string) {
+  const normalizedCurrency = currency.toUpperCase() as SupportedCurrency;
+  const threshold = MIN_PATRON_BY_CURRENCY[normalizedCurrency];
+
+  if (!threshold) {
+    throw new Error(`UNSUPPORTED_PATRON_CURRENCY: ${currency}`);
+  }
+
+  return threshold * 100;
+}
+
+export function paymentQualifiesForPatron(amountMinor: number, currency: string) {
+  return amountMinor >= getPatronThresholdMinor(currency);
+}
 
 type RefundCalculationInput = {
   amountMinor: number;
@@ -464,7 +480,7 @@ export class PaymentService {
             throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${updatedPayment.currency}, got ${intent.currency}`);
         }
 
-        const thresholdMinor = updatedPayment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
+        const thresholdMinor = getPatronThresholdMinor(updatedPayment.currency);
         const existingUser = await tx.user.findUnique({
             where: { id: userId },
             include: { paymentTotals: true }
