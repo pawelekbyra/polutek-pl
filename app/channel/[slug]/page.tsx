@@ -1,7 +1,6 @@
 import React from 'react';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
-import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
@@ -10,8 +9,7 @@ import { ContentService } from '@/lib/services/content.service';
 import { UserService } from '@/lib/services/user.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import SubscribeButton from '@/app/components/SubscribeButton';
-import BrandName from '@/app/components/BrandName';
-import { cn, formatCount } from '@/lib/utils';
+import { formatCount } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,10 +34,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
   const userDb = userId ? await UserService.getOrCreateUser(userId).catch(() => null) : null;
   const isSubscribed = (userId && creator) ? await UserService.isSubscribed(userId, creator.id).catch(() => false) : false;
 
-  // Check if current user is the owner of this channel
-  const isOwner = userDb && userDb.id === creator.userId;
-  const ownerAvatar = isOwner ? userDb.imageUrl : (creator.imageUrl || null);
-  const ownerEmail = isOwner ? userDb.email : null;
+  const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
     ...v,
@@ -47,7 +42,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
       id: creator.id,
       name: creator.name,
       slug: creator.slug,
-      imageUrl: ownerAvatar,
+      imageUrl: channelAvatar,
       subscribersCount: creator.subscribersCount || 0
     }
   }));
@@ -80,13 +75,13 @@ export default async function ChannelPage({ params }: { params: { slug: string }
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="w-24 h-24 md:w-40 md:h-40 rounded-full border border-neutral-200 overflow-hidden bg-[#1a1a1a]/5 shrink-0 shadow-sm">
              <img
-               src={ownerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerEmail || displayName}`}
+               src={channelAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
                alt={displayName}
                className="w-full h-full object-cover"
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="text-[36px] font-black leading-tight tracking-tight uppercase mb-1">
+            <h1 className="text-[36px] font-semibold leading-tight tracking-tight mb-1">
               {displayName}
             </h1>
             <div className="text-[14px] text-[#606060] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
@@ -127,6 +122,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
               isLoggedIn={!!userId}
               isPatron={userDb?.isPatron}
               referralPoints={userDb?.referralPoints}
+              role={userDb?.role}
             />
           ))}
         </div>

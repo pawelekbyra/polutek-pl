@@ -17,9 +17,10 @@ interface ChannelVideoCardProps {
     isLoggedIn: boolean;
     isPatron?: boolean;
     referralPoints?: number;
+    role?: string;
 }
 
-export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPatron, referralPoints = 0 }: ChannelVideoCardProps) {
+export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPatron, referralPoints = 0, role }: ChannelVideoCardProps) {
     const { t } = useLanguage();
     const [mounted, setMounted] = useState(false);
 
@@ -27,7 +28,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
         setMounted(true);
     }, []);
 
-    const isPatron = propIsPatron || referralPoints >= 5;
+    const isPatron = propIsPatron || referralPoints >= 5 || role === 'ADMIN';
 
     const hasAccess = video.tier === 'PUBLIC' ||
                       (video.tier === 'LOGGED_IN' && isLoggedIn) ||

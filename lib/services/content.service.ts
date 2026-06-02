@@ -49,6 +49,16 @@ type PublicCreatorInput = {
   subscribersCount?: number | null;
 };
 
+function withResolvedChannelAvatar<T extends PublicCreatorInput>(creator: T, adminImageUrl?: string | null): T {
+  const imageUrl = adminImageUrl || creator.user?.imageUrl || creator.imageUrl || null;
+
+  return {
+    ...creator,
+    imageUrl,
+    user: creator.user ? { ...creator.user, imageUrl } : creator.user,
+  };
+}
+
 type PublicVideoInput = {
   id: string;
   creatorId?: string;
@@ -143,7 +153,7 @@ export class ContentService {
         id: creator.id,
         name: creator.name,
         slug: creator.slug,
-        imageUrl: creator.imageUrl || creator.user?.imageUrl || null,
+        imageUrl: creator.user?.imageUrl || creator.imageUrl || null,
         subscribersCount: creator.subscribersCount || 0,
     };
   }
@@ -202,7 +212,9 @@ export class ContentService {
 
       if (slug === 'polutek' && creator) {
         // Map data strictly to prevent leakage
-        const videos = (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator }));
+        const videos = (creator.videos || []).map((v) =>
+          this.mapToPublicVideoDTO({ ...v, creator: withResolvedChannelAvatar(creator, adminData?.imageUrl) })
+        );
 
         return {
             id: creator.id,
@@ -242,7 +254,7 @@ export class ContentService {
           bio: creator.bio,
           userId: creator.userId,
           subscribersCount: creator.subscribersCount || 0,
-          videos: (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator }))
+          videos: (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator: withResolvedChannelAvatar(creator) }))
       };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
@@ -336,7 +348,13 @@ export class ContentService {
             .filter(v => (v.tier as string) !== 'ADMIN')
             .map(v => this.mapToPublicVideoDTO(v));
       }
-      return videos.map(v => this.mapToPublicVideoDTO(v));
+      const adminData = videos.some(v => v.creator?.slug === 'polutek') ? await this.getAdminData() : null;
+      return videos.map(v => this.mapToPublicVideoDTO({
+        ...v,
+        creator: v.creator
+          ? withResolvedChannelAvatar(v.creator, v.creator.slug === 'polutek' ? adminData?.imageUrl : null)
+          : v.creator
+      }));
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (flags.demoFallbacks) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
@@ -397,7 +415,14 @@ export class ContentService {
         const fallback = INITIAL_VIDEOS.find(v => v.tier === AccessTier.PUBLIC && v.status === VideoStatus.PUBLISHED) || INITIAL_VIDEOS[0];
         return this.mapToPublicVideoDTO(fallback);
       }
-      return selectedVideo ? this.mapToPublicVideoDTO(selectedVideo) : null;
+      if (!selectedVideo) return null;
+      const adminData = selectedVideo.creator?.slug === 'polutek' ? await this.getAdminData() : null;
+      return this.mapToPublicVideoDTO({
+        ...selectedVideo,
+        creator: selectedVideo.creator
+          ? withResolvedChannelAvatar(selectedVideo.creator, adminData?.imageUrl)
+          : selectedVideo.creator
+      });
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);

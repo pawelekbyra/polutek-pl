@@ -291,8 +291,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div className="space-y-8 max-w-4xl bg-white px-6 pb-6 pt-4 md:px-8 md:pb-8 md:pt-5 rounded-2xl border border-neutral-200 shadow-sm my-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+    <div className="space-y-7 max-w-4xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
          <div className="flex items-center gap-3 order-2 sm:order-1">
             <MessageSquare size={20} className="text-blue-600" />
             <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
@@ -369,7 +369,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 onChange={(e) => setNewComment(e.target.value)}
                 onFocus={() => setIsInputFocused(true)}
                 placeholder={replyTo ? t.addReply : t.addComment}
-                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-1 min-h-[1.5rem]"
+                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
               />
             )}
           </div>
@@ -432,7 +432,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   <button
                     onClick={() => userProfile && likeMutation.mutate(comment.id)}
                     className={cn(
-                      "flex items-center gap-1 transition-all group",
+                      "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
                       comment.isLiked ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]"
                     )}
                   >
@@ -442,7 +442,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   <button
                     onClick={() => userProfile && dislikeMutation.mutate(comment.id)}
                     className={cn(
-                        "flex items-center gap-1 transition-all group",
+                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
                         comment.isDisliked ? "text-black" : "text-[#606060] hover:text-[#0f0f0f]"
                     )}
                   >
@@ -499,7 +499,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         <button
                           onClick={() => userProfile && likeMutation.mutate(reply.id)}
                           className={cn(
-                            "flex items-center gap-1 transition-all group",
+                            "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
                             reply.isLiked ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]"
                           )}
                         >
@@ -509,7 +509,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         <button
                           onClick={() => userProfile && dislikeMutation.mutate(reply.id)}
                           className={cn(
-                              "flex items-center gap-1 transition-all group",
+                              "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
                               reply.isDisliked ? "text-black" : "text-[#606060] hover:text-[#0f0f0f]"
                           )}
                         >
