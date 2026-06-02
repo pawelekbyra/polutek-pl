@@ -17,9 +17,17 @@ type CommentAuthor = {
   username?: string | null;
 };
 
+function isGeneratedClerkUsername(value?: string | null) {
+  return /^user_[a-z0-9]+$/i.test(value?.trim() || '');
+}
+
 function getCommentAuthorName(author?: CommentAuthor | null) {
+  const rawName = author?.name?.trim();
+  const name = isGeneratedClerkUsername(rawName) ? null : rawName;
+  const username = author?.username?.trim();
   const fallbackFromEmail = author?.email?.split('@')[0]?.trim();
-  return author?.username || author?.name || fallbackFromEmail || "Użytkownik";
+
+  return name || (isGeneratedClerkUsername(username) ? null : username) || fallbackFromEmail || "Użytkownik";
 }
 
 const postCommentSchema = z.object({
@@ -50,15 +58,17 @@ export async function GET(request: NextRequest) {
   }
 
   let userId: string | null = null;
+  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
       const authData = await auth();
       userId = authData.userId;
+      sessionClaims = authData.sessionClaims;
   } catch {}
 
   try {
     let internalUserId = null;
     if (userId) {
-        const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+        const user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
         internalUserId = user?.id ?? null;
     }
 
