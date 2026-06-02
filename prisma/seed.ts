@@ -2,7 +2,7 @@ import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/clien
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawelek.byra@gmail.com";
 
 async function main() {
   console.log('Starting seeding for Paweł Perfect MVP...');
