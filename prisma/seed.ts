@@ -46,7 +46,7 @@ async function main() {
   // 3. Define Videos
   const videosData = [
     {
-      title: 'Wuthering Heights - Kate Bush Cover',
+      title: "You don't have the guts to log in",
       slug: 'wuthering-heights-cover',
       description: 'Moja interpretacja klasycznego utworu Kate Bush. Nagrane w jednym ujęciu, aby oddać surowość i emocje tej kompozycji.',
       videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4",
@@ -59,7 +59,7 @@ async function main() {
       dislikesCount: 120,
     },
     {
-      title: 'Historia powstania Osady Natury "Zew" w gruncie ruchu Stefan',
+      title: 'Secret Project',
       slug: 'historia-powstania-osady',
       description: 'Materiał o historii powstania osady.',
       videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/historia-powstania-osady-natury-zew-w-gruncie-ruchu-stefan.mp4",
@@ -72,7 +72,7 @@ async function main() {
       dislikesCount: 50,
     },
     {
-      title: 'Intencja - świadomość sprawczości - Michał Kiciński Q&A',
+      title: 'Udało się!!!',
       slug: 'intencja-swiadomosc-sprawczosci',
       description: 'Q&A z Michałem Kicińskim z Festiwalu Wibracje.',
       videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/intencja-swiadomosc-sprawczosci-michal-kicinski-qa-festiwal-wibracje.mp4",

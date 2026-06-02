@@ -37,7 +37,7 @@ type CommentView = {
   id: string;
   authorId?: string;
   authorName?: string;
-  author?: { imageUrl?: string | null; slug?: string | null; email?: string | null } | null;
+  author?: { imageUrl?: string | null; slug?: string | null; email?: string | null; name?: string | null; username?: string | null } | null;
   text: string;
   createdAt?: string | Date;
   isLiked?: boolean;
@@ -52,6 +52,10 @@ type CommentsPage = {
 };
 
 type CommentsData = InfiniteData<CommentsPage>;
+
+function getAvatarSeed(comment: CommentView) {
+  return comment.author?.email || comment.authorName || comment.authorId || comment.id;
+}
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -78,7 +82,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
-  const userProfile = propUserProfile || (isSignedIn ? {
+  const clerkUserProfile = isSignedIn ? {
     id: userId!,
     email: user?.primaryEmailAddress?.emailAddress || '',
     imageUrl: user?.imageUrl || null,
@@ -86,7 +90,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     isPatron: booleanMetadata(metadata.isPatron),
     role: stringMetadata(metadata.role, 'USER'),
     referralPoints: numberMetadata(metadata.referralPoints)
-  } : null);
+  } : null;
+  const userProfile = (propUserProfile || clerkUserProfile)
+    ? {
+        ...(clerkUserProfile || {}),
+        ...(propUserProfile || {}),
+        email: propUserProfile?.email || clerkUserProfile?.email || '',
+        imageUrl: clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
+      }
+    : null;
 
   const isPatronGated = videoTier === "PATRON";
   const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN';
@@ -400,7 +412,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <div className="flex gap-3 items-start group/comment">
                <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
                   <img
-                    src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
+                    src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
@@ -467,7 +479,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
                     <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
                        <img
-                         src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
+                         src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`}
                          alt="Avatar"
                          className="w-full h-full object-cover"
                        />

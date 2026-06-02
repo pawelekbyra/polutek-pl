@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { currentUser } from '@clerk/nextjs/server';
+import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
@@ -12,6 +12,11 @@ function stringClaim(claims: AuthSessionClaims, ...keys: string[]) {
     if (typeof value === 'string' && value.trim()) return value.trim();
   }
   return null;
+}
+
+function emailLocalPart(email: string | null) {
+  const localPart = email?.split('@')[0]?.trim();
+  return localPart || null;
 }
 
 function metadataClaim(claims: AuthSessionClaims, metadataKey: 'publicMetadata' | 'unsafeMetadata', key: string) {
@@ -33,13 +38,16 @@ export class UserService {
    */
   static async getOrCreateUser(clerkUserId: string) {
     try {
-      const clerkUser = await currentUser();
+      let clerkUser = await currentUser();
 
-      // Fallback if Clerk API is unavailable but we have an ID
       if (!clerkUser || clerkUser.id !== clerkUserId) {
+        try {
+          clerkUser = await clerkClient.users.getUser(clerkUserId);
+        } catch (apiError) {
           const local = await prisma.user.findUnique({ where: { id: clerkUserId } });
           if (local) return local;
-          if (!clerkUser) throw new Error("CLERK_USER_NOT_FOUND");
+          if (!clerkUser) throw apiError instanceof Error ? apiError : new Error("CLERK_USER_NOT_FOUND");
+        }
       }
 
       const email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
@@ -150,15 +158,26 @@ export class UserService {
     }
 
     const existing = await prisma.user.findUnique({ where: { id: userId } });
-    if (existing) return existing;
 
-    const email = stringClaim(sessionClaims, 'email', 'primary_email_address', 'preferred_username')
+    const email = stringClaim(sessionClaims, 'email', 'primary_email_address', 'email_address')
+      || existing?.email
       || `${userId}@clerk.local`;
-    const firstName = stringClaim(sessionClaims, 'first_name', 'given_name');
-    const lastName = stringClaim(sessionClaims, 'last_name', 'family_name');
-    const name = stringClaim(sessionClaims, 'name') || [firstName, lastName].filter(Boolean).join(' ') || null;
-    const imageUrl = stringClaim(sessionClaims, 'picture', 'image_url');
-    const username = stringClaim(sessionClaims, 'username');
+    const firstName = stringClaim(sessionClaims, 'first_name', 'given_name', 'firstName');
+    const lastName = stringClaim(sessionClaims, 'last_name', 'family_name', 'lastName');
+    const username = stringClaim(sessionClaims, 'username', 'preferred_username')
+      || metadataClaim(sessionClaims, 'publicMetadata', 'username')
+      || metadataClaim(sessionClaims, 'unsafeMetadata', 'username')
+      || existing?.username
+      || null;
+    const isPlaceholderEmail = email.endsWith('@clerk.local');
+    const name = stringClaim(sessionClaims, 'name', 'full_name')
+      || [firstName, lastName].filter(Boolean).join(' ')
+      || username
+      || existing?.name
+      || (isPlaceholderEmail ? null : emailLocalPart(email));
+    const imageUrl = stringClaim(sessionClaims, 'picture', 'image_url', 'imageUrl', 'avatar_url', 'avatarUrl')
+      || existing?.imageUrl
+      || null;
     const language = metadataClaim(sessionClaims, 'publicMetadata', 'language')
       || metadataClaim(sessionClaims, 'unsafeMetadata', 'language')
       || stringClaim(sessionClaims, 'locale')

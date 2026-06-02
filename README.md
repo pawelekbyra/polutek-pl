@@ -91,7 +91,7 @@ The homepage reads real `PUBLISHED` videos from the database. Demo fallback data
    # 3. Run the content fix script to ensure MVP branding
    npm run content:fix:polutek
    ```
-   The seed creates the primary `polutek` creator named "Paweł Perfect" and sets "Wuthering Heights" as the main featured video using its R2 URL.
+   The seed creates the primary `polutek` creator named "Paweł Perfect" and sets the main featured video using its R2 URL.
 
 2. Add a video in the admin panel with status `PUBLISHED`; the backend sets `publishedAt` automatically and attaches it to the approved creator.
 3. For local/demo development only, explicitly opt in to fallback content:
