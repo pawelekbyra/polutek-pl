@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Hero from './Hero';
-import VideoPlaylist from './VideoPlaylist';
 import PremiumWrapper from './PremiumWrapper';
 import VideoPlayer from './VideoPlayer';
 import EmbeddedComments from './comments/EmbeddedComments';
@@ -172,15 +171,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const patronPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
   const searchPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
 
-  const donationSection = !searchQuery ? (
-    <div className="pt-6 pb-0">
-        <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-        </div>
-        <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
-    </div>
-  ) : null;
-
   const playlistItems = (
     <>
       {isPatronViewer && !searchQuery ? (
@@ -202,9 +192,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             </div>
           )}
 
-          {/* For non-patrons, the tip gate should appear before locked patron materials. */}
-          {donationSection}
-
           {/* SECTION 2: PATRON ZONE */}
           {!searchQuery && patronVideos.length > 0 && (
             <div className="pt-6 space-y-2">
@@ -219,9 +206,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
       {/* Search results fallback */}
       {searchQuery && searchPlaylistVideos.map(renderVideoItem)}
-
-      {/* Patron viewers keep the tip gate under the full materials playlist. */}
-      {isPatronViewer && donationSection}
     </>
   );
 

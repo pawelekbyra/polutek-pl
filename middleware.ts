@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/zrzutka',
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',

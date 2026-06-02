@@ -18,7 +18,6 @@
 - [ ] `RESEND_API_KEY`
 - [ ] `EMAIL_FROM`
 - [ ] `ENABLE_DEMO_FALLBACKS`
-- [ ] `ENABLE_CAMPAIGN_PAGE`
 
 ## Database
 - [ ] `npx prisma generate`
@@ -36,7 +35,7 @@
 ## Payments
 - [ ] Stripe webhook endpoint configured
 - [ ] Test payment creates/updates Payment
-- [ ] Qualifying donation grants patron
+- [ ] Qualifying payment grants patron
 - [ ] Failed payment does not grant patron
 
 ## Final smoke test

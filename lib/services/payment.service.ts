@@ -420,7 +420,7 @@ export class PaymentService {
   }
 
   private static async sendPaymentEmailSafely(
-    type: 'DONATION' | 'PATRON',
+    type: 'PAYMENT' | 'PATRON',
     email: string,
     amount: number,
     currency: string,
@@ -429,8 +429,8 @@ export class PaymentService {
     paymentId: string
   ): Promise<void> {
     try {
-      if (type === 'DONATION') {
-        await EmailService.sendDonationThankYouEmail(email, amount, currency, language);
+      if (type === 'PAYMENT') {
+        await EmailService.sendPaymentThankYouEmail(email, amount, currency, language);
       } else {
         await EmailService.sendBecomePatronEmail(email, language);
       }
@@ -442,7 +442,7 @@ export class PaymentService {
         targetId: paymentId,
         actorUserId: userId,
         metadata: {
-          emailType: type === 'DONATION' ? "donation_thank_you" : "become_patron",
+          emailType: type === 'PAYMENT' ? "payment_thank_you" : "become_patron",
           error: error instanceof Error ? error.message : String(error),
         },
       });
@@ -500,7 +500,7 @@ export class PaymentService {
             }
         });
 
-        // Patron status is granted by a single qualifying donation, not by cumulative lifetime total.
+        // Patron status is granted by a single qualifying payment, not by cumulative lifetime total.
         const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
         const becamePatronNow = !existingUser.isPatron && grantsPatron;
 
@@ -545,7 +545,7 @@ export class PaymentService {
 
       // Emails are side effects, send them safely outside transaction
       await this.sendPaymentEmailSafely(
-        'DONATION',
+        'PAYMENT',
         user.email,
         amount,
         intent.currency.toUpperCase(),

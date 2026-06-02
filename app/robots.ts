@@ -10,7 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/admin/',
         '/api/',
-        '/zrzutka/',
       ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,

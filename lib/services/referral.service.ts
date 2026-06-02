@@ -81,7 +81,7 @@ export class ReferralService {
                     userId: referrerId,
                     source: PatronGrantSource.REFERRAL,
                     referralId: referral.id,
-                    reason: 'Referral goal reached (5)'
+                    reason: 'Referral threshold reached (5)'
                 }
             });
 

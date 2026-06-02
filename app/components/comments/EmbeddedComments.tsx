@@ -384,14 +384,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               </div>
             )}
             {!canComment ? (
-              <div className="w-full rounded-xl border border-dashed border-amber-200 bg-amber-50/60 px-4 py-3 min-h-[2.75rem] flex items-center justify-center">
+              <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
                  {isPatronGated && !isPatronLike ? (
-                    <a
-                      href="#donations"
-                      className="text-[14px] font-black text-amber-700 underline underline-offset-4 hover:opacity-80 transition-all text-center"
-                    >
-                      {language === 'pl' ? 'Zostań patronem, aby skomentować ten film.' : t.becomePatronToComment}
-                    </a>
+                    <span className="text-[14px] font-bold text-neutral-500 text-center">
+                      {language === 'pl' ? 'Tylko patroni mogą komentować ten film.' : 'Only patrons can comment on this video.'}
+                    </span>
                   ) : (
                     <SignInButton mode="modal">
                       <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">

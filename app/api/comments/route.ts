@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, VideoStatus } from '@prisma/client';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
@@ -44,17 +44,22 @@ export async function GET(request: NextRequest) {
       userId = authData.userId;
   } catch {}
 
-  // Access control check
-  const decision = await AccessPolicy.canViewVideo(userId, videoId);
-  if (!decision.allowed) {
-      return NextResponse.json({
-          success: false,
-          message: decision.reason,
-          requiredTier: decision.requiredTier
-      }, { status: 403 });
-  }
-
   try {
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { status: true, publishedAt: true },
+    });
+
+    const isPublished = video?.status === VideoStatus.PUBLISHED &&
+      (!video.publishedAt || video.publishedAt <= new Date());
+
+    if (!video || !isPublished) {
+      return NextResponse.json({
+        success: false,
+        message: 'NOT_FOUND',
+      }, { status: 404 });
+    }
+
     let internalUserId = null;
     if (userId) {
         const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });

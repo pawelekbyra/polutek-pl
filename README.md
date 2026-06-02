@@ -1,17 +1,17 @@
-# Paweł Perfect - Private VOD & Donation Platform
+# Paweł Perfect - Private VOD & Patron Platform
 
 ## Important for AI coding agents
 Before changing code, read `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, and `DEPLOY_CHECKLIST.md`.
 This project should be developed according to product behavior, not only technical stack.
 
-A modern, responsive media platform for exclusive content, built with Next.js 14, Tailwind CSS, and Prisma. This project is designed with a professional "YouTube-style" aesthetic and features a permanent content locking mechanism for supporters based on lifetime donation value.
+A modern, responsive media platform for exclusive content, built with Next.js 14, Tailwind CSS, and Prisma. This project is designed with a professional "YouTube-style" aesthetic and features a permanent content locking mechanism for supporters based on lifetime payment value.
 
 ## Project Vision
-Paweł Perfect is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by leaving a voluntary donation.
+Paweł Perfect is a private service. It serves as a central hub for exclusive media where users can gain permanent access to restricted "Materials" by becoming a patron.
 
 ### Key Concept: Reward for Support
-- **Not a Subscription**: We don't sell access as a service. Instead, we accept voluntary donations and grant permanent access as a token of gratitude.
-- **Patron Status**: Patron status is currently granted by a single qualifying donation. Payment totals are tracked per currency (`UserPaymentTotal`) which is the primary source of truth for total value.
+- **Not a Subscription**: We don't sell access as a service. Instead, we accept patron payments and grant permanent access as a token of gratitude.
+- **Patron Status**: Patron status is currently granted by a single qualifying payment. Payment totals are tracked per currency (`UserPaymentTotal`) which is the primary source of truth for total value.
 - **Public Discovery**: One primary featured video is always public, serving as a gateway to the platform.
 
 ## Architecture & Scalability
@@ -115,11 +115,11 @@ npm test
 6. [ ] `PATRON` tier videos show paywall for regular logged-in users.
 7. [ ] `PATRON` tier videos are accessible to patrons.
 8. [ ] Stripe webhook correctly fulfills payments and grants Patron status.
-9. [ ] Reaching the referral goal (5 points) grants Patron status and syncs to Clerk.
+9. [ ] Reaching the referral threshold (5 points) grants Patron status and syncs to Clerk.
 10. [ ] Webhook idempotency prevents double-processing of Stripe events.
 
 ## Legal
-The platform operates on a donation basis. All "Tips" or "Donations" are voluntary contributions to the creator, not payments for services or products. Detailed terms are available on the `/regulamin` page.
+The platform operates on a patron basis. All patron payments are voluntary contributions to the creator, not payments for services or products. Detailed terms are available on the `/regulamin` page.
 
 ## Production hardening requirements
 
@@ -163,5 +163,3 @@ npm run build
 ```
 
 Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, writable Redis REST URL/token (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` or Vercel `KV_REST_API_URL`/`KV_REST_API_TOKEN`), exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.
-
-Before promoting the deployment, verify `/api/media/:videoId` and `/api/checkout/create-intent` do not return 500 responses, and complete a smoke test that opens Stripe Checkout from the campaign page.

@@ -202,12 +202,12 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                     </span>
 
                     <div className={cn(isThumbnail && "invisible")}>
-                      <a href="#donations" className="group flex flex-col items-center gap-2 mt-6 md:mt-10">
-                         <div className="h-px w-16 md:w-24 bg-white/10 group-hover:w-48 transition-all duration-500" />
-                         <span className="text-[8px] md:text-[10px] font-brand font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-white/30 group-hover:text-amber-500 transition-colors">
-                            {t.paywallUnlock}
+                      <div className="flex flex-col items-center gap-2 mt-6 md:mt-10">
+                         <div className="h-px w-16 md:w-24 bg-white/10" />
+                         <span className="text-[8px] md:text-[10px] font-brand font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-white/30">
+                            {t.becomePatron}
                          </span>
-                      </a>
+                      </div>
                     </div>
                 </div>
               ) : (
