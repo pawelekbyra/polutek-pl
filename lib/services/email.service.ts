@@ -49,16 +49,6 @@ const EMAIL_DICTIONARY: Record<string, {
       html: '<h1>Account Security</h1><p>Your password has just been updated. If this was not you, please contact us immediately.</p>'
     }
   },
-  THANK_YOU_DONATION: {
-    pl: {
-      subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
-      html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>'
-    },
-    en: {
-      subject: 'Thank you for your support! - POLUTEK.PL',
-      html: '<h1>Big thanks!</h1><p>We received your tip of {{amount}} {{currency}}. Your support allows us to create more content!</p>'
-    }
-  },
   BECOME_PATRON: {
     pl: {
       subject: 'Zostałeś Patronem! - POLUTEK.PL',
@@ -143,13 +133,6 @@ export class EmailService {
 
   static async sendPasswordChangedEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {
     await this.sendEmail(toEmail, 'PASSWORD_CHANGED', language);
-  }
-
-  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'THANK_YOU_DONATION', language, {
-      amount: amount.toFixed(2),
-      currency: currency
-    });
   }
 
   static async sendBecomePatronEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {

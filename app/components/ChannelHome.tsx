@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Hero from './Hero';
-import VideoPlaylist from './VideoPlaylist';
 import PremiumWrapper from './PremiumWrapper';
 import VideoPlayer from './VideoPlayer';
 import EmbeddedComments from './comments/EmbeddedComments';
@@ -158,70 +157,37 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const sidebarVideos = sortedVideos.filter(v =>
     v.status === 'PUBLISHED' && ['PUBLIC', 'LOGGED_IN', 'PATRON'].includes(v.tier)
   );
-  const moveSelectedVideoFirst = (videos: PublicVideoDTO[]) => {
-    if (!selectedVideo) return videos;
-    return [
-      ...videos.filter(v => v.id === selectedVideo.id),
-      ...videos.filter(v => v.id !== selectedVideo.id),
-    ];
-  };
-  const loggedInVideo = sidebarVideos.find(v => v.tier === 'LOGGED_IN');
-  const publicVideo = sidebarVideos.find(v => v.tier === 'PUBLIC');
-  const freeMaterialVideos = [publicVideo, loggedInVideo].filter((video): video is PublicVideoDTO => Boolean(video));
+  const freeMaterialVideos = [
+    sidebarVideos.find(v => v.tier === 'PUBLIC'),
+    sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
+  ].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
-  const patronPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
-  const searchPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
-
-  const donationSection = !searchQuery ? (
-    <div className="pt-6 pb-0">
-        <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-        </div>
-        <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
-    </div>
-  ) : null;
 
   const playlistItems = (
     <>
-      {isPatronViewer && !searchQuery ? (
+      {/* SECTION 1: FREE MATERIALS */}
+      {!searchQuery && freeMaterialVideos.length > 0 && (
         <div className="space-y-2">
           <div className="pb-1 border-b border-neutral-100">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
           </div>
-          {patronPlaylistVideos.map(renderVideoItem)}
+          {freeMaterialVideos.map(renderVideoItem)}
         </div>
-      ) : (
-        <>
-          {/* SECTION 1: FREE MATERIALS */}
-          {!searchQuery && freeMaterialVideos.length > 0 && (
-            <div className="space-y-2">
-              <div className="pb-1 border-b border-neutral-100">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-              </div>
-              {freeMaterialVideos.map(renderVideoItem)}
-            </div>
-          )}
+      )}
 
-          {/* For non-patrons, the tip gate should appear before locked patron materials. */}
-          {donationSection}
 
-          {/* SECTION 2: PATRON ZONE */}
-          {!searchQuery && patronVideos.length > 0 && (
-            <div className="pt-6 space-y-2">
-                <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-                </div>
-                {patronVideos.map(renderVideoItem)}
+      {/* SECTION 3: PATRON ZONE */}
+      {!searchQuery && patronVideos.length > 0 && (
+        <div className="pt-6 space-y-2">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
             </div>
-          )}
-        </>
+            {patronVideos.map(renderVideoItem)}
+        </div>
       )}
 
       {/* Search results fallback */}
-      {searchQuery && searchPlaylistVideos.map(renderVideoItem)}
-
-      {/* Patron viewers keep the tip gate under the full materials playlist. */}
-      {isPatronViewer && donationSection}
+      {searchQuery && sidebarVideos.map(renderVideoItem)}
     </>
   );
 

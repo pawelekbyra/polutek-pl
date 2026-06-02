@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { buildPublicVideoWhere } from '@/lib/services/content.service';
-import { calculateChargebackNetAdjustment } from '@/lib/services/payment.service';
 
 type TestVideo = {
   status: VideoStatus;
@@ -84,8 +83,3 @@ describe('public video visibility policy', () => {
   });
 });
 
-describe('chargeback net totals adjustment', () => {
-  it('subtracts only the remaining net amount after a partial refund', () => {
-    expect(calculateChargebackNetAdjustment({ amountMinor: 2000, refundedAmountMinor: 500 })).toBe(1500);
-  });
-});

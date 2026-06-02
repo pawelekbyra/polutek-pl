@@ -1,10 +1,5 @@
 export const flags = {
   /**
-   * Hidden campaign/zrzutka page. Experimental.
-   */
-  campaignPage: process.env.ENABLE_CAMPAIGN_PAGE === "true",
-
-  /**
    * Whether to allow INITIAL_VIDEOS fallback.
    * Opt-in only: production must never enable demo data by omission.
    */

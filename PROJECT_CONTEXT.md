@@ -29,7 +29,7 @@ Paweł Perfect is a video platform inspired by YouTube, built to host exclusive 
 - Clerk metadata is a cache/sync layer, not the primary source of truth.
 - Stripe webhook is the source of truth for successful payments.
 - Demo fallback content is allowed only in development or when `ENABLE_DEMO_FALLBACKS=true`.
-- The campaign page is experimental and hidden behind `ENABLE_CAMPAIGN_PAGE`.
+
 
 ## Patron access policy
 

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { PublicVideoDTO } from '../types/video';
 import VideoStory from './VideoStory';
-import VideoPlaylist from './VideoPlaylist';
 import EmbeddedComments from './comments/EmbeddedComments';
 
 interface VideoTabsProps {
@@ -15,7 +14,6 @@ const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
 
   const tabs = [
     { id: 'story', label: 'O Kanale' },
-    { id: 'donations', label: 'Wesprzyj' },
     { id: 'comments', label: 'Komentarze' },
   ];
 
@@ -39,16 +37,6 @@ const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
       <div className="min-h-[400px]">
         {activeTab === 'story' && video && <VideoStory video={video} />}
 
-        {activeTab === 'donations' && video && (
-          <div className="max-w-xl mx-auto">
-            <VideoPlaylist
-              videoId={video.id}
-              videoSlug={video.slug}
-              videoTitle={video.title}
-              creatorId={video.creatorId}
-            />
-          </div>
-        )}
 
         {activeTab === 'comments' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
