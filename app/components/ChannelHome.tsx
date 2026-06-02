@@ -10,7 +10,7 @@ import { PublicVideoDTO } from '../types/video';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useLanguage } from './LanguageContext';
 import BrandName from './BrandName';
@@ -34,6 +34,27 @@ interface ChannelHomeProps {
 
 import { useSearchParams } from 'next/navigation';
 
+const PATRON_PREMIERE_DATE = new Date('2026-10-13T00:00:00+02:00');
+
+const formatPremiereCountdown = (targetDate: Date, language: string) => {
+  const remainingMs = targetDate.getTime() - Date.now();
+
+  if (remainingMs <= 0) {
+    return language === 'pl' ? 'Premiera już dostępna' : 'Premiere available now';
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value: number) => value.toString().padStart(2, '0');
+
+  return language === 'pl'
+    ? `${days} dni ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+    : `${days} days ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};
+
 export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId, userProfile }: ChannelHomeProps) {
   const { t, language, setLanguage } = useLanguage();
   const searchParams = useSearchParams();
@@ -42,6 +63,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const viewerIsPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
+  const [premiereCountdown, setPremiereCountdown] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -51,6 +73,17 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, [selectedVideo?.id]);
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      setPremiereCountdown(formatPremiereCountdown(PATRON_PREMIERE_DATE, language));
+    };
+
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [language]);
 
   if (!selectedVideo) {
     return (
@@ -92,6 +125,37 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return dateB - dateA;
   });
+
+  const renderPremiereItem = () => (
+    <div className="group flex gap-2 p-1 rounded-lg relative cursor-default bg-gradient-to-r from-amber-50 to-white border border-amber-100">
+      <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 border border-amber-300">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.55),_transparent_42%),linear-gradient(135deg,_#171717,_#3f2a08)]" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3 text-white">
+          <span className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">Premiera</span>
+          <span className="mt-1 text-[13px] font-black leading-tight">13.10.2026</span>
+        </div>
+        <div className="absolute inset-0 z-20 bg-black/35 backdrop-blur-[1px] flex items-center justify-center px-2 text-center">
+          <div className="rounded-full border border-white/35 bg-black/60 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+            {language === 'pl' ? 'Premiera 13.10.2026' : 'Premiere 13.10.2026'}
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
+        <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
+          Premiera 13.10.2026
+        </h4>
+        <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
+          <span>{language === 'pl' ? 'Strefa patronów' : 'Patron zone'}</span>
+          <span className="font-mono text-[11px] text-amber-700">
+            {mounted ? premiereCountdown : '—'}
+          </span>
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">
+          {language === 'pl' ? 'Odliczanie do premiery' : 'Premiere countdown'}
+        </span>
+      </div>
+    </div>
+  );
 
   const renderVideoItem = (video: PublicVideoDTO) => {
     const isCurrent = video.id === selectedVideo.id;
@@ -164,6 +228,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
   ].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
+  const usePatronPlaylistOrder = viewerIsPatron && !!userProfile;
 
   const publicMaterialsSection = !searchQuery && freeMaterialVideos.length > 0 ? (
     <div className="space-y-2">
@@ -183,12 +248,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     </div>
   ) : null;
 
-  const patronZoneSection = !searchQuery && patronVideos.length > 0 ? (
-    <div className="pt-6 space-y-2">
+  const patronZoneSection = !searchQuery && (patronVideos.length > 0 || usePatronPlaylistOrder) ? (
+    <div className={cn("space-y-2", usePatronPlaylistOrder ? "" : "pt-6")}>
       <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
       </div>
       {patronVideos.map(renderVideoItem)}
+      {usePatronPlaylistOrder && renderPremiereItem()}
     </div>
   ) : null;
 
@@ -196,9 +262,19 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
   const playlistItems = (
     <>
-      {publicMaterialsSection}
-      {secretProjectSection}
-      {patronZoneSection}
+      {usePatronPlaylistOrder ? (
+        <>
+          {patronZoneSection}
+          {secretProjectSection}
+          {publicMaterialsSection}
+        </>
+      ) : (
+        <>
+          {publicMaterialsSection}
+          {secretProjectSection}
+          {patronZoneSection}
+        </>
+      )}
       {searchResultsSection}
     </>
   );
