@@ -18,6 +18,6 @@ export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   USD: 1000,
 };
 
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawelek.byra@gmail.com";
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.local";
 
 export const DISPLAY_EUR_TO_PLN_RATE = Number(process.env.DISPLAY_EUR_TO_PLN_RATE) || 4.3;
