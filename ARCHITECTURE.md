@@ -8,7 +8,7 @@
 * **Donation to patron**: Handled by Stripe Webhook. Idempotent processing.
 * **Referral to patron**: 5 points needed. Synced to Clerk outside transaction.
 * **Admin video management**: Restricted to ADMIN role. Soft deletion supported (planned).
-* **Removed campaign page**:
+* ****:
 
 ## Source of truth
 

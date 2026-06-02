@@ -33,7 +33,7 @@ export default function AdminPanel() {
   const [creator, setCreator] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'videos' | 'channel' | 'email'>('videos');
+  const [activeTab, setActiveTab] = useState<'videos' | 'channel' | 'stats' | 'email'>('videos');
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
@@ -429,12 +429,18 @@ export default function AdminPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video className="h-4 w-4" />} />
           <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus className="h-4 w-4" />} />
+          <StatCard
+            title="Przychód (PLN)"
+            value={`${stats?.revenueByCurrency?.find((r: any) => r.currency === 'PLN')?.amount?.toFixed(2) || "0.00"} PLN`}
+            icon={<BarChart3 className="h-4 w-4" />}
+          />
           <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star className="h-4 w-4" />} />
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="videos">Materiały</TabsTrigger>
+                <TabsTrigger value="stats">Finanse</TabsTrigger>
                 <TabsTrigger value="channel">Kanał</TabsTrigger>
                 <TabsTrigger value="email">E-mail</TabsTrigger>
             </TabsList>
@@ -507,6 +513,38 @@ export default function AdminPanel() {
                 </Card>
             </TabsContent>
 
+            <TabsContent value="stats" className="space-y-4 pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Historia Wpłat</CardTitle>
+                        <CardDescription>Ostatnie 10 udanych transakcji Stripe.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Użytkownik</TableHead>
+                                    <TableHead>Kwota</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Data</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {stats?.recentPayments?.map((tx: any) => (
+                                    <TableRow key={tx.id}>
+                                        <TableCell className="font-mono text-xs">{tx.userEmail}</TableCell>
+                                        <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
+                                        <TableCell><Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Sukces</Badge></TableCell>
+                                        <TableCell className="text-right text-xs text-muted-foreground">
+                                            {mounted ? new Date(tx.createdAt).toLocaleString('pl-PL') : ''}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
 
             <TabsContent value="channel" className="max-w-2xl pt-4">
                 <Card>
@@ -589,13 +627,4 @@ function StatCard({ title, value, icon }: { title: string; value: string; icon: 
       </CardContent>
     </Card>
   );
-}
-
-
-function formatRevenueByCurrency(revenueByCurrency?: Array<{ currency: string; amount?: number }>) {
-  if (!revenueByCurrency?.length) return "0.00 PLN";
-
-  return revenueByCurrency
-    .map((entry) => `${(entry.amount || 0).toFixed(2)} ${entry.currency}`)
-    .join(" • ");
 }

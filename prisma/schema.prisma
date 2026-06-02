@@ -39,6 +39,8 @@ model User {
   commentDislikes  CommentDislike[]
   videoLikes       VideoLike[]
   videoDislikes    VideoDislike[]
+  payments         Payment[]
+  paymentTotals    UserPaymentTotal[]
   patronGrants     PatronGrant[]
   referralsSent    Referral[]          @relation("ReferralReferrer")
   referralReceived Referral?           @relation("ReferralReferred")
@@ -47,10 +49,56 @@ model User {
   @@index([email])
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+  CHARGEBACK_LOST
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  userId          String
+  creatorId       String?
+  stripeIntentId  String?       @unique
+  stripeSessionId String?       @unique
+  amountMinor     Int
+  refundedAmountMinor Int       @default(0)
+  currency        String
+  status          PaymentStatus @default(PENDING)
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  creator         Creator?      @relation(fields: [creatorId], references: [id])
+
+  @@index([userId, status])
+  @@index([userId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 enum WebhookEventStatus {
   PROCESSING
   PROCESSED
   FAILED
+}
+
+model StripeEvent {
+  id          String             @id
+  type        String
+  status      WebhookEventStatus @default(PROCESSING)
+  payload     Json?
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model ClerkEvent {
@@ -119,6 +167,7 @@ model Creator {
   updatedAt        DateTime  @updatedAt
   user             User      @relation(fields: [userId], references: [id])
   videos           Video[]
+  payments         Payment[]
   comments         Comment[]
   subscriptions    Subscription[]
 }
@@ -334,6 +383,17 @@ model VideoView {
 enum SystemRole {
   ADMIN
   USER
+}
+
+model UserPaymentTotal {
+  id          String @id @default(uuid())
+  userId      String
+  currency    String
+  amountMinor Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
 }
 
 model EmailTemplate {

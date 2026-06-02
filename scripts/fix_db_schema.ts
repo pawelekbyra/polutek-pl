@@ -19,9 +19,21 @@ async function fix() {
        END IF;
      END $$;`,
 
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentStatus') THEN
+         CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUNDED', 'PARTIALLY_REFUNDED', 'DISPUTED', 'CHARGEBACK_LOST');
+       END IF;
+     END $$;`,
+
+    // Ensure all values exist in PaymentStatus
+    `ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'PARTIALLY_REFUNDED';`,
+    `ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'DISPUTED';`,
+    `ALTER TYPE "PaymentStatus" ADD VALUE IF NOT EXISTS 'CHARGEBACK_LOST';`,
+
     // 2. User table
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "username" TEXT;`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "name" TEXT;`,
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "totalPaidMinor" INTEGER DEFAULT 0;`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referralCode" TEXT;`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referralPoints" INTEGER DEFAULT 0;`,
     `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referralCount" INTEGER DEFAULT 0;`,
@@ -49,7 +61,20 @@ async function fix() {
     `ALTER TABLE "Creator" ADD COLUMN IF NOT EXISTS "isPrimary" BOOLEAN DEFAULT false;`,
     `ALTER TABLE "Creator" ADD COLUMN IF NOT EXISTS "subscribersCount" INTEGER DEFAULT 0;`,
 
+    // 5. Payment table
+    `ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "amountMinor" INTEGER DEFAULT 0;`,
+    `ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundedAmountMinor" INTEGER DEFAULT 0;`,
+    `ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "currency" TEXT DEFAULT 'PLN';`,
+
     // 6. New Tables
+    `CREATE TABLE IF NOT EXISTS "UserPaymentTotal" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL,
+        "currency" TEXT NOT NULL,
+        "amountMinor" INTEGER NOT NULL DEFAULT 0,
+        CONSTRAINT "UserPaymentTotal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );`,
+
     `CREATE TABLE IF NOT EXISTS "ClerkEvent" (
         "id" TEXT PRIMARY KEY,
         "type" TEXT NOT NULL,
@@ -62,7 +87,8 @@ async function fix() {
     );`,
 
     // 7. Indexes
-    `CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");`
+    `CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "UserPaymentTotal_userId_currency_key" ON "UserPaymentTotal"("userId", "currency");`
   ];
 
   for (const cmd of commands) {

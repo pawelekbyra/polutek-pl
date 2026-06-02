@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Hero from './Hero';
+import VideoPlaylist from './VideoPlaylist';
 import PremiumWrapper from './PremiumWrapper';
 import VideoPlayer from './VideoPlayer';
 import EmbeddedComments from './comments/EmbeddedComments';
@@ -38,8 +39,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
-  const isLoggedIn = !!userProfile;
-  const isPatronViewer = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
 
@@ -54,7 +53,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
   if (!selectedVideo) {
     return (
-        <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-20 text-center">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-20 text-center">
             <h1 className="text-2xl font-bold mb-4">{language === 'pl' ? 'Brak filmu' : 'No video found'}</h1>
             <p className="text-neutral-600">
                 {language === 'pl'
@@ -95,7 +94,9 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
   const renderVideoItem = (video: PublicVideoDTO) => {
     const isCurrent = video.id === selectedVideo.id;
-    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatronViewer);
+    const isLoggedIn = !!userProfile;
+    const isPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
+    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
 
     return (
       <div
@@ -175,6 +176,15 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         </div>
       )}
 
+      {/* SECTION 2: DONATE (STRIPE GATE) */}
+      {!searchQuery && (
+        <div className="pt-6 pb-0">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+            </div>
+            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
+        </div>
+      )}
 
       {/* SECTION 3: PATRON ZONE */}
       {!searchQuery && patronVideos.length > 0 && (
@@ -193,10 +203,10 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
   return (
     <main className="bg-neutral-50 min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
 
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
             <Hero
               video={selectedVideo}

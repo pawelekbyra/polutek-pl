@@ -3,6 +3,7 @@ import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
 import { ContentService } from '@/lib/services/content.service';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
+import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -26,15 +27,19 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   let userDb = null;
   if (userId) {
     userDb = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: { paymentTotals: true }
     }).catch(() => null);
 
     if (!userDb) {
+      // If UserService.getOrCreateUser is called, it might not return paymentTotals by default.
+      // Re-fetch to ensure relations are present for type safety and normalized totals.
       await UserService.getOrCreateUser(userId).catch((e) => {
         console.error("[HOME_USER_FETCH_ERROR]", e);
       });
       userDb = await prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
+        include: { paymentTotals: true }
       }).catch(() => null);
     }
   }
@@ -80,7 +85,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     email: user?.primaryEmailAddress?.emailAddress || '',
     name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
     imageUrl: user?.imageUrl || null,
-    totalPaid: 0,
+    // Use normalized totals from UserPaymentTotal if userDb is present
+    totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
