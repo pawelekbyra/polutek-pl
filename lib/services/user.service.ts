@@ -19,6 +19,30 @@ function emailLocalPart(email: string | null) {
   return localPart || null;
 }
 
+function hasIdentityClaim(claims: AuthSessionClaims) {
+  return Boolean(
+    stringClaim(
+      claims,
+      'email',
+      'primary_email_address',
+      'email_address',
+      'name',
+      'full_name',
+      'first_name',
+      'given_name',
+      'last_name',
+      'family_name',
+      'username',
+      'preferred_username',
+      'picture',
+      'image_url',
+      'imageUrl',
+      'avatar_url',
+      'avatarUrl'
+    )
+  );
+}
+
 function metadataClaim(claims: AuthSessionClaims, metadataKey: 'publicMetadata' | 'unsafeMetadata', key: string) {
   const metadata = claims?.[metadataKey];
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -53,9 +77,9 @@ export class UserService {
       const email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
       if (!email) throw new Error("USER_HAS_NO_EMAIL");
 
-      const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || null;
-      const imageUrl = clerkUser.imageUrl || null;
       const username = clerkUser.username || null;
+      const name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || username || emailLocalPart(email);
+      const imageUrl = clerkUser.imageUrl || null;
 
       // Metadata extraction
       const publicMeta = clerkUser.publicMetadata as ClerkPublicMetadata;
@@ -149,7 +173,18 @@ export class UserService {
    */
   static async getOrCreateUserFromAuth(userId: string, sessionClaims?: AuthSessionClaims) {
     try {
-      return await this.getOrCreateUser(userId);
+      const user = await this.getOrCreateUser(userId);
+
+      // If Clerk's backend API was temporarily unavailable, getOrCreateUser may
+      // return an already-existing local row. Refresh local display fields from
+      // session claims so freshly posted comments don't show placeholder author
+      // names or avatars.
+      if (hasIdentityClaim(sessionClaims)) {
+        const syncedFromClaims = await this.syncUserFromClaims(userId, sessionClaims, user);
+        if (syncedFromClaims) return syncedFromClaims;
+      }
+
+      return user;
     } catch (error) {
       console.warn(
         "[UserService.getOrCreateUserFromAuth] Falling back to session claims:",
@@ -158,6 +193,24 @@ export class UserService {
     }
 
     const existing = await prisma.user.findUnique({ where: { id: userId } });
+    const syncedFromClaims = await this.syncUserFromClaims(userId, sessionClaims, existing);
+    if (syncedFromClaims) return syncedFromClaims;
+
+    return this.syncUserFromClaims(userId, sessionClaims, existing, true);
+  }
+
+  private static async syncUserFromClaims(
+    userId: string,
+    sessionClaims: AuthSessionClaims,
+    existing?: {
+      email?: string | null;
+      username?: string | null;
+      name?: string | null;
+      imageUrl?: string | null;
+    } | null,
+    allowPlaceholderEmail = false
+  ) {
+    if (!allowPlaceholderEmail && !hasIdentityClaim(sessionClaims)) return null;
 
     const email = stringClaim(sessionClaims, 'email', 'primary_email_address', 'email_address')
       || existing?.email

@@ -6,6 +6,7 @@ import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/ty
 import { flags } from '../feature-flags';
 import { isPubliclyVisibleVideo } from './content.visibility';
 import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
+import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 
 const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -165,7 +166,7 @@ export class ContentService {
     return {
         id: video.id,
         creatorId: video.creatorId ?? '',
-        title: video.title,
+        title: getCanonicalVideoTitle(video),
         slug: video.slug,
         description: video.description,
         thumbnailUrl: video.thumbnailUrl,

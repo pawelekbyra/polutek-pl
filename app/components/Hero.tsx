@@ -12,8 +12,8 @@ import SubscribeButton from './SubscribeButton';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
 import { useLanguage } from './LanguageContext';
-import BrandName from './BrandName';
 import { logger } from '@/lib/logger';
+import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -28,6 +28,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
+  const displayTitle = getVideoDisplayTitle(video, language);
 
   useEffect(() => {
     setMounted(true);
@@ -96,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   const handleShare = async () => {
     const shareData = {
-      title: video.title,
+      title: displayTitle,
       text: video.description || "",
       url: window.location.href,
     };
@@ -161,11 +162,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         {/* INFO SECTION */}
         <div className="space-y-3 pt-3">
           <h2 className="text-[20px] font-bold text-[#0f0f0f] tracking-tight leading-[1.2]">
-             {video.slug === 'independency-2024'
-              ? (userId ? (
-                <>{t.welcomeOn} <BrandName /></>
-              ) : t.independencyTitle)
-              : video.title}
+             {displayTitle}
           </h2>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
