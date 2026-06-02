@@ -37,6 +37,7 @@ type CommentView = {
   id: string;
   authorId?: string;
   authorName?: string;
+  imageUrl?: string | null;
   author?: { imageUrl?: string | null; slug?: string | null; email?: string | null; name?: string | null; username?: string | null } | null;
   text: string;
   createdAt?: string | Date;
@@ -412,7 +413,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <div className="flex gap-3 items-start group/comment">
                <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
                   <img
-                    src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`}
+                    src={comment.imageUrl || comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
@@ -479,7 +480,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
                     <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
                        <img
-                         src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`}
+                         src={reply.imageUrl || reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`}
                          alt="Avatar"
                          className="w-full h-full object-cover"
                        />

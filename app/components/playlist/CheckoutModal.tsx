@@ -153,7 +153,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                 <div className="space-y-4">
                   <h1 className="text-4xl font-brand font-black uppercase tracking-tighter text-neutral-900">
-                    {language === 'pl' ? 'Wielkie dzięki!' : 'Suceed!!!'}
+                    {language === 'pl' ? 'Wielkie dzięki!' : 'Succeed!!!'}
                   </h1>
                   <p className="text-lg text-neutral-500 font-medium italic leading-relaxed max-w-sm mx-auto">
                     {language === 'pl'

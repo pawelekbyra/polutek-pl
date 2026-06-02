@@ -250,22 +250,38 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
               </span>
            </div>
 
-           <div className={cn(
-              "text-[14px] text-[#0f0f0f] leading-relaxed whitespace-pre-wrap",
-              !isExpanded && "line-clamp-2"
-           )}>
-              {video.description || t.noDescription}
+           <div className="text-[14px] text-[#0f0f0f] leading-relaxed whitespace-pre-wrap">
+              {isExpanded ? (
+                (video.description || t.noDescription)
+              ) : (
+                <>
+                  {(video.description || t.noDescription).slice(0, 160).trim()}
+                  {(video.description || t.noDescription).length > 160 && (
+                    <span
+                      className="text-[14px] font-semibold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(true);
+                      }}
+                    >
+                      {t.showMore}
+                    </span>
+                  )}
+                </>
+              )}
            </div>
 
-           <button
-             className="text-[14px] font-semibold text-[#0f0f0f] mt-1 hover:underline block"
-             onClick={(e) => {
-               e.stopPropagation();
-               setIsExpanded(!isExpanded);
-             }}
-           >
-              {isExpanded ? t.showLess : t.showMore}
-           </button>
+           {isExpanded && (
+             <button
+               className="text-[14px] font-semibold text-[#0f0f0f] mt-1 hover:underline inline-block"
+               onClick={(e) => {
+                 e.stopPropagation();
+                 setIsExpanded(false);
+               }}
+             >
+                {t.showLess}
+             </button>
+           )}
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@ import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
+import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
 
@@ -17,10 +18,6 @@ function stringClaim(claims: AuthSessionClaims, ...keys: string[]) {
 function emailLocalPart(email: string | null) {
   const localPart = email?.split('@')[0]?.trim();
   return localPart || null;
-}
-
-function isGeneratedClerkUsername(value?: string | null) {
-  return /^user_[a-z0-9]+$/i.test(value?.trim() || '');
 }
 
 function hasIdentityClaim(claims: AuthSessionClaims) {

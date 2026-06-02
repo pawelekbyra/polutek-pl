@@ -39,6 +39,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
             playerInstance.current = new Artplayer({
                 container: artRef.current,
+                zIndex: 10,
                 url: videoUrl,
                 poster: posterUrl,
                 volume: 0.7,
@@ -170,6 +171,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 .artplayer-container {
                     --art-theme: #2563eb;
                     --art-fullscreen-web-index: 40;
+                    z-index: 0;
                 }
 
                 .artplayer-container .art-video-player {
