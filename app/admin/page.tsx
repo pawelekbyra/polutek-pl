@@ -430,8 +430,8 @@ export default function AdminPanel() {
           <StatCard title="Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video className="h-4 w-4" />} />
           <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus className="h-4 w-4" />} />
           <StatCard
-            title="Przychód (PLN)"
-            value={`${stats?.revenueByCurrency?.find((r: any) => r.currency === 'PLN')?.amount?.toFixed(2) || "0.00"} PLN`}
+            title="Przychód wg walut"
+            value={formatRevenueByCurrency(stats?.revenueByCurrency)}
             icon={<BarChart3 className="h-4 w-4" />}
           />
           <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star className="h-4 w-4" />} />
@@ -627,4 +627,13 @@ function StatCard({ title, value, icon }: { title: string; value: string; icon: 
       </CardContent>
     </Card>
   );
+}
+
+
+function formatRevenueByCurrency(revenueByCurrency?: Array<{ currency: string; amount?: number }>) {
+  if (!revenueByCurrency?.length) return "0.00 PLN";
+
+  return revenueByCurrency
+    .map((entry) => `${(entry.amount || 0).toFixed(2)} ${entry.currency}`)
+    .join(" • ");
 }
