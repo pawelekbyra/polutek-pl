@@ -83,6 +83,35 @@ describe('AccessPolicy', () => {
       expect(decision.allowed).toBe(true);
     });
 
+
+    it('allows LOGGED_IN video viewing for authenticated users before local profile sync', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.LOGGED_IN,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+      expect(decision.allowed).toBe(true);
+    });
+
+    it('allows commenting on LOGGED_IN videos for authenticated users before local profile sync', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.LOGGED_IN,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      const decision = await AccessPolicy.canComment('u1', 'v1');
+      expect(decision.allowed).toBe(true);
+    });
+
     it('denies access to PATRON videos if user is not a patron', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
