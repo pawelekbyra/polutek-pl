@@ -50,6 +50,7 @@ export default function AdminPanel() {
     dislikesCount: 0,
     views: 0,
     isMainFeatured: false,
+    showInSidebar: true,
     sidebarOrder: 0
   });
 
@@ -177,6 +178,7 @@ export default function AdminPanel() {
       dislikesCount: vid.dislikesCount || 0,
       views: vid.views,
       isMainFeatured: vid.isMainFeatured,
+      showInSidebar: vid.showInSidebar ?? true,
       sidebarOrder: vid.sidebarOrder || 0
     });
     setIsEditing(true);
@@ -197,6 +199,7 @@ export default function AdminPanel() {
       dislikesCount: 0,
       views: 0,
       isMainFeatured: false,
+      showInSidebar: true,
       sidebarOrder: 0
     });
     setIsEditing(true);
@@ -377,10 +380,21 @@ export default function AdminPanel() {
                         checked={formData.isMainFeatured}
                         onCheckedChange={(checked) => setFormData({...formData, isMainFeatured: !!checked})}
                        />
-                       <Label htmlFor="isMainFeatured">Hero Video</Label>
+                       <Label htmlFor="isMainFeatured">Hero Video (Tylko Public)</Label>
                   </div>
+                  <div className="flex items-center space-x-2 pt-4">
+                       <Checkbox
+                        id="showInSidebar"
+                        checked={formData.showInSidebar}
+                        onCheckedChange={(checked) => setFormData({...formData, showInSidebar: !!checked})}
+                       />
+                       <Label htmlFor="showInSidebar">Pokaż w bocznym pasku</Label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="sidebarOrder">Kolejność (Sidebar)</Label>
+                    <Label htmlFor="sidebarOrder">Kolejność w sidebarze (1 = najwyżej)</Label>
                     <Input
                       id="sidebarOrder"
                       type="number"

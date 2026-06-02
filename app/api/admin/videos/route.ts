@@ -28,6 +28,7 @@ const videoSchema = z.object({
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
   isMainFeatured: z.boolean().default(false),
+  showInSidebar: z.boolean().default(true),
   sidebarOrder: z.number().int().default(0),
 });
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, sidebarOrder } = result.data;
+  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
 
   // Validation: Only PUBLIC and PUBLISHED videos can be main featured
   if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
             status,
             publishedAt,
             isMainFeatured: !!isMainFeatured,
+            showInSidebar,
             sidebarOrder
           }
         });
@@ -151,6 +153,7 @@ export async function POST(req: NextRequest) {
             status: status || VideoStatus.PUBLISHED,
             publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
             isMainFeatured: !!isMainFeatured,
+            showInSidebar,
             sidebarOrder
           }
         });

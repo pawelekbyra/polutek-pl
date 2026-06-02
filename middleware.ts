@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -27,6 +28,19 @@ export default clerkMiddleware(async (auth, req) => {
   } else if (!isPublicRoute(req)) {
     (await auth()).protect();
   }
+
+  const response = NextResponse.next();
+  response.headers.set(
+    'Content-Security-Policy-Report-Only',
+    "default-src 'self'; " +
+    "script-src 'self' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; " +
+    "connect-src 'self' https://*.clerk.accounts.dev https://api.stripe.com https://*.r2.dev https://*.vercel-storage.com; " +
+    "frame-src https://js.stripe.com; " +
+    "img-src 'self' data: https://*.clerk.com https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://*.r2.dev https://*.vercel-storage.com; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "media-src 'self' https://*.r2.dev https://*.vercel-storage.com;"
+  );
+  return response;
 });
 
 export const config = {
