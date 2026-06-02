@@ -19,6 +19,10 @@ function emailLocalPart(email: string | null) {
   return localPart || null;
 }
 
+function isGeneratedClerkUsername(value?: string | null) {
+  return /^user_[a-z0-9]+$/i.test(value?.trim() || '');
+}
+
 function hasIdentityClaim(claims: AuthSessionClaims) {
   return Boolean(
     stringClaim(
@@ -78,7 +82,8 @@ export class UserService {
       if (!email) throw new Error("USER_HAS_NO_EMAIL");
 
       const username = clerkUser.username || null;
-      const name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || username || emailLocalPart(email);
+      const displayUsername = isGeneratedClerkUsername(username) ? null : username;
+      const name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || displayUsername || emailLocalPart(email);
       const imageUrl = clerkUser.imageUrl || null;
 
       // Metadata extraction
@@ -222,11 +227,15 @@ export class UserService {
       || metadataClaim(sessionClaims, 'unsafeMetadata', 'username')
       || existing?.username
       || null;
+    const displayUsername = isGeneratedClerkUsername(username) ? null : username;
     const isPlaceholderEmail = email.endsWith('@clerk.local');
-    const name = stringClaim(sessionClaims, 'name', 'full_name')
+    const rawClaimName = stringClaim(sessionClaims, 'name', 'full_name');
+    const claimName = isGeneratedClerkUsername(rawClaimName) ? null : rawClaimName;
+    const existingName = isGeneratedClerkUsername(existing?.name) ? null : existing?.name;
+    const name = claimName
       || [firstName, lastName].filter(Boolean).join(' ')
-      || username
-      || existing?.name
+      || displayUsername
+      || existingName
       || (isPlaceholderEmail ? null : emailLocalPart(email));
     const imageUrl = stringClaim(sessionClaims, 'picture', 'image_url', 'imageUrl', 'avatar_url', 'avatarUrl')
       || existing?.imageUrl
