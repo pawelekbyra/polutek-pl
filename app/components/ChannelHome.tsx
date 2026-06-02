@@ -39,6 +39,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
+  const viewerIsPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
 
@@ -176,13 +177,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         </div>
       )}
 
-      {/* SECTION 2: DONATE (STRIPE GATE) */}
+      {/* SECTION 2: SECRET PROJECT */}
       {!searchQuery && (
         <div className="pt-6 pb-0">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
             </div>
-            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
+            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} isPatron={viewerIsPatron} />
         </div>
       )}
 
