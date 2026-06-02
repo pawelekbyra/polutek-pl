@@ -230,14 +230,15 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     </div>
   );
 
-  const publicMaterialsSection = !searchQuery && freeMaterialVideos.length > 0 && (
-    <div className={viewerIsPatron ? "pt-6 space-y-2" : "space-y-2"}>
-      <div className="pb-1 border-b border-neutral-100">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-      </div>
-      {freeMaterialVideos.map(renderVideoItem)}
-    </div>
-  );
+      {/* SECTION 2: SECRET PROJECT */}
+      {!searchQuery && (
+        <div className="pt-6 pb-0">
+            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+            </div>
+            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} isPatron={viewerIsPatron} />
+        </div>
+      )}
 
   const secretProjectSection = !searchQuery && (
     <div className="pt-6 pb-0">
