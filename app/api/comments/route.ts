@@ -11,6 +11,17 @@ import { isAllowedMediaUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
+type CommentAuthor = {
+  email?: string | null;
+  name?: string | null;
+  username?: string | null;
+};
+
+function getCommentAuthorName(author?: CommentAuthor | null) {
+  const fallbackFromEmail = author?.email?.split('@')[0]?.trim();
+  return author?.username || author?.name || fallbackFromEmail || "Użytkownik";
+}
+
 const postCommentSchema = z.object({
   videoId: z.string(),
   text: z.string().trim().min(1).max(2000).optional(),
@@ -115,7 +126,7 @@ export async function GET(request: NextRequest) {
             author: r.deletedAt ? null : r.author,
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
-            authorName: r.deletedAt ? "Użytkownik" : (r.author?.username || r.author?.name || "Użytkownik"),
+            authorName: r.deletedAt ? "Użytkownik" : (getCommentAuthorName(r.author)),
         }));
 
         return {
@@ -124,7 +135,7 @@ export async function GET(request: NextRequest) {
             author: isDeleted ? null : c.author,
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
-            authorName: isDeleted ? "Użytkownik" : (c.author?.username || c.author?.name || "Użytkownik"),
+            authorName: isDeleted ? "Użytkownik" : (getCommentAuthorName(c.author)),
             replies,
         };
     });
@@ -225,7 +236,7 @@ export async function POST(request: NextRequest) {
             ...newComment,
             isLiked: false,
             isDisliked: false,
-            authorName: newComment.author?.username || newComment.author?.name || "Użytkownik",
+            authorName: getCommentAuthorName(newComment.author),
             replies: [],
         }
     }, { status: 201 });

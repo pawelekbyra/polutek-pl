@@ -47,7 +47,7 @@ async function main() {
     const targetVideos = [
       {
         slug: 'wuthering-heights-cover',
-        title: 'Wuthering Heights - Kate Bush Cover',
+        title: "You don't have the guts to log in",
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/Wuthering-Heights.mp4',
         thumbnailUrl: '/wuthering.jpg',
         isMainFeatured: true,
@@ -57,7 +57,7 @@ async function main() {
       },
       {
         slug: 'historia-powstania-osady',
-        title: 'Historia powstania Osady Natury "Zew" w gruncie ruchu Stefan',
+        title: 'Secret Project',
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/historia-powstania-osady-natury-zew-w-gruncie-ruchu-stefan.mp4',
         thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
         isMainFeatured: false,
@@ -65,7 +65,7 @@ async function main() {
       },
       {
         slug: 'intencja-swiadomosc-sprawczosci',
-        title: 'Intencja - świadomość sprawczości - Michał Kiciński Q&A',
+        title: 'Udało się!!!',
         videoUrl: 'https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/intencja-swiadomosc-sprawczosci-michal-kicinski-qa-festiwal-wibracje.mp4',
         thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2659&auto=format&fit=crop',
         isMainFeatured: false,
@@ -110,7 +110,7 @@ async function main() {
     console.log(`- Widoczne filmy: ${finalVisible}`);
 
     if (finalVisible > 0) {
-        console.log("\nSUKCES: Baza została zasilona materiałami MVP. Strona główna powinna teraz wyświetlać Paweł Perfect & Wuthering Heights.");
+        console.log("\nSUKCES: Baza została zasilona materiałami MVP. Strona główna powinna teraz wyświetlać Paweł Perfect & You don't have the guts to log in.");
     } else {
         console.log("\nUWAGA: Nadal brak widocznych filmów. Sprawdź npm run content:diagnose");
     }
