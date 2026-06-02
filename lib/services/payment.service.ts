@@ -75,16 +75,19 @@ export async function applyLostChargeback(
   payment: { id: string; userId: string; currency: string; amountMinor: number; refundedAmountMinor?: number | null; status: PaymentStatus },
   disputeStatus: string,
 ) {
-  // Conditional update for idempotency
-  if (payment.status === PaymentStatus.CHARGEBACK_LOST) {
-    console.log(`[PaymentService] Payment ${payment.id} already marked as CHARGEBACK_LOST. Skipping adjustment.`);
-    return;
-  }
-
-  await tx.payment.update({
-    where: { id: payment.id },
+  // Conditional update using updateMany for atomicity
+  const { count } = await tx.payment.updateMany({
+    where: {
+      id: payment.id,
+      status: { not: PaymentStatus.CHARGEBACK_LOST }
+    },
     data: { status: PaymentStatus.CHARGEBACK_LOST },
   });
+
+  if (count === 0) {
+    console.log(`[PaymentService] Payment ${payment.id} already marked as CHARGEBACK_LOST or not found. Skipping adjustment.`);
+    return;
+  }
 
   await decrementUserNetPaymentTotals(
     tx,
