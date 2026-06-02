@@ -23,6 +23,7 @@ export default function AdminPanel() {
   const { isLoaded: authLoaded } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -71,19 +72,26 @@ export default function AdminPanel() {
     if (!userLoaded || !authLoaded) return;
 
     if (!user) {
-      router.push("/");
+      setError("Zaloguj się, aby uzyskać dostęp do panelu.");
+      setIsLoading(false);
       return;
     }
 
     const checkAdmin = async () => {
-      const res = await fetch("/api/admin/stats", { cache: "no-store" });
-      if (!res.ok) {
-        router.push("/");
-        return;
-      }
+      try {
+        const res = await fetch("/api/admin/stats", { cache: "no-store" });
+        if (!res.ok) {
+          setError("Brak uprawnień administratora.");
+          setIsLoading(false);
+          return;
+        }
 
-      setIsAdmin(true);
-      fetchAll();
+        setIsAdmin(true);
+        fetchAll();
+      } catch (err) {
+        setError("Wystąpił błąd podczas weryfikacji uprawnień.");
+        setIsLoading(false);
+      }
     };
 
     checkAdmin();
@@ -258,8 +266,21 @@ export default function AdminPanel() {
     }
   }
 
-  if (!isAdmin || isLoading) {
+  if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Weryfikacja dostępu...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 space-y-4">
+        <div className="text-destructive font-bold text-xl">{error}</div>
+        <Button onClick={() => router.push("/")}>Wróć do strony głównej</Button>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+     return <div className="min-h-screen bg-background flex items-center justify-center">Brak uprawnień.</div>;
   }
 
   return (

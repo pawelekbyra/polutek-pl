@@ -19,3 +19,5 @@ export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
 };
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawel.perfect@gmail.com";
+
+export const DISPLAY_EUR_TO_PLN_RATE = 4.3;

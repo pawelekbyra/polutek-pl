@@ -1,6 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { UserService } from "./services/user.service";
+import { ADMIN_EMAIL } from "./constants";
 
 export class AuthError extends Error {
   constructor(
@@ -22,12 +23,26 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const userId = await requireUser();
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, isDeleted: true },
+    select: { role: true, isDeleted: true, email: true },
   });
 
-  if (!user || user.isDeleted || user.role !== "ADMIN") {
+  if (!user || user.isDeleted) {
+    throw new AuthError("FORBIDDEN");
+  }
+
+  // Bootstrap Admin logic
+  if (user.role !== "ADMIN" && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: "ADMIN" }
+    });
+    return userId;
+  }
+
+  if (user.role !== "ADMIN") {
     throw new AuthError("FORBIDDEN");
   }
 
