@@ -284,10 +284,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const avatarFrameClass = (vip: boolean, sizeClass: string) => cn(
     sizeClass,
-    "rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-0 relative",
+    "rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0 relative",
     vip
       ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.16),0_0_14px_rgba(251,191,36,0.22)] ring-1 ring-white"
       : "border border-[#e9eef6]"
+  );
+
+  const vipBadgeClass = (compact = false) => cn(
+    "rounded-full bg-amber-100 font-black uppercase tracking-widest text-amber-700 leading-none",
+    compact ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
   );
 
   const getCommentsLabel = (count: number) => {
@@ -338,12 +343,17 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       {/* Input Area */}
       <div className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}>
         {userProfile && (
-          <div className={avatarFrameClass(isCurrentUserVip, "w-10 h-10 mt-1")}>
-             <img
-               src={userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
-               alt="Avatar"
-               className="w-full h-full object-cover"
-             />
+          <div className="flex shrink-0 flex-col items-center gap-1">
+            <div className={avatarFrameClass(isCurrentUserVip, "w-10 h-10 mt-1")}>
+               <img
+                 src={userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
+                 alt="Avatar"
+                 className="w-full h-full object-cover"
+               />
+            </div>
+            {isCurrentUserVip && (
+              <span className={vipBadgeClass()}>VIP</span>
+            )}
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -412,20 +422,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {comments.map((comment) => (
           <div key={comment.id} className="space-y-3">
             <div className="flex gap-3 items-start group/comment">
-               <div className={avatarFrameClass(hasVipLook(comment.author), "w-9 h-9")}>
-                  <img
-                    src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+               <div className="flex shrink-0 flex-col items-center gap-1">
+                 <div className={avatarFrameClass(hasVipLook(comment.author), "w-9 h-9")}>
+                    <img
+                      src={comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.email}`}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                 </div>
+                 {hasVipLook(comment.author) && (
+                   <span className={vipBadgeClass()}>VIP</span>
+                 )}
                </div>
               <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-1.5 leading-none">
                         <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{comment.authorName}</span>
-                        {hasVipLook(comment.author) && (
-                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-amber-700">VIP</span>
-                        )}
                         <span className="text-[11px] text-[#606060] leading-none">
                             {isClient && comment.createdAt && !isNaN(new Date(comment.createdAt).getTime())
                             ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
@@ -482,20 +494,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="flex gap-2.5 items-start group/reply">
-                    <div className={avatarFrameClass(hasVipLook(reply.author), "w-6 h-6")}>
-                       <img
-                         src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
-                         alt="Avatar"
-                         className="w-full h-full object-cover"
-                       />
+                    <div className="flex shrink-0 flex-col items-center gap-1">
+                      <div className={avatarFrameClass(hasVipLook(reply.author), "w-6 h-6")}>
+                         <img
+                           src={reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.authorName || 'Guest'}`}
+                           alt="Avatar"
+                           className="w-full h-full object-cover"
+                         />
+                      </div>
+                      {hasVipLook(reply.author) && (
+                        <span className={vipBadgeClass(true)}>VIP</span>
+                      )}
                     </div>
                     <div className="flex-1 space-y-0.5 pt-0.5">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-1.5 leading-none">
                           <span className="font-bold text-[#0f0f0f] text-[11px] leading-none">{reply.authorName}</span>
-                          {hasVipLook(reply.author) && (
-                            <span className="rounded-full bg-amber-100 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-amber-700">VIP</span>
-                          )}
                           <span className="text-[10px] text-[#606060] leading-none">
                             {isClient && reply.createdAt && !isNaN(new Date(reply.createdAt).getTime())
                               ? formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')

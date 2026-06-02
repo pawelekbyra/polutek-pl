@@ -204,6 +204,9 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             </div>
           )}
 
+          {/* For non-patrons, the tip gate should appear before locked patron materials. */}
+          {donationSection}
+
           {/* SECTION 2: PATRON ZONE */}
           {!searchQuery && patronVideos.length > 0 && (
             <div className="pt-6 space-y-2">
@@ -219,8 +222,8 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       {/* Search results fallback */}
       {searchQuery && searchPlaylistVideos.map(renderVideoItem)}
 
-      {/* Donate gate stays under the whole playlist */}
-      {donationSection}
+      {/* Patron viewers keep the tip gate under the full materials playlist. */}
+      {isPatronViewer && donationSection}
     </>
   );
 
