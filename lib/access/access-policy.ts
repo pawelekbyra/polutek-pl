@@ -83,15 +83,16 @@ export class AccessPolicy {
       where: { id: userId }
     });
 
-    if (!user || user.isDeleted) return { allowed: false, reason: "DELETED" };
+    if (user?.isDeleted) return { allowed: false, reason: "DELETED" };
 
     // Admins have access to everything
-    if (user.role === 'ADMIN') return { allowed: true };
+    if (user?.role === 'ADMIN') return { allowed: true };
 
-    // Logged in tier
+    // Logged in tier only requires an authenticated Clerk session. A missing
+    // local row should not block freshly signed-in users before profile sync.
     if (video.tier === AccessTier.LOGGED_IN) return { allowed: true };
 
-    // Patron tier
+    // Patron tier requires a local patron-like profile.
     if (video.tier === AccessTier.PATRON) {
       if (isPatronLikeUser(user)) return { allowed: true };
       return { allowed: false, reason: "PATRON_REQUIRED", requiredTier: AccessTier.PATRON };

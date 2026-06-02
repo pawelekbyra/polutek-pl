@@ -13,7 +13,7 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variab
 const gluten = Gluten({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-gluten' });
 
 export const metadata = {
-  title: "POLUTEK.PL - Niezależna Platforma VOD",
+  title: "polutek.pl",
   description: "POLUTEK.PL — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi."
 };
 
