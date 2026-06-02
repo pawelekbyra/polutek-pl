@@ -167,9 +167,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   };
   const loggedInVideo = sidebarVideos.find(v => v.tier === 'LOGGED_IN');
   const publicVideo = sidebarVideos.find(v => v.tier === 'PUBLIC');
-  const freeMaterialVideos = [
-    ...(isLoggedIn && !isPatronViewer ? [loggedInVideo, publicVideo] : [publicVideo, loggedInVideo]),
-  ].filter((video): video is PublicVideoDTO => Boolean(video));
+  const freeMaterialVideos = [publicVideo, loggedInVideo].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
   const patronPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
   const searchPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);

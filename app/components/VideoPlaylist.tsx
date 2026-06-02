@@ -1,7 +1,7 @@
 import { PublicVideoDTO } from '../types/video';
 "use client";
 
-import { MIN_PAYMENT_BY_CURRENCY, type SupportedCurrency } from '@/lib/constants';
+import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
@@ -131,10 +131,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
     setAmount(getSuggestedAmount(curr));
   };
 
-  const availableCurrencies = ['PLN', 'USD', 'EUR', 'GBP', 'CHF'].filter(curr => {
-    if (language === 'en' && curr === 'PLN') return false;
-    return true;
-  });
+  const availableCurrencies = [...SUPPORTED_CURRENCIES];
 
   const onSupport = async () => {
     if (!userId) {
@@ -148,9 +145,25 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
     }
     setShowTermsError(false);
 
-    if (!amount || amount < minAmount) {
-      alert(language === 'pl' ? `Minimalna kwota wsparcia to ${minAmount} ${selectedCurrency}` : `Minimum support amount is ${minAmount} ${selectedCurrency}`);
+    const numericAmount = Number(amount);
+    if (amount === '' || !Number.isFinite(numericAmount) || numericAmount < minAmount) {
+      alert(language === 'pl' ? `Wpisz kwotę minimum ${minAmount} ${selectedCurrency}.` : `Enter at least ${minAmount} ${selectedCurrency}.`);
       return;
+    }
+
+    const checkoutBody: {
+      amountMinor: number;
+      currency: string;
+      title: string;
+      creatorId?: string;
+    } = {
+      amountMinor: Math.round(numericAmount * 100),
+      currency: selectedCurrency.toUpperCase(),
+      title: videoTitle || "Tip The Guy / Patron",
+    };
+
+    if (creatorId) {
+      checkoutBody.creatorId = creatorId;
     }
 
     try {
@@ -159,12 +172,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
       const response = await fetch('/api/checkout/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amountMinor: Number(amount) * 100,
-            currency: selectedCurrency.toUpperCase(),
-            title: videoTitle || "Tip The Guy / Patron",
-            creatorId: creatorId
-          }),
+          body: JSON.stringify(checkoutBody),
           cache: 'no-store'
       });
 
@@ -201,7 +209,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           isTermsAccepted={isTermsAccepted}
           showTermsError={showTermsError}
           availableCurrencies={availableCurrencies}
-          onAmountChange={(val) => setAmount(val === '' ? '' : parseInt(val))}
+          onAmountChange={(val) => setAmount(val === '' ? '' : Number(val))}
           onCurrencyChange={handleCurrencyChange}
           onTermsChange={(checked) => {
             setIsTermsAccepted(!!checked);
