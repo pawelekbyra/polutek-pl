@@ -39,6 +39,8 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
+  const isLoggedIn = !!userProfile;
+  const isPatronViewer = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
 
@@ -94,9 +96,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
 
   const renderVideoItem = (video: PublicVideoDTO) => {
     const isCurrent = video.id === selectedVideo.id;
-    const isLoggedIn = !!userProfile;
-    const isPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
-    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
+    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatronViewer);
 
     return (
       <div
@@ -158,42 +158,71 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const sidebarVideos = sortedVideos.filter(v =>
     v.status === 'PUBLISHED' && ['PUBLIC', 'LOGGED_IN', 'PATRON'].includes(v.tier)
   );
+  const moveSelectedVideoFirst = (videos: PublicVideoDTO[]) => {
+    if (!selectedVideo) return videos;
+    return [
+      ...videos.filter(v => v.id === selectedVideo.id),
+      ...videos.filter(v => v.id !== selectedVideo.id),
+    ];
+  };
+  const loggedInVideo = sidebarVideos.find(v => v.tier === 'LOGGED_IN');
+  const publicVideo = sidebarVideos.find(v => v.tier === 'PUBLIC');
   const freeMaterialVideos = [
-    sidebarVideos.find(v => v.tier === 'PUBLIC'),
-    sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
+    ...(isLoggedIn && !isPatronViewer ? [loggedInVideo, publicVideo] : [publicVideo, loggedInVideo]),
   ].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
+  const patronPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
+
+  const donationSection = !searchQuery ? (
+    <div className="pt-6 pb-0">
+        <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+        </div>
+        <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
+    </div>
+  ) : null;
 
   const playlistItems = (
     <>
-      {/* SECTION 1: FREE MATERIALS */}
-      {!searchQuery && freeMaterialVideos.length > 0 && (
-        <div className="space-y-2">
-          <div className="pb-1 border-b border-neutral-100">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+      {isPatronViewer && !searchQuery ? (
+        <>
+          <div className="space-y-2">
+            <div className="pb-1 border-b border-neutral-100">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
+                {language === 'pl' ? 'Filmiki' : t.videosTab}
+              </h3>
+            </div>
+            {patronPlaylistVideos.map(renderVideoItem)}
           </div>
-          {freeMaterialVideos.map(renderVideoItem)}
-        </div>
-      )}
 
-      {/* SECTION 2: DONATE (STRIPE GATE) */}
-      {!searchQuery && (
-        <div className="pt-6 pb-0">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+          {/* Patron viewers keep the tip gate below the complete unified playlist. */}
+          {donationSection}
+        </>
+      ) : (
+        <>
+          {/* SECTION 1: FREE MATERIALS */}
+          {!searchQuery && freeMaterialVideos.length > 0 && (
+            <div className="space-y-2">
+              <div className="pb-1 border-b border-neutral-100">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+              </div>
+              {freeMaterialVideos.map(renderVideoItem)}
             </div>
-            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
-        </div>
-      )}
+          )}
 
-      {/* SECTION 3: PATRON ZONE */}
-      {!searchQuery && patronVideos.length > 0 && (
-        <div className="pt-6 space-y-2">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+          {/* Non-patrons keep the tip gate between public/logged-in videos and patron zone. */}
+          {donationSection}
+
+          {/* SECTION 2: PATRON ZONE */}
+          {!searchQuery && patronVideos.length > 0 && (
+            <div className="pt-6 space-y-2">
+                <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+                </div>
+                {patronVideos.map(renderVideoItem)}
             </div>
-            {patronVideos.map(renderVideoItem)}
-        </div>
+          )}
+        </>
       )}
 
       {/* Search results fallback */}

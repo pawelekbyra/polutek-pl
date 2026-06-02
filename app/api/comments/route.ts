@@ -76,12 +76,12 @@ export async function GET(request: NextRequest) {
         orderBy,
         include: {
             author: {
-                select: { id: true, name: true, username: true, imageUrl: true }
+                select: { id: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true }
             },
             replies: {
                 take: 3,
                 include: {
-                    author: { select: { id: true, name: true, username: true, imageUrl: true } },
+                    author: { select: { id: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true } },
                     _count: { select: { likes: true, dislikes: true } }
                 },
                 orderBy: { createdAt: 'asc' }
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
             imageUrl: imageUrl || null,
         },
         include: {
-            author: { select: { id: true, name: true, username: true, imageUrl: true } },
+            author: { select: { id: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true } },
             _count: { select: { likes: true, dislikes: true, replies: true } }
         }
     });
