@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { PatronGrantSource } from '@prisma/client';
-import { UserAccessService, normalizePaymentTotals } from './user-access.service';
+import { UserAccessService } from './user-access.service';
 
 type ClerkSyncData = {
   userId: string;
@@ -72,8 +72,7 @@ export class ReferralService {
                 data: {
                     isPatron: true,
                     patronSince: new Date()
-                },
-                include: { paymentTotals: true }
+                }
             });
 
             await tx.patronGrant.create({
@@ -88,7 +87,7 @@ export class ReferralService {
             syncData.current = {
                 userId: referrerId,
                 isPatron: true,
-                totalPaid: normalizePaymentTotals(updatedReferrer.paymentTotals)
+                totalPaid: 0
             };
         }
 

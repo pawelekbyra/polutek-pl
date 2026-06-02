@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { prisma } from '@/lib/prisma';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +16,7 @@ export async function GET(req: NextRequest) {
     await UserService.getOrCreateUser(userId);
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { paymentTotals: true }
+      where: { id: userId }
     });
 
     if (!user) {
@@ -26,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      totalPaid: normalizePaymentTotals(user.paymentTotals),
+      totalPaid: 0,
       isPatron: user.isPatron,
       language: user.language
     });

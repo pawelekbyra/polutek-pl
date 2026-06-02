@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "sidebarOrder" INTEGER NOT NULL DEFAULT 0;

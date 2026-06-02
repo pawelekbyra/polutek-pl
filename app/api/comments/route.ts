@@ -44,16 +44,6 @@ export async function GET(request: NextRequest) {
       userId = authData.userId;
   } catch {}
 
-  // Access control check
-  const decision = await AccessPolicy.canViewVideo(userId, videoId);
-  if (!decision.allowed) {
-      return NextResponse.json({
-          success: false,
-          message: decision.reason,
-          requiredTier: decision.requiredTier
-      }, { status: 403 });
-  }
-
   try {
     let internalUserId = null;
     if (userId) {

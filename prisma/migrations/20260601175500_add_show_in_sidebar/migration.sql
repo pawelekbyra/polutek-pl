@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "showInSidebar" BOOLEAN NOT NULL DEFAULT true;
