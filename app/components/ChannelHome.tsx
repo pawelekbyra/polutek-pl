@@ -34,11 +34,68 @@ interface ChannelHomeProps {
 
 import { useSearchParams } from 'next/navigation';
 
+
+const PREMIERE_DATE = new Date('2026-10-13T00:00:00');
+
+function PremiereCountdownItem({ language }: { language: string }) {
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateRemaining = () => {
+      setRemainingMs(Math.max(0, PREMIERE_DATE.getTime() - Date.now()));
+    };
+
+    updateRemaining();
+    const interval = window.setInterval(updateRemaining, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const totalSeconds = remainingMs === null ? null : Math.floor(remainingMs / 1000);
+  const days = totalSeconds === null ? null : Math.floor(totalSeconds / 86400);
+  const hours = totalSeconds === null ? 0 : Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = totalSeconds === null ? 0 : Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds === null ? 0 : totalSeconds % 60;
+  const countdown = totalSeconds === null
+    ? '--:--:--'
+    : [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
+
+  return (
+    <div className="group flex gap-2 p-1 rounded-lg transition-colors relative cursor-default hover:bg-[#ebebeb]">
+      <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-[#111] relative z-10 border border-amber-300/40 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-300/25 via-[#161616] to-orange-700/25" />
+        <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full bg-amber-300/30 blur-2xl" />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-3 text-center text-white">
+          <span className="text-[9px] font-black uppercase tracking-[0.22em] text-amber-200">
+            {language === 'pl' ? 'do premiery' : 'premiere in'}
+          </span>
+          <span className="font-mono text-3xl font-black leading-none text-white">{days ?? '—'}</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.24em] text-white/55">
+            {language === 'pl' ? 'dni' : 'days'}
+          </span>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
+        <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
+          Premiera 13.10.2026
+        </h4>
+        <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
+          <span>{language === 'pl' ? 'Data premiery' : 'Premiere date'}: 13.10.2026</span>
+          <span className="font-mono font-bold text-amber-700">{countdown}</span>
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">
+          {language === 'pl' ? 'Odliczanie' : 'Countdown'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId, userProfile }: ChannelHomeProps) {
   const { t, language, setLanguage } = useLanguage();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
+  const viewerIsPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
 
@@ -163,37 +220,59 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
   ].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
+  const featuredPatronVideo = patronVideos[0];
+
+  const patronZoneSection = !searchQuery && viewerIsPatron && featuredPatronVideo && (
+    <div className="space-y-2">
+      <div className="pb-1 border-b border-neutral-100">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+      </div>
+      {renderVideoItem(featuredPatronVideo)}
+      <PremiereCountdownItem language={language} />
+    </div>
+  );
+
+  const publicMaterialsSection = !searchQuery && freeMaterialVideos.length > 0 && (
+    <div className={viewerIsPatron ? "pt-6 space-y-2" : "space-y-2"}>
+      <div className="pb-1 border-b border-neutral-100">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+      </div>
+      {freeMaterialVideos.map(renderVideoItem)}
+    </div>
+  );
+
+  const secretProjectSection = !searchQuery && (
+    <div className="pt-6 pb-0">
+      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+      </div>
+      <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} isPatron={viewerIsPatron} />
+    </div>
+  );
+
+  const defaultPatronSection = !searchQuery && !viewerIsPatron && patronVideos.length > 0 && (
+    <div className="pt-6 space-y-2">
+      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
+      </div>
+      {patronVideos.map(renderVideoItem)}
+    </div>
+  );
 
   const playlistItems = (
     <>
-      {/* SECTION 1: FREE MATERIALS */}
-      {!searchQuery && freeMaterialVideos.length > 0 && (
-        <div className="space-y-2">
-          <div className="pb-1 border-b border-neutral-100">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-          </div>
-          {freeMaterialVideos.map(renderVideoItem)}
-        </div>
-      )}
-
-      {/* SECTION 2: DONATE (STRIPE GATE) */}
-      {!searchQuery && (
-        <div className="pt-6 pb-0">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-            </div>
-            <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
-        </div>
-      )}
-
-      {/* SECTION 3: PATRON ZONE */}
-      {!searchQuery && patronVideos.length > 0 && (
-        <div className="pt-6 space-y-2">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-            </div>
-            {patronVideos.map(renderVideoItem)}
-        </div>
+      {viewerIsPatron ? (
+        <>
+          {patronZoneSection}
+          {secretProjectSection}
+          {publicMaterialsSection}
+        </>
+      ) : (
+        <>
+          {publicMaterialsSection}
+          {secretProjectSection}
+          {defaultPatronSection}
+        </>
       )}
 
       {/* Search results fallback */}
@@ -244,9 +323,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
                  />
                ) : (
                  <div className="space-y-2">
-                    <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-                    </div>
                     {playlistItems}
                     {searchQuery && (
                       <div className="px-2 pt-4 border-t border-neutral-300 mt-4">
