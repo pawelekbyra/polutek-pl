@@ -2,6 +2,7 @@ import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { flags } from '../feature-flags';
 import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
+import { isPatronLikeUser } from './comment-access';
 
 
 type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
@@ -92,7 +93,7 @@ export class AccessPolicy {
 
     // Patron tier
     if (video.tier === AccessTier.PATRON) {
-      if (user.isPatron) return { allowed: true };
+      if (isPatronLikeUser(user)) return { allowed: true };
       return { allowed: false, reason: "PATRON_REQUIRED", requiredTier: AccessTier.PATRON };
     }
 
