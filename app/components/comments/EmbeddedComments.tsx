@@ -291,8 +291,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div className="space-y-8 max-w-4xl bg-white p-6 md:p-8 rounded-2xl border border-neutral-200 shadow-sm my-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+    <div className="space-y-8 max-w-4xl bg-white px-6 pb-6 pt-4 md:px-8 md:pb-8 md:pt-5 rounded-2xl border border-neutral-200 shadow-sm my-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
          <div className="flex items-center gap-3 order-2 sm:order-1">
             <MessageSquare size={20} className="text-blue-600" />
             <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
@@ -323,14 +323,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="flex gap-5 items-start mb-10">
-        <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
-           <img
-             src={userProfile?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
-             alt="Avatar"
-             className="w-full h-full object-cover"
-           />
-        </div>
+      <div className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}>
+        {userProfile && (
+          <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
+             <img
+               src={userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
+               alt="Avatar"
+               className="w-full h-full object-cover"
+             />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="relative">
             {replyTo && userProfile && (
