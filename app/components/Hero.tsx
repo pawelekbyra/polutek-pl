@@ -219,13 +219,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "flex items-center justify-center px-4 h-full flex-none hover:bg-neutral-100 transition-colors active:bg-neutral-200",
+                        "flex h-full w-12 flex-none items-center justify-center px-0 hover:bg-neutral-100 transition-colors active:bg-neutral-200",
                         optimisticState.isDisliked && "text-red-600",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
-                     <ThumbsDown size={18} className={cn(optimisticState.isDisliked && "fill-red-600")} />
+                     <ThumbsDown size={18} className={cn("block", optimisticState.isDisliked && "fill-red-600")} />
                   </button>
                </div>
                <button
