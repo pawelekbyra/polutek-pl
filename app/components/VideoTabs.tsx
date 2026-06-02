@@ -5,6 +5,8 @@ import { PublicVideoDTO } from '../types/video';
 import VideoStory from './VideoStory';
 import VideoPlaylist from './VideoPlaylist';
 import EmbeddedComments from './comments/EmbeddedComments';
+import { useLanguage } from './LanguageContext';
+import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
 interface VideoTabsProps {
   video: PublicVideoDTO;
@@ -12,6 +14,8 @@ interface VideoTabsProps {
 
 const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
   const [activeTab, setActiveTab] = useState('story');
+  const { language } = useLanguage();
+  const displayTitle = getVideoDisplayTitle(video, language);
 
   const tabs = [
     { id: 'story', label: 'O Kanale' },
@@ -44,7 +48,7 @@ const VideoTabs: React.FC<VideoTabsProps> = ({ video }) => {
             <VideoPlaylist
               videoId={video.id}
               videoSlug={video.slug}
-              videoTitle={video.title}
+              videoTitle={displayTitle}
               creatorId={video.creatorId}
             />
           </div>

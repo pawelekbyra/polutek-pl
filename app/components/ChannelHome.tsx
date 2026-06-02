@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useLanguage } from './LanguageContext';
-import BrandName from './BrandName';
+import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -158,6 +158,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   );
 
   const renderVideoItem = (video: PublicVideoDTO) => {
+    const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideo.id;
     const isLoggedIn = !!userProfile;
     const isPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
@@ -187,7 +188,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
           <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
             <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
-               {video.slug === 'independency-2024' ? (isLoggedIn ? <>{t.welcomeOn} <BrandName /></> : t.independencyTitle) : video.title}
+               {displayTitle}
             </h4>
           </Link>
           <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
@@ -244,7 +245,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
       </div>
-      <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} isPatron={viewerIsPatron} />
+      <VideoPlaylist videoTitle={getVideoDisplayTitle(selectedVideo, language)} creatorId={selectedVideo.creatorId} isPatron={viewerIsPatron} />
     </div>
   ) : null;
 

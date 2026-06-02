@@ -10,7 +10,7 @@ import VideoPlayer from './VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useLanguage } from './LanguageContext';
-import BrandName from './BrandName';
+import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
 interface ChannelVideoCardProps {
     video: PublicVideoDTO;
@@ -21,7 +21,7 @@ interface ChannelVideoCardProps {
 }
 
 export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPatron, referralPoints = 0, role }: ChannelVideoCardProps) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -29,6 +29,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
     }, []);
 
     const isPatron = propIsPatron || referralPoints >= 5 || role === 'ADMIN';
+    const displayTitle = getVideoDisplayTitle(video, language);
 
     const hasAccess = video.tier === 'PUBLIC' ||
                       (video.tier === 'LOGGED_IN' && isLoggedIn) ||
@@ -71,11 +72,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                     <div className="flex-1 min-w-0">
                         <Link href={`/?v=${video.id}`}>
                             <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 uppercase tracking-tight mb-1 hover:opacity-80 transition-opacity">
-                                {video.slug === 'independency-2024'
-                                    ? (isLoggedIn ? (
-                                        <>{t.welcomeOn} <BrandName /></>
-                                    ) : t.independencyTitle)
-                                    : video.title}
+                                {displayTitle}
                             </h3>
                         </Link>
                         <div className="text-[12px] text-[#606060] font-sans leading-relaxed">
