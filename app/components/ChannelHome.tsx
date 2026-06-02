@@ -172,6 +172,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   ].filter((video): video is PublicVideoDTO => Boolean(video));
   const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
   const patronPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
+  const searchPlaylistVideos = moveSelectedVideoFirst(sidebarVideos);
 
   const donationSection = !searchQuery ? (
     <div className="pt-6 pb-0">
@@ -185,19 +186,12 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const playlistItems = (
     <>
       {isPatronViewer && !searchQuery ? (
-        <>
-          <div className="space-y-2">
-            <div className="pb-1 border-b border-neutral-100">
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-                {language === 'pl' ? 'Filmiki' : t.videosTab}
-              </h3>
-            </div>
-            {patronPlaylistVideos.map(renderVideoItem)}
+        <div className="space-y-2">
+          <div className="pb-1 border-b border-neutral-100">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
           </div>
-
-          {/* Patron viewers keep the tip gate below the complete unified playlist. */}
-          {donationSection}
-        </>
+          {patronPlaylistVideos.map(renderVideoItem)}
+        </div>
       ) : (
         <>
           {/* SECTION 1: FREE MATERIALS */}
@@ -209,9 +203,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
               {freeMaterialVideos.map(renderVideoItem)}
             </div>
           )}
-
-          {/* Non-patrons keep the tip gate between public/logged-in videos and patron zone. */}
-          {donationSection}
 
           {/* SECTION 2: PATRON ZONE */}
           {!searchQuery && patronVideos.length > 0 && (
@@ -226,7 +217,10 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       )}
 
       {/* Search results fallback */}
-      {searchQuery && sidebarVideos.map(renderVideoItem)}
+      {searchQuery && searchPlaylistVideos.map(renderVideoItem)}
+
+      {/* Donate gate stays under the whole playlist */}
+      {donationSection}
     </>
   );
 
