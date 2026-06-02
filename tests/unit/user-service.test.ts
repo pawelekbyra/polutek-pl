@@ -48,6 +48,37 @@ describe('UserService.getOrCreateUserFromAuth', () => {
     );
   });
 
+  it('refreshes an existing local user with Clerk session display data', async () => {
+    vi.spyOn(UserService, 'getOrCreateUser').mockResolvedValue({
+      id: 'user_3',
+      email: 'user_3@clerk.local',
+      name: null,
+      username: null,
+      imageUrl: null,
+    } as never);
+    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_3' } as never);
+
+    await UserService.getOrCreateUserFromAuth('user_3', {
+      email: 'real@example.com',
+      first_name: 'Real',
+      last_name: 'Person',
+      picture: 'https://img.clerk.com/avatar.png',
+      username: 'realperson',
+      locale: 'pl',
+    });
+
+    expect(syncSpy).toHaveBeenCalledWith(
+      'user_3',
+      'real@example.com',
+      'Real Person',
+      'https://img.clerk.com/avatar.png',
+      null,
+      'pl',
+      'realperson',
+      null
+    );
+  });
+
   it('falls back to a stable placeholder email when claims do not include email', async () => {
     vi.spyOn(UserService, 'getOrCreateUser').mockRejectedValue(new Error('USER_HAS_NO_EMAIL'));
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
