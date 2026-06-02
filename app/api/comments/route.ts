@@ -8,6 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
 import { isAllowedMediaUrl } from '@/lib/blob';
+import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,17 +18,14 @@ type CommentAuthor = {
   username?: string | null;
 };
 
-function isGeneratedClerkUsername(value?: string | null) {
-  return /^user_[a-z0-9]+$/i.test(value?.trim() || '');
-}
-
 function getCommentAuthorName(author?: CommentAuthor | null) {
   const rawName = author?.name?.trim();
-  const name = isGeneratedClerkUsername(rawName) ? null : rawName;
-  const username = author?.username?.trim();
+  const name = (rawName && !isGeneratedClerkUsername(rawName)) ? rawName : null;
+  const rawUsername = author?.username?.trim();
+  const username = (rawUsername && !isGeneratedClerkUsername(rawUsername)) ? rawUsername : null;
   const fallbackFromEmail = author?.email?.split('@')[0]?.trim();
 
-  return name || (isGeneratedClerkUsername(username) ? null : username) || fallbackFromEmail || "Użytkownik";
+  return name || username || fallbackFromEmail || "Użytkownik";
 }
 
 const postCommentSchema = z.object({
@@ -134,6 +132,7 @@ export async function GET(request: NextRequest) {
             ...r,
             text: r.deletedAt ? "Komentarz usunięty" : r.text,
             author: r.deletedAt ? null : r.author,
+            imageUrl: r.deletedAt ? null : (r.imageUrl || r.author?.imageUrl),
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
             authorName: r.deletedAt ? "Użytkownik" : (getCommentAuthorName(r.author)),
@@ -143,6 +142,7 @@ export async function GET(request: NextRequest) {
             ...c,
             text: isDeleted ? "Komentarz usunięty" : c.text,
             author: isDeleted ? null : c.author,
+            imageUrl: isDeleted ? null : (c.imageUrl || c.author?.imageUrl),
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
             authorName: isDeleted ? "Użytkownik" : (getCommentAuthorName(c.author)),
@@ -247,6 +247,7 @@ export async function POST(request: NextRequest) {
             isLiked: false,
             isDisliked: false,
             authorName: getCommentAuthorName(newComment.author),
+            imageUrl: newComment.imageUrl || newComment.author?.imageUrl,
             replies: [],
         }
     }, { status: 201 });
