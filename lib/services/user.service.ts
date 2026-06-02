@@ -4,6 +4,26 @@ import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 
+type AuthSessionClaims = Record<string, unknown> | null | undefined;
+
+function stringClaim(claims: AuthSessionClaims, ...keys: string[]) {
+  for (const key of keys) {
+    const value = claims?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function metadataClaim(claims: AuthSessionClaims, metadataKey: 'publicMetadata' | 'unsafeMetadata', key: string) {
+  const metadata = claims?.[metadataKey];
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    const value = (metadata as Record<string, unknown>)[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+
 export class UserService {
   static readonly ADMIN_EMAIL = ADMIN_EMAIL;
 
@@ -111,6 +131,42 @@ export class UserService {
        console.error("[UserService.syncUser] Error:", message);
        throw err;
     }
+  }
+
+
+  /**
+   * Ensures comment authors have a local row even when Clerk's user API is
+   * temporarily unavailable in a route handler. Comments require a User FK, so
+   * an authenticated Clerk session must be enough to create a minimal profile.
+   */
+  static async getOrCreateUserFromAuth(userId: string, sessionClaims?: AuthSessionClaims) {
+    try {
+      return await this.getOrCreateUser(userId);
+    } catch (error) {
+      console.warn(
+        "[UserService.getOrCreateUserFromAuth] Falling back to session claims:",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id: userId } });
+    if (existing) return existing;
+
+    const email = stringClaim(sessionClaims, 'email', 'primary_email_address', 'preferred_username')
+      || `${userId}@clerk.local`;
+    const firstName = stringClaim(sessionClaims, 'first_name', 'given_name');
+    const lastName = stringClaim(sessionClaims, 'last_name', 'family_name');
+    const name = stringClaim(sessionClaims, 'name') || [firstName, lastName].filter(Boolean).join(' ') || null;
+    const imageUrl = stringClaim(sessionClaims, 'picture', 'image_url');
+    const username = stringClaim(sessionClaims, 'username');
+    const language = metadataClaim(sessionClaims, 'publicMetadata', 'language')
+      || metadataClaim(sessionClaims, 'unsafeMetadata', 'language')
+      || stringClaim(sessionClaims, 'locale')
+      || 'en';
+    const referrerId = metadataClaim(sessionClaims, 'unsafeMetadata', 'referrerId');
+    const clerkRole = metadataClaim(sessionClaims, 'publicMetadata', 'role');
+
+    return this.syncUser(userId, email, name, imageUrl, referrerId, language, username, clerkRole);
   }
 
   static async toggleSubscription(userId: string, creatorId: string) {

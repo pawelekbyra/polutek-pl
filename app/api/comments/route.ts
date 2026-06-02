@@ -148,9 +148,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   let userId: string | null = null;
+  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
       const authData = await auth();
       userId = authData.userId;
+      sessionClaims = authData.sessionClaims;
   } catch {
       return NextResponse.json({
           success: false,
@@ -175,7 +177,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await UserService.getOrCreateUser(userId);
+    await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
 
     const body = await request.json();
     const result = postCommentSchema.safeParse(body);
