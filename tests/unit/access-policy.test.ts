@@ -5,6 +5,8 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $queryRaw: vi.fn().mockResolvedValue([{ column_name: 'showInSidebar' }, { column_name: 'sidebarOrder' }]),
+    $executeRawUnsafe: vi.fn().mockResolvedValue(0),
     video: {
       findUnique: vi.fn(),
     },
