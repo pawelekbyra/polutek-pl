@@ -124,7 +124,7 @@ The platform operates on a donation basis. All "Tips" or "Donations" are volunta
 ## Production hardening requirements
 
 ### Rate limiting
-`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required in production. If either value is missing with `NODE_ENV=production`, the application fails fast instead of falling back to an in-memory limiter. The in-memory limiter exists only for local development and tests because serverless memory is per-instance and resets on cold starts.
+Production rate limiting requires writable Upstash Redis REST credentials. Configure either `UPSTASH_REDIS_REST_URL` plus `UPSTASH_REDIS_REST_TOKEN`, or the Vercel KV fallback names `KV_REST_API_URL` plus `KV_REST_API_TOKEN`. Do not use `KV_REST_API_READ_ONLY_TOKEN` for rate limiting because the limiter must write counters. If no writable pair is available with `NODE_ENV=production`, the application logs `Missing Redis env vars: set UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.` and fails fast instead of falling back to an in-memory limiter. The in-memory limiter exists only for local development and tests because serverless memory is per-instance and resets on cold starts.
 
 `/api/media/:videoId` is rate-limited per authenticated user (or client IP for guests) and per media id. The limit is intentionally higher than comment limits to allow normal video player `Range` requests while still bounding streaming costs.
 
@@ -162,4 +162,6 @@ npx prisma migrate deploy
 npm run build
 ```
 
-Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, Upstash Redis REST URL/token, exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.
+Required production environment groups: database URLs, Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, writable Redis REST URL/token (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` or Vercel `KV_REST_API_URL`/`KV_REST_API_TOKEN`), exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, and `HEALTHCHECK_TOKEN`.
+
+Before promoting the deployment, verify `/api/media/:videoId` and `/api/checkout/create-intent` do not return 500 responses, and complete a smoke test that opens Stripe Checkout from the campaign page.

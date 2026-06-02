@@ -80,20 +80,34 @@ type RateLimitEnv = Record<string, string | undefined>;
 
 export type RateLimitStoreKind = 'memory' | 'upstash';
 
+export type RateLimitRedisConfig = {
+  restUrl?: string;
+  token?: string;
+};
+
+export const MISSING_REDIS_ENV_MESSAGE = 'Missing Redis env vars: set UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.';
+
 export function getRateLimitRedisKey(key: string) {
   return `rate-limit:${key}`;
 }
 
+export function resolveRateLimitRedisConfig(env: RateLimitEnv = process.env): RateLimitRedisConfig {
+  return {
+    restUrl: env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL,
+    token: env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN,
+  };
+}
+
 export function resolveRateLimitStoreKind(env: RateLimitEnv = process.env): RateLimitStoreKind {
-  const restUrl = env.UPSTASH_REDIS_REST_URL;
-  const token = env.UPSTASH_REDIS_REST_TOKEN;
+  const { restUrl, token } = resolveRateLimitRedisConfig(env);
 
   if (restUrl && token) {
     return 'upstash';
   }
 
   if (env.NODE_ENV === 'production') {
-    throw new Error('[RateLimit] Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
+    console.error(`[RateLimit] ${MISSING_REDIS_ENV_MESSAGE}`);
+    throw new Error(`[RateLimit] ${MISSING_REDIS_ENV_MESSAGE}`);
   }
 
   return 'memory';
@@ -103,7 +117,8 @@ export function createRateLimitStore(env: RateLimitEnv = process.env): RateLimit
   const kind = resolveRateLimitStoreKind(env);
 
   if (kind === 'upstash') {
-    return new UpstashRedisStore(env.UPSTASH_REDIS_REST_URL!, env.UPSTASH_REDIS_REST_TOKEN!);
+    const { restUrl, token } = resolveRateLimitRedisConfig(env);
+    return new UpstashRedisStore(restUrl!, token!);
   }
 
   console.warn('[RateLimit] Using in-memory rate limit store. This is allowed only outside production.');
