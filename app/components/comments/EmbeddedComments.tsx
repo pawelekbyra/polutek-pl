@@ -9,6 +9,7 @@ import { SignInButton, useAuth, useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { AccessTier } from "@prisma/client";
+import { getCommentAccessState, isPatronLikeUser } from '@/lib/access/comment-access';
 import { Button } from '@/components/ui/button';
 import { parseJsonResponse } from '@/lib/client/api';
 
@@ -88,10 +89,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     referralPoints: numberMetadata(metadata.referralPoints)
   } : null);
 
-  const isPatronGated = videoTier === "PATRON";
-  const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN';
-  const canComment = !!userProfile && (!isPatronGated || isPatron);
-  const isCurrentUserVip = !!isPatron;
+  const { isPatronGated, isPatronLike, canComment } = getCommentAccessState(userProfile, videoTier);
+  const isCurrentUserVip = isPatronLike;
 
   const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');
   const [newComment, setNewComment] = useState('');
@@ -278,9 +277,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     postMutation.mutate({ text: newComment, parentId: replyTo || undefined });
   };
 
-  const hasVipLook = (author?: CommentView['author'] | null) => {
-    return !!author?.isPatron || (author?.referralPoints || 0) >= 5 || author?.role === 'ADMIN';
-  };
+  const hasVipLook = (author?: CommentView['author'] | null) => isPatronLikeUser(author);
 
   const avatarFrameClass = (vip: boolean, sizeClass: string) => cn(
     sizeClass,
@@ -371,7 +368,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             )}
             {!canComment ? (
               <div className="w-full rounded-xl border border-dashed border-amber-200 bg-amber-50/60 px-4 py-3 min-h-[2.75rem] flex items-center justify-center">
-                 {isPatronGated && !isPatron ? (
+                 {isPatronGated && !isPatronLike ? (
                     <a
                       href="#donations"
                       className="text-[14px] font-black text-amber-700 underline underline-offset-4 hover:opacity-80 transition-all text-center"
