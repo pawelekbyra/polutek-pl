@@ -91,6 +91,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const { isPatronGated, isPatronLike, canComment } = getCommentAccessState(userProfile, videoTier);
   const isCurrentUserVip = isPatronLike;
+  const showInputAvatar = !!userProfile && canComment;
 
   const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');
   const [newComment, setNewComment] = useState('');
@@ -338,8 +339,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}>
-        {userProfile && (
+      <div className={cn("flex items-start mb-10", showInputAvatar ? "gap-5" : "gap-0")}>
+        {showInputAvatar && (
           <div className="flex shrink-0 flex-col items-center gap-1">
             <div className={avatarFrameClass(isCurrentUserVip, "w-10 h-10 mt-1")}>
                <img
