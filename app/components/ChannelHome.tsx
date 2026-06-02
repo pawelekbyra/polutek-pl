@@ -77,13 +77,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   };
 
   // CUSTOM SORTING LOGIC:
-  // 1. sidebarOrder (desc)
+  // 1. sidebarOrder (asc, 1 = top)
   // 2. publishedAt (desc)
   const sortedVideos = [...(allVideos || [])].sort((a, b) => {
-      // 1. sidebarOrder
-      const orderA = a.sidebarOrder ?? 0;
-      const orderB = b.sidebarOrder ?? 0;
-      if (orderA !== orderB) return orderB - orderA;
+      // 1. sidebarOrder (1 = highest)
+      const orderA = a.sidebarOrder === 0 ? 999999 : (a.sidebarOrder ?? 999999);
+      const orderB = b.sidebarOrder === 0 ? 999999 : (b.sidebarOrder ?? 999999);
+      if (orderA !== orderB) return orderA - orderB;
 
       // 2. publishedAt
       const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
@@ -154,24 +154,37 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     );
   };
 
-  const publicAndRegisteredVideos = sortedVideos.filter(v => v.tier !== 'PATRON');
+  const topPublicVideo = sortedVideos.find(v => v.tier === 'PUBLIC');
+  const topLoggedInVideo = sortedVideos.find(v => v.tier === 'LOGGED_IN');
   const patronVideos = sortedVideos.filter(v => v.tier === 'PATRON');
 
   const playlistItems = (
     <>
-      {/* SECTION: MATERIALS */}
-      {!searchQuery && (
-        <div className="pb-2 pt-2">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-1">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
-            </div>
+      {/* SECTION 1: PUBLIC TEASER */}
+      {!searchQuery && topPublicVideo && (
+        <div className="space-y-2">
+          <div className="pb-1 border-b border-neutral-100">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+          </div>
+          {renderVideoItem(topPublicVideo)}
         </div>
       )}
-      {publicAndRegisteredVideos.map(renderVideoItem)}
 
-      {/* SECTION: DONATE (STRIPE GATE) */}
+      {/* SECTION 2: LOGGED-IN TEASER */}
+      {!searchQuery && topLoggedInVideo && (
+        <div className="pt-4 space-y-2">
+          <div className="pb-1 border-b border-neutral-100">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
+              {language === 'pl' ? 'Dla społeczności' : 'For community'}
+            </h3>
+          </div>
+          {renderVideoItem(topLoggedInVideo)}
+        </div>
+      )}
+
+      {/* SECTION 3: DONATE (STRIPE GATE) */}
       {!searchQuery && (
-        <div className="pt-4 pb-0">
+        <div className="pt-6 pb-0">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
             </div>
@@ -179,15 +192,18 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
         </div>
       )}
 
-      {/* SECTION: PATRON ZONE */}
+      {/* SECTION 4: PATRON ZONE */}
       {!searchQuery && patronVideos.length > 0 && (
-        <div className="pt-4">
+        <div className="pt-6 space-y-2">
             <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
             </div>
+            {patronVideos.map(renderVideoItem)}
         </div>
       )}
-      {patronVideos.map(renderVideoItem)}
+
+      {/* Search results fallback */}
+      {searchQuery && sortedVideos.map(renderVideoItem)}
     </>
   );
 
