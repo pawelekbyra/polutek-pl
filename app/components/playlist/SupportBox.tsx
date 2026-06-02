@@ -41,15 +41,17 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   onOpenPolityka,
 }) => {
   return (
-    <div className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center">
+    <div className="relative overflow-hidden rounded-2xl border border-cyan-200/70 bg-white p-6 text-center shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-300/20 blur-2xl" aria-hidden="true" />
+      <div className="absolute -bottom-12 -left-10 h-32 w-32 rounded-full bg-fuchsia-300/20 blur-2xl" aria-hidden="true" />
       <div className="space-y-4 relative z-10">
         <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2">
-          {t.supportArtist}
-          <Trophy size={32} className="text-neutral-900" />
+          <span className="-rotate-1 rounded-xl bg-gradient-to-r from-cyan-100 via-white to-fuchsia-100 px-3 py-1 shadow-sm">{t.supportArtist}</span>
+          <Trophy size={32} className="text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.45)]" />
         </h3>
 
         <div className="space-y-3 text-center">
-          <p className="font-sans text-[13px] leading-relaxed text-neutral-500 whitespace-pre-wrap">
+          <p className="font-sans text-[13px] leading-relaxed text-neutral-600 whitespace-pre-wrap">
             {t.donationDescription}
           </p>
 
@@ -60,7 +62,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           )}
 
           <div className="space-y-2 pt-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-cyan-700/70">
               {language === 'pl' ? `Kwota wsparcia (Min ${minAmount}.00 ${selectedCurrency})` : `Transaction amount (Min ${minAmount}.00 ${selectedCurrency})`}
             </label>
             <div className="relative group">
@@ -68,7 +70,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 <select
                   value={selectedCurrency}
                   onChange={(e) => onCurrencyChange(e.target.value)}
-                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-neutral-400 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
+                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-cyan-700/60 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
                   aria-label="Select Currency"
                 >
                   {availableCurrencies.map(curr => (
@@ -85,7 +87,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 step="1"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
+                className="w-full rounded-xl border border-cyan-100 bg-gradient-to-r from-neutral-50 via-white to-fuchsia-50/50 py-4 px-12 text-center font-mono text-3xl font-black text-neutral-900 outline-none transition-all placeholder:text-neutral-200 focus:border-transparent focus:ring-2 focus:ring-cyan-400"
                 placeholder={String(minAmount)}
               />
             </div>
@@ -101,7 +103,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           type="button"
           onClick={onSupport}
           disabled={isLoading || amount === '' || amount < minAmount}
-          className="w-full h-12 uppercase tracking-wider text-sm"
+          className="h-12 w-full bg-slate-950 text-sm uppercase tracking-wider text-white shadow-[0_0_18px_rgba(34,211,238,0.28)] hover:bg-slate-800"
           size="lg"
         >
           {isLoading ? (

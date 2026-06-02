@@ -179,8 +179,16 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       {/* SECTION 2: DONATE (STRIPE GATE) */}
       {!searchQuery && (
         <div className="pt-6 pb-0">
-            <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cyan-200/60 pb-2 mb-3">
+                <h3 className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
+                    <span>{t.donate}</span>
+                    <span
+                      className="rounded-full border border-cyan-200 bg-slate-950 px-2.5 py-1 font-mono text-[10px] font-black tracking-[0.18em] text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.45)]"
+                      style={{ textShadow: '0 0 7px rgba(34, 211, 238, 0.95), 0 0 14px rgba(59, 130, 246, 0.65)' }}
+                    >
+                      Open 24.h
+                    </span>
+                </h3>
             </div>
             <VideoPlaylist videoTitle={selectedVideo.title} creatorId={selectedVideo.creatorId} />
         </div>
