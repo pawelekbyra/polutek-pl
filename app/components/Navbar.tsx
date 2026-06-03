@@ -187,7 +187,7 @@ const Navbar = () => {
                   }}
                 />
                 {isPatron && (
-                  <span className="pointer-events-none absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                  <span className="pointer-events-none absolute -bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
                     Patron
                   </span>
                 )}
