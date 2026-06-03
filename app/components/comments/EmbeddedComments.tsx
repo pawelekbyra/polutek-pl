@@ -1,17 +1,36 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
-import { pl } from 'date-fns/locale';
-import { Heart, MessageSquare, ArrowUp, Loader2, Smile, ImageIcon, CornerDownRight, ThumbsUp, ThumbsDown, MoreVertical, Trash2, Lock, Star, Gem } from '../icons';
-import { SignInButton, useAuth, useUser } from '@clerk/nextjs';
-import { cn } from '@/lib/utils';
-import { useLanguage } from '../LanguageContext';
+import React, { useState, useEffect } from "react";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { pl } from "date-fns/locale";
+import {
+  Heart,
+  MessageSquare,
+  ArrowUp,
+  Loader2,
+  Smile,
+  ImageIcon,
+  CornerDownRight,
+  ThumbsUp,
+  ThumbsDown,
+  MoreVertical,
+  Trash2,
+  Lock,
+  Star,
+  Gem,
+} from "../icons";
+import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
+import { cn } from "@/lib/utils";
+import { useLanguage } from "../LanguageContext";
 import { AccessTier } from "@prisma/client";
-import { Button } from '@/components/ui/button';
-import { parseJsonResponse } from '@/lib/client/api';
-
+import { Button } from "@/components/ui/button";
+import { parseJsonResponse } from "@/lib/client/api";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -21,24 +40,35 @@ type ClerkCommentMetadata = {
 };
 
 function numberMetadata(value: unknown, fallback = 0) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 function booleanMetadata(value: unknown, fallback = false) {
-  return typeof value === 'boolean' ? value : fallback;
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function stringMetadata(value: unknown, fallback: string) {
-  return typeof value === 'string' && value ? value : fallback;
+  return typeof value === "string" && value ? value : fallback;
 }
 
 type CommentCounts = { likes: number; dislikes: number; replies?: number };
+type CommentAuthorView = {
+  imageUrl?: string | null;
+  slug?: string | null;
+  email?: string | null;
+  name?: string | null;
+  username?: string | null;
+  isPatron?: boolean | null;
+  referralPoints?: number | null;
+  role?: string | null;
+};
+
 type CommentView = {
   id: string;
   authorId?: string;
   authorName?: string;
   imageUrl?: string | null;
-  author?: { imageUrl?: string | null; slug?: string | null; email?: string | null; name?: string | null; username?: string | null } | null;
+  author?: CommentAuthorView | null;
   text: string;
   createdAt?: string | Date;
   isLiked?: boolean;
@@ -58,7 +88,21 @@ type CommentsPage = {
 type CommentsData = InfiniteData<CommentsPage>;
 
 function getAvatarSeed(comment: CommentView) {
-  return comment.author?.email || comment.authorName || comment.authorId || comment.id;
+  return (
+    comment.author?.email ||
+    comment.authorName ||
+    comment.authorId ||
+    comment.id
+  );
+}
+
+function isPatronAuthor(author?: CommentAuthorView | null) {
+  return (
+    !!author &&
+    (author.isPatron ||
+      (author.referralPoints || 0) >= 5 ||
+      author.role === "ADMIN")
+  );
 }
 
 interface EmbeddedCommentsProps {
@@ -80,7 +124,7 @@ interface EmbeddedCommentsProps {
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
   videoId,
-  videoTier = "PUBLIC"
+  videoTier = "PUBLIC",
 }) => {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
@@ -88,34 +132,52 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
-  const clerkUserProfile = isSignedIn ? {
-    id: userId!,
-    email: user?.primaryEmailAddress?.emailAddress || '',
-    imageUrl: user?.imageUrl || null,
-    name: user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.username || null,
-    username: user?.username || null,
-    totalPaid: numberMetadata(metadata.totalPaid),
-    isPatron: booleanMetadata(metadata.isPatron),
-    role: stringMetadata(metadata.role, 'USER'),
-    referralPoints: numberMetadata(metadata.referralPoints)
-  } : null;
-  const userProfile = (propUserProfile || clerkUserProfile)
+  const clerkUserProfile = isSignedIn
     ? {
-        ...(clerkUserProfile || {}),
-        ...(propUserProfile || {}),
-        email: propUserProfile?.email || clerkUserProfile?.email || '',
-        imageUrl: clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
-        name: clerkUserProfile?.name || propUserProfile?.name || null,
-        username: clerkUserProfile?.username || propUserProfile?.username || null,
+        id: userId!,
+        email: user?.primaryEmailAddress?.emailAddress || "",
+        imageUrl: user?.imageUrl || null,
+        name:
+          user?.fullName ||
+          [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+          user?.username ||
+          null,
+        username: user?.username || null,
+        totalPaid: numberMetadata(metadata.totalPaid),
+        isPatron: booleanMetadata(metadata.isPatron),
+        role: stringMetadata(metadata.role, "USER"),
+        referralPoints: numberMetadata(metadata.referralPoints),
       }
     : null;
+  const userProfile =
+    propUserProfile || clerkUserProfile
+      ? {
+          ...(clerkUserProfile || {}),
+          ...(propUserProfile || {}),
+          email: propUserProfile?.email || clerkUserProfile?.email || "",
+          imageUrl:
+            clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
+          name: clerkUserProfile?.name || propUserProfile?.name || null,
+          username:
+            clerkUserProfile?.username || propUserProfile?.username || null,
+        }
+      : null;
 
   const isPatronGated = videoTier === "PATRON";
-  const isPatron = userProfile?.isPatron || (userProfile?.referralPoints || 0) >= 5 || userProfile?.role === 'ADMIN';
+  const isPatron =
+    userProfile?.isPatron ||
+    (userProfile?.referralPoints || 0) >= 5 ||
+    userProfile?.role === "ADMIN";
   const canComment = !!userProfile && (!isPatronGated || isPatron);
+  const userAvatarUrl = userProfile
+    ? userProfile.imageUrl ||
+      (userProfile.email
+        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userProfile.email)}`
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`)
+    : null;
 
-  const [sortBy, setSortBy] = useState<'newest' | 'top'>('newest');
-  const [newComment, setNewComment] = useState('');
+  const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
+  const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -124,227 +186,326 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     setIsClient(true);
   }, []);
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isLoading,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl],
-    queryFn: async ({ pageParam }) => {
-        const url = new URL('/api/comments', window.location.origin);
-        url.searchParams.append('videoId', videoId);
-        url.searchParams.append('sortBy', sortBy);
-        if (pageParam) url.searchParams.append('cursor', pageParam as string);
-        if (userProfile?.name) url.searchParams.append('viewerName', userProfile.name);
-        if (userProfile?.username) url.searchParams.append('viewerUsername', userProfile.username);
-        if (userProfile?.imageUrl) url.searchParams.append('viewerImageUrl', userProfile.imageUrl);
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: [
+        "comments",
+        videoId,
+        sortBy,
+        userProfile?.name,
+        userProfile?.username,
+        userProfile?.imageUrl,
+      ],
+      queryFn: async ({ pageParam }) => {
+        const url = new URL("/api/comments", window.location.origin);
+        url.searchParams.append("videoId", videoId);
+        url.searchParams.append("sortBy", sortBy);
+        if (pageParam) url.searchParams.append("cursor", pageParam as string);
+        if (userProfile?.name)
+          url.searchParams.append("viewerName", userProfile.name);
+        if (userProfile?.username)
+          url.searchParams.append("viewerUsername", userProfile.username);
+        if (userProfile?.imageUrl)
+          url.searchParams.append("viewerImageUrl", userProfile.imageUrl);
         const res = await fetch(url.toString());
         return parseJsonResponse<CommentsPage>(res);
-    },
-    initialPageParam: '',
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: !!videoId,
-  });
+      },
+      initialPageParam: "",
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      enabled: !!videoId,
+    });
 
   const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
 
-  const replyingToAuthor = replyTo ? comments.find(c => c.id === replyTo)?.authorName : null;
+  const replyingToAuthor = replyTo
+    ? comments.find((c) => c.id === replyTo)?.authorName
+    : null;
 
   const postMutation = useMutation({
-    mutationFn: async ({ text, parentId }: { text: string; parentId?: string }) => {
-        const res = await fetch('/api/comments', {
-            method: 'POST',
-            body: JSON.stringify({
-              videoId,
-              text,
-              parentId,
-              authorProfile: userProfile ? {
+    mutationFn: async ({
+      text,
+      parentId,
+    }: {
+      text: string;
+      parentId?: string;
+    }) => {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        body: JSON.stringify({
+          videoId,
+          text,
+          parentId,
+          authorProfile: userProfile
+            ? {
                 name: userProfile.name || null,
                 username: userProfile.username || null,
                 imageUrl: userProfile.imageUrl || null,
-              } : undefined,
-            }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return parseJsonResponse(res);
+              }
+            : undefined,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
-      setNewComment('');
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+      setNewComment("");
       setReplyTo(null);
     },
   });
 
   const likeMutation = useMutation({
     mutationFn: async (commentId: string) => {
-        const res = await fetch('/api/comments/like', {
-            method: 'POST',
-            body: JSON.stringify({ commentId }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return parseJsonResponse(res);
+      const res = await fetch("/api/comments/like", {
+        method: "POST",
+        body: JSON.stringify({ commentId }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
-        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
-        const previousData = queryClient.getQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl]);
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      const previousData = queryClient.getQueryData([
+        "comments",
+        videoId,
+        sortBy,
+        userProfile?.name,
+        userProfile?.username,
+        userProfile?.imageUrl,
+      ]);
 
-        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], (old) => {
-            if (!old) return old;
+      queryClient.setQueryData<CommentsData>(
+        [
+          "comments",
+          videoId,
+          sortBy,
+          userProfile?.name,
+          userProfile?.username,
+          userProfile?.imageUrl,
+        ],
+        (old) => {
+          if (!old) return old;
 
-            const updateComment = (c: CommentView): CommentView => {
-                if (c.id === commentId) {
-                    const wasLiked = c.isLiked;
-                    const wasDisliked = c.isDisliked;
-                    return {
-                        ...c,
-                        isLiked: !wasLiked,
-                        isDisliked: false,
-                        _count: {
-                            ...(c._count ?? { likes: 0, dislikes: 0 }),
-                            likes: wasLiked ? Math.max(0, (c._count?.likes ?? 0) - 1) : (c._count?.likes ?? 0) + 1,
-                            dislikes: wasDisliked ? Math.max(0, (c._count?.dislikes ?? 0) - 1) : (c._count?.dislikes ?? 0)
-                        }
-                    };
-                }
-                if (c.replies) {
-                    return { ...c, replies: c.replies.map(updateComment) };
-                }
-                return c;
-            };
+          const updateComment = (c: CommentView): CommentView => {
+            if (c.id === commentId) {
+              const wasLiked = c.isLiked;
+              const wasDisliked = c.isDisliked;
+              return {
+                ...c,
+                isLiked: !wasLiked,
+                isDisliked: false,
+                _count: {
+                  ...(c._count ?? { likes: 0, dislikes: 0 }),
+                  likes: wasLiked
+                    ? Math.max(0, (c._count?.likes ?? 0) - 1)
+                    : (c._count?.likes ?? 0) + 1,
+                  dislikes: wasDisliked
+                    ? Math.max(0, (c._count?.dislikes ?? 0) - 1)
+                    : (c._count?.dislikes ?? 0),
+                },
+              };
+            }
+            if (c.replies) {
+              return { ...c, replies: c.replies.map(updateComment) };
+            }
+            return c;
+          };
 
-            return {
-                ...old,
-                pages: old.pages.map((page) => ({
-                    ...page,
-                    comments: page.comments.map(updateComment)
-                }))
-            };
-        });
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              comments: page.comments.map(updateComment),
+            })),
+          };
+        },
+      );
 
-        return { previousData };
+      return { previousData };
     },
     onError: (err, commentId, context) => {
-        if (context?.previousData) {
-            queryClient.setQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], context.previousData);
-        }
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          [
+            "comments",
+            videoId,
+            sortBy,
+            userProfile?.name,
+            userProfile?.username,
+            userProfile?.imageUrl,
+          ],
+          context.previousData,
+        );
+      }
     },
     onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
   });
 
   const dislikeMutation = useMutation({
     mutationFn: async (commentId: string) => {
-        const res = await fetch('/api/comments/dislike', {
-            method: 'POST',
-            body: JSON.stringify({ commentId }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return parseJsonResponse(res);
+      const res = await fetch("/api/comments/dislike", {
+        method: "POST",
+        body: JSON.stringify({ commentId }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
-        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
-        const previousData = queryClient.getQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl]);
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      const previousData = queryClient.getQueryData([
+        "comments",
+        videoId,
+        sortBy,
+        userProfile?.name,
+        userProfile?.username,
+        userProfile?.imageUrl,
+      ]);
 
-        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], (old) => {
-            if (!old) return old;
+      queryClient.setQueryData<CommentsData>(
+        [
+          "comments",
+          videoId,
+          sortBy,
+          userProfile?.name,
+          userProfile?.username,
+          userProfile?.imageUrl,
+        ],
+        (old) => {
+          if (!old) return old;
 
-            const updateComment = (c: CommentView): CommentView => {
-                if (c.id === commentId) {
-                    const wasLiked = c.isLiked;
-                    const wasDisliked = c.isDisliked;
-                    return {
-                        ...c,
-                        isLiked: false,
-                        isDisliked: !wasDisliked,
-                        _count: {
-                            ...(c._count ?? { likes: 0, dislikes: 0 }),
-                            likes: wasLiked ? Math.max(0, (c._count?.likes ?? 0) - 1) : (c._count?.likes ?? 0),
-                            dislikes: wasDisliked ? Math.max(0, (c._count?.dislikes ?? 0) - 1) : (c._count?.dislikes ?? 0) + 1
-                        }
-                    };
-                }
-                if (c.replies) {
-                    return { ...c, replies: c.replies.map(updateComment) };
-                }
-                return c;
-            };
+          const updateComment = (c: CommentView): CommentView => {
+            if (c.id === commentId) {
+              const wasLiked = c.isLiked;
+              const wasDisliked = c.isDisliked;
+              return {
+                ...c,
+                isLiked: false,
+                isDisliked: !wasDisliked,
+                _count: {
+                  ...(c._count ?? { likes: 0, dislikes: 0 }),
+                  likes: wasLiked
+                    ? Math.max(0, (c._count?.likes ?? 0) - 1)
+                    : (c._count?.likes ?? 0),
+                  dislikes: wasDisliked
+                    ? Math.max(0, (c._count?.dislikes ?? 0) - 1)
+                    : (c._count?.dislikes ?? 0) + 1,
+                },
+              };
+            }
+            if (c.replies) {
+              return { ...c, replies: c.replies.map(updateComment) };
+            }
+            return c;
+          };
 
-            return {
-                ...old,
-                pages: old.pages.map((page) => ({
-                    ...page,
-                    comments: page.comments.map(updateComment)
-                }))
-            };
-        });
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              comments: page.comments.map(updateComment),
+            })),
+          };
+        },
+      );
 
-        return { previousData };
+      return { previousData };
     },
     onError: (err, commentId, context) => {
-        if (context?.previousData) {
-            queryClient.setQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], context.previousData);
-        }
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          [
+            "comments",
+            videoId,
+            sortBy,
+            userProfile?.name,
+            userProfile?.username,
+            userProfile?.imageUrl,
+          ],
+          context.previousData,
+        );
+      }
     },
     onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
   });
 
   const pinMutation = useMutation({
-    mutationFn: async ({ commentId, pinned }: { commentId: string; pinned: boolean }) => {
-        const res = await fetch('/api/comments', {
-            method: 'PATCH',
-            body: JSON.stringify({ commentId, pinned }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return parseJsonResponse(res);
+    mutationFn: async ({
+      commentId,
+      pinned,
+    }: {
+      commentId: string;
+      pinned: boolean;
+    }) => {
+      const res = await fetch("/api/comments", {
+        method: "PATCH",
+        body: JSON.stringify({ commentId, pinned }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
     },
     onMutate: async ({ commentId, pinned }) => {
-        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
-        const queryKey = ['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl];
-        const previousData = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      const queryKey = [
+        "comments",
+        videoId,
+        sortBy,
+        userProfile?.name,
+        userProfile?.username,
+        userProfile?.imageUrl,
+      ];
+      const previousData = queryClient.getQueryData(queryKey);
 
-        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
-            if (!old) return old;
+      queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+        if (!old) return old;
 
-            return {
-                ...old,
-                pages: old.pages.map((page) => ({
-                    ...page,
-                    comments: page.comments.map((comment) => ({
-                        ...comment,
-                        isPinned: pinned ? comment.id === commentId : comment.id === commentId ? false : comment.isPinned,
-                        pinnedAt: pinned && comment.id === commentId ? new Date().toISOString() : comment.id === commentId ? null : comment.pinnedAt,
-                    }))
-                }))
-            };
-        });
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            comments: page.comments.map((comment) => ({
+              ...comment,
+              isPinned: pinned
+                ? comment.id === commentId
+                : comment.id === commentId
+                  ? false
+                  : comment.isPinned,
+              pinnedAt:
+                pinned && comment.id === commentId
+                  ? new Date().toISOString()
+                  : comment.id === commentId
+                    ? null
+                    : comment.pinnedAt,
+            })),
+          })),
+        };
+      });
 
-        return { previousData, queryKey };
+      return { previousData, queryKey };
     },
     onError: (err, variables, context) => {
-        if (context?.previousData) {
-            queryClient.setQueryData(context.queryKey, context.previousData);
-        }
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
     },
     onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (commentId: string) => {
-        const res = await fetch(`/api/comments?id=${commentId}`, {
-            method: 'DELETE',
-        });
-        return parseJsonResponse(res);
+      const res = await fetch(`/api/comments?id=${commentId}`, {
+        method: "DELETE",
+      });
+      return parseJsonResponse(res);
     },
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -354,59 +515,82 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   const getCommentsLabel = (count: number) => {
-    if (language === 'pl') {
-      if (count === 1) return 'Komentarz';
+    if (language === "pl") {
+      if (count === 1) return "Komentarz";
       const lastDigit = count % 10;
       const lastTwoDigits = count % 100;
-      if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) {
-        return 'Komentarze';
+      if (
+        lastDigit >= 2 &&
+        lastDigit <= 4 &&
+        (lastTwoDigits < 12 || lastTwoDigits > 14)
+      ) {
+        return "Komentarze";
       }
-      return 'Komentarzy';
+      return "Komentarzy";
     }
-    return count === 1 ? 'comment' : 'comments';
+    return count === 1 ? "comment" : "comments";
   };
 
   return (
     <div className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-         <div className="flex items-center gap-3 order-2 sm:order-1">
-            <MessageSquare size={20} className="text-blue-600" />
-            <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
-                {comments.length} {getCommentsLabel(comments.length)}
-            </h3>
-         </div>
+        <div className="flex items-center gap-3 order-2 sm:order-1">
+          <MessageSquare size={20} className="text-blue-600" />
+          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
+            {comments.length} {getCommentsLabel(comments.length)}
+          </h3>
+        </div>
 
-         <div className="flex gap-4 order-1 sm:order-2 self-end sm:self-auto">
-            <button
-              onClick={() => setSortBy('top')}
-              className={cn(
-                "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
-                sortBy === 'top' ? "text-blue-600 border-blue-600" : "text-neutral-400 border-transparent hover:text-neutral-600"
-              )}
-            >
-              {language === 'pl' ? 'Najlepsze' : 'Top'}
-            </button>
-            <button
-              onClick={() => setSortBy('newest')}
-              className={cn(
-                "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
-                sortBy === 'newest' ? "text-blue-600 border-blue-600" : "text-neutral-400 border-transparent hover:text-neutral-600"
-              )}
-            >
-              {language === 'pl' ? 'Najnowsze' : 'Newest'}
-            </button>
-         </div>
+        <div className="flex gap-4 order-1 sm:order-2 self-end sm:self-auto">
+          <button
+            onClick={() => setSortBy("top")}
+            className={cn(
+              "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
+              sortBy === "top"
+                ? "text-blue-600 border-blue-600"
+                : "text-neutral-400 border-transparent hover:text-neutral-600",
+            )}
+          >
+            {language === "pl" ? "Najlepsze" : "Top"}
+          </button>
+          <button
+            onClick={() => setSortBy("newest")}
+            className={cn(
+              "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
+              sortBy === "newest"
+                ? "text-blue-600 border-blue-600"
+                : "text-neutral-400 border-transparent hover:text-neutral-600",
+            )}
+          >
+            {language === "pl" ? "Najnowsze" : "Newest"}
+          </button>
+        </div>
       </div>
 
       {/* Input Area */}
-      <div className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}>
+      <div
+        className={cn(
+          "flex items-start mb-10",
+          userProfile ? "gap-5" : "gap-0",
+        )}
+      >
         {userProfile && (
-          <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
-             <img
-               src={userProfile.imageUrl || (userProfile.email ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userProfile.email)}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`)}
-               alt="Avatar"
-               className="w-full h-full object-cover"
-             />
+          <div
+            className={cn(
+              "w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-1",
+              isPatron
+                ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
+                : "border border-[#e9eef6]",
+            )}
+          >
+            <img
+              src={
+                userAvatarUrl ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`
+              }
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -414,29 +598,38 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             {replyTo && userProfile && (
               <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#e9eef6]">
                 <CornerDownRight size={12} />
-                {language === 'pl' ? (
-                  <>Odpowiadasz <span className="font-black ml-1">{replyingToAuthor}</span></>
+                {language === "pl" ? (
+                  <>
+                    Odpowiadasz{" "}
+                    <span className="font-black ml-1">{replyingToAuthor}</span>
+                  </>
                 ) : (
-                  <>Replying to <span className="font-black ml-1">{replyingToAuthor}</span></>
+                  <>
+                    Replying to{" "}
+                    <span className="font-black ml-1">{replyingToAuthor}</span>
+                  </>
                 )}
-                <button onClick={() => setReplyTo(null)} className="ml-2 hover:opacity-60">✕</button>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="ml-2 hover:opacity-60"
+                >
+                  ✕
+                </button>
               </div>
             )}
             {!canComment ? (
               <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
-                 {isPatronGated && !isPatron ? (
-                    <span
-                      className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
-                    >
-                      {t.becomePatronToComment}
-                    </span>
-                  ) : (
-                    <SignInButton mode="modal">
-                      <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                        {t.signInToComment}
-                      </button>
-                    </SignInButton>
-                  )}
+                {isPatronGated && !isPatron ? (
+                  <span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
+                    {t.becomePatronToComment}
+                  </span>
+                ) : (
+                  <SignInButton mode="modal">
+                    <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
+                      {t.signInToComment}
+                    </button>
+                  </SignInButton>
+                )}
               </div>
             ) : (
               <textarea
@@ -451,19 +644,29 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
           {(isInputFocused || newComment.trim() || replyTo) && canComment && (
             <div className="flex justify-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-               <Button
-                 variant="ghost"
-                 onClick={() => {setNewComment(''); setReplyTo(null); setIsInputFocused(false);}}
-               >
-                   {t.cancel}
-               </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setNewComment("");
+                  setReplyTo(null);
+                  setIsInputFocused(false);
+                }}
+              >
+                {t.cancel}
+              </Button>
 
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!newComment.trim() || postMutation.isPending}
-                >
-                  {postMutation.isPending ? <Loader2 className="animate-spin" size={14} /> : (replyTo ? t.reply : t.comment)}
-                </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!newComment.trim() || postMutation.isPending}
+              >
+                {postMutation.isPending ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : replyTo ? (
+                  t.reply
+                ) : (
+                  t.comment
+                )}
+              </Button>
             </div>
           )}
         </div>
@@ -471,152 +674,305 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       {/* Comments List */}
       <div className="space-y-6">
-        {comments.map((comment) => (
-          <div key={comment.id} className="space-y-3">
-            <div className="flex gap-3 items-start group/comment">
-               <div className="w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
-                  <img
-                    src={comment.imageUrl || comment.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-               </div>
-              <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
-                <div className="flex items-start justify-between">
+        {comments.map((comment) => {
+          const commentAuthorIsPatron = isPatronAuthor(comment.author);
+          return (
+            <div key={comment.id} className="space-y-3">
+              <div className="flex gap-3 items-start group/comment">
+                <div className="flex w-11 shrink-0 flex-col items-center gap-1">
+                  <div
+                    className={cn(
+                      "relative w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
+                      commentAuthorIsPatron
+                        ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
+                        : "border border-[#e9eef6]",
+                    )}
+                  >
+                    <img
+                      src={
+                        comment.imageUrl ||
+                        comment.author?.imageUrl ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`
+                      }
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {commentAuthorIsPatron && (
+                    <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[8px] font-black leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                      VIP 2
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
+                  <div className="flex items-start justify-between">
                     <div className="flex items-center gap-1.5 leading-none">
-                        <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{comment.authorName}</span>
-                        {comment.isPinned && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
-                            <Star size={10} className="fill-blue-600" />
-                            {language === 'pl' ? 'Przypięty' : 'Pinned'}
-                          </span>
+                      <span
+                        className={cn(
+                          "font-bold text-[#0f0f0f] text-[12px] leading-none",
+                          commentAuthorIsPatron && "text-amber-900",
                         )}
-                        <span className="text-[11px] text-[#606060] leading-none">
-                            {isClient && comment.createdAt && !isNaN(new Date(comment.createdAt).getTime())
-                            ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
-                            : isClient ? 'niedawno' : ''}
+                      >
+                        {comment.authorName}
+                      </span>
+                      {commentAuthorIsPatron && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
+                          <Gem
+                            size={9}
+                            className="fill-amber-400 text-amber-500"
+                          />
+                          Patron
                         </span>
+                      )}
+                      {comment.isPinned && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
+                          <Star size={10} className="fill-blue-600" />
+                          {language === "pl" ? "Przypięty" : "Pinned"}
+                        </span>
+                      )}
+                      <span className="text-[11px] text-[#606060] leading-none">
+                        {isClient &&
+                        comment.createdAt &&
+                        !isNaN(new Date(comment.createdAt).getTime())
+                          ? formatDistanceToNow(new Date(comment.createdAt), {
+                              addSuffix: true,
+                              locale: pl,
+                            }).replace("około", "ok.")
+                          : isClient
+                            ? "niedawno"
+                            : ""}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-60 transition-opacity">
                       {comment.canPin && (
                         <button
-                          onClick={() => pinMutation.mutate({ commentId: comment.id, pinned: !comment.isPinned })}
+                          onClick={() =>
+                            pinMutation.mutate({
+                              commentId: comment.id,
+                              pinned: !comment.isPinned,
+                            })
+                          }
                           disabled={pinMutation.isPending}
-                          className={cn("rounded-md p-1 hover:!opacity-100 hover:bg-blue-50", comment.isPinned && "text-blue-600 opacity-100")}
-                          title={comment.isPinned ? (language === 'pl' ? 'Odepnij komentarz' : 'Unpin comment') : (language === 'pl' ? 'Przypnij komentarz' : 'Pin comment')}
+                          className={cn(
+                            "rounded-md p-1 hover:!opacity-100 hover:bg-blue-50",
+                            comment.isPinned && "text-blue-600 opacity-100",
+                          )}
+                          title={
+                            comment.isPinned
+                              ? language === "pl"
+                                ? "Odepnij komentarz"
+                                : "Unpin comment"
+                              : language === "pl"
+                                ? "Przypnij komentarz"
+                                : "Pin comment"
+                          }
                         >
-                            <Star size={12} className={cn(comment.isPinned && "fill-blue-600")} />
+                          <Star
+                            size={12}
+                            className={cn(comment.isPinned && "fill-blue-600")}
+                          />
                         </button>
                       )}
                       {userProfile?.id === comment.authorId && (
                         <button
-                          onClick={() => confirm(t.deleteComment) && deleteMutation.mutate(comment.id)}
+                          onClick={() =>
+                            confirm(t.deleteComment) &&
+                            deleteMutation.mutate(comment.id)
+                          }
                           className="rounded-md p-1 hover:!opacity-100 hover:bg-red-50"
                         >
-                            <Trash2 size={12} className="text-destructive" />
+                          <Trash2 size={12} className="text-destructive" />
                         </button>
                       )}
                     </div>
-                </div>
-                <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-                  {comment.text}
-                </p>
-                <div className="flex items-center gap-3 pt-0.5">
-                  <button
-                    onClick={() => userProfile && likeMutation.mutate(comment.id)}
-                    className={cn(
-                      "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                      comment.isLiked ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]"
-                    )}
-                  >
-                    <ThumbsUp size={13} className={cn(comment.isLiked && "fill-primary")} />
-                    <span className="text-[11px] font-normal">{comment._count?.likes || 0}</span>
-                  </button>
-                  <button
-                    onClick={() => userProfile && dislikeMutation.mutate(comment.id)}
-                    className={cn(
-                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                        comment.isDisliked ? "text-black" : "text-[#606060] hover:text-[#0f0f0f]"
-                    )}
-                  >
-                    <ThumbsDown size={13} className={cn(comment.isDisliked && "fill-black")} />
-                    <span className="text-[11px] font-normal">{comment._count?.dislikes || 0}</span>
-                  </button>
-                  {canComment && (
+                  </div>
+                  <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
+                    {comment.text}
+                  </p>
+                  <div className="flex items-center gap-3 pt-0.5">
                     <button
+                      onClick={() =>
+                        userProfile && likeMutation.mutate(comment.id)
+                      }
+                      className={cn(
+                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
+                        comment.isLiked
+                          ? "text-primary"
+                          : "text-[#606060] hover:text-[#0f0f0f]",
+                      )}
+                    >
+                      <ThumbsUp
+                        size={13}
+                        className={cn(comment.isLiked && "fill-primary")}
+                      />
+                      <span className="text-[11px] font-normal">
+                        {comment._count?.likes || 0}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        userProfile && dislikeMutation.mutate(comment.id)
+                      }
+                      className={cn(
+                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
+                        comment.isDisliked
+                          ? "text-black"
+                          : "text-[#606060] hover:text-[#0f0f0f]",
+                      )}
+                    >
+                      <ThumbsDown
+                        size={13}
+                        className={cn(comment.isDisliked && "fill-black")}
+                      />
+                      <span className="text-[11px] font-normal">
+                        {comment._count?.dislikes || 0}
+                      </span>
+                    </button>
+                    {canComment && (
+                      <button
                         onClick={() => userProfile && setReplyTo(comment.id)}
                         className="text-[11px] font-bold text-[#0f0f0f] hover:bg-[#dbeafe] px-2.5 py-0.5 rounded-md ml-1 transition-all"
-                    >
+                      >
                         {t.reply}
-                    </button>
-                  )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* NESTED REPLIES */}
-            {comment.replies && comment.replies.length > 0 && (
-              <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} className="flex gap-2.5 items-start group/reply">
-                    <div className="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-0">
-                       <img
-                         src={reply.imageUrl || reply.author?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`}
-                         alt="Avatar"
-                         className="w-full h-full object-cover"
-                       />
-                    </div>
-                    <div className="flex-1 space-y-0.5 pt-0.5">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-1.5 leading-none">
-                          <span className="font-bold text-[#0f0f0f] text-[11px] leading-none">{reply.authorName}</span>
-                          <span className="text-[10px] text-[#606060] leading-none">
-                            {isClient && reply.createdAt && !isNaN(new Date(reply.createdAt).getTime())
-                              ? formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
-                              : t.justNow}
-                          </span>
+              {/* NESTED REPLIES */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
+                  {comment.replies.map((reply) => {
+                    const replyAuthorIsPatron = isPatronAuthor(reply.author);
+                    return (
+                      <div
+                        key={reply.id}
+                        className="flex gap-2.5 items-start group/reply"
+                      >
+                        <div className="flex w-8 shrink-0 flex-col items-center gap-1">
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
+                              replyAuthorIsPatron
+                                ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]"
+                                : "border border-[#e9eef6]",
+                            )}
+                          >
+                            <img
+                              src={
+                                reply.imageUrl ||
+                                reply.author?.imageUrl ||
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`
+                              }
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          {replyAuthorIsPatron && (
+                            <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1 py-0.5 text-[7px] font-black leading-none tracking-[0.1em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                              VIP 2
+                            </span>
+                          )}
                         </div>
-                        {userProfile?.id === reply.authorId && (
+                        <div className="flex-1 space-y-0.5 pt-0.5">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-1.5 leading-none">
+                              <span
+                                className={cn(
+                                  "font-bold text-[#0f0f0f] text-[11px] leading-none",
+                                  replyAuthorIsPatron && "text-amber-900",
+                                )}
+                              >
+                                {reply.authorName}
+                              </span>
+                              {replyAuthorIsPatron && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-amber-700">
+                                  <Gem
+                                    size={8}
+                                    className="fill-amber-400 text-amber-500"
+                                  />
+                                  Patron
+                                </span>
+                              )}
+                              <span className="text-[10px] text-[#606060] leading-none">
+                                {isClient &&
+                                reply.createdAt &&
+                                !isNaN(new Date(reply.createdAt).getTime())
+                                  ? formatDistanceToNow(
+                                      new Date(reply.createdAt),
+                                      { addSuffix: true, locale: pl },
+                                    ).replace("około", "ok.")
+                                  : t.justNow}
+                              </span>
+                            </div>
+                            {userProfile?.id === reply.authorId && (
+                              <button
+                                onClick={() =>
+                                  confirm(t.deleteComment) &&
+                                  deleteMutation.mutate(reply.id)
+                                }
+                                className="opacity-0 group-hover/reply:opacity-40 hover:!opacity-100 transition-opacity p-1"
+                              >
+                                <Trash2
+                                  size={10}
+                                  className="text-destructive"
+                                />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
+                            {reply.text}
+                          </p>
+                          <div className="flex items-center gap-3 pt-0.5">
                             <button
-                              onClick={() => confirm(t.deleteComment) && deleteMutation.mutate(reply.id)}
-                              className="opacity-0 group-hover/reply:opacity-40 hover:!opacity-100 transition-opacity p-1"
+                              onClick={() =>
+                                userProfile && likeMutation.mutate(reply.id)
+                              }
+                              className={cn(
+                                "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
+                                reply.isLiked
+                                  ? "text-primary"
+                                  : "text-[#606060] hover:text-[#0f0f0f]",
+                              )}
                             >
-                                <Trash2 size={10} className="text-destructive" />
+                              <ThumbsUp
+                                size={11}
+                                className={cn(reply.isLiked && "fill-primary")}
+                              />
+                              <span className="text-[10px] font-normal">
+                                {reply._count?.likes || 0}
+                              </span>
                             </button>
-                        )}
+                            <button
+                              onClick={() =>
+                                userProfile && dislikeMutation.mutate(reply.id)
+                              }
+                              className={cn(
+                                "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
+                                reply.isDisliked
+                                  ? "text-black"
+                                  : "text-[#606060] hover:text-[#0f0f0f]",
+                              )}
+                            >
+                              <ThumbsDown
+                                size={11}
+                                className={cn(reply.isDisliked && "fill-black")}
+                              />
+                              <span className="text-[10px] font-normal">
+                                {reply._count?.dislikes || 0}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-                        {reply.text}
-                      </p>
-                      <div className="flex items-center gap-3 pt-0.5">
-                        <button
-                          onClick={() => userProfile && likeMutation.mutate(reply.id)}
-                          className={cn(
-                            "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                            reply.isLiked ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]"
-                          )}
-                        >
-                          <ThumbsUp size={11} className={cn(reply.isLiked && "fill-primary")} />
-                          <span className="text-[10px] font-normal">{reply._count?.likes || 0}</span>
-                        </button>
-                        <button
-                          onClick={() => userProfile && dislikeMutation.mutate(reply.id)}
-                          className={cn(
-                              "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                              reply.isDisliked ? "text-black" : "text-[#606060] hover:text-[#0f0f0f]"
-                          )}
-                        >
-                          <ThumbsDown size={11} className={cn(reply.isDisliked && "fill-black")} />
-                          <span className="text-[10px] font-normal">{reply._count?.dislikes || 0}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         {hasNextPage && (
           <div className="pt-6 flex justify-center">
@@ -625,7 +981,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
             >
-              {isFetchingNextPage ? <Loader2 className="animate-spin" /> : 'Pokaż więcej'}
+              {isFetchingNextPage ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Pokaż więcej"
+              )}
             </Button>
           </div>
         )}
