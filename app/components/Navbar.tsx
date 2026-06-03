@@ -81,7 +81,7 @@ const Navbar = () => {
                   className="text-[1.1rem] md:text-[1.3rem]"
                   variant="handwriting"
                 />
-                <span className="ml-1.5 bg-neutral-900 text-[7px] font-black uppercase tracking-wider text-white px-1 py-0 rounded-[2px] self-start mt-0.5 shadow-sm select-none">
+                <span className="ml-0.5 bg-neutral-900 text-[7px] font-black uppercase tracking-wider text-white px-1 py-0 rounded-[2px] self-start mt-0.5 shadow-sm select-none">
                   Beta
                 </span>
               </div>
