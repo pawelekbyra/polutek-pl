@@ -1,20 +1,32 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState } from "react";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, LogIn, X } from "./icons";
-import { useLanguage } from './LanguageContext';
-import { cn } from '@/lib/utils';
-import BrandName from './BrandName';
+import { useLanguage } from "./LanguageContext";
+import { cn } from "@/lib/utils";
+import BrandName from "./BrandName";
+
+type NavbarMetadata = {
+  isPatron?: unknown;
+  referralPoints?: unknown;
+  role?: unknown;
+};
 
 const Navbar = () => {
   const { language, setLanguage, t } = useLanguage();
   const { user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(searchParams.get('q') || "");
+  const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -23,39 +35,51 @@ const Navbar = () => {
       router.push(`/?q=${encodeURIComponent(searchValue.trim())}`);
       setIsMobileSearchOpen(false);
     } else {
-      router.push('/');
+      router.push("/");
       setIsMobileSearchOpen(false);
     }
   };
 
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN';
+  const metadata = (user?.publicMetadata || {}) as NavbarMetadata;
+  const isAdmin = metadata.role === "ADMIN";
+  const isPatron =
+    metadata.isPatron === true ||
+    (typeof metadata.referralPoints === "number" &&
+      metadata.referralPoints >= 5) ||
+    isAdmin;
 
   return (
     <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
-           <button
-             onClick={() => setIsMobileSearchOpen(false)}
-             className="p-2 hover:bg-neutral-200 rounded-full transition-colors shrink-0"
-           >
-             <X size={20} />
-           </button>
-           <form onSubmit={handleSearch} className="flex-1 flex">
-             <input
-               type="text"
-               autoFocus
-               placeholder="Szukaj"
-               value={searchValue}
-               onChange={(e) => setSearchValue(e.target.value)}
-               className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-             />
-           </form>
+          <button
+            onClick={() => setIsMobileSearchOpen(false)}
+            className="p-2 hover:bg-neutral-200 rounded-full transition-colors shrink-0"
+          >
+            <X size={20} />
+          </button>
+          <form onSubmit={handleSearch} className="flex-1 flex">
+            <input
+              type="text"
+              autoFocus
+              placeholder="Szukaj"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+            />
+          </form>
         </div>
       ) : (
         <>
           <div className="flex items-center shrink-0">
-            <Link href="/" className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95">
-              <BrandName className="text-[1.1rem] md:text-[1.3rem]" variant="handwriting" />
+            <Link
+              href="/"
+              className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
+            >
+              <BrandName
+                className="text-[1.1rem] md:text-[1.3rem]"
+                variant="handwriting"
+              />
             </Link>
           </div>
 
@@ -70,7 +94,11 @@ const Navbar = () => {
                   className="w-full h-9 bg-white border border-neutral-300 rounded-l-full pl-6 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-neutral-400"
                 />
               </div>
-              <button type="submit" className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-full px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600" title="Szukaj">
+              <button
+                type="submit"
+                className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-full px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600"
+                title="Szukaj"
+              >
                 <Search size={18} />
               </button>
             </form>
@@ -78,40 +106,51 @@ const Navbar = () => {
 
           <div className="flex items-center justify-end gap-1 md:gap-3">
             <div className="flex items-center gap-1 sm:hidden">
-                <button
-                  onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 hover:bg-neutral-200 rounded-full transition-colors"
-                >
-                    <Search size={20} className="text-neutral-600" />
-                </button>
+              <button
+                onClick={() => setIsMobileSearchOpen(true)}
+                className="p-2 hover:bg-neutral-200 rounded-full transition-colors"
+              >
+                <Search size={20} className="text-neutral-600" />
+              </button>
             </div>
 
             <div className="flex gap-1 items-center bg-white/50 rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
-                <button
-                  onClick={() => { if (setLanguage) setLanguage('pl'); }}
-                  className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
-                    language === 'pl' ? "bg-white shadow-sm text-neutral-900 border border-neutral-300" : "text-neutral-400 hover:text-neutral-600"
-                  )}
-                >
-                  PL
-                </button>
-                <button
-                  onClick={() => { if (setLanguage) setLanguage('en'); }}
-                  className={cn(
-                    "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
-                    language === 'en' ? "bg-white shadow-sm text-neutral-900 border border-neutral-300" : "text-neutral-400 hover:text-neutral-600"
-                  )}
-                >
-                  EN
-                </button>
+              <button
+                onClick={() => {
+                  if (setLanguage) setLanguage("pl");
+                }}
+                className={cn(
+                  "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
+                  language === "pl"
+                    ? "bg-white shadow-sm text-neutral-900 border border-neutral-300"
+                    : "text-neutral-400 hover:text-neutral-600",
+                )}
+              >
+                PL
+              </button>
+              <button
+                onClick={() => {
+                  if (setLanguage) setLanguage("en");
+                }}
+                className={cn(
+                  "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
+                  language === "en"
+                    ? "bg-white shadow-sm text-neutral-900 border border-neutral-300"
+                    : "text-neutral-400 hover:text-neutral-600",
+                )}
+              >
+                EN
+              </button>
             </div>
 
             {/* Pionowy separator */}
             <div className="h-6 w-px bg-neutral-300 mx-1" aria-hidden="true" />
 
             {isAdmin && (
-              <Link href="/admin" className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-neutral-900 transition-colors whitespace-nowrap px-2">
+              <Link
+                href="/admin"
+                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-neutral-900 transition-colors whitespace-nowrap px-2"
+              >
                 Admin
               </Link>
             )}
@@ -125,8 +164,29 @@ const Navbar = () => {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <div className="flex items-center gap-2">
-                <UserButton afterSignOutUrl="/" />
+              <div
+                className={cn(
+                  "relative flex items-center gap-2 rounded-full p-0.5 transition-all",
+                  isPatron &&
+                    "bg-gradient-to-br from-amber-200 via-yellow-100 to-amber-300 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_8px_20px_rgba(180,83,9,0.16)]",
+                )}
+                title={isPatron ? "Patron VIP 2" : undefined}
+              >
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: isPatron
+                        ? "ring-2 ring-amber-300 ring-offset-2 ring-offset-white shadow-sm"
+                        : undefined,
+                    },
+                  }}
+                />
+                {isPatron && (
+                  <span className="pointer-events-none absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-1.5 py-0.5 text-[7px] font-black leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                    VIP 2
+                  </span>
+                )}
               </div>
             </SignedIn>
           </div>
