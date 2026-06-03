@@ -53,8 +53,10 @@ export interface InternalVideoDTO {
   id: string;
   creatorId: string;
   title: string;
+  titleEn?: string | null;
   slug: string;
   description?: string | null;
+  descriptionEn?: string | null;
   videoUrl: string;
   thumbnailUrl: string;
   duration?: string | null;

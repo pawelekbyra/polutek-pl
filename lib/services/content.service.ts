@@ -64,8 +64,10 @@ type PublicVideoInput = {
   id: string;
   creatorId?: string;
   title: string;
+  titleEn?: string | null;
   slug: string;
   description?: string | null;
+  descriptionEn?: string | null;
   thumbnailUrl: string;
   duration?: string | null;
   tier: AccessTier;
@@ -167,8 +169,10 @@ export class ContentService {
         id: video.id,
         creatorId: video.creatorId ?? '',
         title: getCanonicalVideoTitle(video),
+        titleEn: video.titleEn,
         slug: video.slug,
         description: video.description,
+        descriptionEn: video.descriptionEn,
         thumbnailUrl: video.thumbnailUrl,
         duration: video.duration,
         tier: video.tier,
