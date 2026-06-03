@@ -122,7 +122,7 @@ async function main() {
         if (counters.allVideos === 0) console.log("ROOT CAUSE: DB is empty. Action: npm run db:setup:dev");
         else if (counters.published === 0) console.log("ROOT CAUSE: No videos are PUBLISHED. Action: npm run content:fix:polutek");
         else if (counters.approvedCreators === 0) console.log("ROOT CAUSE: No creators are approved. Action: npm run content:fix:polutek");
-        else console.log("ROOT CAUSE: Possible schema mismatch or future publication dates. Action: npm run db:fix:schema");
+        else console.log("ROOT CAUSE: Possible schema mismatch or future publication dates. Action: npm run db:migrate:deploy");
     }
 
   } catch (err: any) {

@@ -9,7 +9,6 @@ import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
 import { isAllowedMediaUrl } from '@/lib/blob';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
-import { ensureCommentPinningColumns } from '@/lib/db/comment-schema-heal';
 
 export const dynamic = 'force-dynamic';
 
@@ -149,8 +148,6 @@ export async function GET(request: NextRequest) {
   } catch {}
 
   try {
-    await ensureCommentPinningColumns();
-
     let internalUserId = null;
     let canModerateComments = false;
     if (userId) {
@@ -296,8 +293,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await ensureCommentPinningColumns();
-
     let localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     if (!localUser) {
       return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
@@ -468,8 +463,6 @@ export async function DELETE(request: NextRequest) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        await ensureCommentPinningColumns();
-
         const { searchParams } = new URL(request.url);
         const commentId = searchParams.get('id');
 

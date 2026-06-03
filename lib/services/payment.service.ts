@@ -50,17 +50,10 @@ async function decrementUserNetPaymentTotals(
 ) {
   if (deltaMinor <= 0) return;
 
-  const [user, total] = await Promise.all([
-    tx.user.findUnique({ where: { id: userId }, select: { totalPaidMinor: true } }),
-    tx.userPaymentTotal.findUnique({ where: { userId_currency: { userId, currency } }, select: { amountMinor: true } }),
-  ]);
-
-  if (user) {
-    await tx.user.update({
-      where: { id: userId },
-      data: { totalPaidMinor: Math.max(0, user.totalPaidMinor - deltaMinor) },
-    });
-  }
+  const total = await tx.userPaymentTotal.findUnique({
+    where: { userId_currency: { userId, currency } },
+    select: { amountMinor: true },
+  });
 
   if (total) {
     await tx.userPaymentTotal.update({
@@ -491,7 +484,6 @@ export class PaymentService {
         const user = await tx.user.update({
           where: { id: userId },
           data: {
-            totalPaidMinor: { increment: updatedPayment.amountMinor },
             isPatron: existingUser.isPatron || grantsPatron,
             patronSince: becamePatronNow ? new Date() : undefined
           },

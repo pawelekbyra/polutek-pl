@@ -1,7 +1,6 @@
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { flags } from '../feature-flags';
-import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
 import { isPatronLikeUser } from './comment-access';
 
 
@@ -35,8 +34,6 @@ export type AccessDecision = {
 
 export class AccessPolicy {
   static async canViewVideo(userId: string | null | undefined, videoId: string): Promise<AccessDecision> {
-    await ensureVideoPresentationColumns();
-
     let video: AccessVideo | null = await prisma.video.findUnique({
       where: { id: videoId },
       include: { creator: true }

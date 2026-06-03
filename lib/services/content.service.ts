@@ -5,7 +5,6 @@ import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 import { flags } from '../feature-flags';
 import { isPubliclyVisibleVideo } from './content.visibility';
-import { ensureVideoPresentationColumns } from '@/lib/db/video-schema-heal';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 
 const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
@@ -88,7 +87,6 @@ export class ContentService {
    */
   static async getVideoById(videoId: string) {
     try {
-      await ensureVideoPresentationColumns();
       const video = await prisma.video.findUnique({
         where: { id: videoId },
         include: {
@@ -193,7 +191,6 @@ export class ContentService {
    */
   static async getCreatorBySlug(slug: string): Promise<PublicCreatorPageDTO | null> {
     try {
-      await ensureVideoPresentationColumns();
       const creator = await prisma.creator.findUnique({
         where: { slug },
         include: {
@@ -321,7 +318,6 @@ export class ContentService {
    */
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
-      await ensureVideoPresentationColumns();
       const videos = await prisma.video.findMany({
         where: {
           ...buildPublicVideoWhere(),
@@ -374,7 +370,6 @@ export class ContentService {
    */
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
-      await ensureVideoPresentationColumns();
       const video = await prisma.video.findFirst({
         where: {
             ...buildPublicVideoWhere(),

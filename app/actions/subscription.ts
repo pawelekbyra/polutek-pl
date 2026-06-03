@@ -56,7 +56,7 @@ export async function toggleSubscriptionAction(creatorId: string) {
   } catch (error: any) {
     console.error("[TOGGLE_SUBSCRIPTION_ACTION_ERROR]", error);
     if (error.code === 'P2021' || error.message?.includes("DATABASE_TABLES_MISSING") || error.message?.includes("P2021")) {
-        return { error: 'DATABASE_ERROR', message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma db push' w swoim środowisku." };
+        return { error: 'DATABASE_ERROR', message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma migrate deploy' z aktualnymi migracjami." };
     }
     return { error: error.message || 'INTERNAL_ERROR' };
   }

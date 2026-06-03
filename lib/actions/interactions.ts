@@ -76,7 +76,7 @@ export async function toggleVideoLike(videoId: string) {
   } catch (error: any) {
     console.error("[TOGGLE_LIKE_ERROR]", error);
     if (error.code === 'P2021' || error.message?.includes("DATABASE_TABLES_MISSING") || error.message?.includes("P2021")) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma db push' w swoim środowisku." };
+        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma migrate deploy' z aktualnymi migracjami." };
     }
     return { error: "INTERNAL_ERROR", message: error.message };
   }
@@ -151,7 +151,7 @@ export async function toggleVideoDislike(videoId: string) {
   } catch (error: any) {
     console.error("[TOGGLE_DISLIKE_ERROR]", error);
     if (error.code === 'P2021' || error.message?.includes("DATABASE_TABLES_MISSING") || error.message?.includes("P2021")) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma db push' w swoim środowisku." };
+        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma migrate deploy' z aktualnymi migracjami." };
     }
     return { error: "INTERNAL_ERROR", message: error.message };
   }
