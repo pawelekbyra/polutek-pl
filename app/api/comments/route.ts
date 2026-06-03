@@ -23,7 +23,9 @@ function getCommentAuthorName(author?: CommentAuthor | null) {
   const name = (rawName && !isGeneratedClerkUsername(rawName)) ? rawName : null;
   const rawUsername = author?.username?.trim();
   const username = (rawUsername && !isGeneratedClerkUsername(rawUsername)) ? rawUsername : null;
-  const fallbackFromEmail = author?.email?.split('@')[0]?.trim();
+
+  const rawEmailFallback = author?.email?.split('@')[0]?.trim();
+  const fallbackFromEmail = (rawEmailFallback && !isGeneratedClerkUsername(rawEmailFallback)) ? rawEmailFallback : null;
 
   return name || username || fallbackFromEmail || "Użytkownik";
 }

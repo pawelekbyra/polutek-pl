@@ -340,7 +340,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {userProfile && (
           <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden border border-[#e9eef6] mt-1">
              <img
-               src={userProfile.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`}
+               src={userProfile.imageUrl || (userProfile.email ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userProfile.email)}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`)}
                alt="Avatar"
                className="w-full h-full object-cover"
              />
