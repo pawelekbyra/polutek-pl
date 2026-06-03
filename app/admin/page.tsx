@@ -63,10 +63,9 @@ export default function AdminPanel() {
   });
 
   const [emailTemplate, setEmailTemplate] = useState({
-    subjectPl: "",
-    bodyPl: "",
-    subjectEn: "",
-    bodyEn: ""
+    slug: "welcome-email",
+    subject: "",
+    html: ""
   });
 
   useEffect(() => {
@@ -152,10 +151,9 @@ export default function AdminPanel() {
       const data = await res.json();
       if (data && !data.error) {
         setEmailTemplate({
-          subjectPl: data.subjectPl || "",
-          bodyPl: data.bodyPl || "",
-          subjectEn: data.subjectEn || "",
-          bodyEn: data.bodyEn || ""
+          slug: data.slug || "welcome-email",
+          subject: data.subject || "",
+          html: data.html || ""
         });
       }
     } catch (err) {
@@ -579,33 +577,16 @@ export default function AdminPanel() {
                 <Card>
                     <CardHeader>
                         <CardTitle>E-mail Powitalny</CardTitle>
+                        <CardDescription>Szablon {emailTemplate.slug} jest edytowany w dedykowanym edytorze HTML z podglądem na żywo.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleEmailTemplateSubmit} className="space-y-6">
-                            <div className="space-y-4">
-                                <h3 className="font-semibold text-sm border-b pb-1">Wersja Polska</h3>
-                                <div className="space-y-2">
-                                    <Label>Temat</Label>
-                                    <Input value={emailTemplate.subjectPl} onChange={e => setEmailTemplate({...emailTemplate, subjectPl: e.target.value})} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Treść (HTML)</Label>
-                                    <Textarea value={emailTemplate.bodyPl} onChange={e => setEmailTemplate({...emailTemplate, bodyPl: e.target.value})} rows={6} className="font-mono text-xs" required />
-                                </div>
-                            </div>
-                            <div className="space-y-4 pt-4">
-                                <h3 className="font-semibold text-sm border-b pb-1">English Version</h3>
-                                <div className="space-y-2">
-                                    <Label>Subject</Label>
-                                    <Input value={emailTemplate.subjectEn} onChange={e => setEmailTemplate({...emailTemplate, subjectEn: e.target.value})} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Body (HTML)</Label>
-                                    <Textarea value={emailTemplate.bodyEn} onChange={e => setEmailTemplate({...emailTemplate, bodyEn: e.target.value})} rows={6} className="font-mono text-xs" required />
-                                </div>
-                            </div>
-                            <Button type="submit" className="w-full">Zapisz Szablony</Button>
-                        </form>
+                    <CardContent className="space-y-4">
+                        <div className="rounded-lg border p-4">
+                            <p className="text-sm font-medium">{emailTemplate.subject || "Brak zapisanego tematu"}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Użyj zmiennej {"{{firstName}}"}, aby personalizować wiadomość powitalną po rejestracji w Clerk.</p>
+                        </div>
+                        <Button asChild className="w-full">
+                            <Link href="/admin/emails">Otwórz edytor HTML</Link>
+                        </Button>
                     </CardContent>
                 </Card>
             </TabsContent>
