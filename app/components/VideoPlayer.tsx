@@ -149,7 +149,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     );
 
     return (
-        <div className="relative z-0 isolate w-full aspect-video bg-black rounded-lg overflow-hidden group shadow-2xl artplayer-container">
+        <div className="relative z-0 w-full aspect-video bg-black rounded-lg overflow-hidden group shadow-2xl artplayer-container">
             {loadError ? (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
                     <AlertCircle className="w-12 h-12 text-red-500 mb-4" />

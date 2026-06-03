@@ -11,7 +11,7 @@ describe('video title overrides', () => {
 
   it('keeps known logged-in and patron placeholders visible with requested titles', () => {
     expect(getCanonicalVideoTitle({ slug: 'historia-powstania-osady', title: 'Historia powstania osady' })).toBe('Secret Project');
-    expect(getCanonicalVideoTitle({ slug: 'intencja-swiadomosc-sprawczosci', title: 'Intencja świadomość sprawczości' })).toBe('Udało się!!!');
+    expect(getCanonicalVideoTitle({ slug: 'intencja-swiadomosc-sprawczosci', title: 'Intencja świadomość sprawczości' })).toBe('Suceed!!!');
   });
 
   it('still catches the old homepage special slug', () => {

@@ -69,7 +69,7 @@ export const VIDEO_TITLE_OVERRIDES: VideoTitleOverride[] = [
     matches: isPatronPlaceholderVideo,
     titles: {
       pl: 'Udało się!!!',
-      en: 'Udało się!!!',
+      en: 'Suceed!!!',
     },
   },
 ];

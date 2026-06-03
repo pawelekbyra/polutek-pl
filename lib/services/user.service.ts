@@ -80,7 +80,9 @@ export class UserService {
 
       const username = clerkUser.username || null;
       const displayUsername = isGeneratedClerkUsername(username) ? null : username;
-      const name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || displayUsername || emailLocalPart(email);
+      const fullName = (clerkUser.fullName && !isGeneratedClerkUsername(clerkUser.fullName)) ? clerkUser.fullName : null;
+      const firstLast = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
+      const name = fullName || (firstLast && !isGeneratedClerkUsername(firstLast) ? firstLast : null) || displayUsername || emailLocalPart(email);
       const imageUrl = clerkUser.imageUrl || null;
 
       // Metadata extraction
