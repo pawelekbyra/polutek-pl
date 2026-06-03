@@ -29,6 +29,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
+  const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
 
   useEffect(() => {
     setMounted(true);
@@ -252,11 +253,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
            <div className="text-[14px] text-[#0f0f0f] leading-relaxed whitespace-pre-wrap">
               {isExpanded ? (
-                (video.description || t.noDescription)
+                displayDescription
               ) : (
                 <>
-                  {(video.description || t.noDescription).slice(0, 160).trim()}
-                  {(video.description || t.noDescription).length > 160 && (
+                  {displayDescription.slice(0, 160).trim()}
+                  {displayDescription.length > 160 && (
                     <span
                       className="text-[14px] font-semibold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
                       onClick={(e) => {

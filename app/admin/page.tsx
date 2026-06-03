@@ -39,8 +39,10 @@ export default function AdminPanel() {
   const [formData, setFormData] = useState({
     id: "",
     title: "",
+    titleEn: "",
     slug: "",
     description: "",
+    descriptionEn: "",
     videoUrl: "",
     thumbnailUrl: "",
     duration: "",
@@ -165,8 +167,10 @@ export default function AdminPanel() {
     setFormData({
       id: vid.id,
       title: vid.title,
+      titleEn: vid.titleEn || "",
       slug: vid.slug,
       description: vid.description || "",
+      descriptionEn: vid.descriptionEn || "",
       videoUrl: vid.videoUrl,
       thumbnailUrl: vid.thumbnailUrl,
       duration: vid.duration || "",
@@ -186,8 +190,10 @@ export default function AdminPanel() {
     setFormData({
       id: "",
       title: `${vid.title} (Kopia)`,
+      titleEn: vid.titleEn ? `${vid.titleEn} (Copy)` : "",
       slug: `${vid.slug}-kopia-${Math.floor(Math.random() * 1000)}`,
       description: vid.description || "",
+      descriptionEn: vid.descriptionEn || "",
       videoUrl: vid.videoUrl,
       thumbnailUrl: vid.thumbnailUrl,
       duration: vid.duration || "",
@@ -207,8 +213,10 @@ export default function AdminPanel() {
     setFormData({
       id: "",
       title: "",
+      titleEn: "",
       slug: "",
       description: "",
+      descriptionEn: "",
       videoUrl: "",
       thumbnailUrl: "",
       duration: "",
@@ -336,21 +344,38 @@ export default function AdminPanel() {
               <DialogTitle>{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Tytuł</Label>
-                    <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="slug">Slug (URL)</Label>
-                    <Input id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Opis</Label>
-                  <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} />
-                </div>
+                <Tabs defaultValue="pl">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="pl">Polski</TabsTrigger>
+                    <TabsTrigger value="en">Angielski</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pl" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Tytuł (PL)</Label>
+                        <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="slug">Slug (URL)</Label>
+                        <Input id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Opis (PL)</Label>
+                      <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="en" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="titleEn">Tytuł (EN)</Label>
+                      <Input id="titleEn" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="descriptionEn">Opis (EN)</Label>
+                      <Textarea id="descriptionEn" value={formData.descriptionEn} onChange={e => setFormData({...formData, descriptionEn: e.target.value})} rows={4} />
+                    </div>
+                  </TabsContent>
+                </Tabs>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">

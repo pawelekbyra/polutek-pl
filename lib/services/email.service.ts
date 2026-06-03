@@ -48,10 +48,10 @@ type SendTemplateEmailInput = {
   fallback?: { subject: string; html: string };
 };
 
-async function sendTemplateEmail({ to, slug, variables = {}, fallback }: SendTemplateEmailInput) {
+async function sendTemplateEmail({ to, slug, variables = {}, fallback, language = 'pl' }: SendTemplateEmailInput & { language?: string }) {
   const template = await prisma.emailTemplate.findUnique({
     where: { slug },
-    select: { subject: true, html: true },
+    select: { subject: true, html: true, subjectEn: true, htmlEn: true },
   });
 
   if (!template && !fallback) {
@@ -61,8 +61,16 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback }: SendTem
   const safeVariables = Object.fromEntries(
     Object.entries(variables).map(([key, value]) => [key, value ?? ''])
   );
-  const subject = replaceTemplateVariables(template?.subject ?? fallback!.subject, safeVariables);
-  const html = replaceTemplateVariables(template?.html ?? fallback!.html, safeVariables);
+  let subjectBase = template?.subject ?? fallback!.subject;
+  let htmlBase = template?.html ?? fallback!.html;
+
+  if (language === 'en' && (template?.subjectEn || template?.htmlEn)) {
+    subjectBase = template?.subjectEn || subjectBase;
+    htmlBase = template?.htmlEn || htmlBase;
+  }
+
+  const subject = replaceTemplateVariables(subjectBase, safeVariables);
+  const html = replaceTemplateVariables(htmlBase, safeVariables);
 
   const resend = getResendClient();
   const { data, error } = await resend.emails.send({
@@ -79,19 +87,20 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback }: SendTem
   return data;
 }
 
-export async function sendWelcomeEmail(to: string, firstName?: string | null) {
+export async function sendWelcomeEmail(to: string, firstName?: string | null, language: string = 'pl') {
   return sendTemplateEmail({
     to,
     slug: WELCOME_EMAIL_SLUG,
     variables: {
-      firstName: firstName || 'Użytkowniku',
+      firstName: firstName || (language === 'en' ? 'User' : 'Użytkowniku'),
     },
+    language,
   });
 }
 
 export class EmailService {
-  static async sendWelcomeEmail(toEmail: string, firstName?: string | null) {
-    return sendWelcomeEmail(toEmail, firstName);
+  static async sendWelcomeEmail(toEmail: string, firstName?: string | null, language: string = 'pl') {
+    return sendWelcomeEmail(toEmail, firstName, language);
   }
 
   static async sendAccountDeletedEmail(toEmail: string) {

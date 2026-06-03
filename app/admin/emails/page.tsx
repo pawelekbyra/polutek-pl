@@ -27,7 +27,7 @@ export default async function AdminEmailsPage() {
   try {
     template = await prisma.emailTemplate.findUnique({
       where: { slug: DEFAULT_WELCOME_TEMPLATE.slug },
-      select: { slug: true, subject: true, html: true },
+    select: { slug: true, subject: true, html: true, subjectEn: true, htmlEn: true },
     });
   } catch (err) {
     console.error("[AdminEmailsPage] Failed to fetch template, falling back to default.", err);
