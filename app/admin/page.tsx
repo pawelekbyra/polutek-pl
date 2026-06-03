@@ -182,6 +182,27 @@ export default function AdminPanel() {
     setIsEditing(true);
   };
 
+  const handleDuplicate = (vid: any) => {
+    setFormData({
+      id: "",
+      title: `${vid.title} (Kopia)`,
+      slug: `${vid.slug}-kopia-${Math.floor(Math.random() * 1000)}`,
+      description: vid.description || "",
+      videoUrl: vid.videoUrl,
+      thumbnailUrl: vid.thumbnailUrl,
+      duration: vid.duration || "",
+      tier: vid.tier,
+      status: "DRAFT",
+      likesCount: 0,
+      dislikesCount: 0,
+      views: 0,
+      isMainFeatured: false,
+      showInSidebar: vid.showInSidebar ?? true,
+      sidebarOrder: vid.sidebarOrder || 0
+    });
+    setIsEditing(true);
+  };
+
   const handleCreateNew = () => {
     setFormData({
       id: "",
@@ -224,10 +245,15 @@ export default function AdminPanel() {
   };
 
   const handleDelete = async (id: string) => {
-      if (!confirm("Are you sure? This cannot be undone.")) return;
+      if (!confirm("⚠️ UWAGA: Czy na pewno chcesz TRWALE USUNĄĆ ten film? Tej operacji nie da się cofnąć.")) return;
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
-          if (res.ok) fetchVideos();
+          if (res.ok) {
+              fetchVideos();
+          } else {
+              const err = await res.json();
+              alert("Błąd usuwania: " + err.error);
+          }
       } catch (err) {
           console.error("Delete failed", err);
       }
@@ -498,8 +524,9 @@ export default function AdminPanel() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(vid)}><Edit className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(vid.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(vid)} title="Edytuj"><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDuplicate(vid)} title="Kopiuj"><Plus className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(vid.id)} className="text-destructive" title="Usuń trwale"><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
