@@ -3,35 +3,36 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id               String              @id // This is now the clerkUserId directly
-  email            String              @unique
-  username         String?
-  name             String?
-  isDeleted        Boolean             @default(false)
-  role             SystemRole          @default(USER)
-  language         String              @default("en")
-  // Legacy mixed-currency aggregate. Do not use for patron eligibility or financial reporting.
+  id                            String     @id // This is now the clerkUserId directly
+  email                         String     @unique
+  username                      String?
+  name                          String?
+  isDeleted                     Boolean    @default(false)
+  role                          SystemRole @default(USER)
+  language                      String     @default("en")
+  // Legacy historical mixed-currency aggregate kept only for old rows.
+  // Do not use for patron eligibility, financial reporting, access decisions, or payment sync.
   // Use UserPaymentTotal per currency or normalized totals instead.
-  totalPaidMinor   Int                 @default(0)
-  referralCode     String              @unique @default(cuid())
-  referralPoints   Int                 @default(0)
-  referralCount    Int                 @default(0)
-  referredById     String?
-  referredBy       User?               @relation("UserReferrals", fields: [referredById], references: [id])
-  referrals        User[]              @relation("UserReferrals")
-  stripeCustomerId String?             @unique
-  imageUrl         String?
-  isPatron         Boolean             @default(false)
-  patronSince      DateTime?
-  canCreateChannel Boolean             @default(false)
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  legacyTotalPaidMinor_DoNotUse Int        @default(0) @map("totalPaidMinor")
+  referralCode                  String     @unique @default(cuid())
+  referralPoints                Int        @default(0)
+  referralCount                 Int        @default(0)
+  referredById                  String?
+  referredBy                    User?      @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals                     User[]     @relation("UserReferrals")
+  stripeCustomerId              String?    @unique
+  imageUrl                      String?
+  isPatron                      Boolean    @default(false)
+  patronSince                   DateTime?
+  canCreateChannel              Boolean    @default(false)
+  createdAt                     DateTime   @default(now())
+  updatedAt                     DateTime   @updatedAt
 
   creators         Creator[]
   comments         Comment[]
@@ -42,8 +43,8 @@ model User {
   payments         Payment[]
   paymentTotals    UserPaymentTotal[]
   patronGrants     PatronGrant[]
-  referralsSent    Referral[]          @relation("ReferralReferrer")
-  referralReceived Referral?           @relation("ReferralReferred")
+  referralsSent    Referral[]         @relation("ReferralReferrer")
+  referralReceived Referral?          @relation("ReferralReferred")
   subscriptions    Subscription[]
 
   @@index([email])
@@ -61,21 +62,21 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id              String        @id @default(uuid())
-  userId          String
-  creatorId       String?
-  stripeIntentId  String?       @unique
-  stripeSessionId String?       @unique
-  amountMinor     Int
-  refundedAmountMinor Int       @default(0)
-  currency        String
-  status          PaymentStatus @default(PENDING)
-  metadata        Json?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                  String        @id @default(uuid())
+  userId              String
+  creatorId           String?
+  stripeIntentId      String?       @unique
+  stripeSessionId     String?       @unique
+  amountMinor         Int
+  refundedAmountMinor Int           @default(0)
+  currency            String
+  status              PaymentStatus @default(PENDING)
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
-  user            User          @relation(fields: [userId], references: [id])
-  creator         Creator?      @relation(fields: [creatorId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  creator Creator? @relation(fields: [creatorId], references: [id])
 
   @@index([userId, status])
   @@index([userId])
@@ -97,8 +98,8 @@ model StripeEvent {
   payload     Json?
   error       String?
   processedAt DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 model ClerkEvent {
@@ -108,8 +109,8 @@ model ClerkEvent {
   payload     Json?
   error       String?
   processedAt DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 enum PatronGrantSource {
@@ -120,17 +121,17 @@ enum PatronGrantSource {
 }
 
 model PatronGrant {
-  id            String            @id @default(uuid())
-  userId        String
-  source        PatronGrantSource
-  paymentId     String?
-  referralId    String?
-  grantedById   String?
-  reason        String?
-  createdAt     DateTime          @default(now())
-  revokedAt     DateTime?
+  id          String            @id @default(uuid())
+  userId      String
+  source      PatronGrantSource
+  paymentId   String?
+  referralId  String?
+  grantedById String?
+  reason      String?
+  createdAt   DateTime          @default(now())
+  revokedAt   DateTime?
 
-  user          User              @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId, revokedAt])
   @@index([paymentId])
@@ -153,19 +154,19 @@ model AuditLog {
 }
 
 model Creator {
-  id               String    @id @default(uuid())
+  id               String         @id @default(uuid())
   userId           String
-  slug             String    @unique
+  slug             String         @unique
   name             String
   bio              String?
   bannerUrl        String?
-  subscribersCount Int       @default(0)
-  isApproved       Boolean   @default(false)
-  isPrimary        Boolean   @default(false)
-  stripeConnectId  String?   @unique
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  user             User      @relation(fields: [userId], references: [id])
+  subscribersCount Int            @default(0)
+  isApproved       Boolean        @default(false)
+  isPrimary        Boolean        @default(false)
+  stripeConnectId  String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  user             User           @relation(fields: [userId], references: [id])
   videos           Video[]
   payments         Payment[]
   comments         Comment[]
@@ -178,8 +179,8 @@ model Subscription {
   creatorId String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@unique([userId, creatorId])
   @@index([userId])
@@ -187,29 +188,29 @@ model Subscription {
 }
 
 model Video {
-  id            String    @id @default(uuid())
-  creatorId     String
-  title         String
-  titleEn       String?
-  slug          String    @unique
-  description   String?
-  descriptionEn String?
-  videoUrl      String    // Legacy field
-  thumbnailUrl  String
-  duration      String?   // e.g. "12:45"
-  tier          AccessTier @default(PUBLIC)
-  views         Int       @default(0)
-  likesCount    Int       @default(0)
-  dislikesCount Int       @default(0)
-  isMainFeatured Boolean  @default(false) // This video is the "One Hero Video" on homepage
-  showInSidebar Boolean  @default(true)
-  sidebarOrder  Int       @default(0)
-  status        VideoStatus @default(DRAFT)
-  publishedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String      @id @default(uuid())
+  creatorId      String
+  title          String
+  titleEn        String?
+  slug           String      @unique
+  description    String?
+  descriptionEn  String?
+  videoUrl       String // Legacy field
+  thumbnailUrl   String
+  duration       String? // e.g. "12:45"
+  tier           AccessTier  @default(PUBLIC)
+  views          Int         @default(0)
+  likesCount     Int         @default(0)
+  dislikesCount  Int         @default(0)
+  isMainFeatured Boolean     @default(false) // This video is the "One Hero Video" on homepage
+  showInSidebar  Boolean     @default(true)
+  sidebarOrder   Int         @default(0)
+  status         VideoStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  creator       Creator   @relation(fields: [creatorId], references: [id])
+  creator       Creator        @relation(fields: [creatorId], references: [id])
   comments      Comment[]
   videoLikes    VideoLike[]
   videoDislikes VideoDislike[]
@@ -230,17 +231,17 @@ enum StorageProvider {
 }
 
 model VideoAsset {
-  id          String          @id @default(uuid())
-  videoId     String          @unique
-  provider    StorageProvider
-  objectKey   String
-  bucket      String?
-  mimeType    String?
-  sizeBytes   Int?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id        String          @id @default(uuid())
+  videoId   String          @unique
+  provider  StorageProvider
+  objectKey String
+  bucket    String?
+  mimeType  String?
+  sizeBytes Int?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
-  video       Video           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@index([provider])
 }
@@ -253,17 +254,17 @@ enum ReferralStatus {
 }
 
 model Referral {
-  id          String         @id @default(uuid())
-  referrerId  String
-  referredId  String         @unique
-  status      ReferralStatus @default(PENDING)
-  source      String?
-  claimedAt   DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id         String         @id @default(uuid())
+  referrerId String
+  referredId String         @unique
+  status     ReferralStatus @default(PENDING)
+  source     String?
+  claimedAt  DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
-  referrer   User @relation("ReferralReferrer", fields: [referrerId], references: [id])
-  referred   User @relation("ReferralReferred", fields: [referredId], references: [id])
+  referrer User @relation("ReferralReferrer", fields: [referrerId], references: [id])
+  referred User @relation("ReferralReferred", fields: [referredId], references: [id])
 
   @@unique([referrerId, referredId])
   @@index([referrerId])
@@ -297,33 +298,33 @@ model VideoDislike {
 }
 
 model Comment {
-  id         String   @id @default(uuid())
-  text       String
-  imageUrl   String?
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id       String  @id @default(uuid())
+  text     String
+  imageUrl String?
+  authorId String
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  videoId    String
-  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId String
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
-  creatorId  String?  // Optional for now
-  creator    Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId String? // Optional for now
+  creator   Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
 
   // Self-relation for replies
-  parentId   String?
-  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies    Comment[] @relation("CommentReplies")
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
 
-  likes      CommentLike[]
-  dislikes   CommentDislike[]
+  likes    CommentLike[]
+  dislikes CommentDislike[]
 
   pinnedAt   DateTime?
   pinnedById String?
 
-  deletedAt  DateTime?
+  deletedAt   DateTime?
   deletedById String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([videoId, pinnedAt, createdAt])
   @@index([videoId, createdAt])
@@ -360,9 +361,9 @@ model CommentDislike {
 }
 
 enum AccessTier {
-  PUBLIC    // Everyone
+  PUBLIC // Everyone
   LOGGED_IN // Minimum: Logged in (Clerk mail)
-  PATRON    // Minimum: isPatron status granted
+  PATRON // Minimum: isPatron status granted
 }
 
 enum VideoStatus {
@@ -379,7 +380,7 @@ model VideoView {
   ipHash    String?
   createdAt DateTime @default(now())
 
-  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@index([videoId])
   @@index([userId])

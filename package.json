@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
@@ -18,7 +19,6 @@
     "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
     "content:fix:polutek": "npx tsx scripts/fix-polutek-content.ts",
     "content:ensure:welcome": "npx tsx scripts/ensure-welcome-template.ts",
-    "db:fix:schema": "npx tsx scripts/fix_db_schema.ts",
     "clerk:resync": "npx tsx scripts/resync-clerk-access.ts"
   },
   "dependencies": {

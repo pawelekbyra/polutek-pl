@@ -143,9 +143,9 @@ Configure concrete bucket/CDN hosts such as `my-bucket.example.r2.dev` or `media
 ### Refund and dispute policy
 Payments store `refundedAmountMinor` so refund webhooks are idempotent by amount. A repeated Stripe refund event does not subtract totals twice.
 
-- Partial refund: payment status becomes `PARTIALLY_REFUNDED`, `User.totalPaidMinor` and `UserPaymentTotal.amountMinor` are reduced to net paid totals, and patron grants are retained.
+- Partial refund: payment status becomes `PARTIALLY_REFUNDED`, `UserPaymentTotal.amountMinor` is reduced to net paid totals, and patron grants are retained.
 - Full refund: payment status becomes `REFUNDED`, net totals are reduced, and patron grants tied to that payment are revoked.
-- Lost chargeback/dispute: payment status becomes `CHARGEBACK_LOST`, the remaining net paid amount (`amountMinor - refundedAmountMinor`) is removed from `User.totalPaidMinor` and `UserPaymentTotal.amountMinor`, and patron grants tied to that payment are revoked.
+- Lost chargeback/dispute: payment status becomes `CHARGEBACK_LOST`, the remaining net paid amount (`amountMinor - refundedAmountMinor`) is removed from `UserPaymentTotal.amountMinor`, and patron grants tied to that payment are revoked.
 
 Clerk `publicMetadata.totalPaid` is synchronized from net normalized payment totals after refund/dispute handling.
 
