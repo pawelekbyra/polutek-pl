@@ -1,9 +1,6 @@
-import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { verifyAdmin } from "@/lib/auth-utils";
-import { EmailTemplateEditor } from "./EmailTemplateEditor";
+import { PrismaClient } from '@prisma/client';
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient();
 
 const DEFAULT_WELCOME_TEMPLATE = {
   slug: "welcome-email",
@@ -18,20 +15,27 @@ const DEFAULT_WELCOME_TEMPLATE = {
   `,
 };
 
-export default async function AdminEmailsPage() {
-  if (!(await verifyAdmin())) {
-    redirect("/");
-  }
+async function main() {
+  console.log('Ensuring welcome email template exists...');
+  const template = await prisma.emailTemplate.findUnique({
+    where: { slug: DEFAULT_WELCOME_TEMPLATE.slug },
+  });
 
-  let template = null;
-  try {
-    template = await prisma.emailTemplate.findUnique({
-      where: { slug: DEFAULT_WELCOME_TEMPLATE.slug },
-      select: { slug: true, subject: true, html: true },
+  if (!template) {
+    await prisma.emailTemplate.create({
+      data: DEFAULT_WELCOME_TEMPLATE,
     });
-  } catch (err) {
-    console.error("[AdminEmailsPage] Failed to fetch template, falling back to default.", err);
+    console.log('Created default welcome email template.');
+  } else {
+    console.log('Welcome email template already exists.');
   }
-
-  return <EmailTemplateEditor initialTemplate={template || DEFAULT_WELCOME_TEMPLATE} />;
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.();
+  });

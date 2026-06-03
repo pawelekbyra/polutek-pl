@@ -86,9 +86,19 @@ async function fix() {
         "updatedAt" TIMESTAMP(3) NOT NULL
     );`,
 
+    `CREATE TABLE IF NOT EXISTS "EmailTemplate" (
+        "id" TEXT PRIMARY KEY,
+        "slug" TEXT NOT NULL,
+        "subject" TEXT NOT NULL,
+        "html" TEXT NOT NULL,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );`,
+
     // 7. Indexes
     `CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS "UserPaymentTotal_userId_currency_key" ON "UserPaymentTotal"("userId", "currency");`
+    `CREATE UNIQUE INDEX IF NOT EXISTS "UserPaymentTotal_userId_currency_key" ON "UserPaymentTotal"("userId", "currency");`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "EmailTemplate_slug_key" ON "EmailTemplate"("slug");`
   ];
 
   for (const cmd of commands) {
