@@ -13,9 +13,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   let userId: string | null = null;
+  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
-        const authData = await auth();
+      const authData = await auth();
       userId = authData.userId;
+      sessionClaims = authData.sessionClaims;
   } catch (e) {
       return NextResponse.json({
           success: false,
@@ -40,7 +42,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await UserService.getOrCreateUser(userId);
+    const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    if (!localUser) {
+      return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
+    }
 
     const { commentId } = await request.json();
 
@@ -59,19 +64,19 @@ export async function POST(request: NextRequest) {
     return await prisma.$transaction(async (tx) => {
         // 1. Remove existing like if any
         await tx.commentLike.deleteMany({
-            where: { userId, commentId }
+            where: { userId: localUser.id, commentId }
         });
 
         // 2. Toggle Dislike
         const existingDislike = await tx.commentDislike.findUnique({
-            where: { userId_commentId: { userId, commentId } }
+            where: { userId_commentId: { userId: localUser.id, commentId } }
         });
 
         if (existingDislike) {
             await tx.commentDislike.delete({ where: { id: existingDislike.id } });
             return NextResponse.json({ success: true, liked: false, disliked: false });
         } else {
-            await tx.commentDislike.create({ data: { userId, commentId } });
+            await tx.commentDislike.create({ data: { userId: localUser.id, commentId } });
             return NextResponse.json({ success: true, liked: false, disliked: true });
         }
     });
