@@ -29,13 +29,17 @@ function hasIdentityClaim(claims: AuthSessionClaims) {
       'email_address',
       'name',
       'full_name',
+      'fullName',
       'first_name',
       'given_name',
+      'firstName',
       'last_name',
       'family_name',
+      'lastName',
       'username',
       'preferred_username',
       'picture',
+      'img',
       'image_url',
       'imageUrl',
       'avatar_url',
@@ -67,7 +71,8 @@ export class UserService {
 
       if (!clerkUser || clerkUser.id !== clerkUserId) {
         try {
-          clerkUser = await clerkClient.users.getUser(clerkUserId);
+          const client = await clerkClient();
+          clerkUser = await client.users.getUser(clerkUserId);
         } catch (apiError) {
           const local = await prisma.user.findUnique({ where: { id: clerkUserId } });
           if (local) return local;
@@ -228,7 +233,7 @@ export class UserService {
       || null;
     const displayUsername = isGeneratedClerkUsername(username) ? null : username;
     const isPlaceholderEmail = email.endsWith('@clerk.local');
-    const rawClaimName = stringClaim(sessionClaims, 'name', 'full_name');
+    const rawClaimName = stringClaim(sessionClaims, 'name', 'full_name', 'fullName');
     const claimName = isGeneratedClerkUsername(rawClaimName) ? null : rawClaimName;
     const existingName = isGeneratedClerkUsername(existing?.name) ? null : existing?.name;
     const name = claimName
@@ -236,7 +241,7 @@ export class UserService {
       || displayUsername
       || existingName
       || (isPlaceholderEmail ? null : emailLocalPart(email));
-    const imageUrl = stringClaim(sessionClaims, 'picture', 'image_url', 'imageUrl', 'avatar_url', 'avatarUrl')
+    const imageUrl = stringClaim(sessionClaims, 'picture', 'img', 'image_url', 'imageUrl', 'avatar_url', 'avatarUrl')
       || existing?.imageUrl
       || null;
     const language = metadataClaim(sessionClaims, 'publicMetadata', 'language')

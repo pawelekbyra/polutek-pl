@@ -18,6 +18,21 @@ type CommentAuthor = {
   username?: string | null;
 };
 
+type ClerkAuthorProfile = {
+  name?: string | null;
+  username?: string | null;
+  imageUrl?: string | null;
+};
+
+type SyncedLocalUser = {
+  email: string;
+  name?: string | null;
+  username?: string | null;
+  imageUrl?: string | null;
+  language: string;
+  role: 'ADMIN' | 'USER';
+};
+
 function getCommentAuthorName(author?: CommentAuthor | null) {
   const rawName = author?.name?.trim();
   const name = (rawName && !isGeneratedClerkUsername(rawName)) ? rawName : null;
@@ -30,11 +45,73 @@ function getCommentAuthorName(author?: CommentAuthor | null) {
   return name || username || fallbackFromEmail || "Użytkownik";
 }
 
+function isAllowedClerkAvatarUrl(rawUrl?: string | null) {
+  if (!rawUrl) return false;
+
+  try {
+    const url = new URL(rawUrl);
+    const hostname = url.hostname.toLowerCase();
+
+    return url.protocol === 'https:' && (hostname === 'img.clerk.com' || hostname.endsWith('.clerk.com'));
+  } catch {
+    return false;
+  }
+}
+
+function cleanAuthorProfile(profile?: ClerkAuthorProfile | null) {
+  const rawName = profile?.name?.trim() || null;
+  const name = rawName && !isGeneratedClerkUsername(rawName) ? rawName : null;
+  const rawUsername = profile?.username?.trim() || null;
+  const username = rawUsername && !isGeneratedClerkUsername(rawUsername) ? rawUsername : null;
+  const imageUrl = isAllowedClerkAvatarUrl(profile?.imageUrl) ? profile?.imageUrl?.trim() || null : null;
+
+  return { name, username, imageUrl };
+}
+
+function shouldReplaceStoredName(storedName: string | null | undefined, email: string | null | undefined, nextName: string | null) {
+  if (!nextName) return false;
+
+  const normalizedStoredName = storedName?.trim() || null;
+  const emailLocalPart = email?.split('@')[0]?.trim() || null;
+
+  return !normalizedStoredName
+    || normalizedStoredName === 'Użytkownik'
+    || isGeneratedClerkUsername(normalizedStoredName)
+    || normalizedStoredName === emailLocalPart;
+}
+
+async function refreshLocalUserDisplayProfile<T extends SyncedLocalUser>(userId: string, localUser: T, profile?: ClerkAuthorProfile | null): Promise<T> {
+  const cleanProfile = cleanAuthorProfile(profile);
+  const shouldUpdateName = shouldReplaceStoredName(localUser.name, localUser.email, cleanProfile.name);
+  const shouldUpdateImage = !!cleanProfile.imageUrl && cleanProfile.imageUrl !== localUser.imageUrl;
+  const shouldUpdateUsername = !!cleanProfile.username && cleanProfile.username !== localUser.username;
+
+  if (!shouldUpdateImage && !shouldUpdateName && !shouldUpdateUsername) {
+    return localUser;
+  }
+
+  return await UserService.syncUser(
+    userId,
+    localUser.email,
+    shouldUpdateName ? cleanProfile.name : localUser.name,
+    shouldUpdateImage ? cleanProfile.imageUrl : localUser.imageUrl,
+    undefined,
+    localUser.language,
+    shouldUpdateUsername ? cleanProfile.username : localUser.username,
+    localUser.role
+  ) as unknown as T;
+}
+
 const postCommentSchema = z.object({
   videoId: z.string(),
   text: z.string().trim().min(1).max(2000).optional(),
   parentId: z.string().optional().nullable(),
   imageUrl: z.string().url().refine((url) => isAllowedMediaUrl(url), "Zablokowany host obrazka").optional().nullable(),
+  authorProfile: z.object({
+    name: z.string().trim().max(120).optional().nullable(),
+    username: z.string().trim().max(120).optional().nullable(),
+    imageUrl: z.string().url().optional().nullable(),
+  }).optional(),
 }).refine(data => data.text || data.imageUrl, {
   message: "Treść komentarza lub obrazek jest wymagany",
   path: ["text"]
@@ -49,6 +126,11 @@ export async function GET(request: NextRequest) {
   const videoId = searchParams.get('videoId');
   const sortBy = searchParams.get('sortBy') || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
+  const viewerProfile = {
+    name: searchParams.get('viewerName'),
+    username: searchParams.get('viewerUsername'),
+    imageUrl: searchParams.get('viewerImageUrl'),
+  };
 
   const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
   const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 50);
@@ -68,7 +150,10 @@ export async function GET(request: NextRequest) {
   try {
     let internalUserId = null;
     if (userId) {
-        const user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        let user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        if (user) {
+          user = await refreshLocalUserDisplayProfile(userId, user, viewerProfile);
+        }
         internalUserId = user?.id ?? null;
     }
 
@@ -190,7 +275,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    let localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    if (!localUser) {
+      return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
+    }
 
     const body = await request.json();
     const result = postCommentSchema.safeParse(body);
@@ -199,7 +287,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
     }
 
-    const { videoId, text, parentId, imageUrl } = result.data;
+    const { videoId, text, parentId, imageUrl, authorProfile } = result.data;
+    localUser = await refreshLocalUserDisplayProfile(userId, localUser, authorProfile);
 
     // Access control check
     const decision = await AccessPolicy.canComment(userId, videoId);

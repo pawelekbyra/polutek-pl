@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { UserService } from '@/lib/services/user.service';
+import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 import { Prisma, WebhookEventStatus } from '@prisma/client';
@@ -150,7 +151,9 @@ export async function POST(req: Request) {
       const unsafeMetadata = getMetadataObject(userData.unsafe_metadata) as ClerkUnsafeMetadata;
       const publicMetadata = getMetadataObject(userData.public_metadata) as ClerkPublicMetadata;
       const email = email_addresses[0]?.email_address;
-      const name = `${first_name || ''} ${last_name || ''}`.trim() || null;
+      const firstLast = `${first_name || ''} ${last_name || ''}`.trim();
+      const displayUsername = isGeneratedClerkUsername(username) ? null : username;
+      const name = (firstLast && !isGeneratedClerkUsername(firstLast) ? firstLast : null) || displayUsername;
       const referrerId = getString(unsafeMetadata.referrerId);
       const userLanguage = resolveLanguage(publicMetadata, unsafeMetadata);
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserService } from '@/lib/services/user.service';
 import { prisma } from '@/lib/prisma';
+import { clerkClient, currentUser } from '@clerk/nextjs/server';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -12,6 +13,7 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@clerk/nextjs/server', () => ({
   currentUser: vi.fn(),
+  clerkClient: vi.fn(),
 }));
 
 describe('UserService.getOrCreateUserFromAuth', () => {
@@ -75,6 +77,64 @@ describe('UserService.getOrCreateUserFromAuth', () => {
       null,
       'pl',
       'realperson',
+      null
+    );
+  });
+
+  it('fetches Clerk profile through the backend client when currentUser is unavailable', async () => {
+    vi.mocked(currentUser).mockResolvedValue(null as never);
+    vi.mocked(clerkClient).mockResolvedValue({
+      users: {
+        getUser: vi.fn().mockResolvedValue({
+          id: 'user_4',
+          primaryEmailAddress: { emailAddress: 'clerk@example.com' },
+          emailAddresses: [],
+          username: 'clerkname',
+          fullName: 'Clerk Person',
+          firstName: null,
+          lastName: null,
+          imageUrl: 'https://img.clerk.com/clerk-person.png',
+          publicMetadata: { language: 'pl' },
+          unsafeMetadata: {},
+        }),
+      },
+    } as never);
+    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_4' } as never);
+
+    await UserService.getOrCreateUser('user_4');
+
+    expect(syncSpy).toHaveBeenCalledWith(
+      'user_4',
+      'clerk@example.com',
+      'Clerk Person',
+      'https://img.clerk.com/clerk-person.png',
+      null,
+      'pl',
+      'clerkname',
+      undefined
+    );
+  });
+
+  it('reads Clerk default session image and camelCase name claims', async () => {
+    vi.spyOn(UserService, 'getOrCreateUser').mockRejectedValue(new Error('CLERK_USER_NOT_FOUND'));
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_5' } as never);
+
+    await UserService.getOrCreateUserFromAuth('user_5', {
+      email: 'claim@example.com',
+      fullName: 'Claim Person',
+      img: 'https://img.clerk.com/claim-person.png',
+      username: 'user_3Ea99aSDKtt0UQKIG72VtRSWEtb',
+    });
+
+    expect(syncSpy).toHaveBeenCalledWith(
+      'user_5',
+      'claim@example.com',
+      'Claim Person',
+      'https://img.clerk.com/claim-person.png',
+      null,
+      'en',
+      'user_3Ea99aSDKtt0UQKIG72VtRSWEtb',
       null
     );
   });
