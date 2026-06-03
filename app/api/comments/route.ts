@@ -385,8 +385,6 @@ export async function PATCH(request: NextRequest) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        await ensureCommentPinningColumns();
-
         const body = await request.json();
         const result = z.object({
           commentId: z.string(),
