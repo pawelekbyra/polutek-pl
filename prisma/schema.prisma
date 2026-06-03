@@ -190,8 +190,10 @@ model Video {
   id            String    @id @default(uuid())
   creatorId     String
   title         String
+  titleEn       String?
   slug          String    @unique
   description   String?
+  descriptionEn String?
   videoUrl      String    // Legacy field
   thumbnailUrl  String
   duration      String?   // e.g. "12:45"
@@ -405,6 +407,8 @@ model EmailTemplate {
   slug      String   @unique // e.g., "welcome-email"
   subject   String
   html      String   @db.Text
+  subjectEn String?
+  htmlEn    String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

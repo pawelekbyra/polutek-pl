@@ -13,8 +13,10 @@ export const dynamic = 'force-dynamic';
 const videoSchema = z.object({
   id: z.string().optional().nullable(),
   title: z.string().min(1).max(160),
+  titleEn: z.string().max(160).optional().nullable(),
   slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/),
   description: z.string().max(5000).optional().nullable(),
+  descriptionEn: z.string().max(5000).optional().nullable(),
   videoUrl: z.string().url(),
   thumbnailUrl: z.string().refine((value) => {
     if (value.startsWith("/")) return true;
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
   }
 
-  const { id, title, slug, description, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
+  const { id, title, titleEn, slug, description, descriptionEn, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
 
   // Validation: Only PUBLIC and PUBLISHED videos can be main featured
   if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
@@ -80,8 +82,10 @@ export async function POST(req: NextRequest) {
           where: { id },
           data: {
             title,
+            titleEn,
             slug,
             description,
+            descriptionEn,
             videoUrl,
             thumbnailUrl,
             duration,
@@ -149,8 +153,10 @@ export async function POST(req: NextRequest) {
           data: {
             creatorId: creator.id,
             title,
+            titleEn,
             slug,
             description,
+            descriptionEn,
             videoUrl,
             thumbnailUrl,
             duration,

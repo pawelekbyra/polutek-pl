@@ -28,6 +28,8 @@ const templateSchema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   subject: z.string().trim().min(1).max(150),
   html: z.string().min(1).max(50_000),
+  subjectEn: z.string().trim().max(150).optional().nullable(),
+  htmlEn: z.string().max(50_000).optional().nullable(),
 });
 
 const sanitizeOptions = {
@@ -81,19 +83,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
     }
 
-    const { slug, subject, html } = result.data;
+    const { slug, subject, html, subjectEn, htmlEn } = result.data;
     const cleanHtml = sanitizeHtml(html, sanitizeOptions);
+    const cleanHtmlEn = htmlEn ? sanitizeHtml(htmlEn, sanitizeOptions) : null;
 
     const updated = await prisma.emailTemplate.upsert({
       where: { slug },
       update: {
         subject,
         html: cleanHtml,
+        subjectEn,
+        htmlEn: cleanHtmlEn,
       },
       create: {
         slug,
         subject,
         html: cleanHtml,
+        subjectEn,
+        htmlEn: cleanHtmlEn,
       },
     });
 

@@ -172,8 +172,9 @@ const Navbar = () => {
               <div
                 className={cn(
                   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
-                  isPatron &&
-                    "shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]",
+                  isPatron
+                    ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
+                    : "border border-neutral-300",
                 )}
                 title={isPatron ? "Patron" : undefined}
               >

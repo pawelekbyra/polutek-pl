@@ -48,6 +48,8 @@ async function fix() {
 
     // 3. Video table (CRITICAL FIX)
     `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "status" "VideoStatus" NOT NULL DEFAULT 'DRAFT';`,
+    `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "titleEn" TEXT;`,
+    `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "descriptionEn" TEXT;`,
     `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3);`,
     `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "isMainFeatured" BOOLEAN DEFAULT false;`,
     `ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "tier" "AccessTier" NOT NULL DEFAULT 'PUBLIC';`,
@@ -91,9 +93,14 @@ async function fix() {
         "slug" TEXT NOT NULL,
         "subject" TEXT NOT NULL,
         "html" TEXT NOT NULL,
+        "subjectEn" TEXT,
+        "htmlEn" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );`,
+
+    `ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "subjectEn" TEXT;`,
+    `ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "htmlEn" TEXT;`,
 
     // 7. Indexes
     `CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");`,

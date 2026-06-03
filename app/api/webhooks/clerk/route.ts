@@ -164,7 +164,7 @@ export async function POST(req: Request) {
         if (eventType === 'user.created') {
           console.log(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
           try {
-            await EmailService.sendWelcomeEmail(email, first_name || name || undefined);
+            await EmailService.sendWelcomeEmail(email, first_name || name || undefined, userLanguage);
           } catch (error) {
             console.error('[ClerkWebhook] Failed to send welcome email:', error);
           }

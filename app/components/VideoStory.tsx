@@ -20,9 +20,9 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
           {displayTitle}
         </h2>
         
-        {video.description ? (
+        {(language === 'en' ? (video.descriptionEn || video.description) : video.description) ? (
           <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
-            {video.description}
+            {language === 'en' ? (video.descriptionEn || video.description) : video.description}
           </div>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 italic">
