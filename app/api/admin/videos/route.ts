@@ -206,20 +206,19 @@ export async function DELETE(req: NextRequest) {
   try {
     await ensureVideoPresentationColumns();
 
-    const deleted = await prisma.video.update({
-      where: { id },
-      data: { status: VideoStatus.ARCHIVED }
+    const deleted = await prisma.video.delete({
+      where: { id }
     });
 
     await writeAuditLog({
         actorUserId: (await auth()).userId,
-        action: "VIDEO_ARCHIVED",
+        action: "VIDEO_DELETED",
         targetType: "Video",
         targetId: id,
         metadata: { title: deleted.title }
     });
 
-    return NextResponse.json(deleted);
+    return NextResponse.json({ success: true, deleted: deleted.title });
   } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
     const message = error instanceof Error ? error.message : String(error);
