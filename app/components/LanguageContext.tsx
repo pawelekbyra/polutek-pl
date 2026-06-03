@@ -109,7 +109,7 @@ export const translations = {
     topSecret: 'Ściśle Tajne',
     paywallText: 'Strefa',
     paywallAction: 'Zalogowanych',
-    supportArtist: 'ZOSTAŃ PATRONĘ',
+    supportArtist: 'ZOSTAŃ PATRONEM',
     supportBrand: 'WSPIERAJ',
     loginToWatchShort: 'Zaloguj się',
     independencyTitle: 'Nie masz psychy się zalogować',
