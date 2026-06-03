@@ -163,10 +163,11 @@ export async function POST(req: Request) {
 
         if (eventType === 'user.created') {
           console.log(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
-          // Send welcome email without blocking Clerk webhook delivery.
-          EmailService.sendWelcomeEmail(email, isSupportedLanguage(user.language) ? user.language : 'pl').catch((error) => {
+          try {
+            await EmailService.sendWelcomeEmail(email, first_name || name || undefined);
+          } catch (error) {
             console.error('[ClerkWebhook] Failed to send welcome email:', error);
-          });
+          }
         }
       }
     }
@@ -186,7 +187,7 @@ export async function POST(req: Request) {
             }
 
             if (user && user.email && !user.email.startsWith('deleted_')) {
-                await EmailService.sendAccountDeletedEmail(user.email, isSupportedLanguage(user.language) ? user.language : 'pl');
+                await EmailService.sendAccountDeletedEmail(user.email);
             }
         }
     }
@@ -201,7 +202,7 @@ export async function POST(req: Request) {
                 select: { email: true, language: true }
             });
             if (user?.email) {
-                await EmailService.sendPasswordChangedEmail(user.email, isSupportedLanguage(user.language) ? user.language : 'pl');
+                await EmailService.sendPasswordChangedEmail(user.email);
             }
         }
     }

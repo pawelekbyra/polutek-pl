@@ -1,158 +1,132 @@
 import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 
+const WELCOME_EMAIL_SLUG = 'welcome-email';
+
+const EMAIL_DICTIONARY: Record<string, { subject: string; html: string }> = {
+  'account-deleted': {
+    subject: 'Twoje konto zostało usunięte - POLUTEK.PL',
+    html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>',
+  },
+  'password-changed': {
+    subject: 'Hasło zostało zmienione - POLUTEK.PL',
+    html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>',
+  },
+  'thank-you-donation': {
+    subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
+    html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>',
+  },
+  'become-patron': {
+    subject: 'Zostałeś Patronem! - POLUTEK.PL',
+    html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>',
+  },
+};
+
 let resendClient: Resend | null = null;
 
 function getResendClient() {
   if (!resendClient) {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn('[EmailService] RESEND_API_KEY is missing. Emails will not be sent.');
-      return null;
+      throw new Error('RESEND_API_KEY is missing. Add it to Vercel/environment variables.');
     }
     resendClient = new Resend(apiKey);
   }
   return resendClient;
 }
 
-const EMAIL_DICTIONARY: Record<string, {
-    pl: { subject: string, html: string },
-    en: { subject: string, html: string }
-}> = {
-  WELCOME: {
-    pl: {
-      subject: 'Witaj w POLUTEK.PL!',
-      html: '<h1>Siema!</h1><p>Dzięki za dołączenie do naszej społeczności. Cieszymy się, że tu jesteś!</p>'
-    },
-    en: {
-      subject: 'Welcome to POLUTEK.PL!',
-      html: '<h1>Hey!</h1><p>Thanks for joining our community. We are glad to have you here!</p>'
-    }
-  },
-  ACCOUNT_DELETED: {
-    pl: {
-      subject: 'Twoje konto zostało usunięte - POLUTEK.PL',
-      html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>'
-    },
-    en: {
-      subject: 'Your account has been deleted - POLUTEK.PL',
-      html: '<h1>Account Deletion Confirmation</h1><p>Your data has been successfully removed from our system. We will miss you!</p>'
-    }
-  },
-  PASSWORD_CHANGED: {
-    pl: {
-      subject: 'Hasło zostało zmienione - POLUTEK.PL',
-      html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>'
-    },
-    en: {
-      subject: 'Password Changed - POLUTEK.PL',
-      html: '<h1>Account Security</h1><p>Your password has just been updated. If this was not you, please contact us immediately.</p>'
-    }
-  },
-  THANK_YOU_DONATION: {
-    pl: {
-      subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
-      html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>'
-    },
-    en: {
-      subject: 'Thank you for your support! - POLUTEK.PL',
-      html: '<h1>Big thanks!</h1><p>We received your tip of {{amount}} {{currency}}. Your support allows us to create more content!</p>'
-    }
-  },
-  BECOME_PATRON: {
-    pl: {
-      subject: 'Zostałeś Patronem! - POLUTEK.PL',
-      html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>'
-    },
-    en: {
-      subject: 'You are now a Patron! - POLUTEK.PL',
-      html: '<h1>Welcome to the Patrons circle!</h1><p>Thank you for your trust. You now have access to exclusive materials in the Patrons Zone.</p>'
-    }
-  }
+function replaceTemplateVariables(value: string, variables: Record<string, string>) {
+  return Object.entries(variables).reduce((result, [key, replacement]) => {
+    return result.split(`{{${key}}}`).join(replacement);
+  }, value);
+}
+
+type SendTemplateEmailInput = {
+  to: string;
+  slug: string;
+  variables?: Record<string, string | null | undefined>;
+  fallback?: { subject: string; html: string };
 };
 
+async function sendTemplateEmail({ to, slug, variables = {}, fallback }: SendTemplateEmailInput) {
+  const template = await prisma.emailTemplate.findUnique({
+    where: { slug },
+    select: { subject: true, html: true },
+  });
+
+  if (!template && !fallback) {
+    throw new Error(`Email template with slug "${slug}" was not found.`);
+  }
+
+  const safeVariables = Object.fromEntries(
+    Object.entries(variables).map(([key, value]) => [key, value ?? ''])
+  );
+  const subject = replaceTemplateVariables(template?.subject ?? fallback!.subject, safeVariables);
+  const html = replaceTemplateVariables(template?.html ?? fallback!.html, safeVariables);
+
+  const resend = getResendClient();
+  const { data, error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM || 'POLUTEK.PL <no-reply@polutek.pl>',
+    to: [to],
+    subject,
+    html,
+  });
+
+  if (error) {
+    throw new Error(`Resend failed to send "${slug}" email: ${JSON.stringify(error)}`);
+  }
+
+  return data;
+}
+
+export async function sendWelcomeEmail(to: string, firstName?: string | null) {
+  return sendTemplateEmail({
+    to,
+    slug: WELCOME_EMAIL_SLUG,
+    variables: {
+      firstName: firstName || 'Użytkowniku',
+    },
+  });
+}
+
 export class EmailService {
-  private static async sendEmail(toEmail: string, templateName: string, language: 'pl' | 'en' = 'pl', variables?: Record<string, string>) {
-    console.log(`[EmailService] Attempting to send ${templateName} to ${toEmail} (${language})`);
-    try {
-      const resend = getResendClient();
-      if (!resend) {
-        console.warn('[EmailService] Resend client not available. Aborting send.');
-        return;
-      }
-
-      let template = null;
-      try {
-        template = await prisma.emailTemplate.findUnique({
-          where: { name: templateName }
-        });
-      } catch (dbError) {
-        console.error(`[EmailService] DB error fetching ${templateName} template:`, dbError);
-      }
-
-      let subject: string;
-      let html: string;
-
-      if (!template) {
-        console.warn(`[EmailService] ${templateName} template not found in DB. Using dictionary fallback.`);
-        const fallback = EMAIL_DICTIONARY[templateName];
-        if (fallback) {
-          subject = language === 'pl' ? fallback.pl.subject : fallback.en.subject;
-          html = language === 'pl' ? fallback.pl.html : fallback.en.html;
-        } else {
-          console.warn(`[EmailService] No fallback found for ${templateName}. Skipping.`);
-          return;
-        }
-      } else {
-        subject = language === 'pl' ? template.subjectPl : template.subjectEn;
-        html = language === 'pl' ? template.bodyPl : template.bodyEn;
-      }
-
-      // Simple variable replacement
-      if (variables) {
-        Object.entries(variables).forEach(([key, value]) => {
-          subject = subject.split(`{{${key}}}`).join(value);
-          html = html.split(`{{${key}}}`).join(value);
-        });
-      }
-
-      const { data, error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'POLUTEK.PL <no-reply@polutek.pl>',
-        to: [toEmail],
-        subject: subject,
-        html: html,
-      });
-
-      if (error) {
-        console.error(`[EmailService] Error sending ${templateName} email via Resend:`, error);
-      } else {
-        console.log(`[EmailService] ${templateName} email sent to ${toEmail} (${language})`);
-      }
-    } catch (e) {
-      console.error(`[EmailService] Unexpected error sending ${templateName} email:`, e);
-    }
+  static async sendWelcomeEmail(toEmail: string, firstName?: string | null) {
+    return sendWelcomeEmail(toEmail, firstName);
   }
 
-  static async sendWelcomeEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'WELCOME', language);
-  }
-
-  static async sendAccountDeletedEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'ACCOUNT_DELETED', language);
-  }
-
-  static async sendPasswordChangedEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'PASSWORD_CHANGED', language);
-  }
-
-  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'THANK_YOU_DONATION', language, {
-      amount: amount.toFixed(2),
-      currency: currency
+  static async sendAccountDeletedEmail(toEmail: string) {
+    return sendTemplateEmail({
+      to: toEmail,
+      slug: 'account-deleted',
+      fallback: EMAIL_DICTIONARY['account-deleted'],
     });
   }
 
-  static async sendBecomePatronEmail(toEmail: string, language: 'pl' | 'en' = 'pl') {
-    await this.sendEmail(toEmail, 'BECOME_PATRON', language);
+  static async sendPasswordChangedEmail(toEmail: string) {
+    return sendTemplateEmail({
+      to: toEmail,
+      slug: 'password-changed',
+      fallback: EMAIL_DICTIONARY['password-changed'],
+    });
+  }
+
+  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, _language?: string) {
+    return sendTemplateEmail({
+      to: toEmail,
+      slug: 'thank-you-donation',
+      variables: {
+        amount: amount.toFixed(2),
+        currency,
+      },
+      fallback: EMAIL_DICTIONARY['thank-you-donation'],
+    });
+  }
+
+  static async sendBecomePatronEmail(toEmail: string, _language?: string) {
+    return sendTemplateEmail({
+      to: toEmail,
+      slug: 'become-patron',
+      fallback: EMAIL_DICTIONARY['become-patron'],
+    });
   }
 }

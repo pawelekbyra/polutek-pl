@@ -402,10 +402,9 @@ model UserPaymentTotal {
 
 model EmailTemplate {
   id        String   @id @default(uuid())
-  name      String   @unique // e.g., "WELCOME"
-  subjectPl String
-  bodyPl    String   @db.Text
-  subjectEn String
-  bodyEn    String   @db.Text
+  slug      String   @unique // e.g., "welcome-email"
+  subject   String
+  html      String   @db.Text
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
