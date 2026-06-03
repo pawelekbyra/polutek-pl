@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
 import { isAllowedMediaUrl } from '@/lib/blob';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+import { ensureCommentPinningColumns } from '@/lib/db/comment-schema-heal';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,21 +149,38 @@ export async function GET(request: NextRequest) {
   } catch {}
 
   try {
+    await ensureCommentPinningColumns();
+
     let internalUserId = null;
+    let canModerateComments = false;
     if (userId) {
         let user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
         if (user) {
           user = await refreshLocalUserDisplayProfile(userId, user, viewerProfile);
         }
         internalUserId = user?.id ?? null;
+
+        if (user?.role === 'ADMIN') {
+          canModerateComments = true;
+        } else {
+          const creator = await prisma.creator.findFirst({
+            where: { userId, videos: { some: { id: videoId } } },
+            select: { id: true }
+          });
+          canModerateComments = !!creator;
+        }
     }
 
-    const orderBy: Prisma.CommentOrderByWithRelationInput | Prisma.CommentOrderByWithRelationInput[] = sortBy === 'top'
+    const orderBy: Prisma.CommentOrderByWithRelationInput[] = sortBy === 'top'
         ? [
+            { pinnedAt: { sort: 'desc', nulls: 'last' } },
             { likes: { _count: 'desc' } },
             { createdAt: 'desc' }
           ]
-        : { createdAt: 'desc' };
+        : [
+            { pinnedAt: { sort: 'desc', nulls: 'last' } },
+            { createdAt: 'desc' }
+          ];
 
     const comments = await prisma.comment.findMany({
         where: { videoId, parentId: null },
@@ -223,6 +241,7 @@ export async function GET(request: NextRequest) {
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
             authorName: r.deletedAt ? "Użytkownik" : (getCommentAuthorName(r.author)),
+            canPin: false,
         }));
 
         return {
@@ -233,6 +252,8 @@ export async function GET(request: NextRequest) {
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
             authorName: isDeleted ? "Użytkownik" : (getCommentAuthorName(c.author)),
+            canPin: canModerateComments && !isDeleted && !c.parentId,
+            isPinned: !!c.pinnedAt,
             replies,
         };
     });
@@ -275,6 +296,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureCommentPinningColumns();
+
     let localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     if (!localUser) {
       return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
@@ -347,11 +370,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+
+export async function PATCH(request: NextRequest) {
     let userId: string | null = null;
+    let sessionClaims: Record<string, unknown> | null | undefined = null;
     try {
         const authData = await auth();
         userId = authData.userId;
+        sessionClaims = authData.sessionClaims;
     } catch {
         return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
     }
@@ -359,6 +385,93 @@ export async function DELETE(request: NextRequest) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
+        await ensureCommentPinningColumns();
+
+        const body = await request.json();
+        const result = z.object({
+          commentId: z.string(),
+          pinned: z.boolean(),
+        }).safeParse(body);
+
+        if (!result.success) {
+          return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
+        }
+
+        const { commentId, pinned } = result.data;
+        const comment = await prisma.comment.findUnique({
+          where: { id: commentId },
+          include: { video: { select: { id: true, creatorId: true } } }
+        });
+        if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        if (comment.parentId) {
+          return NextResponse.json({ success: false, message: "Przypinać można tylko główne komentarze." }, { status: 400 });
+        }
+        if (comment.deletedAt) {
+          return NextResponse.json({ success: false, message: "Nie można przypiąć usuniętego komentarza." }, { status: 400 });
+        }
+
+        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+
+        const actor = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { creators: { select: { id: true } } }
+        });
+        const isAdmin = actor?.role === "ADMIN";
+        const isVideoCreator = actor?.creators.some(c => c.id === comment.video.creatorId);
+
+        if (!isAdmin && !isVideoCreator) {
+            return NextResponse.json({
+              error: "Forbidden",
+              message: "Comment pinning is limited to video creator and admin."
+            }, { status: 403 });
+        }
+
+        const updatedComment = await prisma.$transaction(async (tx) => {
+          if (!pinned) {
+            return tx.comment.update({
+              where: { id: commentId },
+              data: { pinnedAt: null, pinnedById: null },
+            });
+          }
+
+          await tx.comment.updateMany({
+            where: {
+              videoId: comment.video.id,
+              parentId: null,
+              pinnedAt: { not: null },
+              id: { not: commentId },
+            },
+            data: { pinnedAt: null, pinnedById: null },
+          });
+
+          return tx.comment.update({
+            where: { id: commentId },
+            data: { pinnedAt: new Date(), pinnedById: userId },
+          });
+        });
+
+        return NextResponse.json({ success: true, isPinned: !!updatedComment.pinnedAt, pinnedAt: updatedComment.pinnedAt });
+    } catch (error: unknown) {
+        return handleApiError(error);
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    let userId: string | null = null;
+    let sessionClaims: Record<string, unknown> | null | undefined = null;
+    try {
+        const authData = await auth();
+        userId = authData.userId;
+        sessionClaims = authData.sessionClaims;
+    } catch {
+        return NextResponse.json({ error: "Handshake Error" }, { status: 401 });
+    }
+
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    try {
+        await ensureCommentPinningColumns();
+
         const { searchParams } = new URL(request.url);
         const commentId = searchParams.get('id');
 
@@ -369,6 +482,8 @@ export async function DELETE(request: NextRequest) {
           include: { video: { select: { creatorId: true } } }
         });
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
 
         const actor = await prisma.user.findUnique({
           where: { id: userId },
