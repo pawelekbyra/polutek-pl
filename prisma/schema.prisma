@@ -315,11 +315,15 @@ model Comment {
   likes      CommentLike[]
   dislikes   CommentDislike[]
 
+  pinnedAt   DateTime?
+  pinnedById String?
+
   deletedAt  DateTime?
   deletedById String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@index([videoId, pinnedAt, createdAt])
   @@index([videoId, createdAt])
   @@index([parentId, createdAt])
   @@index([videoId])

@@ -45,6 +45,9 @@ type CommentView = {
   isDisliked?: boolean;
   _count?: CommentCounts;
   replies?: CommentView[];
+  canPin?: boolean;
+  isPinned?: boolean;
+  pinnedAt?: string | Date | null;
 };
 
 type CommentsPage = {
@@ -290,6 +293,48 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     }
   });
 
+  const pinMutation = useMutation({
+    mutationFn: async ({ commentId, pinned }: { commentId: string; pinned: boolean }) => {
+        const res = await fetch('/api/comments', {
+            method: 'PATCH',
+            body: JSON.stringify({ commentId, pinned }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return parseJsonResponse(res);
+    },
+    onMutate: async ({ commentId, pinned }) => {
+        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
+        const queryKey = ['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl];
+        const previousData = queryClient.getQueryData(queryKey);
+
+        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+            if (!old) return old;
+
+            return {
+                ...old,
+                pages: old.pages.map((page) => ({
+                    ...page,
+                    comments: page.comments.map((comment) => ({
+                        ...comment,
+                        isPinned: pinned ? comment.id === commentId : comment.id === commentId ? false : comment.isPinned,
+                        pinnedAt: pinned && comment.id === commentId ? new Date().toISOString() : comment.id === commentId ? null : comment.pinnedAt,
+                    }))
+                }))
+            };
+        });
+
+        return { previousData, queryKey };
+    },
+    onError: (err, variables, context) => {
+        if (context?.previousData) {
+            queryClient.setQueryData(context.queryKey, context.previousData);
+        }
+    },
+    onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (commentId: string) => {
         const res = await fetch(`/api/comments?id=${commentId}`, {
@@ -440,20 +485,38 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-1.5 leading-none">
                         <span className="font-bold text-[#0f0f0f] text-[12px] leading-none">{comment.authorName}</span>
+                        {comment.isPinned && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
+                            <Star size={10} className="fill-blue-600" />
+                            {language === 'pl' ? 'Przypięty' : 'Pinned'}
+                          </span>
+                        )}
                         <span className="text-[11px] text-[#606060] leading-none">
                             {isClient && comment.createdAt && !isNaN(new Date(comment.createdAt).getTime())
                             ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: pl }).replace('około', 'ok.')
                             : isClient ? 'niedawno' : ''}
                         </span>
                     </div>
-                    {userProfile?.id === comment.authorId && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-60 transition-opacity">
+                      {comment.canPin && (
+                        <button
+                          onClick={() => pinMutation.mutate({ commentId: comment.id, pinned: !comment.isPinned })}
+                          disabled={pinMutation.isPending}
+                          className={cn("rounded-md p-1 hover:!opacity-100 hover:bg-blue-50", comment.isPinned && "text-blue-600 opacity-100")}
+                          title={comment.isPinned ? (language === 'pl' ? 'Odepnij komentarz' : 'Unpin comment') : (language === 'pl' ? 'Przypnij komentarz' : 'Pin comment')}
+                        >
+                            <Star size={12} className={cn(comment.isPinned && "fill-blue-600")} />
+                        </button>
+                      )}
+                      {userProfile?.id === comment.authorId && (
                         <button
                           onClick={() => confirm(t.deleteComment) && deleteMutation.mutate(comment.id)}
-                          className="opacity-0 group-hover/comment:opacity-40 hover:!opacity-100 transition-opacity p-1"
+                          className="rounded-md p-1 hover:!opacity-100 hover:bg-red-50"
                         >
                             <Trash2 size={12} className="text-destructive" />
                         </button>
-                    )}
+                      )}
+                    </div>
                 </div>
                 <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
                   {comment.text}
