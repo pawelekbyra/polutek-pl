@@ -49,7 +49,7 @@ const Navbar = () => {
     isAdmin;
 
   return (
-    <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-hidden">
+    <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-visible">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
           <button
@@ -166,25 +166,29 @@ const Navbar = () => {
             <SignedIn>
               <div
                 className={cn(
-                  "relative flex items-center gap-2 rounded-full p-0.5 transition-all",
+                  "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
                   isPatron &&
-                    "bg-gradient-to-br from-amber-200 via-yellow-100 to-amber-300 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_8px_20px_rgba(180,83,9,0.16)]",
+                    "shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]",
                 )}
-                title={isPatron ? "Patron VIP 2" : undefined}
+                title={isPatron ? "Patron" : undefined}
               >
                 <UserButton
                   afterSignOutUrl="/"
                   appearance={{
                     elements: {
+                      userButtonBox: isPatron ? "overflow-visible" : undefined,
+                      userButtonTrigger: isPatron
+                        ? "overflow-visible"
+                        : undefined,
                       userButtonAvatarBox: isPatron
-                        ? "ring-2 ring-amber-300 ring-offset-2 ring-offset-white shadow-sm"
+                        ? "h-9 w-9 border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
                         : undefined,
                     },
                   }}
                 />
                 {isPatron && (
-                  <span className="pointer-events-none absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-1.5 py-0.5 text-[7px] font-black leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
-                    VIP 2
+                  <span className="pointer-events-none absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                    Patron
                   </span>
                 )}
               </div>

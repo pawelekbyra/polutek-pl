@@ -23,7 +23,6 @@ import {
   Trash2,
   Lock,
   Star,
-  Gem,
 } from "../icons";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
@@ -699,8 +698,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     />
                   </div>
                   {commentAuthorIsPatron && (
-                    <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[8px] font-black leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
-                      VIP 2
+                    <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                      Patron
                     </span>
                   )}
                 </div>
@@ -715,15 +714,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       >
                         {comment.authorName}
                       </span>
-                      {commentAuthorIsPatron && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
-                          <Gem
-                            size={9}
-                            className="fill-amber-400 text-amber-500"
-                          />
-                          Patron
-                        </span>
-                      )}
                       {comment.isPinned && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
                           <Star size={10} className="fill-blue-600" />
@@ -870,8 +860,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                             />
                           </div>
                           {replyAuthorIsPatron && (
-                            <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1 py-0.5 text-[7px] font-black leading-none tracking-[0.1em] text-amber-950 shadow-sm ring-1 ring-amber-200">
-                              VIP 2
+                            <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.1em] text-amber-950 shadow-sm ring-1 ring-amber-200">
+                              Patron
                             </span>
                           )}
                         </div>
@@ -886,15 +876,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                               >
                                 {reply.authorName}
                               </span>
-                              {replyAuthorIsPatron && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-amber-700">
-                                  <Gem
-                                    size={8}
-                                    className="fill-amber-400 text-amber-500"
-                                  />
-                                  Patron
-                                </span>
-                              )}
                               <span className="text-[10px] text-[#606060] leading-none">
                                 {isClient &&
                                 reply.createdAt &&
