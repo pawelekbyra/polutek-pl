@@ -63,6 +63,8 @@ interface EmbeddedCommentsProps {
     id: string;
     email: string;
     imageUrl?: string | null;
+    name?: string | null;
+    username?: string | null;
     totalPaid?: number;
     isPatron?: boolean;
     role?: string;
@@ -87,6 +89,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     id: userId!,
     email: user?.primaryEmailAddress?.emailAddress || '',
     imageUrl: user?.imageUrl || null,
+    name: user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.username || null,
+    username: user?.username || null,
     totalPaid: numberMetadata(metadata.totalPaid),
     isPatron: booleanMetadata(metadata.isPatron),
     role: stringMetadata(metadata.role, 'USER'),
@@ -98,6 +102,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         ...(propUserProfile || {}),
         email: propUserProfile?.email || clerkUserProfile?.email || '',
         imageUrl: clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
+        name: clerkUserProfile?.name || propUserProfile?.name || null,
+        username: clerkUserProfile?.username || propUserProfile?.username || null,
       }
     : null;
 
@@ -122,12 +128,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     isLoading,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['comments', videoId, sortBy],
+    queryKey: ['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl],
     queryFn: async ({ pageParam }) => {
         const url = new URL('/api/comments', window.location.origin);
         url.searchParams.append('videoId', videoId);
         url.searchParams.append('sortBy', sortBy);
         if (pageParam) url.searchParams.append('cursor', pageParam as string);
+        if (userProfile?.name) url.searchParams.append('viewerName', userProfile.name);
+        if (userProfile?.username) url.searchParams.append('viewerUsername', userProfile.username);
+        if (userProfile?.imageUrl) url.searchParams.append('viewerImageUrl', userProfile.imageUrl);
         const res = await fetch(url.toString());
         return parseJsonResponse<CommentsPage>(res);
     },
@@ -144,13 +153,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     mutationFn: async ({ text, parentId }: { text: string; parentId?: string }) => {
         const res = await fetch('/api/comments', {
             method: 'POST',
-            body: JSON.stringify({ videoId, text, parentId }),
+            body: JSON.stringify({
+              videoId,
+              text,
+              parentId,
+              authorProfile: userProfile ? {
+                name: userProfile.name || null,
+                username: userProfile.username || null,
+                imageUrl: userProfile.imageUrl || null,
+              } : undefined,
+            }),
             headers: { 'Content-Type': 'application/json' }
         });
         return parseJsonResponse(res);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
+      queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
       setNewComment('');
       setReplyTo(null);
     },
@@ -166,10 +184,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
-        await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
-        const previousData = queryClient.getQueryData(['comments', videoId, sortBy]);
+        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
+        const previousData = queryClient.getQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl]);
 
-        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy], (old) => {
+        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], (old) => {
             if (!old) return old;
 
             const updateComment = (c: CommentView): CommentView => {
@@ -206,11 +224,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     },
     onError: (err, commentId, context) => {
         if (context?.previousData) {
-            queryClient.setQueryData(['comments', videoId, sortBy], context.previousData);
+            queryClient.setQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], context.previousData);
         }
     },
     onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
+        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
     }
   });
 
@@ -224,10 +242,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
-        await queryClient.cancelQueries({ queryKey: ['comments', videoId, sortBy] });
-        const previousData = queryClient.getQueryData(['comments', videoId, sortBy]);
+        await queryClient.cancelQueries({ queryKey: ['comments', videoId] });
+        const previousData = queryClient.getQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl]);
 
-        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy], (old) => {
+        queryClient.setQueryData<CommentsData>(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], (old) => {
             if (!old) return old;
 
             const updateComment = (c: CommentView): CommentView => {
@@ -264,11 +282,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     },
     onError: (err, commentId, context) => {
         if (context?.previousData) {
-            queryClient.setQueryData(['comments', videoId, sortBy], context.previousData);
+            queryClient.setQueryData(['comments', videoId, sortBy, userProfile?.name, userProfile?.username, userProfile?.imageUrl], context.previousData);
         }
     },
     onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
+        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
     }
   });
 
@@ -280,7 +298,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         return parseJsonResponse(res);
     },
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['comments', videoId, sortBy] });
+        queryClient.invalidateQueries({ queryKey: ['comments', videoId] });
     }
   });
 
