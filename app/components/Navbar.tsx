@@ -76,10 +76,15 @@ const Navbar = () => {
               href="/"
               className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
             >
-              <BrandName
-                className="text-[1.1rem] md:text-[1.3rem]"
-                variant="handwriting"
-              />
+              <div className="flex items-center gap-1.5">
+                <BrandName
+                  className="text-[1.1rem] md:text-[1.3rem]"
+                  variant="handwriting"
+                />
+                <span className="bg-neutral-900 text-[9px] font-black uppercase tracking-[0.1em] text-white px-1.5 py-0.5 rounded-sm shadow-sm select-none">
+                  Beta
+                </span>
+              </div>
             </Link>
           </div>
 
