@@ -58,8 +58,6 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   }
 
   let initialInteraction = { liked: false, disliked: false };
-  let initialIsSubscribed = false;
-
   if (userId && mainVideo) {
     const targetVideoId = videoId || mainVideo.id;
     const [like, dislike] = await Promise.all([
@@ -71,13 +69,6 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
       }).catch(() => null)
     ]);
     initialInteraction = { liked: !!like, disliked: !!dislike };
-
-    if (creator?.id) {
-      const sub = await prisma.subscription.findUnique({
-        where: { userId_creatorId: { userId, creatorId: creator.id } }
-      }).catch(() => null);
-      initialIsSubscribed = !!sub;
-    }
   }
 
   const userProfile = userId ? {
@@ -90,8 +81,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
-    initialInteraction,
-    initialIsSubscribed
+    initialInteraction
   } : null;
 
   if (content.status === 'error' || content.status === 'empty') {

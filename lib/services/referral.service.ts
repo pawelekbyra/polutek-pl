@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { PatronGrantSource } from '@prisma/client';
-import { UserAccessService, normalizePaymentTotals } from './user-access.service';
+import { UserAccessService } from './user-access.service';
+import { grantPatronStatus } from './patron.service';
 
 type ClerkSyncData = {
   userId: string;
@@ -65,30 +65,18 @@ export class ReferralService {
             }
         });
 
-        // Grant Patron if threshold reached (5 points)
+        // Referral rewards grant Patron through the central domain function.
         if (referrer.referralPoints >= 5 && !referrer.isPatron) {
-            const updatedReferrer = await tx.user.update({
-                where: { id: referrerId },
-                data: {
-                    isPatron: true,
-                    patronSince: new Date()
-                },
-                include: { paymentTotals: true }
-            });
-
-            await tx.patronGrant.create({
-                data: {
-                    userId: referrerId,
-                    source: PatronGrantSource.REFERRAL,
-                    referralId: referral.id,
-                    reason: 'Referral goal reached (5)'
-                }
-            });
+            const grant = await grantPatronStatus(referrerId, {
+                source: 'referral',
+                referralId: referral.id,
+                note: 'Granted by referral reward',
+            }, tx);
 
             syncData.current = {
                 userId: referrerId,
                 isPatron: true,
-                totalPaid: normalizePaymentTotals(updatedReferrer.paymentTotals)
+                totalPaid: grant.normalizedTotal
             };
         }
 

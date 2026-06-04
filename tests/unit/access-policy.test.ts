@@ -149,6 +149,28 @@ describe('AccessPolicy', () => {
       expect(decision.allowed).toBe(true);
     });
 
+
+    it('denies PATRON videos when a non-patron only has legacy referral points', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isPatron: false,
+        referralPoints: 5,
+        isDeleted: false,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('PATRON_REQUIRED');
+    });
+
     it('allows access to anything if user is an ADMIN', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',

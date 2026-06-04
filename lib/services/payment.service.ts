@@ -2,9 +2,10 @@ import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
 import { UserAccessService } from './user-access.service';
+import { grantPatronStatus } from './patron.service';
 import { writeAuditLog } from './audit.service';
-import { MIN_PATRON_AMOUNT, MIN_PATRON_AMOUNT_PLN, DISPLAY_EUR_TO_PLN_RATE } from '../constants';
-import { PaymentStatus, PatronGrantSource, WebhookEventStatus, Prisma } from '@prisma/client';
+import { DISPLAY_EUR_TO_PLN_RATE } from '../constants';
+import { PaymentStatus, WebhookEventStatus, Prisma } from '@prisma/client';
 
 
 type RefundCalculationInput = {
@@ -40,6 +41,13 @@ function normalizePaymentTotals(paymentTotals: Array<{ currency: string; amountM
   const totalPLN = paymentTotals.find(t => t.currency === 'PLN')?.amountMinor || 0;
   const totalEUR = paymentTotals.find(t => t.currency === 'EUR')?.amountMinor || 0;
   return (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
+}
+
+function getPatronMinTipAmountMinor() {
+  const raw = process.env.PATRON_MIN_TIP_AMOUNT;
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
 async function decrementUserNetPaymentTotals(
@@ -457,7 +465,6 @@ export class PaymentService {
             throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${updatedPayment.currency}, got ${intent.currency}`);
         }
 
-        const thresholdMinor = updatedPayment.currency === 'PLN' ? MIN_PATRON_AMOUNT_PLN * 100 : MIN_PATRON_AMOUNT * 100;
         const existingUser = await tx.user.findUnique({
             where: { id: userId },
             include: { paymentTotals: true }
@@ -477,36 +484,26 @@ export class PaymentService {
             }
         });
 
-        // Patron status is granted by a single qualifying donation, not by cumulative lifetime total.
-        const grantsPatron = updatedPayment.amountMinor >= thresholdMinor;
-        const becamePatronNow = !existingUser.isPatron && grantsPatron;
-
-        const user = await tx.user.update({
-          where: { id: userId },
-          data: {
-            isPatron: existingUser.isPatron || grantsPatron,
-            patronSince: becamePatronNow ? new Date() : undefined
-          },
-          include: { paymentTotals: true }
-        });
-
-        if (becamePatronNow) {
-            await tx.patronGrant.create({
-                data: {
-                    userId,
-                    source: PatronGrantSource.PAYMENT,
-                    paymentId: updatedPayment.id,
-                    reason: 'Single payment threshold reached'
-                }
-            });
-        }
-
-        const totals = user.paymentTotals.map(t =>
+        const patronMinTipAmountMinor = getPatronMinTipAmountMinor();
+        // By default every successful one-time tip grants Patron status.
+        // Set PATRON_MIN_TIP_AMOUNT (minor units) only if business rules require a separate Patron threshold.
+        const grantsPatron = updatedPayment.amountMinor >= patronMinTipAmountMinor;
+        let user = { ...existingUser, paymentTotals: existingUser.paymentTotals.map(t =>
             t.currency === updatedPayment.currency ? updatedTotal : t
-        );
-        const totalPLN = totals.find(t => t.currency === 'PLN')?.amountMinor || 0;
-        const totalEUR = totals.find(t => t.currency === 'EUR')?.amountMinor || 0;
-        const normalizedTotal = (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
+        ) };
+        let becamePatronNow = false;
+        let normalizedTotal = normalizePaymentTotals(user.paymentTotals);
+
+        if (grantsPatron) {
+            const grantResult = await grantPatronStatus(userId, {
+                source: 'stripe_tip',
+                paymentId: updatedPayment.id,
+                note: 'Granted after successful one-time Stripe tip',
+            }, tx);
+            user = grantResult.user;
+            becamePatronNow = grantResult.becamePatronNow;
+            normalizedTotal = grantResult.normalizedTotal;
+        }
 
         return { user, becamePatronNow, normalizedTotal };
       });

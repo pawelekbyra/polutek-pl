@@ -255,38 +255,12 @@ export class UserService {
     return this.syncUser(userId, email, name, imageUrl, referrerId, language, username, clerkRole);
   }
 
-  static async toggleSubscription(userId: string, creatorId: string) {
-    try {
-      await this.getOrCreateUser(userId);
-
-      return await prisma.$transaction(async (tx) => {
-        const creator = await tx.creator.findUnique({
-          where: { id: creatorId },
-          select: { id: true, isApproved: true },
-        });
-
-        if (!creator || !creator.isApproved) {
-          throw new Error('CREATOR_NOT_FOUND');
-        }
-
-        const existing = await tx.subscription.findUnique({
-          where: { userId_creatorId: { userId, creatorId } }
-        });
-
-        if (existing) {
-          await tx.subscription.delete({ where: { id: existing.id } });
-          await tx.creator.updateMany({ where: { id: creatorId, subscribersCount: { gt: 0 } }, data: { subscribersCount: { decrement: 1 } } });
-          return { isSubscribed: false };
-        } else {
-          await tx.subscription.create({ data: { userId, creatorId } });
-          await tx.creator.update({ where: { id: creatorId }, data: { subscribersCount: { increment: 1 } } });
-          return { isSubscribed: true };
-        }
-      });
-    } catch (e: unknown) {
-      console.error("[TOGGLE_SUBSCRIPTION_ERROR]", e);
-      throw e;
-    }
+  /**
+   * LEGACY: channel subscriptions are no longer used or mutated.
+   * Patron-only content access must use User.isPatron.
+   */
+  static async toggleSubscription(_userId: string, _creatorId: string) {
+    return { isSubscribed: false, legacy: true };
   }
 
   static async softDeleteUser(id: string) {
@@ -303,11 +277,12 @@ export class UserService {
     });
   }
 
-  static async isSubscribed(userId: string, creatorId: string) {
-    const sub = await prisma.subscription.findUnique({
-      where: { userId_creatorId: { userId, creatorId } }
-    });
-    return !!sub;
+  /**
+   * LEGACY: retained only for compatibility with old callers.
+   * Returns false because subscriptions no longer grant access.
+   */
+  static async isSubscribed(_userId: string, _creatorId: string) {
+    return false;
   }
 
   static async getVideoInteraction(userId: string, videoId: string) {

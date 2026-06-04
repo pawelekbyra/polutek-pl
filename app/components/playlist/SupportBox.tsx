@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Trophy, Loader2, ChevronDown, Clock } from '../icons';
+import React from 'react';
+import { Trophy, Loader2, ChevronDown } from '../icons';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -42,28 +42,18 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   onOpenPolityka,
   isPatron = false,
 }) => {
-  const [daysLeft, setDaysLeft] = useState<number | null>(null);
-
-  useEffect(() => {
-    const campaignEndDate = new Date('2026-09-30T23:59:59Z').getTime();
-    const dayInMs = 1000 * 60 * 60 * 24;
-    setDaysLeft(Math.max(0, Math.ceil((campaignEndDate - Date.now()) / dayInMs)));
-  }, []);
-
-  const progressPercent = 64;
-
   return (
     <div className={"bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center"}>
       <div className="space-y-4 relative z-10">
         <h3 className={"text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2"}>
-          {isPatron ? t.donate : t.supportArtist}
+          {isPatron ? t.donate : (language === 'pl' ? 'Wesprzyj kanał i zostań Patronem' : 'Support the channel and become a Patron')}
           <Trophy size={32} className={"text-neutral-900"} />
         </h3>
 
         {isPatron ? null : (
           <div className="space-y-3 text-center">
             <p className="font-sans text-[13px] leading-relaxed text-neutral-500 whitespace-pre-wrap">
-              {t.donationDescription}
+              {language === 'pl' ? 'Przekaż dobrowolny jednorazowy napiwek. Każda udana wpłata nadaje bezterminowy status Patrona i dostęp do materiałów premium.' : 'Send a voluntary one-time tip. Every successful tip grants permanent Patron status and access to premium materials.'}
             </p>
           </div>
         )}
@@ -77,7 +67,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
 
           <div className="space-y-2 pt-2">
             <label className={"block text-xs font-semibold uppercase tracking-wider text-neutral-400"}>
-              {isPatron ? (language === 'pl' ? `Dorzuć do projektu (Min ${minAmount}.00 ${selectedCurrency})` : `Add to project (Min ${minAmount}.00 ${selectedCurrency})`) : (language === 'pl' ? `Kwota wsparcia (Min ${minAmount}.00 ${selectedCurrency})` : `Transaction amount (Min ${minAmount}.00 ${selectedCurrency})`)}
+              {isPatron ? (language === 'pl' ? `Dorzuć do projektu (Min ${minAmount}.00 ${selectedCurrency})` : `Add to project (Min ${minAmount}.00 ${selectedCurrency})`) : (language === 'pl' ? `Kwota napiwku (Min ${minAmount}.00 ${selectedCurrency})` : `Tip amount (Min ${minAmount}.00 ${selectedCurrency})`)}
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 right-0 flex items-center">
@@ -126,7 +116,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               {language === 'pl' ? "PRZETWARZANIE..." : "LOADING..."}
             </>
           ) : (
-            isPatron ? t.crowdfundingButton : (language === 'pl' ? 'WYŚLIJ NAPIWEK' : 'TIP THE GUY')
+            isPatron ? (language === 'pl' ? 'DORZUĆ NAPIWEK' : 'SEND ANOTHER TIP') : (language === 'pl' ? 'WYŚLIJ NAPIWEK I ZOSTAŃ PATRONEM' : 'TIP AND BECOME A PATRON')
           )}
         </Button>
 

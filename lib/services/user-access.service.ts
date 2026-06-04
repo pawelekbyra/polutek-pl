@@ -46,7 +46,8 @@ export class UserAccessService {
         where: { id: userId },
         data: {
             isPatron,
-            patronSince: isPatron ? (activeGrant.createdAt) : null
+            patronSince: isPatron ? activeGrant.createdAt : null,
+            patronSource: isPatron ? activeGrant.source : null
         },
         include: {
           paymentTotals: true

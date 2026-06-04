@@ -515,8 +515,8 @@ export default function AdminVideosPage() {
                           <SelectTrigger><SelectValue placeholder="Wybierz poziom" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="PUBLIC">Publiczny (wszyscy)</SelectItem>
-                            <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                            <SelectItem value="PATRON">Patron (wspierający)</SelectItem>
+                            <SelectItem value="LOGGED_IN">Dla zalogowanych</SelectItem>
+                            <SelectItem value="PATRON">Dla Patronów — wymaga statusu Patrona</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -671,7 +671,7 @@ export default function AdminVideosPage() {
                                             <TableCell>
                                                 <Badge variant="outline" className="gap-1">
                                                     {vid.tier === 'PUBLIC' ? <Globe className="h-3 w-3" /> : vid.tier === 'LOGGED_IN' ? <Lock className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />}
-                                                    {vid.tier}
+                                                    {vid.tier === 'PUBLIC' ? 'Publiczny' : vid.tier === 'LOGGED_IN' ? 'Dla zalogowanych' : 'Dla Patronów'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">

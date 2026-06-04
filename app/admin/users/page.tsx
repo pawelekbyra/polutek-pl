@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Search, ShieldCheck } from "@/app/components/icons";
 import { prisma } from "@/lib/prisma";
+import { UserPatronActions } from "./UserPatronActions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       patronSince: true,
       isDeleted: true,
       createdAt: true,
-      subscriptions: { select: { id: true }, take: 1 },
+      patronSource: true,
     },
   });
 
@@ -58,7 +59,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Administracja</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Użytkownicy</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Lista użytkowników, role, dostęp do treści, status subskrypcji i podstawowe informacje administracyjne. MVP jest tylko do odczytu — bez destrukcyjnych akcji.
+            Lista użytkowników, role, dostęp do treści, status Patrona i podstawowe informacje administracyjne. Status Patrona można nadać lub cofnąć ręcznie.
           </p>
         </div>
 
@@ -85,6 +86,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                     <TableHead>Rola</TableHead>
                     <TableHead>Dostęp</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Akcje Patrona</TableHead>
                     <TableHead className="text-right">Utworzono</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -101,19 +103,22 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           {user.isPatron && <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Patron</Badge>}
-                          {user.subscriptions.length > 0 && <Badge variant="secondary">Subskrypcja</Badge>}
-                          {!user.isPatron && user.subscriptions.length === 0 && <Badge variant="outline">Podstawowy</Badge>}
+                          {user.patronSource && <Badge variant="secondary">{user.patronSource}</Badge>}
+                          {!user.isPatron && <Badge variant="outline">Podstawowy</Badge>}
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.isDeleted ? "destructive" : "outline"}>{user.isDeleted ? "Usunięty" : "Aktywny"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <UserPatronActions userId={user.id} isPatron={user.isPatron} />
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">Brak użytkowników dla podanego filtra.</TableCell>
+                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Brak użytkowników dla podanego filtra.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
