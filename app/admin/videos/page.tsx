@@ -271,11 +271,19 @@ export default function AdminVideosPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
+    const submissionData = {
+      ...formData,
+      title: formData.title?.trim(),
+      description: formData.description?.trim() || null,
+      titleEn: formData.titleEn?.trim() || null,
+      descriptionEn: formData.descriptionEn?.trim() || null,
+    };
+
     try {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submissionData)
       });
       const data = await res.json();
       if (res.ok) {
@@ -619,9 +627,11 @@ export default function AdminVideosPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="videos">Materiały</TabsTrigger>
                 <TabsTrigger value="stats">Finanse</TabsTrigger>
+                <TabsTrigger value="channel">Kanał</TabsTrigger>
+                <TabsTrigger value="email">E-mail</TabsTrigger>
             </TabsList>
 
             <TabsContent value="videos" className="space-y-4 pt-4">

@@ -45,6 +45,50 @@ export async function grantPatronStatus(
 ) {
   const source = sourceToEnum(options.source);
 
+  // Idempotency check for paymentId
+  if (options.paymentId) {
+    const existingGrant = await db.patronGrant.findFirst({
+      where: { paymentId: options.paymentId },
+    });
+
+    if (existingGrant) {
+      const user = await db.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { paymentTotals: true },
+      });
+      return {
+        user,
+        grant: existingGrant,
+        alreadyGranted: true,
+        isPatron: true,
+        becamePatronNow: false,
+        normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+      };
+    }
+  }
+
+  // Idempotency check for referralId
+  if (options.referralId) {
+    const existingGrant = await db.patronGrant.findFirst({
+      where: { referralId: options.referralId },
+    });
+
+    if (existingGrant) {
+      const user = await db.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { paymentTotals: true },
+      });
+      return {
+        user,
+        grant: existingGrant,
+        alreadyGranted: true,
+        isPatron: true,
+        becamePatronNow: false,
+        normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+      };
+    }
+  }
+
   const user = await db.user.findUnique({
     where: { id: userId },
     include: { paymentTotals: true },
@@ -65,7 +109,7 @@ export async function grantPatronStatus(
     include: { paymentTotals: true },
   });
 
-  await db.patronGrant.create({
+  const grant = await db.patronGrant.create({
     data: {
       userId,
       source,
@@ -79,6 +123,8 @@ export async function grantPatronStatus(
   const normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
   return {
     user: updatedUser,
+    grant,
+    alreadyGranted: false,
     isPatron: true,
     becamePatronNow: !user.isPatron,
     normalizedTotal,
