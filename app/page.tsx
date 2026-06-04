@@ -129,7 +129,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
                 <div className="mt-6 bg-neutral-900 text-neutral-300 p-4 rounded-lg font-mono text-xs">
                   <p className="mb-2 text-neutral-500"># Spróbuj naprawić dane:</p>
                   <p className="text-blue-400">npm run content:diagnose</p>
-                  <p className="text-blue-400">npm run content:fix:polutek</p>
+                  <p className="text-blue-400">npm run content:fix:main-creator</p>
                 </div>
               </div>
             </div>
