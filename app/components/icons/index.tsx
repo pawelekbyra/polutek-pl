@@ -146,8 +146,6 @@ export const Bell = (props: IconProps) => (
   </BaseIcon>
 );
 
-export { Image };
-export const ImageIcon = (props: IconProps) => <Image {...props} />;
 
 export const ThumbsUp = (props: IconProps) => (
   <BaseIcon viewBox="0 0 153 144" {...props}>
