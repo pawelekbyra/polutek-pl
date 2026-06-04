@@ -158,20 +158,19 @@ Clerk `publicMetadata.totalPaid` is synchronized from net normalized payment tot
 `ClerkEvent` records webhook delivery ids and prevents duplicate side effects. `PROCESSED` events are skipped, `FAILED` events can be retried, and `PROCESSING` events are retried after a five-minute staleness timeout so a crashed worker cannot block an event forever.
 
 ### Production deploy order
-Vercel uses the `vercel-build` npm script, which first runs a narrow migration-repair preflight for known rollback-safe failed migrations, then runs production migrations before building. A deploy must fail rather than build against a database that has not received the current Prisma migrations.
+Vercel uses the `vercel-build` npm script, which runs production migrations before building. A deploy must fail rather than build against a database that has not received the current Prisma migrations.
 
 Use this order for manual deployments and when debugging Vercel builds:
 
 ```bash
 npm ci
-npm run db:migrate:repair
 npx prisma migrate deploy
 npx prisma generate
 npm run db:smoke
 npm run build
 ```
 
-The `db:migrate:repair` preflight only auto-resolves the known idempotent `20260603120000_add_comment_pinning` failure state so `migrate deploy` can retry it; any other failed migration still blocks deploy and requires manual database review. The `db:smoke` check performs minimal Prisma `findFirst` queries that select critical columns including `User.isPatron`, `User.patronSince`, `User.patronSource`, `Video.titleEn`, `Video.descriptionEn`, `PatronGrant.paymentId`, and `PatronGrant.referralId`. A `P2022` failure means the active `DATABASE_URL` still has schema drift and must be migrated before traffic is promoted.
+The `db:smoke` check performs minimal Prisma `findFirst` queries that select critical columns including `User.isPatron`, `User.patronSince`, `User.patronSource`, `Video.titleEn`, `Video.descriptionEn`, `PatronGrant.paymentId`, and `PatronGrant.referralId`. A `P2022` failure means the active `DATABASE_URL` still has schema drift and must be migrated before traffic is promoted.
 
 Required production environment groups: database URLs available during the Vercel build (`DATABASE_URL` and, when used, `DATABASE_URL_UNPOOLED`), Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, writable Redis REST URL/token (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` or Vercel `KV_REST_API_URL`/`KV_REST_API_TOKEN`), exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, `PATRON_MIN_TIP_AMOUNT`, and `HEALTHCHECK_TOKEN`.
 
