@@ -228,8 +228,8 @@ Legenda:
 ## 9. Media proxy security
 
 - [x] Aktualne testy jednostkowe mediów przechodzą w pakiecie Vitest.
-- [ ] Rozszerzyć testy SSRF/private IP/localhost/metadata endpoints, jeśli brakuje przypadków.
-- [ ] Potwierdzić logowanie bez sekretów i bez pełnych signed URL-i.
+- [x] Rozszerzono testy SSRF/private IP/localhost/metadata endpoints dla media proxy i źródeł direct video: `npm test -- --run tests/unit/media-security.test.ts` PASS.
+- [x] Potwierdzono logowanie błędów media proxy bez sekretów, tokenów i pełnych signed URL-i: test `gated media proxy logging` w `tests/unit/media-security.test.ts` PASS.
 - [ ] Potwierdzić allowlistę hostów w ENV produkcyjnym.
 
 ## 10. Stripe
@@ -271,7 +271,7 @@ Legenda:
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 23 pliki, 121 testów.
+- [x] Unit suite PASS: 23 pliki, 124 testy.
 - [ ] Dodać coverage script i raport minimalnych progów albo świadomie oznaczyć brak progu jako limitation.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
