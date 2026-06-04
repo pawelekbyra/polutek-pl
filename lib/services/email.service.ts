@@ -54,13 +54,17 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
     select: { subject: true, html: true, subjectEn: true, htmlEn: true },
   });
 
-  if (!template && !fallback) {
-    throw new Error(`Email template with slug "${slug}" was not found.`);
-  }
-
   if (!template && process.env.NODE_ENV === "production") {
     console.error(`[EmailService] Missing required email template in production: ${slug}`);
     throw new Error(`Missing required email template: ${slug}`);
+  }
+
+  if (!template && !fallback) {
+    throw new Error(`Email template with slug "${slug}" was not found and no fallback provided.`);
+  }
+
+  if (!template && fallback) {
+    console.warn(`[EmailService] Using hardcoded fallback for template: ${slug}`);
   }
 
   const safeVariables = Object.fromEntries(

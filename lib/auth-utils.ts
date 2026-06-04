@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { UserService } from "./services/user.service";
 import { ADMIN_EMAIL } from "./constants";
+import { NextResponse } from "next/server";
 
 export class AuthError extends Error {
   constructor(
@@ -10,6 +11,32 @@ export class AuthError extends Error {
   ) {
     super(message);
     this.name = "AuthError";
+  }
+}
+
+export async function requireAdminForApi(scope: string) {
+  try {
+    const adminUserId = await requireAdmin();
+    return { adminUserId, response: null as null };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        adminUserId: null,
+        response: NextResponse.json(
+          { error: error.code === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
+          { status: error.code === "UNAUTHORIZED" ? 401 : 403 }
+        ),
+      };
+    }
+
+    console.error(`[${scope}] Unexpected admin auth error:`, error);
+    return {
+      adminUserId: null,
+      response: NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      ),
+    };
   }
 }
 

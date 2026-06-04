@@ -1,13 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
-import { verifyAdmin } from '@/lib/auth-utils';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
-import { isAllowedMediaUrl } from '@/lib/blob';
+import { isAllowedMediaUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,14 +21,9 @@ const videoSchema = z.object({
   videoUrl: z.string().url().refine(isAllowedMediaUrl, {
     message: "Video URL musi pochodzić z dozwolonego hosta mediów (ALLOWED_MEDIA_HOSTS).",
   }),
-  thumbnailUrl: z.string().refine((value) => {
-    if (value.startsWith("/")) return true;
-    try {
-      return isAllowedMediaUrl(value);
-    } catch {
-      return false;
-    }
-  }, { message: "Miniaturka musi być ścieżką lokalną lub pochodzić z dozwolonego hosta." }),
+  thumbnailUrl: z.string().refine(isAllowedThumbnailUrl, {
+    message: "Miniaturka musi być bezpieczną ścieżką lokalną lub pochodzić z dozwolonego hosta obrazków.",
+  }),
   duration: z.string().optional().nullable(),
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
@@ -41,10 +36,8 @@ const videoSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const adminCheck = await verifyAdmin();
-  if (!adminCheck) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
+  if (response) return response;
 
   const videos = await prisma.video.findMany({
     orderBy: { createdAt: 'desc' },
@@ -55,9 +48,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
+  if (response) return response;
 
   const body = await req.json();
   const result = videoSchema.safeParse(body);
@@ -231,9 +223,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("DELETE_ADMIN_VIDEOS");
+  if (response) return response;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');

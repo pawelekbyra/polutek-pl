@@ -1,30 +1,22 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin, AuthError } from '@/lib/auth-utils';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { grantPatronStatus, revokePatronStatus } from '@/lib/services/patron.service';
 import { syncPatronStatusToClerk } from '@/lib/services/patron.service';
 
 type Context = { params: { userId: string } };
 
-function adminErrorResponse(error: unknown) {
-  if (error instanceof AuthError) {
-    return NextResponse.json(
-      { error: error.code === 'UNAUTHORIZED' ? 'Unauthorized' : 'Forbidden' },
-      { status: error.code === 'UNAUTHORIZED' ? 401 : 403 },
-    );
-  }
-  throw error;
-}
-
 export async function PATCH(request: Request, { params }: Context) {
+  const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_USER_PATRON");
+  if (response) return response;
+
   try {
-    const adminUserId = await requireAdmin();
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
 
     if (action === 'grant') {
       const result = await grantPatronStatus(params.userId, {
         source: 'admin',
-        grantedByUserId: adminUserId,
+        grantedByUserId: adminUserId!,
         note: body?.note || 'Granted manually by administrator',
       });
       await syncPatronStatusToClerk(params.userId, true, result.normalizedTotal).catch((error) => {
@@ -35,7 +27,7 @@ export async function PATCH(request: Request, { params }: Context) {
 
     if (action === 'revoke') {
       const result = await revokePatronStatus(params.userId, {
-        revokedByUserId: adminUserId,
+        revokedByUserId: adminUserId!,
         note: body?.note || 'Revoked manually by administrator',
       });
       await syncPatronStatusToClerk(params.userId, false, result.normalizedTotal).catch((error) => {
@@ -46,11 +38,7 @@ export async function PATCH(request: Request, { params }: Context) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    try {
-      return adminErrorResponse(error);
-    } catch (unhandled) {
-      console.error('[ADMIN_PATRON_PATCH_ERROR]', unhandled);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
+    console.error('[ADMIN_PATRON_PATCH_ERROR]', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

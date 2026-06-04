@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
-import { verifyAdmin } from '@/lib/auth-utils';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
@@ -9,9 +9,8 @@ import { auth } from '@clerk/nextjs/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_CREATOR");
+  if (response) return response;
 
   try {
     const creator = await prisma.creator.findFirst({
@@ -37,9 +36,8 @@ const creatorSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("POST_ADMIN_CREATOR");
+  if (response) return response;
 
   const body = await req.json();
   const result = creatorSchema.safeParse(body);
