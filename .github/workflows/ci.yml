@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - work
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
+      NEXT_PUBLIC_APP_URL: https://example.com
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_example
+      CLERK_SECRET_KEY: sk_test_example
+      CLERK_WEBHOOK_SECRET: whsec_clerk
+      STRIPE_SECRET_KEY: sk_test_stripe
+      STRIPE_WEBHOOK_SECRET: whsec_stripe
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
+      RESEND_API_KEY: re_example
+      EMAIL_FROM: notifications@example.com
+      ADMIN_EMAIL: admin@example.com
+      MAIN_CREATOR_SLUG: ci-creator
+      PATRON_MIN_TIP_AMOUNT: "500"
+      PATRON_MIN_TIP_CURRENCY: EUR
+      REFERRAL_PATRON_THRESHOLD: "5"
+      HEALTHCHECK_TOKEN: ci-health-token
+      MEDIA_BUCKET_HOST: media.example.com
+      UPSTASH_REDIS_REST_URL: https://redis.example.com
+      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run env:validate:prod
+      - run: npx prisma validate
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm test -- --run
+      - run: npm run lint
+      - run: npm run build
+
+  integration-postgres:
+    name: integration-postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
+      NEXT_PUBLIC_APP_URL: https://example.com
+      MAIN_CREATOR_SLUG: ci-creator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma generate
+      - run: npm run db:smoke
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: npm audit high
+        run: npm audit --audit-level=high
+        continue-on-error: true

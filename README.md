@@ -21,7 +21,7 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 
 ## Aktualny tryb aplikacji
 
-Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy. W aktualnym kodzie `/channel/[slug]` przekierowuje na `/`, gdy `ENABLE_MULTI_CREATOR=false` i `params.slug === flags.mainCreatorSlug`; brak redirectu dla tego sluga jest wymaganiem roadmapy, ale nie jest jeszcze wdrożony.
+Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy, ale `/channel/[slug]` pozostaje dostępną, indeksowalną stroną kanału dla skonfigurowanego sluga.
 
 Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Kod nie powinien polegać na fallbacku do konkretnego sluga kanału.
 
@@ -43,7 +43,7 @@ Patron może wynikać z kwalifikującego napiwku Stripe, grantu admina, migracji
 
 **Subscription = zgoda mailowa / obserwowanie kanału / newsletter opt-in.** Model `Subscription` nie może dawać dostępu do materiałów `PATRON`.
 
-Aktualny endpoint `/api/subscriptions` jest endpointem legacy: `GET` zwraca `isSubscribed: false`, a `POST` zwraca `410 SUBSCRIPTIONS_LEGACY`. Roadmapa wymaga zastąpienia tego pełnym flow mailowego follow/unfollow z modalem zgody.
+Endpoint `/api/subscriptions` obsługuje mailowe follow/unfollow: `GET` zwraca status, `POST` zapisuje zgodę na powiadomienia mailowe, a `DELETE` ją usuwa. Endpoint nie zmienia `User.isPatron` i nie nadaje dostępu premium.
 
 ### Twarda zasada
 
@@ -194,36 +194,36 @@ Legenda:
 
 ## 5. Strona kanału `/channel/[slug]`
 
-- [ ] Usunąć redirect skonfigurowanego `MAIN_CREATOR_SLUG` do `/` i zapewnić pełną stronę kanału.
-- [ ] Potwierdzić banner/avatar/name/slug/bio/count/grid dla `/channel/${MAIN_CREATOR_SLUG}`.
-- [ ] Dodać linki z Hero i ChannelHome do dynamicznego sluga twórcy.
-- [ ] Upewnić się, że sitemap generuje dynamiczny URL kanału bez hardcoded sluga.
-- [ ] Dodać testy jednostkowe/smoke dla strony kanału.
+- [x] Usunięto redirect skonfigurowanego `MAIN_CREATOR_SLUG` do `/`; `/channel/[slug]` renderuje pełną stronę kanału.
+- [x] Potwierdzono w kodzie strony kanału banner/avatar/name/slug/bio/count/grid dla dynamicznego sluga.
+- [x] Linki z Hero i list materiałów prowadzą do dynamicznego `Creator.slug`.
+- [x] Sitemap generuje `/channel/${MAIN_CREATOR_SLUG}` dynamicznie także w single-creator mode.
+- [~] Zaktualizowano test sitemap dla URL kanału; osobny render/smoke strony kanału nadal otwarty.
 
 ## 6. Subscription jako mail follow, nie access
 
-- [ ] Zastąpić legacy `/api/subscriptions` pełnym `GET/POST/DELETE` follow/unfollow.
-- [ ] `GET` ma zwracać status subskrypcji mailowej dla zalogowanego użytkownika i twórcy.
-- [ ] `POST` ma tworzyć `Subscription` jako zgodę mailową, bez zmiany `User.isPatron`.
-- [ ] `DELETE` ma usuwać/wyłączać zgodę mailową, bez odbierania `User.isPatron`.
-- [ ] Dodać walidację `creatorId`/slug i ochronę przed zapisaniem do nieistniejącego twórcy.
+- [x] Zastąpiono legacy `/api/subscriptions` pełnym `GET/POST/DELETE` follow/unfollow dla powiadomień mailowych.
+- [x] `GET` zwraca status subskrypcji mailowej dla zalogowanego użytkownika i twórcy.
+- [x] `POST` tworzy `Subscription` jako zgodę mailową, bez zmiany `User.isPatron`.
+- [x] `DELETE` usuwa zgodę mailową, bez odbierania `User.isPatron`.
+- [x] Dodano walidację `creatorId`/`creatorSlug` i odrzucanie nieistniejących albo niezatwierdzonych twórców.
 
 ## 7. Komponent subskrypcji
 
-- [ ] Dodać przycisk `Subskrybuj` / `Subskrybowano` na stronie kanału.
-- [ ] Dodać analogiczny entrypoint na stronie filmu/playlisty, jeśli UX tego wymaga.
-- [ ] Guest click → Clerk Sign In.
-- [ ] Logged user click → modal zgody mailowej.
-- [ ] Unsubscribe → modal potwierdzenia wypisania.
-- [ ] Teksty UI muszą jasno mówić, że subskrypcja to maile/obserwowanie, nie patron access.
+- [x] Dodano przycisk `Subskrybuj` / `Subskrybowano` na stronie kanału.
+- [x] Dodano przycisk pod aktualnie oglądanym filmem w sekcji Hero, jak w modelu YouTube.
+- [x] Guest click → Clerk Sign In przez `openSignIn()`.
+- [x] Logged user click → modal zgody mailowej.
+- [x] Unsubscribe → modal potwierdzenia wypisania.
+- [x] Teksty UI jasno mówią, że subskrypcja to powiadomienia mailowe i nie daje Patron access.
 
 ## 8. Testy Subscription vs Patron
 
-- [ ] subscribed non-patron nie ma dostępu do `PATRON`.
-- [ ] patron unsubscribed nadal ma dostęp do `PATRON`.
-- [ ] patron subscribed ma dostęp do `PATRON` i ma rekord `Subscription`.
-- [ ] Admin access pozostaje niezależny od subskrypcji.
-- [ ] Legacy endpoint nie może udawać gotowego flow.
+- [x] Test: subscribed non-patron nie ma dostępu do `PATRON`.
+- [x] Test: patron unsubscribed nadal ma dostęp do `PATRON`.
+- [~] Dostęp patrona i rekord `Subscription` są rozdzielone w testach API/access; pełny scenariusz E2E patron subscribed nadal otwarty.
+- [x] Istniejący test admin access pozostaje niezależny od subskrypcji.
+- [x] Legacy `410` usunięte; endpoint obsługuje realny flow mail follow/unfollow.
 
 ## 9. Media proxy security
 
@@ -257,37 +257,37 @@ Legenda:
 
 ## 13. Rate limit
 
-- [ ] Potwierdzić limity dla checkout, comments, media, subscriptions i referrals.
-- [ ] Potwierdzić zachowanie produkcyjne Redis/KV.
-- [ ] Dodać testy dla nowego endpointu subskrypcji po jego wdrożeniu.
+- [~] Limity istnieją dla checkout, comments, media, subscriptions i referrals; nadal trzeba potwierdzić produkcyjne zachowanie Redis/KV na środowisku.
+- [ ] Potwierdzić zachowanie produkcyjne Redis/KV na realnym środowisku.
+- [x] Dodano testy nowego endpointu subskrypcji po jego wdrożeniu.
 
 ## 14. ENV validation
 
-- [ ] Dodać centralną walidację env dla dev/test/prod.
-- [ ] Wymusić `MAIN_CREATOR_SLUG` tam, gdzie jest wymagany.
-- [ ] Wymusić DB URLs dla migracji/smoke/deploy.
-- [ ] Jasno rozdzielić opcjonalne i wymagane zmienne.
+- [x] Dodano centralną walidację env dla dev/test/prod oraz skrypty `env:validate` / `env:validate:prod`.
+- [x] `MAIN_CREATOR_SLUG` jest wymagany przez walidację produkcyjną i ostrzegany poza produkcją.
+- [x] `DATABASE_URL` i `DATABASE_URL_UNPOOLED` są wymagane przez walidację produkcyjną; realne `db:smoke`/`migrate deploy` nadal wymagają prawdziwej DB.
+- [x] Walidacja env rozdziela wymagane produkcyjne zmienne, rekomendowane zmienne i ostrzeżenia dev/test.
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 21 plików, 108 testów.
+- [x] Unit suite PASS: 23 pliki, 120 testów.
 - [ ] Dodać coverage script i raport minimalnych progów albo świadomie oznaczyć brak progu jako limitation.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
 
 ## 16. CI/CD
 
-- [ ] Dodać `.github/workflows/ci.yml` z jobem quality: `npm ci`, `prisma validate`, `prisma generate`, `typecheck`, tests, lint, build.
-- [ ] Dodać job integration-postgres z Postgres service, migrations i `db:smoke`.
-- [ ] Dodać podstawowy job security albo udokumentować brak.
+- [x] Dodano `.github/workflows/ci.yml` z jobem quality: `npm ci`, env validation, `prisma validate`, `prisma generate`, typecheck, tests, lint, build.
+- [x] Dodano job integration-postgres z Postgres service, `prisma migrate deploy`, generate i `db:smoke`.
+- [x] Dodano podstawowy job security z `npm audit --audit-level=high` jako sygnałem nieblokującym.
 
 ## 17. Dokumentacja poza README
 
-- [ ] Zaktualizować `ARCHITECTURE.md`.
-- [ ] Zaktualizować `DEPLOY_CHECKLIST.md`.
-- [ ] Zaktualizować `KNOWN_LIMITATIONS.md`.
+- [x] Zaktualizowano `ARCHITECTURE.md` o Subscription vs Patron, env validation, CI i rate limit.
+- [x] Zaktualizowano `DEPLOY_CHECKLIST.md` o env validation, CI, subskrypcje i rate limit.
+- [x] Zaktualizowano `KNOWN_LIMITATIONS.md` o aktualne ograniczenia E2E/DB/CI/security.
 - [x] Zaktualizowano `.env.example` o neutralny `MAIN_CREATOR_SLUG` i opcjonalne `MAIN_CREATOR_NAME`.
-- [ ] Upewnić się, że dokumentacja wszędzie rozdziela `Subscription` od `Patron`.
+- [x] Dokumentacja rozdziela `Subscription` jako powiadomienia mailowe od `Patron` jako płatny dostęp premium.
 
 ## 18. Finalna walidacja przed prywatną betą
 

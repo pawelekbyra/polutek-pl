@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { UserService } from '@/lib/services/user.service';
+import { rateLimit } from '@/lib/rate-limit';
 
 type SubscriptionPayload = {
   creatorId?: unknown;
@@ -51,6 +52,26 @@ async function resolveCreator(creatorId: string | null, creatorSlug: string | nu
   return { creator };
 }
 
+
+async function enforceSubscriptionRateLimit(userId: string, action: 'read' | 'write') {
+  const limit = action === 'read' ? 120 : 20;
+  const windowMs = action === 'read' ? 60 * 1000 : 10 * 60 * 1000;
+  const result = await rateLimit({
+    key: `subscriptions:${action}:${userId}`,
+    limit,
+    windowMs,
+  });
+
+  if (!result.success) {
+    return NextResponse.json(
+      { error: 'RATE_LIMITED', message: 'Too many subscription requests. Please try again later.' },
+      { status: 429 },
+    );
+  }
+
+  return null;
+}
+
 async function requireUser(): Promise<
   | { userId: string; error?: never }
   | { error: NextResponse; userId?: never }
@@ -69,6 +90,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
+
+    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'read');
+    if (rateLimited) return rateLimited;
 
     const url = new URL(req.url);
     const { creatorId, creatorSlug } = normalizeCreatorRef({}, url);
@@ -97,6 +121,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
+
+    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
+    if (rateLimited) return rateLimited;
 
     const url = new URL(req.url);
     const payload = await readJsonPayload(req);
@@ -129,6 +156,9 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
+
+    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
+    if (rateLimited) return rateLimited;
 
     const url = new URL(req.url);
     const payload = await readJsonPayload(req);

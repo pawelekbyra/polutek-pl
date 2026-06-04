@@ -27,7 +27,9 @@
     "clerk:resync": "npx tsx scripts/resync-clerk-access.ts",
     "db:validate": "prisma validate",
     "vercel-build": "npm run db:migrate:repair && npm run db:migrate:deploy && npm run db:generate && npm run db:smoke && next build",
-    "content:fix:main-creator": "npx tsx scripts/fix-main-creator-content.ts"
+    "content:fix:main-creator": "npx tsx scripts/fix-main-creator-content.ts",
+    "env:validate": "tsx scripts/validate-env.ts",
+    "env:validate:prod": "tsx scripts/validate-env.ts --mode=production"
   },
   "dependencies": {
     "sanitize-html": "^2.17.4",

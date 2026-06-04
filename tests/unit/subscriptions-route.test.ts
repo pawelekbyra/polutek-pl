@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { UserService } from '@/lib/services/user.service';
+import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -30,11 +31,16 @@ vi.mock('@/lib/services/user.service', () => ({
   },
 }));
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn(),
+}));
+
 describe('/api/subscriptions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as Awaited<ReturnType<typeof auth>>);
     vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
+    vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 119 });
     vi.mocked(prisma.creator.findUnique).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true } as any);
   });
 
@@ -108,6 +114,27 @@ describe('/api/subscriptions', () => {
       where: { userId: 'user_1', creatorId: 'creator_1' },
     });
     expect(JSON.stringify(vi.mocked(prisma.subscription.deleteMany).mock.calls)).not.toContain('isPatron');
+  });
+
+
+
+  it('rate limits logged-in subscription mutations before database writes', async () => {
+    vi.mocked(rateLimit).mockResolvedValue({ success: false, remaining: 0 });
+
+    const res = await POST(new NextRequest('http://localhost/api/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({ creatorId: 'creator_1' }),
+    }));
+    const body = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(body.error).toBe('RATE_LIMITED');
+    expect(rateLimit).toHaveBeenCalledWith({
+      key: 'subscriptions:write:user_1',
+      limit: 20,
+      windowMs: 10 * 60 * 1000,
+    });
+    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
   });
 
   it('rejects non-existing or unapproved creators', async () => {

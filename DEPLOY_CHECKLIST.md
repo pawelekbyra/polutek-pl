@@ -1,8 +1,12 @@
 # Deploy checklist
 
 ## Build
-- [ ] `npm install`
+- [ ] `npm ci`
+- [ ] `npm run env:validate:prod`
+- [ ] `npx prisma validate`
 - [ ] `npx prisma generate`
+- [ ] `npm run typecheck`
+- [ ] `npm test -- --run`
 - [ ] `npm run lint`
 - [ ] `npm run build`
 
@@ -19,6 +23,10 @@
 - [ ] `EMAIL_FROM`
 - [ ] `ENABLE_DEMO_FALLBACKS`
 - [ ] `ENABLE_CAMPAIGN_PAGE`
+- [ ] `MAIN_CREATOR_SLUG`
+- [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
+- [ ] exact media host allowlist: `MEDIA_BUCKET_HOST`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or `ALLOWED_MEDIA_HOSTS`
+- [ ] `HEALTHCHECK_TOKEN`
 
 ## Database
 - [ ] `npx prisma generate`
@@ -41,8 +49,13 @@
 
 ## Final smoke test
 - [ ] Home page loads
-- [ ] Channel page loads
+- [ ] `/channel/${MAIN_CREATOR_SLUG}` loads and does not redirect to `/`
 - [ ] Login works
+- [ ] Guest clicking `Subskrybuj` opens Clerk sign-in
+- [ ] Logged-in user can enable email notifications via `Subskrybuj`
+- [ ] Logged-in user can disable email notifications via `Subskrybowano`
+- [ ] Subscribed non-patron still cannot access Patron-only videos
+- [ ] Patron without subscription still can access Patron-only videos
 - [ ] Admin page is blocked for non-admin
 - [ ] Admin can manage videos
 
@@ -75,3 +88,8 @@
 - [ ] After deploy: `/admin/videos` works.
 - [ ] After deploy: Vercel logs contain no Prisma `P2022`, especially no missing `User.patronSource` or `Video.titleEn` columns.
 - [ ] After deploy: `npm run db:smoke` passes against the production database.
+
+## CI/CD
+- [ ] GitHub Actions `quality` job passes.
+- [ ] GitHub Actions `integration-postgres` job passes with Postgres service, migrations, and `db:smoke`.
+- [ ] GitHub Actions `security` job has been reviewed; `npm audit --audit-level=high` is currently non-blocking.
