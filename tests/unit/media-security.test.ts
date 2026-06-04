@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedMediaUrl, parseMediaHosts } from '@/lib/blob';
+import { isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
 import { buildMediaRateLimitKey } from '@/lib/media/rate-limit';
 
 describe('media host validation', () => {
@@ -46,5 +46,52 @@ describe('media rate limit key', () => {
   it('falls back to ip for anonymous requests', () => {
     expect(buildMediaRateLimitKey({ userId: null, ip: '203.0.113.10', mediaId: 'video-1' }))
       .toBe('media:ip:203.0.113.10:video-1');
+  });
+});
+
+describe('isAllowedVideoSourceUrl', () => {
+  const env = { ALLOWED_MEDIA_HOSTS: 'cdn.example.com' };
+
+  it('allows youtube URLs', () => {
+    expect(isAllowedVideoSourceUrl('https://www.youtube.com/watch?v=abc123', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://youtu.be/abc123', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://youtube.com/shorts/abc123', env)).toBe(true);
+  });
+
+  it('allows vimeo URLs', () => {
+    expect(isAllowedVideoSourceUrl('https://vimeo.com/123456', env)).toBe(true);
+  });
+
+  it('allows configured media hosts', () => {
+    expect(isAllowedVideoSourceUrl('https://cdn.example.com/video.mp4', env)).toBe(true);
+  });
+
+  it('blocks http', () => {
+    expect(isAllowedVideoSourceUrl('http://youtube.com/watch?v=abc', env)).toBe(false);
+  });
+
+  it('blocks arbitrary external hosts', () => {
+    expect(isAllowedVideoSourceUrl('https://malicious.com/video.mp4', env)).toBe(false);
+  });
+});
+
+describe('isAllowedThumbnailUrl', () => {
+  const env = { ALLOWED_MEDIA_HOSTS: 'cdn.example.com' };
+
+  it('allows safe local paths', () => {
+    expect(isAllowedThumbnailUrl('/thumbnails/video.jpg', env)).toBe(true);
+  });
+
+  it('blocks protocol-relative URLs', () => {
+    expect(isAllowedThumbnailUrl('//malicious.com/img.jpg', env)).toBe(false);
+  });
+
+  it('allows default trusted thumbnail hosts', () => {
+    expect(isAllowedThumbnailUrl('https://i.ytimg.com/vi/abc/hqdefault.jpg', env)).toBe(true);
+    expect(isAllowedThumbnailUrl('https://img.clerk.com/abc.jpg', env)).toBe(true);
+  });
+
+  it('blocks http', () => {
+    expect(isAllowedThumbnailUrl('http://cdn.example.com/thumb.jpg', env)).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import { PublicVideoDTO } from '../types/video';
 "use client";
 
-import { MIN_PAYMENT_BY_CURRENCY, type SupportedCurrency } from '@/lib/constants';
+import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
@@ -132,8 +132,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
     setAmount(getSuggestedAmount(curr));
   };
 
-  const availableCurrencies = ['PLN', 'USD', 'EUR', 'GBP', 'CHF'].filter(curr => {
-    if (language === 'en' && curr === 'PLN') return false;
+  const availableCurrencies = [...SUPPORTED_CURRENCIES].filter((currency) => {
+    if (language === 'en' && currency === 'PLN') return false;
     return true;
   });
 

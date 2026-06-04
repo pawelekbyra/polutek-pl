@@ -137,7 +137,6 @@ model PatronGrant {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, revokedAt])
-  @@index([paymentId])
   @@index([userId])
   @@index([createdAt])
 }
