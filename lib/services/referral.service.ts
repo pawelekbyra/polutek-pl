@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { UserAccessService } from './user-access.service';
 import { grantPatronStatus } from './patron.service';
@@ -91,13 +92,13 @@ export class ReferralService {
               dataToSync.isPatron,
               dataToSync.totalPaid
           ).catch(err => {
-              console.error("[ReferralService] Clerk sync failed after transaction:", err);
+              logger.error("[ReferralService] Clerk sync failed after transaction:", err);
           });
       }
 
       return result;
     } catch (error) {
-      console.error("[REFERRAL_CLAIM_ERROR]", error);
+      logger.error("[REFERRAL_CLAIM_ERROR]", error);
       throw error;
     }
   }

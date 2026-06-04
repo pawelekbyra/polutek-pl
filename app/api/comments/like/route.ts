@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     return await prisma.$transaction(async (tx) => {
-        // 1. Remove existing dislike if any
+        // 1. Remove an existing dislike when present
         await tx.commentDislike.deleteMany({
             where: { userId: localUser.id, commentId }
         });
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
         }
     });
   } catch (error: unknown) {
-    console.error('[COMMENT_LIKE_ERROR]', error);
+    logger.error('[COMMENT_LIKE_ERROR]', error);
     return NextResponse.json({ success: false, message: 'Wystąpił błąd podczas oceniania komentarza.' }, { status: 500 });
   }
 }

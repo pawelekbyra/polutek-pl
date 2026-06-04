@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Prisma, PatronGrantSource } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { normalizePaymentTotals, UserAccessService } from './user-access.service';
@@ -202,7 +203,7 @@ export async function revokePatronStatus(
     targetType: 'User',
     targetId: userId,
     metadata: { note: options.note },
-  }).catch((error) => console.error('[PATRON_REVOKE_AUDIT_ERROR]', error));
+  }).catch((error) => logger.error('[PATRON_REVOKE_AUDIT_ERROR]', error));
 
   return {
     user: updatedUser,

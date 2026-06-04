@@ -1,6 +1,7 @@
-import { PublicVideoDTO } from '../types/video';
 "use client";
 
+import { logger } from "@/lib/logger";
+import { PublicVideoDTO } from '../types/video';
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -10,11 +11,12 @@ import { useLanguage } from './LanguageContext';
 import ReferralModal from './ReferralModal';
 import { loadStripe } from '@stripe/stripe-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
-// Modular Components
 import SupportBox from './playlist/SupportBox';
 import CheckoutModal from './playlist/CheckoutModal';
 import ReferralInfo from './playlist/ReferralInfo';
+
+
+// Modular Components
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -84,7 +86,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             if (data.totalPaid > 0) router.refresh();
           }
         } catch (e) {
-          console.error("Sync error", e);
+          logger.error("Sync error", e);
         }
       }, 2000);
     }
@@ -120,7 +122,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             });
           }
         } catch (error) {
-          console.error("[VideoPlaylist] Failed to fetch referral data:", error);
+          logger.error("[VideoPlaylist] Failed to fetch referral data:", error);
         }
       };
       fetchReferralData();
@@ -183,7 +185,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
         }
       }
     } catch (error: unknown) {
-      console.error("Payment error", error);
+      logger.error("Payment error", error);
       alert(language === 'pl' ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę." : "Payment system connection error. Please refresh the page.");
     } finally {
       setIsLoading(false);

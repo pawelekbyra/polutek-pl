@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Navbar from "@/app/components/Navbar";
@@ -26,7 +27,7 @@ export default async function AdminEmailsPage() {
     select: { slug: true, subject: true, html: true, subjectEn: true, htmlEn: true },
     });
   } catch (err) {
-    console.error("[AdminEmailsPage] Failed to fetch template, falling back to default.", err);
+    logger.error("[AdminEmailsPage] Failed to fetch template, falling back to default.", err);
   }
 
   return (

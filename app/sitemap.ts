@@ -16,6 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
+  if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
+    return routes;
+  }
+
   try {
     const videos = flags.multiCreator
       ? await ContentService.getAllVideos()

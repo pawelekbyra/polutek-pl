@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
         }
     });
   } catch (error) {
-    console.error("[HEALTH_CHECK_ERROR]", error);
+    logger.error("[HEALTH_CHECK_ERROR]", error);
     return NextResponse.json({
         ok: false,
         database: "error",

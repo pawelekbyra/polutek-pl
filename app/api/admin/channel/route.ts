@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
@@ -52,7 +53,7 @@ export async function GET() {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    console.error("[ADMIN_CHANNEL_GET_ERROR]", error);
+    logger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -87,7 +88,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    console.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
+    logger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -59,7 +59,12 @@ export async function GET(
         if (flags.demoFallbacks) {
             const fallback = INITIAL_VIDEOS.find(v => v.id === videoId || v.slug === videoId);
             if (fallback) {
-                return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers, fallback as any);
+                return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers, {
+                    id: fallback.id,
+                    tier: fallback.tier,
+                    status: fallback.status,
+                    publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : null,
+                });
             }
         }
         return NextResponse.json({ error: 'Video not found' }, { status: 404 });

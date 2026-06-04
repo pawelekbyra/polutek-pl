@@ -1,5 +1,6 @@
 'use server';
 
+import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import crypto from 'crypto';
@@ -19,7 +20,7 @@ export async function checkReferralStatus() {
       hasReferrer: !!user?.referredById
     };
   } catch (error) {
-    console.error("[CHECK_REFERRAL_STATUS_ERROR]", error);
+    logger.error("[CHECK_REFERRAL_STATUS_ERROR]", error);
     return { error: "DB_ERROR", isLoggedIn: false };
   }
 }
@@ -43,7 +44,7 @@ export async function getReferralData() {
                 select: { referralCode: true, referralPoints: true, id: true }
             });
         } catch (e) {
-            console.error("[getReferralData] Failed to update missing referralCode", e);
+            logger.error("[getReferralData] Failed to update missing referralCode", e);
         }
     }
 
@@ -53,7 +54,7 @@ export async function getReferralData() {
       userId: user?.id
     };
   } catch (error) {
-    console.error("[GET_REFERRAL_DATA_ERROR]", error);
+    logger.error("[GET_REFERRAL_DATA_ERROR]", error);
     return { error: "DB_ERROR" };
   }
 }

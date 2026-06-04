@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/logger";
 import { useAuth, SignInButton, useClerk } from "@clerk/nextjs";
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -90,7 +91,7 @@ export default function PremiumWrapper({
         }
         if (data.requiredTier) setDbTier(data.requiredTier);
       } catch (error) {
-        console.error("Error checking video access:", error);
+        logger.error("Error checking video access:", error);
         setHasAccess(false);
       } finally {
         setIsLoading(false);
@@ -202,11 +203,11 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
               {isVIPGated ? (
                 <div className="flex flex-col items-center">
                     <span className={cn("uppercase tracking-tighter leading-[0.8] text-amber-500", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
-                        {(t as any).patronZoneLine1}
+                        {t.patronZoneLine1}
                     </span>
                     <div className={cn("h-px bg-white/10", isThumbnail ? "w-[clamp(3rem,34cqw,8rem)] my-[clamp(0.1rem,1.5cqw,0.5rem)]" : "w-24 md:w-48 my-1 md:my-2")} />
                     <span className={cn("uppercase tracking-tighter leading-[0.8] text-white", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
-                        {(t as any).patronZoneLine2}
+                        {t.patronZoneLine2}
                     </span>
 
                     <div className={cn(isThumbnail && "hidden")}>

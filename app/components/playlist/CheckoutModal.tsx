@@ -4,6 +4,7 @@ import React from 'react';
 import { X, Star, Gem, Shield, Loader2 } from '../icons';
 import { Button } from '@/components/ui/button';
 import { Elements } from '@stripe/react-stripe-js';
+import type { Stripe } from '@stripe/stripe-js';
 import CheckoutForm from '../CheckoutForm';
 
 interface CheckoutModalProps {
@@ -14,7 +15,7 @@ interface CheckoutModalProps {
   selectedCurrency: string;
   videoTitle?: string;
   clientSecret: string | null;
-  stripePromise: any;
+  stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
 }

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(creator);
   } catch (error: unknown) {
-    console.error("[ADMIN_CREATOR_GET_ERROR]", error);
+    logger.error("[ADMIN_CREATOR_GET_ERROR]", error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(created);
     }
   } catch (error: unknown) {
-    console.error("[ADMIN_CREATOR_POST_ERROR]", error);
+    logger.error("[ADMIN_CREATOR_POST_ERROR]", error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

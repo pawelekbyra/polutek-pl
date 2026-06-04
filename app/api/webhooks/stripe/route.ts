@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { PaymentService } from '@/lib/services/payment.service';
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`Webhook Error: ${message}`);
+    logger.error(`Webhook Error: ${message}`);
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
 }

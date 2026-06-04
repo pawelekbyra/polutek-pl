@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 
@@ -55,7 +56,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   });
 
   if (!template && process.env.NODE_ENV === "production") {
-    console.error(`[EmailService] Missing required email template in production: ${slug}`);
+    logger.error(`[EmailService] Missing required email template in production: ${slug}`);
     throw new Error(`Missing required email template: ${slug}`);
   }
 
@@ -64,7 +65,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   }
 
   if (!template && fallback) {
-    console.warn(`[EmailService] Using hardcoded fallback for template: ${slug}`);
+    logger.warn(`[EmailService] Using hardcoded fallback for template: ${slug}`);
   }
 
   const safeVariables = Object.fromEntries(

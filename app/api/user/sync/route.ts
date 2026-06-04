@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       language: user.language
     });
   } catch (error) {
-    console.error('[USER_SYNC_API_ERROR]', error);
+    logger.error('[USER_SYNC_API_ERROR]', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

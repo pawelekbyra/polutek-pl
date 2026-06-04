@@ -26,7 +26,7 @@ export default function ReferralTracker() {
         document.cookie = `clerk_referrer_id=${ref}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
         logger.debug(`[ReferralTracker] Saved referrer ID/Code: ${ref}`);
       } catch (e) {
-        console.error("[ReferralTracker] Cookie error:", e);
+        logger.error("[ReferralTracker] Cookie error:", e);
       }
     }
   }, [ref, mounted]);
@@ -59,7 +59,7 @@ export default function ReferralTracker() {
                 document.cookie = "clerk_referrer_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
               } else {
                 const error = await response.json().catch(() => ({}));
-                console.warn(`[ReferralTracker] Failed to claim referral:`, error.error);
+                logger.warn(`[ReferralTracker] Failed to claim referral:`, error.error);
                 if (response.status === 400 || response.status === 404) {
                     document.cookie = "clerk_referrer_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
                 }
@@ -69,7 +69,7 @@ export default function ReferralTracker() {
             }
           }
         } catch (err) {
-          console.error(`[ReferralTracker] Error during claim process:`, err);
+          logger.error(`[ReferralTracker] Error during claim process:`, err);
         }
       };
 

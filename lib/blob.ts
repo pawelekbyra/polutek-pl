@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+import type { AccessVideo } from '@/lib/access/access-policy';
 import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
@@ -211,7 +213,7 @@ export async function getGatedBlobResponse(
   videoId: string,
   blobUrl: string,
   headers?: Headers,
-  prefetchedVideo?: any // Can be AccessVideo
+  prefetchedVideo?: AccessVideo | null
 ) {
   const decision = await AccessPolicy.canViewVideo(userId, videoId, prefetchedVideo);
 
@@ -222,9 +224,9 @@ export async function getGatedBlobResponse(
   if (!isAllowedMediaUrl(blobUrl)) {
     try {
       const hostname = new URL(blobUrl).hostname.toLowerCase();
-      console.error(`[MediaProxy] Blocked unauthorized media host: ${hostname}`);
+      logger.error(`[MediaProxy] Blocked unauthorized media host: ${hostname}`);
     } catch {
-      console.error('[MediaProxy] Blocked malformed media URL.');
+      logger.error('[MediaProxy] Blocked malformed media URL.');
     }
     return new NextResponse('Unauthorized Media Host', { status: 403 });
   }
@@ -247,14 +249,14 @@ export async function getGatedBlobResponse(
     }
 
     const targetHost = new URL(targetUrl).hostname.toLowerCase();
-    console.log(`[MediaProxy] Fetching configured media host: ${targetHost} (Range: ${range?.value || 'none'})`);
+    logger.info(`[MediaProxy] Fetching configured media host: ${targetHost} (Range: ${range?.value || 'none'})`);
 
     const response = await fetch(targetUrl, {
         headers: range?.value ? { Range: range.value } : {}
     });
 
     if (!response.ok && response.status !== 206) {
-        console.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText} from ${targetHost}`);
+        logger.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText} from ${targetHost}`);
       return new NextResponse('Error fetching content', { status: response.status });
     }
 
@@ -270,7 +272,7 @@ export async function getGatedBlobResponse(
       headers: resHeaders,
     });
   } catch (error) {
-    console.error('Error accessing gated media:', error);
+    logger.error('Error accessing gated media:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

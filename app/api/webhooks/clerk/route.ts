@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.error('Error verifying webhook:', err);
+    logger.error('Error verifying webhook:', err);
     return new Response('Error occured', { status: 400 });
   }
 
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
   if (!shouldProcessClerkEvent(existingEvent)) {
     const duplicate = existingEvent?.status === WebhookEventStatus.PROCESSED;
     const processing = existingEvent?.status === WebhookEventStatus.PROCESSING;
-    console.log(`[ClerkWebhook] Event ${svix_id} already received with status ${existingEvent?.status}.`);
+    logger.info(`[ClerkWebhook] Event ${svix_id} already received with status ${existingEvent?.status}.`);
     return NextResponse.json({ success: true, duplicate, processing });
   }
 
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      console.log(`[ClerkWebhook] Event ${svix_id} was inserted concurrently; skipping duplicate.`);
+      logger.info(`[ClerkWebhook] Event ${svix_id} was inserted concurrently; skipping duplicate.`);
       return NextResponse.json({ success: true, processing: true });
     }
 
@@ -159,14 +160,14 @@ export async function POST(req: Request) {
 
       if (id && email) {
         const user = await UserService.syncUser(id, email, name, image_url, referrerId, userLanguage, username || undefined);
-        console.log(`User ${id} synced via webhook. Referrer: ${referrerId || 'None'}, Language: ${userLanguage}`);
+        logger.info(`User ${id} synced via webhook. Referrer: ${referrerId || 'None'}, Language: ${userLanguage}`);
 
         if (eventType === 'user.created') {
-          console.log(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
+          logger.info(`[ClerkWebhook] New user created: ${email}. Triggering welcome email.`);
           try {
             await EmailService.sendWelcomeEmail(email, first_name || name || undefined, userLanguage);
           } catch (error) {
-            console.error('[ClerkWebhook] Failed to send welcome email:', error);
+            logger.error('[ClerkWebhook] Failed to send welcome email:', error);
           }
         }
       }
@@ -183,7 +184,7 @@ export async function POST(req: Request) {
 
             if (user) {
                 await UserService.softDeleteUser(id);
-                console.log(`User ${id} soft-deleted/anonymized via webhook.`);
+                logger.info(`User ${id} soft-deleted/anonymized via webhook.`);
             }
 
             if (user && user.email && !user.email.startsWith('deleted_')) {
@@ -218,7 +219,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`[ClerkWebhook] Error handling event ${svix_id}:`, error);
+    logger.error(`[ClerkWebhook] Error handling event ${svix_id}:`, error);
     await prisma.clerkEvent.update({
       where: { id: svix_id },
       data: {
