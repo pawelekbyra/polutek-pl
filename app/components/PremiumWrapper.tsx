@@ -167,7 +167,7 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
     )}>
       <div className={cn(
           "aspect-video bg-[#0a0a0a] overflow-hidden relative border flex items-center justify-center h-full w-full shadow-2xl transition-all duration-500",
-          isThumbnail ? "rounded-lg border-white/10" : "rounded-lg border-[#1a1a1a]"
+          isThumbnail ? "rounded-lg border-white/10 [container-type:inline-size]" : "rounded-lg border-[#1a1a1a]"
       )}>
 
          <div className="absolute inset-0 z-0 opacity-60">
@@ -181,18 +181,18 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
 
          <div className={cn(
              "relative z-10 flex flex-col items-center text-center max-w-none origin-center transition-transform duration-500",
-             isThumbnail ? "scale-[0.18] w-[550%]" : "px-6 w-full"
+             isThumbnail ? "w-full px-2" : "px-6 w-full"
          )}>
             <div className={cn(
                 "transition-all duration-700 group-hover:scale-110 flex items-center justify-center",
-                isThumbnail ? "mb-10" : "mb-4 md:mb-8"
+                isThumbnail ? "mb-[clamp(0.25rem,3cqw,0.75rem)]" : "mb-4 md:mb-8"
             )}>
                {isVIPGated ? (
-                 <Gem className="text-amber-500 w-16 h-16 md:w-24 md:h-24" />
+                 <Gem className={cn("text-amber-500", isThumbnail ? "h-[clamp(1.75rem,18cqw,4rem)] w-[clamp(1.75rem,18cqw,4rem)]" : "w-16 h-16 md:w-24 md:h-24")} />
                ) : (
                  <CustomAuthTrigger>
                     <button className="hover:opacity-40 transition-opacity cursor-pointer flex items-center justify-center">
-                      <Lock className="text-blue-400 w-16 h-16 md:w-24 md:h-24" />
+                      <Lock className={cn("text-blue-400", isThumbnail ? "h-[clamp(1.75rem,18cqw,4rem)] w-[clamp(1.75rem,18cqw,4rem)]" : "w-16 h-16 md:w-24 md:h-24")} />
                     </button>
                  </CustomAuthTrigger>
                )}
@@ -201,15 +201,15 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
             <div className="flex flex-col items-center font-brand font-black">
               {isVIPGated ? (
                 <div className="flex flex-col items-center">
-                    <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-amber-500">
+                    <span className={cn("uppercase tracking-tighter leading-[0.8] text-amber-500", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
                         {(t as any).patronZoneLine1}
                     </span>
-                    <div className="h-px w-24 md:w-48 bg-white/10 my-1 md:my-2" />
-                    <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-white">
+                    <div className={cn("h-px bg-white/10", isThumbnail ? "w-[clamp(3rem,34cqw,8rem)] my-[clamp(0.1rem,1.5cqw,0.5rem)]" : "w-24 md:w-48 my-1 md:my-2")} />
+                    <span className={cn("uppercase tracking-tighter leading-[0.8] text-white", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
                         {(t as any).patronZoneLine2}
                     </span>
 
-                    <div className={cn(isThumbnail && "invisible")}>
+                    <div className={cn(isThumbnail && "hidden")}>
                       <a href="#donations" className="group flex flex-col items-center gap-2 mt-6 md:mt-10">
                          <div className="h-px w-16 md:w-24 bg-white/10 group-hover:w-48 transition-all duration-500" />
                          <span className="text-[8px] md:text-[10px] font-brand font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-white/30 group-hover:text-amber-500 transition-colors">
@@ -220,15 +220,15 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                    <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-white">
+                    <span className={cn("uppercase tracking-tighter leading-[0.8] text-white", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
                         {t.paywallText}
                     </span>
-                    <div className="h-px w-24 md:w-48 bg-white/10 my-1 md:my-2" />
-                    <span className="text-[clamp(2rem,10vw,6rem)] uppercase tracking-tighter leading-[0.8] text-blue-400">
+                    <div className={cn("h-px bg-white/10", isThumbnail ? "w-[clamp(3rem,34cqw,8rem)] my-[clamp(0.1rem,1.5cqw,0.5rem)]" : "w-24 md:w-48 my-1 md:my-2")} />
+                    <span className={cn("uppercase tracking-tighter leading-[0.8] text-blue-400", isThumbnail ? "text-[clamp(1.05rem,12cqw,3rem)]" : "text-[clamp(2rem,10vw,6rem)]")}>
                         {t.paywallAction}
                     </span>
 
-                    <div className={cn(isThumbnail && "invisible")}>
+                    <div className={cn(isThumbnail && "hidden")}>
                       <CustomAuthTrigger>
                         <button className="group flex flex-col items-center gap-2 mt-6 md:mt-10">
                            <div className="h-px w-16 md:w-24 bg-white/10 group-hover:w-48 transition-all duration-500" />
