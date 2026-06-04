@@ -48,14 +48,14 @@ describe('sitemap', () => {
     });
   });
 
-  it('omits the main creator channel in single-creator mode', async () => {
+  it('includes the main creator channel in single-creator mode', async () => {
     const sitemap = await importSitemap({ multiCreator: false });
 
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain('https://example.com');
-    expect(urls).not.toContain('https://example.com/channel/kraufanding');
+    expect(urls).toContain('https://example.com/channel/kraufanding');
   });
 
   it('fetches only the main creator videos in single-creator mode', async () => {
