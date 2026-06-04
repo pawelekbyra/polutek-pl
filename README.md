@@ -21,7 +21,7 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 
 ## Aktualny tryb aplikacji
 
-Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy, ale `/channel/[slug]` pozostaje dostępną, indeksowalną stroną kanału dla skonfigurowanego sluga.
+Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy. W aktualnym kodzie `/channel/[slug]` przekierowuje na `/`, gdy `ENABLE_MULTI_CREATOR=false` i `params.slug === flags.mainCreatorSlug`; brak redirectu dla tego sluga jest wymaganiem roadmapy, ale nie jest jeszcze wdrożony.
 
 Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Kod nie powinien polegać na fallbacku do konkretnego sluga kanału.
 
@@ -43,7 +43,7 @@ Patron może wynikać z kwalifikującego napiwku Stripe, grantu admina, migracji
 
 **Subscription = zgoda mailowa / obserwowanie kanału / newsletter opt-in.** Model `Subscription` nie może dawać dostępu do materiałów `PATRON`.
 
-Endpoint `/api/subscriptions` obsługuje mailowe follow/unfollow: `GET` zwraca status, `POST` zapisuje zgodę na powiadomienia mailowe, a `DELETE` ją usuwa. Endpoint nie zmienia `User.isPatron` i nie nadaje dostępu premium.
+Aktualny endpoint `/api/subscriptions` jest endpointem legacy: `GET` zwraca `isSubscribed: false`, a `POST` zwraca `410 SUBSCRIPTIONS_LEGACY`. Roadmapa wymaga zastąpienia tego pełnym flow mailowego follow/unfollow z modalem zgody.
 
 ### Twarda zasada
 
@@ -194,36 +194,36 @@ Legenda:
 
 ## 5. Strona kanału `/channel/[slug]`
 
-- [x] Usunięto redirect skonfigurowanego `MAIN_CREATOR_SLUG` do `/`; `/channel/[slug]` renderuje pełną stronę kanału.
-- [x] Potwierdzono w kodzie strony kanału banner/avatar/name/slug/bio/count/grid dla dynamicznego sluga.
-- [x] Linki z Hero i list materiałów prowadzą do dynamicznego `Creator.slug`.
-- [x] Sitemap generuje `/channel/${MAIN_CREATOR_SLUG}` dynamicznie także w single-creator mode.
-- [~] Zaktualizowano test sitemap dla URL kanału; osobny render/smoke strony kanału nadal otwarty.
+- [ ] Usunąć redirect skonfigurowanego `MAIN_CREATOR_SLUG` do `/` i zapewnić pełną stronę kanału.
+- [ ] Potwierdzić banner/avatar/name/slug/bio/count/grid dla `/channel/${MAIN_CREATOR_SLUG}`.
+- [ ] Dodać linki z Hero i ChannelHome do dynamicznego sluga twórcy.
+- [ ] Upewnić się, że sitemap generuje dynamiczny URL kanału bez hardcoded sluga.
+- [ ] Dodać testy jednostkowe/smoke dla strony kanału.
 
 ## 6. Subscription jako mail follow, nie access
 
-- [x] Zastąpiono legacy `/api/subscriptions` pełnym `GET/POST/DELETE` follow/unfollow dla powiadomień mailowych.
-- [x] `GET` zwraca status subskrypcji mailowej dla zalogowanego użytkownika i twórcy.
-- [x] `POST` tworzy `Subscription` jako zgodę mailową, bez zmiany `User.isPatron`.
-- [x] `DELETE` usuwa zgodę mailową, bez odbierania `User.isPatron`.
-- [x] Dodano walidację `creatorId`/`creatorSlug` i odrzucanie nieistniejących albo niezatwierdzonych twórców.
+- [ ] Zastąpić legacy `/api/subscriptions` pełnym `GET/POST/DELETE` follow/unfollow.
+- [ ] `GET` ma zwracać status subskrypcji mailowej dla zalogowanego użytkownika i twórcy.
+- [ ] `POST` ma tworzyć `Subscription` jako zgodę mailową, bez zmiany `User.isPatron`.
+- [ ] `DELETE` ma usuwać/wyłączać zgodę mailową, bez odbierania `User.isPatron`.
+- [ ] Dodać walidację `creatorId`/slug i ochronę przed zapisaniem do nieistniejącego twórcy.
 
 ## 7. Komponent subskrypcji
 
-- [x] Dodano przycisk `Subskrybuj` / `Subskrybowano` na stronie kanału.
-- [x] Dodano przycisk pod aktualnie oglądanym filmem w sekcji Hero, jak w modelu YouTube.
-- [x] Guest click → Clerk Sign In przez `openSignIn()`.
-- [x] Logged user click → modal zgody mailowej.
-- [x] Unsubscribe → modal potwierdzenia wypisania.
-- [x] Teksty UI jasno mówią, że subskrypcja to powiadomienia mailowe i nie daje Patron access.
+- [ ] Dodać przycisk `Subskrybuj` / `Subskrybowano` na stronie kanału.
+- [ ] Dodać analogiczny entrypoint na stronie filmu/playlisty, jeśli UX tego wymaga.
+- [ ] Guest click → Clerk Sign In.
+- [ ] Logged user click → modal zgody mailowej.
+- [ ] Unsubscribe → modal potwierdzenia wypisania.
+- [ ] Teksty UI muszą jasno mówić, że subskrypcja to maile/obserwowanie, nie patron access.
 
 ## 8. Testy Subscription vs Patron
 
-- [x] Test: subscribed non-patron nie ma dostępu do `PATRON`.
-- [x] Test: patron unsubscribed nadal ma dostęp do `PATRON`.
-- [~] Dostęp patrona i rekord `Subscription` są rozdzielone w testach API/access; pełny scenariusz E2E patron subscribed nadal otwarty.
-- [x] Istniejący test admin access pozostaje niezależny od subskrypcji.
-- [x] Legacy `410` usunięte; endpoint obsługuje realny flow mail follow/unfollow.
+- [ ] subscribed non-patron nie ma dostępu do `PATRON`.
+- [ ] patron unsubscribed nadal ma dostęp do `PATRON`.
+- [ ] patron subscribed ma dostęp do `PATRON` i ma rekord `Subscription`.
+- [ ] Admin access pozostaje niezależny od subskrypcji.
+- [ ] Legacy endpoint nie może udawać gotowego flow.
 
 ## 9. Media proxy security
 
@@ -259,7 +259,7 @@ Legenda:
 
 - [ ] Potwierdzić limity dla checkout, comments, media, subscriptions i referrals.
 - [ ] Potwierdzić zachowanie produkcyjne Redis/KV.
-- [x] Dodano testy nowego endpointu subskrypcji po jego wdrożeniu.
+- [ ] Dodać testy dla nowego endpointu subskrypcji po jego wdrożeniu.
 
 ## 14. ENV validation
 
@@ -270,7 +270,7 @@ Legenda:
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 22 pliki, 115 testów.
+- [x] Unit suite PASS: 21 plików, 108 testów.
 - [ ] Dodać coverage script i raport minimalnych progów albo świadomie oznaczyć brak progu jako limitation.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
