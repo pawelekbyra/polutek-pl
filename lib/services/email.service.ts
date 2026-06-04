@@ -58,6 +58,11 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
     throw new Error(`Email template with slug "${slug}" was not found.`);
   }
 
+  if (!template && process.env.NODE_ENV === "production") {
+    console.error(`[EmailService] Missing required email template in production: ${slug}`);
+    throw new Error(`Missing required email template: ${slug}`);
+  }
+
   const safeVariables = Object.fromEntries(
     Object.entries(variables).map(([key, value]) => [key, value ?? ''])
   );

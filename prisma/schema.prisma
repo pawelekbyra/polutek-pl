@@ -127,8 +127,8 @@ model PatronGrant {
   id          String            @id @default(uuid())
   userId      String
   source      PatronGrantSource
-  paymentId   String?
-  referralId  String?
+  paymentId   String?           @unique
+  referralId  String?           @unique
   grantedById String?
   reason      String?
   createdAt   DateTime          @default(now())

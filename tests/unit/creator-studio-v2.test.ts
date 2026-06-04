@@ -18,6 +18,11 @@ vi.mock('@/lib/services/audit.service', () => ({
   writeAuditLog: vi.fn().mockResolvedValue({}),
 }));
 
+// Mock blob validation
+vi.mock('@/lib/blob', () => ({
+  isAllowedMediaUrl: vi.fn().mockReturnValue(true),
+}));
+
 describe('Creator Studio V2 - Constraints and Logic', () => {
   const creatorId = 'creator-1';
 

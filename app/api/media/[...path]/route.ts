@@ -44,14 +44,14 @@ export async function GET(
 
   const video = await prisma.video.findUnique({
     where: { id: videoId },
-    select: { videoUrl: true }
+    include: { creator: true }
   });
 
   if (!video) {
     // Try by slug if ID not found (optional fallback)
     const videoBySlug = await prisma.video.findUnique({
         where: { slug: videoId },
-        select: { id: true, videoUrl: true }
+        include: { creator: true }
     });
 
     if (!videoBySlug) {
@@ -59,15 +59,15 @@ export async function GET(
         if (flags.demoFallbacks) {
             const fallback = INITIAL_VIDEOS.find(v => v.id === videoId || v.slug === videoId);
             if (fallback) {
-                return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers);
+                return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers, fallback as any);
             }
         }
         return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers);
+    return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers, videoBySlug);
   }
 
   // Securely stream the gated content from configured media storage
-  return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
+  return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers, video);
 }
