@@ -5,21 +5,17 @@ import { auth } from '@clerk/nextjs/server';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 import { Search } from '@/app/components/icons';
 import { ContentService } from '@/lib/services/content.service';
 import { UserService } from '@/lib/services/user.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount } from '@/lib/utils';
-import { flags } from '@/lib/feature-flags';
+import SubscribeButton from '@/app/components/SubscribeButton';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ChannelPage({ params }: { params: { slug: string } }) {
-  if (!flags.multiCreator && params.slug === flags.mainCreatorSlug) {
-    redirect('/');
-  }
-
   const creator = await ContentService.getCreatorBySlug(params.slug);
 
   if (!creator) {
@@ -38,6 +34,12 @@ export default async function ChannelPage({ params }: { params: { slug: string }
 
   const { userId } = await auth();
   const userDb = userId ? await UserService.getOrCreateUser(userId).catch(() => null) : null;
+  const initialSubscribed = userId
+    ? !!(await prisma.subscription.findUnique({
+        where: { userId_creatorId: { userId, creatorId: creator.id } },
+        select: { id: true },
+      }).catch(() => null))
+    : false;
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
@@ -99,6 +101,14 @@ export default async function ChannelPage({ params }: { params: { slug: string }
             <p className="text-[14px] text-[#606060] line-clamp-1 max-w-2xl font-sans mt-1">
                {displayBio}
             </p>
+            <div className="mt-4 flex justify-center md:justify-start">
+              <SubscribeButton
+                creatorId={creator.id}
+                creatorSlug={creator.slug}
+                creatorName={creator.name}
+                initialSubscribed={initialSubscribed}
+              />
+            </div>
           </div>
         </div>
 

@@ -186,6 +186,51 @@ describe('AccessPolicy', () => {
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
+
+
+    it('does not treat channel email subscription as Patron access', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isPatron: false,
+        isDeleted: false,
+        subscriptions: [{ creatorId: 'creator_1' }],
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('PATRON_REQUIRED');
+    });
+
+    it('keeps Patron access independent from channel email subscription status', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isPatron: true,
+        isDeleted: false,
+        subscriptions: [],
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+
+      expect(decision.allowed).toBe(true);
+    });
+
     it('allows access to anything if user is an ADMIN', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
