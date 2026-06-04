@@ -409,25 +409,27 @@ export default function AdminPanel() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="space-y-6">
-                  <section className="space-y-5 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
-                    <div className="border-b pb-4">
-                      <h2 className="flex items-center gap-2 text-xl font-semibold">
-                        <Globe className="h-5 w-5" /> Treść i języki
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">Najważniejsze dane są na górze, a pola tekstowe wykorzystują całą szerokość strony.</p>
-                    </div>
-                    <Tabs defaultValue="pl" className="w-full">
-                      <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-muted/60 p-1 sm:grid-cols-2">
-                        <TabsTrigger value="pl" className="py-2.5">Polski (główny)</TabsTrigger>
-                        <TabsTrigger value="en" className="py-2.5">Angielski (opcjonalny)</TabsTrigger>
-                      </TabsList>
+                  <section className="rounded-3xl border bg-card p-5 shadow-sm md:p-6">
+                    <Tabs defaultValue="pl" className="w-full gap-0">
+                      <div className="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <h2 className="flex items-center gap-2 text-xl font-semibold">
+                            <Globe className="h-5 w-5 shrink-0" /> Treść i języki
+                          </h2>
+                          <p className="mt-1 text-sm text-muted-foreground">Wybierz język krótkimi zakładkami, a tytuł, slug i opis edytuj w pełnej szerokości sekcji.</p>
+                        </div>
+                        <TabsList className="grid h-auto w-full shrink-0 grid-cols-2 gap-1 bg-muted/60 p-1 sm:inline-grid sm:w-auto">
+                          <TabsTrigger value="pl" className="px-3 py-2 text-xs sm:min-w-32 sm:text-sm">Polski</TabsTrigger>
+                          <TabsTrigger value="en" className="px-3 py-2 text-xs sm:min-w-32 sm:text-sm">Angielski</TabsTrigger>
+                        </TabsList>
+                      </div>
                       <TabsContent value="pl" className="mt-5 space-y-5">
                         <div className="grid grid-cols-1 gap-5">
                           <div className="space-y-2">
                             <Label htmlFor="title" className="text-sm font-bold">Tytuł filmu (PL)</Label>
                             <Input id="title" className="h-12 w-full text-base" placeholder="Np. Mój nowy film" value={formData.title} onChange={e => handleTitleChange(e.target.value)} required />
                           </div>
-                          <div className="space-y-2 md:max-w-xl">
+                          <div className="space-y-2">
                             <Label htmlFor="slug" className="text-sm font-bold text-muted-foreground">Slug (URL)</Label>
                             <Input
                               id="slug"
@@ -451,11 +453,11 @@ export default function AdminPanel() {
                       <TabsContent value="en" className="mt-5 space-y-5">
                         <div className="space-y-2">
                           <Label htmlFor="titleEn" className="text-sm font-bold text-blue-600">Tytuł (EN)</Label>
-                          <Input id="titleEn" className="h-12 text-base" placeholder="My new video" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} />
+                          <Input id="titleEn" className="h-12 w-full text-base" placeholder="My new video" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="descriptionEn" className="text-sm font-bold text-blue-600">Opis (EN)</Label>
-                          <Textarea id="descriptionEn" className="min-h-40 text-base leading-7" placeholder="Detailed video description..." value={formData.descriptionEn} onChange={e => setFormData({...formData, descriptionEn: e.target.value})} />
+                          <Textarea id="descriptionEn" className="min-h-40 w-full text-base leading-7" placeholder="Detailed video description..." value={formData.descriptionEn} onChange={e => setFormData({...formData, descriptionEn: e.target.value})} />
                         </div>
                       </TabsContent>
                     </Tabs>
