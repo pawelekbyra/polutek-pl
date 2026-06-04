@@ -45,7 +45,52 @@ export function isAllowedMediaUrl(rawUrl: string, env: MediaHostEnv = process.en
 }
 
 export function isSafeLocalPath(value: string) {
-    return value.startsWith("/") && !value.startsWith("//") && !value.includes("..");
+    if (!value.startsWith("/") || value.startsWith("//") || value.includes('\\')) return false;
+
+    let decodedValue = value;
+    try {
+        decodedValue = decodeURIComponent(value.split(/[?#]/, 1)[0]);
+    } catch {
+        return false;
+    }
+
+    return decodedValue.startsWith('/')
+        && !decodedValue.startsWith('//')
+        && !decodedValue.split('/').some((segment) => segment === '..');
+}
+
+function isAllowedYouTubeUrl(url: URL) {
+    const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
+
+    if (hostname === 'youtu.be') {
+        return /^\/[A-Za-z0-9_-]+$/.test(pathname);
+    }
+
+    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(hostname)) {
+        return false;
+    }
+
+    if (pathname === '/watch') {
+        return !!url.searchParams.get('v');
+    }
+
+    return /^\/(shorts|live|embed)\/[A-Za-z0-9_-]+$/.test(pathname);
+}
+
+function isAllowedVimeoUrl(url: URL) {
+    const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
+
+    if (hostname === 'vimeo.com') {
+        return /^\/\d+$/.test(pathname);
+    }
+
+    if (hostname === 'player.vimeo.com') {
+        return /^\/video\/\d+$/.test(pathname);
+    }
+
+    return false;
 }
 
 export function isAllowedVideoSourceUrl(rawUrl: string, env: MediaHostEnv = process.env) {
@@ -58,29 +103,54 @@ export function isAllowedVideoSourceUrl(rawUrl: string, env: MediaHostEnv = proc
 
     if (url.protocol !== 'https:') return false;
 
-    const hostname = url.hostname.toLowerCase();
-
-    // 1. Allowed embed sources
-    const embedHosts = new Set([
-        'youtube.com',
-        'www.youtube.com',
-        'youtu.be',
-        'youtube-nocookie.com',
-        'vimeo.com',
-        'player.vimeo.com',
-    ]);
-
-    if (embedHosts.has(hostname)) {
+    if (isAllowedYouTubeUrl(url) || isAllowedVimeoUrl(url)) {
         return true;
     }
 
-    // 2. Direct media from allowed hosts
+    // Direct files and streaming manifests must be served from explicitly configured media hosts.
     const allowedMediaHosts = getAllowedMediaHosts(env);
-    if (allowedMediaHosts.has(hostname)) {
-        return true;
+    return allowedMediaHosts.has(url.hostname.toLowerCase());
+}
+
+export function getAllowedCommentImageHosts(env: MediaHostEnv = process.env) {
+    return new Set([
+        ...parseMediaHosts(env.ALLOWED_COMMENT_IMAGE_HOSTS),
+        ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
+    ]);
+}
+
+export function getAllowedAvatarHosts(env: MediaHostEnv = process.env) {
+    return new Set([
+        'img.clerk.com',
+        ...parseMediaHosts(env.ALLOWED_AVATAR_HOSTS),
+    ]);
+}
+
+export function isAllowedCommentImageUrl(rawUrl: string, env: MediaHostEnv = process.env) {
+    let url: URL;
+    try {
+        url = new URL(rawUrl);
+    } catch {
+        return false;
     }
 
-    return false;
+    if (url.protocol !== 'https:') return false;
+    return getAllowedCommentImageHosts(env).has(url.hostname.toLowerCase());
+}
+
+export function isAllowedAvatarUrl(rawUrl?: string | null, env: MediaHostEnv = process.env) {
+    if (!rawUrl) return false;
+
+    let url: URL;
+    try {
+        url = new URL(rawUrl);
+    } catch {
+        return false;
+    }
+
+    if (url.protocol !== 'https:') return false;
+    const hostname = url.hostname.toLowerCase();
+    return hostname.endsWith('.clerk.com') || getAllowedAvatarHosts(env).has(hostname);
 }
 
 export function isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv = process.env) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
+import { isAllowedAvatarUrl, isAllowedCommentImageUrl, isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
 import { buildMediaRateLimitKey } from '@/lib/media/rate-limit';
 
 describe('media host validation', () => {
@@ -52,25 +52,34 @@ describe('media rate limit key', () => {
 describe('isAllowedVideoSourceUrl', () => {
   const env = { ALLOWED_MEDIA_HOSTS: 'cdn.example.com' };
 
-  it('allows youtube URLs', () => {
+  it('allows only supported youtube URL shapes', () => {
     expect(isAllowedVideoSourceUrl('https://www.youtube.com/watch?v=abc123', env)).toBe(true);
     expect(isAllowedVideoSourceUrl('https://youtu.be/abc123', env)).toBe(true);
     expect(isAllowedVideoSourceUrl('https://youtube.com/shorts/abc123', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://www.youtube.com/live/abc123', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://www.youtube.com/embed/abc123', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://www.youtube.com/channel/UCabc123', env)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://www.youtube.com/redirect?q=https://evil.com/video.mp4', env)).toBe(false);
   });
 
-  it('allows vimeo URLs', () => {
+  it('allows only supported vimeo URL shapes', () => {
     expect(isAllowedVideoSourceUrl('https://vimeo.com/123456', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://player.vimeo.com/video/123456', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://vimeo.com/channels/staffpicks/123456', env)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://player.vimeo.com/event/123456', env)).toBe(false);
   });
 
-  it('allows configured media hosts', () => {
+  it('allows configured direct media and streaming manifest hosts', () => {
     expect(isAllowedVideoSourceUrl('https://cdn.example.com/video.mp4', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://cdn.example.com/video.m3u8', env)).toBe(true);
+    expect(isAllowedVideoSourceUrl('https://cdn.example.com/manifest.mpd', env)).toBe(true);
   });
 
-  it('blocks http', () => {
+  it('blocks unsafe or malformed video source URLs', () => {
     expect(isAllowedVideoSourceUrl('http://youtube.com/watch?v=abc', env)).toBe(false);
-  });
-
-  it('blocks arbitrary external hosts', () => {
+    expect(isAllowedVideoSourceUrl('//youtube.com/watch?v=abc', env)).toBe(false);
+    expect(isAllowedVideoSourceUrl('evil.com/video.mp4', env)).toBe(false);
+    expect(isAllowedVideoSourceUrl('not-a-url', env)).toBe(false);
     expect(isAllowedVideoSourceUrl('https://malicious.com/video.mp4', env)).toBe(false);
   });
 });
@@ -80,10 +89,13 @@ describe('isAllowedThumbnailUrl', () => {
 
   it('allows safe local paths', () => {
     expect(isAllowedThumbnailUrl('/thumbnails/video.jpg', env)).toBe(true);
+    expect(isAllowedThumbnailUrl('/images/thumb.jpg', env)).toBe(true);
   });
 
-  it('blocks protocol-relative URLs', () => {
+  it('blocks unsafe local or protocol-relative URLs', () => {
     expect(isAllowedThumbnailUrl('//malicious.com/img.jpg', env)).toBe(false);
+    expect(isAllowedThumbnailUrl('/../secret', env)).toBe(false);
+    expect(isAllowedThumbnailUrl('/%2e%2e/secret', env)).toBe(false);
   });
 
   it('allows default trusted thumbnail hosts', () => {
@@ -91,7 +103,31 @@ describe('isAllowedThumbnailUrl', () => {
     expect(isAllowedThumbnailUrl('https://img.clerk.com/abc.jpg', env)).toBe(true);
   });
 
-  it('blocks http', () => {
+  it('blocks http and random external hosts', () => {
     expect(isAllowedThumbnailUrl('http://cdn.example.com/thumb.jpg', env)).toBe(false);
+    expect(isAllowedThumbnailUrl('https://evil.com/thumb.jpg', env)).toBe(false);
+  });
+});
+
+describe('comment image and avatar URL validation', () => {
+  const env = {
+    ALLOWED_COMMENT_IMAGE_HOSTS: 'comments.example.com',
+    ALLOWED_AVATAR_HOSTS: 'avatars.example.com',
+    ALLOWED_MEDIA_HOSTS: 'video-cdn.example.com',
+  };
+
+  it('uses dedicated comment image hosts instead of video media hosts', () => {
+    expect(isAllowedCommentImageUrl('https://comments.example.com/comment.jpg', env)).toBe(true);
+    expect(isAllowedCommentImageUrl('https://video-cdn.example.com/comment.jpg', env)).toBe(false);
+    expect(isAllowedCommentImageUrl('http://comments.example.com/comment.jpg', env)).toBe(false);
+    expect(isAllowedCommentImageUrl('not-a-url', env)).toBe(false);
+  });
+
+  it('uses dedicated avatar hosts and Clerk avatar hosts', () => {
+    expect(isAllowedAvatarUrl('https://img.clerk.com/avatar.jpg', env)).toBe(true);
+    expect(isAllowedAvatarUrl('https://images.clerk.com/avatar.jpg', env)).toBe(true);
+    expect(isAllowedAvatarUrl('https://avatars.example.com/avatar.jpg', env)).toBe(true);
+    expect(isAllowedAvatarUrl('https://video-cdn.example.com/avatar.jpg', env)).toBe(false);
+    expect(isAllowedAvatarUrl('http://img.clerk.com/avatar.jpg', env)).toBe(false);
   });
 });

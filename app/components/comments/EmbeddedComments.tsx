@@ -220,13 +220,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           videoId,
           text,
           parentId,
-          authorProfile: userProfile
-            ? {
-                name: userProfile.name || null,
-                username: userProfile.username || null,
-                imageUrl: userProfile.imageUrl || null,
-              }
-            : undefined,
         }),
         headers: { "Content-Type": "application/json" },
       });

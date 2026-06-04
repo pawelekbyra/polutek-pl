@@ -54,6 +54,10 @@ export class AccessPolicy {
 
     if (!video) return { allowed: false, reason: "NOT_FOUND" };
 
+    if (video.status === VideoStatus.ARCHIVED) {
+        return { allowed: false, reason: "NOT_FOUND" };
+    }
+
     // 1. Check Publication Status
     const isPublished = video.status === VideoStatus.PUBLISHED &&
                         (!video.publishedAt || video.publishedAt <= new Date());
