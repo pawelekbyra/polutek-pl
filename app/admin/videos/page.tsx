@@ -240,7 +240,7 @@ export default function AdminVideosPage() {
   };
 
   const handleDelete = async (id: string) => {
-      if (!confirm("⚠️ UWAGA: Czy na pewno chcesz TRWALE USUNĄĆ ten film? Tej operacji nie da się cofnąć.")) return;
+      if (!confirm("Czy na pewno chcesz zarchiwizować ten film? Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
@@ -578,7 +578,7 @@ export default function AdminVideosPage() {
                                                 <div className="flex justify-end gap-2">
                                                     <Button variant="ghost" size="icon" onClick={() => handleEdit(vid)} title="Edytuj"><Edit className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="icon" onClick={() => handleDuplicate(vid)} title="Kopiuj"><Plus className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(vid.id)} className="text-destructive" title="Usuń trwale"><Trash2 className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(vid.id)} className="text-destructive" title="Zarchiwizuj"><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>

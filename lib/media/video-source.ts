@@ -66,6 +66,10 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
   }
 
   const pathname = url.pathname.toLowerCase();
+  // NOTE: HLS/DASH manifests are served directly (needsProxy: false).
+  // This means the manifest URL is publicly accessible if known.
+  // Segment-level access control (token auth, signed URLs) is out of scope for this project.
+  // Patron access is enforced at the UI/API layer, not at the CDN/segment level.
   if (pathname.endsWith('.m3u8')) {
     return {
       kind: 'hls',

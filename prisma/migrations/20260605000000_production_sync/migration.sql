@@ -68,32 +68,46 @@ ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundedAmountMinor" INTEGER NOT
 ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "subjectEn" TEXT;
 ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "htmlEn" TEXT;
 
--- 10. Fix unique constraints on PatronGrant
--- 10.1 Clean duplicates before adding unique constraint (keeping the oldest one)
-DELETE FROM "PatronGrant"
-WHERE id IN (
+-- 10. Fix unique constraints on PatronGrant without deleting grant history.
+-- Keep the oldest row as canonical; mark later duplicates as revoked and clear
+-- duplicate external ids so unique indexes can be created safely.
+WITH duplicate_payment_grants AS (
     SELECT id
     FROM (
-        SELECT id, ROW_NUMBER() OVER (PARTITION BY "paymentId" ORDER BY "createdAt" ASC) as row_num
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY "paymentId" ORDER BY "createdAt" ASC, id ASC) AS row_num
         FROM "PatronGrant"
         WHERE "paymentId" IS NOT NULL
-    ) t
+    ) ranked
     WHERE row_num > 1
-);
+)
+UPDATE "PatronGrant" pg
+SET
+    "revokedAt" = COALESCE(pg."revokedAt", NOW()),
+    "reason" = CONCAT_WS(' ', NULLIF(pg."reason", ''), '[MIGRATION_DEDUP duplicate paymentId]'),
+    "paymentId" = NULL
+FROM duplicate_payment_grants d
+WHERE pg.id = d.id;
 
-DELETE FROM "PatronGrant"
-WHERE id IN (
+WITH duplicate_referral_grants AS (
     SELECT id
     FROM (
-        SELECT id, ROW_NUMBER() OVER (PARTITION BY "referralId" ORDER BY "createdAt" ASC) as row_num
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY "referralId" ORDER BY "createdAt" ASC, id ASC) AS row_num
         FROM "PatronGrant"
         WHERE "referralId" IS NOT NULL
-    ) t
+    ) ranked
     WHERE row_num > 1
-);
+)
+UPDATE "PatronGrant" pg
+SET
+    "revokedAt" = COALESCE(pg."revokedAt", NOW()),
+    "reason" = CONCAT_WS(' ', NULLIF(pg."reason", ''), '[MIGRATION_DEDUP duplicate referralId]'),
+    "referralId" = NULL
+FROM duplicate_referral_grants d
+WHERE pg.id = d.id;
 
 -- 10.2 Drop old redundant indices if they exist
 DROP INDEX IF EXISTS "PatronGrant_paymentId_idx";
+DROP INDEX IF EXISTS "PatronGrant_referralId_idx";
 
 -- 10.3 Create unique indices
 CREATE UNIQUE INDEX IF NOT EXISTS "PatronGrant_paymentId_key" ON "PatronGrant"("paymentId");

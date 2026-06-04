@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { verifyAdmin } from "@/lib/auth-utils";
 import Navbar from "@/app/components/Navbar";
 import { EmailTemplateEditor } from "./EmailTemplateEditor";
 
