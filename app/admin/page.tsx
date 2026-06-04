@@ -4,7 +4,7 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
-import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft } from "@/app/components/icons";
+import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft, Image as ImageIconLucide } from "@/app/components/icons";
 import { formatCount, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -35,6 +35,8 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'videos' | 'channel' | 'stats' | 'email'>('videos');
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -163,7 +165,32 @@ export default function AdminPanel() {
     }
   }
 
+  const slugify = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
+  const [isSlugManual, setIsSlugManual] = useState<boolean>(false);
+
+  const handleTitleChange = (val: string) => {
+    setFormData(prev => ({
+      ...prev,
+      title: val,
+      slug: (prev.id || isSlugManual) ? prev.slug : slugify(val)
+    }));
+  };
+
   const handleEdit = (vid: any) => {
+    setFormError(null);
+    setIsSlugManual(true);
     setFormData({
       id: vid.id,
       title: vid.title,
@@ -187,11 +214,14 @@ export default function AdminPanel() {
   };
 
   const handleDuplicate = (vid: any) => {
+    setFormError(null);
+    setIsSlugManual(false);
+    const newTitle = `${vid.title} (Kopia)`;
     setFormData({
       id: "",
-      title: `${vid.title} (Kopia)`,
+      title: newTitle,
       titleEn: vid.titleEn ? `${vid.titleEn} (Copy)` : "",
-      slug: `${vid.slug}-kopia-${Math.floor(Math.random() * 1000)}`,
+      slug: slugify(newTitle) + "-" + Math.floor(Math.random() * 1000),
       description: vid.description || "",
       descriptionEn: vid.descriptionEn || "",
       videoUrl: vid.videoUrl,
@@ -210,6 +240,8 @@ export default function AdminPanel() {
   };
 
   const handleCreateNew = () => {
+    setFormError(null);
+    setIsSlugManual(false);
     setFormData({
       id: "",
       title: "",
@@ -234,21 +266,26 @@ export default function AdminPanel() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setFormError(null);
     try {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
+      const data = await res.json();
       if (res.ok) {
         setIsEditing(false);
         fetchVideos();
       } else {
-        const err = await res.json();
-        alert("Error: " + err.error);
+        setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
       }
     } catch (err) {
       console.error("Submit failed", err);
+      setFormError("Błąd połączenia z serwerem.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -339,111 +376,159 @@ export default function AdminPanel() {
         </header>
 
         <Dialog open={isEditing} onOpenChange={setIsEditing}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</DialogTitle>
+              <DialogTitle className="text-2xl">{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <Tabs defaultValue="pl">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="pl">Polski</TabsTrigger>
-                    <TabsTrigger value="en">Angielski</TabsTrigger>
+
+            {formError && (
+              <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-8 py-4">
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <Globe className="h-4 w-4" /> Treść i Języki
+                </h3>
+                <Tabs defaultValue="pl" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="pl">Polski (Główny)</TabsTrigger>
+                    <TabsTrigger value="en">Angielski (Opcjonalny)</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="pl" className="space-y-4 pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TabsContent value="pl" className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="title">Tytuł (PL)</Label>
-                        <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                        <Label htmlFor="title" className="text-sm font-bold">Tytuł (PL)</Label>
+                        <Input
+                          id="title"
+                          placeholder="Np. Mój nowy film"
+                          value={formData.title}
+                          onChange={e => handleTitleChange(e.target.value)}
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="slug">Slug (URL)</Label>
-                        <Input id="slug" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
+                        <Label htmlFor="slug" className="text-sm font-bold text-muted-foreground">Slug (URL)</Label>
+                        <Input
+                          id="slug"
+                          placeholder="moj-nowy-film"
+                          value={formData.slug}
+                          onChange={e => {
+                            setIsSlugManual(true);
+                            setFormData({...formData, slug: slugify(e.target.value)});
+                          }}
+                          required
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description">Opis (PL)</Label>
-                      <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} />
+                      <Label htmlFor="description" className="text-sm font-bold">Opis (PL)</Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Szczegółowy opis filmu..."
+                        value={formData.description}
+                        onChange={e => setFormData({...formData, description: e.target.value})}
+                        rows={5}
+                      />
                     </div>
                   </TabsContent>
-                  <TabsContent value="en" className="space-y-4 pt-4">
+                  <TabsContent value="en" className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="titleEn">Tytuł (EN)</Label>
-                      <Input id="titleEn" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} />
+                      <Label htmlFor="titleEn" className="text-sm font-bold text-blue-600">Tytuł (EN)</Label>
+                      <Input
+                        id="titleEn"
+                        placeholder="My new video"
+                        value={formData.titleEn}
+                        onChange={e => setFormData({...formData, titleEn: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="descriptionEn">Opis (EN)</Label>
-                      <Textarea id="descriptionEn" value={formData.descriptionEn} onChange={e => setFormData({...formData, descriptionEn: e.target.value})} rows={4} />
+                      <Label htmlFor="descriptionEn" className="text-sm font-bold text-blue-600">Opis (EN)</Label>
+                      <Textarea
+                        id="descriptionEn"
+                        placeholder="Detailed video description..."
+                        value={formData.descriptionEn}
+                        onChange={e => setFormData({...formData, descriptionEn: e.target.value})}
+                        rows={5}
+                      />
                     </div>
                   </TabsContent>
                 </Tabs>
+              </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" /> Media i Pliki
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="videoUrl">URL Wideo</Label>
-                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
+                    <Label htmlFor="videoUrl" className="text-sm font-bold">URL Wideo (R2/S3/URL)</Label>
+                    <Input
+                      id="videoUrl"
+                      placeholder="https://..."
+                      value={formData.videoUrl}
+                      onChange={e => setFormData({...formData, videoUrl: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="thumbnailUrl">URL Miniaturki</Label>
-                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
+                    <Label htmlFor="thumbnailUrl" className="text-sm font-bold">URL Miniaturki</Label>
+                    <Input
+                      id="thumbnailUrl"
+                      placeholder="/thumbnail.jpg lub https://..."
+                      value={formData.thumbnailUrl}
+                      onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="duration">Czas trwania</Label>
-                    <Input id="duration" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} />
+                    <Label htmlFor="duration" className="text-sm font-bold">Czas trwania (np. 12:45)</Label>
+                    <Input
+                      id="duration"
+                      placeholder="MM:SS"
+                      value={formData.duration}
+                      onChange={e => setFormData({...formData, duration: e.target.value})}
+                    />
                   </div>
                 </div>
+              </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" /> Widoczność i Dostęp
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                    <div className="space-y-2">
-                    <Label htmlFor="tier">Poziom Dostępu</Label>
+                    <Label htmlFor="tier" className="text-sm font-bold">Poziom Dostępu</Label>
                     <Select value={formData.tier} onValueChange={(v) => setFormData({...formData, tier: v || "PUBLIC"})}>
                         <SelectTrigger>
                             <SelectValue placeholder="Wybierz poziom" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="PUBLIC">Publiczny</SelectItem>
+                            <SelectItem value="PUBLIC">Publiczny (Wszyscy)</SelectItem>
                             <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                            <SelectItem value="PATRON">Patron</SelectItem>
+                            <SelectItem value="PATRON">Patron (Wspierający)</SelectItem>
                         </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status Publikacji</Label>
+                    <Label htmlFor="status" className="text-sm font-bold">Status Publikacji</Label>
                     <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v || "PUBLISHED"})}>
                         <SelectTrigger>
                             <SelectValue placeholder="Wybierz status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="DRAFT">Draft</SelectItem>
+                            <SelectItem value="DRAFT">Szkic (DRAFT)</SelectItem>
                             <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
                             <SelectItem value="UNLISTED">Niepubliczny</SelectItem>
                             <SelectItem value="ARCHIVED">Zarchiwizowany</SelectItem>
                         </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2 pt-4">
-                       <Checkbox
-                        id="isMainFeatured"
-                        checked={formData.isMainFeatured}
-                        onCheckedChange={(checked) => setFormData({...formData, isMainFeatured: !!checked})}
-                       />
-                       <Label htmlFor="isMainFeatured">Hero Video (Tylko Public)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 pt-4">
-                       <Checkbox
-                        id="showInSidebar"
-                        checked={formData.showInSidebar}
-                        onCheckedChange={(checked) => setFormData({...formData, showInSidebar: !!checked})}
-                       />
-                       <Label htmlFor="showInSidebar">Pokaż w bocznym pasku</Label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="sidebarOrder">Kolejność w sidebarze (1 = najwyżej)</Label>
+                    <Label htmlFor="sidebarOrder" className="text-sm font-bold">Kolejność (1 = góra)</Label>
                     <Input
                       id="sidebarOrder"
                       type="number"
@@ -453,25 +538,67 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <div className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg border">
+                       <Checkbox
+                        id="isMainFeatured"
+                        checked={formData.isMainFeatured}
+                        onCheckedChange={(checked) => setFormData({...formData, isMainFeatured: !!checked})}
+                       />
+                       <div className="grid gap-1.5 leading-none">
+                        <Label htmlFor="isMainFeatured" className="text-sm font-bold">Hero Video</Label>
+                        <p className="text-xs text-muted-foreground">Główny film na stronie (wymaga PUBLIC+PUBLISHED)</p>
+                       </div>
+                  </div>
+                  <div className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg border">
+                       <Checkbox
+                        id="showInSidebar"
+                        checked={formData.showInSidebar}
+                        onCheckedChange={(checked) => setFormData({...formData, showInSidebar: !!checked})}
+                       />
+                       <div className="grid gap-1.5 leading-none">
+                        <Label htmlFor="showInSidebar" className="text-sm font-bold">Pokaż w sidebarze</Label>
+                        <p className="text-xs text-muted-foreground">Czy ma być widoczny na liście bocznej</p>
+                       </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" /> Statystyki i Metryki (Override)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="likes">Polubienia</Label>
+                    <Label htmlFor="likes" className="text-sm">Polubienia</Label>
                     <Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dislikes">Dislajki</Label>
+                    <Label htmlFor="dislikes" className="text-sm">Dislajki</Label>
                     <Input id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="views">Wyświetlenia</Label>
+                    <Label htmlFor="views" className="text-sm">Wyświetlenia</Label>
                     <Input id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
                   </div>
                 </div>
+              </section>
 
-                <Button type="submit" className="w-full">
-                  Zapisz Zmiany
+              <div className="flex gap-4 pt-4 sticky bottom-0 bg-background pb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSubmitting}
+                >
+                  Anuluj
                 </Button>
-              </form>
+                <Button type="submit" className="flex-[2]" disabled={isSubmitting}>
+                  {isSubmitting ? "Zapisywanie..." : (formData.id ? "Zapisz Zmiany" : "Dodaj Film")}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
 
