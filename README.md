@@ -78,7 +78,7 @@ npm run db:migrate:deploy
 The admin panel at `/admin` includes several enhancements for content management:
 - **Scoped Hero Videos**: Toggling a video as "Hero" (isMainFeatured) only unsets other featured videos for the **same creator**, supporting multi-creator environments.
 - **Manual Sidebar Ordering**: Use the `sidebarOrder` field to manually prioritize videos in the sidebar. Sorting follows `sidebarOrder` (desc), then `publishedAt` (desc).
-- **Smart Creator Selection**: New videos are automatically assigned to the primary creator (`isPrimary: true`) or the `polutek` fallback.
+- **Smart Creator Selection**: New videos are automatically assigned to the primary creator (`isPrimary: true`) or fallback to the creator configured by `MAIN_CREATOR_SLUG`.
 - **Safety Constraints**: The system prevents setting non-public or non-published videos as the main featured material.
 
 ### Local content for the homepage
