@@ -17,7 +17,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   try {
-    const videos = await ContentService.getAllVideos();
+    const videos = flags.multiCreator
+      ? await ContentService.getAllVideos()
+      : (await ContentService.getCreatorBySlug(flags.mainCreatorSlug))?.videos || [];
     const videoRoutes = videos
       .filter(v => v.tier === 'PUBLIC')
       .map((v) => ({
