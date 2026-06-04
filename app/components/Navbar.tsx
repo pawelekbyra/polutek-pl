@@ -196,7 +196,7 @@ const Navbar = () => {
                     <UserButton.MenuItems>
                       <UserButton.Link
                         href="/admin"
-                        label="Panel admina"
+                        label="Zarządzaj kanałem"
                         labelIcon={<ShieldCheck size={16} />}
                       />
                     </UserButton.MenuItems>
