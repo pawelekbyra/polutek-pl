@@ -137,12 +137,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
+        const mainCreatorSlug = flags.mainCreatorSlug;
+
         // Find primary creator first
         let creator = await tx.creator.findFirst({ where: { isPrimary: true } });
 
         if (!creator) {
           // Fallback to the configured main creator slug
-          creator = await tx.creator.findUnique({ where: { slug: flags.mainCreatorSlug } });
+          creator = await tx.creator.findUnique({ where: { slug: mainCreatorSlug } });
         }
 
         if (!creator) {
@@ -153,7 +155,7 @@ export async function POST(req: NextRequest) {
             data: {
               userId: user.id,
               name: "Paweł Perfect",
-              slug: flags.mainCreatorSlug,
+              slug: mainCreatorSlug,
               isApproved: true,
               isPrimary: true,
             }

@@ -18,6 +18,7 @@ vi.mock('@/lib/services/content.service', () => ({
 
 describe('sitemap', () => {
   beforeEach(() => {
+    vi.resetModules();
     mockFeatureFlags.flags.multiCreator = false;
     mockFeatureFlags.flags.mainCreatorSlug = 'kraufanding';
     process.env.NEXT_PUBLIC_APP_URL = 'https://example.com';
