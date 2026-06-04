@@ -1,7 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { UserService } from "./services/user.service";
-import { ADMIN_EMAIL } from "./constants";
+import { requireConfiguredAdminEmail } from "./constants";
 import { NextResponse } from "next/server";
 
 export class AuthError extends Error {
@@ -60,8 +60,10 @@ export async function requireAdmin() {
     throw new AuthError("FORBIDDEN");
   }
 
+  const adminEmail = requireConfiguredAdminEmail();
+
   // Bootstrap Admin logic
-  if (user.role !== "ADMIN" && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+  if (user.role !== "ADMIN" && user.email.toLowerCase() === adminEmail.toLowerCase()) {
     await prisma.user.update({
       where: { id: userId },
       data: { role: "ADMIN" }

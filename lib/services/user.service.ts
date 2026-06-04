@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
-import { ADMIN_EMAIL } from '../constants';
+import { ADMIN_EMAIL, getConfiguredAdminEmail } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { flags } from '@/lib/feature-flags';
@@ -132,7 +132,9 @@ export class UserService {
         // 2. Otherwise keep existing role or default to USER.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
-        if (clerkRole?.toUpperCase() === 'ADMIN' || email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
+        const adminEmail = getConfiguredAdminEmail();
+
+        if (clerkRole?.toUpperCase() === 'ADMIN' || (adminEmail && email.toLowerCase() === adminEmail.toLowerCase())) {
           targetRole = 'ADMIN';
         } else if (existingUser) {
           targetRole = existingUser.role;
