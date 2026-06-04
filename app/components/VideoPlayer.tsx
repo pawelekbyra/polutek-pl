@@ -86,7 +86,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
     return (
-        <div className="relative w-full h-full min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
+        <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
             {loadError ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950 text-white p-6 text-center">
                     <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
