@@ -5,8 +5,11 @@ import { clerkClient, currentUser } from '@clerk/nextjs/server';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     user: {
       findUnique: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -18,6 +21,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 describe('UserService.getOrCreateUserFromAuth', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
@@ -156,5 +160,58 @@ describe('UserService.getOrCreateUserFromAuth', () => {
       null,
       null
     );
+  });
+});
+
+
+describe('UserService.syncUser', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns the user created by a parallel request when upsert hits P2002', async () => {
+    const existingUser = { id: 'user_race', email: 'race@example.com' };
+    vi.mocked(prisma.$transaction).mockRejectedValue({ code: 'P2002' } as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(existingUser as never);
+
+    const result = await UserService.syncUser('user_race', 'race@example.com', 'Race User');
+
+    expect(result).toEqual(existingUser);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user_race' } });
+    expect(prisma.user.findUnique).not.toHaveBeenCalledWith({ where: { email: 'race@example.com' } });
+  });
+});
+
+describe('UserService.updateUserLanguage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('upserts language preferences for an existing local user', async () => {
+    const updatedUser = { id: 'user_lang', email: 'lang@example.com', language: 'pl' };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'lang@example.com' } as never);
+    vi.mocked(prisma.user.upsert).mockResolvedValue(updatedUser as never);
+
+    const result = await UserService.updateUserLanguage('user_lang', 'pl');
+
+    expect(result).toEqual(updatedUser);
+    expect(prisma.user.upsert).toHaveBeenCalledWith({
+      where: { id: 'user_lang' },
+      update: { language: 'pl' },
+      create: expect.objectContaining({
+        id: 'user_lang',
+        email: 'lang@example.com',
+        language: 'pl',
+      }),
+    });
   });
 });

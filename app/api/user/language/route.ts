@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { UserService } from '@/lib/services/user.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +16,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid language" }, { status: 400 });
     }
 
-    // 1. Update Database
-    await prisma.user.update({
-      where: { id: userId },
-      data: { language: language }
-    });
+    // 1. Upsert Database row so brand-new users can save preferences before other syncs finish.
+    await UserService.updateUserLanguage(userId, language);
 
     // 2. Update Clerk Metadata for persistence and webhook use
     const client = await clerkClient();
