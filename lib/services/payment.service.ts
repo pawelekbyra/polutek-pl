@@ -41,14 +41,18 @@ import { normalizePaymentTotals } from './user-access.service';
 
 function getPatronMinTipAmountMinor() {
   const raw = process.env.PATRON_MIN_TIP_AMOUNT;
-  if (!raw) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("CRITICAL: PATRON_MIN_TIP_AMOUNT environment variable is missing in production.");
-    }
-    return 500; // Safe default for dev/test (5.00)
+
+  if (!raw && process.env.NODE_ENV === "production") {
+    throw new Error("CRITICAL: PATRON_MIN_TIP_AMOUNT is missing in production.");
   }
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 500;
+
+  const parsed = Number(raw ?? 500);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`CRITICAL: PATRON_MIN_TIP_AMOUNT="${raw}" is not a valid positive number.`);
+  }
+
+  return Math.floor(parsed);
 }
 
 async function decrementUserNetPaymentTotals(

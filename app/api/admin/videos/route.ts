@@ -235,7 +235,7 @@ export async function DELETE(req: NextRequest) {
 
   try {
     // Soft-delete by setting status to ARCHIVED
-    const deleted = await prisma.video.update({
+    const archived = await prisma.video.update({
       where: { id },
       data: { status: VideoStatus.ARCHIVED }
     });
@@ -245,10 +245,10 @@ export async function DELETE(req: NextRequest) {
         action: "VIDEO_ARCHIVED",
         targetType: "Video",
         targetId: id,
-        metadata: { title: deleted.title, originalAction: "DELETE_REQUEST" }
+        metadata: { title: archived.title, originalAction: "DELETE_REQUEST" }
     });
 
-    return NextResponse.json({ success: true, deleted: deleted.title, status: 'ARCHIVED' });
+    return NextResponse.json({ success: true, archived: archived.title, status: 'ARCHIVED' });
   } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
     const message = error instanceof Error ? error.message : String(error);
