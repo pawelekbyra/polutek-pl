@@ -70,13 +70,13 @@ export function EmailTemplateEditor({ initialTemplate }: EmailTemplateEditorProp
         <div className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Panel admina</p>
-            <h1 className="text-3xl font-bold tracking-tight">Szablony e-mail</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Maile</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Edytujesz szablon <code className="rounded bg-muted px-1 py-0.5">{slug}</code>. Zmienna <code className="rounded bg-muted px-1 py-0.5">{"{{firstName}}"}</code> zostanie podmieniona podczas wysyłki.
+              Szablony wiadomości, newslettery, powiadomienia. Edytujesz szablon <code className="rounded bg-muted px-1 py-0.5">{slug}</code>. Zmienna <code className="rounded bg-muted px-1 py-0.5">{"{{firstName}}"}</code> zostanie podmieniona podczas wysyłki.
             </p>
           </div>
           <Button variant="outline" asChild>
-            <Link href="/admin">Powrót do panelu</Link>
+            <Link href="/admin">← Wróć do panelu</Link>
           </Button>
         </div>
 

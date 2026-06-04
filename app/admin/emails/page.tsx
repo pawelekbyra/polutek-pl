@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { verifyAdmin } from "@/lib/auth-utils";
+import Navbar from "@/app/components/Navbar";
 import { EmailTemplateEditor } from "./EmailTemplateEditor";
 
 export const dynamic = "force-dynamic";
@@ -33,5 +34,10 @@ export default async function AdminEmailsPage() {
     console.error("[AdminEmailsPage] Failed to fetch template, falling back to default.", err);
   }
 
-  return <EmailTemplateEditor initialTemplate={template || DEFAULT_WELCOME_TEMPLATE} />;
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar />
+      <EmailTemplateEditor initialTemplate={template || DEFAULT_WELCOME_TEMPLATE} />
+    </div>
+  );
 }
