@@ -62,7 +62,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     // 1. Load Creator
     debug.stage = "loading_creator";
     try {
-      creator = await ContentService.getCreatorBySlug(flags.mainCreatorSlug);
+      creator = await ContentService.getConfiguredOrDefaultCreator();
       debug.creatorSuccess = true;
     } catch (e) {
       logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
@@ -101,7 +101,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       logger.info("[HOME_CONTENT_DEBUG] Loader finished", {
         status: allVideos.length > 0 ? "ready" : "empty",
         mode: flags.multiCreator ? "multi_creator" : "single_creator",
-        mainCreatorSlug: flags.mainCreatorSlug,
+        mainCreatorSlug: flags.mainCreatorSlug || creator?.slug || null,
         ...debug,
       });
     }

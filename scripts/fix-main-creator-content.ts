@@ -2,14 +2,22 @@ import { PrismaClient, VideoStatus, AccessTier } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const creatorSlug = process.env.MAIN_CREATOR_SLUG;
+const creatorDisplayName = process.env.MAIN_CREATOR_NAME || creatorSlug;
+
 async function main() {
-  console.log("=== NAPRAWA I POPULACJA TREŚCI MVP: Paweł Perfect ===");
+  console.log("=== NAPRAWA I POPULACJA TREŚCI MVP DLA SKONFIGUROWANEGO TWÓRCY ===");
+
+  if (!creatorSlug) {
+    console.log("BŁĄD: Brak MAIN_CREATOR_SLUG w środowisku. Ustaw slug twórcy przed uruchomieniem skryptu.");
+    return;
+  }
 
   try {
-    let polutek = await prisma.creator.findUnique({ where: { slug: 'polutek' } });
+    let creator = await prisma.creator.findUnique({ where: { slug: creatorSlug } });
 
-    if (!polutek) {
-      console.log("Nie znaleziono twórcy o slugu 'polutek'. Próba znalezienia admina...");
+    if (!creator) {
+      console.log(`Nie znaleziono twórcy o slugu z MAIN_CREATOR_SLUG (${creatorSlug}). Próba znalezienia admina...`);
       const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
 
       if (!admin) {
@@ -17,11 +25,11 @@ async function main() {
         return;
       }
 
-      console.log(`Tworzenie twórcy 'polutek' (Paweł Perfect) dla admina ${admin.email}...`);
-      polutek = await prisma.creator.create({
+      console.log(`Tworzenie twórcy ${creatorSlug} dla admina ${admin.email}...`);
+      creator = await prisma.creator.create({
         data: {
-          slug: 'polutek',
-          name: 'Paweł Perfect',
+          slug: creatorSlug,
+          name: creatorDisplayName || creatorSlug,
           userId: admin.id,
           isApproved: true,
           isPrimary: true,
@@ -30,13 +38,13 @@ async function main() {
       });
     }
 
-    console.log(`Znaleziono twórcę: ${polutek.name} (ID: ${polutek.id})`);
+    console.log(`Znaleziono twórcę: ${creator.name} (ID: ${creator.id})`);
 
     console.log("Aktualizacja brandingu twórcy...");
     await prisma.creator.update({
-      where: { id: polutek.id },
+      where: { id: creator.id },
       data: {
-        name: 'Paweł Perfect',
+        name: creatorDisplayName || creator.name,
         isApproved: true,
         isPrimary: true,
         subscribersCount: 1250000
@@ -89,7 +97,7 @@ async function main() {
           likesCount: v.likesCount
         },
         create: {
-          creatorId: polutek.id,
+          creatorId: creator.id,
           slug: v.slug,
           title: v.title,
           videoUrl: v.videoUrl,
@@ -106,11 +114,11 @@ async function main() {
 
     const finalVisible = await countVisible();
     console.log(`\nStan końcowy MVP:`);
-    console.log(`- Nazwa twórcy: Paweł Perfect`);
+    console.log(`- Nazwa twórcy: ${creatorDisplayName || creator.name}`);
     console.log(`- Widoczne filmy: ${finalVisible}`);
 
     if (finalVisible > 0) {
-        console.log("\nSUKCES: Baza została zasilona materiałami MVP. Strona główna powinna teraz wyświetlać Paweł Perfect & You don't have the guts to log in.");
+        console.log("\nSUKCES: Baza została zasilona materiałami MVP dla skonfigurowanego twórcy.");
     } else {
         console.log("\nUWAGA: Nadal brak widocznych filmów. Sprawdź npm run content:diagnose");
     }

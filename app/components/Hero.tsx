@@ -13,6 +13,7 @@ import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions'
 import { useLanguage } from './LanguageContext';
 import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
+import SubscribeButton from './SubscribeButton';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -187,6 +188,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                   <span className="text-[12px] text-[#606060] whitespace-nowrap">
                      {mounted ? formatCount(video.creator?.subscribersCount || 0) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
+               </div>
+               <div className="ml-auto lg:ml-2 shrink-0">
+                  <SubscribeButton
+                    creatorId={video.creatorId}
+                    creatorSlug={video.creator?.slug}
+                    creatorName={video.creator?.name}
+                    variant="compact"
+                  />
                </div>
             </div>
 
