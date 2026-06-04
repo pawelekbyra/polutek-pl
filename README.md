@@ -14,6 +14,11 @@ Paweł Perfect is a private service. It serves as a central hub for exclusive me
 - **Patron Status**: Patron status is currently granted by a single qualifying donation. Payment totals are tracked per currency (`UserPaymentTotal`) which is the primary source of truth for total value.
 - **Public Discovery**: One primary featured video is always public, serving as a gateway to the platform.
 
+## Current App Mode
+The portal currently runs as a **single-creator / monokanał VOD**. By default, `ENABLE_MULTI_CREATOR=false` keeps the homepage scoped to the creator configured in `MAIN_CREATOR_SLUG` (currently `polutek`) and redirects that creator's channel URL back to `/` to avoid duplicate SEO content.
+
+Multi-creator support remains a future platform mode and should be enabled explicitly with `ENABLE_MULTI_CREATOR=true` only when open creator discovery/onboarding is ready.
+
 ## Architecture & Scalability
 The platform is built with future growth and high performance in mind:
 

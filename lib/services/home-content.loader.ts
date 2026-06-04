@@ -1,4 +1,5 @@
 import { ContentService } from "./content.service";
+import { flags } from "../feature-flags";
 import { PublicVideoDTO, PublicCreatorPageDTO } from "@/app/types/video";
 
 export type HomeContentDebugInfo = {
@@ -60,22 +61,22 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     // 1. Load Creator
     debug.stage = "loading_creator";
     try {
-      creator = await ContentService.getCreatorBySlug("polutek");
+      creator = await ContentService.getCreatorBySlug(flags.mainCreatorSlug);
       debug.creatorSuccess = true;
     } catch (e) {
       console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
-      // Creator failure might not be fatal if we still have videos, but usually it is for polutek
+      // Creator failure might not be fatal in multi-creator mode if global videos are still available.
     }
 
-    // 2. Load All Videos
-    debug.stage = "loading_all_videos";
+    // 2. Load Videos
+    debug.stage = flags.multiCreator ? "loading_all_videos" : "loading_main_creator_videos";
     try {
-      allVideos = (await ContentService.getAllVideos()) || [];
+      allVideos = flags.multiCreator ? (await ContentService.getAllVideos()) || [] : creator?.videos || [];
       debug.allVideosSuccess = true;
       debug.allVideosCount = allVideos.length;
     } catch (e) {
-      console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load all videos", getSafeErrorInfo(e));
-      // If demo fallbacks are enabled, ContentService.getAllVideos() should already handle it.
+      console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", getSafeErrorInfo(e));
+      // If demo fallbacks are enabled, ContentService should already handle it.
       // We re-throw only if it's a critical DB error and no videos were returned.
       if (allVideos.length === 0) {
         throw e;
@@ -85,7 +86,9 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     // 3. Load Main Video
     debug.stage = "loading_main_video";
     try {
-      mainVideo = await ContentService.getMainFeaturedVideo();
+      mainVideo = flags.multiCreator
+        ? await ContentService.getMainFeaturedVideo()
+        : allVideos.find((video) => video.isMainFeatured) || null;
       debug.mainVideoSuccess = true;
       debug.mainVideoId = mainVideo?.id || null;
     } catch (e) {
@@ -96,6 +99,8 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     if (process.env.DEBUG_HOME_CONTENT === "true") {
       console.log("[HOME_CONTENT_DEBUG] Loader finished", {
         status: allVideos.length > 0 ? "ready" : "empty",
+        mode: flags.multiCreator ? "multi_creator" : "single_creator",
+        mainCreatorSlug: flags.mainCreatorSlug,
         ...debug,
       });
     }

@@ -4,16 +4,22 @@ import Footer from '@/app/components/Footer';
 import { auth } from '@clerk/nextjs/server';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Search } from '@/app/components/icons';
 import { ContentService } from '@/lib/services/content.service';
 import { UserService } from '@/lib/services/user.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { formatCount } from '@/lib/utils';
+import { flags } from '@/lib/feature-flags';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ChannelPage({ params }: { params: { slug: string } }) {
+  if (!flags.multiCreator && params.slug === flags.mainCreatorSlug) {
+    redirect('/');
+  }
+
   const creator = await ContentService.getCreatorBySlug(params.slug);
 
   if (!creator) {
