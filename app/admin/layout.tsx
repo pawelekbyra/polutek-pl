@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth-utils";
+import { AuthError, requireAdmin } from "@/lib/auth-utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   try {
     await requireAdmin();
-  } catch {
-    redirect("/");
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect("/");
+    }
+
+    console.error("[AdminLayout] Unexpected admin auth error:", error);
+    throw error;
   }
 
   return children;

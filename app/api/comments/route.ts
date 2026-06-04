@@ -126,11 +126,6 @@ export async function GET(request: NextRequest) {
   const videoId = searchParams.get('videoId');
   const sortBy = searchParams.get('sortBy') || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
-  const viewerProfile = {
-    name: searchParams.get('viewerName'),
-    username: searchParams.get('viewerUsername'),
-    imageUrl: searchParams.get('viewerImageUrl'),
-  };
 
   const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
   const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 50);
@@ -151,10 +146,7 @@ export async function GET(request: NextRequest) {
     let internalUserId = null;
     let canModerateComments = false;
     if (userId) {
-        let user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
-        if (user) {
-          user = await refreshLocalUserDisplayProfile(userId, user, viewerProfile);
-        }
+        const user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
         internalUserId = user?.id ?? null;
 
         if (user?.role === 'ADMIN') {

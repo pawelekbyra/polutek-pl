@@ -33,8 +33,12 @@ export type AccessDecision = {
 };
 
 export class AccessPolicy {
-  static async canViewVideo(userId: string | null | undefined, videoId: string): Promise<AccessDecision> {
-    let video: AccessVideo | null = await prisma.video.findUnique({
+  static async canViewVideo(
+    userId: string | null | undefined,
+    videoId: string,
+    prefetchedVideo?: AccessVideo | null
+  ): Promise<AccessDecision> {
+    let video: AccessVideo | null = prefetchedVideo ?? await prisma.video.findUnique({
       where: { id: videoId },
       include: { creator: true }
     });

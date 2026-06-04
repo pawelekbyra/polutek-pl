@@ -415,7 +415,7 @@ export default function AdminVideosPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="space-y-6">
                   <section className="rounded-3xl border bg-card p-5 shadow-sm md:p-6">
                     <Tabs defaultValue="pl" className="w-full gap-0">
@@ -511,7 +511,7 @@ export default function AdminVideosPage() {
                   </section>
                 </div>
 
-                <aside className="space-y-6 xl:sticky xl:top-20 xl:self-start">
+                <aside className="space-y-6 2xl:sticky 2xl:top-20 2xl:self-start">
                   <section className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
                     <h2 className="flex items-center gap-2 border-b pb-3 text-lg font-semibold">
                       <ShieldCheck className="h-5 w-5" /> Widoczność i dostęp
@@ -520,7 +520,7 @@ export default function AdminVideosPage() {
                       <div className="space-y-2">
                         <Label htmlFor="tier" className="text-sm font-bold">Poziom dostępu</Label>
                         <Select value={formData.tier} onValueChange={(v) => setFormData({...formData, tier: v || "PUBLIC"})}>
-                          <SelectTrigger><SelectValue placeholder="Wybierz poziom" /></SelectTrigger>
+                          <SelectTrigger className="w-full"><SelectValue placeholder="Wybierz poziom" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="PUBLIC">Publiczny (wszyscy)</SelectItem>
                             <SelectItem value="LOGGED_IN">Dla zalogowanych</SelectItem>
@@ -531,7 +531,7 @@ export default function AdminVideosPage() {
                       <div className="space-y-2">
                         <Label htmlFor="status" className="text-sm font-bold">Status publikacji</Label>
                         <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v || "PUBLISHED"})}>
-                          <SelectTrigger><SelectValue placeholder="Wybierz status" /></SelectTrigger>
+                          <SelectTrigger className="w-full"><SelectValue placeholder="Wybierz status" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="DRAFT">Szkic (DRAFT)</SelectItem>
                             <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
@@ -567,7 +567,7 @@ export default function AdminVideosPage() {
                     <h2 className="flex items-center gap-2 border-b pb-3 text-lg font-semibold">
                       <BarChart3 className="h-5 w-5" /> Statystyki (override)
                     </h2>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 2xl:grid-cols-1">
                       <div className="space-y-2"><Label htmlFor="likes" className="text-sm">Polubienia</Label><Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} /></div>
                       <div className="space-y-2"><Label htmlFor="dislikes" className="text-sm">Dislajki</Label><Input id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} /></div>
                       <div className="space-y-2"><Label htmlFor="views" className="text-sm">Wyświetlenia</Label><Input id="views" type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} /></div>

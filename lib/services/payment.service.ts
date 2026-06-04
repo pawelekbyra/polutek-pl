@@ -37,10 +37,19 @@ export function calculateChargebackNetAdjustment(payment: RefundCalculationInput
   return Math.max(0, payment.amountMinor - Math.max(0, payment.refundedAmountMinor ?? 0));
 }
 
+/**
+ * Estimated lifetime total in PLN for display purposes.
+ */
 function normalizePaymentTotals(paymentTotals: Array<{ currency: string; amountMinor: number }>) {
   const totalPLN = paymentTotals.find(t => t.currency === 'PLN')?.amountMinor || 0;
   const totalEUR = paymentTotals.find(t => t.currency === 'EUR')?.amountMinor || 0;
-  return (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
+  const totalUSD = paymentTotals.find(t => t.currency === 'USD')?.amountMinor || 0;
+
+  const ESTIMATED_USD_TO_PLN_RATE = 4.0;
+
+  return (totalPLN / 100) +
+         (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE) +
+         (totalUSD / 100 * ESTIMATED_USD_TO_PLN_RATE);
 }
 
 function getPatronMinTipAmountMinor() {

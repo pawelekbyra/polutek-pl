@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
+import { isAllowedMediaUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,16 +18,17 @@ const videoSchema = z.object({
   slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/),
   description: z.string().max(5000).optional().nullable(),
   descriptionEn: z.string().max(5000).optional().nullable(),
-  videoUrl: z.string().url(),
+  videoUrl: z.string().url().refine(isAllowedMediaUrl, {
+    message: "Video URL musi pochodzić z dozwolonego hosta mediów (ALLOWED_MEDIA_HOSTS).",
+  }),
   thumbnailUrl: z.string().refine((value) => {
     if (value.startsWith("/")) return true;
     try {
-      new URL(value);
-      return true;
+      return isAllowedMediaUrl(value);
     } catch {
       return false;
     }
-  }, { message: "Invalid URL or local path" }),
+  }, { message: "Miniaturka musi być ścieżką lokalną lub pochodzić z dozwolonego hosta." }),
   duration: z.string().optional().nullable(),
   tier: z.nativeEnum(AccessTier).default(AccessTier.PUBLIC),
   status: z.nativeEnum(VideoStatus).default(VideoStatus.PUBLISHED),
@@ -241,19 +243,21 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const deleted = await prisma.video.delete({
-      where: { id }
+    // Soft-delete by setting status to ARCHIVED
+    const deleted = await prisma.video.update({
+      where: { id },
+      data: { status: VideoStatus.ARCHIVED }
     });
 
     await writeAuditLog({
         actorUserId: (await auth()).userId,
-        action: "VIDEO_DELETED",
+        action: "VIDEO_ARCHIVED",
         targetType: "Video",
         targetId: id,
-        metadata: { title: deleted.title }
+        metadata: { title: deleted.title, originalAction: "DELETE_REQUEST" }
     });
 
-    return NextResponse.json({ success: true, deleted: deleted.title });
+    return NextResponse.json({ success: true, deleted: deleted.title, status: 'ARCHIVED' });
   } catch (error: unknown) {
     console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
     const message = error instanceof Error ? error.message : String(error);

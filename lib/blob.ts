@@ -78,9 +78,10 @@ export async function getGatedBlobResponse(
   userId: string | null,
   videoId: string,
   blobUrl: string,
-  headers?: Headers
+  headers?: Headers,
+  prefetchedVideo?: any // Can be AccessVideo
 ) {
-  const decision = await AccessPolicy.canViewVideo(userId, videoId);
+  const decision = await AccessPolicy.canViewVideo(userId, videoId, prefetchedVideo);
 
   if (!decision.allowed) {
     return new NextResponse('Forbidden', { status: 403 });

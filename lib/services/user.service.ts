@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
@@ -131,22 +132,25 @@ export class UserService {
         // 2. Otherwise keep existing role or default to USER.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
-        if (clerkRole === 'ADMIN' || email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
+        if (clerkRole?.toUpperCase() === 'ADMIN' || email.toLowerCase() === UserService.ADMIN_EMAIL.toLowerCase()) {
           targetRole = 'ADMIN';
         } else if (existingUser) {
           targetRole = existingUser.role;
         }
 
+        const updateData: Prisma.UserUpdateInput = {
+          email,
+          language,
+          role: targetRole,
+        };
+
+        if (name) updateData.name = name;
+        if (username) updateData.username = username;
+        if (imageUrl) updateData.imageUrl = imageUrl;
+
         const user = await tx.user.upsert({
           where: { id },
-          update: {
-            email,
-            name,
-            username,
-            imageUrl,
-            language,
-            role: targetRole,
-          },
+          update: updateData,
           create: {
             id,
             email,
@@ -294,16 +298,20 @@ export class UserService {
   }
 
   static async ensureAdminUser() {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("ensureAdminUser must not be used in production");
+    }
+
     return await prisma.user.upsert({
         where: { email: UserService.ADMIN_EMAIL },
         update: { role: 'ADMIN', name: "Paweł Perfect" },
         create: {
-            id: `admin_${Date.now()}`,
+            id: `admin_dev_${crypto.randomBytes(4).toString('hex')}`,
             email: UserService.ADMIN_EMAIL,
             name: "Paweł Perfect",
             role: 'ADMIN',
             language: "pl",
-            referralCode: 'admin'
+            referralCode: 'admin_dev'
         }
     });
   }
