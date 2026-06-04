@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base routes
   const routes = [
     '',
-    ...(flags.multiCreator ? [`/channel/${flags.mainCreatorSlug}`] : []),
+    ...(flags.mainCreatorSlug ? [`/channel/${flags.mainCreatorSlug}`] : []),
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
