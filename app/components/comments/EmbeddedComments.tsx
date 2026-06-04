@@ -186,21 +186,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         "comments",
         videoId,
         sortBy,
-        userProfile?.name,
-        userProfile?.username,
-        userProfile?.imageUrl,
       ],
       queryFn: async ({ pageParam }) => {
         const url = new URL("/api/comments", window.location.origin);
         url.searchParams.append("videoId", videoId);
         url.searchParams.append("sortBy", sortBy);
         if (pageParam) url.searchParams.append("cursor", pageParam as string);
-        if (userProfile?.name)
-          url.searchParams.append("viewerName", userProfile.name);
-        if (userProfile?.username)
-          url.searchParams.append("viewerUsername", userProfile.username);
-        if (userProfile?.imageUrl)
-          url.searchParams.append("viewerImageUrl", userProfile.imageUrl);
         const res = await fetch(url.toString());
         return parseJsonResponse<CommentsPage>(res);
       },
@@ -263,9 +254,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         "comments",
         videoId,
         sortBy,
-        userProfile?.name,
-        userProfile?.username,
-        userProfile?.imageUrl,
       ]);
 
       queryClient.setQueryData<CommentsData>(
@@ -273,9 +261,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           "comments",
           videoId,
           sortBy,
-          userProfile?.name,
-          userProfile?.username,
-          userProfile?.imageUrl,
         ],
         (old) => {
           if (!old) return old;
@@ -324,9 +309,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             "comments",
             videoId,
             sortBy,
-            userProfile?.name,
-            userProfile?.username,
-            userProfile?.imageUrl,
           ],
           context.previousData,
         );
@@ -352,9 +334,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         "comments",
         videoId,
         sortBy,
-        userProfile?.name,
-        userProfile?.username,
-        userProfile?.imageUrl,
       ]);
 
       queryClient.setQueryData<CommentsData>(
@@ -362,9 +341,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           "comments",
           videoId,
           sortBy,
-          userProfile?.name,
-          userProfile?.username,
-          userProfile?.imageUrl,
         ],
         (old) => {
           if (!old) return old;
@@ -413,9 +389,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             "comments",
             videoId,
             sortBy,
-            userProfile?.name,
-            userProfile?.username,
-            userProfile?.imageUrl,
           ],
           context.previousData,
         );
@@ -447,9 +420,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         "comments",
         videoId,
         sortBy,
-        userProfile?.name,
-        userProfile?.username,
-        userProfile?.imageUrl,
       ];
       const previousData = queryClient.getQueryData(queryKey);
 

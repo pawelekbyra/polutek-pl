@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { flags } from "@/lib/feature-flags";
-import { requireAdmin, AuthError } from "@/lib/auth-utils";
+import { requireAdminForApi } from "@/lib/auth-utils";
 import { writeAuditLog } from "@/lib/services/audit.service";
 
 export const dynamic = "force-dynamic";
@@ -34,21 +34,11 @@ const channelPatchSchema = z.object({
   bannerUrl: optionalUrl,
 });
 
-function adminErrorResponse(error: unknown) {
-  if (error instanceof AuthError) {
-    return NextResponse.json(
-      { error: error.code === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
-      { status: error.code === "UNAUTHORIZED" ? 401 : 403 },
-    );
-  }
-
-  throw error;
-}
-
 export async function GET() {
-  try {
-    await requireAdmin();
+  const { response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
+  if (response) return response;
 
+  try {
     const creator = await prisma.creator.findUnique({
       where: { slug: flags.mainCreatorSlug },
       include: {
@@ -62,19 +52,16 @@ export async function GET() {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    try {
-      return adminErrorResponse(error);
-    } catch (unhandled) {
-      console.error("[ADMIN_CHANNEL_GET_ERROR]", unhandled);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
+    console.error("[ADMIN_CHANNEL_GET_ERROR]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
-  try {
-    await requireAdmin();
+  const { response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
+  if (response) return response;
 
+  try {
     const body = await request.json();
     const result = channelPatchSchema.safeParse(body);
 
@@ -100,11 +87,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    try {
-      return adminErrorResponse(error);
-    } catch (unhandled) {
-      console.error("[ADMIN_CHANNEL_PATCH_ERROR]", unhandled);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
+    console.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

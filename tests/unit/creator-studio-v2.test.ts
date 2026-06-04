@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server';
 // Mock auth and admin check
 vi.mock('@/lib/auth-utils', () => ({
   verifyAdmin: vi.fn().mockResolvedValue(true),
+  requireAdminForApi: vi.fn().mockResolvedValue({ adminUserId: 'user_admin', response: null }),
 }));
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -21,6 +22,7 @@ vi.mock('@/lib/services/audit.service', () => ({
 // Mock blob validation
 vi.mock('@/lib/blob', () => ({
   isAllowedMediaUrl: vi.fn().mockReturnValue(true),
+  isAllowedThumbnailUrl: vi.fn().mockReturnValue(true),
 }));
 
 describe('Creator Studio V2 - Constraints and Logic', () => {

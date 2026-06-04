@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/lib/auth-utils';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
@@ -54,9 +54,8 @@ function getSlug(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_TEMPLATES");
+  if (response) return response;
 
   try {
     const slug = getSlug(req);
@@ -71,9 +70,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("POST_ADMIN_TEMPLATES");
+  if (response) return response;
 
   try {
     const data = await req.json();

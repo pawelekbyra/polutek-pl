@@ -44,6 +44,31 @@ export function isAllowedMediaUrl(rawUrl: string, env: MediaHostEnv = process.en
     return getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
 }
 
+export function isSafeLocalPath(value: string) {
+    return value.startsWith("/") && !value.startsWith("//") && !value.includes("..");
+}
+
+export function isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv = process.env) {
+    if (isSafeLocalPath(rawUrl)) return true;
+
+    let url: URL;
+    try {
+        url = new URL(rawUrl);
+    } catch {
+        return false;
+    }
+
+    if (url.protocol !== 'https:') return false;
+
+    // Miniaturki mogą pochodzić z hostów mediów lub zaufanych hostów obrazków
+    const allowedHosts = new Set([
+        ...getAllowedMediaHosts(env),
+        ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com'),
+    ]);
+
+    return allowedHosts.has(url.hostname.toLowerCase());
+}
+
 function getValidatedRange(headers?: Headers) {
     const range = headers?.get('range');
     if (!range) return null;

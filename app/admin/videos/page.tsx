@@ -415,7 +415,7 @@ export default function AdminVideosPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
                 <div className="space-y-6">
                   <section className="rounded-3xl border bg-card p-5 shadow-sm md:p-6">
                     <Tabs defaultValue="pl" className="w-full gap-0">
@@ -520,8 +520,8 @@ export default function AdminVideosPage() {
                       <div className="space-y-2">
                         <Label htmlFor="tier" className="text-sm font-bold">Poziom dostępu</Label>
                         <Select value={formData.tier} onValueChange={(v) => setFormData({...formData, tier: v || "PUBLIC"})}>
-                          <SelectTrigger className="w-full"><SelectValue placeholder="Wybierz poziom" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="w-full h-11"><SelectValue placeholder="Wybierz poziom" /></SelectTrigger>
+                          <SelectContent className="w-full">
                             <SelectItem value="PUBLIC">Publiczny (wszyscy)</SelectItem>
                             <SelectItem value="LOGGED_IN">Dla zalogowanych</SelectItem>
                             <SelectItem value="PATRON">Dla Patronów — wymaga statusu Patrona</SelectItem>
@@ -531,8 +531,8 @@ export default function AdminVideosPage() {
                       <div className="space-y-2">
                         <Label htmlFor="status" className="text-sm font-bold">Status publikacji</Label>
                         <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v || "PUBLISHED"})}>
-                          <SelectTrigger className="w-full"><SelectValue placeholder="Wybierz status" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="w-full h-11"><SelectValue placeholder="Wybierz status" /></SelectTrigger>
+                          <SelectContent className="w-full">
                             <SelectItem value="DRAFT">Szkic (DRAFT)</SelectItem>
                             <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
                             <SelectItem value="UNLISTED">Niepubliczny</SelectItem>

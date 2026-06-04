@@ -135,18 +135,19 @@ export async function GET(request: NextRequest) {
   }
 
   let userId: string | null = null;
-  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
       const authData = await auth();
       userId = authData.userId;
-      sessionClaims = authData.sessionClaims;
   } catch {}
 
   try {
     let internalUserId = null;
     let canModerateComments = false;
     if (userId) {
-        const user = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, role: true }
+        });
         internalUserId = user?.id ?? null;
 
         if (user?.role === 'ADMIN') {

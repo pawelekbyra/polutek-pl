@@ -1,13 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
-import { verifyAdmin } from '@/lib/auth-utils';
+import { requireAdminForApi } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_STATS");
+  if (response) return response;
 
   try {
     const totalUsers = await prisma.user.count();

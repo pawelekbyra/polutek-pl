@@ -45,90 +45,123 @@ export async function grantPatronStatus(
 ) {
   const source = sourceToEnum(options.source);
 
-  // Idempotency check for paymentId
-  if (options.paymentId) {
-    const existingGrant = await db.patronGrant.findFirst({
-      where: { paymentId: options.paymentId },
+  try {
+    // 1. Idempotency check for paymentId
+    if (options.paymentId) {
+      const existingGrant = await db.patronGrant.findUnique({
+        where: { paymentId: options.paymentId },
+      });
+
+      if (existingGrant) {
+        const user = await db.user.findUniqueOrThrow({
+          where: { id: userId },
+          include: { paymentTotals: true },
+        });
+        return {
+          user,
+          grant: existingGrant,
+          alreadyGranted: true,
+          isPatron: true,
+          becamePatronNow: false,
+          normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+        };
+      }
+    }
+
+    // 2. Idempotency check for referralId
+    if (options.referralId) {
+      const existingGrant = await db.patronGrant.findUnique({
+        where: { referralId: options.referralId },
+      });
+
+      if (existingGrant) {
+        const user = await db.user.findUniqueOrThrow({
+          where: { id: userId },
+          include: { paymentTotals: true },
+        });
+        return {
+          user,
+          grant: existingGrant,
+          alreadyGranted: true,
+          isPatron: true,
+          becamePatronNow: false,
+          normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+        };
+      }
+    }
+
+    // 3. Fetch user and update status
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { paymentTotals: true },
     });
 
-    if (existingGrant) {
-      const user = await db.user.findUniqueOrThrow({
-        where: { id: userId },
-        include: { paymentTotals: true },
-      });
-      return {
-        user,
-        grant: existingGrant,
-        alreadyGranted: true,
-        isPatron: true,
-        becamePatronNow: false,
-        normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-      };
+    if (!user) {
+      throw new PatronStatusError(`Cannot grant Patron status: user ${userId} was not found.`);
     }
-  }
 
-  // Idempotency check for referralId
-  if (options.referralId) {
-    const existingGrant = await db.patronGrant.findFirst({
-      where: { referralId: options.referralId },
+    const now = new Date();
+    const updatedUser = await db.user.update({
+      where: { id: userId },
+      data: {
+        isPatron: true,
+        patronSince: user.isPatron && user.patronSince ? user.patronSince : now,
+        patronSource: source,
+      },
+      include: { paymentTotals: true },
     });
 
-    if (existingGrant) {
-      const user = await db.user.findUniqueOrThrow({
-        where: { id: userId },
-        include: { paymentTotals: true },
-      });
-      return {
-        user,
-        grant: existingGrant,
-        alreadyGranted: true,
-        isPatron: true,
-        becamePatronNow: false,
-        normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-      };
-    }
-  }
+    // 4. Create grant record
+    const grant = await db.patronGrant.create({
+      data: {
+        userId,
+        source,
+        paymentId: options.paymentId,
+        referralId: options.referralId,
+        grantedById: options.grantedByUserId,
+        reason: options.note,
+      },
+    });
 
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: { paymentTotals: true },
-  });
-
-  if (!user) {
-    throw new PatronStatusError(`Cannot grant Patron status: user ${userId} was not found.`);
-  }
-
-  const now = new Date();
-  const updatedUser = await db.user.update({
-    where: { id: userId },
-    data: {
+    const normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
+    return {
+      user: updatedUser,
+      grant,
+      alreadyGranted: false,
       isPatron: true,
-      patronSince: user.isPatron && user.patronSince ? user.patronSince : now,
-      patronSource: source,
-    },
-    include: { paymentTotals: true },
-  });
+      becamePatronNow: !user.isPatron,
+      normalizedTotal,
+    };
+  } catch (error) {
+    // Handle Race Condition (P2002: Unique constraint failed)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const target = (error.meta?.target as string[]) || [];
+      const paymentIdMatch = options.paymentId && target.includes('paymentId');
+      const referralIdMatch = options.referralId && target.includes('referralId');
 
-  const grant = await db.patronGrant.create({
-    data: {
-      userId,
-      source,
-      paymentId: options.paymentId,
-      referralId: options.referralId,
-      grantedById: options.grantedByUserId,
-      reason: options.note,
-    },
-  });
+      if (paymentIdMatch || referralIdMatch) {
+        const existingGrant = await db.patronGrant.findUnique({
+          where: paymentIdMatch ? { paymentId: options.paymentId } : { referralId: options.referralId },
+        });
 
-  const normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
-  return {
-    user: updatedUser,
-    grant,
-    alreadyGranted: false,
-    isPatron: true,
-    becamePatronNow: !user.isPatron,
-    normalizedTotal,
-  };
+        if (existingGrant) {
+          const user = await db.user.findUniqueOrThrow({
+            where: { id: userId },
+            include: { paymentTotals: true },
+          });
+          return {
+            user,
+            grant: existingGrant,
+            alreadyGranted: true,
+            isPatron: true,
+            becamePatronNow: false,
+            normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+          };
+        }
+      }
+    }
+    throw error;
+  }
 }
 
 export async function revokePatronStatus(
