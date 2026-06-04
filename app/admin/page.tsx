@@ -382,7 +382,7 @@ export default function AdminPanel() {
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Panel Twórcy</p>
                   <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">{formData.id ? "Edytuj film" : "Dodaj nowy film"}</h1>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                    Pełna strona zamiast ciasnego modala: szerokie pola, czytelne sekcje i stały pasek zapisu na dole ekranu.
+                    Pełna strona zamiast ciasnego modala: szerokie pola, czytelne sekcje i zapis jako ostatni element formularza.
                   </p>
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function AdminPanel() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6 pb-28">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="space-y-6">
                   <section className="space-y-5 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
@@ -422,16 +422,16 @@ export default function AdminPanel() {
                         <TabsTrigger value="en" className="py-2.5">Angielski (opcjonalny)</TabsTrigger>
                       </TabsList>
                       <TabsContent value="pl" className="mt-5 space-y-5">
-                        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+                        <div className="grid grid-cols-1 gap-5">
                           <div className="space-y-2">
-                            <Label htmlFor="title" className="text-sm font-bold">Tytuł (PL)</Label>
-                            <Input id="title" className="h-12 text-base" placeholder="Np. Mój nowy film" value={formData.title} onChange={e => handleTitleChange(e.target.value)} required />
+                            <Label htmlFor="title" className="text-sm font-bold">Tytuł filmu (PL)</Label>
+                            <Input id="title" className="h-12 w-full text-base" placeholder="Np. Mój nowy film" value={formData.title} onChange={e => handleTitleChange(e.target.value)} required />
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-2 md:max-w-xl">
                             <Label htmlFor="slug" className="text-sm font-bold text-muted-foreground">Slug (URL)</Label>
                             <Input
                               id="slug"
-                              className="h-12 text-base"
+                              className="h-11 w-full text-sm md:text-base"
                               placeholder="moj-nowy-film"
                               value={formData.slug}
                               onChange={e => {
@@ -440,6 +440,7 @@ export default function AdminPanel() {
                               }}
                               required
                             />
+                            <p className="text-xs leading-relaxed text-muted-foreground">Adres filmu generowany z tytułu; możesz go poprawić ręcznie, używając małych liter, cyfr i myślników.</p>
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -565,8 +566,8 @@ export default function AdminPanel() {
                 </aside>
               </div>
 
-              <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
-                <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="rounded-3xl border bg-card p-5 shadow-sm md:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">{formData.id ? "Zapisujesz zmiany w istniejącym filmie." : "Nowy film zostanie dodany do panelu po zapisaniu."}</p>
                   <div className="flex gap-3">
                     <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => setIsEditing(false)} disabled={isSubmitting}>Anuluj</Button>
