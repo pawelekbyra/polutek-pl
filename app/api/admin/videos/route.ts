@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   // Validation: Only PUBLIC and PUBLISHED videos can be main featured
   if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
-    return NextResponse.json({ error: "Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
+    return NextResponse.json({ error: "Only public and published videos can be featured as Hero. Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
   }
 
   try {

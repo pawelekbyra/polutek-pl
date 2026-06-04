@@ -4,7 +4,7 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
-import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft, Image as ImageIconLucide } from "@/app/components/icons";
+import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft, Image as ImageIconLucide, AlertCircle, Youtube } from "@/app/components/icons";
 import { formatCount, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
 
 export default function AdminPanel() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -71,6 +72,8 @@ export default function AdminPanel() {
     subject: "",
     html: ""
   });
+
+  const detectedVideoSource = formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null;
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
@@ -376,21 +379,37 @@ export default function AdminPanel() {
         </header>
 
         <Dialog open={isEditing} onOpenChange={setIsEditing}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">{formData.id ? "Edytuj Film" : "Dodaj Nowy Film"}</DialogTitle>
-            </DialogHeader>
+          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-6xl max-h-[92vh] overflow-y-auto p-0 sm:rounded-3xl">
+            <div className="sticky top-0 z-20 border-b bg-background/95 px-5 py-4 backdrop-blur md:px-8">
+              <DialogHeader>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <DialogTitle className="text-2xl md:text-3xl">{formData.id ? "Edytuj film" : "Dodaj nowy film"}</DialogTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">Uporządkowany formularz z szerokimi polami, podpowiedziami i obsługą wielu źródeł wideo.</p>
+                  </div>
+                  {detectedVideoSource && (
+                    <Badge variant="outline" className="w-fit gap-2 rounded-full px-3 py-1.5 text-sm">
+                      {detectedVideoSource.kind === 'youtube' ? <Youtube className="h-4 w-4" /> : <Video className="h-4 w-4" />}
+                      Wykryto: {detectedVideoSource.label}
+                    </Badge>
+                  )}
+                </div>
+              </DialogHeader>
+            </div>
 
-            {formError && (
-              <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm font-medium border border-destructive/20">
-                {formError}
-              </div>
-            )}
+            <div className="px-5 md:px-8">
+              {formError && (
+                <div className="mt-5 flex gap-3 rounded-2xl border border-destructive/20 bg-destructive/15 p-4 text-sm font-medium text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8 py-4">
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-                  <Globe className="h-4 w-4" /> Treść i Języki
+            <form onSubmit={handleSubmit} className="space-y-8 px-5 py-6 md:px-8">
+              <section className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
+                <h3 className="text-lg font-semibold border-b pb-3 flex items-center gap-2">
+                  <Globe className="h-5 w-5" /> Treść i języki
                 </h3>
                 <Tabs defaultValue="pl" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -458,46 +477,78 @@ export default function AdminPanel() {
                 </Tabs>
               </section>
 
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" /> Media i Pliki
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="videoUrl" className="text-sm font-bold">URL Wideo (R2/S3/URL)</Label>
-                    <Input
-                      id="videoUrl"
-                      placeholder="https://..."
-                      value={formData.videoUrl}
-                      onChange={e => setFormData({...formData, videoUrl: e.target.value})}
-                      required
-                    />
+              <section className="overflow-hidden rounded-3xl border bg-gradient-to-br from-muted/60 via-background to-background shadow-sm">
+                <div className="border-b bg-background/70 p-5 md:p-6">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold">
+                    <ImageIcon className="h-5 w-5" /> Media i źródła filmu
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Wklej jeden link do filmu. System rozpozna YouTube, Vimeo, HLS, DASH albo bezpośredni plik wideo.</p>
+                </div>
+
+                <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_320px] md:p-6">
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label htmlFor="videoUrl" className="text-sm font-bold">Link do filmu</Label>
+                        {detectedVideoSource && (
+                          <Badge className="rounded-full bg-blue-600 text-white hover:bg-blue-600">{detectedVideoSource.label}</Badge>
+                        )}
+                      </div>
+                      <Input
+                        id="videoUrl"
+                        className="h-12 w-full text-base"
+                        placeholder="https://youtu.be/... albo https://cdn.example.com/video.m3u8"
+                        value={formData.videoUrl}
+                        onChange={e => setFormData({...formData, videoUrl: e.target.value.trim()})}
+                        required
+                      />
+                      <p className="text-xs leading-relaxed text-muted-foreground">Dla plików R2/S3/Vercel Blob i własnych CDN host musi być dodany w konfiguracji <code className="rounded bg-muted px-1 py-0.5">ALLOWED_MEDIA_HOSTS</code>. YouTube i Vimeo są odtwarzane jako osadzone źródła.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_180px]">
+                      <div className="space-y-2">
+                        <Label htmlFor="thumbnailUrl" className="text-sm font-bold">Miniaturka / poster</Label>
+                        <Input
+                          id="thumbnailUrl"
+                          className="h-11 w-full"
+                          placeholder="/thumbnail.jpg lub https://..."
+                          value={formData.thumbnailUrl}
+                          onChange={e => setFormData({...formData, thumbnailUrl: e.target.value.trim()})}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="duration" className="text-sm font-bold">Czas trwania</Label>
+                        <Input
+                          id="duration"
+                          className="h-11 w-full"
+                          placeholder="MM:SS"
+                          value={formData.duration}
+                          onChange={e => setFormData({...formData, duration: e.target.value})}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="thumbnailUrl" className="text-sm font-bold">URL Miniaturki</Label>
-                    <Input
-                      id="thumbnailUrl"
-                      placeholder="/thumbnail.jpg lub https://..."
-                      value={formData.thumbnailUrl}
-                      onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="duration" className="text-sm font-bold">Czas trwania (np. 12:45)</Label>
-                    <Input
-                      id="duration"
-                      placeholder="MM:SS"
-                      value={formData.duration}
-                      onChange={e => setFormData({...formData, duration: e.target.value})}
-                    />
-                  </div>
+
+                  <aside className="rounded-2xl border bg-background p-4 shadow-sm">
+                    <h4 className="flex items-center gap-2 font-semibold">
+                      <ShieldCheck className="h-4 w-4 text-blue-600" /> Obsługiwane formaty
+                    </h4>
+                    <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                      {SUPPORTED_VIDEO_SOURCES.map((source) => (
+                        <li key={source} className="flex gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                          <span>{source}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </aside>
                 </div>
               </section>
 
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Widoczność i Dostęp
+              <section className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
+                <h3 className="text-lg font-semibold border-b pb-3 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" /> Widoczność i dostęp
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                    <div className="space-y-2">
@@ -564,9 +615,9 @@ export default function AdminPanel() {
                 </div>
               </section>
 
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" /> Statystyki i Metryki (Override)
+              <section className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
+                <h3 className="text-lg font-semibold border-b pb-3 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" /> Statystyki i metryki (override)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
