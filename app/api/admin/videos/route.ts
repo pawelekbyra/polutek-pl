@@ -32,6 +32,9 @@ const videoSchema = z.object({
   isMainFeatured: z.boolean().default(false),
   showInSidebar: z.boolean().default(true),
   sidebarOrder: z.number().int().default(0),
+  likesCount: z.number().int().optional(),
+  dislikesCount: z.number().int().optional(),
+  views: z.number().int().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -57,14 +60,28 @@ export async function POST(req: NextRequest) {
   const result = videoSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
+    const flattened = result.error.flatten();
+    const errorMessages = Object.entries(flattened.fieldErrors)
+      .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+      .join('; ');
+
+    return NextResponse.json({
+      error: 'Błędne dane w formularzu',
+      details: flattened,
+      message: errorMessages
+    }, { status: 400 });
   }
 
-  const { id, title, titleEn, slug, description, descriptionEn, videoUrl, thumbnailUrl, duration, tier, status, isMainFeatured, showInSidebar, sidebarOrder } = result.data;
+  const {
+    id, title, titleEn, slug, description, descriptionEn,
+    videoUrl, thumbnailUrl, duration, tier, status,
+    isMainFeatured, showInSidebar, sidebarOrder,
+    likesCount, dislikesCount, views
+  } = result.data;
 
   // Validation: Only PUBLIC and PUBLISHED videos can be main featured
   if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
-    return NextResponse.json({ error: "Only public and published videos can be featured as Hero." }, { status: 400 });
+    return NextResponse.json({ error: "Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
   }
 
   try {
@@ -89,7 +106,10 @@ export async function POST(req: NextRequest) {
             publishedAt,
             isMainFeatured: !!isMainFeatured,
             showInSidebar,
-            sidebarOrder
+            sidebarOrder,
+            likesCount,
+            dislikesCount,
+            views
           }
         });
 
@@ -160,7 +180,10 @@ export async function POST(req: NextRequest) {
             publishedAt: status === VideoStatus.PUBLISHED ? new Date() : null,
             isMainFeatured: !!isMainFeatured,
             showInSidebar,
-            sidebarOrder
+            sidebarOrder,
+            likesCount: likesCount || 0,
+            dislikesCount: dislikesCount || 0,
+            views: views || 0
           }
         });
 
@@ -186,9 +209,19 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(created);
     }
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("[ADMIN_VIDEO_POST_ERROR]", error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0] || 'pole';
+      return NextResponse.json({
+        error: `Wartość w polu '${field}' musi być unikalna. Prawdopodobnie taki Slug już istnieje.`
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd serwera (Internal Server Error)'
+    }, { status: 500 });
   }
 }
 
