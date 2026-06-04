@@ -1,13 +1,21 @@
 'use client';
 
+import { logger } from "@/lib/logger";
 import React, { useEffect, useState } from 'react';
 import { getUserTips } from '@/lib/actions/tips';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Loader2, Coins } from '../icons';
 
+type TipListItem = {
+  id: string;
+  createdAt: Date | string;
+  amount: number;
+  currency: string;
+};
+
 export default function TipsList() {
-  const [tips, setTips] = useState<any[]>([]);
+  const [tips, setTips] = useState<TipListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -18,7 +26,7 @@ export default function TipsList() {
         const data = await getUserTips();
         setTips(data);
       } catch (error) {
-        console.error("Error fetching tips:", error);
+        logger.error("Error fetching tips:", error);
       } finally {
         setIsLoading(false);
       }

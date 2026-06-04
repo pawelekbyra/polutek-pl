@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { getClerkClient } from '@/lib/clerk';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -83,10 +84,10 @@ export class UserAccessService {
         try {
           const client = await getClerkClient();
           await client.users.updateUserMetadata(userId, { publicMetadata });
-          console.log(`[UserAccessService] Synced Clerk access for user ${userId}: isPatron=${isPatron}, role=${role} (attempt ${i + 1})`);
+          logger.info(`[UserAccessService] Synced Clerk access for user ${userId}: isPatron=${isPatron}, role=${role} (attempt ${i + 1})`);
           return true;
         } catch (error) {
-          console.error(`[UserAccessService] Error syncing Clerk access for user ${userId} (attempt ${i + 1}):`, error);
+          logger.error(`[UserAccessService] Error syncing Clerk access for user ${userId} (attempt ${i + 1}):`, error);
           if (i < attempts - 1) {
             const delay = 250 * Math.pow(3, i);
             await new Promise(resolve => setTimeout(resolve, delay));
@@ -98,7 +99,7 @@ export class UserAccessService {
 
     const success = await retry();
     if (!success) {
-      console.error(`[UserAccessService] Final failure syncing Clerk access for user ${userId}`);
+      logger.error(`[UserAccessService] Final failure syncing Clerk access for user ${userId}`);
       await writeAuditLog({
         action: "CLERK_SYNC_FAILED",
         targetType: "User",

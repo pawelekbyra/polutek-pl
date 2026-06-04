@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    console.error('[REFERRAL_CLAIM_ERROR]', err);
+    logger.error('[REFERRAL_CLAIM_ERROR]', err);
     const message = err instanceof Error ? err.message : "Failed to claim referral";
 
     if (message === "Self-referral is not allowed") {

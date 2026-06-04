@@ -4,7 +4,7 @@ import { flags } from '../feature-flags';
 import { isPatronLikeUser } from './comment-access';
 
 
-type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
+export type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
   id: string;
   tier: AccessTier;
   status: VideoStatus;

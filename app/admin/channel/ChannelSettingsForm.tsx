@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -140,8 +141,8 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-muted">
-                  {fallbackAvatar ? <img src={fallbackAvatar} alt="Fallback avatara kanału" className="h-full w-full object-cover" /> : <ImageIcon className="h-7 w-7 text-muted-foreground" />}
+                <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-muted">
+                  {fallbackAvatar ? <Image src={fallbackAvatar} alt="Fallback avatara kanału" fill sizes="64px" className="object-cover" unoptimized /> : <ImageIcon className="h-7 w-7 text-muted-foreground" />}
                 </div>
                 <div className="min-w-0">
                   <Badge variant="outline">Fallback Clerk</Badge>

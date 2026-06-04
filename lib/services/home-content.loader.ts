@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { ContentService } from "./content.service";
 import { flags } from "../feature-flags";
 import { PublicVideoDTO, PublicCreatorPageDTO } from "@/app/types/video";
@@ -64,7 +65,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       creator = await ContentService.getCreatorBySlug(flags.mainCreatorSlug);
       debug.creatorSuccess = true;
     } catch (e) {
-      console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
       // Creator failure might not be fatal in multi-creator mode if global videos are still available.
     }
 
@@ -75,7 +76,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.allVideosSuccess = true;
       debug.allVideosCount = allVideos.length;
     } catch (e) {
-      console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", getSafeErrorInfo(e));
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", getSafeErrorInfo(e));
       // If demo fallbacks are enabled, ContentService should already handle it.
       // We re-throw only if it's a critical DB error and no videos were returned.
       if (allVideos.length === 0) {
@@ -92,12 +93,12 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
       debug.mainVideoSuccess = true;
       debug.mainVideoId = mainVideo?.id || null;
     } catch (e) {
-      console.error("[HOME_CONTENT_LOAD_ERROR] Failed to load main video", getSafeErrorInfo(e));
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load main video", getSafeErrorInfo(e));
       // Not necessarily fatal if allVideos worked
     }
 
     if (process.env.DEBUG_HOME_CONTENT === "true") {
-      console.log("[HOME_CONTENT_DEBUG] Loader finished", {
+      logger.info("[HOME_CONTENT_DEBUG] Loader finished", {
         status: allVideos.length > 0 ? "ready" : "empty",
         mode: flags.multiCreator ? "multi_creator" : "single_creator",
         mainCreatorSlug: flags.mainCreatorSlug,
@@ -115,10 +116,10 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
 
     // Specific handling for missing columns (P2022) to help with production debugging
     if (safeInfo.prismaCode === "P2022") {
-      console.error("[CRITICAL_DB_ERROR] Database schema is out of sync. Missing column. Run 'npx prisma migrate deploy'.", safeInfo);
+      logger.error("[CRITICAL_DB_ERROR] Database schema is out of sync. Missing column. Run 'npx prisma migrate deploy'.", safeInfo);
     }
 
-    console.error("[HOME_CONTENT_LOAD_ERROR] Global failure", {
+    logger.error("[HOME_CONTENT_LOAD_ERROR] Global failure", {
       stage: debug.stage,
       ...safeInfo,
     });

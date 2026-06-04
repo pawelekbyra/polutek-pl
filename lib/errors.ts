@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 export class AppError extends Error {
@@ -12,7 +13,7 @@ export class AppError extends Error {
 }
 
 export function handleApiError(error: unknown) {
-  console.error('[API_ERROR]', error);
+  logger.error('[API_ERROR]', error);
 
   if (error instanceof AppError) {
     return NextResponse.json(

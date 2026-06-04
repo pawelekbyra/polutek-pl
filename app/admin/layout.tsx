@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { redirect } from "next/navigation";
 import { AuthError, requireAdmin } from "@/lib/auth-utils";
 
@@ -11,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       redirect("/");
     }
 
-    console.error("[AdminLayout] Unexpected admin auth error:", error);
+    logger.error("[AdminLayout] Unexpected admin auth error:", error);
     throw error;
   }
 

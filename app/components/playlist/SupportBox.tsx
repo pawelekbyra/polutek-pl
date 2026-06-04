@@ -5,8 +5,13 @@ import { Trophy, Loader2, ChevronDown } from '../icons';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
+type SupportBoxTranslations = {
+  donate: string;
+  pleaseAcceptTerms: string;
+};
+
 interface SupportBoxProps {
-  t: any;
+  t: SupportBoxTranslations;
   language: string;
   selectedCurrency: string;
   amount: number | '';

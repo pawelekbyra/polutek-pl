@@ -1,10 +1,11 @@
+import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
@@ -206,11 +207,11 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(created);
     }
-  } catch (error: any) {
-    console.error("[ADMIN_VIDEO_POST_ERROR]", error);
+  } catch (error: unknown) {
+    logger.error("[ADMIN_VIDEO_POST_ERROR]", error);
 
-    if (error.code === 'P2002') {
-      const field = error.meta?.target?.[0] || 'pole';
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const field = Array.isArray(error.meta?.target) ? error.meta?.target[0] : 'pole';
       return NextResponse.json({
         error: `Wartość w polu '${field}' musi być unikalna. Prawdopodobnie taki Slug już istnieje.`
       }, { status: 400 });
@@ -250,7 +251,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, archived: archived.title, status: 'ARCHIVED' });
   } catch (error: unknown) {
-    console.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
+    logger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

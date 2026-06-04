@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 type RateLimitOptions = {
   key: string;
   limit: number;
@@ -106,7 +107,7 @@ export function resolveRateLimitStoreKind(env: RateLimitEnv = process.env): Rate
   }
 
   if (env.NODE_ENV === 'production') {
-    console.error(`[RateLimit] ${MISSING_REDIS_ENV_MESSAGE}`);
+    logger.error(`[RateLimit] ${MISSING_REDIS_ENV_MESSAGE}`);
     throw new Error(`[RateLimit] ${MISSING_REDIS_ENV_MESSAGE}`);
   }
 
@@ -121,7 +122,7 @@ export function createRateLimitStore(env: RateLimitEnv = process.env): RateLimit
     return new UpstashRedisStore(restUrl!, token!);
   }
 
-  console.warn('[RateLimit] Using in-memory rate limit store. This is allowed only outside production.');
+  logger.warn('[RateLimit] Using in-memory rate limit store. This is allowed only outside production.');
   return new MemoryStore();
 }
 

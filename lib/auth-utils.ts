@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { UserService } from "./services/user.service";
@@ -29,7 +30,7 @@ export async function requireAdminForApi(scope: string) {
       };
     }
 
-    console.error(`[${scope}] Unexpected admin auth error:`, error);
+    logger.error(`[${scope}] Unexpected admin auth error:`, error);
     return {
       adminUserId: null,
       response: NextResponse.json(

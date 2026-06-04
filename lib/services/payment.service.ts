@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from './email.service';
@@ -91,7 +92,7 @@ export async function applyLostChargeback(
   });
 
   if (count === 0) {
-    console.log(`[PaymentService] Payment ${payment.id} already marked as CHARGEBACK_LOST or not found. Skipping adjustment.`);
+    logger.info(`[PaymentService] Payment ${payment.id} already marked as CHARGEBACK_LOST or not found. Skipping adjustment.`);
     return;
   }
 
@@ -232,21 +233,21 @@ export class PaymentService {
           payload: getSafeStripeEventPayload(event)
         }
       });
-    } catch (e: any) {
-      if (e.code === 'P2002') {
+    } catch (e: unknown) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
         if (existing?.status === WebhookEventStatus.PROCESSED) {
-          console.log(`[PaymentService] Event ${event.id} already PROCESSED.`);
+          logger.info(`[PaymentService] Event ${event.id} already PROCESSED.`);
           return;
         }
         if (existing?.status === WebhookEventStatus.PROCESSING) {
           const STALE_MINS = 10;
           const diff = (Date.now() - (existing.updatedAt?.getTime() || 0)) / 60000;
           if (diff < STALE_MINS) {
-            console.log(`[PaymentService] Event ${event.id} is being processed elsewhere.`);
+            logger.info(`[PaymentService] Event ${event.id} is being processed elsewhere.`);
             return;
           }
-          console.log(`[PaymentService] Retrying stale event ${event.id}.`);
+          logger.info(`[PaymentService] Retrying stale event ${event.id}.`);
         }
         await prisma.stripeEvent.update({
           where: { id: event.id },
@@ -285,12 +286,12 @@ export class PaymentService {
                     data: { status: PaymentStatus.FAILED }
                 });
                 if (count === 0) {
-                    console.warn(`[PaymentService] No payment record found for failed intent: ${intent.id}`);
+                    logger.warn(`[PaymentService] No payment record found for failed intent: ${intent.id}`);
                 }
                 break;
             }
             default:
-                console.log(`Unhandled Stripe event type: ${event.type}`);
+                logger.info(`Unhandled Stripe event type: ${event.type}`);
         }
 
         // Mark as PROCESSED
@@ -302,7 +303,7 @@ export class PaymentService {
             }
         });
     } catch (error: unknown) {
-        console.error(`[PaymentService] Error handling event ${event.id}:`, error);
+        logger.error(`[PaymentService] Error handling event ${event.id}:`, error);
         await prisma.stripeEvent.update({
             where: { id: event.id },
             data: {
@@ -320,7 +321,7 @@ export class PaymentService {
       ? charge.payment_intent
       : charge.payment_intent?.id;
 
-    console.log(`[PaymentService] Handling refund. paymentId=${paymentId || 'none'}, intentId=${stripeIntentId || 'none'}`);
+    logger.info(`[PaymentService] Handling refund. paymentId=${paymentId || 'none'}, intentId=${stripeIntentId || 'none'}`);
 
     const syncData = await prisma.$transaction(async (tx) => {
         const payment = paymentId
@@ -348,7 +349,7 @@ export class PaymentService {
 
         let resultData;
         if (!refund.isFullRefund) {
-            console.log(`[PaymentService] Payment ${payment.id} partially refunded (${refund.newRefundedAmountMinor}/${payment.amountMinor}); retaining grants.`);
+            logger.info(`[PaymentService] Payment ${payment.id} partially refunded (${refund.newRefundedAmountMinor}/${payment.amountMinor}); retaining grants.`);
             const user = await tx.user.findUnique({
                 where: { id: payment.userId },
                 include: { paymentTotals: true },
@@ -373,7 +374,7 @@ export class PaymentService {
 
     if (syncData) {
         await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => {
-            console.error("[PaymentService] Post-refund sync failed:", e);
+            logger.error("[PaymentService] Post-refund sync failed:", e);
         });
     }
     return syncData;
@@ -386,7 +387,7 @@ export class PaymentService {
     const payment = await prisma.payment.findUnique({ where: { stripeIntentId } });
     if (!payment) return;
 
-    console.log(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
+    logger.info(`[PaymentService] Handling dispute (${dispute.status}) for payment ${payment.id}`);
 
     if (dispute.status === 'lost') {
         const syncData = await prisma.$transaction(async (tx) => {
@@ -397,7 +398,7 @@ export class PaymentService {
 
         if (syncData) {
             await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => {
-                console.error("[PaymentService] Post-dispute sync failed:", e);
+                logger.error("[PaymentService] Post-dispute sync failed:", e);
             });
         }
         return syncData;
@@ -425,7 +426,7 @@ export class PaymentService {
         await EmailService.sendBecomePatronEmail(email, language);
       }
     } catch (error) {
-      console.error(`[${type}_EMAIL_FAILED]`, error);
+      logger.error(`[${type}_EMAIL_FAILED]`, error);
       await writeAuditLog({
         action: "EMAIL_SEND_FAILED",
         targetType: "Payment",
@@ -444,7 +445,7 @@ export class PaymentService {
     const userId = intent.metadata.userId;
 
     if (!paymentId || !userId) {
-      console.error('[PaymentService] Missing metadata in intent', intent.id);
+      logger.error('[PaymentService] Missing metadata in intent', intent.id);
       return;
     }
 
@@ -456,7 +457,7 @@ export class PaymentService {
         });
 
         if (count === 0) {
-            console.log(`[PaymentService] Payment ${paymentId} already fulfilled or not found.`);
+            logger.info(`[PaymentService] Payment ${paymentId} already fulfilled or not found.`);
             return null;
         }
 
@@ -544,9 +545,9 @@ export class PaymentService {
         );
       }
 
-      console.log(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);
+      logger.info(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);
     } catch (error) {
-      console.error('[PaymentService] Error fulfilling payment:', error);
+      logger.error('[PaymentService] Error fulfilling payment:', error);
       throw error;
     }
   }

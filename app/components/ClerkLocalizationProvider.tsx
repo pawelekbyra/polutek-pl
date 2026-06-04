@@ -1,5 +1,6 @@
 'use client';
 
+import { logger } from "@/lib/logger";
 import { ClerkProvider, useUser } from '@clerk/nextjs';
 import { plPL } from '@clerk/localizations';
 import { useLanguage } from './LanguageContext';
@@ -15,14 +16,15 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoaded && user && isInitialized && !syncedOnce) {
       try {
-        const metadata = user.publicMetadata as any;
-        const dbLang = (metadata.language || metadata.preferredLanguage) as 'pl' | 'en';
+        const metadata = user.publicMetadata as Record<string, unknown>;
+        const metadataLanguage = metadata.language || metadata.preferredLanguage;
+        const dbLang = metadataLanguage === 'pl' || metadataLanguage === 'en' ? metadataLanguage : null;
         if (dbLang && dbLang !== language) {
           setLanguage(dbLang, true);
         }
         setSyncedOnce(true);
       } catch (e) {
-        console.error("[ClerkLocalizationProvider] Error syncing metadata:", e);
+        logger.error("[ClerkLocalizationProvider] Error syncing metadata:", e);
       }
     }
   }, [user, isLoaded, isInitialized, language, setLanguage, syncedOnce]);
@@ -31,7 +33,7 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoaded && user && isInitialized && syncedOnce) {
        updateUserLanguage(language).catch(err => {
-         console.warn("[ClerkLocalizationProvider] Failed to persist language choice:", err);
+         logger.warn("[ClerkLocalizationProvider] Failed to persist language choice:", err);
        });
     }
   }, [language, user, isLoaded, isInitialized, syncedOnce]);
@@ -41,11 +43,17 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
 
 export default function ClerkLocalizationProvider({ children }: { children: React.ReactNode }) {
   const { language } = useLanguage();
+  const localization = language === 'pl'
+    ? plPL as React.ComponentProps<typeof ClerkProvider>["localization"]
+    : undefined;
+
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    ?? "pk_test_YnVpbGQtdGltZS1wbGFjZWhvbGRlciRjbGVyay5hY2NvdW50cy5kZXYk";
 
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      localization={(language === 'pl' ? plPL : undefined) as any}
+      publishableKey={publishableKey}
+      localization={localization}
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
       signInForceRedirectUrl="/"

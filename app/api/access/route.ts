@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { ContentService } from '@/lib/services/content.service';
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
       const authData = await auth();
       userId = authData.userId;
   } catch (e) {
-      console.warn("[Access] Clerk Handshake failure during access check. Proceeding as guest.");
+      logger.warn("[Access] Clerk Handshake failure during access check. Proceeding as guest.");
   }
 
   const { searchParams } = new URL(req.url);
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
     const { hasAccess, requiredTier, reason } = await ContentService.getVideoAccess(userId, videoId);
     return NextResponse.json({ hasAccess, requiredTier, reason });
   } catch (error: unknown) {
-    console.error("[ACCESS_API_ERROR]", error);
+    logger.error("[ACCESS_API_ERROR]", error);
     // Extreme fallback: restrict access but don't crash
     return NextResponse.json({
         hasAccess: false,

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
@@ -29,7 +30,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('[LANGUAGE_UPDATE_ERROR]', err);
+    logger.error('[LANGUAGE_UPDATE_ERROR]', err);
     return NextResponse.json({ error: "Failed to update language" }, { status: 500 });
   }
 }

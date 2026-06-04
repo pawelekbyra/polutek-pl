@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
@@ -106,7 +107,7 @@ export class ContentService {
 
       return video;
     } catch (e: unknown) {
-      console.error("[GET_VIDEO_BY_ID_ERROR]", e);
+      logger.error("[GET_VIDEO_BY_ID_ERROR]", e);
       return flags.demoFallbacks ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
     }
   }
@@ -128,7 +129,7 @@ export class ContentService {
         select: { imageUrl: true, email: true }
       });
 
-      // Step 2: Try to find any other admin user if first lookup failed
+      // Step 2: Try to find another admin user if first lookup failed
       if (!adminUser) {
         adminUser = await prisma.user.findFirst({
           where: { role: 'ADMIN' },
@@ -262,7 +263,7 @@ export class ContentService {
           videos: (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator: withResolvedChannelAvatar(creator) }))
       };
     } catch (e: unknown) {
-      console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
+      logger.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
       if (isMainCreator && flags.demoFallbacks) {
         return {
             ...DEFAULT_CREATOR,
@@ -309,7 +310,7 @@ export class ContentService {
         }
       });
     } catch (e: unknown) {
-      console.error("[CREATE_COMMENT_ERROR]", e);
+      logger.error("[CREATE_COMMENT_ERROR]", e);
       const message = e instanceof Error ? e.message : String(e);
       throw new Error(`Failed to create comment: ${message}`);
     }
@@ -342,7 +343,7 @@ export class ContentService {
       });
 
       if (process.env.DEBUG_HOME_CONTENT === "true") {
-        console.log("[HOME_CONTENT_DEBUG] getAllVideos", {
+        logger.info("[HOME_CONTENT_DEBUG] getAllVideos", {
           foundInDb: videos.length,
           demoFallbacksEnabled: flags.demoFallbacks
         });
@@ -363,7 +364,7 @@ export class ContentService {
           : v.creator
       }));
     } catch (e: unknown) {
-      console.error("[GET_ALL_VIDEOS_ERROR]", e);
+      logger.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (flags.demoFallbacks) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
       // Re-throw so the page knows it was an error, not just an empty DB
       throw e;
@@ -411,7 +412,7 @@ export class ContentService {
       });
 
       if (process.env.DEBUG_HOME_CONTENT === "true") {
-        console.log("[HOME_CONTENT_DEBUG] getMainFeaturedVideo", {
+        logger.info("[HOME_CONTENT_DEBUG] getMainFeaturedVideo", {
           featuredFound: !!video,
           fallbackFound: !!selectedVideo,
           demoFallbacksEnabled: flags.demoFallbacks
@@ -432,7 +433,7 @@ export class ContentService {
           : selectedVideo.creator
       });
     } catch (e: unknown) {
-      console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
+      logger.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       throw e;
     }

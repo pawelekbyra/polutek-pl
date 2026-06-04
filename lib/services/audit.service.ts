@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -25,6 +26,6 @@ export async function writeAuditLog({
       },
     });
   } catch (error) {
-    console.error("[AUDIT_LOG_ERROR]", error);
+    logger.error("[AUDIT_LOG_ERROR]", error);
   }
 }

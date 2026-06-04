@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
       referralCode: user?.referralCode || userId
     });
   } catch (error) {
-    console.error("[REFERRALS_API_ERROR]", error);
+    logger.error("[REFERRALS_API_ERROR]", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

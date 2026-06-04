@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -534,19 +535,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {userProfile && (
           <div
             className={cn(
-              "w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-1",
+              "relative w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-1",
               isPatron
                 ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
                 : "border border-[#e9eef6]",
             )}
           >
-            <img
+            <Image
               src={
                 userAvatarUrl ||
                 `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`
               }
               alt="Avatar"
-              className="w-full h-full object-cover"
+              fill
+              sizes="40px"
+              className="object-cover"
+              unoptimized
             />
           </div>
         )}
@@ -645,14 +649,17 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         : "border border-[#e9eef6]",
                     )}
                   >
-                    <img
+                    <Image
                       src={
                         comment.imageUrl ||
                         comment.author?.imageUrl ||
                         `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`
                       }
                       alt="Avatar"
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
                   {commentAuthorIsPatron && (
@@ -801,20 +808,23 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         <div className="flex w-8 shrink-0 flex-col items-center gap-1">
                           <div
                             className={cn(
-                              "w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
+                              "relative w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
                               replyAuthorIsPatron
                                 ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]"
                                 : "border border-[#e9eef6]",
                             )}
                           >
-                            <img
+                            <Image
                               src={
                                 reply.imageUrl ||
                                 reply.author?.imageUrl ||
                                 `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`
                               }
                               alt="Avatar"
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="24px"
+                              className="object-cover"
+                              unoptimized
                             />
                           </div>
                           {replyAuthorIsPatron && (

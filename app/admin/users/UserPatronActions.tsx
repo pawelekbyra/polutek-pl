@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export function UserPatronActions({ userId, isPatron }: { userId: string; isPatr
 
       router.refresh();
     } catch (error) {
-      console.error("[USER_PATRON_ACTION_ERROR]", error);
+      logger.error("[USER_PATRON_ACTION_ERROR]", error);
       alert(error instanceof Error ? error.message : "Nie udało się zmienić statusu Patrona.");
     } finally {
       setIsPending(false);

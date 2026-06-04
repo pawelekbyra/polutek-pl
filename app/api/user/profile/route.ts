@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(user);
   } catch (error) {
-    console.error('[USER_PROFILE_API_ERROR]', error);
+    logger.error('[USER_PROFILE_API_ERROR]', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

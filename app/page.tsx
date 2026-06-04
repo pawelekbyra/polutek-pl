@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
@@ -17,7 +18,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   try {
     authData = await auth();
   } catch (e) {
-    console.error("[HOME_AUTH_ERROR]", e);
+    logger.error("[HOME_AUTH_ERROR]", e);
   }
   const userId = authData.userId;
 
@@ -35,7 +36,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
       // If UserService.getOrCreateUser is called, it might not return paymentTotals by default.
       // Re-fetch to ensure relations are present for type safety and normalized totals.
       await UserService.getOrCreateUser(userId).catch((e) => {
-        console.error("[HOME_USER_FETCH_ERROR]", e);
+        logger.error("[HOME_USER_FETCH_ERROR]", e);
       });
       userDb = await prisma.user.findUnique({
         where: { id: userId },
@@ -54,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   try {
     user = await currentUser();
   } catch (e) {
-    console.error("[HOME_CURRENT_USER_ERROR]", e);
+    logger.error("[HOME_CURRENT_USER_ERROR]", e);
   }
 
   let initialInteraction = { liked: false, disliked: false };

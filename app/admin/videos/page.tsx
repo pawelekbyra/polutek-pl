@@ -1,8 +1,8 @@
 "use client";
 
+import { logger } from "@/lib/logger";
 import { useUser, useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import Link from 'next/link';
 import { Settings, Video, Edit, Save, BarChart3, Plus, Trash2, X, Globe, Lock, ShieldCheck, Star, Clock, ImageIcon, Mail, ArrowLeft, Image as ImageIconLucide, AlertCircle, Youtube } from "@/app/components/icons";
 import { formatCount, cn } from "@/lib/utils";
@@ -18,11 +18,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
 import Navbar from "@/app/components/Navbar";
+import type { InternalVideoDTO } from "@/app/types/video";
+
+type AdminVideo = InternalVideoDTO & {
+  showInSidebar?: boolean;
+  _count?: { videoLikes: number; videoDislikes: number; comments: number };
+};
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
   const { isLoaded: authLoaded } = useAuth();
-  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -30,7 +35,7 @@ export default function AdminVideosPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  const [videos, setVideos] = useState<any[]>([]);
+  const [videos, setVideos] = useState<AdminVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -57,6 +62,25 @@ export default function AdminVideosPage() {
   });
 
   const detectedVideoSource = formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null;
+
+  const fetchVideos = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/videos");
+      const data = await res.json() as AdminVideo[];
+      setVideos(data);
+    } catch (err) {
+      logger.error("Failed to fetch videos", err);
+    }
+  }, []);
+
+  const fetchAll = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        await fetchVideos();
+    } finally {
+        setIsLoading(false);
+    }
+  }, [fetchVideos]);
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
@@ -85,26 +109,7 @@ export default function AdminVideosPage() {
     };
 
     checkAdmin();
-  }, [user, userLoaded, authLoaded, router]);
-
-  const fetchAll = async () => {
-    setIsLoading(true);
-    try {
-        await fetchVideos();
-    } finally {
-        setIsLoading(false);
-    }
-  }
-
-  const fetchVideos = async () => {
-    try {
-      const res = await fetch("/api/admin/videos");
-      const data = await res.json();
-      setVideos(data);
-    } catch (err) {
-      console.error("Failed to fetch videos", err);
-    }
-  };
+  }, [user, userLoaded, authLoaded, fetchAll]);
 
 
   const slugify = (text: string) => {
@@ -130,7 +135,7 @@ export default function AdminVideosPage() {
     }));
   };
 
-  const handleEdit = (vid: any) => {
+  const handleEdit = (vid: AdminVideo) => {
     setFormError(null);
     setIsSlugManual(true);
     setFormData({
@@ -155,7 +160,7 @@ export default function AdminVideosPage() {
     setIsEditing(true);
   };
 
-  const handleDuplicate = (vid: any) => {
+  const handleDuplicate = (vid: AdminVideo) => {
     setFormError(null);
     setIsSlugManual(false);
     const newTitle = `${vid.title} (Kopia)`;
@@ -232,7 +237,7 @@ export default function AdminVideosPage() {
         setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
       }
     } catch (err) {
-      console.error("Submit failed", err);
+      logger.error("Submit failed", err);
       setFormError("Błąd połączenia z serwerem.");
     } finally {
       setIsSubmitting(false);
@@ -250,7 +255,7 @@ export default function AdminVideosPage() {
               alert("Błąd archiwizacji: " + err.error);
           }
       } catch (err) {
-          console.error("Delete failed", err);
+          logger.error("Delete failed", err);
       }
   }
 
@@ -268,7 +273,7 @@ export default function AdminVideosPage() {
       <AdminLayoutShell>
         <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center space-y-4 p-4">
           <div className="text-destructive font-bold text-xl">{error}</div>
-          <Button onClick={() => router.push("/")}>Wróć do strony głównej</Button>
+          <Button asChild><Link href="/">Wróć do strony głównej</Link></Button>
         </div>
       </AdminLayoutShell>
     );

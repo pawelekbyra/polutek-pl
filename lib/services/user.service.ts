@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
@@ -110,7 +111,7 @@ export class UserService {
       return await this.syncUser(clerkUserId, email, name, imageUrl, referrerId, language, username, clerkRole);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
-      console.error("[UserService.getOrCreateUser]", message);
+      logger.error("[UserService.getOrCreateUser]", message);
       throw e;
     }
   }
@@ -193,7 +194,7 @@ export class UserService {
       }
 
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[UserService.syncUser] Error:", message);
+      logger.error("[UserService.syncUser] Error:", message);
       throw err;
     }
   }
@@ -276,7 +277,7 @@ export class UserService {
 
       return user;
     } catch (error) {
-      console.warn(
+      logger.warn(
         "[UserService.getOrCreateUserFromAuth] Falling back to session claims:",
         error instanceof Error ? error.message : String(error)
       );

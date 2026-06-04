@@ -74,7 +74,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
             const result = await toggleVideoLike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
-                console.error("[Hero] LIKE Action failed:", result.error, result.message);
+                logger.error("[Hero] LIKE Action failed:", result.error, result.message);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -88,7 +88,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                 logger.debug("[Hero] LIKE Action success:", result);
             }
         } catch (error: unknown) {
-            console.error("[Hero] Transition error during LIKE:", error);
+            logger.error("[Hero] Transition error during LIKE:", error);
             alert("Błąd serwera podczas polubienia. Sprawdź połączenie.");
         }
     });
@@ -109,7 +109,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
         alert(language === 'pl' ? "Link skopiowany do schowka!" : "Link copied to clipboard!");
       }
     } catch (err) {
-      console.error("Error sharing:", err);
+      logger.error("Error sharing:", err);
     }
   };
 
@@ -124,7 +124,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
             const result = await toggleVideoDislike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
 
             if (result.error) {
-                console.error("[Hero] DISLIKE Action failed:", result.error, result.message);
+                logger.error("[Hero] DISLIKE Action failed:", result.error, result.message);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -138,7 +138,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                 logger.debug("[Hero] DISLIKE Action success:", result);
             }
         } catch (error: unknown) {
-            console.error("[Hero] Transition error during DISLIKE:", error);
+            logger.error("[Hero] Transition error during DISLIKE:", error);
             alert("Błąd serwera podczas oceny. Sprawdź połączenie.");
         }
     });

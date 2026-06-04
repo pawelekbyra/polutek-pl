@@ -1,5 +1,6 @@
 'use client';
 
+import { logger } from "@/lib/logger";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Language = 'pl' | 'en';
@@ -57,7 +58,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         // No need to alert on 401, user just might not be logged in
       } catch (e) {
-        console.warn('[LanguageContext] Failed to sync language with DB:', e);
+        logger.warn('[LanguageContext] Failed to sync language with DB:', e);
       }
     }
   };
