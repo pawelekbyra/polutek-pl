@@ -10,6 +10,8 @@ import { useLanguage } from './LanguageContext';
 interface VideoAccessContextType {
   hasAccess: boolean;
   videoUrl: string | null;
+  videoSourceKind: string | null;
+  videoEmbedUrl: string | null;
   isLoading: boolean;
   effectiveTier: AccessTier;
 }
@@ -17,6 +19,8 @@ interface VideoAccessContextType {
 const VideoAccessContext = createContext<VideoAccessContextType>({
   hasAccess: false,
   videoUrl: null,
+  videoSourceKind: null,
+  videoEmbedUrl: null,
   isLoading: true,
   effectiveTier: "PUBLIC" as AccessTier,
 });
@@ -41,6 +45,8 @@ export default function PremiumWrapper({
   const { userId, isLoaded } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoSourceKind, setVideoSourceKind] = useState<string | null>(null);
+  const [videoEmbedUrl, setVideoEmbedUrl] = useState<string | null>(null);
   const [dbTier, setDbTier] = useState<AccessTier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -55,30 +61,32 @@ export default function PremiumWrapper({
 
   useEffect(() => {
     async function checkAccess() {
-      const mediaUrl = `/api/media/${videoId}`;
-
-      if (isPublic) {
-        setHasAccess(true);
-        setVideoUrl(mediaUrl);
-        setIsLoading(false);
-        return;
-      }
-
-      if (isLoaded && !userId) {
+      if (isLoaded && !userId && !isPublic) {
         setHasAccess(false);
+        setVideoUrl(null);
+        setVideoSourceKind(null);
+        setVideoEmbedUrl(null);
         setIsLoading(false);
         return;
       }
 
-      if (!isLoaded || !userId) return;
+      if (!isLoaded && !isPublic) return;
 
       try {
-        const response = await fetch(`/api/access?videoId=${videoId}`);
-        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        const response = await fetch(`/api/media-source/${videoId}`);
         const data = await response.json();
+
+        if (!response.ok) {
+          setHasAccess(false);
+          if (data.requiredTier) setDbTier(data.requiredTier);
+          return;
+        }
+
         setHasAccess(data.hasAccess);
         if (data.hasAccess) {
-          setVideoUrl(mediaUrl);
+          setVideoUrl(data.playbackUrl);
+          setVideoSourceKind(data.kind);
+          setVideoEmbedUrl(data.embedUrl || null);
         }
         if (data.requiredTier) setDbTier(data.requiredTier);
       } catch (error) {
@@ -96,7 +104,7 @@ export default function PremiumWrapper({
     return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;
   }
 
-  const contextValue = { hasAccess: isPublic || isUnlockedByAuth || hasAccess, videoUrl, isLoading, effectiveTier };
+  const contextValue = { hasAccess: isPublic || isUnlockedByAuth || hasAccess, videoUrl, videoSourceKind, videoEmbedUrl, isLoading, effectiveTier };
 
   if (contextValue.hasAccess) {
     return (

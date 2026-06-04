@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle } from './icons';
-import Artplayer from 'artplayer';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -14,80 +14,14 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { videoUrl } = useVideoAccess();
+    const { videoUrl, videoSourceKind, videoEmbedUrl } = useVideoAccess();
     const posterUrl = video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const artRef = useRef<HTMLDivElement>(null);
-    const playerInstance = useRef<Artplayer | null>(null);
 
     useEffect(() => {
         setIsMounted(true);
-        return () => {
-            if (playerInstance.current) {
-                playerInstance.current.destroy(false);
-            }
-        };
     }, []);
-
-    useEffect(() => {
-        if (isMounted && artRef.current && videoUrl && variant !== 'thumbnail') {
-            // Clean up previous instance
-            if (playerInstance.current) {
-                playerInstance.current.destroy(false);
-            }
-
-            playerInstance.current = new Artplayer({
-                container: artRef.current,
-                url: videoUrl,
-                poster: posterUrl,
-                volume: 0.7,
-                muted: variant === 'hero',
-                autoplay: variant === 'hero',
-                pip: false,
-                autoSize: false,
-                screenshot: false,
-                setting: true,
-                loop: false,
-                playbackRate: true,
-                aspectRatio: false,
-                fullscreen: true,
-                fullscreenWeb: false,
-                mutex: true,
-                playsInline: true,
-                theme: '#2563eb',
-                lang: 'pl',
-                subtitleOffset: true,
-                moreVideoAttr: {
-                    style: {
-                        objectFit: 'cover',
-                    } as any,
-                },
-                controls: [
-                    {
-                        position: 'right',
-                        html: '<span style="font-weight: bold; font-size: 14px;">CC</span>',
-                        tooltip: 'Napisy',
-                        click: function () {
-                            const art = this as unknown as import("artplayer").default;
-                            art.subtitle.show = !art.subtitle.show;
-                        },
-                    },
-                ],
-            });
-
-            playerInstance.current.on('error', (error) => {
-                console.error('[Artplayer] Error:', error);
-                setLoadError('Nie udało się załadować materiału wideo. Sprawdź połączenie internetowe lub spróbuj ponownie później.');
-            });
-
-            return () => {
-                if (playerInstance.current) {
-                    playerInstance.current.destroy(false);
-                }
-            };
-        }
-    }, [isMounted, videoUrl, variant, posterUrl, video.id]);
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail' || !videoUrl) {
@@ -140,159 +74,47 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             />
             {variant === 'hero' && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 md:w-24 md:h-24 bg-black/80 backdrop-blur-sm rounded-md flex items-center justify-center border border-white/10">
-                        <Play className="text-white w-8 h-8 md:w-12 md:h-12 ml-1" />
+                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                        <Play className="text-white w-8 h-8 ml-1" />
                     </div>
                 </div>
             )}
         </div>
     );
 
+    const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
+    const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
+
     return (
-        <div className="relative z-0 w-full aspect-video bg-black rounded-lg overflow-hidden group shadow-2xl artplayer-container">
+        <div className="relative w-full h-full min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
             {loadError ? (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900 p-6 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                    <h3 className="text-white font-bold text-lg mb-2">Błąd ładowania filmu</h3>
-                    <p className="text-neutral-400 text-sm max-w-md">{loadError}</p>
-                    <button
-                        onClick={() => setLoadError(null)}
-                        className="mt-6 px-6 py-2 bg-white text-black rounded-md font-bold text-sm hover:bg-neutral-200 transition-colors"
-                    >
-                        Spróbuj ponownie
-                    </button>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950 text-white p-6 text-center">
+                    <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+                    <p className="font-medium">{loadError}</p>
+                    <p className="text-xs text-white/60 mt-2">Źródło: {videoSourceKind || 'URL wideo'}</p>
                 </div>
             ) : (
-                <div ref={artRef} className="w-full h-full" />
+                <MediaPlayer
+                    className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
+                    title={video.title || 'Video'}
+                    src={src}
+                    poster={posterUrl}
+                    muted={variant === 'hero'}
+                    autoPlay={variant === 'hero'}
+                    playsInline
+                    controls
+                    aspectRatio="16/9"
+                    onError={() => setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.')}
+                >
+                    <MediaProvider>
+                        <Poster
+                            className="absolute inset-0 block h-full w-full object-cover opacity-90"
+                            src={posterUrl}
+                            alt={video.title || 'Video poster'}
+                        />
+                    </MediaProvider>
+                </MediaPlayer>
             )}
-
-            <style jsx global>{`
-                .artplayer-container {
-                    --art-theme: #2563eb;
-                    --art-fullscreen-web-index: 40;
-                    z-index: 0;
-                }
-
-                .artplayer-container .art-video-player {
-                    z-index: 0 !important;
-                }
-
-                .artplayer-container .art-video-player video,
-                .artplayer-container .art-poster {
-                    object-fit: cover !important;
-                }
-
-                .artplayer-container .artplayer-app {
-                    border-radius: 8px;
-                    overflow: hidden;
-                    width: 100% !important;
-                    height: 100% !important;
-                }
-
-                /* YouTube-like Progress Bar for Artplayer */
-                .artplayer-container .art-control-progress {
-                    height: 14px !important;
-                    display: flex;
-                    align-items: center;
-                    cursor: pointer;
-                    padding: 0 !important;
-                    margin-bottom: 0 !important;
-                }
-
-                .artplayer-container .art-controls {
-                    display: flex !important;
-                    align-items: center !important;
-                    padding: 0 !important;
-                    height: 48px !important;
-                    margin: 0 !important;
-                    width: 100% !important;
-                    left: 0 !important;
-                    right: 0 !important;
-                }
-
-                .artplayer-container .art-controls-left {
-                    display: flex !important;
-                    align-items: center !important;
-                    height: 100% !important;
-                    padding-left: 0 !important;
-                    margin-left: 0 !important;
-                }
-
-                .artplayer-container .art-controls-right {
-                    display: flex !important;
-                    align-items: center !important;
-                    height: 100% !important;
-                    padding-right: 0 !important;
-                    margin-right: 0 !important;
-                }
-
-                .artplayer-container .art-control {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    height: 100% !important;
-                    padding: 0 2px !important;
-                    margin: 0 !important;
-                }
-
-                .artplayer-container .art-control-progress-inner {
-                    height: 3px !important;
-                    transition: height 0.2s ease-in-out !important;
-                }
-
-                .artplayer-container .art-control-progress:hover .art-control-progress-inner {
-                    height: 8px !important;
-                }
-
-                .artplayer-container .art-progress-indicator {
-                    width: 14px !important;
-                    height: 14px !important;
-                    background: #2563eb !important;
-                    background-image: none !important;
-                    border: none !important;
-                    opacity: 0 !important;
-                    transition: opacity 0.2s ease-in-out !important;
-                    margin-top: 0 !important;
-                    transform: translateY(0) !important;
-                    z-index: 10 !important;
-                    box-shadow: none !important;
-                    filter: none !important;
-                }
-
-                .artplayer-container .art-control-progress:hover .art-progress-indicator {
-                    opacity: 1 !important;
-                }
-
-                .artplayer-container .art-progress-played,
-                .artplayer-container .art-progress-played:after {
-                    background: #2563eb !important;
-                    background-image: none !important;
-                    opacity: 1 !important;
-                    box-shadow: none !important;
-                    filter: none !important;
-                    border: none !important;
-                    backdrop-filter: none !important;
-                }
-
-                .artplayer-container .art-control-pip {
-                    display: none !important;
-                }
-
-                .artplayer-container .art-progress-highlight {
-                    background: rgba(255, 255, 255, 0.3) !important;
-                }
-
-                .artplayer-container .art-progress-loaded {
-                    background: rgba(255, 255, 255, 0.2) !important;
-                }
-
-                /* Mobile responsiveness */
-                @media (max-width: 640px) {
-                    .artplayer-container .art-video-player {
-                        border-radius: 0;
-                    }
-                }
-            `}</style>
         </div>
     );
 }
