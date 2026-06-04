@@ -68,6 +68,12 @@ ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundedAmountMinor" INTEGER NOT
 ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "subjectEn" TEXT;
 ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "htmlEn" TEXT;
 
+-- 9.5 Ensure PatronGrant columns exist before deduplication references them.
+ALTER TABLE "PatronGrant" ADD COLUMN IF NOT EXISTS "paymentId" TEXT;
+ALTER TABLE "PatronGrant" ADD COLUMN IF NOT EXISTS "referralId" TEXT;
+ALTER TABLE "PatronGrant" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "PatronGrant" ADD COLUMN IF NOT EXISTS "revokedAt" TIMESTAMP(3);
+
 -- 10. Fix unique constraints on PatronGrant without deleting grant history.
 -- Keep the oldest row as canonical; mark later duplicates as revoked and clear
 -- duplicate external ids so unique indexes can be created safely.

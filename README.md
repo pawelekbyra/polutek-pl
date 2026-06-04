@@ -70,6 +70,16 @@ For production environments, deploy checked-in migrations only:
 npm run db:migrate:deploy
 # equivalent: npx prisma migrate deploy
 ```
+
+On Vercel, the project build command must be `npm run vercel-build`; this repository enforces that in `vercel.json`. The command intentionally runs `prisma migrate deploy`, `prisma generate`, `db:smoke`, then `next build`, so migrations are applied before Next.js reads Prisma models during build. For production preflight, run either:
+```bash
+npm run predeploy:prod
+npm run build
+```
+or:
+```bash
+npm run vercel-build
+```
 `npm run db:push` / `npx prisma db push` is reserved for local prototyping only and must not be used for production deploys.
 
 *Note: Production deployments must use `prisma migrate deploy` to ensure database schema consistency. Hard delete of production data is discouraged; prefer status updates (e.g., `VideoStatus.ARCHIVED`).*
@@ -172,6 +182,6 @@ npm run build
 
 The `db:smoke` check performs minimal Prisma `findFirst` queries that select critical columns including `User.isPatron`, `User.patronSince`, `User.patronSource`, `Video.titleEn`, `Video.descriptionEn`, `PatronGrant.paymentId`, and `PatronGrant.referralId`. A `P2022` failure means the active `DATABASE_URL` still has schema drift and must be migrated before traffic is promoted.
 
-Required production environment groups: database URLs available during the Vercel build (`DATABASE_URL` and, when used, `DATABASE_URL_UNPOOLED`), Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, writable Redis REST URL/token (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` or Vercel `KV_REST_API_URL`/`KV_REST_API_TOKEN`), exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, `PATRON_MIN_TIP_AMOUNT`, and `HEALTHCHECK_TOKEN`.
+Required production environment groups: database URLs available during the Vercel build (`DATABASE_URL` and, when used, `DATABASE_URL_UNPOOLED`), Clerk keys and webhook secret, Stripe keys and webhook secret, Resend email settings, writable Redis REST URL/token (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` or Vercel `KV_REST_API_URL`/`KV_REST_API_TOKEN`), exact media host allowlist values, `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL=pawel.perfect@gmail.com`, `PATRON_MIN_TIP_AMOUNT=500`, `PATRON_MIN_TIP_CURRENCY=EUR`, `REFERRAL_PATRON_THRESHOLD=5`, `DISPLAY_USD_TO_PLN_RATE=4.0`, and `HEALTHCHECK_TOKEN`.
 
 Before promoting the deployment, verify `/`, `/admin`, `/admin/videos`, `/admin/channel`, `/admin/users`, `/admin/emails`, `/api/media/:videoId`, and `/api/checkout/create-intent` do not return 500 responses, and confirm Vercel logs no longer contain missing-column `P2022` errors such as `Video.titleEn` or `User.patronSource`.

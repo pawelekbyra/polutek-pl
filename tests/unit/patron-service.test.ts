@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PatronGrantSource } from '@prisma/client';
+import { PatronGrantSource, Prisma } from '@prisma/client';
 import { grantPatronStatus, revokePatronStatus } from '@/lib/services/patron.service';
 import { prisma } from '@/lib/prisma';
 
@@ -83,6 +83,45 @@ describe('patron service', () => {
 
     expect(result.user.patronSince).toBe(patronSince);
     expect(result.becamePatronNow).toBe(false);
+  });
+
+  it('grantPatronStatus is idempotent for referralId', async () => {
+    const patronSince = new Date('2026-01-01T00:00:00Z');
+    const existing = { id: 'u1', isPatron: true, patronSince, paymentTotals };
+    const existingGrant = { id: 'grant_ref_1', referralId: 'ref1', userId: 'u1' };
+
+    vi.mocked(prisma.patronGrant.findUnique).mockResolvedValue(existingGrant as any);
+    vi.mocked(prisma.user.findUniqueOrThrow).mockResolvedValue(existing as any);
+
+    const result = await grantPatronStatus('u1', { source: 'referral', referralId: 'ref1' });
+
+    expect(result.alreadyGranted).toBe(true);
+    expect(result.becamePatronNow).toBe(false);
+    expect(result.user.patronSince).toBe(patronSince);
+    expect(prisma.patronGrant.create).not.toHaveBeenCalled();
+  });
+
+  it('treats P2002 races on paymentId as idempotent', async () => {
+    const patronSince = new Date('2026-01-01T00:00:00Z');
+    const existing = { id: 'u1', isPatron: true, patronSince, paymentTotals };
+    const existingGrant = { id: 'grant_payment_1', paymentId: 'p1', userId: 'u1' };
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(existing as any);
+    vi.mocked(prisma.patronGrant.findUnique)
+      .mockResolvedValueOnce(null as any)
+      .mockResolvedValueOnce(existingGrant as any);
+    vi.mocked(prisma.user.findUniqueOrThrow).mockResolvedValue(existing as any);
+    vi.mocked(prisma.patronGrant.create).mockRejectedValue(new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed on the fields: (`paymentId`)',
+      { code: 'P2002', clientVersion: 'test', meta: { target: ['paymentId'] } },
+    ));
+    (prisma.user.update as any).mockResolvedValue(existing);
+
+    const result = await grantPatronStatus('u1', { source: 'stripe_tip', paymentId: 'p1' });
+
+    expect(result.alreadyGranted).toBe(true);
+    expect(result.becamePatronNow).toBe(false);
+    expect(result.user.patronSince).toBe(patronSince);
   });
 
   it('revokePatronStatus revokes grants and does not touch payment history', async () => {

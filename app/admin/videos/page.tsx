@@ -240,14 +240,14 @@ export default function AdminVideosPage() {
   };
 
   const handleDelete = async (id: string) => {
-      if (!confirm("Czy na pewno chcesz zarchiwizować ten film? Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
+      if (!confirm("Zarchiwizuj film. Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
               fetchVideos();
           } else {
               const err = await res.json();
-              alert("Błąd usuwania: " + err.error);
+              alert("Błąd archiwizacji: " + err.error);
           }
       } catch (err) {
           console.error("Delete failed", err);
@@ -325,7 +325,7 @@ export default function AdminVideosPage() {
                 <div className="space-y-6">
                   <section className="rounded-3xl border bg-card p-5 shadow-sm md:p-6">
                     <Tabs defaultValue="pl" className="w-full gap-0">
-                      <div className="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex flex-col gap-4 border-b pb-4">
                         <div className="min-w-0">
                           <h2 className="flex items-center gap-2 text-xl font-semibold">
                             <Globe className="h-5 w-5 shrink-0" /> Treść i języki

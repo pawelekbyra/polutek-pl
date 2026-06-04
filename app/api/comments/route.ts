@@ -7,7 +7,7 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
-import { isAllowedMediaUrl } from '@/lib/blob';
+import { isAllowedAvatarUrl, isAllowedCommentImageUrl } from '@/lib/blob';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 
 export const dynamic = 'force-dynamic';
@@ -45,25 +45,12 @@ function getCommentAuthorName(author?: CommentAuthor | null) {
   return name || username || fallbackFromEmail || "Użytkownik";
 }
 
-function isAllowedClerkAvatarUrl(rawUrl?: string | null) {
-  if (!rawUrl) return false;
-
-  try {
-    const url = new URL(rawUrl);
-    const hostname = url.hostname.toLowerCase();
-
-    return url.protocol === 'https:' && (hostname === 'img.clerk.com' || hostname.endsWith('.clerk.com'));
-  } catch {
-    return false;
-  }
-}
-
 function cleanAuthorProfile(profile?: ClerkAuthorProfile | null) {
   const rawName = profile?.name?.trim() || null;
   const name = rawName && !isGeneratedClerkUsername(rawName) ? rawName : null;
   const rawUsername = profile?.username?.trim() || null;
   const username = rawUsername && !isGeneratedClerkUsername(rawUsername) ? rawUsername : null;
-  const imageUrl = isAllowedClerkAvatarUrl(profile?.imageUrl) ? profile?.imageUrl?.trim() || null : null;
+  const imageUrl = isAllowedAvatarUrl(profile?.imageUrl) ? profile?.imageUrl?.trim() || null : null;
 
   return { name, username, imageUrl };
 }
@@ -106,12 +93,7 @@ const postCommentSchema = z.object({
   videoId: z.string(),
   text: z.string().trim().min(1).max(2000).optional(),
   parentId: z.string().optional().nullable(),
-  imageUrl: z.string().url().refine((url) => isAllowedMediaUrl(url), "Zablokowany host obrazka").optional().nullable(),
-  authorProfile: z.object({
-    name: z.string().trim().max(120).optional().nullable(),
-    username: z.string().trim().max(120).optional().nullable(),
-    imageUrl: z.string().url().optional().nullable(),
-  }).optional(),
+  imageUrl: z.string().url().refine((url) => isAllowedCommentImageUrl(url), "Zablokowany host obrazka").optional().nullable(),
 }).refine(data => data.text || data.imageUrl, {
   message: "Treść komentarza lub obrazek jest wymagany",
   path: ["text"]
@@ -298,8 +280,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
     }
 
-    const { videoId, text, parentId, imageUrl, authorProfile } = result.data;
-    localUser = await refreshLocalUserDisplayProfile(userId, localUser, authorProfile);
+    const { videoId, text, parentId, imageUrl } = result.data;
 
     // Access control check
     const decision = await AccessPolicy.canComment(userId, videoId);

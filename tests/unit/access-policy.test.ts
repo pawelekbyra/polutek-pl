@@ -171,6 +171,21 @@ describe('AccessPolicy', () => {
       expect(decision.reason).toBe('PATRON_REQUIRED');
     });
 
+    it('denies archived videos even for admins so media-source/access APIs do not expose archived content', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v_archived',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.ARCHIVED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('admin_1', 'v_archived');
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('NOT_FOUND');
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
     it('allows access to anything if user is an ADMIN', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
