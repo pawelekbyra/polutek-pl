@@ -10,7 +10,7 @@ import {
 } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, LogIn, X } from "./icons";
+import { Search, LogIn, ShieldCheck, X } from "./icons";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
@@ -191,7 +191,17 @@ const Navbar = () => {
                         : undefined,
                     },
                   }}
-                />
+                >
+                  {isAdmin && (
+                    <UserButton.MenuItems>
+                      <UserButton.Link
+                        href="/admin"
+                        label="Panel admina"
+                        labelIcon={<ShieldCheck size={16} />}
+                      />
+                    </UserButton.MenuItems>
+                  )}
+                </UserButton>
                 {isPatron && (
                   <span className="pointer-events-none absolute -bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
                     Patron

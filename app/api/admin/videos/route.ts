@@ -6,6 +6,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
+import { flags } from '@/lib/feature-flags';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,8 +141,8 @@ export async function POST(req: NextRequest) {
         let creator = await tx.creator.findFirst({ where: { isPrimary: true } });
 
         if (!creator) {
-          // Fallback to polutek slug
-          creator = await tx.creator.findUnique({ where: { slug: "polutek" } });
+          // Fallback to the configured main creator slug
+          creator = await tx.creator.findUnique({ where: { slug: flags.mainCreatorSlug } });
         }
 
         if (!creator) {
@@ -152,7 +153,7 @@ export async function POST(req: NextRequest) {
             data: {
               userId: user.id,
               name: "Paweł Perfect",
-              slug: "polutek",
+              slug: flags.mainCreatorSlug,
               isApproved: true,
               isPrimary: true,
             }

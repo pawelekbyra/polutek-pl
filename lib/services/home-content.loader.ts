@@ -88,7 +88,7 @@ export async function loadHomeContent(): Promise<HomeContentLoadResult> {
     try {
       mainVideo = flags.multiCreator
         ? await ContentService.getMainFeaturedVideo()
-        : allVideos.find((video) => video.isMainFeatured) || null;
+        : allVideos.find((video) => video.isMainFeatured) || allVideos[0] || null;
       debug.mainVideoSuccess = true;
       debug.mainVideoId = mainVideo?.id || null;
     } catch (e) {

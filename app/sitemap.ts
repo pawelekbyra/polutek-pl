@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { ContentService } from '@/lib/services/content.service';
+import { flags } from '@/lib/feature-flags';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pawelperfect.pl';
@@ -7,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base routes
   const routes = [
     '',
-    '/channel/polutek',
+    ...(flags.multiCreator ? [`/channel/${flags.mainCreatorSlug}`] : []),
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
