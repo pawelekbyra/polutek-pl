@@ -46,7 +46,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-700 delay-100 fill-mode-both">
             <div className="relative inline-block overflow-hidden rounded-full group">
               <span className="relative z-10 inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em]">
-                {language === 'pl' ? 'Dostęp Premium' : 'Premium Access'}
+                {language === 'pl' ? 'Dobrowolny napiwek' : 'Voluntary Tip'}
               </span>
               <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shimmer" />
             </div>
@@ -72,12 +72,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {language === 'pl' ? 'Dożywotni Dostęp' : 'Lifetime Access'}
+                    {language === 'pl' ? 'Status Patrona' : 'Patron Status'}
                   </p>
                   <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
                     {language === 'pl'
-                      ? 'Wszystkie obecne i przyszłe materiały premium bez limitów.'
-                      : 'All current and future premium materials without limits.'}
+                      ? 'Każdy udany jednorazowy napiwek nadaje status Patrona i dostęp do materiałów premium.'
+                      : 'Every successful one-time tip grants Patron status and access to premium materials.'}
                   </p>
                 </div>
               </div>
@@ -157,8 +157,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </h1>
                   <p className="text-lg text-neutral-500 font-medium italic leading-relaxed max-w-sm mx-auto">
                     {language === 'pl'
-                      ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Razem budujemy tę platformę!'
-                      : 'Your support has been successfully registered. Together we build this platform!'}
+                      ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Po potwierdzeniu webhooka Stripe otrzymasz status Patrona.'
+                      : 'Your support was registered. After Stripe webhook confirmation you will receive Patron status.'}
                   </p>
                 </div>
 
@@ -177,7 +177,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             ) : (
               <div className="flex flex-col pt-10">
                 <div className="hidden md:block mb-6">
-                  <h2 className="text-2xl font-brand font-black uppercase tracking-tight leading-none">{language === 'pl' ? 'Przekaż napiwek' : 'Finalize payment'}</h2>
+                  <h2 className="text-2xl font-brand font-black uppercase tracking-tight leading-none">{language === 'pl' ? 'Przekaż jednorazowy napiwek' : 'Send a one-time tip'}</h2>
                   <p className="text-sm text-muted-foreground">Bezpieczna transakcja obsługiwana przez Stripe.</p>
                 </div>
 

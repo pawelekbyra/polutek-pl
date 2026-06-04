@@ -98,9 +98,7 @@ function getAvatarSeed(comment: CommentView) {
 function isPatronAuthor(author?: CommentAuthorView | null) {
   return (
     !!author &&
-    (author.isPatron ||
-      (author.referralPoints || 0) >= 5 ||
-      author.role === "ADMIN")
+    (author.role === "ADMIN" || author.isPatron === true)
   );
 }
 
@@ -163,10 +161,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       : null;
 
   const isPatronGated = videoTier === "PATRON";
-  const isPatron =
-    userProfile?.isPatron ||
-    (userProfile?.referralPoints || 0) >= 5 ||
-    userProfile?.role === "ADMIN";
+  const isPatron = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
   const canComment = !!userProfile && (!isPatronGated || isPatron);
   const userAvatarUrl = userProfile
     ? userProfile.imageUrl ||

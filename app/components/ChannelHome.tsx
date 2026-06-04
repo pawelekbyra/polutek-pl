@@ -25,7 +25,6 @@ interface ChannelHomeProps {
     imageUrl?: string | null;
     totalPaid: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
-    initialIsSubscribed?: boolean;
     isPatron?: boolean;
     referralPoints?: number;
     role?: string;
@@ -60,7 +59,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
-  const viewerIsPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
+  const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatron === true;
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
   const [premiereCountdown, setPremiereCountdown] = useState('');
@@ -161,7 +160,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideo.id;
     const isLoggedIn = !!userProfile;
-    const isPatron = !!userProfile?.isPatron || (userProfile?.referralPoints ?? 0) >= 5 || userProfile?.role === 'ADMIN';
+    const isPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatron === true;
     const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
 
     return (
@@ -290,7 +289,6 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
             <Hero
               video={selectedVideo}
               initialInteraction={userProfile?.initialInteraction}
-              initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
 
             <div className="lg:hidden flex border-b border-neutral-300 mt-4">

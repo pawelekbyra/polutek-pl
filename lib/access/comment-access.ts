@@ -14,7 +14,7 @@ export type CommentAccessState = {
 };
 
 export function isPatronLikeUser(user: CommentAccessUser): boolean {
-  return !!user?.isPatron || (user?.referralPoints ?? 0) >= 5 || user?.role === 'ADMIN';
+  return user?.role === 'ADMIN' || user?.isPatron === true;
 }
 
 export function getCommentAccessState(

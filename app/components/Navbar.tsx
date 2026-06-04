@@ -42,11 +42,7 @@ const Navbar = () => {
 
   const metadata = (user?.publicMetadata || {}) as NavbarMetadata;
   const isAdmin = metadata.role === "ADMIN";
-  const isPatron =
-    metadata.isPatron === true ||
-    (typeof metadata.referralPoints === "number" &&
-      metadata.referralPoints >= 5) ||
-    isAdmin;
+  const isPatron = isAdmin || metadata.isPatron === true;
 
   return (
     <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-visible">

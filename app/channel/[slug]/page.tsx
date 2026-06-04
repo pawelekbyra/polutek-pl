@@ -9,7 +9,6 @@ import { Search } from '@/app/components/icons';
 import { ContentService } from '@/lib/services/content.service';
 import { UserService } from '@/lib/services/user.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
-import SubscribeButton from '@/app/components/SubscribeButton';
 import { formatCount } from '@/lib/utils';
 import { flags } from '@/lib/feature-flags';
 
@@ -38,8 +37,6 @@ export default async function ChannelPage({ params }: { params: { slug: string }
 
   const { userId } = await auth();
   const userDb = userId ? await UserService.getOrCreateUser(userId).catch(() => null) : null;
-  const isSubscribed = (userId && creator) ? await UserService.isSubscribed(userId, creator.id).catch(() => false) : false;
-
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
@@ -98,13 +95,6 @@ export default async function ChannelPage({ params }: { params: { slug: string }
             <p className="text-[14px] text-[#606060] line-clamp-1 max-w-2xl font-sans mt-1">
                {displayBio}
             </p>
-            <div className="pt-3 flex flex-wrap justify-center md:justify-start gap-4 items-center">
-               <SubscribeButton
-                 creatorId={creator.id}
-                 initialSubscribersCount={creator.subscribersCount || 0}
-                 initialIsSubscribed={isSubscribed}
-               />
-            </div>
           </div>
         </div>
 

@@ -18,13 +18,13 @@ describe('comment access state', () => {
   it('requires patron-like status to comment on PATRON videos', () => {
     expect(getCommentAccessState({ isPatron: false, role: 'USER', referralPoints: 0 }, AccessTier.PATRON).canComment).toBe(false);
     expect(getCommentAccessState({ isPatron: true, role: 'USER', referralPoints: 0 }, AccessTier.PATRON).canComment).toBe(true);
-    expect(getCommentAccessState({ isPatron: false, role: 'USER', referralPoints: 5 }, AccessTier.PATRON).canComment).toBe(true);
+    expect(getCommentAccessState({ isPatron: false, role: 'USER', referralPoints: 5 }, AccessTier.PATRON).canComment).toBe(false);
     expect(getCommentAccessState({ isPatron: false, role: 'ADMIN', referralPoints: 0 }, AccessTier.PATRON).canComment).toBe(true);
   });
 
-  it('identifies VIP-looking users with patron, referral, or admin status', () => {
+  it('identifies patron-like users from isPatron or admin status only', () => {
     expect(isPatronLikeUser({ isPatron: true })).toBe(true);
-    expect(isPatronLikeUser({ referralPoints: 5 })).toBe(true);
+    expect(isPatronLikeUser({ referralPoints: 5 })).toBe(false);
     expect(isPatronLikeUser({ role: 'ADMIN' })).toBe(true);
     expect(isPatronLikeUser({ isPatron: false, referralPoints: 4, role: 'USER' })).toBe(false);
   });

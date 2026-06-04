@@ -30,6 +30,7 @@ model User {
   imageUrl                      String?
   isPatron                      Boolean    @default(false)
   patronSince                   DateTime?
+  patronSource                  PatronGrantSource?
   canCreateChannel              Boolean    @default(false)
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt
@@ -114,9 +115,11 @@ model ClerkEvent {
 }
 
 enum PatronGrantSource {
+  STRIPE_TIP
   PAYMENT
   REFERRAL
   ADMIN
+  MIGRATION
   LEGACY
 }
 
@@ -174,6 +177,8 @@ model Creator {
 }
 
 model Subscription {
+  /// LEGACY: historical channel-follow/subscription records only.
+  /// Do not use this model for premium/patron content access; User.isPatron is the only access source of truth.
   id        String   @id @default(uuid())
   userId    String
   creatorId String

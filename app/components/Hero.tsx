@@ -8,7 +8,6 @@ import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
 import Image from 'next/image';
-import SubscribeButton from './SubscribeButton';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
 import { useLanguage } from './LanguageContext';
@@ -18,10 +17,9 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 interface HeroProps {
   video: PublicVideoDTO;
   initialInteraction?: { liked: boolean; disliked: boolean };
-  initialIsSubscribed?: boolean;
 }
 
-const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
+const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
   const { t, language } = useLanguage();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
@@ -190,12 +188,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      {mounted ? formatCount(video.creator?.subscribersCount || 0) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
-               <SubscribeButton
-                 creatorId={video.creatorId}
-                 initialSubscribersCount={video.creator?.subscribersCount || 0}
-                 initialIsSubscribed={initialIsSubscribed}
-                 className="flex-1 lg:flex-none"
-               />
             </div>
 
             <div className="flex items-center gap-2 w-full lg:w-auto">

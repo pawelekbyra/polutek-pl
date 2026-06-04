@@ -89,7 +89,7 @@ export class AccessPolicy {
     // local row should not block freshly signed-in users before profile sync.
     if (video.tier === AccessTier.LOGGED_IN) return { allowed: true };
 
-    // Patron tier requires a local patron-like profile.
+    // Patron tier uses User.isPatron as the single source of truth (admins are explicitly allowed above).
     if (video.tier === AccessTier.PATRON) {
       if (isPatronLikeUser(user)) return { allowed: true };
       return { allowed: false, reason: "PATRON_REQUIRED", requiredTier: AccessTier.PATRON };
