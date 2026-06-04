@@ -101,6 +101,6 @@ describe('sitemap', () => {
     expect(urls).toContain('https://example.com/channel/kraufanding');
     expect(urls).toContain('https://example.com/?v=other-video');
     expect(mockContentService.getAllVideos).toHaveBeenCalled();
-    expect(mockContentService.getCreatorBySlug).not.toHaveBeenCalled();
+    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('kraufanding');
   });
 });

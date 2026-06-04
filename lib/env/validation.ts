@@ -94,7 +94,7 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
       errors.push('Writable Redis/KV REST credentials are required in production for rate limiting: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.');
     }
   } else if (!hasValue(env, 'MAIN_CREATOR_SLUG')) {
-    warnings.push('MAIN_CREATOR_SLUG is not set; single-creator pages may be empty until configured.');
+    warnings.push('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');
   }
 
   validateUrl(errors, env, 'NEXT_PUBLIC_APP_URL');

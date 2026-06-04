@@ -23,7 +23,7 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 
 Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy, ale `/channel/[slug]` pozostaje dostępną, indeksowalną stroną kanału dla skonfigurowanego sluga.
 
-Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Kod nie powinien polegać na fallbacku do konkretnego sluga kanału.
+Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału.
 
 ## Definicje domenowe — najważniejsza spójność do bety
 
@@ -267,10 +267,11 @@ Legenda:
 - [x] `MAIN_CREATOR_SLUG` jest wymagany przez walidację produkcyjną i ostrzegany poza produkcją.
 - [x] `DATABASE_URL` i `DATABASE_URL_UNPOOLED` są wymagane przez walidację produkcyjną; realne `db:smoke`/`migrate deploy` nadal wymagają prawdziwej DB.
 - [x] Walidacja env rozdziela wymagane produkcyjne zmienne, rekomendowane zmienne i ostrzeżenia dev/test.
+- [x] Dodano regresję: homepage nie pokazuje pustego stanu tylko dlatego, że `MAIN_CREATOR_SLUG` nie jest ustawiony; używany jest zatwierdzony twórca z bazy.
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 23 pliki, 120 testów.
+- [x] Unit suite PASS: 23 pliki, 121 testów.
 - [ ] Dodać coverage script i raport minimalnych progów albo świadomie oznaczyć brak progu jako limitation.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.

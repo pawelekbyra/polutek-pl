@@ -5,10 +5,23 @@ import { flags } from '@/lib/feature-flags';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pawelperfect.pl';
 
+  if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
+    return [{
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 1,
+    }];
+  }
+
+  const configuredCreator = flags.mainCreatorSlug
+    ? await ContentService.getCreatorBySlug(flags.mainCreatorSlug).catch(() => null)
+    : await ContentService.getConfiguredOrDefaultCreator().catch(() => null);
+
   // Base routes
   const routes = [
     '',
-    ...(flags.mainCreatorSlug ? [`/channel/${flags.mainCreatorSlug}`] : []),
+    ...(configuredCreator?.slug ? [`/channel/${configuredCreator.slug}`] : []),
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -16,14 +29,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
-    return routes;
-  }
-
   try {
     const videos = flags.multiCreator
       ? await ContentService.getAllVideos()
-      : (await ContentService.getCreatorBySlug(flags.mainCreatorSlug))?.videos || [];
+      : configuredCreator?.videos || [];
     const videoRoutes = videos
       .filter(v => v.tier === 'PUBLIC')
       .map((v) => ({

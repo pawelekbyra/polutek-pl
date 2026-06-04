@@ -274,6 +274,78 @@ export class ContentService {
     }
   }
 
+
+  /**
+   * Retrieves the configured creator when MAIN_CREATOR_SLUG is set, otherwise
+   * falls back to the first approved primary creator from the database.
+   * This keeps local/prod data visible without introducing a hardcoded slug.
+   */
+  static async getConfiguredOrDefaultCreator(): Promise<PublicCreatorPageDTO | null> {
+    if (flags.mainCreatorSlug) {
+      const configuredCreator = await this.getCreatorBySlug(flags.mainCreatorSlug);
+      if (configuredCreator) return configuredCreator;
+    }
+
+    try {
+      const creator = await prisma.creator.findFirst({
+        where: { isApproved: true },
+        include: {
+          user: {
+            select: { imageUrl: true, email: true }
+          },
+          videos: {
+            where: {
+              status: VideoStatus.PUBLISHED,
+              OR: [
+                { publishedAt: null },
+                { publishedAt: { lte: new Date() } },
+              ],
+            },
+            orderBy: publicVideoOrderBy,
+          }
+        },
+        orderBy: [
+          { isPrimary: 'desc' },
+          { updatedAt: 'desc' },
+          { createdAt: 'desc' },
+        ],
+      });
+
+      if (!creator) return null;
+
+      const adminData = creator.isPrimary ? await this.getAdminData() : null;
+      const resolvedCreator = withResolvedChannelAvatar(creator, adminData?.imageUrl);
+
+      return {
+        id: creator.id,
+        name: creator.name,
+        slug: creator.slug,
+        imageUrl: resolvedCreator.user?.imageUrl || null,
+        bannerUrl: creator.bannerUrl,
+        bio: creator.bio,
+        userId: creator.userId,
+        subscribersCount: creator.subscribersCount || 0,
+        videos: (creator.videos || []).map((v) => this.mapToPublicVideoDTO({ ...v, creator: resolvedCreator })),
+      };
+    } catch (e: unknown) {
+      logger.error("[GET_CONFIGURED_OR_DEFAULT_CREATOR_ERROR]", e);
+      if (flags.demoFallbacks) {
+        return {
+          id: DEFAULT_CREATOR.id,
+          name: DEFAULT_CREATOR.name,
+          slug: DEFAULT_CREATOR.slug,
+          imageUrl: null,
+          bannerUrl: null,
+          bio: DEFAULT_CREATOR.bio,
+          userId: undefined,
+          subscribersCount: 1250000,
+          videos: INITIAL_VIDEOS.map(v => this.mapToPublicVideoDTO(v)),
+        };
+      }
+      throw e;
+    }
+  }
+
   /**
    * Evaluates if a user has access to a specific video.
    */

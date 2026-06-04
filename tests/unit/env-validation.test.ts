@@ -53,6 +53,6 @@ describe('validateAppEnv', () => {
     const result = validateAppEnv({ NODE_ENV: 'development' }, 'development');
 
     expect(result.success).toBe(true);
-    expect(result.warnings).toContain('MAIN_CREATOR_SLUG is not set; single-creator pages may be empty until configured.');
+    expect(result.warnings).toContain('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');
   });
 });
