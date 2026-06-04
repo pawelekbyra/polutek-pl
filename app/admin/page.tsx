@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
+import Navbar from "@/app/components/Navbar";
 
 export default function AdminPanel() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -342,24 +343,35 @@ export default function AdminPanel() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Weryfikacja dostępu...</div>;
+    return (
+      <AdminLayoutShell>
+        <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Weryfikacja dostępu...</div>
+      </AdminLayoutShell>
+    );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 space-y-4">
-        <div className="text-destructive font-bold text-xl">{error}</div>
-        <Button onClick={() => router.push("/")}>Wróć do strony głównej</Button>
-      </div>
+      <AdminLayoutShell>
+        <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center space-y-4 p-4">
+          <div className="text-destructive font-bold text-xl">{error}</div>
+          <Button onClick={() => router.push("/")}>Wróć do strony głównej</Button>
+        </div>
+      </AdminLayoutShell>
     );
   }
 
   if (!isAdmin) {
-     return <div className="min-h-screen bg-background flex items-center justify-center">Brak uprawnień.</div>;
+     return (
+      <AdminLayoutShell>
+        <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div>
+      </AdminLayoutShell>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+    <AdminLayoutShell>
+      <div className="bg-background text-foreground p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b pb-6 gap-4">
           <div className="space-y-1">
@@ -822,6 +834,16 @@ export default function AdminPanel() {
             </TabsContent>
         </Tabs>
       </div>
+      </div>
+    </AdminLayoutShell>
+  );
+}
+
+function AdminLayoutShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar />
+      <main>{children}</main>
     </div>
   );
 }

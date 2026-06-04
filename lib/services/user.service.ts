@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { ADMIN_EMAIL } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+import { flags } from '@/lib/feature-flags';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
 
@@ -160,7 +161,7 @@ export class UserService {
 
         if (targetRole === 'ADMIN') {
             await tx.creator.updateMany({
-                where: { slug: 'polutek' },
+                where: { slug: flags.mainCreatorSlug },
                 data: { name: 'Paweł Perfect', userId: id }
             });
         }

@@ -187,7 +187,7 @@ export class ContentService {
 
   /**
    * Retrieves a creator by their unique slug.
-   * Falls back to default creator for 'polutek' if not found.
+   * Falls back to the configured main creator if not found.
    */
   static async getCreatorBySlug(slug: string): Promise<PublicCreatorPageDTO | null> {
     try {
@@ -210,9 +210,10 @@ export class ContentService {
         }
       });
 
-      const adminData = slug === 'polutek' ? await this.getAdminData() : null;
+      const isMainCreator = slug === flags.mainCreatorSlug;
+      const adminData = isMainCreator ? await this.getAdminData() : null;
 
-      if (slug === 'polutek' && creator) {
+      if (isMainCreator && creator) {
         // Map data strictly to prevent leakage
         const videos = (creator.videos || []).map((v) =>
           this.mapToPublicVideoDTO({ ...v, creator: withResolvedChannelAvatar(creator, adminData?.imageUrl) })
@@ -231,7 +232,7 @@ export class ContentService {
         };
       }
 
-      if (!creator && slug === 'polutek' && flags.demoFallbacks) {
+      if (!creator && isMainCreator && flags.demoFallbacks) {
         return {
             id: DEFAULT_CREATOR.id,
             name: DEFAULT_CREATOR.name,
@@ -260,7 +261,7 @@ export class ContentService {
       };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (slug === 'polutek' && flags.demoFallbacks) {
+      if (slug === flags.mainCreatorSlug && flags.demoFallbacks) {
         return {
             ...DEFAULT_CREATOR,
             videos: INITIAL_VIDEOS
@@ -349,11 +350,11 @@ export class ContentService {
             .filter(v => (v.tier as string) !== 'ADMIN')
             .map(v => this.mapToPublicVideoDTO(v));
       }
-      const adminData = videos.some(v => v.creator?.slug === 'polutek') ? await this.getAdminData() : null;
+      const adminData = videos.some(v => v.creator?.slug === flags.mainCreatorSlug) ? await this.getAdminData() : null;
       return videos.map(v => this.mapToPublicVideoDTO({
         ...v,
         creator: v.creator
-          ? withResolvedChannelAvatar(v.creator, v.creator.slug === 'polutek' ? adminData?.imageUrl : null)
+          ? withResolvedChannelAvatar(v.creator, v.creator.slug === flags.mainCreatorSlug ? adminData?.imageUrl : null)
           : v.creator
       }));
     } catch (e: unknown) {
@@ -416,7 +417,7 @@ export class ContentService {
         return this.mapToPublicVideoDTO(fallback);
       }
       if (!selectedVideo) return null;
-      const adminData = selectedVideo.creator?.slug === 'polutek' ? await this.getAdminData() : null;
+      const adminData = selectedVideo.creator?.slug === flags.mainCreatorSlug ? await this.getAdminData() : null;
       return this.mapToPublicVideoDTO({
         ...selectedVideo,
         creator: selectedVideo.creator

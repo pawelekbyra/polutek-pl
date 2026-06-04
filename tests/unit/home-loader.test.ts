@@ -46,6 +46,21 @@ describe('loadHomeContent', () => {
     }
   });
 
+  it('falls back to the first creator video as main video in single-creator mode when none is featured', async () => {
+    const mockVideos = [
+      { id: 'first', title: 'First Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
+      { id: 'second', title: 'Second Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
+    ];
+    vi.mocked(ContentService.getCreatorBySlug).mockResolvedValue({ id: 'c1', name: 'Polutek', slug: 'polutek', videos: mockVideos, subscribersCount: 0 } as any);
+
+    const result = await loadHomeContent();
+
+    expect(result.status).toBe('ready');
+    if (result.status === 'ready') {
+      expect(result.mainVideo?.id).toBe('first');
+    }
+  });
+
   it('returns empty status when the main creator has no videos in single-creator mode', async () => {
     vi.mocked(ContentService.getCreatorBySlug).mockResolvedValue({ id: 'c1', name: 'Polutek', slug: 'polutek', videos: [], subscribersCount: 0 } as any);
 
