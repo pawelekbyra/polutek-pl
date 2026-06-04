@@ -59,6 +59,14 @@ function metadataClaim(claims: AuthSessionClaims, metadataKey: 'publicMetadata' 
   return null;
 }
 
+function isPrismaErrorCode(error: unknown, code: string) {
+  return error instanceof Prisma.PrismaClientKnownRequestError || (
+    typeof error === 'object' && error !== null && 'code' in error
+  )
+    ? (error as { code?: unknown }).code === code
+    : false;
+}
+
 
 export class UserService {
   static readonly ADMIN_EMAIL = ADMIN_EMAIL;
@@ -175,9 +183,75 @@ export class UserService {
         return user;
       }, { timeout: 15000 });
     } catch (err: unknown) {
-       const message = err instanceof Error ? err.message : String(err);
-       console.error("[UserService.syncUser] Error:", message);
-       throw err;
+      if (isPrismaErrorCode(err, 'P2002')) {
+        const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id } })
+          ?? await prisma.user.findUnique({ where: { email } });
+
+        if (userCreatedByParallelRequest) {
+          return userCreatedByParallelRequest;
+        }
+      }
+
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[UserService.syncUser] Error:", message);
+      throw err;
+    }
+  }
+
+  static async updateUserLanguage(userId: string, language: 'en' | 'pl') {
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true }
+    });
+
+    let email = existingUser?.email ?? null;
+    let name: string | null = null;
+    let username: string | null = null;
+    let imageUrl: string | null = null;
+
+    if (!email) {
+      const client = await clerkClient();
+      const clerkUser = await client.users.getUser(userId);
+      email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || null;
+
+      if (!email) throw new Error("USER_HAS_NO_EMAIL");
+
+      username = clerkUser.username || null;
+      const displayUsername = isGeneratedClerkUsername(username) ? null : username;
+      const fullName = (clerkUser.fullName && !isGeneratedClerkUsername(clerkUser.fullName)) ? clerkUser.fullName : null;
+      const firstLast = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
+      name = fullName || (firstLast && !isGeneratedClerkUsername(firstLast) ? firstLast : null) || displayUsername || emailLocalPart(email);
+      imageUrl = clerkUser.imageUrl || null;
+    }
+
+    try {
+      return await prisma.user.upsert({
+        where: { id: userId },
+        update: { language },
+        create: {
+          id: userId,
+          email,
+          name,
+          username,
+          imageUrl,
+          language,
+          referralCode: crypto.randomBytes(6).toString('hex'),
+        }
+      });
+    } catch (err: unknown) {
+      if (isPrismaErrorCode(err, 'P2002')) {
+        const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id: userId } })
+          ?? await prisma.user.findUnique({ where: { email } });
+
+        if (userCreatedByParallelRequest) {
+          return prisma.user.update({
+            where: { id: userCreatedByParallelRequest.id },
+            data: { language }
+          });
+        }
+      }
+
+      throw err;
     }
   }
 
