@@ -12,13 +12,17 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:verify": "npx ts-node scripts/verify_db.ts",
+    "db:smoke": "npx tsx scripts/db-smoke.ts",
+    "db:generate": "prisma generate",
     "db:setup:dev": "npm run db:push && npm run db:seed",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "npx prisma migrate deploy",
+    "predeploy:prod": "npm run db:generate && npm run db:migrate:deploy && npm run db:smoke && npm run emails:ensure-required",
     "postinstall": "prisma generate",
     "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
     "content:fix:polutek": "npx tsx scripts/fix-polutek-content.ts",
     "content:ensure:welcome": "npx tsx scripts/ensure-welcome-template.ts",
+    "emails:ensure-required": "npx tsx scripts/ensure-required-emails.ts",
     "clerk:resync": "npx tsx scripts/resync-clerk-access.ts"
   },
   "dependencies": {

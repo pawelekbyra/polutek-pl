@@ -31,10 +31,7 @@ export default function AdminVideosPage() {
     setMounted(true);
   }, []);
   const [videos, setVideos] = useState<any[]>([]);
-  const [creator, setCreator] = useState<any>(null);
-  const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'videos' | 'channel' | 'stats' | 'email'>('videos');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -57,20 +54,6 @@ export default function AdminVideosPage() {
     isMainFeatured: false,
     showInSidebar: true,
     sidebarOrder: 0
-  });
-
-  const [creatorForm, setCreatorForm] = useState({
-    id: "",
-    name: "",
-    bio: "",
-    slug: "",
-    bannerUrl: ""
-  });
-
-  const [emailTemplate, setEmailTemplate] = useState({
-    slug: "welcome-email",
-    subject: "",
-    html: ""
   });
 
   const detectedVideoSource = formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null;
@@ -107,7 +90,7 @@ export default function AdminVideosPage() {
   const fetchAll = async () => {
     setIsLoading(true);
     try {
-        await Promise.all([fetchVideos(), fetchCreator(), fetchStats(), fetchEmailTemplate()]);
+        await fetchVideos();
     } finally {
         setIsLoading(false);
     }
@@ -123,50 +106,6 @@ export default function AdminVideosPage() {
     }
   };
 
-  const fetchCreator = async () => {
-    try {
-        const res = await fetch("/api/admin/creator");
-        const data = await res.json();
-        setCreator(data);
-        if (data) {
-            setCreatorForm({
-                id: data.id,
-                name: data.name || "",
-                bio: data.bio || "",
-                slug: data.slug || "",
-                bannerUrl: data.bannerUrl || ""
-            });
-        }
-    } catch (err) {
-        console.error("Failed to fetch creator", err);
-    }
-  }
-
-  const fetchStats = async () => {
-      try {
-          const res = await fetch("/api/admin/stats");
-          const data = await res.json();
-          setStats(data);
-      } catch (err) {
-          console.error("Failed to fetch stats", err);
-      }
-  }
-
-  const fetchEmailTemplate = async () => {
-    try {
-      const res = await fetch("/api/admin/templates");
-      const data = await res.json();
-      if (data && !data.error) {
-        setEmailTemplate({
-          slug: data.slug || "welcome-email",
-          subject: data.subject || "",
-          html: data.html || ""
-        });
-      }
-    } catch (err) {
-      console.error("Failed to fetch email template", err);
-    }
-  }
 
   const slugify = (text: string) => {
     return text
@@ -315,39 +254,6 @@ export default function AdminVideosPage() {
       }
   }
 
-  const handleCreatorSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      try {
-          const res = await fetch("/api/admin/creator", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(creatorForm)
-          });
-          if (res.ok) {
-              alert("Channel updated successfully");
-              fetchCreator();
-          }
-      } catch (err) {
-          console.error("Creator update failed", err);
-      }
-  }
-
-  const handleEmailTemplateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/admin/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(emailTemplate)
-      });
-      if (res.ok) {
-        alert("Email template updated successfully");
-        fetchEmailTemplate();
-      }
-    } catch (err) {
-      console.error("Email template update failed", err);
-    }
-  }
 
   if (isLoading) {
     return (
@@ -615,26 +521,7 @@ export default function AdminVideosPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Filmy" value={stats?.totalVideos?.toString() || videos.length.toString()} icon={<Video className="h-4 w-4" />} />
-          <StatCard title="Użytkownicy" value={stats?.totalUsers?.toString() || "0"} icon={<Plus className="h-4 w-4" />} />
-          <StatCard
-            title="Przychód (PLN)"
-            value={`${stats?.revenueByCurrency?.find((r: any) => r.currency === 'PLN')?.amount?.toFixed(2) || "0.00"} PLN`}
-            icon={<BarChart3 className="h-4 w-4" />}
-          />
-          <StatCard title="Subskrypcje" value={mounted ? (formatCount(creator?.subscribersCount || 0)) : "0"} icon={<Star className="h-4 w-4" />} />
-        </div>
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="videos">Materiały</TabsTrigger>
-                <TabsTrigger value="stats">Finanse</TabsTrigger>
-                <TabsTrigger value="channel">Kanał</TabsTrigger>
-                <TabsTrigger value="email">E-mail</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="videos" className="space-y-4 pt-4">
+        <div className="space-y-4 pt-4">
                 <Card>
                     <CardHeader>
                         <CardTitle>Zarządzaj Materiałami</CardTitle>
@@ -701,88 +588,7 @@ export default function AdminVideosPage() {
                         </div>
                     </CardContent>
                 </Card>
-            </TabsContent>
-
-            <TabsContent value="stats" className="space-y-4 pt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Historia Wpłat</CardTitle>
-                        <CardDescription>Ostatnie 10 udanych transakcji Stripe.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Użytkownik</TableHead>
-                                    <TableHead>Kwota</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Data</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {stats?.recentPayments?.map((tx: any) => (
-                                    <TableRow key={tx.id}>
-                                        <TableCell className="font-mono text-xs">{tx.userEmail}</TableCell>
-                                        <TableCell className="font-bold">{tx.amount.toFixed(2)} {tx.currency}</TableCell>
-                                        <TableCell><Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Sukces</Badge></TableCell>
-                                        <TableCell className="text-right text-xs text-muted-foreground">
-                                            {mounted ? new Date(tx.createdAt).toLocaleString('pl-PL') : ''}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-
-            <TabsContent value="channel" className="max-w-2xl pt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Tożsamość Kanału</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCreatorSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="creatorName">Nazwa Twórcy</Label>
-                                <Input id="creatorName" value={creatorForm.name} onChange={e => setCreatorForm({...creatorForm, name: e.target.value})} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="channelSlug">Slug (@)</Label>
-                                <Input id="channelSlug" value={creatorForm.slug} onChange={e => setCreatorForm({...creatorForm, slug: e.target.value})} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="channelBio">Biografia</Label>
-                                <Textarea id="channelBio" value={creatorForm.bio} onChange={e => setCreatorForm({...creatorForm, bio: e.target.value})} rows={4} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="bannerUrl">Banner URL</Label>
-                                <Input id="bannerUrl" value={creatorForm.bannerUrl} onChange={e => setCreatorForm({...creatorForm, bannerUrl: e.target.value})} />
-                            </div>
-                            <Button type="submit" className="w-full">Aktualizuj</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-
-            <TabsContent value="email" className="max-w-2xl pt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>E-mail Powitalny</CardTitle>
-                        <CardDescription>Szablon {emailTemplate.slug} jest edytowany w dedykowanym edytorze HTML z podglądem na żywo.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="rounded-lg border p-4">
-                            <p className="text-sm font-medium">{emailTemplate.subject || "Brak zapisanego tematu"}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">Użyj zmiennej {"{{firstName}}"}, aby personalizować wiadomość powitalną po rejestracji w Clerk.</p>
-                        </div>
-                        <Button asChild className="w-full">
-                            <Link href="/admin/emails">Otwórz edytor HTML</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+        </div>
       </div>
       </div>
     </AdminLayoutShell>

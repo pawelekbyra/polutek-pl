@@ -23,7 +23,7 @@
 ## Database
 - [ ] `npx prisma generate`
 - [ ] dev: `npx prisma db push`
-- [ ] production: `npx prisma migrate deploy`
+- [ ] production: `npm run predeploy:prod` (generates client, deploys migrations, and runs `db:smoke`)
 - [ ] seed if database is empty: `npx prisma db seed`
 
 ## Content

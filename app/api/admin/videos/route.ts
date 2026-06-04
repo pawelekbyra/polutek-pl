@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
-import { isAllowedMediaUrl, isAllowedThumbnailUrl } from '@/lib/blob';
+import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +18,8 @@ const videoSchema = z.object({
   slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/),
   description: z.string().max(5000).optional().nullable(),
   descriptionEn: z.string().max(5000).optional().nullable(),
-  videoUrl: z.string().url().refine(isAllowedMediaUrl, {
-    message: "Video URL musi pochodzić z dozwolonego hosta mediów (ALLOWED_MEDIA_HOSTS).",
+  videoUrl: z.string().url().refine(isAllowedVideoSourceUrl, {
+    message: "Video URL musi być linkiem YouTube/Vimeo albo plikiem/manifestem z dozwolonego hosta mediów.",
   }),
   thumbnailUrl: z.string().refine(isAllowedThumbnailUrl, {
     message: "Miniaturka musi być bezpieczną ścieżką lokalną lub pochodzić z dozwolonego hosta obrazków.",

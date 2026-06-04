@@ -85,6 +85,10 @@ export async function isAdmin(): Promise<boolean> {
   }
 }
 
+/**
+ * LEGACY boolean helper. Do not use in production admin routes/pages.
+ * It masks technical errors as false.
+ */
 export async function verifyAdmin() {
   return isAdmin();
 }

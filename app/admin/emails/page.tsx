@@ -20,10 +20,6 @@ const DEFAULT_WELCOME_TEMPLATE = {
 };
 
 export default async function AdminEmailsPage() {
-  if (!(await verifyAdmin())) {
-    redirect("/");
-  }
-
   let template = null;
   try {
     template = await prisma.emailTemplate.findUnique({
