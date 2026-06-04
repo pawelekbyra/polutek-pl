@@ -6,6 +6,10 @@ const ROLLBACK_SAFE_FAILED_MIGRATIONS = new Set([
   // failed while applying its original non-idempotent form, which leaves Prisma in
   // P3009 until it is explicitly marked rolled back and retried.
   '20260603120000_add_comment_pinning',
+  // This migration currently only adds Video columns with IF NOT EXISTS. A
+  // previous production deploy can leave it failed in _prisma_migrations after
+  // the columns were created, which blocks every later migrate deploy with P3009.
+  '20260603140000_add_video_presentation_columns',
 ]);
 
 type FailedMigrationRow = {

@@ -16,8 +16,9 @@
     "db:generate": "prisma generate",
     "db:setup:dev": "npm run db:push && npm run db:seed",
     "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:repair": "tsx scripts/resolve-failed-migrations.ts",
     "db:migrate:deploy": "prisma migrate deploy",
-    "predeploy:prod": "npm run db:migrate:deploy && npm run db:generate && npm run db:smoke && npm run emails:ensure-required",
+    "predeploy:prod": "npm run db:migrate:repair && npm run db:migrate:deploy && npm run db:generate && npm run db:smoke && npm run emails:ensure-required",
     "postinstall": "prisma generate",
     "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
     "content:fix:polutek": "npx tsx scripts/fix-polutek-content.ts",
@@ -25,7 +26,7 @@
     "emails:ensure-required": "npx tsx scripts/ensure-required-emails.ts",
     "clerk:resync": "npx tsx scripts/resync-clerk-access.ts",
     "db:validate": "prisma validate",
-    "vercel-build": "npm run db:migrate:deploy && npm run db:generate && npm run db:smoke && next build"
+    "vercel-build": "npm run db:migrate:repair && npm run db:migrate:deploy && npm run db:generate && npm run db:smoke && next build"
   },
   "dependencies": {
     "sanitize-html": "^2.17.4",

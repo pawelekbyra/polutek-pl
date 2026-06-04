@@ -18,15 +18,21 @@ export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   USD: 1000,
 };
 
-export const ADMIN_EMAIL = (() => {
-  const value = process.env.ADMIN_EMAIL?.trim();
+export function getConfiguredAdminEmail() {
+  return process.env.ADMIN_EMAIL?.trim() || null;
+}
 
-  if (!value && process.env.NODE_ENV === "production" && typeof window === "undefined") {
+export function requireConfiguredAdminEmail() {
+  const value = getConfiguredAdminEmail();
+
+  if (!value) {
     throw new Error("CRITICAL: ADMIN_EMAIL environment variable is not set.");
   }
 
-  return value || "admin@example.local";
-})();
+  return value;
+}
+
+export const ADMIN_EMAIL = getConfiguredAdminEmail() || "admin@example.local";
 
 export const DISPLAY_EUR_TO_PLN_RATE = Number(process.env.DISPLAY_EUR_TO_PLN_RATE) || 4.3;
 
