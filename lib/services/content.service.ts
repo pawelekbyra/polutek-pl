@@ -190,6 +190,9 @@ export class ContentService {
    * Falls back to the configured main creator if not found.
    */
   static async getCreatorBySlug(slug: string): Promise<PublicCreatorPageDTO | null> {
+    const mainCreatorSlug = flags.mainCreatorSlug;
+    const isMainCreator = slug === mainCreatorSlug;
+
     try {
       const creator = await prisma.creator.findUnique({
         where: { slug },
@@ -210,7 +213,6 @@ export class ContentService {
         }
       });
 
-      const isMainCreator = slug === flags.mainCreatorSlug;
       const adminData = isMainCreator ? await this.getAdminData() : null;
 
       if (isMainCreator && creator) {
@@ -261,7 +263,7 @@ export class ContentService {
       };
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (slug === flags.mainCreatorSlug && flags.demoFallbacks) {
+      if (isMainCreator && flags.demoFallbacks) {
         return {
             ...DEFAULT_CREATOR,
             videos: INITIAL_VIDEOS
@@ -350,11 +352,14 @@ export class ContentService {
             .filter(v => (v.tier as string) !== 'ADMIN')
             .map(v => this.mapToPublicVideoDTO(v));
       }
-      const adminData = videos.some(v => v.creator?.slug === flags.mainCreatorSlug) ? await this.getAdminData() : null;
+      const mainCreatorSlug = flags.mainCreatorSlug;
+      const hasMainCreatorVideos = videos.some(v => v.creator?.slug === mainCreatorSlug);
+      const adminData = hasMainCreatorVideos ? await this.getAdminData() : null;
+
       return videos.map(v => this.mapToPublicVideoDTO({
         ...v,
         creator: v.creator
-          ? withResolvedChannelAvatar(v.creator, v.creator.slug === flags.mainCreatorSlug ? adminData?.imageUrl : null)
+          ? withResolvedChannelAvatar(v.creator, v.creator.slug === mainCreatorSlug ? adminData?.imageUrl : null)
           : v.creator
       }));
     } catch (e: unknown) {
@@ -417,7 +422,9 @@ export class ContentService {
         return this.mapToPublicVideoDTO(fallback);
       }
       if (!selectedVideo) return null;
-      const adminData = selectedVideo.creator?.slug === flags.mainCreatorSlug ? await this.getAdminData() : null;
+      const mainCreatorSlug = flags.mainCreatorSlug;
+      const isMainCreatorVideo = selectedVideo.creator?.slug === mainCreatorSlug;
+      const adminData = isMainCreatorVideo ? await this.getAdminData() : null;
       return this.mapToPublicVideoDTO({
         ...selectedVideo,
         creator: selectedVideo.creator
