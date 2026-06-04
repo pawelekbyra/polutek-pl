@@ -297,6 +297,10 @@ export class UserService {
     return { liked: !!like, disliked: !!dislike };
   }
 
+  /**
+   * Helper for seeder and local development only.
+   * NOT FOR PRODUCTION USE.
+   */
   static async ensureAdminUser() {
     if (process.env.NODE_ENV === "production") {
       throw new Error("ensureAdminUser must not be used in production");
@@ -311,7 +315,7 @@ export class UserService {
             name: "Paweł Perfect",
             role: 'ADMIN',
             language: "pl",
-            referralCode: 'admin_dev'
+            referralCode: `admin-dev-${crypto.randomBytes(4).toString('hex')}`
         }
     });
   }

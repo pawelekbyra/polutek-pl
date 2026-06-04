@@ -1,6 +1,8 @@
--- 1. Create WebhookEventStatus enum
+-- 1. Create WebhookEventStatus enum defensivley
 DO $$ BEGIN
-    CREATE TYPE "WebhookEventStatus" AS ENUM ('PROCESSING', 'PROCESSED', 'FAILED');
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WebhookEventStatus') THEN
+        CREATE TYPE "WebhookEventStatus" AS ENUM ('PROCESSING', 'PROCESSED', 'FAILED');
+    END IF;
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -28,9 +30,11 @@ BEGIN
     WHERE table_name = 'StripeEvent' AND column_name = 'status';
 
     IF status_type = 'StripeEventStatus' THEN
+        ALTER TABLE "StripeEvent" ALTER COLUMN "status" DROP DEFAULT;
         ALTER TABLE "StripeEvent" ALTER COLUMN "status" TYPE TEXT;
         ALTER TABLE "StripeEvent" ALTER COLUMN "status" TYPE "WebhookEventStatus" USING "status"::"WebhookEventStatus";
-        DROP TYPE "StripeEventStatus";
+        ALTER TABLE "StripeEvent" ALTER COLUMN "status" SET DEFAULT 'PROCESSING';
+        DROP TYPE IF EXISTS "StripeEventStatus";
     END IF;
 END $$;
 
@@ -65,8 +69,32 @@ ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "subjectEn" TEXT;
 ALTER TABLE "EmailTemplate" ADD COLUMN IF NOT EXISTS "htmlEn" TEXT;
 
 -- 10. Fix unique constraints on PatronGrant
--- Drop old indices if they exist (they might not be unique)
+-- 10.1 Clean duplicates before adding unique constraint (keeping the oldest one)
+DELETE FROM "PatronGrant"
+WHERE id IN (
+    SELECT id
+    FROM (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY "paymentId" ORDER BY "createdAt" ASC) as row_num
+        FROM "PatronGrant"
+        WHERE "paymentId" IS NOT NULL
+    ) t
+    WHERE row_num > 1
+);
+
+DELETE FROM "PatronGrant"
+WHERE id IN (
+    SELECT id
+    FROM (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY "referralId" ORDER BY "createdAt" ASC) as row_num
+        FROM "PatronGrant"
+        WHERE "referralId" IS NOT NULL
+    ) t
+    WHERE row_num > 1
+);
+
+-- 10.2 Drop old redundant indices if they exist
 DROP INDEX IF EXISTS "PatronGrant_paymentId_idx";
--- Create unique indices
+
+-- 10.3 Create unique indices
 CREATE UNIQUE INDEX IF NOT EXISTS "PatronGrant_paymentId_key" ON "PatronGrant"("paymentId");
 CREATE UNIQUE INDEX IF NOT EXISTS "PatronGrant_referralId_key" ON "PatronGrant"("referralId");

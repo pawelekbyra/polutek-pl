@@ -22,6 +22,7 @@ vi.mock('@/lib/services/audit.service', () => ({
 // Mock blob validation
 vi.mock('@/lib/blob', () => ({
   isAllowedMediaUrl: vi.fn().mockReturnValue(true),
+  isAllowedVideoSourceUrl: vi.fn().mockReturnValue(true),
   isAllowedThumbnailUrl: vi.fn().mockReturnValue(true),
 }));
 

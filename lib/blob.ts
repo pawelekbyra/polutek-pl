@@ -48,8 +48,45 @@ export function isSafeLocalPath(value: string) {
     return value.startsWith("/") && !value.startsWith("//") && !value.includes("..");
 }
 
+export function isAllowedVideoSourceUrl(rawUrl: string, env: MediaHostEnv = process.env) {
+    let url: URL;
+    try {
+        url = new URL(rawUrl);
+    } catch {
+        return false;
+    }
+
+    if (url.protocol !== 'https:') return false;
+
+    const hostname = url.hostname.toLowerCase();
+
+    // 1. Allowed embed sources
+    const embedHosts = new Set([
+        'youtube.com',
+        'www.youtube.com',
+        'youtu.be',
+        'youtube-nocookie.com',
+        'vimeo.com',
+        'player.vimeo.com',
+    ]);
+
+    if (embedHosts.has(hostname)) {
+        return true;
+    }
+
+    // 2. Direct media from allowed hosts
+    const allowedMediaHosts = getAllowedMediaHosts(env);
+    if (allowedMediaHosts.has(hostname)) {
+        return true;
+    }
+
+    return false;
+}
+
 export function isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv = process.env) {
     if (isSafeLocalPath(rawUrl)) return true;
+
+    if (rawUrl.startsWith("//")) return false;
 
     let url: URL;
     try {
@@ -63,7 +100,7 @@ export function isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv = proces
     // Miniaturki mogą pochodzić z hostów mediów lub zaufanych hostów obrazków
     const allowedHosts = new Set([
         ...getAllowedMediaHosts(env),
-        ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com'),
+        ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com,img.clerk.com'),
     ]);
 
     return allowedHosts.has(url.hostname.toLowerCase());
