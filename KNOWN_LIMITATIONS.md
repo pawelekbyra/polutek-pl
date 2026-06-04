@@ -6,7 +6,7 @@
 - The campaign/zrzutka page remains experimental and hidden behind a feature flag.
 - Patron status is currently granted by a qualifying one-time donation or another explicit `PatronGrant` source unless this is changed later.
 - `Subscription` is implemented as email notifications / channel follow only. It does not grant premium access and must remain separate from `User.isPatron`.
-- Automated unit tests, typecheck, lint, and build pass locally, but full E2E smoke coverage still depends on installing Playwright browsers in the environment.
+- Automated unit tests (23 files / 124 tests), typecheck, lint, and build pass locally, but full E2E smoke coverage still depends on installing Playwright browsers in the environment.
 - Local attempts to install Playwright Chromium can fail when the CDN returns 403; in that case E2E/screenshot checks must be run in CI or another environment with browser access.
 - `db:smoke` and `db:migrate:deploy` require real `DATABASE_URL` and `DATABASE_URL_UNPOOLED`; without them local results are environment failures, not release PASS.
 - Production rate limiting requires writable Upstash Redis or Vercel KV REST credentials. Memory fallback is allowed only outside production.

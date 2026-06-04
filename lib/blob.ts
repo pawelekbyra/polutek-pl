@@ -32,6 +32,51 @@ export function getAllowedMediaHosts(env: MediaHostEnv = process.env) {
     ]);
 }
 
+function normalizeHostname(hostname: string) {
+    return hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+}
+
+function isPrivateIpv4(hostname: string) {
+    const parts = hostname.split('.');
+    if (parts.length !== 4) return false;
+
+    const octets = parts.map((part) => {
+        if (!/^\d{1,3}$/.test(part)) return Number.NaN;
+        return Number(part);
+    });
+
+    if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+        return false;
+    }
+
+    const [first, second] = octets;
+    return first === 10
+        || first === 127
+        || first === 0
+        || (first === 169 && second === 254)
+        || (first === 172 && second >= 16 && second <= 31)
+        || (first === 192 && second === 168);
+}
+
+function isPrivateIpv6(hostname: string) {
+    const host = normalizeHostname(hostname);
+    if (!host.includes(':')) return false;
+
+    return host === '::1'
+        || host === '0:0:0:0:0:0:0:1'
+        || host.startsWith('fc')
+        || host.startsWith('fd')
+        || host.startsWith('fe80:');
+}
+
+export function isBlockedPrivateHostname(hostname: string) {
+    const host = normalizeHostname(hostname);
+    return host === 'localhost'
+        || host.endsWith('.localhost')
+        || isPrivateIpv4(host)
+        || isPrivateIpv6(host);
+}
+
 export function isAllowedMediaUrl(rawUrl: string, env: MediaHostEnv = process.env) {
     let url: URL;
 
@@ -42,6 +87,7 @@ export function isAllowedMediaUrl(rawUrl: string, env: MediaHostEnv = process.en
     }
 
     if (url.protocol !== 'https:') return false;
+    if (isBlockedPrivateHostname(url.hostname)) return false;
 
     return getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
 }
@@ -110,6 +156,8 @@ export function isAllowedVideoSourceUrl(rawUrl: string, env: MediaHostEnv = proc
     }
 
     // Direct files and streaming manifests must be served from explicitly configured media hosts.
+    if (isBlockedPrivateHostname(url.hostname)) return false;
+
     const allowedMediaHosts = getAllowedMediaHosts(env);
     return allowedMediaHosts.has(url.hostname.toLowerCase());
 }
@@ -137,6 +185,7 @@ export function isAllowedCommentImageUrl(rawUrl: string, env: MediaHostEnv = pro
     }
 
     if (url.protocol !== 'https:') return false;
+    if (isBlockedPrivateHostname(url.hostname)) return false;
     return getAllowedCommentImageHosts(env).has(url.hostname.toLowerCase());
 }
 
@@ -151,6 +200,7 @@ export function isAllowedAvatarUrl(rawUrl?: string | null, env: MediaHostEnv = p
     }
 
     if (url.protocol !== 'https:') return false;
+    if (isBlockedPrivateHostname(url.hostname)) return false;
     const hostname = url.hostname.toLowerCase();
     return hostname.endsWith('.clerk.com') || getAllowedAvatarHosts(env).has(hostname);
 }
@@ -168,6 +218,7 @@ export function isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv = proces
     }
 
     if (url.protocol !== 'https:') return false;
+    if (isBlockedPrivateHostname(url.hostname)) return false;
 
     // Miniaturki mogą pochodzić z hostów mediów lub zaufanych hostów obrazków
     const allowedHosts = new Set([
@@ -272,7 +323,9 @@ export async function getGatedBlobResponse(
       headers: resHeaders,
     });
   } catch (error) {
-    logger.error('Error accessing gated media:', error);
+    logger.error('Error accessing gated media:', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

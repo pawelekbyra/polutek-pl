@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { isAllowedAvatarUrl, isAllowedCommentImageUrl, isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getGatedBlobResponse, isAllowedAvatarUrl, isAllowedCommentImageUrl, isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
 import { buildMediaRateLimitKey } from '@/lib/media/rate-limit';
+import { AccessPolicy } from '@/lib/access/access-policy';
+import { logger } from '@/lib/logger';
 
 describe('media host validation', () => {
   const env = {
@@ -21,6 +23,7 @@ describe('media host validation', () => {
     expect(isAllowedMediaUrl('https://media.example.com/video.mp4', env)).toBe(true);
     expect(isAllowedMediaUrl('https://bucket.example.r2.dev/video.mp4', env)).toBe(true);
     expect(isAllowedMediaUrl('https://cdn.example.com/video.mp4', env)).toBe(true);
+    expect(isAllowedMediaUrl('https://fdn.example.com/video.mp4', { ALLOWED_MEDIA_HOSTS: 'fdn.example.com' })).toBe(true);
   });
 
   it('rejects broad/default external hosts and malformed URLs', () => {
@@ -34,6 +37,24 @@ describe('media host validation', () => {
   it('requires https and exact hosts', () => {
     expect(isAllowedMediaUrl('http://media.example.com/video.mp4', env)).toBe(false);
     expect(isAllowedMediaUrl('https://sub.media.example.com/video.mp4', env)).toBe(false);
+  });
+
+
+  it('blocks SSRF targets even when they are accidentally configured in the media allowlist', () => {
+    const unsafeEnv = {
+      ALLOWED_MEDIA_HOSTS: 'localhost,127.0.0.1,10.0.0.5,172.16.0.10,192.168.1.20,169.254.169.254,[::1],[fd00::1],[fe80::1]',
+    };
+
+    expect(isAllowedMediaUrl('https://localhost/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://app.localhost/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://127.0.0.1/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://10.0.0.5/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://172.16.0.10/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://192.168.1.20/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://169.254.169.254/latest/meta-data', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://[::1]/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://[fd00::1]/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedMediaUrl('https://[fe80::1]/video.mp4', unsafeEnv)).toBe(false);
   });
 });
 
@@ -82,6 +103,16 @@ describe('isAllowedVideoSourceUrl', () => {
     expect(isAllowedVideoSourceUrl('not-a-url', env)).toBe(false);
     expect(isAllowedVideoSourceUrl('https://malicious.com/video.mp4', env)).toBe(false);
   });
+
+
+  it('blocks direct localhost, private IP and metadata endpoint sources even if configured', () => {
+    const unsafeEnv = { ALLOWED_MEDIA_HOSTS: 'localhost,127.0.0.1,10.0.0.5,169.254.169.254' };
+
+    expect(isAllowedVideoSourceUrl('https://localhost/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://127.0.0.1/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://10.0.0.5/video.mp4', unsafeEnv)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://169.254.169.254/latest/meta-data', unsafeEnv)).toBe(false);
+  });
 });
 
 describe('isAllowedThumbnailUrl', () => {
@@ -129,5 +160,38 @@ describe('comment image and avatar URL validation', () => {
     expect(isAllowedAvatarUrl('https://avatars.example.com/avatar.jpg', env)).toBe(true);
     expect(isAllowedAvatarUrl('https://video-cdn.example.com/avatar.jpg', env)).toBe(false);
     expect(isAllowedAvatarUrl('http://img.clerk.com/avatar.jpg', env)).toBe(false);
+  });
+});
+
+
+describe('gated media proxy logging', () => {
+  const previousAllowedMediaHosts = process.env.ALLOWED_MEDIA_HOSTS;
+
+  afterEach(() => {
+    process.env.ALLOWED_MEDIA_HOSTS = previousAllowedMediaHosts;
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('does not log signed media URLs or token-bearing fetch error messages', async () => {
+    process.env.ALLOWED_MEDIA_HOSTS = 'cdn.example.com';
+    vi.spyOn(AccessPolicy, 'canViewVideo').mockResolvedValue({ allowed: true } as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(
+      new Error('fetch failed for https://cdn.example.com/private/video.mp4?token=SECRET_TOKEN'),
+    ));
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+
+    const response = await getGatedBlobResponse(
+      'user_1',
+      'video_1',
+      'https://cdn.example.com/private/video.mp4?token=SECRET_TOKEN',
+    );
+
+    expect(response.status).toBe(500);
+    const loggedPayload = JSON.stringify(errorSpy.mock.calls);
+    expect(loggedPayload).not.toContain('SECRET_TOKEN');
+    expect(loggedPayload).not.toContain('private/video.mp4');
+    expect(loggedPayload).not.toContain('token=');
+    expect(loggedPayload).toContain('Error accessing gated media');
   });
 });
