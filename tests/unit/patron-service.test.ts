@@ -7,9 +7,11 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       update: vi.fn(),
     },
     patronGrant: {
+      findFirst: vi.fn(),
       create: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -29,6 +31,7 @@ describe('patron service', () => {
   it('grantPatronStatus sets isPatron, patronSince and patronSource', async () => {
     const existing = { id: 'u1', isPatron: false, patronSince: null, paymentTotals };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(existing as any);
+    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(null);
     (prisma.user.update as any).mockImplementation(async ({ data }: any) => ({
       ...existing,
       ...data,
@@ -48,10 +51,27 @@ describe('patron service', () => {
     }));
   });
 
+  it('grantPatronStatus is idempotent for paymentId', async () => {
+    const patronSince = new Date('2026-01-01T00:00:00Z');
+    const existing = { id: 'u1', isPatron: true, patronSince, paymentTotals };
+    const existingGrant = { id: 'grant1', paymentId: 'p1', userId: 'u1' };
+
+    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(existingGrant as any);
+    vi.mocked(prisma.user.findUniqueOrThrow).mockResolvedValue(existing as any);
+
+    const result = await grantPatronStatus('u1', { source: 'stripe_tip', paymentId: 'p1' });
+
+    expect(result.alreadyGranted).toBe(true);
+    expect(result.becamePatronNow).toBe(false);
+    expect(result.user.patronSince).toBe(patronSince);
+    expect(prisma.patronGrant.create).not.toHaveBeenCalled();
+  });
+
   it('grantPatronStatus is idempotent and does not reset patronSince', async () => {
     const patronSince = new Date('2026-01-01T00:00:00Z');
     const existing = { id: 'u1', isPatron: true, patronSince, paymentTotals };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(existing as any);
+    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(null);
     (prisma.user.update as any).mockImplementation(async ({ data }: any) => ({
       ...existing,
       ...data,
