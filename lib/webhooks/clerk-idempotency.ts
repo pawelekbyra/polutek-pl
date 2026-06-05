@@ -32,8 +32,8 @@ export async function acquireClerkEventLock(id: string, type: string, payload: P
     });
     logger.info(`[ClerkWebhook] Lock acquired for new event: ${id} (${type})`);
     return { success: true, acquired: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       // 2. If it already exists, check if it's stale or FAILED
       const now = new Date();
       const staleThreshold = new Date(now.getTime() - CLERK_STALE_MS);

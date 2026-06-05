@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { APP_NAME } from '@/lib/constants';
 
 interface BrandNameProps {
   className?: string;
@@ -13,7 +14,7 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic' })
       isClassic ? "font-brand font-black tracking-tighter uppercase" : "font-handwriting font-bold uppercase",
       className
     )}>
-      POLUTEK<span className="text-primary">.PL</span>
+      {APP_NAME.replace('.PL', '')}<span className="text-primary">{APP_NAME.includes('.PL') ? '.PL' : ''}</span>
     </span>
   );
 };

@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { flags } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
 import { DEFAULT_CREATOR } from '@/lib/data/initial-content';
@@ -26,7 +27,7 @@ async function ensureCreatorExists(creatorId: string) {
           id: DEFAULT_CREATOR.id,
           userId: adminUser.id,
           slug: flags.mainCreatorSlug,
-          name: 'Paweł Perfect',
+          name: MAIN_CREATOR_NAME,
           isApproved: true
         }
       });

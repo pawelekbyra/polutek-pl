@@ -8,6 +8,7 @@ import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { flags } from '@/lib/feature-flags';
 import { getAdminClerkUserIds } from '../admin-config';
+import { MAIN_CREATOR_NAME } from '../constants';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
 
@@ -193,7 +194,7 @@ export class UserService {
         if (targetRole === 'ADMIN') {
             await tx.creator.updateMany({
                 where: { slug: flags.mainCreatorSlug },
-                data: { name: 'Paweł Perfect', userId: id }
+                data: { name: MAIN_CREATOR_NAME, userId: id }
             });
         }
 
@@ -431,11 +432,11 @@ export class UserService {
 
     return await prisma.user.upsert({
         where: { email: UserService.ADMIN_EMAIL },
-        update: { role: 'ADMIN', name: "Paweł Perfect" },
+        update: { role: 'ADMIN', name: MAIN_CREATOR_NAME },
         create: {
             id: `admin_dev_${crypto.randomBytes(4).toString('hex')}`,
             email: UserService.ADMIN_EMAIL,
-            name: "Paweł Perfect",
+            name: MAIN_CREATOR_NAME,
             role: 'ADMIN',
             language: "pl",
             referralCode: `admin-dev-${crypto.randomBytes(4).toString('hex')}`

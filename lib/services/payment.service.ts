@@ -274,8 +274,8 @@ export class PaymentService {
         }
       });
       logger.info(`[StripeWebhook] Lock acquired for new event: ${event.id} (${event.type})`);
-    } catch (e: any) {
-      if (e.code === 'P2002') {
+    } catch (e: unknown) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         const now = new Date();
         const staleThreshold = new Date(now.getTime() - STRIPE_STALE_MS);
 

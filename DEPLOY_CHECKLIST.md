@@ -34,6 +34,7 @@
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
 - [ ] exact media host allowlist: `MEDIA_BUCKET_HOST`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or `ALLOWED_MEDIA_HOSTS`
  - [ ] Production media security: confirm that gated HLS/DASH direct URLs are blocked (fail-closed 503) and only direct video files or YouTube/Vimeo are served until signed manifest delivery is active.
+ - [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts ("lock not acquired") and verify that retries are succeeding correctly.
 - [ ] `HEALTHCHECK_TOKEN`
 
 ## Database

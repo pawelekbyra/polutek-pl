@@ -1,8 +1,53 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getGatedBlobResponse, isAllowedAvatarUrl, isAllowedCommentImageUrl, isAllowedMediaUrl, isAllowedThumbnailUrl, isAllowedVideoSourceUrl, parseMediaHosts } from '@/lib/blob';
 import { buildMediaRateLimitKey } from '@/lib/media/rate-limit';
-import { AccessPolicy } from '@/lib/access/access-policy';
+import { GET } from '@/app/api/media-source/[videoId]/route';
+import { NextRequest } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { AccessPolicy } from '@/lib/access/access-policy';
+
+vi.mock('@/lib/access/access-policy', () => ({
+  AccessPolicy: {
+    canViewVideo: vi.fn(),
+  },
+}));
+
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    video: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+}));
+
+describe('media source API security', () => {
+  it('returns 503 for direct HLS .m3u8 sources in production mode logic', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      id: 'vid_1',
+      videoUrl: 'https://example.com/stream.m3u8',
+      creator: { id: 'creator_1' }
+    } as any);
+    vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true });
+
+    const req = new NextRequest('http://localhost/api/media-source/vid_1');
+    const res = await GET(req, { params: { videoId: 'vid_1' } });
+
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('UNSAFE_STREAM_SOURCE');
+  });
+});
 
 describe('media host validation', () => {
   const env = {

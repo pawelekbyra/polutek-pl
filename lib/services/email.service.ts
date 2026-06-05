@@ -1,24 +1,25 @@
 import { logger } from "@/lib/logger";
 import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
+import { APP_NAME } from '../constants';
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
 
 const EMAIL_DICTIONARY: Record<string, { subject: string; html: string }> = {
   'account-deleted': {
-    subject: 'Twoje konto zostało usunięte - POLUTEK.PL',
+    subject: `Twoje konto zostało usunięte - ${APP_NAME}`,
     html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>',
   },
   'password-changed': {
-    subject: 'Hasło zostało zmienione - POLUTEK.PL',
+    subject: `Hasło zostało zmienione - ${APP_NAME}`,
     html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>',
   },
   'thank-you-donation': {
-    subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
+    subject: `Dziękujemy za wsparcie! - ${APP_NAME}`,
     html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>',
   },
   'become-patron': {
-    subject: 'Zostałeś Patronem! - POLUTEK.PL',
+    subject: `Zostałeś Patronem! - ${APP_NAME}`,
     html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>',
   },
 };
@@ -84,7 +85,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
 
   const resend = getResendClient();
   const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM || 'POLUTEK.PL <no-reply@polutek.pl>',
+    from: process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`,
     to: [to],
     subject,
     html,
@@ -103,6 +104,8 @@ export async function sendWelcomeEmail(to: string, firstName?: string | null, la
     slug: WELCOME_EMAIL_SLUG,
     variables: {
       firstName: firstName || (language === 'en' ? 'User' : 'Użytkowniku'),
+      appName: APP_NAME,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://polutek.pl',
     },
     language,
   });

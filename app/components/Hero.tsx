@@ -14,6 +14,7 @@ import { useLanguage } from './LanguageContext';
 import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
+import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -172,7 +173,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                  className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
                >
                   <Image
-                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || 'PAWEŁ PERFECT'}`}
+                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
                     alt={video.creator?.name || 'Creator'}
                     fill
                     className="object-cover"

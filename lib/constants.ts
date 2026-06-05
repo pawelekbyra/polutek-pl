@@ -41,3 +41,8 @@ export const DISPLAY_USD_TO_PLN_RATE = (() => {
   const parsed = Number(raw ?? 4.0);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 4.0;
 })();
+
+export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Paweł Perfect';
+export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'POLUTEK.PL';
+export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase() : 'POLUTEK.PL';
