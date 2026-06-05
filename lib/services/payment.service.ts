@@ -194,6 +194,7 @@ export class PaymentService {
 
         if (existingWithId && existingWithId.stripeIntentId) {
             const intent = await stripe.paymentIntents.retrieve(existingWithId.stripeIntentId);
+            logger.info(`[PaymentService.createPayment] Deduplicated request ${requestId} for user ${userId}. Returning existing payment ${existingWithId.id}`);
             return {
                 id: existingWithId.id,
                 clientSecret: intent.client_secret
@@ -234,6 +235,7 @@ export class PaymentService {
           data: { stripeIntentId: paymentIntent.id }
         });
 
+        logger.info(`[PaymentService.createPayment] Created new payment ${payment.id} with intent ${paymentIntent.id} for request ${requestId || 'none'}`);
         return {
             id: payment.id,
             clientSecret: paymentIntent.client_secret
@@ -271,6 +273,7 @@ export class PaymentService {
           payload: getSafeStripeEventPayload(event)
         }
       });
+      logger.info(`[StripeWebhook] Lock acquired for new event: ${event.id} (${event.type})`);
     } catch (e: any) {
       if (e.code === 'P2002') {
         const now = new Date();
@@ -297,13 +300,13 @@ export class PaymentService {
         if (count === 0) {
           const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
           if (existing?.status === WebhookEventStatus.PROCESSED) {
-            logger.info(`[PaymentService] Event ${event.id} already PROCESSED.`);
+            logger.info(`[PaymentService] Event ${event.id} (${event.type}) already PROCESSED.`);
           } else {
-            logger.info(`[PaymentService] Event ${event.id} is being processed elsewhere.`);
+            logger.info(`[PaymentService] Event ${event.id} (${event.type}) lock not acquired. Status: ${existing?.status}.`);
           }
           return;
         }
-        logger.info(`[PaymentService] Retrying failed or stale event ${event.id}.`);
+        logger.info(`[PaymentService] Reclaimed lock for event ${event.id} (${event.type}) - status was FAILED or STALE.`);
       } else {
         throw e;
       }
@@ -353,6 +356,7 @@ export class PaymentService {
                 processedAt: new Date()
             }
         });
+        logger.info(`[StripeWebhook] Event ${event.id} (${event.type}) PROCESSED successfully.`);
     } catch (error: unknown) {
         logger.error(`[PaymentService] Error handling event ${event.id}:`, error);
         await prisma.stripeEvent.update({

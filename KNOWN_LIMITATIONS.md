@@ -1,7 +1,7 @@
 # Known limitations
 
 - Multi-creator support is still limited: the production scenario remains one configured creator, while open creator onboarding/discovery is not productized.
-- HLS/DASH transcoding/packaging is not implemented yet; playback is currently served through `/api/media/:videoId` with access checks and range-request support for configured media hosts.
+- HLS/DASH transcoding/packaging is not implemented yet; playback of direct HLS (.m3u8) or DASH (.mpd) sources is currently disabled in production (fail-closed 503) to prevent raw origin URL exposure until signed manifest delivery is supported.
 - The upload pipeline is not fully finalized and still depends on administrator-provided media/thumbnail URLs from trusted hosts rather than a complete managed upload/transcoding flow.
 - The campaign/zrzutka page remains experimental and hidden behind a feature flag.
 - Patron status is currently granted by a qualifying one-time donation or another explicit `PatronGrant` source unless this is changed later.

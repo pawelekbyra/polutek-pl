@@ -19,8 +19,14 @@ Kraufanding currently runs as a single-creator VOD with data-model support for a
 * **Database (Prisma)**: `User.role`, `User.isPatron`, `PatronGrant`, `Payment`, `UserPaymentTotal`, `Creator`, `Video`, and `Subscription` are the durable source of truth.
 * **Clerk**: Authentication source and metadata sync/cache layer. Clerk metadata must not override database patron decisions.
 * **Stripe webhook**: Final authority for payment lifecycle events.
-* **API Gateway**: `/api/media/:videoId` is the only path to gated video content.
+* **API Gateway**: `/api/media/:videoId` is the only path to gated video content. Raw manifest URLs (.m3u8, .mpd) are hidden behind a fail-closed 503 mechanism in `/api/media-source` until signed delivery is active.
 * **Subscription records**: Source of truth only for email notifications / channel follow state.
+
+## Robustness Patterns
+
+* **Atomic Webhook Locking**: Clerk and Stripe webhooks use atomic database creation and conditional updates to prevent race conditions during concurrent event delivery.
+* **Compare-And-Swap (CAS)**: Financial updates (refunds, totals) use the CAS pattern to ensure state transitions are monotonic and idempotent.
+* **Idempotent Checkout**: Client-provided `requestId` is used as a Stripe `idempotencyKey` and database deduplication key for payment intent creation.
 
 ## Important modules
 

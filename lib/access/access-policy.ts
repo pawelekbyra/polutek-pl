@@ -2,6 +2,7 @@ import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { canUseDemoFallbacks } from '../feature-flags';
 import { isPatronLikeUser } from './comment-access';
+import { isConfiguredAdminUserId } from '../admin-config';
 
 
 export type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
@@ -140,8 +141,7 @@ export class AccessPolicy {
     if (!userId) return { allowed: false, reason: "LOGIN_REQUIRED" };
 
     // Check immutable allowlist first
-    const adminIds = (process.env.ADMIN_CLERK_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (adminIds.includes(userId)) return { allowed: true };
+    if (isConfiguredAdminUserId(userId)) return { allowed: true };
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

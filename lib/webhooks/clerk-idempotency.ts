@@ -30,6 +30,7 @@ export async function acquireClerkEventLock(id: string, type: string, payload: P
         payload,
       }
     });
+    logger.info(`[ClerkWebhook] Lock acquired for new event: ${id} (${type})`);
     return { success: true, acquired: true };
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -57,7 +58,7 @@ export async function acquireClerkEventLock(id: string, type: string, payload: P
       });
 
       if (count > 0) {
-        logger.info(`[ClerkWebhook] Reclaimed lock for event ${id} (status was FAILED or STALE).`);
+        logger.info(`[ClerkWebhook] Reclaimed lock for event ${id} (${type}) - status was FAILED or STALE.`);
         return { success: true, acquired: true };
       }
 
@@ -67,11 +68,16 @@ export async function acquireClerkEventLock(id: string, type: string, payload: P
         select: { status: true }
       });
 
+      const duplicate = existing?.status === WebhookEventStatus.PROCESSED;
+      const processing = existing?.status === WebhookEventStatus.PROCESSING;
+
+      logger.info(`[ClerkWebhook] Event ${id} (${type}) lock not acquired. Status: ${existing?.status}. Duplicate: ${duplicate}, Processing: ${processing}`);
+
       return {
         success: true,
         acquired: false,
-        duplicate: existing?.status === WebhookEventStatus.PROCESSED,
-        processing: existing?.status === WebhookEventStatus.PROCESSING,
+        duplicate,
+        processing,
       };
     }
 

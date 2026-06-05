@@ -7,6 +7,7 @@ import { ADMIN_EMAIL, getConfiguredAdminEmail } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { flags } from '@/lib/feature-flags';
+import { getAdminClerkUserIds } from '../admin-config';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
 
@@ -143,7 +144,7 @@ export class UserService {
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
         const adminEmail = getConfiguredAdminEmail();
-        const adminIds = (process.env.ADMIN_CLERK_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+        const adminIds = getAdminClerkUserIds();
 
         if (adminIds.includes(id)) {
             targetRole = 'ADMIN';

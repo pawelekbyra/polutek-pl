@@ -5,15 +5,32 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
+import { rateLimit } from '@/lib/rate-limit';
+import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest, { params }: { params: { videoId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { videoId: string } }) {
   const { userId } = await auth();
   const videoId = params.videoId;
 
   if (!videoId) {
     return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
+  }
+
+  // Rate Limiting
+  const rateLimitResult = await rateLimit({
+    key: `media-source:${buildMediaRateLimitKey({ userId, ip: getMediaClientIp(req), mediaId: videoId })}`,
+    limit: 60,
+    windowMs: 60 * 1000
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json({
+        error: 'RATE_LIMITED',
+        message: 'Zbyt wiele zapytań o źródło wideo. Spróbuj za chwilę.'
+    }, { status: 429 });
   }
 
   const video = await prisma.video.findUnique({
@@ -36,6 +53,7 @@ export async function GET(_req: NextRequest, { params }: { params: { videoId: st
   const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
 
   if ((source.kind === 'hls' || source.kind === 'dash') && source.needsProxy) {
+    logger.warn(`[MediaSource] Blocked UNSAFE_STREAM_SOURCE for video ${videoId} (kind: ${source.kind}). Signed delivery/proxy required.`);
     return NextResponse.json({
       error: 'UNSAFE_STREAM_SOURCE',
       message: 'Streaming HLS/DASH wymaga signed delivery/proxy przed produkcją.'
