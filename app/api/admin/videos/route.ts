@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { ADMIN_EMAIL } from '@/lib/constants';
+import { ADMIN_EMAIL, MAIN_CREATOR_NAME } from '@/lib/constants';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
           creator = await tx.creator.create({
             data: {
               userId: user.id,
-              name: "Paweł Perfect",
+              name: MAIN_CREATOR_NAME,
               slug: mainCreatorSlug,
               isApproved: true,
               isPrimary: true,

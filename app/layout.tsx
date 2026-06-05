@@ -4,9 +4,11 @@ import ReferralTracker from "@/app/components/ReferralTracker";
 import { Suspense } from 'react';
 import "./globals.css";
 
+import { APP_NAME } from '@/lib/constants';
+
 export const metadata = {
-  title: "POLUTEK.PL - Niezależna Platforma VOD",
-  description: "POLUTEK.PL — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi."
+  title: `${APP_NAME} - Niezależna Platforma VOD`,
+  description: `${APP_NAME} — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

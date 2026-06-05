@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useLanguage } from './LanguageContext';
 import { Loader2 } from './icons';
+import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
 export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
   const stripe = useStripe();
@@ -43,7 +44,7 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
             type: 'tabs',
             defaultCollapsed: false,
           },
-          business: { name: 'Paweł Perfect' },
+          business: { name: MAIN_CREATOR_NAME },
           paymentMethodOrder: ['card', 'blik', 'p24', 'apple_pay', 'google_pay'],
           wallets: {
             applePay: 'auto',

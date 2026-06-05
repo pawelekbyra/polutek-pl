@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_NAME } from '@/lib/constants';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import Link from 'next/link';
@@ -9,12 +10,12 @@ export default function RegulaminPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#1a1a1a] font-serif leading-relaxed">
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-16">
-        <h1 className="text-3xl font-black uppercase tracking-tighter mb-12 border-b-2 border-[#1a1a1a]/10 pb-8">Regulamin Serwisu POLUTEK.PL</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tighter mb-12 border-b-2 border-[#1a1a1a]/10 pb-8">Regulamin Serwisu {APP_NAME}</h1>
         <div className="prose prose-md prose-neutral space-y-8 text-[#1a1a1a]">
           <section>
             <h2 className="text-lg font-black uppercase tracking-tight text-[#1a1a1a]">1. Charakter platformy</h2>
             <p>
-              Serwis POLUTEK.PL jest prywatną, autorską platformą wideo.
+              Serwis {APP_NAME} jest prywatną, autorską platformą wideo.
               Platforma działa w modelu dożywotniego patronatu. Dostęp do treści cyfrowych jest uzależniony od łącznej kwoty wsparcia przekazanego twórcy.
             </p>
           </section>
@@ -35,7 +36,7 @@ export default function RegulaminPage() {
           <section>
             <h2 className="text-xl font-black uppercase tracking-tight text-[#1a1a1a]">3. Płatności i brak zwrotów</h2>
             <p>
-              Wszelkie wpłaty są procesowane przez Stripe i mają charakter bezzwrotny. Dokonując wpłaty, użytkownik wspiera rozwój projektów POLUTEK.PL
+              Wszelkie wpłaty są procesowane przez Stripe i mają charakter bezzwrotny. Dokonując wpłaty, użytkownik wspiera rozwój projektów {APP_NAME}
               i w zamian otrzymuje dostęp do określonych sekcji serwisu. Raz odblokowany poziom dostępu jest przypisany do konta użytkownika na stałe (Lifetime Access).
             </p>
           </section>

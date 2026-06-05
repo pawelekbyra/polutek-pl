@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebhookEventStatus } from '@prisma/client';
+import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -186,8 +186,7 @@ describe('/api/webhooks/clerk route', () => {
   });
 
   it('short-circuits processed duplicate events without running user side effects', async () => {
-    const error = new Error() as any;
-    error.code = 'P2002';
+    const error = new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '6.4.1' });
     vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
     vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({
@@ -207,8 +206,7 @@ describe('/api/webhooks/clerk route', () => {
   });
 
   it('short-circuits fresh in-flight events so parallel deliveries are idempotent', async () => {
-    const error = new Error() as any;
-    error.code = 'P2002';
+    const error = new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '6.4.1' });
     vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
     vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({

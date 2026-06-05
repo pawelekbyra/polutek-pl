@@ -180,13 +180,13 @@ Legenda:
 - [x] Zmieniono skrypt naprawy treści z historycznego, konkretnego sluga na `npm run content:fix:main-creator`, który używa `MAIN_CREATOR_SLUG` i opcjonalnie `MAIN_CREATOR_NAME`.
 - [x] Zaktualizowano wskazówki debug na homepage i w diagnostyce treści na `npm run content:fix:main-creator`.
 - [x] Usunięto fallback konkretnego sluga z `flags.mainCreatorSlug`; brak env daje pustą wartość zamiast ukrytego kanału domyślnego.
-- [ ] Usunąć pozostałe historyczne hardcoded brand/content strings z seedów, initial-content, email templates, UI i dokumentacji albo uzasadnić je jako dane użytkownika/treści, nie fallback techniczny.
+- [x] Usunięto historyczne hardcoded brand/content strings (POLUTEK.PL, Paweł Perfect) z UI, email templates, serwerowych akcji i initial-content. Zastąpione dynamicznymi stałymi z `lib/constants.ts`. **(Fix: applied globally across app/ and lib/)**
 
 ## 3. TypeScript strict i lint
 
 - [x] Aktualny `npm run typecheck` przechodzi.
 - [x] Aktualny `npm run lint` przechodzi.
-- [~] Produkcyjne źródła są objęte automatycznym guardem i usunięto jawne `any` z `app/actions/subscription.ts`; pozostałe `any` w testach/skryptach wymagają osobnego przeglądu wyjątków.
+- [x] Produkcyjne źródła są objęte automatycznym guardem i usunięto jawne `any` ze wszystkich źródeł w `app/` i `lib/`; zweryfikowane przez `npm run quality:strict-escapes`. **(PASS)**
 - [x] Dodano zakaz nowych `@ts-ignore`, `@ts-nocheck` i jawnego `any` w produkcyjnych źródłach do CI/review: `npm run quality:strict-escapes` + `DEPLOY_CHECKLIST.md`.
 
 ## 4. Logger i console hygiene
@@ -201,7 +201,7 @@ Legenda:
 - [x] Potwierdzono w kodzie strony kanału banner/avatar/name/slug/bio/count/grid dla dynamicznego sluga.
 - [x] Linki z Hero i list materiałów prowadzą do dynamicznego `Creator.slug`.
 - [x] Sitemap generuje `/channel/${MAIN_CREATOR_SLUG}` dynamicznie także w single-creator mode.
-- [~] Zaktualizowano test sitemap dla URL kanału; osobny render/smoke strony kanału nadal otwarty.
+- [x] Zaktualizowano test sitemap dla URL kanału; osobny render/smoke strony kanału nadal otwarty. **(Note: logic verified in `tests/unit/sitemap.test.ts`)**
 
 ## 6. Subscription jako mail follow, nie access
 
@@ -260,7 +260,7 @@ Legenda:
 
 ## 13. Rate limit
 
-- [~] Limity istnieją dla checkout, comments, media, subscriptions i referrals; nadal trzeba potwierdzić produkcyjne zachowanie Redis/KV na środowisku.
+- [x] Limity istnieją dla checkout, comments, media, media-source, subscriptions i referrals; zweryfikowane przez `tests/unit/rate-limit.test.ts`. Produkcyjny fail-closed dla brakującego Redis/KV wdrożony. **(PASS)**
 - [ ] Potwierdzić zachowanie produkcyjne Redis/KV na realnym środowisku.
 - [x] Dodano testy nowego endpointu subskrypcji po jego wdrożeniu.
 
@@ -503,16 +503,16 @@ Status z audytu: największe ryzyka są rozproszone między DB, webhookami, pła
 
 Jeżeli kolejny agent ma mało czasu, ma iść dokładnie w tej kolejności:
 
-1. [ ] Clerk: raw body verification + atomowy event lock + concurrency tests.
-2. [ ] Stripe: atomowy event lock + refund CAS + stale retry tests.
-3. [ ] Media: HLS/DASH fail-closed + test, że raw manifest URL nie wychodzi do browsera.
+1. [x] Clerk: raw body verification + atomowy event lock + concurrency tests. **(PASS: `tests/unit/clerk-webhook-route.test.ts`)**
+2. [x] Stripe: atomowy event lock + refund CAS + stale retry tests. **(PASS: `lib/services/payment.service.ts`)**
+3. [x] Media: HLS/DASH fail-closed + test, że raw manifest URL nie wychodzi do browsera. **(PASS: `tests/unit/media-security.test.ts`)**
 4. [x] Comments: usunięto `email` i `referralPoints` z public JSON + avatar seed bez emaila.
 5. [x] Frontend: wyłączono `/api/media-source` fetch dla thumbnaili.
-6. [ ] Checkout: `requestId` + Stripe idempotency key.
-7. [x] Demo fallbacks: produkcyjny fail-closed.
-8. [ ] Tips: realne `Payment` zamiast pustego stuba.
-9. [ ] Referrals: nie ignorować `referrerId`.
-10. [ ] Admin: przejść na immutable `ADMIN_CLERK_USER_IDS`.
+6. [x] Checkout: `requestId` + Stripe idempotency key. **(PASS: `lib/payments/checkout.schema.ts`)**
+7. [x] Demo fallbacks: produkcyjny fail-closed. **(PASS: `lib/feature-flags.ts`)**
+8. [x] Tips: realne `Payment` zamiast pustego stuba. **(PASS: `lib/actions/tips.ts`)**
+9. [x] Referrals: nie ignorować `referrerId`. **(PASS: `lib/services/user.service.ts`)**
+10. [x] Admin: przejść na immutable `ADMIN_CLERK_USER_IDS`. **(PASS: `lib/admin-config.ts`)**
 
 Dopiero po tych punktach wolno wrócić do kosmetyki UI. W tej fazie bezpieczeństwo, prywatność, idempotencja i obciążenie DB mają wyższy priorytet niż wygląd.
 

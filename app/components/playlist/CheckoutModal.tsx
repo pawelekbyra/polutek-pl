@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, Star, Gem, Shield, Loader2 } from '../icons';
+import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Elements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
@@ -104,7 +105,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         <div className="absolute bottom-10 left-10 lg:left-20 z-10">
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-700">
-            Paweł Perfect &copy; {new Date().getFullYear()}
+            {MAIN_CREATOR_NAME} &copy; {new Date().getFullYear()}
           </p>
         </div>
       </div>

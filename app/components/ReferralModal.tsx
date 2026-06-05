@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from './LanguageContext';
 import { X, Copy, Check } from './icons';
+import { APP_DOMAIN } from '@/lib/constants';
 
 interface ReferralModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface ReferralModalProps {
 export default function ReferralModal({ isOpen, onClose, referralCode, referralPoints }: ReferralModalProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
-  const referralLink = `${typeof window !== 'undefined' ? window.location.origin : 'https://polutek.pl'}/?ref=${referralCode}`;
+  const referralLink = `${typeof window !== 'undefined' ? window.location.origin : `https://${APP_DOMAIN.toLowerCase()}`}/?ref=${referralCode}`;
   const progress = Math.min((referralPoints / 5) * 100, 100);
   const missingCount = Math.max(5 - referralPoints, 0);
 

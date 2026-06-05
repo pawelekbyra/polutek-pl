@@ -2,6 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { APP_NAME } from '@/lib/constants';
 
 type Language = 'pl' | 'en';
 
@@ -115,7 +116,7 @@ export const translations = {
     loginToWatchShort: 'Zaloguj się',
     independencyTitle: 'Nie masz psychy się zalogować',
     welcomeOn: 'WITAJ NA',
-    independencyTitleLoggedIn: 'WITAJ NA POLUTEK.PL',
+    independencyTitleLoggedIn: `WITAJ NA ${APP_NAME}`,
     patronZone: 'Strefa Patronów',
     patronZoneLine1: 'Strefa',
     patronZoneLine2: 'Patronów',
@@ -198,7 +199,7 @@ export const translations = {
     loginToWatchShort: 'Log in',
     independencyTitle: "You don't have the guts to log in",
     welcomeOn: 'WELCOME TO',
-    independencyTitleLoggedIn: 'WELCOME TO POLUTEK.PL',
+    independencyTitleLoggedIn: `WELCOME TO ${APP_NAME}`,
     patronZone: "Patrons' Zone",
     patronZoneLine1: 'Patrons',
     patronZoneLine2: 'Zone',

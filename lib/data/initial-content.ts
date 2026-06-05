@@ -1,11 +1,12 @@
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { InternalVideoDTO as Video } from "@/app/types/video";
+import { MAIN_CREATOR_NAME, MAIN_CREATOR_SLUG } from '../constants';
 
 export const DEFAULT_CREATOR = {
   id: "creator_polutek_default",
-  name: "Paweł Perfect",
-  slug: "polutek",
-  bio: "Oficjalny kanał Pawła Perfecta. Ekskluzywne materiały VOD i niezależne śledztwa.",
+  name: MAIN_CREATOR_NAME,
+  slug: MAIN_CREATOR_SLUG,
+  bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne śledztwa.`,
   bannerUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
   subscribersCount: 1250000,
 };
