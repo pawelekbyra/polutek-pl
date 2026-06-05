@@ -30,7 +30,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   const response = NextResponse.next();
   response.headers.set(
-    'Content-Security-Policy-Report-Only',
+    'Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; " +
     "script-src-elem 'self' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com 'unsafe-inline'; " +

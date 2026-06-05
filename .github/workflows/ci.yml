@@ -45,7 +45,12 @@ jobs:
       - run: npx prisma generate
       - run: npm run quality:strict-escapes
       - run: npm run typecheck
-      - run: npm test -- --run
+      - run: npm run test:coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
       - run: npm run lint
       - run: npm run build
 
@@ -94,4 +99,3 @@ jobs:
       - run: npm ci
       - name: npm audit high
         run: npm audit --audit-level=high
-        continue-on-error: true

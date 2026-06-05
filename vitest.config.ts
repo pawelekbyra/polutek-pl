@@ -8,5 +8,21 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './'),
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: [
+        'app/api/**',
+        'lib/services/**',
+        'lib/access/**',
+        'lib/webhooks/**',
+      ],
+      thresholds: {
+        statements: 30,
+        branches: 25,
+        functions: 40,
+        lines: 30,
+      },
+    },
   },
 });

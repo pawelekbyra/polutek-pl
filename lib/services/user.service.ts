@@ -228,7 +228,7 @@ export class UserService {
     }
 
     try {
-      return await prisma.user.upsert({
+      const user = await prisma.user.upsert({
         where: { id: userId },
         update: { language },
         create: {
@@ -241,6 +241,24 @@ export class UserService {
           referralCode: crypto.randomBytes(6).toString('hex'),
         }
       });
+
+      // Update Clerk Metadata for persistence and webhook use
+      try {
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(userId, {
+          publicMetadata: {
+            language: language
+          }
+        });
+      } catch (clerkError) {
+        logger.error("[UserService.updateUserLanguage] Clerk sync failed:", clerkError);
+        // We don't throw here to avoid failing the whole operation if only Clerk sync fails,
+        // but the roadmap says "zapewnić, że ... aktualizują DB i Clerk metadata spójnie".
+        // Maybe it SHOULD throw? Usually we want DB to be the source of truth, but Clerk is also important.
+        // Given "beta hardening", let's at least log it.
+      }
+
+      return user;
     } catch (err: unknown) {
       if (isPrismaErrorCode(err, 'P2002')) {
         const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id: userId } })

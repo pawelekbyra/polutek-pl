@@ -10,6 +10,7 @@ yarn-error.log
 dev_server.log
 production_server.log
 test-results/
+coverage/
 .DS_Store
 *.pem
 *.log
