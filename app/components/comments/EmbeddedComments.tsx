@@ -1,36 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
 import {
-  Heart,
   MessageSquare,
-  ArrowUp,
   Loader2,
-  Smile,
-  ImageIcon,
-  CornerDownRight,
-  ThumbsUp,
-  ThumbsDown,
-  MoreVertical,
-  Trash2,
-  Lock,
-  Star,
 } from "../icons";
-import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
 import { AccessTier } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { parseJsonResponse } from "@/lib/client/api";
+import { CommentView } from "./types";
+import { CommentComposer } from "./components/CommentComposer";
+import { CommentItem } from "./components/CommentItem";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -50,55 +39,12 @@ function stringMetadata(value: unknown, fallback: string) {
   return typeof value === "string" && value ? value : fallback;
 }
 
-type CommentCounts = { likes: number; dislikes: number; replies?: number };
-type CommentAuthorView = {
-  imageUrl?: string | null;
-  slug?: string | null;
-  name?: string | null;
-  username?: string | null;
-  isPatron?: boolean | null;
-  role?: string | null;
-};
-
-type CommentView = {
-  id: string;
-  authorId?: string;
-  authorName?: string;
-  imageUrl?: string | null;
-  author?: CommentAuthorView | null;
-  text: string;
-  createdAt?: string | Date;
-  isLiked?: boolean;
-  isDisliked?: boolean;
-  _count?: CommentCounts;
-  replies?: CommentView[];
-  canPin?: boolean;
-  isPinned?: boolean;
-  pinnedAt?: string | Date | null;
-};
-
 type CommentsPage = {
   comments: CommentView[];
   nextCursor?: string | null;
 };
 
 type CommentsData = InfiniteData<CommentsPage>;
-
-export function getAvatarSeed(comment: CommentView) {
-  return (
-    comment.authorName ||
-    comment.author?.username ||
-    comment.authorId ||
-    comment.id
-  );
-}
-
-function isPatronAuthor(author?: CommentAuthorView | null) {
-  return (
-    !!author &&
-    (author.role === "ADMIN" || author.isPatron === true)
-  );
-}
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -459,11 +405,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !userProfile) return;
     postMutation.mutate({ text: newComment, parentId: replyTo || undefined });
-  };
+  }, [newComment, userProfile, replyTo, postMutation]);
 
   const getCommentsLabel = (count: number) => {
     if (language === "pl") {
@@ -518,403 +464,68 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       </div>
 
-      {/* Input Area */}
-      <div
-        className={cn(
-          "flex items-start mb-10",
-          userProfile ? "gap-5" : "gap-0",
-        )}
-      >
-        {userProfile && (
-          <div
-            className={cn(
-              "relative w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-1",
-              isPatron
-                ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
-                : "border border-[#e9eef6]",
-            )}
-          >
-            <Image
-              src={
-                userAvatarUrl ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`
-              }
-              alt="Avatar"
-              fill
-              sizes="40px"
-              className="object-cover"
-              unoptimized
-            />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="relative">
-            {replyTo && userProfile && (
-              <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#e9eef6]">
-                <CornerDownRight size={12} />
-                {language === "pl" ? (
-                  <>
-                    Odpowiadasz{" "}
-                    <span className="font-black ml-1">{replyingToAuthor}</span>
-                  </>
-                ) : (
-                  <>
-                    Replying to{" "}
-                    <span className="font-black ml-1">{replyingToAuthor}</span>
-                  </>
-                )}
-                <button
-                  onClick={() => setReplyTo(null)}
-                  className="ml-2 hover:opacity-60"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            {!canComment ? (
-              <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
-                {isPatronGated && !isPatron ? (
-                  <span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                    {t.becomePatronToComment}
-                  </span>
-                ) : (
-                  <SignInButton mode="modal">
-                    <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                      {t.signInToComment}
-                    </button>
-                  </SignInButton>
-                )}
-              </div>
-            ) : (
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onFocus={() => setIsInputFocused(true)}
-                placeholder={replyTo ? t.addReply : t.addComment}
-                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
-              />
-            )}
-          </div>
+      <CommentComposer
+        userProfile={userProfile}
+        userAvatarUrl={userAvatarUrl}
+        replyTo={replyTo}
+        replyingToAuthor={replyingToAuthor}
+        newComment={newComment}
+        setNewComment={setNewComment}
+        setReplyTo={setReplyTo}
+        isInputFocused={isInputFocused}
+        setIsInputFocused={setIsInputFocused}
+        canComment={canComment}
+        isPatronGated={isPatronGated}
+        isPatron={isPatron}
+        isPending={postMutation.isPending}
+        handleSubmit={handleSubmit}
+        t={t}
+        language={language}
+      />
 
-          {(isInputFocused || newComment.trim() || replyTo) && canComment && (
-            <div className="flex justify-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setNewComment("");
-                  setReplyTo(null);
-                  setIsInputFocused(false);
-                }}
-              >
-                {t.cancel}
-              </Button>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={!newComment.trim() || postMutation.isPending}
-              >
-                {postMutation.isPending ? (
-                  <Loader2 className="animate-spin" size={14} />
-                ) : replyTo ? (
-                  t.reply
-                ) : (
-                  t.comment
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Comments List */}
       <div className="space-y-6">
-        {comments.map((comment) => {
-          const commentAuthorIsPatron = isPatronAuthor(comment.author);
-          return (
-            <div key={comment.id} className="space-y-3">
-              <div className="flex gap-3 items-start group/comment">
-                <div className="flex w-11 shrink-0 flex-col items-center gap-1">
-                  <div
-                    className={cn(
-                      "relative w-9 h-9 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
-                      commentAuthorIsPatron
-                        ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-                        : "border border-[#e9eef6]",
-                    )}
-                  >
-                    <Image
-                      src={
-                        comment.imageUrl ||
-                        comment.author?.imageUrl ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`
-                      }
-                      alt="Avatar"
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-                  {commentAuthorIsPatron && (
-                    <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200">
-                      Patron
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-1.5 leading-none">
-                      <span
-                        className={cn(
-                          "font-bold text-[#0f0f0f] text-[12px] leading-none",
-                          commentAuthorIsPatron && "text-amber-900",
-                        )}
-                      >
-                        {comment.authorName}
-                      </span>
-                      {comment.isPinned && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
-                          <Star size={10} className="fill-blue-600" />
-                          {language === "pl" ? "Przypięty" : "Pinned"}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-[#606060] leading-none">
-                        {isClient &&
-                        comment.createdAt &&
-                        !isNaN(new Date(comment.createdAt).getTime())
-                          ? formatDistanceToNow(new Date(comment.createdAt), {
-                              addSuffix: true,
-                              locale: pl,
-                            }).replace("około", "ok.")
-                          : isClient
-                            ? "niedawno"
-                            : ""}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-60 transition-opacity">
-                      {comment.canPin && (
-                        <button
-                          onClick={() =>
-                            pinMutation.mutate({
-                              commentId: comment.id,
-                              pinned: !comment.isPinned,
-                            })
-                          }
-                          disabled={pinMutation.isPending}
-                          className={cn(
-                            "rounded-md p-1 hover:!opacity-100 hover:bg-blue-50",
-                            comment.isPinned && "text-blue-600 opacity-100",
-                          )}
-                          title={
-                            comment.isPinned
-                              ? language === "pl"
-                                ? "Odepnij komentarz"
-                                : "Unpin comment"
-                              : language === "pl"
-                                ? "Przypnij komentarz"
-                                : "Pin comment"
-                          }
-                        >
-                          <Star
-                            size={12}
-                            className={cn(comment.isPinned && "fill-blue-600")}
-                          />
-                        </button>
-                      )}
-                      {userProfile?.id === comment.authorId && (
-                        <button
-                          onClick={() =>
-                            confirm(t.deleteComment) &&
-                            deleteMutation.mutate(comment.id)
-                          }
-                          className="rounded-md p-1 hover:!opacity-100 hover:bg-red-50"
-                        >
-                          <Trash2 size={12} className="text-destructive" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-                    {comment.text}
-                  </p>
-                  <div className="flex items-center gap-3 pt-0.5">
-                    <button
-                      onClick={() =>
-                        userProfile && likeMutation.mutate(comment.id)
-                      }
-                      className={cn(
-                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                        comment.isLiked
-                          ? "text-primary"
-                          : "text-[#606060] hover:text-[#0f0f0f]",
-                      )}
-                    >
-                      <ThumbsUp
-                        size={13}
-                        className={cn(comment.isLiked && "fill-primary")}
-                      />
-                      <span className="text-[11px] font-normal">
-                        {comment._count?.likes || 0}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        userProfile && dislikeMutation.mutate(comment.id)
-                      }
-                      className={cn(
-                        "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                        comment.isDisliked
-                          ? "text-black"
-                          : "text-[#606060] hover:text-[#0f0f0f]",
-                      )}
-                    >
-                      <ThumbsDown
-                        size={13}
-                        className={cn(comment.isDisliked && "fill-black")}
-                      />
-                      <span className="text-[11px] font-normal">
-                        {comment._count?.dislikes || 0}
-                      </span>
-                    </button>
-                    {canComment && (
-                      <button
-                        onClick={() => userProfile && setReplyTo(comment.id)}
-                        className="text-[11px] font-bold text-[#0f0f0f] hover:bg-[#dbeafe] px-2.5 py-0.5 rounded-md ml-1 transition-all"
-                      >
-                        {t.reply}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+        {comments.map((comment) => (
+          <div key={comment.id} className="space-y-3">
+            <CommentItem
+              comment={comment}
+              userProfile={userProfile}
+              isClient={isClient}
+              language={language}
+              t={t}
+              canComment={canComment}
+              onLike={(id) => likeMutation.mutate(id)}
+              onDislike={(id) => dislikeMutation.mutate(id)}
+              onReply={(id) => setReplyTo(id)}
+              onDelete={(id) => deleteMutation.mutate(id)}
+              onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
+              isPinPending={pinMutation.isPending}
+            />
 
-              {/* NESTED REPLIES */}
-              {comment.replies && comment.replies.length > 0 && (
-                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                  {comment.replies.map((reply) => {
-                    const replyAuthorIsPatron = isPatronAuthor(reply.author);
-                    return (
-                      <div
-                        key={reply.id}
-                        className="flex gap-2.5 items-start group/reply"
-                      >
-                        <div className="flex w-8 shrink-0 flex-col items-center gap-1">
-                          <div
-                            className={cn(
-                              "relative w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
-                              replyAuthorIsPatron
-                                ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]"
-                                : "border border-[#e9eef6]",
-                            )}
-                          >
-                            <Image
-                              src={
-                                reply.imageUrl ||
-                                reply.author?.imageUrl ||
-                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(reply))}`
-                              }
-                              alt="Avatar"
-                              fill
-                              sizes="24px"
-                              className="object-cover"
-                              unoptimized
-                            />
-                          </div>
-                          {replyAuthorIsPatron && (
-                            <span className="rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 px-1 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.1em] text-amber-950 shadow-sm ring-1 ring-amber-200">
-                              Patron
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 space-y-0.5 pt-0.5">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-1.5 leading-none">
-                              <span
-                                className={cn(
-                                  "font-bold text-[#0f0f0f] text-[11px] leading-none",
-                                  replyAuthorIsPatron && "text-amber-900",
-                                )}
-                              >
-                                {reply.authorName}
-                              </span>
-                              <span className="text-[10px] text-[#606060] leading-none">
-                                {isClient &&
-                                reply.createdAt &&
-                                !isNaN(new Date(reply.createdAt).getTime())
-                                  ? formatDistanceToNow(
-                                      new Date(reply.createdAt),
-                                      { addSuffix: true, locale: pl },
-                                    ).replace("około", "ok.")
-                                  : t.justNow}
-                              </span>
-                            </div>
-                            {userProfile?.id === reply.authorId && (
-                              <button
-                                onClick={() =>
-                                  confirm(t.deleteComment) &&
-                                  deleteMutation.mutate(reply.id)
-                                }
-                                className="opacity-0 group-hover/reply:opacity-40 hover:!opacity-100 transition-opacity p-1"
-                              >
-                                <Trash2
-                                  size={10}
-                                  className="text-destructive"
-                                />
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-                            {reply.text}
-                          </p>
-                          <div className="flex items-center gap-3 pt-0.5">
-                            <button
-                              onClick={() =>
-                                userProfile && likeMutation.mutate(reply.id)
-                              }
-                              className={cn(
-                                "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                                reply.isLiked
-                                  ? "text-primary"
-                                  : "text-[#606060] hover:text-[#0f0f0f]",
-                              )}
-                            >
-                              <ThumbsUp
-                                size={11}
-                                className={cn(reply.isLiked && "fill-primary")}
-                              />
-                              <span className="text-[10px] font-normal">
-                                {reply._count?.likes || 0}
-                              </span>
-                            </button>
-                            <button
-                              onClick={() =>
-                                userProfile && dislikeMutation.mutate(reply.id)
-                              }
-                              className={cn(
-                                "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                                reply.isDisliked
-                                  ? "text-black"
-                                  : "text-[#606060] hover:text-[#0f0f0f]",
-                              )}
-                            >
-                              <ThumbsDown
-                                size={11}
-                                className={cn(reply.isDisliked && "fill-black")}
-                              />
-                              <span className="text-[10px] font-normal">
-                                {reply._count?.dislikes || 0}
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            {/* NESTED REPLIES */}
+            {comment.replies && comment.replies.length > 0 && (
+              <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
+                {comment.replies.map((reply) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    userProfile={userProfile}
+                    isClient={isClient}
+                    language={language}
+                    t={t}
+                    canComment={canComment}
+                    onLike={(id) => likeMutation.mutate(id)}
+                    onDislike={(id) => dislikeMutation.mutate(id)}
+                    onReply={() => {}}
+                    onDelete={(id) => deleteMutation.mutate(id)}
+                    onPin={() => {}}
+                    isPinPending={false}
+                    isReply={true}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
 
         {hasNextPage && (
           <div className="pt-6 flex justify-center">

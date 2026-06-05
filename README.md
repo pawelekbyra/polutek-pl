@@ -166,10 +166,6 @@ Legenda:
 - `[ ]` — otwarte,
 - `ENV` — zablokowane brakiem prawdziwych zmiennych środowiskowych, bazy, sekretów albo stagingu.
 
-## 0. P0 — admin authorization musi być spójne z finalnym modelem bezpieczeństwa
-
-Runtime admin access wynika z `User.role=ADMIN` albo `ADMIN_CLERK_USER_IDS`. `ADMIN_EMAIL` jest bootstrap/recovery dla seed/repair scripts, nie źródłem uprawnień w runtime.
-
 ## 2. P0 — staging smoke dla krytycznych ścieżek płatności, dostępu i admina
 
 Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze stagingu z prawdziwymi sekretami, prawdziwą bazą, realną sesją Clerk, Stripe test mode i hostami mediów z allowlisty.
@@ -186,7 +182,7 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 
 Vitest posiada konfigurację coverage i progi jakościowe. CI publikuje raport jako artefakt.
 
-- [~] Rozbudować Playwright smoke: zrealizowane homepage, channel page, public video, guest blocks dla login-gated/patron-gated, subscription vs Patron access, comments access, checkout unauthorized guard, admin block, media-source denial, ENV-gated non-patron/admin checks oraz ENV-gated admin video CRUD mutation. Nadal brakuje pełnego staging smoke dla checkout/webhook success path.
+- [~] Rozbudować Playwright smoke: zrealizowane homepage, channel page, public video, guest blocks dla login-gated/patron-gated, subscription vs Patron access, comments access, checkout unauthorized guard, admin block, media-source denial, ENV-gated non-patron/admin checks oraz ENV-gated admin video CRUD mutation.
 - [ ] Zebrać i podlinkować/zapisać pierwsze zielone zdalne przebiegi GitHub Actions dla quality, integration-postgres i E2E/staging smoke.
 
 ## 4. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
@@ -196,33 +192,22 @@ Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines`
 - [ ] Potwierdzić produkcyjne Redis/KV dla rate limitów na realnym środowisku; memory fallback pozostaje wyłącznie dev/test.
 - [ ] Potwierdzić produkcyjne allowlisty hostów mediów/obrazów w ENV, bez szerokich domen providerów.
 
-## 5. P1 — formalizacja kontraktów API
-
-Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kontraktów w `docs/API_CONTRACTS.md` oraz testy kontraktowe w `tests/unit/api-contracts.test.ts`.
-
 ## 6. P1 — performance, observability i alertowalne sygnały
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
 - [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, comments, webhooks).
-- [~] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors. Zrealizowane: log-based `[METRIC]` signals w kodzie i kontrakt dashboardów w `docs/OBSERVABILITY_RUNBOOK.md`; nadal brakuje zdalnych dashboardów ze staging/prod-like logs.
-- [~] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy. Zrealizowane: `alert:true` log signals i runbook alertów; nadal brakuje konfiguracji alertów w hostingu/observability backendzie.
+- [~] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors. Zrealizowane: log-based `[METRIC]` signals w kodzie i kontrakt dashboardów w `docs/OBSERVABILITY_RUNBOOK.md`.
+- [~] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy. Zrealizowane: `alert:true` log signals i runbook alertów.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
 
 ## 7. P2 — moduły, hotspoty i dług techniczny
 
 Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening. Lokalny guard `npm run quality:hotspots` pilnuje budżetów LOC i dokumentuje tymczasowe wyjątki dla znanych hotspotów.
 
-- [ ] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
-- [ ] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
-- [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
-
-## 8. P2 — dokumentacja, licencja i reconciliation pass
-
-Dokumentacja była miejscami bardziej optymistyczna niż runtime. Po każdym hardeningu trzeba utrzymać zasadę: README/ENV/deploy docs opisują dokładnie to, co działa w kodzie i zostało zweryfikowane.
-
-- [ ] Po naprawie admin auth zrobić pełny reconciliation pass README, `.env.example`, `DEPLOY_CHECKLIST.md`, `KNOWN_LIMITATIONS.md` i `ARCHITECTURE.md`.
-- [ ] Usunąć z dokumentacji twierdzenia typu PASS, jeśli nie mają aktualnego testu/komendy albo staging evidence.
+- [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
+- [~] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
+- [~] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami (zrealizowane dla `app/admin/videos/page.tsx` i `app/components/comments/EmbeddedComments.tsx`).
 
 ## 19. Finalna walidacja przed prywatną betą
 

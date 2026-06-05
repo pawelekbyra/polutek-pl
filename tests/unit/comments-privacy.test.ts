@@ -28,10 +28,10 @@ describe('comments privacy helpers', () => {
   });
 
   it('keeps email out of the client author type and avatar seed logic', () => {
-    const source = readFileSync('app/components/comments/EmbeddedComments.tsx', 'utf8');
+    const source = readFileSync('app/components/comments/types.ts', 'utf8');
     const avatarSeedBlock = source.slice(
       source.indexOf('export function getAvatarSeed'),
-      source.indexOf('function isPatronAuthor'),
+      source.indexOf('export function isPatronAuthor'),
     );
 
     expect(source).not.toContain('email?: string | null');
