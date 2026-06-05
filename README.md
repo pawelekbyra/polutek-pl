@@ -207,6 +207,7 @@ Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększ
 
 - [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
 - [~] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
+- [~] Rozbić `ContentService` i API komentarzy na mniejsze moduły (zrealizowane: video, creator, comments service).
 - [~] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami (zrealizowane dla `app/admin/videos/page.tsx` i `app/components/comments/EmbeddedComments.tsx`).
 
 ## 19. Finalna walidacja przed prywatną betą

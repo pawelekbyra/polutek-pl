@@ -26,30 +26,10 @@ const budgets: Record<FileKind, number> = {
 };
 
 const hotspotExceptions: Record<string, HotspotException> = {
-  "app/admin/videos/page.tsx": {
-    maxLines: 650,
-    reason:
-      "Known admin CRUD hotspot; keep below current envelope until split into form/table/data modules.",
-  },
-  "app/api/comments/route.ts": {
-    maxLines: 500,
-    reason:
-      "Known comments API hotspot; keep below current envelope until read/write/moderation handlers are split.",
-  },
-  "app/components/comments/EmbeddedComments.tsx": {
-    maxLines: 950,
-    reason:
-      "Known comments UI hotspot; keep below current envelope until composer/thread/reaction modules are split.",
-  },
   "app/components/icons/index.tsx": {
     maxLines: 800,
     reason:
       "Central icon barrel/component registry; tolerate current size but block further unbounded growth.",
-  },
-  "lib/services/content.service.ts": {
-    maxLines: 525,
-    reason:
-      "Known content loading/mapping service hotspot; keep below current envelope until query/mapping helpers are split.",
   },
 };
 
