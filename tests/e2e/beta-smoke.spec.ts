@@ -1,66 +1,192 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIResponse } from "@playwright/test";
 
-const creatorSlug = process.env.E2E_CREATOR_SLUG || process.env.MAIN_CREATOR_SLUG;
-const patronStorageState = process.env.E2E_PATRON_STORAGE_STATE;
-const subscriberStorageState = process.env.E2E_SUBSCRIBER_STORAGE_STATE;
+const e2e = {
+  creatorSlug:
+    process.env.E2E_CREATOR_SLUG ||
+    process.env.MAIN_CREATOR_SLUG ||
+    "main-creator",
+  publicVideoId: process.env.E2E_PUBLIC_VIDEO_ID || "v_fallback_001",
+  loggedInVideoId: process.env.E2E_LOGGED_IN_VIDEO_ID || "v_fallback_002",
+  patronVideoId: process.env.E2E_PATRON_VIDEO_ID || "v_fallback_003",
+  nonPatronStorageState:
+    process.env.E2E_NON_PATRON_STORAGE_STATE ||
+    process.env.E2E_SUBSCRIBER_STORAGE_STATE,
+};
 
 async function expectNonServerError(status: number | null) {
-  expect(status, 'route should respond before browser assertions').not.toBeNull();
-  expect(status ?? 500, 'route must not return a server error').toBeLessThan(500);
+  expect(
+    status,
+    "route should respond before browser assertions",
+  ).not.toBeNull();
+  expect(status ?? 500, "route must not return a server error").toBeLessThan(
+    500,
+  );
 }
 
-test.describe('beta public smoke', () => {
-  test('homepage renders without server errors', async ({ page }) => {
-    const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+async function expectMediaSourceDenied(response: APIResponse) {
+  expect(
+    response.status(),
+    "media-source should make an explicit access decision",
+  ).toBe(403);
+  const body = await response.json();
+  expect(body.hasAccess).toBe(false);
+  expect(
+    body.playbackUrl,
+    "denied media-source responses must not leak playback URLs",
+  ).toBeUndefined();
+  expect(
+    body.url,
+    "denied media-source responses must not leak raw URLs",
+  ).toBeUndefined();
+}
+
+test.describe("beta smoke: guest/public access", () => {
+  test("homepage works", async ({ page }) => {
+    const response = await page.goto("/", { waitUntil: "domcontentloaded" });
 
     await expectNonServerError(response?.status() ?? null);
     await expect(page).toHaveTitle(/Polutek|VOD/i);
-    await expect(page.locator('body')).toContainText(/Polutek|VOD|kanał|film|materiał/i);
+    await expect(page.locator("body")).toContainText(
+      /Polutek|VOD|kanał|film|materiał|Brak materiałów/i,
+    );
   });
 
-  test('configured channel page renders without server errors', async ({ page }) => {
-    test.skip(!creatorSlug, 'Set E2E_CREATOR_SLUG or MAIN_CREATOR_SLUG to smoke the configured channel page.');
-
-    const response = await page.goto(`/channel/${creatorSlug}`, { waitUntil: 'domcontentloaded' });
+  test("/channel/[MAIN_CREATOR_SLUG] works", async ({ page }) => {
+    const response = await page.goto(`/channel/${e2e.creatorSlug}`, {
+      waitUntil: "domcontentloaded",
+    });
 
     await expectNonServerError(response?.status() ?? null);
-    await expect(page.locator('body')).toContainText(new RegExp(`@?${creatorSlug}`, 'i'));
-    await expect(page.locator('body')).toContainText(/Subskrybuj|Subskrybowano|film|kanał/i);
+    await expect(page.locator("body")).toContainText(
+      new RegExp(`@?${e2e.creatorSlug}|Kanał nie znaleziony`, "i"),
+    );
   });
 
-  test('guest admin visit does not expose the admin dashboard', async ({ page }) => {
-    const response = await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+  test("public video is available for a guest", async ({ page, request }) => {
+    const response = await page.goto(`/?v=${e2e.publicVideoId}`, {
+      waitUntil: "domcontentloaded",
+    });
 
     await expectNonServerError(response?.status() ?? null);
-    await expect(page.locator('body')).not.toContainText(/Panel administracyjny|Zarządzaj kanałem/i);
+    const sourceResponse = await request.get(
+      `/api/media-source/${e2e.publicVideoId}`,
+    );
+    expect(sourceResponse.status()).toBe(200);
+    const source = await sourceResponse.json();
+    expect(source.hasAccess).toBe(true);
+    expect(
+      source.playbackUrl,
+      "public media-source should expose a playable URL",
+    ).toEqual(expect.any(String));
+  });
+
+  test("logged-in video blocks a guest", async ({ page, request }) => {
+    const response = await page.goto(`/?v=${e2e.loggedInVideoId}`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expectNonServerError(response?.status() ?? null);
+    await expect(page.locator("body")).toContainText(
+      /Zaloguj|Log in|Access Restricted/i,
+    );
+
+    const sourceResponse = await request.get(
+      `/api/media-source/${e2e.loggedInVideoId}`,
+    );
+    await expectMediaSourceDenied(sourceResponse);
+  });
+
+  test("patron video blocks a guest", async ({ page, request }) => {
+    const response = await page.goto(`/?v=${e2e.patronVideoId}`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expectNonServerError(response?.status() ?? null);
+    await expect(page.locator("body")).toContainText(
+      /Patron|Access Restricted|Strefa/i,
+    );
+
+    const sourceResponse = await request.get(
+      `/api/media-source/${e2e.patronVideoId}`,
+    );
+    await expectMediaSourceDenied(sourceResponse);
+  });
+
+  test("guest admin visit does not expose the admin dashboard", async ({
+    page,
+  }) => {
+    const response = await page.goto("/admin", {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expectNonServerError(response?.status() ?? null);
+    await expect(page.locator("body")).not.toContainText(
+      /Panel administracyjny|Zarządzaj kanałem|Admin dashboard/i,
+    );
+  });
+
+  test("media-source does not return a source without access", async ({
+    request,
+  }) => {
+    const response = await request.get(
+      `/api/media-source/${e2e.patronVideoId}`,
+    );
+
+    await expectMediaSourceDenied(response);
   });
 });
 
-test.describe('beta authenticated smoke', () => {
-  test.use({ storageState: subscriberStorageState });
+test.describe("beta smoke: authenticated non-patron access", () => {
+  test.use({ storageState: e2e.nonPatronStorageState });
 
-  test('subscriber can open the configured channel and see subscription UI', async ({ page }) => {
-    test.skip(!creatorSlug, 'Set E2E_CREATOR_SLUG or MAIN_CREATOR_SLUG to smoke subscriptions.');
-    test.skip(!subscriberStorageState, 'Set E2E_SUBSCRIBER_STORAGE_STATE for authenticated subscription smoke.');
+  test.beforeEach(() => {
+    test.skip(
+      !e2e.nonPatronStorageState,
+      "ENV blocked: set E2E_NON_PATRON_STORAGE_STATE or E2E_SUBSCRIBER_STORAGE_STATE for non-patron smoke.",
+    );
+  });
 
-    const response = await page.goto(`/channel/${creatorSlug}`, { waitUntil: 'domcontentloaded' });
+  test("patron video blocks a non-patron", async ({ page, request }) => {
+    const response = await page.goto(`/?v=${e2e.patronVideoId}`, {
+      waitUntil: "domcontentloaded",
+    });
 
     await expectNonServerError(response?.status() ?? null);
-    await expect(page.getByRole('button', { name: /Subskrybuj|Subskrybowano/i })).toBeVisible();
+    await expect(page.locator("body")).toContainText(/Patron|Strefa/i);
+
+    const sourceResponse = await request.get(
+      `/api/media-source/${e2e.patronVideoId}`,
+    );
+    await expectMediaSourceDenied(sourceResponse);
   });
-});
 
-test.describe('beta patron and media smoke', () => {
-  test.use({ storageState: patronStorageState });
+  test("subscription does not give Patron access", async ({
+    page,
+    request,
+  }) => {
+    const channelResponse = await page.goto(`/channel/${e2e.creatorSlug}`, {
+      waitUntil: "domcontentloaded",
+    });
 
-  test('patron session can request configured media source endpoint', async ({ request }) => {
-    const videoId = process.env.E2E_PATRON_VIDEO_ID;
-    test.skip(!patronStorageState, 'Set E2E_PATRON_STORAGE_STATE for authenticated patron smoke.');
-    test.skip(!videoId, 'Set E2E_PATRON_VIDEO_ID to smoke media-source access.');
+    await expectNonServerError(channelResponse?.status() ?? null);
+    await expect(page.locator("body")).toContainText(
+      /Subskrybuj|Subskrybowano|Subscribe|Subscribed/i,
+    );
 
-    const response = await request.get(`/api/media-source/${videoId}`);
+    const sourceResponse = await request.get(
+      `/api/media-source/${e2e.patronVideoId}`,
+    );
+    await expectMediaSourceDenied(sourceResponse);
+  });
 
-    expect(response.status(), 'patron media-source request should not fail server-side').toBeLessThan(500);
-    expect([200, 403, 404], 'media-source should return an explicit access/data decision').toContain(response.status());
+  test("admin route blocks a regular user", async ({ page }) => {
+    const response = await page.goto("/admin", {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expectNonServerError(response?.status() ?? null);
+    await expect(page.locator("body")).not.toContainText(
+      /Panel administracyjny|Zarządzaj kanałem|Admin dashboard/i,
+    );
   });
 });
