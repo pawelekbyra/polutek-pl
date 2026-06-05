@@ -189,9 +189,9 @@ Legenda:
 
 ## 4. Logger i console hygiene
 
-- [ ] Zinwentaryzować `console.*` w kodzie produkcyjnym.
-- [ ] Zastąpić produkcyjne logi loggerem bez sekretów, signed URL-i, tokenów, danych kart i pełnych payloadów webhooków.
-- [ ] Pozostawić `console.*` tylko w skryptach CLI/testach albo z uzasadnieniem w raporcie.
+- [x] Zinwentaryzowano `console.*` w kodzie produkcyjnym: `rg -n "\\bconsole\\." app lib middleware.ts next.config.mjs vitest.config.ts` pokazuje wyłącznie adapter `lib/logger.ts` po usunięciu bezpośredniego `console.error` z `SubscribeButton`.
+- [x] Zastąpiono bezpośredni produkcyjny log w komponencie subskrypcji loggerem i dodano sanitizację loggera dla sekretów, tokenów, query signed URL-i, obiektów `Error` oraz cyklicznych payloadów; potwierdzone `npm test -- --run tests/unit/logger.test.ts tests/unit/media-security.test.ts`.
+- [x] Pozostawiono `console.*` tylko wewnątrz centralnego adaptera `lib/logger.ts` oraz poza źródłami produkcyjnymi/testach CLI; aktualny guard `npm run quality:strict-escapes` pozostaje PASS.
 
 ## 5. Strona kanału `/channel/[slug]`
 
@@ -272,7 +272,7 @@ Legenda:
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 25 plików, 136 testów.
+- [x] Unit suite PASS: 26 plików, 138 testów.
 - [~] Próba dodania coverage provider zablokowana przez `npm install -D @vitest/coverage-v8@4.1.7` → `403 Forbidden`; coverage script/progi nadal otwarte do wykonania w środowisku z dostępem do registry.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
