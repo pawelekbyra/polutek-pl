@@ -17,13 +17,12 @@ const isPublicRoute = createRouteMatcher([
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Specific GET exception for comments (if product needs public comments)
+  // Specific GET exception for comments (if product needs public comments).
+  // Mutations are protected but still flow through the shared response setup
+  // below so request IDs and security headers are attached consistently.
   if (req.nextUrl.pathname === '/api/comments' && req.method !== 'GET') {
     (await auth()).protect();
-    return;
-  }
-
-  if (isAdminRoute(req)) {
+  } else if (isAdminRoute(req)) {
     (await auth()).protect();
   } else if (!isPublicRoute(req)) {
     (await auth()).protect();

@@ -204,7 +204,7 @@ Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kont
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
-- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, webhooks).
+- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, comments, webhooks).
 - [ ] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors.
 - [ ] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
