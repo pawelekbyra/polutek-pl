@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { flags } from "@/lib/feature-flags";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { writeAuditLog } from "@/lib/services/audit.service";
+import { MainCreatorService } from "@/lib/services/main-creator.service";
 
 export const dynamic = "force-dynamic";
 
@@ -36,20 +36,22 @@ const channelPatchSchema = z.object({
 });
 
 export async function GET() {
-  const { response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
-    const creator = await prisma.creator.findUnique({
-      where: { slug: flags.mainCreatorSlug },
-      include: {
-        user: { select: { id: true, email: true, name: true, imageUrl: true } },
-      },
-    });
+    const creator = await prisma.$transaction(async (tx) => {
+      const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
+        repairSingleChannelContent: true,
+      });
 
-    if (!creator) {
-      return NextResponse.json({ error: "Channel not found" }, { status: 404 });
-    }
+      return tx.creator.findUnique({
+        where: { id: mainCreator.id },
+        include: {
+          user: { select: { id: true, email: true, name: true, imageUrl: true } },
+        },
+      });
+    });
 
     return NextResponse.json({ creator });
   } catch (error) {
@@ -59,7 +61,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const { response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
+  const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
@@ -70,12 +72,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid data", details: result.error.flatten() }, { status: 400 });
     }
 
-    const creator = await prisma.creator.update({
-      where: { slug: flags.mainCreatorSlug },
-      data: result.data,
-      include: {
-        user: { select: { id: true, email: true, name: true, imageUrl: true } },
-      },
+    const creator = await prisma.$transaction(async (tx) => {
+      const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
+        repairSingleChannelContent: true,
+      });
+
+      return tx.creator.update({
+        where: { id: mainCreator.id },
+        data: result.data,
+        include: {
+          user: { select: { id: true, email: true, name: true, imageUrl: true } },
+        },
+      });
     });
 
     await writeAuditLog({
@@ -83,7 +91,7 @@ export async function PATCH(request: Request) {
       action: "CHANNEL_UPDATED",
       targetType: "Creator",
       targetId: creator.id,
-      metadata: { slug: flags.mainCreatorSlug, fields: Object.keys(result.data) },
+      metadata: { slug: creator.slug, fields: Object.keys(result.data) },
     });
 
     return NextResponse.json({ creator });

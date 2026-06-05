@@ -100,11 +100,17 @@ describe('Creator Studio V2 - Constraints and Logic', () => {
     // We need to mock the DB transaction for success
     const mockTx = {
       creator: {
-        findFirst: vi.fn().mockResolvedValue({ id: creatorId, isApproved: true }),
+        findUnique: vi.fn().mockResolvedValue({ id: creatorId, slug: 'main-creator', isApproved: true, isPrimary: true }),
+        findFirst: vi.fn().mockResolvedValue({ id: creatorId, slug: 'main-creator', isApproved: true, isPrimary: true }),
+        update: vi.fn().mockResolvedValue({ id: creatorId, slug: 'main-creator', isApproved: true, isPrimary: true }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       video: {
         create: vi.fn().mockResolvedValue({ id: 'new-video', title: 'Featured' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      comment: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       }
     };
 
