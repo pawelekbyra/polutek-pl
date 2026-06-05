@@ -22,20 +22,20 @@ describe('Comment Name Resolution', () => {
 
   it('prefers name over generated username', () => {
     const author = {
-      name: 'Paweł Perfect',
+      name: 'Test Creator',
       username: 'user_2n9VpX9z9z9z9z9z9z9z9z9z9z9',
-      email: 'pawel@example.com'
+      email: 'creator@example.com'
     };
-    expect(getCommentAuthorName(author)).toBe('Paweł Perfect');
+    expect(getCommentAuthorName(author)).toBe('Test Creator');
   });
 
   it('prefers username over email if username is not generated', () => {
     const author = {
       name: 'user_2n9VpX9z9z9z9z9z9z9z9z9z9z9',
-      username: 'pawel_p',
-      email: 'pawel@example.com'
+      username: 'creator_user',
+      email: 'creator@example.com'
     };
-    expect(getCommentAuthorName(author)).toBe('pawel_p');
+    expect(getCommentAuthorName(author)).toBe('creator_user');
   });
 
   it('falls back to email if name and username are generated', () => {

@@ -29,7 +29,6 @@
 - [ ] `RESEND_API_KEY`
 - [ ] `EMAIL_FROM`
 - [ ] `ENABLE_DEMO_FALLBACKS=false` in production; demo fallback code is ignored under `NODE_ENV=production` and must not be used as production resilience
-- [ ] `ENABLE_CAMPAIGN_PAGE`
 - [ ] `MAIN_CREATOR_SLUG`
 - [ ] `ADMIN_CLERK_USER_IDS` (comma-separated list of Clerk IDs for immutable admin access)
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
@@ -71,7 +70,7 @@
 
 ## Vercel production migration checklist
 - [ ] Vercel Build Command is `npm run vercel-build` (this repo also enforces it in `vercel.json`). The command must run `prisma migrate deploy`, `prisma generate`, `db:smoke`, then `next build` in that order.
-- [ ] Vercel Production `DATABASE_URL` points to the same Postgres/Neon database used by `polutek.pl` production traffic.
+- [ ] Vercel Production `DATABASE_URL` points to the same Postgres/Neon database used by production traffic.
 - [ ] If Vercel reports `P3009` for `20260603140000_add_video_presentation_columns`, inspect the failed row and resolve it only after confirming the two columns exist or after rolling back the failed attempt:
   ```bash
   npx prisma migrate resolve --rolled-back 20260603140000_add_video_presentation_columns

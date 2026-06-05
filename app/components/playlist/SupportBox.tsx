@@ -72,7 +72,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
 
           <div className="space-y-2 pt-2">
             <label className={"block text-xs font-semibold uppercase tracking-wider text-neutral-400"}>
-              {isPatron ? (language === 'pl' ? `Dorzuć do projektu (Min ${minAmount}.00 ${selectedCurrency})` : `Add to project (Min ${minAmount}.00 ${selectedCurrency})`) : (language === 'pl' ? `Kwota napiwku (Min ${minAmount}.00 ${selectedCurrency})` : `Tip amount (Min ${minAmount}.00 ${selectedCurrency})`)}
+              {isPatron ? (language === 'pl' ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})` : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`) : (language === 'pl' ? `Kwota napiwku (Min ${minAmount}.00 ${selectedCurrency})` : `Tip amount (Min ${minAmount}.00 ${selectedCurrency})`)}
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 right-0 flex items-center">
