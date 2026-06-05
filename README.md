@@ -167,10 +167,6 @@ Legenda:
 
 Runtime admin access wynika z `User.role=ADMIN` albo `ADMIN_CLERK_USER_IDS`. `ADMIN_EMAIL` jest bootstrap/recovery dla seed/repair scripts, nie źródłem uprawnień w runtime.
 
-## 1. P0 — jeden kanoniczny flow dla Subscription i language preference
-
-Subskrypcja kanału używa `/api/subscriptions` jako runtime kontraktu follow/unfollow z rate limitingiem, licznikami kanału i `purpose=EMAIL_NOTIFICATIONS`. Zmiana języka ma nadal drift: route `/api/user/language` synchronizuje DB + Clerk metadata, a `lib/actions/user.ts` zapisuje tylko DB.
-
 ## 2. P0 — staging smoke dla krytycznych ścieżek płatności, dostępu i admina
 
 Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze stagingu z prawdziwymi sekretami, prawdziwą bazą, realną sesją Clerk, Stripe test mode i hostami mediów z allowlisty.
@@ -185,7 +181,7 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 
 ## 3. P1 — coverage, E2E i release evidence w CI
 
-Vitest nie ma coverage config ani progów. Playwright smoke istnieje, ale pełny przebieg zależy od browserów i `E2E_*` state. CI istnieje, ale security audit jest nieblokujący, a realne zdalne artefakty/logi nadal muszą być traktowane jako brak dowodu, dopóki nie zostaną zapisane.
+Vitest posiada konfigurację coverage i progi jakościowe. CI publikuje raport jako artefakt.
 
 - [ ] Rozbudować Playwright o nieskipowane case’y dla homepage, channel page, login-gated video, patron-gated video, subscriptions, comments, checkout/webhook smoke i admin CRUD.
 - [ ] Dodać konfigurację `E2E_*` storage state/test user/test video IDs do staging checklisty, żeby smoke nie zależał od ręcznego stanu przeglądarki.
@@ -193,11 +189,9 @@ Vitest nie ma coverage config ani progów. Playwright smoke istnieje, ale pełny
 
 ## 4. P1 — security gates i CSP enforce
 
-Aktualny workflow security traktuje `npm audit --audit-level=high` jako nieblokujący sygnał. Middleware ustawia `Content-Security-Policy-Report-Only`, z szerokimi hostami dla mediów/obrazów. To jest hardening w toku, nie beta-ready security gate.
+`npm audit` jest blokującym gate'em w CI. CSP jest egzekwowane i używa zwężonych hostów.
 
 - [ ] Dodać SAST/secret scanning jako wymagany gate albo opisać, gdzie jest wykonywany poza repo.
-- [ ] Zwęzić CSP hosty mediów i obrazów tak, aby były zgodne z jawnie skonfigurowanymi allowlistami repo, a nie szerokimi wildcardami providerów.
-- [ ] Dodać test albo snapshot nagłówków bezpieczeństwa dla middleware.
 
 ## 5. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
 
@@ -208,15 +202,13 @@ Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines`
 
 ## 6. P1 — formalizacja kontraktów API
 
-Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kontraktów w `docs/API_CONTRACTS.md`.
-
-- [ ] Dodać testy kontraktowe dla najważniejszych response shapes, szczególnie public JSON bez prywatnych pól.
+Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kontraktów w `docs/API_CONTRACTS.md` oraz testy kontraktowe w `tests/unit/api-contracts.test.ts`.
 
 ## 7. P1 — performance, observability i alertowalne sygnały
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
-- [ ] Dodać request/correlation ID dla krytycznych route handlers i webhooków.
+- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (częściowo zrealizowane dla language, clerk webhook).
 - [ ] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors.
 - [ ] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
@@ -232,7 +224,7 @@ Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/t
 
 Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening.
 
-- [ ] Rozbić `UserService` na mniejsze moduły: profile sync, subscriptions, referrals, admin/bootstrap, language preference.
+- [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
 - [ ] Rozbić `PaymentService` na lifecycle checkout, webhook fulfillment, refund/dispute repair i access sync.
 - [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
 - [ ] Ustawić lokalne guardrails dla max LOC / complexity w krytycznych modułach albo przynajmniej dokumentować wyjątki.

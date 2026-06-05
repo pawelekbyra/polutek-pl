@@ -1,11 +1,15 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
+import { getCorrelationId } from "@/lib/utils/correlation";
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { UserService } from '@/lib/services/user.service';
 
 export const dynamic = 'force-dynamic';
 
 export async function PATCH(req: NextRequest) {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +26,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    logger.error('[LANGUAGE_UPDATE_ERROR]', err);
+    scopedLogger.error('[LANGUAGE_UPDATE_ERROR]', err);
     return NextResponse.json({ error: "Failed to update language" }, { status: 500 });
   }
 }
