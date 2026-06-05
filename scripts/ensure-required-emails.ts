@@ -1,31 +1,32 @@
 import { PrismaClient } from '@prisma/client';
+import { APP_NAME } from '../lib/constants';
 
 const prisma = new PrismaClient();
 
 const REQUIRED_TEMPLATES = [
   {
     slug: 'welcome-email',
-    subject: 'Witaj w POLUTEK.PL, {{firstName}}!',
-    html: '<h1>Witaj w POLUTEK.PL</h1><p>Cześć {{firstName}}! Dziękujemy za dołączenie.</p>',
+    subject: `Witaj w ${APP_NAME}, {{firstName}}!`,
+    html: `<h1>Witaj w ${APP_NAME}</h1><p>Cześć {{firstName}}! Dziękujemy za dołączenie.</p>`,
   },
   {
     slug: 'account-deleted',
-    subject: 'Twoje konto zostało usunięte - POLUTEK.PL',
+    subject: `Twoje konto zostało usunięte - ${APP_NAME}`,
     html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte.</p>',
   },
   {
     slug: 'password-changed',
-    subject: 'Hasło zostało zmienione - POLUTEK.PL',
+    subject: `Hasło zostało zmienione - ${APP_NAME}`,
     html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane.</p>',
   },
   {
     slug: 'thank-you-donation',
-    subject: 'Dziękujemy za wsparcie! - POLUTEK.PL',
+    subject: `Dziękujemy za wsparcie! - ${APP_NAME}`,
     html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}.</p>',
   },
   {
     slug: 'become-patron',
-    subject: 'Zostałeś Patronem! - POLUTEK.PL',
+    subject: `Zostałeś Patronem! - ${APP_NAME}`,
     html: '<h1>Witaj w gronie Patronów!</h1><p>Masz teraz dostęp do ekskluzywnych materiałów.</p>',
   },
 ];

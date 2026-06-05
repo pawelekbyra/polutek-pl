@@ -2,7 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import { PublicVideoDTO } from '../types/video';
-import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
+import { MAIN_CREATOR_NAME, MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
@@ -256,13 +256,13 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
         <Dialog open={isRegulaminOpen} onOpenChange={setIsRegulaminOpen}>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter border-b pb-4">Regulamin Serwisu Paweł Perfect</DialogTitle>
+                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter border-b pb-4">Regulamin serwisu</DialogTitle>
                 </DialogHeader>
                 <div className="prose prose-sm prose-neutral max-w-none text-foreground">
                   <section className="space-y-6">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Charakter platformy</h2>
-                      <p>Serwis Paweł Perfect jest prywatną, autorską platformą wideo. Platforma działa w modelu dożywotniego patronatu.</p>
+                      <p>Serwis kanału {MAIN_CREATOR_NAME} jest prywatną, autorską platformą wideo. Platforma działa w modelu patronatu.</p>
                     </div>
                   </section>
                 </div>

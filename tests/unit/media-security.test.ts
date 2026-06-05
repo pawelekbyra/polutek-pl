@@ -73,7 +73,7 @@ describe('media host validation', () => {
 
   it('rejects broad/default external hosts and malformed URLs', () => {
     expect(isAllowedMediaUrl('https://images.unsplash.com/photo.jpg', {})).toBe(false);
-    expect(isAllowedMediaUrl('https://polutek.pl/video.mp4', {})).toBe(false);
+    expect(isAllowedMediaUrl('https://unconfigured.example/video.mp4', {})).toBe(false);
     expect(isAllowedMediaUrl('https://r2.dev/video.mp4', {})).toBe(false);
     expect(isAllowedMediaUrl('https://vercel-storage.com/video.mp4', {})).toBe(false);
     expect(isAllowedMediaUrl('not-a-url', env)).toBe(false);
