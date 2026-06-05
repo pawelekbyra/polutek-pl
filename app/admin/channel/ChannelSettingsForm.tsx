@@ -149,9 +149,6 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">Jeśli nie ustawisz avatara kanału, zostanie użyte zdjęcie profilowe z konta właściciela kanału w Clerk.</p>
                 </div>
               </div>
-              <p className="text-xs leading-5 text-muted-foreground">
-                TODO: docelowo Creator powinien mieć jawne powiązanie z kontem Clerk albo osobne pole avatarUrl, jeśli kanał ma mieć avatar niezależny od użytkownika.
-              </p>
             </CardContent>
           </Card>
         </aside>

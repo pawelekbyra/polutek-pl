@@ -106,7 +106,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
                 creatorId={creator.id}
                 creatorSlug={creator.slug}
                 creatorName={creator.name}
-                initialSubscribed={initialSubscribed}
+                initialIsSubscribed={initialSubscribed}
               />
             </div>
           </div>
