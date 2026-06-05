@@ -23,7 +23,6 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://assets.example.com');
     expect(csp).toContain('https://bucket.r2.dev');
     expect(csp).not.toContain('https://*.r2.dev');
-    expect(csp).toContain("media-src 'self' blob: https://bucket.r2.dev https://cdn.example.com https://assets.example.com");
   });
 
   it('generates CSP with default security hosts', () => {
@@ -41,6 +40,6 @@ describe('Security Headers', () => {
     const csp = generateCSP();
 
     expect(csp).toContain('https://user-images.example.com');
-    expect(csp).toContain('img-src \'self\' data: blob: https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com');
+    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
   });
 });

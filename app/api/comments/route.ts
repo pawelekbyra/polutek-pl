@@ -262,6 +262,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę." }, { status: 429 });
   }
 
+  const requestId = request.headers.get('x-request-id');
+
   try {
     let localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     if (!localUser) {
@@ -280,7 +282,11 @@ export async function POST(request: NextRequest) {
     // Access control check
     const decision = await AccessPolicy.canComment(userId, videoId);
     if (!decision.allowed) {
-        return NextResponse.json({ success: false, message: decision.reason }, { status: 403 });
+        console.error(`[RID:${requestId}] Comment access denied for user ${userId} on video ${videoId}: ${decision.reason}`);
+        return NextResponse.json({
+            success: false,
+            message: decision.reason === "PATRON_REQUIRED" ? "Ten film jest dostępny tylko dla Patronów." : (decision.reason || "Brak uprawnień do komentowania.")
+        }, { status: 403 });
     }
 
     if (parentId) {
