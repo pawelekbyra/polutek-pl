@@ -180,7 +180,6 @@ test.describe("beta smoke: guest/public access", () => {
 
     await expectMediaSourceDenied(response);
   });
-});
 
 test.describe("beta smoke: authenticated non-patron access", () => {
   test.use({ storageState: e2e.nonPatronStorageState });
