@@ -81,10 +81,12 @@ test.describe("beta smoke: guest/public access", () => {
     });
 
     await expectNonServerError(response?.status() ?? null);
+
     const sourceResponse = await request.get(
       `/api/media-source/${e2e.publicVideoId}`,
     );
     expect(sourceResponse.status()).toBe(200);
+
     const source = await sourceResponse.json();
     expect(source.hasAccess).toBe(true);
     expect(
@@ -180,6 +182,7 @@ test.describe("beta smoke: guest/public access", () => {
 
     await expectMediaSourceDenied(response);
   });
+});
 
 test.describe("beta smoke: authenticated non-patron access", () => {
   test.use({ storageState: e2e.nonPatronStorageState });
@@ -235,6 +238,7 @@ test.describe("beta smoke: authenticated non-patron access", () => {
     expect(response.status(), "public comment smoke should be accepted").toBe(
       201,
     );
+
     const body = await response.json();
     expect(body.success).toBe(true);
     expect(body.comment?.id).toEqual(expect.any(String));
@@ -251,6 +255,7 @@ test.describe("beta smoke: authenticated non-patron access", () => {
     });
 
     expect(response.status()).toBe(403);
+
     const body = await response.json();
     expect(body.success).toBe(false);
     expect(body.message).toMatch(/Patron|Brak uprawnień/i);
