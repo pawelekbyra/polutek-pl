@@ -79,6 +79,8 @@ npm run db:validate
 npm run db:generate
 npm run db:smoke
 npm run db:migrate:deploy
+npm run e2e:list
+npm run e2e
 npm run content:diagnose
 npm run content:fix:main-creator
 ```
@@ -274,8 +276,8 @@ Legenda:
 
 - [x] Unit suite PASS: 26 plików, 138 testów.
 - [~] Próba dodania coverage provider zablokowana przez `npm install -D @vitest/coverage-v8@4.1.7` → `403 Forbidden`; coverage script/progi nadal otwarte do wykonania w środowisku z dostępem do registry.
-- [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
-- [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
+- [~] Dodano Playwright smoke scaffold dla ścieżek bety: public homepage, `/channel/${MAIN_CREATOR_SLUG}`, guest admin redirect oraz env-gated authenticated subscription/patron/media checks; `npm run e2e:list` PASS, pełne uruchomienie wymaga przeglądarki Playwright i staging env.
+- [~] Smoke obejmuje `/`, `/channel/${MAIN_CREATOR_SLUG}`, login/admin redirect oraz szkielety subskrypcji, patron access i media proxy; pełny PASS nadal wymaga `E2E_*` storage state/video ID oraz browserów.
 
 ## 16. CI/CD
 
