@@ -225,7 +225,7 @@ Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/t
 Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening.
 
 - [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
-- [ ] Rozbić `PaymentService` na lifecycle checkout, webhook fulfillment, refund/dispute repair i access sync.
+- [~] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
 - [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
 - [ ] Ustawić lokalne guardrails dla max LOC / complexity w krytycznych modułach albo przynajmniej dokumentować wyjątki.
 
