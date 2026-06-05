@@ -132,8 +132,8 @@ Nie dodawaj szerokich domen providerów. Każdy bucket/CDN host musi być wpisan
 
 ## Obecne ograniczenia uczciwe wobec bety
 
-- Strona `/channel/[slug]` nadal przekierowuje skonfigurowany slug na `/` w trybie single-creator.
-- Flow subskrypcji mailowej nie jest gotowy; endpoint jest legacy i zwraca `410` dla `POST`.
+- Strona `/channel/[slug]` renderuje dynamiczny kanał, ale nadal wymaga smoke/E2E z realnym `MAIN_CREATOR_SLUG`.
+- Flow subskrypcji mailowej jest podłączony jako follow/unfollow dla powiadomień mailowych; nie daje dostępu premium i wymaga dalszego smoke/E2E w przeglądarce.
 - Nie ma pełnego smoke E2E Playwright potwierdzającego kliknięcia użytkownika.
 - Komendy DB wymagają prawdziwych `DATABASE_URL` i `DATABASE_URL_UNPOOLED`; bez nich `db:smoke` i `db:migrate:deploy` nie są dowodem gotowości.
 - W repo nadal istnieją historyczne hardcoded brand/content strings; roadmapa wymaga ich systematycznego usuwania bez zrywania istniejących danych.
@@ -210,12 +210,13 @@ Legenda:
 
 ## 7. Komponent subskrypcji
 
-- [x] Dodano przycisk `Subskrybuj` / `Subskrybowano` na stronie kanału.
+- [x] Dodano przycisk `Subskrajb` / `Subskrajbd ✓` na stronie kanału, ze stylistyką skopiowaną z gałęzi layoutowej.
 - [x] Dodano przycisk pod aktualnie oglądanym filmem w sekcji Hero, jak w modelu YouTube.
 - [x] Guest click → Clerk Sign In przez `openSignIn()`.
-- [x] Logged user click → modal zgody mailowej.
-- [x] Unsubscribe → modal potwierdzenia wypisania.
+- [x] Logged user click → modal zgody mailowej z tekstem z gałęzi layoutowej.
+- [x] Unsubscribe → modal potwierdzenia wypisania, bez wpływu na status Patrona.
 - [x] Teksty UI jasno mówią, że subskrypcja to powiadomienia mailowe i nie daje Patron access.
+- [x] Usunięto niedokończone rozłączenie w komponencie: `variant="compact"` ma teraz realny wpływ na rozmiar przycisku, a wypisanie nie omija już modala potwierdzającego.
 
 ## 8. Testy Subscription vs Patron
 
@@ -335,3 +336,12 @@ Każdy agent kończący większy etap ma dopisać w PR/odpowiedzi:
 - znane ograniczenia,
 - blokery public release,
 - jeden konkretny następny krok.
+
+## 20. Przegląd porządkowy po imporcie stylu subskrypcji
+
+- [x] Potwierdzono, że fonty gałęzi layoutowej są spięte przez `next/font/google`, zmienne CSS i mapowanie Tailwind `font-sans` / `font-heading` / `font-brand`.
+- [x] Potwierdzono, że komponent subskrypcji używa tych fontów bez lokalnych, odłączonych definicji CSS.
+- [x] Potwierdzono, że modal subskrypcji zachowuje tekst zgody mailowej z gałęzi layoutowej.
+- [x] Naprawiono niespójność beta: wypisanie z subskrypcji ma teraz własny modal i jawnie komunikuje, że nie wpływa na status Patrona.
+- [x] Przegląd wykazał brak rootowych artefaktów importowanej gałęzi typu `branch_globals.css`, `branch_layout.tsx` albo `*.bak` w aktualnym checkoutcie.
+- [~] Repo nadal zawiera celowe skrypty diagnostyczne CLI oraz historyczne treści seed/demo; nie zostały usunięte bez pełnego smoke na prawdziwej bazie, żeby nie skasować toolingów potrzebnych do bety.

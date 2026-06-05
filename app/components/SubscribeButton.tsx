@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useEffect, useMemo, useState, useTransition } from 'react';
+import { logger } from '@/lib/logger';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { toggleSubscriptionAction, getSubscriptionStatusAction } from '@/app/actions/subscription';
@@ -11,17 +12,15 @@ interface SubscribeButtonProps {
   creatorId: string;
   creatorSlug?: string | null;
   creatorName?: string | null;
-  initialSubscribersCount?: number;
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: 'default' | 'compact';
 }
 
+type PendingAction = 'subscribe' | 'unsubscribe' | null;
+
 export default function SubscribeButton({
   creatorId,
-  creatorSlug,
-  creatorName,
-  initialSubscribersCount,
   initialIsSubscribed,
   className,
   variant = 'default',
@@ -31,37 +30,62 @@ export default function SubscribeButton({
   const { openSignIn } = useClerk();
   const [isSubscribed, setIsSubscribed] = useState(() => initialIsSubscribed ?? false);
   const [isPending, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
   useEffect(() => {
-    setMounted(true);
-    if (initialIsSubscribed !== undefined)
+    if (initialIsSubscribed !== undefined) {
       setIsSubscribed(initialIsSubscribed);
-
-    if (userId && creatorId && initialIsSubscribed === undefined) {
-      getSubscriptionStatusAction(creatorId)
-        .then(data => setIsSubscribed(data.isSubscribed))
-        .catch(err => console.error("Error fetching subscription status:", err));
+      return;
     }
 
-    if (!userId && mounted) setIsSubscribed(false);
-  }, [userId, creatorId, initialIsSubscribed, mounted]);
+    if (!userId) {
+      setIsSubscribed(false);
+      return;
+    }
+
+    let isActive = true;
+
+    getSubscriptionStatusAction(creatorId)
+      .then((data) => {
+        if (isActive) setIsSubscribed(data.isSubscribed);
+      })
+      .catch((err) => logger.error("Error fetching subscription status:", err));
+
+    return () => {
+      isActive = false;
+    };
+  }, [userId, creatorId, initialIsSubscribed]);
+
+  const modalCopy = useMemo(() => {
+    if (pendingAction === 'unsubscribe') {
+      return {
+        title: t.confirmUnsubscribeTitle,
+        text: t.confirmUnsubscribeText,
+        confirmLabel: t.yes,
+        cancelLabel: t.no,
+      };
+    }
+
+    return {
+      title: t.confirmSubscribeTitle,
+      text: t.confirmSubscribeText,
+      confirmLabel: t.yes,
+      cancelLabel: t.no,
+    };
+  }, [pendingAction, t]);
 
   const handleSubscribe = async () => {
     if (!userId) { openSignIn(); return; }
     if (!creatorId || isPending) return;
 
-    if (!isSubscribed) {
-      setShowConfirm(true);
-      return;
-    }
-
-    executeSubscribe();
+    setPendingAction(isSubscribed ? 'unsubscribe' : 'subscribe');
   };
 
   const executeSubscribe = async () => {
+    if (!pendingAction) return;
+
     const prevSubscribed = isSubscribed;
+    setPendingAction(null);
     setIsSubscribed(!prevSubscribed);
 
     startTransition(async () => {
@@ -74,17 +98,21 @@ export default function SubscribeButton({
     });
   };
 
+  const closeModal = () => setPendingAction(null);
+
   return (
     <>
       <button
+        type="button"
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "text-xs font-bold rounded-full px-6 h-9 flex items-center justify-center transition-all uppercase tracking-widest sm:min-w-[154px] border active:scale-95",
+          "inline-flex items-center justify-center rounded-full border font-brand text-xs font-bold uppercase tracking-widest transition-all active:scale-95",
+          variant === 'compact' ? "h-9 px-5 sm:min-w-[136px]" : "h-10 px-7 sm:min-w-[154px]",
           isSubscribed
-            ? "bg-neutral-100 text-neutral-600 border-neutral-400"
-            : "bg-charcoal text-white border-charcoal hover:bg-black",
-          isPending && "opacity-50 cursor-wait",
+            ? "border-neutral-400 bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+            : "border-charcoal bg-charcoal text-white shadow-brutalist-sm hover:-translate-y-0.5 hover:bg-black hover:shadow-brutalist",
+          isPending && "cursor-wait opacity-50 hover:translate-y-0 hover:shadow-brutalist-sm",
           className
         )}
       >
@@ -92,23 +120,40 @@ export default function SubscribeButton({
         <span>{isSubscribed ? t.subscribed : t.subscribe}</span>
       </button>
 
-      {showConfirm && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white border border-neutral-300 p-8 max-w-sm w-full rounded-xl shadow-lg animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-bold text-neutral-900 tracking-tight mb-2">{t.confirmSubscribeTitle}</h3>
-            <p className="text-sm text-neutral-500 mb-8">{t.confirmSubscribeText}</p>
+      {pendingAction && (
+        <div
+          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-300"
+          role="presentation"
+          onClick={closeModal}
+        >
+          <div
+            aria-modal="true"
+            role="dialog"
+            aria-labelledby="subscription-confirm-title"
+            aria-describedby="subscription-confirm-description"
+            className="w-full max-w-sm rounded-xl border border-neutral-300 bg-white p-8 font-sans shadow-lg animate-in zoom-in-95 duration-300"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="subscription-confirm-title" className="mb-2 font-heading text-xl font-bold tracking-tight text-neutral-900">
+              {modalCopy.title}
+            </h3>
+            <p id="subscription-confirm-description" className="mb-8 text-sm leading-6 text-neutral-500">
+              {modalCopy.text}
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => { setShowConfirm(false); executeSubscribe(); }}
-                className="bg-charcoal text-white py-2 rounded-md font-semibold text-sm hover:bg-neutral-800 transition-all"
+                type="button"
+                onClick={executeSubscribe}
+                className="rounded-md bg-charcoal py-2 font-brand text-sm font-semibold uppercase tracking-wide text-white transition-all hover:bg-neutral-800"
               >
-                {t.yes}
+                {modalCopy.confirmLabel}
               </button>
               <button
-                onClick={() => setShowConfirm(false)}
-                className="bg-white border border-neutral-300 text-neutral-900 py-2 rounded-md font-semibold text-sm hover:bg-neutral-50 transition-all"
+                type="button"
+                onClick={closeModal}
+                className="rounded-md border border-neutral-300 bg-white py-2 font-brand text-sm font-semibold uppercase tracking-wide text-neutral-900 transition-all hover:bg-neutral-50"
               >
-                {t.no}
+                {modalCopy.cancelLabel}
               </button>
             </div>
           </div>
