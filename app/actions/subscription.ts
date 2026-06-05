@@ -41,8 +41,9 @@ export async function toggleSubscriptionAction(creatorId: string) {
   try {
     const authData = await auth();
     userId = authData.userId;
-  } catch (e: any) {
-    logger.error("[Subscription] Clerk Handshake Failed:", e.message);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown Clerk auth error';
+    logger.error("[Subscription] Clerk Handshake Failed:", message);
     return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API." };
   }
 
@@ -53,9 +54,9 @@ export async function toggleSubscriptionAction(creatorId: string) {
     const result = await UserService.toggleSubscription(userId, creatorId);
     revalidatePath('/', 'layout');
     return { success: true, isSubscribed: result.isSubscribed };
-  } catch (error: any) {
+  } catch (error) {
     logger.error("[TOGGLE_SUBSCRIPTION_ACTION_ERROR]", error);
-    return { error: error.message || 'INTERNAL_ERROR' };
+    return { error: error instanceof Error ? error.message : 'INTERNAL_ERROR' };
   }
 }
 

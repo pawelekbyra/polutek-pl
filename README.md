@@ -70,6 +70,7 @@ Endpoint `/api/subscriptions` obsługuje mailowe follow/unfollow: `GET` zwraca s
 ```bash
 npm ci
 npm run dev
+npm run quality:strict-escapes
 npm run typecheck
 npm test -- --run
 npm run lint
@@ -157,6 +158,7 @@ Legenda:
 - [x] Uruchomiono `npm ci`; instalacja i postinstall `prisma generate` przeszły.
 - [~] Uruchomiono `npx prisma validate` bez env — wynik `FAILED_ENV`, bo brak `DATABASE_URL_UNPOOLED`.
 - [x] Uruchomiono `npx prisma validate` oraz `npx prisma generate` z tymczasowymi URL-ami Prisma do walidacji składni schematu; schema jest poprawna, klient wygenerowany.
+- [x] Uruchomiono `npm run quality:strict-escapes`; wynik PASS — produkcyjne źródła bez `@ts-ignore`, `@ts-nocheck` i jawnego `any`.
 - [x] Uruchomiono `npm run typecheck`; wynik PASS.
 - [x] Uruchomiono `npm test -- --run`; wynik PASS: 21 plików testowych, 108 testów.
 - [x] Uruchomiono `npm run lint`; wynik PASS: brak ostrzeżeń i błędów ESLint.
@@ -183,8 +185,8 @@ Legenda:
 
 - [x] Aktualny `npm run typecheck` przechodzi.
 - [x] Aktualny `npm run lint` przechodzi.
-- [ ] Przejrzeć pozostawione `any` i opisać każdy świadomy wyjątek albo usunąć.
-- [ ] Dodać zakaz nowych `@ts-ignore`, nieuzasadnionych `any` i obchodzenia strict mode do checklisty CI/review.
+- [~] Produkcyjne źródła są objęte automatycznym guardem i usunięto jawne `any` z `app/actions/subscription.ts`; pozostałe `any` w testach/skryptach wymagają osobnego przeglądu wyjątków.
+- [x] Dodano zakaz nowych `@ts-ignore`, `@ts-nocheck` i jawnego `any` w produkcyjnych źródłach do CI/review: `npm run quality:strict-escapes` + `DEPLOY_CHECKLIST.md`.
 
 ## 4. Logger i console hygiene
 
@@ -272,7 +274,7 @@ Legenda:
 ## 15. Testy, coverage i E2E
 
 - [x] Unit suite PASS: 23 pliki, 124 testy.
-- [ ] Dodać coverage script i raport minimalnych progów albo świadomie oznaczyć brak progu jako limitation.
+- [~] Próba dodania coverage provider zablokowana przez `npm install -D @vitest/coverage-v8@4.1.7` → `403 Forbidden`; coverage script/progi nadal otwarte do wykonania w środowisku z dostępem do registry.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
 
@@ -299,6 +301,7 @@ rm -rf node_modules .next
 npm ci
 npx prisma validate
 npx prisma generate
+npm run quality:strict-escapes
 npm run typecheck
 npm test -- --run
 npm run lint
