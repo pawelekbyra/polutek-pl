@@ -78,6 +78,7 @@ Upload/transcoding pipeline jest poza zakresem prywatnej bety. Beta dopuszcza wy
 npm ci
 npm run dev
 npm run quality:strict-escapes
+npm run quality:hotspots
 npm run typecheck
 npm test -- --run
 npm run lint
@@ -210,12 +211,11 @@ Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tra
 
 ## 7. P2 — moduły, hotspoty i dług techniczny
 
-Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening.
+Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening. Lokalny guard `npm run quality:hotspots` pilnuje budżetów LOC i dokumentuje tymczasowe wyjątki dla znanych hotspotów.
 
 - [ ] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
 - [ ] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
 - [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
-- [ ] Ustawić lokalne guardrails dla max LOC / complexity w krytycznych modułach albo przynajmniej dokumentować wyjątki.
 
 ## 8. P2 — dokumentacja, licencja i reconciliation pass
 
@@ -234,6 +234,7 @@ npm ci
 npx prisma validate
 npx prisma generate
 npm run quality:strict-escapes
+npm run quality:hotspots
 npm run typecheck
 npm test -- --run
 npm run lint

@@ -8,6 +8,7 @@
 - [ ] `npx prisma validate`
 - [ ] `npx prisma generate`
 - [ ] `npm run quality:strict-escapes`
+- [ ] `npm run quality:hotspots`
 - [ ] `npm run typecheck`
 - [ ] `npm test -- --run`
 - [ ] `npm run lint`
@@ -17,7 +18,7 @@
 
 - [ ] No new `@ts-ignore` or `@ts-nocheck` comments in production source files. If TypeScript cannot model an edge case, narrow types explicitly or document the exception outside production code.
 - [ ] No new unjustified `any` escape hatches in production source files. Use `unknown`, generated Prisma types, DTOs, or local type guards instead.
-- [ ] `npm run quality:strict-escapes` passes before review/merge.
+- [ ] `npm run quality:strict-escapes` and `npm run quality:hotspots` pass before review/merge.
 
 ## Required env variables
 
