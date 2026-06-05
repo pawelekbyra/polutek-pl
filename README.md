@@ -44,6 +44,11 @@ Patron może wynikać z kwalifikującego napiwku Stripe, grantu admina, migracji
 
 Endpoint `/api/subscriptions` obsługuje mailowe follow/unfollow: `GET` zwraca status, `POST` zapisuje zgodę na powiadomienia mailowe, a `DELETE` ją usuwa. Endpoint nie zmienia `User.isPatron` i nie nadaje dostępu premium.
 
+
+### Out of beta scope: campaign/zrzutka/crowdfunding
+
+Campaign, zrzutka, crowdfunding i fundraising są **poza zakresem prywatnej bety**. W becie nie jest dostarczana żadna campaign page ani crowdfunding page. Stripe zostaje wyłącznie jako dobrowolny napiwek / płatność Patron, czyli flow „Wesprzyj kanał”, „Przekaż napiwek”, „Zostań Patronem” i „Dostęp dla Patronów”.
+
 ### Twarda zasada
 
 **Patron != Subscription.** Wymagane przypadki testowe do bety:
