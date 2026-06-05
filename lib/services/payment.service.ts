@@ -6,6 +6,7 @@ import { UserAccessService, normalizePaymentTotals } from './user-access.service
 import { PaymentCheckoutService } from './payments/checkout.service';
 import { PaymentFulfillmentService } from './payments/fulfillment.service';
 import { PaymentRefundService, calculateRefundAdjustment } from './payments/refund.service';
+import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -33,6 +34,7 @@ export class PaymentService {
   static fulfillPayment = PaymentFulfillmentService.fulfillPayment.bind(PaymentFulfillmentService);
 
   static async handleWebhook(body: string, sig: string) {
+    const startedAt = startTimer();
     const stripe = getStripe();
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!endpointSecret) throw new Error('STRIPE_WEBHOOK_SECRET is missing');
@@ -55,6 +57,7 @@ export class PaymentService {
         }
       });
       logger.info(`[StripeWebhook] Lock acquired for new event: ${event.id} (${event.type})`);
+      recordMetric('stripe.webhook.lock_acquired', { eventType: event.type });
     } catch (e: unknown) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         const now = new Date();
@@ -75,8 +78,10 @@ export class PaymentService {
           const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
           if (existing?.status === WebhookEventStatus.PROCESSED) {
             logger.info(`[PaymentService] Event ${event.id} (${event.type}) already PROCESSED.`);
+            recordMetric('stripe.webhook.duplicate_event', { eventType: event.type, status: existing.status });
           } else {
             logger.info(`[PaymentService] Event ${event.id} (${event.type}) lock not acquired. Status: ${existing?.status}.`);
+            recordAlert('stripe.webhook.lock_conflict', { eventType: event.type, status: existing?.status || 'unknown' });
           }
           return;
         }
@@ -108,10 +113,11 @@ export class PaymentService {
             }
             case 'payment_intent.payment_failed': {
                 const intent = event.data.object as Stripe.PaymentIntent;
-                await prisma.payment.updateMany({
+                const { count } = await prisma.payment.updateMany({
                     where: { stripeIntentId: intent.id },
                     data: { status: PaymentStatus.FAILED }
                 });
+                recordAlert('payment.failure', { matchedPayments: count, currency: intent.currency || 'unknown' });
                 break;
             }
         }
@@ -121,8 +127,10 @@ export class PaymentService {
             data: { status: WebhookEventStatus.PROCESSED, processedAt: new Date() }
         });
         logger.info(`[StripeWebhook] Event ${event.id} (${event.type}) PROCESSED successfully.`);
+        recordDurationMetric('stripe.webhook.processing_time', startedAt, { eventType: event.type, status: 'processed' });
     } catch (error: unknown) {
         logger.error(`[PaymentService] Error handling event ${event.id}:`, error);
+        recordDurationMetric('stripe.webhook.processing_time', startedAt, { eventType: event.type, status: 'failed' }, { level: 'error', alert: true });
         await prisma.stripeEvent.update({
             where: { id: event.id },
             data: {
@@ -147,18 +155,25 @@ export class PaymentService {
             ? await tx.payment.findUnique({ where: { stripeIntentId } })
             : null;
 
-        if (!payment) return null;
+        if (!payment) {
+          recordAlert('payment.refund_unmatched', { hasPaymentId: Boolean(paymentId), hasStripeIntentId: Boolean(stripeIntentId) });
+          return null;
+        }
 
         const reportedRefundedMinor = charge.amount_refunded || 0;
         const refund = calculateRefundAdjustment(payment, reportedRefundedMinor);
         if (!refund.status) return null;
+        recordMetric('payment.refund_received', { status: refund.status, deltaMinor: refund.deltaRefundMinor, fullRefund: refund.isFullRefund });
 
         const { count } = await tx.payment.updateMany({
             where: { id: payment.id, refundedAmountMinor: payment.refundedAmountMinor ?? 0 },
             data: { refundedAmountMinor: refund.newRefundedAmountMinor, status: refund.status }
         });
 
-        if (count === 0) return null;
+        if (count === 0) {
+          recordAlert('payment.refund_cas_conflict', { paymentStatus: payment.status });
+          return null;
+        }
 
         await PaymentRefundService.decrementUserTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
 
@@ -182,10 +197,16 @@ export class PaymentService {
 
   private static async handleDispute(dispute: Stripe.Dispute) {
     const stripeIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
-    if (!stripeIntentId) return;
+    if (!stripeIntentId) {
+      recordAlert('payment.dispute_missing_intent', { disputeStatus: dispute.status });
+      return;
+    }
 
     const payment = await prisma.payment.findUnique({ where: { stripeIntentId } });
-    if (!payment) return;
+    if (!payment) {
+      recordAlert('payment.dispute_unmatched', { disputeStatus: dispute.status });
+      return;
+    }
 
     if (dispute.status === 'lost') {
         const syncData = await prisma.$transaction(async (tx) => {
@@ -194,9 +215,11 @@ export class PaymentService {
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
         if (syncData) await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute sync failed:", e));
+        recordAlert('payment.dispute_lost', { currency: payment.currency });
         return syncData;
     }
 
     await prisma.payment.update({ where: { id: payment.id }, data: { status: PaymentStatus.DISPUTED } });
+    recordAlert('payment.dispute_opened', { disputeStatus: dispute.status, currency: payment.currency });
   }
 }

@@ -16,6 +16,12 @@ const e2e = {
     process.env.E2E_COMMENT_VIDEO_ID ||
     process.env.E2E_PUBLIC_VIDEO_ID ||
     "v_fallback_001",
+  adminCrudVideoUrl:
+    process.env.E2E_ADMIN_CRUD_VIDEO_URL ||
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  adminCrudThumbnailUrl:
+    process.env.E2E_ADMIN_CRUD_THUMBNAIL_URL ||
+    "/qr-code-placeholder.png",
 };
 
 async function expectNonServerError(status: number | null) {
@@ -292,5 +298,59 @@ test.describe("beta smoke: admin access", () => {
     ).toBeLessThan(500);
     expect(response.status()).toBe(200);
     expect(await response.json()).toEqual(expect.any(Array));
+  });
+
+  test("admin can create, update, and archive a draft video through the API", async ({ request }) => {
+    const slug = `e2e-beta-crud-${Date.now()}`;
+    let createdId: string | undefined;
+
+    const basePayload = {
+      title: "E2E beta CRUD draft",
+      slug,
+      description: "Temporary beta smoke video created by Playwright.",
+      videoUrl: e2e.adminCrudVideoUrl,
+      thumbnailUrl: e2e.adminCrudThumbnailUrl,
+      duration: "00:30",
+      tier: "PUBLIC",
+      status: "DRAFT",
+      isMainFeatured: false,
+      showInSidebar: false,
+      sidebarOrder: 9999,
+    };
+
+    try {
+      const createResponse = await request.post("/api/admin/videos", {
+        data: basePayload,
+      });
+      expect(createResponse.status(), "admin should create a draft video").toBe(200);
+      const created = await createResponse.json();
+      createdId = created.id;
+      expect(created.id).toEqual(expect.any(String));
+      expect(created.status).toBe("DRAFT");
+
+      const updateResponse = await request.post("/api/admin/videos", {
+        data: {
+          ...basePayload,
+          id: createdId,
+          title: "E2E beta CRUD draft updated",
+          description: "Updated by Playwright beta smoke.",
+        },
+      });
+      expect(updateResponse.status(), "admin should update the draft video").toBe(200);
+      const updated = await updateResponse.json();
+      expect(updated.id).toBe(createdId);
+      expect(updated.title).toBe("E2E beta CRUD draft updated");
+
+      const archiveResponse = await request.delete(`/api/admin/videos?id=${createdId}`);
+      expect(archiveResponse.status(), "admin should archive the draft video").toBe(200);
+      const archived = await archiveResponse.json();
+      expect(archived.success).toBe(true);
+      expect(archived.status).toBe("ARCHIVED");
+      createdId = undefined;
+    } finally {
+      if (createdId) {
+        await request.delete(`/api/admin/videos?id=${createdId}`);
+      }
+    }
   });
 });
