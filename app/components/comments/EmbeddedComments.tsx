@@ -36,7 +36,6 @@ type ClerkCommentMetadata = {
   totalPaid?: unknown;
   isPatron?: unknown;
   role?: unknown;
-  referralPoints?: unknown;
 };
 
 function numberMetadata(value: unknown, fallback = 0) {
@@ -55,11 +54,9 @@ type CommentCounts = { likes: number; dislikes: number; replies?: number };
 type CommentAuthorView = {
   imageUrl?: string | null;
   slug?: string | null;
-  email?: string | null;
   name?: string | null;
   username?: string | null;
   isPatron?: boolean | null;
-  referralPoints?: number | null;
   role?: string | null;
 };
 
@@ -87,10 +84,10 @@ type CommentsPage = {
 
 type CommentsData = InfiniteData<CommentsPage>;
 
-function getAvatarSeed(comment: CommentView) {
+export function getAvatarSeed(comment: CommentView) {
   return (
-    comment.author?.email ||
     comment.authorName ||
+    comment.author?.username ||
     comment.authorId ||
     comment.id
   );
@@ -106,14 +103,12 @@ function isPatronAuthor(author?: CommentAuthorView | null) {
 interface EmbeddedCommentsProps {
   userProfile?: {
     id: string;
-    email: string;
     imageUrl?: string | null;
     name?: string | null;
     username?: string | null;
     totalPaid?: number;
     isPatron?: boolean;
     role?: string;
-    referralPoints?: number;
   } | null;
   videoId: string;
   videoTier?: AccessTier;
@@ -133,7 +128,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const clerkUserProfile = isSignedIn
     ? {
         id: userId!,
-        email: user?.primaryEmailAddress?.emailAddress || "",
         imageUrl: user?.imageUrl || null,
         name:
           user?.fullName ||
@@ -144,7 +138,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         totalPaid: numberMetadata(metadata.totalPaid),
         isPatron: booleanMetadata(metadata.isPatron),
         role: stringMetadata(metadata.role, "USER"),
-        referralPoints: numberMetadata(metadata.referralPoints),
       }
     : null;
   const userProfile =
@@ -152,7 +145,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       ? {
           ...(clerkUserProfile || {}),
           ...(propUserProfile || {}),
-          email: propUserProfile?.email || clerkUserProfile?.email || "",
           imageUrl:
             clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
           name: clerkUserProfile?.name || propUserProfile?.name || null,
@@ -164,11 +156,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const isPatronGated = videoTier === "PATRON";
   const isPatron = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
   const canComment = !!userProfile && (!isPatronGated || isPatron);
+  const userAvatarSeed = userProfile
+    ? userProfile.username || userProfile.name || userProfile.id
+    : null;
   const userAvatarUrl = userProfile
     ? userProfile.imageUrl ||
-      (userProfile.email
-        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userProfile.email)}`
-        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`)
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(userAvatarSeed || userProfile.id))}`
     : null;
 
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");

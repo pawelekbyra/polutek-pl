@@ -9,11 +9,11 @@ import { z } from 'zod';
 import { handleApiError } from '@/lib/errors';
 import { isAllowedAvatarUrl, isAllowedCommentImageUrl } from '@/lib/blob';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+import { publicCommentAuthorSelect, toPublicCommentAuthor } from '@/lib/comments-public-author';
 
 export const dynamic = 'force-dynamic';
 
 type CommentAuthor = {
-  email?: string | null;
   name?: string | null;
   username?: string | null;
 };
@@ -35,14 +35,11 @@ type SyncedLocalUser = {
 
 function getCommentAuthorName(author?: CommentAuthor | null) {
   const rawName = author?.name?.trim();
-  const name = (rawName && !isGeneratedClerkUsername(rawName)) ? rawName : null;
+  const name = rawName && !isGeneratedClerkUsername(rawName) ? rawName : null;
   const rawUsername = author?.username?.trim();
-  const username = (rawUsername && !isGeneratedClerkUsername(rawUsername)) ? rawUsername : null;
+  const username = rawUsername && !isGeneratedClerkUsername(rawUsername) ? rawUsername : null;
 
-  const rawEmailFallback = author?.email?.split('@')[0]?.trim();
-  const fallbackFromEmail = (rawEmailFallback && !isGeneratedClerkUsername(rawEmailFallback)) ? rawEmailFallback : null;
-
-  return name || username || fallbackFromEmail || "Użytkownik";
+  return name || username || "Użytkownik";
 }
 
 function cleanAuthorProfile(profile?: ClerkAuthorProfile | null) {
@@ -161,13 +158,11 @@ export async function GET(request: NextRequest) {
         cursor: cursor ? { id: cursor } : undefined,
         orderBy,
         include: {
-            author: {
-                select: { id: true, email: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true }
-            },
+            author: { select: publicCommentAuthorSelect },
             replies: {
                 take: 3,
                 include: {
-                    author: { select: { id: true, email: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true } },
+                    author: { select: publicCommentAuthorSelect },
                     _count: { select: { likes: true, dislikes: true } }
                 },
                 orderBy: { createdAt: 'asc' }
@@ -208,7 +203,7 @@ export async function GET(request: NextRequest) {
         const replies = c.replies.map((r) => ({
             ...r,
             text: r.deletedAt ? "Komentarz usunięty" : r.text,
-            author: r.deletedAt ? null : r.author,
+            author: r.deletedAt ? null : toPublicCommentAuthor(r.author),
             imageUrl: r.deletedAt ? null : (r.imageUrl || r.author?.imageUrl),
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
@@ -219,7 +214,7 @@ export async function GET(request: NextRequest) {
         return {
             ...c,
             text: isDeleted ? "Komentarz usunięty" : c.text,
-            author: isDeleted ? null : c.author,
+            author: isDeleted ? null : toPublicCommentAuthor(c.author),
             imageUrl: isDeleted ? null : (c.imageUrl || c.author?.imageUrl),
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
@@ -318,7 +313,7 @@ export async function POST(request: NextRequest) {
             imageUrl: imageUrl || null,
         },
         include: {
-            author: { select: { id: true, email: true, name: true, username: true, imageUrl: true, isPatron: true, referralPoints: true, role: true } },
+            author: { select: publicCommentAuthorSelect },
             _count: { select: { likes: true, dislikes: true, replies: true } }
         }
     });
@@ -327,6 +322,7 @@ export async function POST(request: NextRequest) {
         success: true,
         comment: {
             ...newComment,
+            author: toPublicCommentAuthor(newComment.author),
             isLiked: false,
             isDisliked: false,
             authorName: getCommentAuthorName(newComment.author),

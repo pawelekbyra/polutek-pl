@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MoreVertical } from './icons';
 import { cn } from '@/lib/utils';
-import PremiumWrapper from './PremiumWrapper';
 import { PublicVideoDTO } from '@/app/types/video';
 import VideoPlayer from './VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,14 +39,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
             <div className="block relative">
                 <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
                 <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
-                    <PremiumWrapper
-                        videoId={video.id}
-                        requiredTier={video.tier}
-                        isMainFeatured={video.isMainFeatured}
-                        variant="thumbnail"
-                    >
-                        <VideoPlayer video={video} variant="thumbnail" />
-                    </PremiumWrapper>
+                    <VideoPlayer video={video} variant="thumbnail" />
                     {video.duration && (
                         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded">
                             {video.duration}

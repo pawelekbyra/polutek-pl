@@ -4,7 +4,7 @@ import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
-import { flags } from '../feature-flags';
+import { canUseDemoFallbacks, flags } from '../feature-flags';
 import { isPubliclyVisibleVideo } from './content.visibility';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 
@@ -102,13 +102,13 @@ export class ContentService {
       });
 
       if (!video) {
-        return flags.demoFallbacks ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
+        return canUseDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
       }
 
       return video;
     } catch (e: unknown) {
       logger.error("[GET_VIDEO_BY_ID_ERROR]", e);
-      return flags.demoFallbacks ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
+      return canUseDemoFallbacks() ? INITIAL_VIDEOS.find(v => v.id === videoId) || null : null;
     }
   }
 
@@ -235,7 +235,7 @@ export class ContentService {
         };
       }
 
-      if (!creator && isMainCreator && flags.demoFallbacks) {
+      if (!creator && isMainCreator && canUseDemoFallbacks()) {
         return {
             id: DEFAULT_CREATOR.id,
             name: DEFAULT_CREATOR.name,
@@ -264,7 +264,7 @@ export class ContentService {
       };
     } catch (e: unknown) {
       logger.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (isMainCreator && flags.demoFallbacks) {
+      if (isMainCreator && canUseDemoFallbacks()) {
         return {
             ...DEFAULT_CREATOR,
             videos: INITIAL_VIDEOS
@@ -329,7 +329,7 @@ export class ContentService {
       };
     } catch (e: unknown) {
       logger.error("[GET_CONFIGURED_OR_DEFAULT_CREATOR_ERROR]", e);
-      if (flags.demoFallbacks) {
+      if (canUseDemoFallbacks()) {
         return {
           id: DEFAULT_CREATOR.id,
           name: DEFAULT_CREATOR.name,
@@ -417,10 +417,10 @@ export class ContentService {
       if (process.env.DEBUG_HOME_CONTENT === "true") {
         logger.info("[HOME_CONTENT_DEBUG] getAllVideos", {
           foundInDb: videos.length,
-          demoFallbacksEnabled: flags.demoFallbacks
+          demoFallbacksEnabled: canUseDemoFallbacks()
         });
       }
-      if (videos.length === 0 && flags.demoFallbacks) {
+      if (videos.length === 0 && canUseDemoFallbacks()) {
           return INITIAL_VIDEOS
             .filter(v => (v.tier as string) !== 'ADMIN')
             .map(v => this.mapToPublicVideoDTO(v));
@@ -437,7 +437,7 @@ export class ContentService {
       }));
     } catch (e: unknown) {
       logger.error("[GET_ALL_VIDEOS_ERROR]", e);
-      if (flags.demoFallbacks) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
+      if (canUseDemoFallbacks()) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
       // Re-throw so the page knows it was an error, not just an empty DB
       throw e;
     }
@@ -487,10 +487,10 @@ export class ContentService {
         logger.info("[HOME_CONTENT_DEBUG] getMainFeaturedVideo", {
           featuredFound: !!video,
           fallbackFound: !!selectedVideo,
-          demoFallbacksEnabled: flags.demoFallbacks
+          demoFallbacksEnabled: canUseDemoFallbacks()
         });
       }
-      if (!selectedVideo && flags.demoFallbacks) {
+      if (!selectedVideo && canUseDemoFallbacks()) {
         const fallback = INITIAL_VIDEOS.find(v => v.tier === AccessTier.PUBLIC && v.status === VideoStatus.PUBLISHED) || INITIAL_VIDEOS[0];
         return this.mapToPublicVideoDTO(fallback);
       }
@@ -506,7 +506,7 @@ export class ContentService {
       });
     } catch (e: unknown) {
       logger.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
-      if (flags.demoFallbacks) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
+      if (canUseDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       throw e;
     }
   }

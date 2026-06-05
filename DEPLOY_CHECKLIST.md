@@ -27,7 +27,7 @@
 - [ ] `NEXT_PUBLIC_APP_URL`
 - [ ] `RESEND_API_KEY`
 - [ ] `EMAIL_FROM`
-- [ ] `ENABLE_DEMO_FALLBACKS`
+- [ ] `ENABLE_DEMO_FALLBACKS=false` in production; demo fallback code is ignored under `NODE_ENV=production` and must not be used as production resilience
 - [ ] `ENABLE_CAMPAIGN_PAGE`
 - [ ] `MAIN_CREATOR_SLUG`
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
@@ -41,7 +41,7 @@
 - [ ] seed if database is empty: `npx prisma db seed`
 
 ## Content
-- [ ] At least one approved creator exists
+- [ ] At least one approved creator exists; production must not depend on `INITIAL_VIDEOS`/`DEFAULT_CREATOR` demo fallback data
 - [ ] One video has `isMainFeatured=true`
 - [ ] Public video plays through `/api/media/:videoId`
 - [ ] Patron video is blocked for non-patron users
