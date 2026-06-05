@@ -1,5 +1,6 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from "next/server";
+import { getCorrelationId } from "./utils/correlation";
 
 export class AppError extends Error {
   constructor(
@@ -13,7 +14,9 @@ export class AppError extends Error {
 }
 
 export function handleApiError(error: unknown) {
-  logger.error('[API_ERROR]', error);
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
+  scopedLogger.error('[API_ERROR]', error);
 
   if (error instanceof AppError) {
     return NextResponse.json(

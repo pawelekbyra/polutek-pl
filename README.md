@@ -208,7 +208,7 @@ Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kont
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
-- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (częściowo zrealizowane dla language, clerk webhook).
+- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, webhooks).
 - [ ] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors.
 - [ ] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
@@ -224,8 +224,8 @@ Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/t
 
 Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening.
 
-- [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
-- [~] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
+- [ ] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
+- [ ] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
 - [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
 - [ ] Ustawić lokalne guardrails dla max LOC / complexity w krytycznych modułach albo przynajmniej dokumentować wyjątki.
 

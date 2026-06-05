@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
@@ -49,6 +49,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
   if (response) return response;
 
@@ -207,7 +209,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(created);
     }
   } catch (error: unknown) {
-    logger.error("[ADMIN_VIDEO_POST_ERROR]", error);
+    scopedLogger.error("[ADMIN_VIDEO_POST_ERROR]", error);
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const field = Array.isArray(error.meta?.target) ? error.meta?.target[0] : 'pole';
@@ -223,6 +225,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { response } = await requireAdminForApi("DELETE_ADMIN_VIDEOS");
   if (response) return response;
 
@@ -250,7 +254,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, archived: archived.title, status: 'ARCHIVED' });
   } catch (error: unknown) {
-    logger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
+    scopedLogger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
