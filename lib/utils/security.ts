@@ -6,7 +6,12 @@ export function generateCSP() {
     '*.clerk.com',
     '*.clerk.accounts.dev',
     '*.clerk.dev',
-    'accounts.clerk.com'
+    'accounts.clerk.com',
+    'clerk.polutek.pl',
+    'accounts.polutek.pl',
+    'polutek.pl',
+    '*.polutek.pl',
+    'clerk.accounts.dev'
   ];
 
   const mediaHosts = Array.from(new Set([

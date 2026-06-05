@@ -91,6 +91,9 @@ export class AccessPolicy {
 
     if (!userId) return { allowed: false, reason: "LOGIN_REQUIRED", requiredTier: video.tier };
 
+    // Logged in tier only requires an authenticated Clerk session.
+    if (video.tier === AccessTier.LOGGED_IN) return { allowed: true };
+
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
@@ -99,10 +102,6 @@ export class AccessPolicy {
 
     // Admins have access to everything
     if (user?.role === 'ADMIN') return { allowed: true };
-
-    // Logged in tier only requires an authenticated Clerk session. A missing
-    // local row should not block freshly signed-in users before profile sync.
-    if (video.tier === AccessTier.LOGGED_IN) return { allowed: true };
 
     // Patron tier uses User.isPatron as the single source of truth (admins are explicitly allowed above).
     if (video.tier === AccessTier.PATRON) {
