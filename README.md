@@ -163,7 +163,7 @@ Legenda:
 - [x] Uruchomiono `npm run typecheck`; wynik PASS.
 - [x] Uruchomiono `npm test -- --run`; wynik PASS: 27 plików testowych, 139 testów.
 - [x] Uruchomiono `npm run lint`; wynik PASS: brak ostrzeżeń i błędów ESLint.
-- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem.
+- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem bez zależności od zdalnego pobierania Google Fonts.
 - [~] Uruchomiono `npm run db:smoke`; wynik `FAILED_ENV`, bo brak `DATABASE_URL`.
 - [~] Uruchomiono `npm run db:migrate:deploy`; wynik `FAILED_ENV`, bo brak `DATABASE_URL_UNPOOLED`.
 
