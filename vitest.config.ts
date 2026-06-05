@@ -4,6 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     environment: 'node',
+    include: ['tests/unit/**/*.test.ts'],
     alias: {
       '@': path.resolve(__dirname, './'),
     },

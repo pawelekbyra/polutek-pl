@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { buildContentSecurityPolicy } from "@/lib/security/csp";
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -31,17 +32,7 @@ export default clerkMiddleware(async (auth, req) => {
   const response = NextResponse.next();
   response.headers.set(
     'Content-Security-Policy-Report-Only',
-    "default-src 'self'; " +
-    "script-src 'self' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; " +
-    "script-src-elem 'self' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com 'unsafe-inline'; " +
-    "connect-src 'self' https://*.clerk.accounts.dev https://clerk.com https://api.stripe.com https://*.r2.dev https://*.vercel-storage.com https://fonts.googleapis.com; " +
-    "frame-src https://js.stripe.com https://*.clerk.accounts.dev; " +
-    "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://*.r2.dev https://*.vercel-storage.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' data: https://fonts.gstatic.com; " +
-    "worker-src 'self' blob:; " +
-    "media-src 'self' blob: https://*.r2.dev https://*.vercel-storage.com;"
+    buildContentSecurityPolicy()
   );
   return response;
 });
