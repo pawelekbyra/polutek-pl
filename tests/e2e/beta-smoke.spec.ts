@@ -11,6 +11,11 @@ const e2e = {
   nonPatronStorageState:
     process.env.E2E_NON_PATRON_STORAGE_STATE ||
     process.env.E2E_SUBSCRIBER_STORAGE_STATE,
+  adminStorageState: process.env.E2E_ADMIN_STORAGE_STATE,
+  commentVideoId:
+    process.env.E2E_COMMENT_VIDEO_ID ||
+    process.env.E2E_PUBLIC_VIDEO_ID ||
+    "v_fallback_001",
 };
 
 async function expectNonServerError(status: number | null) {
@@ -21,6 +26,14 @@ async function expectNonServerError(status: number | null) {
   expect(status ?? 500, "route must not return a server error").toBeLessThan(
     500,
   );
+}
+
+async function expectUnauthorizedOrForbidden(response: APIResponse) {
+  expect(
+    response.status(),
+    "protected API should reject callers without the required access",
+  ).toBeGreaterThanOrEqual(401);
+  expect(response.status()).toBeLessThan(500);
 }
 
 async function expectMediaSourceDenied(response: APIResponse) {
@@ -125,6 +138,39 @@ test.describe("beta smoke: guest/public access", () => {
     );
   });
 
+  test("guest comment mutation is blocked", async ({ request }) => {
+    const response = await request.post("/api/comments", {
+      data: { videoId: e2e.publicVideoId, text: "guest smoke comment" },
+    });
+
+    expect(response.status()).toBe(401);
+    const body = await response.json();
+    expect(body.success).toBe(false);
+  });
+
+  test("guest checkout smoke is blocked before payment creation", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/checkout/create-intent", {
+      data: {
+        amountMinor: 2000,
+        currency: "PLN",
+        title: "E2E smoke tip",
+        requestId: "00000000-0000-4000-8000-000000000001",
+      },
+    });
+
+    expect(response.status()).toBe(401);
+    const body = await response.json();
+    expect(body.error).toBe("Unauthorized");
+  });
+
+  test("guest admin API is blocked", async ({ request }) => {
+    const response = await request.get("/api/admin/videos");
+
+    await expectUnauthorizedOrForbidden(response);
+  });
+
   test("media-source does not return a source without access", async ({
     request,
   }) => {
@@ -134,7 +180,6 @@ test.describe("beta smoke: guest/public access", () => {
 
     await expectMediaSourceDenied(response);
   });
-});
 
 test.describe("beta smoke: authenticated non-patron access", () => {
   test.use({ storageState: e2e.nonPatronStorageState });
@@ -179,6 +224,38 @@ test.describe("beta smoke: authenticated non-patron access", () => {
     await expectMediaSourceDenied(sourceResponse);
   });
 
+  test("non-patron can comment on public material", async ({ request }) => {
+    const response = await request.post("/api/comments", {
+      data: {
+        videoId: e2e.commentVideoId,
+        text: `E2E smoke comment ${Date.now()}`,
+      },
+    });
+
+    expect(response.status(), "public comment smoke should be accepted").toBe(
+      201,
+    );
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    expect(body.comment?.id).toEqual(expect.any(String));
+  });
+
+  test("non-patron cannot comment on patron-only material", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/comments", {
+      data: {
+        videoId: e2e.patronVideoId,
+        text: `E2E patron-denied comment ${Date.now()}`,
+      },
+    });
+
+    expect(response.status()).toBe(403);
+    const body = await response.json();
+    expect(body.success).toBe(false);
+    expect(body.message).toMatch(/Patron|Brak uprawnień/i);
+  });
+
   test("admin route blocks a regular user", async ({ page }) => {
     const response = await page.goto("/admin", {
       waitUntil: "domcontentloaded",
@@ -188,5 +265,27 @@ test.describe("beta smoke: authenticated non-patron access", () => {
     await expect(page.locator("body")).not.toContainText(
       /Panel administracyjny|Zarządzaj kanałem|Admin dashboard/i,
     );
+  });
+});
+
+test.describe("beta smoke: admin access", () => {
+  test.use({ storageState: e2e.adminStorageState });
+
+  test.beforeEach(() => {
+    test.skip(
+      !e2e.adminStorageState,
+      "ENV blocked: set E2E_ADMIN_STORAGE_STATE for admin smoke.",
+    );
+  });
+
+  test("admin can reach video management API", async ({ request }) => {
+    const response = await request.get("/api/admin/videos");
+
+    expect(
+      response.status(),
+      "admin video API should be reachable",
+    ).toBeLessThan(500);
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual(expect.any(Array));
   });
 });
