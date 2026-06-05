@@ -30,7 +30,10 @@
     "content:fix:main-creator": "npx tsx scripts/fix-main-creator-content.ts",
     "env:validate": "tsx scripts/validate-env.ts",
     "env:validate:prod": "tsx scripts/validate-env.ts --mode=production",
-    "quality:strict-escapes": "tsx scripts/check-strict-escapes.ts"
+    "quality:strict-escapes": "tsx scripts/check-strict-escapes.ts",
+    "e2e": "tsx scripts/validate-e2e-env.ts && playwright test",
+    "e2e:list": "playwright test --list",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "sanitize-html": "^2.17.4",

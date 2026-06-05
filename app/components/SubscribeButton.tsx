@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useAuth, useClerk } from '@clerk/nextjs';
+import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { toggleSubscriptionAction, getSubscriptionStatusAction } from '@/app/actions/subscription';
 import { useLanguage } from './LanguageContext';
@@ -42,7 +43,7 @@ export default function SubscribeButton({
     if (userId && creatorId && initialIsSubscribed === undefined) {
       getSubscriptionStatusAction(creatorId)
         .then(data => setIsSubscribed(data.isSubscribed))
-        .catch(err => console.error("Error fetching subscription status:", err));
+        .catch(err => logger.warn("[SUBSCRIPTION_STATUS_FETCH_ERROR]", err));
     }
 
     if (!userId && mounted) setIsSubscribed(false);

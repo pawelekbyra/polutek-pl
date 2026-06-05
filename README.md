@@ -79,6 +79,8 @@ npm run db:validate
 npm run db:generate
 npm run db:smoke
 npm run db:migrate:deploy
+npm run e2e:list
+npm run e2e
 npm run content:diagnose
 npm run content:fix:main-creator
 ```
@@ -159,9 +161,9 @@ Legenda:
 - [x] Uruchomiono `npx prisma validate` oraz `npx prisma generate` z tymczasowymi URL-ami Prisma do walidacji składni schematu; schema jest poprawna, klient wygenerowany.
 - [x] Uruchomiono `npm run quality:strict-escapes`; wynik PASS — produkcyjne źródła bez `@ts-ignore`, `@ts-nocheck` i jawnego `any`.
 - [x] Uruchomiono `npm run typecheck`; wynik PASS.
-- [x] Uruchomiono `npm test -- --run`; wynik PASS: 21 plików testowych, 108 testów.
+- [x] Uruchomiono `npm test -- --run`; wynik PASS: 26 plików testowych, 138 testów.
 - [x] Uruchomiono `npm run lint`; wynik PASS: brak ostrzeżeń i błędów ESLint.
-- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem.
+- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem bez zależności od zdalnego pobierania Google Fonts.
 - [~] Uruchomiono `npm run db:smoke`; wynik `FAILED_ENV`, bo brak `DATABASE_URL`.
 - [~] Uruchomiono `npm run db:migrate:deploy`; wynik `FAILED_ENV`, bo brak `DATABASE_URL_UNPOOLED`.
 
@@ -189,9 +191,9 @@ Legenda:
 
 ## 4. Logger i console hygiene
 
-- [ ] Zinwentaryzować `console.*` w kodzie produkcyjnym.
-- [ ] Zastąpić produkcyjne logi loggerem bez sekretów, signed URL-i, tokenów, danych kart i pełnych payloadów webhooków.
-- [ ] Pozostawić `console.*` tylko w skryptach CLI/testach albo z uzasadnieniem w raporcie.
+- [x] Zinwentaryzowano `console.*` w kodzie produkcyjnym: `rg -n "\\bconsole\\." app lib middleware.ts next.config.mjs vitest.config.ts` pokazuje wyłącznie adapter `lib/logger.ts` po usunięciu bezpośredniego `console.error` z `SubscribeButton`.
+- [x] Zastąpiono bezpośredni produkcyjny log w komponencie subskrypcji loggerem i dodano sanitizację loggera dla sekretów, tokenów, query signed URL-i, obiektów `Error` oraz cyklicznych payloadów; potwierdzone `npm test -- --run tests/unit/logger.test.ts tests/unit/media-security.test.ts`.
+- [x] Pozostawiono `console.*` tylko wewnątrz centralnego adaptera `lib/logger.ts` oraz poza źródłami produkcyjnymi/testach CLI; aktualny guard `npm run quality:strict-escapes` pozostaje PASS.
 
 ## 5. Strona kanału `/channel/[slug]`
 
@@ -272,10 +274,10 @@ Legenda:
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 25 plików, 136 testów.
+- [x] Unit suite PASS: 26 plików, 138 testów.
 - [~] Próba dodania coverage provider zablokowana przez `npm install -D @vitest/coverage-v8@4.1.7` → `403 Forbidden`; coverage script/progi nadal otwarte do wykonania w środowisku z dostępem do registry.
-- [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
-- [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
+- [~] Dodano Playwright smoke scaffold dla ścieżek bety: public homepage, `/channel/${MAIN_CREATOR_SLUG}`, guest admin redirect oraz env-gated authenticated subscription/patron/media checks; `npm run e2e:list` PASS, pełne uruchomienie wymaga przeglądarki Playwright i staging env.
+- [~] Smoke obejmuje `/`, `/channel/${MAIN_CREATOR_SLUG}`, login/admin redirect oraz szkielety subskrypcji, patron access i media proxy; pełny PASS nadal wymaga `E2E_*` storage state/video ID oraz browserów.
 
 ## 16. CI/CD
 
