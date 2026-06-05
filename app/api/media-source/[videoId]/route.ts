@@ -7,7 +7,7 @@ import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
-import { logger } from '@/lib/logger';
+import { isAllowedVideoSourceUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,15 +50,11 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Video not found' }, { status: 404 });
   }
 
-  const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
-
-  if ((source.kind === 'hls' || source.kind === 'dash') && source.needsProxy) {
-    logger.warn(`[MediaSource] Blocked UNSAFE_STREAM_SOURCE for video ${videoId} (kind: ${source.kind}). Signed delivery/proxy required.`);
-    return NextResponse.json({
-      error: 'UNSAFE_STREAM_SOURCE',
-      message: 'Streaming HLS/DASH wymaga signed delivery/proxy przed produkcją.'
-    }, { status: 503 });
+  if (!isAllowedVideoSourceUrl(resolvedVideo.videoUrl)) {
+    return NextResponse.json({ error: 'VIDEO_SOURCE_NOT_ALLOWED' }, { status: 400 });
   }
+
+  const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
 
   return NextResponse.json({
     hasAccess: true,

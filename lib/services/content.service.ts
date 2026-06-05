@@ -2,9 +2,9 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
-import { ADMIN_EMAIL } from '../constants';
 import { PublicVideoDTO, PublicCreatorDTO, PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '../feature-flags';
+import { getAdminClerkUserIds } from '../admin-config';
 import { isPubliclyVisibleVideo } from './content.visibility';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 
@@ -113,37 +113,31 @@ export class ContentService {
   }
 
   /**
-   * Robustly fetches admin data from the database, prioritizing users with avatars.
+   * Robustly fetches channel operator data, prioritizing immutable admin IDs and then DB admins.
+   * This intentionally does not use ADMIN_EMAIL as a runtime authorization or avatar source.
    */
   static async getAdminData() {
     try {
-      // Step 1: Try to find the specific admin user by email (most reliable)
-      let adminUser = await prisma.user.findFirst({
-        where: {
-          email: { equals: ADMIN_EMAIL, mode: 'insensitive' }
-        },
-        orderBy: [
-            { imageUrl: 'desc' }, // Not null first
-            { updatedAt: 'desc' }
-        ],
-        select: { imageUrl: true, email: true }
+      const adminIds = getAdminClerkUserIds();
+      const allowlistedAdmin = adminIds.length > 0
+        ? await prisma.user.findFirst({
+            where: { id: { in: adminIds }, isDeleted: false },
+            orderBy: [{ imageUrl: 'desc' }, { updatedAt: 'desc' }],
+            select: { imageUrl: true, email: true },
+          })
+        : null;
+
+      if (allowlistedAdmin) return allowlistedAdmin;
+
+      const dbAdmin = await prisma.user.findFirst({
+        where: { role: 'ADMIN', isDeleted: false },
+        orderBy: [{ imageUrl: 'desc' }, { updatedAt: 'desc' }],
+        select: { imageUrl: true, email: true },
       });
 
-      // Step 2: Try to find another admin user if first lookup failed
-      if (!adminUser) {
-        adminUser = await prisma.user.findFirst({
-          where: { role: 'ADMIN' },
-          orderBy: [
-              { imageUrl: 'desc' },
-              { updatedAt: 'desc' }
-          ],
-          select: { imageUrl: true, email: true }
-        });
-      }
-
-      return adminUser || { imageUrl: null, email: ADMIN_EMAIL };
+      return dbAdmin || { imageUrl: null, email: null };
     } catch {
-      return { imageUrl: null, email: ADMIN_EMAIL };
+      return { imageUrl: null, email: null };
     }
   }
 

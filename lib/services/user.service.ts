@@ -3,11 +3,10 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import crypto from 'crypto';
-import { ADMIN_EMAIL, getConfiguredAdminEmail } from '../constants';
+import { ADMIN_EMAIL } from '../constants';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
-import { flags } from '@/lib/feature-flags';
-import { getAdminClerkUserIds } from '../admin-config';
+import { isConfiguredAdminUserId } from '../admin-config';
 import { MAIN_CREATOR_NAME } from '../constants';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
@@ -129,7 +128,7 @@ export class UserService {
     referrerId?: string | null,
     language?: string,
     username?: string | null,
-    clerkRole?: string | null
+    _clerkRole?: string | null
   ) {
     try {
       return await prisma.$transaction(async (tx) => {
@@ -138,18 +137,11 @@ export class UserService {
           select: { role: true }
         });
 
-        // Role determination:
-        // 1. Check if user is in ADMIN_CLERK_USER_IDS allowlist (immutable)
-        // 2. If Clerk metadata says ADMIN or email matches ADMIN_EMAIL, trust it (legacy/bootstrap).
-        // 3. Otherwise keep existing role or default to USER.
+        // Runtime admin access is based on immutable Clerk ID allowlist or an existing DB role.
+        // ADMIN_EMAIL and Clerk metadata are bootstrap/recovery inputs only and must not grant admin here.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
-        const adminEmail = getConfiguredAdminEmail();
-        const adminIds = getAdminClerkUserIds();
-
-        if (adminIds.includes(id)) {
-            targetRole = 'ADMIN';
-        } else if (clerkRole?.toUpperCase() === 'ADMIN' || (adminEmail && email.toLowerCase() === adminEmail.toLowerCase())) {
+        if (isConfiguredAdminUserId(id)) {
           targetRole = 'ADMIN';
         } else if (existingUser) {
           targetRole = existingUser.role;
@@ -190,13 +182,6 @@ export class UserService {
               referredBy: updateData.referredBy ? (updateData.referredBy as Prisma.UserCreateNestedOneWithoutReferralsInput) : undefined,
           }
         });
-
-        if (targetRole === 'ADMIN') {
-            await tx.creator.updateMany({
-                where: { slug: flags.mainCreatorSlug },
-                data: { name: MAIN_CREATOR_NAME, userId: id }
-            });
-        }
 
         return user;
       }, { timeout: 15000 });
@@ -353,45 +338,6 @@ export class UserService {
     return this.syncUser(userId, email, name, imageUrl, referrerId, language, username, clerkRole);
   }
 
-  static async toggleSubscription(userId: string, creatorId: string) {
-    try {
-      await this.getOrCreateUser(userId);
-      return await prisma.$transaction(async (tx) => {
-        const creator = await tx.creator.findUnique({
-          where: { id: creatorId },
-          select: { id: true, isApproved: true },
-        });
-
-        if (!creator || !creator.isApproved) {
-          throw new Error('CREATOR_NOT_FOUND');
-        }
-
-        const existing = await tx.subscription.findUnique({
-          where: { userId_creatorId: { userId, creatorId } }
-        });
-
-        if (existing) {
-          await tx.subscription.delete({ where: { id: existing.id } });
-          await tx.creator.updateMany({
-            where: { id: creatorId, subscribersCount: { gt: 0 } },
-            data: { subscribersCount: { decrement: 1 } }
-          });
-          return { isSubscribed: false };
-        } else {
-          await tx.subscription.create({ data: { userId, creatorId } });
-          await tx.creator.update({
-            where: { id: creatorId },
-            data: { subscribersCount: { increment: 1 } }
-          });
-          return { isSubscribed: true };
-        }
-      });
-    } catch (e: unknown) {
-      logger.error("[TOGGLE_SUBSCRIPTION_ERROR]", e);
-      throw e;
-    }
-  }
-
   static async softDeleteUser(id: string) {
     const anonymousId = crypto.randomUUID();
     return await prisma.user.update({
@@ -404,13 +350,6 @@ export class UserService {
         isDeleted: true
       }
     });
-  }
-
-  static async isSubscribed(userId: string, creatorId: string) {
-    const sub = await prisma.subscription.findUnique({
-      where: { userId_creatorId: { userId, creatorId } }
-    });
-    return !!sub;
   }
 
   static async getVideoInteraction(userId: string, videoId: string) {

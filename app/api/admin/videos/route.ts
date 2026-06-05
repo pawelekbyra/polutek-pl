@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { ADMIN_EMAIL, MAIN_CREATOR_NAME } from '@/lib/constants';
+import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
+  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
   if (response) return response;
 
   const body = await req.json();
@@ -143,12 +143,11 @@ export async function POST(req: NextRequest) {
         }
 
         if (!creator) {
-          const user = await tx.user.findFirst({ where: { email: ADMIN_EMAIL } });
-          if (!user) throw new Error('Admin user not found in DB. Check ADMIN_EMAIL env.');
+          if (!adminUserId) throw new Error('Admin user not available for channel bootstrap.');
 
           creator = await tx.creator.create({
             data: {
-              userId: user.id,
+              userId: adminUserId,
               name: MAIN_CREATOR_NAME,
               slug: mainCreatorSlug,
               isApproved: true,

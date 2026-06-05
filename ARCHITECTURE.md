@@ -2,7 +2,7 @@
 
 ## Current product mode
 
-Kraufanding currently runs as a single-creator VOD with data-model support for a future multi-creator mode. `MAIN_CREATOR_SLUG` is the dynamic source for the configured creator in single-creator mode; code should not add new hardcoded creator/channel slugs as technical fallbacks.
+Polutek.pl currently runs as a single-channel VOD with data-model support for future additional channels. `MAIN_CREATOR_SLUG` is the dynamic source for the configured creator in single-creator mode; code should not add new hardcoded creator/channel slugs as technical fallbacks.
 
 ## Main flows
 
@@ -19,7 +19,7 @@ Kraufanding currently runs as a single-creator VOD with data-model support for a
 * **Database (Prisma)**: `User.role`, `User.isPatron`, `PatronGrant`, `Payment`, `UserPaymentTotal`, `Creator`, `Video`, and `Subscription` are the durable source of truth.
 * **Clerk**: Authentication source and metadata sync/cache layer. Clerk metadata must not override database patron decisions.
 * **Stripe webhook**: Final authority for payment lifecycle events.
-* **API Gateway**: `/api/media/:videoId` is the only path to gated video content. Raw manifest URLs (.m3u8, .mpd) are hidden behind a fail-closed 503 mechanism in `/api/media-source` until signed delivery is active.
+* **API Gateway**: `/api/media/:videoId` is the only path to gated video content. Admin-provided HLS/DASH manifest URLs (.m3u8, .mpd) may be returned only after the same access policy authorizes the viewer and the source URL has passed configured media-host allowlist validation before storage.
 * **Subscription records**: Source of truth only for email notifications / channel follow state.
 
 ## Robustness Patterns

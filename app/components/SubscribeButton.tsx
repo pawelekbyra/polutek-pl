@@ -4,7 +4,6 @@ import React, { useState, useEffect, useTransition } from 'react';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
-import { toggleSubscriptionAction, getSubscriptionStatusAction } from '@/app/actions/subscription';
 import { useLanguage } from './LanguageContext';
 import { BellSimple } from './icons';
 
@@ -41,13 +40,18 @@ export default function SubscribeButton({
       setIsSubscribed(initialIsSubscribed);
 
     if (userId && creatorId && initialIsSubscribed === undefined) {
-      getSubscriptionStatusAction(creatorId)
+      const params = new URLSearchParams(creatorSlug ? { creatorSlug } : { creatorId });
+      fetch(`/api/subscriptions?${params.toString()}`)
+        .then(async (response) => {
+          if (!response.ok) throw new Error(`Subscription status failed: ${response.status}`);
+          return response.json() as Promise<{ isSubscribed: boolean }>;
+        })
         .then(data => setIsSubscribed(data.isSubscribed))
         .catch(err => logger.warn("[SUBSCRIPTION_STATUS_FETCH_ERROR]", err));
     }
 
     if (!userId && mounted) setIsSubscribed(false);
-  }, [userId, creatorId, initialIsSubscribed, mounted]);
+  }, [userId, creatorId, creatorSlug, initialIsSubscribed, mounted]);
 
   const handleSubscribe = async () => {
     if (!userId) { openSignIn(); return; }
@@ -67,9 +71,21 @@ export default function SubscribeButton({
 
     startTransition(async () => {
       try {
-        const result = await toggleSubscriptionAction(creatorId) as { success: boolean; error?: string; message?: string };
-        if (result.error) setIsSubscribed(prevSubscribed);
+        const response = await fetch('/api/subscriptions', {
+          method: prevSubscribed ? 'DELETE' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(creatorSlug ? { creatorSlug } : { creatorId }),
+        });
+
+        if (!response.ok) {
+          setIsSubscribed(prevSubscribed);
+          return;
+        }
+
+        const result = await response.json() as { isSubscribed: boolean };
+        setIsSubscribed(result.isSubscribed);
       } catch (err) {
+        logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
         setIsSubscribed(prevSubscribed);
       }
     });

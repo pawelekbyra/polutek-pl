@@ -27,7 +27,7 @@ const otherCreatorVideo = {
 
 async function importSitemap({ multiCreator }: { multiCreator: boolean }) {
   process.env.ENABLE_MULTI_CREATOR = multiCreator ? 'true' : 'false';
-  process.env.MAIN_CREATOR_SLUG = 'kraufanding';
+  process.env.MAIN_CREATOR_SLUG = 'main-channel';
 
   const { default: sitemap } = await import('@/app/sitemap');
 
@@ -40,10 +40,10 @@ describe('sitemap', () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = 'https://example.com';
     process.env.ENABLE_MULTI_CREATOR = 'false';
-    process.env.MAIN_CREATOR_SLUG = 'kraufanding';
+    process.env.MAIN_CREATOR_SLUG = 'main-channel';
     mockContentService.getAllVideos.mockResolvedValue([]);
     mockContentService.getCreatorBySlug.mockResolvedValue({
-      slug: 'kraufanding',
+      slug: 'main-channel',
       videos: [],
     });
   });
@@ -55,12 +55,12 @@ describe('sitemap', () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain('https://example.com');
-    expect(urls).toContain('https://example.com/channel/kraufanding');
+    expect(urls).toContain('https://example.com/channel/main-channel');
   });
 
   it('fetches only the main creator videos in single-creator mode', async () => {
     mockContentService.getCreatorBySlug.mockResolvedValue({
-      slug: 'kraufanding',
+      slug: 'main-channel',
       videos: [mainCreatorVideo],
     });
     mockContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
@@ -70,13 +70,13 @@ describe('sitemap', () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain('https://example.com/?v=main-video');
-    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('kraufanding');
+    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
     expect(mockContentService.getAllVideos).not.toHaveBeenCalled();
   });
 
   it('does not expose other creators videos in single-creator mode', async () => {
     mockContentService.getCreatorBySlug.mockResolvedValue({
-      slug: 'kraufanding',
+      slug: 'main-channel',
       videos: [mainCreatorVideo],
     });
     mockContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
@@ -98,9 +98,9 @@ describe('sitemap', () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain('https://example.com');
-    expect(urls).toContain('https://example.com/channel/kraufanding');
+    expect(urls).toContain('https://example.com/channel/main-channel');
     expect(urls).toContain('https://example.com/?v=other-video');
     expect(mockContentService.getAllVideos).toHaveBeenCalled();
-    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('kraufanding');
+    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
   });
 });

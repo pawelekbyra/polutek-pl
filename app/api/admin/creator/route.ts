@@ -2,7 +2,6 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { ADMIN_EMAIL } from '@/lib/constants';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
@@ -37,7 +36,7 @@ const creatorSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const { response } = await requireAdminForApi("POST_ADMIN_CREATOR");
+  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_CREATOR");
   if (response) return response;
 
   const body = await req.json();
@@ -66,13 +65,6 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(updated);
     } else {
-        const adminUser = await prisma.user.findFirst({
-            where: { email: ADMIN_EMAIL }
-        });
-
-        if (!adminUser) {
-            return NextResponse.json({ error: 'Admin user not found in DB.' }, { status: 400 });
-        }
 
         const created = await prisma.$transaction(async (tx) => {
             const firstCreator = await tx.creator.findFirst();
@@ -80,7 +72,7 @@ export async function POST(req: NextRequest) {
 
             const newCreator = await tx.creator.create({
                 data: {
-                    userId: adminUser.id,
+                    userId: adminUserId!,
                     name,
                     bio,
                     slug,

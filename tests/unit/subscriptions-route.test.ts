@@ -12,16 +12,23 @@ vi.mock('@clerk/nextjs/server', () => ({
   clerkClient: vi.fn(),
 }));
 
+const prismaMock = vi.hoisted(() => ({
+  creator: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+  },
+  subscription: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+}));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    creator: {
-      findUnique: vi.fn(),
-    },
-    subscription: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-      deleteMany: vi.fn(),
-    },
+    $transaction: vi.fn(async (callback) => callback(prismaMock)),
+    ...prismaMock,
   },
 }));
 
@@ -77,7 +84,9 @@ describe('/api/subscriptions', () => {
 
   it('creates a Subscription as email notifications only and never grants Patron access', async () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
-    vi.mocked(prisma.subscription.upsert).mockResolvedValue({ id: 'sub_1', createdAt } as any);
+    vi.mocked(prisma.subscription.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.subscription.create).mockResolvedValue({ id: 'sub_1', createdAt } as any);
+    vi.mocked(prisma.creator.update).mockResolvedValue({} as any);
 
     const res = await POST(new NextRequest('http://localhost/api/subscriptions', {
       method: 'POST',
@@ -88,13 +97,15 @@ describe('/api/subscriptions', () => {
     expect(res.status).toBe(200);
     expect(body.isSubscribed).toBe(true);
     expect(body.purpose).toBe('EMAIL_NOTIFICATIONS');
-    expect(prisma.subscription.upsert).toHaveBeenCalledWith({
-      where: { userId_creatorId: { userId: 'user_1', creatorId: 'creator_1' } },
-      update: {},
-      create: { userId: 'user_1', creatorId: 'creator_1' },
+    expect(prisma.subscription.create).toHaveBeenCalledWith({
+      data: { userId: 'user_1', creatorId: 'creator_1' },
       select: { id: true, createdAt: true },
     });
-    expect(JSON.stringify(vi.mocked(prisma.subscription.upsert).mock.calls)).not.toContain('isPatron');
+    expect(prisma.creator.update).toHaveBeenCalledWith({
+      where: { id: 'creator_1' },
+      data: { subscribersCount: { increment: 1 } },
+    });
+    expect(JSON.stringify(vi.mocked(prisma.subscription.create).mock.calls)).not.toContain('isPatron');
   });
 
   it('removes email notifications without touching Patron access', async () => {
@@ -112,6 +123,10 @@ describe('/api/subscriptions', () => {
     expect(body.purpose).toBe('EMAIL_NOTIFICATIONS');
     expect(prisma.subscription.deleteMany).toHaveBeenCalledWith({
       where: { userId: 'user_1', creatorId: 'creator_1' },
+    });
+    expect(prisma.creator.updateMany).toHaveBeenCalledWith({
+      where: { id: 'creator_1', subscribersCount: { gt: 0 } },
+      data: { subscribersCount: { decrement: 1 } },
     });
     expect(JSON.stringify(vi.mocked(prisma.subscription.deleteMany).mock.calls)).not.toContain('isPatron');
   });
@@ -134,7 +149,7 @@ describe('/api/subscriptions', () => {
       limit: 20,
       windowMs: 10 * 60 * 1000,
     });
-    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
+    expect(prisma.subscription.create).not.toHaveBeenCalled();
   });
 
   it('rejects non-existing or unapproved creators', async () => {
@@ -148,6 +163,6 @@ describe('/api/subscriptions', () => {
 
     expect(res.status).toBe(404);
     expect(body.error).toBe('CREATOR_NOT_FOUND');
-    expect(prisma.subscription.upsert).not.toHaveBeenCalled();
+    expect(prisma.subscription.create).not.toHaveBeenCalled();
   });
 });
