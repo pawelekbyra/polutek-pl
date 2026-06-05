@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { recordAlert, recordMetric } from "@/lib/observability";
 import type { AccessVideo } from '@/lib/access/access-policy';
 import { get } from "@vercel/blob";
 import { AccessPolicy } from "./access/access-policy";
@@ -269,6 +270,7 @@ export async function getGatedBlobResponse(
   const decision = await AccessPolicy.canViewVideo(userId, videoId, prefetchedVideo);
 
   if (!decision.allowed) {
+    recordMetric('media_proxy.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
     return new NextResponse('Forbidden', { status: 403 });
   }
 
@@ -276,14 +278,17 @@ export async function getGatedBlobResponse(
     try {
       const hostname = new URL(blobUrl).hostname.toLowerCase();
       logger.error(`[MediaProxy] Blocked unauthorized media host: ${hostname}`);
+      recordAlert('media_proxy.host_blocked', { videoId, host: hostname });
     } catch {
       logger.error('[MediaProxy] Blocked malformed media URL.');
+      recordAlert('media_proxy.malformed_url', { videoId });
     }
     return new NextResponse('Unauthorized Media Host', { status: 403 });
   }
 
   const range = getValidatedRange(headers);
   if (range?.error) {
+    recordMetric('media_proxy.invalid_range', { videoId }, { level: 'warn' });
     return new NextResponse('Invalid Range header', { status: 416 });
   }
 
@@ -294,6 +299,7 @@ export async function getGatedBlobResponse(
     if (isVercelBlob) {
         const result = await get(blobUrl, { access: 'private' });
         if (!result) {
+            recordMetric('media_proxy.blob_not_found', { videoId }, { level: 'warn' });
             return new NextResponse('Not found', { status: 404 });
         }
         targetUrl = result.blob.url;
@@ -308,6 +314,7 @@ export async function getGatedBlobResponse(
 
     if (!response.ok && response.status !== 206) {
         logger.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText} from ${targetHost}`);
+        recordAlert('media_proxy.upstream_error', { videoId, status: response.status, host: targetHost });
       return new NextResponse('Error fetching content', { status: response.status });
     }
 
@@ -323,6 +330,7 @@ export async function getGatedBlobResponse(
       headers: resHeaders,
     });
   } catch (error) {
+    recordAlert('media_proxy.fetch_exception', { videoId });
     logger.error('Error accessing gated media:', {
       name: error instanceof Error ? error.name : 'UnknownError',
     });

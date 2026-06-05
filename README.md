@@ -186,7 +186,7 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 
 Vitest posiada konfigurację coverage i progi jakościowe. CI publikuje raport jako artefakt.
 
-- [~] Rozbudować Playwright smoke: zrealizowane homepage, channel page, public video, guest blocks dla login-gated/patron-gated, subscription vs Patron access, comments access, checkout unauthorized guard, admin block, media-source denial oraz ENV-gated non-patron/admin checks. Nadal brakuje pełnego staging smoke dla checkout/webhook success path i admin video CRUD mutation.
+- [~] Rozbudować Playwright smoke: zrealizowane homepage, channel page, public video, guest blocks dla login-gated/patron-gated, subscription vs Patron access, comments access, checkout unauthorized guard, admin block, media-source denial, ENV-gated non-patron/admin checks oraz ENV-gated admin video CRUD mutation. Nadal brakuje pełnego staging smoke dla checkout/webhook success path.
 - [ ] Zebrać i podlinkować/zapisać pierwsze zielone zdalne przebiegi GitHub Actions dla quality, integration-postgres i E2E/staging smoke.
 
 ## 4. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
@@ -205,8 +205,8 @@ Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kont
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
 - [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, comments, webhooks).
-- [ ] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors.
-- [ ] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy.
+- [~] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors. Zrealizowane: log-based `[METRIC]` signals w kodzie i kontrakt dashboardów w `docs/OBSERVABILITY_RUNBOOK.md`; nadal brakuje zdalnych dashboardów ze staging/prod-like logs.
+- [~] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy. Zrealizowane: `alert:true` log signals i runbook alertów; nadal brakuje konfiguracji alertów w hostingu/observability backendzie.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
 
 ## 7. P2 — moduły, hotspoty i dług techniczny

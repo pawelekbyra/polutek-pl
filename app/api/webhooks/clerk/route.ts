@@ -9,6 +9,7 @@ import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 import { Prisma, WebhookEventStatus } from '@prisma/client';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
+import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 
 type SupportedLanguage = 'pl' | 'en';
 type ClerkPublicMetadata = {
@@ -78,6 +79,7 @@ function getSafePayload(evt: WebhookEvent): Prisma.InputJsonValue {
 }
 
 export async function POST(req: Request) {
+  const startedAt = startTimer();
   const requestId = req.headers.get('svix-id') || crypto.randomUUID();
   const scopedLogger = createScopedLogger(requestId);
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -108,12 +110,14 @@ export async function POST(req: Request) {
     }) as WebhookEvent;
   } catch (err) {
     scopedLogger.error('Error verifying webhook:', err);
+    recordDurationMetric('clerk.webhook.processing_time', startedAt, { status: 'verification_failed' }, { level: 'error', alert: true });
     return new Response('Error occured', { status: 400 });
   }
 
   const lock = await acquireClerkEventLock(svix_id, evt.type, getSafePayload(evt));
   if (!lock.acquired) {
     scopedLogger.info(`[ClerkWebhook] Event ${svix_id} already received or processing.`);
+    recordMetric('clerk.webhook.duplicate_or_processing', { eventType: evt.type, duplicate: lock.duplicate, processing: lock.processing });
     return NextResponse.json({
       success: true,
       duplicate: lock.duplicate,
@@ -196,9 +200,12 @@ export async function POST(req: Request) {
     });
 
     scopedLogger.info(`[ClerkWebhook] Event ${svix_id} (${evt.type}) PROCESSED successfully.`);
+    recordDurationMetric('clerk.webhook.processing_time', startedAt, { eventType: evt.type, status: 'processed' });
     return NextResponse.json({ success: true });
   } catch (error) {
     scopedLogger.error(`[ClerkWebhook] Error handling event ${svix_id}:`, error);
+    recordAlert('clerk.webhook.failed', { eventType: evt.type });
+    recordDurationMetric('clerk.webhook.processing_time', startedAt, { eventType: evt.type, status: 'failed' }, { level: 'error', alert: true });
     await prisma.clerkEvent.update({
       where: { id: svix_id },
       data: {

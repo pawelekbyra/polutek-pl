@@ -9,6 +9,7 @@ import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
+import { recordAlert, recordMetric } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
   });
 
   if (!rateLimitResult.success) {
+    recordAlert('media_source.rate_limited', { videoId });
     return NextResponse.json({
         error: 'RATE_LIMITED',
         message: 'Zbyt wiele zapytań o źródło wideo. Spróbuj za chwilę.'
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
 
   const decision = await AccessPolicy.canViewVideo(userId, videoId, video);
   if (!decision.allowed) {
+    recordMetric('media_source.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
     return NextResponse.json({ hasAccess: false, reason: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
   }
 
@@ -54,6 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
   }
 
   if (!isAllowedVideoSourceUrl(resolvedVideo.videoUrl)) {
+    recordAlert('media_source.host_blocked', { videoId });
     return NextResponse.json({ error: 'VIDEO_SOURCE_NOT_ALLOWED' }, { status: 400 });
   }
 
