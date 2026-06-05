@@ -1,5 +1,6 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
+import { getCorrelationId } from "@/lib/utils/correlation";
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { UserService } from '@/lib/services/user.service';
@@ -87,6 +88,8 @@ async function requireUser(): Promise<
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
@@ -112,12 +115,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       purpose: 'EMAIL_NOTIFICATIONS',
     });
   } catch (error) {
-    logger.error('[SUBSCRIPTIONS_GET_ERROR]', error);
+    scopedLogger.error('[SUBSCRIPTIONS_GET_ERROR]', error);
     return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
@@ -161,12 +166,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       message: 'Email notifications enabled for this channel.',
     });
   } catch (error) {
-    logger.error('[SUBSCRIPTIONS_POST_ERROR]', error);
+    scopedLogger.error('[SUBSCRIPTIONS_POST_ERROR]', error);
     return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
   try {
     const userResult = await requireUser();
     if (userResult.error) return userResult.error;
@@ -204,7 +211,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       message: 'Email notifications disabled for this channel.',
     });
   } catch (error) {
-    logger.error('[SUBSCRIPTIONS_DELETE_ERROR]', error);
+    scopedLogger.error('[SUBSCRIPTIONS_DELETE_ERROR]', error);
     return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
 }

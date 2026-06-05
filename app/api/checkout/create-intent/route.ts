@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { createScopedLogger } from '@/lib/logger';
 import { PaymentService } from '@/lib/services/payment.service';
 import { UserService } from '@/lib/services/user.service';
 import { rateLimit } from '@/lib/rate-limit';
@@ -11,6 +12,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function POST(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   try {
     const { userId } = await auth();
 

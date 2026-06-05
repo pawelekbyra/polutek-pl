@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { createScopedLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { flags } from '@/lib/feature-flags';
@@ -12,6 +13,8 @@ import { isAllowedVideoSourceUrl } from '@/lib/blob';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, { params }: { params: { videoId: string } }) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { userId } = await auth();
   const videoId = params.videoId;
 

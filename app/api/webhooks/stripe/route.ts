@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { PaymentService } from '@/lib/services/payment.service';
@@ -6,6 +6,8 @@ import { PaymentService } from '@/lib/services/payment.service';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const requestId = headers().get('stripe-signature')?.slice(-20) || crypto.randomUUID();
+  const scopedLogger = createScopedLogger(requestId);
   const body = await req.text();
   const sig = headers().get('stripe-signature');
 
@@ -18,7 +20,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    logger.error(`Webhook Error: ${message}`);
+    scopedLogger.error(`Webhook Error: ${message}`);
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
 }
