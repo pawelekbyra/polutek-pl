@@ -12,11 +12,14 @@ export type EnvValidationResult = {
 
 type EnvRecord = Record<string, string | undefined>;
 
+const requiredRuntimeVars = [
+  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
+] as const;
+
 const requiredProductionVars = [
   'DATABASE_URL',
   'DATABASE_URL_UNPOOLED',
   'NEXT_PUBLIC_APP_URL',
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
   'CLERK_SECRET_KEY',
   'CLERK_WEBHOOK_SECRET',
   'STRIPE_SECRET_KEY',
@@ -76,6 +79,10 @@ function hasWritableRateLimitStore(env: EnvRecord) {
 export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidationMode = resolveEnvValidationMode(env)): EnvValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
+
+  for (const key of requiredRuntimeVars) {
+    if (!hasValue(env, key)) errors.push(`${key} is required for application runtime.`);
+  }
 
   if (mode === 'production') {
     for (const key of requiredProductionVars) {
