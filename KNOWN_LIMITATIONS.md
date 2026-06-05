@@ -12,4 +12,4 @@
 - `db:smoke` and `db:migrate:deploy` require real `DATABASE_URL` and `DATABASE_URL_UNPOOLED`; without them local results are environment failures, not release PASS.
 - Production rate limiting requires writable Upstash Redis or Vercel KV REST credentials. Memory fallback is allowed only outside production.
 - CI is present, but the GitHub-hosted `integration-postgres` and security jobs still need their first real remote run before they can be treated as proven release evidence.
-- Demo fallback content must not be used in production unless `ENABLE_DEMO_FALLBACKS=true` is an explicit operational decision.
+- Demo fallback content is now fail-closed in production: `ENABLE_DEMO_FALLBACKS=true` is honored only outside `NODE_ENV=production`, so real production content must come from the database.

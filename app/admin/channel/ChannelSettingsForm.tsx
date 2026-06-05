@@ -17,7 +17,7 @@ type ChannelCreator = {
   name: string;
   bio: string | null;
   bannerUrl: string | null;
-  user?: { imageUrl: string | null; email: string; name: string | null } | null;
+  user?: { imageUrl: string | null; name: string | null } | null;
 };
 
 type ChannelSettingsFormProps = {

@@ -16,7 +16,7 @@ export default async function AdminChannelPage() {
         name: true,
         bio: true,
         bannerUrl: true,
-        user: { select: { email: true, name: true, imageUrl: true } },
+        user: { select: { name: true, imageUrl: true } },
       },
     }),
     currentUser(),

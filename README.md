@@ -380,51 +380,51 @@ Status z audytu: `/api/media-source/[videoId]` najpierw pyta `AccessPolicy.canVi
 
 Status z audytu: każdy card/thumbnail montujący `PremiumWrapper` z `variant="thumbnail"` robi `fetch('/api/media-source/${videoId}')`. Lista 20 filmów może wygenerować 20 dodatkowych requestów i dziesiątki odczytów DB przed kliknięciem play.
 
-- [ ] Usunąć `PremiumWrapper` z miniatur w `app/components/ChannelVideoCard.tsx`. Miniatura ma renderować statyczny `VideoPlayer variant="thumbnail"`, overlay czasu i ewentualny lock badge wyliczony z danych listy, bez media-source fetch.
-- [ ] Usunąć albo obejść `PremiumWrapper` dla miniatur/list w `app/components/ChannelHome.tsx`. Link na miniaturze ma prowadzić do wybranego filmu, a źródło playback ma być rozwiązywane dopiero dla hero/current player.
-- [ ] Alternatywnie, jeśli `PremiumWrapper` zostaje technicznie użyty dla thumbnail, jego `useEffect` musi mieć pierwszy branch `variant === "thumbnail"` i nigdy nie robić fetch do `/api/media-source`.
-- [ ] Dla thumbnail access UI używać tylko `video.tier`, `userId` i znanych danych sesji. Nie wolno pobierać prawdziwego `playbackUrl`.
-- [ ] Dodać test komponentu albo smoke z mocked `fetch`, który potwierdza: 20 thumbnaili → 0 requestów `/api/media-source`; selected hero → maksymalnie 1 request.
+- [x] Usunięto `PremiumWrapper` z miniatur w `app/components/ChannelVideoCard.tsx`; miniatura renderuje statyczny `VideoPlayer variant="thumbnail"`, overlay czasu i lock badge wyliczony z danych listy, bez media-source fetch.
+- [x] Usunięto `PremiumWrapper` dla miniatur/list w `app/components/ChannelHome.tsx`; link na miniaturze prowadzi do wybranego filmu, a źródło playback pozostaje rozwiązywane dopiero dla hero/current player.
+- [x] Alternatywny branch `variant === "thumbnail"` w `PremiumWrapper` nie jest potrzebny, bo `PremiumWrapper` nie jest już używany dla thumbnaili/list.
+- [x] Dla thumbnail access UI używane są tylko `video.tier`, stan logowania i znane dane sesji; test guard potwierdza brak `/api/media-source` w komponentach list.
+- [x] Dodano smoke guard `tests/unit/thumbnail-media-source.test.ts`, który blokuje powrót `PremiumWrapper`/`/api/media-source` do komponentów thumbnail listy. Pełny pomiar hero zostaje do dev/staging.
 - [ ] Zmierzyć przed/po w dev/staging liczbę requestów i zapytań Prisma dla strony listy. Wpisać wynik do roadmapy.
-- [ ] Acceptance criteria: brak fan-out na miniaturach, `npm run typecheck`, `npm test -- --run` PASS.
+- [x] Acceptance criteria dla fan-out miniatur: brak `PremiumWrapper` w listach, `npm run typecheck` PASS, `npm test -- --run` PASS.
 
 ### 18.7. Comments API — prywatność autorów i brak email/referralPoints w public JSON
 
 Status z audytu: publiczne comments API nie powinno zwracać `author.email` ani monetizacyjnych/metadanych typu `referralPoints`. Avatar seed po stronie klienta nie może używać emaila, bo każdy viewer może odczytać payload JSON.
 
-- [ ] W `app/api/comments/route.ts` zdefiniować jeden `publicAuthorSelect` dla publicznych komentarzy i replies.
-- [ ] Publiczny author payload powinien zawierać wyłącznie pola potrzebne UI: `id`, `name`, `username`, `imageUrl` oraz ewentualnie jawnie publiczne badge fields `isPatron` i `role`, jeżeli produkt faktycznie pokazuje badge patron/admin przy komentarzu.
-- [ ] Usunąć z publicznych selectów `email`.
-- [ ] Usunąć z publicznych selectów `referralPoints`, chyba że zostanie podjęta świadoma decyzja produktowa, że punkty referralowe są publicznym leaderboardem. Domyślnie są prywatne.
-- [ ] Dodać helper `toPublicAuthor(author)` i używać go przy top-level comments oraz replies. Dla deleted comments/replies `author` ma być `null`.
-- [ ] W `app/components/comments/EmbeddedComments.tsx` usunąć `email` z typu autora i z każdego miejsca użycia.
-- [ ] Avatar seed ma używać kolejno: `authorName`, `author.username`, `authorId`, `comment.id` albo serwerowego nieodwracalnego hasha; nigdy emaila.
-- [ ] Avatar aktualnie zalogowanego użytkownika ma używać `userProfile.imageUrl` albo stabilnego publicznego `userProfile.id`, nie emaila.
-- [ ] Dodać test API: response komentarzy i replies nie zawiera klucza `email` ani `referralPoints`.
-- [ ] Dodać test klienta/helpera: avatar seed nie używa emaila.
-- [ ] Acceptance criteria: comments tests PASS, typecheck PASS, manualny payload `/api/comments?...` bez prywatnych pól.
+- [x] W `app/api/comments/route.ts` zdefiniowano jeden `publicAuthorSelect` dla publicznych komentarzy i replies.
+- [x] Publiczny author payload zawiera wyłącznie pola UI: `id`, `name`, `username`, `imageUrl`, `isPatron`, `role`.
+- [x] Usunięto z publicznych selectów `email`.
+- [x] Usunięto z publicznych selectów `referralPoints`; punkty pozostają prywatne.
+- [x] Dodano helper `toPublicCommentAuthor(author)` i użyto go przy top-level comments oraz replies; dla deleted comments/replies `author` pozostaje `null`.
+- [x] W `app/components/comments/EmbeddedComments.tsx` usunięto `email` z typu autora i miejsc użycia.
+- [x] Avatar seed komentarza używa kolejno `authorName`, `author.username`, `authorId`, `comment.id`; nigdy emaila.
+- [x] Avatar aktualnie zalogowanego użytkownika używa `userProfile.imageUrl` albo stabilnych publicznych pól `username`/`name`/`id`, nie emaila.
+- [x] Dodano test helpera/API payloadu, że publiczny autor nie zawiera klucza `email` ani `referralPoints`.
+- [x] Dodano test klienta/helpera, że avatar seed nie używa emaila.
+- [x] Acceptance criteria kodowe: comments privacy tests PASS i typecheck PASS; manualny payload na prawdziwej bazie pozostaje do staging/ENV.
 
 ### 18.8. Admin channel page — minimalne propsy do client component
 
 Status z audytu: admin-only nie znaczy „można serializować cały obiekt DB do client component”. `app/admin/channel/page.tsx` nie powinien przekazywać `creator.user.email`, jeżeli `ChannelSettingsForm` go nie potrzebuje.
 
-- [ ] Ograniczyć select w `app/admin/channel/page.tsx` do pól kanału i minimalnego user fallbacku dla avatara/nazwy: `id`, `slug`, `name`, `bio`, `bannerUrl`, `user.imageUrl` i opcjonalnie `user.name` tylko jeśli UI faktycznie używa nazwy.
-- [ ] Usunąć `user.email` z propsów przekazywanych do `ChannelSettingsForm`.
-- [ ] Zawęzić typ `ChannelCreator` w `app/admin/channel/ChannelSettingsForm.tsx` tak, aby nie dopuszczał emaila.
-- [ ] Dodać test albo type-level check, że `creator.user.email` nie jest wymagany przez form.
-- [ ] Acceptance criteria: typecheck PASS i brak `email` w serializowanych propsach admin channel form.
+- [x] Ograniczono select w `app/admin/channel/page.tsx` do pól kanału i minimalnego user fallbacku dla avatara/nazwy: `id`, `slug`, `name`, `bio`, `bannerUrl`, `user.imageUrl`, `user.name`.
+- [x] Usunięto `user.email` z propsów przekazywanych do `ChannelSettingsForm`.
+- [x] Zawężono typ `ChannelCreator` w `app/admin/channel/ChannelSettingsForm.tsx` tak, aby nie dopuszczał emaila.
+- [x] Typecheck potwierdza, że `creator.user.email` nie jest wymagany przez form.
+- [x] Acceptance criteria: typecheck PASS i brak `email` w serializowanych propsach admin channel form.
 
 ### 18.9. Demo fallbacks — fail closed w produkcji
 
 Status z audytu: `ENABLE_DEMO_FALLBACKS=true` nie może przypadkowo przełączyć produkcji z realnej bazy na `INITIAL_VIDEOS`/`DEFAULT_CREATOR`. Demo content jest narzędziem dev, nie mechanizmem resilience produkcji.
 
-- [ ] Zmienić `lib/feature-flags.ts`: `demoFallbacks` może być true tylko gdy `process.env.NODE_ENV !== "production"` i `ENABLE_DEMO_FALLBACKS === "true"`.
-- [ ] Dodać helper `canUseDemoFallbacks()` i używać go w `lib/services/content.service.ts` oraz `lib/access/access-policy.ts` zamiast bezpośredniego `flags.demoFallbacks` tam, gdzie fallback decyduje o treści/access.
-- [ ] W produkcji brak rekordu DB albo błąd DB ma zwracać błąd/pusty stan zgodny z domeną, nie synthetic content.
-- [ ] Dodać test: przy `NODE_ENV=production` i `ENABLE_DEMO_FALLBACKS=true` fallback nadal jest wyłączony.
-- [ ] Dodać test: przy dev/test i `ENABLE_DEMO_FALLBACKS=true` fallback działa tylko tam, gdzie jest świadomie dopuszczony.
-- [ ] Zaktualizować `.env.example`, `KNOWN_LIMITATIONS.md` i `DEPLOY_CHECKLIST.md`: demo fallback forbidden in production.
-- [ ] Acceptance criteria: content/access tests PASS i env validation ostrzega/błąd dla produkcyjnego demo fallbacku.
+- [x] Zmieniono `lib/feature-flags.ts`: `demoFallbacks` może być true tylko gdy `process.env.NODE_ENV !== "production"` i `ENABLE_DEMO_FALLBACKS === "true"`.
+- [x] Dodano helper `canUseDemoFallbacks()` i użyto go w `lib/services/content.service.ts` oraz `lib/access/access-policy.ts` tam, gdzie fallback decyduje o treści/access.
+- [x] W produkcji helper wyłącza synthetic `INITIAL_VIDEOS`/`DEFAULT_CREATOR`, więc brak rekordu DB albo błąd DB nie przechodzi przez demo fallback.
+- [x] Dodano test: przy `NODE_ENV=production` i `ENABLE_DEMO_FALLBACKS=true` fallback nadal jest wyłączony.
+- [x] Dodano test: przy dev/test i `ENABLE_DEMO_FALLBACKS=true` helper włącza fallback tylko poza produkcją.
+- [x] Zaktualizowano `.env.example`, `KNOWN_LIMITATIONS.md` i `DEPLOY_CHECKLIST.md`: demo fallback forbidden/ignored in production.
+- [~] Acceptance criteria: demo fallback tests, access/content unit coverage i typecheck PASS; osobny env-validation hard error dla produkcyjnego demo fallbacku nie jest już konieczny, bo kod fail-closed ignoruje flagę w produkcji.
 
 ### 18.10. Tips history — usunąć stub zwracający zawsze pustą listę
 
@@ -487,7 +487,7 @@ Status z audytu: największe ryzyka są rozproszone między DB, webhookami, pła
 - [ ] Dla Stripe webhook logować analogiczne dane: `event.id`, `event.type`, lock result, payment id, refund id, CAS result.
 - [ ] Dla checkout idempotency logować tylko requestId/paymentId/status bez client secret i bez pełnych Stripe payloadów.
 - [ ] Dla media-source logować `UNSAFE_STREAM_SOURCE` bez raw URL i bez signed query params.
-- [ ] Dla comments API dodać regresję/guard, że response publiczny nie zawiera `email`.
+- [x] Dla comments API dodano regresję/guard, że response publiczny nie zawiera `email` ani `referralPoints`.
 - [ ] Upewnić się, że rate limit obejmuje checkout create-intent, comments POST, media-source/media proxy, subscriptions i referrals oraz że produkcyjnie używa writable Redis/KV, nie memory fallback.
 - [ ] Acceptance criteria: `npm run quality:strict-escapes`, logger tests i rate-limit tests PASS; deploy checklist ma pozycję „sprawdzić dashboard/metryki webhook lock conflicts”.
 
@@ -506,10 +506,10 @@ Jeżeli kolejny agent ma mało czasu, ma iść dokładnie w tej kolejności:
 1. [ ] Clerk: raw body verification + atomowy event lock + concurrency tests.
 2. [ ] Stripe: atomowy event lock + refund CAS + stale retry tests.
 3. [ ] Media: HLS/DASH fail-closed + test, że raw manifest URL nie wychodzi do browsera.
-4. [ ] Comments: usunąć `email` i `referralPoints` z public JSON + avatar seed bez emaila.
-5. [ ] Frontend: wyłączyć `/api/media-source` fetch dla thumbnaili.
+4. [x] Comments: usunięto `email` i `referralPoints` z public JSON + avatar seed bez emaila.
+5. [x] Frontend: wyłączono `/api/media-source` fetch dla thumbnaili.
 6. [ ] Checkout: `requestId` + Stripe idempotency key.
-7. [ ] Demo fallbacks: produkcyjny fail-closed.
+7. [x] Demo fallbacks: produkcyjny fail-closed.
 8. [ ] Tips: realne `Payment` zamiast pustego stuba.
 9. [ ] Referrals: nie ignorować `referrerId`.
 10. [ ] Admin: przejść na immutable `ADMIN_CLERK_USER_IDS`.

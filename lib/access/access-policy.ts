@@ -1,6 +1,6 @@
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { flags } from '../feature-flags';
+import { canUseDemoFallbacks } from '../feature-flags';
 import { isPatronLikeUser } from './comment-access';
 
 
@@ -43,7 +43,7 @@ export class AccessPolicy {
       include: { creator: true }
     });
 
-    if (!video && flags.demoFallbacks) {
+    if (!video && canUseDemoFallbacks()) {
         // Fallback for demo/dev if DB is empty
         const { INITIAL_VIDEOS } = await import('../data/initial-content');
         const fallback = INITIAL_VIDEOS.find(v => v.id === videoId);
