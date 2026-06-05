@@ -293,7 +293,230 @@ Legenda:
 - [x] Zaktualizowano `.env.example` o neutralny `MAIN_CREATOR_SLUG` i opcjonalne `MAIN_CREATOR_NAME`.
 - [x] Dokumentacja rozdziela `Subscription` jako powiadomienia mailowe od `Patron` jako płatny dostęp premium.
 
-## 18. Finalna walidacja przed prywatną betą
+
+## 18. Roadmapa po brutalnym audycie produkcyjnym VOD Creator Platform
+
+Ta sekcja jest szczegółowym backlogiem dla kolejnych agentów AI na podstawie audytu bezpieczeństwa, spójności finansowej, prywatności, obciążenia DB i „logic shells”. Nie wolno traktować żadnego punktu jako naprawionego tylko dlatego, że istnieje test jednostkowy podobnej ścieżki. Każdy punkt wymaga osobnej weryfikacji aktualnego kodu, patcha, testu regresyjnego i krótkiego wpisu przy checkboxie.
+
+Priorytet wykonania przed prywatną betą:
+
+1. **P0 / release blocker** — naprawić atomowe blokady webhooków Clerk i Stripe, CAS refundów, surową weryfikację Clerk webhook, blokadę raw HLS/DASH oraz wyciek danych w comments API.
+2. **P1 / beta blocker** — usunąć fan-out `PremiumWrapper` na miniaturach, zduplikowane odczyty media-source/access-policy, idempotency key dla checkout create-intent, produkcyjne wyłączenie demo fallbacków i realną historię tipsów.
+3. **P2 / hardening przed public release** — admin allowlist po immutable Clerk user ID, referral flow z `referrerId`, naprawcza synchronizacja Clerk access po płatnościach/refundach, ograniczenie danych przekazywanych do client components, staging smoke i testy wyścigów.
+
+### 18.1. Clerk webhook — atomowa idempotencja i raw body verification
+
+Status z audytu: obecna idempotencja może być logicznie nieatomowa, jeżeli route wykonuje schemat read → decision → upsert/update statusu `PROCESSING`. Dodatkowo webhook nie może weryfikować podpisu na `JSON.stringify(await req.json())`, tylko na surowym body dostarczonym przez Clerk/Svix.
+
+- [ ] Zweryfikować aktualny kod w `app/api/webhooks/clerk/route.ts` i `lib/webhooks/clerk-idempotency.ts`: czy po weryfikacji `svix-id` istnieje jeden atomowy mechanizm acquire lock dla `ClerkEvent`, bez rozdzielonego pre-checku dopuszczającego dwa workery.
+- [ ] Zastąpić split read/decision/update funkcją typu `acquireClerkEventLock(id, type, payload)`, która najpierw próbuje `prisma.clerkEvent.create({ status: PROCESSING })`, a przy `P2002` wykonuje warunkowe `updateMany` tylko dla `FAILED` albo starego `PROCESSING` z `updatedAt < now - CLERK_STALE_MS`.
+- [ ] Ustalić i udokumentować `CLERK_STALE_MS` — rekomendacja z audytu: 5 minut. Wartość ma być stałą w kodzie albo kontrolowaną env z bezpiecznym defaultem.
+- [ ] Jeśli lock nie został przejęty, endpoint ma zwrócić sukces idempotentny, np. `{ success: true, duplicate: true }`, bez wykonywania side effects: welcome email, password notification, user sync, delete/deactivate.
+- [ ] Przebudować weryfikację podpisu: najpierw pobrać `const body = await req.text()`, zweryfikować `wh.verify(body, headers)`, a JSON parsować dopiero po poprawnej weryfikacji albo używać zweryfikowanego `evt`.
+- [ ] Dodać test regresyjny dla raw body: payload z inną kolejnością/formatowaniem whitespace nie może przechodzić/failować przypadkowo przez rekonstrukcję JSON; test ma udowodnić, że podpis jest liczony na dokładnych bajtach request body.
+- [ ] Dodać test wyścigu logicznego: dwa równoległe przetwarzania tego samego `svix-id` nie mogą oba wejść do handlera side effects; jeden ma przejąć lock, drugi ma dostać duplicate/locked.
+- [ ] Dodać test stale retry: stary `PROCESSING` może zostać przejęty dokładnie raz, świeży `PROCESSING` nigdy.
+- [ ] Dodać test `FAILED` retry: event `FAILED` może wrócić do `PROCESSING` dokładnie raz i czyści `error`.
+- [ ] Acceptance criteria: `npm test -- --run tests/unit/clerk-webhook-route.test.ts tests/unit/clerk-webhook.test.ts` PASS plus nowy test concurrency/raw-body w tym samym obszarze.
+
+### 18.2. Stripe webhook — atomowy lock, refund CAS i replay-safe repair
+
+Status z audytu: Stripe event handling ma lepszy model niż Clerk, ale nadal może dopuścić dwa stale retriery do jednego eventu, jeżeli przejście do `PROCESSING` nie jest warunkowe. Szczególnie groźne jest `handleRefund()`, bo refund czyta `refundedAmountMinor`, liczy deltę i aktualizuje totals; przy wyścigu dwa workery mogą odjąć tę samą deltę dwa razy.
+
+- [ ] Zweryfikować aktualny `PaymentService.handleWebhook()` i tabelę `StripeEvent`: czy acquire lock jest atomowy przez `create` + warunkowy `updateMany`, a nie przez read → decyzja → update.
+- [ ] Dodać prywatną metodę `acquireStripeEventLock(event: Stripe.Event)`: `create` dla nowego eventu; przy `P2002` tylko `FAILED` albo stary `PROCESSING` może przejść do `PROCESSING`.
+- [ ] Ustalić i udokumentować `STRIPE_STALE_MS` — rekomendacja z audytu: 10 minut.
+- [ ] `handleWebhook()` ma natychmiast kończyć bez side effects, jeśli lock nie został przejęty. Log powinien mówić `already handled or locked`, bez sekretów i bez pełnych payloadów Stripe.
+- [ ] W `handleRefund()` zamienić aktualizację `Payment` na compare-and-swap: `updateMany({ where: { id, refundedAmountMinor: previousRefundedMinor }, data: { refundedAmountMinor: newValue, status } })`.
+- [ ] Jeśli CAS zwraca `count === 0`, transakcja nie może drugi raz dekrementować `UserPaymentTotal`, odbierać patrona ani emitować maili. Ma zalogować idempotentny no-op.
+- [ ] Upewnić się, że `refund.newRefundedAmountMinor` i status refundu są monotoniczne wobec dotychczasowego stanu. Pełny refund po partial refund ma odjąć tylko różnicę, a nie całą kwotę drugi raz.
+- [ ] Dodać test równoległego refund eventu: dwa handlery z tym samym startowym `refundedAmountMinor` nie mogą podwójnie zdekrementować lifetime totals.
+- [ ] Dodać test stale `PROCESSING` dla `StripeEvent`: tylko jeden worker przejmuje stary event.
+- [ ] Dodać test `FAILED` retry dla `StripeEvent`: event może wrócić do `PROCESSING` dokładnie raz.
+- [ ] Przebudować `fulfillPayment()` tak, aby replay webhooka mógł naprawić zewnętrzny stan Clerk nawet wtedy, gdy lokalny payment jest już `SUCCEEDED`. Side effects mailowe zostają tylko przy pierwszym przejściu `PENDING → SUCCEEDED`.
+- [ ] Po każdym replay-safe `fulfillPayment()` pobrać świeży stan usera i payment totals, znormalizować totals i wywołać `UserAccessService.syncClerkAccess()`. Błąd tej synchronizacji musi być widoczny operacyjnie: audit log, metryka albo zadanie retry, nie cichy sukces produkcyjny.
+- [ ] Acceptance criteria: testy `payment.service`/Stripe webhook/refund/dispute PASS, nowy test CAS refundu PASS, test replay repair Clerk access PASS.
+
+### 18.3. Checkout create-intent — idempotentne tworzenie PaymentIntent
+
+Status z audytu: każdy POST do `/api/checkout/create-intent` może tworzyć nowy rekord `Payment` i nowy Stripe `PaymentIntent`. Double click, retry przeglądarki, retry CDN albo niestabilna sieć mogą wygenerować wiele pending intents dla jednej intencji płatności.
+
+- [ ] Dodać do request body `requestId` jako UUID generowany po stronie klienta dla pojedynczej intencji checkoutu.
+- [ ] Rozszerzyć walidację `checkoutSchema` w `app/api/checkout/create-intent/route.ts` o `requestId: z.string().uuid()`.
+- [ ] Przekazać `requestId` do `PaymentService.createPayment()` i zapisać go w `Payment.metadata.requestId`.
+- [ ] Przed utworzeniem nowego paymentu szukać istniejącego pending paymentu dla `(userId, amountMinor, currency, requestId)`. Jeżeli ma `stripeIntentId`, zwrócić istniejący client secret po retrieve ze Stripe.
+- [ ] Przy `stripe.paymentIntents.create(...)` użyć Stripe idempotency key, np. `payment-intent:${userId}:${requestId}`.
+- [ ] Jeśli lokalny `Payment` powstał, ale Stripe create failuje, oznaczyć payment jako `FAILED` albo wprowadzić jawny stan recovery. Nie zostawiać wiszących `PENDING` bez `stripeIntentId` jako normalnego sukcesu.
+- [ ] Rozważyć unikalny indeks DB dla deduplikacji requestu. Jeżeli metadata JSON nie nadaje się do indeksu w obecnym modelu, dodać osobne pole `checkoutRequestId` i migrację.
+- [ ] Dodać test double-submit: dwa POST-y z tym samym `requestId` nie tworzą dwóch Stripe intents i zwracają ten sam payment/client secret.
+- [ ] Dodać test retry po awarii Stripe: lokalny rekord nie zostaje w stanie mylącym operatora.
+- [ ] Acceptance criteria: testy checkout route i `PaymentService.createPayment` PASS, plus ręczny/staging smoke double click checkout.
+
+### 18.4. Media access — raw HLS/DASH URL nie może trafiać do browsera
+
+Status z audytu: aktualny model jest bezpieczny tylko wtedy, gdy browser nigdy nie dostaje trwałego/raw origin URL dla gated content. Dla `.m3u8` i `.mpd` trzeba założyć, że manifest i segmenty mogą być pobierane poza aplikacją, jeżeli URL wypłynie do klienta.
+
+- [ ] Zweryfikować `lib/media/video-source.ts`: `.m3u8` i `.mpd` nie mogą być oznaczane jako `needsProxy: false` dla treści gated.
+- [ ] Krótkoterminowo fail-closed: `getVideoSourceInfo()` ma oznaczać HLS/DASH jako `needsProxy: true`, a `/api/media-source/[videoId]` ma zwrócić `503 UNSAFE_STREAM_SOURCE`, dopóki nie istnieje signed manifest/signed segment delivery albo manifest/segment proxy egzekwujący `AccessPolicy` na każdym żądaniu.
+- [ ] `/api/media-source/[videoId]` nie może zwracać raw `playbackUrl` dla HLS/DASH z origin/CDN, nawet po pozytywnej decyzji access.
+- [ ] `PremiumWrapper` i `VideoPlayer` muszą obsłużyć błąd `UNSAFE_STREAM_SOURCE` czytelnym komunikatem dla admina/twórcy: „streaming HLS/DASH wymaga signed delivery/proxy przed produkcją”.
+- [ ] Zaprojektować długoterminowy wariant: signed manifests i signed segments albo serwerowy manifest rewriter/proxy. Decyzja musi jasno określić TTL, cache headers, ochronę segmentów i relację z allowlistą mediów.
+- [ ] Dodać test: patron z dostępem do filmu `.m3u8` nie dostaje raw URL w JSON odpowiedzi `/api/media-source/[videoId]`.
+- [ ] Dodać test: `.mpd` zachowuje się tak samo jak `.m3u8`.
+- [ ] Dodać test: direct video albo bezpieczny proxied URL nadal działa zgodnie z allowlistą hostów.
+- [ ] Acceptance criteria: `npm test -- --run tests/unit/media-security.test.ts` PASS plus nowe testy HLS/DASH fail-closed.
+
+### 18.5. Media-source i AccessPolicy — usunąć zduplikowane odczyty Prisma
+
+Status z audytu: `/api/media-source/[videoId]` najpierw pyta `AccessPolicy.canViewVideo(userId, videoId)`, które ładuje film, a potem route ponownie robi `prisma.video.findUnique()` po `videoUrl`. To jest gorąca ścieżka playera i nie może mieć oczywistych duplikatów.
+
+- [ ] Rozszerzyć `AccessPolicy.canViewVideo()` tak, aby opcjonalnie przyjmował już załadowany obiekt video z polami wymaganymi do decyzji: `id`, `tier`, `status`, `publishedAt`, `creator.id` i ewentualnie `videoUrl` poza samą decyzją.
+- [ ] W `/api/media-source/[videoId]` wykonać jeden `prisma.video.findUnique()` z kompletnym `select`, przekazać obiekt do `AccessPolicy.canViewVideo(...)` i potem użyć tego samego obiektu do `getVideoSourceInfo(...)`.
+- [ ] Upewnić się, że missing video zwraca 404/403 zgodnie z obecną semantyką i nie uruchamia demo fallbacku w produkcji.
+- [ ] Dodać test route albo mock Prisma, który wykrywa brak podwójnego `findUnique` dla jednego requestu.
+- [ ] Acceptance criteria: test media-source/access-policy PASS i brak regresji Patron vs Subscription.
+
+### 18.6. Frontend load amplification — `PremiumWrapper` nie może odpalać API dla miniatur
+
+Status z audytu: każdy card/thumbnail montujący `PremiumWrapper` z `variant="thumbnail"` robi `fetch('/api/media-source/${videoId}')`. Lista 20 filmów może wygenerować 20 dodatkowych requestów i dziesiątki odczytów DB przed kliknięciem play.
+
+- [ ] Usunąć `PremiumWrapper` z miniatur w `app/components/ChannelVideoCard.tsx`. Miniatura ma renderować statyczny `VideoPlayer variant="thumbnail"`, overlay czasu i ewentualny lock badge wyliczony z danych listy, bez media-source fetch.
+- [ ] Usunąć albo obejść `PremiumWrapper` dla miniatur/list w `app/components/ChannelHome.tsx`. Link na miniaturze ma prowadzić do wybranego filmu, a źródło playback ma być rozwiązywane dopiero dla hero/current player.
+- [ ] Alternatywnie, jeśli `PremiumWrapper` zostaje technicznie użyty dla thumbnail, jego `useEffect` musi mieć pierwszy branch `variant === "thumbnail"` i nigdy nie robić fetch do `/api/media-source`.
+- [ ] Dla thumbnail access UI używać tylko `video.tier`, `userId` i znanych danych sesji. Nie wolno pobierać prawdziwego `playbackUrl`.
+- [ ] Dodać test komponentu albo smoke z mocked `fetch`, który potwierdza: 20 thumbnaili → 0 requestów `/api/media-source`; selected hero → maksymalnie 1 request.
+- [ ] Zmierzyć przed/po w dev/staging liczbę requestów i zapytań Prisma dla strony listy. Wpisać wynik do roadmapy.
+- [ ] Acceptance criteria: brak fan-out na miniaturach, `npm run typecheck`, `npm test -- --run` PASS.
+
+### 18.7. Comments API — prywatność autorów i brak email/referralPoints w public JSON
+
+Status z audytu: publiczne comments API nie powinno zwracać `author.email` ani monetizacyjnych/metadanych typu `referralPoints`. Avatar seed po stronie klienta nie może używać emaila, bo każdy viewer może odczytać payload JSON.
+
+- [ ] W `app/api/comments/route.ts` zdefiniować jeden `publicAuthorSelect` dla publicznych komentarzy i replies.
+- [ ] Publiczny author payload powinien zawierać wyłącznie pola potrzebne UI: `id`, `name`, `username`, `imageUrl` oraz ewentualnie jawnie publiczne badge fields `isPatron` i `role`, jeżeli produkt faktycznie pokazuje badge patron/admin przy komentarzu.
+- [ ] Usunąć z publicznych selectów `email`.
+- [ ] Usunąć z publicznych selectów `referralPoints`, chyba że zostanie podjęta świadoma decyzja produktowa, że punkty referralowe są publicznym leaderboardem. Domyślnie są prywatne.
+- [ ] Dodać helper `toPublicAuthor(author)` i używać go przy top-level comments oraz replies. Dla deleted comments/replies `author` ma być `null`.
+- [ ] W `app/components/comments/EmbeddedComments.tsx` usunąć `email` z typu autora i z każdego miejsca użycia.
+- [ ] Avatar seed ma używać kolejno: `authorName`, `author.username`, `authorId`, `comment.id` albo serwerowego nieodwracalnego hasha; nigdy emaila.
+- [ ] Avatar aktualnie zalogowanego użytkownika ma używać `userProfile.imageUrl` albo stabilnego publicznego `userProfile.id`, nie emaila.
+- [ ] Dodać test API: response komentarzy i replies nie zawiera klucza `email` ani `referralPoints`.
+- [ ] Dodać test klienta/helpera: avatar seed nie używa emaila.
+- [ ] Acceptance criteria: comments tests PASS, typecheck PASS, manualny payload `/api/comments?...` bez prywatnych pól.
+
+### 18.8. Admin channel page — minimalne propsy do client component
+
+Status z audytu: admin-only nie znaczy „można serializować cały obiekt DB do client component”. `app/admin/channel/page.tsx` nie powinien przekazywać `creator.user.email`, jeżeli `ChannelSettingsForm` go nie potrzebuje.
+
+- [ ] Ograniczyć select w `app/admin/channel/page.tsx` do pól kanału i minimalnego user fallbacku dla avatara/nazwy: `id`, `slug`, `name`, `bio`, `bannerUrl`, `user.imageUrl` i opcjonalnie `user.name` tylko jeśli UI faktycznie używa nazwy.
+- [ ] Usunąć `user.email` z propsów przekazywanych do `ChannelSettingsForm`.
+- [ ] Zawęzić typ `ChannelCreator` w `app/admin/channel/ChannelSettingsForm.tsx` tak, aby nie dopuszczał emaila.
+- [ ] Dodać test albo type-level check, że `creator.user.email` nie jest wymagany przez form.
+- [ ] Acceptance criteria: typecheck PASS i brak `email` w serializowanych propsach admin channel form.
+
+### 18.9. Demo fallbacks — fail closed w produkcji
+
+Status z audytu: `ENABLE_DEMO_FALLBACKS=true` nie może przypadkowo przełączyć produkcji z realnej bazy na `INITIAL_VIDEOS`/`DEFAULT_CREATOR`. Demo content jest narzędziem dev, nie mechanizmem resilience produkcji.
+
+- [ ] Zmienić `lib/feature-flags.ts`: `demoFallbacks` może być true tylko gdy `process.env.NODE_ENV !== "production"` i `ENABLE_DEMO_FALLBACKS === "true"`.
+- [ ] Dodać helper `canUseDemoFallbacks()` i używać go w `lib/services/content.service.ts` oraz `lib/access/access-policy.ts` zamiast bezpośredniego `flags.demoFallbacks` tam, gdzie fallback decyduje o treści/access.
+- [ ] W produkcji brak rekordu DB albo błąd DB ma zwracać błąd/pusty stan zgodny z domeną, nie synthetic content.
+- [ ] Dodać test: przy `NODE_ENV=production` i `ENABLE_DEMO_FALLBACKS=true` fallback nadal jest wyłączony.
+- [ ] Dodać test: przy dev/test i `ENABLE_DEMO_FALLBACKS=true` fallback działa tylko tam, gdzie jest świadomie dopuszczony.
+- [ ] Zaktualizować `.env.example`, `KNOWN_LIMITATIONS.md` i `DEPLOY_CHECKLIST.md`: demo fallback forbidden in production.
+- [ ] Acceptance criteria: content/access tests PASS i env validation ostrzega/błąd dla produkcyjnego demo fallbacku.
+
+### 18.10. Tips history — usunąć stub zwracający zawsze pustą listę
+
+Status z audytu: `lib/actions/tips.ts:getUserTips()` nie może autoryzować użytkownika, a potem zawsze zwracać `[]` z komentarzem, że model `Tip` zniknął. To kłamie UI i użytkownikowi.
+
+- [ ] Przebudować `getUserTips()` tak, aby czytał realne `Payment` użytkownika.
+- [ ] Zwracać co najmniej: `id`, `createdAt`, `amountMinor` albo znormalizowane `amount`, `currency`, `status`, `refundedAmountMinor` i opcjonalnie dane `creator` (`id`, `name`, `slug`) jeżeli UI pokazuje twórcę.
+- [ ] Uwzględnić statusy: `SUCCEEDED`, `PARTIALLY_REFUNDED`, `REFUNDED`. Dla kwoty netto liczyć `max(0, amountMinor - refundedAmountMinor)`.
+- [ ] Dla guestów zdecydować jedną semantykę: zwrócić `[]` tylko jeśli UI tego oczekuje, albo rzucić `AUTH_REQUIRED`. Decyzję opisać w komentarzu/testach.
+- [ ] Zaktualizować `app/components/profile/TipsList.tsx`, jeżeli obecny typ oczekuje starego/stubowego kształtu danych.
+- [ ] Dodać test: user z trzema paymentami widzi historię; user bez paymentów widzi pustą listę; cudze paymenty nie wyciekają.
+- [ ] Acceptance criteria: tips action tests PASS i UI profilu renderuje realną historię.
+
+### 18.11. Referral flow — `referrerId` nie może być ignorowany
+
+Status z audytu: `getOrCreateUser()` wyciąga `referrerId` z Clerk metadata i przekazuje do `syncUser()`, ale `syncUser()` może go ignorować. Jeśli produkt ma referral patron threshold, to jest niedokończona ścieżka biznesowa.
+
+- [ ] Zweryfikować aktualny `lib/services/user.service.ts`: czy `referrerId` jest realnie zapisywany do `User.referredById` albo tworzy właściwy rekord referralowy.
+- [ ] Jeżeli nadal jest ignorowany, opakować `syncUser()` w transakcję i pobrać istniejącego usera z `role` oraz `referredById`.
+- [ ] Przy create/update ustawić `referredById` tylko gdy: `referrerId` istnieje, `referrerId !== id`, referrer istnieje w DB i user nie ma już `referredById`.
+- [ ] Nie nadpisywać istniejącego referrera przy kolejnych webhookach Clerk/user update.
+- [ ] Zdecydować, czy claim referral ma skutkować punktami/grantem patrona natychmiast czy przez istniejący endpoint `/api/user/referrals/claim`; opisać spójną ścieżkę w dokumentacji.
+- [ ] Dodać test: nowy user z poprawnym `referrerId` dostaje `referredById`.
+- [ ] Dodać test: self-referral jest odrzucony.
+- [ ] Dodać test: nieistniejący referrer nic nie ustawia.
+- [ ] Dodać test: istniejący `referredById` nie jest nadpisywany.
+- [ ] Acceptance criteria: referral/unit tests PASS i brak regresji Clerk user sync.
+
+### 18.12. Admin privileges — odejście od mutable email/bootstrap role jako źródła prawdy
+
+Status z audytu: admin przez `ADMIN_EMAIL` albo Clerk metadata role jest wygodny, ale opiera uprawnienia na atrybutach, które są bardziej zmienne niż immutable Clerk subject ID. To nie jest klasyczne BOLA, ale jest ryzykiem eskalacji przy przejęciu/misconfig identity.
+
+- [ ] Zaprojektować migrację konfiguracji z `ADMIN_EMAIL` na `ADMIN_CLERK_USER_IDS` jako allowlistę immutable Clerk user IDs.
+- [ ] Dodać `lib/admin-config.ts` z parserem `ADMIN_CLERK_USER_IDS` i helperem `isConfiguredAdminUserId(userId)`.
+- [ ] Zmienić `UserService.syncUser()` tak, aby admin role wynikał z allowlisty user ID albo istniejącej roli w DB zgodnie z polityką migracji; nie promować nowych adminów tylko przez email equality.
+- [ ] Zmienić `requireAdmin()` tak, aby nie auto-upgrade’ował usera na podstawie emaila. Jeżeli tymczasowo zachowujemy legacy `ADMIN_EMAIL`, musi być oznaczone jako deprecated i nie jako finalny production model.
+- [ ] Zaktualizować `.env.example`, `DEPLOY_CHECKLIST.md` i dokumentację env: `ADMIN_CLERK_USER_IDS` wymagane/rekomendowane dla produkcji, `ADMIN_EMAIL` tylko fallback migracyjny albo usunięte.
+- [ ] Dodać test: user z admin ID ma dostęp.
+- [ ] Dodać test: user z takim samym email jak `ADMIN_EMAIL`, ale bez allowlist ID, nie dostaje automatycznie admina w finalnym trybie.
+- [ ] Dodać test: Clerk metadata `role=ADMIN` samo w sobie nie nadaje admina, chyba że świadomie zostanie zachowana osobna trust policy.
+- [ ] Acceptance criteria: admin access tests PASS, deploy checklist opisuje procedurę ustawienia pierwszego admina.
+
+### 18.13. Authorization review — utrzymać brak publicznego BOLA w mutation routes
+
+Status z audytu: w głównych non-admin mutacjach nie znaleziono potwierdzonego publicznego BOLA/IDOR. To trzeba utrzymać, bo nowe zmiany w comments/subscriptions/checkout/referrals mogą łatwo to zepsuć.
+
+- [ ] Dodać/utrzymać testy dla comment delete: autor może usunąć, admin może usunąć, właściciel video/creator może usunąć, obcy user nie może.
+- [ ] Dodać/utrzymać testy dla comment pin: tylko admin albo właściciel creator/video może przypiąć/odpiąć.
+- [ ] Dodać/utrzymać testy dla `/api/subscriptions`: rekord zawsze wiąże się z `auth.userId`, a nie userId z body.
+- [ ] Dodać/utrzymać testy dla `/api/user/language`: update zawsze dotyczy `auth.userId`.
+- [ ] Dodać/utrzymać testy dla `/api/checkout/create-intent`: payment zawsze powstaje dla session usera, nie dla userId z body.
+- [ ] Dodać/utrzymać testy dla `/api/user/referrals/claim`: claim działa tylko dla authenticated usera i nie pozwala claimować za kogoś.
+- [ ] Acceptance criteria: reprezentatywny suite auth/BOLA PASS przed każdą zmianą release blockerów.
+
+### 18.14. Rate limit i observability dla ścieżek krytycznych
+
+Status z audytu: największe ryzyka są rozproszone między DB, webhookami, płatnościami i browser exposure. Sama poprawka kodu nie wystarczy bez sygnałów operacyjnych.
+
+- [ ] Dla Clerk webhook logować: `eventId`, `type`, rezultat locka (`acquired`, `duplicate`, `stale_reclaimed`, `failed_retry`), finalny status i sanitizowany błąd.
+- [ ] Dla Stripe webhook logować analogiczne dane: `event.id`, `event.type`, lock result, payment id, refund id, CAS result.
+- [ ] Dla checkout idempotency logować tylko requestId/paymentId/status bez client secret i bez pełnych Stripe payloadów.
+- [ ] Dla media-source logować `UNSAFE_STREAM_SOURCE` bez raw URL i bez signed query params.
+- [ ] Dla comments API dodać regresję/guard, że response publiczny nie zawiera `email`.
+- [ ] Upewnić się, że rate limit obejmuje checkout create-intent, comments POST, media-source/media proxy, subscriptions i referrals oraz że produkcyjnie używa writable Redis/KV, nie memory fallback.
+- [ ] Acceptance criteria: `npm run quality:strict-escapes`, logger tests i rate-limit tests PASS; deploy checklist ma pozycję „sprawdzić dashboard/metryki webhook lock conflicts”.
+
+### 18.15. Dokumentacja i deploy checklist po audycie
+
+- [ ] Zaktualizować `KNOWN_LIMITATIONS.md`: dodać jawne ograniczenia HLS/DASH, demo fallback, checkout idempotency, webhook concurrency i comments privacy, dopóki nie będą naprawione.
+- [ ] Zaktualizować `DEPLOY_CHECKLIST.md`: dodać blokery P0/P1 z tej sekcji jako warunek prywatnej bety/production release.
+- [ ] Zaktualizować `ARCHITECTURE.md`: opisać finalną granicę bezpieczeństwa mediów — browser może dostać tylko URL-e publiczne albo krótkotrwałe/signed/proxied, nigdy trwały raw gated stream URL.
+- [ ] Zaktualizować `.env.example`: `ADMIN_CLERK_USER_IDS`, produkcyjny zakaz demo fallback, wymagane media hosts, Redis/KV, healthcheck.
+- [ ] Po zamknięciu każdego P0 dopisać w README: zmienione pliki, testy, ograniczenia i wpływ na release status.
+
+### 18.16. Minimalny plan wykonania dla kolejnego agenta AI
+
+Jeżeli kolejny agent ma mało czasu, ma iść dokładnie w tej kolejności:
+
+1. [ ] Clerk: raw body verification + atomowy event lock + concurrency tests.
+2. [ ] Stripe: atomowy event lock + refund CAS + stale retry tests.
+3. [ ] Media: HLS/DASH fail-closed + test, że raw manifest URL nie wychodzi do browsera.
+4. [ ] Comments: usunąć `email` i `referralPoints` z public JSON + avatar seed bez emaila.
+5. [ ] Frontend: wyłączyć `/api/media-source` fetch dla thumbnaili.
+6. [ ] Checkout: `requestId` + Stripe idempotency key.
+7. [ ] Demo fallbacks: produkcyjny fail-closed.
+8. [ ] Tips: realne `Payment` zamiast pustego stuba.
+9. [ ] Referrals: nie ignorować `referrerId`.
+10. [ ] Admin: przejść na immutable `ADMIN_CLERK_USER_IDS`.
+
+Dopiero po tych punktach wolno wrócić do kosmetyki UI. W tej fazie bezpieczeństwo, prywatność, idempotencja i obciążenie DB mają wyższy priorytet niż wygląd.
+
+## 19. Finalna walidacja przed prywatną betą
 
 Wykonać z czystego stanu:
 
@@ -315,7 +538,7 @@ npm run db:migrate:deploy
 
 Nie wolno oznaczyć statusu **GOTOWE DO PRYWATNEJ BETY**, dopóki wszystkie komendy jakościowe i DB nie mają faktycznego PASS albo jawnie zaakceptowanego środowiska testowego.
 
-## 19. Raport końcowy każdego agenta
+## 20. Raport końcowy każdego agenta
 
 Każdy agent kończący większy etap ma dopisać w PR/odpowiedzi:
 
