@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { UserService } from '@/lib/services/user.service';
 import { POST, DELETE, PATCH } from '@/app/api/comments/route';
 import { NextRequest } from 'next/server';
 
@@ -37,6 +38,7 @@ vi.mock('@/lib/rate-limit', () => ({
 describe('Comments API BOLA protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(UserService.getOrCreateUserFromAuth).mockImplementation(async (userId) => ({ id: userId } as Awaited<ReturnType<typeof UserService.getOrCreateUserFromAuth>>));
   });
 
   it('DELETE /api/comments: blocks unauthorized user from deleting others comment', async () => {

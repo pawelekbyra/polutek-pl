@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
         data: {
             videoId,
             text: text?.trim() || '',
-            authorId: userId,
+            authorId: localUser.id,
             parentId: parentId || null,
             imageUrl: imageUrl || null,
         },
@@ -379,10 +379,13 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ success: false, message: "Nie można przypiąć usuniętego komentarza." }, { status: 400 });
         }
 
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        if (!localUser) {
+          return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
+        }
 
         const actor = await prisma.user.findUnique({
-          where: { id: userId },
+          where: { id: localUser.id },
           include: { creators: { select: { id: true } } }
         });
         const isAdmin = actor?.role === "ADMIN";
@@ -415,7 +418,7 @@ export async function PATCH(request: NextRequest) {
 
           return tx.comment.update({
             where: { id: commentId },
-            data: { pinnedAt: new Date(), pinnedById: userId },
+            data: { pinnedAt: new Date(), pinnedById: localUser.id },
           });
         });
 
@@ -450,13 +453,16 @@ export async function DELETE(request: NextRequest) {
         });
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        if (!localUser) {
+          return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
+        }
 
         const actor = await prisma.user.findUnique({
-          where: { id: userId },
+          where: { id: localUser.id },
           include: { creators: { select: { id: true } } }
         });
-        const isOwner = comment.authorId === userId;
+        const isOwner = comment.authorId === localUser.id;
         const isAdmin = actor?.role === "ADMIN";
         const isVideoCreator = actor?.creators.some(c => c.id === comment.video.creatorId);
 
@@ -471,7 +477,7 @@ export async function DELETE(request: NextRequest) {
             where: { id: commentId },
             data: {
                 deletedAt: new Date(),
-                deletedById: userId,
+                deletedById: localUser.id,
                 text: "",
                 imageUrl: null
             }
