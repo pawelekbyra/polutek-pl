@@ -44,10 +44,13 @@ Patron może wynikać z kwalifikującego napiwku Stripe, grantu admina, migracji
 
 Endpoint `/api/subscriptions` obsługuje mailowe follow/unfollow: `GET` zwraca status, `POST` zapisuje zgodę na powiadomienia mailowe, a `DELETE` ją usuwa. Endpoint nie zmienia `User.isPatron` i nie nadaje dostępu premium.
 
-
 ### Out of beta scope: campaign/zrzutka/crowdfunding
 
 Campaign, zrzutka, crowdfunding i fundraising są **poza zakresem prywatnej bety**. W becie nie jest dostarczana żadna campaign page ani crowdfunding page. Stripe zostaje wyłącznie jako dobrowolny napiwek / płatność Patron, czyli flow „Wesprzyj kanał”, „Przekaż napiwek”, „Zostań Patronem” i „Dostęp dla Patronów”.
+
+### Media w prywatnej becie
+
+Upload/transcoding pipeline jest poza zakresem prywatnej bety. Beta dopuszcza wyłącznie administrator-provided trusted media URLs: YouTube/Vimeo albo bezpośrednie pliki i manifesty HLS/DASH z hostów wpisanych w dokładnej allowliście mediów. Publiczne upload routes, onboarding twórców i marketplace multi-creator nie są częścią beta release.
 
 ### Twarda zasada
 
@@ -67,7 +70,7 @@ Campaign, zrzutka, crowdfunding i fundraising są **poza zakresem prywatnej bety
 - Resend email templates
 - Tailwind CSS
 - Vitest unit tests
-- Playwright jest w zależnościach, ale smoke E2E nie jest jeszcze domknięte
+- Playwright smoke E2E ma bazowe scenariusze public/gated/admin/media-source oraz ENV-gated scenariusze authenticated; pełne release evidence nadal wymaga stagingu i storage state
 
 ## Najważniejsze skrypty
 
@@ -106,7 +109,6 @@ Wymagane grupy zmiennych:
 - healthcheck: `HEALTHCHECK_TOKEN`.
 
 W produkcji rate limit wymaga zapisywalnego Redis/KV. Memory fallback jest dopuszczalny tylko lokalnie i w testach.
-
 
 ## Status prawny repo
 
@@ -183,28 +185,21 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 
 Vitest posiada konfigurację coverage i progi jakościowe. CI publikuje raport jako artefakt.
 
-- [ ] Rozbudować Playwright o nieskipowane case’y dla homepage, channel page, login-gated video, patron-gated video, subscriptions, comments, checkout/webhook smoke i admin CRUD.
-- [ ] Dodać konfigurację `E2E_*` storage state/test user/test video IDs do staging checklisty, żeby smoke nie zależał od ręcznego stanu przeglądarki.
+- [~] Rozbudować Playwright smoke: zrealizowane homepage, channel page, public video, guest blocks dla login-gated/patron-gated, subscription vs Patron access, comments access, checkout unauthorized guard, admin block, media-source denial oraz ENV-gated non-patron/admin checks. Nadal brakuje pełnego staging smoke dla checkout/webhook success path i admin video CRUD mutation.
 - [ ] Zebrać i podlinkować/zapisać pierwsze zielone zdalne przebiegi GitHub Actions dla quality, integration-postgres i E2E/staging smoke.
 
-## 4. P1 — security gates i CSP enforce
-
-`npm audit` jest blokującym gate'em w CI. CSP jest egzekwowane i używa zwężonych hostów.
-
-- [ ] Dodać SAST/secret scanning jako wymagany gate albo opisać, gdzie jest wykonywany poza repo.
-
-## 5. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
+## 4. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
 
 Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines` i GitHub Actions (`actions/setup-node` czyta `.nvmrc`). `ClerkLocalizationProvider` nie używa już build-time placeholdera dla `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`; brak klucza jest błędem walidacji env i jawnie zatrzymuje provider. Nadal trzeba potwierdzić produkcyjne zależności środowiskowe na realnym deployu.
 
 - [ ] Potwierdzić produkcyjne Redis/KV dla rate limitów na realnym środowisku; memory fallback pozostaje wyłącznie dev/test.
 - [ ] Potwierdzić produkcyjne allowlisty hostów mediów/obrazów w ENV, bez szerokich domen providerów.
 
-## 6. P1 — formalizacja kontraktów API
+## 5. P1 — formalizacja kontraktów API
 
 Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kontraktów w `docs/API_CONTRACTS.md` oraz testy kontraktowe w `tests/unit/api-contracts.test.ts`.
 
-## 7. P1 — performance, observability i alertowalne sygnały
+## 6. P1 — performance, observability i alertowalne sygnały
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
@@ -213,14 +208,7 @@ Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tra
 - [ ] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
 
-## 8. P2 — scope bety, eksperymentalne funkcje i multi-creator
-
-Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/transcoding pipeline, HLS/DASH smoke na realnym hostingu mediów oraz future multi-creator architecture. Beta pozostaje prywatną platformą VOD z dobrowolnymi napiwkami Stripe i dostępem Patron.
-
-- [ ] Domknąć upload pipeline albo jasno ograniczyć betę do administrator-provided trusted media URLs.
-- [ ] Private beta is single configured creator/channel. Multi-creator data model may remain, but no public multi-creator product flow is required for beta.
-
-## 9. P2 — moduły, hotspoty i dług techniczny
+## 7. P2 — moduły, hotspoty i dług techniczny
 
 Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening.
 
@@ -229,7 +217,7 @@ Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększ
 - [ ] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami.
 - [ ] Ustawić lokalne guardrails dla max LOC / complexity w krytycznych modułach albo przynajmniej dokumentować wyjątki.
 
-## 10. P2 — dokumentacja, licencja i reconciliation pass
+## 8. P2 — dokumentacja, licencja i reconciliation pass
 
 Dokumentacja była miejscami bardziej optymistyczna niż runtime. Po każdym hardeningu trzeba utrzymać zasadę: README/ENV/deploy docs opisują dokładnie to, co działa w kodzie i zostało zweryfikowane.
 
