@@ -43,6 +43,7 @@ jobs:
       - run: npm run env:validate:prod
       - run: npx prisma validate
       - run: npx prisma generate
+      - run: npm run quality:strict-escapes
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run lint
