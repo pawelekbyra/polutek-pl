@@ -21,6 +21,8 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       upsert: vi.fn(),
       update: vi.fn(),
+      create: vi.fn(),
+      updateMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -136,9 +138,11 @@ describe('/api/webhooks/clerk route', () => {
       'anna-nowak',
     );
     expect(EmailService.sendWelcomeEmail).toHaveBeenCalledWith('new@example.com', 'Anna', 'en');
-    expect(prisma.clerkEvent.upsert).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'evt_1' },
-      create: expect.objectContaining({ status: WebhookEventStatus.PROCESSING }),
+    expect(prisma.clerkEvent.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        id: 'evt_1',
+        status: WebhookEventStatus.PROCESSING
+      }),
     }));
     expect(prisma.clerkEvent.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'evt_1' },
@@ -182,10 +186,14 @@ describe('/api/webhooks/clerk route', () => {
   });
 
   it('short-circuits processed duplicate events without running user side effects', async () => {
+    const error = new Error() as any;
+    error.code = 'P2002';
+    vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
+    vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({
       status: WebhookEventStatus.PROCESSED,
-      updatedAt: new Date(),
     } as never);
+
     const payload = { type: 'user.created', data: { id: 'user_1' } };
     mockVerifiedEvent(payload);
 
@@ -194,15 +202,19 @@ describe('/api/webhooks/clerk route', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ success: true, duplicate: true, processing: false });
-    expect(prisma.clerkEvent.upsert).not.toHaveBeenCalled();
+    expect(prisma.clerkEvent.create).toHaveBeenCalled();
     expect(UserService.syncUser).not.toHaveBeenCalled();
   });
 
   it('short-circuits fresh in-flight events so parallel deliveries are idempotent', async () => {
+    const error = new Error() as any;
+    error.code = 'P2002';
+    vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
+    vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({
       status: WebhookEventStatus.PROCESSING,
-      updatedAt: new Date(),
     } as never);
+
     const payload = { type: 'user.updated', data: { id: 'user_1' } };
     mockVerifiedEvent(payload);
 
@@ -211,7 +223,7 @@ describe('/api/webhooks/clerk route', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ success: true, duplicate: false, processing: true });
-    expect(prisma.clerkEvent.upsert).not.toHaveBeenCalled();
+    expect(prisma.clerkEvent.create).toHaveBeenCalled();
     expect(UserService.syncUser).not.toHaveBeenCalled();
   });
 });

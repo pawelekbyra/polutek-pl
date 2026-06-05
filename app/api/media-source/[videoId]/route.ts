@@ -16,15 +16,15 @@ export async function GET(_req: NextRequest, { params }: { params: { videoId: st
     return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
   }
 
-  const decision = await AccessPolicy.canViewVideo(userId, videoId);
+  const video = await prisma.video.findUnique({
+    where: { id: videoId },
+    include: { creator: true }
+  });
+
+  const decision = await AccessPolicy.canViewVideo(userId, videoId, video);
   if (!decision.allowed) {
     return NextResponse.json({ hasAccess: false, reason: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
   }
-
-  const video = await prisma.video.findUnique({
-    where: { id: videoId },
-    select: { id: true, videoUrl: true },
-  });
 
   const fallback = !video && flags.demoFallbacks ? INITIAL_VIDEOS.find((item) => item.id === videoId || item.slug === videoId) : null;
   const resolvedVideo = video || fallback;
@@ -34,6 +34,13 @@ export async function GET(_req: NextRequest, { params }: { params: { videoId: st
   }
 
   const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
+
+  if ((source.kind === 'hls' || source.kind === 'dash') && source.needsProxy) {
+    return NextResponse.json({
+      error: 'UNSAFE_STREAM_SOURCE',
+      message: 'Streaming HLS/DASH wymaga signed delivery/proxy przed produkcją.'
+    }, { status: 503 });
+  }
 
   return NextResponse.json({
     hasAccess: true,

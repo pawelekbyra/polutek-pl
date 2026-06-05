@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, title, creatorId } = result.data;
+    const { amountMinor, currency, title, creatorId, requestId } = result.data;
 
     const amountError = validatePaymentAmountMinor(amountMinor, currency);
 
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       currency,
       title,
       creatorId,
+      requestId,
     });
 
     return NextResponse.json({

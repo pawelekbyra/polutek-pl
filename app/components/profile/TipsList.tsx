@@ -10,8 +10,10 @@ import { Loader2, Coins } from '../icons';
 type TipListItem = {
   id: string;
   createdAt: Date | string;
-  amount: number;
+  amountMinor: number;
   currency: string;
+  status: string;
+  creator?: { name: string } | null;
 };
 
 export default function TipsList() {
@@ -70,12 +72,19 @@ export default function TipsList() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/30 mb-1 italic">
                     {mounted ? format(new Date(tip.createdAt), 'd MMMM yyyy, HH:mm', { locale: pl }) : ''}
                   </p>
-                  <h4 className="text-xl font-black text-[#1a1a1a] uppercase tracking-tight">Wsparcie Projektu</h4>
+                  <h4 className="text-xl font-black text-[#1a1a1a] uppercase tracking-tight">
+                    {tip.creator?.name ? `Dla: ${tip.creator.name}` : 'Wsparcie Projektu'}
+                  </h4>
+                  {tip.status !== 'SUCCEEDED' && (
+                    <span className="text-[9px] font-black uppercase bg-red-100 text-red-600 px-2 py-0.5 rounded">
+                      {tip.status === 'REFUNDED' ? 'Zwrócono' : 'Częściowy zwrot'}
+                    </span>
+                  )}
                </div>
             </div>
             <div className="text-right">
                <span className="text-2xl font-black text-primary">
-                  {mounted ? (tip.amount / 100).toLocaleString('pl-PL', { style: 'currency', currency: tip.currency }) : ''}
+                  {mounted ? (tip.amountMinor / 100).toLocaleString('pl-PL', { style: 'currency', currency: tip.currency }) : ''}
                </span>
             </div>
           </div>

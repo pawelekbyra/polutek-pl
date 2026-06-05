@@ -8,7 +8,7 @@ import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 import { Prisma, WebhookEventStatus } from '@prisma/client';
-import { shouldProcessClerkEvent } from '@/lib/webhooks/clerk-idempotency';
+import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 
 type SupportedLanguage = 'pl' | 'en';
 type ClerkPublicMetadata = {
@@ -93,8 +93,7 @@ export async function POST(req: Request) {
     return new Response('Error occured -- no svix headers', { status: 400 });
   }
 
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  const body = await req.text();
   const wh = new Webhook(WEBHOOK_SECRET);
 
   let evt: WebhookEvent;
@@ -110,37 +109,14 @@ export async function POST(req: Request) {
     return new Response('Error occured', { status: 400 });
   }
 
-  const existingEvent = await prisma.clerkEvent.findUnique({ where: { id: svix_id } });
-  if (!shouldProcessClerkEvent(existingEvent)) {
-    const duplicate = existingEvent?.status === WebhookEventStatus.PROCESSED;
-    const processing = existingEvent?.status === WebhookEventStatus.PROCESSING;
-    logger.info(`[ClerkWebhook] Event ${svix_id} already received with status ${existingEvent?.status}.`);
-    return NextResponse.json({ success: true, duplicate, processing });
-  }
-
-  try {
-    await prisma.clerkEvent.upsert({
-      where: { id: svix_id },
-      create: {
-        id: svix_id,
-        type: evt.type,
-        status: WebhookEventStatus.PROCESSING,
-        payload: getSafePayload(evt),
-      },
-      update: {
-        type: evt.type,
-        status: WebhookEventStatus.PROCESSING,
-        error: null,
-        payload: getSafePayload(evt),
-      },
+  const lock = await acquireClerkEventLock(svix_id, evt.type, getSafePayload(evt));
+  if (!lock.acquired) {
+    logger.info(`[ClerkWebhook] Event ${svix_id} already received or processing.`);
+    return NextResponse.json({
+      success: true,
+      duplicate: lock.duplicate,
+      processing: lock.processing
     });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      logger.info(`[ClerkWebhook] Event ${svix_id} was inserted concurrently; skipping duplicate.`);
-      return NextResponse.json({ success: true, processing: true });
-    }
-
-    throw error;
   }
 
   try {

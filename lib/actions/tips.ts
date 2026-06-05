@@ -14,8 +14,35 @@ export async function getUserTips() {
 
   if (!user) return [];
 
-  // This part needs updating since Tip model is gone?
-  // Actually, we don't have a Tip model anymore.
-  // Let's check schema.prisma again.
-  return [];
+  const payments = await prisma.payment.findMany({
+    where: {
+      userId,
+      status: {
+        in: ['SUCCEEDED', 'PARTIALLY_REFUNDED', 'REFUNDED']
+      }
+    },
+    include: {
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          slug: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  return payments.map(p => ({
+    id: p.id,
+    createdAt: p.createdAt,
+    amountMinor: p.amountMinor,
+    currency: p.currency,
+    status: p.status,
+    refundedAmountMinor: p.refundedAmountMinor || 0,
+    netAmountMinor: Math.max(0, p.amountMinor - (p.refundedAmountMinor || 0)),
+    creator: p.creator
+  }));
 }
