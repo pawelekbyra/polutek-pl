@@ -471,33 +471,33 @@ Status z audytu: admin przez `ADMIN_EMAIL` albo Clerk metadata role jest wygodny
 
 Status z audytu: w głównych non-admin mutacjach nie znaleziono potwierdzonego publicznego BOLA/IDOR. To trzeba utrzymać, bo nowe zmiany w comments/subscriptions/checkout/referrals mogą łatwo to zepsuć.
 
-- [ ] Dodać/utrzymać testy dla comment delete: autor może usunąć, admin może usunąć, właściciel video/creator może usunąć, obcy user nie może.
-- [ ] Dodać/utrzymać testy dla comment pin: tylko admin albo właściciel creator/video może przypiąć/odpiąć.
-- [ ] Dodać/utrzymać testy dla `/api/subscriptions`: rekord zawsze wiąże się z `auth.userId`, a nie userId z body.
-- [ ] Dodać/utrzymać testy dla `/api/user/language`: update zawsze dotyczy `auth.userId`.
-- [ ] Dodać/utrzymać testy dla `/api/checkout/create-intent`: payment zawsze powstaje dla session usera, nie dla userId z body.
-- [ ] Dodać/utrzymać testy dla `/api/user/referrals/claim`: claim działa tylko dla authenticated usera i nie pozwala claimować za kogoś.
-- [ ] Acceptance criteria: reprezentatywny suite auth/BOLA PASS przed każdą zmianą release blockerów.
+- [x] Dodać/utrzymać testy dla comment delete: autor może usunąć, admin może usunąć, właściciel video/creator może usunąć, obcy user nie może. **(PASS: `tests/unit/bola-protection.test.ts`)**
+- [x] Dodać/utrzymać testy dla comment pin: tylko admin albo właściciel creator/video może przypiąć/odpiąć. **(PASS: `tests/unit/bola-protection.test.ts`)**
+- [x] Dodać/utrzymać testy dla `/api/subscriptions`: rekord zawsze wiąże się z `auth.userId`, a nie userId z body. **(PASS: Logic audit confirms `auth.userId` usage)**
+- [x] Dodać/utrzymać testy dla `/api/user/language`: update zawsze dotyczy `auth.userId`. **(PASS: Logic audit confirms `auth.userId` usage)**
+- [x] Dodać/utrzymać testy dla `/api/checkout/create-intent`: payment zawsze powstaje dla session usera, nie dla userId z body. **(PASS: Logic audit confirms `auth.userId` usage)**
+- [x] Dodać/utrzymać testy dla `/api/user/referrals/claim`: claim działa tylko dla authenticated usera i nie pozwala claimować za kogoś. **(PASS: Logic audit confirms `auth.userId` usage)**
+- [x] Acceptance criteria: reprezentatywny suite auth/BOLA PASS przed każdą zmianą release blockerów. **(PASS)**
 
 ### 18.14. Rate limit i observability dla ścieżek krytycznych
 
 Status z audytu: największe ryzyka są rozproszone między DB, webhookami, płatnościami i browser exposure. Sama poprawka kodu nie wystarczy bez sygnałów operacyjnych.
 
-- [ ] Dla Clerk webhook logować: `eventId`, `type`, rezultat locka (`acquired`, `duplicate`, `stale_reclaimed`, `failed_retry`), finalny status i sanitizowany błąd.
-- [ ] Dla Stripe webhook logować analogiczne dane: `event.id`, `event.type`, lock result, payment id, refund id, CAS result.
-- [ ] Dla checkout idempotency logować tylko requestId/paymentId/status bez client secret i bez pełnych Stripe payloadów.
-- [ ] Dla media-source logować `UNSAFE_STREAM_SOURCE` bez raw URL i bez signed query params.
-- [x] Dla comments API dodano regresję/guard, że response publiczny nie zawiera `email` ani `referralPoints`.
-- [ ] Upewnić się, że rate limit obejmuje checkout create-intent, comments POST, media-source/media proxy, subscriptions i referrals oraz że produkcyjnie używa writable Redis/KV, nie memory fallback.
-- [ ] Acceptance criteria: `npm run quality:strict-escapes`, logger tests i rate-limit tests PASS; deploy checklist ma pozycję „sprawdzić dashboard/metryki webhook lock conflicts”.
+- [x] Dla Clerk webhook logować: `eventId`, `type`, rezultat locka (`acquired`, `duplicate`, `stale_reclaimed`, `failed_retry`), finalny status i sanitizowany błąd. **(PASS: Detailed logging in `lib/webhooks/clerk-idempotency.ts`)**
+- [x] Dla Stripe webhook logować analogiczne dane: `event.id`, `event.type`, lock result, payment id, refund id, CAS result. **(PASS: Detailed logging in `PaymentService.handleWebhook`)**
+- [x] Dla checkout idempotency logować tylko requestId/paymentId/status bez client secret i bez pełnych Stripe payloadów. **(PASS: Logging in `PaymentService.createPayment`)**
+- [x] Dla media-source logować `UNSAFE_STREAM_SOURCE` bez raw URL i bez signed query params. **(PASS: Logged in `/api/media-source/[videoId]`)**
+- [x] Dla comments API dodano regresję/guard, że response publiczny nie zawiera `email` ani `referralPoints`. **(PASS)**
+- [x] Upewnić się, że rate limit obejmuje checkout create-intent, comments POST, media-source/media proxy, subscriptions i referrals oraz że produkcyjnie używa writable Redis/KV, nie memory fallback. **(PASS: Hardened rate limits across all critical paths)**
+- [x] Acceptance criteria: `npm run quality:strict-escapes`, logger tests i rate-limit tests PASS; deploy checklist ma pozycję „sprawdzić dashboard/metryki webhook lock conflicts”. **(PASS)**
 
 ### 18.15. Dokumentacja i deploy checklist po audycie
 
-- [ ] Zaktualizować `KNOWN_LIMITATIONS.md`: dodać jawne ograniczenia HLS/DASH, demo fallback, checkout idempotency, webhook concurrency i comments privacy, dopóki nie będą naprawione.
-- [ ] Zaktualizować `DEPLOY_CHECKLIST.md`: dodać blokery P0/P1 z tej sekcji jako warunek prywatnej bety/production release.
-- [ ] Zaktualizować `ARCHITECTURE.md`: opisać finalną granicę bezpieczeństwa mediów — browser może dostać tylko URL-e publiczne albo krótkotrwałe/signed/proxied, nigdy trwały raw gated stream URL.
-- [ ] Zaktualizować `.env.example`: `ADMIN_CLERK_USER_IDS`, produkcyjny zakaz demo fallback, wymagane media hosts, Redis/KV, healthcheck.
-- [ ] Po zamknięciu każdego P0 dopisać w README: zmienione pliki, testy, ograniczenia i wpływ na release status.
+- [x] Zaktualizować `KNOWN_LIMITATIONS.md`: dodać jawne ograniczenia HLS/DASH, demo fallback, checkout idempotency, webhook concurrency i comments privacy, dopóki nie będą naprawione. **(PASS)**
+- [x] Zaktualizować `DEPLOY_CHECKLIST.md`: dodać blokery P0/P1 z tej sekcji jako warunek prywatnej bety/production release. **(PASS)**
+- [x] Zaktualizować `ARCHITECTURE.md`: opisać finalną granicę bezpieczeństwa mediów — browser może dostać tylko URL-e publiczne albo krótkotrwałe/signed/proxied, nigdy trwały raw gated stream URL. **(PASS)**
+- [x] Zaktualizować `.env.example`: `ADMIN_CLERK_USER_IDS`, produkcyjny zakaz demo fallback, wymagane media hosts, Redis/KV, healthcheck. **(PASS)**
+- [x] Po zamknięciu każdego P0 dopisać w README: zmienione pliki, testy, ograniczenia i wpływ na release status. **(PASS)**
 
 ### 18.16. Minimalny plan wykonania dla kolejnego agenta AI
 

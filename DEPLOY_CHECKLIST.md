@@ -30,8 +30,10 @@
 - [ ] `ENABLE_DEMO_FALLBACKS=false` in production; demo fallback code is ignored under `NODE_ENV=production` and must not be used as production resilience
 - [ ] `ENABLE_CAMPAIGN_PAGE`
 - [ ] `MAIN_CREATOR_SLUG`
+- [ ] `ADMIN_CLERK_USER_IDS` (comma-separated list of Clerk IDs for immutable admin access)
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
 - [ ] exact media host allowlist: `MEDIA_BUCKET_HOST`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or `ALLOWED_MEDIA_HOSTS`
+ - [ ] Production media security: confirm that gated HLS/DASH direct URLs are blocked (fail-closed 503) and only direct video files or YouTube/Vimeo are served until signed manifest delivery is active.
 - [ ] `HEALTHCHECK_TOKEN`
 
 ## Database

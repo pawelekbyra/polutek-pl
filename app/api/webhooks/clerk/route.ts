@@ -193,6 +193,7 @@ export async function POST(req: Request) {
       },
     });
 
+    logger.info(`[ClerkWebhook] Event ${svix_id} (${evt.type}) PROCESSED successfully.`);
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error(`[ClerkWebhook] Error handling event ${svix_id}:`, error);
