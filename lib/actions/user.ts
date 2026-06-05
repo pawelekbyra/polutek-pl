@@ -10,6 +10,7 @@ export async function updateUserLanguage(language: 'en' | 'pl') {
   if (!userId) return { error: "AUTH_REQUIRED" };
 
   try {
+    // Centralized update for both DB and Clerk Metadata
     await UserService.updateUserLanguage(userId, language);
     revalidatePath('/', 'layout');
     return { success: true };

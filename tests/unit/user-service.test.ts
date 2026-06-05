@@ -200,6 +200,11 @@ describe('UserService.updateUserLanguage', () => {
     const updatedUser = { id: 'user_lang', email: 'lang@example.com', language: 'pl' };
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'lang@example.com' } as never);
     vi.mocked(prisma.user.upsert).mockResolvedValue(updatedUser as never);
+    vi.mocked(clerkClient).mockResolvedValue({
+      users: {
+        updateUserMetadata: vi.fn().mockResolvedValue({}),
+      },
+    } as never);
 
     const result = await UserService.updateUserLanguage('user_lang', 'pl');
 

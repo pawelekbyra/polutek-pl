@@ -171,10 +171,6 @@ Runtime admin access wynika z `User.role=ADMIN` albo `ADMIN_CLERK_USER_IDS`. `AD
 
 Subskrypcja kanału używa `/api/subscriptions` jako runtime kontraktu follow/unfollow z rate limitingiem, licznikami kanału i `purpose=EMAIL_NOTIFICATIONS`. Zmiana języka ma nadal drift: route `/api/user/language` synchronizuje DB + Clerk metadata, a `lib/actions/user.ts` zapisuje tylko DB.
 
-- [ ] Wybrać jeden kanoniczny backend dla zmiany języka i zapewnić, że UI, API oraz server action aktualizują DB i Clerk metadata spójnie albo świadomie nie dotykają Clerk metadata.
-- [ ] Dodać regresje dla language update: zapisuje oczekiwane źródła prawdy i nie nadpisuje innych pól użytkownika.
-- [ ] Dodać kontraktowe testy response shapes dla endpointów user/language i pozostałych public APIs.
-
 ## 2. P0 — staging smoke dla krytycznych ścieżek płatności, dostępu i admina
 
 Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze stagingu z prawdziwymi sekretami, prawdziwą bazą, realną sesją Clerk, Stripe test mode i hostami mediów z allowlisty.
@@ -191,8 +187,6 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 
 Vitest nie ma coverage config ani progów. Playwright smoke istnieje, ale pełny przebieg zależy od browserów i `E2E_*` state. CI istnieje, ale security audit jest nieblokujący, a realne zdalne artefakty/logi nadal muszą być traktowane jako brak dowodu, dopóki nie zostaną zapisane.
 
-- [ ] Dodać coverage provider/script dla Vitest i minimalne progi jakościowe dla krytycznych folderów (`app/api`, `lib/services`, `lib/access`, webhooki).
-- [ ] Publikować coverage report jako artefakt CI i wymagać progów przed merge.
 - [ ] Rozbudować Playwright o nieskipowane case’y dla homepage, channel page, login-gated video, patron-gated video, subscriptions, comments, checkout/webhook smoke i admin CRUD.
 - [ ] Dodać konfigurację `E2E_*` storage state/test user/test video IDs do staging checklisty, żeby smoke nie zależał od ręcznego stanu przeglądarki.
 - [ ] Zebrać i podlinkować/zapisać pierwsze zielone zdalne przebiegi GitHub Actions dla quality, integration-postgres i E2E/staging smoke.
@@ -201,9 +195,7 @@ Vitest nie ma coverage config ani progów. Playwright smoke istnieje, ale pełny
 
 Aktualny workflow security traktuje `npm audit --audit-level=high` jako nieblokujący sygnał. Middleware ustawia `Content-Security-Policy-Report-Only`, z szerokimi hostami dla mediów/obrazów. To jest hardening w toku, nie beta-ready security gate.
 
-- [ ] Zmienić `npm audit --audit-level=high` w CI na blokujący gate albo dodać jawny allowlist/exception workflow dla znanych podatności.
 - [ ] Dodać SAST/secret scanning jako wymagany gate albo opisać, gdzie jest wykonywany poza repo.
-- [ ] Przejść z `Content-Security-Policy-Report-Only` na egzekwowany `Content-Security-Policy` po walidacji hostów Clerk/Stripe/media.
 - [ ] Zwęzić CSP hosty mediów i obrazów tak, aby były zgodne z jawnie skonfigurowanymi allowlistami repo, a nie szerokimi wildcardami providerów.
 - [ ] Dodać test albo snapshot nagłówków bezpieczeństwa dla middleware.
 
@@ -216,10 +208,8 @@ Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines`
 
 ## 6. P1 — formalizacja kontraktów API
 
-Route handlers mają kontrakty w kodzie, ale nie ma jednej specyfikacji API. Drift między API i server actions pokazał, że repo potrzebuje jednego źródła prawdy dla request/response i konsumentów.
+Route handlers mają kontrakty w kodzie. Repozytorium zawiera specyfikację kontraktów w `docs/API_CONTRACTS.md`.
 
-- [ ] Dodać tabelę kontraktów albo OpenAPI dla `/api/subscriptions`, `/api/user/language`, `/api/media-source/[videoId]`, `/api/checkout/create-intent`, webhooków i admin APIs.
-- [ ] Dla każdego publicznego route opisać: auth, rate limit, input, output, error codes, efekty uboczne i owner service.
 - [ ] Dodać testy kontraktowe dla najważniejszych response shapes, szczególnie public JSON bez prywatnych pól.
 
 ## 7. P1 — performance, observability i alertowalne sygnały

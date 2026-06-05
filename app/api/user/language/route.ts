@@ -17,16 +17,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid language" }, { status: 400 });
     }
 
-    // 1. Upsert Database row so brand-new users can save preferences before other syncs finish.
+    // Centralized update for both DB and Clerk Metadata
     await UserService.updateUserLanguage(userId, language);
-
-    // 2. Update Clerk Metadata for persistence and webhook use
-    const client = await clerkClient();
-    await client.users.updateUserMetadata(userId, {
-      publicMetadata: {
-        language: language
-      }
-    });
 
     return NextResponse.json({ success: true });
   } catch (err) {
