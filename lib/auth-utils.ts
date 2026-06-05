@@ -2,8 +2,8 @@ import { logger } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { UserService } from "./services/user.service";
-import { requireConfiguredAdminEmail } from "./constants";
 import { NextResponse } from "next/server";
+import { isConfiguredAdminUserId } from "./admin-config";
 
 export class AuthError extends Error {
   constructor(
@@ -54,21 +54,20 @@ export async function requireAdmin() {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, isDeleted: true, email: true },
+    select: { role: true, isDeleted: true },
   });
 
   if (!user || user.isDeleted) {
     throw new AuthError("FORBIDDEN");
   }
 
-  const adminEmail = requireConfiguredAdminEmail();
-
-  // Bootstrap Admin logic
-  if (user.role !== "ADMIN" && user.email.toLowerCase() === adminEmail.toLowerCase()) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: "ADMIN" }
-    });
+  if (isConfiguredAdminUserId(userId)) {
+    if (user.role !== "ADMIN") {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role: "ADMIN" },
+      });
+    }
     return userId;
   }
 

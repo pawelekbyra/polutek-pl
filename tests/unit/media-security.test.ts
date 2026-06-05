@@ -31,7 +31,9 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 describe('media source API security', () => {
-  it('returns 503 for direct HLS .m3u8 sources in production mode logic', async () => {
+  it('returns an HLS playback source after access policy allows the video and host is configured', async () => {
+    const previousAllowedMediaHosts = process.env.ALLOWED_MEDIA_HOSTS;
+    process.env.ALLOWED_MEDIA_HOSTS = 'example.com';
     vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       id: 'vid_1',
@@ -40,12 +42,18 @@ describe('media source API security', () => {
     } as any);
     vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true });
 
-    const req = new NextRequest('http://localhost/api/media-source/vid_1');
-    const res = await GET(req, { params: { videoId: 'vid_1' } });
+    try {
+      const req = new NextRequest('http://localhost/api/media-source/vid_1');
+      const res = await GET(req, { params: { videoId: 'vid_1' } });
 
-    expect(res.status).toBe(503);
-    const body = await res.json();
-    expect(body.error).toBe('UNSAFE_STREAM_SOURCE');
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.hasAccess).toBe(true);
+      expect(body.kind).toBe('hls');
+      expect(body.playbackUrl).toBe('https://example.com/stream.m3u8');
+    } finally {
+      process.env.ALLOWED_MEDIA_HOSTS = previousAllowedMediaHosts;
+    }
   });
 });
 

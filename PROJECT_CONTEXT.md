@@ -5,7 +5,7 @@ Polutek.pl is a private VOD platform built to host exclusive content and support
 
 ## Product Logic
 1. **YouTube-style Experience**: The platform is a video-first experience. The homepage features a main highlighted video and a list of other materials.
-2. **Channel System**: Private beta has one configured primary channel from `MAIN_CREATOR_SLUG`, while the architecture is designed to support multiple creators in the future.
+2. **Channel System**: `Creator` is the public channel profile. Private beta has one configured primary channel from `MAIN_CREATOR_SLUG`, while the architecture is designed to support multiple channels in the future.
 3. **Access Tiers (Paywall)**:
    - `PUBLIC`: Available to everyone.
    - `LOGGED_IN`: Requires a free Clerk account.

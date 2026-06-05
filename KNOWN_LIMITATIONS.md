@@ -1,7 +1,7 @@
 # Known limitations
 
 - Multi-creator support is still limited: the production scenario remains one configured creator, while open creator onboarding/discovery is not productized.
-- HLS/DASH transcoding/packaging is not implemented yet; playback of direct HLS (.m3u8) or DASH (.mpd) sources is currently disabled in production (fail-closed 503) to prevent raw origin URL exposure until signed manifest delivery is supported.
+- HLS/DASH transcoding/packaging is not implemented yet; admin-provided HLS (.m3u8) and DASH (.mpd) manifests must come from exact allowed media hosts.
 - The upload pipeline is not fully finalized and still depends on administrator-provided media/thumbnail URLs from trusted hosts rather than a complete managed upload/transcoding flow.
 - Patron status is currently granted by a qualifying one-time donation or another explicit `PatronGrant` source unless this is changed later.
 - `Subscription` is implemented as email notifications / channel follow only. It does not grant premium access and must remain separate from `User.isPatron`.

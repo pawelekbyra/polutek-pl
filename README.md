@@ -22,7 +22,7 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 
 Aplikacja działa w prywatnej becie jako **single configured creator/channel VOD** z przygotowaniem modelu danych pod przyszły tryb multi-creator. `ENABLE_MULTI_CREATOR=false` jest prawidłowym trybem bety: homepage pokazuje główny skonfigurowany kanał, a `/channel/[MAIN_CREATOR_SLUG]` pozostaje dostępną stroną tego kanału i nie przekierowuje do `/`.
 
-Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału. Model `Creator` i relacje `Video.creator`, `Payment.creator`, `Subscription.creator` mogą pozostać jako architektura future multi-creator, ale beta nie dostarcza publicznego marketplace’u, onboardingu ani multi-creator dashboardu.
+Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału. Model `Creator` traktujemy w becie jako publiczny profil kanału: `Video.creatorId` przypina film do kanału, `Payment.creatorId` przypina napiwek do kanału, a `Subscription.creatorId` przypina zgodę mailową do kanału. Relacje mogą pozostać jako architektura future multi-creator, ale beta nie dostarcza publicznego marketplace’u, onboardingu ani multi-creator dashboardu.
 
 ## Definicje domenowe — najważniejsza spójność do bety
 
@@ -94,7 +94,7 @@ Wymagane grupy zmiennych:
 - Clerk: klucze publiczne/sekretne i webhook secret,
 - Stripe: secret key, publishable key, webhook secret,
 - Resend/email: `RESEND_API_KEY`, `EMAIL_FROM`,
-- aplikacja: `NEXT_PUBLIC_APP_URL`, `ADMIN_EMAIL`, `MAIN_CREATOR_SLUG`, opcjonalnie `MAIN_CREATOR_NAME`,
+- aplikacja: `NEXT_PUBLIC_APP_URL`, `ADMIN_CLERK_USER_IDS`, `MAIN_CREATOR_SLUG`, opcjonalnie `MAIN_CREATOR_NAME` i bootstrapowe `ADMIN_EMAIL`,
 - patronat: `PATRON_MIN_TIP_AMOUNT`, `PATRON_MIN_TIP_CURRENCY`, `REFERRAL_PATRON_THRESHOLD`,
 - rate limit w produkcji: writable Upstash Redis albo Vercel KV REST credentials,
 - media proxy: dokładna allowlista hostów mediów i obrazów,
@@ -160,25 +160,15 @@ Legenda:
 
 ## 0. P0 — admin authorization musi być spójne z finalnym modelem bezpieczeństwa
 
-Obecny kod nadal nie spełnia finalnej deklaracji „immutable admin IDs only”. `requireAdmin()` bootstrappuje rolę `ADMIN` po `ADMIN_EMAIL`, `UserService.syncUser()` ufa `ADMIN_EMAIL` oraz `clerkRole=ADMIN`, część admin/content flows wyszukuje admina po emailu, a test admin access nadal uznaje bootstrap po emailu za oczekiwany scenariusz.
-
-- [ ] Usunąć auto-promocję admina po `ADMIN_EMAIL` z runtime `requireAdmin()`; admin access ma wynikać z jawnej roli w DB i/lub `ADMIN_CLERK_USER_IDS`, bez email bootstrapu.
-- [ ] Usunąć nadawanie roli `ADMIN` w `UserService.syncUser()` na podstawie `email === ADMIN_EMAIL` oraz `publicMetadata.role === 'ADMIN'` / `clerkRole=ADMIN`.
-- [ ] Przejrzeć i przepiąć admin-centric flows, które nadal używają `ADMIN_EMAIL` do wyszukania użytkownika lub danych właściciela: admin creator route, admin videos route, content service, seed/ensure-admin scripts.
-- [ ] Zmienić walidację produkcyjnego env z `ADMIN_EMAIL` na `ADMIN_CLERK_USER_IDS` albo jawnie opisać `ADMIN_EMAIL` jako wyłącznie legacy seed/migration value, nie źródło uprawnień.
-- [ ] Usunąć fallback `ADMIN_EMAIL` jako finalny mechanizm z `.env.example`, `DEPLOY_CHECKLIST.md` i dokumentacji runtime albo oznaczyć go jako deprecated/non-auth.
-- [ ] Zaktualizować testy admin access: user z `ADMIN_CLERK_USER_IDS` ma dostęp; user z tym samym emailem co `ADMIN_EMAIL`, ale bez allowlist ID/DB role, nie dostaje admina; Clerk metadata `role=ADMIN` samo w sobie nie nadaje admina.
+Runtime admin access wynika z `User.role=ADMIN` albo `ADMIN_CLERK_USER_IDS`. `ADMIN_EMAIL` jest bootstrap/recovery dla seed/repair scripts, nie źródłem uprawnień w runtime.
 
 ## 1. P0 — jeden kanoniczny flow dla Subscription i language preference
 
-Repo ma dwa równoległe modele wywołań. UI subskrypcji używa server actions i `UserService.toggleSubscription()`, podczas gdy `/api/subscriptions` ma osobny kontrakt follow/unfollow z rate limitingiem i jawnie semantyką email notifications. Zmiana języka ma podobny drift: route `/api/user/language` synchronizuje DB + Clerk metadata, a `lib/actions/user.ts` zapisuje tylko DB.
+Subskrypcja kanału używa `/api/subscriptions` jako runtime kontraktu follow/unfollow z rate limitingiem, licznikami kanału i `purpose=EMAIL_NOTIFICATIONS`. Zmiana języka ma nadal drift: route `/api/user/language` synchronizuje DB + Clerk metadata, a `lib/actions/user.ts` zapisuje tylko DB.
 
-- [ ] Wybrać jeden kanoniczny backend dla subskrypcji: `/api/subscriptions` albo server action jako cienki adapter do tej samej usługi i tej samej semantyki.
-- [ ] Przepiąć `SubscribeButton` tak, aby nie omijał rate limitingu/kontraktu API albo dodać równoważny rate limit i semantykę do wspólnej warstwy serwisowej.
-- [ ] Usunąć dev-only auto-healing tworzenia default creator z `app/actions/subscription.ts` albo przenieść go do jawnego narzędzia seed/repair, poza normalny flow użytkownika.
-- [ ] Ujednolicić response contract dla statusu subskrypcji: `creatorId`/`creatorSlug`, `purpose=EMAIL_NOTIFICATIONS`, `isSubscribed`, bez efektów na `User.isPatron`.
 - [ ] Wybrać jeden kanoniczny backend dla zmiany języka i zapewnić, że UI, API oraz server action aktualizują DB i Clerk metadata spójnie albo świadomie nie dotykają Clerk metadata.
-- [ ] Dodać regresje dla obu ścieżek: subskrypcja nie nadaje Patron access, patron unsubscribed nadal ma Patron access, language update zapisuje oczekiwane źródła prawdy.
+- [ ] Dodać regresje dla language update: zapisuje oczekiwane źródła prawdy i nie nadpisuje innych pól użytkownika.
+- [ ] Dodać kontraktowe testy response shapes dla endpointów user/language i pozostałych public APIs.
 
 ## 2. P0 — staging smoke dla krytycznych ścieżek płatności, dostępu i admina
 
@@ -190,7 +180,7 @@ Unit tests i scaffolding E2E nie są dowodem bety. Nadal brakuje artefaktów ze 
 - [ ] `ENV` Przejść smoke: Stripe success → webhook → `Payment`/`PatronGrant` → `User.isPatron` → Clerk access sync → dostęp do materiału `PATRON`.
 - [ ] `ENV` Przejść smoke: partial refund, full refund i lost dispute → cofnięcie albo korekta Patron access zgodnie z polityką.
 - [ ] `ENV` Przejść smoke admin: login admina → creator/channel settings → video CRUD → widoczność opublikowanego materiału.
-- [ ] `ENV` Przejść smoke media: public video, login-gated video, patron-gated video, media proxy/range request oraz fail-closed dla HLS/DASH bez signed delivery.
+- [ ] `ENV` Przejść smoke media: public video, login-gated video, patron-gated video, media proxy/range request oraz HLS/DASH z dozwolonego hosta.
 
 ## 3. P1 — coverage, E2E i release evidence w CI
 
@@ -238,10 +228,9 @@ Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tra
 
 ## 8. P2 — scope bety, eksperymentalne funkcje i multi-creator
 
-Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/transcoding pipeline, signed HLS/DASH delivery oraz future multi-creator architecture. Beta pozostaje prywatną platformą VOD z dobrowolnymi napiwkami Stripe i dostępem Patron.
+Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/transcoding pipeline, HLS/DASH smoke na realnym hostingu mediów oraz future multi-creator architecture. Beta pozostaje prywatną platformą VOD z dobrowolnymi napiwkami Stripe i dostępem Patron.
 
 - [ ] Domknąć upload pipeline albo jasno ograniczyć betę do administrator-provided trusted media URLs.
-- [ ] Zaprojektować signed HLS/DASH delivery albo utrzymać fail-closed i opisać to jako ograniczenie bety.
 - [ ] Private beta is single configured creator/channel. Multi-creator data model may remain, but no public multi-creator product flow is required for beta.
 
 ## 9. P2 — moduły, hotspoty i dług techniczny

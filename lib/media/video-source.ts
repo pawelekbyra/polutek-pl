@@ -66,16 +66,14 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
   }
 
   const pathname = url.pathname.toLowerCase();
-  // NOTE: HLS/DASH manifests are served directly (needsProxy: false).
-  // This means the manifest URL is publicly accessible if known.
-  // Segment-level access control (token auth, signed URLs) is out of scope for this project.
-  // Patron access is enforced at the UI/API layer, not at the CDN/segment level.
+  // HLS/DASH manifests are allowed from explicitly configured media hosts.
+  // Access is checked before this URL is returned to the player.
   if (pathname.endsWith('.m3u8')) {
     return {
       kind: 'hls',
       label: 'HLS (.m3u8)',
       playbackUrl: rawUrl,
-      needsProxy: true, // Fail-closed: HLS/DASH must be proxied or signed
+      needsProxy: false,
     };
   }
 
@@ -84,7 +82,7 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
       kind: 'dash',
       label: 'MPEG-DASH (.mpd)',
       playbackUrl: rawUrl,
-      needsProxy: true, // Fail-closed: HLS/DASH must be proxied or signed
+      needsProxy: false,
     };
   }
 

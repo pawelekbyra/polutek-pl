@@ -131,11 +131,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const creatorResult = await resolveCreator(creatorId, creatorSlug);
     if (creatorResult.error) return creatorResult.error;
 
-    const subscription = await prisma.subscription.upsert({
-      where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
-      update: {},
-      create: { userId: userResult.userId, creatorId: creatorResult.creator.id },
-      select: { id: true, createdAt: true },
+    const subscription = await prisma.$transaction(async (tx) => {
+      const existing = await tx.subscription.findUnique({
+        where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
+        select: { id: true, createdAt: true },
+      });
+
+      if (existing) return existing;
+
+      const created = await tx.subscription.create({
+        data: { userId: userResult.userId, creatorId: creatorResult.creator.id },
+        select: { id: true, createdAt: true },
+      });
+
+      await tx.creator.update({
+        where: { id: creatorResult.creator.id },
+        data: { subscribersCount: { increment: 1 } },
+      });
+
+      return created;
     });
 
     return NextResponse.json({
@@ -166,8 +180,19 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     const creatorResult = await resolveCreator(creatorId, creatorSlug);
     if (creatorResult.error) return creatorResult.error;
 
-    const result = await prisma.subscription.deleteMany({
-      where: { userId: userResult.userId, creatorId: creatorResult.creator.id },
+    const result = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.subscription.deleteMany({
+        where: { userId: userResult.userId, creatorId: creatorResult.creator.id },
+      });
+
+      if (deleted.count > 0) {
+        await tx.creator.updateMany({
+          where: { id: creatorResult.creator.id, subscribersCount: { gt: 0 } },
+          data: { subscribersCount: { decrement: 1 } },
+        });
+      }
+
+      return deleted;
     });
 
     return NextResponse.json({

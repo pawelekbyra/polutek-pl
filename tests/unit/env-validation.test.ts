@@ -14,7 +14,7 @@ const productionEnv = {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_stripe',
   RESEND_API_KEY: 're_example',
   EMAIL_FROM: 'notifications@example.com',
-  ADMIN_EMAIL: 'admin@example.com',
+  ADMIN_CLERK_USER_IDS: 'user_admin_1',
   MAIN_CREATOR_SLUG: 'creator-slug',
   PATRON_MIN_TIP_AMOUNT: '500',
   PATRON_MIN_TIP_CURRENCY: 'EUR',
@@ -31,6 +31,13 @@ describe('validateAppEnv', () => {
 
     expect(result.success).toBe(true);
     expect(result.errors).toEqual([]);
+  });
+
+  it('requires immutable admin Clerk IDs in production', () => {
+    const result = validateAppEnv({ ...productionEnv, ADMIN_CLERK_USER_IDS: '' }, 'production');
+
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('ADMIN_CLERK_USER_IDS is required in production.');
   });
 
   it('requires the main creator slug in production', () => {

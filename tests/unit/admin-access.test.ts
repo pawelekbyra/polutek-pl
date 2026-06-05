@@ -38,6 +38,7 @@ describe('admin API access protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_EMAIL = 'admin@example.com';
+    process.env.ADMIN_CLERK_USER_IDS = '';
     vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as never);
   });
 
@@ -83,16 +84,32 @@ describe('admin API access protection', () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it('bootstraps the configured ADMIN_EMAIL only after an authenticated database user match', async () => {
+  it('does not grant admin access from ADMIN_EMAIL alone', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'admin_1' } as Awaited<ReturnType<typeof auth>>);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       role: 'USER',
       isDeleted: false,
       email: 'admin@example.com',
     } as never);
+
+    const { adminUserId, response } = await requireAdminForApi('TEST_ADMIN_EMAIL_NO_BOOTSTRAP');
+
+    expect(adminUserId).toBeNull();
+    expect(response?.status).toBe(403);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('allows and persists users from ADMIN_CLERK_USER_IDS', async () => {
+    process.env.ADMIN_CLERK_USER_IDS = 'admin_1,admin_2';
+    vi.mocked(auth).mockResolvedValue({ userId: 'admin_1' } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      role: 'USER',
+      isDeleted: false,
+      email: 'viewer@example.com',
+    } as never);
     vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
-    const { adminUserId, response } = await requireAdminForApi('TEST_ADMIN_BOOTSTRAP');
+    const { adminUserId, response } = await requireAdminForApi('TEST_ADMIN_ID_ALLOWLIST');
 
     expect(adminUserId).toBe('admin_1');
     expect(response).toBeNull();
