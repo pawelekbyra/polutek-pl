@@ -133,10 +133,9 @@ Nie dodawaj szerokich domen providerów. Każdy bucket/CDN host musi być wpisan
 
 ## Obecne ograniczenia uczciwe wobec bety
 
-- Strona `/channel/[slug]` nadal przekierowuje skonfigurowany slug na `/` w trybie single-creator.
-- Flow subskrypcji mailowej nie jest gotowy; endpoint jest legacy i zwraca `410` dla `POST`.
-- Nie ma pełnego smoke E2E Playwright potwierdzającego kliknięcia użytkownika.
+- Nie ma pełnego smoke E2E Playwright potwierdzającego krytyczne kliknięcia użytkownika, login redirect, subskrypcję, Patron access i media proxy.
 - Komendy DB wymagają prawdziwych `DATABASE_URL` i `DATABASE_URL_UNPOOLED`; bez nich `db:smoke` i `db:migrate:deploy` nie są dowodem gotowości.
+- Stripe, Clerk, Admin i media/rate-limit mają coraz więcej regresji jednostkowych, ale nadal wymagają potwierdzenia na realnym/staging środowisku przed oznaczeniem prywatnej bety.
 - W repo nadal istnieją historyczne hardcoded brand/content strings; roadmapa wymaga ich systematycznego usuwania bez zrywania istniejących danych.
 
 ---
@@ -245,17 +244,17 @@ Legenda:
 ## 11. Clerk webhook
 
 - [x] Aktualne testy jednostkowe Clerk webhook przechodzą w pakiecie Vitest.
-- [ ] Potwierdzić create/update/delete z fixture payloadami.
-- [ ] Potwierdzić signature verification i idempotency/stale processing.
+- [x] Potwierdzono create/update/delete z fixture payloadami: `npm test -- --run tests/unit/clerk-webhook-route.test.ts` PASS.
+- [x] Potwierdzono signature verification oraz duplicate/fresh/stale idempotency processing w testach `tests/unit/clerk-webhook-route.test.ts` i `tests/unit/clerk-webhook.test.ts`.
 - [ ] Potwierdzić login flow w smoke/E2E.
 
 ## 12. Admin
 
 - [x] Aktualne testy jednostkowe admin dashboard przechodzą w pakiecie Vitest.
-- [ ] Potwierdzić guest → brak dostępu.
-- [ ] Potwierdzić non-admin → brak dostępu.
-- [ ] Potwierdzić admin → dostęp.
-- [ ] Potwierdzić ochronę API admina, nie tylko UI.
+- [x] Potwierdzono guest → brak dostępu w admin auth/API guard: `tests/unit/admin-access.test.ts` PASS.
+- [x] Potwierdzono non-admin → brak dostępu w admin auth/API guard: `tests/unit/admin-access.test.ts` PASS.
+- [x] Potwierdzono admin → dostęp oraz bootstrap `ADMIN_EMAIL`: `tests/unit/admin-access.test.ts` PASS.
+- [x] Potwierdzono ochronę reprezentatywnego API admina przed route-specific DB work: `tests/unit/admin-access.test.ts` PASS.
 
 ## 13. Rate limit
 
@@ -273,7 +272,7 @@ Legenda:
 
 ## 15. Testy, coverage i E2E
 
-- [x] Unit suite PASS: 23 pliki, 124 testy.
+- [x] Unit suite PASS: 25 plików, 136 testów.
 - [~] Próba dodania coverage provider zablokowana przez `npm install -D @vitest/coverage-v8@4.1.7` → `403 Forbidden`; coverage script/progi nadal otwarte do wykonania w środowisku z dostępem do registry.
 - [ ] Dodać Playwright smoke dla krytycznych ścieżek bety.
 - [ ] Smoke musi objąć `/`, `/channel/${MAIN_CREATOR_SLUG}`, login redirect, subskrypcję, patron access i media proxy.
