@@ -86,6 +86,19 @@ function log(level: LogLevel, args: unknown[]) {
   console.info(prefix, ...sanitizedArgs);
 }
 
+/**
+ * Returns a logger with correlation ID bound to its output.
+ */
+export function createScopedLogger(requestId: string | null) {
+    const idSuffix = requestId ? ` [RID:${requestId}]` : '';
+    return {
+        debug: (...args: unknown[]) => log("debug", [`${args[0]}${idSuffix}`, ...args.slice(1)]),
+        info: (...args: unknown[]) => log("info", [`${args[0]}${idSuffix}`, ...args.slice(1)]),
+        warn: (...args: unknown[]) => log("warn", [`${args[0]}${idSuffix}`, ...args.slice(1)]),
+        error: (...args: unknown[]) => log("error", [`${args[0]}${idSuffix}`, ...args.slice(1)]),
+    };
+}
+
 export const logger = {
   debug: (...args: unknown[]) => log("debug", args),
   info: (...args: unknown[]) => log("info", args),

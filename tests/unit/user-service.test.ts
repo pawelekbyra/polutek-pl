@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService } from '@/lib/services/user/profile.service';
+import { UserLanguageService } from '@/lib/services/user/language.service';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 
@@ -19,7 +20,7 @@ vi.mock('@clerk/nextjs/server', () => ({
   clerkClient: vi.fn(),
 }));
 
-describe('UserService.getOrCreateUserFromAuth', () => {
+describe('UserProfileService.getOrCreateUserFromAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -30,11 +31,11 @@ describe('UserService.getOrCreateUserFromAuth', () => {
   });
 
   it('creates a minimal local user from session claims when Clerk user lookup fails', async () => {
-    vi.spyOn(UserService, 'getOrCreateUser').mockRejectedValue(new Error('CLERK_USER_NOT_FOUND'));
+    vi.spyOn(UserProfileService, 'getOrCreateUser').mockRejectedValue(new Error('CLERK_USER_NOT_FOUND'));
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_1' } as never);
+    const syncSpy = vi.spyOn(UserProfileService, 'syncUser').mockResolvedValue({ id: 'user_1' } as never);
 
-    await UserService.getOrCreateUserFromAuth('user_1', {
+    await UserProfileService.getOrCreateUserFromAuth('user_1', {
       email: 'user@example.com',
       name: 'Test User',
       picture: 'https://example.com/avatar.png',
@@ -55,16 +56,16 @@ describe('UserService.getOrCreateUserFromAuth', () => {
   });
 
   it('refreshes an existing local user with Clerk session display data', async () => {
-    vi.spyOn(UserService, 'getOrCreateUser').mockResolvedValue({
+    vi.spyOn(UserProfileService, 'getOrCreateUser').mockResolvedValue({
       id: 'user_3',
       email: 'user_3@clerk.local',
       name: null,
       username: null,
       imageUrl: null,
     } as never);
-    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_3' } as never);
+    const syncSpy = vi.spyOn(UserProfileService, 'syncUser').mockResolvedValue({ id: 'user_3' } as never);
 
-    await UserService.getOrCreateUserFromAuth('user_3', {
+    await UserProfileService.getOrCreateUserFromAuth('user_3', {
       email: 'real@example.com',
       first_name: 'Real',
       last_name: 'Person',
@@ -103,9 +104,9 @@ describe('UserService.getOrCreateUserFromAuth', () => {
         }),
       },
     } as never);
-    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_4' } as never);
+    const syncSpy = vi.spyOn(UserProfileService, 'syncUser').mockResolvedValue({ id: 'user_4' } as never);
 
-    await UserService.getOrCreateUser('user_4');
+    await UserProfileService.getOrCreateUser('user_4');
 
     expect(syncSpy).toHaveBeenCalledWith(
       'user_4',
@@ -120,11 +121,11 @@ describe('UserService.getOrCreateUserFromAuth', () => {
   });
 
   it('reads Clerk default session image and camelCase name claims', async () => {
-    vi.spyOn(UserService, 'getOrCreateUser').mockRejectedValue(new Error('CLERK_USER_NOT_FOUND'));
+    vi.spyOn(UserProfileService, 'getOrCreateUser').mockRejectedValue(new Error('CLERK_USER_NOT_FOUND'));
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_5' } as never);
+    const syncSpy = vi.spyOn(UserProfileService, 'syncUser').mockResolvedValue({ id: 'user_5' } as never);
 
-    await UserService.getOrCreateUserFromAuth('user_5', {
+    await UserProfileService.getOrCreateUserFromAuth('user_5', {
       email: 'claim@example.com',
       fullName: 'Claim Person',
       img: 'https://img.clerk.com/claim-person.png',
@@ -144,11 +145,11 @@ describe('UserService.getOrCreateUserFromAuth', () => {
   });
 
   it('falls back to a stable placeholder email when claims do not include email', async () => {
-    vi.spyOn(UserService, 'getOrCreateUser').mockRejectedValue(new Error('USER_HAS_NO_EMAIL'));
+    vi.spyOn(UserProfileService, 'getOrCreateUser').mockRejectedValue(new Error('USER_HAS_NO_EMAIL'));
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    const syncSpy = vi.spyOn(UserService, 'syncUser').mockResolvedValue({ id: 'user_2' } as never);
+    const syncSpy = vi.spyOn(UserProfileService, 'syncUser').mockResolvedValue({ id: 'user_2' } as never);
 
-    await UserService.getOrCreateUserFromAuth('user_2', { sub: 'user_2' });
+    await UserProfileService.getOrCreateUserFromAuth('user_2', { sub: 'user_2' });
 
     expect(syncSpy).toHaveBeenCalledWith(
       'user_2',
@@ -164,7 +165,7 @@ describe('UserService.getOrCreateUserFromAuth', () => {
 });
 
 
-describe('UserService.syncUser', () => {
+describe('UserProfileService.syncUser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -179,7 +180,7 @@ describe('UserService.syncUser', () => {
     vi.mocked(prisma.$transaction).mockRejectedValue({ code: 'P2002' } as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(existingUser as never);
 
-    const result = await UserService.syncUser('user_race', 'race@example.com', 'Race User');
+    const result = await UserProfileService.syncUser('user_race', 'race@example.com', 'Race User');
 
     expect(result).toEqual(existingUser);
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user_race' } });
@@ -187,7 +188,7 @@ describe('UserService.syncUser', () => {
   });
 });
 
-describe('UserService.updateUserLanguage', () => {
+describe('UserLanguageService.updateUserLanguage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -206,7 +207,7 @@ describe('UserService.updateUserLanguage', () => {
       },
     } as never);
 
-    const result = await UserService.updateUserLanguage('user_lang', 'pl');
+    const result = await UserLanguageService.updateUserLanguage('user_lang', 'pl');
 
     expect(result).toEqual(updatedUser);
     expect(prisma.user.upsert).toHaveBeenCalledWith({

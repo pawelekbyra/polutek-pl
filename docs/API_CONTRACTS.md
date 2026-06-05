@@ -11,20 +11,49 @@ Obsługuje zapisywanie się na newsletter i śledzenie kanału (zgoda marketingo
 ### `GET /api/subscriptions?creatorId=[id]`
 Zwraca status subskrypcji dla zalogowanego użytkownika.
 - **Auth**: Wymagane
-- **Output (200)**: `{ subscribed: boolean }`
-- **Error (401)**: `{ error: "Unauthorized" }`
+- **Output (200)**:
+  ```json
+  {
+    "isSubscribed": boolean,
+    "subscribedAt": string | null,
+    "creatorId": string,
+    "creatorSlug": string,
+    "purpose": "EMAIL_NOTIFICATIONS"
+  }
+  ```
+- **Error (401)**: `{ "error": "UNAUTHORIZED", ... }`
 
 ### `POST /api/subscriptions`
 Tworzy subskrypcję (follow).
 - **Auth**: Wymagane
-- **Input**: `{ creatorId: string }`
-- **Output (200)**: `{ success: true }`
+- **Input**: `{ "creatorId": string }`
+- **Output (200)**:
+  ```json
+  {
+    "isSubscribed": true,
+    "subscribedAt": string,
+    "creatorId": string,
+    "creatorSlug": string,
+    "purpose": "EMAIL_NOTIFICATIONS",
+    "message": string
+  }
+  ```
 - **Efekty**: Tworzy rekord w tabeli `Subscription`, inkrementuje `subscribersCount` w modelu `Creator`.
 
 ### `DELETE /api/subscriptions?creatorId=[id]`
 Usuwa subskrypcję (unfollow).
 - **Auth**: Wymagane
-- **Output (200)**: `{ success: true }`
+- **Output (200)**:
+  ```json
+  {
+    "isSubscribed": false,
+    "deleted": boolean,
+    "creatorId": string,
+    "creatorSlug": string,
+    "purpose": "EMAIL_NOTIFICATIONS",
+    "message": string
+  }
+  ```
 - **Efekty**: Usuwa rekord z tabeli `Subscription`, dekrementuje `subscribersCount` w modelu `Creator`.
 
 ---
@@ -48,9 +77,18 @@ Zwraca bezpieczny URL do odtwarzania materiału wideo.
 
 ### `GET /api/media-source/[videoId]`
 - **Auth**: Wymagane (dostęp zależy od `AccessPolicy`)
-- **Output (200)**: `{ url: string, type: "video/mp4" | "application/x-mpegURL" | ... }`
-- **Error (403)**: `{ error: "Forbidden" }` (brak dostępu Patron)
-- **Error (503)**: `{ error: "Signed delivery for HLS/DASH not implemented" }` (dla streamów wymagających proxy)
+- **Output (200)**:
+  ```json
+  {
+    "hasAccess": true,
+    "kind": "direct" | "hls" | "dash" | "youtube" | "vimeo" | "unknown",
+    "label": string,
+    "playbackUrl": string,
+    "embedUrl": string, // opcjonalnie
+    "needsProxy": boolean
+  }
+  ```
+- **Error (403)**: `{ "hasAccess": false, "reason": string, "requiredTier": string }`
 
 ---
 
@@ -64,13 +102,14 @@ Tworzy Stripe Payment Intent dla napiwku/dostępu Patron.
 - **Input**:
   ```json
   {
-    "amount": number, // w groszach/centach
+    "amountMinor": number, // w groszach/centach
     "currency": "PLN" | "EUR",
+    "title": string,
     "creatorId": string,
     "requestId": string // UUID dla idempotencji
   }
   ```
-- **Output (200)**: `{ clientSecret: string, paymentId: string }`
+- **Output (200)**: `{ "clientSecret": string, "paymentId": string }`
 - **Efekty**: Rezerwuje rekord `Payment` w statusie `PENDING`.
 
 ---
