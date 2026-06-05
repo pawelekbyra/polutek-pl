@@ -1,23 +1,27 @@
 # Deploy checklist
 
 ## Build
+
 - [ ] Node runtime is 22.x (`.nvmrc` / `package.json#engines`; Vercel and CI must use the same major)
 - [ ] `npm ci`
 - [ ] `npm run env:validate:prod`
 - [ ] `npx prisma validate`
 - [ ] `npx prisma generate`
 - [ ] `npm run quality:strict-escapes`
+- [ ] `npm run quality:hotspots`
 - [ ] `npm run typecheck`
 - [ ] `npm test -- --run`
 - [ ] `npm run lint`
 - [ ] `npm run build`
 
 ## Review guardrails
+
 - [ ] No new `@ts-ignore` or `@ts-nocheck` comments in production source files. If TypeScript cannot model an edge case, narrow types explicitly or document the exception outside production code.
 - [ ] No new unjustified `any` escape hatches in production source files. Use `unknown`, generated Prisma types, DTOs, or local type guards instead.
-- [ ] `npm run quality:strict-escapes` passes before review/merge.
+- [ ] `npm run quality:strict-escapes` and `npm run quality:hotspots` pass before review/merge.
 
 ## Required env variables
+
 - [ ] `DATABASE_URL`
 - [ ] `DATABASE_URL_UNPOOLED`
 - [ ] `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
@@ -33,17 +37,19 @@
 - [ ] `ADMIN_CLERK_USER_IDS` (comma-separated list of Clerk IDs for immutable admin access)
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
 - [ ] exact media host allowlist: `MEDIA_BUCKET_HOST`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or `ALLOWED_MEDIA_HOSTS`
- - [ ] Production media security: confirm direct files and HLS/DASH manifest URLs load only from exact allowed media hosts.
- - [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts ("lock not acquired") and verify that retries are succeeding correctly.
+- [ ] Production media security: confirm direct files and HLS/DASH manifest URLs load only from exact allowed media hosts.
+- [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts ("lock not acquired") and verify that retries are succeeding correctly.
 - [ ] `HEALTHCHECK_TOKEN`
 
 ## Database
+
 - [ ] `npx prisma generate`
 - [ ] dev: `npx prisma db push`
 - [ ] production: `npm run predeploy:prod` (generates client, deploys migrations, and runs `db:smoke`)
 - [ ] seed if database is empty: `npx prisma db seed`
 
 ## Content
+
 - [ ] At least one approved creator exists; production must not depend on `INITIAL_VIDEOS`/`DEFAULT_CREATOR` demo fallback data
 - [ ] One video has `isMainFeatured=true`
 - [ ] Public video plays through `/api/media/:videoId`
@@ -51,12 +57,26 @@
 - [ ] Patron video plays for patron users
 
 ## Payments
+
 - [ ] Stripe webhook endpoint configured
 - [ ] Test payment creates/updates Payment
 - [ ] Qualifying donation grants patron
 - [ ] Failed payment does not grant patron
 
+## E2E staging configuration
+
+- [ ] `E2E_BASE_URL` points to the deployed staging/preview URL, or local env is complete enough for `npm run dev`.
+- [ ] `MAIN_CREATOR_SLUG` or `E2E_CREATOR_SLUG` points to the private beta channel.
+- [ ] `E2E_PUBLIC_VIDEO_ID` points to a published `PUBLIC` video.
+- [ ] `E2E_LOGGED_IN_VIDEO_ID` points to a published `LOGGED_IN` video.
+- [ ] `E2E_PATRON_VIDEO_ID` points to a published `PATRON` video.
+- [ ] `E2E_NON_PATRON_STORAGE_STATE` points to a Playwright storage-state JSON for a regular logged-in user who is not a Patron.
+- [ ] `E2E_SUBSCRIBER_STORAGE_STATE` may point to the same user after email follow/subscription is enabled; this user still must not have Patron access.
+- [ ] `E2E_ADMIN_STORAGE_STATE` points to a Playwright storage-state JSON for an admin user before admin CRUD smoke is enabled.
+- [ ] Authenticated storage-state files are regenerated for the current Clerk environment before release smoke; do not reuse stale local browser state.
+
 ## Final smoke test
+
 - [ ] Home page loads
 - [ ] `/channel/${MAIN_CREATOR_SLUG}` loads and does not redirect to `/`
 - [ ] Login works
@@ -65,10 +85,13 @@
 - [ ] Logged-in user can disable email notifications via `Subskrybowano`
 - [ ] Subscribed non-patron still cannot access Patron-only videos
 - [ ] Patron without subscription still can access Patron-only videos
+- [ ] Regular logged-in user can comment on a public/logged-in video but cannot comment on a Patron-only video.
+- [ ] Guest checkout/create-intent requests are rejected; logged-in Stripe test-mode success creates `Payment` and qualifying Patron access.
 - [ ] Admin page is blocked for non-admin
 - [ ] Admin can manage videos
 
 ## Vercel production migration checklist
+
 - [ ] Vercel Build Command is `npm run vercel-build` (this repo also enforces it in `vercel.json`). The command must run `prisma migrate deploy`, `prisma generate`, `db:smoke`, then `next build` in that order.
 - [ ] Vercel Production `DATABASE_URL` points to the same Postgres/Neon database used by production traffic.
 - [ ] If Vercel reports `P3009` for `20260603140000_add_video_presentation_columns`, inspect the failed row and resolve it only after confirming the two columns exist or after rolling back the failed attempt:
@@ -99,6 +122,8 @@
 - [ ] After deploy: `npm run db:smoke` passes against the production database.
 
 ## CI/CD
+
 - [ ] GitHub Actions `quality` job passes.
 - [ ] GitHub Actions `integration-postgres` job passes with Postgres service, migrations, and `db:smoke`.
 - [ ] GitHub Actions `security` job has been reviewed; `npm audit --audit-level=high` is currently non-blocking.
+- [ ] Secret scanning with push protection and CodeQL/SAST evidence is attached or linked according to `docs/SECURITY_GATES.md`.
