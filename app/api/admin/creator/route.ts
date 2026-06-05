@@ -5,21 +5,39 @@ import { requireAdminForApi } from '@/lib/auth-utils';
 import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
+import { flags } from '@/lib/feature-flags';
+import { MainCreatorService } from '@/lib/services/main-creator.service';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const { response } = await requireAdminForApi("GET_ADMIN_CREATOR");
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CREATOR");
   if (response) return response;
 
   try {
-    const creator = await prisma.creator.findFirst({
-        include: {
-          user: {
-            select: { id: true, email: true, name: true, imageUrl: true }
+    const creator = flags.multiCreator
+      ? await prisma.creator.findFirst({
+          include: {
+            user: {
+              select: { id: true, email: true, name: true, imageUrl: true }
+            }
           }
-        }
-    });
+        })
+      : await prisma.$transaction(async (tx) => {
+          const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
+            repairSingleChannelContent: true,
+          });
+
+          return tx.creator.findUnique({
+            where: { id: mainCreator.id },
+            include: {
+              user: {
+                select: { id: true, email: true, name: true, imageUrl: true }
+              }
+            }
+          });
+        });
+
     return NextResponse.json(creator);
   } catch (error: unknown) {
     logger.error("[ADMIN_CREATOR_GET_ERROR]", error);
@@ -49,6 +67,29 @@ export async function POST(req: NextRequest) {
   const { id, name, bio, slug, bannerUrl } = result.data;
 
   try {
+    if (!flags.multiCreator) {
+      const updated = await prisma.$transaction(async (tx) => {
+        const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
+          repairSingleChannelContent: true,
+        });
+
+        return tx.creator.update({
+          where: { id: mainCreator.id },
+          data: { name, bio, bannerUrl }
+        });
+      });
+
+      await writeAuditLog({
+          actorUserId: (await auth()).userId,
+          action: "CREATOR_UPDATED",
+          targetType: "Creator",
+          targetId: updated.id,
+          metadata: { name, slug: updated.slug, singleChannelAlias: true }
+      });
+
+      return NextResponse.json(updated);
+    }
+
     if (id) {
       const updated = await prisma.creator.update({
         where: { id },

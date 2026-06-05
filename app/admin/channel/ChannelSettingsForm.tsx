@@ -70,7 +70,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
         <Card>
           <CardHeader>
             <CardTitle>Kanał nie został znaleziony</CardTitle>
-            <CardDescription>Nie znaleziono twórcy dla aktualnego flags.mainCreatorSlug. Sprawdź konfigurację MAIN_CREATOR_SLUG.</CardDescription>
+            <CardDescription>Nie udało się przygotować głównego kanału. Sprawdź konfigurację MAIN_CREATOR_SLUG albo spróbuj ponownie po odświeżeniu panelu.</CardDescription>
           </CardHeader>
         </Card>
       </main>

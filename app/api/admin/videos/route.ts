@@ -2,12 +2,12 @@ import { logger, createScopedLogger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
+import { MainCreatorService } from '@/lib/services/main-creator.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
@@ -37,10 +37,17 @@ const videoSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const { response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
   if (response) return response;
 
+  const mainCreator = flags.multiCreator
+    ? null
+    : await prisma.$transaction((tx) =>
+        MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
+      );
+
   const videos = await prisma.video.findMany({
+    where: mainCreator ? { creatorId: mainCreator.id } : undefined,
     orderBy: { createdAt: 'desc' },
     include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
   });
@@ -85,12 +92,21 @@ export async function POST(req: NextRequest) {
   try {
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
+        const mainCreator = flags.multiCreator
+          ? null
+          : await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true });
         const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true, creatorId: true } });
-        const publishedAt = (status === VideoStatus.PUBLISHED && !currentVideo?.publishedAt) ? new Date() : undefined;
+        if (!currentVideo) {
+          throw new Error('Nie znaleziono filmu do aktualizacji.');
+        }
+
+        const targetCreatorId = mainCreator?.id || currentVideo.creatorId;
+        const publishedAt = (status === VideoStatus.PUBLISHED && !currentVideo.publishedAt) ? new Date() : undefined;
 
         const video = await tx.video.update({
           where: { id },
           data: {
+            creatorId: targetCreatorId,
             title,
             titleEn,
             slug,
@@ -115,7 +131,7 @@ export async function POST(req: NextRequest) {
           await tx.video.updateMany({
             where: {
               id: { not: id },
-              creatorId: currentVideo?.creatorId
+              creatorId: targetCreatorId
             },
             data: { isMainFeatured: false }
           });
@@ -134,34 +150,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
-        const mainCreatorSlug = flags.mainCreatorSlug;
-
-        // Find primary creator first
-        let creator = await tx.creator.findFirst({ where: { isPrimary: true } });
-
-        if (!creator) {
-          // Fallback to the configured main creator slug
-          creator = await tx.creator.findUnique({ where: { slug: mainCreatorSlug } });
-        }
-
-        if (!creator) {
-          if (!adminUserId) throw new Error('Admin user not available for channel bootstrap.');
-
-          creator = await tx.creator.create({
-            data: {
-              userId: adminUserId,
-              name: MAIN_CREATOR_NAME,
-              slug: mainCreatorSlug,
-              isApproved: true,
-              isPrimary: true,
-            }
-          });
-        } else if (!creator.isApproved) {
-          creator = await tx.creator.update({
-            where: { id: creator.id },
-            data: { isApproved: true },
-          });
-        }
+        const creator = flags.multiCreator
+          ? await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx)
+          : await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true });
 
         const video = await tx.video.create({
           data: {
