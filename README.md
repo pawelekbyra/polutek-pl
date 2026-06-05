@@ -159,9 +159,9 @@ Legenda:
 - [x] Uruchomiono `npx prisma validate` oraz `npx prisma generate` z tymczasowymi URL-ami Prisma do walidacji składni schematu; schema jest poprawna, klient wygenerowany.
 - [x] Uruchomiono `npm run quality:strict-escapes`; wynik PASS — produkcyjne źródła bez `@ts-ignore`, `@ts-nocheck` i jawnego `any`.
 - [x] Uruchomiono `npm run typecheck`; wynik PASS.
-- [x] Uruchomiono `npm test -- --run`; wynik PASS: 21 plików testowych, 108 testów.
+- [x] Uruchomiono `npm test -- --run`; wynik PASS: 26 plików testowych, 138 testów.
 - [x] Uruchomiono `npm run lint`; wynik PASS: brak ostrzeżeń i błędów ESLint.
-- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem.
+- [x] Uruchomiono `npm run build`; wynik PASS: production build zakończony sukcesem bez zależności od zdalnego pobierania Google Fonts.
 - [~] Uruchomiono `npm run db:smoke`; wynik `FAILED_ENV`, bo brak `DATABASE_URL`.
 - [~] Uruchomiono `npm run db:migrate:deploy`; wynik `FAILED_ENV`, bo brak `DATABASE_URL_UNPOOLED`.
 
