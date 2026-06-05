@@ -47,8 +47,13 @@ export default function ClerkLocalizationProvider({ children }: { children: Reac
     ? plPL as React.ComponentProps<typeof ClerkProvider>["localization"]
     : undefined;
 
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-    ?? "pk_test_YnVpbGQtdGltZS1wbGFjZWhvbGRlciRjbGVyay5hY2NvdW50cy5kZXYk";
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    throw new Error(
+      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required. Run npm run env:validate or set the Clerk publishable key before starting the app.',
+    );
+  }
 
   return (
     <ClerkProvider

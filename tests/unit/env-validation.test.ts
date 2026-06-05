@@ -6,7 +6,7 @@ const productionEnv = {
   DATABASE_URL: 'postgresql://user:pass@example.com:5432/app',
   DATABASE_URL_UNPOOLED: 'postgresql://user:pass@example.com:5432/app',
   NEXT_PUBLIC_APP_URL: 'https://example.com',
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_example',
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ',
   CLERK_SECRET_KEY: 'sk_test_example',
   CLERK_WEBHOOK_SECRET: 'whsec_clerk',
   STRIPE_SECRET_KEY: 'sk_test_stripe',
@@ -49,8 +49,18 @@ describe('validateAppEnv', () => {
     expect(result.errors).toContain('Writable Redis/KV REST credentials are required in production for rate limiting: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.');
   });
 
-  it('warns but does not fail when MAIN_CREATOR_SLUG is missing outside production', () => {
+  it('requires Clerk publishable key in every runtime mode', () => {
     const result = validateAppEnv({ NODE_ENV: 'development' }, 'development');
+
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required for application runtime.');
+  });
+
+  it('warns but does not fail when MAIN_CREATOR_SLUG is missing outside production', () => {
+    const result = validateAppEnv({
+      NODE_ENV: 'development',
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ',
+    }, 'development');
 
     expect(result.success).toBe(true);
     expect(result.warnings).toContain('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');

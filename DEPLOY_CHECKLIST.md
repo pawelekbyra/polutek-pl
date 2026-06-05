@@ -1,6 +1,7 @@
 # Deploy checklist
 
 ## Build
+- [ ] Node runtime is 22.x (`.nvmrc` / `package.json#engines`; Vercel and CI must use the same major)
 - [ ] `npm ci`
 - [ ] `npm run env:validate:prod`
 - [ ] `npx prisma validate`

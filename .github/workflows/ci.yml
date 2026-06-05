@@ -16,7 +16,7 @@ jobs:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
       NEXT_PUBLIC_APP_URL: https://example.com
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_example
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ
       CLERK_SECRET_KEY: sk_test_example
       CLERK_WEBHOOK_SECRET: whsec_clerk
       STRIPE_SECRET_KEY: sk_test_stripe
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run env:validate:prod
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npx prisma migrate deploy
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - name: npm audit high

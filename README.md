@@ -209,10 +209,8 @@ Aktualny workflow security traktuje `npm audit --audit-level=high` jako niebloku
 
 ## 5. P1 — konfiguracja runtime, Node matrix i ukryte fallbacki
 
-CI używa Node 22, wcześniejsza diagnostyka w README wskazywała Node 24.15.0, a `package.json` nie deklaruje `engines`. `ClerkLocalizationProvider` nadal ma build-time placeholder publishable key, który może maskować misconfig po stronie klienta.
+Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines` i GitHub Actions (`actions/setup-node` czyta `.nvmrc`). `ClerkLocalizationProvider` nie używa już build-time placeholdera dla `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`; brak klucza jest błędem walidacji env i jawnie zatrzymuje provider. Nadal trzeba potwierdzić produkcyjne zależności środowiskowe na realnym deployu.
 
-- [ ] Dodać `engines`, `.nvmrc` albo Volta i ujednolicić runtime matrix między README, CI, Vercel i lokalnym setupem.
-- [ ] Usunąć fallback placeholdera `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` z `ClerkLocalizationProvider`; brak klucza powinien fail-fast w konfiguracji, nie ukrywać misconfig.
 - [ ] Potwierdzić produkcyjne Redis/KV dla rate limitów na realnym środowisku; memory fallback pozostaje wyłącznie dev/test.
 - [ ] Potwierdzić produkcyjne allowlisty hostów mediów/obrazów w ENV, bez szerokich domen providerów.
 

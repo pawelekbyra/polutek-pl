@@ -40,7 +40,7 @@ Kraufanding currently runs as a single-creator VOD with data-model support for a
 
 ## Release automation
 
-`.github/workflows/ci.yml` contains:
+`.github/workflows/ci.yml` uses the repository `.nvmrc` so CI follows the same Node 22 runtime declared in `package.json#engines`. It contains:
 
 * `quality`: install, env validation, Prisma validate/generate, typecheck, unit tests, lint, build.
 * `integration-postgres`: Postgres service, `prisma migrate deploy`, Prisma generate, `db:smoke`.
