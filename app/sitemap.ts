@@ -3,7 +3,7 @@ import { ContentService } from '@/lib/services/content.service';
 import { flags } from '@/lib/feature-flags';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pawelperfect.pl';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
     return [{

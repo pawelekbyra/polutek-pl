@@ -14,8 +14,8 @@ test.describe('beta public smoke', () => {
     const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     await expectNonServerError(response?.status() ?? null);
-    await expect(page).toHaveTitle(/POLUTEK|Kraufanding|VOD/i);
-    await expect(page.locator('body')).toContainText(/POLUTEK|VOD|kanał|film|materiał/i);
+    await expect(page).toHaveTitle(/Polutek|VOD/i);
+    await expect(page.locator('body')).toContainText(/Polutek|VOD|kanał|film|materiał/i);
   });
 
   test('configured channel page renders without server errors', async ({ page }) => {

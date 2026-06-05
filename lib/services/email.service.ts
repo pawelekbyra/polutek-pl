@@ -85,7 +85,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
 
   const resend = getResendClient();
   const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`,
+    from: process.env.EMAIL_FROM || `${APP_NAME} <no-reply@example.local>`,
     to: [to],
     subject,
     html,
@@ -105,7 +105,7 @@ export async function sendWelcomeEmail(to: string, firstName?: string | null, la
     variables: {
       firstName: firstName || (language === 'en' ? 'User' : 'Użytkowniku'),
       appName: APP_NAME,
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://polutek.pl',
+      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     },
     language,
   });

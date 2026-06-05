@@ -3,7 +3,7 @@ import { InternalVideoDTO as Video } from "@/app/types/video";
 import { MAIN_CREATOR_NAME, MAIN_CREATOR_SLUG } from '../constants';
 
 export const DEFAULT_CREATOR = {
-  id: "creator_polutek_default",
+  id: "creator_default",
   name: MAIN_CREATOR_NAME,
   slug: MAIN_CREATOR_SLUG,
   bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne śledztwa.`,
@@ -33,7 +33,7 @@ export const INITIAL_VIDEOS: Video[] = [
   {
     id: "v_fallback_002",
     creatorId: DEFAULT_CREATOR.id,
-    title: "Secret Project",
+    title: "Materiał dla zalogowanych",
     slug: "historia-powstania-osady",
     description: "Materiał o historii powstania osady.",
     videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/historia-powstania-osady-natury-zew-w-gruncie-ruchu-stefan.mp4",

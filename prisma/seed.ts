@@ -2,41 +2,43 @@ import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/clien
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "pawelek.byra@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.local";
+const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || "main-creator";
+const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || "Configured Creator";
 
 async function main() {
-  console.log('Starting seeding for Paweł Perfect MVP...');
+  console.log(`Starting seeding for ${MAIN_CREATOR_NAME} MVP...`);
 
   // 1. Create or update the Admin User
   const adminUser = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
       role: SystemRole.ADMIN,
-      name: "Paweł Perfect",
+      name: MAIN_CREATOR_NAME,
     },
     create: {
       id: "user_admin_001",
       email: ADMIN_EMAIL,
-      name: "Paweł Perfect",
+      name: MAIN_CREATOR_NAME,
       role: SystemRole.ADMIN,
     },
   });
 
   // 2. Create the Creator profile
   const creator = await prisma.creator.upsert({
-    where: { slug: 'polutek' },
+    where: { slug: MAIN_CREATOR_SLUG },
     update: {
-      name: 'Paweł Perfect',
-      bio: 'Oficjalna platforma Paweł Perfect. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      name: MAIN_CREATOR_NAME,
+      bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne treści.`,
       subscribersCount: 1250000,
       isApproved: true,
       isPrimary: true,
     },
     create: {
       userId: adminUser.id,
-      slug: 'polutek',
-      name: 'Paweł Perfect',
-      bio: 'Oficjalna platforma Paweł Perfect. Ekskluzywne materiały VOD i niezależne śledztwa.',
+      slug: MAIN_CREATOR_SLUG,
+      name: MAIN_CREATOR_NAME,
+      bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne treści.`,
       subscribersCount: 1250000,
       isApproved: true,
       isPrimary: true,
@@ -59,7 +61,7 @@ async function main() {
       dislikesCount: 120,
     },
     {
-      title: 'Secret Project',
+      title: 'Materiał dla zalogowanych',
       slug: 'historia-powstania-osady',
       description: 'Materiał o historii powstania osady.',
       videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/historia-powstania-osady-natury-zew-w-gruncie-ruchu-stefan.mp4",

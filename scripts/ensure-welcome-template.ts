@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client';
+import { APP_NAME } from '../lib/constants';
 
 const prisma = new PrismaClient();
 
 const DEFAULT_WELCOME_TEMPLATE = {
   slug: "welcome-email",
-  subject: "Witaj w POLUTEK.PL, {{firstName}}!",
+  subject: `Witaj w ${APP_NAME}, {{firstName}}!`,
   html: `
     <div style="font-family: serif; color: #1a1a1a; background-color: #FDFBF7; padding: 40px; line-height: 1.6; border: 1px solid #1a1a1a;">
-      <h1 style="text-transform: uppercase; letter-spacing: -0.05em; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px;">Witaj w POLUTEK.PL</h1>
+      <h1 style="text-transform: uppercase; letter-spacing: -0.05em; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px;">Witaj w ${APP_NAME}</h1>
       <p>Cześć {{firstName}}!</p>
       <p>Dziękujemy za dołączenie do naszej społeczności. Od teraz masz dostęp do podstawowych funkcji platformy.</p>
-      <p>Odwiedź <a href="https://polutek.pl" style="color: #3b82f6; font-weight: bold; text-decoration: none;">POLUTEK.PL</a>, aby zobaczyć najnowsze filmy.</p>
+      <p>Odwiedź <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}" style="color: #3b82f6; font-weight: bold; text-decoration: none;">${APP_NAME}</a>, aby zobaczyć najnowsze filmy.</p>
     </div>
   `,
 };

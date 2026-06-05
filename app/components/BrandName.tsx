@@ -9,12 +9,15 @@ interface BrandNameProps {
 
 const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic' }) => {
   const isClassic = variant === 'classic';
+  const dotSuffixMatch = APP_NAME.match(/\.pl$/i);
+  const baseName = dotSuffixMatch ? APP_NAME.slice(0, -dotSuffixMatch[0].length) : APP_NAME;
+
   return (
     <span className={cn(
-      isClassic ? "font-brand font-black tracking-tighter uppercase" : "font-handwriting font-bold uppercase",
+      isClassic ? "font-brand font-black tracking-tighter uppercase text-neutral-950" : "font-handwriting font-bold uppercase text-neutral-950",
       className
     )}>
-      {APP_NAME.replace('.PL', '')}<span className="text-primary">{APP_NAME.includes('.PL') ? '.PL' : ''}</span>
+      {baseName}<span className="text-primary">{dotSuffixMatch?.[0] ?? ''}</span>
     </span>
   );
 };

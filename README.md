@@ -1,6 +1,6 @@
-# Kraufanding — prywatna platforma VOD i patronatu
+# Polutek.pl — prywatna platforma VOD i patronatu
 
-Kraufanding to aplikacja **Next.js 14 App Router** dla prywatnego VOD, dobrowolnych napiwków i dostępu premium typu Patron. Repo jest w trybie **beta hardening**: priorytetem jest bezpieczeństwo release, spójność domenowa i pełna weryfikowalność prac kolejnych agentów AI.
+Polutek.pl to aplikacja **Next.js 14 App Router** dla prywatnego VOD, dobrowolnych napiwków i dostępu premium typu Patron. Repo jest w trybie **beta hardening**: priorytetem jest bezpieczeństwo release, spójność domenowa i pełna weryfikowalność prac kolejnych agentów AI.
 
 ## Start dla agentów AI — przeczytaj przed zmianami
 
@@ -20,9 +20,9 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 
 ## Aktualny tryb aplikacji
 
-Aplikacja działa jako **single-creator VOD** z przygotowaniem danych pod tryb multi-creator. Flaga `ENABLE_MULTI_CREATOR=false` utrzymuje stronę główną jako główny widok wybranego twórcy, ale `/channel/[slug]` pozostaje dostępną, indeksowalną stroną kanału dla skonfigurowanego sluga.
+Aplikacja działa w prywatnej becie jako **single configured creator/channel VOD** z przygotowaniem modelu danych pod przyszły tryb multi-creator. `ENABLE_MULTI_CREATOR=false` jest prawidłowym trybem bety: homepage pokazuje główny skonfigurowany kanał, a `/channel/[MAIN_CREATOR_SLUG]` pozostaje dostępną stroną tego kanału i nie przekierowuje do `/`.
 
-Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału.
+Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału. Model `Creator` i relacje `Video.creator`, `Payment.creator`, `Subscription.creator` mogą pozostać jako architektura future multi-creator, ale beta nie dostarcza publicznego marketplace’u, onboardingu ani multi-creator dashboardu.
 
 ## Definicje domenowe — najważniejsza spójność do bety
 
@@ -101,6 +101,11 @@ Wymagane grupy zmiennych:
 - healthcheck: `HEALTHCHECK_TOKEN`.
 
 W produkcji rate limit wymaga zapisywalnego Redis/KV. Memory fallback jest dopuszczalny tylko lokalnie i w testach.
+
+
+## Status prawny repo
+
+Repo jest prywatne/proprietary. `package.json` ma `license: "UNLICENSED"`; bez osobnej pisemnej zgody nie zakładaj prawa do redystrybucji kodu.
 
 ## Prisma i deploy
 
@@ -233,13 +238,11 @@ Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tra
 
 ## 8. P2 — scope bety, eksperymentalne funkcje i multi-creator
 
-Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: campaign/zrzutka page, upload/transcoding pipeline, signed HLS/DASH delivery oraz ograniczony multi-creator. Beta powinna mieć zamrożony scope bez udawania, że niedomknięte ścieżki są gotowe.
+Repo nadal ma funkcje oznaczone jako eksperymentalne lub niedomknięte: upload/transcoding pipeline, signed HLS/DASH delivery oraz future multi-creator architecture. Beta pozostaje prywatną platformą VOD z dobrowolnymi napiwkami Stripe i dostępem Patron.
 
-- [ ] Spisać jawny beta scope: które funkcje są w becie, które są wyłączone/ukryte i które są świadomie poza zakresem.
-- [ ] Ukryć albo domknąć campaign/zrzutka page przed prywatną betą.
 - [ ] Domknąć upload pipeline albo jasno ograniczyć betę do administrator-provided trusted media URLs.
 - [ ] Zaprojektować signed HLS/DASH delivery albo utrzymać fail-closed i opisać to jako ograniczenie bety.
-- [ ] Wyczyścić hardcoded single-creator assumptions tylko wtedy, gdy beta ma wyjść poza jeden skonfigurowany kanał.
+- [ ] Private beta is single configured creator/channel. Multi-creator data model may remain, but no public multi-creator product flow is required for beta.
 
 ## 9. P2 — moduły, hotspoty i dług techniczny
 
@@ -256,8 +259,6 @@ Dokumentacja była miejscami bardziej optymistyczna niż runtime. Po każdym har
 
 - [ ] Po naprawie admin auth zrobić pełny reconciliation pass README, `.env.example`, `DEPLOY_CHECKLIST.md`, `KNOWN_LIMITATIONS.md` i `ARCHITECTURE.md`.
 - [ ] Usunąć z dokumentacji twierdzenia typu PASS, jeśli nie mają aktualnego testu/komendy albo staging evidence.
-- [ ] Dodać jawny status licencyjny: `LICENSE`, `license` w `package.json` albo świadome oznaczenie proprietary/private.
-- [ ] Zaktualizować nazwę/metadane pakietu, jeśli repo nie powinno dalej występować jako historyczne `polutek`.
 
 ## 19. Finalna walidacja przed prywatną betą
 

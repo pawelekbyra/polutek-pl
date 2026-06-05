@@ -236,7 +236,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
     </div>
   ) : null;
 
-  const secretProjectSection = !searchQuery ? (
+  const patronSupportSection = !searchQuery ? (
     <div className="pt-6 pb-0">
       <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
@@ -262,13 +262,13 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       {usePatronPlaylistOrder ? (
         <>
           {patronZoneSection}
-          {secretProjectSection}
+          {patronSupportSection}
           {publicMaterialsSection}
         </>
       ) : (
         <>
           {publicMaterialsSection}
-          {secretProjectSection}
+          {patronSupportSection}
           {patronZoneSection}
         </>
       )}

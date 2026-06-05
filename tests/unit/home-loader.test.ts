@@ -7,7 +7,7 @@ const mockFeatureFlags = vi.hoisted(() => ({
   flags: {
     demoFallbacks: false,
     multiCreator: false,
-    mainCreatorSlug: 'kraufanding',
+    mainCreatorSlug: 'main-channel',
   },
 }));
 
@@ -27,12 +27,12 @@ describe('loadHomeContent', () => {
     vi.clearAllMocks();
     mockFeatureFlags.flags.demoFallbacks = false;
     mockFeatureFlags.flags.multiCreator = false;
-    mockFeatureFlags.flags.mainCreatorSlug = 'kraufanding';
+    mockFeatureFlags.flags.mainCreatorSlug = 'main-channel';
   });
 
   it('returns ready status with videos scoped to the main creator in single-creator mode', async () => {
     const mockVideos = [{ id: '1', title: 'Video 1', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: true }];
-    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Kraufanding', slug: 'kraufanding', videos: mockVideos, subscribersCount: 0 } as any);
+    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: mockVideos, subscribersCount: 0 } as any);
 
     const result = await loadHomeContent();
 
@@ -43,7 +43,7 @@ describe('loadHomeContent', () => {
     if (result.status === 'ready') {
       expect(result.allVideos).toHaveLength(1);
       expect(result.mainVideo?.id).toBe('1');
-      expect(result.creator?.slug).toBe('kraufanding');
+      expect(result.creator?.slug).toBe('main-channel');
     }
   });
 
@@ -52,7 +52,7 @@ describe('loadHomeContent', () => {
       { id: 'first', title: 'First Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
       { id: 'second', title: 'Second Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
     ];
-    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Kraufanding', slug: 'kraufanding', videos: mockVideos, subscribersCount: 0 } as any);
+    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: mockVideos, subscribersCount: 0 } as any);
 
     const result = await loadHomeContent();
 
@@ -89,7 +89,7 @@ describe('loadHomeContent', () => {
   });
 
   it('returns empty status when the main creator has no videos in single-creator mode', async () => {
-    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Kraufanding', slug: 'kraufanding', videos: [], subscribersCount: 0 } as any);
+    vi.mocked(ContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: [], subscribersCount: 0 } as any);
 
     const result = await loadHomeContent();
 

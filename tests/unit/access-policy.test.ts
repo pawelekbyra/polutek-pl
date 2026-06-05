@@ -130,6 +130,47 @@ describe('AccessPolicy', () => {
       expect(decision.reason).toBe('PATRON_REQUIRED');
     });
 
+    it('does not treat a Subscription-like user property as Patron access', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isPatron: false,
+        isDeleted: false,
+        isSubscribed: true,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('PATRON_REQUIRED');
+    });
+
+    it('allows Patron access even when the user is not subscribed to email notifications', async () => {
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        publishedAt: new Date(Date.now() - 1000),
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'u1',
+        role: 'USER',
+        isPatron: true,
+        isDeleted: false,
+        isSubscribed: false,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
+      expect(decision.allowed).toBe(true);
+    });
+
     it('allows access to PATRON videos if user is a patron', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
