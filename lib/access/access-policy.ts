@@ -38,10 +38,16 @@ export class AccessPolicy {
     videoId: string,
     prefetchedVideo?: AccessVideo | null
   ): Promise<AccessDecision> {
-    let video: AccessVideo | null = prefetchedVideo ?? await prisma.video.findUnique({
-      where: { id: videoId },
-      include: { creator: true }
-    });
+    let video: AccessVideo | null;
+
+    if (prefetchedVideo !== undefined) {
+      video = prefetchedVideo;
+    } else {
+      video = await prisma.video.findUnique({
+        where: { id: videoId },
+        include: { creator: true }
+      });
+    }
 
     if (!video && canUseDemoFallbacks()) {
         // Fallback for demo/dev if DB is empty
@@ -132,6 +138,10 @@ export class AccessPolicy {
 
   static async canManageAdmin(userId: string | null | undefined): Promise<AccessDecision> {
     if (!userId) return { allowed: false, reason: "LOGIN_REQUIRED" };
+
+    // Check immutable allowlist first
+    const adminIds = (process.env.ADMIN_CLERK_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (adminIds.includes(userId)) return { allowed: true };
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

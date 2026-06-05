@@ -75,7 +75,7 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
       kind: 'hls',
       label: 'HLS (.m3u8)',
       playbackUrl: rawUrl,
-      needsProxy: false,
+      needsProxy: true, // Fail-closed: HLS/DASH must be proxied or signed
     };
   }
 
@@ -84,7 +84,7 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
       kind: 'dash',
       label: 'MPEG-DASH (.mpd)',
       playbackUrl: rawUrl,
-      needsProxy: false,
+      needsProxy: true, // Fail-closed: HLS/DASH must be proxied or signed
     };
   }
 

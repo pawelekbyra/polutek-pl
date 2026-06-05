@@ -159,12 +159,14 @@ export class PaymentService {
     currency,
     title,
     creatorId,
+    requestId,
   }: {
     userId: string;
     amountMinor: number;
     currency: string;
     title: string;
     creatorId?: string;
+    requestId?: string;
   }) {
     const stripe = getStripe();
     const user = await prisma.user.findUnique({
@@ -176,6 +178,29 @@ export class PaymentService {
 
     const stripeCustomerId = await this.getOrCreateStripeCustomer(userId, user.email);
 
+    // Deduplication check: look for an existing pending payment with the same requestId
+    if (requestId) {
+        // Find by metadata.requestId using Prisma JSON filter.
+        const existingWithId = await prisma.payment.findFirst({
+            where: {
+                userId,
+                status: PaymentStatus.PENDING,
+                metadata: {
+                    path: ['requestId'],
+                    equals: requestId
+                }
+            }
+        });
+
+        if (existingWithId && existingWithId.stripeIntentId) {
+            const intent = await stripe.paymentIntents.retrieve(existingWithId.stripeIntentId);
+            return {
+                id: existingWithId.id,
+                clientSecret: intent.client_secret
+            };
+        }
+    }
+
     const payment = await prisma.payment.create({
       data: {
         userId,
@@ -183,31 +208,43 @@ export class PaymentService {
         amountMinor,
         currency: currency.toUpperCase(),
         status: PaymentStatus.PENDING,
+        metadata: requestId ? { requestId } : {},
       }
     });
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountMinor,
-      currency: currency.toLowerCase(),
-      customer: stripeCustomerId,
-      description: title,
-      metadata: {
-        userId,
-        paymentId: payment.id,
-        ...(creatorId ? { creatorId } : {}),
-      },
-      automatic_payment_methods: { enabled: true },
-    });
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountMinor,
+          currency: currency.toLowerCase(),
+          customer: stripeCustomerId,
+          description: title,
+          metadata: {
+            userId,
+            paymentId: payment.id,
+            requestId: requestId || null,
+            ...(creatorId ? { creatorId } : {}),
+          },
+          automatic_payment_methods: { enabled: true },
+        }, {
+            idempotencyKey: requestId ? `payment-intent-${userId}-${requestId}` : undefined
+        });
 
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: { stripeIntentId: paymentIntent.id }
-    });
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { stripeIntentId: paymentIntent.id }
+        });
 
-    return {
-        id: payment.id,
-        clientSecret: paymentIntent.client_secret
-    };
+        return {
+            id: payment.id,
+            clientSecret: paymentIntent.client_secret
+        };
+    } catch (error) {
+        await prisma.payment.update({
+            where: { id: payment.id },
+            data: { status: PaymentStatus.FAILED }
+        });
+        throw error;
+    }
   }
 
   static async handleWebhook(body: string, sig: string) {
@@ -224,6 +261,7 @@ export class PaymentService {
     }
 
     // Atomic idempotency check with lock
+    const STRIPE_STALE_MS = 10 * 60_000;
     try {
       await prisma.stripeEvent.create({
         data: {
@@ -233,26 +271,39 @@ export class PaymentService {
           payload: getSafeStripeEventPayload(event)
         }
       });
-    } catch (e: unknown) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
-        if (existing?.status === WebhookEventStatus.PROCESSED) {
-          logger.info(`[PaymentService] Event ${event.id} already PROCESSED.`);
+    } catch (e: any) {
+      if (e.code === 'P2002') {
+        const now = new Date();
+        const staleThreshold = new Date(now.getTime() - STRIPE_STALE_MS);
+
+        const { count } = await prisma.stripeEvent.updateMany({
+          where: {
+            id: event.id,
+            OR: [
+              { status: WebhookEventStatus.FAILED },
+              {
+                status: WebhookEventStatus.PROCESSING,
+                updatedAt: { lt: staleThreshold }
+              }
+            ]
+          },
+          data: {
+            status: WebhookEventStatus.PROCESSING,
+            updatedAt: now,
+            error: null
+          }
+        });
+
+        if (count === 0) {
+          const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
+          if (existing?.status === WebhookEventStatus.PROCESSED) {
+            logger.info(`[PaymentService] Event ${event.id} already PROCESSED.`);
+          } else {
+            logger.info(`[PaymentService] Event ${event.id} is being processed elsewhere.`);
+          }
           return;
         }
-        if (existing?.status === WebhookEventStatus.PROCESSING) {
-          const STALE_MINS = 10;
-          const diff = (Date.now() - (existing.updatedAt?.getTime() || 0)) / 60000;
-          if (diff < STALE_MINS) {
-            logger.info(`[PaymentService] Event ${event.id} is being processed elsewhere.`);
-            return;
-          }
-          logger.info(`[PaymentService] Retrying stale event ${event.id}.`);
-        }
-        await prisma.stripeEvent.update({
-          where: { id: event.id },
-          data: { status: WebhookEventStatus.PROCESSING, error: null }
-        });
+        logger.info(`[PaymentService] Retrying failed or stale event ${event.id}.`);
       } else {
         throw e;
       }
@@ -337,13 +388,21 @@ export class PaymentService {
 
         if (!refund.status) return null;
 
-        await tx.payment.update({
-            where: { id: payment.id },
+        const { count } = await tx.payment.updateMany({
+            where: {
+                id: payment.id,
+                refundedAmountMinor: payment.refundedAmountMinor ?? 0,
+            },
             data: {
                 refundedAmountMinor: refund.newRefundedAmountMinor,
                 status: refund.status,
             }
         });
+
+        if (count === 0) {
+            logger.info(`[PaymentService] Refund for payment ${payment.id} already processed or CAS failed.`);
+            return null;
+        }
 
         await decrementUserNetPaymentTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
 
@@ -451,17 +510,25 @@ export class PaymentService {
 
     try {
       const result = await prisma.$transaction(async (tx) => {
+        // Try to update PENDING -> SUCCEEDED (first time)
         const { count } = await tx.payment.updateMany({
             where: { id: paymentId, status: PaymentStatus.PENDING },
             data: { status: PaymentStatus.SUCCEEDED }
         });
 
+        const updatedPayment = await tx.payment.findUnique({ where: { id: paymentId } });
+
         if (count === 0) {
-            logger.info(`[PaymentService] Payment ${paymentId} already fulfilled or not found.`);
-            return null;
+            // If it was already SUCCEEDED, we continue to ensure metadata sync.
+            // If it's something else (FAILED, REFUNDED), we stop.
+            if (updatedPayment?.status === PaymentStatus.SUCCEEDED) {
+              logger.info(`[PaymentService] Payment ${paymentId} already SUCCEEDED; proceeding with replay-safe sync.`);
+            } else {
+              logger.info(`[PaymentService] Payment ${paymentId} already fulfilled or not in a fulfillable state.`);
+              return null;
+            }
         }
 
-        const updatedPayment = await tx.payment.findUnique({ where: { id: paymentId } });
         if (!updatedPayment) throw new Error('PAYMENT_RECORD_LOST');
 
         if (updatedPayment.amountMinor !== intent.amount) {
@@ -478,17 +545,30 @@ export class PaymentService {
 
         if (!existingUser) throw new Error('USER_NOT_FOUND');
 
-        const updatedTotal = await tx.userPaymentTotal.upsert({
-            where: { userId_currency: { userId, currency: updatedPayment.currency } },
-            create: {
-                userId,
-                currency: updatedPayment.currency,
-                amountMinor: updatedPayment.amountMinor
-            },
-            update: {
-                amountMinor: { increment: updatedPayment.amountMinor }
-            }
-        });
+        let updatedTotal;
+        if (count > 0) {
+          // Only increment total on the first successful fulfillment
+          updatedTotal = await tx.userPaymentTotal.upsert({
+              where: { userId_currency: { userId, currency: updatedPayment.currency } },
+              create: {
+                  userId,
+                  currency: updatedPayment.currency,
+                  amountMinor: updatedPayment.amountMinor
+              },
+              update: {
+                  amountMinor: { increment: updatedPayment.amountMinor }
+              }
+          });
+        } else {
+          // On replay, just fetch the current total
+          updatedTotal = await tx.userPaymentTotal.findUnique({
+              where: { userId_currency: { userId, currency: updatedPayment.currency } }
+          });
+          if (!updatedTotal) {
+            // This should not happen if it was already SUCCEEDED
+             throw new Error('USER_PAYMENT_TOTAL_LOST');
+          }
+        }
 
         const patronMinTipAmountMinor = getPatronMinTipAmountMinor();
         // By default every successful one-time tip grants Patron status.
@@ -511,38 +591,40 @@ export class PaymentService {
             normalizedTotal = grantResult.normalizedTotal;
         }
 
-        return { user, becamePatronNow, normalizedTotal };
+        return { user, becamePatronNow, normalizedTotal, isFirstFulfillment: count > 0 };
       });
 
       if (!result) return;
-      const { user, becamePatronNow, normalizedTotal } = result;
+      const { user, becamePatronNow, normalizedTotal, isFirstFulfillment } = result;
 
       await UserAccessService.syncClerkAccess(user.id, user.isPatron, normalizedTotal);
 
       const language = (user.language as 'pl' | 'en') || 'pl';
       const amount = intent.amount / 100;
 
-      // Emails are side effects, send them safely outside transaction
-      await this.sendPaymentEmailSafely(
-        'DONATION',
-        user.email,
-        amount,
-        intent.currency.toUpperCase(),
-        language,
-        user.id,
-        paymentId
-      );
+      // Emails are side effects, send them safely outside transaction only on first fulfillment
+      if (isFirstFulfillment) {
+          await this.sendPaymentEmailSafely(
+            'DONATION',
+            user.email,
+            amount,
+            intent.currency.toUpperCase(),
+            language,
+            user.id,
+            paymentId
+          );
 
-      if (becamePatronNow) {
-        await this.sendPaymentEmailSafely(
-          'PATRON',
-          user.email,
-          amount,
-          intent.currency.toUpperCase(),
-          language,
-          user.id,
-          paymentId
-        );
+          if (becamePatronNow) {
+            await this.sendPaymentEmailSafely(
+              'PATRON',
+              user.email,
+              amount,
+              intent.currency.toUpperCase(),
+              language,
+              user.id,
+              paymentId
+            );
+          }
       }
 
       logger.info(`[PaymentService] Payment fulfilled for user ${userId}: ${amount} ${intent.currency}`);

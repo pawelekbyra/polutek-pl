@@ -137,13 +137,17 @@ export class UserService {
         });
 
         // Role determination:
-        // 1. If Clerk metadata says ADMIN or email matches ADMIN_EMAIL, trust it.
-        // 2. Otherwise keep existing role or default to USER.
+        // 1. Check if user is in ADMIN_CLERK_USER_IDS allowlist (immutable)
+        // 2. If Clerk metadata says ADMIN or email matches ADMIN_EMAIL, trust it (legacy/bootstrap).
+        // 3. Otherwise keep existing role or default to USER.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
         const adminEmail = getConfiguredAdminEmail();
+        const adminIds = (process.env.ADMIN_CLERK_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 
-        if (clerkRole?.toUpperCase() === 'ADMIN' || (adminEmail && email.toLowerCase() === adminEmail.toLowerCase())) {
+        if (adminIds.includes(id)) {
+            targetRole = 'ADMIN';
+        } else if (clerkRole?.toUpperCase() === 'ADMIN' || (adminEmail && email.toLowerCase() === adminEmail.toLowerCase())) {
           targetRole = 'ADMIN';
         } else if (existingUser) {
           targetRole = existingUser.role;
@@ -154,6 +158,16 @@ export class UserService {
           language,
           role: targetRole,
         };
+
+        if (referrerId && !existingUser) {
+            const referrer = await tx.user.findUnique({
+                where: { id: referrerId },
+                select: { id: true }
+            });
+            if (referrer && referrer.id !== id) {
+                updateData.referredBy = { connect: { id: referrer.id } };
+            }
+        }
 
         if (name) updateData.name = name;
         if (username) updateData.username = username;
@@ -171,6 +185,7 @@ export class UserService {
             role: targetRole,
             language: language || 'en',
             referralCode: crypto.randomBytes(6).toString('hex'),
+              referredBy: updateData.referredBy ? (updateData.referredBy as Prisma.UserCreateNestedOneWithoutReferralsInput) : undefined,
           }
         });
 
