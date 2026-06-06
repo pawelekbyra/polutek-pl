@@ -90,6 +90,7 @@ describe('media host validation', () => {
   it('requires https and exact hosts', () => {
     expect(isAllowedMediaUrl('http://media.example.com/video.mp4', env)).toBe(false);
     expect(isAllowedMediaUrl('https://sub.media.example.com/video.mp4', env)).toBe(false);
+    expect(isAllowedMediaUrl('https://media.example.com.evil.com/video.mp4', env)).toBe(false);
   });
 
 

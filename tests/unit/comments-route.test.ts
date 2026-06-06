@@ -101,4 +101,36 @@ describe('/api/comments POST', () => {
       }),
     }));
   });
+
+  it('returns 401 for guests', async () => {
+    vi.mocked(auth).mockResolvedValue({
+      userId: null,
+    } as unknown as Awaited<ReturnType<typeof auth>>);
+
+    const request = new NextRequest('http://localhost/api/comments', {
+      method: 'POST',
+      body: JSON.stringify({ videoId: 'video-id', text: 'Komentarz' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(401);
+  });
+
+  it('returns 403 when AccessPolicy denies commenting', async () => {
+    vi.mocked(auth).mockResolvedValue({
+      userId: 'clerk-user-id',
+      sessionClaims: { email: 'fan@example.com' },
+    } as unknown as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(AccessPolicy.canComment).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED' });
+
+    const request = new NextRequest('http://localhost/api/comments', {
+      method: 'POST',
+      body: JSON.stringify({ videoId: 'video-id', text: 'Komentarz' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+  });
 });

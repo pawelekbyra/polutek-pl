@@ -10,6 +10,7 @@ import { isAllowedCommentImageUrl } from '@/lib/blob';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 import { CommentService } from '@/lib/services/comments/comment.service';
 import { createScopedLogger } from '@/lib/logger';
+import { getCorrelationId } from '@/lib/utils/correlation';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ async function getSafeAuth() {
 }
 
 export async function GET(request: NextRequest) {
-  const requestId = request.headers.get('x-request-id');
+  const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
   const videoId = searchParams.get('videoId');
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const requestId = request.headers.get('x-request-id');
+  const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { userId, sessionClaims } = await getSafeAuth();
   if (!userId) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const requestId = request.headers.get('x-request-id');
+    const requestId = getCorrelationId();
     const scopedLogger = createScopedLogger(requestId);
     const { userId, sessionClaims } = await getSafeAuth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -182,7 +183,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    const requestId = request.headers.get('x-request-id');
+    const requestId = getCorrelationId();
     const scopedLogger = createScopedLogger(requestId);
     const { userId, sessionClaims } = await getSafeAuth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

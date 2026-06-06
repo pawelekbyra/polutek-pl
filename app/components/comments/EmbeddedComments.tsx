@@ -53,23 +53,24 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
-  const clerkUserProfile = isSignedIn
-    ? {
-        id: userId!,
-        imageUrl: user?.imageUrl || null,
-        name:
-          user?.fullName ||
-          [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-          user?.username ||
-          null,
-        username: user?.username || null,
-        totalPaid: numberMetadata(metadata.totalPaid),
-        isPatron: booleanMetadata(metadata.isPatron),
-        role: stringMetadata(metadata.role, "USER"),
-      }
-    : null;
-  const userProfile =
-    propUserProfile || clerkUserProfile
+  const userProfile = React.useMemo(() => {
+    const clerkUserProfile = isSignedIn
+      ? {
+          id: userId!,
+          imageUrl: user?.imageUrl || null,
+          name:
+            user?.fullName ||
+            [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+            user?.username ||
+            null,
+          username: user?.username || null,
+          totalPaid: numberMetadata(metadata.totalPaid),
+          isPatron: booleanMetadata(metadata.isPatron),
+          role: stringMetadata(metadata.role, "USER"),
+        }
+      : null;
+
+    return propUserProfile || clerkUserProfile
       ? {
           ...(clerkUserProfile || {}),
           ...(propUserProfile || {}),
@@ -80,6 +81,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             clerkUserProfile?.username || propUserProfile?.username || null,
         }
       : null;
+  }, [propUserProfile, isSignedIn, userId, user, metadata.totalPaid, metadata.isPatron, metadata.role]);
 
   const isPatronGated = videoTier === "PATRON";
   const isPatron = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
@@ -114,6 +116,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     deleteMutation,
   } = useComments(videoId, sortBy);
 
+  const { mutate: postComment } = postMutation;
+
   const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
 
   const replyingToAuthor = replyTo
@@ -123,13 +127,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !userProfile) return;
-    postMutation.mutate({ text: newComment, parentId: replyTo || undefined }, {
+    postComment({ text: newComment, parentId: replyTo || undefined }, {
         onSuccess: () => {
             setNewComment("");
             setReplyTo(null);
         }
     });
-  }, [newComment, userProfile, replyTo, postMutation]);
+  }, [newComment, userProfile, replyTo, postComment]);
 
   const getCommentsLabel = (count: number) => {
     if (language === "pl") {

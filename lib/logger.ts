@@ -3,7 +3,7 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 type JsonLike = string | number | boolean | null | JsonLike[] | { [key: string]: JsonLike };
 
 const isDebugEnabled = process.env.NODE_ENV !== "production" || process.env.ENABLE_DEBUG_LOGS === "true";
-const sensitiveKeyPattern = /(authorization|cookie|password|secret|signature|token|webhook|api[_-]?key|client[_-]?secret|card|cvc)/i;
+const sensitiveKeyPattern = /(authorization|cookie|password|secret|signature|token|webhook|api[_-]?key|client[_-]?secret|card|cvc|x-request-id)/i;
 const sensitiveValuePattern = /(sk_live|sk_test|pk_live|rk_live|whsec|clerk_secret|bearer\s+)[A-Za-z0-9_\-.]+/gi;
 
 function redactUrl(value: string) {

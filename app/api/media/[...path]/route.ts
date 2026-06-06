@@ -8,8 +8,11 @@ import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
+import { getCorrelationId } from '@/lib/utils/correlation';
+import { recordAlert } from '@/lib/observability';
 
-function rateLimitedResponse() {
+function rateLimitedResponse(videoId: string) {
+  recordAlert('media_proxy.rate_limited', { videoId });
   return NextResponse.json(
     {
       success: false,
@@ -24,7 +27,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
-  const requestId = req.headers.get('x-request-id');
+  const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { userId } = await auth();
 
@@ -42,7 +45,7 @@ export async function GET(
     });
 
     if (!mediaRateLimit.success) {
-      return rateLimitedResponse();
+      return rateLimitedResponse(videoId);
     }
 
     const video = await prisma.video.findUnique({
