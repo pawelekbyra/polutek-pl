@@ -79,12 +79,11 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   const html = replaceTemplateVariables(htmlBase, safeVariables);
 
   const resend = getResendClient();
-  const from = process.env.EMAIL_FROM || (() => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('EMAIL_FROM is not set. Add it to environment variables. Example: "My Channel <no-reply@yourdomain.com>"');
-    }
-    return `${APP_NAME} <no-reply@example.local>`;
-  })();
+  const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+
+  if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
+    logger.error('[EmailService] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
+  }
 
   const { data, error } = await resend.emails.send({
     from,
