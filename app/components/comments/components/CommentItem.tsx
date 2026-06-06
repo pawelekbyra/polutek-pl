@@ -10,10 +10,10 @@ import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 
 interface CommentItemProps {
   comment: CommentView;
-  userProfile: any;
+  userProfile: { id: string } | null;
   isClient: boolean;
   language: string;
-  t: any;
+  t: Record<string, string>;
   canComment: boolean;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
