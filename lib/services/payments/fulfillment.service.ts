@@ -7,17 +7,6 @@ import { grantPatronStatus } from '../patron.service';
 import { writeAuditLog } from '../audit.service';
 import Stripe from 'stripe';
 
-function getPatronMinTipAmountMinor() {
-  const raw = process.env.PATRON_MIN_TIP_AMOUNT;
-  if (!raw && process.env.NODE_ENV === "production") {
-    throw new Error("CRITICAL: PATRON_MIN_TIP_AMOUNT is missing in production.");
-  }
-  const parsed = Number(raw ?? 500);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`CRITICAL: PATRON_MIN_TIP_AMOUNT="${raw}" is not a valid positive number.`);
-  }
-  return Math.floor(parsed);
-}
 
 export class PaymentFulfillmentService {
   private static async sendPaymentEmailSafely(
@@ -113,8 +102,8 @@ export class PaymentFulfillmentService {
           if (!updatedTotal) throw new Error('USER_PAYMENT_TOTAL_LOST');
         }
 
-        const patronMinTipAmountMinor = getPatronMinTipAmountMinor();
-        const grantsPatron = updatedPayment.amountMinor >= patronMinTipAmountMinor;
+        // Any successful one-time Stripe tip that passed checkout minimum validation grants Patron status.
+        const grantsPatron = true;
         let user = { ...existingUser, paymentTotals: existingUser.paymentTotals.map(t =>
             t.currency === updatedPayment.currency ? updatedTotal : t
         ) };

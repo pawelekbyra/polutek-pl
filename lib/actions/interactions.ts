@@ -22,9 +22,11 @@ function isDatabaseTableMissingError(error: unknown) {
  */
 export async function toggleVideoLike(videoId: string) {
   let userId: string | null = null;
+  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
       const authData = await auth();
       userId = authData.userId;
+      sessionClaims = authData.sessionClaims;
   } catch (e: unknown) {
       logger.error("[Interaction] Clerk Handshake Failed:", getErrorMessage(e));
       return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
@@ -38,7 +40,7 @@ export async function toggleVideoLike(videoId: string) {
   try {
     // 1. Sync/Fetch user record
     try {
-        await UserService.getOrCreateUser(userId);
+        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
@@ -98,9 +100,11 @@ export async function toggleVideoLike(videoId: string) {
  */
 export async function toggleVideoDislike(videoId: string) {
   let userId: string | null = null;
+  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
       const authData = await auth();
       userId = authData.userId;
+      sessionClaims = authData.sessionClaims;
   } catch (e: unknown) {
       logger.error("[Interaction] Clerk Handshake Failed:", getErrorMessage(e));
       return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
@@ -113,7 +117,7 @@ export async function toggleVideoDislike(videoId: string) {
 
   try {
     try {
-        await UserService.getOrCreateUser(userId);
+        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };

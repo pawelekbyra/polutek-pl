@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Mail, Settings, Video, ShieldCheck } from "@/app/components/icons";
+import { ArrowRight, Mail, Settings, Video, ShieldCheck, Trophy } from "@/app/components/icons";
 
 const adminSections = [
   {
@@ -22,6 +22,13 @@ const adminSections = [
     description: "Nazwa kanału, opis, cover photo, social links, ustawienia profilu.",
     href: "/admin/channel",
     icon: Settings,
+  },
+
+  {
+    title: "Płatności",
+    description: "Waluty, minimalne kwoty napiwków i ustawienia bramki patronackiej.",
+    href: "/admin/payments",
+    icon: Trophy,
   },
   {
     title: "Użytkownicy",

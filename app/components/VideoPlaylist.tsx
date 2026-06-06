@@ -53,14 +53,30 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
   const [isSyncing, setIsSyncing] = useState(false);
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const [referralData, setReferralData] = useState<{ count: number, points: number, code: string | null }>({ count: 0, points: 0, code: null });
+  const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
-  const minAmount = MIN_PAYMENT_BY_CURRENCY[(selectedCurrency.toUpperCase() as SupportedCurrency)] ?? MIN_PAYMENT_BY_CURRENCY.PLN;
+  const minAmount = minimums[(selectedCurrency.toUpperCase() as SupportedCurrency)] ?? minimums.PLN;
   const getSuggestedAmount = useCallback((curr: string) => {
     if (curr === 'PLN') return 25;
     return 10;
   }, []);
 
   const [amount, setAmount] = useState<number | ''>(getSuggestedAmount(t.currency));
+
+  useEffect(() => {
+    fetch('/api/payment-settings', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.limits) return;
+        const nextMinimums = { ...MIN_PAYMENT_BY_CURRENCY } as Record<SupportedCurrency, number>;
+        for (const currency of SUPPORTED_CURRENCIES) {
+          const minAmount = Number(data.limits[currency]?.minAmount);
+          if (Number.isFinite(minAmount) && minAmount > 0) nextMinimums[currency] = minAmount;
+        }
+        setMinimums(nextMinimums);
+      })
+      .catch((error) => logger.warn('[VideoPlaylist] Failed to fetch payment minimums:', error));
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -204,7 +220,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
           isTermsAccepted={isTermsAccepted}
           showTermsError={showTermsError}
           availableCurrencies={availableCurrencies}
-          onAmountChange={(val) => setAmount(val === '' ? '' : parseInt(val))}
+          onAmountChange={(val) => setAmount(val === '' ? '' : Number(val))}
           onCurrencyChange={handleCurrencyChange}
           onTermsChange={(checked) => {
             setIsTermsAccepted(!!checked);

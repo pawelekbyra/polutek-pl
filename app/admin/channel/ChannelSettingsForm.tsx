@@ -17,6 +17,8 @@ type ChannelCreator = {
   name: string;
   bio: string | null;
   bannerUrl: string | null;
+  subscribersCount: number;
+  displaySubscribersCount: number | null;
   user?: { imageUrl: string | null; name: string | null } | null;
 };
 
@@ -30,6 +32,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
   const [bannerUrl, setBannerUrl] = useState(initialCreator?.bannerUrl || "");
+  const [displaySubscribersCount, setDisplaySubscribersCount] = useState(initialCreator?.displaySubscribersCount?.toString() || "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +45,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
       const response = await fetch("/api/admin/channel", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, bannerUrl }),
+        body: JSON.stringify({ name, bio, bannerUrl, displaySubscribersCount: displaySubscribersCount.trim() === "" ? null : Number(displaySubscribersCount) }),
       });
       const payload = await response.json().catch(() => null);
 
@@ -54,6 +57,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
       setName(payload.creator.name || "");
       setBio(payload.creator.bio || "");
       setBannerUrl(payload.creator.bannerUrl || "");
+      setDisplaySubscribersCount(payload.creator.displaySubscribersCount?.toString() || "");
       setStatus("saved");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Nie udało się zapisać danych kanału.");
@@ -108,6 +112,25 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
               <div className="space-y-2">
                 <Label htmlFor="channel-slug">Slug kanału</Label>
                 <Input id="channel-slug" value={creator.slug} disabled className="bg-muted" />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="real-subscribers">Prawdziwa liczba subskrybentów</Label>
+                  <Input id="real-subscribers" value={creator.subscribersCount} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="display-subscribers">Wyświetlana liczba subskrybentów</Label>
+                  <Input
+                    id="display-subscribers"
+                    type="number"
+                    min="0"
+                    value={displaySubscribersCount}
+                    onChange={(event) => setDisplaySubscribersCount(event.target.value)}
+                    placeholder="Puste = prawdziwa liczba"
+                  />
+                  <p className="text-xs text-muted-foreground">Jeśli zostawisz puste, pod kanałem wyświetli się prawdziwa liczba.</p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="channel-bio">Opis / bio</Label>

@@ -78,13 +78,17 @@ async function requireUser(): Promise<
   | { userId: string; error?: never }
   | { error: NextResponse; userId?: never }
 > {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return { error: NextResponse.json({ error: 'UNAUTHORIZED', message: 'Sign in to manage email notifications.' }, { status: 401 }) };
   }
 
-  await UserService.getOrCreateUser(userId);
+  if (typeof UserService.getOrCreateUserFromAuth === 'function') {
+    await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+  } else {
+    await UserService.getOrCreateUser(userId);
+  }
   return { userId };
 }
 
