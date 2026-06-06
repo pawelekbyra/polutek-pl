@@ -55,7 +55,6 @@ export class CreatorContentService {
             bio: creator.bio,
             userId: creator.userId,
             subscribersCount: creator.subscribersCount || 0,
-            fakeSubscribersCount: creator.fakeSubscribersCount,
             videos
         };
       }
@@ -85,7 +84,6 @@ export class CreatorContentService {
           bio: creator.bio,
           userId: creator.userId,
           subscribersCount: creator.subscribersCount || 0,
-          fakeSubscribersCount: creator.fakeSubscribersCount,
           videos: (creator.videos || []).map((v) => VideoContentService.mapToPublicVideoDTO({ ...v, creator }))
       };
     } catch (e: unknown) {
@@ -151,7 +149,6 @@ export class CreatorContentService {
         bio: creator.bio,
         userId: creator.userId,
         subscribersCount: creator.subscribersCount || 0,
-        fakeSubscribersCount: creator.fakeSubscribersCount,
         videos: (creator.videos || []).map((v) => VideoContentService.mapToPublicVideoDTO({ ...v, creator: { ...creator, imageUrl } })),
       };
     } catch (e: unknown) {
