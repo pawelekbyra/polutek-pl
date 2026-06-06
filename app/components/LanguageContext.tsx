@@ -1,7 +1,7 @@
 'use client';
 
 import { logger } from "@/lib/logger";
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { APP_NAME } from '@/lib/constants';
 
 type Language = 'pl' | 'en';
@@ -10,6 +10,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language, skipSync?: boolean) => void;
   isInitialized: boolean;
+  t: typeof translations.pl;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -64,8 +65,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const t = useMemo(() => translations[language], [language]);
+
+  const contextValue = useMemo(() => ({
+    language,
+    setLanguage,
+    isInitialized,
+    t
+  }), [language, isInitialized, t]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, isInitialized }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
@@ -233,8 +243,5 @@ export const useLanguage = () => {
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
-  return {
-    ...context,
-    t: translations[context.language]
-  };
+  return context;
 };

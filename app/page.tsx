@@ -7,11 +7,29 @@ import { loadHomeContent } from '@/lib/services/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { Metadata } from 'next';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { APP_NAME } from '@/lib/constants';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await loadHomeContent();
+  if (content.status !== 'ready') return { title: APP_NAME };
+
+  const { creator, mainVideo } = content;
+  return {
+    title: mainVideo?.title ? `${mainVideo.title} — ${APP_NAME}` : APP_NAME,
+    description: creator?.bio ?? `${APP_NAME} — platforma wideo`,
+    openGraph: {
+      title: mainVideo?.title ?? APP_NAME,
+      images: mainVideo?.thumbnailUrl ? [{ url: mainVideo.thumbnailUrl }] : [],
+      type: 'video.other',
+    },
+  };
+}
 
 export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {
   let authData = { userId: null as string | null };
@@ -27,22 +45,13 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
 
   let userDb = null;
   if (userId) {
+    await UserService.getOrCreateUser(userId).catch((e) => {
+      logger.error("[HOME_USER_FETCH_ERROR]", e);
+    });
     userDb = await prisma.user.findUnique({
       where: { id: userId },
       include: { paymentTotals: true }
     }).catch(() => null);
-
-    if (!userDb) {
-      // If UserService.getOrCreateUser is called, it might not return paymentTotals by default.
-      // Re-fetch to ensure relations are present for type safety and normalized totals.
-      await UserService.getOrCreateUser(userId).catch((e) => {
-        logger.error("[HOME_USER_FETCH_ERROR]", e);
-      });
-      userDb = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { paymentTotals: true }
-      }).catch(() => null);
-    }
   }
 
   const content = await loadHomeContent();
@@ -59,17 +68,24 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   }
 
   let initialInteraction = { liked: false, disliked: false };
+  let initialIsSubscribed = false;
+
   if (userId && mainVideo) {
     const targetVideoId = videoId || mainVideo.id;
-    const [like, dislike] = await Promise.all([
+    const [like, dislike, sub] = await Promise.all([
       prisma.videoLike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
       }).catch(() => null),
       prisma.videoDislike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
+      }).catch(() => null),
+      prisma.subscription.findUnique({
+        where: { userId_creatorId: { userId, creatorId: mainVideo.creatorId } },
+        select: { id: true }
       }).catch(() => null)
     ]);
     initialInteraction = { liked: !!like, disliked: !!dislike };
+    initialIsSubscribed = !!sub;
   }
 
   const userProfile = userId ? {
@@ -82,7 +98,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     isPatron: userDb?.isPatron || false,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
-    initialInteraction
+    initialInteraction,
+    initialIsSubscribed
   } : null;
 
   if (content.status === 'error' || content.status === 'empty') {

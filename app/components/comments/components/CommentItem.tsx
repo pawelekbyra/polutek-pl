@@ -10,7 +10,7 @@ import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 
 interface CommentItemProps {
   comment: CommentView;
-  userProfile: { id: string } | null;
+  userProfile: { id?: string } | null;
   isClient: boolean;
   language: string;
   t: Record<string, string>;
