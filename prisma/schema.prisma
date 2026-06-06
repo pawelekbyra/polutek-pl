@@ -426,3 +426,14 @@ model EmailTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model BroadcastEmail {
+  id        String   @id @default(uuid())
+  subjectPl String
+  htmlPl    String   @db.Text
+  subjectEn String
+  htmlEn    String   @db.Text
+  sentAt    DateTime @default(now())
+  recipientCount Int
+  status    String   @default("SENT")
+}

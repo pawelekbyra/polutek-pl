@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Navbar from "@/app/components/Navbar";
 import { EmailTemplateEditor } from "./EmailTemplateEditor";
+import { BroadcastEmailForm } from "./broadcast/BroadcastEmailForm";
+import { BroadcastHistory } from "./broadcast/BroadcastHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +34,39 @@ export default async function AdminEmailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-neutral-50 text-foreground pb-20">
       <Navbar />
-      <EmailTemplateEditor initialTemplate={template || DEFAULT_WELCOME_TEMPLATE} />
+
+      <main className="max-w-6xl mx-auto px-6 py-12">
+        <header className="mb-12">
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-neutral-900 mb-2">Zarządzanie Emailami</h1>
+          <p className="text-neutral-500 font-medium italic">Konfiguracja szablonów systemowych oraz komunikacja z subskrybentami.</p>
+        </header>
+
+        <Tabs defaultValue="broadcast" className="space-y-8">
+          <TabsList className="bg-white border border-neutral-200 p-1 h-14 rounded-2xl shadow-sm inline-flex mb-8">
+            <TabsTrigger value="broadcast" className="rounded-xl px-8 font-black uppercase tracking-widest text-xs data-[state=active]:bg-neutral-900 data-[state=active]:text-white">Broadcast</TabsTrigger>
+            <TabsTrigger value="templates" className="rounded-xl px-8 font-black uppercase tracking-widest text-xs data-[state=active]:bg-neutral-900 data-[state=active]:text-white">Szablony Systemowe</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="broadcast" className="space-y-8 focus-visible:outline-none">
+            <div className="space-y-2 mb-8">
+              <h2 className="text-2xl font-black uppercase tracking-tight text-neutral-900">Mailing do subskrybentów</h2>
+              <p className="text-sm text-neutral-500">Wiadomość zostanie wysłana do wszystkich osób, które obserwują kanał.</p>
+            </div>
+            <BroadcastEmailForm />
+            <BroadcastHistory />
+          </TabsContent>
+
+          <TabsContent value="templates" className="focus-visible:outline-none">
+            <div className="space-y-2 mb-8">
+              <h2 className="text-2xl font-black uppercase tracking-tight text-neutral-900">Automatyczne szablony</h2>
+              <p className="text-sm text-neutral-500">Edytuj szablony wiadomości wysyłanych przez system (np. powitanie).</p>
+            </div>
+            <EmailTemplateEditor initialTemplate={template || DEFAULT_WELCOME_TEMPLATE} />
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 }
