@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import { auth } from '@clerk/nextjs/server';
+import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -13,10 +14,36 @@ import { formatCount } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // regeneruj co 60 sekund
+
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  const creator = await ContentService.getCreatorBySlug(params.slug);
+  if (!creator) return { title: 'Kanał nie znaleziony' };
+
+  return {
+    title: creator.name,
+    description: creator.bio ?? `Kanał ${creator.name} — materiały wideo`,
+    openGraph: {
+      title: creator.name,
+      description: creator.bio ?? `Kanał ${creator.name}`,
+      images: creator.bannerUrl ? [{ url: creator.bannerUrl }] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: creator.name,
+      images: creator.bannerUrl ? [creator.bannerUrl] : [],
+    },
+  };
+}
 
 export default async function ChannelPage({ params }: { params: { slug: string } }) {
-  const creator = await ContentService.getCreatorBySlug(params.slug);
+  const [{ userId }, creator] = await Promise.all([
+    auth(),
+    ContentService.getCreatorBySlug(params.slug),
+  ]);
 
   if (!creator) {
     return (
@@ -32,14 +59,15 @@ export default async function ChannelPage({ params }: { params: { slug: string }
     );
   }
 
-  const { userId } = await auth();
-  const userDb = userId ? await UserService.getOrCreateUser(userId).catch(() => null) : null;
-  const initialSubscribed = userId
-    ? !!(await prisma.subscription.findUnique({
-        where: { userId_creatorId: { userId, creatorId: creator.id } },
-        select: { id: true },
-      }).catch(() => null))
-    : false;
+  const [userDb, initialSubscribed] = await Promise.all([
+    userId ? UserService.getOrCreateUser(userId).catch(() => null) : Promise.resolve(null),
+    userId
+      ? prisma.subscription.findUnique({
+          where: { userId_creatorId: { userId, creatorId: creator.id } },
+          select: { id: true },
+        }).catch(() => null).then(Boolean)
+      : Promise.resolve(false),
+  ]);
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
@@ -64,7 +92,7 @@ export default async function ChannelPage({ params }: { params: { slug: string }
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
         <div className="w-full aspect-[6/1] bg-neutral-200 relative overflow-hidden rounded-none md:rounded-xl border border-black/5">
            {creator.bannerUrl ? (
-             <Image src={creator.bannerUrl} alt={displayName} fill sizes="100vw" className="object-cover" unoptimized />
+             <Image src={creator.bannerUrl} alt={displayName} fill sizes="(max-width: 768px) 100vw, 1284px" className="object-cover" unoptimized />
            ) : (
              <>
                <div className="absolute inset-0 bg-gradient-to-r from-neutral-300 to-neutral-400 opacity-50" />

@@ -11,6 +11,7 @@ import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
 import { useLanguage } from './LanguageContext';
+import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
@@ -20,10 +21,12 @@ import { MAIN_CREATOR_NAME } from '@/lib/constants';
 interface HeroProps {
   video: PublicVideoDTO;
   initialInteraction?: { liked: boolean; disliked: boolean };
+  initialIsSubscribed?: boolean;
 }
 
-const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
+const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
   const { t, language } = useLanguage();
+  const toast = useToast();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
   const [mounted, setMounted] = useState(false);
@@ -82,18 +85,18 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
-                    alert(`BŁĄD KONFIGURACJI CLERK:\n\n${result.message}\n\nSprawdź klucze API w Vercel.`);
+                    toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {
-                    alert(`BŁĄD BAZY DANYCH:\n\n${result.message}\n\nJeśli problem nadal występuje, spróbuj uruchomić:\n'npx prisma migrate deploy'`);
+                    toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
                 } else {
-                    alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
+                    toast(`BŁĄD: ${result.message || result.error}`, 'error');
                 }
             } else {
                 logger.debug("[Hero] LIKE Action success:", result);
             }
         } catch (error: unknown) {
             logger.error("[Hero] Transition error during LIKE:", error);
-            alert("Błąd serwera podczas polubienia. Sprawdź połączenie.");
+            toast("Błąd serwera podczas polubienia. Sprawdź połączenie.", 'error');
         }
     });
   };
@@ -110,7 +113,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert(language === 'pl' ? "Link skopiowany do schowka!" : "Link copied to clipboard!");
+        toast(language === 'pl' ? "Link skopiowany do schowka!" : "Link copied to clipboard!", 'success');
       }
     } catch (err) {
       logger.error("Error sharing:", err);
@@ -132,18 +135,18 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
-                    alert(`BŁĄD KONFIGURACJI CLERK:\n\n${result.message}\n\nSprawdź klucze API w Vercel.`);
+                    toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {
-                    alert(`BŁĄD BAZY DANYCH:\n\n${result.message}\n\nJeśli problem nadal występuje, spróbuj uruchomić:\n'npx prisma migrate deploy'`);
+                    toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
                 } else {
-                    alert(`BŁĄD: ${result.message || result.error}\n\nSprawdź logi Vercela lub konsolę przeglądarki.`);
+                    toast(`BŁĄD: ${result.message || result.error}`, 'error');
                 }
             } else {
                 logger.debug("[Hero] DISLIKE Action success:", result);
             }
         } catch (error: unknown) {
             logger.error("[Hero] Transition error during DISLIKE:", error);
-            alert("Błąd serwera podczas oceny. Sprawdź połączenie.");
+            toast("Błąd serwera podczas oceny. Sprawdź połączenie.", 'error');
         }
     });
   };
@@ -190,6 +193,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
                     alt={video.creator?.name || 'Creator'}
                     fill
+                    sizes="40px"
                     className="object-cover"
                   />
                </Link>
@@ -210,6 +214,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
+                    initialIsSubscribed={initialIsSubscribed}
                   />
                </div>
             </div>

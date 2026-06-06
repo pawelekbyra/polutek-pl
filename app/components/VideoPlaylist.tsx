@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
+import { useToast } from '@/app/hooks/useToast';
 import ReferralModal from './ReferralModal';
 import { loadStripe } from '@stripe/stripe-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,6 +36,7 @@ interface VideoPlaylistProps {
 
 const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, isPatron = false }) => {
   const { t, language } = useLanguage();
+  const toast = useToast();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
   const searchParams = useSearchParams();
@@ -168,7 +170,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
     setShowTermsError(false);
 
     if (!amount || amount < minAmount) {
-      alert(language === 'pl' ? `Minimalna kwota wsparcia to ${minAmount} ${selectedCurrency}` : `Minimum support amount is ${minAmount} ${selectedCurrency}`);
+      toast(language === 'pl' ? `Minimalna kwota wsparcia to ${minAmount} ${selectedCurrency}` : `Minimum support amount is ${minAmount} ${selectedCurrency}`, 'error');
       return;
     }
 
@@ -194,15 +196,15 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
         setIsCheckoutModalOpen(true);
       } else if (data?.error) {
         if (response.status === 401 || data.error.includes("AUTH_REQUIRED")) {
-          alert(language === 'pl' ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.");
+          toast(language === 'pl' ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", 'error');
           openSignIn();
         } else {
-          alert(language === 'pl' ? `Błąd: ${data.message || data.error}` : `Error: ${data.message || data.error}`);
+          toast(language === 'pl' ? `Błąd: ${data.message || data.error}` : `Error: ${data.message || data.error}`, 'error');
         }
       }
     } catch (error: unknown) {
       logger.error("Payment error", error);
-      alert(language === 'pl' ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę." : "Payment system connection error. Please refresh the page.");
+      toast(language === 'pl' ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę." : "Payment system connection error. Please refresh the page.", 'error');
     } finally {
       setIsLoading(false);
     }

@@ -23,6 +23,7 @@ interface ChannelHomeProps {
     imageUrl?: string | null;
     totalPaid: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
+    initialIsSubscribed?: boolean;
     isPatron?: boolean;
     referralPoints?: number;
     role?: string;
@@ -110,7 +111,11 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
-            <Hero video={selectedVideo} initialInteraction={userProfile?.initialInteraction} />
+            <Hero
+              video={selectedVideo}
+              initialInteraction={userProfile?.initialInteraction}
+              initialIsSubscribed={userProfile?.initialIsSubscribed}
+            />
             <div className="lg:hidden flex border-b border-neutral-300 mt-4">
                {(['comments', 'videos'] as const).map((tab) => (
                  <button key={tab} onClick={() => setActiveTab(tab)} className={cn("flex-1 py-3 text-sm font-semibold uppercase tracking-widest transition-all border-b-2", activeTab === tab ? "border-primary text-primary" : "border-transparent text-[#1a1a1a]/40")}>

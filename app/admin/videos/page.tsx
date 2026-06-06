@@ -3,6 +3,7 @@
 import { logger } from "@/lib/logger";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
 import { Plus, ArrowLeft } from "@/app/components/icons";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { VideoForm } from "./components/VideoForm";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
+  const toast = useToast();
   const { isLoaded: authLoaded } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -228,9 +230,10 @@ export default function AdminVideosPage() {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
               fetchVideos();
+              toast("Pomyślnie zarchiwizowano film.", 'success');
           } else {
               const err = await res.json();
-              alert("Błąd archiwizacji: " + err.error);
+              toast("Błąd archiwizacji: " + err.error, 'error');
           }
       } catch (err) {
           logger.error("Delete failed", err);
