@@ -163,6 +163,7 @@ model Creator {
   bio              String?
   bannerUrl        String?
   subscribersCount Int            @default(0)
+  displaySubscribersCount Int?
   isApproved       Boolean        @default(false)
   isPrimary        Boolean        @default(false)
   stripeConnectId  String?        @unique
@@ -405,6 +406,14 @@ model UserPaymentTotal {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, currency])
+}
+
+model PaymentCurrencySetting {
+  currency       String   @id
+  minAmountMinor Int
+  updatedAt      DateTime @updatedAt
+
+  @@index([updatedAt])
 }
 
 model EmailTemplate {

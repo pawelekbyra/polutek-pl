@@ -7,7 +7,7 @@ import "./globals.css";
 import { APP_NAME } from '@/lib/constants';
 
 export const metadata = {
-  title: `${APP_NAME} - Niezależna Platforma VOD`,
+  title: APP_NAME,
   description: `${APP_NAME} — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`
 };
 

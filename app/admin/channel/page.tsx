@@ -22,6 +22,8 @@ export default async function AdminChannelPage() {
             name: true,
             bio: true,
             bannerUrl: true,
+            subscribersCount: true,
+            displaySubscribersCount: true,
             user: { select: { name: true, imageUrl: true } },
           },
         });

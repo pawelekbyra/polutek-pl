@@ -4,7 +4,8 @@ import { createScopedLogger } from '@/lib/logger';
 import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
-import { checkoutSchema, validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
+import { checkoutSchema } from '@/lib/payments/checkout.schema';
+import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const { amountMinor, currency, title, creatorId, requestId } = result.data;
 
-    const amountError = validatePaymentAmountMinor(amountMinor, currency);
+    const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
     if (amountError) {
       return NextResponse.json({ error: amountError }, { status: 400 });

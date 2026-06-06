@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
             ...r,
             text: r.deletedAt ? "Komentarz usunięty" : r.text,
             author: r.deletedAt ? null : toPublicCommentAuthor(r.author),
-            imageUrl: r.deletedAt ? null : (r.imageUrl || r.author?.imageUrl),
+            imageUrl: r.deletedAt ? null : r.imageUrl,
             isLiked: userLikes.has(r.id),
             isDisliked: userDislikes.has(r.id),
             authorName: r.deletedAt ? "Użytkownik" : (CommentService.getCommentAuthorName(r.author)),
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
             ...c,
             text: isDeleted ? "Komentarz usunięty" : c.text,
             author: isDeleted ? null : toPublicCommentAuthor(c.author),
-            imageUrl: isDeleted ? null : (c.imageUrl || c.author?.imageUrl),
+            imageUrl: isDeleted ? null : c.imageUrl,
             isLiked: userLikes.has(c.id),
             isDisliked: userDislikes.has(c.id),
             authorName: isDeleted ? "Użytkownik" : (CommentService.getCommentAuthorName(c.author)),
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
         success: true,
-        comment: { ...newComment, author: toPublicCommentAuthor(newComment.author), isLiked: false, isDisliked: false, authorName: CommentService.getCommentAuthorName(newComment.author), imageUrl: newComment.imageUrl || newComment.author?.imageUrl, replies: [] }
+        comment: { ...newComment, author: toPublicCommentAuthor(newComment.author), isLiked: false, isDisliked: false, authorName: CommentService.getCommentAuthorName(newComment.author), imageUrl: newComment.imageUrl, replies: [] }
     }, { status: 201 });
   } catch (error: unknown) {
     scopedLogger.error("[POST_COMMENT_ERROR]", error);

@@ -34,6 +34,7 @@ const channelPatchSchema = z.object({
   name: z.string().trim().min(1, "Nazwa kanału jest wymagana.").max(100),
   bio: z.string().trim().max(1_000).optional().nullable().transform((value) => value || null),
   bannerUrl: optionalUrl,
+  displaySubscribersCount: z.number().int().min(0).nullable().optional(),
 });
 
 export async function GET(req: NextRequest) {
