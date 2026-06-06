@@ -141,7 +141,8 @@ export const translations = {
     yes: 'TAK',
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
-    pleaseAcceptTerms: 'Zapraszam do Strefy Patronów (zaakceptuj regulamin)'
+    pleaseAcceptTerms: 'Zapraszam do Strefy Patronów (zaakceptuj regulamin)',
+    tipTheGuy: 'NAPIWKUJ'
   },
   en: {
     views: 'views',
@@ -218,7 +219,8 @@ export const translations = {
     yes: 'YES',
     no: 'NO',
     acceptTerms: 'I accept the Terms and Privacy Policy',
-    pleaseAcceptTerms: 'I invite you to the Patrons\' Zone (please accept terms)'
+    pleaseAcceptTerms: 'I invite you to the Patrons\' Zone (please accept terms)',
+    tipTheGuy: 'TIP THE GUY'
   }
 };
 
