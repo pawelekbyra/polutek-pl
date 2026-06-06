@@ -113,7 +113,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           type="button"
           onClick={onSupport}
           disabled={isLoading || amount === '' || amount < minAmount}
-          className={"w-full h-16 uppercase tracking-[0.2em] text-xs font-black shadow-xl transition-all duration-300 rounded-2xl"}
+          className={"w-full h-12 uppercase tracking-wider text-sm"}
           size="lg"
         >
           {isLoading ? (

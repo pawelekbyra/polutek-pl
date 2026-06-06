@@ -186,7 +186,7 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
          )}>
             <div className={cn(
                 "transition-all duration-700 group-hover:scale-110 flex items-center justify-center",
-                isThumbnail ? "mb-14" : "mb-4 md:mb-8"
+                isThumbnail ? "mb-16" : "mb-4 md:mb-8"
             )}>
                {isVIPGated ? (
                  <Gem className={cn("text-amber-500", isThumbnail ? "w-64 h-64" : "w-16 h-16 md:w-24 md:h-24")} />
@@ -204,14 +204,14 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 <div className="flex flex-col items-center">
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-amber-500",
-                        isThumbnail ? "text-[11rem]" : "text-[clamp(2rem,7vw,4.5rem)]"
+                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
                     )}>
                         {(t as any).patronZoneLine1}
                     </span>
                     <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-2 w-96" : "h-px w-24 md:w-48")} />
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-white",
-                        isThumbnail ? "text-[11rem]" : "text-[clamp(2rem,7vw,4.5rem)]"
+                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
                     )}>
                         {(t as any).patronZoneLine2}
                     </span>
@@ -229,14 +229,14 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 <div className="flex flex-col items-center">
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-white",
-                        isThumbnail ? "text-[11rem]" : "text-[clamp(2rem,7vw,4.5rem)]"
+                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
                     )}>
                         {t.paywallText}
                     </span>
                     <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-2 w-96" : "h-px w-24 md:w-48")} />
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-blue-400",
-                        isThumbnail ? "text-[11rem]" : "text-[clamp(2rem,7vw,4.5rem)]"
+                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
                     )}>
                         {t.paywallAction}
                     </span>
