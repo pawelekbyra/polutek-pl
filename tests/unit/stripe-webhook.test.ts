@@ -42,11 +42,13 @@ vi.mock('@/lib/prisma', () => ({
   },
   Prisma: {
     PrismaClientKnownRequestError: class extends Error {
-        constructor(message: string, { code }: { code: string }) {
+        constructor(message: string, { code, clientVersion }: { code: string; clientVersion: string }) {
             super(message);
             this.code = code;
+            this.clientVersion = clientVersion;
         }
         code: string;
+        clientVersion: string;
     }
   }
 }));
@@ -80,7 +82,7 @@ describe('Stripe Webhook Idempotency and Status', () => {
     const event = { id: 'evt_1', type: 'payment_intent.succeeded' } as any;
     mockConstructEvent.mockReturnValue(event);
 
-    vi.mocked(prisma.stripeEvent.create).mockRejectedValue(new Prisma.PrismaClientKnownRequestError('Unique constraint', { code: 'P2002' }));
+    vi.mocked(prisma.stripeEvent.create).mockRejectedValue(new Prisma.PrismaClientKnownRequestError('Unique constraint', { code: 'P2002', clientVersion: '6.4.1' }));
 
     vi.mocked(prisma.stripeEvent.updateMany).mockResolvedValue({ count: 0 } as any);
     vi.mocked(prisma.stripeEvent.findUnique).mockResolvedValue({ id: 'evt_1', status: WebhookEventStatus.PROCESSED } as any);
