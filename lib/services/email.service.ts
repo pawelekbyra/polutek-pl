@@ -51,6 +51,13 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
   }, value);
 }
 
+export type BroadcastRecipientInput = {
+    userId?: string;
+    email: string;
+    name?: string;
+    language?: string;
+};
+
 type SendTemplateEmailInput = {
   to: string;
   slug: string;
@@ -72,9 +79,17 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
     logger.warn(`[EmailService] Using hardcoded fallback for template: ${slug}`);
   }
 
-  const safeVariables = Object.fromEntries(
-    Object.entries(variables).map(([key, value]) => [key, value ?? ''])
-  );
+  const safeVariables = {
+    ...Object.fromEntries(
+        Object.entries(variables).map(([key, value]) => [key, value ?? ''])
+    ),
+    appName: APP_NAME,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    email: to,
+    userLanguage: language,
+    unsubscribeLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/unsubscribe?email=${encodeURIComponent(to)}`,
+    preferencesLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/profile/settings`
+  };
   let subjectBase = template?.subject ?? fallback!.subject;
   let htmlBase = template?.html ?? fallback!.html;
 
@@ -160,6 +175,117 @@ export async function sendWelcomeEmail(to: string, firstName?: string | null, la
 export class EmailService {
   static async sendWelcomeEmail(toEmail: string, firstName?: string | null, language: string = 'pl') {
     return sendWelcomeEmail(toEmail, firstName, language);
+  }
+
+  static async sendBroadcast(broadcastId: string) {
+    const broadcast = await prisma.broadcastEmail.findUnique({
+        where: { id: broadcastId },
+        include: {
+            recipients: { where: { status: 'PENDING' } }
+        }
+    });
+
+    if (!broadcast) throw new Error(`Broadcast ${broadcastId} not found`);
+
+    await prisma.broadcastEmail.update({
+        where: { id: broadcastId },
+        data: { status: 'SENDING' }
+    });
+
+    const resend = getResendClient();
+    const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    // Batching logic: 50 at a time to be safe with Resend rate limits
+    const batchSize = 50;
+    const recipients = broadcast.recipients;
+
+    for (let i = 0; i < recipients.length; i += batchSize) {
+        const batch = recipients.slice(i, i + batchSize);
+
+        await Promise.all(batch.map(async (recipient) => {
+            // Check preferences
+            const pref = await prisma.emailPreference.findUnique({ where: { email: recipient.email } });
+            if (pref && !pref.marketingEmails) {
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: { status: 'SKIPPED', error: 'User opted out of marketing emails' }
+                });
+                return;
+            }
+
+            const subject = recipient.language === 'en' ? broadcast.subjectEn : broadcast.subjectPl;
+            const htmlBase = recipient.language === 'en' ? broadcast.htmlEn : broadcast.htmlPl;
+
+            const vars = {
+                firstName: recipient.email.split('@')[0], // Fallback if no name
+                name: recipient.email.split('@')[0],
+                email: recipient.email,
+                appName: APP_NAME,
+                appUrl,
+                unsubscribeLink: `${appUrl}/unsubscribe?email=${encodeURIComponent(recipient.email)}`,
+                preferencesLink: `${appUrl}/profile/settings`,
+                userLanguage: recipient.language
+            };
+
+            const html = replaceTemplateVariables(htmlBase, vars);
+
+            try {
+                const { data, error } = await resend.emails.send({
+                    from,
+                    to: [recipient.email],
+                    subject,
+                    html,
+                    headers: {
+                        'X-Broadcast-Id': broadcastId,
+                        'X-Recipient-Id': recipient.id
+                    }
+                });
+
+                if (error) throw error;
+
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: {
+                        resendEmailId: data?.id,
+                        status: 'SENT',
+                        sentAt: new Date()
+                    }
+                });
+            } catch (e: any) {
+                logger.error(`[EmailService] Failed to send broadcast to ${recipient.email}`, e);
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: { status: 'FAILED', error: e.message || 'Unknown error' }
+                });
+            }
+        }));
+
+        // Brief delay between batches
+        if (i + batchSize < recipients.length) {
+            await new Promise(r => setTimeout(r, 1000));
+        }
+    }
+
+    // Final status update
+    const stats = await prisma.broadcastEmailRecipient.groupBy({
+        by: ['status'],
+        where: { broadcastEmailId: broadcastId },
+        _count: true
+    });
+
+    const counts = Object.fromEntries(stats.map(s => [s.status, s._count]));
+    const totalFailed = (counts['FAILED'] || 0) + (counts['BOUNCED'] || 0);
+
+    await prisma.broadcastEmail.update({
+        where: { id: broadcastId },
+        data: {
+            status: totalFailed > 0 ? 'PARTIAL_FAILED' : 'SENT',
+            sentAt: new Date(),
+            sentCount: counts['SENT'] || 0,
+            errorCount: totalFailed
+        }
+    });
   }
 
   static async sendAccountDeletedEmail(toEmail: string) {

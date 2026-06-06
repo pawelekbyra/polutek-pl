@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface BroadcastLog {
   id: string;
@@ -16,7 +17,7 @@ interface BroadcastLog {
 }
 
 export function BroadcastHistory() {
-  const [history, setHistory] = useState<BroadcastLog[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -49,7 +50,16 @@ export function BroadcastHistory() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-green-100 text-green-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-green-200">
+                <div className="text-right hidden sm:block mr-2">
+                    <p className="text-[10px] font-black uppercase text-neutral-400 leading-none mb-1">Dostarczono</p>
+                    <p className="text-xs font-bold text-neutral-900 leading-none">{log.sentCount} / {log.recipientCount}</p>
+                </div>
+                <span className={cn(
+                    "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                    log.status === 'SENT' ? "bg-green-50 text-green-700 border-green-200" :
+                    log.status === 'SENDING' ? "bg-blue-50 text-blue-700 border-blue-200 animate-pulse" :
+                    "bg-neutral-50 text-neutral-700 border-neutral-200"
+                )}>
                   {log.status}
                 </span>
                 <button className="text-neutral-400 hover:text-neutral-900 transition-colors">

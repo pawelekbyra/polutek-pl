@@ -28,6 +28,10 @@ const DEFAULT_TEMPLATE = {
 
 const templateSchema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(100).optional().nullable(),
+  description: z.string().trim().max(255).optional().nullable(),
+  category: z.enum(['SYSTEM', 'WELCOME', 'PAYMENT', 'PATRON', 'BROADCAST', 'MANUAL', 'OTHER']).default('OTHER'),
+  isActive: z.boolean().default(true),
   subject: z.string().trim().min(1).max(150),
   html: z.string().min(1).max(50_000),
   subjectEn: z.string().trim().max(150).optional().nullable(),
@@ -62,12 +66,19 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
-    const slug = getSlug(req);
-    const template = await prisma.emailTemplate.findUnique({
-      where: { slug },
+    const slug = req.nextUrl.searchParams.get('slug');
+    if (slug) {
+        const template = await prisma.emailTemplate.findUnique({
+            where: { slug },
+        });
+        return NextResponse.json(template || { ...DEFAULT_TEMPLATE, slug });
+    }
+
+    const templates = await prisma.emailTemplate.findMany({
+        orderBy: { updatedAt: 'desc' }
     });
 
-    return NextResponse.json(template || { ...DEFAULT_TEMPLATE, slug });
+    return NextResponse.json(templates);
   } catch (err) {
     scopedLogger.error("[GET_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
@@ -88,9 +99,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
     }
 
-    const { slug, subject, html, subjectEn, htmlEn } = result.data;
+    const { slug, subject, html, subjectEn, htmlEn, name, description, category, isActive } = result.data;
     const cleanHtml = sanitizeHtml(html, sanitizeOptions);
     const cleanHtmlEn = htmlEn ? sanitizeHtml(htmlEn, sanitizeOptions) : null;
+
+    // Check if it's a system template to prevent critical changes if necessary
+    // (In this version we allow editing but we could add more guards)
 
     const updated = await prisma.emailTemplate.upsert({
       where: { slug },
@@ -99,6 +113,10 @@ export async function POST(req: NextRequest) {
         html: cleanHtml,
         subjectEn,
         htmlEn: cleanHtmlEn,
+        name,
+        description,
+        category,
+        isActive
       },
       create: {
         slug,
@@ -106,12 +124,17 @@ export async function POST(req: NextRequest) {
         html: cleanHtml,
         subjectEn,
         htmlEn: cleanHtmlEn,
+        name,
+        description,
+        category,
+        isActive,
+        isSystem: ['welcome-email', 'become-patron', 'thank-you-donation', 'password-changed', 'account-deleted'].includes(slug)
       },
     });
 
     await writeAuditLog({
       actorUserId: (await auth()).userId,
-      action: 'TEMPLATE_UPDATED',
+      action: 'TEMPLATE_SAVED',
       targetType: 'EmailTemplate',
       targetId: updated.id,
       metadata: { slug: updated.slug },
@@ -122,4 +145,38 @@ export async function POST(req: NextRequest) {
     scopedLogger.error("[POST_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
   }
+}
+
+export async function DELETE(req: NextRequest) {
+    const requestId = req.headers.get('x-request-id');
+    const scopedLogger = createScopedLogger(requestId);
+    const { response } = await requireAdminForApi("DELETE_ADMIN_TEMPLATES");
+    if (response) return response;
+
+    try {
+        const slug = req.nextUrl.searchParams.get('slug');
+        if (!slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
+
+        const template = await prisma.emailTemplate.findUnique({ where: { slug } });
+        if (!template) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+        if (template.isSystem) {
+            return NextResponse.json({ error: 'Cannot delete system template' }, { status: 403 });
+        }
+
+        await prisma.emailTemplate.delete({ where: { slug } });
+
+        await writeAuditLog({
+            actorUserId: (await auth()).userId,
+            action: 'TEMPLATE_DELETED',
+            targetType: 'EmailTemplate',
+            targetId: template.id,
+            metadata: { slug },
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        scopedLogger.error("[DELETE_ADMIN_TEMPLATES_ERROR]", err);
+        return handleApiError(err);
+    }
 }

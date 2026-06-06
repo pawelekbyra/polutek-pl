@@ -94,8 +94,10 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
                   {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div className="font-medium">{user.email}</div>
-                        <div className="text-xs text-muted-foreground">{user.name || user.username || "Brak nazwy"}</div>
+                        <Link href={`/admin/users/${user.id}`} className="hover:underline">
+                            <div className="font-medium">{user.email}</div>
+                            <div className="text-xs text-muted-foreground">{user.name || user.username || "Brak nazwy"}</div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>{user.role}</Badge>

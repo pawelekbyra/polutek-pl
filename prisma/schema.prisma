@@ -416,24 +416,166 @@ model PaymentCurrencySetting {
   @@index([updatedAt])
 }
 
+enum EmailTemplateCategory {
+  SYSTEM
+  WELCOME
+  PAYMENT
+  PATRON
+  BROADCAST
+  MANUAL
+  OTHER
+}
+
 model EmailTemplate {
-  id        String   @id @default(uuid())
-  slug      String   @unique // e.g., "welcome-email"
-  subject   String
-  html      String   @db.Text
-  subjectEn String?
-  htmlEn    String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String                @id @default(uuid())
+  slug        String                @unique // e.g., "welcome-email"
+  name        String?
+  description String?
+  category    EmailTemplateCategory @default(OTHER)
+  isSystem    Boolean               @default(false)
+  isActive    Boolean               @default(true)
+  subject     String
+  html        String                @db.Text
+  subjectEn   String?
+  htmlEn      String?               @db.Text
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  broadcasts BroadcastEmail[]
+}
+
+enum BroadcastStatus {
+  DRAFT
+  READY
+  SENDING
+  SENT
+  PARTIAL_FAILED
+  FAILED
+  CANCELLED
+}
+
+enum BroadcastRecipientGroup {
+  ALL
+  SUBSCRIBERS
+  PATRONS
+  MANUAL
 }
 
 model BroadcastEmail {
-  id        String   @id @default(uuid())
-  subjectPl String
-  htmlPl    String   @db.Text
-  subjectEn String
-  htmlEn    String   @db.Text
-  sentAt    DateTime @default(now())
-  recipientCount Int
-  status    String   @default("SENT")
+  id             String                  @id @default(uuid())
+  templateId     String?
+  createdById    String?
+  subjectPl      String
+  htmlPl         String                  @db.Text
+  subjectEn      String
+  htmlEn         String                  @db.Text
+  recipientGroup BroadcastRecipientGroup @default(SUBSCRIBERS)
+  recipientCount Int                     @default(0)
+  sentCount      Int                     @default(0)
+  errorCount     Int                     @default(0)
+  status         BroadcastStatus         @default(DRAFT)
+  sentAt         DateTime?
+  scheduledAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  template   EmailTemplate?           @relation(fields: [templateId], references: [id])
+  recipients BroadcastEmailRecipient[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum BroadcastRecipientStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  FAILED
+  SKIPPED
+  UNSUBSCRIBED
+}
+
+model BroadcastEmailRecipient {
+  id               String                   @id @default(uuid())
+  broadcastEmailId String
+  userId           String?
+  email            String
+  language         String                   @default("pl")
+  status           BroadcastRecipientStatus @default(PENDING)
+  resendEmailId    String?
+  error            String?
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  openedAt         DateTime?
+  clickedAt        DateTime?
+  bouncedAt        DateTime?
+  complainedAt     DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  broadcast BroadcastEmail @relation(fields: [broadcastEmailId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastEmailId])
+  @@index([email])
+  @@index([status])
+}
+
+model EmailPreference {
+  id              String    @id @default(uuid())
+  userId          String?   @unique
+  email           String    @unique
+  marketingEmails Boolean   @default(true)
+  systemEmails    Boolean   @default(true)
+  unsubscribedAt  DateTime?
+  resendContactId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([email])
+}
+
+enum InboundEmailStatus {
+  NEW
+  READ
+  ARCHIVED
+  RESOLVED
+}
+
+model InboundEmail {
+  id               String             @id @default(uuid())
+  fromEmail        String
+  fromName         String?
+  toEmail          String
+  subject          String?
+  text             String?            @db.Text
+  html             String?            @db.Text
+  resendId         String             @unique
+  status           InboundEmailStatus @default(NEW)
+  userId           String?
+  broadcastEmailId String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([fromEmail])
+  @@index([status])
+}
+
+model EmailEvent {
+  id               String   @id @default(uuid())
+  type             String
+  resendEmailId    String?
+  broadcastEmailId String?
+  recipientId      String?
+  userId           String?
+  email            String?
+  payload          Json
+  createdAt        DateTime @default(now())
+
+  @@index([resendEmailId])
+  @@index([broadcastEmailId])
+  @@index([email])
 }

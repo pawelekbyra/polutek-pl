@@ -14,6 +14,8 @@ function getResendClient() {
   return new Resend(apiKey);
 }
 
+import { EmailService } from '@/lib/services/email.service';
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   const decision = await AccessPolicy.canManageAdmin(userId);
@@ -22,79 +24,92 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: decision.reason }, { status: 403 });
   }
 
-  const { subjectPl, htmlPl, subjectEn, htmlEn } = await req.json();
+  const { subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, isTest, testEmail, manualEmails } = await req.json();
 
   if (!subjectPl || !htmlPl || !subjectEn || !htmlEn) {
     return NextResponse.json({ error: 'Missing content' }, { status: 400 });
   }
 
   try {
-    // 1. Get all subscribed users
-    // We look for users who have at least one subscription record
-    // or we could look for isPatron users if that's the requirement.
-    // The user asked for "subskrajberow ktorzy maja zaznaczona subskrybcje".
-    const subscribers = await prisma.user.findMany({
-      where: {
-        isDeleted: false,
-        subscriptions: { some: {} }
-      },
-      select: {
-        email: true,
-        language: true,
-        name: true
-      }
-    });
+    if (isTest) {
+        const resend = getResendClient();
+        const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+        await resend.emails.send({
+            from,
+            to: [testEmail || (await auth()).sessionClaims?.email as string],
+            subject: `[TEST] ${subjectPl}`,
+            html: htmlPl
+        });
+        return NextResponse.json({ success: true, message: 'Test email sent' });
+    }
+
+    // 1. Determine recipients based on group
+    let subscribers: Array<{ id?: string, email: string, language: string, name?: string | null }> = [];
+
+    if (recipientGroup === 'MANUAL' && manualEmails) {
+        const emails = manualEmails.split(',').map((e: string) => e.trim()).filter(Boolean);
+        subscribers = emails.map((email: string) => ({
+            email,
+            language: 'pl', // Default for manual
+            name: email.split('@')[0]
+        }));
+    } else {
+        let where: any = { isDeleted: false };
+        if (recipientGroup === 'SUBSCRIBERS') {
+            where.subscriptions = { some: {} };
+        } else if (recipientGroup === 'PATRONS') {
+            where.isPatron = true;
+        }
+
+        const users = await prisma.user.findMany({
+            where,
+            select: {
+                id: true,
+                email: true,
+                language: true,
+                name: true
+            }
+        });
+        subscribers = users.map(u => ({ ...u, language: u.language || 'pl' }));
+    }
 
     if (subscribers.length === 0) {
-      return NextResponse.json({ recipientCount: 0, message: 'No subscribers found' });
+      return NextResponse.json({ recipientCount: 0, message: 'No recipients found for this group' });
     }
 
-    const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
-    const resend = getResendClient();
-
-    // 2. Group by language to send in batches if possible or just loop
-    // Resend supports batching up to 100 emails per call.
-    const plRecipients = subscribers.filter(s => s.language === 'pl');
-    const enRecipients = subscribers.filter(s => s.language !== 'pl');
-
-    const sendPromises = [];
-
-    // Send PL emails
-    for (const sub of plRecipients) {
-        sendPromises.push(resend.emails.send({
-            from,
-            to: [sub.email],
-            subject: subjectPl,
-            html: htmlPl
-        }).catch(e => logger.error(`Failed to send PL broadcast to ${sub.email}`, e)));
-    }
-
-    // Send EN emails
-    for (const sub of enRecipients) {
-        sendPromises.push(resend.emails.send({
-            from,
-            to: [sub.email],
-            subject: subjectEn,
-            html: htmlEn
-        }).catch(e => logger.error(`Failed to send EN broadcast to ${sub.email}`, e)));
-    }
-
-    await Promise.all(sendPromises);
-
-    // 3. Save to BroadcastEmail log
-    await prisma.broadcastEmail.create({
+    // 2. Create BroadcastEmail record
+    const broadcast = await prisma.broadcastEmail.create({
       data: {
         subjectPl,
         htmlPl,
         subjectEn,
         htmlEn,
+        recipientGroup: recipientGroup || 'SUBSCRIBERS',
         recipientCount: subscribers.length,
-        status: 'SENT'
+        status: 'READY',
+        createdById: userId
       }
+    });
+
+    // 3. Create individual recipient records
+    await prisma.broadcastEmailRecipient.createMany({
+        data: subscribers.map(s => ({
+            broadcastEmailId: broadcast.id,
+            userId: s.id,
+            email: s.email,
+            language: s.language || 'pl',
+            status: 'PENDING'
+        }))
+    });
+
+    // 4. Trigger background sending (don't await fully to avoid timeout)
+    EmailService.sendBroadcast(broadcast.id).catch(err => {
+        logger.error(`[BroadcastEmailAPI] Background send failed for ${broadcast.id}`, err);
     });
 
     return NextResponse.json({
         success: true,
+        broadcastId: broadcast.id,
         recipientCount: subscribers.length
     });
 
