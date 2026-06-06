@@ -22,7 +22,7 @@ export class PaymentFulfillmentService {
       if (type === 'DONATION') {
         await EmailService.sendDonationThankYouEmail(email, amount, currency, language);
       } else {
-        await EmailService.sendBecomePatronEmail(email, language);
+        await EmailService.sendBecomePatronEmail(email, amount, currency, language);
       }
     } catch (error) {
       logger.error(`[${type}_EMAIL_FAILED]`, error);
@@ -133,19 +133,19 @@ export class PaymentFulfillmentService {
       const amount = intent.amount / 100;
 
       if (isFirstFulfillment) {
-          await this.sendPaymentEmailSafely(
-            'DONATION',
-            user.email,
-            amount,
-            intent.currency.toUpperCase(),
-            language,
-            user.id,
-            paymentId
-          );
-
           if (becamePatronNow) {
             await this.sendPaymentEmailSafely(
               'PATRON',
+              user.email,
+              amount,
+              intent.currency.toUpperCase(),
+              language,
+              user.id,
+              paymentId
+            );
+          } else {
+            await this.sendPaymentEmailSafely(
+              'DONATION',
               user.email,
               amount,
               intent.currency.toUpperCase(),
