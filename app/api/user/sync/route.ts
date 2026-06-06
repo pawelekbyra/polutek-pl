@@ -1,13 +1,16 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { prisma } from '@/lib/prisma';
 import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest) {
       language: user.language
     });
   } catch (error) {
-    logger.error('[USER_SYNC_API_ERROR]', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    scopedLogger.error('[USER_SYNC_API_ERROR]', error);
+    return handleApiError(error);
   }
 }

@@ -3,25 +3,20 @@ import { VideoContentService, buildPublicVideoWhere as buildWhere } from './cont
 import { CreatorContentService } from './content/creator.service';
 
 export const buildPublicVideoWhere = buildWhere;
+export { VideoContentService, CreatorContentService };
 
 /**
  * @deprecated Use specialized services from @/lib/services/content/
  */
 export class ContentService {
-  static getVideoById = VideoContentService.getVideoById.bind(VideoContentService);
-  static getCreatorBySlug = CreatorContentService.getCreatorBySlug.bind(CreatorContentService);
-  static getConfiguredOrDefaultCreator = CreatorContentService.getConfiguredOrDefaultCreator.bind(CreatorContentService);
-  static getAllVideos = VideoContentService.getAllVideos.bind(VideoContentService);
-  static getMainFeaturedVideo = VideoContentService.getMainFeaturedVideo.bind(VideoContentService);
+  static getVideoById(id: string) { return VideoContentService.getVideoById(id); }
+  static getCreatorBySlug(slug: string) { return CreatorContentService.getCreatorBySlug(slug); }
+  static getConfiguredOrDefaultCreator() { return CreatorContentService.getConfiguredOrDefaultCreator(); }
+  static getAllVideos() { return VideoContentService.getAllVideos(); }
+  static getMainFeaturedVideo() { return VideoContentService.getMainFeaturedVideo(); }
 
   static async getVideoAccess(userId: string | null, videoId: string) {
-    const { AccessPolicy } = await import('../access/access-policy');
-    const decision = await AccessPolicy.canViewVideo(userId, videoId);
-    return {
-        hasAccess: decision.allowed,
-        reason: decision.reason,
-        requiredTier: decision.requiredTier
-    };
+    return VideoContentService.getVideoAccess(userId, videoId);
   }
 
   static async createComment(data: {

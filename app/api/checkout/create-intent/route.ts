@@ -1,8 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
-import { PaymentService } from '@/lib/services/payment.service';
-import { UserService } from '@/lib/services/user.service';
+import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema, validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
 import { prisma } from '@/lib/prisma';

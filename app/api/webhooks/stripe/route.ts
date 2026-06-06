@@ -1,31 +1,24 @@
+import { NextResponse, NextRequest } from 'next/server';
 import { createScopedLogger } from "@/lib/logger";
-import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { PaymentService } from '@/lib/services/payment.service';
-import { recordAlert, recordDurationMetric, startTimer } from '@/lib/observability';
+import { handleApiError } from '@/lib/errors';
 
-export const dynamic = 'force-dynamic';
-
-export async function POST(req: Request) {
-  const requestId = headers().get('stripe-signature')?.slice(-20) || crypto.randomUUID();
+export async function POST(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id') || req.headers.get('stripe-signature')?.slice(-8) || 'stripe-webhook';
   const scopedLogger = createScopedLogger(requestId);
-  const startedAt = startTimer();
+  const sig = req.headers.get('stripe-signature');
   const body = await req.text();
-  const sig = headers().get('stripe-signature');
 
   if (!sig) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 });
   }
 
   try {
+    // Handle the webhook through centralized payment service
     await PaymentService.handleWebhook(body, sig);
-    recordDurationMetric('stripe.webhook.request', startedAt, { status: 'success' });
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    scopedLogger.error(`Webhook Error: ${message}`);
-    recordAlert('stripe.webhook.request_failed', { status: 'failed' });
-    recordDurationMetric('stripe.webhook.request', startedAt, { status: 'failed' }, { level: 'error', alert: true });
-    return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
+    scopedLogger.error('Stripe Webhook Error:', err);
+    return handleApiError(err);
   }
 }

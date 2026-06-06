@@ -3,7 +3,7 @@ import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';

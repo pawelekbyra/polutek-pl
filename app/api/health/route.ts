@@ -1,13 +1,16 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
 import { buildPublicVideoWhere } from '@/lib/services/content.service';
 import { getAllowedMediaHosts } from '@/lib/blob';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const authHeader = req.headers.get('x-health-token');
   const isAuthorized = !!process.env.HEALTHCHECK_TOKEN && authHeader === process.env.HEALTHCHECK_TOKEN;
 
@@ -17,24 +20,14 @@ export async function GET(req: Request) {
 
   try {
     await prisma.$queryRaw`SELECT 1`;
-    const approvedCreatorExists = await prisma.creator.findFirst({
-        where: { isApproved: true }
-    });
-
-    const primaryCreatorExists = await prisma.creator.findFirst({
-        where: { isPrimary: true, isApproved: true }
-    });
+    const approvedCreatorExists = await prisma.creator.findFirst({ where: { isApproved: true } });
+    const primaryCreatorExists = await prisma.creator.findFirst({ where: { isPrimary: true, isApproved: true } });
 
     const [allVideosCount, publishedVideosCount, visibleVideosCount, mainFeaturedVideoExists] = await Promise.all([
         prisma.video.count(),
         prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }),
         prisma.video.count({ where: buildPublicVideoWhere() }),
-        prisma.video.findFirst({
-            where: {
-                ...buildPublicVideoWhere(),
-                isMainFeatured: true,
-            }
-        }),
+        prisma.video.findFirst({ where: { ...buildPublicVideoWhere(), isMainFeatured: true } }),
     ]);
 
     return NextResponse.json({
@@ -58,11 +51,7 @@ export async function GET(req: Request) {
         }
     });
   } catch (error) {
-    logger.error("[HEALTH_CHECK_ERROR]", error);
-    return NextResponse.json({
-        ok: false,
-        database: "error",
-        message: "System is having trouble connecting to the database or internal services."
-    }, { status: 500 });
+    scopedLogger.error("[HEALTH_CHECK_ERROR]", error);
+    return handleApiError(error);
   }
 }

@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
-import { UserService } from "./services/user.service";
+import { UserProfileService as UserService } from "./services/user/profile.service";
 import { NextResponse } from "next/server";
 import { isConfiguredAdminUserId } from "./admin-config";
 

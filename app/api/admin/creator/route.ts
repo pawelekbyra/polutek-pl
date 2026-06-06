@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger";
+import { createScopedLogger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
@@ -7,10 +7,13 @@ import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
 import { flags } from '@/lib/feature-flags';
 import { MainCreatorService } from '@/lib/services/main-creator.service';
+import { handleApiError } from "@/lib/errors";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CREATOR");
   if (response) return response;
 
@@ -40,8 +43,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(creator);
   } catch (error: unknown) {
-    logger.error("[ADMIN_CREATOR_GET_ERROR]", error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    scopedLogger.error("[ADMIN_CREATOR_GET_ERROR]", error);
+    return handleApiError(error);
   }
 }
 
@@ -54,6 +57,8 @@ const creatorSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_CREATOR");
   if (response) return response;
 
@@ -128,7 +133,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(created);
     }
   } catch (error: unknown) {
-    logger.error("[ADMIN_CREATOR_POST_ERROR]", error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    scopedLogger.error("[ADMIN_CREATOR_POST_ERROR]", error);
+    return handleApiError(error);
   }
 }

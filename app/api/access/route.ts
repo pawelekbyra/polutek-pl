@@ -1,44 +1,36 @@
-import { logger } from "@/lib/logger";
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { ContentService } from '@/lib/services/content.service';
+import { auth } from '@clerk/nextjs/server';
+import { VideoContentService as ContentService } from '@/lib/services/content/video.service';
+import { handleApiError } from '@/lib/errors';
+import { createScopedLogger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * API Route for checking video access.
- * RESILIENCE: Never returns a 500 error; falls back to restricted access on DB failure.
- */
 export async function GET(req: NextRequest) {
-  let userId: string | null = null;
-  try {
-      const authData = await auth();
-      userId = authData.userId;
-  } catch (e) {
-      logger.warn("[Access] Clerk Handshake failure during access check. Proceeding as guest.");
-  }
-
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(req.url);
   const videoId = searchParams.get('videoId');
 
   if (!videoId) {
-    return NextResponse.json({
-      error: 'INVALID_INPUT',
-      message: 'Video ID is required'
-    }, { status: 400 });
+    return NextResponse.json({ error: 'Missing videoId' }, { status: 400 });
   }
 
   try {
+    const { userId } = await auth();
     const { hasAccess, requiredTier, reason } = await ContentService.getVideoAccess(userId, videoId);
-    return NextResponse.json({ hasAccess, requiredTier, reason });
-  } catch (error: unknown) {
-    logger.error("[ACCESS_API_ERROR]", error);
-    // Extreme fallback: restrict access but don't crash
+
+    if (!hasAccess) {
+        scopedLogger.warn(`Access denied for video ${videoId}. Reason: ${reason}`);
+    }
+
     return NextResponse.json({
-        hasAccess: false,
-        requiredTier: 'PATRON',
-        reason: 'SYSTEM_ERROR',
-        message: "Wystąpił błąd podczas sprawdzania dostępu."
+      hasAccess,
+      requiredTier,
+      reason
     });
+  } catch (error: unknown) {
+    scopedLogger.error("[GET_ACCESS_ERROR]", error);
+    return handleApiError(error);
   }
 }

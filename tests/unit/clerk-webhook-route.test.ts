@@ -3,7 +3,7 @@ import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { EmailService } from '@/lib/services/email.service';
 import { POST } from '@/app/api/webhooks/clerk/route';
 
@@ -30,8 +30,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     syncUser: vi.fn(),
     softDeleteUser: vi.fn(),
   },

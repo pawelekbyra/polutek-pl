@@ -10,6 +10,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
 import { recordAlert, recordMetric } from '@/lib/observability';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,48 +24,52 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Video ID is required' }, { status: 400 });
   }
 
-  // Rate Limiting
-  const rateLimitResult = await rateLimit({
-    key: `media-source:${buildMediaRateLimitKey({ userId, ip: getMediaClientIp(req), mediaId: videoId })}`,
-    limit: 60,
-    windowMs: 60 * 1000
-  });
+  try {
+    const rateLimitResult = await rateLimit({
+      key: `media-source:${buildMediaRateLimitKey({ userId, ip: getMediaClientIp(req), mediaId: videoId })}`,
+      limit: 60,
+      windowMs: 60 * 1000
+    });
 
-  if (!rateLimitResult.success) {
-    recordAlert('media_source.rate_limited', { videoId });
+    if (!rateLimitResult.success) {
+      recordAlert('media_source.rate_limited', { videoId });
+      return NextResponse.json({
+          error: 'RATE_LIMITED',
+          message: 'Zbyt wiele zapytań o źródło wideo. Spróbuj za chwilę.'
+      }, { status: 429 });
+    }
+
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      include: { creator: true }
+    });
+
+    const decision = await AccessPolicy.canViewVideo(userId, videoId, video);
+    if (!decision.allowed) {
+      recordMetric('media_source.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
+      return NextResponse.json({ hasAccess: false, reason: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
+    }
+
+    const fallback = !video && flags.demoFallbacks ? INITIAL_VIDEOS.find((item) => item.id === videoId || item.slug === videoId) : null;
+    const resolvedVideo = video || fallback;
+
+    if (!resolvedVideo?.videoUrl) {
+      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
+    if (!isAllowedVideoSourceUrl(resolvedVideo.videoUrl)) {
+      recordAlert('media_source.host_blocked', { videoId });
+      return NextResponse.json({ error: 'VIDEO_SOURCE_NOT_ALLOWED' }, { status: 400 });
+    }
+
+    const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
+
     return NextResponse.json({
-        error: 'RATE_LIMITED',
-        message: 'Zbyt wiele zapytań o źródło wideo. Spróbuj za chwilę.'
-    }, { status: 429 });
+      hasAccess: true,
+      ...source,
+    });
+  } catch (error) {
+    scopedLogger.error('[MEDIA_SOURCE_GET_ERROR]', error);
+    return handleApiError(error);
   }
-
-  const video = await prisma.video.findUnique({
-    where: { id: videoId },
-    include: { creator: true }
-  });
-
-  const decision = await AccessPolicy.canViewVideo(userId, videoId, video);
-  if (!decision.allowed) {
-    recordMetric('media_source.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
-    return NextResponse.json({ hasAccess: false, reason: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
-  }
-
-  const fallback = !video && flags.demoFallbacks ? INITIAL_VIDEOS.find((item) => item.id === videoId || item.slug === videoId) : null;
-  const resolvedVideo = video || fallback;
-
-  if (!resolvedVideo?.videoUrl) {
-    return NextResponse.json({ error: 'Video not found' }, { status: 404 });
-  }
-
-  if (!isAllowedVideoSourceUrl(resolvedVideo.videoUrl)) {
-    recordAlert('media_source.host_blocked', { videoId });
-    return NextResponse.json({ error: 'VIDEO_SOURCE_NOT_ALLOWED' }, { status: 400 });
-  }
-
-  const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
-
-  return NextResponse.json({
-    hasAccess: true,
-    ...source,
-  });
 }

@@ -1,18 +1,17 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * API Route for toggling a 'Dislike' on a comment.
- * Mutually exclusive with 'Like'.
- */
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   let userId: string | null = null;
   let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
@@ -23,55 +22,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
           success: false,
           error: "CLERK_ERROR",
-          message: 'Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w panelu Vercel.'
+          message: 'Błąd weryfikacji sesji.'
       }, { status: 500 });
   }
 
-  if (!userId) {
-    return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
 
-  // Rate Limiting: 60 reactions per minute
-  const rateLimitResult = await rateLimit({
-      key: `reactions:${userId}`,
-      limit: 60,
-      windowMs: 60 * 1000
-  });
-
-  if (!rateLimitResult.success) {
-      return NextResponse.json({ success: false, message: "Zbyt wiele reakcji. Odczekaj chwilę." }, { status: 429 });
-  }
+  const rateLimitResult = await rateLimit({ key: `reactions:${userId}`, limit: 60, windowMs: 60 * 1000 });
+  if (!rateLimitResult.success) return NextResponse.json({ success: false, message: "Zbyt wiele reakcji. Odczekaj chwilę." }, { status: 429 });
 
   try {
     const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
-    if (!localUser) {
-      return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
-    }
+    if (!localUser) return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
 
     const { commentId } = await request.json();
-
-    if (!commentId) {
-      return NextResponse.json({ success: false, message: 'Brak ID komentarza.' }, { status: 400 });
-    }
+    if (!commentId) return NextResponse.json({ success: false, message: 'Brak ID komentarza.' }, { status: 400 });
 
     const decision = await AccessPolicy.canReactToComment(userId, commentId);
     if (!decision.allowed) {
-      return NextResponse.json(
-        { success: false, message: decision.reason, requiredTier: decision.requiredTier },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, message: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
     }
 
     return await prisma.$transaction(async (tx) => {
-        // 1. Remove an existing like when present
-        await tx.commentLike.deleteMany({
-            where: { userId: localUser.id, commentId }
-        });
-
-        // 2. Toggle Dislike
-        const existingDislike = await tx.commentDislike.findUnique({
-            where: { userId_commentId: { userId: localUser.id, commentId } }
-        });
+        await tx.commentLike.deleteMany({ where: { userId: localUser.id, commentId } });
+        const existingDislike = await tx.commentDislike.findUnique({ where: { userId_commentId: { userId: localUser.id, commentId } } });
 
         if (existingDislike) {
             await tx.commentDislike.delete({ where: { id: existingDislike.id } });
@@ -82,7 +56,7 @@ export async function POST(request: NextRequest) {
         }
     });
   } catch (error: unknown) {
-    logger.error('[COMMENT_DISLIKE_ERROR]', error);
-    return NextResponse.json({ success: false, message: 'Wystąpił błąd podczas oceniania komentarza.' }, { status: 500 });
+    scopedLogger.error('[COMMENT_DISLIKE_ERROR]', error);
+    return handleApiError(error);
   }
 }

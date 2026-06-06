@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { POST, DELETE, PATCH } from '@/app/api/comments/route';
 import { NextRequest } from 'next/server';
 
@@ -25,8 +25,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     getOrCreateUserFromAuth: vi.fn(),
   },
 }));

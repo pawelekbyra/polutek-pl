@@ -196,19 +196,10 @@ Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines`
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
-- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, comments, webhooks).
+- [~] Dodać request/correlation ID dla krytycznych route handlers i webhooków (zrealizowane dla: language, subscriptions, media-source, checkout, comments, webhooks, profile, admin).
 - [~] Dodać metryki lub dashboardy dla: webhook processing time, duplicate/stale lock conflicts, payment failures, refund/dispute handling, 403/429 spikes, media upstream errors. Zrealizowane: log-based `[METRIC]` signals w kodzie i kontrakt dashboardów w `docs/OBSERVABILITY_RUNBOOK.md`.
 - [~] Dodać alerty dla nieudanych webhooków Stripe/Clerk, błędów sync Clerk access, wysokiego 429 oraz błędów media proxy. Zrealizowane: `alert:true` log signals i runbook alertów.
 - [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
-
-## 7. P2 — moduły, hotspoty i dług techniczny
-
-Kod ma sensowne warstwy domenowe, ale duże serwisy i client components zwiększają ryzyko regresji przy kolejnych zmianach beta-hardening. Lokalny guard `npm run quality:hotspots` pilnuje budżetów LOC i dokumentuje tymczasowe wyjątki dla znanych hotspotów.
-
-- [~] Rozbić `UserService` na mniejsze moduły (zrealizowane: profile, language, subscriptions, admin).
-- [~] Rozbić `PaymentService` na mniejsze moduły (zrealizowane: checkout, fulfillment, refund).
-- [~] Rozbić `ContentService` i API komentarzy na mniejsze moduły (zrealizowane: video, creator, comments service).
-- [~] Ograniczyć największe client components/hotspoty komentarzy/admin videos do mniejszych jednostek z testowalnymi granicami (zrealizowane dla `app/admin/videos/page.tsx` i `app/components/comments/EmbeddedComments.tsx`).
 
 ## 19. Finalna walidacja przed prywatną betą
 

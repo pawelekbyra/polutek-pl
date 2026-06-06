@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { isAllowedAvatarUrl } from '@/lib/blob';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { publicCommentAuthorSelect } from '@/lib/comments-public-author';

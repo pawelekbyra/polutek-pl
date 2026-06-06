@@ -3,7 +3,7 @@
 import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { UserService } from "@/lib/services/user.service";
+import { UserProfileService as UserService } from "@/lib/services/user/profile.service";
 import { revalidatePath } from "next/cache";
 import { AccessPolicy } from "@/lib/access/access-policy";
 

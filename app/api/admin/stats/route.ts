@@ -1,11 +1,15 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
+import { handleApiError } from '@/lib/errors';
+import { createScopedLogger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const { response } = await requireAdminForApi("GET_ADMIN_STATS");
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_STATS");
   if (response) return response;
 
   try {
@@ -56,7 +60,7 @@ export async function GET(req: NextRequest) {
         recentPayments: paymentsDTO
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    scopedLogger.error("[GET_ADMIN_STATS_ERROR]", error);
+    return handleApiError(error);
   }
 }

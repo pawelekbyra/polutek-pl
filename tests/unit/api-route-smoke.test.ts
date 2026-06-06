@@ -35,14 +35,14 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock('@/lib/services/payment.service', () => ({
-  PaymentService: {
+vi.mock('@/lib/services/payments/checkout.service', () => ({
+  PaymentCheckoutService: {
     createPayment: vi.fn(),
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     getOrCreateUser: vi.fn(),
   },
 }));

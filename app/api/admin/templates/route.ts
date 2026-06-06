@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { auth } from '@clerk/nextjs/server';
 import sanitizeHtml from 'sanitize-html';
+import { createScopedLogger } from '@/lib/logger';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +56,8 @@ function getSlug(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { response } = await requireAdminForApi("GET_ADMIN_TEMPLATES");
   if (response) return response;
 
@@ -65,11 +69,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(template || { ...DEFAULT_TEMPLATE, slug });
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to fetch template' }, { status: 500 });
+    scopedLogger.error("[GET_ADMIN_TEMPLATES_ERROR]", err);
+    return handleApiError(err);
   }
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { response } = await requireAdminForApi("POST_ADMIN_TEMPLATES");
   if (response) return response;
 
@@ -112,6 +119,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(updated);
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to update template' }, { status: 500 });
+    scopedLogger.error("[POST_ADMIN_TEMPLATES_ERROR]", err);
+    return handleApiError(err);
   }
 }

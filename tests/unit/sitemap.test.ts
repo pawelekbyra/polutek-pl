@@ -1,12 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockContentService = vi.hoisted(() => ({
-  getAllVideos: vi.fn(),
+const mockCreatorContentService = vi.hoisted(() => ({
   getCreatorBySlug: vi.fn(),
+  getConfiguredOrDefaultCreator: vi.fn(),
 }));
 
+const mockVideoContentService = vi.hoisted(() => ({
+  getAllVideos: vi.fn(),
+}));
+
+vi.mock('@/lib/services/content/creator.service', () => ({
+  CreatorContentService: mockCreatorContentService,
+}));
+
+vi.mock('@/lib/services/content/video.service', () => ({
+  VideoContentService: mockVideoContentService,
+}));
+
+// Also mock the facade to avoid static initializer errors
 vi.mock('@/lib/services/content.service', () => ({
-  ContentService: mockContentService,
+  CreatorContentService: mockCreatorContentService,
+  VideoContentService: mockVideoContentService,
 }));
 
 const mainCreatorVideo = {
@@ -41,8 +55,8 @@ describe('sitemap', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://example.com';
     process.env.ENABLE_MULTI_CREATOR = 'false';
     process.env.MAIN_CREATOR_SLUG = 'main-channel';
-    mockContentService.getAllVideos.mockResolvedValue([]);
-    mockContentService.getCreatorBySlug.mockResolvedValue({
+    mockVideoContentService.getAllVideos.mockResolvedValue([]);
+    mockCreatorContentService.getCreatorBySlug.mockResolvedValue({
       slug: 'main-channel',
       videos: [],
     });
@@ -59,27 +73,27 @@ describe('sitemap', () => {
   });
 
   it('fetches only the main creator videos in single-creator mode', async () => {
-    mockContentService.getCreatorBySlug.mockResolvedValue({
+    mockCreatorContentService.getCreatorBySlug.mockResolvedValue({
       slug: 'main-channel',
       videos: [mainCreatorVideo],
     });
-    mockContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
+    mockVideoContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
     const sitemap = await importSitemap({ multiCreator: false });
 
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain('https://example.com/?v=main-video');
-    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
-    expect(mockContentService.getAllVideos).not.toHaveBeenCalled();
+    expect(mockCreatorContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
+    expect(mockVideoContentService.getAllVideos).not.toHaveBeenCalled();
   });
 
   it('does not expose other creators videos in single-creator mode', async () => {
-    mockContentService.getCreatorBySlug.mockResolvedValue({
+    mockCreatorContentService.getCreatorBySlug.mockResolvedValue({
       slug: 'main-channel',
       videos: [mainCreatorVideo],
     });
-    mockContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
+    mockVideoContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
     const sitemap = await importSitemap({ multiCreator: false });
 
     const entries = await sitemap();
@@ -87,11 +101,11 @@ describe('sitemap', () => {
 
     expect(urls.some((url) => url.includes('other-video'))).toBe(false);
     expect(urls.some((url) => url.includes('film-innego-tworcy'))).toBe(false);
-    expect(mockContentService.getAllVideos).not.toHaveBeenCalled();
+    expect(mockVideoContentService.getAllVideos).not.toHaveBeenCalled();
   });
 
   it('continues to use all videos in multi-creator mode', async () => {
-    mockContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
+    mockVideoContentService.getAllVideos.mockResolvedValue([otherCreatorVideo]);
     const sitemap = await importSitemap({ multiCreator: true });
 
     const entries = await sitemap();
@@ -100,7 +114,7 @@ describe('sitemap', () => {
     expect(urls).toContain('https://example.com');
     expect(urls).toContain('https://example.com/channel/main-channel');
     expect(urls).toContain('https://example.com/?v=other-video');
-    expect(mockContentService.getAllVideos).toHaveBeenCalled();
-    expect(mockContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
+    expect(mockVideoContentService.getAllVideos).toHaveBeenCalled();
+    expect(mockCreatorContentService.getCreatorBySlug).toHaveBeenCalledWith('main-channel');
   });
 });

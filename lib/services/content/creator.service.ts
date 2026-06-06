@@ -38,10 +38,11 @@ export class CreatorContentService {
       }) : null;
 
       if (isMainCreator && creator) {
+        const effectiveImageUrl = adminData?.imageUrl || creator.user?.imageUrl || null;
         const videos = (creator.videos || []).map((v) =>
           VideoContentService.mapToPublicVideoDTO({
               ...v,
-              creator: { ...creator, imageUrl: adminData?.imageUrl || (creator as any).user?.imageUrl || (creator as any).imageUrl || null }
+              creator: { ...creator, imageUrl: effectiveImageUrl }
           })
         );
 
@@ -49,7 +50,7 @@ export class CreatorContentService {
             id: creator.id,
             name: creator.name,
             slug: creator.slug,
-            imageUrl: adminData?.imageUrl || (creator as any).user?.imageUrl || (creator as any).imageUrl || null,
+            imageUrl: effectiveImageUrl,
             bannerUrl: creator.bannerUrl,
             bio: creator.bio,
             userId: creator.userId,
@@ -78,7 +79,7 @@ export class CreatorContentService {
           id: creator.id,
           name: creator.name,
           slug: creator.slug,
-          imageUrl: (creator as any).user?.imageUrl || null,
+          imageUrl: creator.user?.imageUrl || null,
           bannerUrl: creator.bannerUrl,
           bio: creator.bio,
           userId: creator.userId,
@@ -90,7 +91,8 @@ export class CreatorContentService {
       if (isMainCreator && canUseDemoFallbacks()) {
         return {
             ...DEFAULT_CREATOR,
-            videos: INITIAL_VIDEOS.map(v => VideoContentService.mapToPublicVideoDTO(v)) as any
+            imageUrl: null,
+            videos: INITIAL_VIDEOS.map(v => VideoContentService.mapToPublicVideoDTO(v))
         };
       }
       throw e;
@@ -136,7 +138,7 @@ export class CreatorContentService {
         select: { imageUrl: true }
       }) : null;
 
-      const imageUrl = adminData?.imageUrl || (creator as any).user?.imageUrl || (creator as any).imageUrl || null;
+      const imageUrl = adminData?.imageUrl || creator.user?.imageUrl || null;
 
       return {
         id: creator.id,

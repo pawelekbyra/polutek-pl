@@ -9,6 +9,7 @@ import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
 import { MainCreatorService } from '@/lib/services/main-creator.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,22 +38,29 @@ const videoSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
   if (response) return response;
 
-  const mainCreator = flags.multiCreator
-    ? null
-    : await prisma.$transaction((tx) =>
-        MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
-      );
+  try {
+    const mainCreator = flags.multiCreator
+      ? null
+      : await prisma.$transaction((tx) =>
+          MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
+        );
 
-  const videos = await prisma.video.findMany({
-    where: mainCreator ? { creatorId: mainCreator.id } : undefined,
-    orderBy: { createdAt: 'desc' },
-    include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
-  });
+    const videos = await prisma.video.findMany({
+      where: mainCreator ? { creatorId: mainCreator.id } : undefined,
+      orderBy: { createdAt: 'desc' },
+      include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
+    });
 
-  return NextResponse.json(videos);
+    return NextResponse.json(videos);
+  } catch (error: unknown) {
+      scopedLogger.error("[GET_ADMIN_VIDEOS_ERROR]", error);
+      return handleApiError(error);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -61,35 +69,35 @@ export async function POST(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
   if (response) return response;
 
-  const body = await req.json();
-  const result = videoSchema.safeParse(body);
-
-  if (!result.success) {
-    const flattened = result.error.flatten();
-    const errorMessages = Object.entries(flattened.fieldErrors)
-      .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
-      .join('; ');
-
-    return NextResponse.json({
-      error: 'Błędne dane w formularzu',
-      details: flattened,
-      message: errorMessages
-    }, { status: 400 });
-  }
-
-  const {
-    id, title, titleEn, slug, description, descriptionEn,
-    videoUrl, thumbnailUrl, duration, tier, status,
-    isMainFeatured, showInSidebar, sidebarOrder,
-    likesCount, dislikesCount, views
-  } = result.data;
-
-  // Validation: Only PUBLIC and PUBLISHED videos can be main featured
-  if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
-    return NextResponse.json({ error: "Only public and published videos can be featured as Hero. Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
-  }
-
   try {
+    const body = await req.json();
+    const result = videoSchema.safeParse(body);
+
+    if (!result.success) {
+      const flattened = result.error.flatten();
+      const errorMessages = Object.entries(flattened.fieldErrors)
+        .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+        .join('; ');
+
+      return NextResponse.json({
+        error: 'Błędne dane w formularzu',
+        details: flattened,
+        message: errorMessages
+      }, { status: 400 });
+    }
+
+    const {
+      id, title, titleEn, slug, description, descriptionEn,
+      videoUrl, thumbnailUrl, duration, tier, status,
+      isMainFeatured, showInSidebar, sidebarOrder,
+      likesCount, dislikesCount, views
+    } = result.data;
+
+    // Validation: Only PUBLIC and PUBLISHED videos can be main featured
+    if (isMainFeatured && (tier !== AccessTier.PUBLIC || status !== VideoStatus.PUBLISHED)) {
+      return NextResponse.json({ error: "Only public and published videos can be featured as Hero. Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
+    }
+
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
         const mainCreator = flags.multiCreator
@@ -201,17 +209,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_POST_ERROR]", error);
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const field = Array.isArray(error.meta?.target) ? error.meta?.target[0] : 'pole';
-      return NextResponse.json({
-        error: `Wartość w polu '${field}' musi być unikalna. Prawdopodobnie taki Slug już istnieje.`
-      }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd serwera (Internal Server Error)'
-    }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -246,7 +244,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true, archived: archived.title, status: 'ARCHIVED' });
   } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleApiError(error);
   }
 }

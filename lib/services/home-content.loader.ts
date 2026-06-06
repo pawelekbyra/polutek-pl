@@ -1,133 +1,92 @@
-import { logger } from "@/lib/logger";
-import { ContentService } from "./content.service";
 import { flags } from "../feature-flags";
-import { PublicVideoDTO, PublicCreatorPageDTO } from "@/app/types/video";
+import { PublicCreatorPageDTO, PublicVideoDTO } from "@/app/types/video";
+import { CreatorContentService, VideoContentService } from "./content.service";
+import { logger } from "../logger";
 
-export type HomeContentDebugInfo = {
-  creatorSuccess: boolean;
-  allVideosSuccess: boolean;
-  mainVideoSuccess: boolean;
-  allVideosCount: number;
-  mainVideoId: string | null;
-  stage: string;
-};
-
-export type HomeContentLoadResult =
-  | {
-      status: "ready";
-      creator: PublicCreatorPageDTO | null;
-      mainVideo: PublicVideoDTO | null;
-      allVideos: PublicVideoDTO[];
-      debug?: HomeContentDebugInfo;
-    }
-  | {
-      status: "empty";
-      creator: PublicCreatorPageDTO | null;
-      mainVideo: null;
-      allVideos: [];
-      debug?: HomeContentDebugInfo;
-    }
-  | {
-      status: "error";
-      publicMessage: string;
-      debug?: HomeContentDebugInfo;
-    };
-
-function getSafeErrorInfo(error: unknown) {
-  return {
-    name: error instanceof Error ? error.name : "UnknownError",
-    message: error instanceof Error ? error.message : "Unknown error",
-    prismaCode:
-      typeof error === "object" && error && "code" in error
-        ? String((error as { code?: unknown }).code)
-        : undefined,
+export interface HomeContent {
+  status: 'loading' | 'ready' | 'error' | 'empty';
+  creator: PublicCreatorPageDTO | null;
+  mainVideo: PublicVideoDTO | null;
+  allVideos: PublicVideoDTO[];
+  error?: string;
+  publicMessage?: string;
+  debug?: {
+    stage: string;
+    creatorSuccess: boolean;
+    allVideosSuccess: boolean;
+    mainVideoId: string | null;
+    allVideosCount: number;
   };
 }
 
-export async function loadHomeContent(): Promise<HomeContentLoadResult> {
-  const debug: HomeContentDebugInfo = {
-    creatorSuccess: false,
-    allVideosSuccess: false,
-    mainVideoSuccess: false,
-    allVideosCount: 0,
-    mainVideoId: null,
-    stage: "init",
-  };
-
+/**
+ * Core business logic for loading the initial homepage state.
+ * This is decoupled from React components for easier testing.
+ */
+export async function loadHomeContent(): Promise<HomeContent> {
   let creator: PublicCreatorPageDTO | null = null;
   let allVideos: PublicVideoDTO[] = [];
-  let mainVideo: PublicVideoDTO | null = null;
+  let mainFeaturedVideo: PublicVideoDTO | null = null;
 
   try {
-    // 1. Load Creator
-    debug.stage = "loading_creator";
-    try {
-      creator = await ContentService.getConfiguredOrDefaultCreator();
-      debug.creatorSuccess = true;
-    } catch (e) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", getSafeErrorInfo(e));
-      // Creator failure might not be fatal in multi-creator mode if global videos are still available.
-    }
-
-    // 2. Load Videos
-    debug.stage = flags.multiCreator ? "loading_all_videos" : "loading_main_creator_videos";
-    try {
-      allVideos = flags.multiCreator ? (await ContentService.getAllVideos()) || [] : creator?.videos || [];
-      debug.allVideosSuccess = true;
-      debug.allVideosCount = allVideos.length;
-    } catch (e) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", getSafeErrorInfo(e));
-      // If demo fallbacks are enabled, ContentService should already handle it.
-      // We re-throw only if it's a critical DB error and no videos were returned.
-      if (allVideos.length === 0) {
-        throw e;
+    // 1. Resolve Creator (Single-creator mode only)
+    if (!flags.multiCreator) {
+      try {
+        creator = await CreatorContentService.getConfiguredOrDefaultCreator();
+      } catch (err) {
+        logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", err);
+        // We continue because videos might still load or fallbacks might trigger.
       }
     }
 
-    // 3. Load Main Video
-    debug.stage = "loading_main_video";
+    // 2. Load Videos
     try {
-      mainVideo = flags.multiCreator
-        ? await ContentService.getMainFeaturedVideo()
-        : allVideos.find((video) => video.isMainFeatured) || allVideos[0] || null;
-      debug.mainVideoSuccess = true;
-      debug.mainVideoId = mainVideo?.id || null;
-    } catch (e) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load main video", getSafeErrorInfo(e));
-      // Not necessarily fatal if allVideos worked
+      allVideos = flags.multiCreator
+        ? (await VideoContentService.getAllVideos()) || []
+        : creator?.videos || [];
+    } catch (err) {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", err);
+      // In multi-creator mode, failing to load videos is a fatal error for home.
+      if (flags.multiCreator) {
+          return { status: 'error', creator: null, mainVideo: null, allVideos: [], error: "GLOBAL_FAILURE" };
+      }
     }
 
-    if (process.env.DEBUG_HOME_CONTENT === "true") {
-      logger.info("[HOME_CONTENT_DEBUG] Loader finished", {
-        status: allVideos.length > 0 ? "ready" : "empty",
-        mode: flags.multiCreator ? "multi_creator" : "single_creator",
-        mainCreatorSlug: flags.mainCreatorSlug || creator?.slug || null,
-        ...debug,
-      });
+    // 3. Resolve Main Featured Video
+    try {
+      // Logic for featured video:
+      // a) Explicitly marked as isMainFeatured
+      // b) Fallback to the first video in the sorted list
+      mainFeaturedVideo = (await VideoContentService.getMainFeaturedVideo())
+        || (allVideos.length > 0 ? allVideos[0] : null);
+    } catch (err) {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to resolve main video", err);
     }
 
-    if (allVideos.length === 0 && !mainVideo) {
-      return { status: "empty", creator, allVideos: [], mainVideo: null, debug };
+    if (!mainFeaturedVideo && allVideos.length === 0) {
+        return {
+            status: 'empty',
+            creator,
+            mainVideo: null,
+            allVideos: [],
+            publicMessage: "Brak dostępnych materiałów."
+        };
     }
-
-    return { status: "ready", creator, allVideos, mainVideo, debug };
-  } catch (error) {
-    const safeInfo = getSafeErrorInfo(error);
-
-    // Specific handling for missing columns (P2022) to help with production debugging
-    if (safeInfo.prismaCode === "P2022") {
-      logger.error("[CRITICAL_DB_ERROR] Database schema is out of sync. Missing column. Run 'npx prisma migrate deploy'.", safeInfo);
-    }
-
-    logger.error("[HOME_CONTENT_LOAD_ERROR] Global failure", {
-      stage: debug.stage,
-      ...safeInfo,
-    });
 
     return {
-      status: "error",
-      publicMessage: "Nie udało się wczytać materiałów. Spróbuj odświeżyć stronę później.",
-      debug,
+      status: 'ready',
+      creator,
+      mainVideo: mainFeaturedVideo,
+      allVideos,
+    };
+  } catch (globalErr) {
+    logger.error("[HOME_CONTENT_LOAD_ERROR] Global failure", globalErr);
+    return {
+      status: 'error',
+      creator: null,
+      mainVideo: null,
+      allVideos: [],
+      error: "GLOBAL_FAILURE",
     };
   }
 }

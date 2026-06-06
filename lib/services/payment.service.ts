@@ -24,6 +24,8 @@ function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
   };
 }
 
+export { PaymentCheckoutService, PaymentFulfillmentService, PaymentRefundService };
+
 /**
  * @deprecated Use specialized services from @/lib/services/payments/
  */
