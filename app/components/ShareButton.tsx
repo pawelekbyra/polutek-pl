@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Share2, Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
+import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
+import { Share2 } from './icons';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
 
@@ -88,10 +89,10 @@ export default function ShareButton({
             onClick={() => copyToClipboard(url)}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider",
-              copied ? "bg-green-50 text-green-600" : "hover:bg-muted text-blue-600"
+              copied ? "bg-green-50 text-green-600" : "hover:bg-muted text-primary"
             )}
           >
-            {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-blue-600" />}
+            {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-primary" />}
             <span>{copied ? "Skopiowano!" : "Kopiuj link"}</span>
           </div>
 

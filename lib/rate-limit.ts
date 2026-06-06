@@ -12,6 +12,7 @@ interface RateLimitRecord {
 
 export interface RateLimitStore {
   hit(key: string, windowMs: number): Promise<RateLimitRecord>;
+  setNxEx(key: string, value: string, seconds: number): Promise<boolean>;
 }
 
 export class MemoryStore implements RateLimitStore {
@@ -29,6 +30,14 @@ export class MemoryStore implements RateLimitStore {
 
     record.count += 1;
     return record;
+  }
+
+  async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
+    const now = Date.now();
+    const record = this.cache.get(key);
+    if (record && now < record.resetAt) return false;
+    this.cache.set(key, { count: 1, resetAt: now + (seconds * 1000) });
+    return true;
   }
 }
 
@@ -74,6 +83,11 @@ export class UpstashRedisStore implements RateLimitStore {
       count,
       resetAt: Date.now() + Math.max(ttl, 0),
     };
+  }
+
+  async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
+    const result = await this.command<string>(['SET', key, value, 'NX', 'EX', seconds]);
+    return result === 'OK';
   }
 }
 
@@ -141,4 +155,8 @@ export async function rateLimit({ key, limit, windowMs }: RateLimitOptions) {
   }
 
   return { success: true, remaining: Math.max(0, limit - record.count) };
+}
+
+export async function setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
+  return await getStore().setNxEx(key, value, seconds);
 }

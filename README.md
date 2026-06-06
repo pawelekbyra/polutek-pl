@@ -196,19 +196,6 @@ Runtime Node jest ujednolicony na Node 22 przez `.nvmrc`, `package.json#engines`
 
 Logger i audit logi są dobrą bazą, ale nadal brakuje metryk, request IDs, tracingu i alertów dla flows, które decydują o pieniądzach, dostępie i mediach.
 
-- [ ] Zebrać podstawowy profiling/budżety dla homepage, channel page, comments, player/media-source i checkout render.
-
-## 7. P1 — Robustness of Identity and Sync
-
-Ensuring that identity changes in external providers do not block user access or create orphaned data cycles.
-
-- [✓] Handle email conflicts during Clerk sync by renaming stale/conflicting records.
-- [✓] Improve optimistic UI for reactions to prevent lag and double-increment visual bugs.
-- [✓] Ensure comment avatars correctly prioritize author profile images.
-- [✓] Add `music.youtube.com` and expanded Vimeo URL support.
-- [✓] Fix `subscribersCount` logic and add admin resync endpoint.
-- [✓] Improve Email (Resend) resilience with fallbacks and production guards.
-- [✓] Replace native desktop share with custom popover while keeping native mobile share.
 
 ## 19. Finalna walidacja przed prywatną betą
 
