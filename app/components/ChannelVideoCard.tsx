@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MoreVertical } from './icons';
 import { cn } from '@/lib/utils';
+import PremiumWrapper from './PremiumWrapper';
 import { PublicVideoDTO } from '@/app/types/video';
-import Image from 'next/image';
+import VideoPlayer from './VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useLanguage } from './LanguageContext';
@@ -39,13 +40,14 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
             <div className="block relative">
                 <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
                 <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
-                    <Image
-                      src={video.thumbnailUrl || '/logo.png'}
-                      alt={video.title || 'Video thumbnail'}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
-                      className="w-full h-full object-cover"
-                    />
+                    <PremiumWrapper
+                        videoId={video.id}
+                        requiredTier={video.tier}
+                        isMainFeatured={video.isMainFeatured}
+                        variant="thumbnail"
+                    >
+                        <VideoPlayer video={video} variant="thumbnail" />
+                    </PremiumWrapper>
                     {video.duration && (
                         <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded">
                             {video.duration}

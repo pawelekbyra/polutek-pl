@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import VideoPlayer from '../VideoPlayer';
 import VideoPlaylist from '../VideoPlaylist';
+import PremiumWrapper from '../PremiumWrapper';
 import { PublicVideoDTO } from '@/app/types/video';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
@@ -85,7 +86,9 @@ export function SidebarPlaylist({
         <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-0" />
         <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
           <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-20" />
-          <VideoPlayer video={video} variant="thumbnail" />
+          <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
+             <VideoPlayer video={video} variant="thumbnail" />
+          </PremiumWrapper>
           {video.duration && (
             <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
                {video.duration}
