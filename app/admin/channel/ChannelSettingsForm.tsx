@@ -17,19 +17,29 @@ type ChannelCreator = {
   name: string;
   bio: string | null;
   bannerUrl: string | null;
+  subscribersCount: number;
+  fakeSubscribersCount: number | null;
   user?: { imageUrl: string | null; name: string | null } | null;
+};
+
+type CurrencySetting = {
+  code: string;
+  minAmountMinor: number;
 };
 
 type ChannelSettingsFormProps = {
   initialCreator: ChannelCreator | null;
+  initialCurrencySettings?: CurrencySetting[];
   clerkFallbackImageUrl: string | null;
 };
 
-export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: ChannelSettingsFormProps) {
+export function ChannelSettingsForm({ initialCreator, initialCurrencySettings = [], clerkFallbackImageUrl }: ChannelSettingsFormProps) {
   const [creator, setCreator] = useState(initialCreator);
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
   const [bannerUrl, setBannerUrl] = useState(initialCreator?.bannerUrl || "");
+  const [fakeSubscribersCount, setFakeSubscribersCount] = useState<string>(initialCreator?.fakeSubscribersCount?.toString() || "");
+  const [currencySettings, setCurrencySettings] = useState<CurrencySetting[]>(initialCurrencySettings);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +52,13 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
       const response = await fetch("/api/admin/channel", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, bannerUrl }),
+        body: JSON.stringify({
+            name,
+            bio,
+            bannerUrl,
+            fakeSubscribersCount: fakeSubscribersCount ? parseInt(fakeSubscribersCount, 10) : null,
+            currencySettings
+        }),
       });
       const payload = await response.json().catch(() => null);
 
@@ -118,6 +134,22 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                 <Input id="channel-banner" value={bannerUrl} onChange={(event) => setBannerUrl(event.target.value)} placeholder="https://..." />
                 <p className="text-xs text-muted-foreground">Cover photo należy do kanału i nie jest pobierane z Clerk.</p>
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="real-subs">Prawdziwa liczba subskrybentów</Label>
+                  <Input id="real-subs" value={creator.subscribersCount} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fake-subs">Wyświetlana liczba subskrybentów</Label>
+                  <Input
+                    id="fake-subs"
+                    type="number"
+                    value={fakeSubscribersCount}
+                    onChange={(event) => setFakeSubscribersCount(event.target.value)}
+                    placeholder="Zostaw puste, aby wyświetlać prawdziwą liczbę"
+                  />
+                </div>
+              </div>
               <div className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm">
                   {status === "saved" && <span className="text-green-600">Zapisano zmiany.</span>}
@@ -149,6 +181,38 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">Jeśli nie ustawisz avatara kanału, zostanie użyte zdjęcie profilowe z konta właściciela kanału w Clerk.</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Waluty i progi</CardTitle>
+              <CardDescription>Minimalne kwoty dla statusu Patrona w różnych walutach (w groszach/centach).</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+               {['PLN', 'EUR', 'USD', 'CHF', 'GBP'].map(code => {
+                 const setting = currencySettings.find(s => s.code === code) || { code, minAmountMinor: code === 'PLN' ? 2000 : 500 };
+                 return (
+                   <div key={code} className="space-y-1">
+                     <Label htmlFor={`min-${code}`} className="text-xs uppercase font-bold">{code}</Label>
+                     <Input
+                       id={`min-${code}`}
+                       type="number"
+                       value={setting.minAmountMinor}
+                       onChange={(e) => {
+                         const val = parseInt(e.target.value, 10) || 0;
+                         setCurrencySettings(prev => {
+                           const existing = prev.find(p => p.code === code);
+                           if (existing) {
+                             return prev.map(p => p.code === code ? { ...p, minAmountMinor: val } : p);
+                           }
+                           return [...prev, { code, minAmountMinor: val }];
+                         });
+                       }}
+                     />
+                   </div>
+                 );
+               })}
             </CardContent>
           </Card>
         </aside>

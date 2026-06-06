@@ -160,10 +160,11 @@ model Creator {
   userId           String
   slug             String         @unique
   name             String
-  bio              String?
-  bannerUrl        String?
-  subscribersCount Int            @default(0)
-  isApproved       Boolean        @default(false)
+  bio                  String?
+  bannerUrl            String?
+  subscribersCount     Int               @default(0)
+  fakeSubscribersCount Int?
+  isApproved           Boolean           @default(false)
   isPrimary        Boolean        @default(false)
   stripeConnectId  String?        @unique
   createdAt        DateTime       @default(now())
@@ -416,4 +417,10 @@ model EmailTemplate {
   htmlEn    String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model CurrencySetting {
+  code           String   @id // e.g., "PLN", "EUR", "USD", "CHF", "GBP"
+  minAmountMinor Int      @default(0)
+  updatedAt      DateTime @updatedAt
 }

@@ -8,13 +8,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminChannelPage() {
   const clerkUser = await currentUser();
-  const creator = clerkUser?.id
+  const data = clerkUser?.id
     ? await prisma.$transaction(async (tx) => {
         const mainCreator = await MainCreatorService.getOrCreateForAdmin(clerkUser.id, tx, {
           repairSingleChannelContent: true,
         });
 
-        return tx.creator.findUnique({
+        const creator = await tx.creator.findUnique({
           where: { id: mainCreator.id },
           select: {
             id: true,
@@ -22,16 +22,25 @@ export default async function AdminChannelPage() {
             name: true,
             bio: true,
             bannerUrl: true,
+            subscribersCount: true,
+            fakeSubscribersCount: true,
             user: { select: { name: true, imageUrl: true } },
           },
         });
+
+        const currencySettings = await tx.currencySetting.findMany();
+        return { creator, currencySettings };
       })
     : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
       <Navbar />
-      <ChannelSettingsForm initialCreator={creator} clerkFallbackImageUrl={clerkUser?.imageUrl || null} />
+      <ChannelSettingsForm
+        initialCreator={data?.creator || null}
+        initialCurrencySettings={data?.currencySettings || []}
+        clerkFallbackImageUrl={clerkUser?.imageUrl || null}
+      />
     </div>
   );
 }

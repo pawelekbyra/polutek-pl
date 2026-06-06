@@ -81,6 +81,7 @@ export class VideoContentService {
             slug: video.creator.slug,
             imageUrl: video.creator.user?.imageUrl || video.creator.imageUrl || null,
             subscribersCount: video.creator.subscribersCount || 0,
+            fakeSubscribersCount: video.creator.fakeSubscribersCount,
         } : undefined,
     };
   }

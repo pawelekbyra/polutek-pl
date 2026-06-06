@@ -9,6 +9,7 @@ export interface Creator {
   imageUrl?: string | null;
   bannerUrl?: string | null;
   subscribersCount: number;
+  fakeSubscribersCount?: number | null;
 }
 
 /**
@@ -46,6 +47,7 @@ export interface PublicCreatorDTO {
   slug: string;
   imageUrl?: string | null;
   subscribersCount: number;
+  fakeSubscribersCount?: number | null;
 }
 
 export type PublicCreatorPageDTO = PublicCreatorDTO & {

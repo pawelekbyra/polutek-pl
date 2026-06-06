@@ -34,6 +34,11 @@ const channelPatchSchema = z.object({
   name: z.string().trim().min(1, "Nazwa kanału jest wymagana.").max(100),
   bio: z.string().trim().max(1_000).optional().nullable().transform((value) => value || null),
   bannerUrl: optionalUrl,
+  fakeSubscribersCount: z.number().int().min(0).optional().nullable(),
+  currencySettings: z.array(z.object({
+    code: z.string(),
+    minAmountMinor: z.number().int().min(0)
+  })).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -43,20 +48,30 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
-    const creator = await prisma.$transaction(async (tx) => {
+    const data = await prisma.$transaction(async (tx) => {
       const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
         repairSingleChannelContent: true,
       });
 
-      return tx.creator.findUnique({
+      const creator = await tx.creator.findUnique({
         where: { id: mainCreator.id },
-        include: {
-          user: { select: { id: true, email: true, name: true, imageUrl: true } },
-        },
+        select: {
+            id: true,
+            slug: true,
+            name: true,
+            bio: true,
+            bannerUrl: true,
+            subscribersCount: true,
+            fakeSubscribersCount: true,
+            user: { select: { id: true, email: true, name: true, imageUrl: true } },
+        }
       });
+
+      const currencySettings = await tx.currencySetting.findMany();
+      return { creator, currencySettings };
     });
 
-    return NextResponse.json({ creator });
+    return NextResponse.json(data);
   } catch (error) {
     scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
     return handleApiError(error);
@@ -82,12 +97,31 @@ export async function PATCH(request: NextRequest) {
         repairSingleChannelContent: true,
       });
 
+      const { currencySettings, ...channelData } = result.data;
+
+      if (currencySettings) {
+        for (const setting of currencySettings) {
+            await tx.currencySetting.upsert({
+                where: { code: setting.code },
+                create: setting,
+                update: { minAmountMinor: setting.minAmountMinor }
+            });
+        }
+      }
+
       return tx.creator.update({
         where: { id: mainCreator.id },
-        data: result.data,
-        include: {
-          user: { select: { id: true, email: true, name: true, imageUrl: true } },
-        },
+        data: channelData,
+        select: {
+            id: true,
+            slug: true,
+            name: true,
+            bio: true,
+            bannerUrl: true,
+            subscribersCount: true,
+            fakeSubscribersCount: true,
+            user: { select: { id: true, email: true, name: true, imageUrl: true } },
+        }
       });
     });
 
