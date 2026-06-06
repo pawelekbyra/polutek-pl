@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 type SupportBoxTranslations = {
   donate: string;
   pleaseAcceptTerms: string;
+  tipTheGuy: string;
 };
 
 interface SupportBoxProps {
@@ -112,7 +113,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           type="button"
           onClick={onSupport}
           disabled={isLoading || amount === '' || amount < minAmount}
-          className={"w-full h-12 uppercase tracking-wider text-sm"}
+          className={"w-full h-16 uppercase tracking-[0.2em] text-xs font-black shadow-xl transition-all duration-300 rounded-2xl"}
           size="lg"
         >
           {isLoading ? (
@@ -121,7 +122,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               {language === 'pl' ? "PRZETWARZANIE..." : "LOADING..."}
             </>
           ) : (
-            isPatron ? (language === 'pl' ? 'DORZUĆ NAPIWEK' : 'SEND ANOTHER TIP') : (language === 'pl' ? 'WYŚLIJ NAPIWEK I ZOSTAŃ PATRONEM' : 'TIP AND BECOME A PATRON')
+            t.tipTheGuy
           )}
         </Button>
 
