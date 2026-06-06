@@ -5,22 +5,30 @@ import { APP_NAME } from '../constants';
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
 
-const EMAIL_DICTIONARY: Record<string, { subject: string; html: string }> = {
+const EMAIL_DICTIONARY: Record<string, { subject: string; html: string; subjectEn?: string; htmlEn?: string }> = {
   'account-deleted': {
     subject: `Twoje konto zostało usunięte - ${APP_NAME}`,
     html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>',
+    subjectEn: `Your account has been deleted - ${APP_NAME}`,
+    htmlEn: '<h1>Account Deletion Confirmed</h1><p>Your data has been successfully removed from our system. We will miss you!</p>',
   },
   'password-changed': {
     subject: `Hasło zostało zmienione - ${APP_NAME}`,
     html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>',
+    subjectEn: `Password changed - ${APP_NAME}`,
+    htmlEn: '<h1>Account Security</h1><p>Your password has been updated. If this was not you, please contact us immediately.</p>',
   },
   'thank-you-donation': {
     subject: `Dziękujemy za wsparcie! - ${APP_NAME}`,
     html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>',
+    subjectEn: `Thank you for your support! - ${APP_NAME}`,
+    htmlEn: '<h1>Big Thanks!</h1><p>We received your tip of {{amount}} {{currency}}. Your support helps us create more content!</p>',
   },
   'become-patron': {
     subject: `Zostałeś Patronem! - ${APP_NAME}`,
-    html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>',
+    html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Otrzymaliśmy Twoje wsparcie w wysokości {{amount}} {{currency}}. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>',
+    subjectEn: `You are now a Patron! - ${APP_NAME}`,
+    htmlEn: '<h1>Welcome to the Patrons!</h1><p>Thank you for your trust. We received your support of {{amount}} {{currency}}. You now have access to exclusive materials in the Patrons\' Zone.</p>',
   },
 };
 
@@ -70,9 +78,9 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   let subjectBase = template?.subject ?? fallback!.subject;
   let htmlBase = template?.html ?? fallback!.html;
 
-  if (language === 'en' && (template?.subjectEn || template?.htmlEn)) {
-    subjectBase = template?.subjectEn || subjectBase;
-    htmlBase = template?.htmlEn || htmlBase;
+  if (language === 'en') {
+    subjectBase = template?.subjectEn || fallback?.subjectEn || subjectBase;
+    htmlBase = template?.htmlEn || fallback?.htmlEn || htmlBase;
   }
 
   const subject = replaceTemplateVariables(subjectBase, safeVariables);
@@ -170,7 +178,7 @@ export class EmailService {
     });
   }
 
-  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, _language?: string) {
+  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, language?: string) {
     return sendTemplateEmail({
       to: toEmail,
       slug: 'thank-you-donation',
@@ -179,14 +187,20 @@ export class EmailService {
         currency,
       },
       fallback: EMAIL_DICTIONARY['thank-you-donation'],
+      language,
     });
   }
 
-  static async sendBecomePatronEmail(toEmail: string, _language?: string) {
+  static async sendBecomePatronEmail(toEmail: string, amount: number, currency: string, language?: string) {
     return sendTemplateEmail({
       to: toEmail,
       slug: 'become-patron',
+      variables: {
+        amount: amount.toFixed(2),
+        currency,
+      },
       fallback: EMAIL_DICTIONARY['become-patron'],
+      language,
     });
   }
 }
