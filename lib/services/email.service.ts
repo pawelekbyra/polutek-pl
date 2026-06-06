@@ -55,7 +55,7 @@ type SendTemplateEmailInput = {
   to: string;
   slug: string;
   variables?: Record<string, string | null | undefined>;
-  fallback?: { subject: string; html: string };
+  fallback?: { subject: string; html: string; subjectEn?: string; htmlEn?: string };
 };
 
 async function sendTemplateEmail({ to, slug, variables = {}, fallback, language = 'pl' }: SendTemplateEmailInput & { language?: string }) {
