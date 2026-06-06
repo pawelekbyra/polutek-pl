@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
+import { handleApiError } from '@/lib/errors';
 
 type SubscriptionPayload = {
   creatorId?: unknown;
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     scopedLogger.error('[SUBSCRIPTIONS_GET_ERROR]', error);
-    return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     scopedLogger.error('[SUBSCRIPTIONS_POST_ERROR]', error);
-    return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -212,6 +213,6 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     scopedLogger.error('[SUBSCRIPTIONS_DELETE_ERROR]', error);
-    return NextResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
+    return handleApiError(error);
   }
 }

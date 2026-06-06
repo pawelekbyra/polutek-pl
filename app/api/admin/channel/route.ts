@@ -1,11 +1,12 @@
-import { logger } from "@/lib/logger";
-import { NextResponse } from "next/server";
+import { createScopedLogger } from "@/lib/logger";
+import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { writeAuditLog } from "@/lib/services/audit.service";
 import { MainCreatorService } from "@/lib/services/main-creator.service";
+import { handleApiError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,9 @@ const channelPatchSchema = z.object({
   bannerUrl: optionalUrl,
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
 
@@ -55,12 +58,14 @@ export async function GET() {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    logger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
+    return handleApiError(error);
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
   if (response) return response;
 
@@ -96,7 +101,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    logger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
+    return handleApiError(error);
   }
 }

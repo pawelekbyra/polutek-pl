@@ -1,8 +1,9 @@
 import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
 import { getCorrelationId } from "@/lib/utils/correlation";
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { auth } from '@clerk/nextjs/server';
+import { UserLanguageService as UserService } from '@/lib/services/user/language.service';
+import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     scopedLogger.error('[LANGUAGE_UPDATE_ERROR]', err);
-    return NextResponse.json({ error: "Failed to update language" }, { status: 500 });
+    return handleApiError(err);
   }
 }
 

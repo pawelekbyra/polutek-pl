@@ -5,10 +5,11 @@ import { GET as mediaSourceGET } from '@/app/api/media-source/[videoId]/route';
 import { POST as checkoutIntentPOST } from '@/app/api/checkout/create-intent/route';
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { UserLanguageService } from '@/lib/services/user/language.service';
 import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
-import { PaymentService } from '@/lib/services/payment.service';
+import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -32,12 +33,15 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
-    updateUserLanguage: vi.fn(),
-    toggleSubscription: vi.fn(),
-    getSubscriptionStatus: vi.fn(),
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     getOrCreateUser: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/services/user/language.service', () => ({
+  UserLanguageService: {
+    updateUserLanguage: vi.fn(),
   },
 }));
 
@@ -47,8 +51,8 @@ vi.mock('@/lib/access/access-policy', () => ({
     },
 }));
 
-vi.mock('@/lib/services/payment.service', () => ({
-    PaymentService: {
+vi.mock('@/lib/services/payments/checkout.service', () => ({
+    PaymentCheckoutService: {
         createPayment: vi.fn(),
     },
 }));
@@ -73,7 +77,7 @@ describe('API Contracts', () => {
   describe('PATCH /api/user/language', () => {
     it('matches the documented response shape for success', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(UserService.updateUserLanguage).mockResolvedValue({} as any);
+      vi.mocked(UserLanguageService.updateUserLanguage).mockResolvedValue({} as any);
 
       const req = new NextRequest('http://localhost/api/user/language', {
         method: 'PATCH',

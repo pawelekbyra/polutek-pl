@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 
@@ -32,8 +32,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     getOrCreateUser: vi.fn(),
   },
 }));

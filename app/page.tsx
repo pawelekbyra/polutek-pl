@@ -2,12 +2,12 @@ import { logger } from "@/lib/logger";
 import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
-import { ContentService } from '@/lib/services/content.service';
+import { CreatorContentService as ContentService } from '@/lib/services/content/creator.service';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
 

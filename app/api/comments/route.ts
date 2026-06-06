@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -9,6 +9,7 @@ import { handleApiError } from '@/lib/errors';
 import { isAllowedCommentImageUrl } from '@/lib/blob';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 import { CommentService } from '@/lib/services/comments/comment.service';
+import { createScopedLogger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,8 @@ async function getSafeAuth() {
 }
 
 export async function GET(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
   const videoId = searchParams.get('videoId');
   const sortBy = searchParams.get('sortBy') || 'newest';
@@ -90,11 +93,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, comments: commentsWithStatus, nextCursor: comments.length === limit ? comments[limit - 1].id : null });
   } catch (error: unknown) {
+    scopedLogger.error("[GET_COMMENTS_ERROR]", error);
     return handleApiError(error);
   }
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { userId, sessionClaims } = await getSafeAuth();
   if (!userId) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
 
@@ -111,6 +117,7 @@ export async function POST(request: NextRequest) {
     const { videoId, text, parentId, imageUrl } = result.data;
     const decision = await AccessPolicy.canComment(userId, videoId);
     if (!decision.allowed) {
+        scopedLogger.warn(`Comment access denied for user ${userId} on video ${videoId}: ${decision.reason}`);
         return NextResponse.json({
             success: false,
             message: decision.reason === "PATRON_REQUIRED" ? "Ten film jest dostępny tylko dla Patronów." : (decision.reason || "Brak uprawnień do komentowania.")
@@ -134,11 +141,14 @@ export async function POST(request: NextRequest) {
         comment: { ...newComment, author: toPublicCommentAuthor(newComment.author), isLiked: false, isDisliked: false, authorName: CommentService.getCommentAuthorName(newComment.author), imageUrl: newComment.imageUrl || newComment.author?.imageUrl, replies: [] }
     }, { status: 201 });
   } catch (error: unknown) {
+    scopedLogger.error("[POST_COMMENT_ERROR]", error);
     return handleApiError(error);
   }
 }
 
 export async function PATCH(request: NextRequest) {
+    const requestId = request.headers.get('x-request-id');
+    const scopedLogger = createScopedLogger(requestId);
     const { userId, sessionClaims } = await getSafeAuth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -166,11 +176,14 @@ export async function PATCH(request: NextRequest) {
 
         return NextResponse.json({ success: true, isPinned: !!updatedComment.pinnedAt, pinnedAt: updatedComment.pinnedAt });
     } catch (error: unknown) {
+        scopedLogger.error("[PATCH_COMMENT_ERROR]", error);
         return handleApiError(error);
     }
 }
 
 export async function DELETE(request: NextRequest) {
+    const requestId = request.headers.get('x-request-id');
+    const scopedLogger = createScopedLogger(requestId);
     const { userId, sessionClaims } = await getSafeAuth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -192,6 +205,7 @@ export async function DELETE(request: NextRequest) {
         await prisma.comment.update({ where: { id: commentId }, data: { deletedAt: new Date(), deletedById: localUser.id, text: "", imageUrl: null } });
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
+        scopedLogger.error("[DELETE_COMMENT_ERROR]", error);
         return handleApiError(error);
     }
 }

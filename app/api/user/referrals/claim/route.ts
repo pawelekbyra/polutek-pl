@@ -1,16 +1,18 @@
-import { logger } from "@/lib/logger";
+import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { ReferralService } from '@/lib/services/referral.service';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { handleApiError } from '@/lib/errors';
 
 export async function POST(req: Request) {
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Rate Limiting: 5 claims per hour per user
   const rateLimitResult = await rateLimit({
       key: `referral-claim:${userId}`,
       limit: 5,
@@ -37,21 +39,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    logger.error('[REFERRAL_CLAIM_ERROR]', err);
-    const message = err instanceof Error ? err.message : "Failed to claim referral";
+    scopedLogger.error('[REFERRAL_CLAIM_ERROR]', err);
 
-    if (message === "Self-referral is not allowed") {
-      return NextResponse.json({ error: message }, { status: 400 });
+    if (err instanceof Error) {
+        if (err.message === "Self-referral is not allowed") return NextResponse.json({ error: err.message }, { status: 400 });
+        if (err.message === "User already referred") return NextResponse.json({ error: err.message }, { status: 409 });
+        if (err.message === "Referred user not found") return NextResponse.json({ error: err.message }, { status: 404 });
     }
 
-    if (message === "User already referred") {
-      return NextResponse.json({ error: message }, { status: 409 });
-    }
-
-    if (message === "Referred user not found") {
-      return NextResponse.json({ error: message }, { status: 404 });
-    }
-
-    return NextResponse.json({ error: "Failed to claim referral" }, { status: 500 });
+    return handleApiError(err);
   }
 }

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
-import { PublicVideoDTO, PublicCreatorPageDTO } from '@/app/types/video';
+import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
@@ -122,7 +122,7 @@ export class VideoContentService {
       const mainCreatorSlug = flags.mainCreatorSlug;
 
       return videos.map(v => {
-          let imageUrl = (v.creator as any)?.user?.imageUrl || (v.creator as any)?.imageUrl || null;
+          let imageUrl = v.creator?.user?.imageUrl || null;
           if (v.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
               imageUrl = adminData.imageUrl;
           }
@@ -187,7 +187,7 @@ export class VideoContentService {
       }) : null;
 
       const mainCreatorSlug = flags.mainCreatorSlug;
-      let imageUrl = (selectedVideo.creator as any)?.user?.imageUrl || (selectedVideo.creator as any)?.imageUrl || null;
+      let imageUrl = selectedVideo.creator?.user?.imageUrl || null;
       if (selectedVideo.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
           imageUrl = adminData.imageUrl;
       }
@@ -201,5 +201,15 @@ export class VideoContentService {
       if (canUseDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);
       throw e;
     }
+  }
+
+  static async getVideoAccess(userId: string | null, videoId: string) {
+    const { AccessPolicy } = await import('@/lib/access/access-policy');
+    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    return {
+        hasAccess: decision.allowed,
+        reason: decision.reason,
+        requiredTier: decision.requiredTier
+    };
   }
 }

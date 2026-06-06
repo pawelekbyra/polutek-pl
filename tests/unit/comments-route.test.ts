@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { AccessPolicy } from '@/lib/access/access-policy';
-import { UserService } from '@/lib/services/user.service';
+import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { POST } from '@/app/api/comments/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -30,8 +30,8 @@ vi.mock('@/lib/access/access-policy', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user.service', () => ({
-  UserService: {
+vi.mock('@/lib/services/user/profile.service', () => ({
+  UserProfileService: {
     getOrCreateUserFromAuth: vi.fn(),
   },
 }));
