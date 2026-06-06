@@ -33,7 +33,7 @@ interface VideoFormData {
 
 interface VideoFormProps {
   formData: VideoFormData;
-  setFormData: (data: any) => void;
+  setFormData: (data: VideoFormData | ((prev: VideoFormData) => VideoFormData)) => void;
   formError: string | null;
   isSubmitting: boolean;
   onCancel: () => void;

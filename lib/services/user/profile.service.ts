@@ -142,6 +142,13 @@ export class UserProfileService {
             where: { id: existingUserByEmail.id },
             data: { email: `${existingUserByEmail.email}_stale_${Date.now()}` }
           });
+
+          logger.info(`[METRIC] user.sync.email_conflict_resolved`, {
+            metric: 'user.sync.email_conflict_resolved',
+            email,
+            oldId: existingUserByEmail.id,
+            newId: id
+          });
         }
 
         // Runtime admin access is based on immutable Clerk ID allowlist or an existing DB role.
