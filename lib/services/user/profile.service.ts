@@ -121,18 +121,36 @@ export class UserProfileService {
   ) {
     try {
       return await prisma.$transaction(async (tx) => {
-        const existingUser = await tx.user.findUnique({
+        const existingUserById = await tx.user.findUnique({
           where: { id },
-          select: { role: true }
+          select: { id: true, role: true, email: true }
         });
+
+        const existingUserByEmail = await tx.user.findUnique({
+          where: { email },
+          select: { id: true, role: true, email: true }
+        });
+
+        // If email is taken by a DIFFERENT user ID, we have a conflict.
+        // This often happens during migrations or if a user's Clerk ID changed.
+        if (existingUserByEmail && existingUserByEmail.id !== id) {
+          logger.warn(`[UserProfileService.syncUser] Email conflict: ${email} is owned by ${existingUserByEmail.id}, but Clerk says it should be ${id}. Attempting to resolve by prioritizing new Clerk ID.`);
+
+          // To safely allow the new ID to take over this email, we must "free" the email from the old record.
+          // We append a suffix to the old record's email.
+          await tx.user.update({
+            where: { id: existingUserByEmail.id },
+            data: { email: `${existingUserByEmail.email}_stale_${Date.now()}` }
+          });
+        }
 
         // Runtime admin access is based on immutable Clerk ID allowlist or an existing DB role.
         let targetRole: 'ADMIN' | 'USER' = 'USER';
 
         if (UserAdminService.isConfiguredAdmin(id)) {
           targetRole = 'ADMIN';
-        } else if (existingUser) {
-          targetRole = existingUser.role;
+        } else if (existingUserById) {
+          targetRole = existingUserById.role;
         }
 
         const updateData: Prisma.UserUpdateInput = {
@@ -141,7 +159,7 @@ export class UserProfileService {
           role: targetRole,
         };
 
-        if (referrerId && !existingUser) {
+        if (referrerId && !existingUserById) {
             const referrer = await tx.user.findUnique({
                 where: { id: referrerId },
                 select: { id: true }
@@ -167,7 +185,7 @@ export class UserProfileService {
             role: targetRole,
             language: language || 'en',
             referralCode: crypto.randomBytes(6).toString('hex'),
-              referredBy: updateData.referredBy ? (updateData.referredBy as Prisma.UserCreateNestedOneWithoutReferralsInput) : undefined,
+            referredBy: updateData.referredBy ? (updateData.referredBy as Prisma.UserCreateNestedOneWithoutReferralsInput) : undefined,
           }
         });
 
@@ -175,12 +193,13 @@ export class UserProfileService {
       }, { timeout: 15000 });
     } catch (err: unknown) {
       if (isPrismaErrorCode(err, 'P2002')) {
-        const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id } })
-          ?? await prisma.user.findUnique({ where: { email } });
+        // Double-check if it's already there (parallel request)
+        const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id } });
+        if (userCreatedByParallelRequest) return userCreatedByParallelRequest;
 
-        if (userCreatedByParallelRequest) {
-          return userCreatedByParallelRequest;
-        }
+        // If it's an email conflict that survived our pre-check (highly unlikely), try one more time to find it
+        const userWithEmail = await prisma.user.findUnique({ where: { email } });
+        if (userWithEmail && userWithEmail.id === id) return userWithEmail;
       }
 
       const message = err instanceof Error ? err.message : String(err);

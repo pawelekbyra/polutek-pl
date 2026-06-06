@@ -27,25 +27,27 @@ function updateCommentReactionInCache(
       const dislikes = c._count?.dislikes ?? 0;
 
       if (action === "LIKE") {
+        const nextIsLiked = !wasLiked;
         return {
           ...c,
-          isLiked: !wasLiked,
+          isLiked: nextIsLiked,
           isDisliked: false,
           _count: {
             ...(c._count ?? { likes: 0, dislikes: 0 }),
             likes: wasLiked ? Math.max(0, likes - 1) : likes + 1,
-            dislikes: wasDisliked ? Math.max(0, dislikes - 1) : dislikes,
+            dislikes: wasDisliked ? Math.max(0, dislikes - 1) : (c._count?.dislikes ?? 0),
           },
         };
       }
 
+      const nextIsDisliked = !wasDisliked;
       return {
         ...c,
         isLiked: false,
-        isDisliked: !wasDisliked,
+        isDisliked: nextIsDisliked,
         _count: {
           ...(c._count ?? { likes: 0, dislikes: 0 }),
-          likes: wasLiked ? Math.max(0, likes - 1) : likes,
+          likes: wasLiked ? Math.max(0, likes - 1) : (c._count?.likes ?? 0),
           dislikes: wasDisliked ? Math.max(0, dislikes - 1) : dislikes + 1,
         },
       };

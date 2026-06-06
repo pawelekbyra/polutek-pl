@@ -57,7 +57,6 @@ export function CommentItem({
         >
           <Image
             src={
-              comment.imageUrl ||
               comment.author?.imageUrl ||
               `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`
             }
