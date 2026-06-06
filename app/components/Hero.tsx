@@ -45,22 +45,21 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
         dislikesCount: video.dislikesCount || 0
     },
     (state, action: 'LIKE' | 'DISLIKE') => {
+      const wasLiked = state.isLiked;
+      const wasDisliked = state.isDisliked;
+
       if (action === 'LIKE') {
-        const wasLiked = state.isLiked;
-        const wasDisliked = state.isDisliked;
         return {
           isLiked: !wasLiked,
           isDisliked: false,
           likesCount: wasLiked ? state.likesCount - 1 : state.likesCount + 1,
-          dislikesCount: wasDisliked ? state.dislikesCount - 1 : state.dislikesCount
+          dislikesCount: wasDisliked ? Math.max(0, state.dislikesCount - 1) : state.dislikesCount
         };
       } else {
-        const wasLiked = state.isLiked;
-        const wasDisliked = state.isDisliked;
         return {
           isLiked: false,
           isDisliked: !wasDisliked,
-          likesCount: wasLiked ? state.likesCount - 1 : state.likesCount,
+          likesCount: wasLiked ? Math.max(0, state.likesCount - 1) : state.likesCount,
           dislikesCount: wasDisliked ? state.dislikesCount - 1 : state.dislikesCount + 1
         };
       }
