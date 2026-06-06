@@ -6,7 +6,13 @@ import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
 import { APP_NAME } from '@/lib/constants';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is missing');
+  }
+  return new Resend(apiKey);
+}
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -44,6 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+    const resend = getResendClient();
 
     // 2. Group by language to send in batches if possible or just loop
     // Resend supports batching up to 100 emails per call.
