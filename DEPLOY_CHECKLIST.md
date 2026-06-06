@@ -46,6 +46,19 @@
 - [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts ("lock not acquired") and verify that retries are succeeding correctly.
 - [ ] `HEALTHCHECK_TOKEN`
 
+## Konfiguracja webhooka Clerk (wymagana dla emaili)
+
+1. Wejdź na https://dashboard.clerk.com → twoja aplikacja → Webhooks
+2. Kliknij "Add Endpoint"
+3. URL: https://twojadomena.pl/api/webhooks/clerk
+4. Zaznacz zdarzenia: user.created, user.updated, user.deleted, password.updated
+5. Skopiuj "Signing Secret" (zaczyna się od whsec_...)
+6. Dodaj do Vercel env: CLERK_WEBHOOK_SECRET=whsec_...
+7. Zrób nowy deploy po dodaniu zmiennej
+
+Aby przetestować bez rejestracji nowego użytkownika:
+W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → user.created
+
 ## Database
 
 - [ ] `npx prisma generate`

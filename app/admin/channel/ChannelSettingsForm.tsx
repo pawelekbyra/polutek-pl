@@ -116,7 +116,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="real-subscribers">Prawdziwa liczba subskrybentów</Label>
+                  <Label htmlFor="real-subscribers">Liczba subskrybentów (licznik cache)</Label>
                   <Input id="real-subscribers" value={creator.subscribersCount} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
@@ -127,9 +127,12 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                     min="0"
                     value={displaySubscribersCount}
                     onChange={(event) => setDisplaySubscribersCount(event.target.value)}
-                    placeholder="Puste = prawdziwa liczba"
+                    placeholder="Puste = licznik cache"
                   />
-                  <p className="text-xs text-muted-foreground">Jeśli zostawisz puste, pod kanałem wyświetli się prawdziwa liczba.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Jeśli zostawisz puste, wyświetli się licznik cache. Aby zsynchronizować z rzeczywistą
+                    liczbą subskrybentów wywołaj POST /api/admin/subscribers/resync z poziomu admina.
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">

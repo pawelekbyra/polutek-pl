@@ -14,6 +14,7 @@ const allowedAppRoutes = [
   "app/api/admin/creator/route.ts",
   "app/api/admin/payment-settings/route.ts",
   "app/api/admin/stats/route.ts",
+  "app/api/admin/subscribers/resync/route.ts",
   "app/api/admin/templates/route.ts",
   "app/api/admin/users/[userId]/patron/route.ts",
   "app/api/admin/videos/route.ts",

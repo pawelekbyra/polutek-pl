@@ -33,12 +33,16 @@ async function main() {
           userId: admin.id,
           isApproved: true,
           isPrimary: true,
-          subscribersCount: 1250000
+          subscribersCount: 0
         }
       });
     }
 
     console.log(`Znaleziono twórcę: ${creator.name} (ID: ${creator.id})`);
+
+    const realSubscribersCount = await prisma.subscription.count({
+      where: { creatorId: creator.id }
+    });
 
     console.log("Aktualizacja brandingu twórcy...");
     await prisma.creator.update({
@@ -47,7 +51,7 @@ async function main() {
         name: creatorDisplayName || creator.name,
         isApproved: true,
         isPrimary: true,
-        subscribersCount: 1250000
+        subscribersCount: realSubscribersCount
       }
     });
 
