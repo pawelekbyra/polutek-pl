@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import ReferralModal from './ReferralModal';
@@ -41,6 +42,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
   const { openSignIn } = useClerk();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(t.currency);
@@ -88,6 +90,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
       setIsCheckoutModalOpen(true);
       setIsSuccess(true);
       setIsSyncing(true);
+
+      // Invalidate queries to refresh patron status and other state
+      queryClient.invalidateQueries();
 
       let attempts = 0;
       const maxAttempts = 10;

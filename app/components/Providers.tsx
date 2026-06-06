@@ -6,7 +6,15 @@ import { LanguageProvider } from './LanguageContext';
 import { ToastProvider } from '@/app/hooks/useToast';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 2,  // komentarze świeże 2 minuty
+        gcTime: 1000 * 60 * 10,
+        refetchOnWindowFocus: false, // YouTube też tak robi
+      }
+    }
+  }));
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -32,58 +32,60 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {
-  let authData = { userId: null as string | null };
-  try {
-    authData = await auth();
-  } catch (e) {
-    logger.error("[HOME_AUTH_ERROR]", e);
-  }
-  const userId = authData.userId;
+  const getSafeAuth = async () => {
+    try {
+      return await auth();
+    } catch (e) {
+      logger.error("[HOME_AUTH_ERROR]", e);
+      return { userId: null as string | null };
+    }
+  };
 
+  const [authData, content, user] = await Promise.all([
+    getSafeAuth(),
+    loadHomeContent(),
+    currentUser().catch((e) => {
+      logger.error("[HOME_CURRENT_USER_ERROR]", e);
+      return null;
+    }),
+  ]);
+
+  const userId = authData.userId;
   const videoId = searchParams.v;
-  const searchQuery = searchParams.q;
+  const { mainVideo, allVideos } = content.status !== 'error'
+    ? content
+    : { mainVideo: null, allVideos: [] as PublicVideoDTO[] };
 
   let userDb = null;
-  if (userId) {
-    await UserService.getOrCreateUser(userId).catch((e) => {
-      logger.error("[HOME_USER_FETCH_ERROR]", e);
-    });
-    userDb = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { paymentTotals: true }
-    }).catch(() => null);
-  }
-
-  const content = await loadHomeContent();
-  const { creator, allVideos, mainVideo } =
-    content.status !== 'error'
-      ? content
-      : { creator: null, allVideos: [] as PublicVideoDTO[], mainVideo: null };
-
-  let user = null;
-  try {
-    user = await currentUser();
-  } catch (e) {
-    logger.error("[HOME_CURRENT_USER_ERROR]", e);
-  }
-
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
 
-  if (userId && mainVideo) {
-    const targetVideoId = videoId || mainVideo.id;
-    const [like, dislike, sub] = await Promise.all([
-      prisma.videoLike.findUnique({
-        where: { userId_videoId: { userId, videoId: targetVideoId } }
+  if (userId) {
+    const targetVideoId = videoId || mainVideo?.id;
+
+    // We run getOrCreateUser sequentially before other DB calls to ensure record exists for relations
+    await UserService.getOrCreateUser(userId).catch((e) => {
+      logger.error("[HOME_USER_FETCH_ERROR]", e);
+    });
+
+    const [dbResult, like, dislike, sub] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        include: { paymentTotals: true }
       }).catch(() => null),
-      prisma.videoDislike.findUnique({
+      targetVideoId ? prisma.videoLike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
-      }).catch(() => null),
-      prisma.subscription.findUnique({
+      }).catch(() => null) : null,
+      targetVideoId ? prisma.videoDislike.findUnique({
+        where: { userId_videoId: { userId, videoId: targetVideoId } }
+      }).catch(() => null) : null,
+      mainVideo ? prisma.subscription.findUnique({
         where: { userId_creatorId: { userId, creatorId: mainVideo.creatorId } },
         select: { id: true }
-      }).catch(() => null)
+      }).catch(() => null) : null,
     ]);
+
+    userDb = dbResult;
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
   }

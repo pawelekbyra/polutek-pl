@@ -12,6 +12,7 @@ import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
 import { recordAlert, recordMetric } from '@/lib/observability';
 import { handleApiError } from '@/lib/errors';
+import { setNxEx } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,35 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
     }
 
     const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
+
+    // Non-blocking view count tracking with deduplication
+    if (video) {
+        (async () => {
+            try {
+                const identifier = userId || getMediaClientIp(req) || 'anonymous';
+                const lockKey = `video:view:${videoId}:${identifier}`;
+                const isNewView = await setNxEx(lockKey, '1', 3600);
+
+                if (isNewView) {
+                    await prisma.$transaction([
+                        prisma.videoView.create({
+                            data: {
+                                videoId,
+                                userId: userId || null,
+                                ipHash: !userId ? identifier : null
+                            }
+                        }),
+                        prisma.video.update({
+                            where: { id: videoId },
+                            data: { views: { increment: 1 } }
+                        })
+                    ]);
+                }
+            } catch (trackError) {
+                scopedLogger.warn('[VIDEO_VIEW_TRACK_ERROR]', trackError);
+            }
+        })();
+    }
 
     return NextResponse.json({
       hasAccess: true,

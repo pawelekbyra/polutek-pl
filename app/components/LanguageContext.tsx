@@ -16,32 +16,16 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en'); // Default to English
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'pl';
+    const saved = localStorage.getItem('app-language');
+    if (saved === 'pl' || saved === 'en') return saved as Language;
+    return navigator.language.startsWith('pl') ? 'pl' : 'en';
+  });
+  const [isInitialized, setIsInitialized] = useState(true);
 
   useEffect(() => {
-    const initializeLanguage = async () => {
-      // 1. Check local storage
-      const savedLang = localStorage.getItem('app-language') as Language;
-      if (savedLang && (savedLang === 'pl' || savedLang === 'en')) {
-        setLanguageState(savedLang);
-        setIsInitialized(true);
-        return;
-      }
-
-      // 2. Browser detection if no local preference
-      if (typeof window !== 'undefined' && window.navigator) {
-        const browserLang = window.navigator.language.toLowerCase();
-        if (browserLang.startsWith('pl')) {
-          setLanguageState('pl');
-        } else {
-          setLanguageState('en');
-        }
-      }
-      setIsInitialized(true);
-    };
-
-    initializeLanguage();
+    setIsInitialized(true);
   }, []);
 
   const setLanguage = async (lang: Language, skipSync: boolean = false) => {
@@ -243,5 +227,12 @@ export const useLanguage = () => {
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
-  return context;
+
+  const { language } = context;
+  const t = useMemo(() => translations[language], [language]);
+
+  return useMemo(() => ({
+    ...context,
+    t
+  }), [context, t]);
 };
