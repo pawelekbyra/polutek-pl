@@ -29,16 +29,24 @@ export default function SubscribeButton({
   const { t } = useLanguage();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
-  const [isSubscribed, setIsSubscribed] = useState(() => initialIsSubscribed ?? false);
+  const [isSubscribed, setIsSubscribed] = useState(initialIsSubscribed ?? false);
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (initialIsSubscribed !== undefined)
-      setIsSubscribed(initialIsSubscribed);
+  }, []);
 
+  // Sync with prop if it changes
+  useEffect(() => {
+    if (initialIsSubscribed !== undefined) {
+      setIsSubscribed(initialIsSubscribed);
+    }
+  }, [initialIsSubscribed]);
+
+  // Fetch status if not provided
+  useEffect(() => {
     if (userId && creatorId && initialIsSubscribed === undefined) {
       const params = new URLSearchParams(creatorSlug ? { creatorSlug } : { creatorId });
       fetch(`/api/subscriptions?${params.toString()}`)
@@ -46,12 +54,16 @@ export default function SubscribeButton({
           if (!response.ok) throw new Error(`Subscription status failed: ${response.status}`);
           return response.json() as Promise<{ isSubscribed: boolean }>;
         })
-        .then(data => setIsSubscribed(data.isSubscribed))
+        .then(data => {
+            setIsSubscribed(data.isSubscribed);
+        })
         .catch(err => logger.warn("[SUBSCRIPTION_STATUS_FETCH_ERROR]", err));
     }
+  }, [userId, creatorId, creatorSlug, initialIsSubscribed]);
 
+  useEffect(() => {
     if (!userId && mounted) setIsSubscribed(false);
-  }, [userId, creatorId, creatorSlug, initialIsSubscribed, mounted]);
+  }, [userId, mounted]);
 
   const handleSubscribe = async () => {
     if (!userId) { openSignIn(); return; }
@@ -66,19 +78,19 @@ export default function SubscribeButton({
   };
 
   const executeSubscribe = async () => {
-    const prevSubscribed = isSubscribed;
-    setIsSubscribed(!prevSubscribed);
+    const nextState = !isSubscribed;
+    setIsSubscribed(nextState);
 
     startTransition(async () => {
       try {
         const response = await fetch('/api/subscriptions', {
-          method: prevSubscribed ? 'DELETE' : 'POST',
+          method: nextState ? 'POST' : 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(creatorSlug ? { creatorSlug } : { creatorId }),
         });
 
         if (!response.ok) {
-          setIsSubscribed(prevSubscribed);
+          setIsSubscribed(!nextState);
           return;
         }
 
@@ -86,7 +98,7 @@ export default function SubscribeButton({
         setIsSubscribed(result.isSubscribed);
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
-        setIsSubscribed(prevSubscribed);
+        setIsSubscribed(!nextState);
       }
     });
   };

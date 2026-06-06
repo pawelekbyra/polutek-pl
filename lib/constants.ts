@@ -3,19 +3,23 @@ export const DEFAULT_AVATAR_URL = 'https://www.dicebear.com/api/avataaars/anonym
 export const MIN_PATRON_AMOUNT = 5; // EUR/USD
 export const MIN_PATRON_AMOUNT_PLN = 20; // PLN
 
-export const SUPPORTED_CURRENCIES = ["PLN", "EUR", "USD"] as const;
+export const SUPPORTED_CURRENCIES = ["PLN", "EUR", "USD", "CHF", "GBP"] as const;
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 
 export const MIN_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   PLN: 20,
   EUR: 5,
   USD: 5,
+  CHF: 5,
+  GBP: 5,
 };
 
 export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   PLN: 5000,
   EUR: 1000,
   USD: 1000,
+  CHF: 1000,
+  GBP: 1000,
 };
 
 export function getConfiguredAdminEmail() {
@@ -43,6 +47,8 @@ export const DISPLAY_USD_TO_PLN_RATE = (() => {
 })();
 
 export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Creator';
-export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'main-creator';
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Polutek.pl';
-export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase() : 'POLUTEK.PL';
+export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'polutek.pl';
+export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL
+  ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase().replace(/^WWW\./, '')
+  : 'POLUTEK.PL';
