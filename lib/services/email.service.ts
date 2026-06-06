@@ -94,9 +94,27 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   });
 
   if (error) {
+    logger.error(`[EmailService] Resend failed to send "${slug}" email to ${to}:`, error);
     throw new Error(`Resend failed to send "${slug}" email: ${JSON.stringify(error)}`);
   }
 
+  // Auto-subscribe to audience if configured
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (audienceId) {
+    try {
+      await resend.contacts.create({
+        email: to,
+        firstName: variables?.firstName as string | undefined,
+        unsubscribed: false,
+        audienceId,
+      });
+      logger.info(`[EmailService] User ${to} synchronized with Resend audience ${audienceId}. First Name: ${variables?.firstName || 'None'}`);
+    } catch (e) {
+      logger.warn(`[EmailService] Failed to sync contact ${to} to audience ${audienceId}:`, e);
+    }
+  }
+
+  logger.info(`[EmailService] Email "${slug}" sent successfully to ${to}. ID: ${data?.id}`);
   return data;
 }
 

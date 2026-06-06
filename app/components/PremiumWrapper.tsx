@@ -181,17 +181,17 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
          </div>
 
          <div className={cn(
-             "relative z-10 flex flex-col items-center text-center max-w-none transition-all duration-500 w-full"
+             "absolute inset-0 z-10 flex flex-col items-center justify-center text-center max-w-none transition-all duration-500 w-full px-[5cqi]"
          )}>
             <div className={cn(
-                "transition-all duration-700 group-hover:scale-110 flex items-center justify-center mb-[5cqi]"
+                "transition-all duration-700 group-hover:scale-110 flex items-center justify-center mb-[4cqi]"
             )}>
                {isVIPGated ? (
-                 <Gem className="text-amber-500 w-[16cqi] h-[16cqi]" />
+                 <Gem className="text-amber-500 w-[14cqi] h-[14cqi]" />
                ) : (
                  <CustomAuthTrigger>
                     <button className="hover:opacity-40 transition-opacity cursor-pointer flex items-center justify-center">
-                      <Lock className="text-blue-400 w-[16cqi] h-[16cqi]" />
+                      <Lock className="text-blue-400 w-[14cqi] h-[14cqi]" />
                     </button>
                  </CustomAuthTrigger>
                )}
@@ -200,16 +200,16 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
             <div className="flex flex-col items-center font-brand font-black">
               {isVIPGated ? (
                 <div className="flex flex-col items-center">
-                    <span className="text-[9cqi] uppercase tracking-tighter leading-[0.8] text-amber-500">
+                    <span className="text-[clamp(1rem,9cqi,6rem)] uppercase tracking-tighter leading-[0.8] text-amber-500">
                         {(t as any).patronZoneLine1}
                     </span>
-                    <div className="h-[0.2cqi] w-[25cqi] bg-white/10 my-[1.5cqi]" />
-                    <span className="text-[9cqi] uppercase tracking-tighter leading-[0.8] text-white">
+                    <div className="h-[0.2cqi] w-[30cqi] bg-white/10 my-[1.5cqi]" />
+                    <span className="text-[clamp(1rem,9cqi,6rem)] uppercase tracking-tighter leading-[0.8] text-white">
                         {(t as any).patronZoneLine2}
                     </span>
 
                     {!isThumbnail && (
-                      <a href="#donations" className="group flex flex-col items-center gap-[2.5cqi] mt-[6cqi]">
+                      <a href="#donations" className="group flex flex-col items-center gap-[2cqi] mt-[5cqi]">
                          <div className="h-[0.1cqi] w-[15cqi] bg-white/10 group-hover:w-[30cqi] transition-all duration-500" />
                          <span className="text-[2.5cqi] font-brand font-black uppercase tracking-[0.4em] text-white/30 group-hover:text-amber-500 transition-colors">
                             {t.paywallUnlock}
@@ -219,17 +219,17 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                    <span className="text-[9cqi] uppercase tracking-tighter leading-[0.8] text-white">
+                    <span className="text-[clamp(1rem,9cqi,6rem)] uppercase tracking-tighter leading-[0.8] text-white">
                         {t.paywallText}
                     </span>
-                    <div className="h-[0.2cqi] w-[25cqi] bg-white/10 my-[1.5cqi]" />
-                    <span className="text-[9cqi] uppercase tracking-tighter leading-[0.8] text-blue-400">
+                    <div className="h-[0.2cqi] w-[30cqi] bg-white/10 my-[1.5cqi]" />
+                    <span className="text-[clamp(1rem,9cqi,6rem)] uppercase tracking-tighter leading-[0.8] text-blue-400">
                         {t.paywallAction}
                     </span>
 
                     {!isThumbnail && (
                       <CustomAuthTrigger>
-                        <button className="group flex flex-col items-center gap-[2.5cqi] mt-[6cqi]">
+                        <button className="group flex flex-col items-center gap-[2cqi] mt-[5cqi]">
                            <div className="h-[0.1cqi] w-[15cqi] bg-white/10 group-hover:w-[30cqi] transition-all duration-500" />
                            <span className="text-[2.5cqi] font-brand font-black uppercase tracking-[0.4em] text-white/30 group-hover:text-primary transition-colors">
                               {t.loginGatedText}
