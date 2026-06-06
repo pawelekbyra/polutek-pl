@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, ShieldCheck, ImageIcon, Video, Youtube, BarChart3, AlertCircle, Save } from "@/app/components/icons";
+import { ArrowLeft, Globe, ShieldCheck, ImageIcon, Video, Youtube, BarChart3, AlertCircle, Save, RotateCcw } from "@/app/components/icons";
 import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
 
 interface VideoFormData {
@@ -239,9 +239,40 @@ export function VideoForm({
               </section>
 
               <section className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm md:p-6">
-                <h2 className="flex items-center gap-2 border-b pb-3 text-lg font-semibold">
-                  <BarChart3 className="h-5 w-5" /> Statystyki (override)
-                </h2>
+                <div className="flex items-center justify-between border-b pb-3">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold">
+                    <BarChart3 className="h-5 w-5" /> Statystyki (override)
+                  </h2>
+                  {formData.id && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/admin/videos/resync', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ videoId: formData.id })
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            setFormData(prev => ({
+                              ...prev,
+                              likesCount: data.likes,
+                              dislikesCount: data.dislikes,
+                              views: data.views
+                            }));
+                          }
+                        } catch (e) {
+                          console.error("Failed to resync video stats", e);
+                        }
+                      }}
+                      className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                      title="Przywróć rzeczywiste wartości z bazy danych (polubienia, dislajki, wyświetlenia)"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Resetuj wszystkie
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 2xl:grid-cols-1">
                   <div className="space-y-2"><Label htmlFor="likes" className="text-sm">Polubienia</Label><Input id="likes" type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} /></div>
                   <div className="space-y-2"><Label htmlFor="dislikes" className="text-sm">Dislajki</Label><Input id="dislikes" type="number" value={formData.dislikesCount} onChange={e => setFormData({...formData, dislikesCount: parseInt(e.target.value) || 0})} /></div>

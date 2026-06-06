@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ImageIcon, Save, Settings } from "@/app/components/icons";
+import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
 
 type ChannelCreator = {
   id: string;
@@ -116,22 +116,61 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="real-subscribers">Liczba subskrybentów (licznik cache)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="real-subscribers">Liczba subskrybentów (licznik cache)</Label>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setStatus("saving");
+                        try {
+                          const res = await fetch('/api/admin/subscribers/resync', { method: 'POST' });
+                          if (res.ok) {
+                            const data = await res.json();
+                            const updated = data.updated.find((c: any) => c.creatorId === creator.id);
+                            if (updated) {
+                                setCreator({ ...creator, subscribersCount: updated.subscribersCount });
+                                setStatus("saved");
+                            }
+                          }
+                        } catch (e) {
+                          setStatus("error");
+                        }
+                      }}
+                      className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                      title="Zsynchronizuj licznik cache z rzeczywistą liczbą rekordów w bazie"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Reset
+                    </button>
+                  </div>
                   <Input id="real-subscribers" value={creator.subscribersCount} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="display-subscribers">Wyświetlana liczba subskrybentów</Label>
-                  <Input
-                    id="display-subscribers"
-                    type="number"
-                    min="0"
-                    value={displaySubscribersCount}
-                    onChange={(event) => setDisplaySubscribersCount(event.target.value)}
-                    placeholder="Puste = licznik cache"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Jeśli zostawisz puste, wyświetli się licznik cache. Aby zsynchronizować z rzeczywistą
-                    liczbą subskrybentów wywołaj POST /api/admin/subscribers/resync z poziomu admina.
+                  <Label htmlFor="display-subscribers">Wyświetlana liczba subskrybentów (Fake)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                        id="display-subscribers"
+                        type="number"
+                        min="0"
+                        value={displaySubscribersCount}
+                        onChange={(event) => setDisplaySubscribersCount(event.target.value)}
+                        placeholder="Puste = licznik cache"
+                        className="flex-1"
+                    />
+                    {displaySubscribersCount !== "" && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0 h-10 w-10"
+                            onClick={() => setDisplaySubscribersCount("")}
+                            title="Przywróć licznik rzeczywisty (cache)"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    Jeśli wpiszesz liczbę, zostanie ona wyświetlona publicznie zamiast licznika cache.
                   </p>
                 </div>
               </div>
