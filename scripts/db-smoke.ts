@@ -29,6 +29,17 @@ async function main() {
     });
     console.log("✓ Video table schema is up to date.");
 
+    // 2b. Check UserPaymentTotal table
+    console.log("Checking UserPaymentTotal table...");
+    await prisma.userPaymentTotal.findFirst({
+      select: {
+        userId: true,
+        currency: true,
+        amountMinor: true,
+      },
+    });
+    console.log("✓ UserPaymentTotal table schema is up to date.");
+
     // 3. Check EmailTemplate table
     console.log("Checking EmailTemplate table...");
     await prisma.emailTemplate.findFirst({
@@ -60,6 +71,16 @@ async function main() {
         }
     });
     console.log("✓ PatronGrant table schema is up to date.");
+
+    // 6. Check StripeEvent table
+    console.log("Checking StripeEvent table...");
+    await prisma.stripeEvent.findFirst({
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+    console.log("✓ StripeEvent table schema is up to date.");
 
     console.log("\n🚀 DB SCHEMA HEALTHY: All critical columns and tables exist.");
   } catch (e: any) {

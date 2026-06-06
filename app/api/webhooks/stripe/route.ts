@@ -2,9 +2,10 @@ import { NextResponse, NextRequest } from 'next/server';
 import { createScopedLogger } from "@/lib/logger";
 import { PaymentService } from '@/lib/services/payment.service';
 import { handleApiError } from '@/lib/errors';
+import { getCorrelationId } from '@/lib/utils/correlation';
 
 export async function POST(req: NextRequest) {
-  const requestId = req.headers.get('x-request-id') || req.headers.get('stripe-signature')?.slice(-8) || 'stripe-webhook';
+  const requestId = getCorrelationId() || req.headers.get('stripe-signature')?.slice(-8) || 'stripe-webhook';
   const scopedLogger = createScopedLogger(requestId);
   const sig = req.headers.get('stripe-signature');
   const body = await req.text();

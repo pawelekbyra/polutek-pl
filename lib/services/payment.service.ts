@@ -119,7 +119,7 @@ export class PaymentService {
                     where: { stripeIntentId: intent.id },
                     data: { status: PaymentStatus.FAILED }
                 });
-                recordAlert('payment.failure', { matchedPayments: count, currency: intent.currency || 'unknown' });
+                recordAlert('payment.failure', { matchedPayments: count, currency: intent.currency || 'unknown', stripeIntentId: intent.id });
                 break;
             }
         }

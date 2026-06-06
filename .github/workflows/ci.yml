@@ -44,6 +44,7 @@ jobs:
       - run: npx prisma validate
       - run: npx prisma generate
       - run: npm run quality:strict-escapes
+      - run: npm run quality:hotspots
       - run: npm run typecheck
       - run: npm run test:coverage
       - name: Upload coverage report

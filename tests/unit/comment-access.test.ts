@@ -22,6 +22,17 @@ describe('comment access state', () => {
     expect(getCommentAccessState({ isPatron: false, role: 'ADMIN', referralPoints: 0 }, AccessTier.PATRON).canComment).toBe(true);
   });
 
+  it('allows logged-in user to comment on public video even if not a patron', () => {
+    expect(getCommentAccessState({ isPatron: false, role: 'USER', referralPoints: 0 }, AccessTier.PUBLIC).canComment).toBe(true);
+  });
+
+  it('allows admin to comment on any video tier', () => {
+    const admin = { isPatron: false, role: 'ADMIN', referralPoints: 0 };
+    expect(getCommentAccessState(admin, AccessTier.PUBLIC).canComment).toBe(true);
+    expect(getCommentAccessState(admin, AccessTier.LOGGED_IN).canComment).toBe(true);
+    expect(getCommentAccessState(admin, AccessTier.PATRON).canComment).toBe(true);
+  });
+
   it('identifies patron-like users from isPatron or admin status only', () => {
     expect(isPatronLikeUser({ isPatron: true })).toBe(true);
     expect(isPatronLikeUser({ referralPoints: 5 })).toBe(false);

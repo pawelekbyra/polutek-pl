@@ -14,6 +14,11 @@
 - [ ] `npm run lint`
 - [ ] `npm run build`
 
+## Release candidate status
+- [ ] Documentation updated (`BETA_RELEASE_CHECKLIST.md`, `KNOWN_LIMITATIONS.md`)
+- [ ] Code quality gates pass (`strict-escapes`, `hotspots`)
+- [ ] Regression tests for login/comments/subscriptions pass
+
 ## Review guardrails
 
 - [ ] No new `@ts-ignore` or `@ts-nocheck` comments in production source files. If TypeScript cannot model an edge case, narrow types explicitly or document the exception outside production code.
@@ -87,6 +92,8 @@
 - [ ] Patron without subscription still can access Patron-only videos
 - [ ] Regular logged-in user can comment on a public/logged-in video but cannot comment on a Patron-only video.
 - [ ] Guest checkout/create-intent requests are rejected; logged-in Stripe test-mode success creates `Payment` and qualifying Patron access.
+- [ ] Full refund or lost dispute revokes Patron access (verified via `recalculateUserPatronStatus`).
+- [ ] Webhook idempotency protects against duplicate Stripe events.
 - [ ] Admin page is blocked for non-admin
 - [ ] Admin can manage videos
 

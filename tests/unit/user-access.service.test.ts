@@ -56,4 +56,39 @@ describe('UserAccessService.recalculateUserPatronStatus', () => {
       }),
     }));
   });
+
+  it('revokes Patron access when no active grants remain', async () => {
+    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      id: 'user_1',
+      isPatron: false,
+      patronSince: null,
+      patronSource: null,
+      paymentTotals: [],
+    } as any);
+
+    const result = await UserAccessService.recalculateUserPatronStatus('user_1');
+
+    expect(result.isPatron).toBe(false);
+    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'user_1' },
+      data: expect.objectContaining({
+        isPatron: false,
+        patronSince: null,
+        patronSource: null,
+      }),
+    }));
+  });
+
+  it('picks the earliest active grant for patronSince when multiple exist', async () => {
+      const grant1 = { id: 'g1', createdAt: new Date('2026-01-01'), source: 'stripe_tip' };
+      vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(grant1 as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 'user_1', paymentTotals: [] } as any);
+
+      await UserAccessService.recalculateUserPatronStatus('user_1');
+
+      expect(prisma.patronGrant.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+          orderBy: { createdAt: 'asc' }
+      }));
+  });
 });
