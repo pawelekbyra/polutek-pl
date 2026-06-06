@@ -14,6 +14,7 @@ import { useLanguage } from './LanguageContext';
 import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
+import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
 interface HeroProps {
@@ -241,13 +242,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction }) => {
                      <ThumbsDown size={18} className={cn("block", optimisticState.isDisliked && "fill-red-600")} />
                   </button>
                </div>
-               <button
-                 onClick={handleShare}
-                 className="flex items-center justify-center gap-2 px-4 h-9 bg-white hover:bg-neutral-100 rounded-full transition-colors flex-[2] lg:flex-none border border-neutral-400 active:scale-95"
-               >
-                  <Share2 size={16} />
-                  <span className="text-[13px] font-bold">{t.share}</span>
-               </button>
+                  <ShareButton
+                    url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
+                    title={displayTitle}
+                    text={video.description || undefined}
+                    className="flex-[2] lg:flex-none"
+                  />
                <button
                  onClick={openCupGame}
                  className="w-9 h-9 flex items-center justify-center bg-white hover:bg-neutral-100 rounded-full transition-colors shrink-0 border border-neutral-400 active:scale-95"

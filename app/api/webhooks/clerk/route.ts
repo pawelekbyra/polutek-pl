@@ -149,7 +149,18 @@ export async function POST(req: Request) {
           try {
             await EmailService.sendWelcomeEmail(email, first_name || name || undefined, userLanguage);
           } catch (error) {
-            scopedLogger.error('[ClerkWebhook] Failed to send welcome email:', error);
+            const message = error instanceof Error ? error.message : String(error);
+            scopedLogger.error('[ClerkWebhook] Failed to send welcome email:', {
+              to: email,
+              error: message,
+              hint: message.includes('EMAIL_FROM')
+                ? 'Set EMAIL_FROM in environment variables'
+                : message.includes('Missing required email template')
+                ? 'Save welcome-email template at /admin/emails'
+                : message.includes('Resend')
+                ? 'Check RESEND_API_KEY and domain verification at resend.com/domains'
+                : 'Check Vercel logs for full stack trace',
+            });
           }
         }
       }

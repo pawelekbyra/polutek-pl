@@ -156,6 +156,27 @@ test.describe("beta smoke: guest/public access", () => {
     expect(body.success).toBe(false);
   });
 
+  test("share popover opens on desktop", async ({ page }) => {
+    // Navigate to a page with a video (hero has the share button)
+    await page.goto("/");
+
+    // The share button is identified by aria-label "Udostępnij"
+    const shareButton = page.getByLabel("Udostępnij");
+    await expect(shareButton).toBeVisible();
+
+    // On desktop, it should open a popover
+    await shareButton.click();
+
+    const popover = page.locator('text=Kopiuj link');
+    await expect(popover).toBeVisible();
+    await expect(page.locator('text=Udostępnij na X')).toBeVisible();
+    await expect(page.locator('text=Udostępnij na Facebook')).toBeVisible();
+
+    // Clicking "Kopiuj link" should change text to "Skopiowano!"
+    await popover.click();
+    await expect(page.locator('text=Skopiowano!')).toBeVisible();
+  });
+
   test("guest checkout smoke is blocked before payment creation", async ({
     request,
   }) => {
@@ -298,6 +319,14 @@ test.describe("beta smoke: admin access", () => {
     ).toBeLessThan(500);
     expect(response.status()).toBe(200);
     expect(await response.json()).toEqual(expect.any(Array));
+  });
+
+  test("admin can resync subscriber counts", async ({ request }) => {
+    const response = await request.post("/api/admin/subscribers/resync");
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    expect(body.updated).toEqual(expect.any(Array));
   });
 
   test("admin can create, update, and archive a draft video through the API", async ({ request }) => {

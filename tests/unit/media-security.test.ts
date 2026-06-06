@@ -139,7 +139,7 @@ describe('isAllowedVideoSourceUrl', () => {
   it('allows only supported vimeo URL shapes', () => {
     expect(isAllowedVideoSourceUrl('https://vimeo.com/123456', env)).toBe(true);
     expect(isAllowedVideoSourceUrl('https://player.vimeo.com/video/123456', env)).toBe(true);
-    expect(isAllowedVideoSourceUrl('https://vimeo.com/channels/staffpicks/123456', env)).toBe(false);
+    expect(isAllowedVideoSourceUrl('https://vimeo.com/channels/staffpicks/123456', env)).toBe(true);
     expect(isAllowedVideoSourceUrl('https://player.vimeo.com/event/123456', env)).toBe(false);
   });
 

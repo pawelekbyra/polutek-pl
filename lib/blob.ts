@@ -116,7 +116,7 @@ function isAllowedYouTubeUrl(url: URL) {
         return /^\/[A-Za-z0-9_-]+$/.test(pathname);
     }
 
-    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(hostname)) {
+    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(hostname)) {
         return false;
     }
 
@@ -132,7 +132,7 @@ function isAllowedVimeoUrl(url: URL) {
     const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
 
     if (hostname === 'vimeo.com') {
-        return /^\/\d+$/.test(pathname);
+        return /^\/\d+$/.test(pathname) || /\/\d+$/.test(pathname);
     }
 
     if (hostname === 'player.vimeo.com') {

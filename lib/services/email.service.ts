@@ -84,8 +84,15 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   const html = replaceTemplateVariables(htmlBase, safeVariables);
 
   const resend = getResendClient();
+  const from = process.env.EMAIL_FROM || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('EMAIL_FROM is not set. Add it to environment variables. Example: "My Channel <no-reply@yourdomain.com>"');
+    }
+    return `${APP_NAME} <no-reply@example.local>`;
+  })();
+
   const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM || `${APP_NAME} <no-reply@example.local>`,
+    from,
     to: [to],
     subject,
     html,
@@ -99,13 +106,32 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
 }
 
 export async function sendWelcomeEmail(to: string, firstName?: string | null, language: string = 'pl') {
+  const firstName_ = firstName || (language === 'en' ? 'User' : 'Użytkowniku');
   return sendTemplateEmail({
     to,
     slug: WELCOME_EMAIL_SLUG,
     variables: {
-      firstName: firstName || (language === 'en' ? 'User' : 'Użytkowniku'),
+      firstName: firstName_,
       appName: APP_NAME,
       appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    },
+    fallback: {
+      subject: language === 'en'
+        ? `Welcome to ${APP_NAME}, ${firstName_}!`
+        : `Witaj w ${APP_NAME}, ${firstName_}!`,
+      html: language === 'en'
+        ? `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+             <h1 style="font-size:24px;margin-bottom:16px">Welcome to ${APP_NAME}</h1>
+             <p>Hi ${firstName_},</p>
+             <p>Thanks for joining. You can now comment and rate videos.</p>
+             <p>Visit <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}">${APP_NAME}</a> to get started.</p>
+           </div>`
+        : `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+             <h1 style="font-size:24px;margin-bottom:16px">Witaj w ${APP_NAME}</h1>
+             <p>Cześć ${firstName_},</p>
+             <p>Dziękujemy za dołączenie. Możesz teraz komentować i oceniać materiały.</p>
+             <p>Odwiedź <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}">${APP_NAME}</a>, aby zacząć.</p>
+           </div>`,
     },
     language,
   });
