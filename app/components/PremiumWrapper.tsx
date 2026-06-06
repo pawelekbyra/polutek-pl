@@ -181,19 +181,19 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
          </div>
 
          <div className={cn(
-             "relative z-10 flex flex-col items-center text-center max-w-none origin-center transition-transform duration-500",
-             isThumbnail ? "scale-[0.18] w-[555%]" : "px-6 w-full"
+             "z-10 flex flex-col items-center text-center max-w-none origin-center transition-transform duration-500",
+             isThumbnail ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[556%] scale-[0.18] justify-center" : "relative px-6 w-full"
          )}>
             <div className={cn(
                 "transition-all duration-700 group-hover:scale-110 flex items-center justify-center",
-                isThumbnail ? "mb-16" : "mb-4 md:mb-8"
+                isThumbnail ? "mb-4" : "mb-4 md:mb-8"
             )}>
                {isVIPGated ? (
-                 <Gem className={cn("text-amber-500", isThumbnail ? "w-64 h-64" : "w-16 h-16 md:w-24 md:h-24")} />
+                 <Gem className={cn("text-amber-500", isThumbnail ? "w-32 h-32" : "w-16 h-16 md:w-24 md:h-24")} />
                ) : (
                  <CustomAuthTrigger>
                     <button className="hover:opacity-40 transition-opacity cursor-pointer flex items-center justify-center">
-                      <Lock className={cn("text-blue-400", isThumbnail ? "w-64 h-64" : "w-16 h-16 md:w-24 md:h-24")} />
+                      <Lock className={cn("text-blue-400", isThumbnail ? "w-32 h-32" : "w-16 h-16 md:w-24 md:h-24")} />
                     </button>
                  </CustomAuthTrigger>
                )}
@@ -204,14 +204,14 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 <div className="flex flex-col items-center">
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-amber-500",
-                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
+                        isThumbnail ? "text-[5rem]" : "text-[clamp(3.5rem,12vw,10rem)]"
                     )}>
                         {(t as any).patronZoneLine1}
                     </span>
-                    <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-2 w-96" : "h-px w-24 md:w-48")} />
+                    <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-1 w-48" : "h-px w-24 md:w-48")} />
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-white",
-                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
+                        isThumbnail ? "text-[5rem]" : "text-[clamp(3.5rem,12vw,10rem)]"
                     )}>
                         {(t as any).patronZoneLine2}
                     </span>
@@ -229,14 +229,14 @@ function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: A
                 <div className="flex flex-col items-center">
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-white",
-                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
+                        isThumbnail ? "text-[5rem]" : "text-[clamp(3.5rem,12vw,10rem)]"
                     )}>
                         {t.paywallText}
                     </span>
-                    <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-2 w-96" : "h-px w-24 md:w-48")} />
+                    <div className={cn("bg-white/10 my-1 md:my-2", isThumbnail ? "h-1 w-48" : "h-px w-24 md:w-48")} />
                     <span className={cn(
                         "uppercase tracking-tighter leading-[0.8] text-blue-400",
-                        isThumbnail ? "text-[7rem]" : "text-[clamp(1.5rem,5vw,3rem)]"
+                        isThumbnail ? "text-[5rem]" : "text-[clamp(3.5rem,12vw,10rem)]"
                     )}>
                         {t.paywallAction}
                     </span>
