@@ -12,6 +12,7 @@ const allowedAppRoutes = [
   "app/api/access/route.ts",
   "app/api/admin/channel/route.ts",
   "app/api/admin/creator/route.ts",
+  "app/api/admin/emails/broadcast/route.ts",
   "app/api/admin/payment-settings/route.ts",
   "app/api/admin/stats/route.ts",
   "app/api/admin/subscribers/resync/route.ts",
