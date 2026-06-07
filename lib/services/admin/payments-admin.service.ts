@@ -83,7 +83,7 @@ export class PaymentsAdminService {
         skip,
         take: pageSize,
       }),
-      this.getFinancialStats()
+      this.getFinancialStats(where)
     ]);
 
     const mappedItems: AdminPaymentListItem[] = items.map(p => ({
@@ -99,7 +99,12 @@ export class PaymentsAdminService {
         stripeSessionId: p.stripeSessionId,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
-        metadata: p.metadata
+        metadata: p.metadata,
+        creator: p.creator ? {
+            id: p.creator.id,
+            name: p.creator.name,
+            slug: p.creator.slug
+        } : null
     }));
 
     return {
@@ -116,10 +121,16 @@ export class PaymentsAdminService {
     };
   }
 
-  static async getFinancialStats() {
+  static async getFinancialStats(where: Prisma.PaymentWhereInput = {}) {
+    // For succeeded, we want to respect all filters BUT override status to SUCCEEDED
+    // OR we respect current filters (including status).
+    // The requirement says: "summary respektuje aktywne filtry. Dla totalSucceeded dodatkowo nałóż status: 'SUCCEEDED' na bazowy where."
+
+    const succeededWhere = { ...where, status: 'SUCCEEDED' as PaymentStatus };
+
     const succeeded = await prisma.payment.groupBy({
       by: ['currency'],
-      where: { status: 'SUCCEEDED' },
+      where: succeededWhere,
       _sum: {
         amountMinor: true
       },
@@ -130,6 +141,7 @@ export class PaymentsAdminService {
 
     const refunded = await prisma.payment.groupBy({
       by: ['currency'],
+      where,
       _sum: {
         refundedAmountMinor: true
       }
@@ -137,6 +149,7 @@ export class PaymentsAdminService {
 
     const countsPerStatus = await prisma.payment.groupBy({
       by: ['status'],
+      where,
       _count: {
         id: true
       }
