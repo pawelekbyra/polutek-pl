@@ -23,6 +23,9 @@ vi.mock('@/lib/prisma', () => ({
     video: {
       findUnique: vi.fn(),
     },
+    videoPlaybackSession: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -38,9 +41,11 @@ describe('media source API security', () => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       id: 'vid_1',
       videoUrl: 'https://example.com/stream.m3u8',
-      creator: { id: 'creator_1' }
+      creator: { id: 'creator_1' },
+      tier: 'PUBLIC'
     } as any);
     vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 'session_1' } as any);
 
     try {
       const req = new NextRequest('http://localhost/api/media-source/vid_1');

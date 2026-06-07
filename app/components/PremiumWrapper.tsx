@@ -15,6 +15,10 @@ interface VideoAccessContextType {
   videoEmbedUrl: string | null;
   isLoading: boolean;
   effectiveTier: AccessTier;
+  tracking?: {
+      playbackSessionId: string;
+      heartbeatIntervalSeconds: number;
+  };
 }
 
 const VideoAccessContext = createContext<VideoAccessContextType>({
@@ -48,6 +52,7 @@ export default function PremiumWrapper({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoSourceKind, setVideoSourceKind] = useState<string | null>(null);
   const [videoEmbedUrl, setVideoEmbedUrl] = useState<string | null>(null);
+  const [tracking, setTracking] = useState<any>(null);
   const [dbTier, setDbTier] = useState<AccessTier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -88,6 +93,7 @@ export default function PremiumWrapper({
           setVideoUrl(data.playbackUrl);
           setVideoSourceKind(data.kind);
           setVideoEmbedUrl(data.embedUrl || null);
+          setTracking(data.tracking);
         }
         if (data.requiredTier) setDbTier(data.requiredTier);
       } catch (error) {
@@ -105,7 +111,7 @@ export default function PremiumWrapper({
     return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;
   }
 
-  const contextValue = { hasAccess: isPublic || isUnlockedByAuth || hasAccess, videoUrl, videoSourceKind, videoEmbedUrl, isLoading, effectiveTier };
+  const contextValue = { hasAccess: isPublic || isUnlockedByAuth || hasAccess, videoUrl, videoSourceKind, videoEmbedUrl, isLoading, effectiveTier, tracking };
 
   if (contextValue.hasAccess) {
     return (

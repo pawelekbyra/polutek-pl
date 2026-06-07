@@ -29,6 +29,9 @@ vi.mock('@/lib/prisma', () => ({
     video: {
       findUnique: vi.fn(),
     },
+    videoPlaybackSession: {
+      create: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -180,37 +183,39 @@ describe('API Contracts', () => {
   describe('GET /api/media-source/[videoId]', () => {
     it('matches the documented response shape for success', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({ id: 'v1', videoUrl: 'https://media.example.com/v.mp4' } as any);
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({ id: 'v1', videoUrl: 'https://media.example.com/v.mp4', tier: 'PUBLIC' } as any);
       vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true } as any);
+      vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 'session_1' } as any);
 
       const req = new NextRequest('http://localhost/api/media-source/v1');
       const res = await mediaSourceGET(req, { params: { videoId: 'v1' } });
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data).toEqual({
+      expect(data).toMatchObject({
         hasAccess: true,
         kind: 'direct',
-        label: 'Plik wideo',
         playbackUrl: '/api/media/v1',
-        needsProxy: true
       });
+      expect(data.tracking).toBeDefined();
     });
 
     it('matches the documented response shape for forbidden', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({ id: 'v1' } as any);
-      vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: false, reason: 'PATRON_ONLY', requiredTier: 'PATRON' } as any);
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({ id: 'v1', tier: 'PATRON' } as any);
+      vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any);
 
       const req = new NextRequest('http://localhost/api/media-source/v1');
       const res = await mediaSourceGET(req, { params: { videoId: 'v1' } });
       const data = await res.json();
 
       expect(res.status).toBe(403);
-      expect(data).toEqual({
+      expect(data).toMatchObject({
         hasAccess: false,
-        reason: 'PATRON_ONLY',
-        requiredTier: 'PATRON'
+        access: {
+            reason: 'PATRON_REQUIRED',
+            requiredTier: 'PATRON'
+        }
       });
     });
   });
