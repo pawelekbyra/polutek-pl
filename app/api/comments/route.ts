@@ -9,6 +9,7 @@ import { handleApiError } from '@/lib/errors';
 import { isAllowedCommentImageUrl } from '@/lib/blob';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 import { CommentService } from '@/lib/services/comments/comment.service';
+import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
   const videoId = searchParams.get('videoId');
-  const sortBy = searchParams.get('sortBy') || 'newest';
+  const sortBy = (searchParams.get('sortBy') as any) || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
   const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
   const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 50);
@@ -47,52 +48,25 @@ export async function GET(request: NextRequest) {
   const { userId } = await getSafeAuth();
 
   try {
-    const user = userId ? await CommentService.getInternalUser(userId) : null;
-    const canModerateComments = user?.role === 'ADMIN' || (userId ? !!(await prisma.creator.findFirst({ where: { userId, videos: { some: { id: videoId } } }, select: { id: true } })) : false);
+    const [commentsData, canComment, canModerate] = await Promise.all([
+      CommentService.getComments(videoId, userId, sortBy, cursor, limit),
+      CommentAccessService.canComment(userId, videoId),
+      CommentAccessService.canModerate(userId, videoId)
+    ]);
 
-    const comments = await CommentService.getComments(videoId, sortBy, cursor, limit);
-    const commentIds = [...comments.map(c => c.id), ...comments.flatMap(c => c.replies.map(r => r.id))];
-
-    let userLikes = new Set<string>();
-    let userDislikes = new Set<string>();
-
-    if (user?.id && commentIds.length > 0) {
-        const [likes, dislikes] = await Promise.all([
-            prisma.commentLike.findMany({ where: { userId: user.id, commentId: { in: commentIds } }, select: { commentId: true } }),
-            prisma.commentDislike.findMany({ where: { userId: user.id, commentId: { in: commentIds } }, select: { commentId: true } })
-        ]);
-        userLikes = new Set(likes.map(l => l.commentId));
-        userDislikes = new Set(dislikes.map(d => d.commentId));
-    }
-
-    const commentsWithStatus = comments.map(c => {
-        const isDeleted = !!c.deletedAt;
-        const replies = c.replies.map((r) => ({
-            ...r,
-            text: r.deletedAt ? "Komentarz usunięty" : r.text,
-            author: r.deletedAt ? null : toPublicCommentAuthor(r.author),
-            imageUrl: r.deletedAt ? null : r.imageUrl,
-            isLiked: userLikes.has(r.id),
-            isDisliked: userDislikes.has(r.id),
-            authorName: r.deletedAt ? "Użytkownik" : (CommentService.getCommentAuthorName(r.author)),
-            canPin: false,
-        }));
-
-        return {
-            ...c,
-            text: isDeleted ? "Komentarz usunięty" : c.text,
-            author: isDeleted ? null : toPublicCommentAuthor(c.author),
-            imageUrl: isDeleted ? null : c.imageUrl,
-            isLiked: userLikes.has(c.id),
-            isDisliked: userDislikes.has(c.id),
-            authorName: isDeleted ? "Użytkownik" : (CommentService.getCommentAuthorName(c.author)),
-            canPin: canModerateComments && !isDeleted && !c.parentId,
-            isPinned: !!c.pinnedAt,
-            replies,
-        };
+    return NextResponse.json({
+      success: true,
+      comments: commentsData.comments,
+      totalCount: commentsData.totalCount,
+      nextCursor: commentsData.nextCursor,
+      hasMore: !!commentsData.nextCursor,
+      viewer: {
+        canComment: canComment.allowed,
+        canReact: !!userId,
+        canReport: !!userId,
+        canModerate: canModerate
+      }
     });
-
-    return NextResponse.json({ success: true, comments: commentsWithStatus, nextCursor: comments.length === limit ? comments[limit - 1].id : null });
   } catch (error: unknown) {
     scopedLogger.error("[GET_COMMENTS_ERROR]", error);
     return handleApiError(error);
@@ -116,7 +90,7 @@ export async function POST(request: NextRequest) {
     if (!result.success) return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
 
     const { videoId, text, parentId, imageUrl } = result.data;
-    const decision = await AccessPolicy.canComment(userId, videoId);
+    const decision = await CommentAccessService.canComment(userId, videoId);
     if (!decision.allowed) {
         scopedLogger.warn(`Comment access denied for user ${userId} on video ${videoId}: ${decision.reason}`);
         return NextResponse.json({
@@ -125,21 +99,11 @@ export async function POST(request: NextRequest) {
         }, { status: 403 });
     }
 
-    if (parentId) {
-        const parent = await prisma.comment.findUnique({ where: { id: parentId }, select: { videoId: true, parentId: true, deletedAt: true } });
-        if (!parent || parent.videoId !== videoId || parent.parentId || parent.deletedAt) {
-            return NextResponse.json({ success: false, message: "Nieprawidłowy komentarz nadrzędny." }, { status: 400 });
-        }
-    }
-
-    const newComment = await prisma.comment.create({
-        data: { videoId, text: text?.trim() || '', authorId: localUser.id, parentId: parentId || null, imageUrl: imageUrl || null },
-        include: { author: { select: { id: true, name: true, username: true, imageUrl: true, isPatron: true, role: true } }, _count: { select: { likes: true, dislikes: true, replies: true } } }
-    });
+    const newComment = await CommentService.createComment(localUser.id, videoId, text || '', parentId || undefined, imageUrl || undefined);
 
     return NextResponse.json({
         success: true,
-        comment: { ...newComment, author: toPublicCommentAuthor(newComment.author), isLiked: false, isDisliked: false, authorName: CommentService.getCommentAuthorName(newComment.author), imageUrl: newComment.imageUrl, replies: [] }
+        comment: CommentService.mapToDto(newComment, localUser.id)
     }, { status: 201 });
   } catch (error: unknown) {
     scopedLogger.error("[POST_COMMENT_ERROR]", error);

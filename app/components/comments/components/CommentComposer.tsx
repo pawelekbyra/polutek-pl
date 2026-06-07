@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { CornerDownRight, Loader2 } from "../../icons";
 import { Button } from "@/components/ui/button";
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { SafeAvatar } from "../../SafeAvatar";
 
 interface CommentComposerProps {
   userProfile: any;
@@ -26,6 +26,15 @@ interface CommentComposerProps {
   language: string;
 }
 
+export function countGraphemes(text: string) {
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    return [...new Intl.Segmenter("pl", { granularity: "grapheme" }).segment(text)].length;
+  }
+  return Array.from(text).length;
+}
+
+const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
+
 export function CommentComposer({
   userProfile,
   userAvatarUrl,
@@ -44,6 +53,28 @@ export function CommentComposer({
   t,
   language
 }: CommentComposerProps) {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const graphemeCount = countGraphemes(newComment);
+  const isTooLong = graphemeCount > 2000;
+
+  const insertEmoji = (emoji: string) => {
+    if (!textareaRef.current) return;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const text = newComment;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    setNewComment(before + emoji + after);
+
+    // Focus back and set cursor position after the emoji
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newPos = start + emoji.length;
+        textareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
+  };
   return (
     <div
       className={cn(
@@ -52,26 +83,18 @@ export function CommentComposer({
       )}
     >
       {userProfile && (
-        <div
+        <SafeAvatar
+          src={userAvatarUrl}
+          alt={userProfile.name || "Avatar"}
+          size={40}
+          fallbackSeed={userProfile.id}
           className={cn(
-            "relative w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center shrink-0 overflow-hidden mt-1",
+            "mt-1",
             isPatron
               ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
               : "border border-[#e9eef6]",
           )}
-        >
-          <Image
-            src={
-              userAvatarUrl ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`
-            }
-            alt="Avatar"
-            fill
-            sizes="40px"
-            className="object-cover"
-            unoptimized
-          />
-        </div>
+        />
       )}
       <div className="flex-1 min-w-0">
         <div className="relative">
@@ -113,9 +136,21 @@ export function CommentComposer({
             </div>
           ) : (
             <textarea
+              ref={textareaRef}
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={(e) => {
+                setNewComment(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
               onFocus={() => setIsInputFocused(true)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  if (newComment.trim() && !isPending && !isTooLong) {
+                    handleSubmit(e as any);
+                  }
+                }
+              }}
               placeholder={replyTo ? t.addReply : t.addComment}
               className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
             />
@@ -123,30 +158,50 @@ export function CommentComposer({
         </div>
 
         {(isInputFocused || newComment.trim() || replyTo) && canComment && (
-          <div className="flex justify-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setNewComment("");
-                setReplyTo(null);
-                setIsInputFocused(false);
-              }}
-            >
-              {t.cancel}
-            </Button>
+          <div className="flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex gap-1.5">
+                {QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => insertEmoji(emoji)}
+                    className="hover:bg-neutral-100 p-1 rounded-md transition-colors"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
 
-            <Button
-              onClick={handleSubmit}
-              disabled={!newComment.trim() || isPending}
-            >
-              {isPending ? (
-                <Loader2 className="animate-spin" size={14} />
-              ) : replyTo ? (
-                t.reply
-              ) : (
-                t.comment
-              )}
-            </Button>
+              <div className={cn("text-[10px] font-bold", isTooLong ? "text-red-500" : "text-neutral-400")}>
+                {graphemeCount} / 2000
+              </div>
+            </div>
+
+            <div className="flex justify-start gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setNewComment("");
+                  setReplyTo(null);
+                  setIsInputFocused(false);
+                }}
+              >
+                {t.cancel}
+              </Button>
+
+              <Button
+                onClick={handleSubmit}
+                disabled={!newComment.trim() || isPending || isTooLong}
+              >
+                {isPending ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : replyTo ? (
+                  t.reply
+                ) : (
+                  t.comment
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>

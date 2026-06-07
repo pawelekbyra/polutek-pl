@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { AccessPolicy } from '@/lib/access/access-policy';
+import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
+import { CommentReactionService } from '@/lib/services/comments/comment-reaction.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/errors';
 
@@ -38,23 +39,17 @@ export async function POST(request: NextRequest) {
     const { commentId } = await request.json();
     if (!commentId) return NextResponse.json({ success: false, message: 'Brak ID komentarza.' }, { status: 400 });
 
-    const decision = await AccessPolicy.canReactToComment(userId, commentId);
+    const decision = await CommentAccessService.canReact(userId, commentId);
     if (!decision.allowed) {
-      return NextResponse.json({ success: false, message: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
+      return NextResponse.json({
+        success: false,
+        message: decision.reason,
+        requiredTier: 'requiredTier' in decision ? decision.requiredTier : undefined
+      }, { status: 403 });
     }
 
-    return await prisma.$transaction(async (tx) => {
-        await tx.commentDislike.deleteMany({ where: { userId: localUser.id, commentId } });
-        const existingLike = await tx.commentLike.findUnique({ where: { userId_commentId: { userId: localUser.id, commentId } } });
-
-        if (existingLike) {
-            await tx.commentLike.delete({ where: { id: existingLike.id } });
-            return NextResponse.json({ success: true, liked: false, disliked: false });
-        } else {
-            await tx.commentLike.create({ data: { userId: localUser.id, commentId } });
-            return NextResponse.json({ success: true, liked: true, disliked: false });
-        }
-    });
+    const result = await CommentReactionService.toggleLike(localUser.id, commentId);
+    return NextResponse.json({ success: true, liked: result.liked, disliked: false });
   } catch (error: unknown) {
     scopedLogger.error('[COMMENT_LIKE_ERROR]', error);
     return handleApiError(error);

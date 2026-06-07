@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
-import { AccessPolicy } from '@/lib/access/access-policy';
+import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
+import { CommentService } from '@/lib/services/comments/comment.service';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { POST } from '@/app/api/comments/route';
 
@@ -24,9 +25,16 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock('@/lib/access/access-policy', () => ({
-  AccessPolicy: {
+vi.mock('@/lib/services/comments/comment-access.service', () => ({
+  CommentAccessService: {
     canComment: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/services/comments/comment.service', () => ({
+  CommentService: {
+    createComment: vi.fn(),
+    mapToDto: vi.fn(),
   },
 }));
 
@@ -40,7 +48,7 @@ describe('/api/comments POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 4 });
-    vi.mocked(AccessPolicy.canComment).mockResolvedValue({ allowed: true });
+    vi.mocked(CommentAccessService.canComment).mockResolvedValue({ allowed: true });
     vi.mocked(UserService.getOrCreateUserFromAuth).mockResolvedValue({
       id: 'local-user-id',
       email: 'fan@example.com',
@@ -55,29 +63,9 @@ describe('/api/comments POST', () => {
       sessionClaims: { email: 'fan@example.com' },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
-    vi.mocked(prisma.comment.create).mockResolvedValue({
-      id: 'comment-id',
-      videoId: 'video-id',
-      text: 'Komentarz fana',
-      authorId: 'local-user-id',
-      parentId: null,
-      creatorId: null,
-      imageUrl: null,
-      pinnedAt: null,
-      pinnedById: null,
-      deletedAt: null,
-      deletedById: null,
-      createdAt: new Date('2026-06-05T00:00:00.000Z'),
-      updatedAt: new Date('2026-06-05T00:00:00.000Z'),
-      author: {
-        name: 'Fan',
-        username: 'fan',
-        imageUrl: null,
-        isPatron: false,
-        role: 'USER',
-      },
-      _count: { likes: 0, dislikes: 0, replies: 0 },
-    } as unknown as Awaited<ReturnType<typeof prisma.comment.create>>);
+    const mockComment = { id: 'comment-id', text: 'Komentarz fana' };
+    vi.mocked(CommentService.createComment).mockResolvedValue(mockComment as any);
+    vi.mocked(CommentService.mapToDto).mockReturnValue({ id: 'comment-id', text: 'Komentarz fana' } as any);
 
     const request = new NextRequest('http://localhost/api/comments', {
       method: 'POST',
@@ -91,15 +79,8 @@ describe('/api/comments POST', () => {
     expect(response.status).toBe(201);
     expect(body.success).toBe(true);
     expect(UserService.getOrCreateUserFromAuth).toHaveBeenCalledWith('clerk-user-id', { email: 'fan@example.com' });
-    expect(AccessPolicy.canComment).toHaveBeenCalledWith('clerk-user-id', 'video-id');
-    expect(prisma.comment.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        videoId: 'video-id',
-        text: 'Komentarz fana',
-        authorId: 'local-user-id',
-        parentId: null,
-      }),
-    }));
+    expect(CommentAccessService.canComment).toHaveBeenCalledWith('clerk-user-id', 'video-id');
+    expect(CommentService.createComment).toHaveBeenCalledWith('local-user-id', 'video-id', 'Komentarz fana', undefined, undefined);
   });
 
   it('returns 401 for guests', async () => {
@@ -122,7 +103,7 @@ describe('/api/comments POST', () => {
       userId: 'clerk-user-id',
       sessionClaims: { email: 'fan@example.com' },
     } as unknown as Awaited<ReturnType<typeof auth>>);
-    vi.mocked(AccessPolicy.canComment).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED' });
+    vi.mocked(CommentAccessService.canComment).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED' });
 
     const request = new NextRequest('http://localhost/api/comments', {
       method: 'POST',

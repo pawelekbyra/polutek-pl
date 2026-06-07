@@ -76,7 +76,7 @@ function updateCommentReactionInCache(
 export function useComments(videoId: string, sortBy: "newest" | "top") {
   const queryClient = useQueryClient();
 
-  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error } =
     useInfiniteQuery({
       queryKey: ["comments", videoId, sortBy],
       queryFn: async ({ pageParam }) => {
@@ -85,7 +85,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         url.searchParams.append("sortBy", sortBy);
         if (pageParam) url.searchParams.append("cursor", pageParam as string);
         const res = await fetch(url.toString());
-        return parseJsonResponse<CommentsPage>(res);
+        return parseJsonResponse<CommentsPage & { viewer: any; totalCount: number }>(res);
       },
       initialPageParam: "",
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -239,6 +239,31 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async ({ commentId, text }: { commentId: string; text: string }) => {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ text }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: async ({ commentId, reason, note }: { commentId: string; reason: string; note?: string }) => {
+      const res = await fetch(`/api/comments/${commentId}/report`, {
+        method: "POST",
+        body: JSON.stringify({ reason, note }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
+    },
+  });
+
   return {
     data,
     fetchNextPage,
@@ -250,5 +275,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     dislikeMutation,
     pinMutation,
     deleteMutation,
+    editMutation,
+    reportMutation,
   };
 }
