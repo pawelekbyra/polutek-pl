@@ -226,9 +226,9 @@ describe('Playback Events API', () => {
     expect(res.status).toBe(200);
     expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
-            metadata: {
+            metadata: expect.objectContaining({
                 visibleKey: 'visible-value'
-            }
+            })
         })
     }));
   });

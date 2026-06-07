@@ -53,9 +53,10 @@ export class VideosAdminService {
         isMainFeatured !== undefined ? { isMainFeatured } : {},
         showInSidebar !== undefined ? { showInSidebar } : {},
         sourceKind ? (
-            sourceKind === 'YOUTUBE' ? { videoUrl: { contains: 'youtube' } } :
-            sourceKind === 'VIMEO' ? { videoUrl: { contains: 'vimeo' } } :
-            ['HLS', 'DASH', 'MP4'].includes(sourceKind) ? { videoUrl: { contains: sourceKind.toLowerCase() } } :
+            sourceKind.toLowerCase() === 'youtube' ? { videoUrl: { contains: 'youtube' } } :
+            sourceKind.toLowerCase() === 'vimeo' ? { videoUrl: { contains: 'vimeo' } } :
+            ['HLS', 'DASH', 'MP4'].includes(sourceKind.toUpperCase()) ? { videoUrl: { contains: sourceKind.toLowerCase() } } :
+            sourceKind.toLowerCase() === 'direct' ? { asset: { isNot: null } } :
             { asset: { provider: sourceKind as any } }
         ) : {},
       ]

@@ -6,6 +6,7 @@ import { handleApiError } from '@/lib/errors';
 import { setNxEx, rateLimit } from '@/lib/rate-limit';
 import { getMediaClientIp } from '@/lib/media/rate-limit';
 import { AccessPolicy } from '@/lib/access/access-policy';
+import { countGraphemes } from '@/lib/utils/graphemes';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,32 @@ const PLAYBACK_EVENT_TYPES = [
   "SOURCE_ERROR",
   "ACCESS_ERROR"
 ] as const;
+
+function sanitizePlaybackMetadata(metadata: any) {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+
+  const sensitiveKeys = ['playbackUrl', 'signedUrl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
+  const sanitized = { ...metadata };
+
+  for (const key of sensitiveKeys) {
+    delete sanitized[key];
+  }
+
+  // Limit to 20 keys and values up to 500 chars
+  const keys = Object.keys(sanitized);
+  const result: Record<string, any> = {};
+  const finalKeys = keys.slice(0, 20);
+
+  for (const key of finalKeys) {
+    let value = sanitized[key];
+    if (typeof value === 'string' && value.length > 500) {
+      value = value.substring(0, 500);
+    }
+    result[key] = value;
+  }
+
+  return result;
+}
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = await auth();
@@ -106,8 +133,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             if (session.userId && session.userId !== userId) {
                 return NextResponse.json({ error: 'SESSION_USER_MISMATCH' }, { status: 403 });
             }
-            // If session was anonymous but now we are logged in, we might allow it or reject it.
-            // Requirement says: "nie akceptuj sesji anonymous dla zalogowanego usera, chyba że masz świadomy migration fallback"
             if (!session.userId) {
                 return NextResponse.json({ error: 'SESSION_ANONYMOUS_FORBIDDEN' }, { status: 403 });
             }
@@ -131,26 +156,60 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         return NextResponse.json({ error: 'SESSION_REQUIRED' }, { status: 400 });
     }
 
-    // 1. Record the event
-    await prisma.videoPlaybackEvent.create({
-      data: {
-        sessionId,
-        videoId,
-        userId,
-        type,
-        positionMs,
-        durationMs,
-        bufferedMs,
-        volume,
-        muted,
-        fullscreen,
-        errorCode,
-        errorMessage,
-        provider,
-        sourceKind,
-        metadata: metadata ? (metadata as any) : undefined
-      }
-    });
+    // Throttling logic for PROGRESS/HEARTBEAT
+    const isProgressOrHeartbeat = ['PROGRESS', 'HEARTBEAT'].includes(type);
+    let shouldSaveEvent = true;
+
+    if (sessionId && (isProgressOrHeartbeat || ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type))) {
+        const now = new Date();
+        const lastHeartbeat = session?.lastHeartbeatAt || session?.createdAt || now;
+        const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
+
+        const isCritical = ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type);
+        const shouldUpdateStats = isCritical || timeSinceLastHeartbeat >= 10000;
+
+        if (isProgressOrHeartbeat && !shouldUpdateStats) {
+            shouldSaveEvent = false;
+        }
+
+        if (shouldUpdateStats) {
+            const incrementMs = !isCritical && timeSinceLastHeartbeat < 30000 ? timeSinceLastHeartbeat : 0;
+
+            await prisma.videoPlaybackSession.update({
+                where: { id: sessionId },
+                data: {
+                    lastHeartbeatAt: now,
+                    firstPlayAt: type === 'PLAY_STARTED' && !session?.firstPlayAt ? now : undefined,
+                    totalWatchMs: { increment: Math.floor(incrementMs) },
+                    maxProgressMs: positionMs ? Math.max(session?.maxProgressMs || 0, positionMs) : undefined,
+                    durationMs: durationMs || undefined,
+                }
+            }).catch(err => scopedLogger.warn("[SESSION_UPDATE_ERROR]", err));
+        }
+    }
+
+    // 1. Record the event (if not throttled)
+    if (shouldSaveEvent) {
+        await prisma.videoPlaybackEvent.create({
+          data: {
+            sessionId,
+            videoId,
+            userId,
+            type,
+            positionMs,
+            durationMs,
+            bufferedMs,
+            volume,
+            muted,
+            fullscreen,
+            errorCode,
+            errorMessage,
+            provider,
+            sourceKind,
+            metadata: sanitizePlaybackMetadata(metadata)
+          }
+        });
+    }
 
     // 2. Handle view counting
     if (type === 'WATCHED_10_SECONDS' && session && !session.isAdminPreview && !session.countedAsView) {
@@ -177,8 +236,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 })
             ]);
         } else {
-            // Even if it's not a "new" view globally for this user/video in 24h,
-            // mark the session as counted to prevent repeated attempts in the same session.
             await prisma.videoPlaybackSession.update({
                 where: { id: sessionId },
                 data: { countedAsView: true }
@@ -186,36 +243,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
     }
 
-    // 3. Update session stats with throttling
-    if (sessionId && ['HEARTBEAT', 'PROGRESS', 'PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type)) {
-        const now = new Date();
-        const lastHeartbeat = session?.lastHeartbeatAt || session?.createdAt || now;
-        const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
-
-        // Throttling: only update if more than 10 seconds since last update,
-        // OR if it's a critical event like PLAY_STARTED or WATCHED_10_SECONDS
-        const isCritical = ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type);
-        const shouldUpdate = isCritical || timeSinceLastHeartbeat >= 10000;
-
-        if (shouldUpdate) {
-            // Heuristic for watch time: if heartbeat within expected window (e.g. 30s), add the delta
-            // Max increment capped at 30s to prevent giant jumps from suspended tabs
-            const incrementMs = !isCritical && timeSinceLastHeartbeat < 30000 ? timeSinceLastHeartbeat : 0;
-
-            await prisma.videoPlaybackSession.update({
-                where: { id: sessionId },
-                data: {
-                    lastHeartbeatAt: now,
-                    firstPlayAt: type === 'PLAY_STARTED' && !session?.firstPlayAt ? now : undefined,
-                    totalWatchMs: { increment: Math.floor(incrementMs) },
-                    maxProgressMs: positionMs ? Math.max(session?.maxProgressMs || 0, positionMs) : undefined,
-                    durationMs: durationMs || undefined,
-                }
-            }).catch(err => scopedLogger.warn("[SESSION_UPDATE_ERROR]", err));
-        }
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+        success: true,
+        throttled: isProgressOrHeartbeat && !shouldSaveEvent ? true : undefined
+    });
   } catch (error) {
     scopedLogger.error('[PLAYBACK_EVENT_POST_ERROR]', error);
     return handleApiError(error);
