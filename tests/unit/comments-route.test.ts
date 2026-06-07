@@ -21,7 +21,7 @@ vi.mock('@/lib/prisma', () => ({
     video: {
       findUnique: vi.fn(),
     },
-    $transaction: vi.fn((cb) => cb(prisma)),
+    $transaction: vi.fn((cb) => (typeof cb === 'function' ? cb(prisma) : Promise.resolve(cb))),
   },
 }));
 
@@ -59,14 +59,14 @@ describe('/api/comments POST', () => {
       email: 'fan@example.com',
       language: 'pl',
       role: 'USER',
-    } as Awaited<ReturnType<typeof UserService.getOrCreateUserFromAuth>>);
+    } as any);
   });
 
   it('persists the comment with the synchronized local user id', async () => {
     vi.mocked(auth).mockResolvedValue({
       userId: 'clerk-user-id',
       sessionClaims: { email: 'fan@example.com' },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any);
 
     const mockComment = { id: 'comment-id', text: 'Komentarz fana' };
     vi.mocked(CommentService.createComment).mockResolvedValue(mockComment as any);
@@ -78,7 +78,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } } as any);
+    const response = await POST(request);
     const body = await response.json();
 
     expect(response.status).toBe(201);
@@ -91,7 +91,7 @@ describe('/api/comments POST', () => {
   it('returns 401 for guests', async () => {
     vi.mocked(auth).mockResolvedValue({
       userId: null,
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any);
 
     const request = new NextRequest('http://localhost/api/comments', {
       method: 'POST',
@@ -99,7 +99,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } } as any);
+    const response = await POST(request);
     expect(response.status).toBe(401);
   });
 
@@ -107,7 +107,7 @@ describe('/api/comments POST', () => {
     vi.mocked(auth).mockResolvedValue({
       userId: 'clerk-user-id',
       sessionClaims: { email: 'fan@example.com' },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any);
     vi.mocked(CommentAccessService.canComment).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED' });
 
     const request = new NextRequest('http://localhost/api/comments', {
@@ -116,7 +116,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } } as any);
+    const response = await POST(request);
     expect(response.status).toBe(403);
   });
 });
