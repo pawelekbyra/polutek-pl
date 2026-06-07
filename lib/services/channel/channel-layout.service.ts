@@ -78,7 +78,7 @@ export class ChannelLayoutService {
             sections.push({
                 id: 'section-free',
                 type: 'FREE',
-                title: 'Darmowe materiały',
+                title: 'Publiczne',
                 items: freeVideos.map(mapItem)
             });
         }
