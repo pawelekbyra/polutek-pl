@@ -104,6 +104,10 @@ export function CommentItem({
     setShowMenu(false);
   };
 
+  if (comment.status === 'DELETED' && !comment.viewerCanModerate) {
+    return null;
+  }
+
   return (
     <div
       id={`comment-${comment.id}`}

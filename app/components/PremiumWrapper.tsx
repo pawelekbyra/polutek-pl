@@ -146,7 +146,13 @@ export default function PremiumWrapper({
         );
     }
 
-    if (!isLoading && !playbackPlan) {
+    // Don't render children (VideoPlayer) for public video until we have a plan,
+    // to avoid flickering/broken media icon.
+    if (isLoading && isPublic) {
+        return <PlayerSkeleton />;
+    }
+
+    if (!isLoading && !playbackPlan && isPublic) {
         return (
           <PlayerErrorOverlay
               errorCode="NO_PLAYBACK_PLAN"

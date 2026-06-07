@@ -7,6 +7,8 @@ import { CommentView } from "../types";
 type CommentsPage = {
   comments: CommentView[];
   nextCursor?: string | null;
+  totalCount: number;
+  viewer: any;
 };
 
 type CommentsData = InfiniteData<CommentsPage>;
@@ -42,7 +44,7 @@ function updateCommentReactionInCache(
     return c;
   };
 
-  for (const [queryKey, previousData] of queries) {
+  for (const [queryKey] of queries) {
     queryClient.setQueryData<CommentsData>(queryKey, (old) => {
       if (!old) return old;
       return {
@@ -71,7 +73,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         url.searchParams.set('sortBy', sortBy);
         if (pageParam) url.searchParams.set('cursor', String(pageParam));
         const res = await fetch(url.toString());
-        return parseJsonResponse<CommentsPage & { viewer: any; totalCount: number }>(res);
+        return parseJsonResponse<CommentsPage>(res);
       },
       initialPageParam: "",
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -205,7 +207,45 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       });
       return parseJsonResponse(res);
     },
-    onSuccess: () => {
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      const queryKey = ["comments", videoId, sortBy];
+      const previousData = queryClient.getQueryData<CommentsData>(queryKey);
+
+      queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => {
+            const isRootDeleted = page.comments.some(c => c.id === commentId);
+            return {
+              ...page,
+              comments: page.comments
+                .filter((c) => c.id !== commentId)
+                .map((c) => {
+                  if (c.repliesPreview?.some(r => r.id === commentId)) {
+                     return {
+                        ...c,
+                        repliesPreview: c.repliesPreview.filter(r => r.id !== commentId),
+                        repliesCount: Math.max(0, (c.repliesCount || 0) - 1)
+                      };
+                  }
+                  return c;
+                }),
+              totalCount: page.totalCount - (isRootDeleted ? 1 : 0)
+            };
+          }),
+        };
+      });
+
+      return { previousData, queryKey };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
     },
   });

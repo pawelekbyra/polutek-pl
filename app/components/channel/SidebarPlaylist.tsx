@@ -94,13 +94,24 @@ export function SidebarPlaylist({
               </div>
           )}
           {!hasAccess && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-30">
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-30 backdrop-blur-[1px]">
                   <Lock className="text-white/60 w-5 h-5" />
               </div>
           )}
           {video.duration && (
             <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
                {video.duration}
+            </div>
+          )}
+
+          {/* Access Indicator Badge on Thumbnail - Matching ChannelVideoCard */}
+          {mounted && (
+            <div className="absolute top-1 right-1 z-40 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-white/10 tracking-widest">
+              {!hasAccess ? (
+                  video.tier === 'LOGGED_IN' ? (language === 'pl' ? 'Zaloguj się' : 'Login') : (language === 'pl' ? 'Patron' : 'Patron')
+              ) : (
+                  video.tier === 'PUBLIC' ? (language === 'pl' ? 'Publiczne' : 'Public') : (language === 'pl' ? 'Odblokowane' : 'Unlocked')
+              )}
             </div>
           )}
         </div>

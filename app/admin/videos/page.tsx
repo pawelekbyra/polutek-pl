@@ -3,6 +3,7 @@
 import { logger } from "@/lib/logger";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
 import { Plus, ArrowLeft, Search, Filter } from "@/app/components/icons";
@@ -106,6 +107,9 @@ export default function AdminVideosPage() {
     }
   }, [fetchVideos]);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
 
@@ -117,6 +121,21 @@ export default function AdminVideosPage() {
 
     checkAdmin();
   }, [user, userLoaded, authLoaded, checkAdmin]);
+
+  // Handle auto-edit from query param
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && videos.length > 0 && !isEditing) {
+        const videoToEdit = videos.find(v => v.id === editId);
+        if (videoToEdit) {
+            handleEdit(videoToEdit);
+            // Clear the param without refreshing
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('edit');
+            router.replace(`/admin/videos${newParams.toString() ? '?' + newParams.toString() : ''}`);
+        }
+    }
+  }, [searchParams, videos, isEditing, router]);
 
   // Refetch when filters change (except search which has its own button)
   useEffect(() => {

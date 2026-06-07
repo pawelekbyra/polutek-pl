@@ -507,7 +507,7 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                         <CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO
                     </Button>
                     <Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild>
-                        <Link href="/admin/videos"><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link>
+                        <Link href={`/admin/videos?edit=${video.id}`}><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link>
                     </Button>
                 </CardContent>
             </Card>
