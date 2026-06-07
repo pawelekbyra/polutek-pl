@@ -5,8 +5,8 @@ import { MessageSquare, Loader2, ChevronUp } from "../icons";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
-import { AccessTier } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
@@ -40,7 +40,7 @@ interface EmbeddedCommentsProps {
     role?: string;
   } | null;
   videoId: string;
-  videoTier?: AccessTier;
+  videoTier?: AccessTierDto;
 }
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
