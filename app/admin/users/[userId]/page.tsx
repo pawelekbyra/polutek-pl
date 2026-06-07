@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/users/${params.userId}`);
       if (res.ok) {
@@ -37,11 +37,11 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.userId]);
 
   useEffect(() => {
     fetchUser();
-  }, [params.userId]);
+  }, [fetchUser]);
 
   if (isLoading) return <div className="p-8 text-center">Ładowanie...</div>;
   if (error || !user) return <div className="p-8 text-center text-destructive">{error || "Użytkownik nie znaleziony."}</div>;

@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = await auth();
   const videoId = params.id;
-  const scopedLogger = createScopedLogger();
+  const requestId = req.headers.get('x-request-id');
+  const scopedLogger = createScopedLogger(requestId);
 
   try {
     const body = await req.json();

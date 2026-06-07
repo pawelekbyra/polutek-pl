@@ -1,7 +1,7 @@
 'use client';
 
 import { logger } from "@/lib/logger";
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { APP_NAME } from '@/lib/constants';
 
 type Language = 'pl' | 'en';
@@ -28,7 +28,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsInitialized(true);
   }, []);
 
-  const setLanguage = async (lang: Language, skipSync: boolean = false) => {
+  const setLanguage = useCallback(async (lang: Language, skipSync: boolean = false) => {
     const prevLang = language;
     setLanguageState(lang);
     localStorage.setItem('app-language', lang);
@@ -47,7 +47,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         logger.warn('[LanguageContext] Failed to sync language with DB:', e);
       }
     }
-  };
+  }, [language, isInitialized]);
 
   const t = useMemo(() => translations[language], [language]);
 
@@ -56,7 +56,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguage,
     isInitialized,
     t
-  }), [language, isInitialized, t]);
+  }), [language, setLanguage, isInitialized, t]);
 
   return (
     <LanguageContext.Provider value={contextValue}>

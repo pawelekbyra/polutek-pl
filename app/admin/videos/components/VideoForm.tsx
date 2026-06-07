@@ -184,7 +184,7 @@ export function VideoForm({
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Poziom dostępu</Label>
-                            <Select value={formData.tier} onValueChange={v => setFormData({...formData, tier: v})}>
+                            <Select value={formData.tier} onValueChange={v => setFormData({...formData, tier: v || 'PUBLIC'})}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="PUBLIC">Publiczny</SelectItem>
@@ -195,7 +195,7 @@ export function VideoForm({
                         </div>
                         <div className="space-y-2">
                             <Label>Status publikacji</Label>
-                            <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                            <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v || 'DRAFT'})}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="DRAFT">Szkic</SelectItem>

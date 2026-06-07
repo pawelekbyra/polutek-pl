@@ -115,7 +115,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
     }
 
     return () => { if (interval) clearInterval(interval); };
-  }, [searchParams, router]);
+  }, [searchParams, router, queryClient]);
 
   useEffect(() => {
     if (isCheckoutModalOpen) {

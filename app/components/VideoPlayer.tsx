@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { MediaPlayer, MediaProvider, Poster, type MediaPlayerInstance } from '@vidstack/react';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle } from './icons';
-import { useRef } from 'react';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -20,10 +19,40 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const posterUrl = video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const hasReached10s = useRef(false);
+
+    const sendEvent = useCallback(async (type: string, extra = {}) => {
+        if (!tracking?.playbackSessionId) return;
+        try {
+            await fetch(`/api/videos/${video.id}/playback-event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: tracking.playbackSessionId,
+                    type,
+                    positionMs: player.current ? Math.floor(player.current.currentTime * 1000) : 0,
+                    durationMs: player.current ? Math.floor(player.current.duration * 1000) : 0,
+                    ...extra
+                })
+            });
+        } catch (e) {
+            console.warn("Failed to send playback event", type, e);
+        }
+    }, [video.id, tracking?.playbackSessionId]);
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!isMounted || !tracking?.playbackSessionId) return;
+        const interval = setInterval(() => {
+            if (player.current?.paused === false) {
+                sendEvent('HEARTBEAT');
+            }
+        }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
+        return () => clearInterval(interval);
+    }, [isMounted, tracking, sendEvent]);
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail' || !videoUrl) {
@@ -86,37 +115,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
-
-    const hasReached10s = useRef(false);
-
-    const sendEvent = async (type: string, extra = {}) => {
-        if (!tracking?.playbackSessionId) return;
-        try {
-            await fetch(`/api/videos/${video.id}/playback-event`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: tracking.playbackSessionId,
-                    type,
-                    positionMs: player.current ? Math.floor(player.current.currentTime * 1000) : 0,
-                    durationMs: player.current ? Math.floor(player.current.duration * 1000) : 0,
-                    ...extra
-                })
-            });
-        } catch (e) {
-            console.warn("Failed to send playback event", type, e);
-        }
-    };
-
-    useEffect(() => {
-        if (!isMounted || !tracking?.playbackSessionId) return;
-        const interval = setInterval(() => {
-            if (player.current?.paused === false) {
-                sendEvent('HEARTBEAT');
-            }
-        }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
-        return () => clearInterval(interval);
-    }, [isMounted, tracking]);
 
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
