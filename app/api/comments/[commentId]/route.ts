@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { CommentService } from '@/lib/services/comments/comment.service';
+import { CommentModerationService } from '@/lib/services/comments/comment-moderation.service';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
@@ -50,6 +51,43 @@ export async function PATCH(
     return NextResponse.json({ success: true, comment: CommentService.mapToDto(updated, context) });
   } catch (error: unknown) {
     scopedLogger.error('[COMMENT_PATCH_ERROR]', error);
+    return handleApiError(error);
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { commentId: string } }
+) {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
+  const { userId, sessionClaims } = await auth();
+  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+
+  const { commentId } = params;
+
+  try {
+    const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
+
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { authorId: true, videoId: true }
+    });
+    if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const canModerate = await CommentAccessService.canModerate(localUser.id, comment.videoId);
+    const isAuthor = comment.authorId === localUser.id;
+
+    if (!isAuthor && !canModerate) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const reason = isAuthor ? 'AUTHOR_DELETED' : 'MODERATOR_DELETED';
+    await CommentModerationService.softDelete(commentId, localUser.id, reason);
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    scopedLogger.error('[COMMENT_DELETE_ERROR]', error);
     return handleApiError(error);
   }
 }

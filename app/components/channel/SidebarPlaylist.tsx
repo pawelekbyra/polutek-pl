@@ -106,25 +106,26 @@ export function SidebarPlaylist({
             requiredTier={video.tier}
             variant="thumbnail"
           >
-              {video.thumbnailUrl ? (
-                  <Image
-                    src={video.thumbnailUrl}
-                    alt={displayTitle}
-                    fill
-                    className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
-                  />
-              ) : (
-                  <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                      <Video className="text-white/20 w-8 h-8" />
-                  </div>
-              )}
+              <div className="relative w-full h-full">
+                  {video.thumbnailUrl ? (
+                      <Image
+                        src={video.thumbnailUrl}
+                        alt={displayTitle}
+                        fill
+                        className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
+                      />
+                  ) : (
+                      <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                          <Video className="text-white/20 w-8 h-8" />
+                      </div>
+                  )}
+                  {video.duration && (
+                    <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
+                       {video.duration}
+                    </div>
+                  )}
+              </div>
           </PremiumWrapper>
-
-          {video.duration && (
-            <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
-               {video.duration}
-            </div>
-          )}
           {/* Access Indicator Badge on Thumbnail */}
           {mounted && (() => {
               const badge = getSidebarAccessBadge(video, hasAccess, language);
