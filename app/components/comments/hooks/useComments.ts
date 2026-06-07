@@ -43,7 +43,7 @@ function updateCommentReactionInCache(
     return c;
   };
 
-  for (const [queryKey, previousData] of queries) {
+  for (const [queryKey] of queries) {
     queryClient.setQueryData<CommentsData>(queryKey, (old) => {
       if (!old) return old;
       return {
@@ -99,25 +99,20 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     },
     onMutate: async ({ text, parentId }) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const queryKey = ["comments", videoId, sortBy];
-      const previousData = queryClient.getQueryData<CommentsData>(queryKey);
+      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
 
-      // We don't have the full author object here, so optimistic add might be partial
-      // but we can at least increment totalCount and maybe add a placeholder
-      if (previousData) {
+      for (const [queryKey] of queries) {
         queryClient.setQueryData<CommentsData>(queryKey, (old) => {
           if (!old) return old;
 
-          // Increment totalCount on the first page
           const pages = [...old.pages];
           if (pages[0]) {
              pages[0] = {
                ...pages[0],
-               totalCount: (pages[0] as any).totalCount + 1
+               totalCount: pages[0].totalCount + 1
              };
           }
 
-          // If it's a reply, increment repliesCount for the parent
           if (parentId) {
             return {
               ...old,
@@ -137,11 +132,13 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         });
       }
 
-      return { previousData, queryKey };
+      return { previousData: queries };
     },
     onError: (err, variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(context.queryKey, context.previousData);
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
     },
     onSettled: () => {
@@ -152,9 +149,11 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
     mutationFn: async (commentId: string) => {
-      const comment = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
-          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || [])
-          .find(c => c?.id === commentId);
+      const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
+          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
+
+      const comment = allComments.find(c => c?.id === commentId) ||
+                    allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
 
       const isLiked = comment?.viewerReaction === "LIKE";
       const method = isLiked ? "DELETE" : "PUT";
@@ -168,9 +167,11 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     onMutate: async (commentId) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
 
-      const comment = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
-          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || [])
-          .find(c => c?.id === commentId);
+      const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
+          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
+
+      const comment = allComments.find(c => c?.id === commentId) ||
+                    allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
 
       const isLiked = comment?.viewerReaction === "LIKE";
       const action = isLiked ? "UNLIKE" : "LIKE";
@@ -179,11 +180,13 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       return { previousData };
     },
     onError: (err, commentId, context) => {
-      for (const [queryKey, data] of context?.previousData ?? []) {
-        queryClient.setQueryData(queryKey, data);
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
     },
-    onSettled: () => {
+    onSettled: (data, error, commentId) => {
       if (queryClient.isMutating({ mutationKey: ["comment-reaction", videoId] }) === 1) {
         queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
       }
@@ -277,12 +280,21 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         return next;
       };
 
-      for (const [queryKey, previousData] of queries) {
+      for (const [queryKey] of queries) {
         queryClient.setQueryData<CommentsData>(queryKey, (old) => {
           if (!old) return old;
+
+          const pages = [...old.pages];
+          if (pages[0]) {
+             pages[0] = {
+               ...pages[0],
+               totalCount: Math.max(0, pages[0].totalCount - 1)
+             };
+          }
+
           return {
             ...old,
-            pages: old.pages.map((page) => ({
+            pages: pages.map((page) => ({
               ...page,
               comments: page.comments
                 .map(c => removeComment(c))

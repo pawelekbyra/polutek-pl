@@ -12,6 +12,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { SidebarPlaylistSkeleton } from '@/components/skeletons';
+import PremiumWrapper from '../PremiumWrapper';
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -38,6 +39,25 @@ export function SidebarPlaylist({
   premiereCountdown,
   onVideoMouseEnter
 }: SidebarPlaylistProps) {
+  const getSidebarAccessBadge = (video: any, hasAccess: boolean, lang: string) => {
+    const isPl = lang === 'pl';
+    if (!video.tier || video.tier === 'PUBLIC') {
+      return { text: isPl ? "Publiczne" : "Public", variant: 'public' };
+    }
+
+    if (video.tier === 'LOGGED_IN') {
+      if (!hasAccess) return { text: isPl ? "Zaloguj się" : "Login required", variant: 'locked' };
+      return { text: isPl ? "Odblokowane" : "Unlocked", variant: 'unlocked' };
+    }
+
+    if (video.tier === 'PATRON') {
+      if (!hasAccess) return { text: isPl ? "Patron" : "Patron", variant: 'locked' };
+      return { text: isPl ? "Odblokowane" : "Unlocked", variant: 'unlocked' };
+    }
+
+    return null;
+  };
+
   const [layout, setLayout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
@@ -80,45 +100,46 @@ export function SidebarPlaylist({
       >
         <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-0" />
         <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
-          <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-20" />
-          {video.thumbnailUrl ? (
-              <Image
-                src={video.thumbnailUrl}
-                alt={displayTitle}
-                fill
-                className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
-              />
-          ) : (
-              <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                  <Video className="text-white/20 w-8 h-8" />
-              </div>
-          )}
-          {!hasAccess && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-30">
-                  <Lock className="text-white/60 w-5 h-5" />
-              </div>
-          )}
+          <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-40" />
+          <PremiumWrapper
+            videoId={video.id}
+            requiredTier={video.tier}
+            variant="thumbnail"
+          >
+              {video.thumbnailUrl ? (
+                  <Image
+                    src={video.thumbnailUrl}
+                    alt={displayTitle}
+                    fill
+                    className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
+                  />
+              ) : (
+                  <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                      <Video className="text-white/20 w-8 h-8" />
+                  </div>
+              )}
+          </PremiumWrapper>
+
           {video.duration && (
             <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
                {video.duration}
             </div>
           )}
           {/* Access Indicator Badge on Thumbnail */}
-          {mounted && (
-              !hasAccess ? (
-                  <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
-                      {video.tier === 'LOGGED_IN' ? t.loginReq : t.patronOnly}
+          {mounted && (() => {
+              const badge = getSidebarAccessBadge(video, hasAccess, language);
+              if (!badge) return null;
+              return (
+                  <div className={cn(
+                    "absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
+                    badge.variant === 'unlocked' && "bg-primary/80 border-primary/20"
+                  )}>
+                      {badge.text}
                   </div>
-              ) : (
-                  video.tier === 'PUBLIC' && (
-                    <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
-                        {t.public}
-                    </div>
-                  )
-              )
-          )}
+              );
+          })()}
         </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
+        <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10">
           <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
             <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
                {displayTitle}
