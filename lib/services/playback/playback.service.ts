@@ -23,10 +23,27 @@ export type PlaybackPlan = {
     requiredTier?: AccessTier;
   };
   source?: {
+    provider: string;
     kind: string;
     playbackUrl: string;
     embedUrl?: string;
+    posterUrl?: string;
+    mimeType?: string;
     needsProxy: boolean;
+    isExternalEmbed: boolean;
+    isSignedUrl: boolean;
+    expiresAt?: string;
+  };
+  player: {
+    autoplayAllowed: boolean;
+    mutedAutoplay: boolean;
+    controls: boolean;
+    poster: string;
+    title: string;
+  };
+  diagnostics: {
+    warnings: string[];
+    sourceConfidence: "HIGH" | "MEDIUM" | "LOW";
   };
   tracking: {
     playbackSessionId: string;
@@ -46,6 +63,8 @@ export class PlaybackService {
             videoId,
             canPlay: false,
             access: { allowed: false, reason: "VIDEO_NOT_FOUND" },
+            player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: '', title: '' },
+            diagnostics: { warnings: ["Video not found"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
         };
     }
@@ -61,6 +80,8 @@ export class PlaybackService {
                 reason: decision.reason,
                 requiredTier: decision.requiredTier
             },
+            player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: video.thumbnailUrl, title: video.title },
+            diagnostics: { warnings: [decision.reason || "Access denied"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
         };
     }
@@ -73,6 +94,8 @@ export class PlaybackService {
             canPlay: false,
             access: { allowed: true },
             source: undefined,
+            player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: video.thumbnailUrl, title: video.title },
+            diagnostics: { warnings: ["Video URL missing"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
         };
     }
@@ -82,11 +105,18 @@ export class PlaybackService {
             videoId,
             canPlay: false,
             access: { allowed: true },
+            player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: video.thumbnailUrl, title: video.title },
+            diagnostics: { warnings: ["Video URL not allowed"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
         };
     }
 
     const sourceInfo = getVideoSourceInfo(videoUrl, `/api/media/${video.id}`);
+
+    const isAdminPreview = userId ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }
+    }).then(u => u?.role === 'ADMIN') : false;
 
     const session = await prisma.videoPlaybackSession.create({
         data: {
@@ -96,6 +126,7 @@ export class PlaybackService {
             userAgentHash,
             sourceKind: sourceInfo.kind,
             accessTier: video.tier,
+            isAdminPreview: isAdminPreview
         }
     });
 
@@ -104,10 +135,25 @@ export class PlaybackService {
         canPlay: true,
         access: { allowed: true },
         source: {
+            provider: sourceInfo.kind, // Mapping kind to provider for DTO compatibility
             kind: sourceInfo.kind,
             playbackUrl: sourceInfo.playbackUrl,
             embedUrl: sourceInfo.embedUrl,
-            needsProxy: sourceInfo.needsProxy
+            posterUrl: video.thumbnailUrl,
+            needsProxy: sourceInfo.needsProxy,
+            isExternalEmbed: sourceInfo.kind === 'youtube' || sourceInfo.kind === 'vimeo',
+            isSignedUrl: false,
+        },
+        player: {
+            autoplayAllowed: true,
+            mutedAutoplay: true,
+            controls: true,
+            poster: video.thumbnailUrl,
+            title: video.title
+        },
+        diagnostics: {
+            warnings: [],
+            sourceConfidence: "HIGH"
         },
         tracking: {
             playbackSessionId: session.id,

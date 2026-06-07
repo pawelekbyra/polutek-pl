@@ -49,6 +49,17 @@ export class VideosDiagnosticsService {
     if (video.showInSidebar && video.status === VideoStatus.ARCHIVED) {
         issues.push({ severity: "WARNING", message: "Film zarchiwizowany nie powinien być w sidebarze.", field: "showInSidebar" });
     }
+    if (video.showInSidebar && video.status !== VideoStatus.PUBLISHED) {
+        issues.push({ severity: "WARNING", message: "Tylko opublikowane filmy powinny być widoczne w sidebarze.", field: "showInSidebar" });
+    }
+
+    // 5. Uniqueness
+    const duplicateSlug = await prisma.video.findFirst({
+        where: { slug: video.slug, id: { not: videoId } }
+    });
+    if (duplicateSlug) {
+        issues.push({ severity: "ERROR", message: "Slug jest już używany przez inny film.", field: "slug" });
+    }
 
     return issues;
   }

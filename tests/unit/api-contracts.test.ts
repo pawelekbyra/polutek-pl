@@ -29,6 +29,9 @@ vi.mock('@/lib/prisma', () => ({
     video: {
       findUnique: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
     videoPlaybackSession: {
       create: vi.fn(),
     },
@@ -184,6 +187,7 @@ describe('API Contracts', () => {
     it('matches the documented response shape for success', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
       vi.mocked(prisma.video.findUnique).mockResolvedValue({ id: 'v1', videoUrl: 'https://media.example.com/v.mp4', tier: 'PUBLIC' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'USER' } as any);
       vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true } as any);
       vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 'session_1' } as any);
 

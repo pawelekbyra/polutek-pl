@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('q') || undefined;
-  const status = (searchParams.get('status') as VideoStatus) || undefined;
-  const tier = (searchParams.get('tier') as AccessTier) || undefined;
+  const status = (searchParams.get('status') as any === 'ALL' ? undefined : searchParams.get('status') as VideoStatus) || undefined;
+  const tier = (searchParams.get('tier') as any === 'ALL' ? undefined : searchParams.get('tier') as AccessTier) || undefined;
   const page = parseInt(searchParams.get('page') || '1');
   const pageSize = parseInt(searchParams.get('pageSize') || '20');
   const orderBy = searchParams.get('orderBy') || 'createdAt';
