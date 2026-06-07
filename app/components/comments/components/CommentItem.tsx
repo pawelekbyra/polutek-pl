@@ -45,7 +45,7 @@ export function CommentItem({
   isPinPending,
   isReply = false
 }: CommentItemProps) {
-  const isDeletedForPublic = comment.status === 'DELETED' && !comment.viewerCanModerate;
+  const isDeletedForPublic = comment.status === 'DELETED';
 
   const authorIsPatron = isPatronAuthor(comment.author);
   const [isEditing, setIsEditing] = useState(false);
@@ -209,7 +209,7 @@ export function CommentItem({
                 {comment.viewerCanDelete && (
                   <button
                     onClick={() => { if(confirm(t.deleteComment)) onDelete(comment.id); setShowMenu(false); }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-red-600"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-neutral-600"
                   >
                     <Trash2 size={14} /> {language === "pl" ? "Usuń" : "Delete"}
                   </button>

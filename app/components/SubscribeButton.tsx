@@ -15,6 +15,7 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: 'default' | 'compact';
+  onStatusChange?: (isSubscribed: boolean) => void;
 }
 
 export default function SubscribeButton({
@@ -25,6 +26,7 @@ export default function SubscribeButton({
   initialIsSubscribed,
   className,
   variant = 'default',
+  onStatusChange,
 }: SubscribeButtonProps) {
   const { t } = useLanguage();
   const { userId } = useAuth();
@@ -80,6 +82,7 @@ export default function SubscribeButton({
   const executeSubscribe = async () => {
     const nextState = !isSubscribed;
     setIsSubscribed(nextState);
+    onStatusChange?.(nextState);
 
     startTransition(async () => {
       try {

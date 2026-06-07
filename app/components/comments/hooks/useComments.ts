@@ -7,6 +7,7 @@ import { CommentView } from "../types";
 type CommentsPage = {
   comments: CommentView[];
   nextCursor?: string | null;
+  totalCount: number;
 };
 
 type CommentsData = InfiniteData<CommentsPage>;
@@ -96,7 +97,54 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       });
       return parseJsonResponse(res);
     },
-    onSuccess: () => {
+    onMutate: async ({ text, parentId }) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      const queryKey = ["comments", videoId, sortBy];
+      const previousData = queryClient.getQueryData<CommentsData>(queryKey);
+
+      // We don't have the full author object here, so optimistic add might be partial
+      // but we can at least increment totalCount and maybe add a placeholder
+      if (previousData) {
+        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+          if (!old) return old;
+
+          // Increment totalCount on the first page
+          const pages = [...old.pages];
+          if (pages[0]) {
+             pages[0] = {
+               ...pages[0],
+               totalCount: (pages[0] as any).totalCount + 1
+             };
+          }
+
+          // If it's a reply, increment repliesCount for the parent
+          if (parentId) {
+            return {
+              ...old,
+              pages: pages.map(page => ({
+                ...page,
+                comments: page.comments.map(c => {
+                  if (c.id === parentId) {
+                    return { ...c, repliesCount: (c.repliesCount ?? 0) + 1 };
+                  }
+                  return c;
+                })
+              }))
+            };
+          }
+
+          return { ...old, pages };
+        });
+      }
+
+      return { previousData, queryKey };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
     },
   });
