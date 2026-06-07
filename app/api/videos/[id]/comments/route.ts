@@ -49,7 +49,8 @@ export async function GET(
 
   try {
     const canView = await CommentAccessService.canViewComments(userId, videoId);
-    if (!canView) return NextResponse.json({ success: false, message: 'Brak dostępu do filmu' }, { status: 403 });
+    // Even if canView is technically always true now in Service, we keep the check for future-proofing or if we decide to revert.
+    if (!canView) return NextResponse.json({ success: false, message: 'Brak dostępu do komentarzy' }, { status: 403 });
 
     const [video, canModerate] = await Promise.all([
         prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),

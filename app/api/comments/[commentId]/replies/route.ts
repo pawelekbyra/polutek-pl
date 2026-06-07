@@ -5,6 +5,7 @@ import { CommentService } from '@/lib/services/comments/comment.service';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { handleApiError } from '@/lib/errors';
 import { publicCommentAuthorSelect } from '@/lib/comments-public-author';
+import { CommentStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function GET(
     const replies = await prisma.comment.findMany({
       where: {
         parentId: params.commentId,
-        status: canModerate ? undefined : { not: 'HIDDEN' }
+        status: canModerate ? undefined : CommentStatus.VISIBLE
       },
       take: limit,
       skip: cursor ? 1 : 0,

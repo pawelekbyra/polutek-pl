@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { cn } from '@/lib/utils';
 import { Star, Gem, Lock } from './icons';
 import { useLanguage } from './LanguageContext';
-import { PlaybackPlan } from "@/lib/services/playback/playback.service";
+import type { PlaybackPlan } from "@/lib/services/playback/playback.dto";
 import { AccessTier } from "@prisma/client";
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { PlayerSkeleton } from "@/components/skeletons";

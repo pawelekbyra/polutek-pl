@@ -38,6 +38,29 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
 
     const hasAccess = serverHasAccess ?? clientHasAccess;
 
+    const getAccessBadge = () => {
+        if (!mounted) return null;
+        const isPl = language === 'pl';
+
+        if (video.tier === 'PUBLIC') {
+            return { text: t.public, variant: 'public' };
+        }
+
+        if (video.tier === 'LOGGED_IN') {
+            if (!hasAccess) return { text: t.loginReq, variant: 'locked' };
+            return { text: isPl ? "Odblokowane" : "Unlocked", variant: 'unlocked' };
+        }
+
+        if (video.tier === 'PATRON') {
+            if (!hasAccess) return { text: t.patronOnly, variant: 'locked' };
+            return { text: isPl ? "Odblokowane" : "Unlocked", variant: 'unlocked' };
+        }
+
+        return null;
+    };
+
+    const badge = getAccessBadge();
+
     return (
         <div className="group cursor-pointer flex flex-col">
             <div className="block relative">
@@ -50,26 +73,24 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                         variant="thumbnail"
                         onAccessLoad={setServerHasAccess}
                     >
-                        <VideoPlayer video={video} variant="thumbnail" />
-                    </PremiumWrapper>
-                    {video.duration && (
-                        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded">
-                            {video.duration}
-                        </div>
-                    )}
-                    {/* Access Indicator Badge on Thumbnail */}
-                    {mounted && (
-                        !hasAccess ? (
-                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest">
-                                {video.tier === 'LOGGED_IN' ? t.loginReq : t.patronOnly}
-                            </div>
-                        ) : (
-                            video.tier === 'PUBLIC' && (
-                                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest">
-                                    {t.public}
+                        <div className="relative w-full h-full">
+                            <VideoPlayer video={video} variant="thumbnail" />
+                            {video.duration && (
+                                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded z-30">
+                                    {video.duration}
                                 </div>
-                            )
-                        )
+                            )}
+                        </div>
+                    </PremiumWrapper>
+
+                    {/* Access Indicator Badge on Thumbnail */}
+                    {badge && (
+                        <div className={cn(
+                            "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
+                            badge.variant === 'unlocked' && "bg-primary/80 border-primary/20"
+                        )}>
+                            {badge.text}
+                        </div>
                     )}
                 </div>
                 <div className="flex gap-2 relative z-10">

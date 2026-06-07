@@ -18,6 +18,7 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
+import { ThreeCupsGame } from './ThreeCupsGame';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -175,11 +176,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       openSignIn();
       return;
     }
-    setSelectedCup(null);
     setIsCupGameOpen(true);
   };
-
-  const losingBallCup = selectedCup === null ? 1 : ((selectedCup + 1) % 3);
 
   if (!mounted) return <PlayerSkeleton />;
 
@@ -332,47 +330,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       </div>
 
       {isCupGameOpen && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-3xl border border-neutral-300 bg-white p-6 text-center shadow-2xl">
-            <button
-              onClick={() => setIsCupGameOpen(false)}
-              className="absolute right-4 top-4 rounded-full border border-neutral-300 bg-white p-2 text-neutral-700 transition hover:bg-neutral-100"
-              aria-label={language === 'pl' ? 'Zamknij' : 'Close'}
-            >
-              <X size={16} />
-            </button>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">{language === 'pl' ? 'Trzy kubki' : 'Shell game'}</p>
-            <h3 className="mt-2 text-2xl font-black tracking-tight text-neutral-950">
-              {selectedCup === null
-                ? (language === 'pl' ? 'Wybierz kubek z piłeczką' : 'Pick the cup with the ball')
-                : (language === 'pl' ? 'Prawie! Piłeczka była gdzie indziej.' : 'Almost! The ball was somewhere else.')}
-            </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
-              {language === 'pl'
-                ? 'Niby wiadomo, pod którym kubkiem jest piłeczka... ale w tej grze nie da się wygrać.'
-                : 'You think you know where the ball is... but this game cannot be won.'}
-            </p>
-            <div className="mt-8 grid grid-cols-3 gap-3">
-              {[0, 1, 2].map((cup) => (
-                <button
-                  key={cup}
-                  onClick={() => setSelectedCup(cup)}
-                  className="group rounded-2xl border border-neutral-300 bg-neutral-50 p-4 transition hover:-translate-y-1 hover:bg-blue-50"
-                >
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-b-[2rem] rounded-t-lg border-4 border-neutral-900 bg-white text-4xl shadow-lg transition group-hover:shadow-xl">
-                    🥤
-                  </div>
-                  <div className="mt-3 h-6 text-2xl leading-none">
-                    {selectedCup !== null && losingBallCup === cup ? '⚪' : ''}
-                  </div>
-                </button>
-              ))}
-            </div>
-            {selectedCup !== null && (
-              <button onClick={() => setIsCupGameOpen(false)} className="mt-6 rounded-full bg-charcoal px-6 py-2 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-black">{language === 'pl' ? 'Zamknij' : 'Close'}</button>
-            )}
-          </div>
-        </div>
+        <ThreeCupsGame
+          language={language}
+          onClose={() => setIsCupGameOpen(false)}
+        />
       )}
     </section>
   );
