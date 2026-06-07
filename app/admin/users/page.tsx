@@ -9,25 +9,37 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download } from "@/app/components/icons";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Trash2, Mail } from "@/app/components/icons";
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
+import { AdminUserListItem } from "@/lib/services/admin/users-admin.dto";
 
-function formatDate(value: string | Date) {
+function formatDate(value: string | Date | null) {
+  if (!value) return "—";
   return new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [patronFilter, setPatronFilter] = useState("ALL");
+  const [languageFilter, setLanguageFilter] = useState("ALL");
+  const [patronSourceFilter, setPatronSourceFilter] = useState("ALL");
+  const [isDeletedFilter, setIsDeletedFilter] = useState<boolean>(false);
+  const [hasPaymentsFilter, setHasPaymentsFilter] = useState<boolean>(false);
+  const [hasSubscriptionsFilter, setHasSubscriptionsFilter] = useState<boolean>(false);
+  const [orderBy, setOrderBy] = useState<string>("createdAt");
 
   const fetchStats = async () => {
     try {
@@ -41,13 +53,17 @@ export default function AdminUsersPage() {
     }
   };
 
-  const fetchUsers = useCallback(async (p = page, q = searchQuery, r = roleFilter, pat = patronFilter) => {
+  const fetchUsers = useCallback(async (p = page) => {
     setIsLoading(true);
     try {
-      let url = `/api/admin/users?page=${p}&q=${encodeURIComponent(q)}`;
-      if (r !== "ALL") url += `&role=${r}`;
-      if (pat !== "ALL") url += `&isPatron=${pat === "PATRON"}`;
-      url += `&orderBy=createdAt&orderDir=desc`;
+      let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
+      if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
+      if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
+      if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
+      if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
+      if (isDeletedFilter) url += `&isDeleted=true`;
+      if (hasPaymentsFilter) url += `&hasPayments=true`;
+      if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -62,12 +78,12 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, searchQuery, roleFilter, patronFilter]);
+  }, [page, searchQuery, roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy]);
 
   useEffect(() => {
     fetchStats();
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(1);
+  }, [roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy, fetchUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,15 +94,17 @@ export default function AdminUsersPage() {
       let url = `/api/admin/users/export?q=${encodeURIComponent(searchQuery)}`;
       if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
       if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
+      if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
+      if (isDeletedFilter) url += `&isDeleted=true`;
       window.open(url, "_blank");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
+    <div className="min-h-screen bg-muted/20 text-foreground">
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-            <Button variant="ghost" asChild className="-ml-3">
+            <Button variant="ghost" asChild className="-ml-3 h-8 px-2">
               <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
             </Button>
             <Button variant="outline" onClick={exportCsv} size="sm">
@@ -94,172 +112,191 @@ export default function AdminUsersPage() {
             </Button>
         </div>
 
-        <div className="mb-8 rounded-3xl border bg-card p-6 shadow-sm md:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Administracja</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Użytkownicy i Patroni</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Zarządzaj społecznością, weryfikuj statusy patronów i monitoruj aktywność finansową użytkowników.
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Użytkownicy i Patroni</h1>
+          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+            Zarządzaj społecznością, weryfikuj statusy patronów i monitoruj aktywność finansową.
           </p>
         </div>
 
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Wszyscy</p>
-                    <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600"><Heart className="h-6 w-6" /></div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Patroni</p>
-                    <p className="text-2xl font-bold">{stats.patrons}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-green-100 rounded-lg text-green-600"><CreditCard className="h-6 w-6" /></div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Wpłaty</p>
-                    <p className="text-2xl font-bold">{stats.totalPayments}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600"><MessageSquare className="h-6 w-6" /></div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Komentarze</p>
-                    <p className="text-2xl font-bold">{stats.totalComments}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard label="Wszyscy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
+            <StatCard label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
+            <StatCard label="Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="green" />
+            <StatCard label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    placeholder="Szukaj użytkownika..."
-                    className="pl-9"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button type="submit">Szukaj</Button>
-            </form>
-            <div className="flex gap-2">
-                <Select value={roleFilter} onValueChange={(val) => { setRoleFilter(val as string); fetchUsers(1, searchQuery, val as string, patronFilter); }}>
-                    <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Rola" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="ALL">Wszystkie role</SelectItem>
-                        <SelectItem value="ADMIN">Administrator</SelectItem>
-                        <SelectItem value="USER">Użytkownik</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={patronFilter} onValueChange={(val) => { setPatronFilter(val as string); fetchUsers(1, searchQuery, roleFilter, val as string); }}>
-                    <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="ALL">Wszyscy</SelectItem>
-                        <SelectItem value="PATRON">Tylko Patroni</SelectItem>
-                        <SelectItem value="NON_PATRON">Nie-Patroni</SelectItem>
-                    </SelectContent>
-                </Select>
+        <div className="space-y-4 mb-8">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+                <form onSubmit={handleSearch} className="w-full lg:w-1/3 flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="E-mail, nazwa, ID..."
+                        className="pl-9 h-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" size="sm" className="h-9">Szukaj</Button>
+                </form>
+
+                <div className="flex flex-wrap gap-2 items-center flex-1">
+                    <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v || "ALL")}>
+                        <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue placeholder="Rola" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Wszystkie role</SelectItem>
+                            <SelectItem value="ADMIN">Administrator</SelectItem>
+                            <SelectItem value="USER">Użytkownik</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={patronFilter} onValueChange={(v) => setPatronFilter(v || "ALL")}>
+                        <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Wszyscy</SelectItem>
+                            <SelectItem value="PATRON">Tylko Patroni</SelectItem>
+                            <SelectItem value="NON_PATRON">Nie-Patroni</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={languageFilter} onValueChange={(v) => setLanguageFilter(v || "ALL")}>
+                        <SelectTrigger className="w-[100px] h-9 text-xs"><SelectValue placeholder="Język" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Język: Dowolny</SelectItem>
+                            <SelectItem value="pl">Polski (PL)</SelectItem>
+                            <SelectItem value="en">Angielski (EN)</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={orderBy} onValueChange={(v) => setOrderBy(v || "createdAt")}>
+                        <SelectTrigger className="w-[160px] h-9 text-xs">
+                            <div className="flex items-center gap-2"><Filter className="h-3 w-3 opacity-70" /><SelectValue placeholder="Sortuj" /></div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="createdAt">Data dołączenia</SelectItem>
+                            <SelectItem value="patronSince">Od kiedy patron</SelectItem>
+                            <SelectItem value="email">E-mail (alfabetycznie)</SelectItem>
+                            <SelectItem value="referralPoints">Punkty poleceń</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <div className="flex flex-wrap gap-4 items-center bg-background/50 px-3 py-1.5 rounded-md border h-9">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="deleted" checked={isDeletedFilter} onCheckedChange={(v) => setIsDeletedFilter(!!v)} />
+                            <Label htmlFor="deleted" className="text-[10px] font-bold uppercase cursor-pointer">Usunięci</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="payments" checked={hasPaymentsFilter} onCheckedChange={(v) => setHasPaymentsFilter(!!v)} />
+                            <Label htmlFor="payments" className="text-[10px] font-bold uppercase cursor-pointer">Płacący</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="subs" checked={hasSubscriptionsFilter} onCheckedChange={(v) => setHasSubscriptionsFilter(!!v)} />
+                            <Label htmlFor="subs" className="text-[10px] font-bold uppercase cursor-pointer">Follow</Label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Lista użytkowników</CardTitle>
-            <CardDescription>Znaleziono {total} użytkowników.</CardDescription>
+        <Card className="shadow-sm border-0">
+          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <div>
+                <CardTitle className="text-lg flex items-center gap-2">Lista użytkowników</CardTitle>
+                <CardDescription className="text-xs">Znaleziono {total} wyników.</CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto rounded-2xl border">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Użytkownik</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Finanse</TableHead>
-                    <TableHead>Rola</TableHead>
-                    <TableHead>Akcje</TableHead>
-                    <TableHead className="text-right">Dołączył</TableHead>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="text-[10px] uppercase font-bold">Użytkownik</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold">Status Patronatu</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold">Wpłaty & Polecenia</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold">Rola & Język</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold">Akcje</TableHead>
+                    <TableHead className="text-right text-[10px] uppercase font-bold">Rejestracja</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                      <TableRow>
-                          <TableCell colSpan={6} className="py-10 text-center">Ładowanie...</TableCell>
-                      </TableRow>
+                      <TableRow><TableCell colSpan={6} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie listy użytkowników...</TableCell></TableRow>
                   ) : users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={user.isDeleted ? "opacity-50 grayscale bg-muted/20" : ""}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                            <div className="relative h-8 w-8 rounded-full overflow-hidden bg-muted">
+                            <div className="relative h-9 w-9 rounded-full overflow-hidden bg-muted border shrink-0">
                                 {user.imageUrl && <Image src={user.imageUrl} alt={user.name || ""} fill className="object-cover" />}
                             </div>
-                            <Link href={`/admin/users/${user.id}`} className="hover:underline">
-                                <div className="font-medium text-sm">{user.email}</div>
-                                <div className="text-xs text-muted-foreground">{user.name || user.username || "Anonim"}</div>
-                            </Link>
+                            <div className="flex flex-col min-w-0">
+                                <Link href={`/admin/users/${user.id}`} className="font-bold text-sm hover:underline decoration-primary truncate">{user.email}</Link>
+                                <div className="text-[10px] text-muted-foreground truncate">{user.name || user.username || "Bez nazwy"}</div>
+                                {user.isDeleted && <Badge variant="destructive" className="w-fit h-4 text-[8px] mt-1">USUNIĘTY</Badge>}
+                            </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1.5">
+                            {user.isPatron ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200 text-[10px] w-fit">PATRON</Badge>
+                                    <div className="text-[9px] text-muted-foreground">Od: {formatDate(user.patronSince)}</div>
+                                    <div className="text-[8px] uppercase font-bold opacity-60">Źródło: {user.patronSource || "ADMIN"}</div>
+                                </div>
+                            ) : (
+                                <Badge variant="outline" className="text-[10px] w-fit opacity-50">BRAK</Badge>
+                            )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
-                            {user.isPatron ? (
-                                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
-                                    Patron {user.patronSource && `(${user.patronSource})`}
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline">Podstawowy</Badge>
-                            )}
-                            {user.isDeleted && <Badge variant="destructive">Usunięty</Badge>}
+                            <div className="flex gap-2 items-center">
+                                <span className="text-[11px] font-bold">
+                                    {user.paymentTotals?.length > 0 ? (
+                                        user.paymentTotals.map(t => `${(t.totalPaidMinor/100).toFixed(2)} ${t.currency}`).join(', ')
+                                    ) : "0.00 PLN"}
+                                </span>
+                                <Badge variant="secondary" className="h-4 text-[9px]">{user.paymentCount} płatności</Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-muted-foreground font-medium uppercase">Ostatnia: {formatDate(user.lastPaymentAt)}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="h-4 text-[8px]">Ref: {user.referralPoints} pts / {user.referralCount} os.</Badge>
+                                {user.hasSubscriptions && <Badge variant="outline" className="h-4 text-[8px] bg-blue-50 text-blue-700 border-blue-100">FOLLOW</Badge>}
+                            </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-xs font-medium">
-                            {user.normalizedTotal > 0 ? (
-                                <span className="text-green-600">~{user.normalizedTotal.toFixed(2)} PLN</span>
-                            ) : (
-                                <span className="text-muted-foreground">0.00 PLN</span>
-                            )}
+                        <div className="flex flex-col gap-2">
+                            <Badge variant={user.role === "ADMIN" ? "default" : "secondary"} className="text-[9px] w-fit font-mono">
+                                {user.role}
+                            </Badge>
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-semibold uppercase">
+                                <Globe className="h-3 w-3" /> {user.language || 'PL'}
+                            </div>
                         </div>
-                        <div className="text-[10px] text-muted-foreground">Wpłat: {user._count?.payments || 0}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.role === "ADMIN" ? "default" : "secondary"} className="text-[10px]">
-                            {user.role}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                            <UserPatronActions userId={user.id} isPatron={user.isPatron} />
+                            <Button variant="ghost" size="icon" asChild title="Wyślij wiadomość"><Link href={`/admin/emails?to=${user.email}`}><Mail className="h-4 w-4" /></Link></Button>
+                        </div>
                       </TableCell>
-                      <TableCell>
-                        <UserPatronActions userId={user.id} isPatron={user.isPatron} />
+                      <TableCell className="text-right">
+                          <div className="text-[10px] font-medium">{formatDate(user.createdAt)}</div>
+                          <div className="text-[9px] text-muted-foreground italic mt-0.5">Zaktualizowano: {formatDate(user.updatedAt)}</div>
                       </TableCell>
-                      <TableCell className="text-right text-[10px] text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                   {!isLoading && users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Brak użytkowników dla podanego filtra.</TableCell>
+                      <TableCell colSpan={6} className="py-20 text-center text-muted-foreground italic border-b-0">
+                          Brak użytkowników spełniających kryteria wyszukiwania.
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -267,7 +304,7 @@ export default function AdminUsersPage() {
             </div>
 
             {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-6">
+                <div className="flex justify-center items-center gap-4 py-8 border-t bg-muted/10">
                     <Button
                         variant="outline"
                         size="sm"
@@ -276,8 +313,8 @@ export default function AdminUsersPage() {
                     >
                         Poprzednia
                     </Button>
-                    <div className="flex items-center text-sm font-medium">
-                        Strona {page} z {totalPages}
+                    <div className="text-sm font-medium">
+                        Strona <span className="text-primary font-bold">{page}</span> z {totalPages}
                     </div>
                     <Button
                         variant="outline"
@@ -294,4 +331,26 @@ export default function AdminUsersPage() {
       </main>
     </div>
   );
+}
+
+function StatCard({ label, value, icon, color }: { label: string, value: number, icon: React.ReactNode, color: string }) {
+    const colors: any = {
+        blue: "bg-blue-100 text-blue-600 border-blue-200",
+        amber: "bg-amber-100 text-amber-600 border-amber-200",
+        green: "bg-green-100 text-green-600 border-green-200",
+        purple: "bg-purple-100 text-purple-600 border-purple-200"
+    };
+    return (
+        <Card className="shadow-sm border-0">
+            <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                    <div className={`p-2.5 rounded-xl border ${colors[color] || colors.blue}`}>{icon}</div>
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</p>
+                        <p className="text-2xl font-black">{value.toLocaleString()}</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }

@@ -23,8 +23,14 @@ type ResendWebhookPayload = {
 };
 
 export async function POST(req: NextRequest) {
-  // TODO: Implement signature verification if Resend provides a shared secret in the future.
-  // Currently Resend webhooks don't have a standard signature header like Stripe.
+  // Webhook signature verification
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  const receivedSecret = req.headers.get('x-resend-webhook-secret');
+
+  if (secret && receivedSecret !== secret) {
+      logger.warn("[ResendWebhook] Unauthorized access attempt - invalid secret.");
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const payload = (await req.json()) as ResendWebhookPayload;

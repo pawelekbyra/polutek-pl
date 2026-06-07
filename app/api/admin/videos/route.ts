@@ -4,13 +4,14 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
 import { MainCreatorService } from '@/lib/services/main-creator.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 import { handleApiError } from '@/lib/errors';
 import { VideosAdminService } from '@/lib/services/admin/videos-admin.service';
+import { parseVideoQueryParams } from '@/lib/services/admin/admin-query-parser';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,14 +45,7 @@ export async function GET(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
   if (response) return response;
 
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get('q') || undefined;
-  const status = (searchParams.get('status') as any === 'ALL' ? undefined : searchParams.get('status') as VideoStatus) || undefined;
-  const tier = (searchParams.get('tier') as any === 'ALL' ? undefined : searchParams.get('tier') as AccessTier) || undefined;
-  const page = parseInt(searchParams.get('page') || '1');
-  const pageSize = parseInt(searchParams.get('pageSize') || '20');
-  const orderBy = searchParams.get('orderBy') || 'createdAt';
-  const orderDir = (searchParams.get('orderDir') as 'asc' | 'desc') || 'desc';
+  const options = parseVideoQueryParams(req);
 
   try {
     const mainCreator = flags.multiCreator
@@ -60,15 +54,7 @@ export async function GET(req: NextRequest) {
           MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
         );
 
-    const result = await VideosAdminService.getVideos({
-      query,
-      status,
-      tier,
-      page,
-      pageSize,
-      orderBy,
-      orderDir
-    }, mainCreator?.id);
+    const result = await VideosAdminService.getVideos(options, mainCreator?.id);
 
     return NextResponse.json(result);
   } catch (error: unknown) {

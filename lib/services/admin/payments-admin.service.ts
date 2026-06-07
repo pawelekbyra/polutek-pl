@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, PaymentStatus } from '@prisma/client';
+import { AdminPaymentListItem, AdminPaymentsListResponse, PAYMENT_SORT_FIELDS, PaymentSortField } from './payments-admin.dto';
 
 export interface PaymentFilterOptions {
   userId?: string;
@@ -17,7 +18,7 @@ export interface PaymentFilterOptions {
 }
 
 export class PaymentsAdminService {
-  static async getPayments(options: PaymentFilterOptions) {
+  static async getPayments(options: PaymentFilterOptions): Promise<AdminPaymentsListResponse> {
     const {
       userId,
       creatorId,
@@ -56,7 +57,7 @@ export class PaymentsAdminService {
       ]
     };
 
-    const [total, items] = await Promise.all([
+    const [total, items, financialStats] = await Promise.all([
       prisma.payment.count({ where }),
       prisma.payment.findMany({
         where,
@@ -81,15 +82,37 @@ export class PaymentsAdminService {
         orderBy: this.getOrderBy(orderBy, orderDir),
         skip,
         take: pageSize,
-      })
+      }),
+      this.getFinancialStats()
     ]);
 
+    const mappedItems: AdminPaymentListItem[] = items.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        email: p.user.email,
+        userName: p.user.name || p.user.username,
+        amountMinor: p.amountMinor,
+        refundedAmountMinor: p.refundedAmountMinor,
+        currency: p.currency,
+        status: p.status,
+        stripeIntentId: p.stripeIntentId,
+        stripeSessionId: p.stripeSessionId,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        metadata: p.metadata
+    }));
+
     return {
-      items,
+      items: mappedItems,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
+      summary: {
+          totalSucceeded: financialStats.succeeded.map(s => ({ currency: s.currency, amountMinor: s.totalAmount })),
+          totalRefunded: financialStats.refunded.map(r => ({ currency: r.currency, amountMinor: r.totalAmount })),
+          countByStatus: financialStats.statusCounts.reduce((acc, curr) => ({ ...acc, [curr.status]: curr.count }), {})
+      }
     };
   }
 
@@ -137,8 +160,7 @@ export class PaymentsAdminService {
   }
 
   private static getOrderBy(field: string, dir: 'asc' | 'desc'): Prisma.PaymentOrderByWithRelationInput {
-    const whitelist = ['createdAt', 'updatedAt', 'amountMinor', 'status'];
-    if (!whitelist.includes(field)) {
+    if (!PAYMENT_SORT_FIELDS.includes(field as PaymentSortField)) {
       return { createdAt: 'desc' };
     }
     return { [field]: dir };

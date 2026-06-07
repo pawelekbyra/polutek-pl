@@ -583,27 +583,36 @@ model EmailEvent {
 }
 
 model VideoPlaybackSession {
-  id              String     @id @default(uuid())
+  id              String   @id @default(uuid())
   videoId         String
   userId          String?
   ipHash          String?
   userAgentHash   String?
-  sourceKind      String
+  sourceKind      String?
+  provider        String?
   accessTier      AccessTier
-  countedAsView   Boolean    @default(false)
-  isAdminPreview  Boolean    @default(false)
-  totalWatchMs    Int        @default(0)
-  maxProgressMs   Int?
+  startedAt       DateTime @default(now())
+  firstPlayAt     DateTime?
+  lastHeartbeatAt DateTime? @default(now())
+  endedAt         DateTime?
+  totalWatchMs    Int      @default(0)
+  maxProgressMs   Int      @default(0)
   durationMs      Int?
-  lastHeartbeatAt DateTime   @default(now())
-  createdAt       DateTime   @default(now())
+  countedAsView   Boolean  @default(false)
+  isAdminPreview  Boolean  @default(false)
+  errorCode       String?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   video  Video                @relation(fields: [videoId], references: [id], onDelete: Cascade)
   events VideoPlaybackEvent[]
 
   @@index([videoId])
   @@index([userId])
-  @@index([createdAt])
+  @@index([countedAsView])
+  @@index([startedAt])
+  @@index([isAdminPreview])
 }
 
 model VideoPlaybackEvent {
@@ -614,8 +623,15 @@ model VideoPlaybackEvent {
   type         String
   positionMs   Int?
   durationMs   Int?
+  bufferedMs   Int?
+  volume       Float?
+  muted        Boolean?
+  fullscreen   Boolean?
   errorCode    String?
   errorMessage String?
+  provider     String?
+  sourceKind   String?
+  metadata     Json?
   createdAt    DateTime @default(now())
 
   session VideoPlaybackSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
@@ -623,6 +639,7 @@ model VideoPlaybackEvent {
 
   @@index([sessionId])
   @@index([videoId])
+  @@index([userId])
   @@index([type])
   @@index([createdAt])
 }

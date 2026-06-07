@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, SystemRole, PatronGrantSource } from '@prisma/client';
 import { normalizePaymentTotals } from '../user-access.service';
+import { AdminUserListItem, AdminUsersListResponse, USER_SORT_FIELDS, UserSortField } from './users-admin.dto';
 
 export interface UserFilterOptions {
   query?: string;
@@ -8,6 +9,9 @@ export interface UserFilterOptions {
   isPatron?: boolean;
   patronSource?: PatronGrantSource;
   isDeleted?: boolean;
+  language?: string;
+  hasPayments?: boolean;
+  hasSubscriptions?: boolean;
   page?: number;
   pageSize?: number;
   orderBy?: string;
@@ -15,13 +19,16 @@ export interface UserFilterOptions {
 }
 
 export class UsersAdminService {
-  static async getUsers(options: UserFilterOptions) {
+  static async getUsers(options: UserFilterOptions): Promise<AdminUsersListResponse> {
     const {
       query,
       role,
       isPatron,
       patronSource,
       isDeleted,
+      language,
+      hasPayments,
+      hasSubscriptions,
       page = 1,
       pageSize = 20,
       orderBy = 'createdAt',
@@ -43,6 +50,9 @@ export class UsersAdminService {
         isPatron !== undefined ? { isPatron } : {},
         patronSource ? { patronSource } : {},
         isDeleted !== undefined ? { isDeleted } : {},
+        language ? { language } : {},
+        hasPayments ? { payments: { some: {} } } : {},
+        hasSubscriptions ? { subscriptions: { some: {} } } : {},
       ]
     };
 
@@ -52,12 +62,19 @@ export class UsersAdminService {
         where,
         include: {
           paymentTotals: true,
+          subscriptions: { take: 1 },
           _count: {
             select: {
               comments: true,
               payments: true,
-              referrals: true
+              referrals: true,
+              subscriptions: true
             }
+          },
+          payments: {
+              where: { status: 'SUCCEEDED' },
+              orderBy: { createdAt: 'desc' },
+              take: 1
           }
         },
         orderBy: this.getOrderBy(orderBy, orderDir),
@@ -66,11 +83,35 @@ export class UsersAdminService {
       })
     ]);
 
+    const mappedItems: AdminUserListItem[] = items.map(user => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        username: user.username,
+        imageUrl: user.imageUrl,
+        language: user.language,
+        role: user.role,
+        isDeleted: user.isDeleted,
+        isPatron: user.isPatron,
+        patronSince: user.patronSince?.toISOString() || null,
+        patronSource: user.patronSource,
+        hasSubscriptions: user._count.subscriptions > 0,
+        paymentCount: user._count.payments,
+        paymentTotals: user.paymentTotals.map(pt => ({
+            currency: pt.currency,
+            totalPaidMinor: pt.amountMinor,
+            // Refund logic would need more complex join or pre-calculation
+            refundedAmountMinor: 0
+        })),
+        lastPaymentAt: user.payments[0]?.createdAt.toISOString() || null,
+        referralPoints: user.referralPoints,
+        referralCount: user.referralCount,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+    }));
+
     return {
-      items: items.map(user => ({
-        ...user,
-        normalizedTotal: normalizePaymentTotals(user.paymentTotals)
-      })),
+      items: mappedItems,
       total,
       page,
       pageSize,
@@ -114,16 +155,7 @@ export class UsersAdminService {
   }
 
   private static getOrderBy(field: string, dir: 'asc' | 'desc'): Prisma.UserOrderByWithRelationInput {
-    const whitelist = [
-      'createdAt',
-      'updatedAt',
-      'email',
-      'patronSince',
-      'referralPoints',
-      'referralCount'
-    ];
-
-    if (!whitelist.includes(field)) {
+    if (!USER_SORT_FIELDS.includes(field as UserSortField)) {
       return { createdAt: 'desc' };
     }
 
