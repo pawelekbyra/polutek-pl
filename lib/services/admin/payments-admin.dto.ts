@@ -11,7 +11,7 @@ export type AdminPaymentListItem = {
   stripeSessionId: string | null;
   createdAt: string;
   updatedAt: string;
-  metadata?: any;
+  metadata?: unknown;
   creator?: {
     id: string;
     name: string | null;
