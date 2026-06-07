@@ -18,7 +18,10 @@ export class CommentReactionService {
 
       await tx.comment.update({
         where: { id: commentId },
-        data: { likesCount: { increment: 1 } }
+        data: {
+          likesCount: { increment: 1 },
+          score: { increment: 1 }
+        }
       });
 
       return { liked: true };
@@ -37,10 +40,20 @@ export class CommentReactionService {
 
       await tx.commentReaction.delete({ where: { id: existing.id } });
 
-      await tx.comment.update({
-        where: { id: commentId },
-        data: { likesCount: { decrement: 1 } }
+      const comment = await tx.comment.findUnique({
+          where: { id: commentId },
+          select: { likesCount: true, score: true }
       });
+
+      if (comment) {
+          await tx.comment.update({
+            where: { id: commentId },
+            data: {
+                likesCount: comment.likesCount > 0 ? { decrement: 1 } : 0,
+                score: comment.score > 0 ? { decrement: 1 } : 0
+            }
+          });
+      }
 
       return { liked: false };
     });

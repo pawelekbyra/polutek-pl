@@ -131,39 +131,20 @@ export class UserProfileService {
           select: { id: true, role: true, email: true }
         });
 
-        // If email is taken by a DIFFERENT user ID, we have a conflict.
-        // This often happens during migrations or if a user's Clerk ID changed.
-        if (existingUserByEmail && existingUserByEmail.id !== id) {
-          logger.warn(`[UserProfileService.syncUser] Email conflict: ${email} is owned by ${existingUserByEmail.id}, but Clerk says it should be ${id}. Attempting to resolve by prioritizing new Clerk ID.`);
+        const isEmailConflict = existingUserByEmail && existingUserByEmail.id !== id;
 
-          // To safely allow the new ID to take over this email, we must "free" the email from the old record.
-          // We append a suffix to the old record's email.
+        // 1. If email is taken by a DIFFERENT user ID, we have a conflict.
+        // Free the email from the old record.
+        if (isEmailConflict) {
+          logger.warn(`[UserProfileService.syncUser] Email conflict: ${email} is owned by ${existingUserByEmail.id}. Attempting to resolve.`);
           await tx.user.update({
             where: { id: existingUserByEmail.id },
             data: { email: `${existingUserByEmail.email}_stale_${Date.now()}` }
           });
-
-          logger.info(`[METRIC] user.sync.email_conflict_resolved`, {
-            metric: 'user.sync.email_conflict_resolved',
-            email,
-            oldId: existingUserByEmail.id,
-            newId: id
-          });
-
-          // Re-link comments from the old stale user to the new one
-          const movedComments = await tx.comment.updateMany({
-            where: { authorId: existingUserByEmail.id },
-            data: { authorId: id }
-          });
-
-          if (movedComments.count > 0) {
-            logger.info(`[UserProfileService.syncUser] Re-linked ${movedComments.count} comments from ${existingUserByEmail.id} to ${id}`);
-          }
         }
 
-        // Runtime admin access is based on immutable Clerk ID allowlist or an existing DB role.
+        // 2. Upsert the target user record BEFORE repointing related records to ensure ID exists
         let targetRole: 'ADMIN' | 'USER' = 'USER';
-
         if (UserAdminService.isConfiguredAdmin(id)) {
           targetRole = 'ADMIN';
         } else if (existingUserById) {
@@ -206,15 +187,71 @@ export class UserProfileService {
           }
         });
 
+        // 3. If there was a conflict, repoint ALL related records from old ID to new ID
+        if (isEmailConflict) {
+          const oldId = existingUserByEmail.id;
+
+          // Comments
+          const movedComments = await tx.comment.updateMany({
+            where: { authorId: oldId },
+            data: { authorId: id }
+          });
+
+          // Comment Reactions - avoid unique constraint violations
+          const oldReactions = await tx.commentReaction.findMany({ where: { userId: oldId } });
+          for (const reaction of oldReactions) {
+              await tx.commentReaction.upsert({
+                  where: { userId_commentId: { userId: id, commentId: reaction.commentId } },
+                  update: {}, // Keep existing new reaction if any
+                  create: { userId: id, commentId: reaction.commentId, type: reaction.type, createdAt: reaction.createdAt }
+              });
+          }
+          await tx.commentReaction.deleteMany({ where: { userId: oldId } });
+
+          // Comment Reports - avoid unique constraint violations
+          const oldReports = await tx.commentReport.findMany({ where: { reporterId: oldId } });
+          for (const report of oldReports) {
+              await tx.commentReport.upsert({
+                  where: { commentId_reporterId: { commentId: report.commentId, reporterId: id } },
+                  update: {},
+                  create: {
+                      commentId: report.commentId,
+                      reporterId: id,
+                      reason: report.reason,
+                      note: report.note,
+                      status: report.status,
+                      createdAt: report.createdAt
+                  }
+              });
+          }
+          await tx.commentReport.deleteMany({ where: { reporterId: oldId } });
+
+          // Legacy Comment Likes/Dislikes
+          await tx.commentLike.deleteMany({
+              where: { userId: id, commentId: { in: (await tx.commentLike.findMany({ where: { userId: oldId }, select: { commentId: true } })).map(l => l.commentId) } }
+          });
+          await tx.commentLike.updateMany({ where: { userId: oldId }, data: { userId: id } });
+
+          await tx.commentDislike.deleteMany({
+              where: { userId: id, commentId: { in: (await tx.commentDislike.findMany({ where: { userId: oldId }, select: { commentId: true } })).map(d => d.commentId) } }
+          });
+          await tx.commentDislike.updateMany({ where: { userId: oldId }, data: { userId: id } });
+
+          // Audit Logs
+          await tx.auditLog.updateMany({ where: { actorUserId: oldId }, data: { actorUserId: id } });
+
+          logger.info(`[UserProfileService.syncUser] Merged records from ${oldId} to ${id}`, {
+              movedComments: movedComments.count,
+              email
+          });
+        }
+
         return user;
-      }, { timeout: 15000 });
+      }, { timeout: 30000 });
     } catch (err: unknown) {
       if (isPrismaErrorCode(err, 'P2002')) {
-        // Double-check if it's already there (parallel request)
         const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id } });
         if (userCreatedByParallelRequest) return userCreatedByParallelRequest;
-
-        // If it's an email conflict that survived our pre-check (highly unlikely), try one more time to find it
         const userWithEmail = await prisma.user.findUnique({ where: { email } });
         if (userWithEmail && userWithEmail.id === id) return userWithEmail;
       }

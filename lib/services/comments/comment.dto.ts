@@ -1,11 +1,21 @@
-import { CommentStatus } from '@prisma/client';
+export type CommentStatusDto = 'VISIBLE' | 'HELD_FOR_REVIEW' | 'HIDDEN' | 'DELETED';
+
+export type CommentDeletedReasonDto = 'AUTHOR_DELETED' | 'MODERATOR_DELETED' | 'SPAM' | 'ABUSE' | 'OTHER';
+
+export type CommentReportReasonDto = 'SPAM' | 'HARASSMENT' | 'HATE' | 'NSFW' | 'SPOILER' | 'OTHER';
+
+export type CommentReactionDto = 'LIKE';
+
+export type CommentAuthorBadgeDto = 'ADMIN' | 'PATRON' | 'AUTHOR';
+
+export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN' | 'PATRON';
 
 export type CommentAuthorDto = {
   id: string;
   displayName: string;
   username: string | null;
   imageUrl: string | null;
-  badges: Array<"ADMIN" | "PATRON" | "AUTHOR">;
+  badges: CommentAuthorBadgeDto[];
 };
 
 export type CommentDto = {
@@ -14,18 +24,19 @@ export type CommentDto = {
   parentId: string | null;
   text: string | null;
   imageUrl: string | null;
-  status: CommentStatus;
+  status: CommentStatusDto;
   author: CommentAuthorDto | null;
   createdAt: string;
   updatedAt: string;
   editedAt: string | null;
   deletedAt: string | null;
-  deletedReason: string | null;
+  deletedReason: CommentDeletedReasonDto | null;
   pinnedAt: string | null;
   likesCount: number;
   repliesCount: number;
   reportsCount?: number;
-  viewerReaction: "LIKE" | null;
+  score?: number;
+  viewerReaction: CommentReactionDto | null;
   viewerCanEdit: boolean;
   viewerCanDelete: boolean;
   viewerCanReport: boolean;

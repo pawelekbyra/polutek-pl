@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
-import { CommentReportReason } from "@prisma/client";
+import { CommentReportReasonDto } from "@/lib/services/comments/comment.dto";
+import { useToast } from "@/app/hooks/useToast";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -23,7 +24,7 @@ interface CommentItemProps {
   onDelete: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
   onEdit: (id: string, text: string) => void;
-  onReport: (id: string, reason: string, note?: string) => void;
+  onReport: (id: string, reason: CommentReportReasonDto, note?: string) => void;
   isPinPending: boolean;
   isReply?: boolean;
 }
@@ -49,6 +50,7 @@ export function CommentItem({
   const [editText, setEditText] = useState(comment.text || "");
   const [showMenu, setShowMenu] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -73,6 +75,34 @@ export function CommentItem({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleHide = async () => {
+    try {
+      const res = await fetch(`/api/admin/comments/${comment.id}/hide`, { method: "POST" });
+      if (res.ok) {
+        toast(language === "pl" ? "Komentarz ukryty." : "Comment hidden.", "success");
+      } else {
+        toast(language === "pl" ? "Błąd ukrywania." : "Error hiding.", "error");
+      }
+    } catch (err) {
+      toast("Error", "error");
+    }
+    setShowMenu(false);
+  };
+
+  const handleRestore = async () => {
+    try {
+      const res = await fetch(`/api/admin/comments/${comment.id}/restore`, { method: "POST" });
+      if (res.ok) {
+        toast(language === "pl" ? "Komentarz przywrócony." : "Comment restored.", "success");
+      } else {
+        toast(language === "pl" ? "Błąd przywracania." : "Error restoring.", "error");
+      }
+    } catch (err) {
+      toast("Error", "error");
+    }
+    setShowMenu(false);
+  };
 
   return (
     <div
@@ -201,13 +231,19 @@ export function CommentItem({
                 )}
 
                 {comment.viewerCanModerate && comment.status === 'VISIBLE' && !isReply && (
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
+                  <button
+                    onClick={handleHide}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
                     <EyeOff size={14} /> {language === "pl" ? "Ukryj" : "Hide"}
                   </button>
                 )}
 
                 {comment.viewerCanModerate && comment.status === 'HIDDEN' && !isReply && (
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
+                  <button
+                    onClick={handleRestore}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
                     <RotateCcw size={14} /> {language === "pl" ? "Przywróć" : "Restore"}
                   </button>
                 )}

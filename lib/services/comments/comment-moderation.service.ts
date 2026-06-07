@@ -63,4 +63,57 @@ export class CommentModerationService {
     await logCommentAction(actorId, 'DELETE', commentId, comment.videoId, { reason, actorId });
     return result;
   }
+
+  static async pinComment(actorUserId: string, commentId: string) {
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { videoId: true, parentId: true, status: true }
+    });
+
+    if (!comment) throw new Error("Comment not found");
+    if (comment.parentId) throw new Error("Cannot pin replies");
+    if (comment.status === 'DELETED' || comment.status === 'HIDDEN') {
+      throw new Error("Cannot pin deleted or hidden comments");
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // Unpin any previous pinned comment for this video
+      await tx.comment.updateMany({
+        where: { videoId: comment.videoId, pinnedAt: { not: null } },
+        data: { pinnedAt: null, pinnedById: null }
+      });
+
+      const updated = await tx.comment.update({
+        where: { id: commentId },
+        data: {
+          pinnedAt: new Date(),
+          pinnedById: actorUserId
+        }
+      });
+
+      await logCommentAction(actorUserId, 'PIN', commentId, updated.videoId);
+      return updated;
+    });
+  }
+
+  static async unpinComment(actorUserId: string, commentId: string) {
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { videoId: true, pinnedAt: true }
+    });
+
+    if (!comment) throw new Error("Comment not found");
+    if (!comment.pinnedAt) return null;
+
+    const updated = await prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        pinnedAt: null,
+        pinnedById: null
+      }
+    });
+
+    await logCommentAction(actorUserId, 'UNPIN', commentId, updated.videoId);
+    return updated;
+  }
 }

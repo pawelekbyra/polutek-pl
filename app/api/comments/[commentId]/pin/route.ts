@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
-import { CommentService } from '@/lib/services/comments/comment.service';
+import { CommentModerationService } from '@/lib/services/comments/comment-moderation.service';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
@@ -33,7 +33,7 @@ export async function POST(
     const canPin = await CommentAccessService.canModerate(userId, comment.videoId);
     if (!canPin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    await CommentService.pinComment(commentId, userId);
+    await CommentModerationService.pinComment(userId, commentId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     scopedLogger.error("[PIN_COMMENT_ERROR]", error);
@@ -63,7 +63,7 @@ export async function DELETE(
     const canUnpin = await CommentAccessService.canModerate(userId, comment.videoId);
     if (!canUnpin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    await CommentService.unpinComment(commentId);
+    await CommentModerationService.unpinComment(userId, commentId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     scopedLogger.error("[UNPIN_COMMENT_ERROR]", error);

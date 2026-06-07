@@ -16,7 +16,7 @@ import { countGraphemes } from '@/lib/utils/graphemes';
 export const dynamic = 'force-dynamic';
 
 const postCommentSchema = z.object({
-  text: z.string().trim().min(1).max(2000).optional(),
+  text: z.string().trim().min(1).optional(),
   parentId: z.string().optional().nullable(),
   imageUrl: z.string().url().refine((url) => isAllowedCommentImageUrl(url), "Zablokowany host obrazka").optional().nullable(),
 }).refine(data => data.text || data.imageUrl, {
@@ -98,10 +98,14 @@ export async function PATCH(
         const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
         if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
-        const result = z.object({ pinned: z.boolean().optional(), text: z.string().trim().min(1).max(2000).optional() }).safeParse(await request.json());
+        const result = z.object({ pinned: z.boolean().optional(), text: z.string().trim().min(1).optional() }).safeParse(await request.json());
         if (!result.success) return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.', errors: result.error.flatten() }, { status: 400 });
 
         const { pinned, text } = result.data;
+
+        if (text && countGraphemes(text) > 2000) {
+            return NextResponse.json({ success: false, message: 'Komentarz jest za długi (max 2000 znaków).' }, { status: 400 });
+        }
 
         const comment = await prisma.comment.findUnique({ where: { id: commentId }, select: { videoId: true } });
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -114,7 +118,13 @@ export async function PATCH(
 
         if (pinned !== undefined) {
             if (!context.canModerate) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-            // ... pinning logic should be in service ...
+
+            if (pinned) {
+                await CommentModerationService.pinComment(localUser.id, commentId);
+            } else {
+                await CommentModerationService.unpinComment(localUser.id, commentId);
+            }
+            return NextResponse.json({ success: true });
         }
 
         if (text !== undefined) {

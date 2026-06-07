@@ -95,12 +95,12 @@ export default function AdminPaymentsListPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                Razem {f.currency}
+                                Suma {f.currency}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-black">{(f.amountMinor / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2 })} {f.currency}</div>
-                            <div className="text-[10px] text-muted-foreground mt-1 font-medium">Status: SUCCEEDED</div>
+                            <div className="text-[10px] text-muted-foreground mt-1 font-medium italic">Filtrowane podsumowanie</div>
                         </CardContent>
                     </Card>
                 ))}
@@ -192,6 +192,7 @@ export default function AdminPaymentsListPage() {
                         <TableHeader>
                             <TableRow className="bg-muted/30 hover:bg-muted/30">
                                 <TableHead className="text-[10px] uppercase font-bold">Użytkownik</TableHead>
+                                <TableHead className="text-[10px] uppercase font-bold">Dla twórcy</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Kwota & Waluta</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Stripe ID</TableHead>
@@ -200,13 +201,12 @@ export default function AdminPaymentsListPage() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={5} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie płatności...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie płatności...</TableCell></TableRow>
                             ) : payments.map((p) => (
                                 <TableRow key={p.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="h-7 w-7 rounded-full overflow-hidden bg-muted relative border shrink-0">
-                                                {/* Image logic could be added if user data included in p */}
                                                 <div className="flex items-center justify-center h-full text-[10px] font-bold uppercase">{p.email[0]}</div>
                                             </div>
                                             <div className="flex flex-col min-w-0">
@@ -214,6 +214,17 @@ export default function AdminPaymentsListPage() {
                                                 <div className="text-[10px] text-muted-foreground truncate">{p.userName || "Anonim"}</div>
                                             </div>
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {p.creator ? (
+                                            <Link href={`/channel/${p.creator.slug}`} className="inline-flex items-center gap-1.5 hover:underline">
+                                                <Badge variant="outline" className="text-[9px] font-bold uppercase py-0 px-1.5 border-amber-200 text-amber-700 bg-amber-50">
+                                                    {p.creator.name}
+                                                </Badge>
+                                            </Link>
+                                        ) : (
+                                            <span className="text-[9px] text-muted-foreground italic">—</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
@@ -245,7 +256,7 @@ export default function AdminPaymentsListPage() {
                                 </TableRow>
                             ))}
                             {!isLoading && payments.length === 0 && (
-                                <TableRow><TableCell colSpan={5} className="py-20 text-center text-muted-foreground italic border-b-0">Brak transakcji spełniających kryteria.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="py-20 text-center text-muted-foreground italic border-b-0">Brak transakcji spełniających kryteria.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
