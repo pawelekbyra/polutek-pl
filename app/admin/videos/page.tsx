@@ -16,6 +16,7 @@ import Navbar from "@/app/components/Navbar";
 import { VideoTable } from "./components/VideoTable";
 import { VideoForm } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import { AdminVideosPageSkeleton, AdminFormSkeleton } from "@/components/skeletons/admin";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -273,7 +274,7 @@ export default function AdminVideosPage() {
   if (isLoading) {
     return (
       <AdminLayoutShell>
-        <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Weryfikacja dostępu...</div>
+        <AdminVideosPageSkeleton />
       </AdminLayoutShell>
     );
   }
@@ -283,7 +284,10 @@ export default function AdminVideosPage() {
       <AdminLayoutShell>
         <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center space-y-4 p-4">
           <div className="text-destructive font-bold text-xl">{error}</div>
-          <Button asChild><Link href="/">Wróć do strony głównej</Link></Button>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => { setError(null); setIsLoading(true); checkAdmin(); }}>Spróbuj ponownie</Button>
+            <Button asChild><Link href="/">Wróć do strony głównej</Link></Button>
+          </div>
         </div>
       </AdminLayoutShell>
     );
@@ -300,7 +304,9 @@ export default function AdminVideosPage() {
   if (isEditing) {
     return (
       <AdminLayoutShell>
+        {isSubmitting && <AdminFormSkeleton />}
         <VideoForm
+          className={isSubmitting ? "hidden" : ""}
           formData={formData}
           setFormData={setFormData}
           formError={formError}

@@ -11,6 +11,7 @@ import { ArrowLeft, User, Heart, CreditCard, MessageSquare, History, Share2, Shi
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { UserPatronActions } from "../UserPatronActions";
+import { AdminUserDetailsSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -43,7 +44,16 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
     fetchUser();
   }, [fetchUser]);
 
-  if (isLoading) return <div className="p-8 text-center">Ładowanie...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+           <AdminUserDetailsSkeleton />
+        </main>
+      </div>
+    );
+  }
   if (error || !user) return <div className="p-8 text-center text-destructive">{error || "Użytkownik nie znaleziony."}</div>;
 
   return (

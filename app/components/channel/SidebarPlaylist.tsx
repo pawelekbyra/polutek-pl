@@ -14,6 +14,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
+import { SidebarPlaylistSkeleton } from '@/components/skeletons';
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -168,17 +169,7 @@ export function SidebarPlaylist({
   };
 
   if (loading || !layout) {
-      return <div className="space-y-4 animate-pulse">
-          {[1,2,3].map(i => (
-              <div key={i} className="flex gap-2 p-1">
-                  <div className="w-[168px] h-[94px] bg-neutral-200 rounded-md" />
-                  <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 bg-neutral-200 rounded w-3/4" />
-                      <div className="h-3 bg-neutral-200 rounded w-1/2" />
-                  </div>
-              </div>
-          ))}
-      </div>;
+      return <SidebarPlaylistSkeleton />;
   }
 
   const searchResultsSection = searchQuery ? (

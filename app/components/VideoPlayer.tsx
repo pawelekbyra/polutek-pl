@@ -6,7 +6,8 @@ import { MediaPlayer, MediaProvider, Poster, type MediaPlayerInstance } from '@v
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { Play, AlertCircle } from './icons';
+import { Play, AlertCircle, RefreshCcw } from './icons';
+import { PlayerSkeleton } from '@/components/skeletons';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -108,23 +109,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     }
 
     // Hydration guard
-    if (!isMounted) return (
-        <div className="relative w-full aspect-video bg-black overflow-hidden flex items-center justify-center cursor-pointer rounded-lg">
-            <Image
-                src={posterUrl}
-                alt={video.title || 'Video poster'}
-                fill
-                className="w-full h-full object-cover opacity-60"
-            />
-            {variant === 'hero' && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                        <Play className="text-white w-8 h-8 ml-1" />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+    if (!isMounted) return <PlayerSkeleton />;
 
     const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
@@ -134,8 +119,18 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             {loadError ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950 text-white p-6 text-center">
                     <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
-                    <p className="font-medium">{loadError}</p>
-                    <p className="text-xs text-white/60 mt-2">Źródło: {videoSourceKind || 'URL wideo'}</p>
+                    <p className="font-medium">Nie udało się przygotować odtwarzania.</p>
+                    <p className="text-xs text-white/60 mt-2 mb-6">Wystąpił błąd podczas ładowania źródła wideo.</p>
+                    <button
+                        onClick={() => {
+                            setLoadError(null);
+                            refreshPlaybackPlan();
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-bold uppercase tracking-widest transition-all"
+                    >
+                        <RefreshCcw size={16} />
+                        Spróbuj ponownie
+                    </button>
                 </div>
             ) : (
                 <MediaPlayer

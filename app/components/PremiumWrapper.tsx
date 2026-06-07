@@ -7,12 +7,15 @@ import { cn } from '@/lib/utils';
 import { Star, Gem, Lock } from './icons';
 import { useLanguage } from './LanguageContext';
 import { PlaybackPlan } from "@/lib/services/playback/playback.service";
+import { AccessTier } from "@prisma/client";
+import { AccessTierDto } from "@/lib/services/comments/comment.dto";
+import { PlayerSkeleton } from "@/components/skeletons";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
   playbackPlan: PlaybackPlan | null;
   isLoading: boolean;
-  effectiveTier: AccessTier;
+  effectiveTier: AccessTierDto;
   refreshPlaybackPlan: () => Promise<void>;
 }
 
@@ -20,7 +23,7 @@ const VideoAccessContext = createContext<VideoAccessContextType>({
   hasAccess: false,
   playbackPlan: null,
   isLoading: true,
-  effectiveTier: "PUBLIC" as AccessTier,
+  effectiveTier: "PUBLIC" as AccessTierDto,
   refreshPlaybackPlan: async () => {},
 });
 
@@ -46,7 +49,7 @@ export default function PremiumWrapper({
   const { userId, isLoaded } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
-  const [dbTier, setDbTier] = useState<AccessTier | null>(null);
+  const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -54,7 +57,7 @@ export default function PremiumWrapper({
     setMounted(true);
   }, []);
 
-  const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTierDto);
+  const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
@@ -118,7 +121,7 @@ export default function PremiumWrapper({
   }, [playbackPlan, checkAccess]);
 
   if (!mounted) {
-    return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;
+    return <PlayerSkeleton />;
   }
 
   const contextValue = {
@@ -143,7 +146,7 @@ export default function PremiumWrapper({
     if (isLoaded && !userId && !isPublic) {
         return <PaywallOverlay requiredTier={effectiveTier} isLoggedIn={false} variant={variant} />;
     }
-    return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;
+    return <PlayerSkeleton />;
   }
 
   return (

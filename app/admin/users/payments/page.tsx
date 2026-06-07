@@ -15,6 +15,7 @@ import { ArrowLeft, CreditCard, Search, Download, Filter, Calendar } from "@/app
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { AdminPaymentListItem, AdminPaymentsListResponse } from "@/lib/services/admin/payments-admin.dto";
+import { AdminPaymentsPageSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -24,6 +25,7 @@ function formatDate(value: string | Date | null) {
 export default function AdminPaymentsListPage() {
   const [payments, setPayments] = useState<AdminPaymentListItem[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -40,6 +42,7 @@ export default function AdminPaymentsListPage() {
 
   const fetchPayments = useCallback(async (p = page) => {
     setIsLoading(true);
+    setError(null);
     try {
       let url = `/api/admin/payments?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
@@ -56,9 +59,13 @@ export default function AdminPaymentsListPage() {
         setTotalPages(data.totalPages);
         setPage(data.page);
         setSummary(data.summary);
+      } else {
+        const err = await res.json();
+        setError(err.error || "Nie udało się pobrać listy płatności.");
       }
     } catch (err) {
       logger.error("Failed to fetch payments", err);
+      setError("Wystąpił błąd połączenia.");
     } finally {
       setIsLoading(false);
     }
@@ -72,6 +79,17 @@ export default function AdminPaymentsListPage() {
     e.preventDefault();
     fetchPayments(1);
   };
+
+  if (isLoading && page === 1 && payments.length === 0) {
+    return (
+      <div className="min-h-screen bg-muted/20 text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+           <AdminPaymentsPageSkeleton />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/20 text-foreground">
@@ -200,7 +218,14 @@ export default function AdminPaymentsListPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {isLoading ? (
+                            {error ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="py-12 text-center text-destructive">
+                                        <p className="font-bold mb-2">{error}</p>
+                                        <Button variant="outline" size="sm" onClick={() => fetchPayments(page)}>Spróbuj ponownie</Button>
+                                    </TableCell>
+                                </TableRow>
+                            ) : isLoading ? (
                                 <TableRow><TableCell colSpan={6} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie płatności...</TableCell></TableRow>
                             ) : payments.map((p) => (
                                 <TableRow key={p.id}>

@@ -152,18 +152,29 @@ export default async function ChannelPage({ params }: { params: { slug: string }
         </div>
 
         {/* VIDEOS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8 py-6">
-          {allVideos.map((video) => (
-            <ChannelVideoCard
-              key={video.id}
-              video={video}
-              isLoggedIn={!!userId}
-              isPatron={userDb?.isPatron}
-              referralPoints={userDb?.referralPoints}
-              role={userDb?.role}
-            />
-          ))}
-        </div>
+        {allVideos.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8 py-6">
+            {allVideos.map((video) => (
+              <ChannelVideoCard
+                key={video.id}
+                video={video}
+                isLoggedIn={!!userId}
+                isPatron={userDb?.isPatron}
+                referralPoints={userDb?.referralPoints}
+                role={userDb?.role}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-20 text-center space-y-4">
+             <div className="text-4xl opacity-20">🎬</div>
+             <h3 className="text-xl font-bold uppercase tracking-tight text-[#0f0f0f]">Ten kanał nie ma jeszcze publicznych filmów</h3>
+             <p className="text-[#606060] max-w-md mx-auto">Wróć tu później lub sprawdź inne kanały na naszej platformie.</p>
+             <Link href="/" className="inline-block mt-4 text-[14px] font-bold uppercase tracking-widest border-b-2 border-[#0f0f0f] pb-1 hover:opacity-70 transition-opacity">
+                Eksploruj platformę
+             </Link>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

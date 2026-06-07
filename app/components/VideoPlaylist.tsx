@@ -45,6 +45,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
   const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [selectedCurrency, setSelectedCurrency] = useState(t.currency);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
@@ -79,7 +80,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
         }
         setMinimums(nextMinimums);
       })
-      .catch((error) => logger.warn('[VideoPlaylist] Failed to fetch payment minimums:', error));
+      .catch((error) => logger.warn('[VideoPlaylist] Failed to fetch payment minimums:', error))
+      .finally(() => setIsInitialLoading(false));
   }, []);
 
   useEffect(() => {
@@ -237,6 +239,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
           onOpenRegulamin={() => setIsRegulaminOpen(true)}
           onOpenPolityka={() => setIsPolitykaOpen(true)}
           isPatron={isPatron}
+          isInitialLoading={isInitialLoading}
         />
 
         <ReferralInfo

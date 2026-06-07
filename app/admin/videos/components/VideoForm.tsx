@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,7 @@ interface VideoFormProps {
   onTitleChange: (val: string) => void;
   onSlugChange: (val: string) => void;
   slugify: (text: string) => string;
+  className?: string;
 }
 
 export function VideoForm({
@@ -56,7 +58,8 @@ export function VideoForm({
   onSubmit,
   onTitleChange,
   onSlugChange,
-  slugify
+  slugify,
+  className
 }: VideoFormProps) {
   const [diagnostics, setDiagnostics] = useState<any[]>([]);
 
@@ -75,7 +78,7 @@ export function VideoForm({
   const detectedSource = useMemo(() => formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null, [formData.videoUrl]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+    <div className={cn("max-w-7xl mx-auto p-4 md:p-8 space-y-8", className)}>
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 gap-4">
           <div className="space-y-1">
             <Button variant="ghost" onClick={onCancel} className="-ml-3 mb-2">
