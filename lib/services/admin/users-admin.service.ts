@@ -60,7 +60,7 @@ export class UsersAdminService {
             }
           }
         },
-        orderBy: { [orderBy]: orderDir },
+        orderBy: this.getOrderBy(orderBy, orderDir),
         skip,
         take: pageSize,
       })
@@ -111,5 +111,22 @@ export class UsersAdminService {
           totalAmount: pt._sum.amountMinor || 0
       }))
     };
+  }
+
+  private static getOrderBy(field: string, dir: 'asc' | 'desc'): Prisma.UserOrderByWithRelationInput {
+    const whitelist = [
+      'createdAt',
+      'updatedAt',
+      'email',
+      'patronSince',
+      'referralPoints',
+      'referralCount'
+    ];
+
+    if (!whitelist.includes(field)) {
+      return { createdAt: 'desc' };
+    }
+
+    return { [field]: dir };
   }
 }

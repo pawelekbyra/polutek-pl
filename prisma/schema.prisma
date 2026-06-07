@@ -591,6 +591,7 @@ model VideoPlaybackSession {
   sourceKind      String
   accessTier      AccessTier
   countedAsView   Boolean    @default(false)
+  isAdminPreview  Boolean    @default(false)
   totalWatchMs    Int        @default(0)
   maxProgressMs   Int?
   durationMs      Int?

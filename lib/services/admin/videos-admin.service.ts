@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { VideoStatus, AccessTier, Prisma } from '@prisma/client';
+import { VideosDiagnosticsService } from './videos-diagnostics.service';
 
 export interface VideoFilterOptions {
   query?: string;
@@ -63,18 +64,47 @@ export class VideosAdminService {
           },
           asset: true
         },
-        orderBy: { [orderBy]: orderDir },
+        orderBy: this.getOrderBy(orderBy, orderDir),
         skip,
         take: pageSize,
       })
     ]);
 
+    const itemsWithDiagnostics = await Promise.all(items.map(async (item) => {
+        const diagnostics = await VideosDiagnosticsService.diagnoseVideo(item.id);
+        return {
+            ...item,
+            diagnostics
+        };
+    }));
+
     return {
-      items,
+      items: itemsWithDiagnostics,
       total,
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize)
     };
+  }
+
+  private static getOrderBy(field: string, dir: 'asc' | 'desc'): Prisma.VideoOrderByWithRelationInput {
+    const whitelist = [
+      'createdAt',
+      'updatedAt',
+      'publishedAt',
+      'title',
+      'views',
+      'likesCount',
+      'dislikesCount',
+      'sidebarOrder',
+      'status',
+      'tier'
+    ];
+
+    if (!whitelist.includes(field)) {
+      return { createdAt: 'desc' };
+    }
+
+    return { [field]: dir };
   }
 }

@@ -5,9 +5,11 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
-import { Plus, ArrowLeft } from "@/app/components/icons";
+import { Plus, ArrowLeft, Search } from "@/app/components/icons";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/app/components/Navbar";
 import { VideoTable, type AdminVideo } from "./components/VideoTable";
 import { VideoForm } from "./components/VideoForm";
@@ -45,24 +47,40 @@ export default function AdminVideosPage() {
     sidebarOrder: 0
   });
 
-  const fetchVideos = useCallback(async () => {
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [tierFilter, setTierFilter] = useState<string>("ALL");
+
+  const fetchVideos = useCallback(async (p = page, q = searchQuery, s = statusFilter, t = tierFilter) => {
     try {
-      const res = await fetch("/api/admin/videos");
-      const data = await res.json() as AdminVideo[];
-      setVideos(data);
+      let url = `/api/admin/videos?page=${p}&q=${encodeURIComponent(q)}`;
+      if (s !== "ALL") url += `&status=${s}`;
+      if (t !== "ALL") url += `&tier=${t}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        setVideos(data.items);
+        setTotal(data.total);
+        setPage(data.page);
+        setTotalPages(data.totalPages);
+      }
     } catch (err) {
       logger.error("Failed to fetch videos", err);
     }
-  }, []);
+  }, [page, searchQuery, statusFilter, tierFilter]);
 
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
     try {
-        await fetchVideos();
+        await fetchVideos(1, searchQuery, statusFilter, tierFilter);
     } finally {
         setIsLoading(false);
     }
-  }, [fetchVideos]);
+  }, [fetchVideos, searchQuery, statusFilter, tierFilter]);
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
@@ -128,12 +146,12 @@ export default function AdminVideosPage() {
       videoUrl: vid.videoUrl,
       thumbnailUrl: vid.thumbnailUrl,
       duration: vid.duration || "",
-      tier: vid.tier,
-      status: vid.status || "PUBLISHED",
+      tier: vid.tier as any,
+      status: (vid.status || "PUBLISHED") as any,
       likesCount: vid.likesCount,
-      dislikesCount: vid.dislikesCount || 0,
+      dislikesCount: (vid as any).dislikesCount || 0,
       views: vid.views,
-      isMainFeatured: vid.isMainFeatured,
+      isMainFeatured: vid.isMainFeatured || false,
       showInSidebar: vid.showInSidebar ?? true,
       sidebarOrder: vid.sidebarOrder || 0
     });
@@ -154,7 +172,7 @@ export default function AdminVideosPage() {
       videoUrl: vid.videoUrl,
       thumbnailUrl: vid.thumbnailUrl,
       duration: vid.duration || "",
-      tier: vid.tier,
+      tier: vid.tier as any,
       status: "DRAFT",
       likesCount: 0,
       dislikesCount: 0,
@@ -201,6 +219,7 @@ export default function AdminVideosPage() {
       description: formData.description?.trim() || null,
       titleEn: formData.titleEn?.trim() || null,
       descriptionEn: formData.descriptionEn?.trim() || null,
+      dislikesCount: (formData as any).dislikesCount || 0
     };
 
     try {
@@ -212,7 +231,7 @@ export default function AdminVideosPage() {
       const data = await res.json();
       if (res.ok) {
         setIsEditing(false);
-        fetchVideos();
+        fetchVideos(page, searchQuery, statusFilter, tierFilter);
       } else {
         setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
       }
@@ -229,7 +248,7 @@ export default function AdminVideosPage() {
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
-              fetchVideos();
+          fetchVideos(page, searchQuery, statusFilter, tierFilter);
               toast("Pomyślnie zarchiwizowano film.", 'success');
           } else {
               const err = await res.json();
@@ -304,16 +323,60 @@ export default function AdminVideosPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu
               </Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link href="/admin/videos/layout">Układ kanału</Link>
+            </Button>
             <Button onClick={handleCreateNew}>
               <Plus className="mr-2 h-4 w-4" /> Nowy Film
             </Button>
           </div>
         </header>
 
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <form onSubmit={(e) => { e.preventDefault(); fetchVideos(1); }} className="flex-1 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    placeholder="Szukaj filmu..."
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button type="submit">Szukaj</Button>
+            </form>
+            <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val || "ALL"); fetchVideos(1, searchQuery, val || "ALL", tierFilter); }}>
+                    <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Wszystkie statusy</SelectItem>
+                        <SelectItem value="PUBLISHED">Opublikowane</SelectItem>
+                        <SelectItem value="DRAFT">Szkice</SelectItem>
+                        <SelectItem value="ARCHIVED">Zarchiwizowane</SelectItem>
+                        <SelectItem value="UNLISTED">Niepubliczne</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={tierFilter} onValueChange={(val) => { setTierFilter(val || "ALL"); fetchVideos(1, searchQuery, statusFilter, val || "ALL"); }}>
+                    <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Poziom" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Wszystkie poziomy</SelectItem>
+                        <SelectItem value="PUBLIC">Publiczne</SelectItem>
+                        <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
+                        <SelectItem value="PATRON">Patroni</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
         <div className="space-y-4 pt-4">
                 <Card>
                     <CardHeader>
                         <CardTitle>Zarządzaj Materiałami</CardTitle>
+                        <CardDescription>Znaleziono {total} filmów.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <VideoTable
@@ -322,6 +385,30 @@ export default function AdminVideosPage() {
                           onDuplicate={handleDuplicate}
                           onDelete={handleDelete}
                         />
+
+                        {totalPages > 1 && (
+                            <div className="flex justify-center gap-2 mt-6">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page === 1}
+                                    onClick={() => fetchVideos(page - 1)}
+                                >
+                                    Poprzednia
+                                </Button>
+                                <div className="flex items-center text-sm font-medium">
+                                    Strona {page} z {totalPages}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page === totalPages}
+                                    onClick={() => fetchVideos(page + 1)}
+                                >
+                                    Następna
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
         </div>

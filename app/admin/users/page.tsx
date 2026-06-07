@@ -47,6 +47,7 @@ export default function AdminUsersPage() {
       let url = `/api/admin/users?page=${p}&q=${encodeURIComponent(q)}`;
       if (r !== "ALL") url += `&role=${r}`;
       if (pat !== "ALL") url += `&isPatron=${pat === "PATRON"}`;
+      url += `&orderBy=createdAt&orderDir=desc`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -74,7 +75,10 @@ export default function AdminUsersPage() {
   };
 
   const exportCsv = () => {
-      window.open("/api/admin/users/export", "_blank");
+      let url = `/api/admin/users/export?q=${encodeURIComponent(searchQuery)}`;
+      if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
+      if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
+      window.open(url, "_blank");
   };
 
   return (

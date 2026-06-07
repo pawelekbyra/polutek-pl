@@ -10,8 +10,28 @@ export async function GET(req: NextRequest) {
   const { response } = await requireAdminForApi("EXPORT_ADMIN_USERS");
   if (response) return response;
 
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get('q') || undefined;
+  const role = (searchParams.get('role') as any) || undefined;
+  const isPatron = searchParams.get('isPatron') === 'true' ? true : searchParams.get('isPatron') === 'false' ? false : undefined;
+
   try {
+    const where: any = {
+        AND: [
+          query ? {
+            OR: [
+              { email: { contains: query, mode: 'insensitive' } },
+              { name: { contains: query, mode: 'insensitive' } },
+              { username: { contains: query, mode: 'insensitive' } },
+            ]
+          } : {},
+          role ? { role } : {},
+          isPatron !== undefined ? { isPatron } : {},
+        ]
+    };
+
     const users = await prisma.user.findMany({
+      where,
       include: {
         paymentTotals: true,
       },

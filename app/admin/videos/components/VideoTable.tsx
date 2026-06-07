@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, Globe, Lock, ShieldCheck, Edit, Plus, Trash2 } from "@/app/components/icons";
+import { Video, Globe, Lock, ShieldCheck, Edit, Plus, Trash2, AlertTriangle } from "@/app/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -10,6 +10,7 @@ import type { InternalVideoDTO } from "@/app/types/video";
 export type AdminVideo = InternalVideoDTO & {
   showInSidebar?: boolean;
   _count?: { videoLikes: number; videoDislikes: number; comments: number };
+  diagnostics?: any[];
 };
 
 interface VideoTableProps {
@@ -56,7 +57,15 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="font-medium">{vid.title}</div>
+                <div className="flex items-center gap-2">
+                    <div className="font-medium">{vid.title}</div>
+                    {vid.diagnostics && vid.diagnostics.length > 0 && (
+                        <Badge variant="destructive" className="h-5 px-1.5 gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span className="text-[10px]">{vid.diagnostics.length}</span>
+                        </Badge>
+                    )}
+                </div>
                 <div className="text-xs text-muted-foreground">/{vid.slug}</div>
               </TableCell>
               <TableCell>
