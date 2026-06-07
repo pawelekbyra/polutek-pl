@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { CommentModerationService } from '@/lib/services/comments/comment-moderation.service';
 import { handleApiError } from '@/lib/errors';
+import { CommentDeletedReason } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,11 +10,12 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { commentId: string } }
 ) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { adminUserId, response } = await requireAdminForApi("DELETE_COMMENT_ADMIN");
+  if (response) return response;
 
   try {
-    await CommentModerationService.softDelete(params.commentId, userId, 'MODERATOR_DELETED');
+    const { reason } = await request.json().catch(() => ({ reason: 'MODERATOR_DELETED' }));
+    await CommentModerationService.softDelete(params.commentId, adminUserId, reason as CommentDeletedReason || 'MODERATOR_DELETED');
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     return handleApiError(error);
