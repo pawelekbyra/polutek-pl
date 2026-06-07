@@ -13,6 +13,7 @@ import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
 import { CommentDto } from "@/lib/services/comments/comment.dto";
 import { useCallback } from "react";
+import { AdminTableSkeleton } from "@/components/skeletons/admin";
 
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
@@ -92,7 +93,16 @@ export default function AdminCommentsPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-10 opacity-50">Ładowanie...</TableCell></TableRow>
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><div className="flex items-center gap-2"><div className="h-6 w-6 rounded-full bg-neutral-100 animate-pulse" /><div className="h-4 w-24 bg-neutral-100 animate-pulse" /></div></TableCell>
+                      <TableCell><div className="h-4 w-48 bg-neutral-100 animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-neutral-100 animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-12 bg-neutral-100 animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-neutral-100 animate-pulse" /></TableCell>
+                      <TableCell><div className="flex justify-end gap-2"><div className="h-8 w-8 bg-neutral-100 animate-pulse" /><div className="h-8 w-8 bg-neutral-100 animate-pulse" /></div></TableCell>
+                    </TableRow>
+                  ))
                 ) : comments.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-10 opacity-50">Brak komentarzy.</TableCell></TableRow>
                 ) : comments.map((comment) => (

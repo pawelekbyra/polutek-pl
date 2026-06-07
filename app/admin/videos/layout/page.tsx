@@ -10,6 +10,7 @@ import { ArrowLeft, GripVertical, Star, Layout, Eye, EyeOff, Save, RefreshCcw } 
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useToast } from "@/app/hooks/useToast";
+import { AdminVideoLayoutSkeleton } from "@/components/skeletons/admin";
 
 export default function ChannelLayoutPage() {
   const [videos, setVideos] = useState<any[]>([]);
@@ -91,7 +92,16 @@ export default function ChannelLayoutPage() {
       }
   };
 
-  if (isLoading) return <div className="p-8 text-center">Ładowanie układu...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+           <AdminVideoLayoutSkeleton />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">

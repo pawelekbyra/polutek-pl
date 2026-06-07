@@ -21,6 +21,7 @@ import VideoPlayer from "@/app/components/VideoPlayer";
 import PremiumWrapper from "@/app/components/PremiumWrapper";
 import { useToast } from "@/app/hooks/useToast";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
+import { AdminVideoDetailsSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -77,8 +78,28 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
       }
   };
 
-  if (isLoading) return <div className="p-8 text-center italic text-muted-foreground animate-pulse">Ładowanie danych filmu...</div>;
-  if (error || !video) return <div className="p-8 text-center text-destructive font-bold">{error || "Film nie znaleziony."}</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-muted/20 text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <AdminVideoDetailsSkeleton />
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !video) {
+    return (
+      <div className="min-h-screen bg-muted/20 text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 text-center py-20">
+          <div className="text-destructive font-bold text-xl mb-4">{error || "Film nie znaleziony."}</div>
+          <Button asChild variant="outline"><Link href="/admin/videos">Wróć do listy</Link></Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/20 text-foreground">

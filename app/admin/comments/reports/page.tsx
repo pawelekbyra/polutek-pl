@@ -97,11 +97,15 @@ export default function AdminCommentReportsPage() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="py-20 text-center italic text-muted-foreground animate-pulse">
-                        Pobieranie zgłoszeń...
-                      </TableCell>
-                    </TableRow>
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><div className="space-y-2"><div className="h-3 w-32 bg-neutral-100 animate-pulse" /><div className="h-10 w-full bg-neutral-100 animate-pulse" /></div></TableCell>
+                        <TableCell><div className="space-y-2"><div className="h-4 w-24 bg-neutral-100 animate-pulse" /><div className="h-3 w-32 bg-neutral-100 animate-pulse" /></div></TableCell>
+                        <TableCell><div className="h-4 w-32 bg-neutral-100 animate-pulse" /></TableCell>
+                        <TableCell><div className="h-5 w-16 bg-neutral-100 animate-pulse" /></TableCell>
+                        <TableCell><div className="flex justify-end gap-2"><div className="h-7 w-20 bg-neutral-100 animate-pulse" /><div className="h-7 w-20 bg-neutral-100 animate-pulse" /></div></TableCell>
+                      </TableRow>
+                    ))
                   ) : reports.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="py-20 text-center text-muted-foreground italic">

@@ -16,6 +16,7 @@ import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { AdminUserListItem } from "@/lib/services/admin/users-admin.dto";
+import { AdminUsersPageSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -25,6 +26,7 @@ function formatDate(value: string | Date | null) {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,6 +57,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async (p = page) => {
     setIsLoading(true);
+    setError(null);
     try {
       let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
@@ -72,9 +75,13 @@ export default function AdminUsersPage() {
         setTotal(data.total);
         setTotalPages(data.totalPages);
         setPage(data.page);
+      } else {
+        const err = await res.json();
+        setError(err.error || "Nie udało się pobrać listy użytkowników.");
       }
     } catch (err) {
       logger.error("Failed to fetch users", err);
+      setError("Wystąpił błąd połączenia.");
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +108,17 @@ export default function AdminUsersPage() {
       if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
       window.open(url, "_blank");
   };
+
+  if (isLoading && page === 1 && users.length === 0) {
+    return (
+      <div className="min-h-screen bg-muted/20 text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+           <AdminUsersPageSkeleton />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/20 text-foreground">
@@ -238,7 +256,14 @@ export default function AdminUsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
+                  {error ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-destructive">
+                        <p className="font-bold mb-2">{error}</p>
+                        <Button variant="outline" size="sm" onClick={() => fetchUsers(page)}>Spróbuj ponownie</Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : isLoading ? (
                       <TableRow><TableCell colSpan={6} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie listy użytkowników...</TableCell></TableRow>
                   ) : users.map((user) => (
                     <TableRow key={user.id} className={user.isDeleted ? "opacity-50 grayscale bg-muted/20" : ""}>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Users, Heart, CreditCard, MessageSquare, TrendingUp, TrendingDown, DollarSign } from "@/app/components/icons";
 import { logger } from "@/lib/logger";
+import { AdminUsersDashboardSkeleton } from "@/components/skeletons/admin";
 
 export default function UserDashboardPage() {
   const [stats, setStats] = useState<any>(null);
@@ -30,7 +31,14 @@ export default function UserDashboardPage() {
   }, []);
 
   if (isLoading) {
-    return <div className="p-8 text-center">Ładowanie statystyk...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <AdminUsersDashboardSkeleton />
+        </main>
+      </div>
+    );
   }
 
   return (

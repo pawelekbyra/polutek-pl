@@ -4,6 +4,7 @@ import React from 'react';
 import { Trophy, Loader2, ChevronDown } from '../icons';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SupportBoxSkeleton } from '@/components/skeletons';
 
 type SupportBoxTranslations = {
   donate: string;
@@ -28,6 +29,7 @@ interface SupportBoxProps {
   onOpenRegulamin: () => void;
   onOpenPolityka: () => void;
   isPatron?: boolean;
+  isInitialLoading?: boolean;
 }
 
 const SupportBox: React.FC<SupportBoxProps> = ({
@@ -47,7 +49,10 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   onOpenRegulamin,
   onOpenPolityka,
   isPatron = false,
+  isInitialLoading = false,
 }) => {
+  if (isInitialLoading) return <SupportBoxSkeleton />;
+
   return (
     <div className={"bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center"}>
       <div className="space-y-4 relative z-10">

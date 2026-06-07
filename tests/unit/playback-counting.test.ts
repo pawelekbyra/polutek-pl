@@ -198,7 +198,7 @@ describe('Playback Events API', () => {
     expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
   });
 
-  it('sanitizes sensitive metadata', async () => {
+  it('sanitizes sensitive metadata comprehensively', async () => {
     (auth as any).mockResolvedValue({ userId: 'user_1' });
     (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
     (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
@@ -215,22 +215,45 @@ describe('Playback Events API', () => {
         type: 'PLAYER_READY',
         sessionId: 'sess_1',
         metadata: {
-            playbackUrl: 'http://secret.com/video.mp4',
-            token: 'secret-token',
-            visibleKey: 'visible-value'
+            mediaUrl: 'http://secret.com/video.mp4',
+            video_url: 'http://secret.com/video.mp4',
+            accessToken: 'secret-token',
+            refreshToken: 'refresh-token',
+            authCookie: 'session=123',
+            authorizationHeader: 'Bearer 123',
+            secretKey: 'top-secret',
+            signature: 'abc-123',
+            playbackUrl: 'http://secret.com/v.mp4',
+            signedUrl: 'http://secret.com/s.mp4',
+            quality: '1080p',
+            droppedFrames: 0,
+            bufferedSeconds: 15,
+            playerVersion: '1.0.0'
         }
       }),
     });
 
     const res = await POST(req, { params: { id: 'vid_1' } });
     expect(res.status).toBe(200);
-    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-            metadata: expect.objectContaining({
-                visibleKey: 'visible-value'
-            })
-        })
-    }));
+
+    const call = (prisma.videoPlaybackEvent.create as any).mock.calls[0][0];
+    const metadata = call.data.metadata;
+
+    expect(metadata.quality).toBe('1080p');
+    expect(metadata.droppedFrames).toBe(0);
+    expect(metadata.bufferedSeconds).toBe(15);
+    expect(metadata.playerVersion).toBe('1.0.0');
+
+    expect(metadata.mediaUrl).toBeUndefined();
+    expect(metadata.video_url).toBeUndefined();
+    expect(metadata.accessToken).toBeUndefined();
+    expect(metadata.refreshToken).toBeUndefined();
+    expect(metadata.authCookie).toBeUndefined();
+    expect(metadata.authorizationHeader).toBeUndefined();
+    expect(metadata.secretKey).toBeUndefined();
+    expect(metadata.signature).toBeUndefined();
+    expect(metadata.playbackUrl).toBeUndefined();
+    expect(metadata.signedUrl).toBeUndefined();
   });
 
   it('throttles HEARTBEAT events within 10 seconds', async () => {

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
+import { PlayerSkeleton } from '@/components/skeletons';
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
@@ -163,9 +164,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   const losingBallCup = selectedCup === null ? 1 : ((selectedCup + 1) % 3);
 
-  if (!mounted) return (
-      <div className="w-full aspect-video bg-black rounded-xl animate-pulse" />
-  );
+  if (!mounted) return <PlayerSkeleton />;
 
   return (
     <section className="bg-transparent">

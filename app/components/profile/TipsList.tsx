@@ -5,7 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { getUserTips } from '@/lib/actions/tips';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { Loader2, Coins } from '../icons';
+import { Loader2, Coins, RefreshCcw } from '../icons';
+import { TipsListSkeleton } from '@/components/skeletons';
 
 type TipListItem = {
   id: string;
@@ -19,28 +20,45 @@ type TipListItem = {
 export default function TipsList() {
   const [tips, setTips] = useState<TipListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const fetchTips = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getUserTips();
+      setTips(data);
+    } catch (error) {
+      logger.error("Error fetching tips:", error);
+      setError("Nie udało się załadować historii wpłat.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
-    async function fetchTips() {
-      try {
-        const data = await getUserTips();
-        setTips(data);
-      } catch (error) {
-        logger.error("Error fetching tips:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     fetchTips();
   }, []);
 
   if (isLoading) {
+    return <TipsListSkeleton />;
+  }
+
+  if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm font-black uppercase tracking-widest opacity-30 italic">Ładowanie historii wpłat...</p>
+      <div className="p-12 text-center space-y-6 bg-red-50 rounded-[2.5rem] border-2 border-dashed border-red-100">
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black uppercase tracking-tight text-red-600">{error}</h3>
+          <button
+            onClick={fetchTips}
+            className="mt-4 flex items-center gap-2 mx-auto px-6 py-2 bg-white hover:bg-neutral-50 rounded-full text-sm font-bold uppercase tracking-widest transition-all border border-red-100 text-red-600"
+          >
+            <RefreshCcw size={16} />
+            Spróbuj ponownie
+          </button>
+        </div>
       </div>
     );
   }
