@@ -6,7 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { CommentReactionService } from '@/lib/services/comments/comment-reaction.service';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { POST as likeComment } from '@/app/api/comments/like/route';
+import { PUT as likeComment } from '@/app/api/comments/[commentId]/reaction/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -31,6 +31,8 @@ vi.mock('@/lib/services/comments/comment-access.service', () => ({
 vi.mock('@/lib/services/comments/comment-reaction.service', () => ({
   CommentReactionService: {
     toggleLike: vi.fn(),
+    like: vi.fn(),
+    unlike: vi.fn(),
   },
 }));
 
@@ -51,20 +53,19 @@ describe('/api/comments/like', () => {
   it('persists likes with the synchronized local user id', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'clerk-user-id', sessionClaims: { email: 'fan@example.com' } } as unknown as Awaited<ReturnType<typeof auth>>);
 
-    vi.mocked(CommentReactionService.toggleLike).mockResolvedValue({ liked: true });
+    vi.mocked(CommentReactionService.like).mockResolvedValue({ liked: true });
 
-    const request = new NextRequest('http://localhost/api/comments/like', {
-      method: 'POST',
-      body: JSON.stringify({ commentId: 'comment-id' }),
+    const request = new NextRequest('http://localhost/api/comments/comment-id/reaction', {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await likeComment(request);
+    const response = await likeComment(request, { params: { commentId: 'comment-id' } } as any);
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ success: true, liked: true, disliked: false });
+    expect(body).toEqual({ success: true, liked: true });
     expect(UserService.getOrCreateUserFromAuth).toHaveBeenCalledWith('clerk-user-id', { email: 'fan@example.com' });
-    expect(CommentReactionService.toggleLike).toHaveBeenCalledWith('local-user-id', 'comment-id');
+    expect(CommentReactionService.like).toHaveBeenCalledWith('local-user-id', 'comment-id');
   });
 });

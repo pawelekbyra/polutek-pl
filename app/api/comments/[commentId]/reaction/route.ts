@@ -29,7 +29,7 @@ export async function PUT(
       return NextResponse.json({ success: false, message: decision.reason }, { status: 403 });
     }
 
-    const result = await CommentReactionService.toggleLike(localUser.id, commentId);
+    const result = await CommentReactionService.like(localUser.id, commentId);
     return NextResponse.json({ success: true, liked: result.liked });
   } catch (error: unknown) {
     scopedLogger.error('[COMMENT_REACTION_PUT_ERROR]', error);
@@ -41,6 +41,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { commentId: string } }
 ) {
+  const requestId = getCorrelationId();
+  const scopedLogger = createScopedLogger(requestId);
   const { userId, sessionClaims } = await auth();
   if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
@@ -50,11 +52,15 @@ export async function DELETE(
     const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
     if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
-    // In this toggle implementation, DELETE could also just toggle off if it's already liked
-    // But let's just make it simple and call toggleLike which handles both
-    const result = await CommentReactionService.toggleLike(localUser.id, commentId);
+    const decision = await CommentAccessService.canReact(userId, commentId);
+    if (!decision.allowed) {
+      return NextResponse.json({ success: false, message: decision.reason }, { status: 403 });
+    }
+
+    const result = await CommentReactionService.unlike(localUser.id, commentId);
     return NextResponse.json({ success: true, liked: result.liked });
   } catch (error: unknown) {
+    scopedLogger.error('[COMMENT_REACTION_DELETE_ERROR]', error);
     return handleApiError(error);
   }
 }

@@ -11,24 +11,27 @@ export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
 
 type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentAuthorSelect }>;
 
+import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
 
   const badges: Array<"ADMIN" | "PATRON" | "AUTHOR"> = [];
   if (author.role === 'ADMIN') badges.push("ADMIN");
   if (author.isPatron) badges.push("PATRON");
+  if (videoCreatorId && author.id === videoCreatorId) badges.push("AUTHOR");
 
-  // If we have a videoCreatorId, we can check if this author is the video author
-  // This might need more logic if we want to show 'AUTHOR' badge
-  // For now, let's just return the basic info as requested in DTO
+  const rawName = author.name?.trim();
+  const name = rawName && !isGeneratedClerkUsername(rawName) ? rawName : null;
+  const rawUsername = author.username?.trim();
+  const username = rawUsername && !isGeneratedClerkUsername(rawUsername) ? rawUsername : null;
+  const displayName = name || username || "Użytkownik";
 
   return {
     id: author.id,
-    name: author.name,
+    displayName,
     username: author.username,
     imageUrl: author.imageUrl,
-    isPatron: author.isPatron,
-    role: author.role,
     badges,
   };
 }

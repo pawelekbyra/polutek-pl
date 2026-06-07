@@ -15,10 +15,17 @@ export class CommentService {
     limit: number = 20
   ): Promise<{ comments: CommentDto[], totalCount: number, nextCursor: string | null }> {
 
+    const [video, canModerate] = await Promise.all([
+      prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),
+      CommentAccessService.canModerate(userId, videoId)
+    ]);
+
+    const videoCreatorId = video?.creator?.userId || null;
+
     const where: Prisma.CommentWhereInput = {
       videoId,
       parentId: null,
-      status: { not: CommentStatus.HIDDEN }
+      status: canModerate ? undefined : { not: CommentStatus.HIDDEN }
     };
 
     const totalCount = await prisma.comment.count({ where });
@@ -45,18 +52,20 @@ export class CommentService {
       include: {
         author: { select: publicCommentAuthorSelect },
         replies: {
-          where: { status: { not: CommentStatus.HIDDEN } },
+          where: canModerate ? undefined : { status: { not: CommentStatus.HIDDEN } },
           take: 3,
           orderBy: { createdAt: 'asc' },
           include: {
-            author: { select: publicCommentAuthorSelect }
+            author: { select: publicCommentAuthorSelect },
+            reactions: userId ? { where: { userId } } : false
           }
         },
         reactions: userId ? { where: { userId } } : false
       }
     });
 
-    const mappedComments: CommentDto[] = comments.map(c => this.mapToDto(c, userId));
+    const context = { userId, canModerate, videoCreatorId };
+    const mappedComments: CommentDto[] = comments.map(c => this.mapToDto(c, context));
 
     return {
       comments: mappedComments,
@@ -65,16 +74,21 @@ export class CommentService {
     };
   }
 
-  static mapToDto(comment: any, userId: string | null): CommentDto {
+  static mapToDto(comment: any, context: { userId: string | null, canModerate: boolean, videoCreatorId: string | null }): CommentDto {
+    const { userId, canModerate, videoCreatorId } = context;
     const isDeleted = comment.status === CommentStatus.DELETED;
-    const author = isDeleted ? null : toPublicCommentAuthor(comment.author);
+    const isHidden = comment.status === CommentStatus.HIDDEN;
+
+    // Non-moderators don't see hidden comments or text of deleted ones
+    const shouldHideContent = (isHidden && !canModerate) || (isDeleted && !canModerate);
+    const author = (isDeleted && !canModerate) ? null : toPublicCommentAuthor(comment.author, videoCreatorId);
 
     return {
       id: comment.id,
       videoId: comment.videoId,
       parentId: comment.parentId,
-      text: isDeleted ? null : comment.text,
-      imageUrl: isDeleted ? null : comment.imageUrl,
+      text: shouldHideContent ? null : comment.text,
+      imageUrl: shouldHideContent ? null : comment.imageUrl,
       status: comment.status,
       author: author as CommentAuthorDto | null,
       createdAt: comment.createdAt.toISOString(),
@@ -85,24 +99,41 @@ export class CommentService {
       pinnedAt: comment.pinnedAt?.toISOString() || null,
       likesCount: comment.likesCount,
       repliesCount: comment.repliesCount,
-      reportsCount: comment.reportsCount,
+      reportsCount: canModerate ? comment.reportsCount : undefined,
       viewerReaction: comment.reactions?.[0]?.type || null,
-      viewerCanEdit: userId === comment.authorId && !isDeleted,
-      viewerCanDelete: userId === comment.authorId && !isDeleted,
-      viewerCanReport: !!userId && userId !== comment.authorId,
-      viewerCanModerate: false, // Set this based on permissions elsewhere if needed
-      repliesPreview: comment.replies?.map((r: any) => this.mapToDto(r, userId)) || []
+      viewerCanEdit: userId === comment.authorId && !isDeleted && !isHidden,
+      viewerCanDelete: (userId === comment.authorId && !isDeleted) || canModerate,
+      viewerCanReport: !!userId && userId !== comment.authorId && !isDeleted && !isHidden,
+      viewerCanModerate: canModerate,
+      viewerCanPin: canModerate && !comment.parentId,
+      isPinned: !!comment.pinnedAt,
+      repliesPreview: comment.replies?.map((r: any) => this.mapToDto(r, context)) || []
     };
   }
 
   static async createComment(userId: string, videoId: string, text: string, parentId?: string, imageUrl?: string) {
+    let finalParentId = parentId || null;
+
+    if (parentId) {
+      const parent = await prisma.comment.findUnique({
+        where: { id: parentId },
+        select: { id: true, parentId: true, videoId: true }
+      });
+      if (!parent || parent.videoId !== videoId) throw new Error("Invalid parent comment");
+
+      // Enforce one-level nesting: if parent is a reply, attach to its parent instead
+      if (parent.parentId) {
+        finalParentId = parent.parentId;
+      }
+    }
+
     return await prisma.$transaction(async (tx) => {
       const comment = await tx.comment.create({
         data: {
           authorId: userId,
           videoId,
           text,
-          parentId,
+          parentId: finalParentId,
           imageUrl,
           status: CommentStatus.VISIBLE
         },
@@ -111,14 +142,14 @@ export class CommentService {
         }
       });
 
-      if (parentId) {
+      if (finalParentId) {
         await tx.comment.update({
-          where: { id: parentId },
+          where: { id: finalParentId },
           data: { repliesCount: { increment: 1 } }
         });
       }
 
-      await logCommentAction(userId, 'CREATE', comment.id, videoId, { parentId });
+      await logCommentAction(userId, 'CREATE', comment.id, videoId, { parentId: finalParentId });
 
       return comment;
     });

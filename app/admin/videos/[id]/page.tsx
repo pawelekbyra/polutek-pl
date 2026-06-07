@@ -56,10 +56,14 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
 
   const handleAction = async (action: string) => {
       try {
-          const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+          const isFullUrl = action.startsWith('comments/');
+          const url = isFullUrl ? `/api/admin/${action}` : `/api/admin/videos/${params.id}/actions`;
+          const body = isFullUrl ? {} : { action };
+
+          const res = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action })
+              body: JSON.stringify(body)
           });
           if (res.ok) {
               toast(`Akcja ${action} wykonana pomyślnie.`, 'success');
@@ -366,8 +370,12 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                                           <p className="text-sm leading-relaxed mb-3">{comment.text || <span className="italic opacity-50">Treść usunięta</span>}</p>
 
                                           <div className="flex gap-2">
-                                            <Button variant="ghost" size="sm" className="h-7 text-[10px]">Ukryj</Button>
-                                            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-red-600">Usuń</Button>
+                                            {comment.status === 'VISIBLE' ? (
+                                                <Button onClick={() => handleAction(`comments/${comment.id}/hide`)} variant="ghost" size="sm" className="h-7 text-[10px]">Ukryj</Button>
+                                            ) : (
+                                                <Button onClick={() => handleAction(`comments/${comment.id}/restore`)} variant="ghost" size="sm" className="h-7 text-[10px]">Przywróć</Button>
+                                            )}
+                                            <Button onClick={() => handleAction(`comments/${comment.id}/delete`)} variant="ghost" size="sm" className="h-7 text-[10px] text-red-600">Usuń</Button>
                                             <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
                                                 <Link href={`/watch/${video.slug}#comment-${comment.id}`} target="_blank">Pokaż w serwisie</Link>
                                             </Button>

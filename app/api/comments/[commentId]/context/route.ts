@@ -33,11 +33,18 @@ export async function GET(
     const canView = await CommentAccessService.canViewComments(userId, comment.videoId);
     if (!canView) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    const [video, canModerate] = await Promise.all([
+        prisma.video.findUnique({ where: { id: comment.videoId }, select: { creator: { select: { userId: true } } } }),
+        CommentAccessService.canModerate(userId, comment.videoId)
+    ]);
+    const videoCreatorId = video?.creator?.userId || null;
+    const context = { userId, canModerate, videoCreatorId };
+
     // For context, we might want nearby comments, but for now let's just return the comment and its parent
     return NextResponse.json({
       success: true,
-      comment: CommentService.mapToDto(comment, userId),
-      parentComment: comment.parent ? CommentService.mapToDto(comment.parent, userId) : null,
+      comment: CommentService.mapToDto(comment, context),
+      parentComment: comment.parent ? CommentService.mapToDto(comment.parent, context) : null,
       videoId: comment.videoId,
       canView: true
     });

@@ -1,4 +1,5 @@
 import { AccessTier } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
 
 export class CommentAccessService {
@@ -21,8 +22,20 @@ export class CommentAccessService {
 
   static async canModerate(userId: string | null | undefined, videoId: string) {
     if (!userId) return false;
-    return await AccessPolicy.canManageAdmin(userId).then(d => d.allowed);
-    // Note: In a real scenario, we'd also check if user is the video creator.
-    // AccessPolicy.canManageAdmin currently only checks global ADMIN role.
+
+    // Global admin can moderate everything
+    const isAdmin = await AccessPolicy.canManageAdmin(userId).then(d => d.allowed);
+    if (isAdmin) return true;
+
+    // Video creator can moderate their own video comments
+    if (videoId) {
+        const creator = await prisma.creator.findFirst({
+            where: { userId, videos: { some: { id: videoId } } },
+            select: { id: true }
+        });
+        if (creator) return true;
+    }
+
+    return false;
   }
 }

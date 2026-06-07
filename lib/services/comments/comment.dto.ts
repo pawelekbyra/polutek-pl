@@ -30,7 +30,9 @@ export type CommentDto = {
   viewerCanDelete: boolean;
   viewerCanReport: boolean;
   viewerCanModerate: boolean;
-  repliesPreview?: CommentDto[];
+  viewerCanPin: boolean;
+  isPinned: boolean;
+  repliesPreview: CommentDto[];
 };
 
 export type CommentListResponse = {

@@ -18,6 +18,10 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    video: {
+      findUnique: vi.fn(),
+    },
+    $transaction: vi.fn((cb) => cb(prisma)),
   },
 }));
 
@@ -28,6 +32,7 @@ vi.mock('@/lib/rate-limit', () => ({
 vi.mock('@/lib/services/comments/comment-access.service', () => ({
   CommentAccessService: {
     canComment: vi.fn(),
+    canModerate: vi.fn(),
   },
 }));
 
@@ -73,7 +78,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } } as any);
     const body = await response.json();
 
     expect(response.status).toBe(201);
@@ -94,7 +99,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } } as any);
     expect(response.status).toBe(401);
   });
 
@@ -111,7 +116,7 @@ describe('/api/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } } as any);
     expect(response.status).toBe(403);
   });
 });

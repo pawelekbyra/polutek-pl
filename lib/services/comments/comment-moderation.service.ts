@@ -29,19 +29,38 @@ export class CommentModerationService {
     return comment;
   }
 
-  static async softDelete(commentId: string, deletedById: string, reason: CommentDeletedReason) {
-    const comment = await prisma.comment.update({
+  static async softDelete(commentId: string, actorId: string, reason: CommentDeletedReason) {
+    const comment = await prisma.comment.findUnique({
       where: { id: commentId },
-      data: {
-        status: CommentStatus.DELETED,
-        deletedAt: new Date(),
-        deletedById,
-        deletedReason: reason,
-        text: "[deleted]",
-        imageUrl: null
-      }
+      select: { authorId: true, videoId: true, parentId: true }
     });
-    await logCommentAction(deletedById, 'DELETE', commentId, comment.videoId, { reason });
-    return comment;
+
+    if (!comment) throw new Error("Comment not found");
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.comment.update({
+        where: { id: commentId },
+        data: {
+          status: CommentStatus.DELETED,
+          deletedAt: new Date(),
+          deletedById: actorId,
+          deletedReason: reason,
+          text: "[deleted]",
+          imageUrl: null
+        }
+      });
+
+      if (comment.parentId) {
+        await tx.comment.update({
+          where: { id: comment.parentId },
+          data: { repliesCount: { decrement: 1 } }
+        });
+      }
+
+      return updated;
+    });
+
+    await logCommentAction(actorId, 'DELETE', commentId, comment.videoId, { reason, actorId });
+    return result;
   }
 }
