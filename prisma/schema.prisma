@@ -221,6 +221,8 @@ model Video {
   videoDislikes VideoDislike[]
   asset         VideoAsset?
   videoViews    VideoView[]
+  playbackSessions VideoPlaybackSession[]
+  playbackEvents   VideoPlaybackEvent[]
 
   @@index([status, publishedAt])
   @@index([status, createdAt])
@@ -578,4 +580,48 @@ model EmailEvent {
   @@index([resendEmailId])
   @@index([broadcastEmailId])
   @@index([email])
+}
+
+model VideoPlaybackSession {
+  id              String     @id @default(uuid())
+  videoId         String
+  userId          String?
+  ipHash          String?
+  userAgentHash   String?
+  sourceKind      String
+  accessTier      AccessTier
+  countedAsView   Boolean    @default(false)
+  totalWatchMs    Int        @default(0)
+  maxProgressMs   Int?
+  durationMs      Int?
+  lastHeartbeatAt DateTime   @default(now())
+  createdAt       DateTime   @default(now())
+
+  video  Video                @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  events VideoPlaybackEvent[]
+
+  @@index([videoId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model VideoPlaybackEvent {
+  id           String   @id @default(uuid())
+  sessionId    String?
+  videoId      String
+  userId       String?
+  type         String
+  positionMs   Int?
+  durationMs   Int?
+  errorCode    String?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  session VideoPlaybackSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  video   Video                 @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([videoId])
+  @@index([type])
+  @@index([createdAt])
 }

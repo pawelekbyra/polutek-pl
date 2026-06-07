@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchStats();
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +161,7 @@ export default function AdminUsersPage() {
               <Button type="submit">Szukaj</Button>
             </form>
             <div className="flex gap-2">
-                <Select value={roleFilter} onValueChange={(val) => { setRoleFilter(val); fetchUsers(1, searchQuery, val, patronFilter); }}>
+                <Select value={roleFilter} onValueChange={(val) => { setRoleFilter(val as string); fetchUsers(1, searchQuery, val as string, patronFilter); }}>
                     <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder="Rola" />
                     </SelectTrigger>
@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
                         <SelectItem value="USER">Użytkownik</SelectItem>
                     </SelectContent>
                 </Select>
-                <Select value={patronFilter} onValueChange={(val) => { setPatronFilter(val); fetchUsers(1, searchQuery, roleFilter, val); }}>
+                <Select value={patronFilter} onValueChange={(val) => { setPatronFilter(val as string); fetchUsers(1, searchQuery, roleFilter, val as string); }}>
                     <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder="Status" />
                     </SelectTrigger>

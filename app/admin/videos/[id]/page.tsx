@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Video, Globe, Lock, ShieldCheck, BarChart3, MessageSquare, History, AlertTriangle, ExternalLink, Play, Eye } from "@/app/components/icons";
+import { ArrowLeft, Video, Globe, Lock, ShieldCheck, BarChart3, MessageSquare, History, AlertTriangle, ExternalLink, Play, Eye, Heart } from "@/app/components/icons";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import VideoPlayer from "@/app/components/VideoPlayer";
@@ -23,7 +23,7 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchVideo = async () => {
+  const fetchVideo = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/videos/${params.id}`);
       if (res.ok) {
@@ -38,11 +38,11 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.id]);
 
   useEffect(() => {
     fetchVideo();
-  }, [params.id]);
+  }, [fetchVideo]);
 
   if (isLoading) return <div className="p-8 text-center">Ładowanie...</div>;
   if (error || !video) return <div className="p-8 text-center text-destructive">{error || "Film nie znaleziony."}</div>;

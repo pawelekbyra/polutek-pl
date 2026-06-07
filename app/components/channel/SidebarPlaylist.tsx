@@ -8,6 +8,8 @@ import { pl } from 'date-fns/locale';
 import VideoPlayer from '../VideoPlayer';
 import VideoPlaylist from '../VideoPlaylist';
 import PremiumWrapper from '../PremiumWrapper';
+import Image from 'next/image';
+import { Video, Lock } from '../icons';
 import { PublicVideoDTO } from '@/app/types/video';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { useEffect, useState } from 'react';

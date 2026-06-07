@@ -10,6 +10,7 @@ const allowedAppRoutes = [
   "app/admin/users/[userId]/page.tsx",
   "app/admin/users/dashboard/page.tsx",
   "app/admin/users/page.tsx",
+  "app/admin/users/payments/page.tsx",
   "app/admin/videos/[id]/page.tsx",
   "app/admin/videos/layout/page.tsx",
   "app/admin/videos/page.tsx",
