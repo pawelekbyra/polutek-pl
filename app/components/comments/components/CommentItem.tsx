@@ -36,7 +36,6 @@ export function CommentItem({
   t,
   canComment,
   onLike,
-  onDislike,
   onReply,
   onDelete,
   onPin,
@@ -47,9 +46,11 @@ export function CommentItem({
 }: CommentItemProps) {
   const authorIsPatron = isPatronAuthor(comment.author);
   const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(comment.text);
+  const [editText, setEditText] = useState(comment.text || "");
   const [showMenu, setShowMenu] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+
+  const isLiked = comment.viewerReaction === "LIKE";
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -86,7 +87,7 @@ export function CommentItem({
       <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-8" : "w-11")}>
         <SafeAvatar
           src={comment.author?.imageUrl}
-          alt={comment.authorName || "Avatar"}
+          alt={comment.author?.displayName || "Avatar"}
           size={isReply ? 24 : 36}
           fallbackSeed={getAvatarSeed(comment)}
           className={cn(
@@ -117,7 +118,7 @@ export function CommentItem({
                 authorIsPatron && "text-amber-900",
               )}
             >
-              {comment.authorName}
+              {comment.author?.displayName || "Użytkownik"}
             </span>
             {!isReply && comment.isPinned && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
@@ -163,24 +164,24 @@ export function CommentItem({
                   <LinkIcon size={14} /> {language === "pl" ? "Kopiuj link" : "Copy link"}
                 </button>
 
-                {userProfile?.id === comment.authorId && (
-                  <>
-                    <button
-                      onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
-                    >
-                      <Edit size={14} /> {language === "pl" ? "Edytuj" : "Edit"}
-                    </button>
-                    <button
-                      onClick={() => { if(confirm(t.deleteComment)) onDelete(comment.id); setShowMenu(false); }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-red-600"
-                    >
-                      <Trash2 size={14} /> {language === "pl" ? "Usuń" : "Delete"}
-                    </button>
-                  </>
+                {comment.viewerCanEdit && (
+                  <button
+                    onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <Edit size={14} /> {language === "pl" ? "Edytuj" : "Edit"}
+                  </button>
+                )}
+                {comment.viewerCanDelete && (
+                  <button
+                    onClick={() => { if(confirm(t.deleteComment)) onDelete(comment.id); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 size={14} /> {language === "pl" ? "Usuń" : "Delete"}
+                  </button>
                 )}
 
-                {userProfile?.id && userProfile.id !== comment.authorId && (
+                {comment.viewerCanReport && (
                   <button
                     onClick={() => { setIsReportDialogOpen(true); setShowMenu(false); }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
@@ -190,7 +191,7 @@ export function CommentItem({
                 )}
 
                 {/* Admin/Moderator actions */}
-                {!isReply && comment.canPin && (
+                {!isReply && comment.viewerCanPin && (
                    <button
                     onClick={() => { onPin(comment.id, !comment.isPinned); setShowMenu(false); }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
@@ -199,14 +200,13 @@ export function CommentItem({
                   </button>
                 )}
 
-                {userProfile?.id && comment.status === 'VISIBLE' && !isReply && (
-                  /* Note: canModerate should be checked here in a real scenario */
+                {comment.viewerCanModerate && comment.status === 'VISIBLE' && !isReply && (
                   <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
                     <EyeOff size={14} /> {language === "pl" ? "Ukryj" : "Hide"}
                   </button>
                 )}
 
-                {userProfile?.id && comment.status === 'HIDDEN' && !isReply && (
+                {comment.viewerCanModerate && comment.status === 'HIDDEN' && !isReply && (
                   <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
                     <RotateCcw size={14} /> {language === "pl" ? "Przywróć" : "Restore"}
                   </button>
@@ -242,7 +242,7 @@ export function CommentItem({
           </div>
         ) : (
           <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-            {comment.text}
+            {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
           </p>
         )}
 
@@ -258,39 +258,19 @@ export function CommentItem({
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
               "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-              comment.isLiked
+              isLiked
                 ? "text-primary"
                 : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
             <ThumbsUp
               size={isReply ? 11 : 13}
-              className={cn(comment.isLiked && "fill-primary")}
+              className={cn(isLiked && "fill-primary")}
             />
             <span className={cn("font-normal", isReply ? "text-[10px]" : "text-[11px]")}>
-              {comment._count?.likes || 0}
+              {comment.likesCount || 0}
             </span>
           </button>
-          {/* Public dislike hidden per product decision */}
-          {false && (
-            <button
-              onClick={() => userProfile && onDislike(comment.id)}
-              className={cn(
-                "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-                comment.isDisliked
-                  ? "text-black"
-                  : "text-[#606060] hover:text-[#0f0f0f]",
-              )}
-            >
-              <ThumbsDown
-                size={isReply ? 11 : 13}
-                className={cn(comment.isDisliked && "fill-black")}
-              />
-              <span className={cn("font-normal", isReply ? "text-[10px]" : "text-[11px]")}>
-                {comment._count?.dislikes || 0}
-              </span>
-            </button>
-          )}
           {!isReply && canComment && (
             <button
               onClick={() => userProfile && onReply(comment.id)}

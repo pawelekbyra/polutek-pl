@@ -63,78 +63,30 @@ export class VideosAdminService {
 
     // Optimization: if we only need a few videos, we can afford diagnostics N+1 or batch.
     // For large lists, we should ideally cache diagnostics or count them differently.
-    // Optimization: for needsAttention, we must fetch diagnostics for all items matching other filters
-    // to get correct total and pagination.
-    // BUT fetching diagnostics for ALL items is heavy.
-    // If needsAttention is false, we proceed normally.
-    // If needsAttention is true, we might need a different approach.
-
-    let total = 0;
-    let items: any[] = [];
-
-    if (needsAttention) {
-        // Fetch all candidates (limited by some reasonable max if needed, or using same filters)
-        const candidates = await prisma.video.findMany({
-            where,
-            include: {
-                _count: {
-                    select: {
-                        comments: true,
-                        videoLikes: true,
-                        videoDislikes: true,
-                        playbackSessions: true
-                    }
-                },
-                asset: true
-            },
-            orderBy: this.getOrderBy(orderBy, orderDir),
-        });
-
-        // This is still N+1-ish but we are already doing it in a map below.
-        // For production we'd want batch diagnostics.
-        const withDiagnostics = await Promise.all(candidates.map(async (item) => {
-            const diagnostics = await VideosDiagnosticsService.diagnoseVideo(item.id);
-            return { item, diagnosticsCount: diagnostics.length };
-        }));
-
-        const filtered = withDiagnostics.filter(d => d.diagnosticsCount > 0);
-        total = filtered.length;
-        items = filtered.slice(skip, skip + pageSize).map(f => ({
-            ...f.item,
-            diagnosticsCount: f.diagnosticsCount
-        }));
-    } else {
-        const [t, i] = await Promise.all([
-            prisma.video.count({ where }),
-            prisma.video.findMany({
-                where,
-                include: {
-                    _count: {
-                        select: {
-                            comments: true,
-                            videoLikes: true,
-                            videoDislikes: true,
-                            playbackSessions: true
-                        }
-                    },
-                    asset: true
-                },
-                orderBy: this.getOrderBy(orderBy, orderDir),
-                skip,
-                take: pageSize,
-            })
-        ]);
-        total = t;
-        items = i;
-    }
-
-    const stats = await this.getStats();
+    const [total, items, stats] = await Promise.all([
+      prisma.video.count({ where }),
+      prisma.video.findMany({
+        where,
+        include: {
+          _count: {
+            select: {
+              comments: true,
+              videoLikes: true,
+              videoDislikes: true,
+              playbackSessions: true
+            }
+          },
+          asset: true
+        },
+        orderBy: this.getOrderBy(orderBy, orderDir),
+        skip,
+        take: pageSize,
+      }),
+      this.getStats()
+    ]);
 
     let itemsWithDiagnostics: AdminVideoListItem[] = await Promise.all(items.map(async (item) => {
-        const diagnosticsCount = item.diagnosticsCount !== undefined
-            ? item.diagnosticsCount
-            : (await VideosDiagnosticsService.diagnoseVideo(item.id)).length;
-
+        const diagnostics = await VideosDiagnosticsService.diagnoseVideo(item.id);
         return {
             id: item.id,
             slug: item.slug,
@@ -155,12 +107,16 @@ export class VideosAdminService {
             likesCount: item.likesCount,
             dislikesCount: item.dislikesCount,
             commentsCount: item._count.comments,
-            diagnosticsIssuesCount: diagnosticsCount,
+            diagnosticsIssuesCount: diagnostics.length,
             createdAt: item.createdAt.toISOString(),
             updatedAt: item.updatedAt.toISOString(),
             publishedAt: item.publishedAt?.toISOString() || null,
         };
     }));
+
+    if (needsAttention) {
+        itemsWithDiagnostics = itemsWithDiagnostics.filter(i => i.diagnosticsIssuesCount > 0);
+    }
 
     return {
       items: itemsWithDiagnostics,

@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
           } : {},
           options.role ? { role: options.role } : {},
           options.isPatron !== undefined ? { isPatron: options.isPatron } : {},
-          options.patronSource ? { patronSource: options.patronSource } : {},
           options.language ? { language: options.language } : {},
           options.isDeleted !== undefined ? { isDeleted: options.isDeleted } : {},
           options.hasPayments ? { payments: { some: {} } } : {},

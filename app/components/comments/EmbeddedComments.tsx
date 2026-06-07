@@ -116,7 +116,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     isLoading,
     postMutation,
     likeMutation,
-    dislikeMutation,
     pinMutation,
     deleteMutation,
     editMutation,
@@ -159,7 +158,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const viewer = data?.pages?.[0]?.viewer;
 
   const replyingToAuthor = replyTo
-    ? comments.find((c) => c.id === replyTo)?.authorName
+    ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -250,7 +249,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         setReplyTo={setReplyTo}
         isInputFocused={isInputFocused}
         setIsInputFocused={setIsInputFocused}
-        canComment={canComment}
+        canComment={viewer?.canComment ?? false}
         isPatronGated={isPatronGated}
         isPatron={isPatron}
         isPending={postMutation.isPending}
@@ -268,9 +267,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               isClient={isClient}
               language={language}
               t={t}
-              canComment={canComment}
+              canComment={viewer?.canComment ?? false}
               onLike={(id) => likeMutation.mutate(id)}
-              onDislike={(id) => dislikeMutation.mutate(id)}
+              onDislike={() => {}}
               onReply={(id) => setReplyTo(id)}
               onDelete={(id) => deleteMutation.mutate(id)}
               onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
@@ -280,9 +279,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             />
 
             {/* NESTED REPLIES */}
-            {comment.replies && comment.replies.length > 0 && (
+            {comment.repliesPreview && comment.repliesPreview.length > 0 && (
               <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                {comment.replies.map((reply) => (
+                {comment.repliesPreview.map((reply) => (
                   <CommentItem
                     key={reply.id}
                     comment={reply}
@@ -290,9 +289,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     isClient={isClient}
                     language={language}
                     t={t}
-                    canComment={canComment}
+                    canComment={viewer?.canComment ?? false}
                     onLike={(id) => likeMutation.mutate(id)}
-                    onDislike={(id) => dislikeMutation.mutate(id)}
+                    onDislike={() => {}}
                     onReply={() => {}}
                     onDelete={(id) => deleteMutation.mutate(id)}
                     onPin={() => {}}
