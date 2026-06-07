@@ -52,7 +52,12 @@ export class VideosAdminService {
         tier ? { tier } : {},
         isMainFeatured !== undefined ? { isMainFeatured } : {},
         showInSidebar !== undefined ? { showInSidebar } : {},
-        sourceKind ? { asset: { provider: sourceKind as any } } : {}, // Simplified mapping
+        sourceKind ? (
+            sourceKind === 'YOUTUBE' ? { videoUrl: { contains: 'youtube' } } :
+            sourceKind === 'VIMEO' ? { videoUrl: { contains: 'vimeo' } } :
+            ['HLS', 'DASH', 'MP4'].includes(sourceKind) ? { videoUrl: { contains: sourceKind.toLowerCase() } } :
+            { asset: { provider: sourceKind as any } }
+        ) : {},
       ]
     };
 
