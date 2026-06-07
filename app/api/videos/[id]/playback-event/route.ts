@@ -36,20 +36,27 @@ const PLAYBACK_EVENT_TYPES = [
 function sanitizePlaybackMetadata(metadata: any) {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
 
-  const sensitiveKeys = ['playbackUrl', 'signedUrl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
-  const sanitized = { ...metadata };
+  const forbiddenFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
+  const sanitized: Record<string, any> = {};
 
-  for (const key of sensitiveKeys) {
-    delete sanitized[key];
-  }
+  const keys = Object.keys(metadata);
+  const filteredKeys = keys.filter(key => {
+      const lowerKey = key.toLowerCase();
+      return !forbiddenFragments.some(fragment => lowerKey.includes(forbiddenFragments.includes(fragment) ? fragment : fragment.toLowerCase()));
+  });
+
+  // More robust check
+  const finalFilteredKeys = keys.filter(key => {
+      const lowerKey = key.toLowerCase();
+      return !forbiddenFragments.some(fragment => lowerKey.includes(fragment));
+  });
 
   // Limit to 20 keys and values up to 500 chars
-  const keys = Object.keys(sanitized);
   const result: Record<string, any> = {};
-  const finalKeys = keys.slice(0, 20);
+  const finalKeys = finalFilteredKeys.slice(0, 20);
 
   for (const key of finalKeys) {
-    let value = sanitized[key];
+    let value = metadata[key];
     if (typeof value === 'string' && value.length > 500) {
       value = value.substring(0, 500);
     }

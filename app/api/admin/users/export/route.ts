@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
           options.isPatron !== undefined ? { isPatron: options.isPatron } : {},
           options.language ? { language: options.language } : {},
           options.isDeleted !== undefined ? { isDeleted: options.isDeleted } : {},
+          options.patronSource ? { patronSource: options.patronSource } : {},
           options.hasPayments ? { payments: { some: {} } } : {},
           options.hasSubscriptions ? { subscriptions: { some: {} } } : {},
         ]

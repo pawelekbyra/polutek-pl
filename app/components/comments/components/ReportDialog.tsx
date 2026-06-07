@@ -18,17 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CommentReportReason } from "@prisma/client";
+import { CommentReportReasonDto } from "@/lib/services/comments/comment.dto";
 
 interface ReportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (reason: CommentReportReason, note?: string) => void;
+  onSubmit: (reason: CommentReportReasonDto, note?: string) => void;
   language: string;
 }
 
 export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDialogProps) {
-  const [reason, setReason] = useState<CommentReportReason>("SPAM");
+  const [reason, setReason] = useState<CommentReportReasonDto>("SPAM");
   const [note, setNote] = useState("");
 
   const handleSubmit = () => {
@@ -49,7 +49,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
             <Label htmlFor="reason">
               {language === "pl" ? "Powód" : "Reason"}
             </Label>
-            <Select value={reason} onValueChange={(v) => setReason(v as CommentReportReason)}>
+            <Select value={reason} onValueChange={(v) => setReason(v as CommentReportReasonDto)}>
               <SelectTrigger id="reason">
                 <SelectValue />
               </SelectTrigger>

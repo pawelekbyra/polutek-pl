@@ -28,7 +28,7 @@ export async function PATCH(
     if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
     const body = await request.json();
-    const { text } = z.object({ text: z.string().trim().min(1).max(2000) }).parse(body);
+    const { text } = z.object({ text: z.string().trim().min(1) }).parse(body);
 
     if (countGraphemes(text) > 2000) {
         return NextResponse.json({ success: false, message: 'Komentarz jest za długi.' }, { status: 400 });

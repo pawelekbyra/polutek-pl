@@ -3,37 +3,56 @@ import { prisma } from '@/lib/prisma';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { VideoStatus, AccessTier } from '@prisma/client';
-import { auth } from '@clerk/nextjs/server';
+import { z } from 'zod';
+
+const patchVideoSchema = z.object({
+  title: z.string().trim().min(1).optional(),
+  titleEn: z.string().trim().optional().nullable(),
+  slug: z.string().trim().min(1).optional(),
+  description: z.string().trim().optional().nullable(),
+  descriptionEn: z.string().trim().optional().nullable(),
+  videoUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().url().optional(),
+  tier: z.nativeEnum(AccessTier).optional(),
+  status: z.nativeEnum(VideoStatus).optional(),
+  isMainFeatured: z.boolean().optional(),
+  showInSidebar: z.boolean().optional(),
+  sidebarOrder: z.number().int().optional(),
+  publishedAt: z.string().datetime().optional().nullable(),
+});
+
+const postActionSchema = z.object({
+  action: z.enum(['publish', 'unpublish', 'archive', 'restore', 'set-hero']),
+  reason: z.string().trim().optional(),
+});
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_VIDEO");
   if (response) return response;
 
   const videoId = params.id;
-  const body = await req.json();
-  const { userId } = await auth();
 
   try {
+    const rawBody = await req.json();
+    const result = patchVideoSchema.safeParse(rawBody);
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Invalid request body', details: result.error.flatten() }, { status: 400 });
+    }
+
+    const body = result.data;
     const video = await prisma.video.findUnique({ where: { id: videoId } });
     if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
 
+    const updateData: any = { ...body };
+
+    if (body.status === 'PUBLISHED' && !video.publishedAt && !body.publishedAt) {
+        updateData.publishedAt = new Date();
+    }
+
     const updated = await prisma.video.update({
       where: { id: videoId },
-      data: {
-        title: body.title,
-        titleEn: body.titleEn,
-        slug: body.slug,
-        description: body.description,
-        descriptionEn: body.descriptionEn,
-        videoUrl: body.videoUrl,
-        thumbnailUrl: body.thumbnailUrl,
-        tier: body.tier,
-        status: body.status,
-        isMainFeatured: body.isMainFeatured,
-        showInSidebar: body.showInSidebar,
-        sidebarOrder: body.sidebarOrder,
-        publishedAt: body.status === 'PUBLISHED' && !video.publishedAt ? new Date() : undefined,
-      }
+      data: updateData
     });
 
     if (body.isMainFeatured) {
@@ -44,11 +63,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     await writeAuditLog({
-      actorUserId: userId,
+      actorUserId: adminUserId,
       action: "VIDEO_UPDATED",
       targetType: "Video",
       targetId: videoId,
-      metadata: body
+      metadata: {
+          action: "PATCH_VIDEO",
+          changedFields: Object.keys(updateData).filter(k => updateData[k] !== undefined),
+          status: updateData.status,
+          tier: updateData.tier
+      }
     });
 
     return NextResponse.json(updated);
@@ -62,16 +86,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (response) return response;
 
     const videoId = params.id;
-    const { action, reason } = await req.json();
-    const { userId } = await auth();
 
     try {
+        const rawBody = await req.json();
+        const result = postActionSchema.safeParse(rawBody);
+
+        if (!result.success) {
+            return NextResponse.json({ error: 'Invalid action', details: result.error.flatten() }, { status: 400 });
+        }
+
+        const { action, reason } = result.data;
+        const video = await prisma.video.findUnique({ where: { id: videoId } });
+        if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+
+        const previousStatus = video.status;
+        const previousIsHero = video.isMainFeatured;
+
         let updated;
         switch (action) {
             case 'publish':
                 updated = await prisma.video.update({
                     where: { id: videoId },
-                    data: { status: VideoStatus.PUBLISHED, publishedAt: new Date() }
+                    data: { status: VideoStatus.PUBLISHED, publishedAt: video.publishedAt || new Date() }
                 });
                 break;
             case 'unpublish':
@@ -93,9 +129,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 });
                 break;
             case 'set-hero':
-                const video = await prisma.video.findUnique({ where: { id: videoId } });
                 await prisma.video.updateMany({
-                    where: { creatorId: video?.creatorId },
+                    where: { creatorId: video.creatorId },
                     data: { isMainFeatured: false }
                 });
                 updated = await prisma.video.update({
@@ -103,16 +138,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                     data: { isMainFeatured: true, status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC }
                 });
                 break;
-            default:
-                return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
 
         await writeAuditLog({
-            actorUserId: userId,
+            actorUserId: adminUserId,
             action: `VIDEO_${action.toUpperCase()}`,
             targetType: "Video",
             targetId: videoId,
-            metadata: { reason }
+            metadata: {
+                action,
+                reason,
+                previousStatus,
+                nextStatus: updated?.status,
+                previousIsHero,
+                nextIsHero: updated?.isMainFeatured
+            }
         });
 
         return NextResponse.json(updated);
