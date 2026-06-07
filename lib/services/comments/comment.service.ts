@@ -167,4 +167,47 @@ export class CommentService {
       }
     });
   }
+
+  static async pinComment(commentId: string, moderatorId: string) {
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { videoId: true, parentId: true }
+    });
+
+    if (!comment) throw new Error("Comment not found");
+    if (comment.parentId) throw new Error("Cannot pin replies");
+
+    return await prisma.$transaction(async (tx) => {
+      // Unpin any existing pinned comment for this video
+      await tx.comment.updateMany({
+        where: { videoId: comment.videoId, pinnedAt: { not: null } },
+        data: { pinnedAt: null, pinnedById: null }
+      });
+
+      // Pin the new comment
+      const updated = await tx.comment.update({
+        where: { id: commentId },
+        data: {
+          pinnedAt: new Date(),
+          pinnedById: moderatorId
+        }
+      });
+
+      await logCommentAction(moderatorId, 'PIN', commentId, comment.videoId);
+      return updated;
+    });
+  }
+
+  static async unpinComment(commentId: string) {
+    const comment = await prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        pinnedAt: null,
+        pinnedById: null
+      }
+    });
+
+    await logCommentAction(comment.pinnedById || 'system', 'UNPIN', commentId, comment.videoId);
+    return comment;
+  }
 }
