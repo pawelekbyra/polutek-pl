@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { SafeAvatar } from "../../SafeAvatar";
+import { countGraphemes } from "@/lib/utils/graphemes";
 
 interface CommentComposerProps {
   userProfile: any;
@@ -24,13 +25,6 @@ interface CommentComposerProps {
   handleSubmit: (e: React.FormEvent) => void;
   t: any;
   language: string;
-}
-
-export function countGraphemes(text: string) {
-  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-    return [...new Intl.Segmenter("pl", { granularity: "grapheme" }).segment(text)].length;
-  }
-  return Array.from(text).length;
 }
 
 const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];

@@ -66,8 +66,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     useInfiniteQuery({
       queryKey: ["comments", videoId, sortBy],
       queryFn: async ({ pageParam }) => {
-        const url = new URL("/api/comments", window.location.origin);
-        url.searchParams.append("videoId", videoId);
+        const url = new URL(`/api/videos/${videoId}/comments`, window.location.origin);
         url.searchParams.append("sortBy", sortBy);
         if (pageParam) url.searchParams.append("cursor", pageParam as string);
         const res = await fetch(url.toString());
@@ -86,10 +85,9 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       text: string;
       parentId?: string;
     }) => {
-      const res = await fetch("/api/comments", {
+      const res = await fetch(`/api/videos/${videoId}/comments`, {
         method: "POST",
         body: JSON.stringify({
-          videoId,
           text,
           parentId,
         }),
@@ -151,9 +149,8 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       commentId: string;
       pinned: boolean;
     }) => {
-      const res = await fetch("/api/comments", {
-        method: "PATCH",
-        body: JSON.stringify({ commentId, pinned }),
+      const res = await fetch(`/api/comments/${commentId}/pin`, {
+        method: pinned ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
       });
       return parseJsonResponse(res);
@@ -202,7 +199,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
 
   const deleteMutation = useMutation({
     mutationFn: async (commentId: string) => {
-      const res = await fetch(`/api/comments?id=${commentId}`, {
+      const res = await fetch(`/api/comments/${commentId}`, {
         method: "DELETE",
       });
       return parseJsonResponse(res);

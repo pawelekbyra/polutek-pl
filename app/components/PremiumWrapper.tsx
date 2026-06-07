@@ -5,7 +5,6 @@ import { useAuth, SignInButton, useClerk } from "@clerk/nextjs";
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Star, Gem, Lock } from './icons';
-import { AccessTier } from "@prisma/client";
 import { useLanguage } from './LanguageContext';
 import { PlaybackPlan } from "@/lib/services/playback/playback.service";
 
@@ -30,7 +29,7 @@ export const useVideoAccess = () => useContext(VideoAccessContext);
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
-  requiredTier?: AccessTier;
+  requiredTier?: AccessTierDto;
   isMainFeatured?: boolean;
   variant?: 'default' | 'thumbnail';
   onAccessLoad?: (hasAccess: boolean) => void;
@@ -55,7 +54,7 @@ export default function PremiumWrapper({
     setMounted(true);
   }, []);
 
-  const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTier);
+  const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTierDto);
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
@@ -179,7 +178,7 @@ function CustomAuthTrigger({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: AccessTier, isLoggedIn: boolean, variant: 'default' | 'thumbnail' }) {
+function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: AccessTierDto, isLoggedIn: boolean, variant: 'default' | 'thumbnail' }) {
   const { t } = useLanguage();
   const isVIPGated = requiredTier === "PATRON";
   const isThumbnail = variant === 'thumbnail';
