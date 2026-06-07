@@ -23,6 +23,7 @@ interface ChannelVideoCardProps {
 export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPatron, role }: ChannelVideoCardProps) {
     const { t, language } = useLanguage();
     const [mounted, setMounted] = useState(false);
+    const [serverHasAccess, setServerHasAccess] = useState<boolean | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -31,9 +32,11 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
     const isPatron = role === 'ADMIN' || propIsPatron === true;
     const displayTitle = getVideoDisplayTitle(video, language);
 
-    const hasAccess = video.tier === 'PUBLIC' ||
+    const clientHasAccess = video.tier === 'PUBLIC' ||
                       (video.tier === 'LOGGED_IN' && isLoggedIn) ||
                       (video.tier === 'PATRON' && isPatron);
+
+    const hasAccess = serverHasAccess ?? clientHasAccess;
 
     return (
         <div className="group cursor-pointer flex flex-col">
@@ -45,6 +48,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                         requiredTier={video.tier}
                         isMainFeatured={video.isMainFeatured}
                         variant="thumbnail"
+                        onAccessLoad={setServerHasAccess}
                     >
                         <VideoPlayer video={video} variant="thumbnail" />
                     </PremiumWrapper>

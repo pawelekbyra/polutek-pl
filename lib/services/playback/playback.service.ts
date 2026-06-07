@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus, StorageProvider } from '@prisma/client';
+import { StorageService } from '../storage/storage.service';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -111,7 +112,27 @@ export class PlaybackService {
         };
     }
 
-    const sourceInfo = getVideoSourceInfo(videoUrl, `/api/media/${video.id}`);
+    let sourceUrl = videoUrl;
+    let isSignedUrl = false;
+    let expiresAt: string | undefined = undefined;
+
+    if (video.asset) {
+        try {
+            const signedData = await StorageService.getPresignedUrl(
+                video.asset.provider,
+                video.asset.bucket || process.env.R2_BUCKET_NAME || '',
+                video.asset.objectKey,
+                900
+            );
+            sourceUrl = signedData.url;
+            isSignedUrl = true;
+            expiresAt = signedData.expiresAt.toISOString();
+        } catch (e) {
+            console.error("[PLAYBACK_SERVICE] Failed to sign URL", e);
+        }
+    }
+
+    const sourceInfo = getVideoSourceInfo(sourceUrl, `/api/media/${video.id}`);
 
     const isAdminPreview = userId ? await prisma.user.findUnique({
         where: { id: userId },
@@ -142,7 +163,8 @@ export class PlaybackService {
             posterUrl: video.thumbnailUrl,
             needsProxy: sourceInfo.needsProxy,
             isExternalEmbed: sourceInfo.kind === 'youtube' || sourceInfo.kind === 'vimeo',
-            isSignedUrl: false,
+            isSignedUrl,
+            expiresAt,
         },
         player: {
             autoplayAllowed: true,

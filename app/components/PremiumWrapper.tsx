@@ -2,32 +2,26 @@
 
 import { logger } from "@/lib/logger";
 import { useAuth, SignInButton, useClerk } from "@clerk/nextjs";
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Star, Gem, Lock } from './icons';
 import { useLanguage } from './LanguageContext';
-import { AccessTierDto } from '@/lib/services/comments/comment.dto';
+import { PlaybackPlan } from "@/lib/services/playback/playback.service";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
-  videoUrl: string | null;
-  videoSourceKind: string | null;
-  videoEmbedUrl: string | null;
+  playbackPlan: PlaybackPlan | null;
   isLoading: boolean;
-  effectiveTier: AccessTierDto;
-  tracking?: {
-      playbackSessionId: string;
-      heartbeatIntervalSeconds: number;
-  };
+  effectiveTier: AccessTier;
+  refreshPlaybackPlan: () => Promise<void>;
 }
 
 const VideoAccessContext = createContext<VideoAccessContextType>({
   hasAccess: false,
-  videoUrl: null,
-  videoSourceKind: null,
-  videoEmbedUrl: null,
+  playbackPlan: null,
   isLoading: true,
-  effectiveTier: "PUBLIC" as AccessTierDto,
+  effectiveTier: "PUBLIC" as AccessTier,
+  refreshPlaybackPlan: async () => {},
 });
 
 export const useVideoAccess = () => useContext(VideoAccessContext);
@@ -38,6 +32,7 @@ interface PremiumWrapperProps {
   requiredTier?: AccessTierDto;
   isMainFeatured?: boolean;
   variant?: 'default' | 'thumbnail';
+  onAccessLoad?: (hasAccess: boolean) => void;
 }
 
 export default function PremiumWrapper({
@@ -45,15 +40,13 @@ export default function PremiumWrapper({
   videoId,
   requiredTier: initialTier,
   isMainFeatured,
-  variant = 'default'
+  variant = 'default',
+  onAccessLoad
 }: PremiumWrapperProps) {
   const { userId, isLoaded } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [videoSourceKind, setVideoSourceKind] = useState<string | null>(null);
-  const [videoEmbedUrl, setVideoEmbedUrl] = useState<string | null>(null);
-  const [tracking, setTracking] = useState<any>(null);
-  const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
+  const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
+  const [dbTier, setDbTier] = useState<AccessTier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -65,53 +58,76 @@ export default function PremiumWrapper({
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
-  useEffect(() => {
-    async function checkAccess() {
-      if (isLoaded && !userId && !isPublic) {
+  const checkAccess = useCallback(async () => {
+    if (isLoaded && !userId && !isPublic) {
+      setHasAccess(false);
+      setPlaybackPlan(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isLoaded && !isPublic) return;
+
+    try {
+      const response = await fetch(`/api/media-source/${videoId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
         setHasAccess(false);
-        setVideoUrl(null);
-        setVideoSourceKind(null);
-        setVideoEmbedUrl(null);
-        setIsLoading(false);
+        setPlaybackPlan(null);
+        if (data.requiredTier) setDbTier(data.requiredTier);
         return;
       }
 
-      if (!isLoaded && !isPublic) return;
-
-      try {
-        const response = await fetch(`/api/media-source/${videoId}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          setHasAccess(false);
-          if (data.requiredTier) setDbTier(data.requiredTier);
-          return;
-        }
-
-        setHasAccess(data.hasAccess);
-        if (data.hasAccess) {
-          setVideoUrl(data.playbackUrl);
-          setVideoSourceKind(data.kind);
-          setVideoEmbedUrl(data.embedUrl || null);
-          setTracking(data.tracking);
-        }
-        if (data.requiredTier) setDbTier(data.requiredTier);
-      } catch (error) {
-        logger.error("Error checking video access:", error);
-        setHasAccess(false);
-      } finally {
-        setIsLoading(false);
+      setHasAccess(data.hasAccess);
+      onAccessLoad?.(data.hasAccess);
+      if (data.hasAccess) {
+        setPlaybackPlan(data);
       }
+      if (data.requiredTier) setDbTier(data.requiredTier);
+    } catch (error) {
+      logger.error("Error checking video access:", error);
+      setHasAccess(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoaded, userId, isPublic, videoId]);
+
+  useEffect(() => {
+    checkAccess();
+  }, [checkAccess]);
+
+  useEffect(() => {
+    if (!playbackPlan?.source?.expiresAt) return;
+
+    const expiresAt = new Date(playbackPlan.source.expiresAt).getTime();
+    const refreshThresholdMs = 120 * 1000; // 2 minutes
+    const now = Date.now();
+    const msToRefresh = (expiresAt - now) - refreshThresholdMs;
+
+    if (msToRefresh <= 0) {
+      checkAccess();
+      return;
     }
 
-    checkAccess();
-  }, [userId, isLoaded, videoId, isPublic]);
+    const timer = setTimeout(() => {
+      checkAccess();
+    }, msToRefresh);
+
+    return () => clearTimeout(timer);
+  }, [playbackPlan, checkAccess]);
 
   if (!mounted) {
     return <div className="animate-pulse bg-neutral/5 rounded-xl w-full h-full" />;
   }
 
-  const contextValue = { hasAccess: isPublic || isUnlockedByAuth || hasAccess, videoUrl, videoSourceKind, videoEmbedUrl, isLoading, effectiveTier, tracking };
+  const contextValue = {
+    hasAccess: isPublic || isUnlockedByAuth || hasAccess,
+    playbackPlan,
+    isLoading,
+    effectiveTier,
+    refreshPlaybackPlan: checkAccess
+  };
 
   if (contextValue.hasAccess) {
     return (
