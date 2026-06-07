@@ -164,9 +164,46 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                                   <span className="text-xs">Hero Video</span>
                                   {video.isMainFeatured ? <Badge className="bg-blue-600">TAK</Badge> : <span className="text-xs opacity-50">Nie</span>}
                               </div>
-                              <div className="flex justify-between py-2 border-b">
-                                  <span className="text-xs">Sidebar</span>
-                                  <span className="text-xs font-medium">{video.showInSidebar ? `Widoczny (${video.sidebarOrder})` : 'Ukryty'}</span>
+                              <div className="flex flex-col gap-2 py-2 border-b">
+                                  <div className="flex justify-between items-center">
+                                      <span className="text-xs">Sidebar</span>
+                                      <span className="text-xs font-medium">{video.showInSidebar ? `Widoczny (${video.sidebarOrder})` : 'Ukryty'}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                      <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-7 text-[10px] flex-1"
+                                          onClick={() => {
+                                              const current = video.showInSidebar;
+                                              fetch(`/api/admin/videos/${params.id}/actions`, {
+                                                  method: 'PATCH',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ showInSidebar: !current })
+                                              }).then(res => { if (res.ok) fetchVideo(); });
+                                          }}
+                                      >
+                                          {video.showInSidebar ? 'Ukryj' : 'Pokaż'}
+                                      </Button>
+                                      <div className="flex items-center gap-1 flex-1">
+                                          <input
+                                              type="number"
+                                              defaultValue={video.sidebarOrder}
+                                              className="w-12 h-7 text-[10px] border rounded px-1"
+                                              onBlur={(e) => {
+                                                  const val = parseInt(e.target.value);
+                                                  if (!isNaN(val)) {
+                                                      fetch(`/api/admin/videos/${params.id}/actions`, {
+                                                          method: 'PATCH',
+                                                          headers: { 'Content-Type': 'application/json' },
+                                                          body: JSON.stringify({ sidebarOrder: val })
+                                                      }).then(res => { if (res.ok) fetchVideo(); });
+                                                  }
+                                              }}
+                                          />
+                                          <span className="text-[9px] text-muted-foreground">Poz.</span>
+                                      </div>
+                                  </div>
                               </div>
                               <div className="flex justify-between py-2">
                                   <span className="text-xs">Utworzono</span>

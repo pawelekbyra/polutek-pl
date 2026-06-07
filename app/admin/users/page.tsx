@@ -91,11 +91,14 @@ export default function AdminUsersPage() {
   };
 
   const exportCsv = () => {
-      let url = `/api/admin/users/export?q=${encodeURIComponent(searchQuery)}`;
+      let url = `/api/admin/users/export?query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
       if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
       if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
+      if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
       if (isDeletedFilter) url += `&isDeleted=true`;
+      if (hasPaymentsFilter) url += `&hasPayments=true`;
+      if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
       window.open(url, "_blank");
   };
 
@@ -168,6 +171,19 @@ export default function AdminUsersPage() {
                             <SelectItem value="ALL">Język: Dowolny</SelectItem>
                             <SelectItem value="pl">Polski (PL)</SelectItem>
                             <SelectItem value="en">Angielski (EN)</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={patronSourceFilter} onValueChange={(v) => { setPatronSourceFilter(v || "ALL"); setPage(1); }}>
+                        <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="Źródło Patronatu" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Dowolne źródło</SelectItem>
+                            <SelectItem value="STRIPE_TIP">STRIPE_TIP</SelectItem>
+                            <SelectItem value="PAYMENT">PAYMENT</SelectItem>
+                            <SelectItem value="REFERRAL">REFERRAL</SelectItem>
+                            <SelectItem value="ADMIN">ADMIN</SelectItem>
+                            <SelectItem value="MIGRATION">MIGRATION</SelectItem>
+                            <SelectItem value="LEGACY">LEGACY</SelectItem>
                         </SelectContent>
                     </Select>
 
