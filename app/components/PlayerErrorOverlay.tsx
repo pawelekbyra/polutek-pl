@@ -9,12 +9,14 @@ interface PlayerErrorOverlayProps {
   errorCode?: string;
   onRetry?: () => void;
   isAdmin?: boolean;
+  showTechnicalDetails?: boolean;
 }
 
 export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
   errorCode,
   onRetry,
-  isAdmin = false
+  isAdmin = false,
+  showTechnicalDetails = false
 }) => {
   const { language } = useLanguage();
 
@@ -26,7 +28,7 @@ export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
     },
     en: {
       title: "Could not play this video.",
-      description: "This content is temporarily unavailable or the video source is not responding.",
+      description: "This video is temporarily unavailable or the video source is not responding.",
       retry: "Try again"
     }
   };
@@ -58,7 +60,7 @@ export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
         </Button>
       )}
 
-      {isAdmin && errorCode && (
+      {(isAdmin || showTechnicalDetails) && errorCode && (
         <div className="absolute bottom-4 right-4 px-2 py-1 bg-black/40 rounded border border-white/5 text-[9px] font-mono text-white/30 uppercase tracking-tighter">
           Dev Error: {errorCode}
         </div>

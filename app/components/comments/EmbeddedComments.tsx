@@ -134,6 +134,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     isFetchingNextPage,
     isLoading,
     isError,
+    refetch,
     postMutation,
     likeMutation,
     pinMutation,
@@ -298,10 +299,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               variant="outline"
               size="sm"
               className="border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => window.location.reload()}
+              onClick={() => refetch()}
             >
               <RefreshCcw size={14} className="mr-2" />
-              {language === "pl" ? "Odśwież stronę" : "Refresh page"}
+              {language === "pl" ? "Spróbuj ponownie" : "Try again"}
             </Button>
           </div>
         ) : comments.length === 0 ? (

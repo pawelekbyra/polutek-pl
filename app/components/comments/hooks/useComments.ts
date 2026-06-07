@@ -62,13 +62,14 @@ function updateCommentReactionInCache(
 export function useComments(videoId: string, sortBy: "newest" | "top") {
   const queryClient = useQueryClient();
 
-  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error } =
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch } =
     useInfiniteQuery({
       queryKey: ["comments", videoId, sortBy],
       queryFn: async ({ pageParam }) => {
-        const url = new URL(`/api/videos/${videoId}/comments`, window.location.origin);
-        url.searchParams.append("sortBy", sortBy);
-        if (pageParam) url.searchParams.append("cursor", pageParam as string);
+        const url = new URL('/api/comments', window.location.origin);
+        url.searchParams.set('videoId', videoId);
+        url.searchParams.set('sortBy', sortBy);
+        if (pageParam) url.searchParams.set('cursor', String(pageParam));
         const res = await fetch(url.toString());
         return parseJsonResponse<CommentsPage & { viewer: any; totalCount: number }>(res);
       },
@@ -248,5 +249,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     deleteMutation,
     editMutation,
     reportMutation,
+    refetch,
   };
 }

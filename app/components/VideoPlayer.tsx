@@ -16,7 +16,7 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { playbackPlan, refreshPlaybackPlan, effectiveTier } = useVideoAccess();
+    const { playbackPlan, refreshPlaybackPlan, isLoading, effectiveTier } = useVideoAccess();
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
@@ -110,17 +110,27 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     }
 
     // Hydration guard
-    if (!isMounted) return <PlayerSkeleton />;
+    if (!isMounted || isLoading) return <PlayerSkeleton />;
 
     const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
+
+    if (!src && (variant as string) !== 'thumbnail') {
+        return (
+            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
+                <PlayerErrorOverlay
+                    errorCode="NO_PLAYBACK_URL"
+                    onRetry={() => refreshPlaybackPlan()}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"
-                    isAdmin={true} // In context of this app, if they can see VideoPlayer they are likely meant to see it or we can pass proper isAdmin from profile
                     onRetry={() => {
                         setLoadError(null);
                         refreshPlaybackPlan();

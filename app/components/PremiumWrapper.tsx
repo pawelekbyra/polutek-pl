@@ -141,9 +141,17 @@ export default function PremiumWrapper({
         return (
             <PlayerErrorOverlay
                 errorCode={fetchError}
-                isAdmin={true}
                 onRetry={checkAccess}
             />
+        );
+    }
+
+    if (!isLoading && !playbackPlan) {
+        return (
+          <PlayerErrorOverlay
+              errorCode="NO_PLAYBACK_PLAN"
+              onRetry={checkAccess}
+          />
         );
     }
 
