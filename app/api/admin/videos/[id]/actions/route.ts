@@ -3,15 +3,36 @@ import { prisma } from '@/lib/prisma';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { VideoStatus, AccessTier } from '@prisma/client';
-import { auth } from '@clerk/nextjs/server';
+import { z } from 'zod';
+
+const patchSchema = z.object({
+    title: z.string().min(1).optional(),
+    titleEn: z.string().nullable().optional(),
+    slug: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    descriptionEn: z.string().nullable().optional(),
+    videoUrl: z.string().url().optional(),
+    thumbnailUrl: z.string().url().optional(),
+    tier: z.nativeEnum(AccessTier).optional(),
+    status: z.nativeEnum(VideoStatus).optional(),
+    isMainFeatured: z.boolean().optional(),
+    showInSidebar: z.boolean().optional(),
+    sidebarOrder: z.number().int().nullable().optional(),
+});
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_VIDEO");
   if (response) return response;
 
   const videoId = params.id;
-  const body = await req.json();
-  const { userId } = await auth();
+  const json = await req.json();
+  const validation = patchSchema.safeParse(json);
+
+  if (!validation.success) {
+      return NextResponse.json({ error: 'Validation failed', details: validation.error.format() }, { status: 400 });
+  }
+
+  const body = validation.data;
 
   try {
     const video = await prisma.video.findUnique({ where: { id: videoId } });
@@ -31,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         status: body.status,
         isMainFeatured: body.isMainFeatured,
         showInSidebar: body.showInSidebar,
-        sidebarOrder: body.sidebarOrder,
+        sidebarOrder: body.sidebarOrder ?? undefined,
         publishedAt: body.status === 'PUBLISHED' && !video.publishedAt ? new Date() : undefined,
       }
     });
@@ -43,12 +64,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         });
     }
 
+    // Sanitize metadata for audit log
+    const auditMetadata = { ...body };
+    // Remove potentially large fields if they didn't change or just to be safe
+    delete auditMetadata.description;
+    delete auditMetadata.descriptionEn;
+
     await writeAuditLog({
-      actorUserId: userId,
+      actorUserId: adminUserId,
       action: "VIDEO_UPDATED",
       targetType: "Video",
       targetId: videoId,
-      metadata: body
+      metadata: auditMetadata
     });
 
     return NextResponse.json(updated);
@@ -57,13 +84,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
+const actionSchema = z.object({
+    action: z.enum(['publish', 'unpublish', 'archive', 'restore', 'set-hero']),
+    reason: z.string().optional(),
+});
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
     const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEO_ACTION");
     if (response) return response;
 
     const videoId = params.id;
-    const { action, reason } = await req.json();
-    const { userId } = await auth();
+    const json = await req.json();
+    const validation = actionSchema.safeParse(json);
+
+    if (!validation.success) {
+        return NextResponse.json({ error: 'Validation failed', details: validation.error.format() }, { status: 400 });
+    }
+
+    const { action, reason } = validation.data;
 
     try {
         let updated;
@@ -108,7 +146,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
 
         await writeAuditLog({
-            actorUserId: userId,
+            actorUserId: adminUserId,
             action: `VIDEO_${action.toUpperCase()}`,
             targetType: "Video",
             targetId: videoId,

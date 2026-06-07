@@ -12,6 +12,11 @@ export type AdminPaymentListItem = {
   createdAt: string;
   updatedAt: string;
   metadata?: any;
+  creator?: {
+    id: string;
+    name: string | null;
+    slug: string | null;
+  } | null;
 };
 
 export type AdminPaymentsListResponse = {

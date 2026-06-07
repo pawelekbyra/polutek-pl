@@ -29,6 +29,7 @@ const allowedAppRoutes = [
   "app/api/admin/users/export/route.ts",
   "app/api/admin/users/route.ts",
   "app/api/admin/users/stats/route.ts",
+  "app/api/admin/videos/[id]/actions/route.ts",
   "app/api/admin/videos/[id]/route.ts",
   "app/api/admin/videos/reorder/route.ts",
   "app/api/admin/videos/resync/route.ts",

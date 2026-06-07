@@ -57,6 +57,7 @@ export default function AdminVideosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tierFilter, setTierFilter] = useState<string>("ALL");
+  const [sourceKindFilter, setSourceKindFilter] = useState<string>("ALL");
   const [needsAttention, setNeedsAttention] = useState<boolean>(false);
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
@@ -67,6 +68,7 @@ export default function AdminVideosPage() {
       let url = `/api/admin/videos?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
       if (tierFilter !== "ALL") url += `&tier=${tierFilter}`;
+      if (sourceKindFilter !== "ALL") url += `&sourceKind=${sourceKindFilter}`;
       if (isMainFeatured !== "ALL") url += `&isMainFeatured=${isMainFeatured}`;
       if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
       if (needsAttention) url += `&needsAttention=true`;
@@ -83,7 +85,7 @@ export default function AdminVideosPage() {
     } catch (err) {
       logger.error("Failed to fetch videos", err);
     }
-  }, [page, searchQuery, statusFilter, tierFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
+  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
 
   const checkAdmin = useCallback(async () => {
     try {
@@ -118,7 +120,7 @@ export default function AdminVideosPage() {
   // Refetch when filters change (except search which has its own button)
   useEffect(() => {
       if (isAdmin) fetchVideos(1);
-  }, [statusFilter, tierFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
+  }, [statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
 
 
   const slugify = (text: string) => {
@@ -390,6 +392,22 @@ export default function AdminVideosPage() {
                             <SelectItem value="PUBLIC">Publiczne</SelectItem>
                             <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
                             <SelectItem value="PATRON">Patroni</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={sourceKindFilter} onValueChange={(v) => setSourceKindFilter(v || "ALL")}>
+                        <SelectTrigger className="w-[120px] h-9">
+                            <SelectValue placeholder="Źródło" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Dowolne źródło</SelectItem>
+                            <SelectItem value="YOUTUBE">YouTube</SelectItem>
+                            <SelectItem value="VIMEO">Vimeo</SelectItem>
+                            <SelectItem value="HLS">HLS</SelectItem>
+                            <SelectItem value="DASH">DASH</SelectItem>
+                            <SelectItem value="MP4">MP4</SelectItem>
+                            <SelectItem value="VERCEL_BLOB">Blob</SelectItem>
+                            <SelectItem value="UNKNOWN">Nieznane</SelectItem>
                         </SelectContent>
                     </Select>
 
