@@ -240,6 +240,8 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     hasNextPage,
     isLoading,
     isFetchingNextPage,
+    isError,
+    error,
     postMutation,
     likeMutation,
     pinMutation,

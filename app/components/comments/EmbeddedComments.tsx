@@ -10,6 +10,8 @@ import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RefreshCcw } from "../icons";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -114,6 +116,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isError,
+    error,
     postMutation,
     likeMutation,
     pinMutation,
@@ -189,6 +193,47 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     return count === 1 ? "comment" : "comments";
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="h-6 w-6 rounded-full" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="space-y-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-4">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="max-w-3xl bg-white px-6 py-12 rounded-2xl border border-neutral-200 shadow-sm my-6 text-center space-y-4">
+        <p className="text-neutral-600 font-medium">
+          {language === "pl" ? "Nie udało się załadować komentarzy." : "Could not load comments."}
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => window.location.reload()}
+          className="gap-2"
+        >
+          <RefreshCcw size={16} />
+          {language === "pl" ? "Spróbuj ponownie" : "Try again"}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div ref={commentsTopRef} className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative">
       {/* Sticky Header */}
@@ -259,6 +304,17 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       />
 
       <div className="space-y-6">
+        {comments.length === 0 && (
+          <div className="py-10 text-center border-t border-neutral-100 mt-4">
+             <p className="text-neutral-500 italic text-sm">
+                {canComment
+                  ? (language === "pl" ? "Brak komentarzy. Bądź pierwszy." : "No comments yet. Be the first.")
+                  : (language === "pl" ? "Brak komentarzy." : "No comments yet.")
+                }
+             </p>
+          </div>
+        )}
+
         {comments.map((comment) => (
           <div key={comment.id} className="space-y-3">
             <CommentItem

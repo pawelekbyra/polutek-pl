@@ -11,7 +11,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/health',
   '/api/access(.*)',
   // Only GET comments is public if product requires it
-  '/api/comments'
+  '/api/comments',
+  '/api/channel/sidebar'
 ]);
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);

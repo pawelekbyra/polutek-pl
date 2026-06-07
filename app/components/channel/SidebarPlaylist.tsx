@@ -12,7 +12,7 @@ import Image from 'next/image';
 import { Video, Lock } from '../icons';
 import { PublicVideoDTO } from '@/app/types/video';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { SidebarPlaylistSkeleton } from '@/components/skeletons';
 
@@ -43,23 +43,31 @@ export function SidebarPlaylist({
 }: SidebarPlaylistProps) {
   const [layout, setLayout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchLayout = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await fetch(`/api/channel/sidebar?currentVideoId=${selectedVideoId || ''}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLayout(data);
+      } else {
+        console.warn(`[SidebarPlaylist] Fetch failed with status: ${res.status}`);
+        setError(true);
+      }
+    } catch (err) {
+      logger.error("Failed to fetch sidebar layout", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedVideoId]);
 
   useEffect(() => {
-    async function fetchLayout() {
-      try {
-        const res = await fetch(`/api/channel/sidebar?currentVideoId=${selectedVideoId || ''}`);
-        if (res.ok) {
-          const data = await res.json();
-          setLayout(data);
-        }
-      } catch (err) {
-        logger.error("Failed to fetch sidebar layout", err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchLayout();
-  }, [selectedVideoId]);
+  }, [fetchLayout]);
 
   const renderPremiereItem = () => (
     <div className="group flex gap-2 p-1 rounded-lg relative cursor-default bg-gradient-to-r from-amber-50 to-white border border-amber-100">
@@ -168,8 +176,36 @@ export function SidebarPlaylist({
     );
   };
 
-  if (loading || !layout) {
+  if (loading) {
       return <SidebarPlaylistSkeleton />;
+  }
+
+  // Fallback if API fails or returns no layout
+  if (error || !layout || !layout.sections || layout.sections.length === 0) {
+    if (sortedVideos.length === 0) {
+        return (
+            <div className="py-10 text-center px-4">
+                <p className="text-sm text-neutral-500 italic">
+                    {language === 'pl' ? 'Brak filmów do wyświetlenia.' : 'No videos to show.'}
+                </p>
+            </div>
+        );
+    }
+
+    // Basic fallback using sortedVideos from props
+    return (
+        <div className="space-y-2">
+            <div className="pb-1 border-b border-neutral-100">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
+                    {language === 'pl' ? 'Wszystkie filmy' : 'All videos'}
+                </h3>
+            </div>
+            {sortedVideos.map(video => renderVideoItem({
+                ...video,
+                isLocked: video.tier !== 'PUBLIC' && !viewerIsPatron && userProfile?.role !== 'ADMIN'
+            }))}
+        </div>
+    );
   }
 
   const searchResultsSection = searchQuery ? (
@@ -182,26 +218,35 @@ export function SidebarPlaylist({
 
   if (searchResultsSection) return searchResultsSection;
 
+  const freeSection = layout.sections.find((s: any) => s.type === 'FREE');
+  const loggedInSection = layout.sections.find((s: any) => s.type === 'LOGGED_IN');
+  const patronSection = layout.sections.find((s: any) => s.type === 'PATRON');
+  const otherSections = layout.sections.filter((s: any) => !['FREE', 'LOGGED_IN', 'PATRON'].includes(s.type));
+
+  const renderSection = (section: any) => (
+    <div key={section.id} className="space-y-2 mb-6">
+      <div className="pb-1 border-b border-neutral-100">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{section.title}</h3>
+      </div>
+      {section.items.map(renderVideoItem)}
+    </div>
+  );
+
   return (
     <>
-      {layout.sections.map((section: any) => (
-          <div key={section.id} className="space-y-2 mb-6">
-              <div className="pb-1 border-b border-neutral-100">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{section.title}</h3>
-              </div>
-              {section.items.map(renderVideoItem)}
+      {freeSection && renderSection(freeSection)}
+      {loggedInSection && renderSection(loggedInSection)}
 
-              {section.type === 'FREE' && (
-                  <div className="pt-4 pb-2">
-                      <VideoPlaylist
-                        videoTitle={layout.sections[0]?.items[0]?.title || "Materiały"}
-                        creatorId={layout.sections[0]?.items[0]?.creatorId || ""}
-                        isPatron={viewerIsPatron}
-                      />
-                  </div>
-              )}
-          </div>
-      ))}
+      <div className="pt-2 pb-6 px-1">
+          <VideoPlaylist
+            videoTitle={layout.sections[0]?.items[0]?.title || "Materiały"}
+            creatorId={layout.sections[0]?.items[0]?.creatorId || ""}
+            isPatron={viewerIsPatron}
+          />
+      </div>
+
+      {patronSection && renderSection(patronSection)}
+      {otherSections.map(renderSection)}
     </>
   );
 }
