@@ -171,4 +171,144 @@ describe('Playback Events API', () => {
     expect(res.status).toBe(200);
     expect(prisma.video.update).not.toHaveBeenCalled();
   });
+
+  it('throttles PROGRESS events within 10 seconds', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_1' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+
+    const now = new Date();
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_1',
+      videoId: 'vid_1',
+      userId: 'user_1',
+      lastHeartbeatAt: now,
+      createdAt: now,
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'PROGRESS', sessionId: 'sess_1' }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.throttled).toBe(true);
+    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('sanitizes sensitive metadata', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_1' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_1',
+      videoId: 'vid_1',
+      userId: 'user_1',
+      createdAt: new Date(Date.now() - 20000),
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'PLAYER_READY',
+        sessionId: 'sess_1',
+        metadata: {
+            playbackUrl: 'http://secret.com/video.mp4',
+            token: 'secret-token',
+            visibleKey: 'visible-value'
+        }
+      }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(200);
+    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+            metadata: {
+                visibleKey: 'visible-value'
+            }
+        })
+    }));
+  });
+
+  it('throttles HEARTBEAT events within 10 seconds', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_1' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+
+    const now = new Date();
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_1',
+      videoId: 'vid_1',
+      userId: 'user_1',
+      lastHeartbeatAt: now,
+      createdAt: now,
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'HEARTBEAT', sessionId: 'sess_1' }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.throttled).toBe(true);
+    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('denies view for session belonging to another user', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_B' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_user_A',
+      videoId: 'vid_1',
+      userId: 'user_A', // Session belongs to user A
+      countedAsView: false,
+      createdAt: new Date(),
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'WATCHED_10_SECONDS', sessionId: 'sess_user_A' }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toBe('SESSION_USER_MISMATCH');
+    expect(prisma.video.update).not.toHaveBeenCalled();
+  });
+
+  it('denies view for anonymous session with user agent mismatch', async () => {
+    (auth as any).mockResolvedValue({ userId: null });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_anon',
+      videoId: 'vid_1',
+      userId: null,
+      ipHash: '8e8124043b245e3f898399d82138b30f0f3531b78297b876378e918545cc87f7', // Hash of 127.0.0.1
+      userAgentHash: 'correct-ua-hash',
+      countedAsView: false,
+      createdAt: new Date(),
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      headers: { 'user-agent': 'different-ua' },
+      body: JSON.stringify({ type: 'WATCHED_10_SECONDS', sessionId: 'sess_anon' }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toBe('SESSION_OWNERSHIP_MISMATCH');
+    expect(prisma.video.update).not.toHaveBeenCalled();
+  });
 });
