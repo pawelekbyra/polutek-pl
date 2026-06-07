@@ -47,7 +47,7 @@ export function CommentItem({
 }: CommentItemProps) {
   const authorIsPatron = isPatronAuthor(comment.author);
   const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(comment.text);
+  const [editText, setEditText] = useState(comment.text || "");
   const [showMenu, setShowMenu] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -242,7 +242,7 @@ export function CommentItem({
           </div>
         ) : (
           <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-            {comment.text}
+            {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
           </p>
         )}
 
