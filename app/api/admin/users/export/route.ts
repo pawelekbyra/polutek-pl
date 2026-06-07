@@ -3,30 +3,35 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
 import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { parseUserQueryParams } from '@/lib/services/admin/admin-query-parser';
+import { writeAuditLog } from '@/lib/services/audit.service';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const { userId: actorId } = await auth();
   const { response } = await requireAdminForApi("EXPORT_ADMIN_USERS");
   if (response) return response;
 
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get('q') || undefined;
-  const role = (searchParams.get('role') as any) || undefined;
-  const isPatron = searchParams.get('isPatron') === 'true' ? true : searchParams.get('isPatron') === 'false' ? false : undefined;
+  const options = parseUserQueryParams(req);
 
   try {
     const where: any = {
         AND: [
-          query ? {
+          options.query ? {
             OR: [
-              { email: { contains: query, mode: 'insensitive' } },
-              { name: { contains: query, mode: 'insensitive' } },
-              { username: { contains: query, mode: 'insensitive' } },
+              { email: { contains: options.query, mode: 'insensitive' } },
+              { name: { contains: options.query, mode: 'insensitive' } },
+              { username: { contains: options.query, mode: 'insensitive' } },
             ]
           } : {},
-          role ? { role } : {},
-          isPatron !== undefined ? { isPatron } : {},
+          options.role ? { role: options.role } : {},
+          options.isPatron !== undefined ? { isPatron: options.isPatron } : {},
+          options.language ? { language: options.language } : {},
+          options.isDeleted !== undefined ? { isDeleted: options.isDeleted } : {},
+          options.hasPayments ? { payments: { some: {} } } : {},
+          options.hasSubscriptions ? { subscriptions: { some: {} } } : {},
         ]
     };
 
@@ -39,7 +44,7 @@ export async function GET(req: NextRequest) {
     });
 
     const csvRows = [
-      ['ID', 'Email', 'Name', 'Username', 'Role', 'IsPatron', 'PatronSince', 'PatronSource', 'NormalizedTotalPLN', 'CreatedAt'].join(',')
+      ['ID', 'Email', 'Name', 'Username', 'Role', 'IsPatron', 'PatronSince', 'PatronSource', 'NormalizedTotalPLN', 'Language', 'IsDeleted', 'CreatedAt'].join(',')
     ];
 
     for (const user of users) {
@@ -54,11 +59,20 @@ export async function GET(req: NextRequest) {
         user.patronSince ? user.patronSince.toISOString() : '',
         user.patronSource || '',
         normalizedTotal.toFixed(2),
+        user.language || 'pl',
+        user.isDeleted,
         user.createdAt.toISOString()
       ].join(','));
     }
 
     const csvContent = csvRows.join('\n');
+
+    await writeAuditLog({
+        actorUserId: actorId,
+        action: "USERS_EXPORT",
+        targetType: "System",
+        metadata: { filterOptions: options, count: users.length }
+    });
 
     return new NextResponse(csvContent, {
       headers: {

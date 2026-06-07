@@ -28,6 +28,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             videoDislikes: true,
             playbackSessions: true
           }
+        },
+        comments: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            include: {
+                author: {
+                    select: {
+                        email: true,
+                        name: true,
+                        username: true
+                    }
+                }
+            }
         }
       }
     });

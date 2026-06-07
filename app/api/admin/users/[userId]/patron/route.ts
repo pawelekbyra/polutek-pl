@@ -16,12 +16,17 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   try {
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
+    const reason = (body?.reason || body?.note || "").trim();
+
+    if (!reason) {
+        return NextResponse.json({ error: 'Reason is required for manual patron status change.' }, { status: 400 });
+    }
 
     if (action === 'grant') {
       const result = await grantPatronStatus(params.userId, {
         source: 'admin',
         grantedByUserId: adminUserId!,
-        note: body?.reason || body?.note || 'Granted manually by administrator',
+        note: reason,
       });
       await syncPatronStatusToClerk(params.userId, true, result.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_GRANT_CLERK_SYNC_ERROR]', error);
@@ -32,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     if (action === 'revoke') {
       const result = await revokePatronStatus(params.userId, {
         revokedByUserId: adminUserId!,
-        note: body?.reason || body?.note || 'Revoked manually by administrator',
+        note: reason,
       });
       await syncPatronStatusToClerk(params.userId, false, result.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_REVOKE_CLERK_SYNC_ERROR]', error);

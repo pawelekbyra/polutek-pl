@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { AccessPolicy } from '@/lib/access/access-policy';
 import { auth } from '@clerk/nextjs/server';
 import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
 import { APP_NAME } from '@/lib/constants';
+import { requireAdminForApi } from '@/lib/auth-utils';
+import { EmailService } from '@/lib/services/email.service';
+import { writeAuditLog } from '@/lib/services/audit.service';
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -14,15 +16,9 @@ function getResendClient() {
   return new Resend(apiKey);
 }
 
-import { EmailService } from '@/lib/services/email.service';
-
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  const decision = await AccessPolicy.canManageAdmin(userId);
-
-  if (!decision.allowed) {
-    return NextResponse.json({ error: decision.reason }, { status: 403 });
-  }
+  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_EMAILS_BROADCAST");
+  if (response) return response;
 
   const { subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, isTest, testEmail, manualEmails } = await req.json();
 
@@ -34,12 +30,22 @@ export async function POST(req: NextRequest) {
     if (isTest) {
         const resend = getResendClient();
         const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+        const targetEmail = testEmail || (await auth()).sessionClaims?.email as string;
+
         await resend.emails.send({
             from,
-            to: [testEmail || (await auth()).sessionClaims?.email as string],
+            to: [targetEmail],
             subject: `[TEST] ${subjectPl}`,
             html: htmlPl
         });
+
+        await writeAuditLog({
+            actorUserId: adminUserId,
+            action: "BROADCAST_TEST_SENT",
+            targetType: "Email",
+            metadata: { testEmail: targetEmail, subject: subjectPl }
+        });
+
         return NextResponse.json({ success: true, message: 'Test email sent' });
     }
 
@@ -87,7 +93,7 @@ export async function POST(req: NextRequest) {
         recipientGroup: recipientGroup || 'SUBSCRIBERS',
         recipientCount: subscribers.length,
         status: 'READY',
-        createdById: userId
+        createdById: adminUserId
       }
     });
 
@@ -107,6 +113,14 @@ export async function POST(req: NextRequest) {
         logger.error(`[BroadcastEmailAPI] Background send failed for ${broadcast.id}`, err);
     });
 
+    await writeAuditLog({
+        actorUserId: adminUserId,
+        action: "BROADCAST_CREATED",
+        targetType: "BroadcastEmail",
+        targetId: broadcast.id,
+        metadata: { recipientGroup, recipientCount: subscribers.length, subject: subjectPl }
+    });
+
     return NextResponse.json({
         success: true,
         broadcastId: broadcast.id,
@@ -120,16 +134,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  const decision = await AccessPolicy.canManageAdmin(userId);
-
-  if (!decision.allowed) {
-    return NextResponse.json({ error: decision.reason }, { status: 403 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_EMAILS_BROADCAST_HISTORY");
+  if (response) return response;
 
   try {
     const history = await prisma.broadcastEmail.findMany({
-      orderBy: { sentAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 20
     });
     return NextResponse.json(history);
