@@ -171,4 +171,65 @@ describe('Playback Events API', () => {
     expect(res.status).toBe(200);
     expect(prisma.video.update).not.toHaveBeenCalled();
   });
+
+  it('throttles PROGRESS events within 10 seconds', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_1' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+
+    const now = new Date();
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_1',
+      videoId: 'vid_1',
+      userId: 'user_1',
+      lastHeartbeatAt: now,
+      createdAt: now,
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'PROGRESS', sessionId: 'sess_1' }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.throttled).toBe(true);
+    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('sanitizes sensitive metadata', async () => {
+    (auth as any).mockResolvedValue({ userId: 'user_1' });
+    (prisma.video.findUnique as any).mockResolvedValue({ id: 'vid_1' });
+    (AccessPolicy.canViewVideo as any).mockResolvedValue({ allowed: true });
+    (prisma.videoPlaybackSession.findUnique as any).mockResolvedValue({
+      id: 'sess_1',
+      videoId: 'vid_1',
+      userId: 'user_1',
+      createdAt: new Date(Date.now() - 20000),
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/vid_1/playback-event', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'PLAYER_READY',
+        sessionId: 'sess_1',
+        metadata: {
+            playbackUrl: 'http://secret.com/video.mp4',
+            token: 'secret-token',
+            visibleKey: 'visible-value'
+        }
+      }),
+    });
+
+    const res = await POST(req, { params: { id: 'vid_1' } });
+    expect(res.status).toBe(200);
+    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+            metadata: {
+                visibleKey: 'visible-value'
+            }
+        })
+    }));
+  });
 });

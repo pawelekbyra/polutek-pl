@@ -192,6 +192,7 @@ export default function AdminPaymentsListPage() {
                         <TableHeader>
                             <TableRow className="bg-muted/30 hover:bg-muted/30">
                                 <TableHead className="text-[10px] uppercase font-bold">Użytkownik</TableHead>
+                                <TableHead className="text-[10px] uppercase font-bold">Twórca</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Kwota & Waluta</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Stripe ID</TableHead>
@@ -214,6 +215,16 @@ export default function AdminPaymentsListPage() {
                                                 <div className="text-[10px] text-muted-foreground truncate">{p.userName || "Anonim"}</div>
                                             </div>
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {p.creator ? (
+                                            <div className="flex flex-col">
+                                                <div className="text-xs font-medium">{p.creator.name}</div>
+                                                <div className="text-[9px] text-muted-foreground font-mono">@{p.creator.slug}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-muted-foreground italic">System</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
