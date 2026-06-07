@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
   '/api/health',
   '/api/access(.*)',
+  '/api/channel/sidebar',
   // Only GET comments is public if product requires it
   '/api/comments'
 ]);

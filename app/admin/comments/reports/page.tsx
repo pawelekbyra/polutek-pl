@@ -11,6 +11,7 @@ import { ArrowLeft, MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink }
 import { logger } from "@/lib/logger";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminCommentReportsPage() {
   const [reports, setReports] = useState<any[]>([]);
@@ -99,11 +100,11 @@ export default function AdminCommentReportsPage() {
                   {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><div className="space-y-2"><div className="h-3 w-32 bg-neutral-100 animate-pulse" /><div className="h-10 w-full bg-neutral-100 animate-pulse" /></div></TableCell>
-                        <TableCell><div className="space-y-2"><div className="h-4 w-24 bg-neutral-100 animate-pulse" /><div className="h-3 w-32 bg-neutral-100 animate-pulse" /></div></TableCell>
-                        <TableCell><div className="h-4 w-32 bg-neutral-100 animate-pulse" /></TableCell>
-                        <TableCell><div className="h-5 w-16 bg-neutral-100 animate-pulse" /></TableCell>
-                        <TableCell><div className="flex justify-end gap-2"><div className="h-7 w-20 bg-neutral-100 animate-pulse" /><div className="h-7 w-20 bg-neutral-100 animate-pulse" /></div></TableCell>
+                        <TableCell><div className="space-y-2"><Skeleton className="h-3 w-32" /><Skeleton className="h-10 w-full" /></div></TableCell>
+                        <TableCell><div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-32" /></div></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><div className="flex justify-end gap-2"><Skeleton className="h-7 w-20" /><Skeleton className="h-7 w-20" /></div></TableCell>
                       </TableRow>
                     ))
                   ) : reports.length === 0 ? (

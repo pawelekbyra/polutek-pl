@@ -10,6 +10,7 @@ import { PlaybackPlan } from "@/lib/services/playback/playback.service";
 import { AccessTier } from "@prisma/client";
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { PlayerSkeleton } from "@/components/skeletons";
+import { PlayerErrorOverlay } from "./PlayerErrorOverlay";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
@@ -51,6 +52,7 @@ export default function PremiumWrapper({
   const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
   const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -88,9 +90,11 @@ export default function PremiumWrapper({
         setPlaybackPlan(data);
       }
       if (data.requiredTier) setDbTier(data.requiredTier);
+      setFetchError(null);
     } catch (error) {
       logger.error("Error checking video access:", error);
       setHasAccess(false);
+      setFetchError("SOURCE_ERROR");
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +137,16 @@ export default function PremiumWrapper({
   };
 
   if (contextValue.hasAccess) {
+    if (fetchError) {
+        return (
+            <PlayerErrorOverlay
+                errorCode={fetchError}
+                isAdmin={true}
+                onRetry={checkAccess}
+            />
+        );
+    }
+
     return (
       <VideoAccessContext.Provider value={contextValue}>
         <div className="animate-in fade-in duration-500 h-full w-full">

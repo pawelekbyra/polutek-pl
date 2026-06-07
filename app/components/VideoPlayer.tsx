@@ -8,6 +8,7 @@ import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle, RefreshCcw } from './icons';
 import { PlayerSkeleton } from '@/components/skeletons';
+import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -15,7 +16,7 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { playbackPlan, refreshPlaybackPlan } = useVideoAccess();
+    const { playbackPlan, refreshPlaybackPlan, effectiveTier } = useVideoAccess();
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
@@ -117,21 +118,14 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
             {loadError ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950 text-white p-6 text-center">
-                    <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
-                    <p className="font-medium">Nie udało się przygotować odtwarzania.</p>
-                    <p className="text-xs text-white/60 mt-2 mb-6">Wystąpił błąd podczas ładowania źródła wideo.</p>
-                    <button
-                        onClick={() => {
-                            setLoadError(null);
-                            refreshPlaybackPlan();
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-bold uppercase tracking-widest transition-all"
-                    >
-                        <RefreshCcw size={16} />
-                        Spróbuj ponownie
-                    </button>
-                </div>
+                <PlayerErrorOverlay
+                    errorCode="MEDIA_LOAD_FAILED"
+                    isAdmin={true} // In context of this app, if they can see VideoPlayer they are likely meant to see it or we can pass proper isAdmin from profile
+                    onRetry={() => {
+                        setLoadError(null);
+                        refreshPlaybackPlan();
+                    }}
+                />
             ) : (
                 <MediaPlayer
                     ref={player}

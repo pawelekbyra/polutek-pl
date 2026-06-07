@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { MessageSquare, Loader2, ChevronUp } from "../icons";
+import { MessageSquare, Loader2, ChevronUp, AlertCircle, RefreshCcw } from "../icons";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
@@ -10,6 +10,7 @@ import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -42,6 +43,24 @@ interface EmbeddedCommentsProps {
   videoId: string;
   videoTier?: AccessTierDto;
 }
+
+const CommentsLoadingState = () => (
+  <div className="space-y-8 animate-in fade-in duration-500">
+    {[1, 2, 3].map((i) => (
+      <div key={i} className="flex gap-4">
+        <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
@@ -114,6 +133,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isError,
     postMutation,
     likeMutation,
     pinMutation,
@@ -259,52 +279,94 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       />
 
       <div className="space-y-6">
-        {comments.map((comment) => (
-          <div key={comment.id} className="space-y-3">
-            <CommentItem
-              comment={comment}
-              userProfile={userProfile}
-              isClient={isClient}
-              language={language}
-              t={t}
-              canComment={viewer?.canComment ?? false}
-              onLike={(id) => likeMutation.mutate(id)}
-              onDislike={() => {}}
-              onReply={(id) => setReplyTo(id)}
-              onDelete={(id) => deleteMutation.mutate(id)}
-              onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
-              isPinPending={pinMutation.isPending}
-              onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
-              onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
-            />
-
-            {/* NESTED REPLIES */}
-            {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-              <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                {comment.repliesPreview.map((reply) => (
-                  <CommentItem
-                    key={reply.id}
-                    comment={reply}
-                    userProfile={userProfile}
-                    isClient={isClient}
-                    language={language}
-                    t={t}
-                    canComment={viewer?.canComment ?? false}
-                    onLike={(id) => likeMutation.mutate(id)}
-                    onDislike={() => {}}
-                    onReply={() => {}}
-                    onDelete={(id) => deleteMutation.mutate(id)}
-                    onPin={() => {}}
-                    isPinPending={false}
-                    onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
-                    onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
-                    isReply={true}
-                  />
-                ))}
-              </div>
-            )}
+        {isLoading ? (
+          <CommentsLoadingState />
+        ) : isError ? (
+          <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-red-50/50 rounded-2xl border border-red-100">
+            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+              <AlertCircle size={24} />
+            </div>
+            <div className="space-y-1">
+              <p className="font-bold text-red-900">
+                {language === "pl" ? "Nie udało się załadować komentarzy." : "Could not load comments."}
+              </p>
+              <p className="text-xs text-red-700/70">
+                {language === "pl" ? "Spróbuj odświeżyć stronę lub wróć później." : "Try refreshing the page or come back later."}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-200 text-red-600 hover:bg-red-50"
+              onClick={() => window.location.reload()}
+            >
+              <RefreshCcw size={14} className="mr-2" />
+              {language === "pl" ? "Odśwież stronę" : "Refresh page"}
+            </Button>
           </div>
-        ))}
+        ) : comments.length === 0 ? (
+          <div className="py-16 flex flex-col items-center justify-center text-center space-y-3 opacity-60">
+            <MessageSquare size={48} className="text-neutral-300" />
+            <div className="space-y-1">
+              <p className="font-black uppercase tracking-widest text-[11px]">
+                {language === "pl" ? "Brak komentarzy" : "No comments yet"}
+              </p>
+              <p className="text-xs italic">
+                {viewer?.canComment
+                  ? (language === "pl" ? "Bądź pierwszy i napisz coś sensownego." : "Be the first to say something meaningful.")
+                  : (language === "pl" ? "Ten film nie ma jeszcze komentarzy." : "This video has no comments yet.")
+                }
+              </p>
+            </div>
+          </div>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="space-y-3">
+              <CommentItem
+                comment={comment}
+                userProfile={userProfile}
+                isClient={isClient}
+                language={language}
+                t={t}
+                canComment={viewer?.canComment ?? false}
+                onLike={(id) => likeMutation.mutate(id)}
+                onDislike={() => {}}
+                onReply={(id) => setReplyTo(id)}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
+                isPinPending={pinMutation.isPending}
+                onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
+                onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
+              />
+
+              {/* NESTED REPLIES */}
+              {comment.repliesPreview && comment.repliesPreview.length > 0 && (
+                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
+                  {comment.repliesPreview.map((reply) => (
+                    <CommentItem
+                      key={reply.id}
+                      comment={reply}
+                      userProfile={userProfile}
+                      isClient={isClient}
+                      language={language}
+                      t={t}
+                      canComment={viewer?.canComment ?? false}
+                      onLike={(id) => likeMutation.mutate(id)}
+                      onDislike={() => {}}
+                      onReply={() => {}}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      onPin={() => {}}
+                      isPinPending={false}
+                      onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
+                      onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
+                      isReply={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
 
         <div ref={loadMoreRef} className="h-4" />
 
