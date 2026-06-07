@@ -14,17 +14,23 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { videoUrl, videoSourceKind, videoEmbedUrl, tracking } = useVideoAccess() as any;
+    const { playbackPlan, refreshPlaybackPlan } = useVideoAccess();
+    const { source, tracking, player: playerConfig } = playbackPlan || {};
+    const videoUrl = source?.playbackUrl;
+    const videoSourceKind = source?.kind;
+    const videoEmbedUrl = source?.embedUrl;
+
     const player = useRef<MediaPlayerInstance>(null);
-    const posterUrl = video.thumbnailUrl || '/logo.png';
+    const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const hasReached10s = useRef(false);
+    const reachedThresholds = useRef<Record<number, boolean>>({});
 
     const sendEvent = useCallback(async (type: string, extra = {}) => {
         if (!tracking?.playbackSessionId) return;
         try {
-            await fetch(`/api/videos/${video.id}/playback-event`, {
+            const res = await fetch(`/api/videos/${video.id}/playback-event`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -35,10 +41,17 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     ...extra
                 })
             });
+
+            if (res.status === 403) {
+                const { error } = await res.json();
+                if (error === 'SESSION_EXPIRED') {
+                    refreshPlaybackPlan();
+                }
+            }
         } catch (e) {
             console.warn("Failed to send playback event", type, e);
         }
-    }, [video.id, tracking?.playbackSessionId]);
+    }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -128,20 +141,41 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 <MediaPlayer
                     ref={player}
                     className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
-                    title={video.title || 'Video'}
+                    title={playerConfig?.title || video.title || 'Video'}
                     src={src}
                     poster={posterUrl}
-                    muted={variant === 'hero'}
-                    autoPlay={variant === 'hero'}
+                    muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
+                    autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
                     playsInline
-                    controls
+                    controls={playerConfig ? playerConfig.controls : true}
                     aspectRatio="16/9"
+                    onCanPlay={() => sendEvent('PLAYER_READY')}
                     onPlay={() => sendEvent('PLAY_STARTED')}
                     onPause={() => sendEvent('PLAY_PAUSED')}
-                    onTimeUpdate={(e) => {
-                        if (!hasReached10s.current && e.currentTime >= 10) {
+                    onEnded={() => sendEvent('ENDED')}
+                    onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
+                    onWaiting={() => sendEvent('BUFFERING_STARTED')}
+                    onPlaying={() => sendEvent('BUFFERING_ENDED')}
+                    onTimeUpdate={(e: any) => {
+                        const { currentTime, duration } = e.detail;
+                        if (!hasReached10s.current && currentTime >= 10) {
                             hasReached10s.current = true;
                             sendEvent('WATCHED_10_SECONDS');
+                        }
+
+                        const pct = (currentTime / duration) * 100;
+                        const thresholds = [
+                            { pct: 25, type: 'WATCHED_25_PERCENT' },
+                            { pct: 50, type: 'WATCHED_50_PERCENT' },
+                            { pct: 75, type: 'WATCHED_75_PERCENT' },
+                            { pct: 90, type: 'WATCHED_90_PERCENT' },
+                        ];
+
+                        for (const threshold of thresholds) {
+                            if (pct >= threshold.pct && !reachedThresholds.current[threshold.pct]) {
+                                reachedThresholds.current[threshold.pct] = true;
+                                sendEvent(threshold.type);
+                            }
                         }
                     }}
                     onError={() => {
