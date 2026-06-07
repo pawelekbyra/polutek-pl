@@ -11,6 +11,7 @@ import { AccessTier } from "@prisma/client";
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { PlayerSkeleton } from "@/components/skeletons";
 import { PlayerErrorOverlay } from "./PlayerErrorOverlay";
+import { PlayerStateFrame } from "./PlayerStateFrame";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
@@ -125,7 +126,11 @@ export default function PremiumWrapper({
   }, [playbackPlan, checkAccess]);
 
   if (!mounted) {
-    return <PlayerSkeleton />;
+    return (
+      <PlayerStateFrame>
+        <PlayerSkeleton />
+      </PlayerStateFrame>
+    );
   }
 
   const contextValue = {
@@ -140,7 +145,11 @@ export default function PremiumWrapper({
     if (isLoaded && !userId && !isPublic) {
         return <PaywallOverlay requiredTier={effectiveTier} isLoggedIn={false} variant={variant} />;
     }
-    return <PlayerSkeleton />;
+    return (
+      <PlayerStateFrame>
+        <PlayerSkeleton />
+      </PlayerStateFrame>
+    );
   }
 
   const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
@@ -148,21 +157,25 @@ export default function PremiumWrapper({
   if (contextValue.hasAccess) {
     if (fetchError) {
         return (
+          <PlayerStateFrame>
             <PlayerErrorOverlay
                 errorCode={fetchError}
                 onRetry={checkAccess}
                 isAdmin={isAdmin}
             />
+          </PlayerStateFrame>
         );
     }
 
     if (!playbackPlan) {
         return (
-          <PlayerErrorOverlay
-              errorCode="NO_PLAYBACK_PLAN"
-              onRetry={checkAccess}
-              isAdmin={isAdmin}
-          />
+          <PlayerStateFrame>
+            <PlayerErrorOverlay
+                errorCode="NO_PLAYBACK_PLAN"
+                onRetry={checkAccess}
+                isAdmin={isAdmin}
+            />
+          </PlayerStateFrame>
         );
     }
 

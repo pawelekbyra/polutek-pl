@@ -169,7 +169,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, []);
 
   const scrollToTop = () => {
-    commentsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (commentsTopRef.current) {
+        const yOffset = -160; // Scroll even higher above the box
+        const y = commentsTopRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+    }
   };
 
   const { mutate: postComment } = postMutation;

@@ -59,7 +59,7 @@ export async function GET(
     const context = { userId, canModerate, videoCreatorId };
 
     const [commentsData, canComment] = await Promise.all([
-      CommentService.getComments(videoId, userId, sortBy, cursor, limit),
+      CommentService.getComments(videoId, userId, sortBy, cursor, limit, true),
       CommentAccessService.canComment(userId, videoId)
     ]);
 

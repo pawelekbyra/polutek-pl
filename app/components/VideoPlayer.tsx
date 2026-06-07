@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { Play, AlertCircle, RefreshCcw } from './icons';
 import { PlayerSkeleton } from '@/components/skeletons';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
+import { PlayerStateFrame } from './PlayerStateFrame';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -20,6 +21,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const { playbackPlan, refreshPlaybackPlan, isLoading, effectiveTier } = useVideoAccess();
     const { orgRole } = useAuth();
     const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
+    const [playerKey, setPlayerKey] = useState(0);
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
@@ -73,7 +75,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     }, [isMounted, tracking, sendEvent]);
 
     // Hydration guard
-    if (!isMounted || isLoading) return <PlayerSkeleton />;
+    if (!isMounted || isLoading) {
+        return (
+            <PlayerStateFrame>
+                <PlayerSkeleton />
+            </PlayerStateFrame>
+        );
+    }
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail') {
@@ -103,28 +111,43 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     if (!playbackPlan) {
         return (
-            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
+            <PlayerStateFrame>
                 <PlayerErrorOverlay
                     errorCode="NO_PLAYBACK_PLAN"
                     onRetry={() => refreshPlaybackPlan()}
                     isAdmin={isAdmin}
                 />
-            </div>
+            </PlayerStateFrame>
         );
     }
 
-    const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
+    const normalizedKind = String(videoSourceKind || '').toLowerCase();
+    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
     if (!src) {
         return (
-            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
+            <PlayerStateFrame>
                 <PlayerErrorOverlay
                     errorCode="NO_PLAYBACK_URL"
                     onRetry={() => refreshPlaybackPlan()}
                     isAdmin={isAdmin}
                 />
-            </div>
+            </PlayerStateFrame>
+        );
+    }
+
+    const isSupported = isEmbedProvider || ['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob'].includes(normalizedKind);
+
+    if (!isSupported) {
+        return (
+            <PlayerStateFrame>
+                <PlayerErrorOverlay
+                    errorCode="UNSUPPORTED_SOURCE"
+                    onRetry={() => refreshPlaybackPlan()}
+                    isAdmin={isAdmin}
+                />
+            </PlayerStateFrame>
         );
     }
 
@@ -135,12 +158,14 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     errorCode="MEDIA_LOAD_FAILED"
                     onRetry={() => {
                         setLoadError(null);
-                        refreshPlaybackPlan();
+                        setPlayerKey((k) => k + 1);
+                        refreshPlaybackPlan?.();
                     }}
                     isAdmin={isAdmin}
                 />
             ) : (
                 <MediaPlayer
+                    key={playerKey}
                     ref={player}
                     className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
                     title={playerConfig?.title || video.title || 'Video'}

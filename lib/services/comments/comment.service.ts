@@ -12,14 +12,16 @@ export class CommentService {
     userId: string | null,
     sortBy: 'newest' | 'top' | 'oldest' = 'newest',
     cursor?: string,
-    limit: number = 20
+    limit: number = 20,
+    forceOnlyVisible: boolean = false
   ): Promise<{ comments: CommentDto[], totalCount: number, nextCursor: string | null }> {
 
-    const [video, canModerate] = await Promise.all([
+    const [video, canModerateReal] = await Promise.all([
       prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),
       CommentAccessService.canModerate(userId, videoId)
     ]);
 
+    const canModerate = forceOnlyVisible ? false : canModerateReal;
     const videoCreatorId = video?.creator?.userId || null;
 
     const where: Prisma.CommentWhereInput = {

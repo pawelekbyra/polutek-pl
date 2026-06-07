@@ -230,7 +230,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
-                    initialIsSubscribed={initialIsSubscribed}
+                    initialIsSubscribed={optimisticState.isSubscribed}
                     onStatusChange={(isSubscribed) => {
                         startTransition(() => {
                             addOptimisticAction({ type: 'SUBSCRIBE', isSubscribed });
@@ -286,8 +286,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
 
         {/* DESCRIPTION BOX */}
-        <div className="mt-3 bg-[#ebebeb] rounded-xl p-4 transition-colors cursor-pointer border border-transparent hover:bg-[#e2e2e2]" onClick={() => setIsExpanded(!isExpanded)}>
-           <div className="flex flex-wrap gap-x-2 gap-y-1 mb-1">
+        <div className="mt-2 bg-[#ebebeb] rounded-xl p-3 pt-1 transition-colors cursor-pointer border border-transparent hover:bg-[#e2e2e2]" onClick={() => setIsExpanded(!isExpanded)}>
+           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1 items-baseline">
               <span className="text-[14px] font-semibold text-[#0f0f0f]">
                  {mounted ? video.views.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}
               </span>
