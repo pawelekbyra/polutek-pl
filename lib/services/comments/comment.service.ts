@@ -28,7 +28,12 @@ export class CommentService {
       status: canModerate ? undefined : CommentStatus.VISIBLE
     };
 
-    const totalCount = await prisma.comment.count({ where });
+    const totalCount = await prisma.comment.count({
+      where: {
+        videoId,
+        status: canModerate ? undefined : CommentStatus.VISIBLE
+      }
+    });
 
     const orderBy: Prisma.CommentOrderByWithRelationInput[] = [];
     if (sortBy === 'top') {

@@ -110,9 +110,11 @@ export function SidebarPlaylist({
                       {video.tier === 'LOGGED_IN' ? t.loginReq : t.patronOnly}
                   </div>
               ) : (
-                  <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
-                      {video.tier === 'PUBLIC' ? t.public : t.available}
-                  </div>
+                  video.tier === 'PUBLIC' && (
+                    <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
+                        {t.public}
+                    </div>
+                  )
               )
           )}
         </div>
@@ -136,17 +138,6 @@ export function SidebarPlaylist({
                 )}
              </div>
           </div>
-          {mounted && (
-            hasAccess ? (
-              <span className="text-[9px] font-black uppercase tracking-widest text-primary mt-0.5">
-                {video.tier === 'PUBLIC' ? t.publicStatus : t.unlockedStatus}
-              </span>
-            ) : video.tier === 'LOGGED_IN' ? (
-              <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">{t.loginToWatchShort}</span>
-            ) : (
-              <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 mt-0.5">{t.becomePatron}</span>
-            )
-          )}
         </div>
       </div>
     );

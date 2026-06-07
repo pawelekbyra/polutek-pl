@@ -89,22 +89,6 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                                     </>
                                 )}
                             </div>
-                            <div className="mt-0.5">
-                                {mounted && (
-                                    hasAccess ? (
-                                        <span className="text-[11px] font-black uppercase tracking-widest text-primary">
-                                            {video.tier === 'PUBLIC' ? t.publicStatus : t.unlockedStatus}
-                                        </span>
-                                    ) : (
-                                        <span className={cn(
-                                            "text-[11px] font-black uppercase tracking-widest",
-                                            video.tier === 'LOGGED_IN' ? "text-blue-600" : "text-[#1a1a1a]/40"
-                                        )}>
-                                            {video.tier === 'LOGGED_IN' ? t.loginToWatchShort : t.patronOnly}
-                                        </span>
-                                    )
-                                )}
-                            </div>
                         </div>
                     </div>
                     <button className="h-fit p-1 hover:bg-[#000000]/5 rounded-md transition-colors opacity-0 group-hover:opacity-100 shrink-0 border border-neutral-300 hover:bg-neutral-50">

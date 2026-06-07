@@ -47,27 +47,44 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         isLiked: (userId ? initialInteraction?.liked : false) || false,
         isDisliked: (userId ? initialInteraction?.disliked : false) || false,
         likesCount: video.likesCount || 0,
-        dislikesCount: video.dislikesCount || 0
+        dislikesCount: video.dislikesCount || 0,
+        subscribersCount: video.creator?.subscribersCount || 0,
+        isSubscribed: initialIsSubscribed || false
     },
-    (state, action: 'LIKE' | 'DISLIKE') => {
-      const wasLiked = state.isLiked;
-      const wasDisliked = state.isDisliked;
+    (state, action: 'LIKE' | 'DISLIKE' | { type: 'SUBSCRIBE', isSubscribed: boolean }) => {
+      if (typeof action === 'string') {
+        const wasLiked = state.isLiked;
+        const wasDisliked = state.isDisliked;
 
-      if (action === 'LIKE') {
+        if (action === 'LIKE') {
+          return {
+            ...state,
+            isLiked: !wasLiked,
+            isDisliked: false,
+            likesCount: wasLiked ? state.likesCount - 1 : state.likesCount + 1,
+            dislikesCount: wasDisliked ? Math.max(0, state.dislikesCount - 1) : state.dislikesCount
+          };
+        } else {
+          return {
+            ...state,
+            isLiked: false,
+            isDisliked: !wasDisliked,
+            likesCount: wasLiked ? Math.max(0, state.likesCount - 1) : state.likesCount,
+            dislikesCount: wasDisliked ? state.dislikesCount - 1 : state.dislikesCount + 1
+          };
+        }
+      } else if (action.type === 'SUBSCRIBE') {
+        const wasSubscribed = state.isSubscribed;
+        const nextSubscribed = action.isSubscribed;
+        if (wasSubscribed === nextSubscribed) return state;
+
         return {
-          isLiked: !wasLiked,
-          isDisliked: false,
-          likesCount: wasLiked ? state.likesCount - 1 : state.likesCount + 1,
-          dislikesCount: wasDisliked ? Math.max(0, state.dislikesCount - 1) : state.dislikesCount
-        };
-      } else {
-        return {
-          isLiked: false,
-          isDisliked: !wasDisliked,
-          likesCount: wasLiked ? Math.max(0, state.likesCount - 1) : state.likesCount,
-          dislikesCount: wasDisliked ? state.dislikesCount - 1 : state.dislikesCount + 1
+            ...state,
+            isSubscribed: nextSubscribed,
+            subscribersCount: nextSubscribed ? state.subscribersCount + 1 : Math.max(0, state.subscribersCount - 1)
         };
       }
+      return state;
     }
   );
 
@@ -204,7 +221,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {video.creator?.name || 'Anonimowy Twórca'}
                   </Link>
                   <span className="text-[12px] text-[#606060] whitespace-nowrap">
-                     {mounted ? formatCount(video.creator?.subscribersCount || 0) : (video.creator?.subscribersCount || 0)} {t.subscribers}
+                     {mounted ? formatCount(optimisticState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
                <div className="ml-auto lg:ml-2 shrink-0">
@@ -214,6 +231,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorName={video.creator?.name}
                     variant="compact"
                     initialIsSubscribed={initialIsSubscribed}
+                    onStatusChange={(isSubscribed) => {
+                        startTransition(() => {
+                            addOptimisticAction({ type: 'SUBSCRIBE', isSubscribed });
+                        });
+                    }}
                   />
                </div>
             </div>
@@ -238,12 +260,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     disabled={isPending}
                     className={cn(
                         "flex h-full w-12 flex-none items-center justify-center px-0 hover:bg-neutral-100 transition-colors active:bg-neutral-200",
-                        optimisticState.isDisliked && "text-red-600",
+                        optimisticState.isDisliked && "text-blue-600",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
-                     <ThumbsDown size={18} className={cn("block", optimisticState.isDisliked && "fill-red-600")} />
+                     <ThumbsDown size={18} className={cn("block", optimisticState.isDisliked && "fill-blue-600")} />
                   </button>
                </div>
                   <ShareButton
