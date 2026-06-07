@@ -10,6 +10,8 @@ import VideoPlaylist from '../VideoPlaylist';
 import PremiumWrapper from '../PremiumWrapper';
 import { PublicVideoDTO } from '@/app/types/video';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
+import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -36,6 +38,26 @@ export function SidebarPlaylist({
   premiereCountdown,
   onVideoMouseEnter
 }: SidebarPlaylistProps) {
+  const [layout, setLayout] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLayout() {
+      try {
+        const res = await fetch(`/api/channel/sidebar?currentVideoId=${selectedVideoId || ''}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLayout(data);
+        }
+      } catch (err) {
+        logger.error("Failed to fetch sidebar layout", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLayout();
+  }, [selectedVideoId]);
+
   const renderPremiereItem = () => (
     <div className="group flex gap-2 p-1 rounded-lg relative cursor-default bg-gradient-to-r from-amber-50 to-white border border-amber-100">
       <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 border border-amber-300">
@@ -67,16 +89,14 @@ export function SidebarPlaylist({
     </div>
   );
 
-  const renderVideoItem = (video: PublicVideoDTO) => {
-    const displayTitle = getVideoDisplayTitle(video, language);
+  const renderVideoItem = (video: any) => {
+    const displayTitle = language === 'en' && video.titleEn ? video.titleEn : video.title;
     const isCurrent = video.id === selectedVideoId;
-    const isLoggedIn = !!userProfile;
-    const isPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatron === true;
-    const hasAccess = video.tier === 'PUBLIC' || (video.tier === 'LOGGED_IN' && isLoggedIn) || (video.tier === 'PATRON' && isPatron);
+    const hasAccess = !video.isLocked;
 
     return (
       <div
-        key={video.id}
+        key={video.id || video.slug}
         onMouseEnter={() => onVideoMouseEnter(video.id)}
         className={cn(
           "group flex gap-2 p-1 rounded-lg transition-colors relative cursor-pointer",
@@ -86,9 +106,23 @@ export function SidebarPlaylist({
         <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-0" />
         <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
           <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-20" />
-          <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured} variant="thumbnail">
-             <VideoPlayer video={video} variant="thumbnail" />
-          </PremiumWrapper>
+          {video.thumbnailUrl ? (
+              <Image
+                src={video.thumbnailUrl}
+                alt={displayTitle}
+                fill
+                className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
+              />
+          ) : (
+              <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                  <Video className="text-white/20 w-8 h-8" />
+              </div>
+          )}
+          {!hasAccess && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-30">
+                  <Lock className="text-white/60 w-5 h-5" />
+              </div>
+          )}
           {video.duration && (
             <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
                {video.duration}
@@ -131,62 +165,50 @@ export function SidebarPlaylist({
     );
   };
 
-  const sidebarVideos = sortedVideos.filter(v =>
-    v.status === 'PUBLISHED' && ['PUBLIC', 'LOGGED_IN', 'PATRON'].includes(v.tier)
-  );
-  const freeMaterialVideos = [
-    sidebarVideos.find(v => v.tier === 'PUBLIC'),
-    sidebarVideos.find(v => v.tier === 'LOGGED_IN'),
-  ].filter((video): video is PublicVideoDTO => Boolean(video));
-  const patronVideos = sidebarVideos.filter(v => v.tier === 'PATRON');
-  const usePatronPlaylistOrder = viewerIsPatron && !!userProfile;
+  if (loading || !layout) {
+      return <div className="space-y-4 animate-pulse">
+          {[1,2,3].map(i => (
+              <div key={i} className="flex gap-2 p-1">
+                  <div className="w-[168px] h-[94px] bg-neutral-200 rounded-md" />
+                  <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 bg-neutral-200 rounded w-3/4" />
+                      <div className="h-3 bg-neutral-200 rounded w-1/2" />
+                  </div>
+              </div>
+          ))}
+      </div>;
+  }
 
-  const publicMaterialsSection = !searchQuery && freeMaterialVideos.length > 0 ? (
-    <div className="space-y-2">
-      <div className="pb-1 border-b border-neutral-100">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.materials}</h3>
+  const searchResultsSection = searchQuery ? (
+      <div className="space-y-2">
+          {layout.sections.flatMap((s: any) => s.items)
+            .filter((v: any) => v.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map(renderVideoItem)}
       </div>
-      {freeMaterialVideos.map(renderVideoItem)}
-    </div>
   ) : null;
 
-  const patronSupportSection = !searchQuery && sortedVideos.length > 0 ? (
-    <div className="pt-6 pb-0">
-      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.donate}</h3>
-      </div>
-      <VideoPlaylist videoTitle={getVideoDisplayTitle(sortedVideos[0], language)} creatorId={sortedVideos[0].creatorId} isPatron={viewerIsPatron} />
-    </div>
-  ) : null;
-
-  const patronZoneSection = !searchQuery && (patronVideos.length > 0 || usePatronPlaylistOrder) ? (
-    <div className={cn("space-y-2", usePatronPlaylistOrder ? "" : "pt-6")}>
-      <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{t.patronZone}</h3>
-      </div>
-      {patronVideos.map(renderVideoItem)}
-      {usePatronPlaylistOrder && renderPremiereItem()}
-    </div>
-  ) : null;
-
-  const searchResultsSection = searchQuery ? sidebarVideos.map(renderVideoItem) : null;
+  if (searchResultsSection) return searchResultsSection;
 
   return (
     <>
-      {usePatronPlaylistOrder ? (
-        <>
-          {patronZoneSection}
-          {patronSupportSection}
-          {publicMaterialsSection}
-        </>
-      ) : (
-        <>
-          {publicMaterialsSection}
-          {patronSupportSection}
-          {patronZoneSection}
-        </>
-      )}
-      {searchResultsSection}
+      {layout.sections.map((section: any) => (
+          <div key={section.id} className="space-y-2 mb-6">
+              <div className="pb-1 border-b border-neutral-100">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{section.title}</h3>
+              </div>
+              {section.items.map(renderVideoItem)}
+
+              {section.type === 'FREE' && (
+                  <div className="pt-4 pb-2">
+                      <VideoPlaylist
+                        videoTitle={layout.sections[0]?.items[0]?.title || "Materiały"}
+                        creatorId={layout.sections[0]?.items[0]?.creatorId || ""}
+                        isPatron={viewerIsPatron}
+                      />
+                  </div>
+              )}
+          </div>
+      ))}
     </>
   );
 }

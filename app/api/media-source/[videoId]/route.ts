@@ -6,13 +6,12 @@ import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
-import { getVideoSourceInfo } from '@/lib/media/video-source';
+import { PlaybackService } from '@/lib/services/playback/playback.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
-import { isAllowedVideoSourceUrl } from '@/lib/blob';
-import { recordAlert, recordMetric } from '@/lib/observability';
+import { recordAlert } from '@/lib/observability';
 import { handleApiError } from '@/lib/errors';
-import { setNxEx } from '@/lib/rate-limit';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,64 +40,27 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
       }, { status: 429 });
     }
 
-    const video = await prisma.video.findUnique({
-      where: { id: videoId },
-      include: { creator: true }
-    });
+    const ip = getMediaClientIp(req) || 'unknown';
+    const ua = req.headers.get('user-agent') || 'unknown';
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
+    const uaHash = crypto.createHash('sha256').update(ua).digest('hex');
 
-    const decision = await AccessPolicy.canViewVideo(userId, videoId, video);
-    if (!decision.allowed) {
-      recordMetric('media_source.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
-      return NextResponse.json({ hasAccess: false, reason: decision.reason, requiredTier: decision.requiredTier }, { status: 403 });
+    const playbackPlan = await PlaybackService.createPlaybackPlan(videoId, userId, ipHash, uaHash);
+
+    // Maintain legacy compatibility for now
+    const response = {
+        ...playbackPlan,
+        hasAccess: playbackPlan.access.allowed,
+        kind: playbackPlan.source?.kind,
+        playbackUrl: playbackPlan.source?.playbackUrl,
+        embedUrl: playbackPlan.source?.embedUrl,
+    };
+
+    if (!playbackPlan.access.allowed) {
+        return NextResponse.json(response, { status: 403 });
     }
 
-    const fallback = !video && flags.demoFallbacks ? INITIAL_VIDEOS.find((item) => item.id === videoId || item.slug === videoId) : null;
-    const resolvedVideo = video || fallback;
-
-    if (!resolvedVideo?.videoUrl) {
-      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
-    }
-
-    if (!isAllowedVideoSourceUrl(resolvedVideo.videoUrl)) {
-      recordAlert('media_source.host_blocked', { videoId });
-      return NextResponse.json({ error: 'VIDEO_SOURCE_NOT_ALLOWED' }, { status: 400 });
-    }
-
-    const source = getVideoSourceInfo(resolvedVideo.videoUrl, `/api/media/${resolvedVideo.id}`);
-
-    // Non-blocking view count tracking with deduplication
-    if (video) {
-        (async () => {
-            try {
-                const identifier = userId || getMediaClientIp(req) || 'anonymous';
-                const lockKey = `video:view:${videoId}:${identifier}`;
-                const isNewView = await setNxEx(lockKey, '1', 3600);
-
-                if (isNewView) {
-                    await prisma.$transaction([
-                        prisma.videoView.create({
-                            data: {
-                                videoId,
-                                userId: userId || null,
-                                ipHash: !userId ? identifier : null
-                            }
-                        }),
-                        prisma.video.update({
-                            where: { id: videoId },
-                            data: { views: { increment: 1 } }
-                        })
-                    ]);
-                }
-            } catch (trackError) {
-                scopedLogger.warn('[VIDEO_VIEW_TRACK_ERROR]', trackError);
-            }
-        })();
-    }
-
-    return NextResponse.json({
-      hasAccess: true,
-      ...source,
-    });
+    return NextResponse.json(response);
   } catch (error) {
     scopedLogger.error('[MEDIA_SOURCE_GET_ERROR]', error);
     return handleApiError(error);

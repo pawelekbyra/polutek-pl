@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
+import { MediaPlayer, MediaProvider, Poster, type MediaPlayerInstance } from '@vidstack/react';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { Play, AlertCircle } from './icons';
+import { useRef } from 'react';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -14,7 +15,8 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { videoUrl, videoSourceKind, videoEmbedUrl } = useVideoAccess();
+    const { videoUrl, videoSourceKind, videoEmbedUrl, tracking } = useVideoAccess() as any;
+    const player = useRef<MediaPlayerInstance>(null);
     const posterUrl = video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -85,6 +87,37 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
+    const hasReached10s = useRef(false);
+
+    const sendEvent = async (type: string, extra = {}) => {
+        if (!tracking?.playbackSessionId) return;
+        try {
+            await fetch(`/api/videos/${video.id}/playback-event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: tracking.playbackSessionId,
+                    type,
+                    positionMs: player.current ? Math.floor(player.current.currentTime * 1000) : 0,
+                    durationMs: player.current ? Math.floor(player.current.duration * 1000) : 0,
+                    ...extra
+                })
+            });
+        } catch (e) {
+            console.warn("Failed to send playback event", type, e);
+        }
+    };
+
+    useEffect(() => {
+        if (!isMounted || !tracking?.playbackSessionId) return;
+        const interval = setInterval(() => {
+            if (player.current?.paused === false) {
+                sendEvent('HEARTBEAT');
+            }
+        }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
+        return () => clearInterval(interval);
+    }, [isMounted, tracking]);
+
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
             {loadError ? (
@@ -95,6 +128,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 </div>
             ) : (
                 <MediaPlayer
+                    ref={player}
                     className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
                     title={video.title || 'Video'}
                     src={src}
@@ -104,7 +138,18 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     playsInline
                     controls
                     aspectRatio="16/9"
-                    onError={() => setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.')}
+                    onPlay={() => sendEvent('PLAY_STARTED')}
+                    onPause={() => sendEvent('PLAY_PAUSED')}
+                    onTimeUpdate={(e) => {
+                        if (!hasReached10s.current && e.currentTime >= 10) {
+                            hasReached10s.current = true;
+                            sendEvent('WATCHED_10_SECONDS');
+                        }
+                    }}
+                    onError={() => {
+                        setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.');
+                        sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+                    }}
                 >
                     <MediaProvider>
                         <Poster

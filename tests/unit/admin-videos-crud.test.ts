@@ -21,6 +21,10 @@ vi.mock('@/lib/prisma', () => {
           create: vi.fn(),
           update: vi.fn(),
           updateMany: vi.fn(),
+          count: vi.fn(),
+        },
+        videoAsset: {
+            findUnique: vi.fn(),
         },
         creator: {
             findFirst: vi.fn(),
@@ -55,9 +59,12 @@ describe('Admin Video CRUD API', () => {
 
   it('allows admin to list videos', async () => {
     vi.mocked(prisma.video.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.video.count).mockResolvedValue(0);
     const res = await GET(new NextRequest('http://localhost/api/admin/videos'));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual([]);
+    const body = await res.json();
+    expect(body.items).toEqual([]);
+    expect(body.total).toBe(0);
   });
 
   it('allows admin to create a video', async () => {

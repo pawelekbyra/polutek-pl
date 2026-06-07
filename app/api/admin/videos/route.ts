@@ -10,6 +10,7 @@ import { flags } from '@/lib/feature-flags';
 import { MainCreatorService } from '@/lib/services/main-creator.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 import { handleApiError } from '@/lib/errors';
+import { VideosAdminService } from '@/lib/services/admin/videos-admin.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,15 @@ export async function GET(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
   if (response) return response;
 
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get('q') || undefined;
+  const status = (searchParams.get('status') as VideoStatus) || undefined;
+  const tier = (searchParams.get('tier') as AccessTier) || undefined;
+  const page = parseInt(searchParams.get('page') || '1');
+  const pageSize = parseInt(searchParams.get('pageSize') || '20');
+  const orderBy = searchParams.get('orderBy') || 'createdAt';
+  const orderDir = (searchParams.get('orderDir') as 'asc' | 'desc') || 'desc';
+
   try {
     const mainCreator = flags.multiCreator
       ? null
@@ -50,13 +60,17 @@ export async function GET(req: NextRequest) {
           MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
         );
 
-    const videos = await prisma.video.findMany({
-      where: mainCreator ? { creatorId: mainCreator.id } : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: { creator: true, _count: { select: { videoLikes: true, videoDislikes: true, comments: true } } }
-    });
+    const result = await VideosAdminService.getVideos({
+      query,
+      status,
+      tier,
+      page,
+      pageSize,
+      orderBy,
+      orderDir
+    }, mainCreator?.id);
 
-    return NextResponse.json(videos);
+    return NextResponse.json(result);
   } catch (error: unknown) {
       scopedLogger.error("[GET_ADMIN_VIDEOS_ERROR]", error);
       return handleApiError(error);

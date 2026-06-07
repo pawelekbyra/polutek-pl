@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
       const result = await grantPatronStatus(params.userId, {
         source: 'admin',
         grantedByUserId: adminUserId!,
-        note: body?.note || 'Granted manually by administrator',
+        note: body?.reason || body?.note || 'Granted manually by administrator',
       });
       await syncPatronStatusToClerk(params.userId, true, result.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_GRANT_CLERK_SYNC_ERROR]', error);
@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     if (action === 'revoke') {
       const result = await revokePatronStatus(params.userId, {
         revokedByUserId: adminUserId!,
-        note: body?.note || 'Revoked manually by administrator',
+        note: body?.reason || body?.note || 'Revoked manually by administrator',
       });
       await syncPatronStatusToClerk(params.userId, false, result.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_REVOKE_CLERK_SYNC_ERROR]', error);

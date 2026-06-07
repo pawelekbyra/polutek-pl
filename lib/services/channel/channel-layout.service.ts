@@ -1,0 +1,118 @@
+import { prisma } from '@/lib/prisma';
+import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
+
+export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
+
+export type SidebarItem = {
+    id: string;
+    slug: string;
+    title: string;
+    titleEn?: string | null;
+    thumbnailUrl: string;
+    tier: AccessTier;
+    status: VideoStatus;
+    duration?: string | null;
+    views: number;
+    publishedAt: Date | null;
+    isLocked: boolean;
+};
+
+export type SidebarSection = {
+    id: string;
+    type: "FREE" | "LOGGED_IN" | "PATRON" | "ANNOUNCEMENT";
+    title: string;
+    items: SidebarItem[];
+};
+
+export class ChannelLayoutService {
+    static async getSidebarLayout(userId: string | null, currentVideoId?: string) {
+        let viewerState: SidebarViewerState = "ANONYMOUS";
+        let isPatron = false;
+
+        if (userId) {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { role: true, isPatron: true }
+            });
+            if (user?.role === 'ADMIN') viewerState = "ADMIN";
+            else if (user?.isPatron) {
+                viewerState = "PATRON";
+                isPatron = true;
+            }
+            else viewerState = "LOGGED_IN";
+        }
+
+        const videos = await prisma.video.findMany({
+            where: {
+                status: VideoStatus.PUBLISHED,
+                showInSidebar: true,
+            },
+            orderBy: [
+                { sidebarOrder: 'asc' },
+                { publishedAt: 'desc' }
+            ],
+            include: { creator: true }
+        });
+
+        const sections: SidebarSection[] = [];
+
+        const freeVideos = videos.filter(v => v.tier === AccessTier.PUBLIC);
+        const loggedInVideos = videos.filter(v => v.tier === AccessTier.LOGGED_IN);
+        const patronVideos = videos.filter(v => v.tier === AccessTier.PATRON);
+
+        const mapItem = (v: any): SidebarItem => ({
+            id: v.id,
+            slug: v.slug,
+            title: v.title,
+            titleEn: v.titleEn,
+            thumbnailUrl: v.thumbnailUrl,
+            tier: v.tier,
+            status: v.status,
+            duration: v.duration,
+            views: v.views,
+            publishedAt: v.publishedAt,
+            isLocked: this.isLocked(v.tier, viewerState)
+        });
+
+        if (freeVideos.length > 0) {
+            sections.push({
+                id: 'section-free',
+                type: 'FREE',
+                title: 'Darmowe materiały',
+                items: freeVideos.map(mapItem)
+            });
+        }
+
+        if (loggedInVideos.length > 0) {
+            sections.push({
+                id: 'section-logged-in',
+                type: 'LOGGED_IN',
+                title: 'Dla zalogowanych',
+                items: loggedInVideos.map(mapItem)
+            });
+        }
+
+        if (patronVideos.length > 0) {
+            sections.push({
+                id: 'section-patron',
+                type: 'PATRON',
+                title: 'Strefa Patrona',
+                items: patronVideos.map(mapItem)
+            });
+        }
+
+        return {
+            viewerState,
+            sections,
+            currentVideoId
+        };
+    }
+
+    private static isLocked(tier: AccessTier, state: SidebarViewerState): boolean {
+        if (state === "ADMIN") return false;
+        if (tier === AccessTier.PUBLIC) return false;
+        if (tier === AccessTier.LOGGED_IN) return state === "ANONYMOUS";
+        if (tier === AccessTier.PATRON) return state !== "PATRON";
+        return true;
+    }
+}
