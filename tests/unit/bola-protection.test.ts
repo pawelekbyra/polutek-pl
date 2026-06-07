@@ -49,7 +49,7 @@ vi.mock('@/lib/rate-limit', () => ({
 describe('Comments API BOLA protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(UserService.getOrCreateUserFromAuth).mockImplementation(async (userId) => ({ id: userId } as Awaited<ReturnType<typeof UserService.getOrCreateUserFromAuth>>));
+    vi.mocked(UserService.getOrCreateUserFromAuth).mockImplementation(async (userId) => ({ id: userId } as any));
   });
 
   it('DELETE /api/comments: blocks unauthorized user from deleting others comment', async () => {
@@ -62,7 +62,7 @@ describe('Comments API BOLA protection', () => {
     vi.mocked(CommentAccessService.canModerate).mockResolvedValue(false);
 
     const req = new NextRequest('http://localhost/api/comments?id=comment_1', { method: 'DELETE' });
-    const res = await DELETE(req, { params: { id: 'video_1', commentId: 'comment_1' } } as any);
+    const res = await DELETE(req);
 
     expect(res.status).toBe(403);
   });
@@ -80,7 +80,7 @@ describe('Comments API BOLA protection', () => {
       method: 'PATCH',
       body: JSON.stringify({ pinned: true })
     });
-    const res = await PATCH(req, { params: { id: 'video_1', commentId: 'comment_1' } } as any);
+    const res = await PATCH(req);
 
     expect(res.status).toBe(403);
   });
