@@ -205,7 +205,55 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       });
       return parseJsonResponse(res);
     },
-    onSuccess: () => {
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+
+      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
+
+      const removeComment = (c: CommentView, parent?: CommentView): CommentView | null => {
+        if (c.id === commentId) {
+          return null;
+        }
+
+        const next = { ...c };
+        if (next.repliesPreview) {
+          const originalCount = next.repliesPreview.length;
+          next.repliesPreview = next.repliesPreview
+            .map(r => removeComment(r, next))
+            .filter((r): r is CommentView => r !== null);
+
+          if (next.repliesPreview.length < originalCount) {
+             next.repliesCount = Math.max(0, (next.repliesCount ?? 0) - (originalCount - next.repliesPreview.length));
+          }
+        }
+        return next;
+      };
+
+      for (const [queryKey, previousData] of queries) {
+        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              comments: page.comments
+                .map(c => removeComment(c))
+                .filter((c): c is CommentView => c !== null),
+            })),
+          };
+        });
+      }
+
+      return { previousData: queries };
+    },
+    onError: (err, commentId, context) => {
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
     },
   });

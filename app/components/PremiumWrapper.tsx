@@ -47,7 +47,7 @@ export default function PremiumWrapper({
   variant = 'default',
   onAccessLoad
 }: PremiumWrapperProps) {
-  const { userId, isLoaded } = useAuth();
+  const { userId, isLoaded, orgRole } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
   const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
@@ -98,7 +98,7 @@ export default function PremiumWrapper({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, userId, isPublic, videoId]);
+  }, [isLoaded, userId, isPublic, videoId, onAccessLoad]);
 
   useEffect(() => {
     checkAccess();
@@ -136,21 +136,32 @@ export default function PremiumWrapper({
     refreshPlaybackPlan: checkAccess
   };
 
+  if (isLoading) {
+    if (isLoaded && !userId && !isPublic) {
+        return <PaywallOverlay requiredTier={effectiveTier} isLoggedIn={false} variant={variant} />;
+    }
+    return <PlayerSkeleton />;
+  }
+
+  const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
+
   if (contextValue.hasAccess) {
     if (fetchError) {
         return (
             <PlayerErrorOverlay
                 errorCode={fetchError}
                 onRetry={checkAccess}
+                isAdmin={isAdmin}
             />
         );
     }
 
-    if (!isLoading && !playbackPlan) {
+    if (!playbackPlan) {
         return (
           <PlayerErrorOverlay
               errorCode="NO_PLAYBACK_PLAN"
               onRetry={checkAccess}
+              isAdmin={isAdmin}
           />
         );
     }
@@ -162,13 +173,6 @@ export default function PremiumWrapper({
         </div>
       </VideoAccessContext.Provider>
     );
-  }
-
-  if (isLoading) {
-    if (isLoaded && !userId && !isPublic) {
-        return <PaywallOverlay requiredTier={effectiveTier} isLoggedIn={false} variant={variant} />;
-    }
-    return <PlayerSkeleton />;
   }
 
   return (

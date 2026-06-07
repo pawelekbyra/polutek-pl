@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { MediaPlayer, MediaProvider, Poster, type MediaPlayerInstance } from '@vidstack/react';
+import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,8 @@ interface VideoPlayerProps {
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading, effectiveTier } = useVideoAccess();
+    const { orgRole } = useAuth();
+    const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
@@ -69,35 +72,24 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
+    // Hydration guard
+    if (!isMounted || isLoading) return <PlayerSkeleton />;
+
     // Optimized Thumbnail Variant: No player engine, just a static preview
-    if (variant === 'thumbnail' || !videoUrl) {
+    if (variant === 'thumbnail') {
         return (
             <div
                 className={cn(
                     "relative w-full h-full group/player overflow-hidden bg-neutral-900",
-                    variant === 'hero' ? "cursor-pointer" : "cursor-default"
+                    "cursor-default"
                 )}
             >
-                {variant === 'hero' && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 opacity-0 group-hover/player:opacity-100 transition-opacity duration-500" />
-                )}
-
                 <Image
                     src={posterUrl}
                     alt={video.title || 'Video poster'}
                     fill
                     className="w-full h-full object-cover opacity-90 transition duration-700 group-hover/player:scale-105"
                 />
-                {variant === 'hero' && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className={cn(
-                            "bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10 transition-all duration-500",
-                            "w-16 h-16 md:w-24 md:h-24 shadow-2xl group-hover/player:scale-110 group-hover/player:bg-black/90"
-                        )}>
-                            <Play className="text-white w-8 h-8 md:w-12 md:h-12 ml-1" />
-                        </div>
-                    </div>
-                )}
                 {!videoUrl && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/player:opacity-100 transition-opacity">
                         <span className="text-white font-mono text-[10px] uppercase tracking-widest bg-black/60 px-4 py-2 border border-white/20">
@@ -109,18 +101,28 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    // Hydration guard
-    if (!isMounted || isLoading) return <PlayerSkeleton />;
+    if (!playbackPlan) {
+        return (
+            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
+                <PlayerErrorOverlay
+                    errorCode="NO_PLAYBACK_PLAN"
+                    onRetry={() => refreshPlaybackPlan()}
+                    isAdmin={isAdmin}
+                />
+            </div>
+        );
+    }
 
     const isEmbedProvider = videoSourceKind === 'youtube' || videoSourceKind === 'vimeo';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
-    if (!src && (variant as string) !== 'thumbnail') {
+    if (!src) {
         return (
             <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
                 <PlayerErrorOverlay
                     errorCode="NO_PLAYBACK_URL"
                     onRetry={() => refreshPlaybackPlan()}
+                    isAdmin={isAdmin}
                 />
             </div>
         );
@@ -135,6 +137,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         setLoadError(null);
                         refreshPlaybackPlan();
                     }}
+                    isAdmin={isAdmin}
                 />
             ) : (
                 <MediaPlayer

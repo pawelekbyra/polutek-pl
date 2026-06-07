@@ -25,7 +25,7 @@ export class CommentService {
     const where: Prisma.CommentWhereInput = {
       videoId,
       parentId: null,
-      status: canModerate ? undefined : { not: CommentStatus.HIDDEN }
+      status: canModerate ? undefined : CommentStatus.VISIBLE
     };
 
     const totalCount = await prisma.comment.count({ where });
@@ -52,7 +52,7 @@ export class CommentService {
       include: {
         author: { select: publicCommentAuthorSelect },
         replies: {
-          where: canModerate ? undefined : { status: { not: CommentStatus.HIDDEN } },
+          where: canModerate ? undefined : { status: CommentStatus.VISIBLE },
           take: 3,
           orderBy: { createdAt: 'asc' },
           include: {

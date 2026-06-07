@@ -45,6 +45,8 @@ export function CommentItem({
   isPinPending,
   isReply = false
 }: CommentItemProps) {
+  const isDeletedForPublic = comment.status === 'DELETED' && !comment.viewerCanModerate;
+
   const authorIsPatron = isPatronAuthor(comment.author);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text || "");
@@ -103,6 +105,8 @@ export function CommentItem({
     }
     setShowMenu(false);
   };
+
+  if (isDeletedForPublic) return null;
 
   return (
     <div

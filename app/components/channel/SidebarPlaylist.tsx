@@ -103,6 +103,18 @@ export function SidebarPlaylist({
                {video.duration}
             </div>
           )}
+          {/* Access Indicator Badge on Thumbnail */}
+          {mounted && (
+              !hasAccess ? (
+                  <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
+                      {video.tier === 'LOGGED_IN' ? t.loginReq : t.patronOnly}
+                  </div>
+              ) : (
+                  <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none">
+                      {video.tier === 'PUBLIC' ? t.public : t.available}
+                  </div>
+              )
+          )}
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 z-10">
           <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
