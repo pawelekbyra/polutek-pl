@@ -37,15 +37,8 @@ function sanitizePlaybackMetadata(metadata: any) {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
 
   const forbiddenFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
-  const sanitized: Record<string, any> = {};
 
   const keys = Object.keys(metadata);
-  const filteredKeys = keys.filter(key => {
-      const lowerKey = key.toLowerCase();
-      return !forbiddenFragments.some(fragment => lowerKey.includes(forbiddenFragments.includes(fragment) ? fragment : fragment.toLowerCase()));
-  });
-
-  // More robust check
   const finalFilteredKeys = keys.filter(key => {
       const lowerKey = key.toLowerCase();
       return !forbiddenFragments.some(fragment => lowerKey.includes(fragment));

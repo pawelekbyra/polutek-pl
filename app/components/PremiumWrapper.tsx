@@ -5,8 +5,8 @@ import { useAuth, SignInButton, useClerk } from "@clerk/nextjs";
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Star, Gem, Lock } from './icons';
-import { AccessTier } from "@prisma/client";
 import { useLanguage } from './LanguageContext';
+import { AccessTierDto } from '@/lib/services/comments/comment.dto';
 
 interface VideoAccessContextType {
   hasAccess: boolean;
@@ -14,7 +14,7 @@ interface VideoAccessContextType {
   videoSourceKind: string | null;
   videoEmbedUrl: string | null;
   isLoading: boolean;
-  effectiveTier: AccessTier;
+  effectiveTier: AccessTierDto;
   tracking?: {
       playbackSessionId: string;
       heartbeatIntervalSeconds: number;
@@ -27,7 +27,7 @@ const VideoAccessContext = createContext<VideoAccessContextType>({
   videoSourceKind: null,
   videoEmbedUrl: null,
   isLoading: true,
-  effectiveTier: "PUBLIC" as AccessTier,
+  effectiveTier: "PUBLIC" as AccessTierDto,
 });
 
 export const useVideoAccess = () => useContext(VideoAccessContext);
@@ -35,7 +35,7 @@ export const useVideoAccess = () => useContext(VideoAccessContext);
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
-  requiredTier?: AccessTier;
+  requiredTier?: AccessTierDto;
   isMainFeatured?: boolean;
   variant?: 'default' | 'thumbnail';
 }
@@ -53,7 +53,7 @@ export default function PremiumWrapper({
   const [videoSourceKind, setVideoSourceKind] = useState<string | null>(null);
   const [videoEmbedUrl, setVideoEmbedUrl] = useState<string | null>(null);
   const [tracking, setTracking] = useState<any>(null);
-  const [dbTier, setDbTier] = useState<AccessTier | null>(null);
+  const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -61,7 +61,7 @@ export default function PremiumWrapper({
     setMounted(true);
   }, []);
 
-  const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTier);
+  const effectiveTier = initialTier || dbTier || ("PUBLIC" as AccessTierDto);
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
@@ -162,7 +162,7 @@ function CustomAuthTrigger({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: AccessTier, isLoggedIn: boolean, variant: 'default' | 'thumbnail' }) {
+function PaywallOverlay({ requiredTier, isLoggedIn, variant }: { requiredTier: AccessTierDto, isLoggedIn: boolean, variant: 'default' | 'thumbnail' }) {
   const { t } = useLanguage();
   const isVIPGated = requiredTier === "PATRON";
   const isThumbnail = variant === 'thumbnail';
