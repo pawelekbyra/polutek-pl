@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
 import { setNxEx, rateLimit } from '@/lib/rate-limit';
@@ -32,35 +31,6 @@ const PLAYBACK_EVENT_TYPES = [
   "SOURCE_ERROR",
   "ACCESS_ERROR"
 ] as const;
-
-function sanitizePlaybackMetadata(input: unknown): Record<string, unknown> | undefined {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-        return undefined;
-    }
-
-    const metadata = input as Record<string, unknown>;
-    const sanitized: Record<string, unknown> = {};
-    const sensitivePatterns = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie'];
-
-    const keys = Object.keys(metadata).slice(0, 20);
-
-    for (const key of keys) {
-        const lowerKey = key.toLowerCase();
-        if (sensitivePatterns.some(pattern => lowerKey.includes(pattern))) {
-            continue;
-        }
-
-        const value = metadata[key];
-        if (typeof value === 'string') {
-            sanitized[key] = value.slice(0, 500);
-        } else if (typeof value === 'number' || typeof value === 'boolean' || value === null) {
-            sanitized[key] = value;
-        }
-        // Skip complex nested objects or other types
-    }
-
-    return Object.keys(sanitized).length > 0 ? sanitized : undefined;
-}
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = await auth();
@@ -161,18 +131,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         return NextResponse.json({ error: 'SESSION_REQUIRED' }, { status: 400 });
     }
 
-    // Throttling for PROGRESS and HEARTBEAT
-    if (session && ['PROGRESS', 'HEARTBEAT'].includes(type)) {
-        const lastHeartbeat = session.lastHeartbeatAt || session.createdAt;
-        const timeSinceLastHeartbeat = Date.now() - lastHeartbeat.getTime();
-
-        if (timeSinceLastHeartbeat < 10000) {
-            return NextResponse.json({ success: true, throttled: true });
-        }
-    }
-
-    const sanitizedMetadata = sanitizePlaybackMetadata(metadata);
-
     // 1. Record the event
     await prisma.videoPlaybackEvent.create({
       data: {
@@ -190,7 +148,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         errorMessage,
         provider,
         sourceKind,
-        metadata: sanitizedMetadata ? (sanitizedMetadata as Prisma.InputJsonValue) : Prisma.JsonNull
+        metadata: metadata ? (metadata as any) : undefined
       }
     });
 

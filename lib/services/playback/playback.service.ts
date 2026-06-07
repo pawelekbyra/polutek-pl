@@ -3,7 +3,6 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
 import { AccessTier, VideoStatus } from '@prisma/client';
-import type { PlaybackPlan } from './playback.dto';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -14,6 +13,43 @@ export type PlaybackErrorCode =
   | "VIDEO_SOURCE_MISSING"
   | "VIDEO_SOURCE_NOT_ALLOWED"
   | "UNKNOWN_PLAYBACK_ERROR";
+
+export type PlaybackPlan = {
+  videoId: string;
+  canPlay: boolean;
+  access: {
+    allowed: boolean;
+    reason?: string;
+    requiredTier?: AccessTier;
+  };
+  source?: {
+    provider: string;
+    kind: string;
+    playbackUrl: string;
+    embedUrl?: string;
+    posterUrl?: string;
+    mimeType?: string;
+    needsProxy: boolean;
+    isExternalEmbed: boolean;
+    isSignedUrl: boolean;
+    expiresAt?: string;
+  };
+  player: {
+    autoplayAllowed: boolean;
+    mutedAutoplay: boolean;
+    controls: boolean;
+    poster: string;
+    title: string;
+  };
+  diagnostics: {
+    warnings: string[];
+    sourceConfidence: "HIGH" | "MEDIUM" | "LOW";
+  };
+  tracking: {
+    playbackSessionId: string;
+    heartbeatIntervalSeconds: number;
+  };
+};
 
 export class PlaybackService {
   static async createPlaybackPlan(videoId: string, userId: string | null, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {

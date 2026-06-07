@@ -27,12 +27,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   const receivedSecret = req.headers.get('x-resend-webhook-secret');
 
-  if (process.env.NODE_ENV === 'production' && !secret) {
-      logger.error("[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.");
-      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
-  }
-
-  if (!secret || receivedSecret !== secret) {
+  if (secret && receivedSecret !== secret) {
       logger.warn("[ResendWebhook] Unauthorized access attempt - invalid secret.");
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

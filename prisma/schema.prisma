@@ -39,6 +39,8 @@ model User {
   comments         Comment[]
   commentLikes     CommentLike[]
   commentDislikes  CommentDislike[]
+  commentReactions CommentReaction[]
+  commentReports   CommentReport[]
   videoLikes       VideoLike[]
   videoDislikes    VideoDislike[]
   payments         Payment[]
@@ -322,16 +324,30 @@ model Comment {
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
-  likes    CommentLike[]
-  dislikes CommentDislike[]
+  status        CommentStatus        @default(VISIBLE)
+  likesCount    Int                  @default(0)
+  repliesCount  Int                  @default(0)
+  reportsCount  Int                  @default(0)
+  score         Int                  @default(0)
 
   pinnedAt   DateTime?
   pinnedById String?
 
+  editedAt    DateTime?
   deletedAt   DateTime?
   deletedById String?
+  deletedReason CommentDeletedReason?
+
+  moderatedAt   DateTime?
+  moderatedById String?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  likes         CommentLike[]
+  dislikes      CommentDislike[]
+  reactions     CommentReaction[]
+  reports       CommentReport[]
 
   @@index([videoId, pinnedAt, createdAt])
   @@index([videoId, createdAt])
@@ -339,6 +355,42 @@ model Comment {
   @@index([videoId])
   @@index([parentId])
   @@index([creatorId])
+  @@index([status])
+}
+
+model CommentReaction {
+  id        String @id @default(uuid())
+  userId    String
+  commentId String
+  type      CommentReactionType @default(LIKE)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId, type])
+  @@index([userId])
+}
+
+model CommentReport {
+  id           String @id @default(uuid())
+  commentId   String
+  reporterId  String
+  reason       CommentReportReason
+  note         String?
+  status       CommentReportStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  comment  Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter User    @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, reporterId])
+  @@index([status, createdAt])
+  @@index([commentId])
+  @@index([reporterId])
 }
 
 model CommentLike {
@@ -397,6 +449,40 @@ model VideoView {
 enum SystemRole {
   ADMIN
   USER
+}
+
+enum CommentStatus {
+  VISIBLE
+  HELD_FOR_REVIEW
+  HIDDEN
+  DELETED
+}
+
+enum CommentDeletedReason {
+  AUTHOR_DELETED
+  MODERATOR_DELETED
+  SPAM
+  ABUSE
+  OTHER
+}
+
+enum CommentReactionType {
+  LIKE
+}
+
+enum CommentReportReason {
+  SPAM
+  HARASSMENT
+  HATE
+  NSFW
+  SPOILER
+  OTHER
+}
+
+enum CommentReportStatus {
+  PENDING
+  DISMISSED
+  ACTION_TAKEN
 }
 
 model UserPaymentTotal {

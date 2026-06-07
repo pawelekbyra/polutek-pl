@@ -15,44 +15,30 @@ function updateCommentReactionInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   videoId: string,
   commentId: string,
-  action: "LIKE" | "DISLIKE",
+  action: "LIKE" | "UNLIKE",
 ) {
   const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
 
   const updateComment = (c: CommentView): CommentView => {
     if (c.id === commentId) {
-      const wasLiked = !!c.isLiked;
-      const wasDisliked = !!c.isDisliked;
-      const likes = c._count?.likes ?? 0;
-      const dislikes = c._count?.dislikes ?? 0;
+      const wasLiked = c.viewerReaction === "LIKE";
+      const likes = c.likesCount ?? 0;
 
       if (action === "LIKE") {
-        const nextIsLiked = !wasLiked;
         return {
           ...c,
-          isLiked: nextIsLiked,
-          isDisliked: false,
-          _count: {
-            ...(c._count ?? { likes: 0, dislikes: 0 }),
-            likes: wasLiked ? Math.max(0, likes - 1) : likes + 1,
-            dislikes: wasDisliked ? Math.max(0, dislikes - 1) : (c._count?.dislikes ?? 0),
-          },
+          viewerReaction: "LIKE",
+          likesCount: wasLiked ? likes : likes + 1,
+        };
+      } else {
+        return {
+          ...c,
+          viewerReaction: null,
+          likesCount: wasLiked ? Math.max(0, likes - 1) : likes,
         };
       }
-
-      const nextIsDisliked = !wasDisliked;
-      return {
-        ...c,
-        isLiked: false,
-        isDisliked: nextIsDisliked,
-        _count: {
-          ...(c._count ?? { likes: 0, dislikes: 0 }),
-          likes: wasLiked ? Math.max(0, likes - 1) : (c._count?.likes ?? 0),
-          dislikes: wasDisliked ? Math.max(0, dislikes - 1) : dislikes + 1,
-        },
-      };
     }
-    if (c.replies) return { ...c, replies: c.replies.map(updateComment) };
+    if (c.repliesPreview) return { ...c, repliesPreview: c.repliesPreview.map(updateComment) };
     return c;
   };
 
@@ -76,7 +62,7 @@ function updateCommentReactionInCache(
 export function useComments(videoId: string, sortBy: "newest" | "top") {
   const queryClient = useQueryClient();
 
-  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error } =
     useInfiniteQuery({
       queryKey: ["comments", videoId, sortBy],
       queryFn: async ({ pageParam }) => {
@@ -85,7 +71,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         url.searchParams.append("sortBy", sortBy);
         if (pageParam) url.searchParams.append("cursor", pageParam as string);
         const res = await fetch(url.toString());
-        return parseJsonResponse<CommentsPage>(res);
+        return parseJsonResponse<CommentsPage & { viewer: any; totalCount: number }>(res);
       },
       initialPageParam: "",
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -119,43 +105,30 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
     mutationFn: async (commentId: string) => {
-      const res = await fetch("/api/comments/like", {
-        method: "POST",
-        body: JSON.stringify({ commentId }),
-        headers: { "Content-Type": "application/json" },
-      });
-      return parseJsonResponse(res);
-    },
-    onMutate: async (commentId) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const previousData = updateCommentReactionInCache(queryClient, videoId, commentId, "LIKE");
-      return { previousData };
-    },
-    onError: (err, commentId, context) => {
-      for (const [queryKey, data] of context?.previousData ?? []) {
-        queryClient.setQueryData(queryKey, data);
-      }
-    },
-    onSettled: () => {
-      if (queryClient.isMutating({ mutationKey: ["comment-reaction", videoId] }) === 1) {
-        queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
-      }
-    },
-  });
+      const comment = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
+          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || [])
+          .find(c => c?.id === commentId);
 
-  const dislikeMutation = useMutation({
-    mutationKey: ["comment-reaction", videoId],
-    mutationFn: async (commentId: string) => {
-      const res = await fetch("/api/comments/dislike", {
-        method: "POST",
-        body: JSON.stringify({ commentId }),
+      const isLiked = comment?.viewerReaction === "LIKE";
+      const method = isLiked ? "DELETE" : "PUT";
+
+      const res = await fetch(`/api/comments/${commentId}/reaction`, {
+        method,
         headers: { "Content-Type": "application/json" },
       });
       return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const previousData = updateCommentReactionInCache(queryClient, videoId, commentId, "DISLIKE");
+
+      const comment = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
+          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || [])
+          .find(c => c?.id === commentId);
+
+      const isLiked = comment?.viewerReaction === "LIKE";
+      const action = isLiked ? "UNLIKE" : "LIKE";
+
+      const previousData = updateCommentReactionInCache(queryClient, videoId, commentId, action);
       return { previousData };
     },
     onError: (err, commentId, context) => {
@@ -239,6 +212,31 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async ({ commentId, text }: { commentId: string; text: string }) => {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ text }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    },
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: async ({ commentId, reason, note }: { commentId: string; reason: string; note?: string }) => {
+      const res = await fetch(`/api/comments/${commentId}/report`, {
+        method: "POST",
+        body: JSON.stringify({ reason, note }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return parseJsonResponse(res);
+    },
+  });
+
   return {
     data,
     fetchNextPage,
@@ -247,8 +245,9 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     isFetchingNextPage,
     postMutation,
     likeMutation,
-    dislikeMutation,
     pinMutation,
     deleteMutation,
+    editMutation,
+    reportMutation,
   };
 }

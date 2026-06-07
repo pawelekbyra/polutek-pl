@@ -33,7 +33,6 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
             <TableHead>Status</TableHead>
             <TableHead>Tytuł & Slug</TableHead>
             <TableHead>Dostęp & Źródło</TableHead>
-            <TableHead>Daty</TableHead>
             <TableHead>Statystyki</TableHead>
             <TableHead className="text-right">Akcje</TableHead>
           </TableRow>
@@ -96,11 +95,6 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                     </Badge>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider || vid.sourceKind}</div>
                 </div>
-              </TableCell>
-              <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
-                <div>Utw: {new Date(vid.createdAt).toLocaleDateString()}</div>
-                <div>Zm: {new Date(vid.updatedAt).toLocaleDateString()}</div>
-                {vid.publishedAt && <div className="text-green-600 font-medium">Pub: {new Date(vid.publishedAt).toLocaleDateString()}</div>}
               </TableCell>
               <TableCell className="text-[10px] text-muted-foreground leading-relaxed">
                 <div>👁 {vid.views.toLocaleString()}</div>

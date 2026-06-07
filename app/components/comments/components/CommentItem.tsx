@@ -1,12 +1,14 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
+import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Star, Trash2, ThumbsUp, ThumbsDown } from "../../icons";
+import { Star, Trash2, ThumbsUp, ThumbsDown, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
+import { SafeAvatar } from "../../SafeAvatar";
+import { ReportDialog } from "./ReportDialog";
+import { CommentReportReason } from "@prisma/client";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -20,6 +22,8 @@ interface CommentItemProps {
   onReply: (id: string) => void;
   onDelete: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
+  onEdit: (id: string, text: string) => void;
+  onReport: (id: string, reason: string, note?: string) => void;
   isPinPending: boolean;
   isReply?: boolean;
 }
@@ -32,41 +36,69 @@ export function CommentItem({
   t,
   canComment,
   onLike,
-  onDislike,
   onReply,
   onDelete,
   onPin,
+  onEdit,
+  onReport,
   isPinPending,
   isReply = false
 }: CommentItemProps) {
   const authorIsPatron = isPatronAuthor(comment.author);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.text || "");
+  const [showMenu, setShowMenu] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+
+  const isLiked = comment.viewerReaction === "LIKE";
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const commentRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
+      setIsHighlighted(true);
+      commentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const timer = setTimeout(() => setIsHighlighted(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [comment.id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div className={cn("flex items-start", isReply ? "gap-2.5 group/reply" : "gap-3 group/comment")}>
+    <div
+      id={`comment-${comment.id}`}
+      ref={commentRef}
+      className={cn(
+        "flex items-start transition-colors duration-1000",
+        isReply ? "gap-2.5 group/reply" : "gap-3 group/comment",
+        isHighlighted && "bg-blue-50 ring-2 ring-blue-100 rounded-lg p-2 -m-2"
+      )}
+    >
       <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-8" : "w-11")}>
-        <div
+        <SafeAvatar
+          src={comment.author?.imageUrl}
+          alt={comment.author?.displayName || "Avatar"}
+          size={isReply ? 24 : 36}
+          fallbackSeed={getAvatarSeed(comment)}
           className={cn(
-            "relative rounded-full bg-[#eff6ff] flex items-center justify-center overflow-hidden mt-0",
-            isReply ? "w-6 h-6" : "w-9 h-9",
+            "mt-0",
             authorIsPatron
               ? isReply
                 ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]"
                 : "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
               : "border border-[#e9eef6]",
           )}
-        >
-          <Image
-            src={
-              comment.author?.imageUrl ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(getAvatarSeed(comment))}`
-            }
-            alt="Avatar"
-            fill
-            sizes={isReply ? "24px" : "36px"}
-            className="object-cover"
-            unoptimized
-          />
-        </div>
+        />
         {authorIsPatron && (
           <span className={cn(
             "rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200",
@@ -86,7 +118,7 @@ export function CommentItem({
                 authorIsPatron && "text-amber-900",
               )}
             >
-              {comment.authorName}
+              {comment.author?.displayName || "Użytkownik"}
             </span>
             {!isReply && comment.isPinned && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
@@ -107,88 +139,136 @@ export function CommentItem({
                   : ""}
             </span>
           </div>
-          <div className={cn(
-            "flex items-center gap-1 transition-opacity",
-            isReply
-              ? "opacity-0 group-hover/reply:opacity-40 hover:!opacity-100"
-              : "opacity-0 group-hover/comment:opacity-60"
-          )}>
-            {!isReply && comment.canPin && (
-              <button
-                onClick={() => onPin(comment.id, !comment.isPinned)}
-                disabled={isPinPending}
-                className={cn(
-                  "rounded-md p-1 hover:!opacity-100 hover:bg-blue-50",
-                  comment.isPinned && "text-blue-600 opacity-100",
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className={cn(
+                "p-1 rounded-full hover:bg-neutral-100 transition-opacity",
+                showMenu ? "opacity-100" : "opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100"
+              )}
+            >
+              <MoreVertical size={16} />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-150">
+                <button
+                  onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.hash = `comment-${comment.id}`;
+                    navigator.clipboard.writeText(url.toString());
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                >
+                  <LinkIcon size={14} /> {language === "pl" ? "Kopiuj link" : "Copy link"}
+                </button>
+
+                {comment.viewerCanEdit && (
+                  <button
+                    onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <Edit size={14} /> {language === "pl" ? "Edytuj" : "Edit"}
+                  </button>
                 )}
-                title={
-                  comment.isPinned
-                    ? language === "pl"
-                      ? "Odepnij komentarz"
-                      : "Unpin comment"
-                    : language === "pl"
-                      ? "Przypnij komentarz"
-                      : "Pin comment"
-                }
-              >
-                <Star
-                  size={12}
-                  className={cn(comment.isPinned && "fill-blue-600")}
-                />
-              </button>
-            )}
-            {userProfile?.id === comment.authorId && (
-              <button
-                onClick={() =>
-                  confirm(t.deleteComment) &&
-                  onDelete(comment.id)
-                }
-                className={cn(
-                  "rounded-md p-1 hover:!opacity-100 hover:bg-red-50",
-                  isReply && "p-1"
+                {comment.viewerCanDelete && (
+                  <button
+                    onClick={() => { if(confirm(t.deleteComment)) onDelete(comment.id); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 size={14} /> {language === "pl" ? "Usuń" : "Delete"}
+                  </button>
                 )}
-              >
-                <Trash2 size={isReply ? 10 : 12} className="text-destructive" />
-              </button>
+
+                {comment.viewerCanReport && (
+                  <button
+                    onClick={() => { setIsReportDialogOpen(true); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <Flag size={14} /> {language === "pl" ? "Zgłoś" : "Report"}
+                  </button>
+                )}
+
+                {/* Admin/Moderator actions */}
+                {!isReply && comment.viewerCanPin && (
+                   <button
+                    onClick={() => { onPin(comment.id, !comment.isPinned); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <Star size={14} /> {comment.isPinned ? (language === "pl" ? "Odepnij" : "Unpin") : (language === "pl" ? "Przypnij" : "Pin")}
+                  </button>
+                )}
+
+                {comment.viewerCanModerate && comment.status === 'VISIBLE' && !isReply && (
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
+                    <EyeOff size={14} /> {language === "pl" ? "Ukryj" : "Hide"}
+                  </button>
+                )}
+
+                {comment.viewerCanModerate && comment.status === 'HIDDEN' && !isReply && (
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2">
+                    <RotateCcw size={14} /> {language === "pl" ? "Przywróć" : "Restore"}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
-        <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
-          {comment.text}
-        </p>
+
+        {isEditing ? (
+          <div className="mt-1 space-y-2">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex gap-2">
+               <button
+                onClick={() => setIsEditing(false)}
+                className="text-xs font-bold px-3 py-1 rounded-md hover:bg-neutral-100"
+               >
+                 {t.cancel}
+               </button>
+               <button
+                onClick={() => { onEdit(comment.id, editText); setIsEditing(false); }}
+                disabled={!editText.trim() || editText === comment.text}
+                className="text-xs font-bold px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+               >
+                 {language === "pl" ? "Zapisz" : "Save"}
+               </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
+            {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
+          </p>
+        )}
+
+        <ReportDialog
+          isOpen={isReportDialogOpen}
+          onClose={() => setIsReportDialogOpen(false)}
+          language={language}
+          onSubmit={(reason, note) => onReport(comment.id, reason, note)}
+        />
+
         <div className="flex items-center gap-3 pt-0.5">
           <button
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
               "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-              comment.isLiked
+              isLiked
                 ? "text-primary"
                 : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
             <ThumbsUp
               size={isReply ? 11 : 13}
-              className={cn(comment.isLiked && "fill-primary")}
+              className={cn(isLiked && "fill-primary")}
             />
             <span className={cn("font-normal", isReply ? "text-[10px]" : "text-[11px]")}>
-              {comment._count?.likes || 0}
-            </span>
-          </button>
-          <button
-            onClick={() => userProfile && onDislike(comment.id)}
-            className={cn(
-              "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
-              comment.isDisliked
-                ? "text-black"
-                : "text-[#606060] hover:text-[#0f0f0f]",
-            )}
-          >
-            <ThumbsDown
-              size={isReply ? 11 : 13}
-              className={cn(comment.isDisliked && "fill-black")}
-            />
-            <span className={cn("font-normal", isReply ? "text-[10px]" : "text-[11px]")}>
-              {comment._count?.dislikes || 0}
+              {comment.likesCount || 0}
             </span>
           </button>
           {!isReply && canComment && (

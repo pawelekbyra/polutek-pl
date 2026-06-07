@@ -17,11 +17,10 @@ describe('comments privacy helpers', () => {
 
     expect(publicAuthor).toEqual({
       id: 'user-1',
-      name: 'Komentator',
+      displayName: 'Komentator',
       username: 'komentator',
       imageUrl: 'https://img.example/avatar.png',
-      isPatron: true,
-      role: 'USER',
+      badges: ['PATRON'],
     });
     expect(publicAuthor).not.toHaveProperty('email');
     expect(publicAuthor).not.toHaveProperty('referralPoints');

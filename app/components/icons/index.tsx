@@ -959,5 +959,25 @@ export const Archive = (props: IconProps) => (
   </BaseIcon>
 );
 
+export const ChevronUp = (props: IconProps) => (
+  <BaseIcon viewBox="0 0 24 24" {...props}>
+    <polyline points="18 15 12 9 6 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </BaseIcon>
+);
+
+export const Flag = (props: IconProps) => (
+  <BaseIcon viewBox="0 0 24 24" {...props}>
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </BaseIcon>
+);
+
+export const Link = (props: IconProps) => (
+  <BaseIcon viewBox="0 0 24 24" {...props}>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </BaseIcon>
+);
+
 export { Dollar as DollarSign };
 export { LayoutDashboard as Layout };

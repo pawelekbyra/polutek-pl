@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { MessageSquare, Loader2 } from "../icons";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { MessageSquare, Loader2, ChevronUp } from "../icons";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
@@ -99,6 +99,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
+
+  const commentsTopRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -109,19 +113,52 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isLoading,
     postMutation,
     likeMutation,
-    dislikeMutation,
     pinMutation,
     deleteMutation,
+    editMutation,
+    reportMutation,
   } = useComments(videoId, sortBy);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (commentsTopRef.current) {
+        const top = commentsTopRef.current.getBoundingClientRect().top;
+        setShowStickyHeader(top < -200);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    commentsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const { mutate: postComment } = postMutation;
 
   const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
+  const totalCount = data?.pages?.[0]?.totalCount ?? 0;
+  const viewer = data?.pages?.[0]?.viewer;
 
   const replyingToAuthor = replyTo
-    ? comments.find((c) => c.id === replyTo)?.authorName
+    ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -153,12 +190,26 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6">
+    <div ref={commentsTopRef} className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative">
+      {/* Sticky Header */}
+      {showStickyHeader && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 animate-in slide-in-from-top-4 duration-300">
+           <div className="flex items-center gap-2">
+             <MessageSquare size={16} className="text-blue-600" />
+             <span className="text-xs font-black uppercase">{totalCount} {getCommentsLabel(totalCount)}</span>
+           </div>
+           <button onClick={scrollToTop} className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors">
+             <ChevronUp size={14} />
+             {language === "pl" ? "Do początku" : "To top"}
+           </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3 order-2 sm:order-1">
           <MessageSquare size={20} className="text-blue-600" />
           <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
-            {comments.length} {getCommentsLabel(comments.length)}
+            {totalCount} {getCommentsLabel(totalCount)}
           </h3>
         </div>
 
@@ -198,7 +249,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         setReplyTo={setReplyTo}
         isInputFocused={isInputFocused}
         setIsInputFocused={setIsInputFocused}
-        canComment={canComment}
+        canComment={viewer?.canComment ?? false}
         isPatronGated={isPatronGated}
         isPatron={isPatron}
         isPending={postMutation.isPending}
@@ -216,19 +267,21 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               isClient={isClient}
               language={language}
               t={t}
-              canComment={canComment}
+              canComment={viewer?.canComment ?? false}
               onLike={(id) => likeMutation.mutate(id)}
-              onDislike={(id) => dislikeMutation.mutate(id)}
+              onDislike={() => {}}
               onReply={(id) => setReplyTo(id)}
               onDelete={(id) => deleteMutation.mutate(id)}
               onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
               isPinPending={pinMutation.isPending}
+              onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
+              onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
             />
 
             {/* NESTED REPLIES */}
-            {comment.replies && comment.replies.length > 0 && (
+            {comment.repliesPreview && comment.repliesPreview.length > 0 && (
               <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                {comment.replies.map((reply) => (
+                {comment.repliesPreview.map((reply) => (
                   <CommentItem
                     key={reply.id}
                     comment={reply}
@@ -236,13 +289,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     isClient={isClient}
                     language={language}
                     t={t}
-                    canComment={canComment}
+                    canComment={viewer?.canComment ?? false}
                     onLike={(id) => likeMutation.mutate(id)}
-                    onDislike={(id) => dislikeMutation.mutate(id)}
+                    onDislike={() => {}}
                     onReply={() => {}}
                     onDelete={(id) => deleteMutation.mutate(id)}
                     onPin={() => {}}
                     isPinPending={false}
+                    onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
+                    onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
                     isReply={true}
                   />
                 ))}
@@ -250,6 +305,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             )}
           </div>
         ))}
+
+        <div ref={loadMoreRef} className="h-4" />
 
         {hasNextPage && (
           <div className="pt-6 flex justify-center">
@@ -265,6 +322,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               )}
             </Button>
           </div>
+        )}
+
+        {showStickyHeader && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-10 right-10 z-40 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:bg-blue-700 transition-all animate-in fade-in zoom-in"
+            title="Wróć na górę komentarzy"
+          >
+            <ChevronUp size={24} />
+          </button>
         )}
       </div>
     </div>

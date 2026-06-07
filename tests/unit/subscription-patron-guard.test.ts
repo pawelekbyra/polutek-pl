@@ -40,15 +40,7 @@ describe("Subscription to Patron guard", () => {
       /patronSource\s*:/,
     ];
 
-    const ignoreFiles = [
-        "lib/services/admin/admin-query-parser.ts",
-        "lib/services/admin/users-admin.dto.ts",
-        "lib/services/admin/users-admin.service.ts",
-        "app/api/admin/users/export/route.ts"
-    ];
-
     const violations = checkedFiles.flatMap((file) => {
-      if (ignoreFiles.includes(file)) return [];
       const source = readFileSync(join(repoRoot, file), "utf8");
       if (!source.toLowerCase().includes("subscription")) return [];
 

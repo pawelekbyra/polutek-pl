@@ -149,6 +149,16 @@ export class UserProfileService {
             oldId: existingUserByEmail.id,
             newId: id
           });
+
+          // Re-link comments from the old stale user to the new one
+          const movedComments = await tx.comment.updateMany({
+            where: { authorId: existingUserByEmail.id },
+            data: { authorId: id }
+          });
+
+          if (movedComments.count > 0) {
+            logger.info(`[UserProfileService.syncUser] Re-linked ${movedComments.count} comments from ${existingUserByEmail.id} to ${id}`);
+          }
         }
 
         // Runtime admin access is based on immutable Clerk ID allowlist or an existing DB role.

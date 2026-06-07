@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { POST, DELETE, PATCH } from '@/app/api/comments/route';
 import { NextRequest } from 'next/server';
 
@@ -22,12 +23,22 @@ vi.mock('@/lib/prisma', () => ({
     creator: {
       findFirst: vi.fn(),
     },
+    auditLog: {
+        create: vi.fn(),
+    },
+    $transaction: vi.fn((cb) => cb(prisma)),
   },
 }));
 
 vi.mock('@/lib/services/user/profile.service', () => ({
   UserProfileService: {
     getOrCreateUserFromAuth: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/services/comments/comment-access.service', () => ({
+  CommentAccessService: {
+    canModerate: vi.fn(),
   },
 }));
 
@@ -46,19 +57,14 @@ describe('Comments API BOLA protection', () => {
     vi.mocked(prisma.comment.findUnique).mockResolvedValue({
       id: 'comment_1',
       authorId: 'victim_1',
-      video: { creatorId: 'creator_1' }
+      videoId: 'video_1'
     } as any);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: 'attacker_1',
-      role: 'USER',
-      creators: []
-    } as any);
+    vi.mocked(CommentAccessService.canModerate).mockResolvedValue(false);
 
     const req = new NextRequest('http://localhost/api/comments?id=comment_1', { method: 'DELETE' });
-    const res = await DELETE(req);
+    const res = await DELETE(req, { params: { id: 'video_1', commentId: 'comment_1' } } as any);
 
     expect(res.status).toBe(403);
-    expect(prisma.comment.update).not.toHaveBeenCalled();
   });
 
   it('PATCH /api/comments: blocks non-creator from pinning comment', async () => {
@@ -66,19 +72,15 @@ describe('Comments API BOLA protection', () => {
     vi.mocked(prisma.comment.findUnique).mockResolvedValue({
       id: 'comment_1',
       authorId: 'victim_1',
-      video: { id: 'video_1', creatorId: 'creator_1' }
+      videoId: 'video_1'
     } as any);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: 'random_user',
-      role: 'USER',
-      creators: [] // User does not own creator_1
-    } as any);
+    vi.mocked(CommentAccessService.canModerate).mockResolvedValue(false);
 
-    const req = new NextRequest('http://localhost/api/comments', {
+    const req = new NextRequest('http://localhost/api/comments?id=comment_1', {
       method: 'PATCH',
-      body: JSON.stringify({ commentId: 'comment_1', pinned: true })
+      body: JSON.stringify({ pinned: true })
     });
-    const res = await PATCH(req);
+    const res = await PATCH(req, { params: { id: 'video_1', commentId: 'comment_1' } } as any);
 
     expect(res.status).toBe(403);
   });

@@ -3,9 +3,10 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
-import { AccessPolicy } from '@/lib/access/access-policy';
+import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
+import { CommentReactionService } from '@/lib/services/comments/comment-reaction.service';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { POST as likeComment } from '@/app/api/comments/like/route';
+import { PUT as likeComment } from '@/app/api/comments/[commentId]/reaction/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -21,9 +22,17 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock('@/lib/access/access-policy', () => ({
-  AccessPolicy: {
-    canReactToComment: vi.fn(),
+vi.mock('@/lib/services/comments/comment-access.service', () => ({
+  CommentAccessService: {
+    canReact: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/services/comments/comment-reaction.service', () => ({
+  CommentReactionService: {
+    toggleLike: vi.fn(),
+    like: vi.fn(),
+    unlike: vi.fn(),
   },
 }));
 
@@ -37,37 +46,26 @@ describe('/api/comments/like', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 59 });
-    vi.mocked(AccessPolicy.canReactToComment).mockResolvedValue({ allowed: true });
+    vi.mocked(CommentAccessService.canReact).mockResolvedValue({ allowed: true });
     vi.mocked(UserService.getOrCreateUserFromAuth).mockResolvedValue({ id: 'local-user-id' } as Awaited<ReturnType<typeof UserService.getOrCreateUserFromAuth>>);
   });
 
   it('persists likes with the synchronized local user id', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'clerk-user-id', sessionClaims: { email: 'fan@example.com' } } as unknown as Awaited<ReturnType<typeof auth>>);
 
-    const tx = {
-      commentDislike: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
-      commentLike: {
-        findUnique: vi.fn().mockResolvedValue(null),
-        create: vi.fn().mockResolvedValue({ id: 'like-id' }),
-        delete: vi.fn(),
-      },
-    };
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
+    vi.mocked(CommentReactionService.like).mockResolvedValue({ liked: true });
 
-    const request = new NextRequest('http://localhost/api/comments/like', {
-      method: 'POST',
-      body: JSON.stringify({ commentId: 'comment-id' }),
+    const request = new NextRequest('http://localhost/api/comments/comment-id/reaction', {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await likeComment(request);
+    const response = await likeComment(request, { params: { commentId: 'comment-id' } } as any);
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ success: true, liked: true, disliked: false });
+    expect(body).toEqual({ success: true, liked: true });
     expect(UserService.getOrCreateUserFromAuth).toHaveBeenCalledWith('clerk-user-id', { email: 'fan@example.com' });
-    expect(tx.commentDislike.deleteMany).toHaveBeenCalledWith({ where: { userId: 'local-user-id', commentId: 'comment-id' } });
-    expect(tx.commentLike.findUnique).toHaveBeenCalledWith({ where: { userId_commentId: { userId: 'local-user-id', commentId: 'comment-id' } } });
-    expect(tx.commentLike.create).toHaveBeenCalledWith({ data: { userId: 'local-user-id', commentId: 'comment-id' } });
+    expect(CommentReactionService.like).toHaveBeenCalledWith('local-user-id', 'comment-id');
   });
 });

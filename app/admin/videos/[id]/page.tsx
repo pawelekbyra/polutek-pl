@@ -20,6 +20,7 @@ import Image from "next/image";
 import VideoPlayer from "@/app/components/VideoPlayer";
 import PremiumWrapper from "@/app/components/PremiumWrapper";
 import { useToast } from "@/app/hooks/useToast";
+import { SafeAvatar } from "@/app/components/SafeAvatar";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -55,10 +56,14 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
 
   const handleAction = async (action: string) => {
       try {
-          const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+          const isFullUrl = action.startsWith('comments/');
+          const url = isFullUrl ? `/api/admin/${action}` : `/api/admin/videos/${params.id}/actions`;
+          const body = isFullUrl ? {} : { action };
+
+          const res = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action })
+              body: JSON.stringify(body)
           });
           if (res.ok) {
               toast(`Akcja ${action} wykonana pomyślnie.`, 'success');
@@ -383,17 +388,38 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                                       <div key={comment.id} className="p-4 rounded-lg border bg-muted/30">
                                           <div className="flex justify-between items-start mb-2">
                                               <div className="flex items-center gap-2">
-                                                  <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
-                                                      {comment.author?.email?.[0]?.toUpperCase()}
+                                                  <SafeAvatar
+                                                    src={comment.author?.imageUrl}
+                                                    alt={comment.author?.name || "Avatar"}
+                                                    size={24}
+                                                    fallbackSeed={comment.author?.id}
+                                                  />
+                                                  <div className="flex flex-col">
+                                                    <span className="text-xs font-bold">{comment.author?.name || comment.author?.username || "Użytkownik"}</span>
+                                                    <span className="text-[10px] opacity-50">{comment.author?.email}</span>
                                                   </div>
-                                                  <span className="text-xs font-bold">{comment.author?.email}</span>
                                               </div>
-                                              <span className="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                                <Badge variant="outline" className="text-[9px] h-4">{comment.status}</Badge>
+                                              </div>
                                           </div>
-                                          <p className="text-sm leading-relaxed">{comment.text}</p>
+                                          <p className="text-sm leading-relaxed mb-3">{comment.text || <span className="italic opacity-50">Treść usunięta</span>}</p>
+
+                                          <div className="flex gap-2">
+                                            {comment.status === 'VISIBLE' ? (
+                                                <Button onClick={() => handleAction(`comments/${comment.id}/hide`)} variant="ghost" size="sm" className="h-7 text-[10px]">Ukryj</Button>
+                                            ) : (
+                                                <Button onClick={() => handleAction(`comments/${comment.id}/restore`)} variant="ghost" size="sm" className="h-7 text-[10px]">Przywróć</Button>
+                                            )}
+                                            <Button onClick={() => handleAction(`comments/${comment.id}/delete`)} variant="ghost" size="sm" className="h-7 text-[10px] text-red-600">Usuń</Button>
+                                            <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
+                                                <Link href={`/watch/${video.slug}#comment-${comment.id}`} target="_blank">Pokaż w serwisie</Link>
+                                            </Button>
+                                          </div>
                                       </div>
                                   ))}
-                                  <Button variant="ghost" className="w-full text-xs text-muted-foreground italic">Pokaż wszystkie (Moderacja wkrótce)</Button>
+                                  <Button variant="ghost" className="w-full text-xs text-muted-foreground italic">Pokaż wszystkie (Pełna moderacja wkrótce)</Button>
                               </div>
                           ) : (
                               <div className="py-12 text-center space-y-2 opacity-50">
