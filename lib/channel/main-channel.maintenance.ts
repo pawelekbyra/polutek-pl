@@ -1,7 +1,7 @@
+/** @deprecated Use @/lib/modules/channel */
 import { MainChannelMaintenance as NewMaintenance } from "../modules/channel/application/main-channel.maintenance";
 import { createAppContext } from "../modules/shared/app-context";
 
-/** @deprecated Use @/lib/modules/channel/application/main-channel.maintenance */
 export class MainChannelMaintenance {
   static async previewMainChannelSetup(userId?: string) {
     const ctx = createAppContext({ actor: userId ? { type: 'admin', userId } : { type: 'guest' } });

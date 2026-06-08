@@ -90,9 +90,14 @@ export class MainChannelMaintenance {
                 throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
             }
 
+            const userId = ctx.actor.type !== 'guest' && 'userId' in ctx.actor ? ctx.actor.userId : null;
+            if (!userId) {
+                throw new Error("Cannot create main channel without a valid user actor");
+            }
+
             mainChannel = await tx.creator.create({
                 data: {
-                    userId: (ctx.actor as any).userId as string,
+                    userId: userId,
                     slug,
                     name: MAIN_CREATOR_NAME,
                     isApproved: true,
@@ -104,12 +109,12 @@ export class MainChannelMaintenance {
         await this.applyPrimaryRepairInternal(tx, mainChannel.id);
         await this.applyOwnershipRepairInternal(tx, mainChannel.id);
 
-        await recordAuditEvent({ ...ctx, prisma: tx }, {
+        await recordAuditEvent(ctx, {
             action: 'MAIN_CHANNEL_SETUP_APPLIED',
             targetType: 'CREATOR',
             targetId: mainChannel.id,
             metadata: { slug: mainChannel.slug }
-        });
+        }, tx);
 
         return {
             mainChannelId: mainChannel.id,
@@ -136,12 +141,12 @@ export class MainChannelMaintenance {
     const result = await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
         const stats = await this.applyOwnershipRepairInternal(tx, mainChannelId);
 
-        await recordAuditEvent({ ...ctx, prisma: tx }, {
+        await recordAuditEvent(ctx, {
             action: 'MAIN_CHANNEL_OWNERSHIP_REPAIR',
             targetType: 'CREATOR',
             targetId: mainChannelId,
             metadata: stats
-        });
+        }, tx);
 
         return stats;
     });
@@ -190,11 +195,11 @@ export class MainChannelMaintenance {
     await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
         await this.applyPrimaryRepairInternal(tx, mainChannelId);
 
-        await recordAuditEvent({ ...ctx, prisma: tx }, {
+        await recordAuditEvent(ctx, {
             action: 'MAIN_CHANNEL_PRIMARY_REPAIR',
             targetType: 'CREATOR',
             targetId: mainChannelId,
-        });
+        }, tx);
     });
 
     return { success: true };

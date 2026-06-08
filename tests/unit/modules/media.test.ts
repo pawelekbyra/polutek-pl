@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { MediaPolicy, isBlockedPrivateHostname, isSafeLocalPath, isHlsOrDashManifest } from '@/lib/modules/media';
+import { MediaPolicy, isBlockedPrivateHostname, isSafeLocalPath, isHlsOrDashManifest, isDirectMediaSource } from '@/lib/modules/media';
 
 describe('Media Module', () => {
   const env = {
     MEDIA_BUCKET_HOST: 'media.example.com',
     ALLOWED_MEDIA_HOSTS: 'cdn.example.com',
     NEXT_PUBLIC_BLOB_PUBLIC_HOST: 'blob.example.com',
+    ALLOWED_AVATAR_HOSTS: 'avatars.com',
+    ALLOWED_COMMENT_IMAGE_HOSTS: 'comments.com',
   };
 
   describe('isBlockedPrivateHostname', () => {
@@ -72,6 +74,39 @@ describe('Media Module', () => {
       expect(isHlsOrDashManifest('https://example.com/video.m3u8')).toBe(true);
       expect(isHlsOrDashManifest('https://example.com/video.mpd')).toBe(true);
       expect(isHlsOrDashManifest('https://example.com/video.mp4')).toBe(false);
+    });
+  });
+
+  describe('isDirectMediaSource', () => {
+    it('should detect direct media files', () => {
+      expect(isDirectMediaSource('https://example.com/video.mp4')).toBe(true);
+      expect(isDirectMediaSource('https://example.com/video.webm')).toBe(true);
+      expect(isDirectMediaSource('https://example.com/audio.mp3')).toBe(true);
+      expect(isDirectMediaSource('https://example.com/video.m3u8')).toBe(false);
+    });
+  });
+
+  describe('MediaPolicy.isAllowedAvatarUrl', () => {
+    it('should allow Clerk and allowed avatar hosts', () => {
+      expect(MediaPolicy.isAllowedAvatarUrl('https://img.clerk.com/abc', env)).toBe(true);
+      expect(MediaPolicy.isAllowedAvatarUrl('https://any.clerk.com/abc', env)).toBe(true);
+      expect(MediaPolicy.isAllowedAvatarUrl('https://avatars.com/me.jpg', env)).toBe(true);
+      expect(MediaPolicy.isAllowedAvatarUrl('https://blob.example.com/me.jpg', env)).toBe(true);
+    });
+
+    it('should block unauthorized avatar hosts', () => {
+      expect(MediaPolicy.isAllowedAvatarUrl('https://evil.com/me.jpg', env)).toBe(false);
+    });
+  });
+
+  describe('MediaPolicy.isAllowedCommentImageUrl', () => {
+    it('should allow allowed comment image hosts', () => {
+      expect(MediaPolicy.isAllowedCommentImageUrl('https://comments.com/img.jpg', env)).toBe(true);
+      expect(MediaPolicy.isAllowedCommentImageUrl('https://blob.example.com/img.jpg', env)).toBe(true);
+    });
+
+    it('should block unauthorized hosts', () => {
+      expect(MediaPolicy.isAllowedCommentImageUrl('https://evil.com/img.jpg', env)).toBe(false);
     });
   });
 });
