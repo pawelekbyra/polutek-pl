@@ -25,7 +25,7 @@ function checkModules() {
 
     // 1. Forbidden Next.js/App/Clerk imports in modules
     for (const forbidden of FORBIDDEN_IMPORTS) {
-      if (content.includes(`from '${forbidden}'`) || content.includes(`from "${forbidden}"`)) {
+      if (content.includes(`from '${forbidden}'`) || content.includes(`from "${forbidden}"`) || content.includes(`from "@clerk/nextjs"`)) {
         console.error(`❌ Violation: Forbidden import '${forbidden}' in ${relativePath}`);
         violations++;
       }
@@ -65,8 +65,9 @@ function checkRoutes() {
     const content = fs.readFileSync(file, 'utf-8');
     const relativePath = path.relative(ROOT, file);
 
-    // 3. Direct repository imports in routes
+    // 3. Direct repository/infrastructure imports in routes
     if (content.includes('.repository') || content.includes('/infrastructure/')) {
+       // Search for any import from @/lib/modules that contains .repository or /infrastructure/
        const matches = content.match(/from ['"]@\/lib\/modules\/[^'"]+['"]/g);
        if (matches) {
            for (const match of matches) {
@@ -77,10 +78,14 @@ function checkRoutes() {
            }
        }
 
-       if (content.includes("from './") || content.includes("from '../")) {
-           if (content.includes(".repository") || content.includes("/infrastructure/")) {
-                console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}`);
-                violations++;
+       // Check relative imports as well
+       const relativeMatches = content.match(/from ['"]\.\.?\/[^'"]+['"]/g);
+       if (relativeMatches) {
+           for (const match of relativeMatches) {
+               if (match.includes(".repository") || match.includes("/infrastructure/")) {
+                   console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}: ${match}`);
+                   violations++;
+               }
            }
        }
     }

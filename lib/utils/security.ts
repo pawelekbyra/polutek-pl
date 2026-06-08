@@ -1,4 +1,4 @@
-import { parseMediaHosts } from "@/lib/blob";
+import { parseMediaHosts } from "@/lib/modules/media";
 
 export function generateCSP() {
   const clerkDomains = [

@@ -10,6 +10,7 @@ vi.mock('@/lib/prisma', () => ({
     payment: { updateMany: vi.fn(), count: vi.fn() },
     subscription: { updateMany: vi.fn(), count: vi.fn() },
     auditLog: { create: vi.fn() },
+    $transaction: vi.fn((cb) => cb(prisma)),
   },
 }));
 
@@ -41,19 +42,19 @@ describe('MainChannelMaintenance', () => {
   });
 
   it('applyOwnershipRepair requires correct confirmation phrase', async () => {
-    await expect(MainChannelMaintenance.applyOwnershipRepair('c1', 'WRONG'))
+    await expect(MainChannelMaintenance.applyOwnershipRepair('admin1', 'c1', 'WRONG'))
       .rejects.toThrow(/Invalid confirmation phrase/);
 
-    await MainChannelMaintenance.applyOwnershipRepair('c1', 'CONFIRM OWNERSHIP REPAIR');
+    await MainChannelMaintenance.applyOwnershipRepair('admin1', 'c1', 'CONFIRM OWNERSHIP REPAIR');
     expect(prisma.video.updateMany).toHaveBeenCalled();
     expect(prisma.auditLog.create).toHaveBeenCalled();
   });
 
   it('applyPrimaryRepair requires correct confirmation phrase', async () => {
-    await expect(MainChannelMaintenance.applyPrimaryRepair('c1', 'WRONG'))
+    await expect(MainChannelMaintenance.applyPrimaryRepair('admin1', 'c1', 'WRONG'))
       .rejects.toThrow(/Invalid confirmation phrase/);
 
-    await MainChannelMaintenance.applyPrimaryRepair('c1', 'CONFIRM PRIMARY REPAIR');
+    await MainChannelMaintenance.applyPrimaryRepair('admin1', 'c1', 'CONFIRM PRIMARY REPAIR');
     expect(prisma.creator.updateMany).toHaveBeenCalled();
     expect(prisma.auditLog.create).toHaveBeenCalled();
   });

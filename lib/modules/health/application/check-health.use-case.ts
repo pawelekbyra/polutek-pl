@@ -1,6 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
-import { getAllowedMediaHosts, visiblePublishedAtFilter } from "@/lib/modules/media";
+import { MediaPolicy } from "@/lib/modules/media";
 import { getMainChannel } from "@/lib/modules/channel";
 
 export interface HealthCheckResult {
@@ -30,7 +30,11 @@ export async function checkHealth(
     return { ok: true };
   }
 
-  await (ctx.prisma as any).$queryRaw`SELECT 1`;
+  try {
+    await (ctx.prisma as any).$queryRaw`SELECT 1`;
+  } catch (e) {
+      return { ok: false, database: "failed" };
+  }
 
   const approvedCreatorExists = await ctx.prisma.creator.findFirst({
     where: { isApproved: true },
@@ -47,7 +51,7 @@ export async function checkHealth(
       isApproved: true,
       isPrimary: true,
     },
-    ...visiblePublishedAtFilter(ctx.now()),
+    ...MediaPolicy.visiblePublishedAtFilter(ctx.now()),
   };
 
   const [
@@ -81,7 +85,7 @@ export async function checkHealth(
       approvedCreatorExists: !!approvedCreatorExists,
       primaryCreatorExists: !!primaryCreatorExists,
       mainFeaturedVideoExists: !!mainFeaturedVideoExists,
-      mediaHostsConfigured: getAllowedMediaHosts().size > 0,
+      mediaHostsConfigured: MediaPolicy.getAllowedMediaHosts(process.env).size > 0,
     },
   };
 }
