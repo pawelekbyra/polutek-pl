@@ -29,7 +29,7 @@
 | **R11** | Admin frontend | [ ] |
 
 ## 4. Current next task
-`R5 users module full migration + R6 video module initiation`
+`R5 users module migration phase 1`
 
 ## 5. Mandatory agent rules
 - **do not just move files**: Każdy etap ma być kompletny (kod, testy, typy, boundary guards).
@@ -154,8 +154,8 @@ npm run build
 - R1: [x]
 - R2: [x]
 - R3: [x]
-- R4: [x]
-- R5: [x]
+- R4: [~]
+- R5: [~]
 - R6–R11: [ ]
 
 #### Walidacja

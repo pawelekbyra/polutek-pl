@@ -1,9 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { getUserAccessProfile, getActorAccessProfile } from '@/lib/modules/users';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getUserAccessProfile, getActorAccessProfile, updateUserLanguage } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SystemRole } from '@prisma/client';
 
 describe('Users Module', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('should return user access profile', async () => {
     const mockUser = {
       id: 'user_123',
@@ -99,5 +102,47 @@ describe('Users Module', () => {
       const profile = await getActorAccessProfile(ctx);
       expect(profile).toBeNull();
     });
+  });
+
+  describe('updateUserLanguage', () => {
+    const mockIdentityProvider = {
+        getUserSyncData: vi.fn().mockResolvedValue({
+            email: 'test@example.com',
+            name: 'Test User',
+            username: 'testuser',
+            imageUrl: 'http://image.com'
+        }),
+        updateUserMetadata: vi.fn().mockResolvedValue(undefined)
+    };
+
+    it('should update language and sync to identity provider', async () => {
+      const mockUser = { id: 'user_123', email: 'test@example.com', isDeleted: false };
+      const mockPrisma = {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(mockUser),
+          upsert: vi.fn().mockResolvedValue({ ...mockUser, language: 'pl' }),
+        },
+      } as any;
+
+      const ctx = createAppContext({ prisma: mockPrisma });
+      const result = await updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider);
+
+      expect(result.language).toBe('pl');
+      expect(mockPrisma.user.upsert).toHaveBeenCalled();
+      expect(mockIdentityProvider.updateUserMetadata).toHaveBeenCalledWith('user_123', { language: 'pl' });
+    });
+
+    it('should throw for deleted user', async () => {
+        const mockUser = { id: 'user_123', isDeleted: true };
+        const mockPrisma = {
+          user: {
+            findUnique: vi.fn().mockResolvedValue(mockUser),
+          },
+        } as any;
+
+        const ctx = createAppContext({ prisma: mockPrisma });
+        await expect(updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider))
+          .rejects.toThrow('Cannot update language for deleted user');
+      });
   });
 });

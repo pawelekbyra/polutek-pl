@@ -68,7 +68,7 @@ function checkRoutes() {
     const relativePath = path.relative(ROOT, file);
 
     // 3. Direct repository/infrastructure imports in routes
-    if (content.includes('.repository') || content.includes('/infrastructure/')) {
+    if (content.includes('.repository') || content.includes('/infrastructure/') || content.includes('@/lib/prisma') || content.includes('@/lib/services/')) {
        // Search for any import from @/lib/modules that contains .repository or /infrastructure/
        const matches = content.match(/from ['"]@\/lib\/modules\/[^'"]+['"]/g);
        if (matches) {
@@ -78,6 +78,14 @@ function checkRoutes() {
                    violations++;
                }
            }
+       }
+
+       // 4. Forbidden direct Prisma/Services in refactored routes (example: /api/user/language)
+       if (relativePath.includes('app/api/user/language') || relativePath.includes('app/api/admin/channel')) {
+            if (content.includes('@/lib/prisma') || content.includes('@/lib/services/')) {
+                console.error(`❌ Violation: Forbidden direct Prisma/Service import in refactored route ${relativePath}`);
+                violations++;
+            }
        }
 
        // Check relative imports as well

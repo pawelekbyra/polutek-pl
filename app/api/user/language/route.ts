@@ -1,9 +1,12 @@
-import { logger, createScopedLogger } from "@/lib/logger";
+import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { auth } from '@clerk/nextjs/server';
-import { UserLanguageService as UserService } from '@/lib/services/user/language.service';
 import { handleApiError } from '@/lib/errors';
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { updateUserLanguage } from "@/lib/modules/users";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { ClerkIdentityProvider } from "@/lib/api/identity-provider";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +25,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid language" }, { status: 400 });
     }
 
-    // Centralized update for both DB and Clerk Metadata
-    await UserService.updateUserLanguage(userId, language);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+
+    await updateUserLanguage(ctx, { userId, language }, new ClerkIdentityProvider());
 
     return NextResponse.json({ success: true });
   } catch (err) {
