@@ -43,14 +43,19 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     setMounted(true);
   }, []);
 
+  const [localSubState, setLocalSubState] = useState({
+      isSubscribed: initialIsSubscribed || false,
+      subscribersCount: video.creator?.subscribersCount || 0
+  });
+
   const [optimisticState, addOptimisticAction] = useOptimistic(
     {
         isLiked: (userId ? initialInteraction?.liked : false) || false,
         isDisliked: (userId ? initialInteraction?.disliked : false) || false,
         likesCount: video.likesCount || 0,
         dislikesCount: video.dislikesCount || 0,
-        subscribersCount: video.creator?.subscribersCount || 0,
-        isSubscribed: initialIsSubscribed || false
+        subscribersCount: localSubState.subscribersCount,
+        isSubscribed: localSubState.isSubscribed
     },
     (state, action: 'LIKE' | 'DISLIKE' | { type: 'SUBSCRIBE', isSubscribed: boolean }) => {
       if (typeof action === 'string') {
@@ -228,11 +233,16 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
-                    initialIsSubscribed={optimisticState.isSubscribed}
+                    initialIsSubscribed={localSubState.isSubscribed}
                     onStatusChange={(isSubscribed) => {
                         startTransition(() => {
                             addOptimisticAction({ type: 'SUBSCRIBE', isSubscribed });
                         });
+                        // Also sync local state when the action actually completes
+                        setLocalSubState(prev => ({
+                            isSubscribed,
+                            subscribersCount: isSubscribed ? prev.subscribersCount + 1 : Math.max(0, prev.subscribersCount - 1)
+                        }));
                     }}
                   />
                </div>

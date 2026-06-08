@@ -99,6 +99,7 @@ export default function SubscribeButton({
 
         const result = await response.json() as { isSubscribed: boolean };
         setIsSubscribed(result.isSubscribed);
+        // Dispatch event for other components if needed, or rely on callback
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
         setIsSubscribed(!nextState);
