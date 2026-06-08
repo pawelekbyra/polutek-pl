@@ -60,19 +60,40 @@ export class CommentService {
       orderBy.push({ createdAt: 'desc' });
     }
 
+    const commentSelect = {
+        id: true,
+        text: true,
+        imageUrl: true,
+        authorId: true,
+        videoId: true,
+        parentId: true,
+        status: true,
+        likesCount: true,
+        repliesCount: true,
+        reportsCount: true,
+        pinnedAt: true,
+        editedAt: true,
+        deletedAt: true,
+        deletedReason: true,
+        createdAt: true,
+        updatedAt: true,
+    };
+
     const comments = await prisma.comment.findMany({
       where,
       take: limit,
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
       orderBy,
-      include: {
+      select: {
+        ...commentSelect,
         author: { select: publicCommentAuthorSelect },
         replies: {
           where: canModerate ? undefined : { status: CommentStatus.VISIBLE },
           take: 3,
           orderBy: { createdAt: 'asc' },
-          include: {
+          select: {
+            ...commentSelect,
             author: { select: publicCommentAuthorSelect },
             reactions: userId ? { where: { userId } } : undefined
           }
@@ -155,7 +176,8 @@ export class CommentService {
           imageUrl,
           status: CommentStatus.VISIBLE
         },
-        include: {
+        select: {
+            ...commentSelect,
             author: { select: publicCommentAuthorSelect }
         }
       });
@@ -187,7 +209,8 @@ export class CommentService {
       data: {
         text,
         editedAt: new Date()
-      }
+      },
+      select: commentSelect
     });
   }
 
@@ -213,7 +236,8 @@ export class CommentService {
         data: {
           pinnedAt: new Date(),
           pinnedById: moderatorId
-        }
+        },
+        select: commentSelect
       });
 
       await logCommentAction(moderatorId, 'PIN', commentId, comment.videoId);
@@ -227,7 +251,8 @@ export class CommentService {
       data: {
         pinnedAt: null,
         pinnedById: null
-      }
+      },
+      select: commentSelect
     });
 
     await logCommentAction(comment.pinnedById || 'system', 'UNPIN', commentId, comment.videoId);
@@ -235,19 +260,30 @@ export class CommentService {
   }
 
   static async toggleHeart(commentId: string, moderatorId: string) {
-    const comment = await (prisma.comment as any).findUnique({
-      where: { id: commentId },
-      select: { videoId: true, isHearted: true }
-    });
+    // Note: isHearted might be missing in DB. Using try-catch and avoiding direct column access if possible.
+    try {
+        const comment = await prisma.comment.findUnique({
+          where: { id: commentId },
+          select: {
+              videoId: true,
+              // We use a safe check here or omit it if we want to be fully resilient to missing column
+          }
+        });
 
-    if (!comment) throw new Error("Comment not found");
+        if (!comment) throw new Error("Comment not found");
 
-    const updated = await (prisma.comment as any).update({
-      where: { id: commentId },
-      data: { isHearted: !comment.isHearted }
-    });
+        // If the column is missing in DB, this will fail.
+        // For now, we'll try to use raw query or just catch the error if we want to support it gracefully.
+        const currentIsHearted = await prisma.$queryRaw<any[]>`SELECT "isHearted" FROM "Comment" WHERE id = ${commentId}`;
+        const nextValue = !(currentIsHearted[0]?.isHearted);
 
-    await logCommentAction(moderatorId, updated.isHearted ? 'HEART' : 'UNHEART', commentId, comment.videoId);
-    return updated;
+        await prisma.$executeRaw`UPDATE "Comment" SET "isHearted" = ${nextValue} WHERE id = ${commentId}`;
+
+        await logCommentAction(moderatorId, nextValue ? 'HEART' : 'UNHEART', commentId, comment.videoId);
+        return { ...comment, isHearted: nextValue };
+    } catch (err: any) {
+        logger.error("[CommentService.toggleHeart] Failed:", err.message);
+        throw new Error("Funkcja 'serduszka' jest obecnie niedostępna.");
+    }
   }
 }

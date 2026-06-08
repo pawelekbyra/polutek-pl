@@ -226,7 +226,7 @@ export async function POST(
     }
 
     const [video, canModerate] = await Promise.all([
-        prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),
+        isUuid(videoId) ? prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }) : null,
         CommentAccessService.canModerate(userId, videoId)
     ]);
     const videoCreatorId = video?.creator?.userId || null;
