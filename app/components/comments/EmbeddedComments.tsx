@@ -336,7 +336,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 canComment={viewer?.canComment ?? false}
                 onLike={(id) => likeMutation.mutate(id)}
                 onDislike={() => {}}
-                onReply={(id) => setReplyTo(id)}
+                onReply={(id) => {
+                    setReplyTo(id);
+                    scrollToTop();
+                }}
                 onDelete={(id) => deleteMutation.mutate(id)}
                 onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
                 isPinPending={pinMutation.isPending}

@@ -7,24 +7,9 @@ import { auth } from '@clerk/nextjs/server';
 import sanitizeHtml from 'sanitize-html';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
+import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS, SystemTemplateSlug } from '@/lib/email-defaults';
 
 export const dynamic = 'force-dynamic';
-
-const DEFAULT_TEMPLATE = {
-  slug: 'welcome-email',
-  subject: 'Witaj w {{appName}}, {{firstName}}!',
-  html: `
-    <div style="font-family: serif; color: #1a1a1a; background-color: #FDFBF7; padding: 40px; line-height: 1.6; border: 1px solid #1a1a1a;">
-      <h1 style="text-transform: uppercase; letter-spacing: -0.05em; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px;">Witaj w {{appName}}</h1>
-      <p>Cześć {{firstName}}!</p>
-      <p>Dziękujemy za dołączenie do naszej społeczności. Od teraz masz dostęp do podstawowych funkcji platformy, takich jak komentowanie i ocenianie materiałów.</p>
-      <p>Jeśli chcesz odblokować dostęp do <strong>Strefy Patrona</strong> i oglądać ekskluzywne materiały, możesz wesprzeć projekt dowolnym napiwkiem.</p>
-      <p>Odwiedź <a href="{{appUrl}}" style="color: #3b82f6; font-weight: bold; text-decoration: none;">{{appName}}</a>, aby zobaczyć najnowsze filmy.</p>
-      <br />
-      <p style="font-style: italic; border-top: 1px solid #1a1a1a; padding-top: 16px;">Pozdrawiamy,<br />Zespół {{appName}}</p>
-    </div>
-  `,
-};
 
 const templateSchema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -55,10 +40,6 @@ const sanitizeOptions = {
   },
 };
 
-function getSlug(req: NextRequest) {
-  return req.nextUrl.searchParams.get('slug') || DEFAULT_TEMPLATE.slug;
-}
-
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
@@ -71,14 +52,48 @@ export async function GET(req: NextRequest) {
         const template = await prisma.emailTemplate.findUnique({
             where: { slug },
         });
-        return NextResponse.json(template || { ...DEFAULT_TEMPLATE, slug });
+
+        if (!template && SYSTEM_TEMPLATE_SLUGS.includes(slug as SystemTemplateSlug)) {
+            const defaults = EMAIL_DEFAULTS[slug as SystemTemplateSlug];
+            return NextResponse.json({
+                slug,
+                isSystem: true,
+                category: 'SYSTEM',
+                isActive: true,
+                ...defaults
+            });
+        }
+
+        return NextResponse.json(template || { slug, subject: '', html: '' });
     }
 
     const templates = await prisma.emailTemplate.findMany({
         orderBy: { updatedAt: 'desc' }
     });
 
-    return NextResponse.json(templates);
+    // Ensure system templates are at least represented even if not in DB
+    const dbSlugs = new Set(templates.map(t => t.slug));
+    const allTemplates = [...templates];
+
+    for (const sysSlug of SYSTEM_TEMPLATE_SLUGS) {
+        if (!dbSlugs.has(sysSlug)) {
+            const defaults = EMAIL_DEFAULTS[sysSlug];
+            allTemplates.push({
+                id: `sys-${sysSlug}`,
+                slug: sysSlug,
+                name: `System: ${sysSlug}`,
+                description: 'Domyślny szablon systemowy',
+                category: 'SYSTEM',
+                isSystem: true,
+                isActive: true,
+                createdAt: new Date(0),
+                updatedAt: new Date(0),
+                ...defaults
+            } as any);
+        }
+    }
+
+    return NextResponse.json(allTemplates);
   } catch (err) {
     scopedLogger.error("[GET_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
@@ -103,9 +118,6 @@ export async function POST(req: NextRequest) {
     const cleanHtml = sanitizeHtml(html, sanitizeOptions);
     const cleanHtmlEn = htmlEn ? sanitizeHtml(htmlEn, sanitizeOptions) : null;
 
-    // Check if it's a system template to prevent critical changes if necessary
-    // (In this version we allow editing but we could add more guards)
-
     const updated = await prisma.emailTemplate.upsert({
       where: { slug },
       update: {
@@ -128,7 +140,7 @@ export async function POST(req: NextRequest) {
         description,
         category,
         isActive,
-        isSystem: ['welcome-email', 'become-patron', 'thank-you-donation', 'password-changed', 'account-deleted'].includes(slug)
+        isSystem: SYSTEM_TEMPLATE_SLUGS.includes(slug as SystemTemplateSlug)
       },
     });
 
