@@ -74,10 +74,10 @@ export class CommentService {
           orderBy: { createdAt: 'asc' },
           include: {
             author: { select: publicCommentAuthorSelect },
-            reactions: userId ? { where: { userId } } : false
+            reactions: userId ? { where: { userId } } : undefined
           }
         },
-        reactions: userId ? { where: { userId } } : false
+        reactions: userId ? { where: { userId } } : undefined
       }
     });
 

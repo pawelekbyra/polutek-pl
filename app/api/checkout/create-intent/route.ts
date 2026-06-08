@@ -6,6 +6,7 @@ import { UserProfileService as UserService } from '@/lib/services/user/profile.s
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
 import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
+import { isUuid } from '@/lib/utils/uuid';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
 
@@ -62,10 +63,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (creatorId) {
-      const creator = await prisma.creator.findUnique({
+      const creator = isUuid(creatorId) ? await prisma.creator.findUnique({
         where: { id: creatorId },
         select: { id: true, isApproved: true },
-      });
+      }) : null;
 
       if (!creator || !creator.isApproved) {
         return NextResponse.json({ error: 'Invalid creator' }, { status: 400 });

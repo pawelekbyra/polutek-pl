@@ -104,7 +104,7 @@ export class PaymentCheckoutService {
           metadata: {
             userId,
             paymentId: payment.id,
-            requestId: requestId || null,
+            ...(requestId ? { requestId } : {}),
             ...(creatorId ? { creatorId } : {}),
           },
           automatic_payment_methods: { enabled: true },

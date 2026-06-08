@@ -1,20 +1,29 @@
 import { AccessTier } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { AccessPolicy } from '@/lib/access/access-policy';
+import { isUuid } from '@/lib/utils/uuid';
 
 export class CommentAccessService {
   static async canViewComments(userId: string | null | undefined, videoId: string) {
-    // Users can read comments on any video that exists and is not archived.
-    // We check existence via AccessPolicy to handle slugs and demo fallbacks.
-    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    try {
+        // Users can read comments on any video that exists and is not archived.
+        // We check existence via AccessPolicy to handle slugs and demo fallbacks.
+        const decision = await AccessPolicy.canViewVideo(userId, videoId);
 
-    // If it's NOT_FOUND or DELETED, we hide comments.
-    // Otherwise (even if it's PATRON_REQUIRED), we allow viewing comments.
-    if (decision.reason === 'NOT_FOUND' || decision.reason === 'DELETED') {
-        return false;
+        // If it's NOT_FOUND or DELETED, we hide comments.
+        // Otherwise (even if it's PATRON_REQUIRED), we allow viewing comments.
+        if (decision.reason === 'NOT_FOUND' || decision.reason === 'DELETED') {
+            return false;
+        }
+
+        return true;
+    } catch (err: any) {
+        // Handle Prisma error P2023 (Inconsistent column data / invalid UUID)
+        if (err.code === 'P2023') {
+            return false;
+        }
+        throw err;
     }
-
-    return true;
   }
 
   static async canComment(userId: string | null | undefined, videoId: string) {
@@ -39,7 +48,12 @@ export class CommentAccessService {
     // Video creator can moderate their own video comments
     if (videoId) {
         const creator = await prisma.creator.findFirst({
-            where: { userId, videos: { some: { id: videoId } } },
+            where: {
+                userId,
+                videos: {
+                    some: isUuid(videoId) ? { id: videoId } : { slug: videoId }
+                }
+            },
             select: { id: true }
         });
         if (creator) return true;
