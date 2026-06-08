@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
-import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from '@/lib/channel/main-channel.errors';
+import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from '@/lib/modules/channel';
 import { prisma } from '@/lib/prisma';
 
 vi.mock('@/lib/prisma', () => ({
@@ -57,11 +57,4 @@ describe('MainChannelService', () => {
     const result = await MainChannelService.getRequired();
     expect(result).toEqual(mockChannel);
   });
-});
-
-describe('MainChannelMaintenance phrases', () => {
-    it('requires correct phrases for maintenance actions', () => {
-        // This is a placeholder to ensure the phrases are respected if we add unit tests for maintenance
-        // Currently tested via logic in maintenance.ts
-    });
 });

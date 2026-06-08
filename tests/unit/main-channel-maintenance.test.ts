@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MainChannelMaintenance } from '@/lib/channel/main-channel.maintenance';
 import { prisma } from '@/lib/prisma';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -10,12 +9,13 @@ vi.mock('@/lib/prisma', () => ({
     comment: { updateMany: vi.fn(), count: vi.fn() },
     payment: { updateMany: vi.fn(), count: vi.fn() },
     subscription: { updateMany: vi.fn(), count: vi.fn() },
+    auditLog: { create: vi.fn() },
   },
 }));
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
-  MainChannelService: {
-    getConfiguredSlug: vi.fn(() => 'test-slug'),
+vi.mock('@/lib/feature-flags', () => ({
+  flags: {
+    mainCreatorSlug: 'test-slug',
   },
 }));
 
@@ -26,6 +26,7 @@ describe('MainChannelMaintenance', () => {
     vi.mocked(prisma.comment.updateMany).mockResolvedValue({ count: 0 } as any);
     vi.mocked(prisma.payment.updateMany).mockResolvedValue({ count: 0 } as any);
     vi.mocked(prisma.subscription.updateMany).mockResolvedValue({ count: 0 } as any);
+    vi.mocked(prisma.auditLog.create).mockResolvedValue({ id: 'log-1' } as any);
   });
 
   it('applyMainChannelSetup requires correct confirmation phrase', async () => {
@@ -45,6 +46,7 @@ describe('MainChannelMaintenance', () => {
 
     await MainChannelMaintenance.applyOwnershipRepair('c1', 'CONFIRM OWNERSHIP REPAIR');
     expect(prisma.video.updateMany).toHaveBeenCalled();
+    expect(prisma.auditLog.create).toHaveBeenCalled();
   });
 
   it('applyPrimaryRepair requires correct confirmation phrase', async () => {
@@ -53,5 +55,6 @@ describe('MainChannelMaintenance', () => {
 
     await MainChannelMaintenance.applyPrimaryRepair('c1', 'CONFIRM PRIMARY REPAIR');
     expect(prisma.creator.updateMany).toHaveBeenCalled();
+    expect(prisma.auditLog.create).toHaveBeenCalled();
   });
 });
