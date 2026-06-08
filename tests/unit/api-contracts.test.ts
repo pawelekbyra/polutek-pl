@@ -128,6 +128,7 @@ describe('API Contracts', () => {
       expect(data).toEqual({
         isSubscribed: true,
         subscribedAt: '2024-01-01T00:00:00.000Z',
+        subscribersCount: 0,
         creatorId: 'creator_1',
         creatorSlug: 'creator-slug',
         purpose: 'EMAIL_NOTIFICATIONS',
@@ -152,6 +153,7 @@ describe('API Contracts', () => {
       expect(data).toEqual({
         isSubscribed: true,
         subscribedAt: '2024-01-01T00:00:00.000Z',
+        subscribersCount: 0,
         creatorId: 'creator_1',
         creatorSlug: 'creator-slug',
         purpose: 'EMAIL_NOTIFICATIONS',
@@ -175,6 +177,7 @@ describe('API Contracts', () => {
       expect(data).toEqual({
         isSubscribed: false,
         deleted: true,
+        subscribersCount: 0,
         creatorId: 'creator_1',
         creatorSlug: 'creator-slug',
         purpose: 'EMAIL_NOTIFICATIONS',

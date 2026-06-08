@@ -61,7 +61,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
   let initialIsSubscribed = false;
 
   if (userId) {
-    const targetVideoId = videoId || mainVideo?.id;
+    const targetVideo = (videoId ? allVideos.find(v => v.id === videoId || v.slug === videoId) : null) || mainVideo;
+    const targetVideoId = targetVideo?.id;
 
     // We run getOrCreateUser sequentially before other DB calls to ensure record exists for relations
     await UserService.getOrCreateUser(userId).catch((e) => {
@@ -79,8 +80,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
       targetVideoId ? prisma.videoDislike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
       }).catch(() => null) : null,
-      mainVideo ? prisma.subscription.findUnique({
-        where: { userId_creatorId: { userId, creatorId: mainVideo.creatorId } },
+      targetVideo?.creatorId ? prisma.subscription.findUnique({
+        where: { userId_creatorId: { userId, creatorId: targetVideo.creatorId } },
         select: { id: true }
       }).catch(() => null) : null,
     ]);

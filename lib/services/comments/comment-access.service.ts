@@ -4,14 +4,15 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 
 export class CommentAccessService {
   static async canViewComments(userId: string | null | undefined, videoId: string) {
-    // Users can read comments on any video that exists and is not archived,
-    // even if the video itself is Patron-only.
-    const video = await prisma.video.findUnique({
-      where: { id: videoId },
-      select: { status: true }
-    });
+    // Users can read comments on any video that exists and is not archived.
+    // We check existence via AccessPolicy to handle slugs and demo fallbacks.
+    const decision = await AccessPolicy.canViewVideo(userId, videoId);
 
-    if (!video || video.status === 'ARCHIVED') return false;
+    // If it's NOT_FOUND or DELETED, we hide comments.
+    // Otherwise (even if it's PATRON_REQUIRED), we allow viewing comments.
+    if (decision.reason === 'NOT_FOUND' || decision.reason === 'DELETED') {
+        return false;
+    }
 
     return true;
   }

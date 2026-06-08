@@ -48,6 +48,13 @@ export class AccessPolicy {
         where: { id: videoId },
         include: { creator: true }
       });
+
+      if (!video) {
+          video = await prisma.video.findUnique({
+              where: { slug: videoId },
+              include: { creator: true }
+          });
+      }
     }
 
     if (!video && canUseDemoFallbacks()) {
@@ -139,8 +146,15 @@ export class AccessPolicy {
     });
 
     if (!comment) return { allowed: false, reason: "NOT_FOUND" };
+    if (!userId) return { allowed: false, reason: "LOGIN_REQUIRED" };
 
-    return this.canComment(userId, comment.videoId);
+    // Reaction (Liking) is allowed if you can view the video comments.
+    const viewDecision = await this.canViewVideo(userId, comment.videoId);
+    if (viewDecision.allowed || viewDecision.reason === 'PATRON_REQUIRED') {
+        return { allowed: true };
+    }
+
+    return viewDecision;
   }
 
   static async canManageAdmin(userId: string | null | undefined): Promise<AccessDecision> {
