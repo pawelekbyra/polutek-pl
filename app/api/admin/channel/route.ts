@@ -7,6 +7,7 @@ import { requireAdminForApi } from "@/lib/auth-utils";
 import { writeAuditLog } from "@/lib/services/audit.service";
 import { MainCreatorService } from "@/lib/services/main-creator.service";
 import { handleApiError } from "@/lib/errors";
+import { MainChannelService } from "@/lib/channel/main-channel.service";
 
 export const dynamic = "force-dynamic";
 
@@ -40,14 +41,12 @@ const channelPatchSchema = z.object({
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
+  const { response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
     const creator = await prisma.$transaction(async (tx) => {
-      const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
-        repairSingleChannelContent: true,
-      });
+      const mainCreator = await MainChannelService.getRequired(tx as any);
 
       return tx.creator.findUnique({
         where: { id: mainCreator.id },
@@ -67,7 +66,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const requestId = request.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
+  const { response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
@@ -79,9 +78,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const creator = await prisma.$transaction(async (tx) => {
-      const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
-        repairSingleChannelContent: true,
-      });
+      const mainCreator = await MainChannelService.getRequired(tx as any);
 
       return tx.creator.update({
         where: { id: mainCreator.id },

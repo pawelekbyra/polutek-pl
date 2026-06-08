@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { Prisma, CommentStatus, CommentDeletedReason } from '@prisma/client';
 import { isUuid } from '@/lib/utils/uuid';
 import { toPublicCommentAuthor, publicCommentAuthorSelect } from '@/lib/comments-public-author';
+import { AccessPolicy } from '@/lib/access/access-policy';
 import { logCommentAction } from './comment-audit.service';
 import { CommentDto } from './comment.dto';
 import { CommentAccessService } from './comment-access.service';
@@ -153,6 +154,11 @@ export class CommentService {
   }
 
   static async createComment(userId: string, videoId: string, text: string, parentId?: string, imageUrl?: string) {
+    const decision = await AccessPolicy.canComment(userId, videoId);
+    if (!decision.allowed) {
+        throw new Error(decision.reason || "Access denied");
+    }
+
     let finalParentId = parentId || null;
 
     if (parentId) {
@@ -168,11 +174,19 @@ export class CommentService {
       }
     }
 
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { creatorId: true }
+    });
+
+    if (!video) throw new Error("Video not found");
+
     return await prisma.$transaction(async (tx) => {
       const comment = await tx.comment.create({
         data: {
           authorId: userId,
           videoId,
+          creatorId: video.creatorId,
           text,
           parentId: finalParentId,
           imageUrl,

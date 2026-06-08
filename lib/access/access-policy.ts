@@ -4,18 +4,27 @@ import { isUuid } from '@/lib/utils/uuid';
 import { canUseDemoFallbacks } from '../feature-flags';
 import { isPatronLikeUser } from './comment-access';
 import { isConfiguredAdminUserId } from '../admin-config';
+import { MainChannelService } from '../channel/main-channel.service';
 
 
 export type AccessVideo = Prisma.VideoGetPayload<{ include: { creator: true } }> | {
   id: string;
+  creatorId: string;
   tier: AccessTier;
   status: VideoStatus;
   publishedAt: Date | null;
+  creator?: {
+    id: string;
+    slug: string;
+    isApproved: boolean;
+    isPrimary: boolean;
+  };
 };
 
-function mapFallbackVideoToAccessVideo(fallback: { id: string; tier?: AccessTier; status?: VideoStatus; publishedAt?: Date | string | null }): AccessVideo {
+function mapFallbackVideoToAccessVideo(fallback: { id: string; creatorId?: string; tier?: AccessTier; status?: VideoStatus; publishedAt?: Date | string | null }): AccessVideo {
   return {
     id: fallback.id,
+    creatorId: fallback.creatorId ?? 'demo-creator',
     tier: fallback.tier ?? AccessTier.PUBLIC,
     status: fallback.status ?? VideoStatus.PUBLISHED,
     publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : new Date(0),
@@ -42,26 +51,38 @@ export class AccessPolicy {
   ): Promise<AccessDecision> {
     let video: AccessVideo | null;
 
-    if (prefetchedVideo !== undefined) {
+    if (prefetchedVideo !== undefined && prefetchedVideo?.creator) {
       video = prefetchedVideo;
     } else {
       try {
           if (isUuid(videoId)) {
             video = await prisma.video.findUnique({
               where: { id: videoId },
-              include: { creator: true }
+              include: {
+                creator: {
+                  select: { id: true, slug: true, isApproved: true, isPrimary: true }
+                }
+              }
             });
           } else {
             video = await prisma.video.findUnique({
               where: { slug: videoId },
-              include: { creator: true }
+              include: {
+                creator: {
+                  select: { id: true, slug: true, isApproved: true, isPrimary: true }
+                }
+              }
             });
           }
       } catch (err: any) {
           if (err.code === 'P2023') {
               video = await prisma.video.findUnique({
                   where: { slug: videoId },
-                  include: { creator: true }
+                  include: {
+                    creator: {
+                      select: { id: true, slug: true, isApproved: true, isPrimary: true }
+                    }
+                  }
               });
           } else {
               throw err;
@@ -80,6 +101,30 @@ export class AccessPolicy {
 
     if (!video) return { allowed: false, reason: "NOT_FOUND" };
 
+    // --- Strict Single-Channel Scoping ---
+    const mainChannel = await MainChannelService.getOptional().catch(() => null);
+    const isMainChannelVideo = video.creatorId === mainChannel?.id &&
+                               video.creator?.isApproved &&
+                               video.creator?.isPrimary;
+
+    // Admin Check for bypass
+    let isAdmin = false;
+    if (userId) {
+        const actor = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true, isDeleted: true }
+        });
+        if (actor?.role === 'ADMIN' && !actor?.isDeleted) {
+            isAdmin = true;
+        }
+        if (actor?.isDeleted) return { allowed: false, reason: "DELETED" };
+    }
+
+    // Non-admins must only see videos from the approved primary main channel
+    if (!isAdmin && !isMainChannelVideo) {
+        return { allowed: false, reason: "NOT_FOUND" };
+    }
+
     if (video.status === VideoStatus.ARCHIVED) {
         return { allowed: false, reason: "NOT_FOUND" };
     }
@@ -90,32 +135,15 @@ export class AccessPolicy {
 
     if (!isPublished) {
         // Only Admins can see non-published content
-        if (userId) {
-            const actor = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { role: true, isDeleted: true }
-            });
-            if (actor?.role === 'ADMIN' && !actor?.isDeleted) {
-                // Admin allowed to see drafts/archives
-            } else {
-                return { allowed: false, reason: "NOT_FOUND" };
-            }
+        if (isAdmin) {
+            // Admin allowed to see drafts/archives
         } else {
             return { allowed: false, reason: "NOT_FOUND" };
         }
     }
 
-    // Check if user is deleted first
-    if (userId) {
-        const actor = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { role: true, isDeleted: true }
-        });
-        if (actor?.isDeleted) return { allowed: false, reason: "DELETED" };
-
-        // Admins have access to everything (including Drafts/Archives if they reached here)
-        if (actor?.role === 'ADMIN') return { allowed: true };
-    }
+    // Admins have access to everything (including Drafts/Archives if they reached here)
+    if (isAdmin) return { allowed: true };
 
     // Public videos are always allowed
     if (video.tier === AccessTier.PUBLIC) return { allowed: true };

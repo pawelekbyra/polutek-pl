@@ -49,9 +49,8 @@ export default function SubscribeButton({
 
   // Fetch status if not provided
   useEffect(() => {
-    if (userId && creatorId && initialIsSubscribed === undefined) {
-      const params = new URLSearchParams(creatorSlug ? { creatorSlug } : { creatorId });
-      fetch(`/api/subscriptions?${params.toString()}`)
+    if (userId && initialIsSubscribed === undefined) {
+      fetch(`/api/subscriptions`)
         .then(async (response) => {
           if (!response.ok) throw new Error(`Subscription status failed: ${response.status}`);
           return response.json() as Promise<{ isSubscribed: boolean }>;
@@ -89,7 +88,6 @@ export default function SubscribeButton({
         const response = await fetch('/api/subscriptions', {
           method: nextState ? 'POST' : 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(creatorSlug ? { creatorSlug } : { creatorId }),
         });
 
         if (!response.ok) {

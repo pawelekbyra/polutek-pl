@@ -4,6 +4,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
 import { writeAuditLog } from "@/lib/services/audit.service";
+import { MainChannelService } from "@/lib/channel/main-channel.service";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Videos array is required' }, { status: 400 });
     }
 
+    const mainChannel = await MainChannelService.getRequired();
+
     await prisma.$transaction(async (tx) => {
         for (const v of videos) {
+            const video = await tx.video.findUnique({ where: { id: v.id }, select: { creatorId: true } });
+            if (!video || video.creatorId !== mainChannel.id) {
+                continue; // Skip videos not belonging to main channel
+            }
+
             await tx.video.update({
                 where: { id: v.id },
                 data: {
@@ -34,7 +42,10 @@ export async function POST(req: NextRequest) {
         const heroVideo = videos.find(v => v.isMainFeatured);
         if (heroVideo) {
             await tx.video.updateMany({
-                where: { id: { not: heroVideo.id } },
+                where: {
+                    id: { not: heroVideo.id },
+                    creatorId: mainChannel.id
+                },
                 data: { isMainFeatured: false }
             });
         }

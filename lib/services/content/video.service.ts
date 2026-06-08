@@ -5,6 +5,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -13,11 +14,14 @@ export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => (
   ],
 });
 
-export function buildPublicVideoWhere(now: Date = new Date()): Prisma.VideoWhereInput {
+export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Prisma.VideoWhereInput> {
+  const mainChannel = await MainChannelService.getOptional();
   return {
     status: VideoStatus.PUBLISHED,
+    creatorId: mainChannel?.id || 'none',
     creator: {
       isApproved: true,
+      isPrimary: true,
     },
     ...visiblePublishedAtFilter(now),
   };
@@ -89,7 +93,7 @@ export class VideoContentService {
     try {
       const videos = await prisma.video.findMany({
         where: {
-          ...buildPublicVideoWhere(),
+          ...(await buildPublicVideoWhere()),
           showInSidebar: true,
           tier: {
             in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
@@ -140,9 +144,10 @@ export class VideoContentService {
 
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
+      const publicWhere = await buildPublicVideoWhere();
       const video = await prisma.video.findFirst({
         where: {
-            ...buildPublicVideoWhere(),
+            ...publicWhere,
             tier: AccessTier.PUBLIC,
             isMainFeatured: true,
         },
@@ -159,7 +164,7 @@ export class VideoContentService {
 
       const selectedVideo = video ?? await prisma.video.findFirst({
         where: {
-          ...buildPublicVideoWhere(),
+          ...publicWhere,
           tier: AccessTier.PUBLIC,
         },
         include: {

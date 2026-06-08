@@ -29,21 +29,17 @@ export async function loadHomeContent(): Promise<HomeContent> {
   let mainFeaturedVideo: PublicVideoDTO | null = null;
 
   try {
-    // 1. Resolve Creator (Single-creator mode only)
-    if (!flags.multiCreator) {
-      try {
-        creator = await CreatorContentService.getConfiguredOrDefaultCreator();
-      } catch (err) {
-        logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", err);
-        // We continue because videos might still load or fallbacks might trigger.
-      }
+    // 1. Resolve Creator (Single-channel mode)
+    try {
+      creator = await CreatorContentService.getConfiguredOrDefaultCreator();
+    } catch (err) {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", err);
+      // We continue because videos might still load or fallbacks might trigger.
     }
 
     // 2. Load Videos
     try {
-      allVideos = flags.multiCreator
-        ? (await VideoContentService.getAllVideos()) || []
-        : creator?.videos || [];
+      allVideos = await VideoContentService.getAllVideos();
     } catch (err) {
       logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", err);
       // In multi-creator mode, failing to load videos is a fatal error for home.

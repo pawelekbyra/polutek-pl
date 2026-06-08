@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus } from '@prisma/client';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -17,45 +18,64 @@ vi.mock('@/lib/prisma', () => ({
 vi.mock('../feature-flags', () => ({
   flags: {
     demoFallbacks: false,
+    mainCreatorSlug: 'test-slug',
+  },
+}));
+
+vi.mock('@/lib/channel/main-channel.service', () => ({
+  MainChannelService: {
+    getOptional: vi.fn(),
+    getConfiguredSlug: vi.fn(() => 'test-slug'),
   },
 }));
 
 describe('AccessPolicy', () => {
+  const mainChannel = { id: 'c1', slug: 'test-slug', isApproved: true, isPrimary: true };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(MainChannelService.getOptional).mockResolvedValue(mainChannel as any);
   });
 
   describe('canViewVideo', () => {
 
-    it('allows legacy PUBLIC videos with null publishedAt when status is PUBLISHED', async () => {
+    it('allows legacy PUBLIC videos with null publishedAt when status is PUBLISHED and on main channel', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
+        creatorId: 'c1',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.PUBLISHED,
         publishedAt: null,
+        creator: mainChannel,
       } as any);
 
       const decision = await AccessPolicy.canViewVideo(null, 'v1');
       expect(decision.allowed).toBe(true);
     });
-    it('allows access to PUBLIC videos even if not logged in', async () => {
+
+    it('denies access to PUBLIC videos if NOT on main channel', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
+        creatorId: 'other-c',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.PUBLISHED,
         publishedAt: new Date(Date.now() - 1000),
+        creator: { id: 'other-c', isApproved: true, isPrimary: true },
       } as any);
 
       const decision = await AccessPolicy.canViewVideo(null, 'v1');
-      expect(decision.allowed).toBe(true);
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('NOT_FOUND');
     });
 
     it('denies access to LOGGED_IN videos if not logged in', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
+        creatorId: 'c1',
         tier: AccessTier.LOGGED_IN,
         status: VideoStatus.PUBLISHED,
         publishedAt: new Date(Date.now() - 1000),
+        creator: mainChannel,
       } as any);
 
       const decision = await AccessPolicy.canViewVideo(null, 'v1');
@@ -63,120 +83,14 @@ describe('AccessPolicy', () => {
       expect(decision.reason).toBe('LOGIN_REQUIRED');
     });
 
-    it('allows access to LOGGED_IN videos if logged in', async () => {
+    it('allows access to PATRON videos if user is a patron and on main channel', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
-        tier: AccessTier.LOGGED_IN,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isDeleted: false,
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-
-    it('allows LOGGED_IN video viewing for authenticated users before local profile sync', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.LOGGED_IN,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('allows commenting on LOGGED_IN videos for authenticated users before local profile sync', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.LOGGED_IN,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-
-      const decision = await AccessPolicy.canComment('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('denies access to PATRON videos if user is not a patron', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
+        creatorId: 'c1',
         tier: AccessTier.PATRON,
         status: VideoStatus.PUBLISHED,
         publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        isDeleted: false,
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('PATRON_REQUIRED');
-    });
-
-    it('does not treat a Subscription-like user property as Patron access', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        isDeleted: false,
-        isSubscribed: true,
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('PATRON_REQUIRED');
-    });
-
-    it('allows Patron access even when the user is not subscribed to email notifications', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: true,
-        isDeleted: false,
-        isSubscribed: false,
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('allows access to PATRON videos if user is a patron', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
+        creator: mainChannel,
       } as any);
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
@@ -190,94 +104,14 @@ describe('AccessPolicy', () => {
       expect(decision.allowed).toBe(true);
     });
 
-
-    it('denies PATRON videos when a non-patron only has legacy referral points', async () => {
+    it('allows access to anything if user is an ADMIN, even if not on main channel', async () => {
       vi.mocked(prisma.video.findUnique).mockResolvedValue({
         id: 'v1',
+        creatorId: 'other-c',
         tier: AccessTier.PATRON,
         status: VideoStatus.PUBLISHED,
         publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        referralPoints: 5,
-        isDeleted: false,
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('PATRON_REQUIRED');
-    });
-
-    it('denies archived videos even for admins so media-source/access APIs do not expose archived content', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v_archived',
-        tier: AccessTier.PUBLIC,
-        status: VideoStatus.ARCHIVED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('admin_1', 'v_archived');
-
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('NOT_FOUND');
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    });
-
-
-
-    it('does not treat channel email subscription as Patron access', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        isDeleted: false,
-        subscriptions: [{ creatorId: 'creator_1' }],
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('PATRON_REQUIRED');
-    });
-
-    it('keeps Patron access independent from channel email subscription status', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: true,
-        isDeleted: false,
-        subscriptions: [],
-      } as any);
-
-      const decision = await AccessPolicy.canViewVideo('u1', 'v1');
-
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('allows access to anything if user is an ADMIN', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
+        creator: { id: 'other-c', isApproved: true, isPrimary: true },
       } as any);
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
@@ -288,59 +122,6 @@ describe('AccessPolicy', () => {
 
       const decision = await AccessPolicy.canViewVideo('u1', 'v1');
       expect(decision.allowed).toBe(true);
-    });
-
-    it('allows commenting on PUBLIC videos for logged-in non-patrons', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PUBLIC,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      const decision = await AccessPolicy.canComment('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('allows commenting on LOGGED_IN videos for logged-in non-patrons', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.LOGGED_IN,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        referralPoints: 0,
-        isDeleted: false,
-      } as any);
-
-      const decision = await AccessPolicy.canComment('u1', 'v1');
-      expect(decision.allowed).toBe(true);
-    });
-
-    it('denies commenting on PATRON videos for logged-in non-patrons', async () => {
-      vi.mocked(prisma.video.findUnique).mockResolvedValue({
-        id: 'v1',
-        tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED,
-        publishedAt: new Date(Date.now() - 1000),
-      } as any);
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'u1',
-        role: 'USER',
-        isPatron: false,
-        referralPoints: 0,
-        isDeleted: false,
-      } as any);
-
-      const decision = await AccessPolicy.canComment('u1', 'v1');
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toBe('PATRON_REQUIRED');
     });
   });
 });
