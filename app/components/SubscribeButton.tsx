@@ -15,7 +15,7 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: 'default' | 'compact';
-  onStatusChange?: (isSubscribed: boolean) => void;
+  onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
 export default function SubscribeButton({
@@ -97,9 +97,9 @@ export default function SubscribeButton({
           return;
         }
 
-        const result = await response.json() as { isSubscribed: boolean };
+        const result = await response.json() as { isSubscribed: boolean, subscribersCount: number };
         setIsSubscribed(result.isSubscribed);
-        // Dispatch event for other components if needed, or rely on callback
+        onStatusChange?.(result.isSubscribed, result.subscribersCount);
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
         setIsSubscribed(!nextState);

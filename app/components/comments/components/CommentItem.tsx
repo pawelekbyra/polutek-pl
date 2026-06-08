@@ -55,6 +55,7 @@ export function CommentItem({
   const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
+  const isHearted = (comment as any).isHearted || false;
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -251,6 +252,24 @@ export function CommentItem({
                     <RotateCcw size={14} /> {language === "pl" ? "Przywróć" : "Restore"}
                   </button>
                 )}
+
+                {comment.viewerCanModerate && !isReply && (
+                  <button
+                    onClick={async () => {
+                        try {
+                            const res = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
+                            if (res.ok) {
+                                toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
+                                // We could force refetch but let's keep it simple
+                            }
+                        } catch (err) {}
+                        setShowMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-blue-600"
+                  >
+                    <Star size={14} className={isHearted ? "fill-blue-600" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -311,6 +330,20 @@ export function CommentItem({
               {comment.likesCount || 0}
             </span>
           </button>
+
+          {isHearted && (
+             <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1.5 py-0.5 border border-neutral-200">
+                <SafeAvatar
+                  src={null} // We could show creator avatar but simplified for now
+                  alt="Creator Heart"
+                  size={12}
+                  className="rounded-full bg-blue-500 flex items-center justify-center border-none"
+                  fallbackSeed="heart"
+                />
+                <span className="text-[9px] font-black uppercase text-blue-600 tracking-tighter">Serce twórcy</span>
+             </div>
+          )}
+
           {!isReply && canComment && (
             <button
               onClick={() => userProfile && onReply(comment.id)}

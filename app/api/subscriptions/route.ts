@@ -107,14 +107,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const creatorResult = await resolveCreator(creatorId, creatorSlug);
     if (creatorResult.error) return creatorResult.error;
 
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
-      select: { id: true, createdAt: true },
-    });
+    const [subscription, creator] = await Promise.all([
+        prisma.subscription.findUnique({
+          where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
+          select: { id: true, createdAt: true },
+        }),
+        prisma.creator.findUnique({
+            where: { id: creatorResult.creator.id },
+            select: { subscribersCount: true }
+        })
+    ]);
 
     return NextResponse.json({
       isSubscribed: !!subscription,
       subscribedAt: subscription?.createdAt ?? null,
+      subscribersCount: creator?.subscribersCount ?? 0,
       creatorId: creatorResult.creator.id,
       creatorSlug: creatorResult.creator.slug,
       purpose: 'EMAIL_NOTIFICATIONS',
@@ -162,9 +169,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return created;
     });
 
+    const finalCreator = await prisma.creator.findUnique({ where: { id: creatorResult.creator.id }, select: { subscribersCount: true } });
+
     return NextResponse.json({
       isSubscribed: true,
       subscribedAt: subscription.createdAt,
+      subscribersCount: finalCreator?.subscribersCount ?? 0,
       creatorId: creatorResult.creator.id,
       creatorSlug: creatorResult.creator.slug,
       purpose: 'EMAIL_NOTIFICATIONS',
@@ -207,9 +217,12 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       return deleted;
     });
 
+    const finalCreator = await prisma.creator.findUnique({ where: { id: creatorResult.creator.id }, select: { subscribersCount: true } });
+
     return NextResponse.json({
       isSubscribed: false,
       deleted: result.count > 0,
+      subscribersCount: finalCreator?.subscribersCount ?? 0,
       creatorId: creatorResult.creator.id,
       creatorSlug: creatorResult.creator.slug,
       purpose: 'EMAIL_NOTIFICATIONS',

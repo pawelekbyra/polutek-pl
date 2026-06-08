@@ -68,6 +68,16 @@ export default async function ChannelPage({ params }: { params: { slug: string }
         }).catch(() => null).then(Boolean)
       : Promise.resolve(false),
   ]);
+
+  // Ensure we use the latest subscribersCount from DB if creator service might have cached it
+  const freshCreator = await prisma.creator.findUnique({
+      where: { id: creator.id },
+      select: { subscribersCount: true, displaySubscribersCount: true }
+  });
+
+  if (freshCreator) {
+      creator.subscribersCount = freshCreator.displaySubscribersCount ?? freshCreator.subscribersCount;
+  }
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
