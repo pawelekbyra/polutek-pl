@@ -1,34 +1,26 @@
-import { AccessTier, Video, VideoStatus } from '@prisma/client';
+/**
+ * @deprecated Use @/lib/modules/channel instead.
+ */
+import { MainChannelPolicy as NewMainChannelPolicy } from '@/lib/modules/channel';
 
 export class MainChannelPolicy {
   static isPublicMainChannel(channel: { isApproved: boolean; isPrimary: boolean }): boolean {
-    return channel.isApproved && channel.isPrimary;
+    return NewMainChannelPolicy.isPublicMainChannel(channel);
   }
 
   static isVideoOnMainChannel(video: { creatorId: string }, channelId: string): boolean {
-    return video.creatorId === channelId;
+    return NewMainChannelPolicy.isVideoOnMainChannel(video, channelId);
   }
 
   static buildMainChannelVideoWhere(channelId: string) {
-    return {
-      creatorId: channelId,
-    };
+    return NewMainChannelPolicy.buildMainChannelVideoWhere(channelId);
   }
 
   static buildPublicMainChannelVideoWhere(channelId: string, now: Date = new Date()) {
-    return {
-      creatorId: channelId,
-      status: VideoStatus.PUBLISHED,
-      OR: [
-        { publishedAt: null },
-        { publishedAt: { lte: now } },
-      ],
-    };
+    return NewMainChannelPolicy.buildPublicMainChannelVideoWhere(channelId, now);
   }
 
   static assertVideoBelongsToMainChannel(video: { creatorId: string }, channelId: string) {
-    if (video.creatorId !== channelId) {
-      throw new Error(`Video does not belong to the main channel (expected ${channelId}, got ${video.creatorId})`);
-    }
+    return NewMainChannelPolicy.assertVideoBelongsToMainChannel(video, channelId);
   }
 }

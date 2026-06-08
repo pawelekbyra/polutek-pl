@@ -75,39 +75,47 @@ export class MainChannelMaintenance {
     const slug = flags.mainCreatorSlug;
     if (!slug) throw new Error("MAIN_CREATOR_SLUG not configured");
 
-    let mainChannel = await ctx.prisma.creator.findUnique({ where: { slug } });
+    const result = await (ctx.prisma as any).$transaction(async (tx: any) => {
+        let mainChannel = await tx.creator.findUnique({ where: { slug } });
 
-    if (!mainChannel) {
-        const totalCreators = await ctx.prisma.creator.count();
-        if (totalCreators > 0) {
-            throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
+        if (!mainChannel) {
+            const totalCreators = await tx.creator.count();
+            if (totalCreators > 0) {
+                throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
+            }
+
+            mainChannel = await tx.creator.create({
+                data: {
+                    userId: adminUserId,
+                    slug,
+                    name: MAIN_CREATOR_NAME,
+                    isApproved: true,
+                    isPrimary: true,
+                }
+            });
         }
 
-        mainChannel = await ctx.prisma.creator.create({
-            data: {
-                userId: adminUserId,
-                slug,
-                name: MAIN_CREATOR_NAME,
-                isApproved: true,
-                isPrimary: true,
-            }
+        const txCtx = { ...ctx, prisma: tx };
+
+        await this.applyPrimaryRepair(txCtx, mainChannel.id, "CONFIRM PRIMARY REPAIR");
+        await this.applyOwnershipRepair(txCtx, mainChannel.id, "CONFIRM OWNERSHIP REPAIR");
+
+        await recordAuditEvent(txCtx, {
+            action: 'MAIN_CHANNEL_SETUP_APPLIED',
+            targetType: 'CREATOR',
+            targetId: mainChannel.id,
+            metadata: { slug: mainChannel.slug }
         });
-    }
 
-    await this.applyPrimaryRepair(ctx, mainChannel.id, "CONFIRM PRIMARY REPAIR");
-    await this.applyOwnershipRepair(ctx, mainChannel.id, "CONFIRM OWNERSHIP REPAIR");
-
-    await recordAuditEvent(ctx, {
-        action: 'MAIN_CHANNEL_SETUP_APPLIED',
-        targetType: 'CREATOR',
-        targetId: mainChannel.id,
-        metadata: { slug: mainChannel.slug }
+        return {
+            mainChannelId: mainChannel.id,
+            slug: mainChannel.slug
+        };
     });
 
     return {
         action: 'MAIN_CHANNEL_SETUP_APPLIED',
-        mainChannelId: mainChannel.id,
-        slug: mainChannel.slug
+        ...result
     };
   }
 

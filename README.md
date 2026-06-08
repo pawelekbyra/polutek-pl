@@ -1,83 +1,139 @@
-# Polutek.pl - Platforma VOD
+# Polutek.pl
 
-## Start dla agentów AI
+## 1. Product mode
+- strict single-channel creator hub
+- Creator = legacy MainChannel
+- Subscription != Patron (Subscription is for email follow only)
+- no multi-creator marketplace
 
-Witaj w procesie refaktoryzacji Polutek.pl. Twoim zadaniem jest pomoc w transformacji architektury aplikacji w kierunku **Modular Monolith**.
+## 2. Current active refactor
+- Modular Monolith transition
+- Pattern: route -> use-case -> policy/service/repository -> Prisma
+- README is the sole source of truth for the process
 
-Zanim zaczniesz:
-1. Przeczytaj `ARCHITECTURE_MASTERPLAN.md`, aby zrozumieć docelowy wzorzec.
-2. Zapoznaj się z `REFACTORING_EXAMPLES.md` (przykłady przed/po).
-3. Sprawdź aktualny status refaktoryzacji poniżej.
-
-Zasada pracy:
-- Pracujemy etapami (R0, R1, R2...).
-- Każdy etap musi kończyć się pełną walidacją (`npx prisma validate`, `npm run typecheck`, `npm test`, `npm run lint`).
-- Po zakończeniu zadania masz **obowiązek aktualizacji statusu** w tym dokumencie oraz przygotowania raportu według template'u.
-
----
-
-## Status refaktoryzacji
-
-Aktualny etap: **R1 (Zakończono) -> R4 (W toku)**
-
+## 3. Current status
 | Etap | Opis | Status |
 | :--- | :--- | :--- |
-| **R0** | Zasady i infrastruktura | ✅ |
-| **R1** | Shared, API boundary, errors, ctx | ✅ |
-| **R2** | Moduł: Audit | ✅ |
-| **R3** | Moduł: Media | ⏳ |
-| **R4** | Moduł: Channel | 🔄 |
-| **R5** | Moduł: Users | ⏳ |
-| **R6** | Moduł: Video | ⏳ |
-| **R7** | Moduł: Patron + Payments | ⏳ |
-| **R8** | Moduł: Comments | ⏳ |
-| **R9** | Moduł: Email | ⏳ |
-| **R10** | Cleanup deprecated facade’ów | ⏳ |
-| **R11** | Admin frontend | ⏳ |
+| **R0** | Zasady i infrastruktura | [x] |
+| **R1** | Shared, API boundary, errors, ctx | [x] |
+| **R2** | Moduł: Audit | [x] |
+| **R3** | Moduł: Media | [x] |
+| **R4** | Moduł: Channel | [~] |
+| **R5** | Moduł: Users | [ ] |
+| **R6** | Moduł: Video | [ ] |
+| **R7** | Moduł: Patron + Payments | [ ] |
+| **R8** | Moduł: Comments | [ ] |
+| **R9** | Moduł: Email | [ ] |
+| **R10** | Cleanup deprecated facade’ów | [ ] |
+| **R11** | Admin frontend | [ ] |
 
----
+## 4. Current next task
+- R1/R2/R4 hardening and R3 Media complete.
 
-## Architecture masterplan
+## 5. Mandatory agent rules
+- Do not just move files; ensure complete logic, tests, and types.
+- Update README status after every major task.
+- No `[x]` without passing tests and full validation.
+- Do not start Phase X before R0–R11 is complete.
+- Logic inside `lib/modules/**` must be HTTP/Next.js agnostic.
 
-Pełny plan refaktoryzacji modular monolith oraz późniejszego poziomu Architecture Excellence znajduje się w:
+## 6. R0–R11 roadmap
+- **R0** — zasady i infrastruktura
+- **R1** — shared, api boundary, errors, ctx
+- **R2** — audit
+- **R3** — media
+- **R4** — channel
+- **R5** — users
+- **R6** — video
+- **R7** — patron + payments
+- **R8** — comments
+- **R9** — email
+- **R10** — cleanup deprecated facade’ów
+- **R11** — admin frontend
 
-`ARCHITECTURE_MASTERPLAN.md`
+## 7. Architecture rules
+- **Thin Routes**: Entry points only extract data and delegate to use-cases.
+- **Use Cases**: Accept typed input and `AppContext`.
+- **Result Pattern**: Use `UseCaseResult<T, E>` for returning data or errors.
+- **Actor**: Use `Actor` type to identify the caller (guest, user, admin, system).
+- **ReadDb / WriteTx**: Differentiate between read-only and transactional database access.
+- **Public API**: Modules expose functionality only through `index.ts`.
+- **No HTTP/Next in Modules**: `lib/modules/**` must not import from `next/*` or `@clerk/nextjs`.
 
-Ten dokument jest strategicznym masterplanem. Nie oznacza zgody na implementację zadań X1–X11 przed zakończeniem roadmapy R0–R11 albo bez jawnej decyzji właściciela projektu.
+## 8. Strict single-channel invariant
+- Polutek.pl is a strict single-channel VOD app.
+- Legacy `Creator` model represents the single `MainChannel`.
+- All public content must be scoped to the main channel ID.
+- No auto-repair of channel state during normal runtime.
+- Maintenance (setup/repair) is explicit, confirmed, and auditable.
 
----
+## 9. Domain responsibilities
+- **shared**: Common types (Actor, Result, Context), base errors.
+- **api**: HTTP helpers, auth session extraction, Result-to-HTTP mapping.
+- **audit**: Business event logging.
+- **media**: Media host validation, URL parsing, detection (HLS/DASH/YT).
+- **channel**: Main channel lifecycle and access rules.
+- **users**: User profile, sync, and language management.
+- **video**: Video metadata, visibility, and listing.
+- **patron**: Patron status and eligibility logic.
+- **payments**: Checkout, Stripe integration, and payment history.
+- **comments**: Commenting system, reactions, and moderation.
+- **email**: Email templates and broadcasting.
 
-## Architektura i zasady
+## 10. Validation commands
+```bash
+npx prisma validate
+npm run quality:architecture-boundaries
+npm run typecheck
+npm test -- --run
+npm run lint
+npm run build
+```
 
-### Mapa migracji
-Logika biznesowa przenosi się z rozproszonych serwisów do skonsolidowanych modułów:
-- **Z:** `lib/services/**` (Deprecated)
-- **DO:** `lib/modules/<domena>/**`
+## 11. Phase X — Masterplan after R0–R11
+Strategic goals for Architecture Excellence:
+- **X1**: Access Matrix (fine-grained permissions).
+- **X2**: Actor reasons (auditing system actions).
+- **X3**: Transactional Outbox (reliable side effects).
+- **X4**: Idempotency layer (for critical operations).
+- **X5**: Full Observability (metrics and tracing).
+- **X6**: Quality gates (strict CI/CD checks).
+- **X7**: Scenario tests (complex business flows).
+- **X8**: Admin cockpit (unified management UI).
+- **X9**: Production Runbooks.
+- **X10**: Release readiness audit.
+- **X11**: Semantic schema cleanup.
 
-### Definicja Cienkiego Route'a (Thin Route)
-Route handlery (`app/api/**`) oraz Server Actions służą wyłącznie jako warstwa wejściowa.
-Ich zadania:
-1. Ekstrakcja danych (params, body, session).
-2. Wywołanie odpowiedniego **Use Case** z modułu.
-3. Transformacja wyniku na odpowiedź HTTP.
-**Zakaz:** Bezpośrednia logika biznesowa i złożone zapytania Prisma w route'ach.
+## 12. Agent report template
+```md
+### Raport Refaktoryzacji — [Tytuł Tury]
 
-### Zasada STOP
-Jeśli podczas refaktoryzacji napotkasz na:
-1. Brak testów dla krytycznej logiki, którą masz przenieść.
-2. Niejasne powiązania między domenami, których nie potrafisz rozdzielić.
-3. Ryzyko zmiany zachowania biznesowego (regresja).
-**STOP!** Nie kontynuuj migracji na oślep. Dopisz testy baseline lub poproś o doprecyzowanie wymagań.
+#### Wykonane
+- ...
 
----
+#### README
+- czy README jest głównym źródłem prawdy: [TAK/NIE]
+- czy usunięto archi* documents: [TAK/NIE]
+- czy masterplan X jest w README: [TAK/NIE]
 
-## Obowiązki po zakończeniu pracy
+#### Realny status etapów
+- R0: [x/~/!]
+- ...
 
-1. Uruchom pełną walidację:
-   ```bash
-   npx prisma validate
-   npm run quality
-   npm run lint
-   ```
-2. Zaktualizuj tabelę statusu w `README.md`.
-3. Przygotuj raport w opisie Pull Requesta lub commitu według template'u z ARCHITECTURE_MASTERPLAN.md.
+#### Walidacja
+- Prisma validate: [PASS/FAIL]
+- Architecture boundaries: [PASS/FAIL]
+- Typecheck: [PASS/FAIL]
+- Tests: [PASS/FAIL]
+- Lint: [PASS/FAIL]
+- Build: [PASS/FAIL]
+
+#### Pozostałe adaptery legacy/deprecated
+- ...
+
+#### Znane ryzyka
+- ...
+
+#### Następny rekomendowany krok
+- ...
+```

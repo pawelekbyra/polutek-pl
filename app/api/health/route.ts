@@ -1,6 +1,6 @@
 import { createScopedLogger } from "@/lib/logger";
 import { NextRequest } from 'next/server';
-import { handleApiError, handleApiResponse } from '@/lib/api/api-response';
+import { fromUseCaseResult } from '@/lib/api/api-response';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkHealth } from '@/lib/modules/health';
 import { getActorFromAuth } from "@/lib/api/auth";
@@ -17,9 +17,10 @@ export async function GET(req: NextRequest) {
     const ctx = createAppContext({ requestId: requestId || undefined, actor });
     const result = await checkHealth(ctx, token);
 
-    return handleApiResponse(result);
+    return fromUseCaseResult(result);
   } catch (error) {
     scopedLogger.error("[HEALTH_CHECK_ERROR]", error);
+    const { handleApiError } = await import("@/lib/api/api-response");
     return handleApiError(error);
   }
 }

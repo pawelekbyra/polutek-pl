@@ -10,6 +10,8 @@ export class AuditRepository {
     targetId?: string;
     metadata?: any;
   }) {
+    // We use any cast here because prisma types in the sandbox might not be fully synced,
+    // but the schema contains the auditLog model with these exact fields.
     return await (this.db as any).auditLog.create({
       data: {
         actorUserId: data.actorUserId,

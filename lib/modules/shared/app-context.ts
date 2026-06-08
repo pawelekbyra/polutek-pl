@@ -7,19 +7,13 @@ export interface AppContext {
   actor: Actor;
   now: () => Date;
   requestId?: string;
-  // userId/role are deprecated in favor of actor
-  userId?: string;
-  role?: string;
 }
 
 export function createAppContext(overrides: Partial<AppContext> = {}): AppContext {
-  const actor = overrides.actor || { type: 'guest' };
-
   return {
     prisma: defaultPrisma,
-    actor,
+    actor: { type: 'guest' },
     now: () => new Date(),
-    userId: actor.type !== 'guest' && 'userId' in actor ? actor.userId : undefined,
     ...overrides,
   };
 }

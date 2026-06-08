@@ -32,7 +32,10 @@ describe('checkHealth Use Case', () => {
 
   it('returns simple ok if token is missing or incorrect', async () => {
     const result = await checkHealth(ctx, null);
-    expect(result).toEqual({ ok: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data).toEqual({ ok: true });
+    }
     expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
   });
 
@@ -44,8 +47,11 @@ describe('checkHealth Use Case', () => {
     const result = await checkHealth(ctx, 'test-token');
 
     expect(result.ok).toBe(true);
-    expect(result.database).toBe('ok');
-    expect(result.content?.allVideosCount).toBe(10);
+    if (result.ok) {
+        expect(result.data.ok).toBe(true);
+        expect(result.data.database).toBe('ok');
+        expect(result.data.content?.allVideosCount).toBe(10);
+    }
     expect(mockPrisma.$queryRaw).toHaveBeenCalled();
   });
 });

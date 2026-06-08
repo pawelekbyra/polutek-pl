@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
 import { getAllowedMediaHosts, visiblePublishedAtFilter } from "@/lib/modules/media";
 import { getMainChannel } from "@/lib/modules/channel";
+import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 
 export interface HealthCheckResult {
   ok: boolean;
@@ -21,13 +22,13 @@ export interface HealthCheckResult {
 export async function checkHealth(
   ctx: AppContext,
   tokenProvided: string | null | undefined
-): Promise<HealthCheckResult> {
+): Promise<UseCaseResult<HealthCheckResult>> {
   const isAuthorized =
     !!process.env.HEALTHCHECK_TOKEN &&
     tokenProvided === process.env.HEALTHCHECK_TOKEN;
 
   if (!isAuthorized) {
-    return { ok: true };
+    return ok({ ok: true });
   }
 
   await (ctx.prisma as any).$queryRaw`SELECT 1`;
@@ -64,7 +65,7 @@ export async function checkHealth(
     }),
   ]);
 
-  return {
+  return ok({
     ok: true,
     database: "ok",
     env: {
@@ -83,5 +84,5 @@ export async function checkHealth(
       mainFeaturedVideoExists: !!mainFeaturedVideoExists,
       mediaHostsConfigured: getAllowedMediaHosts().size > 0,
     },
-  };
+  });
 }

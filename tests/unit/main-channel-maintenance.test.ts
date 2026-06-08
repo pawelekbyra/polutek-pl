@@ -10,6 +10,7 @@ vi.mock('@/lib/prisma', () => ({
     payment: { updateMany: vi.fn(), count: vi.fn() },
     subscription: { updateMany: vi.fn(), count: vi.fn() },
     auditLog: { create: vi.fn() },
+    $transaction: vi.fn((cb) => cb(prisma)),
   },
 }));
 

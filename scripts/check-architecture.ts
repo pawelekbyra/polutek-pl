@@ -65,24 +65,21 @@ function checkRoutes() {
     const content = fs.readFileSync(file, 'utf-8');
     const relativePath = path.relative(ROOT, file);
 
-    // 3. Direct repository imports in routes
-    if (content.includes('.repository') || content.includes('/infrastructure/')) {
-       const matches = content.match(/from ['"]@\/lib\/modules\/[^'"]+['"]/g);
-       if (matches) {
-           for (const match of matches) {
-               if (match.includes('.repository') || match.includes('/infrastructure/')) {
-                   console.error(`❌ Violation: Direct infrastructure/repository import in route ${relativePath}: ${match}`);
-                   violations++;
-               }
-           }
-       }
-
-       if (content.includes("from './") || content.includes("from '../")) {
-           if (content.includes(".repository") || content.includes("/infrastructure/")) {
-                console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}`);
+    // 3. Direct repository/infrastructure imports in routes
+    const matches = content.match(/from ['"]@\/lib\/modules\/[^'"]+['"]/g);
+    if (matches) {
+        for (const match of matches) {
+            if (match.includes('.repository') || match.includes('/infrastructure/')) {
+                console.error(`❌ Violation: Direct infrastructure/repository import in route ${relativePath}: ${match}`);
                 violations++;
-           }
-       }
+            }
+        }
+    }
+
+    // Relative imports in routes
+    if (content.match(/from ['"]\.\.?\/.*(infrastructure|repository).*['"]/)) {
+        console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}`);
+        violations++;
     }
   }
   return violations;
