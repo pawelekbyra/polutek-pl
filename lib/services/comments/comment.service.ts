@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, CommentStatus, CommentDeletedReason } from '@prisma/client';
+import { isUuid } from '@/lib/utils/uuid';
 import { toPublicCommentAuthor, publicCommentAuthorSelect } from '@/lib/comments-public-author';
 import { logCommentAction } from './comment-audit.service';
 import { CommentDto } from './comment.dto';
@@ -16,23 +17,31 @@ export class CommentService {
     forceOnlyVisible: boolean = false
   ): Promise<{ comments: CommentDto[], totalCount: number, nextCursor: string | null }> {
 
+    // If videoId is not a UUID, we must first resolve it to an ID via slug
+    let resolvedVideoId = videoId;
+    if (!isUuid(videoId)) {
+        const video = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
+        if (!video) return { comments: [], totalCount: 0, nextCursor: null };
+        resolvedVideoId = video.id;
+    }
+
     const [video, canModerateReal] = await Promise.all([
-      prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),
-      CommentAccessService.canModerate(userId, videoId)
+      prisma.video.findUnique({ where: { id: resolvedVideoId }, select: { creator: { select: { userId: true } } } }),
+      CommentAccessService.canModerate(userId, resolvedVideoId)
     ]);
 
     const canModerate = canModerateReal;
     const videoCreatorId = video?.creator?.userId || null;
 
     const where: Prisma.CommentWhereInput = {
-      videoId,
+      videoId: resolvedVideoId,
       parentId: null,
       status: canModerate ? undefined : CommentStatus.VISIBLE
     };
 
     const totalCount = await prisma.comment.count({
       where: {
-        videoId,
+        videoId: resolvedVideoId,
         parentId: null,
         status: canModerate ? undefined : CommentStatus.VISIBLE
       }
