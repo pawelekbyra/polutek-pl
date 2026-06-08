@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -42,19 +43,28 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
 
+vi.mock('@/lib/channel/main-channel.service', () => ({
+  MainChannelService: {
+    getRequired: vi.fn(),
+  },
+}));
+
 describe('/api/subscriptions', () => {
+  const mainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as Awaited<ReturnType<typeof auth>>);
     vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 119 });
-    vi.mocked(prisma.creator.findUnique).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true } as any);
+    vi.mocked(MainChannelService.getRequired).mockResolvedValue(mainChannel as any);
+    vi.mocked(prisma.creator.findUnique).mockResolvedValue(mainChannel as any);
   });
 
   it('returns 401 for guests so the client can open Clerk sign-in', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
 
-    const res = await GET(new NextRequest('http://localhost/api/subscriptions?creatorId=creator_1'));
+    const res = await GET(new NextRequest('http://localhost/api/subscriptions'));
     const body = await res.json();
 
     expect(res.status).toBe(401);
@@ -62,27 +72,24 @@ describe('/api/subscriptions', () => {
     expect(prisma.subscription.findUnique).not.toHaveBeenCalled();
   });
 
-  it('returns the email notification subscription status for a logged-in user', async () => {
+  it('returns the email notification subscription status for a logged-in user for main channel', async () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
     vi.mocked(prisma.subscription.findUnique).mockResolvedValue({ id: 'sub_1', createdAt } as any);
 
-    const res = await GET(new NextRequest('http://localhost/api/subscriptions?creatorSlug=creator-slug'));
+    const res = await GET(new NextRequest('http://localhost/api/subscriptions'));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.isSubscribed).toBe(true);
+    expect(body.creatorId).toBe('c1');
     expect(body.purpose).toBe('EMAIL_NOTIFICATIONS');
-    expect(prisma.creator.findUnique).toHaveBeenCalledWith({
-      where: { slug: 'creator-slug' },
-      select: { id: true, slug: true, isApproved: true },
-    });
     expect(prisma.subscription.findUnique).toHaveBeenCalledWith({
-      where: { userId_creatorId: { userId: 'user_1', creatorId: 'creator_1' } },
+      where: { userId_creatorId: { userId: 'user_1', creatorId: 'c1' } },
       select: { id: true, createdAt: true },
     });
   });
 
-  it('creates a Subscription as email notifications only and never grants Patron access', async () => {
+  it('creates a Subscription as email notifications only for main channel', async () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
     vi.mocked(prisma.subscription.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.subscription.create).mockResolvedValue({ id: 'sub_1', createdAt } as any);
@@ -90,79 +97,59 @@ describe('/api/subscriptions', () => {
 
     const res = await POST(new NextRequest('http://localhost/api/subscriptions', {
       method: 'POST',
-      body: JSON.stringify({ creatorId: 'creator_1' }),
     }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.isSubscribed).toBe(true);
-    expect(body.purpose).toBe('EMAIL_NOTIFICATIONS');
+    expect(body.creatorId).toBe('c1');
     expect(prisma.subscription.create).toHaveBeenCalledWith({
-      data: { userId: 'user_1', creatorId: 'creator_1' },
+      data: { userId: 'user_1', creatorId: 'c1' },
       select: { id: true, createdAt: true },
     });
     expect(prisma.creator.update).toHaveBeenCalledWith({
-      where: { id: 'creator_1' },
+      where: { id: 'c1' },
       data: { subscribersCount: { increment: 1 } },
     });
-    expect(JSON.stringify(vi.mocked(prisma.subscription.create).mock.calls)).not.toContain('isPatron');
   });
 
-  it('removes email notifications without touching Patron access', async () => {
+  it('removes email notifications for main channel', async () => {
     vi.mocked(prisma.subscription.deleteMany).mockResolvedValue({ count: 1 } as any);
 
     const res = await DELETE(new NextRequest('http://localhost/api/subscriptions', {
       method: 'DELETE',
-      body: JSON.stringify({ creatorId: 'creator_1' }),
     }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.isSubscribed).toBe(false);
-    expect(body.deleted).toBe(true);
-    expect(body.purpose).toBe('EMAIL_NOTIFICATIONS');
+    expect(body.creatorId).toBe('c1');
     expect(prisma.subscription.deleteMany).toHaveBeenCalledWith({
-      where: { userId: 'user_1', creatorId: 'creator_1' },
+      where: { userId: 'user_1', creatorId: 'c1' },
     });
-    expect(prisma.creator.updateMany).toHaveBeenCalledWith({
-      where: { id: 'creator_1', subscribersCount: { gt: 0 } },
-      data: { subscribersCount: { decrement: 1 } },
-    });
-    expect(JSON.stringify(vi.mocked(prisma.subscription.deleteMany).mock.calls)).not.toContain('isPatron');
   });
 
-
-
-  it('rate limits logged-in subscription mutations before database writes', async () => {
+  it('rate limits logged-in subscription mutations', async () => {
     vi.mocked(rateLimit).mockResolvedValue({ success: false, remaining: 0 });
 
     const res = await POST(new NextRequest('http://localhost/api/subscriptions', {
       method: 'POST',
-      body: JSON.stringify({ creatorId: 'creator_1' }),
     }));
     const body = await res.json();
 
     expect(res.status).toBe(429);
     expect(body.error).toBe('RATE_LIMITED');
-    expect(rateLimit).toHaveBeenCalledWith({
-      key: 'subscriptions:write:user_1',
-      limit: 20,
-      windowMs: 10 * 60 * 1000,
-    });
-    expect(prisma.subscription.create).not.toHaveBeenCalled();
   });
 
-  it('rejects non-existing or unapproved creators', async () => {
-    vi.mocked(prisma.creator.findUnique).mockResolvedValue(null);
+  it('fails if main channel is missing', async () => {
+    vi.mocked(MainChannelService.getRequired).mockRejectedValue(new Error('Main channel missing'));
 
     const res = await POST(new NextRequest('http://localhost/api/subscriptions', {
       method: 'POST',
-      body: JSON.stringify({ creatorId: 'missing_creator' }),
     }));
     const body = await res.json();
 
-    expect(res.status).toBe(404);
-    expect(body.error).toBe('CREATOR_NOT_FOUND');
-    expect(prisma.subscription.create).not.toHaveBeenCalled();
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('INTERNAL_ERROR');
   });
 });

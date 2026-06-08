@@ -12,11 +12,11 @@ Polutek.pl is a **strict single-channel VOD** using the legacy `Creator` databas
 * **Donation to Patron**: Stripe checkout/webhooks create payments and patron grants. Refund/dispute handling recalculates net totals and patron status.
 * **Referral to Patron**: Referral grants are represented through `PatronGrant` and synchronized through user access services.
 * **Channel subscription / follow**: `/api/subscriptions` is an email-notification opt-in/out for the main channel. It is authenticated, resolves the main channel server-side, is rate-limited, and writes only `Subscription` rows.
-* **Admin video/channel management**: Restricted to `ADMIN` role and protected at API/service boundaries, not just UI.
+* **Admin video/channel management**: Restricted to `ADMIN` role and protected at API/service boundaries, not just UI. All management actions are strictly scoped to the main channel.
 
 ## Source of truth
 
-* **Database (Prisma)**: `User.role`, `User.isPatron`, `PatronGrant`, `Payment`, `UserPaymentTotal`, `Creator`, `Video`, and `Subscription` are the durable source of truth.
+* **Database (Prisma)**: `User.role`, `User.isPatron`, `PatronGrant`, `Payment`, `UserPaymentTotal`, `Creator`, `Video`, and `Subscription` are the durable source of truth. `Creator` is the legacy database representation of the single `MainChannel`.
 * **Clerk**: Authentication source and metadata sync/cache layer. Clerk metadata must not override database patron decisions.
 * **Stripe webhook**: Final authority for payment lifecycle events.
 * **API Gateway**: `/api/media/:videoId` is the only path to gated video content. Admin-provided HLS/DASH manifest URLs (.m3u8, .mpd) may be returned only after the same access policy authorizes the viewer and the source URL has passed configured media-host allowlist validation before storage.

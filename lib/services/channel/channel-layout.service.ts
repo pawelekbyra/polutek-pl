@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
 
@@ -47,10 +48,21 @@ export class ChannelLayoutService {
             else viewerState = "LOGGED_IN";
         }
 
+        const mainChannel = await MainChannelService.getPublicRequired().catch(() => null);
+        if (!mainChannel) {
+            return { viewerState, sections: [], currentVideoId };
+        }
+
+        const now = new Date();
         const videos = await prisma.video.findMany({
             where: {
+                creatorId: mainChannel.id,
                 status: VideoStatus.PUBLISHED,
                 showInSidebar: true,
+                OR: [
+                    { publishedAt: null },
+                    { publishedAt: { lte: now } },
+                ],
             },
             orderBy: [
                 { sidebarOrder: 'asc' },

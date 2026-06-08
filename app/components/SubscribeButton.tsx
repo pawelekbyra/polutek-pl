@@ -8,7 +8,7 @@ import { useLanguage } from './LanguageContext';
 import { BellSimple } from './icons';
 
 interface SubscribeButtonProps {
-  creatorId: string;
+  creatorId?: string;
   creatorSlug?: string | null;
   creatorName?: string | null;
   initialSubscribersCount?: number;
@@ -68,7 +68,7 @@ export default function SubscribeButton({
 
   const handleSubscribe = async () => {
     if (!userId) { openSignIn(); return; }
-    if (!creatorId || isPending) return;
+    if (isPending) return;
 
     if (!isSubscribed) {
       setShowConfirm(true);

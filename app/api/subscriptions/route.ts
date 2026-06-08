@@ -8,58 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/errors';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 
-type SubscriptionPayload = {
-  creatorId?: unknown;
-  creatorSlug?: unknown;
-};
-
-function normalizeCreatorRef(payload: SubscriptionPayload, url: URL) {
-  const bodyCreatorId = typeof payload.creatorId === 'string' ? payload.creatorId.trim() : '';
-  const bodyCreatorSlug = typeof payload.creatorSlug === 'string' ? payload.creatorSlug.trim() : '';
-  const queryCreatorId = url.searchParams.get('creatorId')?.trim() || '';
-  const queryCreatorSlug = url.searchParams.get('creatorSlug')?.trim() || '';
-
-  return {
-    creatorId: bodyCreatorId || queryCreatorId || null,
-    creatorSlug: bodyCreatorSlug || queryCreatorSlug || null,
-  };
-}
-
-async function readJsonPayload(req: NextRequest): Promise<SubscriptionPayload> {
-  if (!req.body) return {};
-
-  try {
-    const json = await req.json();
-    return json && typeof json === 'object' ? json as SubscriptionPayload : {};
-  } catch {
-    return {};
-  }
-}
-
-async function resolveCreator(creatorId: string | null, creatorSlug: string | null): Promise<
-  | { creator: { id: string; slug: string; isApproved: boolean }; error?: never }
-  | { error: NextResponse; creator?: never }
-> {
-  // In single-channel mode, we always resolve to the main channel regardless of input
-  try {
-    const mainChannel = await MainChannelService.getRequired();
-    return {
-      creator: {
-        id: mainChannel.id,
-        slug: mainChannel.slug,
-        isApproved: mainChannel.isApproved
-      }
-    };
-  } catch (err: any) {
-    return {
-      error: NextResponse.json({
-        error: 'MAIN_CHANNEL_ERROR',
-        message: err.message
-      }, { status: 500 })
-    };
-  }
-}
-
+export const dynamic = 'force-dynamic';
 
 async function enforceSubscriptionRateLimit(userId: string, action: 'read' | 'write') {
   const limit = action === 'read' ? 120 : 20;
@@ -108,18 +57,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'read');
     if (rateLimited) return rateLimited;
 
-    const url = new URL(req.url);
-    const { creatorId, creatorSlug } = normalizeCreatorRef({}, url);
-    const creatorResult = await resolveCreator(creatorId, creatorSlug);
-    if (creatorResult.error) return creatorResult.error;
+    const mainChannel = await MainChannelService.getRequired();
 
     const [subscription, creator] = await Promise.all([
         prisma.subscription.findUnique({
-          where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
+          where: { userId_creatorId: { userId: userResult.userId, creatorId: mainChannel.id } },
           select: { id: true, createdAt: true },
         }),
         prisma.creator.findUnique({
-            where: { id: creatorResult.creator.id },
+            where: { id: mainChannel.id },
             select: { subscribersCount: true }
         })
     ]);
@@ -128,8 +74,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       isSubscribed: !!subscription,
       subscribedAt: subscription?.createdAt ?? null,
       subscribersCount: creator?.subscribersCount ?? 0,
-      creatorId: creatorResult.creator.id,
-      creatorSlug: creatorResult.creator.slug,
+      creatorId: mainChannel.id,
+      creatorSlug: mainChannel.slug,
       purpose: 'EMAIL_NOTIFICATIONS',
     });
   } catch (error) {
@@ -148,41 +94,37 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const url = new URL(req.url);
-    const payload = await readJsonPayload(req);
-    const { creatorId, creatorSlug } = normalizeCreatorRef(payload, url);
-    const creatorResult = await resolveCreator(creatorId, creatorSlug);
-    if (creatorResult.error) return creatorResult.error;
+    const mainChannel = await MainChannelService.getRequired();
 
     const subscription = await prisma.$transaction(async (tx) => {
       const existing = await tx.subscription.findUnique({
-        where: { userId_creatorId: { userId: userResult.userId, creatorId: creatorResult.creator.id } },
+        where: { userId_creatorId: { userId: userResult.userId, creatorId: mainChannel.id } },
         select: { id: true, createdAt: true },
       });
 
       if (existing) return existing;
 
       const created = await tx.subscription.create({
-        data: { userId: userResult.userId, creatorId: creatorResult.creator.id },
+        data: { userId: userResult.userId, creatorId: mainChannel.id },
         select: { id: true, createdAt: true },
       });
 
       await tx.creator.update({
-        where: { id: creatorResult.creator.id },
+        where: { id: mainChannel.id },
         data: { subscribersCount: { increment: 1 } },
       });
 
       return created;
     });
 
-    const finalCreator = await prisma.creator.findUnique({ where: { id: creatorResult.creator.id }, select: { subscribersCount: true } });
+    const finalCreator = await prisma.creator.findUnique({ where: { id: mainChannel.id }, select: { subscribersCount: true } });
 
     return NextResponse.json({
       isSubscribed: true,
       subscribedAt: subscription.createdAt,
       subscribersCount: finalCreator?.subscribersCount ?? 0,
-      creatorId: creatorResult.creator.id,
-      creatorSlug: creatorResult.creator.slug,
+      creatorId: mainChannel.id,
+      creatorSlug: mainChannel.slug,
       purpose: 'EMAIL_NOTIFICATIONS',
       message: 'Email notifications enabled for this channel.',
     });
@@ -202,20 +144,16 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const url = new URL(req.url);
-    const payload = await readJsonPayload(req);
-    const { creatorId, creatorSlug } = normalizeCreatorRef(payload, url);
-    const creatorResult = await resolveCreator(creatorId, creatorSlug);
-    if (creatorResult.error) return creatorResult.error;
+    const mainChannel = await MainChannelService.getRequired();
 
     const result = await prisma.$transaction(async (tx) => {
       const deleted = await tx.subscription.deleteMany({
-        where: { userId: userResult.userId, creatorId: creatorResult.creator.id },
+        where: { userId: userResult.userId, creatorId: mainChannel.id },
       });
 
       if (deleted.count > 0) {
         await tx.creator.updateMany({
-          where: { id: creatorResult.creator.id, subscribersCount: { gt: 0 } },
+          where: { id: mainChannel.id, subscribersCount: { gt: 0 } },
           data: { subscribersCount: { decrement: 1 } },
         });
       }
@@ -223,14 +161,14 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       return deleted;
     });
 
-    const finalCreator = await prisma.creator.findUnique({ where: { id: creatorResult.creator.id }, select: { subscribersCount: true } });
+    const finalCreator = await prisma.creator.findUnique({ where: { id: mainChannel.id }, select: { subscribersCount: true } });
 
     return NextResponse.json({
       isSubscribed: false,
       deleted: result.count > 0,
       subscribersCount: finalCreator?.subscribersCount ?? 0,
-      creatorId: creatorResult.creator.id,
-      creatorSlug: creatorResult.creator.slug,
+      creatorId: mainChannel.id,
+      creatorSlug: mainChannel.slug,
       purpose: 'EMAIL_NOTIFICATIONS',
       message: 'Email notifications disabled for this channel.',
     });
