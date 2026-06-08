@@ -1,5 +1,6 @@
 import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { isUuid } from '@/lib/utils/uuid';
 import { canUseDemoFallbacks } from '../feature-flags';
 import { isPatronLikeUser } from './comment-access';
 import { isConfiguredAdminUserId } from '../admin-config';
@@ -44,16 +45,27 @@ export class AccessPolicy {
     if (prefetchedVideo !== undefined) {
       video = prefetchedVideo;
     } else {
-      video = await prisma.video.findUnique({
-        where: { id: videoId },
-        include: { creator: true }
-      });
-
-      if (!video) {
-          video = await prisma.video.findUnique({
+      try {
+          if (isUuid(videoId)) {
+            video = await prisma.video.findUnique({
+              where: { id: videoId },
+              include: { creator: true }
+            });
+          } else {
+            video = await prisma.video.findUnique({
               where: { slug: videoId },
               include: { creator: true }
-          });
+            });
+          }
+      } catch (err: any) {
+          if (err.code === 'P2023') {
+              video = await prisma.video.findUnique({
+                  where: { slug: videoId },
+                  include: { creator: true }
+              });
+          } else {
+              throw err;
+          }
       }
     }
 

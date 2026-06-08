@@ -12,6 +12,7 @@ import { isAllowedCommentImageUrl } from '@/lib/blob';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
 import { countGraphemes } from '@/lib/utils/graphemes';
+import { isUuid } from '@/lib/utils/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,13 @@ export async function GET(
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
-  const videoId = params.id;
+  let videoId = params.id;
+
+  if (!isUuid(videoId)) {
+      const video = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
+      if (video) videoId = video.id;
+  }
+
   const sortBy = (searchParams.get('sortBy') as any) || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
   const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
@@ -53,7 +60,7 @@ export async function GET(
     if (!canView) return NextResponse.json({ success: false, message: 'Brak dostępu do komentarzy' }, { status: 403 });
 
     const [video, canModerate] = await Promise.all([
-        prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }),
+        isUuid(videoId) ? prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }) : null,
         CommentAccessService.canModerate(userId, videoId)
     ]);
     const videoCreatorId = video?.creator?.userId || null;
@@ -187,7 +194,11 @@ export async function POST(
   const { userId, sessionClaims } = await getSafeAuth();
   if (!userId) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
 
-  const videoId = params.id;
+  let videoId = params.id;
+  if (!isUuid(videoId)) {
+      const video = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
+      if (video) videoId = video.id;
+  }
 
   const rateLimitResult = await rateLimit({ key: `comments:${userId}`, limit: 5, windowMs: 60 * 1000 });
   if (!rateLimitResult.success) return NextResponse.json({ success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę." }, { status: 429 });
