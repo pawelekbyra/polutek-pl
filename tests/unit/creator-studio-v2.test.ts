@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { POST } from '@/app/api/admin/videos/route';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { AccessTier, VideoStatus, SystemRole } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
@@ -17,6 +18,12 @@ vi.mock('@clerk/nextjs/server', () => ({
 // Mock audit log
 vi.mock('@/lib/services/audit.service', () => ({
   writeAuditLog: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock('@/lib/channel/main-channel.service', () => ({
+  MainChannelService: {
+    getRequired: vi.fn(),
+  },
 }));
 
 // Mock blob validation
@@ -97,6 +104,13 @@ describe('Creator Studio V2 - Constraints and Logic', () => {
   });
 
   it('should allow setting isMainFeatured for PUBLIC tier and PUBLISHED status', async () => {
+    vi.mocked(MainChannelService.getRequired).mockResolvedValue({
+      id: creatorId,
+      slug: 'main-creator',
+      isApproved: true,
+      isPrimary: true
+    } as any);
+
     // We need to mock the DB transaction for success
     const mockTx = {
       creator: {
@@ -106,6 +120,7 @@ describe('Creator Studio V2 - Constraints and Logic', () => {
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       video: {
+        findUnique: vi.fn().mockResolvedValue({ publishedAt: null, creatorId }),
         create: vi.fn().mockResolvedValue({ id: 'new-video', title: 'Featured' }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
