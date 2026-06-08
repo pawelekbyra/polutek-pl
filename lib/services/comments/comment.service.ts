@@ -7,6 +7,25 @@ import { CommentDto } from './comment.dto';
 import { CommentAccessService } from './comment-access.service';
 import { CommentAuthorDto } from './comment.dto';
 
+const commentSelect = {
+    id: true,
+    text: true,
+    imageUrl: true,
+    authorId: true,
+    videoId: true,
+    parentId: true,
+    status: true,
+    likesCount: true,
+    repliesCount: true,
+    reportsCount: true,
+    pinnedAt: true,
+    editedAt: true,
+    deletedAt: true,
+    deletedReason: true,
+    createdAt: true,
+    updatedAt: true,
+};
+
 export class CommentService {
   static async getComments(
     videoId: string,
@@ -59,25 +78,6 @@ export class CommentService {
       orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } });
       orderBy.push({ createdAt: 'desc' });
     }
-
-    const commentSelect = {
-        id: true,
-        text: true,
-        imageUrl: true,
-        authorId: true,
-        videoId: true,
-        parentId: true,
-        status: true,
-        likesCount: true,
-        repliesCount: true,
-        reportsCount: true,
-        pinnedAt: true,
-        editedAt: true,
-        deletedAt: true,
-        deletedReason: true,
-        createdAt: true,
-        updatedAt: true,
-    };
 
     const comments = await prisma.comment.findMany({
       where,
