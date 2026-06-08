@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
-import { MainCreatorService } from '@/lib/services/main-creator.service';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 import { handleApiError } from '@/lib/errors';

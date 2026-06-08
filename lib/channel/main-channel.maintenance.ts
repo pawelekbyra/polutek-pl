@@ -55,8 +55,11 @@ export class MainChannelMaintenance {
     };
   }
 
-  static async applyMainChannelSetup(adminUserId: string, confirm: boolean, db: PrismaExecutor = prisma) {
-    if (!confirm) throw new Error("Explicit confirmation required for setup apply.");
+  static async applyMainChannelSetup(adminUserId: string, confirmationPhrase: string, db: PrismaExecutor = prisma) {
+    const EXPECTED_PHRASE = "CONFIRM SETUP MAIN CHANNEL";
+    if (confirmationPhrase !== EXPECTED_PHRASE) {
+        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+    }
 
     const slug = MainChannelService.getConfiguredSlug();
     let mainChannel = await db.creator.findUnique({ where: { slug } });
@@ -78,8 +81,8 @@ export class MainChannelMaintenance {
         });
     }
 
-    await this.applyPrimaryRepair(mainChannel.id, true, db);
-    await this.applyOwnershipRepair(mainChannel.id, true, db);
+    await this.applyPrimaryRepair(mainChannel.id, "CONFIRM PRIMARY REPAIR", db);
+    await this.applyOwnershipRepair(mainChannel.id, "CONFIRM OWNERSHIP REPAIR", db);
 
     // TODO: Write Audit Log when Audit model is available or use existing service
     // For now returning structured data
@@ -90,8 +93,11 @@ export class MainChannelMaintenance {
     };
   }
 
-  static async applyOwnershipRepair(mainChannelId: string, confirm: boolean, db: PrismaExecutor = prisma) {
-    if (!confirm) throw new Error("Explicit confirmation required for ownership repair.");
+  static async applyOwnershipRepair(mainChannelId: string, confirmationPhrase: string, db: PrismaExecutor = prisma) {
+    const EXPECTED_PHRASE = "CONFIRM OWNERSHIP REPAIR";
+    if (confirmationPhrase !== EXPECTED_PHRASE) {
+        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+    }
 
     const [vCount, cCount, pCount, sCount] = await Promise.all([
       db.video.updateMany({
@@ -120,8 +126,11 @@ export class MainChannelMaintenance {
     };
   }
 
-  static async applyPrimaryRepair(mainChannelId: string, confirm: boolean, db: PrismaExecutor = prisma) {
-    if (!confirm) throw new Error("Explicit confirmation required for primary repair.");
+  static async applyPrimaryRepair(mainChannelId: string, confirmationPhrase: string, db: PrismaExecutor = prisma) {
+    const EXPECTED_PHRASE = "CONFIRM PRIMARY REPAIR";
+    if (confirmationPhrase !== EXPECTED_PHRASE) {
+        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+    }
 
     await db.creator.updateMany({
       where: { id: { not: mainChannelId }, isPrimary: true },

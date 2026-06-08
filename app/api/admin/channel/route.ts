@@ -5,7 +5,6 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { writeAuditLog } from "@/lib/services/audit.service";
-import { MainCreatorService } from "@/lib/services/main-creator.service";
 import { handleApiError } from "@/lib/errors";
 import { MainChannelService } from "@/lib/channel/main-channel.service";
 

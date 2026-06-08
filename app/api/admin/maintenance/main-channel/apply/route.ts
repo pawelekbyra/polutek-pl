@@ -8,7 +8,7 @@ import { writeAuditLog } from "@/lib/services/audit.service";
 export const dynamic = "force-dynamic";
 
 const applySchema = z.object({
-  confirm: z.boolean().refine(val => val === true, "Explicit confirmation is required."),
+  confirmationPhrase: z.string().min(1, "Confirmation phrase is required."),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
     const result = applySchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: "Confirmation required", details: result.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Confirmation phrase required", details: result.error.flatten() }, { status: 400 });
     }
 
-    const report = await MainChannelMaintenance.applyMainChannelSetup(adminUserId!, true);
+    const report = await MainChannelMaintenance.applyMainChannelSetup(adminUserId!, result.data.confirmationPhrase);
 
     await writeAuditLog({
         actorUserId: adminUserId,

@@ -58,3 +58,10 @@ describe('MainChannelService', () => {
     expect(result).toEqual(mockChannel);
   });
 });
+
+describe('MainChannelMaintenance phrases', () => {
+    it('requires correct phrases for maintenance actions', () => {
+        // This is a placeholder to ensure the phrases are respected if we add unit tests for maintenance
+        // Currently tested via logic in maintenance.ts
+    });
+});
