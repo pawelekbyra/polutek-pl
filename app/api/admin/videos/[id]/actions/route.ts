@@ -4,6 +4,8 @@ import { requireAdminForApi } from '@/lib/auth-utils';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { VideoStatus, AccessTier } from '@prisma/client';
 import { z } from 'zod';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 
 const patchVideoSchema = z.object({
   title: z.string().trim().min(1).optional(),
@@ -11,8 +13,12 @@ const patchVideoSchema = z.object({
   slug: z.string().trim().min(1).optional(),
   description: z.string().trim().optional().nullable(),
   descriptionEn: z.string().trim().optional().nullable(),
-  videoUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url().optional(),
+  videoUrl: z.string().url().refine(isAllowedVideoSourceUrl, {
+    message: "Video URL musi być linkiem YouTube/Vimeo albo plikiem/manifestem z dozwolonego hosta mediów.",
+  }).optional(),
+  thumbnailUrl: z.string().refine(isAllowedThumbnailUrl, {
+    message: "Miniaturka musi być bezpieczną ścieżką lokalną lub pochodzić z dozwolonego hosta obrazków.",
+  }).optional(),
   tier: z.nativeEnum(AccessTier).optional(),
   status: z.nativeEnum(VideoStatus).optional(),
   isMainFeatured: z.boolean().optional(),
@@ -41,8 +47,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     const body = result.data;
+    const mainChannel = await MainChannelService.getRequired();
     const video = await prisma.video.findUnique({ where: { id: videoId } });
     if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+
+    if (video.creatorId !== mainChannel.id) {
+        return NextResponse.json({ error: 'This video does not belong to the main channel. Maintenance required.' }, { status: 403 });
+    }
 
     const updateData: any = { ...body };
 
@@ -57,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     if (body.isMainFeatured) {
         await prisma.video.updateMany({
-            where: { id: { not: videoId }, creatorId: video.creatorId },
+            where: { id: { not: videoId }, creatorId: mainChannel.id },
             data: { isMainFeatured: false }
         });
     }
@@ -96,8 +107,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
 
         const { action, reason } = result.data;
+        const mainChannel = await MainChannelService.getRequired();
         const video = await prisma.video.findUnique({ where: { id: videoId } });
         if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+
+        if (video.creatorId !== mainChannel.id) {
+            return NextResponse.json({ error: 'This video does not belong to the main channel. Maintenance required.' }, { status: 403 });
+        }
 
         const previousStatus = video.status;
         const previousIsHero = video.isMainFeatured;
@@ -130,7 +146,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 break;
             case 'set-hero':
                 await prisma.video.updateMany({
-                    where: { creatorId: video.creatorId },
+                    where: { creatorId: mainChannel.id },
                     data: { isMainFeatured: false }
                 });
                 updated = await prisma.video.update({

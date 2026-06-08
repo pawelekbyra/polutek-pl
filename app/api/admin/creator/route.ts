@@ -1,139 +1,119 @@
 import { createScopedLogger } from "@/lib/logger";
-import { prisma } from '@/lib/prisma';
-import { NextResponse, NextRequest } from 'next/server';
-import { requireAdminForApi } from '@/lib/auth-utils';
-import { z } from 'zod';
-import { writeAuditLog } from '@/lib/services/audit.service';
-import { auth } from '@clerk/nextjs/server';
-import { flags } from '@/lib/feature-flags';
-import { MainCreatorService } from '@/lib/services/main-creator.service';
+import { NextResponse, NextRequest } from "next/server";
+import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdminForApi } from "@/lib/auth-utils";
+import { writeAuditLog } from "@/lib/services/audit.service";
 import { handleApiError } from "@/lib/errors";
+import { MainChannelService } from "@/lib/channel/main-channel.service";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(2_000)
+  .optional()
+  .nullable()
+  .transform((value) => {
+    if (!value) return null;
+    return value;
+  })
+  .refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "Podaj poprawny adres URL http(s) albo zostaw pole puste.");
+
+const channelPatchSchema = z.object({
+  name: z.string().trim().min(1, "Nazwa kanału jest wymagana.").max(100),
+  bio: z.string().trim().max(1_000).optional().nullable().transform((value) => value || null),
+  bannerUrl: optionalUrl,
+  displaySubscribersCount: z.number().int().min(0).nullable().optional(),
+});
 
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_CREATOR");
+  const { response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
-    const creator = flags.multiCreator
-      ? await prisma.creator.findFirst({
-          include: {
-            user: {
-              select: { id: true, email: true, name: true, imageUrl: true }
-            }
-          }
-        })
-      : await prisma.$transaction(async (tx) => {
-          const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
-            repairSingleChannelContent: true,
-          });
+    const mainChannel = await MainChannelService.getRequired();
 
-          return tx.creator.findUnique({
-            where: { id: mainCreator.id },
-            include: {
-              user: {
-                select: { id: true, email: true, name: true, imageUrl: true }
-              }
-            }
-          });
-        });
+    const creator = await prisma.creator.findUnique({
+      where: { id: mainChannel.id },
+      include: {
+        user: { select: { id: true, email: true, name: true, imageUrl: true } },
+      },
+    });
 
-    return NextResponse.json(creator);
-  } catch (error: unknown) {
-    scopedLogger.error("[ADMIN_CREATOR_GET_ERROR]", error);
+    if (!creator) {
+        return NextResponse.json({
+            error: "MAIN_CHANNEL_NOT_FOUND",
+            message: "Main channel record not found in database despite matching slug."
+        }, { status: 404 });
+    }
+
+    return NextResponse.json({ creator });
+  } catch (error: any) {
+    if (error.name === 'MainChannelNotFoundError' || error.name === 'MainChannelNotApprovedError' || error.name === 'MainChannelNotPrimaryError') {
+        return NextResponse.json({
+            error: "MAIN_CHANNEL_NOT_CONFIGURED",
+            message: error.message || "Main channel is missing or invalid. Run explicit maintenance setup."
+        }, { status: 400 });
+    }
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
     return handleApiError(error);
   }
 }
 
-const creatorSchema = z.object({
-  id: z.string().optional().nullable(),
-  name: z.string().min(1).max(100),
-  bio: z.string().max(1000).optional().nullable(),
-  slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
-  bannerUrl: z.string().url().optional().nullable(),
-});
-
-export async function POST(req: NextRequest) {
-  const requestId = req.headers.get('x-request-id');
+export async function PATCH(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_CREATOR");
+  const { response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
   if (response) return response;
 
-  const body = await req.json();
-  const result = creatorSchema.safeParse(body);
-
-  if (!result.success) {
-    return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
-  }
-
-  const { id, name, bio, slug, bannerUrl } = result.data;
-
   try {
-    if (!flags.multiCreator) {
-      const updated = await prisma.$transaction(async (tx) => {
-        const mainCreator = await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, {
-          repairSingleChannelContent: true,
-        });
+    const body = await request.json();
+    const result = channelPatchSchema.safeParse(body);
 
-        return tx.creator.update({
-          where: { id: mainCreator.id },
-          data: { name, bio, bannerUrl }
-        });
-      });
-
-      await writeAuditLog({
-          actorUserId: (await auth()).userId,
-          action: "CREATOR_UPDATED",
-          targetType: "Creator",
-          targetId: updated.id,
-          metadata: { name, slug: updated.slug, singleChannelAlias: true }
-      });
-
-      return NextResponse.json(updated);
+    if (!result.success) {
+      return NextResponse.json({ error: "Invalid data", details: result.error.flatten() }, { status: 400 });
     }
 
-    if (id) {
-      const updated = await prisma.creator.update({
-        where: { id },
-        data: { name, bio, slug, bannerUrl }
-      });
+    const mainChannel = await MainChannelService.getRequired();
 
-      await writeAuditLog({
-          actorUserId: (await auth()).userId,
-          action: "CREATOR_UPDATED",
-          targetType: "Creator",
-          targetId: id,
-          metadata: { name, slug }
-      });
+    const creator = await prisma.creator.update({
+      where: { id: mainChannel.id },
+      data: result.data,
+      include: {
+        user: { select: { id: true, email: true, name: true, imageUrl: true } },
+      },
+    });
 
-      return NextResponse.json(updated);
-    } else {
+    await writeAuditLog({
+      actorUserId: (await auth()).userId,
+      action: "CHANNEL_UPDATED",
+      targetType: "Creator",
+      targetId: creator.id,
+      metadata: { slug: creator.slug, fields: Object.keys(result.data) },
+    });
 
-        const created = await prisma.$transaction(async (tx) => {
-            const firstCreator = await tx.creator.findFirst();
-            const isPrimary = !firstCreator;
-
-            const newCreator = await tx.creator.create({
-                data: {
-                    userId: adminUserId!,
-                    name,
-                    bio,
-                    slug,
-                    bannerUrl,
-                    isApproved: true,
-                    isPrimary
-                }
-            });
-
-            return newCreator;
-        });
-        return NextResponse.json(created);
+    return NextResponse.json({ creator });
+  } catch (error: any) {
+    if (error.name === 'MainChannelNotFoundError' || error.name === 'MainChannelNotApprovedError' || error.name === 'MainChannelNotPrimaryError') {
+        return NextResponse.json({
+            error: "MAIN_CHANNEL_NOT_CONFIGURED",
+            message: error.message || "Main channel is missing or invalid. Run explicit maintenance setup."
+        }, { status: 400 });
     }
-  } catch (error: unknown) {
-    scopedLogger.error("[ADMIN_CREATOR_POST_ERROR]", error);
+    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
     return handleApiError(error);
   }
 }

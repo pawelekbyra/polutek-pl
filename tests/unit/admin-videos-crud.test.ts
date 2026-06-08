@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { GET, POST, DELETE } from '@/app/api/admin/videos/route';
-import { MainCreatorService } from '@/lib/services/main-creator.service';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -28,6 +28,7 @@ vi.mock('@/lib/prisma', () => {
         },
         creator: {
             findFirst: vi.fn(),
+            findUnique: vi.fn(),
         },
         auditLog: {
             create: vi.fn().mockResolvedValue({}),
@@ -43,18 +44,20 @@ vi.mock('@/lib/services/user/profile.service', () => ({
   },
 }));
 
-vi.mock('@/lib/services/main-creator.service', () => ({
-    MainCreatorService: {
-        getOrCreateForAdmin: vi.fn(),
+vi.mock('@/lib/channel/main-channel.service', () => ({
+    MainChannelService: {
+        getRequired: vi.fn(),
     }
 }));
 
 describe('Admin Video CRUD API', () => {
+  const mainChannel = { id: 'creator_1', slug: 'polutek', isApproved: true, isPrimary: true };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: 'admin_1' } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'ADMIN', isDeleted: false } as any);
-    vi.mocked(MainCreatorService.getOrCreateForAdmin).mockResolvedValue({ id: 'creator_1' } as any);
+    vi.mocked(MainChannelService.getRequired).mockResolvedValue(mainChannel as any);
   });
 
   it('allows admin to list videos', async () => {

@@ -223,6 +223,17 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    const mainChannel = await MainChannelService.getRequired();
+    const video = await prisma.video.findUnique({ where: { id }, select: { id: true, creatorId: true, title: true } });
+
+    if (!video) {
+        return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
+    if (video.creatorId !== mainChannel.id) {
+        return NextResponse.json({ error: 'This video does not belong to the main channel. Maintenance required.' }, { status: 403 });
+    }
+
     // Soft-delete by setting status to ARCHIVED
     const archived = await prisma.video.update({
       where: { id },
