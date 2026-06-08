@@ -8,6 +8,7 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/audit.service';
 import { flags } from '@/lib/feature-flags';
 import { MainCreatorService } from '@/lib/services/main-creator.service';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from '@/lib/blob';
 import { handleApiError } from '@/lib/errors';
 import { VideosAdminService } from '@/lib/services/admin/videos-admin.service';
@@ -42,19 +43,15 @@ const videoSchema = z.object({
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
+  const { response } = await requireAdminForApi("GET_ADMIN_VIDEOS");
   if (response) return response;
 
   const options = parseVideoQueryParams(req);
 
   try {
-    const mainCreator = flags.multiCreator
-      ? null
-      : await prisma.$transaction((tx) =>
-          MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true })
-        );
+    const mainCreator = await MainChannelService.getRequired();
 
-    const result = await VideosAdminService.getVideos(options, mainCreator?.id);
+    const result = await VideosAdminService.getVideos(options, mainCreator.id);
 
     return NextResponse.json(result);
   } catch (error: unknown) {
@@ -66,7 +63,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
+  const { response } = await requireAdminForApi("POST_ADMIN_VIDEOS");
   if (response) return response;
 
   try {
@@ -98,17 +95,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Only public and published videos can be featured as Hero. Tylko publiczne i opublikowane filmy mogą być wyróżnione jako Hero." }, { status: 400 });
     }
 
+    const mainChannel = await MainChannelService.getRequired();
+
     if (id) {
       const updated = await prisma.$transaction(async (tx) => {
-        const mainCreator = flags.multiCreator
-          ? null
-          : await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true });
         const currentVideo = await tx.video.findUnique({ where: { id }, select: { publishedAt: true, creatorId: true } });
         if (!currentVideo) {
           throw new Error('Nie znaleziono filmu do aktualizacji.');
         }
 
-        const targetCreatorId = mainCreator?.id || currentVideo.creatorId;
+        if (currentVideo.creatorId !== mainChannel.id) {
+            throw new Error('Ten film nie należy do głównego kanału. Wymagana interwencja serwisowa.');
+        }
+
+        const targetCreatorId = mainChannel.id;
         const publishedAt = (status === VideoStatus.PUBLISHED && !currentVideo.publishedAt) ? new Date() : undefined;
 
         const video = await tx.video.update({
@@ -158,13 +158,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(updated);
     } else {
       const created = await prisma.$transaction(async (tx) => {
-        const creator = flags.multiCreator
-          ? await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx)
-          : await MainCreatorService.getOrCreateForAdmin(adminUserId!, tx, { repairSingleChannelContent: true });
-
         const video = await tx.video.create({
           data: {
-            creatorId: creator.id,
+            creatorId: mainChannel.id,
             title,
             titleEn,
             slug,
@@ -189,7 +185,7 @@ export async function POST(req: NextRequest) {
           await tx.video.updateMany({
             where: {
               id: { not: video.id },
-              creatorId: creator.id
+              creatorId: mainChannel.id
             },
             data: { isMainFeatured: false }
           });

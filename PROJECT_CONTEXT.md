@@ -5,7 +5,7 @@ Polutek.pl is a private VOD platform built to host exclusive content and support
 
 ## Product Logic
 1. **YouTube-style Experience**: The platform is a video-first experience. The homepage features a main highlighted video and a list of other materials.
-2. **Channel System**: `Creator` is the public channel profile. Private beta has one configured primary channel from `MAIN_CREATOR_SLUG`, while the architecture is designed to support multiple channels in the future.
+2. **Channel System**: The app is **strict single-channel**. `Creator` is legacy technical naming for the main channel record. Public multi-channel marketplace is out of scope.
 3. **Access Tiers (Paywall)**:
    - `PUBLIC`: Available to everyone.
    - `LOGGED_IN`: Requires a free Clerk account.
@@ -15,6 +15,7 @@ Polutek.pl is a private VOD platform built to host exclusive content and support
 6. **Community Features**: Supports multi-level comments, likes, and a referral system that can also grant Patron status.
 
 ## Guardrails for AI Coders
+- **Strict Single-Channel**: No public multi-creator marketplace. No arbitrary creator slug pages. No client-selected creator payments. No automatic creator repair during runtime.
 - **Respect the Paywall**: Any changes to the video player, listing, or API must strictly adhere to the access control policies defined in `AccessPolicy`.
 - **Media Security**: Never expose direct storage URLs (`videoUrl`) to the public frontend. Use the `PublicVideoDTO` for all public-facing data.
 - **Maintain Product Identity**: Keep the product video-first, private-channel oriented, and Patron-access oriented. It must remain a functional VOD platform.

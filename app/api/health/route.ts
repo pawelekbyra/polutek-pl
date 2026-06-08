@@ -23,11 +23,12 @@ export async function GET(req: Request) {
     const approvedCreatorExists = await prisma.creator.findFirst({ where: { isApproved: true } });
     const primaryCreatorExists = await prisma.creator.findFirst({ where: { isPrimary: true, isApproved: true } });
 
+    const publicWhere = await buildPublicVideoWhere();
     const [allVideosCount, publishedVideosCount, visibleVideosCount, mainFeaturedVideoExists] = await Promise.all([
         prisma.video.count(),
         prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }),
-        prisma.video.count({ where: buildPublicVideoWhere() }),
-        prisma.video.findFirst({ where: { ...buildPublicVideoWhere(), isMainFeatured: true } }),
+        prisma.video.count({ where: publicWhere }),
+        prisma.video.findFirst({ where: { ...publicWhere, isMainFeatured: true } }),
     ]);
 
     return NextResponse.json({

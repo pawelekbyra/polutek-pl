@@ -50,13 +50,21 @@ export async function GET(
 
     const video = await prisma.video.findUnique({
       where: { id: videoId },
-      include: { creator: true }
+      include: {
+        creator: {
+          select: { id: true, slug: true, isApproved: true, isPrimary: true }
+        }
+      }
     });
 
     if (!video) {
       const videoBySlug = await prisma.video.findUnique({
           where: { slug: videoId },
-          include: { creator: true }
+          include: {
+            creator: {
+              select: { id: true, slug: true, isApproved: true, isPrimary: true }
+            }
+          }
       });
 
       if (!videoBySlug) {
@@ -65,6 +73,7 @@ export async function GET(
               if (fallback) {
                   return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers, {
                       id: fallback.id,
+                      creatorId: fallback.creatorId || 'demo-creator',
                       tier: fallback.tier,
                       status: fallback.status,
                       publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : null,

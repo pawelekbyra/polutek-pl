@@ -45,18 +45,21 @@ export class CommentAccessService {
     const isAdmin = await AccessPolicy.canManageAdmin(userId).then(d => d.allowed);
     if (isAdmin) return true;
 
-    // Video creator can moderate their own video comments
+    // In single-channel mode, we only allow the configured main channel owner to moderate
+    // if their userId matches the authenticated user.
     if (videoId) {
-        const creator = await prisma.creator.findFirst({
+        const mainChannel = await prisma.creator.findFirst({
             where: {
-                userId,
+                isApproved: true,
+                isPrimary: true,
+                userId, // Ownership check
                 videos: {
                     some: isUuid(videoId) ? { id: videoId } : { slug: videoId }
                 }
             },
             select: { id: true }
         });
-        if (creator) return true;
+        if (mainChannel) return true;
     }
 
     return false;

@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { flags } from '@/lib/feature-flags';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { CreatorContentService as ContentService, VideoContentService } from '@/lib/services/content.service';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -14,9 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
-  const creator = flags.mainCreatorSlug
-    ? await ContentService.getCreatorBySlug(flags.mainCreatorSlug).catch(() => null)
-    : await ContentService.getConfiguredOrDefaultCreator().catch(() => null);
+  const creator = await ContentService.getConfiguredOrDefaultCreator().catch(() => null);
 
   const creatorRoutes = creator ? [
     {
@@ -27,9 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   ] : [];
 
-  const videos = flags.multiCreator
-      ? await VideoContentService.getAllVideos()
-      : creator?.videos || [];
+  const videos = await VideoContentService.getAllVideos();
 
   const videoRoutes = videos.map((v) => ({
     url: `${baseUrl}/?v=${v.id}`,

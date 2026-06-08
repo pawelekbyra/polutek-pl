@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, title, creatorId: inputCreatorId, requestId: inputRequestId } = result.data;
+    const { amountMinor, currency, title, requestId: inputRequestId } = result.data;
 
     const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
@@ -62,28 +62,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: amountError }, { status: 400 });
     }
 
-    let verifiedCreatorId: string | undefined = undefined;
-    if (inputCreatorId) {
-      const creator = isUuid(inputCreatorId) ? await prisma.creator.findUnique({
-        where: { id: inputCreatorId },
-        select: { id: true, isApproved: true },
-      }) : null;
-
-      if (creator && creator.isApproved) {
-        verifiedCreatorId = creator.id;
-      } else {
-         // If creatorId was provided but is invalid/not approved, we fail or ignore it.
-         // Given the FK constraint error, it's safer to fail if it was intended but not found.
-         return NextResponse.json({ error: 'Invalid creator' }, { status: 400 });
-      }
-    }
-
     const payment = await PaymentService.createPayment({
       userId,
       amountMinor,
       currency,
       title,
-      creatorId: verifiedCreatorId,
       requestId: inputRequestId,
     });
 

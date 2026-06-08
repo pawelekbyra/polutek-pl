@@ -108,7 +108,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // Check video existence and fetch basic info for access check
     const video = await prisma.video.findUnique({
         where: { id: videoId },
-        select: { id: true, status: true, tier: true, publishedAt: true }
+        include: {
+            creator: {
+                select: { id: true, slug: true, isApproved: true, isPrimary: true }
+            }
+        }
     });
 
     if (!video) {

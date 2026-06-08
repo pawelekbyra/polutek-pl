@@ -20,7 +20,12 @@ export class PlaybackService {
   static async createPlaybackPlan(videoId: string, userId: string | null, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
     const video = await prisma.video.findUnique({
       where: { id: videoId },
-      include: { asset: true }
+      include: {
+        asset: true,
+        creator: {
+          select: { id: true, slug: true, isApproved: true, isPrimary: true }
+        }
+      }
     });
 
     if (!video) {

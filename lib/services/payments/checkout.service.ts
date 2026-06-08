@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 import { PaymentStatus } from '@prisma/client';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -41,14 +42,12 @@ export class PaymentCheckoutService {
     amountMinor,
     currency,
     title,
-    creatorId,
     requestId,
   }: {
     userId: string;
     amountMinor: number;
     currency: string;
     title: string;
-    creatorId?: string;
     requestId?: string;
   }) {
     const stripe = getStripe();
@@ -58,6 +57,9 @@ export class PaymentCheckoutService {
     });
 
     if (!user) throw new Error('USER_NOT_FOUND');
+
+    const mainChannel = await MainChannelService.getRequired();
+    const creatorId = mainChannel.id;
 
     const stripeCustomerId = await this.getOrCreateStripeCustomer(userId, user.email);
 

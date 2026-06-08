@@ -18,7 +18,6 @@ export const checkoutSchema = z.object({
   amountMinor: z.number().int().positive(),
   currency: currencySchema,
   title: z.string().min(1).max(120),
-  creatorId: z.string().optional(), // Allow non-UUID for fallbacks/demo
   requestId: z.string().uuid().optional(), // Client-side UUID for idempotency
 });
 

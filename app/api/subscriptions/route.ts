@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/errors';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 type SubscriptionPayload = {
   creatorId?: unknown;
@@ -39,19 +40,24 @@ async function resolveCreator(creatorId: string | null, creatorSlug: string | nu
   | { creator: { id: string; slug: string; isApproved: boolean }; error?: never }
   | { error: NextResponse; creator?: never }
 > {
-  if (!creatorId && !creatorSlug) {
-    return { error: NextResponse.json({ error: 'CREATOR_REQUIRED', message: 'creatorId or creatorSlug is required.' }, { status: 400 }) };
+  // In single-channel mode, we always resolve to the main channel regardless of input
+  try {
+    const mainChannel = await MainChannelService.getRequired();
+    return {
+      creator: {
+        id: mainChannel.id,
+        slug: mainChannel.slug,
+        isApproved: mainChannel.isApproved
+      }
+    };
+  } catch (err: any) {
+    return {
+      error: NextResponse.json({
+        error: 'MAIN_CHANNEL_ERROR',
+        message: err.message
+      }, { status: 500 })
+    };
   }
-
-  const creator = creatorId
-    ? await prisma.creator.findUnique({ where: { id: creatorId }, select: { id: true, slug: true, isApproved: true } })
-    : await prisma.creator.findUnique({ where: { slug: creatorSlug as string }, select: { id: true, slug: true, isApproved: true } });
-
-  if (!creator || !creator.isApproved) {
-    return { error: NextResponse.json({ error: 'CREATOR_NOT_FOUND', message: 'Creator not found.' }, { status: 404 }) };
-  }
-
-  return { creator };
 }
 
 

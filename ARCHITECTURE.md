@@ -2,7 +2,7 @@
 
 ## Current product mode
 
-Polutek.pl currently runs as a single-channel VOD with data-model support for future additional channels. `MAIN_CREATOR_SLUG` is the dynamic source for the configured creator in single-creator mode; code should not add new hardcoded creator/channel slugs as technical fallbacks.
+Polutek.pl is a **strict single-channel VOD** using the legacy `Creator` database model as the main channel record. `MAIN_CREATOR_SLUG` is the dynamic source for the configured main channel; code should not add new hardcoded creator/channel slugs as technical fallbacks. Multi-creator marketplace is not supported.
 
 ## Main flows
 
@@ -11,7 +11,7 @@ Polutek.pl currently runs as a single-channel VOD with data-model support for fu
 * **Patron video playback**: Requires `User.isPatron` in the database for `PATRON` videos. `Subscription` records must not grant premium access.
 * **Donation to Patron**: Stripe checkout/webhooks create payments and patron grants. Refund/dispute handling recalculates net totals and patron status.
 * **Referral to Patron**: Referral grants are represented through `PatronGrant` and synchronized through user access services.
-* **Channel subscription / follow**: `/api/subscriptions` is an email-notification opt-in/out for a creator. It is authenticated, validates the creator, is rate-limited, and writes only `Subscription` rows.
+* **Channel subscription / follow**: `/api/subscriptions` is an email-notification opt-in/out for the main channel. It is authenticated, resolves the main channel server-side, is rate-limited, and writes only `Subscription` rows.
 * **Admin video/channel management**: Restricted to `ADMIN` role and protected at API/service boundaries, not just UI.
 
 ## Source of truth

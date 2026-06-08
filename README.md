@@ -9,20 +9,27 @@ Każdy agent rozpoczynający pracę musi wykonać poniższy protokół:
 1. Przeczytaj `README.md` do końca, szczególnie sekcję **Roadmapa beta / release hardening**.
 2. Przeczytaj dokumenty uzupełniające: `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, `DEPLOY_CHECKLIST.md` i `.env.example`.
 3. Nie zakładaj, że aplikacja jest gotowa do bety. Status wynika wyłącznie z uruchomionych komend, testów i smoke testów.
-4. Przed pracą sprawdź roadmapę na końcu README:
-   - zadania z `[~]` są zaczęte, ale nie wolno traktować ich jako gotowych,
-   - zadania z `[ ]` są otwarte,
-   - wykonane elementy są usuwane z roadmapy, żeby backlog pokazywał wyłącznie aktualne braki.
-5. Po zakończeniu pracy koniecznie zaktualizuj roadmapę na końcu README:
-   - usuń punkt tylko wtedy, gdy faktycznie został wykonany i zweryfikowany,
-   - jeśli coś nie przeszło przez brak env, DB albo sekretów, oznacz to jako ograniczenie środowiska, a nie jako PASS.
+4. Przed pracą sprawdź roadmapę na końcu README.
+5. Po zakończeniu pracy zaktualizuj roadmapę.
 6. Nie wpisuj w kodzie nowych hardkodowanych nazw kanałów ani twórców. Slug/nazwa mają pochodzić z `MAIN_CREATOR_SLUG`, `MAIN_CREATOR_NAME`, `flags.mainCreatorSlug` albo z rekordu `Creator` w bazie.
+7. **Zasady Single-Channel**:
+   - Nie wprowadzaj ponownie mechanizmów multi-creator marketplace.
+   - Nie dodawaj fallbacków wybierających innego twórcę, jeśli główny kanał nie istnieje.
+   - Nie wywołuj naprawy (repair/maintenance) z poziomu normalnego runtime'u stron/API.
+   - Nie przyjmuj `creatorId` od publicznych klientów w checkoutcie ani subskrypcjach.
 
 ## Aktualny tryb aplikacji
 
-Aplikacja działa w prywatnej becie jako **single configured creator/channel VOD** z przygotowaniem modelu danych pod przyszły tryb multi-creator. `ENABLE_MULTI_CREATOR=false` jest prawidłowym trybem bety: homepage pokazuje główny skonfigurowany kanał, a `/channel/[MAIN_CREATOR_SLUG]` pozostaje dostępną stroną tego kanału i nie przekierowuje do `/`.
+Polutek.pl to **strict single-channel VOD**. Prisma `Creator` pozostaje jako legacy reprezentacja bazy danych dla głównego kanału, ale zachowanie produktu nie wspiera publicznego marketplace'u, onboardingu twórców, stron dowolnych twórców ani płatności na rzecz wybranych przez klienta twórców.
 
-Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Jeśli nie jest ustawiona poza produkcją, homepage wybiera zatwierdzonego primary/ostatnio aktualizowanego twórcę z bazy, bez hardkodowania sluga kanału. Model `Creator` traktujemy w becie jako publiczny profil kanału: `Video.creatorId` przypina film do kanału, `Payment.creatorId` przypina napiwek do kanału, a `Subscription.creatorId` przypina zgodę mailową do kanału. Relacje mogą pozostać jako architektura future multi-creator, ale beta nie dostarcza publicznego marketplace’u, onboardingu ani multi-creator dashboardu.
+* `MAIN_CREATOR_SLUG` jest wymagany.
+* Skonfigurowany kanał musi istnieć w bazie, być zatwierdzony (`isApproved = true`) i oznaczony jako główny (`isPrimary = true`).
+* Kod runtime nie może automatycznie tworzyć, zmieniać nazw, zatwierdzać ani naprawiać rekordów twórców (zero runtime magic).
+* `/channel/[MAIN_CREATOR_SLUG]` może istnieć jako alias/route dla głównego kanału.
+* Inne strony `/channel/[slug]` zwracają 404.
+* `Creator` to legacy nazwa techniczna dla `MainChannel`.
+
+Wartość `MAIN_CREATOR_SLUG` jest wymagana dla spójnych danych produkcyjnych. Aplikacja działa w trybie **strict single-channel**. Jeśli kanał nie jest ustawiony lub nie istnieje w bazie jako zatwierdzony i główny (primary), aplikacja zgłasza błąd konfiguracji zamiast wybierać innego twórcę. Model `Creator` jest wyłącznie legacy techniczną nazwą dla rekordu kanału: `Video.creatorId` przypina film do kanału, `Payment.creatorId` przypina napiwek do kanału, a `Subscription.creatorId` przypina zgodę mailową do kanału. Publiczny marketplace, onboarding twórców oraz multi-creator dashboard nie są wspierane.
 
 ## Definicje domenowe — najważniejsza spójność do bety
 
@@ -145,7 +152,7 @@ Vercel powinien używać `npm run vercel-build`, które uruchamia naprawę migra
 - `NEXT_PUBLIC_BLOB_PUBLIC_HOST`
 - `ALLOWED_MEDIA_HOSTS`
 
-Nie dodawaj szerokich domen providerów. Każdy bucket/CDN host musi być wpisany jawnie. Testy bezpieczeństwa proxy mediów są częścią krytycznej definicji beta.
+Nie dodawaj szerokich domen providerów. Każdy bucket/CDN host musi być wpisany jawnie. Testy bezpieczeństwa proxy mediów są częścią krytycznej definji beta.
 
 ## Obecne ograniczenia uczciwe wobec bety
 
@@ -226,7 +233,7 @@ Nie wolno oznaczyć statusu **GOTOWE DO PRYWATNEJ BETY**, dopóki wszystkie kome
 
 Każdy agent kończący większy etap ma dopisać w PR/odpowiedzi:
 
-- status: `NIEGOTOWE`, `GOTOWE DO DALSZEJ PRACY NAD BETĄ`, `GOTOWE DO PRYWATNEJ BETY`, `GOTOWE DO MAŁEGO PRODUCTION RELEASE` albo `GOTOWE DO PUBLICZNEGO RELEASE`,
+- status: `NIEGOTOWE`, `GOTOWE DO DALSZEY PRACY NAD BETĄ`, `GOTOWE DO PRYWATNEJ BETY`, `GOTOWE DO MAŁEGO PRODUCTION RELEASE` albo `GOTOWE DO PUBLICZNEGO RELEASE`,
 - komendy przed/po zmianach i ich realny wynik,
 - zmienione pliki,
 - naprawione problemy,

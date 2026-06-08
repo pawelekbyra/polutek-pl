@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { Search } from '@/app/components/icons';
 import { CreatorContentService as ContentService } from '@/lib/services/content/creator.service';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
@@ -19,6 +20,9 @@ export const revalidate = 60; // regeneruj co 60 sekund
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
+  const mainSlug = MainChannelService.getConfiguredSlug();
+  if (params.slug !== mainSlug) return { title: 'Kanał nie znaleziony' };
+
   const creator = await ContentService.getCreatorBySlug(params.slug);
   if (!creator) return { title: 'Kanał nie znaleziony' };
 
@@ -40,6 +44,21 @@ export async function generateMetadata(
 }
 
 export default async function ChannelPage({ params }: { params: { slug: string } }) {
+  const mainSlug = MainChannelService.getConfiguredSlug();
+  if (params.slug !== mainSlug) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center font-serif">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+            <h1 className="text-4xl font-black uppercase">Kanał nie znaleziony</h1>
+            <p className="text-[#606060] mt-2 mb-6">Ten kanał nie istnieje.</p>
+            <Link href="/" className="bg-[#0f0f0f] text-white px-8 py-3 rounded-md uppercase font-bold tracking-widest hover:bg-[#272727] transition-all">Wróć na stronę główną</Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   const [{ userId }, creator] = await Promise.all([
     auth(),
     ContentService.getCreatorBySlug(params.slug),
