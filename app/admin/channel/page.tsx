@@ -1,7 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import Navbar from "@/app/components/Navbar";
 import { prisma } from "@/lib/prisma";
-import { MainCreatorService } from "@/lib/services/main-creator.service";
 import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { MainChannelService } from "@/lib/channel/main-channel.service";
 

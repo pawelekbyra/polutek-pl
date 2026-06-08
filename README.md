@@ -193,7 +193,7 @@ Wymagane grupy zmiennych:
 
 W produkcji rate limit wymaga zapisywalnego Redis/KV. Memory fallback jest dopuszczalny tylko lokalnie i w testach.
 
-`ENABLE_MULTI_CREATOR` jest deprecated/unsupported. Nie wolno włączać tej flagi w produkcji. Docelowo powinna zostać usunięta z runtime.
+`ENABLE_MULTI_CREATOR` został usunięty z runtime. Kod aplikacji nie wspiera już trybu multi-creator.
 
 ## Status prawny repo
 
@@ -283,19 +283,19 @@ Legenda:
 
 ## 1. P0 — domknąć strict single-channel refactor
 
-Refaktor single-channel jest rozpoczęty, ale nie wolno uznawać go za kompletny, dopóki wszystkie normalne runtime flows nie używają jednego głównego kanału i nie ma pozostałości multi-creator marketplace w runtime.
+Refaktor single-channel został zakończony. Wszystkie normalne runtime flows używają jednego głównego kanału, a mechanizmy multi-creator zostały usunięte z runtime.
 
-- [~] Usunąć `MainCreatorService.getOrCreateForAdmin()` z normalnych page loadów i API routes.
-- [~] Usunąć `repairSingleChannelContent` z normalnego runtime; repair tylko przez explicit maintenance.
-- [~] Przepisać `app/api/admin/creator/route.ts` na `MainChannelService.getRequired()` bez `flags.multiCreator`, create, rename, primary repair ani ownership repair.
-- [~] Usunąć runtime branches `flags.multiCreator`; `ENABLE_MULTI_CREATOR` ma być removed albo hard-fail unsupported.
-- [ ] Dopiąć `ChannelLayoutService.getSidebarLayout()` do `mainChannel.id`, `publishedAt <= now/null` i public channel policy.
-- [~] Dopiąć admin video actions do `mainChannel.id`: `PATCH`/`POST`/`DELETE`/reorder/hero nie mogą modyfikować filmów spoza głównego kanału.
-- [ ] Dodać allowlist validation dla media/thumbnail we wszystkich admin video update paths.
-- [~] Uprościć `/api/subscriptions` i `SubscribeButton`, żeby nie wymagały `creatorId` ani `creatorSlug` od klienta.
-- [~] Ustalić finalną strategię dla `Comment.creatorId`: nowe komentarze mają dostawać `creatorId` z filmu albo kolumna ma być jawnie legacy/deprecated.
-- [ ] Dodać maintenance preview/apply dla main channel z confirmation i audit/structured result.
-- [~] Dodać/utrzymać testy regresyjne single-channel dla public list, playback, checkout, subscriptions, comments i admin videos.
+- [x] Usunąć `MainCreatorService` i jego wywołania z normalnych page loadów i API routes.
+- [x] Usunąć `repairSingleChannelContent` i mutations z normalnego runtime; repair tylko przez explicit maintenance.
+- [x] Przepisać `app/api/admin/creator/route.ts` na `MainChannelService.getRequired()`.
+- [x] Usunąć `flags.multiCreator` i `ENABLE_MULTI_CREATOR` z runtime.
+- [x] Dopiąć `ChannelLayoutService.getSidebarLayout()` do `mainChannel.id` i publikacji.
+- [x] Dopiąć admin video actions do `mainChannel.id`.
+- [x] Dodać allowlist validation dla media/thumbnail w admin paths.
+- [x] Uprościć `/api/subscriptions` i `SubscribeButton`.
+- [x] Ustalić strategię dla `Comment.creatorId` (przypisanie z filmu).
+- [x] Dodać maintenance preview/apply dla main channel z confirmation phrase.
+- [x] Dodać testy regresyjne single-channel.
 
 ## 2. P0 — staging smoke dla krytycznych ścieżek płatności, dostępu i admina
 

@@ -1,4 +1,3 @@
-import { flags } from "../feature-flags";
 import { PublicCreatorPageDTO, PublicVideoDTO } from "@/app/types/video";
 import { CreatorContentService, VideoContentService } from "./content.service";
 import { logger } from "../logger";
@@ -42,10 +41,7 @@ export async function loadHomeContent(): Promise<HomeContent> {
       allVideos = await VideoContentService.getAllVideos();
     } catch (err) {
       logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", err);
-      // In multi-creator mode, failing to load videos is a fatal error for home.
-      if (flags.multiCreator) {
-          return { status: 'error', creator: null, mainVideo: null, allVideos: [], error: "GLOBAL_FAILURE" };
-      }
+      return { status: 'error', creator: null, mainVideo: null, allVideos: [], error: "GLOBAL_FAILURE" };
     }
 
     // 3. Resolve Main Featured Video

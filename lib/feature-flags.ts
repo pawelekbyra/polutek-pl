@@ -8,8 +8,6 @@ export const flags = {
   get demoFallbacks() {
     return canUseDemoFallbacks();
   },
-  /** @deprecated Polutek is now strict single-channel. Multi-creator mode is unsupported and disabled in runtime. */
-  multiCreator: false,
   mainCreatorSlug: process.env.MAIN_CREATOR_SLUG || MAIN_CREATOR_SLUG,
 };
 

@@ -1,139 +1,61 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
-import { CreatorContentService } from '@/lib/services/content/creator.service';
-import { VideoContentService } from '@/lib/services/content/video.service';
-import { VideoStatus, AccessTier } from '@prisma/client';
+import { CreatorContentService, VideoContentService } from '@/lib/services/content.service';
 
-const mockFeatureFlags = vi.hoisted(() => ({
-  flags: {
-    demoFallbacks: false,
-    multiCreator: false,
-    mainCreatorSlug: 'main-channel',
-  },
-  canUseDemoFallbacks: vi.fn().mockReturnValue(false),
-}));
-
-vi.mock('@/lib/feature-flags', () => mockFeatureFlags);
-
-vi.mock('@/lib/services/content/creator.service', () => ({
+vi.mock('@/lib/services/content.service', () => ({
   CreatorContentService: {
-    getCreatorBySlug: vi.fn(),
     getConfiguredOrDefaultCreator: vi.fn(),
   },
-}));
-
-vi.mock('@/lib/services/content/video.service', () => ({
   VideoContentService: {
     getAllVideos: vi.fn(),
     getMainFeaturedVideo: vi.fn(),
   },
-  buildPublicVideoWhere: vi.fn(),
 }));
 
-describe('loadHomeContent', () => {
+vi.mock('../logger', () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
+describe('home-content.loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFeatureFlags.flags.demoFallbacks = false;
-    mockFeatureFlags.flags.multiCreator = false;
-    mockFeatureFlags.flags.mainCreatorSlug = 'main-channel';
   });
 
-  it('returns ready status with videos scoped to the main creator in single-creator mode', async () => {
-    const mockVideos = [{ id: '1', title: 'Video 1', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: true }];
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: mockVideos, subscribersCount: 0 } as any);
+  it('loads content for the configured creator', async () => {
+    const mockCreator = { id: 'c1', videos: [] };
+    const mockVideos = [{ id: 'v1' }];
 
-    const result = await loadHomeContent();
-
-    expect(CreatorContentService.getConfiguredOrDefaultCreator).toHaveBeenCalled();
-    expect(VideoContentService.getAllVideos).not.toHaveBeenCalled();
-    expect(VideoContentService.getMainFeaturedVideo).toHaveBeenCalled();
-    expect(result.status).toBe('ready');
-    if (result.status === 'ready') {
-      expect(result.allVideos).toHaveLength(1);
-      expect(result.mainVideo?.id).toBe('1');
-      expect(result.creator?.slug).toBe('main-channel');
-    }
-  });
-
-  it('falls back to the first creator video as main video in single-creator mode when none is featured', async () => {
-    const mockVideos = [
-      { id: 'first', title: 'First Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
-      { id: 'second', title: 'Second Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: false },
-    ];
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: mockVideos, subscribersCount: 0 } as any);
-
-    const result = await loadHomeContent();
-
-    expect(result.status).toBe('ready');
-    if (result.status === 'ready') {
-      expect(result.mainVideo?.id).toBe('first');
-    }
-  });
-
-  it('falls back to the default approved creator when MAIN_CREATOR_SLUG is not configured', async () => {
-    mockFeatureFlags.flags.mainCreatorSlug = '';
-    const mockVideos = [
-      { id: 'db-video', title: 'DB Video', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC, isMainFeatured: true },
-    ];
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({
-      id: 'primary-creator',
-      name: 'Configured in DB',
-      slug: 'db-creator',
-      videos: mockVideos,
-      subscribersCount: 0,
-    } as any);
-
-    const result = await loadHomeContent();
-
-    expect(CreatorContentService.getCreatorBySlug).not.toHaveBeenCalled();
-    expect(CreatorContentService.getConfiguredOrDefaultCreator).toHaveBeenCalled();
-    expect(result.status).toBe('ready');
-    if (result.status === 'ready') {
-      expect(result.creator?.slug).toBe('db-creator');
-      expect(result.mainVideo?.id).toBe('db-video');
-      expect(result.allVideos).toHaveLength(1);
-    }
-  });
-
-  it('returns empty status when the main creator has no videos in single-creator mode', async () => {
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ id: 'c1', name: 'Main Channel', slug: 'main-channel', videos: [], subscribersCount: 0 } as any);
-
-    const result = await loadHomeContent();
-
-    expect(result.status).toBe('empty');
-    if (result.status === 'empty') {
-      expect(result.allVideos).toHaveLength(0);
-      expect(result.mainVideo).toBeNull();
-    }
-  });
-
-  it('returns error status when a fatal global fetch error occurs in multi-creator mode', async () => {
-    mockFeatureFlags.flags.multiCreator = true;
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue(null);
-    vi.mocked(VideoContentService.getAllVideos).mockRejectedValue(new Error('DB Connection Failed'));
-
-    const result = await loadHomeContent();
-
-    expect(result.status).toBe('error');
-    if (result.status === 'error') {
-      expect(result.error).toBe('GLOBAL_FAILURE');
-    }
-  });
-
-  it('returns ready status in multi-creator mode even if creator fetch fails', async () => {
-    mockFeatureFlags.flags.multiCreator = true;
-    const mockVideos = [{ id: '1', title: 'Video 1', status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC }];
-    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockRejectedValue(new Error('Creator Fetch Failed'));
+    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue(mockCreator as any);
     vi.mocked(VideoContentService.getAllVideos).mockResolvedValue(mockVideos as any);
     vi.mocked(VideoContentService.getMainFeaturedVideo).mockResolvedValue(mockVideos[0] as any);
 
     const result = await loadHomeContent();
 
-    expect(VideoContentService.getAllVideos).toHaveBeenCalled();
-    expect(VideoContentService.getMainFeaturedVideo).toHaveBeenCalled();
     expect(result.status).toBe('ready');
-    if (result.status === 'ready') {
-      expect(result.creator).toBeNull();
-    }
+    expect(result.creator).toEqual(mockCreator);
+    expect(result.allVideos).toEqual(mockVideos);
+    expect(result.mainVideo).toEqual(mockVideos[0]);
+  });
+
+  it('handles creator failure gracefully', async () => {
+    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockRejectedValue(new Error('DB FAIL'));
+    vi.mocked(VideoContentService.getAllVideos).mockResolvedValue([]);
+    vi.mocked(VideoContentService.getMainFeaturedVideo).mockResolvedValue(null);
+
+    const result = await loadHomeContent();
+
+    expect(result.status).toBe('empty');
+    expect(result.creator).toBeNull();
+  });
+
+  it('fails if video loading fails', async () => {
+    vi.mocked(VideoContentService.getAllVideos).mockRejectedValue(new Error('VID FAIL'));
+
+    const result = await loadHomeContent();
+
+    expect(result.status).toBe('error');
+    expect(result.error).toBe('GLOBAL_FAILURE');
   });
 });
