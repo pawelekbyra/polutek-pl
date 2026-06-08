@@ -67,6 +67,8 @@ Upload/transcoding pipeline jest poza zakresem prywatnej bety. Beta dopuszcza wy
 - Clerk auth i webhook
 - Stripe checkout/webhook/refund/dispute handling
 - Vercel Blob / zewnętrzne media przez bezpieczny proxy endpoint
+- cloudflare dla filmkow *ai wpisz tu najlepsze rozwiazanie
+- vercel 
 - Resend email templates
 - Tailwind CSS
 - Vitest unit tests
