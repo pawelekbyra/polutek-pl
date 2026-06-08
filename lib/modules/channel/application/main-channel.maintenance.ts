@@ -1,4 +1,4 @@
-import { VideoStatus } from '@prisma/client';
+import { VideoStatus, Prisma, PrismaClient } from '@prisma/client';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { flags } from '@/lib/feature-flags';
@@ -21,7 +21,7 @@ export interface MainChannelSetupPreview {
 export class MainChannelMaintenance {
   static async previewMainChannelSetup(ctx: AppContext): Promise<MainChannelSetupPreview> {
     const slug = flags.mainCreatorSlug;
-    const mainChannel = slug ? await ctx.prisma.creator.findUnique({ where: { slug } }) : null;
+    const mainChannel = slug ? await (ctx.prisma as PrismaClient).creator.findUnique({ where: { slug } }) : null;
     const mainChannelId = mainChannel?.id || null;
 
     const [
@@ -35,20 +35,20 @@ export class MainChannelMaintenance {
       approvedCount,
       totalCreators,
     ] = await Promise.all([
-      ctx.prisma.video.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      ctx.prisma.video.count({
+      (ctx.prisma as PrismaClient).video.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      (ctx.prisma as PrismaClient).video.count({
         where: {
           status: VideoStatus.PUBLISHED,
           ...(mainChannelId ? { creatorId: { not: mainChannelId } } : {})
         }
       }),
-      ctx.prisma.comment.count({ where: { creatorId: null } }),
-      ctx.prisma.comment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      ctx.prisma.payment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      ctx.prisma.subscription.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      ctx.prisma.creator.count({ where: { isPrimary: true } }),
-      ctx.prisma.creator.count({ where: { isApproved: true } }),
-      ctx.prisma.creator.count(),
+      (ctx.prisma as PrismaClient).comment.count({ where: { creatorId: null } }),
+      (ctx.prisma as PrismaClient).comment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      (ctx.prisma as PrismaClient).payment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      (ctx.prisma as PrismaClient).subscription.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      (ctx.prisma as PrismaClient).creator.count({ where: { isPrimary: true } }),
+      (ctx.prisma as PrismaClient).creator.count({ where: { isApproved: true } }),
+      (ctx.prisma as PrismaClient).creator.count(),
     ]);
 
     return {
@@ -66,48 +66,58 @@ export class MainChannelMaintenance {
     };
   }
 
-  static async applyMainChannelSetup(ctx: AppContext, adminUserId: string, confirmationPhrase: string) {
+  static async applyMainChannelSetup(ctx: AppContext, confirmationPhrase: string) {
     const EXPECTED_PHRASE = "CONFIRM SETUP MAIN CHANNEL";
     if (confirmationPhrase !== EXPECTED_PHRASE) {
         throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
     }
 
+    if (ctx.actor.type !== 'admin') {
+        throw new Error("Only admins can perform main channel setup");
+    }
+
     const slug = flags.mainCreatorSlug;
     if (!slug) throw new Error("MAIN_CREATOR_SLUG not configured");
 
-    let mainChannel = await ctx.prisma.creator.findUnique({ where: { slug } });
+    const result = await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
+        let mainChannel = await tx.creator.findUnique({ where: { slug } });
 
-    if (!mainChannel) {
-        const totalCreators = await ctx.prisma.creator.count();
-        if (totalCreators > 0) {
-            throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
+        if (!mainChannel) {
+            const totalCreators = await tx.creator.count();
+            if (totalCreators > 0) {
+                throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
+            }
+
+            mainChannel = await tx.creator.create({
+                data: {
+                    userId: (ctx.actor as any).userId as string,
+                    slug,
+                    name: MAIN_CREATOR_NAME,
+                    isApproved: true,
+                    isPrimary: true,
+                }
+            });
         }
 
-        mainChannel = await ctx.prisma.creator.create({
-            data: {
-                userId: adminUserId,
-                slug,
-                name: MAIN_CREATOR_NAME,
-                isApproved: true,
-                isPrimary: true,
-            }
+        await this.applyPrimaryRepairInternal(tx, mainChannel.id);
+        await this.applyOwnershipRepairInternal(tx, mainChannel.id);
+
+        await recordAuditEvent({ ...ctx, prisma: tx }, {
+            action: 'MAIN_CHANNEL_SETUP_APPLIED',
+            targetType: 'CREATOR',
+            targetId: mainChannel.id,
+            metadata: { slug: mainChannel.slug }
         });
-    }
 
-    await this.applyPrimaryRepair(ctx, mainChannel.id, "CONFIRM PRIMARY REPAIR");
-    await this.applyOwnershipRepair(ctx, mainChannel.id, "CONFIRM OWNERSHIP REPAIR");
-
-    await recordAuditEvent(ctx, {
-        action: 'MAIN_CHANNEL_SETUP_APPLIED',
-        targetType: 'CREATOR',
-        targetId: mainChannel.id,
-        metadata: { slug: mainChannel.slug }
+        return {
+            mainChannelId: mainChannel.id,
+            slug: mainChannel.slug
+        };
     });
 
     return {
         action: 'MAIN_CHANNEL_SETUP_APPLIED',
-        mainChannelId: mainChannel.id,
-        slug: mainChannel.slug
+        ...result
     };
   }
 
@@ -117,42 +127,51 @@ export class MainChannelMaintenance {
         throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
     }
 
+    if (ctx.actor.type !== 'admin') {
+        throw new Error("Only admins can perform ownership repair");
+    }
+
+    const result = await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
+        const stats = await this.applyOwnershipRepairInternal(tx, mainChannelId);
+
+        await recordAuditEvent({ ...ctx, prisma: tx }, {
+            action: 'MAIN_CHANNEL_OWNERSHIP_REPAIR',
+            targetType: 'CREATOR',
+            targetId: mainChannelId,
+            metadata: stats
+        });
+
+        return stats;
+    });
+
+    return result;
+  }
+
+  private static async applyOwnershipRepairInternal(tx: Prisma.TransactionClient, mainChannelId: string) {
     const [vCount, cCount, pCount, sCount] = await Promise.all([
-      ctx.prisma.video.updateMany({
+      tx.video.updateMany({
         where: { creatorId: { not: mainChannelId } },
         data: { creatorId: mainChannelId },
       }),
-      ctx.prisma.comment.updateMany({
+      tx.comment.updateMany({
         where: { OR: [{ creatorId: null }, { creatorId: { not: mainChannelId } }] },
         data: { creatorId: mainChannelId },
       }),
-      ctx.prisma.payment.updateMany({
+      tx.payment.updateMany({
         where: { creatorId: { not: mainChannelId } },
         data: { creatorId: mainChannelId },
       }),
-      ctx.prisma.subscription.updateMany({
+      tx.subscription.updateMany({
         where: { creatorId: { not: mainChannelId } },
         data: { creatorId: mainChannelId },
       }),
     ]);
 
-    await recordAuditEvent(ctx, {
-        action: 'MAIN_CHANNEL_OWNERSHIP_REPAIR',
-        targetType: 'CREATOR',
-        targetId: mainChannelId,
-        metadata: {
-            videosRepaired: vCount.count,
-            commentsRepaired: cCount.count,
-            paymentsRepaired: pCount.count,
-            subscriptionsRepaired: sCount.count,
-        }
-    });
-
     return {
-      videosRepaired: vCount.count,
-      commentsRepaired: cCount.count,
-      paymentsRepaired: pCount.count,
-      subscriptionsRepaired: sCount.count,
+        videosRepaired: vCount.count,
+        commentsRepaired: cCount.count,
+        paymentsRepaired: pCount.count,
+        subscriptionsRepaired: sCount.count,
     };
   }
 
@@ -162,22 +181,32 @@ export class MainChannelMaintenance {
         throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
     }
 
-    await ctx.prisma.creator.updateMany({
+    if (ctx.actor.type !== 'admin') {
+        throw new Error("Only admins can perform primary repair");
+    }
+
+    await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
+        await this.applyPrimaryRepairInternal(tx, mainChannelId);
+
+        await recordAuditEvent({ ...ctx, prisma: tx }, {
+            action: 'MAIN_CHANNEL_PRIMARY_REPAIR',
+            targetType: 'CREATOR',
+            targetId: mainChannelId,
+        });
+    });
+
+    return { success: true };
+  }
+
+  private static async applyPrimaryRepairInternal(tx: Prisma.TransactionClient, mainChannelId: string) {
+    await tx.creator.updateMany({
       where: { id: { not: mainChannelId }, isPrimary: true },
       data: { isPrimary: false },
     });
 
-    await ctx.prisma.creator.update({
+    await tx.creator.update({
       where: { id: mainChannelId },
       data: { isPrimary: true, isApproved: true },
     });
-
-    await recordAuditEvent(ctx, {
-        action: 'MAIN_CHANNEL_PRIMARY_REPAIR',
-        targetType: 'CREATOR',
-        targetId: mainChannelId,
-    });
-
-    return { success: true };
   }
 }

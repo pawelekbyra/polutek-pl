@@ -1,28 +1,25 @@
-import { MainChannelMaintenance as NewMainChannelMaintenance } from '@/lib/modules/channel';
-import { createAppContext } from '@/lib/modules/shared/app-context';
-import { prisma } from '@/lib/prisma';
+import { MainChannelMaintenance as NewMaintenance } from "../modules/channel/application/main-channel.maintenance";
+import { createAppContext } from "../modules/shared/app-context";
 
-/**
- * @deprecated Use @/lib/modules/channel instead.
- */
+/** @deprecated Use @/lib/modules/channel/application/main-channel.maintenance */
 export class MainChannelMaintenance {
-  static async previewMainChannelSetup() {
-    const ctx = createAppContext({ prisma });
-    return await NewMainChannelMaintenance.previewMainChannelSetup(ctx);
+  static async previewMainChannelSetup(userId?: string) {
+    const ctx = createAppContext({ actor: userId ? { type: 'admin', userId } : { type: 'guest' } });
+    return NewMaintenance.previewMainChannelSetup(ctx);
   }
 
   static async applyMainChannelSetup(adminUserId: string, confirmationPhrase: string) {
-    const ctx = createAppContext({ prisma, userId: adminUserId });
-    return await NewMainChannelMaintenance.applyMainChannelSetup(ctx, adminUserId, confirmationPhrase);
+    const ctx = createAppContext({ actor: { type: 'admin', userId: adminUserId } });
+    return NewMaintenance.applyMainChannelSetup(ctx, confirmationPhrase);
   }
 
-  static async applyOwnershipRepair(mainChannelId: string, confirmationPhrase: string) {
-    const ctx = createAppContext({ prisma });
-    return await NewMainChannelMaintenance.applyOwnershipRepair(ctx, mainChannelId, confirmationPhrase);
+  static async applyOwnershipRepair(adminUserId: string, mainChannelId: string, confirmationPhrase: string) {
+    const ctx = createAppContext({ actor: { type: 'admin', userId: adminUserId } });
+    return NewMaintenance.applyOwnershipRepair(ctx, mainChannelId, confirmationPhrase);
   }
 
-  static async applyPrimaryRepair(mainChannelId: string, confirmationPhrase: string) {
-    const ctx = createAppContext({ prisma });
-    return await NewMainChannelMaintenance.applyPrimaryRepair(ctx, mainChannelId, confirmationPhrase);
+  static async applyPrimaryRepair(adminUserId: string, mainChannelId: string, confirmationPhrase: string) {
+    const ctx = createAppContext({ actor: { type: 'admin', userId: adminUserId } });
+    return NewMaintenance.applyPrimaryRepair(ctx, mainChannelId, confirmationPhrase);
   }
 }

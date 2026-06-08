@@ -7,8 +7,9 @@ export interface AppContext {
   actor: Actor;
   now: () => Date;
   requestId?: string;
-  // userId/role are deprecated in favor of actor
+  /** @deprecated use ctx.actor */
   userId?: string;
+  /** @deprecated use ctx.actor */
   role?: string;
 }
 

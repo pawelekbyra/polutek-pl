@@ -2,16 +2,9 @@ import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { getCorrelationId } from "./utils/correlation";
 
-export class AppError extends Error {
-  constructor(
-    public message: string,
-    public statusCode: number = 400,
-    public code?: string
-  ) {
-    super(message);
-    this.name = 'AppError';
-  }
-}
+import { AppError } from "@/lib/modules/shared/app-error";
+
+export { AppError };
 
 export function handleApiError(error: unknown) {
   const requestId = getCorrelationId();

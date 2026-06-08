@@ -1,29 +1,25 @@
-import { getMainChannel, getRequiredMainChannel, MainChannelMaintenance as NewMainChannelMaintenance, MainChannelNotFoundError as NewMainChannelNotFoundError, MainChannelNotApprovedError as NewMainChannelNotApprovedError, MainChannelNotPrimaryError as NewMainChannelNotPrimaryError } from '@/lib/modules/channel';
-import { createAppContext } from "@/lib/modules/shared/app-context";
-import { DbClient } from "@/lib/modules/shared/db";
-import { prisma as globalPrisma } from '@/lib/prisma';
-import { flags } from '@/lib/feature-flags';
+import { MainChannelService as NewService } from "../modules/channel/application/main-channel.service";
+import { createAppContext } from "../modules/shared/app-context";
+import { DbClient } from "../modules/shared/db";
 
-/**
- * @deprecated Use @/lib/modules/channel instead.
- * This is a temporary adapter to avoid breaking existing imports during refactoring.
- */
+/** @deprecated Use @/lib/modules/channel/application/main-channel.service */
 export class MainChannelService {
+  static async getRequired(prisma?: DbClient) {
+    const ctx = createAppContext({ prisma });
+    return NewService.getRequired(ctx);
+  }
+
+  static async getOptional(prisma?: DbClient) {
+    const ctx = createAppContext({ prisma });
+    return NewService.getOptional(ctx);
+  }
+
   static getConfiguredSlug() {
-    return flags.mainCreatorSlug || null;
-  }
-
-  static async getOptional(db: DbClient = globalPrisma) {
-    const ctx = createAppContext({ prisma: db });
-    return await getMainChannel(ctx);
-  }
-
-  static async getRequired(db: DbClient = globalPrisma) {
-    const ctx = createAppContext({ prisma: db });
-    return await getRequiredMainChannel(ctx);
+      return NewService.getConfiguredSlug();
   }
 
   static async getPublicRequired() {
-    return await this.getRequired();
+      const ctx = createAppContext();
+      return NewService.getRequired(ctx);
   }
 }
