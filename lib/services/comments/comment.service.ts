@@ -19,6 +19,7 @@ const commentSelect = {
     repliesCount: true,
     reportsCount: true,
     pinnedAt: true,
+    pinnedById: true,
     editedAt: true,
     deletedAt: true,
     deletedReason: true,
