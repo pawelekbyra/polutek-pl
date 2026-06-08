@@ -35,6 +35,8 @@
     "env:validate:prod": "tsx scripts/validate-env.ts --mode=production",
     "quality:strict-escapes": "tsx scripts/check-strict-escapes.ts",
     "quality:hotspots": "tsx scripts/check-hotspots.ts",
+    "quality:architecture-boundaries": "tsx scripts/check-architecture.ts",
+    "quality": "npm run quality:architecture-boundaries && npm run typecheck && npm test -- --run",
     "e2e": "tsx scripts/validate-e2e-env.ts && playwright test",
     "e2e:list": "playwright test --list",
     "e2e:install": "playwright install chromium"

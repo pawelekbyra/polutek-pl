@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
-import { buildPublicVideoWhere } from "@/lib/services/content.service";
-import { getAllowedMediaHosts } from "@/lib/blob";
+import { getAllowedMediaHosts, visiblePublishedAtFilter } from "@/lib/modules/media";
+import { getMainChannel } from "@/lib/modules/channel";
 
 export interface HealthCheckResult {
   ok: boolean;
@@ -30,7 +30,6 @@ export async function checkHealth(
     return { ok: true };
   }
 
-  // Use ctx.prisma instead of global prisma
   await (ctx.prisma as any).$queryRaw`SELECT 1`;
 
   const approvedCreatorExists = await ctx.prisma.creator.findFirst({
@@ -40,7 +39,16 @@ export async function checkHealth(
     where: { isPrimary: true, isApproved: true },
   });
 
-  const publicWhere = await buildPublicVideoWhere();
+  const mainChannel = await getMainChannel(ctx);
+  const publicWhere = {
+    status: VideoStatus.PUBLISHED,
+    creatorId: mainChannel?.id || 'none',
+    creator: {
+      isApproved: true,
+      isPrimary: true,
+    },
+    ...visiblePublishedAtFilter(ctx.now()),
+  };
 
   const [
     allVideosCount,

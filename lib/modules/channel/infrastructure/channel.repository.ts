@@ -1,4 +1,4 @@
-import { DbClient } from "@/lib/modules/shared/app-context";
+import { DbClient } from "@/lib/modules/shared/db";
 import { flags } from "@/lib/feature-flags";
 
 export class ChannelRepository {

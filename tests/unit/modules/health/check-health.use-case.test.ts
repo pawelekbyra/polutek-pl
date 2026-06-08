@@ -1,12 +1,10 @@
+import { getMainChannel } from "@/lib/modules/channel";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkHealth } from '@/lib/modules/health';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
-  MainChannelService: {
-    getOptional: vi.fn(),
-  }
+vi.mock("@/lib/modules/channel", () => ({
+  getMainChannel: vi.fn(),
 }));
 
 describe('checkHealth Use Case', () => {
@@ -21,15 +19,15 @@ describe('checkHealth Use Case', () => {
     },
   };
 
-  const ctx = createAppContext({
-    prisma: mockPrisma as any,
-    now: new Date('2024-01-01T00:00:00Z'),
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.HEALTHCHECK_TOKEN = 'test-token';
-    vi.mocked(MainChannelService.getOptional).mockResolvedValue({ id: 'main-channel-id' } as any);
+    vi.mocked(getMainChannel).mockResolvedValue({ id: 'main-channel-id' } as any);
+  });
+
+  const ctx = createAppContext({
+    prisma: mockPrisma as any,
+    actor: { type: 'guest' },
   });
 
   it('returns simple ok if token is missing or incorrect', async () => {

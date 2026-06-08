@@ -1,5 +1,6 @@
 import { getMainChannel, getRequiredMainChannel, MainChannelMaintenance as NewMainChannelMaintenance, MainChannelNotFoundError as NewMainChannelNotFoundError, MainChannelNotApprovedError as NewMainChannelNotApprovedError, MainChannelNotPrimaryError as NewMainChannelNotPrimaryError } from '@/lib/modules/channel';
-import { createAppContext, DbClient } from '@/lib/modules/shared/app-context';
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { DbClient } from "@/lib/modules/shared/db";
 import { prisma as globalPrisma } from '@/lib/prisma';
 import { flags } from '@/lib/feature-flags';
 
