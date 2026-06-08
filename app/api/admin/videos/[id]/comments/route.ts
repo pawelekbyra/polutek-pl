@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { CommentService } from '@/lib/services/comments/comment.service';
 import { handleApiError } from '@/lib/errors';
+import { requireAdminForApi } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +12,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { userId } = await auth();
-  const canModerate = await CommentAccessService.canModerate(userId, params.id);
-  if (!canModerate) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_VIDEO_COMMENTS");
+  if (response) return response;
+
+  const userId = adminUserId;
 
   try {
     const { searchParams } = new URL(request.url);

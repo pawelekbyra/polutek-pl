@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { Webhook } from 'svix';
 
 // Resend webhook types based on their documentation
 type ResendWebhookPayload = {
@@ -23,22 +24,46 @@ type ResendWebhookPayload = {
 };
 
 export async function POST(req: NextRequest) {
-  // Webhook signature verification
+  // Webhook signature verification using svix (HMAC-SHA256)
   const secret = process.env.RESEND_WEBHOOK_SECRET;
-  const receivedSecret = req.headers.get('x-resend-webhook-secret');
 
   if (process.env.NODE_ENV === 'production' && !secret) {
     logger.error("[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.");
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
 
-  if (!secret || receivedSecret !== secret) {
-    logger.warn("[ResendWebhook] Unauthorized access attempt - invalid or missing secret.");
+  // Get headers for svix verification
+  const svixId = req.headers.get('svix-id');
+  const svixTimestamp = req.headers.get('svix-timestamp');
+  const svixSignature = req.headers.get('svix-signature');
+
+  // Fallback to legacy header for dev/staging if svix headers are missing and secret matches
+  const legacySecret = req.headers.get('x-resend-webhook-secret');
+
+  let payload: ResendWebhookPayload;
+  const rawBody = await req.text();
+
+  if (svixId && svixTimestamp && svixSignature && secret) {
+    try {
+      const wh = new Webhook(secret);
+      payload = wh.verify(rawBody, {
+        'svix-id': svixId,
+        'svix-timestamp': svixTimestamp,
+        'svix-signature': svixSignature,
+      }) as ResendWebhookPayload;
+    } catch (err) {
+      logger.warn("[ResendWebhook] svix verification failed", err);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+  } else if (secret && legacySecret === secret) {
+    // Allow legacy verification if explicitly configured and matching
+    payload = JSON.parse(rawBody) as ResendWebhookPayload;
+  } else {
+    logger.warn("[ResendWebhook] Unauthorized access attempt - invalid or missing signature/secret.");
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const payload = (await req.json()) as ResendWebhookPayload;
     const { type, data } = payload;
     const resendEmailId = data.email_id;
 

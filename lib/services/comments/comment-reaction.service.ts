@@ -49,9 +49,15 @@ export class CommentReactionService {
           await tx.comment.update({
             where: { id: commentId },
             data: {
-                likesCount: comment.likesCount > 0 ? { decrement: 1 } : 0,
-                score: comment.score > 0 ? { decrement: 1 } : 0
+                likesCount: { decrement: 1 },
+                score: { decrement: 1 }
             }
+          });
+
+          // Double check to avoid underflow
+          await tx.comment.updateMany({
+              where: { id: commentId, likesCount: { lt: 0 } },
+              data: { likesCount: 0, score: 0 }
           });
       }
 

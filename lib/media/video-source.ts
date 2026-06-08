@@ -72,8 +72,8 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
     return {
       kind: 'hls',
       label: 'HLS (.m3u8)',
-      playbackUrl: rawUrl,
-      needsProxy: false,
+      playbackUrl: proxiedUrl || rawUrl,
+      needsProxy: !!proxiedUrl,
     };
   }
 
@@ -81,8 +81,8 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
     return {
       kind: 'dash',
       label: 'MPEG-DASH (.mpd)',
-      playbackUrl: rawUrl,
-      needsProxy: false,
+      playbackUrl: proxiedUrl || rawUrl,
+      needsProxy: !!proxiedUrl,
     };
   }
 

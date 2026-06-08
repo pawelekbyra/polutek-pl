@@ -86,6 +86,18 @@ export class AccessPolicy {
         }
     }
 
+    // Check if user is deleted first
+    if (userId) {
+        const actor = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true, isDeleted: true }
+        });
+        if (actor?.isDeleted) return { allowed: false, reason: "DELETED" };
+
+        // Admins have access to everything (including Drafts/Archives if they reached here)
+        if (actor?.role === 'ADMIN') return { allowed: true };
+    }
+
     // Public videos are always allowed
     if (video.tier === AccessTier.PUBLIC) return { allowed: true };
 
@@ -97,11 +109,6 @@ export class AccessPolicy {
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
-
-    if (user?.isDeleted) return { allowed: false, reason: "DELETED" };
-
-    // Admins have access to everything
-    if (user?.role === 'ADMIN') return { allowed: true };
 
     // Patron tier uses User.isPatron as the single source of truth (admins are explicitly allowed above).
     if (video.tier === AccessTier.PATRON) {

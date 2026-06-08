@@ -103,6 +103,7 @@ export class PlaybackService {
         select: { role: true }
     }).then(u => u?.role === 'ADMIN') : false;
 
+    // Issue 7: Create session only if source is valid and plan is actually being returned
     const session = await prisma.videoPlaybackSession.create({
         data: {
             videoId,

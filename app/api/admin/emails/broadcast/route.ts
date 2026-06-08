@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { Resend } from 'resend';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { APP_NAME } from '@/lib/constants';
 import { requireAdminForApi } from '@/lib/auth-utils';
@@ -20,7 +21,24 @@ export async function POST(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_EMAILS_BROADCAST");
   if (response) return response;
 
-  const { subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, isTest, testEmail, manualEmails } = await req.json();
+  const body = await req.json();
+  const schema = z.object({
+      subjectPl: z.string().min(1),
+      htmlPl: z.string().min(1),
+      subjectEn: z.string().min(1),
+      htmlEn: z.string().min(1),
+      recipientGroup: z.enum(['ALL', 'SUBSCRIBERS', 'PATRONS', 'MANUAL']).optional(),
+      isTest: z.boolean().optional(),
+      testEmail: z.string().email().optional().nullable(),
+      manualEmails: z.string().optional().nullable()
+  });
+
+  const validated = schema.safeParse(body);
+  if (!validated.success) {
+      return NextResponse.json({ error: 'Invalid data', details: validated.error.flatten() }, { status: 400 });
+  }
+
+  const { subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, isTest, testEmail, manualEmails } = validated.data;
 
   if (!subjectPl || !htmlPl || !subjectEn || !htmlEn) {
     return NextResponse.json({ error: 'Missing content' }, { status: 400 });

@@ -200,13 +200,20 @@ export class EmailService {
     const batchSize = 50;
     const recipients = broadcast.recipients;
 
+    // Issue 20: Optimize preferences check - fetch all once
+    const allEmails = recipients.map(r => r.email);
+    const allPrefs = await prisma.emailPreference.findMany({
+        where: { email: { in: allEmails } }
+    });
+    const prefMap = new Map(allPrefs.map(p => [p.email, p.marketingEmails]));
+
     for (let i = 0; i < recipients.length; i += batchSize) {
         const batch = recipients.slice(i, i + batchSize);
 
         await Promise.all(batch.map(async (recipient) => {
             // Check preferences
-            const pref = await prisma.emailPreference.findUnique({ where: { email: recipient.email } });
-            if (pref && !pref.marketingEmails) {
+            const marketingEmailsEnabled = prefMap.get(recipient.email) ?? true;
+            if (!marketingEmailsEnabled) {
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },
                     data: { status: 'SKIPPED', error: 'User opted out of marketing emails' }

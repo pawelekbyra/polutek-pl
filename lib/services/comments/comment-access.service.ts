@@ -4,8 +4,8 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 
 export class CommentAccessService {
   static async canViewComments(userId: string | null | undefined, videoId: string) {
-    // We allow everyone to read comments, even on patron-only videos
-    return true;
+    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    return decision.allowed;
   }
 
   static async canComment(userId: string | null | undefined, videoId: string) {
