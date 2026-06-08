@@ -105,6 +105,7 @@ export function SidebarPlaylist({
             videoId={video.id}
             requiredTier={video.tier}
             variant="thumbnail"
+            hasAccess={hasAccess}
           >
               <div className="relative w-full h-full">
                   {video.thumbnailUrl ? (

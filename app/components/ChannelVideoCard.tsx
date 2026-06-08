@@ -72,6 +72,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                         isMainFeatured={video.isMainFeatured}
                         variant="thumbnail"
                         onAccessLoad={setServerHasAccess}
+                        hasAccess={hasAccess}
                     >
                         <div className="relative w-full h-full">
                             <VideoPlayer video={video} variant="thumbnail" />

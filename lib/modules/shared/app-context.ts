@@ -15,12 +15,13 @@ export interface AppContext {
 
 export function createAppContext(overrides: Partial<AppContext> = {}): AppContext {
   const actor = overrides.actor || { type: 'guest' };
+  const { prisma, ...rest } = overrides;
 
   return {
-    prisma: overrides.prisma || defaultPrisma,
+    prisma: prisma || defaultPrisma,
     actor,
     now: overrides.now || (() => new Date()),
     userId: actor.type !== 'guest' && 'userId' in actor ? actor.userId : undefined,
-    ...overrides,
+    ...rest,
   };
 }

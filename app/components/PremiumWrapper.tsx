@@ -38,6 +38,8 @@ interface PremiumWrapperProps {
   isMainFeatured?: boolean;
   variant?: 'default' | 'thumbnail';
   onAccessLoad?: (hasAccess: boolean) => void;
+  /** Optional pre-calculated access state to avoid unnecessary fetches (useful for thumbnails) */
+  hasAccess?: boolean;
 }
 
 export default function PremiumWrapper({
@@ -46,13 +48,14 @@ export default function PremiumWrapper({
   requiredTier: initialTier,
   isMainFeatured,
   variant = 'default',
-  onAccessLoad
+  onAccessLoad,
+  hasAccess: providedHasAccess
 }: PremiumWrapperProps) {
   const { userId, isLoaded, orgRole } = useAuth();
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [internalHasAccess, setInternalHasAccess] = useState<boolean>(false);
   const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
   const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(variant !== 'thumbnail');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -65,8 +68,14 @@ export default function PremiumWrapper({
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
   const checkAccess = useCallback(async () => {
+    // Skip fetching if we're in thumbnail mode or have pre-provided access
+    if (variant === 'thumbnail' || providedHasAccess !== undefined) {
+      setIsLoading(false);
+      return;
+    }
+
     if (isLoaded && !userId && !isPublic) {
-      setHasAccess(false);
+      setInternalHasAccess(false);
       setPlaybackPlan(null);
       setIsLoading(false);
       return;
@@ -79,13 +88,13 @@ export default function PremiumWrapper({
       const data = await response.json();
 
       if (!response.ok) {
-        setHasAccess(false);
+        setInternalHasAccess(false);
         setPlaybackPlan(null);
         if (data.requiredTier) setDbTier(data.requiredTier);
         return;
       }
 
-      setHasAccess(data.hasAccess);
+      setInternalHasAccess(data.hasAccess);
       onAccessLoad?.(data.hasAccess);
       if (data.hasAccess) {
         setPlaybackPlan(data);
@@ -94,16 +103,18 @@ export default function PremiumWrapper({
       setFetchError(null);
     } catch (error) {
       logger.error("Error checking video access:", error);
-      setHasAccess(false);
+      setInternalHasAccess(false);
       setFetchError("SOURCE_ERROR");
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, userId, isPublic, videoId, onAccessLoad]);
+  }, [isLoaded, userId, isPublic, videoId, onAccessLoad, variant, providedHasAccess]);
 
   useEffect(() => {
-    checkAccess();
-  }, [checkAccess]);
+    if (variant !== 'thumbnail' && providedHasAccess === undefined) {
+      checkAccess();
+    }
+  }, [checkAccess, variant, providedHasAccess]);
 
   useEffect(() => {
     if (!playbackPlan?.source?.expiresAt) return;
@@ -133,8 +144,12 @@ export default function PremiumWrapper({
     );
   }
 
+  const resolvedHasAccess = providedHasAccess !== undefined
+    ? providedHasAccess
+    : (isPublic || isUnlockedByAuth || internalHasAccess);
+
   const contextValue = {
-    hasAccess: isPublic || isUnlockedByAuth || hasAccess,
+    hasAccess: resolvedHasAccess,
     playbackPlan,
     isLoading,
     effectiveTier,

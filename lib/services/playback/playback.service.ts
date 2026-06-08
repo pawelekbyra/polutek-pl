@@ -103,6 +103,26 @@ export class PlaybackService {
 
     const sourceInfo = getVideoSourceInfo(sourceUrl, `/api/media/${video.id}`);
 
+    // HLS/DASH is currently experimental and disabled in production
+    // because manifest/segment proxying is not yet implemented.
+    const isExperimentalDisabled = (sourceInfo.kind === 'hls' || sourceInfo.kind === 'dash') &&
+                                   process.env.NODE_ENV === 'production' &&
+                                   process.env.ENABLE_EXPERIMENTAL_MEDIA !== 'true';
+
+    if (isExperimentalDisabled) {
+        return {
+            videoId,
+            canPlay: false,
+            access: { allowed: true },
+            player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: video.thumbnailUrl, title: video.title },
+            diagnostics: {
+                warnings: ["HLS/DASH is experimental and currently disabled in production. Use MP4/direct path."],
+                sourceConfidence: "LOW"
+            },
+            tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
+        };
+    }
+
     const isAdminPreview = userId ? await prisma.user.findUnique({
         where: { id: userId },
         select: { role: true }

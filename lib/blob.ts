@@ -78,7 +78,8 @@ export async function getGatedBlobResponse(
   videoId: string,
   blobUrl: string,
   headers?: Headers,
-  prefetchedVideo?: AccessVideo | null
+  prefetchedVideo?: AccessVideo | null,
+  method: string = 'GET'
 ) {
   const decision = await AccessPolicy.canViewVideo(userId, videoId, prefetchedVideo);
 
@@ -119,30 +120,70 @@ export async function getGatedBlobResponse(
     }
 
     const targetHost = new URL(targetUrl).hostname.toLowerCase();
-    logger.info(`[MediaProxy] Fetching configured media host: ${targetHost} (Range: ${range?.value || 'none'})`);
+    logger.info(`[MediaProxy] [${method}] Fetching configured media host: ${targetHost} (Range: ${range?.value || 'none'})`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     const response = await fetch(targetUrl, {
-        headers: range?.value ? { Range: range.value } : {}
+        method,
+        headers: range?.value ? { Range: range.value } : {},
+        signal: controller.signal,
+        redirect: 'manual', // Explicitly handle redirects
     });
 
+    clearTimeout(timeout);
+
+    // Handle redirects manually to re-validate host
+    if (response.status === 301 || response.status === 302 || response.status === 307 || response.status === 308) {
+        const location = response.headers.get('Location');
+        if (!location) {
+            return new NextResponse('Redirection without location', { status: 502 });
+        }
+
+        // Safety: ensure redirected URL is still allowed
+        if (!MediaPolicy.isAllowedMediaUrl(location, process.env)) {
+            logger.error(`[MediaProxy] Blocked unauthorized redirect host: ${location}`);
+            return new NextResponse('Unauthorized Redirect Host', { status: 403 });
+        }
+
+        // For simplicity in this iteration, we don't follow recursively here.
+        // We could, but it's safer to just point to the final URL if it's already signed/allowed.
+        // Or we could re-call getGatedBlobResponse recursively with a depth limit.
+        return new NextResponse('Redirected', { status: 502 }); // Better to fail than to leak or SSRF blindly
+    }
+
     if (!response.ok && response.status !== 206) {
-        logger.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText} from ${targetHost}`);
-        recordAlert('media_proxy.upstream_error', { videoId, status: response.status, host: targetHost });
-      return new NextResponse('Error fetching content', { status: response.status });
+        if (response.status === 416) {
+             const size = response.headers.get('Content-Length');
+             return new NextResponse('Requested Range Not Satisfiable', {
+                status: 416,
+                headers: { 'Content-Range': `bytes */${size || '*'}` }
+             });
+        }
+
+        logger.error(`[MediaProxy] Upstream media error: ${response.status} ${response.statusText}`);
+        recordAlert('media_proxy.upstream_error', { videoId, status: response.status });
+        return new NextResponse('Error fetching content', { status: response.status });
     }
 
     const resHeaders = new Headers();
-    ['Content-Type', 'Content-Length', 'Content-Range', 'Accept-Ranges'].forEach(h => {
+    ['Content-Type', 'Content-Length', 'Content-Range', 'Accept-Ranges', 'ETag', 'Last-Modified'].forEach(h => {
         const val = response.headers.get(h);
         if (val) resHeaders.set(h, val);
     });
     resHeaders.set('Cache-Control', 'private, no-store');
+    resHeaders.set('Vary', 'Range, Authorization');
 
-    return new NextResponse(response.body, {
+    return new NextResponse(method === 'HEAD' ? null : response.body, {
       status: response.status,
       headers: resHeaders,
     });
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+        logger.error(`[MediaProxy] Upstream timeout for ${videoId}`);
+        return new NextResponse('Gateway Timeout', { status: 504 });
+    }
     recordAlert('media_proxy.fetch_exception', { videoId });
     logger.error('Error accessing gated media:', {
       name: error instanceof Error ? error.name : 'UnknownError',

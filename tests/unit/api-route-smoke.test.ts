@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
-import { GET as getMedia } from '@/app/api/media/[...path]/route';
+import { GET as getMedia, HEAD as headMedia } from '@/app/api/media/[...path]/route';
 import { POST as createCheckoutIntent } from '@/app/api/checkout/create-intent/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -59,6 +59,17 @@ describe('API route smoke checks', () => {
 
     const req = new NextRequest('http://localhost/api/media/missing-video');
     const res = await getMedia(req, { params: { path: ['missing-video'] } });
+
+    expect(res.status).toBe(404);
+    expect(res.status).not.toBe(500);
+  });
+
+  it('/api/media supports HEAD requests', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(prisma.video.findUnique).mockResolvedValue(null);
+
+    const req = new NextRequest('http://localhost/api/media/missing-video', { method: 'HEAD' });
+    const res = await headMedia(req, { params: { path: ['missing-video'] } });
 
     expect(res.status).toBe(404);
     expect(res.status).not.toBe(500);

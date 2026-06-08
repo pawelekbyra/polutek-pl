@@ -66,12 +66,12 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
   }
 
   const pathname = url.pathname.toLowerCase();
-  // HLS/DASH manifests are allowed from explicitly configured media hosts.
-  // Access is checked before this URL is returned to the player.
+  // HLS/DASH manifests require manifest rewriting and segment proxying
+  // which is not yet implemented for production.
   if (pathname.endsWith('.m3u8')) {
     return {
       kind: 'hls',
-      label: 'HLS (.m3u8)',
+      label: 'HLS (.m3u8) [EXPERIMENTAL]',
       playbackUrl: proxiedUrl || rawUrl,
       needsProxy: !!proxiedUrl,
     };
@@ -80,7 +80,7 @@ export function getVideoSourceInfo(rawUrl: string, proxiedUrl?: string): VideoSo
   if (pathname.endsWith('.mpd')) {
     return {
       kind: 'dash',
-      label: 'MPEG-DASH (.mpd)',
+      label: 'MPEG-DASH (.mpd) [EXPERIMENTAL]',
       playbackUrl: proxiedUrl || rawUrl,
       needsProxy: !!proxiedUrl,
     };

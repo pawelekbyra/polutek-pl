@@ -37,9 +37,12 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 describe('media source API security', () => {
-  it('returns an HLS playback source after access policy allows the video and host is configured', async () => {
+  it('returns an HLS playback source after access policy allows the video and host is configured (in non-production)', async () => {
     const previousAllowedMediaHosts = process.env.ALLOWED_MEDIA_HOSTS;
+    const previousNodeEnv = process.env.NODE_ENV;
     process.env.ALLOWED_MEDIA_HOSTS = 'example.com';
+    (process.env as any).NODE_ENV = 'development';
+
     vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       id: 'vid_1',
@@ -62,6 +65,37 @@ describe('media source API security', () => {
       expect(body.playbackUrl).toBe('/api/media/vid_1');
     } finally {
       process.env.ALLOWED_MEDIA_HOSTS = previousAllowedMediaHosts;
+      (process.env as any).NODE_ENV = previousNodeEnv;
+    }
+  });
+
+  it('rejects HLS/DASH in production unless explicitly enabled', async () => {
+    const previousAllowedMediaHosts = process.env.ALLOWED_MEDIA_HOSTS;
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.ALLOWED_MEDIA_HOSTS = 'example.com';
+    (process.env as any).NODE_ENV = 'production';
+
+    vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      id: 'vid_2',
+      videoUrl: 'https://example.com/stream.m3u8',
+      creator: { id: 'creator_1' },
+      tier: 'PUBLIC'
+    } as any);
+    vi.mocked(AccessPolicy.canViewVideo).mockResolvedValue({ allowed: true });
+
+    try {
+      const req = new NextRequest('http://localhost/api/media-source/vid_2');
+      const res = await GET(req, { params: { videoId: 'vid_2' } });
+
+      expect(res.status).toBe(200); // We return a valid plan but with canPlay: false
+      const body = await res.json();
+      expect(body.canPlay).toBe(false);
+      expect(body.source).toBeUndefined();
+      expect(body.diagnostics.warnings[0]).toContain('experimental');
+    } finally {
+      process.env.ALLOWED_MEDIA_HOSTS = previousAllowedMediaHosts;
+      (process.env as any).NODE_ENV = previousNodeEnv;
     }
   });
 });
