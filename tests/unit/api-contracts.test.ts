@@ -3,6 +3,7 @@ import { PATCH as languagePATCH } from '@/app/api/user/language/route';
 import { GET as subscriptionsGET, POST as subscriptionsPOST, DELETE as subscriptionsDELETE } from '@/app/api/subscriptions/route';
 import { GET as mediaSourceGET } from '@/app/api/media-source/[videoId]/route';
 import { POST as checkoutIntentPOST } from '@/app/api/checkout/create-intent/route';
+import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
@@ -36,6 +37,12 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
     },
     $transaction: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/channel/main-channel.service', () => ({
+  MainChannelService: {
+    getRequired: vi.fn(),
   },
 }));
 
@@ -115,6 +122,7 @@ describe('API Contracts', () => {
 
   describe('/api/subscriptions', () => {
     it('GET matches the documented response shape', async () => {
+      vi.mocked(MainChannelService.getRequired).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true, isPrimary: true } as any);
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
       vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
       vi.mocked(prisma.creator.findUnique).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true } as any);
@@ -136,6 +144,7 @@ describe('API Contracts', () => {
     });
 
     it('POST matches the documented response shape', async () => {
+      vi.mocked(MainChannelService.getRequired).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true, isPrimary: true } as any);
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
       vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
       vi.mocked(prisma.creator.findUnique).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true } as any);
@@ -162,6 +171,7 @@ describe('API Contracts', () => {
     });
 
     it('DELETE matches the documented response shape', async () => {
+      vi.mocked(MainChannelService.getRequired).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true, isPrimary: true } as any);
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
       vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
       vi.mocked(prisma.creator.findUnique).mockResolvedValue({ id: 'creator_1', slug: 'creator-slug', isApproved: true } as any);
