@@ -8,7 +8,13 @@ export const flags = {
   get demoFallbacks() {
     return canUseDemoFallbacks();
   },
-  mainCreatorSlug: process.env.MAIN_CREATOR_SLUG || MAIN_CREATOR_SLUG,
+  get mainCreatorSlug() {
+      const slug = process.env.MAIN_CREATOR_SLUG || MAIN_CREATOR_SLUG;
+      if (!slug && process.env.NODE_ENV === 'production') {
+          throw new Error("CRITICAL CONFIGURATION ERROR: MAIN_CREATOR_SLUG is not defined in production.");
+      }
+      return slug || null;
+  }
 };
 
 if (process.env.ENABLE_MULTI_CREATOR === "true") {
