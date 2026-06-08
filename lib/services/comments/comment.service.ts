@@ -21,7 +21,7 @@ export class CommentService {
       CommentAccessService.canModerate(userId, videoId)
     ]);
 
-    const canModerate = forceOnlyVisible ? false : canModerateReal;
+    const canModerate = canModerateReal;
     const videoCreatorId = video?.creator?.userId || null;
 
     const where: Prisma.CommentWhereInput = {
@@ -33,6 +33,7 @@ export class CommentService {
     const totalCount = await prisma.comment.count({
       where: {
         videoId,
+        parentId: null,
         status: canModerate ? undefined : CommentStatus.VISIBLE
       }
     });
@@ -114,6 +115,7 @@ export class CommentService {
       viewerCanModerate: canModerate,
       viewerCanPin: canModerate && !comment.parentId,
       isPinned: !!comment.pinnedAt,
+      isHearted: (comment as any).isHearted || false,
       repliesPreview: comment.replies?.map((r: any) => this.mapToDto(r, context)) || []
     };
   }
@@ -166,6 +168,11 @@ export class CommentService {
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });
     if (!comment || comment.authorId !== userId) throw new Error("Unauthorized");
 
+    // Issue 3: Prevent editing deleted or hidden comments
+    if (comment.status !== CommentStatus.VISIBLE) {
+        throw new Error("Cannot edit moderated or deleted comments");
+    }
+
     return await prisma.comment.update({
       where: { id: commentId },
       data: {
@@ -216,5 +223,22 @@ export class CommentService {
 
     await logCommentAction(comment.pinnedById || 'system', 'UNPIN', commentId, comment.videoId);
     return comment;
+  }
+
+  static async toggleHeart(commentId: string, moderatorId: string) {
+    const comment = await (prisma.comment as any).findUnique({
+      where: { id: commentId },
+      select: { videoId: true, isHearted: true }
+    });
+
+    if (!comment) throw new Error("Comment not found");
+
+    const updated = await (prisma.comment as any).update({
+      where: { id: commentId },
+      data: { isHearted: !comment.isHearted }
+    });
+
+    await logCommentAction(moderatorId, updated.isHearted ? 'HEART' : 'UNHEART', commentId, comment.videoId);
+    return updated;
   }
 }

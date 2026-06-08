@@ -67,7 +67,13 @@ export class ReferralService {
         });
 
         // Referral rewards grant Patron through the central domain function.
-        if (referrer.referralPoints >= 5 && !referrer.isPatron) {
+        // We use findUnique within the transaction to avoid race condition with parallel referrals.
+        const freshReferrer = await tx.user.findUnique({
+            where: { id: referrerId },
+            select: { referralPoints: true, isPatron: true }
+        });
+
+        if (freshReferrer && freshReferrer.referralPoints >= 5 && !freshReferrer.isPatron) {
             const grant = await grantPatronStatus(referrerId, {
                 source: 'referral',
                 referralId: referral.id,

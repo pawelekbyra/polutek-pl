@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -329,6 +328,7 @@ model Comment {
   repliesCount  Int                  @default(0)
   reportsCount  Int                  @default(0)
   score         Int                  @default(0)
+  isHearted     Boolean              @default(false)
 
   pinnedAt   DateTime?
   pinnedById String?

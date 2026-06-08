@@ -240,6 +240,45 @@ export class UserProfileService {
           // Audit Logs
           await tx.auditLog.updateMany({ where: { actorUserId: oldId }, data: { actorUserId: id } });
 
+          // Issue 12: Merge Financial and Access Records
+          // Payments
+          await tx.payment.updateMany({ where: { userId: oldId }, data: { userId: id } });
+
+          // UserPaymentTotals (Merge counts)
+          const oldTotals = await tx.userPaymentTotal.findMany({ where: { userId: oldId } });
+          for (const total of oldTotals) {
+              await tx.userPaymentTotal.upsert({
+                  where: { userId_currency: { userId: id, currency: total.currency } },
+                  update: {
+                      amountMinor: { increment: total.amountMinor },
+                  },
+                  create: {
+                      userId: id,
+                      currency: total.currency,
+                      amountMinor: total.amountMinor,
+                  }
+              });
+          }
+          await tx.userPaymentTotal.deleteMany({ where: { userId: oldId } });
+
+          // PatronGrants
+          await tx.patronGrant.updateMany({ where: { userId: oldId }, data: { userId: id } });
+
+          // Subscriptions (Handle potential duplicates)
+          const oldSubs = await tx.subscription.findMany({ where: { userId: oldId } });
+          for (const sub of oldSubs) {
+              await tx.subscription.upsert({
+                  where: { userId_creatorId: { userId: id, creatorId: sub.creatorId } },
+                  update: {},
+                  create: { userId: id, creatorId: sub.creatorId, createdAt: sub.createdAt }
+              });
+          }
+          await tx.subscription.deleteMany({ where: { userId: oldId } });
+
+          // Referrals
+          await tx.referral.updateMany({ where: { referrerId: oldId }, data: { referrerId: id } });
+          await tx.referral.updateMany({ where: { referredId: oldId }, data: { referredId: id } });
+
           logger.info(`[UserProfileService.syncUser] Merged records from ${oldId} to ${id}`, {
               movedComments: movedComments.count,
               email
@@ -336,15 +375,27 @@ export class UserProfileService {
 
   static async softDeleteUser(id: string) {
     const anonymousId = crypto.randomUUID();
-    return await prisma.user.update({
-      where: { id },
-      data: {
-        email: `deleted_${anonymousId}@deleted.com`,
-        name: "Usunięty Użytkownik",
-        imageUrl: null,
-        stripeCustomerId: null,
-        isDeleted: true
-      }
+    return await prisma.$transaction(async (tx) => {
+        // Revoke any active patron grants
+        await tx.patronGrant.updateMany({
+            where: { userId: id, revokedAt: null },
+            data: { revokedAt: new Date(), reason: 'User deleted' }
+        });
+
+        return await tx.user.update({
+            where: { id },
+            data: {
+              email: `deleted_${anonymousId}@deleted.com`,
+              name: "Usunięty Użytkownik",
+              username: `deleted_${anonymousId.split('-')[0]}`,
+              imageUrl: null,
+              stripeCustomerId: null,
+              isPatron: false,
+              patronSince: null,
+              patronSource: null,
+              isDeleted: true
+            }
+        });
     });
   }
 

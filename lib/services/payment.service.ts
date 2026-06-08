@@ -221,6 +221,20 @@ export class PaymentService {
         return syncData;
     }
 
+    if (dispute.status === 'won') {
+        const syncData = await prisma.$transaction(async (tx) => {
+            await tx.payment.update({
+                where: { id: payment.id },
+                data: { status: PaymentStatus.SUCCEEDED }
+            });
+            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            return { userId: payment.userId, isPatron, normalizedTotal };
+        });
+        if (syncData) await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute-win sync failed:", e));
+        logger.info(`[PaymentService] Dispute WON for payment ${payment.id}. Patron status restored if applicable.`);
+        return syncData;
+    }
+
     await prisma.payment.update({ where: { id: payment.id }, data: { status: PaymentStatus.DISPUTED } });
     recordAlert('payment.dispute_opened', { disputeStatus: dispute.status, currency: payment.currency });
   }

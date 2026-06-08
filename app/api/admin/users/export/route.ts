@@ -48,21 +48,29 @@ export async function GET(req: NextRequest) {
       ['ID', 'Email', 'Name', 'Username', 'Role', 'IsPatron', 'PatronSince', 'PatronSource', 'NormalizedTotalPLN', 'Language', 'IsDeleted', 'CreatedAt'].join(',')
     ];
 
+    const sanitizeCsvField = (value: any) => {
+        const str = String(value ?? '');
+        if (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@')) {
+            return `"'${str}"`;
+        }
+        return `"${str.replace(/"/g, '""')}"`;
+    };
+
     for (const user of users) {
       const normalizedTotal = normalizePaymentTotals(user.paymentTotals);
       csvRows.push([
-        user.id,
-        user.email,
-        `"${(user.name || '').replace(/"/g, '""')}"`,
-        `"${(user.username || '').replace(/"/g, '""')}"`,
-        user.role,
-        user.isPatron,
-        user.patronSince ? user.patronSince.toISOString() : '',
-        user.patronSource || '',
-        normalizedTotal.toFixed(2),
-        user.language || 'pl',
-        user.isDeleted,
-        user.createdAt.toISOString()
+        sanitizeCsvField(user.id),
+        sanitizeCsvField(user.email),
+        sanitizeCsvField(user.name),
+        sanitizeCsvField(user.username),
+        sanitizeCsvField(user.role),
+        sanitizeCsvField(user.isPatron),
+        sanitizeCsvField(user.patronSince ? user.patronSince.toISOString() : ''),
+        sanitizeCsvField(user.patronSource),
+        sanitizeCsvField(normalizedTotal.toFixed(2)),
+        sanitizeCsvField(user.language),
+        sanitizeCsvField(user.isDeleted),
+        sanitizeCsvField(user.createdAt.toISOString())
       ].join(','));
     }
 

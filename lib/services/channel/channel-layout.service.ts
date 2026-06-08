@@ -15,6 +15,11 @@ export type SidebarItem = {
     views: number;
     publishedAt: Date | null;
     isLocked: boolean;
+    creator?: {
+        id: string;
+        name: string;
+        slug: string;
+    };
 };
 
 export type SidebarSection = {
@@ -71,7 +76,12 @@ export class ChannelLayoutService {
             duration: v.duration,
             views: v.views,
             publishedAt: v.publishedAt,
-            isLocked: this.isLocked(v.tier, viewerState)
+            isLocked: this.isLocked(v.tier, viewerState),
+            creator: v.creator ? {
+                id: v.creator.id,
+                name: v.creator.name,
+                slug: v.creator.slug
+            } : undefined
         });
 
         if (freeVideos.length > 0) {

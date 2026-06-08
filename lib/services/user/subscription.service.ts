@@ -18,9 +18,13 @@ export class UserSubscriptionService {
 
       if (existing) {
         await tx.subscription.delete({ where: { id: existing.id } });
+
+        const creator = await tx.creator.findUnique({ where: { id: creatorId }, select: { subscribersCount: true } });
+        const currentCount = creator?.subscribersCount ?? 0;
+
         await tx.creator.update({
           where: { id: creatorId },
-          data: { subscribersCount: { decrement: 1 } }
+          data: { subscribersCount: Math.max(0, currentCount - 1) }
         });
         return { subscribed: false };
       } else {

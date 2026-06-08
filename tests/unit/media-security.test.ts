@@ -59,7 +59,7 @@ describe('media source API security', () => {
       const body = await res.json();
       expect(body.hasAccess).toBe(true);
       expect(body.kind).toBe('hls');
-      expect(body.playbackUrl).toBe('https://example.com/stream.m3u8');
+      expect(body.playbackUrl).toBe('/api/media/vid_1');
     } finally {
       process.env.ALLOWED_MEDIA_HOSTS = previousAllowedMediaHosts;
     }

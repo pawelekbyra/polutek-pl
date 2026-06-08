@@ -16,15 +16,32 @@ export interface RateLimitStore {
 }
 
 export class MemoryStore implements RateLimitStore {
-  private cache = new Map<string, RateLimitRecord>();
+  private cache = new Map<string, any>();
+  private lastCleanup = Date.now();
+
+  private cleanup() {
+    const now = Date.now();
+    if (now - this.lastCleanup < 60000) return;
+
+    for (const [key, value] of this.cache.entries()) {
+      if (value.resetAt && now > value.resetAt) {
+        this.cache.delete(key);
+      } else if (value.expiresAt && now > value.expiresAt) {
+        this.cache.delete(key);
+      }
+    }
+    this.lastCleanup = now;
+  }
 
   async hit(key: string, windowMs: number) {
+    this.cleanup();
     const now = Date.now();
-    const record = this.cache.get(key);
+    const redisKey = `rl:${key}`;
+    const record = this.cache.get(redisKey);
 
     if (!record || now > record.resetAt) {
       const next = { count: 1, resetAt: now + windowMs };
-      this.cache.set(key, next);
+      this.cache.set(redisKey, next);
       return next;
     }
 
@@ -33,10 +50,13 @@ export class MemoryStore implements RateLimitStore {
   }
 
   async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
+    this.cleanup();
     const now = Date.now();
-    const record = this.cache.get(key);
-    if (record && now < record.resetAt) return false;
-    this.cache.set(key, { count: 1, resetAt: now + (seconds * 1000) });
+    const redisKey = `nx:${key}`;
+    const record = this.cache.get(redisKey);
+    if (record && now < record.expiresAt) return false;
+
+    this.cache.set(redisKey, { value, expiresAt: now + (seconds * 1000) });
     return true;
   }
 }
@@ -72,16 +92,24 @@ export class UpstashRedisStore implements RateLimitStore {
 
   async hit(key: string, windowMs: number) {
     const redisKey = getRateLimitRedisKey(key);
-    const count = Number(await this.command<number>(['INCR', redisKey]));
 
-    if (count === 1) {
-      await this.command(['PEXPIRE', redisKey, windowMs]);
-    }
+    /**
+     * Use Lua script for atomic INCR + PEXPIRE.
+     * Returns [new_count, ttl_ms]
+     */
+    const lua = `
+      local current = redis.call('INCR', KEYS[1])
+      if current == 1 then
+        redis.call('PEXPIRE', KEYS[1], ARGV[1])
+      end
+      return {current, redis.call('PTTL', KEYS[1])}
+    `;
 
-    const ttl = Number(await this.command<number>(['PTTL', redisKey]));
+    const [count, ttl] = await this.command<[number, number]>(['EVAL', lua, '1', redisKey, windowMs]);
+
     return {
-      count,
-      resetAt: Date.now() + Math.max(ttl, 0),
+      count: Number(count),
+      resetAt: Date.now() + Math.max(Number(ttl), 0),
     };
   }
 

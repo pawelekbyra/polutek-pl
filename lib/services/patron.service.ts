@@ -47,6 +47,27 @@ export async function grantPatronStatus(
   const source = sourceToEnum(options.source);
 
   try {
+    // 0. Idempotency check for admin (manual) grants
+    if (source === PatronGrantSource.ADMIN) {
+        const existingActiveAdminGrant = await db.patronGrant.findFirst({
+            where: { userId, source: PatronGrantSource.ADMIN, revokedAt: null }
+        });
+        if (existingActiveAdminGrant) {
+            const user = await db.user.findUniqueOrThrow({
+                where: { id: userId },
+                include: { paymentTotals: true },
+            });
+            return {
+                user,
+                grant: existingActiveAdminGrant,
+                alreadyGranted: true,
+                isPatron: true,
+                becamePatronNow: false,
+                normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+            };
+        }
+    }
+
     // 1. Idempotency check for paymentId
     if (options.paymentId) {
       const existingGrant = await db.patronGrant.findUnique({

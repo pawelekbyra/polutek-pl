@@ -43,6 +43,7 @@ export type CommentDto = {
   viewerCanModerate: boolean;
   viewerCanPin: boolean;
   isPinned: boolean;
+  isHearted: boolean;
   repliesPreview: CommentDto[];
 };
 

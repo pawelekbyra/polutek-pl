@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     patronGrant: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       updateMany: vi.fn(),
     },

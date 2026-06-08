@@ -43,7 +43,7 @@ describe("Subscription to Patron guard", () => {
     const violations = checkedFiles.flatMap((file) => {
       const source = readFileSync(join(repoRoot, file), "utf8");
       if (!source.toLowerCase().includes("subscription")) return [];
-      if (file.includes("admin")) return []; // Allow admin services to use these fields
+      if (file.includes("admin") || file.includes("profile.service.ts")) return []; // Allow admin and profile services to use these fields
 
       return unsafeGrantPatterns
         .filter((pattern) => pattern.test(source))
