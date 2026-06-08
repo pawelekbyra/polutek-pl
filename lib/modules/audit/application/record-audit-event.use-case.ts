@@ -3,8 +3,8 @@ import { AuditRepository } from "../infrastructure/audit.repository";
 
 export interface RecordAuditEventInput {
   action: string;
-  resourceType?: string;
-  resourceId?: string;
+  targetType?: string;
+  targetId?: string;
   metadata?: any;
 }
 
@@ -14,11 +14,13 @@ export async function recordAuditEvent(
 ) {
   const repository = new AuditRepository(ctx.prisma);
 
+  const actorUserId = ctx.actor.type !== 'guest' && 'userId' in ctx.actor ? ctx.actor.userId : undefined;
+
   return await repository.create({
-    userId: ctx.userId,
+    actorUserId,
     action: input.action,
-    resourceType: input.resourceType,
-    resourceId: input.resourceId,
+    targetType: input.targetType,
+    targetId: input.targetId,
     metadata: input.metadata,
   });
 }

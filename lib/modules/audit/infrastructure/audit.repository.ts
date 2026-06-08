@@ -1,7 +1,7 @@
-import { DbClient } from "@/lib/modules/shared/app-context";
+import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 
 export class AuditRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: ReadDb | WriteTx) {}
 
   async create(data: {
     actorUserId?: string;

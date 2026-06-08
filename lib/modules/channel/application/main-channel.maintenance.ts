@@ -99,8 +99,8 @@ export class MainChannelMaintenance {
 
     await recordAuditEvent(ctx, {
         action: 'MAIN_CHANNEL_SETUP_APPLIED',
-        resourceType: 'CREATOR',
-        resourceId: mainChannel.id,
+        targetType: 'CREATOR',
+        targetId: mainChannel.id,
         metadata: { slug: mainChannel.slug }
     });
 
@@ -138,8 +138,8 @@ export class MainChannelMaintenance {
 
     await recordAuditEvent(ctx, {
         action: 'MAIN_CHANNEL_OWNERSHIP_REPAIR',
-        resourceType: 'CREATOR',
-        resourceId: mainChannelId,
+        targetType: 'CREATOR',
+        targetId: mainChannelId,
         metadata: {
             videosRepaired: vCount.count,
             commentsRepaired: cCount.count,
@@ -174,8 +174,8 @@ export class MainChannelMaintenance {
 
     await recordAuditEvent(ctx, {
         action: 'MAIN_CHANNEL_PRIMARY_REPAIR',
-        resourceType: 'CREATOR',
-        resourceId: mainChannelId,
+        targetType: 'CREATOR',
+        targetId: mainChannelId,
     });
 
     return { success: true };

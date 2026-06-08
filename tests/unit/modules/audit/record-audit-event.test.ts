@@ -3,7 +3,7 @@ import { recordAuditEvent } from '@/lib/modules/audit';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 describe('recordAuditEvent Use Case', () => {
-  it('calls repository to create audit log', async () => {
+  it('calls repository with correct field mapping', async () => {
     const mockPrisma = {
       auditLog: {
         create: vi.fn().mockResolvedValue({ id: 'log-1' }),
@@ -12,23 +12,23 @@ describe('recordAuditEvent Use Case', () => {
 
     const ctx = createAppContext({
       prisma: mockPrisma as any,
-      userId: 'user-123',
+      actor: { type: 'user', userId: 'user-123', isPatron: false },
     });
 
     const result = await recordAuditEvent(ctx, {
       action: 'TEST_ACTION',
-      resourceType: 'VIDEO',
-      resourceId: 'video-1',
+      targetType: 'VIDEO',
+      targetId: 'video-1',
       metadata: { foo: 'bar' },
     });
 
     expect(result.id).toBe('log-1');
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
       data: {
-        userId: 'user-123',
+        actorUserId: 'user-123',
         action: 'TEST_ACTION',
-        resourceType: 'VIDEO',
-        resourceId: 'video-1',
+        targetType: 'VIDEO',
+        targetId: 'video-1',
         metadata: { foo: 'bar' },
       },
     });
