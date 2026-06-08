@@ -4,7 +4,7 @@
 - **strict single-channel creator hub**: Jeden oficjalny kanał, jeden twórca, jeden katalog treści.
 - **Creator = legacy MainChannel**: Model `Creator` w bazie to techniczna reprezentacja głównego kanału.
 - **Subscription != Patron**: Subskrypcja (follow) to zapis na newsletter/powiadomienia, nie daje dostępu do treści Patron.
-- **no multi-creator marketplace**: To nie is platforma dla wielu twórców.
+- **no multi-creator marketplace**: To nie jest platforma dla wielu twórców.
 
 ## 2. Current active refactor
 - **Modular Monolith**: Przejście z rozproszonych serwisów na domeny w `lib/modules/**`.
@@ -19,8 +19,8 @@
 | **R1** | Shared, API boundary, errors, ctx | [x] |
 | **R2** | Moduł: Audit | [x] |
 | **R3** | Moduł: Media | [x] |
-| **R4** | Moduł: Channel | [~] |
-| **R5** | Moduł: Users | [ ] |
+| **R4** | Moduł: Channel | [x] |
+| **R5** | Moduł: Users | [~] |
 | **R6** | Moduł: Video | [ ] |
 | **R7** | Moduł: Patron + Payments | [ ] |
 | **R8** | Moduł: Comments | [ ] |
@@ -29,7 +29,7 @@
 | **R11** | Admin frontend | [ ] |
 
 ## 4. Current next task
-`R4 hardening complete + R5 users module initiation`
+`R5 users module full migration + R6 video module initiation`
 
 ## 5. Mandatory agent rules
 - **do not just move files**: Każdy etap ma być kompletny (kod, testy, typy, boundary guards).
