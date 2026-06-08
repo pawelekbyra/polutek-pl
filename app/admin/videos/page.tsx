@@ -2,6 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import { useUser, useAuth } from "@clerk/nextjs";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
@@ -21,6 +22,8 @@ import { AdminVideosPageSkeleton, AdminFormSkeleton } from "@/components/skeleto
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { isLoaded: authLoaded } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +66,40 @@ export default function AdminVideosPage() {
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
   const [orderBy, setOrderBy] = useState<string>("createdAt");
+
+  const fetchVideoForEdit = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/videos/${id}`);
+      if (res.ok) {
+        const vid = await res.json();
+        setFormData({
+          id: vid.id,
+          title: vid.title,
+          titleEn: vid.titleEn || "",
+          slug: vid.slug,
+          description: vid.description || "",
+          descriptionEn: vid.descriptionEn || "",
+          videoUrl: vid.videoUrl || "",
+          thumbnailUrl: vid.thumbnailUrl || "",
+          duration: vid.duration || "",
+          tier: vid.tier as any,
+          status: (vid.status || "PUBLISHED") as any,
+          likesCount: vid.likesCount,
+          dislikesCount: vid.dislikesCount,
+          views: vid.views,
+          isMainFeatured: vid.isMainFeatured || false,
+          showInSidebar: vid.showInSidebar ?? true,
+          sidebarOrder: vid.sidebarOrder || 0
+        });
+        setIsEditing(true);
+        setIsSlugManual(true);
+      } else {
+        toast("Nie udało się pobrać danych filmu do edycji.", "error");
+      }
+    } catch (err) {
+      logger.error("Failed to fetch video for edit", err);
+    }
+  }, [toast]);
 
   const fetchVideos = useCallback(async (p = page) => {
     try {
@@ -117,6 +154,13 @@ export default function AdminVideosPage() {
 
     checkAdmin();
   }, [user, userLoaded, authLoaded, checkAdmin]);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && isAdmin) {
+        fetchVideoForEdit(editId);
+    }
+  }, [searchParams, isAdmin, fetchVideoForEdit]);
 
   // Refetch when filters change (except search which has its own button)
   useEffect(() => {
@@ -242,6 +286,9 @@ export default function AdminVideosPage() {
       const data = await res.json();
       if (res.ok) {
         setIsEditing(false);
+        if (searchParams.get("edit")) {
+            router.replace("/admin/videos");
+        }
         fetchVideos(page);
       } else {
         setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");

@@ -103,7 +103,7 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon" asChild title="Profil"><Link href={`/admin/videos/${vid.id}`}><Edit className="h-4 w-4" /></Link></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(vid)} title="Edytuj"><Edit className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" asChild title="Podgląd"><Link href={`/watch/${vid.slug}`} target="_blank"><Eye className="h-4 w-4" /></Link></Button>
                   <Button variant="ghost" size="icon" onClick={() => copyLink(vid.slug)} title="Kopiuj link"><LinkIcon className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => onDuplicate(vid as any)} title="Duplikuj"><Plus className="h-4 w-4" /></Button>

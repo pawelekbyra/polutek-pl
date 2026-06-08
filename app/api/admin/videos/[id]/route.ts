@@ -4,6 +4,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
 import { VideosDiagnosticsService } from '@/lib/services/admin/videos-diagnostics.service';
+import { isUuid } from '@/lib/utils/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const { response } = await requireAdminForApi("GET_ADMIN_VIDEO_DETAILS");
   if (response) return response;
 
-  const videoId = params.id;
+  let videoId = params.id;
 
   try {
+    if (!isUuid(videoId)) {
+        const found = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
+        if (found) videoId = found.id;
+        else return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
     const video = await prisma.video.findUnique({
       where: { id: videoId },
       include: {
