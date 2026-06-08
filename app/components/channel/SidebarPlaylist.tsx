@@ -126,21 +126,8 @@ export function SidebarPlaylist({
                   )}
               </div>
           </PremiumWrapper>
-          {/* Access Indicator Badge on Thumbnail */}
-          {mounted && (() => {
-              const badge = getSidebarAccessBadge(video, hasAccess, language);
-              if (!badge) return null;
-              return (
-                  <div className={cn(
-                    "absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
-                    badge.variant === 'unlocked' && "bg-primary/80 border-primary/20"
-                  )}>
-                      {badge.text}
-                  </div>
-              );
-          })()}
         </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10">
+        <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10 relative">
           <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
             <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
                {displayTitle}
@@ -160,6 +147,19 @@ export function SidebarPlaylist({
                 )}
              </div>
           </div>
+          {/* Access Indicator Badge moved to right-bottom of text box */}
+          {mounted && (() => {
+              const badge = getSidebarAccessBadge(video, hasAccess, language);
+              if (!badge) return null;
+              return (
+                  <div className={cn(
+                    "absolute bottom-0 right-0 bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-[#1a1a1a] tracking-widest z-30 pointer-events-none mb-0.5 mr-0.5",
+                    badge.variant === 'unlocked' && "bg-primary/80 border-primary/20"
+                  )}>
+                      {badge.text}
+                  </div>
+              );
+          })()}
         </div>
       </div>
     );
