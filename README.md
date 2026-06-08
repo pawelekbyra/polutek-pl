@@ -18,21 +18,21 @@ Zasada pracy:
 
 ## Status refaktoryzacji
 
-Aktualny etap: **R0 (Zakończono) -> R1 (W toku)**
+Aktualny etap: **R1 (Zakończono) -> R4 (W toku)**
 
 | Etap | Opis | Status |
 | :--- | :--- | :--- |
 | **R0** | Zasady i infrastruktura refaktoryzacji | ✅ |
-| **R1** | Guardy architektoniczne i baseline testów | 🔄 |
-| **R2** | Moduł: Channel | ⏳ |
+| **R1** | Guardy architektoniczne i baseline testów | ✅ |
+| **R2** | Moduł: Audit | ✅ |
 | **R3** | Moduł: Media | ⏳ |
-| **R4** | Moduł: Video | ⏳ |
-| **R5** | Moduł: Campaign | ⏳ |
-| **R6** | Moduł: Patron | ⏳ |
-| **R7** | Moduł: Payments | ⏳ |
-| **R8** | Moduł: Auth/User | ⏳ |
-| **R9** | Moduł: Notifications | ⏳ |
-| **R10** | Usuwanie deprecated services | ⏳ |
+| **R4** | Moduł: Channel | 🔄 |
+| **R5** | Moduł: Video | ⏳ |
+| **R6** | Moduł: Campaign | ⏳ |
+| **R7** | Moduł: Patron | ⏳ |
+| **R8** | Moduł: Payments | ⏳ |
+| **R9** | Moduł: Auth/User | ⏳ |
+| **R10** | Moduł: Notifications | ⏳ |
 | **R11** | Finalne utwardzenie architektury | ⏳ |
 
 ---
@@ -75,12 +75,16 @@ Refaktoryzacja jest sekwencyjna. Nie zaczynaj etapu R(n), jeśli R(n-1) nie jest
 - Dodanie testów baseline dla krytycznych domen (Video, Channel, Payments).
 - Wprowadzenie reguł technicznych (lint/scripts) pilnujących granic modułów.
 
-### R2–R9 — Migracja modułów
+### R2 — Moduł Audit
+- System audytowania zdarzeń biznesowych.
+- Wsparcie dla transakcji DB (DbClient).
+
+### R3–R10 — Migracja modułów
 Przenoszenie logiki według priorytetów domenowych do `lib/modules/`.
 
-### R10–R11 — Sprzątanie i utwardzanie
-- Usunięcie `lib/services/**`.
-- Blokada importów z wnętrza modułów (wymuszanie `index.ts`).
+### R11 — Finalne utwardzenie
+- Usunięcie deprecated services.
+- Blokada importów z wnętrza modułów.
 
 ---
 

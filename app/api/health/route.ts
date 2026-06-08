@@ -1,56 +1,21 @@
-import { logger, createScopedLogger } from "@/lib/logger";
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { VideoStatus } from '@prisma/client';
-import { buildPublicVideoWhere } from '@/lib/services/content.service';
-import { getAllowedMediaHosts } from '@/lib/blob';
-import { handleApiError } from '@/lib/errors';
+import { createScopedLogger } from "@/lib/logger";
+import { NextRequest } from 'next/server';
+import { handleApiError, handleApiResponse } from '@/lib/modules/shared/api-response';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { checkHealth } from '@/lib/modules/health';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const authHeader = req.headers.get('x-health-token');
-  const isAuthorized = !!process.env.HEALTHCHECK_TOKEN && authHeader === process.env.HEALTHCHECK_TOKEN;
-
-  if (!isAuthorized) {
-    return NextResponse.json({ ok: true });
-  }
+  const token = req.headers.get('x-health-token');
 
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    const approvedCreatorExists = await prisma.creator.findFirst({ where: { isApproved: true } });
-    const primaryCreatorExists = await prisma.creator.findFirst({ where: { isPrimary: true, isApproved: true } });
+    const ctx = createAppContext({ requestId: requestId || undefined });
+    const result = await checkHealth(ctx, token);
 
-    const publicWhere = await buildPublicVideoWhere();
-    const [allVideosCount, publishedVideosCount, visibleVideosCount, mainFeaturedVideoExists] = await Promise.all([
-        prisma.video.count(),
-        prisma.video.count({ where: { status: VideoStatus.PUBLISHED } }),
-        prisma.video.count({ where: publicWhere }),
-        prisma.video.findFirst({ where: { ...publicWhere, isMainFeatured: true } }),
-    ]);
-
-    return NextResponse.json({
-        ok: true,
-        database: "ok",
-        env: {
-            DATABASE_URL: !!process.env.DATABASE_URL,
-            DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
-            CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
-            STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
-            STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
-        },
-        content: {
-            allVideosCount,
-            publishedVideosCount,
-            visibleVideosCount,
-            approvedCreatorExists: !!approvedCreatorExists,
-            primaryCreatorExists: !!primaryCreatorExists,
-            mainFeaturedVideoExists: !!mainFeaturedVideoExists,
-            mediaHostsConfigured: getAllowedMediaHosts().size > 0,
-        }
-    });
+    return handleApiResponse(result);
   } catch (error) {
     scopedLogger.error("[HEALTH_CHECK_ERROR]", error);
     return handleApiError(error);
