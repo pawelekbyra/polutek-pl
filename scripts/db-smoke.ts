@@ -84,6 +84,11 @@ async function main() {
 
     console.log("\n🚀 DB SCHEMA HEALTHY: All critical columns and tables exist.");
   } catch (e: any) {
+    if (e.message?.includes('Can\'t reach database server')) {
+        console.error("\n❌ ERROR: Database server is unreachable!");
+        console.error("Please verify your DATABASE_URL and network settings.");
+        process.exit(1);
+    }
     if (e.code === 'P2022') {
         console.error("\n❌ ERROR: Database schema drift detected!");
         console.error(`Missing column: ${e.meta?.column}`);
