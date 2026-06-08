@@ -81,3 +81,15 @@ export function isHlsOrDashManifest(url: string): boolean {
   const normalized = url.toLowerCase().split('?')[0];
   return normalized.endsWith('.m3u8') || normalized.endsWith('.mpd');
 }
+
+export function isDirectMediaSource(url: string): boolean {
+  const normalized = url.toLowerCase().split('?')[0];
+  return (
+    normalized.endsWith('.mp4') ||
+    normalized.endsWith('.webm') ||
+    normalized.endsWith('.ogg') ||
+    normalized.endsWith('.mov') ||
+    normalized.endsWith('.wav') ||
+    normalized.endsWith('.mp3')
+  );
+}

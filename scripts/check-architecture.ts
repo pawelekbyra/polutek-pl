@@ -8,8 +8,10 @@ const FORBIDDEN_IMPORTS = [
   'next/server',
   'next/navigation',
   'next/cache',
+  'NextResponse',
   'app/',
   '@clerk/nextjs',
+  'lib/api/',
 ];
 
 function checkModules() {

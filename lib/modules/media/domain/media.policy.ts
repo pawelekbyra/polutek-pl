@@ -115,8 +115,8 @@ export class MediaPolicy {
 
     const hostname = url.hostname.toLowerCase();
     const allowedAvatarHosts = new Set([
-      'img.clerk.com',
       ...parseMediaHosts(env.ALLOWED_AVATAR_HOSTS),
+      ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     ]);
 
     return hostname.endsWith('.clerk.com') || allowedAvatarHosts.has(hostname);

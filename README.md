@@ -20,7 +20,7 @@
 | **R2** | Moduł: Audit | [x] |
 | **R3** | Moduł: Media | [x] |
 | **R4** | Moduł: Channel | [x] |
-| **R5** | Moduł: Users | [~] |
+| **R5** | Moduł: Users | [x] |
 | **R6** | Moduł: Video | [ ] |
 | **R7** | Moduł: Patron + Payments | [ ] |
 | **R8** | Moduł: Comments | [ ] |
@@ -139,3 +139,39 @@ npm run build
 #### Następny rekomendowany krok
 - ...
 ```
+
+### Raport Refaktoryzacji — R3 media + R4 channel + R5 users
+
+#### Wykonane
+- **R3 Media**: Centralizacja logiki media safety (host parsing, IP blocking, HLS/DASH detection, direct media sources). Pełne pokrycie testami (16 testów).
+- **R4 Channel**: Utwardzenie maintenance (transakcyjne audyty, confirmation phrases, walidacja aktora). Oznaczenie legacy adapterów jako @deprecated.
+- **R5 Users**: Implementacja fundamentów profilu użytkownika i dostępu. Use-case getActorAccessProfile mapujący Actor -> UserAccessProfile z obsługą soft-delete.
+- **Audit**: Rozszerzenie recordAuditEvent o wsparcie dla transakcji (WriteTx).
+- **Architektura**: Wzmocnienie guardów (zakaz NextResponse i lib/api w modułach).
+
+#### Realny status etapów
+- R0: [x]
+- R1: [x]
+- R2: [x]
+- R3: [x]
+- R4: [x]
+- R5: [x]
+- R6–R11: [ ]
+
+#### Walidacja
+- Prisma validate: PASS
+- Architecture boundaries: PASS
+- Typecheck: PASS
+- Tests: PASS (31 passed)
+- Lint: PASS
+- Build: FAIL (Środowisko sandbox: brak kluczy Clerk i błędy prerenderingu static pages niezwiązane z refaktoryzacją)
+
+#### Pozostałe adaptery legacy/deprecated
+- lib/blob.ts (compatibility layer do R6)
+- lib/channel/*.ts (adaptery do R10)
+
+#### Znane ryzyka
+- Playback i video delivery wymagają pełnej migracji w R6 (obecnie delegacja do R3).
+
+#### Następny rekomendowany krok
+- R6: Moduł Video i migracja playbacku.

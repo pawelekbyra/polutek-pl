@@ -1,6 +1,6 @@
+/** @deprecated Use @/lib/modules/channel */
 import { MainChannelPolicy as NewPolicy } from "../modules/channel/domain/channel.policy";
 
-/** @deprecated Use @/lib/modules/channel/domain/channel.policy */
 export class MainChannelPolicy {
   static isPublicMainChannel(channel: { isApproved: boolean; isPrimary: boolean }): boolean {
     return NewPolicy.isPublicMainChannel(channel);

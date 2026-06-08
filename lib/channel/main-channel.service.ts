@@ -1,8 +1,8 @@
+/** @deprecated Use @/lib/modules/channel */
 import { MainChannelService as NewService } from "../modules/channel/application/main-channel.service";
 import { createAppContext } from "../modules/shared/app-context";
 import { DbClient } from "../modules/shared/db";
 
-/** @deprecated Use @/lib/modules/channel/application/main-channel.service */
 export class MainChannelService {
   static async getRequired(prisma?: DbClient) {
     const ctx = createAppContext({ prisma });

@@ -1,12 +1,14 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
 import { UserPolicy } from "../domain/user.policy";
+import { SystemRole } from "@prisma/client";
 
 export interface UserAccessProfile {
   userId: string;
-  role: string;
+  role: SystemRole;
   isPatron: boolean;
   isAdmin: boolean;
+  isDeleted: boolean;
 }
 
 export async function getUserAccessProfile(
@@ -23,5 +25,6 @@ export async function getUserAccessProfile(
     role: user.role,
     isPatron: UserPolicy.isPatron(user.isPatron),
     isAdmin: UserPolicy.isAdmin(user.role),
+    isDeleted: user.isDeleted,
   };
 }

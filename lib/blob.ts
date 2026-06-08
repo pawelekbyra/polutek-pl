@@ -1,3 +1,9 @@
+/**
+ * @deprecated Legacy media proxy.
+ * Real logic is being moved to lib/modules/media.
+ * This file acts as a compatibility layer for R6/R10 migration.
+ */
+
 import { logger } from "@/lib/logger";
 import { recordAlert, recordMetric } from "@/lib/observability";
 import type { AccessVideo } from '@/lib/access/access-policy';
