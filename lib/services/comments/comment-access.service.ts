@@ -4,8 +4,16 @@ import { AccessPolicy } from '@/lib/access/access-policy';
 
 export class CommentAccessService {
   static async canViewComments(userId: string | null | undefined, videoId: string) {
-    const decision = await AccessPolicy.canViewVideo(userId, videoId);
-    return decision.allowed;
+    // Users can read comments on any video that exists and is not archived,
+    // even if the video itself is Patron-only.
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { status: true }
+    });
+
+    if (!video || video.status === 'ARCHIVED') return false;
+
+    return true;
   }
 
   static async canComment(userId: string | null | undefined, videoId: string) {

@@ -18,6 +18,7 @@ function updateCommentReactionInCache(
   commentId: string,
   action: "LIKE" | "UNLIKE",
 ) {
+  // We must target all variants of sortBy to prevent rollback when switching views
   const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
 
   const updateComment = (c: CommentView): CommentView => {
