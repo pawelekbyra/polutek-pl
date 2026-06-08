@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { Prisma, CommentStatus, CommentDeletedReason } from '@prisma/client';
 import { isUuid } from '@/lib/utils/uuid';
@@ -19,6 +20,7 @@ const commentSelect = {
     repliesCount: true,
     reportsCount: true,
     pinnedAt: true,
+    pinnedById: true,
     editedAt: true,
     deletedAt: true,
     deletedReason: true,
