@@ -17,9 +17,9 @@ export function createAppContext(overrides: Partial<AppContext> = {}): AppContex
   const actor = overrides.actor || { type: 'guest' };
 
   return {
-    prisma: defaultPrisma,
+    prisma: overrides.prisma || defaultPrisma,
     actor,
-    now: () => new Date(),
+    now: overrides.now || (() => new Date()),
     userId: actor.type !== 'guest' && 'userId' in actor ? actor.userId : undefined,
     ...overrides,
   };

@@ -67,7 +67,8 @@ export class MediaPolicy {
     const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
 
     if (hostname === 'vimeo.com') {
-      return /^\/\d+$/.test(pathname);
+      // Allows /123456 or /channels/anything/123456
+      return /^\/\d+$/.test(pathname) || /\/\d+$/.test(pathname) || /\/\d+$/.test(pathname.split('/').pop() || '');
     }
 
     if (hostname === 'player.vimeo.com') {

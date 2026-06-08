@@ -42,10 +42,17 @@ describe('Media Module', () => {
     it('should allow YouTube and Vimeo URLs', () => {
       expect(MediaPolicy.isAllowedVideoSourceUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ', env)).toBe(true);
       expect(MediaPolicy.isAllowedVideoSourceUrl('https://vimeo.com/123456789', env)).toBe(true);
+      expect(MediaPolicy.isAllowedVideoSourceUrl('https://player.vimeo.com/video/123456789', env)).toBe(true);
+      expect(MediaPolicy.isAllowedVideoSourceUrl('https://vimeo.com/channels/staffpicks/123456789', env)).toBe(true);
     });
 
     it('should allow URLs from allowed media hosts', () => {
       expect(MediaPolicy.isAllowedVideoSourceUrl('https://media.example.com/video.m3u8', env)).toBe(true);
+    });
+
+    it('should block malformed or non-https YouTube/Vimeo URLs', () => {
+      expect(MediaPolicy.isAllowedVideoSourceUrl('http://vimeo.com/123', env)).toBe(false);
+      expect(MediaPolicy.isAllowedVideoSourceUrl('https://vimeo.com/abc', env)).toBe(false);
     });
   });
 

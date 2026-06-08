@@ -3,6 +3,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { flags } from '@/lib/feature-flags';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
+import { WriteTx } from '@/lib/modules/shared/db';
 
 export interface MainChannelSetupPreview {
   mainChannelId: string | null;
@@ -21,7 +22,8 @@ export interface MainChannelSetupPreview {
 export class MainChannelMaintenance {
   static async previewMainChannelSetup(ctx: AppContext): Promise<MainChannelSetupPreview> {
     const slug = flags.mainCreatorSlug;
-    const mainChannel = slug ? await (ctx.prisma as PrismaClient).creator.findUnique({ where: { slug } }) : null;
+    const db = ctx.prisma as PrismaClient;
+    const mainChannel = slug ? await db.creator.findUnique({ where: { slug } }) : null;
     const mainChannelId = mainChannel?.id || null;
 
     const [
@@ -35,20 +37,20 @@ export class MainChannelMaintenance {
       approvedCount,
       totalCreators,
     ] = await Promise.all([
-      (ctx.prisma as PrismaClient).video.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      (ctx.prisma as PrismaClient).video.count({
+      db.video.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      db.video.count({
         where: {
           status: VideoStatus.PUBLISHED,
           ...(mainChannelId ? { creatorId: { not: mainChannelId } } : {})
         }
       }),
-      (ctx.prisma as PrismaClient).comment.count({ where: { creatorId: null } }),
-      (ctx.prisma as PrismaClient).comment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      (ctx.prisma as PrismaClient).payment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      (ctx.prisma as PrismaClient).subscription.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
-      (ctx.prisma as PrismaClient).creator.count({ where: { isPrimary: true } }),
-      (ctx.prisma as PrismaClient).creator.count({ where: { isApproved: true } }),
-      (ctx.prisma as PrismaClient).creator.count(),
+      db.comment.count({ where: { creatorId: null } }),
+      db.comment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      db.payment.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      db.subscription.count({ where: mainChannelId ? { creatorId: { not: mainChannelId } } : {} }),
+      db.creator.count({ where: { isPrimary: true } }),
+      db.creator.count({ where: { isApproved: true } }),
+      db.creator.count(),
     ]);
 
     return {
@@ -147,7 +149,7 @@ export class MainChannelMaintenance {
     return result;
   }
 
-  private static async applyOwnershipRepairInternal(tx: Prisma.TransactionClient, mainChannelId: string) {
+  private static async applyOwnershipRepairInternal(tx: WriteTx, mainChannelId: string) {
     const [vCount, cCount, pCount, sCount] = await Promise.all([
       tx.video.updateMany({
         where: { creatorId: { not: mainChannelId } },
@@ -198,7 +200,7 @@ export class MainChannelMaintenance {
     return { success: true };
   }
 
-  private static async applyPrimaryRepairInternal(tx: Prisma.TransactionClient, mainChannelId: string) {
+  private static async applyPrimaryRepairInternal(tx: WriteTx, mainChannelId: string) {
     await tx.creator.updateMany({
       where: { id: { not: mainChannelId }, isPrimary: true },
       data: { isPrimary: false },
