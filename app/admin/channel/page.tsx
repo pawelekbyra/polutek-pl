@@ -1,8 +1,9 @@
 import { currentUser } from "@clerk/nextjs/server";
 import Navbar from "@/app/components/Navbar";
-import { prisma } from "@/lib/prisma";
 import { ChannelSettingsForm } from "./ChannelSettingsForm";
-import { MainChannelService } from "@/lib/channel/main-channel.service";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { getAdminChannelSettings } from "@/lib/modules/channel";
 
 export const dynamic = "force-dynamic";
 
@@ -10,23 +11,9 @@ export default async function AdminChannelPage() {
   const clerkUser = await currentUser();
 
   try {
-    const creator = await prisma.$transaction(async (tx) => {
-        const mainCreator = await MainChannelService.getRequired(tx as any);
-
-        return tx.creator.findUnique({
-          where: { id: mainCreator.id },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            bio: true,
-            bannerUrl: true,
-            subscribersCount: true,
-            displaySubscribersCount: true,
-            user: { select: { name: true, imageUrl: true } },
-          },
-        });
-    });
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor });
+    const creator = await getAdminChannelSettings(ctx) as any;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">

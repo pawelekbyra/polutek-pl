@@ -1,12 +1,11 @@
 import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
-import { writeAuditLog } from "@/lib/services/audit.service";
 import { handleApiError } from "@/lib/errors";
-import { MainChannelService } from "@/lib/channel/main-channel.service";
+import { getAdminChannelSettings, updateAdminChannelSettings } from "@/lib/modules/channel";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { getActorFromAuth } from "@/lib/api/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -44,16 +43,10 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
-    const creator = await prisma.$transaction(async (tx) => {
-      const mainCreator = await MainChannelService.getRequired(tx as any);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-      return tx.creator.findUnique({
-        where: { id: mainCreator.id },
-        include: {
-          user: { select: { id: true, email: true, name: true, imageUrl: true } },
-        },
-      });
-    });
+    const creator = await getAdminChannelSettings(ctx);
 
     return NextResponse.json({ creator });
   } catch (error) {
@@ -76,25 +69,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid data", details: result.error.flatten() }, { status: 400 });
     }
 
-    const creator = await prisma.$transaction(async (tx) => {
-      const mainCreator = await MainChannelService.getRequired(tx as any);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-      return tx.creator.update({
-        where: { id: mainCreator.id },
-        data: result.data,
-        include: {
-          user: { select: { id: true, email: true, name: true, imageUrl: true } },
-        },
-      });
-    });
-
-    await writeAuditLog({
-      actorUserId: (await auth()).userId,
-      action: "CHANNEL_UPDATED",
-      targetType: "Creator",
-      targetId: creator.id,
-      metadata: { slug: creator.slug, fields: Object.keys(result.data) },
-    });
+    const creator = await updateAdminChannelSettings(ctx, result.data);
 
     return NextResponse.json({ creator });
   } catch (error) {

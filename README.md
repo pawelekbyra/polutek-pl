@@ -19,8 +19,8 @@
 | **R1** | Shared, API boundary, errors, ctx | [x] |
 | **R2** | Moduł: Audit | [x] |
 | **R3** | Moduł: Media | [x] |
-| **R4** | Moduł: Channel | [x] |
-| **R5** | Moduł: Users | [x] |
+| **R4** | Moduł: Channel | [~] |
+| **R5** | Moduł: Users | [~] |
 | **R6** | Moduł: Video | [ ] |
 | **R7** | Moduł: Patron + Payments | [ ] |
 | **R8** | Moduł: Comments | [ ] |
@@ -175,3 +175,10 @@ npm run build
 
 #### Następny rekomendowany krok
 - R6: Moduł Video i migracja playbacku.
+
+### R5 Users Reconciliation Pass
+Fundamenty modułu Users zostały zaimplementowane, ale pełna migracja nie jest zakończona. Pozostałe zadania (migracja legacy serwisów):
+- `lib/services/user/profile.service.ts` -> `lib/modules/users/application/sync-user.use-case.ts`
+- `lib/services/user/admin.service.ts` -> `lib/modules/users/application/admin-user.service.ts`
+- `lib/services/user-access.service.ts` -> `lib/modules/users/domain/user-access.service.ts`
+- Przeniesienie logiki `getOrCreateUser` i synchronizacji z Clerk do modułu.
