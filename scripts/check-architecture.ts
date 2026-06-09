@@ -91,16 +91,10 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R6 blocker: mixed route, uses Video module but diagnostics/audit details remain as legacy extension.',
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
-  'app/api/comments/[commentId]/reaction/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/comments/[commentId]/report/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
-  'app/api/comments/[commentId]/route.ts':
     'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
-  'app/api/videos/[id]/comments/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
   'app/api/media-source/[videoId]/route.ts':
     'R6/R3 certified: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
@@ -148,10 +142,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/export/route.ts': 'R5 blocker: admin export still legacy.',
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
   'app/api/subscriptions/route.ts': 'R5/R7 blocker: mixed route.',
-  'app/api/videos/[id]/comments/route.ts': 'R2/R8 blocker.',
-  'app/api/comments/[commentId]/reaction/route.ts': 'R2/R8 blocker.',
   'app/api/comments/[commentId]/report/route.ts': 'R2/R8 blocker.',
-  'app/api/comments/[commentId]/route.ts': 'R2/R8 blocker.',
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
@@ -167,7 +158,6 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/checkout/create-intent/route.ts': 'R7 blocker.',
   'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
   'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
-  'app/api/comments/[commentId]/replies/route.ts': 'R8 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
   'app/api/webhooks/resend/route.ts': 'R9 blocker.',
 };

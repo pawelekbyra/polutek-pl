@@ -96,7 +96,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R6**  | Moduł Video                                     | [x stronger foundation]      |
 | **R6.5**| Access Foundation                               | [x certified]                 |
 | **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
-| **R8**  | Moduł Comments                                  | [ ]                           |
+| **R8**  | Moduł Comments                                  | [~ core comments migrated]    |
 | **R9**  | Moduł Email                                     | [ ]                           |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
@@ -493,8 +493,27 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ core comments migrated]
 ```
+
+Zmigrowane:
+* `app/api/videos/[id]/comments/route.ts` (List/Create)
+* `app/api/comments/[commentId]/route.ts` (Update/Delete)
+* `app/api/comments/[commentId]/reaction/route.ts` (Like/Unlike)
+* `app/api/comments/[commentId]/replies/route.ts` (List replies)
+* `CommentPolicy` z egzekwowaniem dostępu do wideo (fix buga reaction access).
+* `CommentRepository` z czystym dostępem do DB.
+
+Pozostałe legacy/blokery:
+* `app/api/comments/[commentId]/report/route.ts` (Reports)
+* `app/api/comments/[commentId]/pin/route.ts` (Pin)
+* `app/api/comments/[commentId]/context/route.ts` (Context)
+* `app/api/admin/comments/route.ts` (Admin)
+* `app/api/admin/videos/[id]/comments/route.ts` (Admin video comments)
+* Brak audytu moderacji w use case'ach.
+* Brak zgłoszeń (reports) w module.
+
+Vercel deploy validation: NOT RUN / OUT OF SCOPE — account limits, no reliable logs available.
 
 R8 musi zawierać minimalne elementy Fazy X:
 
