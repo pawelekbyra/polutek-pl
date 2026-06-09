@@ -62,6 +62,7 @@ export type AdminBroadcastEmailListItemDto = {
 };
 
 export type ResendWebhookInput = {
+  eventId?: string; // Internal or provider event ID
   type: string;
   data: {
     email_id: string;
@@ -82,5 +83,5 @@ export type ResendWebhookResult = {
   accepted: boolean;
   ignored?: boolean;
   duplicate?: boolean;
-  idempotency?: "available" | "not_available";
+  idempotency?: "available" | "not_available" | "best_effort";
 };

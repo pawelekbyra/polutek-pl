@@ -33,6 +33,9 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     broadcastEmailRecipient: {
       createMany: vi.fn(),
     },
+    emailPreference: {
+        findUnique: vi.fn(),
+    }
   };
 
   const ctx = createAppContext({
@@ -44,6 +47,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     vi.clearAllMocks();
     mockSendBroadcast.mockResolvedValue({ sent: 1, failed: 0, messageIds: ['b1'] });
     mockSendTestEmail.mockResolvedValue({ messageId: 'test-id' });
+    prismaMock.emailPreference.findUnique.mockResolvedValue(null); // Opt-in by default
   });
 
   it('rejects missing subject or body', async () => {
@@ -127,5 +131,33 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     if (!result.ok) {
         expect(result.error.code).toBe('EMAIL_PROVIDER_FAILED');
     }
+  });
+
+  it('filters out recipients based on preferences', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+        { id: 'u1', email: 'optout@ex.com', language: 'pl', name: 'Opt Out', isPatron: false },
+        { id: 'u2', email: 'optin@ex.com', language: 'pl', name: 'Opt In', isPatron: false },
+    ]);
+    prismaMock.emailPreference.findUnique.mockImplementation(async ({ where }) => {
+        if (where.email === 'optout@ex.com') return { marketingEmails: false };
+        return { marketingEmails: true };
+    });
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+        subject: 'Pref Check',
+        body: 'Body',
+        audience: 'ALL_SUBSCRIBERS',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data.recipientCount).toBe(1);
+    }
+    expect(prismaMock.broadcastEmailRecipient.createMany).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.arrayContaining([
+            expect.objectContaining({ email: 'optin@ex.com' })
+        ])
+    }));
   });
 });

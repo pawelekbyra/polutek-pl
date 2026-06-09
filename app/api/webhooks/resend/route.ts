@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
         'svix-timestamp': svixTimestamp,
         'svix-signature': svixSignature,
       }) as ResendWebhookInput;
+
+      // Preserve svix-id as internal eventId for idempotency
+      payload.eventId = svixId;
     } catch (err) {
       logger.warn("[ResendWebhook] svix verification failed", err);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
@@ -39,6 +42,7 @@ export async function POST(req: NextRequest) {
   } else if (secret && legacySecret === secret) {
     // Allow legacy verification if explicitly configured and matching
     payload = JSON.parse(rawBody) as ResendWebhookInput;
+    payload.eventId = svixId || undefined;
   } else {
     logger.warn("[ResendWebhook] Unauthorized access attempt - invalid or missing signature/secret.");
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

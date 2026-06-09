@@ -11,6 +11,7 @@ import { logger } from "@/lib/logger";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { EmailRepository } from "../infrastructure/email.repository";
 import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
+import { EmailPolicy } from "../domain/email.policy";
 
 /**
  * sendAdminBroadcastEmail use case.
@@ -90,6 +91,21 @@ export async function sendAdminBroadcastEmail(
         return true;
     });
 
+    // 3. Apply Domain Policy (Opt-out check)
+    // For large lists, this should be optimized. For now we do it per recipient or keep it in bridge.
+    // Actually, LegacyEmailServiceProvider calls EmailService which already checks preferences.
+    // For R9 certification, we add the boundary check here but keep it async-safe.
+
+    if (audience !== "TEST") {
+        const eligibleRecipients: BroadcastRecipientDto[] = [];
+        for (const r of recipients) {
+            if (await EmailPolicy.canReceiveBroadcastEmail(ctx.prisma, r.email)) {
+                eligibleRecipients.push(r);
+            }
+        }
+        recipients = eligibleRecipients;
+    }
+
     if (recipients.length === 0) {
       return ok({
         dryRun: !!dryRun,
@@ -116,7 +132,7 @@ export async function sendAdminBroadcastEmail(
       });
     }
 
-    // 3. Handling for TEST via Provider
+    // 4. Handling for TEST via Provider
     if (audience === "TEST") {
       const { messageId } = await provider.sendTestEmail({
         to: testRecipientEmail!,
@@ -141,15 +157,14 @@ export async function sendAdminBroadcastEmail(
       });
     }
 
-    // 4. Map audience to DB Enum (BroadcastRecipientGroup)
+    // 5. Map audience to DB Enum (BroadcastRecipientGroup)
     let dbGroup: 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL' = 'SUBSCRIBERS';
     if (audience === 'ALL_SUBSCRIBERS') dbGroup = 'ALL';
     else if (audience === 'PATRONS') dbGroup = 'PATRONS';
     else if (audience === 'MANUAL') dbGroup = 'MANUAL';
-    // NON_PATRONS and TEST don't have a direct 1:1 match in the old enum, using MANUAL/ALL as fallback for record keeping
     else if (audience === 'NON_PATRONS') dbGroup = 'ALL';
 
-    // 5. Create BroadcastEmail record
+    // 6. Create BroadcastEmail record
     const broadcast = await ctx.prisma.broadcastEmail.create({
       data: {
         subjectPl: subjectPl || subject,
@@ -163,7 +178,7 @@ export async function sendAdminBroadcastEmail(
       }
     });
 
-    // 6. Create individual recipient records
+    // 7. Create individual recipient records
     await ctx.prisma.broadcastEmailRecipient.createMany({
       data: recipients.map(r => ({
         broadcastEmailId: broadcast.id,
@@ -174,7 +189,7 @@ export async function sendAdminBroadcastEmail(
       }))
     });
 
-    // 7. Trigger bridge provider
+    // 8. Trigger bridge provider
     await provider.sendBroadcast({
         subject,
         body,

@@ -17,7 +17,7 @@ export async function handleResendWebhook(
       return fail(new WebhookInvalidPayloadError("Input must be an object"));
   }
 
-  const { type, data } = input;
+  const { type, data, eventId } = input;
 
   if (!type || typeof type !== 'string') {
       return fail(new WebhookInvalidPayloadError("Event type is required and must be a string"));
@@ -29,15 +29,36 @@ export async function handleResendWebhook(
 
   const resendEmailId = data.email_id;
   if (!resendEmailId) {
-      // Some events might not have email_id? According to Resend docs they should.
-      // But we must handle it safely.
       logger.warn(`[handleResendWebhook] Event ${type} missing email_id`);
   }
 
-  logger.info(`[handleResendWebhook] Received event: ${type}`, { email_id: resendEmailId });
+  // 2. Best-effort idempotency check
+  // We check if an event with the same resendEmailId and type already exists.
+  // Note: multiple events of same type for same email_id might be rare but possible in some providers.
+  // Resend usually sends one for each state change.
+  if (resendEmailId) {
+      const existingEvent = await ctx.prisma.emailEvent.findFirst({
+          where: {
+              resendEmailId,
+              type
+          }
+      });
+
+      if (existingEvent) {
+          logger.info(`[handleResendWebhook] Duplicate event detected and ignored: ${type}`, { email_id: resendEmailId });
+          return ok({
+              received: true,
+              accepted: true,
+              duplicate: true,
+              idempotency: "best_effort"
+          });
+      }
+  }
+
+  logger.info(`[handleResendWebhook] Received event: ${type}`, { email_id: resendEmailId, event_id: eventId });
 
   try {
-    // 2. Log the event
+    // 3. Log the event
     await ctx.prisma.emailEvent.create({
       data: {
         type,
@@ -47,7 +68,7 @@ export async function handleResendWebhook(
       }
     });
 
-    // 3. Normalize and handle specific events
+    // 4. Normalize and handle specific events
     const supportedTypes = [
       'email.sent',
       'email.delivered',
@@ -66,7 +87,7 @@ export async function handleResendWebhook(
           received: true,
           accepted: true,
           ignored: true,
-          idempotency: "not_available"
+          idempotency: "best_effort"
       });
     }
 
@@ -104,7 +125,8 @@ export async function handleResendWebhook(
     return ok({
         received: true,
         accepted: true,
-        idempotency: "not_available" // Durable idempotency requires future schema support
+        duplicate: false,
+        idempotency: "best_effort"
     });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
