@@ -54,9 +54,9 @@ export class LegacyEmailServiceProvider implements EmailProvider {
       if (error) throw error;
 
       return { messageId: data?.id || "unknown-id" };
-    } catch (err: any) {
-      logger.error("[LegacyEmailServiceProvider] Failed to send test email", err);
-      throw err;
+    } catch (error) {
+      logger.error("[LegacyEmailServiceProvider] Failed to send test email", error);
+      throw error;
     }
   }
 }

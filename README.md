@@ -97,7 +97,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R6.5**| Access Foundation                               | [x video foundation]         |
 | **R7**  | Moduły Patron + Payments                        | [ ]                           |
 | **R8**  | Moduł Comments                                  | [ ]                           |
-| **R9**  | Moduł Email                                     | [ ]                           |
+| **R9**  | Moduł Email                                     | [~ production hardening]      |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
@@ -521,16 +521,30 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ production hardening]
 ```
+
+R9 Email jest na poziomie ~70–76%. Posiada utwardzony fundament, czyste granice i testy kontraktowe.
 
 R9 musi zawierać minimalne elementy Fazy X:
 
-* idempotentna obsługa webhooków,
+* idempotentna obsługa webhooków (obecnie: best-effort),
 * semantyka ponowień/statusów,
 * audyt broadcastów,
 * podstawowe notatki operacyjne (runbook),
 * brak admin broadcast typu "fire-and-forget" jako docelowy projekt.
+
+### Blokery R9 Email
+
+* **Broadcast route**: Zmigrowany do modułu (POST). POST /api/admin/emails/broadcast używa domain use case.
+* **Broadcast history GET**: Zmigrowany do modułu. GET /api/admin/emails/broadcast używa domain use case.
+* **Resend webhook**: Zmigrowany. Route weryfikuje podpis i deleguje do modułu.
+* **Webhook idempotency**: Best-effort (svix-id). Durable idempotency wymaga unikalnego pola w schema.
+* **Delivery aggregate counts**: Zabezpieczone przed duplikatami i terminal-state overwrite.
+* **Email preferences/unsubscribe**: Policy istnieje, sprawdzana przed wysyłką broadcastu.
+* **Outbox/retry**: NIE zaimplementowano (Future R9/R10).
+* **EmailService legacy bridge**: Nadal używany jako adapter dla Resend/szablonów.
+* **Admin templates/responses/subscriber resync**: Pozostają legacy (Future R9/R10).
 
 ---
 
