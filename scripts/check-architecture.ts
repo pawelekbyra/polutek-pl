@@ -87,8 +87,6 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R5/R9 boundary: webhook still has direct prisma/legacy boundary or was just migrated; mix of user sync and legacy email logic.',
   'app/api/admin/videos/resync/route.ts':
     'R6 cert: use case exists, but audit module transition or slight remaining legacy may trigger mixed mode.',
-  'app/api/access/route.ts':
-    'R6 cert: migrated to modular access use case.',
   'app/api/admin/videos/[id]/route.ts':
     'R6 blocker: mixed route, uses Video module but diagnostics/audit details remain as legacy extension.',
   'app/api/admin/videos/route.ts':
@@ -103,6 +101,10 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
     'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
+  'app/api/media-source/[videoId]/route.ts':
+    'R6/R3 delivery blocker: media-source still uses legacy AccessPolicy until playback/media delivery pass.',
+  'app/api/videos/[id]/playback-event/route.ts':
+    'R6/R3 delivery blocker: playback-event still uses legacy AccessPolicy until playback/media delivery pass.',
   'app/api/admin/users/route.ts':
     'R5 blocker: admin users list is still legacy/direct Prisma.',
   'app/api/admin/users/[userId]/route.ts':
@@ -212,7 +214,41 @@ function getAllFiles(dir: string): string[] {
   return results;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter();
+function checkLegacyAccessPolicy() {
+  let violations = 0;
+  let policyImports = 0;
+
+  const files = getAllFiles(ROOT);
+  for (const file of files) {
+    const relativePath = path.relative(ROOT, file);
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
+    if (relativePath === 'lib/access/access-policy.ts') continue;
+    if (relativePath === 'scripts/check-architecture.ts') continue;
+    if (relativePath.startsWith('tests/unit/')) continue; // Tests are allowed to import legacy policy for now
+
+    const content = fs.readFileSync(file, 'utf-8');
+    if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
+      policyImports++;
+
+      const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
+      const isExpectedLegacy = relativePath.includes('services/comments') ||
+                               relativePath.includes('services/playback') ||
+                               relativePath.includes('lib/blob.ts') ||
+                               relativePath.includes('lib/actions/interactions.ts') ||
+                               relativePath.includes('services/content/video.service.ts');
+
+      if (!allowReason && !isExpectedLegacy) {
+        console.error(`❌ Violation: New code must not import legacy AccessPolicy: ${relativePath}. Use lib/modules/access instead.`);
+        violations++;
+      }
+    }
+  }
+
+  console.log(`- Files importing legacy AccessPolicy: ${policyImports}`);
+  return violations;
+}
+
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);

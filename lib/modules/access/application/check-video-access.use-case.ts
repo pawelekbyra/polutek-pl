@@ -1,6 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok } from "@/lib/modules/shared/result";
-import { AccessDecisionDto } from "../domain/access.dto";
+import { AccessDecisionDto } from "../domain/access-decision.dto";
 import { MainChannelService } from "@/lib/modules/channel";
 import { AccessTier, VideoStatus } from "@prisma/client";
 
@@ -8,12 +8,17 @@ export type CheckVideoAccessInput = {
   videoIdOrSlug: string;
 };
 
+/**
+ * checkVideoAccess is the central decision point for video content gating.
+ * It enforces main-channel scoping, visibility rules, and tier-based access.
+ */
 export async function checkVideoAccess(
   input: CheckVideoAccessInput,
   ctx: AppContext
 ): Promise<UseCaseResult<AccessDecisionDto, never>> {
   const { videoIdOrSlug } = input;
   const { actor, prisma } = ctx;
+  const now = ctx.now();
 
   // 1. Resolve main channel
   const mainChannel = await MainChannelService.getRequired(ctx);
@@ -31,49 +36,53 @@ export async function checkVideoAccess(
     }
   });
 
-  // Admin bypass
+  // Admin bypass check (only within main channel)
   const isAdmin = actor.type === 'admin';
 
   if (!video) return ok({ hasAccess: false, reason: "NOT_FOUND" });
 
-  // 3. Main-channel scoping & Visibility
+  // 3. Main-channel scoping & Approved Primary Check
+  // Admin bypass is scoped to the main channel. Off-channel video remains NOT_FOUND in strict single-channel mode.
   const isMainChannelVideo = video.creatorId === mainChannel.id &&
                              video.creator?.isApproved &&
                              video.creator?.isPrimary;
 
-  // Non-admins only see approved primary main channel videos
-  if (!isAdmin && !isMainChannelVideo) {
+  if (!isMainChannelVideo) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
+  // 4. Visibility rules (Archived/Published/Draft)
   if (video.status === VideoStatus.ARCHIVED) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
-  // 4. Publication Status
   const isPublished = video.status === VideoStatus.PUBLISHED &&
-                      (!video.publishedAt || video.publishedAt <= new Date());
+                      (!video.publishedAt || video.publishedAt <= now);
 
   if (!isPublished && !isAdmin) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
-  // Admin access (after checking existence/main-channel/archived)
+  // Admin access granted for existing main-channel non-archived content
   if (isAdmin) return ok({ hasAccess: true });
 
   // 5. Tier-based access
   if (video.tier === AccessTier.PUBLIC) return ok({ hasAccess: true });
 
   if (actor.type === 'guest') {
+    // If the frontend expects PATRON_REQUIRED reason even for guest on PATRON videos, we return it.
+    // Otherwise LOGIN_REQUIRED is the first barrier.
+    const reason = video.tier === AccessTier.PATRON ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
     return ok({
         hasAccess: false,
-        reason: "LOGIN_REQUIRED",
+        reason,
         requiredTier: video.tier
     });
   }
 
   // 6. User-specific checks (LOGGED_IN, PATRON)
   if (actor.type !== 'user') {
+    // Should not happen for authenticated non-admin actors but for safety:
     return ok({ hasAccess: false, reason: "FORBIDDEN" });
   }
 
@@ -81,14 +90,14 @@ export async function checkVideoAccess(
     where: { id: actor.userId }
   });
 
-  if (!user || user.isDeleted) {
-    return ok({ hasAccess: false, reason: "DELETED" });
-  }
+  // Missing or deleted local user
+  if (!user) return ok({ hasAccess: false, reason: "FORBIDDEN" });
+  if (user.isDeleted) return ok({ hasAccess: false, reason: "DELETED" });
 
   if (video.tier === AccessTier.LOGGED_IN) return ok({ hasAccess: true });
 
   if (video.tier === AccessTier.PATRON) {
-    // DB isPatron is the single source of truth
+    // DB User.isPatron is the single source of truth. actor.isPatron cache is ignored here.
     if (user.isPatron) return ok({ hasAccess: true });
 
     return ok({

@@ -94,6 +94,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R4**  | Moduł Channel / ścisły jednokanałowy            | [x single-channel foundation] |
 | **R5**  | Moduł Users                                     | [~]                           |
 | **R6**  | Moduł Video                                     | [~ stronger]                  |
+| **R6.5**| Access Foundation                               | [x video foundation]         |
 | **R7**  | Moduły Patron + Payments                        | [ ]                           |
 | **R8**  | Moduł Comments                                  | [ ]                           |
 | **R9**  | Moduł Email                                     | [ ]                           |
@@ -112,7 +113,7 @@ Aktualna interpretacja projektu:
 ## 5. Bieżące zadanie
 
 ```txt
-R5/R6 completion — domknięcie pozostałych blokerów Users (admin/webhook) oraz Video (delivery/playback) przed przeglądem gotowości R7.
+R5 Users Admin/Webhook Completion + R6 playback/media-source delivery readiness before R7 readiness review.
 ```
 
 Nie zaczynaj jeszcze R7 Patron + Payments.
@@ -121,7 +122,7 @@ R7 może wystartować dopiero po:
 
 * przejrzeniu blokerów R5 Users,
 * przejrzeniu blokerów R6 Video,
-* certyfikacji granicy dostępu (access) i dostarczania mediów (playback),
+* certyfikacji granicy dostarczania mediów (playback),
 * uzgodnieniu README i architecture guard co do tego, co pozostaje legacy.
 
 ---
@@ -392,9 +393,29 @@ Znane pozostałe prace:
 R6 nie jest ukończone dopóki:
 
 * szczegóły admina (diagnostyka/audyt) nie zostaną w pełni zmigrowane lub jawnie zaakceptowane jako rozszerzenie legacy,
-* strategia route'a dostępu jest w pełni certyfikowana w kontekście dostarczania mediów,
 * publiczne UI nigdy nie otrzymuje surowego `videoUrl`,
 * README i guard zgadzają się co do pozostałego legacy.
+
+---
+
+### R6.5 — Access Foundation (Fundament Dostępu)
+
+Cel:
+* `access` jest centralnym modułem decyzji: allow/deny/reason,
+* obecnie certyfikowany scope to video access,
+* `/api/access` używa modułu access,
+* DB `User.isPatron` jest źródłem prawdy (source of truth),
+* metadane Clerk są tylko cache'em,
+* admin bypass działa tylko w obrębie głównego kanału (main channel),
+* treści spoza głównego kanału (off-channel) są traktowane jako `NOT_FOUND`,
+* playback/media-source nadal mogą używać legacy `AccessPolicy` i są pozostałymi blokerami dostarczania R6/R3.
+
+Status:
+```txt
+[x video foundation]
+```
+
+Certyfikowany fundament dostępu dla wideo.
 
 ---
 
@@ -432,6 +453,14 @@ R7 musi od początku zawierać minimalne elementy Fazy X:
 * checkout nie może akceptować `creatorId` od klienta.
 
 Oczekuje się, że R7 będzie jedną z najbardziej krytycznych faz.
+
+Blokery gotowości R7:
+- obecne przepływy patron/payment to serwisy legacy,
+- idempotencja webhooków Stripe musi zostać certyfikowana,
+- checkout nie może akceptować `creatorId` od klienta,
+- refund/revoke musi aktualizować DB `User.isPatron` jako źródło prawdy,
+- synchronizacja metadanych Clerk musi być post-commit i służyć wyłącznie jako cache,
+- decyzje o dostępie muszą używać `lib/modules/access`, a nie bezpośrednio płatności/patrona.
 
 ---
 
@@ -905,6 +934,7 @@ Pozostało: migracja frontendu publicznego, granica playbacku/delivery.
 
 Posiada:
 
+* centralne decyzje o dostępie dla wideo, komentarzy, media-source, playbacku, podglądu admina oraz przyszłe powody dostępu.
 * granice dostępu do treści,
 * reguły widoczności (publiczne/zalogowany/patron),
 * obejście admina,
@@ -916,7 +946,7 @@ Aktualny status:
 fundament certyfikowany dla wideo
 ```
 
-Używany przez `/api/access`. Dostarczanie mediów (playback) wciąż używa polityki legacy.
+Certyfikowany zasięg: dostęp do wideo. Używany przez `/api/access`. Dostarczanie mediów (playback) wciąż używa polityki legacy.
 
 ---
 
@@ -1226,6 +1256,25 @@ R6 [~ stronger]
 
 ---
 
+### R6.5 Access Foundation Pass — 2026-06-09
+
+* `/api/access` używa `lib/modules/access`.
+* DB `User.isPatron` jest jedynym źródłem prawdy dla dostępu patrona.
+* Cache aktora/Clerk nie jest wystarczający do przyznania dostępu.
+* Decyzje są ograniczone do głównego kanału (main-channel scoped).
+* Podgląd admina działa tylko w obrębie głównego kanału.
+* Treści spoza kanału (off-channel) zwracają `NOT_FOUND`.
+* Legacy `AccessPolicy` ograniczone do znanych przepływów playback/media-source i oznaczone jako przestarzałe.
+* Pozostała macierz dostępu (Access Matrix) należy do przyszłych prac R8/X1/X2.
+
+Status:
+
+```txt
+R6.5 [x video foundation]
+```
+
+---
+
 ## 16. Szablon raportu agenta
 
 Każdy agent musi zakończyć tym raportem:
@@ -1307,6 +1356,7 @@ Skupienie:
 * granica użytkownik/admin/webhook (R5),
 * gotowość dostarczania mediów/playbacku (R6/R3),
 * wyrównanie guardów,
+* certyfikacja R6.5 Access Foundation,
 * brak R7 przed przeglądem gotowości.
 
 ---
