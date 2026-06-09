@@ -84,7 +84,7 @@ const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access']
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
-    'R5/R9 boundary: webhook still has direct prisma/legacy boundary or was just migrated; mix of user sync and legacy email logic.',
+    'R5/R9 boundary: webhook boundary clean but mixed with legacy EmailService until R9.',
   'app/api/admin/videos/resync/route.ts':
     'R6 cert: use case exists, but audit module transition or slight remaining legacy may trigger mixed mode.',
   'app/api/admin/videos/[id]/route.ts':
@@ -106,9 +106,9 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/videos/[id]/playback-event/route.ts':
     'R6/R3 delivery blocker: playback-event still uses legacy AccessPolicy until playback/media delivery pass.',
   'app/api/admin/users/route.ts':
-    'R5 blocker: admin users list is still legacy/direct Prisma.',
+    'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/route.ts':
-    'R5 blocker: admin user details are still legacy/direct Prisma.',
+    'R5 blocker: mixed route, core user identity is modular, but extensions (payments, subscriptions) are legacy.',
   'app/api/admin/users/export/route.ts':
     'R5 blocker: admin user export is still legacy/direct Prisma.',
   'app/api/admin/users/stats/route.ts':

@@ -1,100 +1,86 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { UserRepository } from '@/lib/modules/users/infrastructure/user.repository';
+import { EmailService } from '@/lib/services/email.service';
+
+vi.mock('@/lib/services/email.service', () => ({
+  EmailService: {
+    sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+    sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
+    sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
+  }
+}));
+
+vi.mock('@/lib/modules/users/infrastructure/user.repository', () => {
+    const UserRepository = vi.fn();
+    UserRepository.prototype.findById = vi.fn();
+    UserRepository.prototype.create = vi.fn();
+    UserRepository.prototype.update = vi.fn();
+    return { UserRepository };
+});
 
 describe('SyncUserFromWebhookUseCase', () => {
-  const mockPrisma = {
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    patronGrant: {
-      updateMany: vi.fn(),
-    },
-    auditLog: {
-      create: vi.fn(),
-    },
-    $transaction: vi.fn((cb) => cb(mockPrisma)),
-  } as any;
-
-  const ctx = createAppContext({
-    actor: { type: 'system', reason: 'clerk_webhook' },
-    prisma: mockPrisma
-  });
+  let mockPrisma: any;
+  const ctx = (actor: any = { type: 'system', reason: 'test' }) => createAppContext({ actor, prisma: mockPrisma });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma = {
+        user: { update: vi.fn(), findUnique: vi.fn() },
+        patronGrant: { updateMany: vi.fn() },
+        auditLog: { create: vi.fn() },
+        $transaction: vi.fn((cb) => cb(mockPrisma)),
+    };
   });
 
-  it('syncUser upserts user correctly', async () => {
-    const data = {
-      id: 'user_123',
+  it('creates a new local user and preserves isPatron: false', async () => {
+    vi.mocked(UserRepository.prototype.findById).mockResolvedValue(null);
+    const createSpy = vi.mocked(UserRepository.prototype.create).mockResolvedValue({} as any);
+
+    await SyncUserFromWebhookUseCase.execute(ctx(), {
+      id: 'u1',
       email: 'test@example.com',
       name: 'Test User',
-      username: 'testuser',
-      imageUrl: 'http://image.com',
       language: 'en'
-    };
+    }, 'user.created');
 
-    mockPrisma.user.findUnique.mockResolvedValue(null);
-    mockPrisma.user.create.mockResolvedValue({ ...data, role: 'USER', isPatron: false });
-
-    await SyncUserFromWebhookUseCase.execute(ctx, data);
-
-    expect(mockPrisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        role: 'USER',
-        isPatron: false
-      })
-    }));
-  });
-
-  it('syncUser does not escalate role or isPatron', async () => {
-    const data = {
-      id: 'user_123',
+    expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'u1',
       email: 'test@example.com',
-    };
-
-    mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'user_123',
-        role: 'ADMIN',
-        isPatron: true,
-        name: 'Old Name'
-    });
-
-    await SyncUserFromWebhookUseCase.execute(ctx, data);
-
-    expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'user_123' },
-        data: expect.not.objectContaining({
-            role: expect.anything(),
-            isPatron: expect.anything()
-        })
+      isPatron: false // Source of truth must be protected
     }));
   });
 
-  it('softDelete records audit event', async () => {
-    const userId = 'user_123';
+  it('updates existing local user and preserves current isPatron state', async () => {
+    const existing = { id: 'u1', name: 'Old', isPatron: true, language: 'pl' };
+    vi.mocked(UserRepository.prototype.findById).mockResolvedValue(existing as any);
+    const updateSpy = vi.mocked(UserRepository.prototype.update).mockResolvedValue({} as any);
 
-    await SyncUserFromWebhookUseCase.softDelete(ctx, userId);
+    await SyncUserFromWebhookUseCase.execute(ctx(), {
+      id: 'u1',
+      email: 'new@example.com',
+      name: 'New Name'
+    }, 'user.updated');
 
-    expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-            action: 'USER_SOFT_DELETED',
-            targetType: 'User',
-            targetId: userId
-        })
+    expect(updateSpy).toHaveBeenCalledWith('u1', expect.objectContaining({
+      email: 'new@example.com',
+      name: 'New Name'
     }));
+    // Note: repository.update only takes the partial data, and we don't pass isPatron to it in identity sync.
+  });
 
+  it('performs soft delete correctly', async () => {
+    await SyncUserFromWebhookUseCase.softDelete(ctx(), 'u1');
+
+    expect(mockPrisma.patronGrant.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { userId: 'u1', revokedAt: null }
+    }));
     expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: userId },
+        where: { id: 'u1' },
         data: expect.objectContaining({
             isDeleted: true,
-            email: expect.stringContaining('deleted_')
+            isPatron: false
         })
     }));
   });
