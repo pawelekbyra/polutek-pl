@@ -1,7 +1,7 @@
 import { AppContext } from "../../shared/app-context";
 import { ResendWebhookInput, ResendWebhookResult } from "../domain/email.dto";
 import { UseCaseResult, ok, fail } from "../../shared/result";
-import { EmailError, WebhookUnsupportedEventError } from "../domain/email.errors";
+import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
 
 /**
@@ -12,13 +12,32 @@ export async function handleResendWebhook(
   ctx: AppContext,
   input: ResendWebhookInput
 ): Promise<UseCaseResult<ResendWebhookResult, EmailError>> {
+  // 1. Robust validation
+  if (!input || typeof input !== 'object') {
+      return fail(new WebhookInvalidPayloadError("Input must be an object"));
+  }
+
   const { type, data } = input;
+
+  if (!type || typeof type !== 'string') {
+      return fail(new WebhookInvalidPayloadError("Event type is required and must be a string"));
+  }
+
+  if (!data || typeof data !== 'object') {
+      return fail(new WebhookInvalidPayloadError("Event data is required and must be an object"));
+  }
+
   const resendEmailId = data.email_id;
+  if (!resendEmailId) {
+      // Some events might not have email_id? According to Resend docs they should.
+      // But we must handle it safely.
+      logger.warn(`[handleResendWebhook] Event ${type} missing email_id`);
+  }
 
   logger.info(`[handleResendWebhook] Received event: ${type}`, { email_id: resendEmailId });
 
   try {
-    // 1. Log the event
+    // 2. Log the event
     await ctx.prisma.emailEvent.create({
       data: {
         type,
@@ -28,7 +47,7 @@ export async function handleResendWebhook(
       }
     });
 
-    // 2. Normalize and handle specific events
+    // 3. Normalize and handle specific events
     const supportedTypes = [
       'email.sent',
       'email.delivered',
@@ -43,43 +62,52 @@ export async function handleResendWebhook(
 
     if (!supportedTypes.includes(type)) {
       logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
-      return ok({ received: true, accepted: true, ignored: true });
+      return ok({
+          received: true,
+          accepted: true,
+          ignored: true,
+          idempotency: "not_available"
+      });
     }
 
-    switch (type) {
-      case 'email.sent':
-        await updateRecipientStatus(ctx, resendEmailId, 'SENT', { sentAt: new Date() });
-        break;
-      case 'email.delivered':
-        await updateRecipientStatus(ctx, resendEmailId, 'DELIVERED', { deliveredAt: new Date() });
-        break;
-      case 'email.delivery_delayed':
-        // We log it but don't necessarily update status to an error one yet
-        break;
-      case 'email.bounced':
-        await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() }, true);
-        break;
-      case 'email.complained':
-        await updateRecipientStatus(ctx, resendEmailId, 'COMPLAINED', { complainedAt: new Date() }, true);
-        break;
-      case 'email.opened':
-        await updateRecipientStatus(ctx, resendEmailId, 'OPENED', { openedAt: new Date() });
-        break;
-      case 'email.clicked':
-        await updateRecipientStatus(ctx, resendEmailId, 'CLICKED', { clickedAt: new Date() });
-        break;
-      case 'email.unsubscribed':
-        await handleUnsubscribe(ctx, data.to?.[0]);
-        break;
-      case 'email.received':
-        await handleInboundEmail(ctx, data);
-        break;
+    if (resendEmailId) {
+        switch (type) {
+          case 'email.sent':
+            await updateRecipientStatus(ctx, resendEmailId, 'SENT', { sentAt: new Date() });
+            break;
+          case 'email.delivered':
+            await updateRecipientStatus(ctx, resendEmailId, 'DELIVERED', { deliveredAt: new Date() });
+            break;
+          case 'email.delivery_delayed':
+            break;
+          case 'email.bounced':
+            await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() }, true);
+            break;
+          case 'email.complained':
+            await updateRecipientStatus(ctx, resendEmailId, 'COMPLAINED', { complainedAt: new Date() }, true);
+            break;
+          case 'email.opened':
+            await updateRecipientStatus(ctx, resendEmailId, 'OPENED', { openedAt: new Date() });
+            break;
+          case 'email.clicked':
+            await updateRecipientStatus(ctx, resendEmailId, 'CLICKED', { clickedAt: new Date() });
+            break;
+          case 'email.unsubscribed':
+            await handleUnsubscribe(ctx, data.to?.[0]);
+            break;
+          case 'email.received':
+            await handleInboundEmail(ctx, data);
+            break;
+        }
     }
 
-    return ok({ received: true, accepted: true });
+    return ok({
+        received: true,
+        accepted: true,
+        idempotency: "not_available" // Durable idempotency requires future schema support
+    });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
-    // Return fail only for internal errors that might warrant a retry from Resend
     return fail(new EmailError(error.message || "Internal error during webhook handling"));
   }
 }

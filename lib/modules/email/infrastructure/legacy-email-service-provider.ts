@@ -1,28 +1,37 @@
 import { EmailProvider } from "../domain/email-provider";
 import { EmailService } from "@/lib/services/email.service";
+import { Resend } from "resend";
+import { APP_NAME } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 /**
  * R9 legacy email bridge.
  * Adapts the legacy EmailService to the new EmailProvider interface.
  */
 export class LegacyEmailServiceProvider implements EmailProvider {
+  private resendClient: Resend | null = null;
+
+  private getResendClient() {
+    if (!this.resendClient) {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        throw new Error('RESEND_API_KEY is missing');
+      }
+      this.resendClient = new Resend(apiKey);
+    }
+    return this.resendClient;
+  }
+
   async sendBroadcast(input: {
     subject: string;
     body: string;
     recipients: Array<{ email: string; name?: string | null; language: string }>;
     broadcastId: string;
   }) {
-    // Currently EmailService.sendBroadcast handles its own recipient fetching
-    // and DB updates based on broadcastId.
-    // In this foundation pass, we trigger the existing logic.
-
     // Note: Legacy EmailService.sendBroadcast takes ONLY broadcastId.
-    // It doesn't use the subject/body passed from use case yet as it reads them from DB.
-    // This is fine for foundation.
-
+    // It reads subject/body from DB based on broadcastId.
     await EmailService.sendBroadcast(input.broadcastId);
 
-    // We don't have immediate stats from the async background send
     return {
       sent: input.recipients.length,
       failed: 0,
@@ -31,15 +40,23 @@ export class LegacyEmailServiceProvider implements EmailProvider {
   }
 
   async sendTestEmail(input: { to: string; subject: string; body: string }) {
-    // Legacy test email logic using Resend directly or EmailService?
-    // Let's use EmailService's provider logic if available or just Resend client.
-    // Actually, route was using Resend directly.
-    // For now we'll keep it simple as this is a bridge.
+    try {
+      const resend = this.getResendClient();
+      const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
 
-    // Placeholder as we might not need to implement full test email logic here
-    // if the use case still calls Resend directly for tests.
-    // But better to move it here.
+      const { data, error } = await resend.emails.send({
+        from,
+        to: [input.to],
+        subject: `[TEST] ${input.subject}`,
+        html: input.body
+      });
 
-    return { messageId: "legacy-test-id" };
+      if (error) throw error;
+
+      return { messageId: data?.id || "unknown-id" };
+    } catch (err: any) {
+      logger.error("[LegacyEmailServiceProvider] Failed to send test email", err);
+      throw err;
+    }
   }
 }
