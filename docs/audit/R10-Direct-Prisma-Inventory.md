@@ -9,7 +9,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 | `app/api/user/referrals/claim/route.ts` | Referrals | 1 | R10 | Legacy referral logic |
 | `app/api/subscriptions/route.ts` | Users/Patron | 6 | R7 | Mixed route, subscriptions direct Prisma |
 | `app/api/videos/[id]/playback-event/route.ts` | Video/Analytics | 8 | R6/R3 | Persistence of events/views |
-| `app/api/admin/payment-settings/route.ts` | Payments | 2 | R7 | Admin payment settings |
 | `app/api/admin/templates/route.ts` | Email | 5 | R9 | Legacy email templates |
 | `app/api/admin/videos/[id]/comments/route.ts` | Comments | 1 | R8 | Mixed admin route (legacy CommentService) |
 | `app/api/admin/videos/[id]/route.ts` | Video | 1 | R6 | Audit details extension |
