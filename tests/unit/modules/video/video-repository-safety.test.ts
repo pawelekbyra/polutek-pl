@@ -1,0 +1,124 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { VideoRepository } from '@/lib/modules/video/infrastructure/video.repository';
+import { VideoNotOnMainChannelError, VideoInvalidHeroError } from '@/lib/modules/video/domain/video.errors';
+import { AccessTier, VideoStatus } from '@prisma/client';
+
+describe('VideoRepository Safety', () => {
+  let repository: VideoRepository;
+  let mockPrisma: any;
+  const mainChannelId = 'main-channel-id';
+
+  beforeEach(() => {
+    mockPrisma = {
+      video: {
+        updateMany: vi.fn(),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
+    };
+    repository = new VideoRepository(mockPrisma);
+  });
+
+  describe('updateForMainChannel', () => {
+    it('updates video when id and creatorId match', async () => {
+      mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.video.findFirst.mockResolvedValue({ id: 'v1', creatorId: mainChannelId });
+
+      const result = await repository.updateForMainChannel({ id: 'v1', title: 'New Title' }, mainChannelId, mockPrisma);
+
+      expect(mockPrisma.video.updateMany).toHaveBeenCalledWith({
+        where: { id: 'v1', creatorId: mainChannelId },
+        data: expect.objectContaining({ title: 'New Title' }),
+      });
+      expect(result.id).toBe('v1');
+    });
+
+    it('throws VideoNotOnMainChannelError when updateMany count is not 1', async () => {
+      mockPrisma.video.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(repository.updateForMainChannel({ id: 'v1', title: 'New Title' }, mainChannelId, mockPrisma))
+        .rejects.toThrow(VideoNotOnMainChannelError);
+    });
+  });
+
+  describe('archiveVideo', () => {
+    it('archives only main-channel video', async () => {
+      mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.video.findFirst.mockResolvedValue({ id: 'v1', status: 'ARCHIVED' });
+
+      const result = await repository.archiveVideo('v1', mainChannelId, mockPrisma);
+
+      expect(mockPrisma.video.updateMany).toHaveBeenCalledWith({
+        where: { id: 'v1', creatorId: mainChannelId },
+        data: { status: 'ARCHIVED' },
+      });
+      expect(result.status).toBe('ARCHIVED');
+    });
+
+    it('throws VideoNotOnMainChannelError for off-channel video', async () => {
+      mockPrisma.video.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(repository.archiveVideo('v1', mainChannelId, mockPrisma))
+        .rejects.toThrow(VideoNotOnMainChannelError);
+    });
+  });
+
+  describe('setHero', () => {
+    it('refuses off-channel video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(null);
+
+      await expect(repository.setHero('v1', mainChannelId, mockPrisma))
+        .rejects.toThrow(VideoNotOnMainChannelError);
+    });
+
+    it('refuses non-public/non-published video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'v1',
+        creatorId: mainChannelId,
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED
+      });
+
+      await expect(repository.setHero('v1', mainChannelId, mockPrisma))
+        .rejects.toThrow(VideoInvalidHeroError);
+    });
+
+    it('sets hero for valid video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'v1',
+        creatorId: mainChannelId,
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.PUBLISHED
+      });
+      mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.video.update.mockResolvedValue({ id: 'v1', isMainFeatured: true });
+
+      await repository.setHero('v1', mainChannelId, mockPrisma);
+
+      expect(mockPrisma.video.updateMany).toHaveBeenCalledWith({
+        where: { creatorId: mainChannelId, isMainFeatured: true },
+        data: { isMainFeatured: false }
+      });
+      expect(mockPrisma.video.update).toHaveBeenCalledWith({
+        where: { id: 'v1' },
+        data: { isMainFeatured: true }
+      });
+    });
+  });
+
+  describe('reorder', () => {
+    it('refuses mixed-channel batch', async () => {
+      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: mainChannelId });
+      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: 'other-channel' });
+
+      const updates = [
+        { id: 'v1', sidebarOrder: 1, showInSidebar: true },
+        { id: 'v2', sidebarOrder: 2, showInSidebar: true },
+      ];
+
+      await expect(repository.reorder(updates, mainChannelId, mockPrisma))
+        .rejects.toThrow(VideoNotOnMainChannelError);
+    });
+  });
+});

@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
 import { prisma } from '@/lib/prisma';
+// R6/R3 delivery blocker: playback still uses legacy access policy.
+// Do not expose raw videoUrl to public UI; gated playback migration remains future work.
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { flags } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';

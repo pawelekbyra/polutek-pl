@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+// R6/R3 delivery blocker: playback still uses legacy access policy.
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';

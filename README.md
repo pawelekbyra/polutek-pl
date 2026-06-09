@@ -1,181 +1,180 @@
 # Polutek.pl
 
-## 1. Product mode
+## 1. Tryb produktu
 
-Polutek.pl is a strict single-channel creator hub.
+Polutek.pl to ścisły, jednokanałowy hub twórcy.
 
-Product invariants:
+Inwarianty produktu:
 
-* One official channel.
-* One creator.
-* One content catalog.
-* One patron/access system.
-* One community.
-* One private media platform for the owner/creator.
+* Jeden oficjalny kanał.
+* Jeden twórca.
+* Jeden katalog treści.
+* Jeden system patronów/dostępu.
+* Jedna społeczność.
+* Jedna prywatna platforma mediowa dla właściciela/twórcy.
 
-This is not:
+To NIE jest:
 
-* a multi-creator marketplace,
-* a creator onboarding platform,
-* a mini-Patreon for many creators,
-* a public multi-channel social network.
+* marketplace dla wielu twórców,
+* platforma do onboardingu twórców,
+* mini-Patreon dla wielu twórców,
+* publiczna, wielokanałowa sieć społecznościowa.
 
-Important model mapping:
+Ważne mapowanie modeli:
 
-* `Creator` in the database is a legacy technical representation of `MainChannel`.
-* Do not rename `Creator -> Channel` in Prisma until the modular monolith is stable and tested.
+* `Creator` w bazie danych to legacy techniczna reprezentacja `MainChannel`.
+* Nie zmieniaj nazwy `Creator -> Channel` w Prisemie, dopóki modułowy monolit nie będzie stabilny i przetestowany.
 * `Subscription != Patron`.
-* Subscription/follow means email/newsletter/notification interest.
-* Patron access is controlled by DB state, especially `User.isPatron` and future patron/payment modules.
-* Clerk metadata is a cache/sync layer, not the source of truth for access.
+* Subskrypcja/obserwowanie oznacza zainteresowanie e-mailami/newsletterem/powiadomieniami.
+* Dostęp patrona jest kontrolowany przez stan bazy danych, w szczególności `User.isPatron` i przyszłe moduły patronów/płatności.
+* Metadane Clerk to warstwa cache/sync, a nie źródło prawdy dla dostępu.
 
 ---
 
-## 2. Current active refactor
+## 2. Aktualny refaktor
 
-The active refactor is a practical Modular Monolith migration.
+Aktywny refaktor to praktyczna migracja w kierunku Modułowego Monolitu.
 
-Target flow:
+Docelowy przepływ:
 
 ```txt
 route -> use-case -> policy/service/repository -> Prisma
 ```
 
-Routes should be thin.
+Route'y powinny być cienkie.
 
-Use cases should own business logic.
+Use case'y powinny posiadać logikę biznesową.
 
-Policies should own business rules.
+Policy powinny posiadać reguły biznesowe.
 
-Repositories should own database access.
+Repozytoria powinny posiadać dostęp do bazy danych.
 
-DTOs should protect API/UI contracts from raw Prisma models.
+DTO powinny chronić kontrakty API/UI przed surowymi modelami Prisma.
 
-Modules must expose public API through `index.ts`.
+Moduły muszą wystawiać publiczne API przez `index.ts`.
 
-`README.md` is the active source of truth for the current refactor state, roadmap, rules, known blockers, and next tasks.
-
----
-
-## 3. Status vocabulary
-
-Status meanings:
-
-```txt
-[ ]              not started
-[~]              partial / in progress / known blockers remain
-[x foundation]   foundation is certified, but full legacy removal is intentionally deferred
-[x safety foundation] certified safety layer, but delivery/runtime migration may remain
-[x single-channel foundation] strict single-channel invariant certified, but compatibility adapters may remain
-[x]              certified complete for current roadmap scope
-[!]              blocked / regression / do not proceed
-```
-
-Important rule:
-
-```txt
-Claimed done != certified done
-```
-
-A phase may only be marked as certified when code, tests, guards, validation, README truth, and known blockers are aligned.
-
-A phase can be certified as a foundation without pretending that all legacy runtime paths have been removed.
+`README.md` jest aktywnym źródłem prawdy o aktualnym stanie refaktoryzacji, roadmapie, zasadach, znanych blokerach i kolejnych zadaniach.
 
 ---
 
-## 4. Current status
+## 3. Słownik statusów
 
-| Phase   | Description                                     | Status                        |
+Znaczenie statusów:
+
+```txt
+[ ]              nie rozpoczęto
+[~]              częściowe / w toku / pozostają znane blokery
+[x foundation]   fundament certyfikowany, ale pełne usunięcie legacy jest celowo odroczone
+[x safety foundation] certyfikowana warstwa bezpieczeństwa, ale migracja dostarczania/runtime może pozostać
+[x single-channel foundation] ścisły inwariant jednokanałowy certyfikowany, ale adaptery kompatybilności mogą pozostać
+[x]              certyfikowane jako ukończone dla obecnego zakresu roadmapy
+[!]              zablokowane / regresja / nie kontynuuj
+```
+
+Ważna zasada:
+
+```txt
+Uznane za gotowe != certyfikowane jako gotowe
+```
+
+Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy kod, testy, guardy, prawda w README i znane blokery są spójne.
+
+Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszystkie ścieżki legacy w runtime zostały usunięte.
+
+---
+
+## 4. Aktualny status
+
+| Faza    | Opis                                            | Status                        |
 | :------ | :---------------------------------------------- | :---------------------------- |
-| **R0**  | Rules, infrastructure, project guardrails       | [x]                           |
-| **R1**  | Shared, API boundary, errors, Actor, AppContext | [x]                           |
-| **R2**  | Audit module                                    | [x foundation]                |
-| **R3**  | Media module                                    | [x safety foundation]         |
-| **R4**  | Channel module / strict single-channel          | [x single-channel foundation] |
-| **R5**  | Users module                                    | [~]                           |
-| **R6**  | Video module                                    | [~]                           |
-| **R7**  | Patron + Payments modules                       | [ ]                           |
-| **R8**  | Comments module                                 | [ ]                           |
-| **R9**  | Email module                                    | [ ]                           |
-| **R10** | Cleanup deprecated facades                      | [ ]                           |
-| **R11** | Admin frontend / operational cockpit            | [ ]                           |
+| **R0**  | Zasady, infrastruktura, projektowe bariery      | [x]                           |
+| **R1**  | Shared, granica API, błędy, Actor, AppContext   | [x]                           |
+| **R2**  | Moduł Audit                                     | [x foundation]                |
+| **R3**  | Moduł Media                                     | [x safety foundation]         |
+| **R4**  | Moduł Channel / ścisły jednokanałowy            | [x single-channel foundation] |
+| **R5**  | Moduł Users                                     | [~]                           |
+| **R6**  | Moduł Video                                     | [~ stronger]                  |
+| **R7**  | Moduły Patron + Payments                        | [ ]                           |
+| **R8**  | Moduł Comments                                  | [ ]                           |
+| **R9**  | Moduł Email                                     | [ ]                           |
+| **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
+| **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
-Current project interpretation:
+Aktualna interpretacja projektu:
 
-* R0/R1 are certified as the current foundation.
-* R2/R3/R4 are certified as foundations, not full removal of all legacy dependencies.
-* R5/R6 are active partial migrations and must be completed before R7.
-* R7 must not start until R5/R6 blockers are reviewed and either fixed or explicitly accepted.
+* R0/R1 są certyfikowane jako obecny fundament.
+* R2/R3/R4 są certyfikowane jako fundamenty, a nie pełne usunięcie wszystkich zależności legacy.
+* R5/R6 to aktywne migracje częściowe i muszą zostać domknięte przed R7.
+* R7 nie może się rozpocząć, dopóki blokery R5/R6 nie zostaną przejrzane i naprawione lub jawnie zaakceptowane.
 
 ---
 
-## 5. Current next task
+## 5. Bieżące zadanie
 
 ```txt
-R5/R6 blocker completion — finish users/admin/webhook/access boundaries and video admin details/access route before R7 readiness review.
+R5/R6 completion — domknięcie pozostałych blokerów Users (admin/webhook) oraz Video (delivery/playback) przed przeglądem gotowości R7.
 ```
 
-Do not start R7 Patron + Payments yet.
+Nie zaczynaj jeszcze R7 Patron + Payments.
 
-R7 may start only after:
+R7 może wystartować dopiero po:
 
-* R5 Users blockers are reviewed,
-* R6 Video blockers are reviewed,
-* access route strategy is clear,
-* video admin details/resync are either migrated or explicitly accepted as remaining blockers,
-* README and architecture guard agree on what remains legacy.
-
----
-
-## 6. Mandatory agent rules
-
-All agents must follow these rules:
-
-* Do not just move files.
-* Do not create folders and call a phase complete.
-* Do not mark `[x]` without tests and validation.
-* Do not update README to be more optimistic than code.
-* Do not start new roadmap phases while known blockers remain in the current phase.
-* Do not import module internals from routes.
-* Do not mix closed modules with direct Prisma/services in the same route unless explicitly allowlisted with a phase/comment.
-* Do not expose raw `videoUrl` to public UI/API.
-* Do not treat Clerk metadata as source of truth for patron access.
-* Do not reintroduce creator fallbacks such as `polutek` or `demo-creator`.
-* Do not run maintenance/repair from normal runtime.
-* Do not start Phase X as a separate roadmap before R0–R11 are complete.
-
-Critical refinement:
-
-Phase X must not start as a standalone roadmap before R0–R11 are complete.
-
-However, R7–R11 must include the minimal Phase X concerns that naturally belong to each domain. This prevents Phase X from becoming a second massive refactor.
+* przejrzeniu blokerów R5 Users,
+* przejrzeniu blokerów R6 Video,
+* certyfikacji granicy dostępu (access) i dostarczania mediów (playback),
+* uzgodnieniu README i architecture guard co do tego, co pozostaje legacy.
 
 ---
 
-## 7. R0–R11 roadmap
+## 6. Obowiązkowe zasady agenta
 
-### R0 — Rules and infrastructure
+Wszyscy agenci muszą przestrzegać tych zasad:
 
-Purpose:
+* Nie przenoś tylko plików.
+* Nie twórz folderów nazywając fazę ukończoną.
+* Nie oznaczaj `[x]` bez testów i walidacji.
+* Nie aktualizuj README na bardziej optymistyczne niż rzeczywistość w kodzie.
+* Nie zaczynaj nowych faz roadmapy, gdy pozostają znane blokery w obecnej fazie.
+* Nie importuj wnętrzności modułów z route'ów.
+* Nie mieszaj zamkniętych modułów z bezpośrednią Prismą/serwisami w tym samym route, chyba że jest to jawnie dozwolone (allowlisted) z fazą/komentarzem.
+* Nigdy nie wystawiaj surowego `videoUrl` do publicznego UI/API.
+* Nie traktuj metadanych Clerk jako źródła prawdy dla dostępu patrona.
+* Nie wprowadzaj ponownie fallbacków twórcy, takich jak `polutek` lub `demo-creator`.
+* Nie uruchamiaj konserwacji/naprawy (maintenance/repair) z normalnego runtime'u.
+* Nie zaczynaj Fazy X jako osobnej roadmapy przed ukończeniem R0–R11.
 
-* project rules,
-* validation scripts,
-* architecture guardrails,
-* README as source of truth.
+Kluczowe doprecyzowanie:
 
-Current status:
+Faza X nie może wystartować jako samodzielna roadmapa przed ukończeniem R0–R11.
+
+Jednakże, R7–R11 muszą zawierać minimalne elementy Fazy X, które naturalnie należą do danej domeny. Zapobiega to sytuacji, w której Faza X stałaby się drugim masowym refaktorem.
+
+---
+
+## 7. Roadmapa R0–R11
+
+### R0 — Zasady i infrastruktura
+
+Cel:
+
+* zasady projektu,
+* skrypty walidacyjne,
+* bariery architektoniczne (guards),
+* README jako źródło prawdy.
+
+Status:
 
 ```txt
 [x]
 ```
 
-Certified after R0/R1 certification pass.
+Certyfikowane po przejściu certyfikacji R0/R1.
 
 ---
 
-### R1 — Shared, API boundary, errors, ctx
+### R1 — Shared, granica API, błędy, ctx
 
-Purpose:
+Cel:
 
 * `Actor`,
 * `AppContext`,
@@ -183,404 +182,403 @@ Purpose:
 * `AppError`,
 * `ReadDb`,
 * `WriteTx`,
-* API helpers,
-* response mapping,
-* no deprecated `ctx.userId` / `ctx.role`.
+* helpery API,
+* mapowanie odpowiedzi,
+* brak przestarzałych `ctx.userId` / `ctx.role`.
 
-Current status:
+Status:
 
 ```txt
 [x]
 ```
 
-Certified foundation.
+Certyfikowany fundament.
 
-Remaining polish can happen later, but R1 is good enough as the base for further domain work.
+Dalsze szlify mogą nastąpić później, ale R1 jest wystarczająco dobre jako baza dla dalszych prac domenowych.
 
 ---
 
 ### R2 — Audit
 
-Purpose:
+Cel:
 
-* shared audit module,
-* actor-based audit events,
-* transaction-aware audit logging,
-* use by migrated modules.
+* współdzielony moduł audytu,
+* zdarzenia audytu oparte na aktorze,
+* logowanie audytu świadome transakcji,
+* użycie przez zmigrowane moduły.
 
-Current status:
+Status:
 
 ```txt
 [x foundation]
 ```
 
-Certified as foundation.
+Certyfikowane jako fundament.
 
-Meaning:
+Oznacza to:
 
-* `lib/modules/audit/**` exists,
-* public API goes through `lib/modules/audit/index.ts`,
-* migrated channel/video/users actions can use audit,
-* audit uses `AppContext` / `Actor`,
-* transaction support exists where needed.
+* `lib/modules/audit/**` istnieje,
+* publiczne API przechodzi przez `lib/modules/audit/index.ts`,
+* zmigrowane akcje kanału/wideo/użytkowników mogą używać audytu,
+* audyt używa `AppContext` / `Actor`,
+* wsparcie dla transakcji istnieje tam, gdzie jest potrzebne.
 
-Not yet meaning:
+Nie oznacza jeszcze:
 
-* every legacy comments/payments/email/admin details action is fully migrated to the audit module.
+* każda akcja legacy w komentarzach/płatnościach/e-mailach/szczegółach admina jest w pełni zmigrowana do modułu audytu.
 
-Remaining audit coverage for comments/payments/email/admin details belongs to their domain passes.
+Pozostałe pokrycie audytem dla komentarzy/płatności/e-mailu/szczegółów admina należy do ich przejść domenowych.
 
 ---
 
 ### R3 — Media
 
-Purpose:
+Cel:
 
-* media safety,
-* URL allowlists,
-* private host blocking,
-* thumbnail/video/avatar/comment image validation,
-* HLS/DASH/direct source detection,
-* public DTO no-leak guarantees.
+* bezpieczeństwo mediów,
+* allowlisty URL,
+* blokowanie prywatnych hostów,
+* walidacja miniatur/wideo/awatarów/obrazków w komentarzach,
+* wykrywanie źródeł HLS/DASH/bezpośrednich,
+* gwarancje braku wycieku danych w publicznych DTO.
 
-Current status:
+Status:
 
 ```txt
 [x safety foundation]
 ```
 
-Certified as media safety foundation.
+Certyfikowane jako fundament bezpieczeństwa mediów.
 
-Meaning:
+Oznacza to:
 
-* MediaPolicy safety layer exists,
-* URL safety and private host blocking are tested,
-* public video DTO does not expose raw `videoUrl`,
-* HLS/DASH detection exists as classification.
+* warstwa bezpieczeństwa MediaPolicy istnieje,
+* bezpieczeństwo URL i blokowanie prywatnych hostów są przetestowane,
+* publiczne DTO wideo nie wystawia surowego `videoUrl`,
+* wykrywanie HLS/DASH istnieje jako klasyfikacja.
 
-Not yet meaning:
+Nie oznacza jeszcze:
 
-* full media delivery/proxy migration is complete,
-* manifest rewriting exists,
-* segment proxying exists,
-* `app/api/media/**`, `app/api/media-source/**`, and `lib/blob.ts` are fully modularized.
+* pełna migracja dostarczania mediów/proxy jest ukończona,
+* przepisywanie manifestów istnieje,
+* proxy segmentów istnieje,
+* `app/api/media/**`, `app/api/media-source/**` oraz `lib/blob.ts` są w pełni zmodularyzowane.
 
-Important HLS/DASH caveat:
+Ważne zastrzeżenie dot. HLS/DASH:
 
 ```txt
-HLS/DASH detection exists for validation/classification only.
-It does not mean manifest rewriting or segment proxy delivery is implemented.
+Wykrywanie HLS/DASH istnieje wyłącznie do celów walidacji/klasyfikacji.
+Nie oznacza to, że przepisywanie manifestów lub dostarczanie przez proxy segmentów jest zaimplementowane.
 ```
 
-Full media delivery belongs to a future dedicated R3/R6 delivery pass.
+Pełne dostarczanie mediów należy do przyszłego dedykowanego przejścia R3/R6 delivery.
 
 ---
 
-### R4 — Channel
+### R4 — Channel (Kanał)
 
-Purpose:
+Cel:
 
-* strict single-channel invariant,
+* ścisły inwariant jednokanałowy,
 * `MainChannel`,
-* `MAIN_CREATOR_SLUG` as source of truth,
-* explicit maintenance,
-* admin channel settings,
-* no runtime auto-repair.
+* `MAIN_CREATOR_SLUG` jako źródło prawdy,
+* jawna konserwacja (maintenance),
+* ustawienia kanału admina,
+* brak auto-naprawy w runtime.
 
-Current status:
+Status:
 
 ```txt
 [x single-channel foundation]
 ```
 
-Certified as single-channel foundation.
+Certyfikowane jako fundament jednokanałowy.
 
-Meaning:
+Oznacza to:
 
-* channel module exists,
-* strict single-channel invariant is documented and tested,
-* no runtime fallback/guessing should exist,
-* maintenance preview/apply is explicit, confirmed, and auditable,
-* `/api/admin/channel` uses the channel module,
-* `/api/admin/creator` is deprecated/wrapper behavior, not a parallel source of truth.
+* moduł kanału istnieje,
+* ścisły inwariant jednokanałowy jest udokumentowany i przetestowany,
+* nie powinien istnieć żaden fallback/zgadywanie w runtime,
+* podgląd/zastosowanie konserwacji jest jawne, potwierdzone i audytowalne,
+* `/api/admin/channel` używa modułu kanału,
+* `/api/admin/creator` to zachowanie przestarzałe/wrapper, a nie równoległe źródło prawdy.
 
-Not yet meaning:
+Nie oznacza jeszcze:
 
-* every legacy import of `@/lib/channel/main-channel.service` has been removed.
+* każdy import legacy `@/lib/channel/main-channel.service` został usunięty.
 
-Known compatibility adapter usage remains and is tracked for R5/R6/R7/R10 cleanup.
+Znane użycie adapterów kompatybilności pozostaje i jest śledzone do czyszczenia w R5/R6/R7/R10.
 
 ---
 
-### R5 — Users
+### R5 — Users (Użytkownicy)
 
-Purpose:
+Cel:
 
-* local user,
-* Clerk sync,
-* profile,
-* language,
-* soft delete,
-* user access profile,
-* user merge foundation,
-* admin users,
-* user/access boundary.
+* lokalny użytkownik,
+* synchronizacja Clerk,
+* profil,
+* język,
+* soft delete (miękkie usuwanie),
+* profil dostępu użytkownika,
+* fundament łączenia użytkowników,
+* użytkownicy admina,
+* granica użytkownik/dostęp.
 
-Current status:
+Status:
 
 ```txt
 [~]
 ```
 
-Known remaining work:
+Znane pozostałe prace:
 
-* admin users are not fully migrated,
-* Clerk webhook completion remains,
-* user-access sync boundary remains,
-* patron/payment boundary must stay clearly separated,
-* legacy user services may still exist,
-* guard must keep migrated user routes clean.
+* użytkownicy admina nie są w pełni zmigrowani,
+* ukończenie webhooka Clerk pozostaje,
+* granica synchronizacji użytkownik-dostęp pozostaje,
+* granica patron/płatności musi pozostać wyraźnie oddzielona,
+* serwisy użytkownika legacy mogą nadal istnieć,
+* guard musi utrzymywać zmigrowane route'y użytkowników w czystości.
 
-R5 is not complete until:
+R5 nie jest ukończone dopóki:
 
-* user profile/sync/language/referrals routes are either migrated or explicitly scoped,
-* Clerk webhook imports only public module API,
-* admin users are addressed or explicitly deferred,
-* `User.isPatron` DB source-of-truth is protected by tests,
-* Clerk metadata remains cache only.
+* route'y profilu/synchronizacji/języka/poleceń użytkownika są zmigrowane lub jawnie zaklasyfikowane,
+* webhook Clerk importuje tylko publiczne API modułu,
+* użytkownicy admina są obsłużeni lub jawnie odroczeni,
+* `User.isPatron` w bazie jako źródło prawdy jest chronione testami,
+* metadane Clerk pozostają tylko cache'em.
 
 ---
 
-### R6 — Video
+### R6 — Video (Wideo)
 
-Purpose:
+Cel:
 
-* admin video CRUD,
-* reorder,
-* archive,
-* public list,
-* hero,
-* visibility predicates,
-* DTO safety,
-* main-channel scoping,
-* video access boundary.
+* CRUD wideo admina,
+* reorder (zmiana kolejności),
+* archiwizacja,
+* lista publiczna,
+* hero (wideo promowane),
+* predykaty widoczności,
+* bezpieczeństwo DTO,
+* zasięg main-channel (main-channel scoping),
+* granica dostępu do wideo.
 
-Current status:
+Status:
 
 ```txt
-[~]
+[~ stronger]
 ```
 
-Already improved:
+Już poprawione:
 
-* video module exists,
-* admin CRUD/reorder foundation exists,
-* `PublicVideoDto` does not expose raw `videoUrl`,
-* `AdminVideoDto` may include `videoUrl`,
-* public list/hero predicates have been aligned closer to legacy visibility rules,
-* resync has at least been identified as a blocker or minimally scoped depending on current code.
+* moduł video istnieje,
+* fundament admin CRUD/reorder istnieje,
+* `PublicVideoDto` nie wystawia surowego `videoUrl`,
+* `AdminVideoDto` może zawierać `videoUrl`,
+* predykaty listy publicznej/hero zostały zbliżone do reguł widoczności legacy,
+* core lookup wideo admina jest main-channel scoped przez use case,
+* resync statystyk jest main-channel scoped przez use case,
+* route dostępu (`/api/access`) używa modułowego use case'a,
+* baza danych `User.isPatron` jest źródłem prawdy dla dostępu patrona.
 
-Known remaining work:
+Znane pozostałe prace:
 
-* `app/api/access/route.ts` uses legacy `AccessPolicy` and deprecated channel adapter,
-* admin video details route may still be mixed,
-* resync route may still require full use-case migration,
-* public frontend still uses legacy DTO/contracts in places,
-* media delivery/playback is still not fully modularized,
-* all migrated video routes must be guarded.
+* migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość,
+* publiczne DTO jest bezpieczne, ale publiczny route dostarczania mediów/playbacku wciąż wymaga dedykowanego domknięcia,
+* dostarczanie mediów/proxy/media-source nie są w pełni zmodularyzowane,
+* wszystkie zmigrowane route'y wideo muszą być chronione przez guard.
 
-R6 is not complete until:
+R6 nie jest ukończone dopóki:
 
-* admin details are main-channel scoped,
-* resync is main-channel scoped through a use case,
-* access route strategy is resolved,
-* public list/hero use safe DTOs,
-* public UI never receives raw `videoUrl`,
-* README and guard agree on remaining legacy.
+* szczegóły admina (diagnostyka/audyt) nie zostaną w pełni zmigrowane lub jawnie zaakceptowane jako rozszerzenie legacy,
+* strategia route'a dostępu jest w pełni certyfikowana w kontekście dostarczania mediów,
+* publiczne UI nigdy nie otrzymuje surowego `videoUrl`,
+* README i guard zgadzają się co do pozostałego legacy.
 
 ---
 
-### R7 — Patron + Payments
+### R7 — Patron + Payments (Patroni i Płatności)
 
-Purpose:
+Cel:
 
-* patron access,
+* dostęp patrona,
 * Stripe checkout,
 * Stripe webhook,
-* payment fulfillment,
-* refund/revoke,
-* patron grants,
-* idempotency,
-* audit,
-* DB source-of-truth.
+* realizacja płatności,
+* zwrot/cofnięcie (refund/revoke),
+* uprawnienia patrona (patron grants),
+* idempotencja,
+* audyt,
+* baza danych jako źródło prawdy.
 
-Current status:
+Status:
 
 ```txt
 [ ]
 ```
 
-Do not start R7 until R5/R6 blockers are reviewed.
+Nie zaczynaj R7, dopóki blokery R5/R6 nie zostaną przejrzane.
 
-R7 must include minimal Phase X concerns from the start:
+R7 musi od początku zawierać minimalne elementy Fazy X:
 
-* idempotency,
-* duplicate webhook protection,
-* audit,
-* refund/revoke scenario tests,
-* source-of-truth tests,
-* post-commit side effect discipline,
-* no Clerk metadata as source of truth,
-* checkout must not accept `creatorId` from client.
+* idempotencja,
+* ochrona przed duplikatem webhooka,
+* audyt,
+* testy scenariuszowe dla refund/revoke,
+* testy źródła prawdy (source-of-truth),
+* dyscyplina efektów ubocznych po zatwierdzeniu transakcji (post-commit),
+* brak metadanych Clerk jako źródła prawdy,
+* checkout nie może akceptować `creatorId` od klienta.
 
-R7 is expected to be one of the most critical phases.
+Oczekuje się, że R7 będzie jedną z najbardziej krytycznych faz.
 
 ---
 
-### R8 — Comments
+### R8 — Comments (Komentarze)
 
-Purpose:
+Cel:
 
-* comment listing,
-* create/update/delete,
-* reactions,
-* reports,
-* moderation,
-* pin/heart,
-* access policy,
-* moderation audit.
+* listowanie komentarzy,
+* twórz/aktualizuj/usuń,
+* reakcje,
+* zgłoszenia,
+* moderacja,
+* przypinanie/serduszkowanie (pin/heart),
+* polityka dostępu,
+* audyt moderacji.
 
-Current status:
+Status:
 
 ```txt
 [ ]
 ```
 
-R8 must include minimal Phase X concerns:
+R8 musi zawierać minimalne elementy Fazy X:
 
-* access checks,
-* access-denied reasons where practical,
-* moderation audit,
-* scenario tests for patron/public content,
-* report/moderation flows.
+* sprawdzenia dostępu,
+* powody odmowy dostępu tam, gdzie to praktyczne,
+* audyt moderacji,
+* testy scenariuszowe dla treści patronów/publicznych,
+* przepływy zgłoszeń/moderacji.
 
-Do not migrate comments before access/user/video boundaries are stable.
+Nie migruj komentarzy przed stabilizacją granic dostępu/użytkownika/wideo.
 
 ---
 
 ### R9 — Email
 
-Purpose:
+Cel:
 
-* Resend integration,
-* broadcast,
-* queue/batch semantics,
-* email webhooks,
-* inbound email if needed,
-* notifications.
+* integracja z Resend,
+* broadcast (rozsyłanie),
+* semantyka kolejek/paczek,
+* webhooki e-mail,
+* e-maile przychodzące, jeśli potrzebne,
+* powiadomienia.
 
-Current status:
-
-```txt
-[ ]
-```
-
-R9 must include minimal Phase X concerns:
-
-* idempotent webhook handling,
-* retry/status semantics,
-* broadcast audit,
-* basic runbook notes,
-* no fire-and-forget admin broadcast as final design.
-
----
-
-### R10 — Cleanup deprecated facades
-
-Purpose:
-
-* remove deprecated compatibility facades,
-* strengthen quality gates,
-* block new imports from legacy services,
-* remove obsolete adapters after replacement flows are tested.
-
-Current status:
+Status:
 
 ```txt
 [ ]
 ```
 
-Do not start R10 too early.
+R9 musi zawierać minimalne elementy Fazy X:
 
-R10 happens after replacement flows exist.
+* idempotentna obsługa webhooków,
+* semantyka ponowień/statusów,
+* audyt broadcastów,
+* podstawowe notatki operacyjne (runbook),
+* brak admin broadcast typu "fire-and-forget" jako docelowy projekt.
 
 ---
 
-### R11 — Admin frontend / operational cockpit
+### R10 — Czyszczenie przestarzałych fasad
 
-Purpose:
+Cel:
 
-* admin management UI,
-* content management,
-* system health,
-* operational visibility,
-* release readiness.
+* usunięcie przestarzałych fasad kompatybilności,
+* wzmocnienie bramek jakości (quality gates),
+* blokowanie nowych importów z serwisów legacy,
+* usunięcie przestarzałych adapterów po przetestowaniu przepływów zastępczych.
 
-Current status:
+Status:
 
 ```txt
 [ ]
 ```
 
-R11 should include practical mini-X cockpit pieces:
+Nie zaczynaj R10 zbyt wcześnie.
 
-* recent audit,
-* failed webhooks,
-* payment/patron status,
-* media health,
-* broadcast status,
-* maintenance panel,
-* release readiness checklist.
-
-Do not build a giant cockpit architecture before the underlying domains exist.
+R10 następuje po istnieniu przepływów zastępczych.
 
 ---
 
-## 8. Architecture rules
+### R11 — Frontend admina / kokpit operacyjny
 
-### 8.1 Thin routes
+Cel:
 
-Route handlers should:
+* UI zarządzania dla admina,
+* zarządzanie treścią,
+* zdrowie systemu,
+* widoczność operacyjna,
+* gotowość do wydania (release readiness).
 
-* authenticate,
-* parse input,
-* create context,
-* call a use case,
-* map result to HTTP.
+Status:
 
-Route handlers should not contain:
+```txt
+[ ]
+```
 
-* direct business logic,
-* direct `prisma.*`,
-* direct `prisma.$transaction`,
-* direct access policy logic,
-* direct Stripe/Clerk/Resend business logic,
-* raw repository calls,
-* large DTO mapping.
+R11 powinno zawierać praktyczne elementy kokpitu mini-X:
 
-Legacy exceptions must be allowlisted and documented.
+* ostatni audyt,
+* nieudane webhooki,
+* status płatności/patronów,
+* zdrowie mediów,
+* status broadcastów,
+* panel konserwacji,
+* checklistę gotowości wydania.
+
+Nie buduj gigantycznej architektury kokpitu przed istnieniem podstawowych domen.
 
 ---
 
-### 8.2 Use cases
+## 8. Zasady architektury
 
-Each use case should accept:
+### 8.1 Cienkie route'y
+
+Handlery route'ów powinny:
+
+* uwierzytelniać,
+* parsować wejście,
+* tworzyć kontekst,
+* wywoływać use case,
+* mapować wynik na odpowiedź HTTP.
+
+Handlery route'ów nie powinny zawierać:
+
+* bezpośredniej logiki biznesowej,
+* bezpośredniego `prisma.*`,
+* bezpośredniego `prisma.$transaction`,
+* bezpośredniej logiki polityki dostępu,
+* bezpośredniej logiki biznesowej Stripe/Clerk/Resend,
+* surowych wywołań repozytorium,
+* dużych mapowań DTO.
+
+Wyjątki legacy muszą być jawnie dozwolone (allowlisted) i udokumentowane.
+
+---
+
+### 8.2 Use case'y
+
+Każdy use case powinien przyjmować:
 
 ```txt
 input + AppContext
 ```
 
-Example shape:
+Przykładowy kształt:
 
 ```ts
 export async function updateSomething(
@@ -591,21 +589,21 @@ export async function updateSomething(
 }
 ```
 
-Use cases own:
+Use case'y posiadają:
 
-* business flow,
-* predictable domain errors,
-* transaction boundary when needed,
-* audit calls,
-* policy enforcement.
+* przepływ biznesowy,
+* przewidywalne błędy domenowe,
+* granicę transakcji tam, gdzie jest potrzebna,
+* wywołania audytu,
+* egzekwowanie polityk.
 
 ---
 
 ### 8.3 Actor
 
-Use `Actor` everywhere instead of loose `userId`, `role`, `currentUser`, `admin`, or session objects.
+Używaj `Actor` wszędzie zamiast luźnych `userId`, `role`, `currentUser`, `admin` lub obiektów sesji.
 
-Actor variants:
+Warianty aktora:
 
 ```txt
 guest
@@ -614,23 +612,23 @@ admin
 system
 ```
 
-Important:
+Ważne:
 
-* `actor.isPatron` from Clerk session is cache only.
-* Paywall/access decisions must verify DB state via Users/Patron modules.
+* `actor.isPatron` z sesji Clerk to tylko cache.
+* Decyzje paywall/dostęp muszą weryfikować stan bazy danych przez moduły Users/Patron.
 
 ---
 
 ### 8.4 AppContext
 
-`AppContext` must not expose deprecated shortcut fields such as:
+`AppContext` nie może wystawiać przestarzałych pól skrótowych, takich jak:
 
 ```txt
 ctx.userId
 ctx.role
 ```
 
-Use:
+Używaj:
 
 ```txt
 ctx.actor
@@ -638,138 +636,138 @@ ctx.actor
 
 ---
 
-### 8.5 Result Pattern and errors
+### 8.5 Result Pattern i błędy
 
-Predictable domain failures should use:
+Przewidywalne awarie domenowe powinny używać:
 
 ```txt
 UseCaseResult
 AppError
-typed domain errors
+typowane błędy domenowe
 ```
 
-Do not use plain `throw new Error(string)` for normal domain failures such as:
+Nie używaj zwykłego `throw new Error(string)` dla normalnych awarii domenowych, takich jak:
 
-* not found,
-* forbidden,
-* user deleted,
-* not patron,
-* video not on main channel,
-* duplicate webhook,
-* invalid maintenance confirmation.
+* nie znaleziono (not found),
+* zabronione (forbidden),
+* użytkownik usunięty,
+* nie jest patronem,
+* wideo nie należy do głównego kanału,
+* duplikacja webhooka,
+* nieprawidłowe potwierdzenie konserwacji.
 
-Unexpected infrastructure/programmer failures may still throw.
+Nieoczekiwane błędy infrastrukturalne/programistyczne mogą wciąż rzucać wyjątki.
 
 ---
 
-### 8.6 Module public API
+### 8.6 Publiczne API modułu
 
-External code should import modules through root `index.ts`.
+Kod zewnętrzny powinien importować moduły przez korzeń `index.ts`.
 
-Allowed:
+Dozwolone:
 
 ```ts
 import { getUserProfile } from '@/lib/modules/users';
 ```
 
-Forbidden from routes:
+Zabronione z route'ów:
 
 ```ts
 import { GetUserProfileUseCase } from '@/lib/modules/users/application/get-user-profile.use-case';
 ```
 
-Routes must not import module internals.
+Route'y nie mogą importować wnętrzności modułów.
 
 ---
 
-### 8.7 No HTTP/Next in modules
+### 8.7 Brak HTTP/Next w modułach
 
-Files under `lib/modules/**` must not import:
+Pliki w `lib/modules/**` nie mogą importować:
 
 * `next/server`,
 * `next/navigation`,
 * `next/cache`,
 * `NextResponse`,
 * `app/**`,
-* route handlers.
+* handlerów route'ów.
 
-HTTP belongs to `app/**` and `lib/api/**`.
+HTTP należy do `app/**` i `lib/api/**`.
 
-Domain logic belongs to `lib/modules/**`.
+Logika domenowa należy do `lib/modules/**`.
 
 ---
 
 ### 8.8 ReadDb / WriteTx
 
-Repository methods should use explicit DB types:
+Metody repozytoriów powinny używać jawnych typów DB:
 
 ```txt
 ReadDb = PrismaClient | Prisma.TransactionClient
 WriteTx = Prisma.TransactionClient
 ```
 
-Rules:
+Zasady:
 
-* read methods may accept `ReadDb`,
-* critical writes should prefer `WriteTx`,
-* use cases own transaction boundaries,
-* repositories should not hide multi-step business transactions.
+* metody odczytu mogą przyjmować `ReadDb`,
+* krytyczne zapisy powinny preferować `WriteTx`,
+* use case'y posiadają granice transakcji,
+* repozytoria nie powinny ukrywać wieloetapowych transakcji biznesowych.
 
 ---
 
-### 8.9 External side effects
+### 8.9 Zewnętrzne efekty uboczne
 
-Do not call external side effects blindly inside DB transactions.
+Nie wywołuj ślepo zewnętrznych efektów ubocznych wewnątrz transakcji DB.
 
-External side effects include:
+Zewnętrzne efekty uboczne to:
 
 * Clerk,
 * Stripe,
 * Resend,
 * storage,
-* webhooks.
+* webhooki.
 
-Preferred pattern:
+Preferowany wzorzec:
 
 ```txt
-1. DB transaction writes source of truth
-2. DB transaction writes audit
-3. DB transaction writes outbox or returns post-commit work
-4. side effect happens after commit or via retryable worker
+1. Transakcja DB zapisuje źródło prawdy
+2. Transakcja DB zapisuje audyt
+3. Transakcja DB zapisuje outbox lub zwraca pracę post-commit
+4. Efekt uboczny następuje po zatwierdzeniu (commit) lub przez ponawialnego workera
 ```
 
 ---
 
-## 9. Strict single-channel invariant
+## 9. Ścisły inwariant jednokanałowy
 
-Runtime must not:
+Runtime nie może:
 
-* create creators,
-* rename creators,
-* auto-approve creators,
-* auto-set `isPrimary`,
-* demote other creators,
-* guess fallback creator,
-* use hardcoded fallback slugs,
-* run maintenance from normal page load/API route,
-* reassign content ownership outside explicit maintenance.
+* tworzyć twórców,
+* zmieniać nazw twórców,
+* auto-zatwierdzać twórców,
+* auto-ustawiać `isPrimary`,
+* degradować innych twórców,
+* zgadywać fallback twórcy,
+* używać zahardkodowanych slugów fallback,
+* uruchamiać konserwacji z normalnego ładowania strony/route'a API,
+* przypisywać własności treści poza jawną konserwacją.
 
-Important invariants:
+Ważne inwarianty:
 
-* `MAIN_CREATOR_SLUG` is source of truth.
-* Public content must belong to `mainChannel.id`.
-* Checkout must not accept `creatorId` from client.
+* `MAIN_CREATOR_SLUG` jest źródłem prawdy.
+* Publiczna treść musi należeć do `mainChannel.id`.
+* Checkout nie może akceptować `creatorId` od klienta.
 * `Subscription != Patron`.
-* Maintenance must be explicit, previewable, confirmed, and auditable.
-* `Creator` remains legacy technical representation of `MainChannel`.
+* Konserwacja musi być jawna, z możliwością podglądu, potwierdzona i audytowalna.
+* `Creator` pozostaje techniczną reprezentacją legacy `MainChannel`.
 
 ---
 
-## 10. Domain responsibilities
+## 10. Odpowiedzialności domenowe
 
 ### shared
 
-Owns:
+Posiada:
 
 * `Actor`,
 * `AppContext`,
@@ -777,256 +775,275 @@ Owns:
 * `AppError`,
 * `ReadDb`,
 * `WriteTx`,
-* shared helpers.
+* współdzielone helpery.
 
-Must not own business logic of specific domains.
+Nie może posiadać logiki biznesowej konkretnych domen.
 
 ---
 
 ### api
 
-Owns:
+Posiada:
 
-* HTTP boundary,
-* auth helpers,
-* JSON parsing,
-* Zod error mapping,
-* use-case result to HTTP response mapping.
+* granicę HTTP,
+* helpery uwierzytelniania,
+* parsowanie JSON,
+* mapowanie błędów Zod,
+* mapowanie wyników use-case na odpowiedzi HTTP.
 
-May import Next.js.
+Może importować Next.js.
 
-Modules must not.
+Moduły nie mogą.
 
 ---
 
 ### audit
 
-Owns:
+Posiada:
 
-* audit event recording,
-* actor-aware audit,
-* transaction-aware audit support.
+* zapisywanie zdarzeń audytu,
+* audyt świadomy aktora,
+* wsparcie dla audytu świadomego transakcji.
 
-Current status:
+Aktualny status:
 
 ```txt
-foundation certified for migrated modules
+fundament certyfikowany dla zmigrowanych modułów
 ```
 
-Legacy audit coverage remains for later domain passes.
+Pokrycie audytem legacy pozostaje dla późniejszych przejść domenowych.
 
 ---
 
 ### media
 
-Owns:
+Posiada:
 
-* safe media URL validation,
-* thumbnail URL validation,
-* avatar URL validation,
-* comment image URL validation,
-* blocked internal/private hosts,
-* HLS/DASH/direct classification.
+* bezpieczną walidację URL mediów,
+* walidację URL miniatur,
+* walidację URL awatarów,
+* walidację URL obrazków w komentarzach,
+* blokowanie wewnętrznych/prywatnych hostów,
+* klasyfikację HLS/DASH/direct.
 
-Current status:
+Aktualny status:
 
 ```txt
-safety foundation certified
+fundament bezpieczeństwa certyfikowany
 ```
 
-Delivery/proxy migration remains future work.
+Migracja dostarczania/proxy pozostaje pracą na przyszłość.
 
 ---
 
 ### channel
 
-Owns:
+Posiada:
 
-* main channel access,
-* strict single-channel invariant,
-* admin channel settings,
-* maintenance preview/apply,
-* channel policy/errors.
+* dostęp do głównego kanału,
+* ścisły inwariant jednokanałowy,
+* ustawienia kanału admina,
+* podgląd/zastosowanie konserwacji,
+* politykę kanału/błędy.
 
-Current status:
+Aktualny status:
 
 ```txt
-single-channel foundation certified
+fundament jednokanałowy certyfikowany
 ```
 
-Deprecated compatibility adapter remains until R5/R6/R7/R10 cleanup.
+Przestarzały adapter kompatybilności pozostaje do czasu czyszczenia w R5/R6/R7/R10.
 
 ---
 
 ### users
 
-Owns:
+Posiada:
 
-* local user,
-* Clerk sync,
-* profile,
-* language,
-* access profile,
-* soft delete,
-* user merge foundation.
+* lokalnego użytkownika,
+* synchronizację Clerk,
+* profil,
+* język,
+* profil dostępu,
+* miękkie usuwanie,
+* fundament łączenia użytkowników.
 
-Current status:
+Aktualny status:
 
 ```txt
-partial
+częściowy
 ```
 
-Remaining: admin users, webhook completion, user-access sync boundary.
+Pozostało: użytkownicy admina, ukończenie webhooka, granica synchronizacji użytkownik-dostęp.
 
 ---
 
 ### video
 
-Owns:
+Posiada:
 
-* admin video CRUD,
-* archive,
+* CRUD wideo admina,
+* archiwizację,
 * reorder,
-* public list,
+* listę publiczną,
 * hero,
-* DTOs,
-* video policy,
-* main-channel scoping.
+* DTO,
+* politykę wideo,
+* zasięg main-channel.
 
-Current status:
+Aktualny status:
 
 ```txt
-partial
+częściowy (wzmocniony)
 ```
 
-Remaining: admin details, access route, resync use case, public frontend migration, playback boundary.
+Pozostało: migracja frontendu publicznego, granica playbacku/delivery.
+
+---
+
+### access (dostęp)
+
+Posiada:
+
+* granice dostępu do treści,
+* reguły widoczności (publiczne/zalogowany/patron),
+* obejście admina,
+* powody odmowy dostępu.
+
+Aktualny status:
+
+```txt
+fundament certyfikowany dla wideo
+```
+
+Używany przez `/api/access`. Dostarczanie mediów (playback) wciąż używa polityki legacy.
 
 ---
 
 ### patron
 
-Owns:
+Posiada:
 
-* patron access,
-* patron grants,
-* grant/revoke/recompute,
-* source-of-truth access state.
+* dostęp patrona,
+* uprawnienia patrona,
+* przyznawanie/cofanie/wyliczanie,
+* stan dostępu jako źródło prawdy.
 
-Current status:
+Aktualny status:
 
 ```txt
-not started
+nie rozpoczęto
 ```
 
 ---
 
 ### payments
 
-Owns:
+Posiada:
 
 * Stripe checkout,
 * Stripe webhook,
-* payment fulfillment,
-* refund/dispute handling,
-* idempotency,
-* linking payments to patron grants.
+* realizację płatności,
+* obsługę zwrotów/sporów,
+* idempotencję,
+* łączenie płatności z uprawnieniami patrona.
 
-Current status:
+Aktualny status:
 
 ```txt
-not started
+nie rozpoczęto
 ```
 
 ---
 
 ### comments
 
-Owns:
+Posiada:
 
-* comments,
-* moderation,
-* reports,
-* reactions,
-* access policy,
-* moderation audit.
+* komentarze,
+* moderację,
+* zgłoszenia,
+* reakcje,
+* politykę dostępu,
+* audyt moderacji.
 
-Current status:
+Aktualny status:
 
 ```txt
-not started
+nie rozpoczęto
 ```
 
 ---
 
 ### email
 
-Owns:
+Posiada:
 
-* email sending,
-* broadcasts,
-* Resend webhooks,
-* retry/status semantics,
-* notification jobs.
+* wysyłanie e-maili,
+* broadcasty,
+* webhooki Resend,
+* semantykę ponowień/statusów,
+* zadania powiadomień.
 
-Current status:
+Aktualny status:
 
 ```txt
-not started
+nie rozpoczęto
 ```
 
 ---
 
-## 11. Phase X and how it relates to R0–R11
+## 11. Faza X i jej relacja do R0–R11
 
-Phase X is the long-term excellence roadmap.
+Faza X to długofalowa roadmapa doskonałości.
 
-Phase X must not be started as a standalone roadmap before R0–R11 are complete.
+Faza X nie może zostać rozpoczęta jako samodzielna roadmapa przed ukończeniem R0–R11.
 
-However:
+Jednakże:
 
 ```txt
-Every critical R phase must include the minimal X concerns that naturally belong to that domain.
+Każda krytyczna faza R musi zawierać minimalne elementy Fazy X, które naturalnie należą do tej domeny.
 ```
 
-This is the strategy that prevents Phase X from becoming a second massive refactor.
+To jest strategia, która zapobiega temu, by Faza X stała się drugim masowym refaktorem.
 
 ---
 
-### 11.1 Phase X masterplan
+### 11.1 Masterplan Fazy X
 
-* **X1**: Access Matrix — central access matrix.
-* **X2**: Actor reasons — explicit access denial reasons.
-* **X3**: Outbox — post-commit side effects.
-* **X4**: Idempotency — duplicate event protection.
-* **X5**: Observability — structured logs, domain events, metrics.
-* **X6**: Quality gates — automatic architecture enforcement.
-* **X7**: Scenario tests — product-language tests.
-* **X8**: Admin cockpit — operational control center.
-* **X9**: Runbooks — operational instructions.
-* **X10**: Release readiness — release evidence and checklist.
-* **X11**: Semantic cleanup — final schema naming cleanup.
-
----
-
-### 11.2 Embedded X concerns in R phases
-
-| R phase                  | Minimal X concerns to include                                                                                                            |
-| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| **R7 Patron + Payments** | idempotency, audit, duplicate webhook tests, refund/revoke scenario tests, DB source-of-truth checks, post-commit side effect discipline |
-| **R8 Comments**          | access policy, access-denied reasons where practical, moderation audit, report/moderation scenario tests                                 |
-| **R9 Email**             | idempotent webhook handling, retry/status semantics, broadcast audit, basic runbook notes                                                |
-| **R10 Cleanup**          | stronger quality gates, deprecated import guards, release checklist alignment                                                            |
-| **R11 Admin frontend**   | recent audit, failed webhooks/jobs, media health, payment/patron status, broadcast status, release readiness surface                     |
-
-Do not build X1–X11 as standalone modules prematurely.
-
-Each R phase should leave behind the hooks, tests, docs, and guardrails needed so that Phase X becomes polish and operational hardening, not a second refactor.
+* **X1**: Macierz Dostępu — centralna macierz uprawnień.
+* **X2**: Powody aktora — jawne powody odmowy dostępu.
+* **X3**: Outbox — efekty uboczne po zatwierdzeniu transakcji.
+* **X4**: Idempotencja — ochrona przed duplikatami zdarzeń.
+* **X5**: Obserwowalność — strukturalne logi, zdarzenia domenowe, metryki.
+* **X6**: Bramki jakości — automatyczne egzekwowanie architektury.
+* **X7**: Testy scenariuszowe — testy w języku produktu.
+* **X8**: Kokpit admina — operacyjne centrum kontroli.
+* **X9**: Runbooki — instrukcje operacyjne.
+* **X10**: Gotowość wydania — dowody wydania i checklista.
+* **X11**: Porządki semantyczne — końcowe czyszczenie nazw w schemacie.
 
 ---
 
-## 12. Quality gates
+### 11.2 Wbudowane elementy X w fazy R
 
-Validation commands:
+| Faza R                   | Minimalne elementy X do zawarcia                                                                                                                                       |
+| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **R7 Patron + Payments** | idempotencja, audyt, testy duplikatów webhooków, testy scenariuszowe refund/revoke, sprawdzenia źródła prawdy w DB, dyscyplina efektów ubocznych post-commit           |
+| **R8 Comments**          | polityka dostępu, powody odmowy dostępu tam, gdzie praktyczne, audyt moderacji, testy scenariuszowe zgłoszeń/moderacji                                                 |
+| **R9 Email**             | idempotentna obsługa webhooków, semantyka ponowień/statusów, audyt broadcastów, podstawowe notatki operacyjne (runbook)                                                |
+| **R10 Czyszczenie**      | silniejsze bramki jakości, guardy importów przestarzałych, dostosowanie checklisty gotowości wydania                                                                   |
+| **R11 Frontend admina**  | ostatni audyt, nieudane webhooki/zadania, zdrowie mediów, status płatności/patronów, status broadcastów, powierzchnia gotowości wydania                                |
+
+Nie buduj X1–X11 jako samodzielnych modułów przedwcześnie.
+
+Każda faza R powinna zostawiać po sobie haki (hooks), testy, dokumentację i guardy potrzebne do tego, by Faza X stała się szlifem i operacyjnym utwardzeniem, a nie drugim refaktorem.
+
+---
+
+## 12. Bramki jakości (Quality gates)
+
+Komendy walidacyjne:
 
 ```bash
 npx prisma validate
@@ -1038,114 +1055,111 @@ npm run lint
 npm run build
 ```
 
-If a command cannot run because of missing environment, dependencies, database, Clerk, Stripe, or sandbox limitations, the agent must say so explicitly.
+Jeśli komenda nie może zostać uruchomiona z powodu braku środowiska, zależności, bazy danych, Clerk, Stripe lub ograniczeń piaskownicy, agent musi to jawnie zaznaczyć.
 
-Do not write PASS if a command did not run.
+Nie pisz PASS, jeśli komenda nie została uruchomiona.
 
-Architecture guard should report:
+Architecture guard powinien raportować:
 
-* routes importing `@/lib/prisma`,
-* routes importing `@/lib/services`,
-* routes importing internal module paths,
-* files importing deprecated channel adapter,
-* allowlisted known blockers with phase/reason.
+* route'y importujące `@/lib/prisma`,
+* route'y importujące `@/lib/services`,
+* route'y importujące wewnętrzne ścieżki modułów,
+* pliki importujące przestarzały adapter kanału,
+* dozwolone (allowlisted) znane blokery z fazą/powodem.
 
-Current guard is allowed to use allowlists while R5–R11 are incomplete.
+Obecny guard może używać allowlist, dopóki R5–R11 są niekompletne.
 
-Allowlists must be explicit and justified.
-
----
-
-## 13. Definition of Done for one refactor slice
-
-A refactor slice is complete only when:
-
-1. One concrete route/flow was selected.
-2. Current behavior/contract was checked.
-3. Use case handles the real current flow, not only future abstraction.
-4. Route imports module public API through `index.ts`.
-5. Route does not import `@/lib/prisma`, unless still explicitly legacy/allowlisted.
-6. Route does not import `@/lib/services/**`, unless still explicitly legacy/allowlisted.
-7. Route does not import internal module files.
-8. DTO is minimal and safe.
-9. Source-of-truth/business rule is tested.
-10. Architecture guard protects the migrated route.
-11. README status changes only after real runtime integration.
-12. Known blockers are documented, not hidden.
-13. Validation was run or inability to run it was clearly explained.
-
-Adding a use case is not enough.
-
-Creating a module folder is not enough.
-
-A route is not migrated until the runtime flow uses the module and tests/guards protect it.
+Allowlisty muszą być jawne i uzasadnione.
 
 ---
 
-## 14. Known current blockers
+## 13. Definicja ukończenia (DoD) dla wycinka refaktora
 
-### R5 Users blockers
+Wycinek refaktora jest ukończony tylko wtedy, gdy:
 
-* Admin users are not fully migrated.
-* Clerk webhook completion remains.
-* User-access sync boundary remains.
-* Patron/payment boundary remains.
-* Legacy user services may still exist.
-* DB `User.isPatron` must remain source of truth.
-* Clerk metadata must remain cache only.
+1. Wybrano konkretny route/przepływ.
+2. Sprawdzono obecne zachowanie/kontrakt.
+3. Use case obsługuje realny obecny przepływ, a nie tylko przyszłą abstrakcję.
+4. Route importuje publiczne API modułu przez `index.ts`.
+5. Route nie importuje `@/lib/prisma`, chyba że jest wciąż jawnie legacy/allowlisted.
+6. Route nie importuje `@/lib/services/**`, chyba że jest wciąż jawnie legacy/allowlisted.
+7. Route nie importuje wewnętrznych plików modułu.
+8. DTO jest minimalne i bezpieczne.
+9. Źródło prawdy/reguła biznesowa jest przetestowana.
+10. Architecture guard chroni zmigrowany route.
+11. Status w README zmienia się dopiero po realnej integracji w runtime.
+12. Znane blokery są udokumentowane, a nie ukryte.
+13. Uruchomiono walidację lub jawnie wyjaśniono brak możliwości jej uruchomienia.
 
----
+Dodanie use case'a to za mało.
 
-### R6 Video blockers
+Utworzenie folderu modułu to za mało.
 
-* `app/api/access/route.ts` uses legacy `AccessPolicy` and deprecated channel adapter.
-* Admin video details route may still be mixed.
-* `app/api/admin/videos/resync/route.ts` remains legacy/direct Prisma or only minimally scoped.
-* Public frontend migration to module DTO remains future work.
-* Public DTO is safe, but public playback/access route still needs dedicated completion.
-* Media delivery/proxy/media-source are not fully modularized.
-
----
-
-### R7 blockers before start
-
-R7 must not start until:
-
-* R5/R6 blockers are reviewed,
-* access route strategy is defined,
-* video/admin/access boundaries are safe,
-* payment/patron source-of-truth rules are written,
-* mini-X requirements for R7 are accepted.
+Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a testy/guardy go nie chronią.
 
 ---
 
-### Remaining large legacy domains
+## 14. Znane bieżące blokery
 
-Not yet migrated as full modules:
+### Blokery R5 Users
 
-* payments,
+* Użytkownicy admina nie są w pełni zmigrowani (R5 blocker).
+* Ukończenie webhooka Clerk pozostaje (R5/R9 boundary).
+* Granica synchronizacji użytkownik-dostęp pozostaje.
+* Granica patron/płatności pozostaje.
+* Serwisy użytkownika legacy mogą nadal istnieć.
+* `User.isPatron` w DB musi pozostać źródłem prawdy.
+* Metadane Clerk muszą pozostać tylko cache'em.
+
+---
+
+### Blokery R6 Video
+
+* Szczegóły admina (diagnostyka/audyt) pozostają jako rozszerzenie legacy (R6 blocker).
+* Migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość.
+* Publiczne DTO jest bezpieczne, ale publiczny route dostarczania mediów/playbacku wciąż wymaga dedykowanego domknięcia (R3/R6 delivery blocker).
+* Dostarczanie mediów/proxy/media-source nie są w pełni zmodularyzowane.
+
+---
+
+### Blokery R7 przed startem
+
+R7 nie może wystartować, dopóki:
+
+* blokery R5/R6 nie zostaną przejrzane,
+* strategia granicy dostępu/playbacku jest bezpieczna,
+* reguły źródła prawdy dla płatności/patronów są spisane,
+* wymagania mini-X dla R7 są zaakceptowane.
+
+---
+
+### Pozostałe duże domeny legacy
+
+Jeszcze nie zmigrowane jako pełne moduły:
+
+* payments (płatności),
 * patron,
-* comments,
+* comments (komentarze),
 * email,
-* referrals,
+* referrals (polecenia),
 * admin cockpit,
-* release readiness.
+* release readiness (gotowość wydania).
 
 ---
 
-## 15. Certification notes
+## 15. Notatki certyfikacyjne
 
 ### R0/R1 Certification Pass — 2026-06-09
 
-* Removed deprecated `userId` / `role` from `AppContext`.
-* Fixed `UserPolicy.canSeeProfile()` from `actor.role` to `actor.type`.
-* Documented Clerk `isPatron` as cache, not source of truth.
-* Added `user.errors.ts`.
-* Replaced predictable `throw new Error` in modules with `AppError` / typed errors.
-* Added `lib/modules/**` to coverage.
-* Added tests for Actor/AppContext, UseCaseResult, UserPolicy, and user errors.
-* Strengthened architecture guard for internal module imports and mixed closed-module routes.
-* Applied minimal security hardening: `PublicVideoDto` no longer exposes `videoUrl`.
+* Usunięto przestarzałe `userId` / `role` z `AppContext`.
+* Poprawiono `UserPolicy.canSeeProfile()` z `actor.role` na `actor.type`.
+* Udokumentowano `isPatron` w Clerk jako cache, a nie źródło prawdy.
+* Dodano `user.errors.ts`.
+* Zastąpiono przewidywalne `throw new Error` w modułach przez `AppError` / typowane błędy.
+* Dodano `lib/modules/**` do pokrycia testami.
+* Dodano testy dla Actor/AppContext, UseCaseResult, UserPolicy oraz błędów użytkownika.
+* Wzmocniono architecture guard dla wewnętrznych importów modułów i mieszanych route'ów.
+* Zastosowano minimalne utwardzenie bezpieczeństwa: `PublicVideoDto` nie wystawia już `videoUrl`.
 
 Status:
 
@@ -1160,28 +1174,28 @@ R1 [x]
 
 R2 Audit:
 
-* Audit foundation certified.
-* Module API uses `AppContext` / `Actor`.
-* Supports transaction-aware recording.
-* Used by migrated channel/video/users actions.
-* Legacy audit paths remain for comments/payments/email/admin detail routes and belong to their domain passes.
+* Fundament audytu certyfikowany.
+* API modułu używa `AppContext` / `Actor`.
+* Wspiera zapisywanie świadome transakcji.
+* Używany przez zmigrowane akcje kanału/wideo/użytkowników.
+* Ścieżki audytu legacy pozostają dla komentarzy/płatności/e-mailu/szczegółów admina i należą do ich przejść domenowych.
 
 R3 Media:
 
-* Media safety foundation certified.
-* `MediaPolicy` includes URL allowlists and private host blocking.
-* Thumbnail/video/avatar/comment-image safety covered.
-* `PublicVideoDto` no-leak confirmed.
-* HLS/DASH detection exists only for classification.
-* Media delivery/proxy/media-source remain legacy.
+* Fundament bezpieczeństwa mediów certyfikowany.
+* `MediaPolicy` zawiera allowlisty URL i blokowanie prywatnych hostów.
+* Bezpieczeństwo miniatur/wideo/awatarów/obrazków-komentarzy pokryte.
+* Brak wycieków w `PublicVideoDto` potwierdzony.
+* Wykrywanie HLS/DASH istnieje tylko dla klasyfikacji.
+* Dostarczanie mediów/proxy/media-source pozostają legacy.
 
 R4 Channel:
 
-* Strict single-channel foundation certified.
-* No runtime fallback/guessing/auto-repair should exist.
-* Maintenance preview/apply is explicit and auditable.
-* Legacy channel adapter usage mapped.
-* Deprecated compatibility adapter remains until R5/R6/R7/R10 cleanup.
+* Fundament ścisłego jednokanałowości certyfikowany.
+* Nie powinien istnieć żaden fallback/zgadywanie/auto-naprawa w runtime.
+* Podgląd/zastosowanie konserwacji jest jawne i audytowalne.
+* Użycie adaptera kanału legacy zmapowane.
+* Przestarzały adapter kompatybilności pozostaje do czasu czyszczenia w R5/R6/R7/R10.
 
 Status:
 
@@ -1193,12 +1207,31 @@ R4 [x single-channel foundation]
 
 ---
 
-## 16. Agent report template
+### R6 Video + Access Safety Pass — 2026-06-09
 
-Every agent must finish with this report:
+* Wzmocniono bezpieczeństwo zapisu w repozytorium wideo (scoped write semantics).
+* Zaimplementowano use case `getAdminVideoById` z wymuszonym zasięgiem głównego kanału.
+* Zmigrowano `app/api/admin/videos/[id]/route.ts` do modułu video (szczegóły diagnostyki pozostają jako legacy extension).
+* Zaimplementowano modułowy use case `resyncAdminVideoStats` z audytem i zasięgiem głównego kanału.
+* Zaimplementowano modułowy fundament `access` dla wideo.
+* Zmigrowano `app/api/access/route.ts` do nowego modułu access (używa `User.isPatron` z bazy jako źródła prawdy).
+* Sklasyfikowano blokery R5 (admin users) i R7 (admin patron management) w README i architecture guard.
+* Dodano testy dla bezpieczeństwa repozytorium, resyncu i modularnego dostępu.
+
+Status:
+
+```txt
+R6 [~ stronger]
+```
+
+---
+
+## 16. Szablon raportu agenta
+
+Każdy agent musi zakończyć tym raportem:
 
 ```md
-### Refactor Report — [Task Title]
+### Refactor Report — [Tytuł zadania]
 
 #### Summary
 - ...
@@ -1207,10 +1240,10 @@ Every agent must finish with this report:
 - ...
 
 #### README
-- README updated: YES/NO
-- README remains source of truth: YES/NO
-- Statuses changed: YES/NO
-- Current next task changed: YES/NO
+- README zaktualizowane: TAK/NIE
+- README pozostaje źródłem prawdy: TAK/NIE
+- Statusy zmienione: TAK/NIE
+- Bieżące zadanie zmienione: TAK/NIE
 
 #### Real phase status
 - R0:
@@ -1227,20 +1260,20 @@ Every agent must finish with this report:
 - R11:
 
 #### Validation
-- Prisma validate: PASS/FAIL/NOT RUN + reason
-- Architecture boundaries: PASS/FAIL/NOT RUN + reason
-- Typecheck: PASS/FAIL/NOT RUN + reason
-- Tests: PASS/FAIL/NOT RUN + reason
-- Coverage: PASS/FAIL/NOT RUN + reason
-- Lint: PASS/FAIL/NOT RUN + reason
-- Build: PASS/FAIL/NOT RUN + reason
+- Prisma validate: PASS/FAIL/NOT RUN + powód
+- Architecture boundaries: PASS/FAIL/NOT RUN + powód
+- Typecheck: PASS/FAIL/NOT RUN + powód
+- Tests: PASS/FAIL/NOT RUN + powód
+- Coverage: PASS/FAIL/NOT RUN + powód
+- Lint: PASS/FAIL/NOT RUN + powód
+- Build: PASS/FAIL/NOT RUN + powód
 
 #### Architecture guard
-- routes with direct Prisma:
-- routes with `@/lib/services`:
-- routes with internal module imports:
-- legacy channel adapter imports:
-- new allowlist entries:
+- route'y z bezpośrednią Prismą:
+- route'y z `@/lib/services`:
+- route'y z wewnętrznymi importami modułów:
+- importy przestarzałego adaptera kanału:
+- nowe wpisy w allowlist:
 
 #### Legacy/deprecated adapters
 - ...
@@ -1249,9 +1282,9 @@ Every agent must finish with this report:
 - ...
 
 #### Scope control
-- Did not start unrelated domains: YES/NO
-- Did not update status beyond code reality: YES/NO
-- Did not hide validation failures: YES/NO
+- Nie rozpoczęto niepowiązanych domen: TAK/NIE
+- Nie zaktualizowano statusu ponad rzeczywistość kodu: TAK/NIE
+- Nie ukryto awarii walidacji: TAK/NIE
 
 #### Next recommended step
 - ...
@@ -1259,91 +1292,89 @@ Every agent must finish with this report:
 
 ---
 
-## 17. Near-term work plan
+## 17. Plan pracy w najbliższym czasie
 
-### Step 1 — R5/R6 blocker completion
+### Krok 1 — Dokończenie blokerów R5/R6
 
-Next active work:
+Kolejne aktywne prace:
 
 ```txt
 R5/R6 blocker completion
 ```
 
-Focus:
+Skupienie:
 
-* users admin/webhook/access boundary,
-* video admin details,
-* video resync use case,
-* `app/api/access/route.ts`,
-* guard alignment,
-* no R7 yet.
+* granica użytkownik/admin/webhook (R5),
+* gotowość dostarczania mediów/playbacku (R6/R3),
+* wyrównanie guardów,
+* brak R7 przed przeglądem gotowości.
 
 ---
 
-### Step 2 — R7 readiness review
+### Krok 2 — Przegląd gotowości R7
 
-Before implementation, perform an R7 architecture audit:
+Przed implementacją wykonaj audyt architektury R7:
 
-* inspect payment service,
-* inspect Stripe webhook,
-* inspect checkout,
-* inspect refund/revoke flow,
-* inspect patron source-of-truth,
-* write R7 use-case map,
-* decide idempotency/outbox minimal scope.
+* sprawdź serwis płatności,
+* sprawdź webhook Stripe,
+* sprawdź checkout,
+* sprawdź przepływ refund/revoke,
+* sprawdź źródło prawdy patrona,
+* spisz mapę use-case'ów R7,
+* zdecyduj o minimalnym zakresie idempotencji/outbox.
 
 ---
 
-### Step 3 — R7 Patron + Payments build
+### Krok 3 — Budowa R7 Patron + Payments
 
-Build modules:
+Zbuduj moduły:
 
 * `lib/modules/patron`,
 * `lib/modules/payments`,
-* optional `lib/modules/idempotency` foundation if needed.
+* opcjonalnie fundament `lib/modules/idempotency`, jeśli potrzebny.
 
-R7 must include mini-X concerns from day one.
-
----
-
-### Step 4 — R7 certification
-
-Certify:
-
-* duplicate webhook does not double grant,
-* refund revokes patron access,
-* subscription never grants patron access,
-* checkout never uses client `creatorId`,
-* DB `User.isPatron` is source of truth,
-* audit is written,
-* side effects are post-commit or explicitly safe.
+R7 musi od pierwszego dnia zawierać elementy mini-X.
 
 ---
 
-### Step 5 — R8/R9/R10/R11
+### Krok 4 — Certyfikacja R7
 
-Proceed only after R7 is stable.
+Certyfikuj:
+
+* duplikat webhooka nie dubluje uprawnień,
+* zwrot pieniędzy cofa dostęp patrona,
+* subskrypcja nigdy nie daje dostępu patrona,
+* checkout nigdy nie używa `creatorId` od klienta,
+* `User.isPatron` w DB jest źródłem prawdy,
+* audyt jest zapisywany,
+* efekty uboczne są post-commit lub jawnie bezpieczne.
 
 ---
 
-## 18. Final project target
+### Krok 5 — R8/R9/R10/R11
 
-After R0–R11:
+Kontynuuj dopiero po ustabilizowaniu R7.
+
+---
+
+## 18. Docelowy cel projektu
+
+Po R0–R11:
 
 ```txt
-A clean, practical, production-grade modular monolith for a strict single-channel creator platform.
+Czysty, praktyczny, produkcyjny monolit modułowy dla ściśle jednokanałowej platformy twórcy.
 ```
 
-After Phase X:
+Po Fazie X:
 
 ```txt
-A self-monitoring operational system for a private creator media platform.
+Samomonitorujący się system operacyjny dla prywatnej platformy mediowej twórcy.
 ```
 
-The goal is not maximum abstraction.
+Celem nie jest maksymalna abstrakcja.
 
-The goal is:
+Celem jest:
 
 ```txt
-the fewest places where future agents or developers can make dangerous mistakes.
+jak najmniejsza liczba miejsc, w których przyszli agenci lub programiści mogą popełnić niebezpieczne błędy.
 ```

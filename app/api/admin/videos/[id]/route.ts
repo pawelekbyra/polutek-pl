@@ -4,8 +4,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
 import { VideosDiagnosticsService } from '@/lib/services/admin/videos-diagnostics.service';
-import { isUuid } from '@/lib/utils/uuid';
-import { getVideoById } from '@/lib/modules/video';
+import { getAdminVideoById } from '@/lib/modules/video';
 import { fromUseCaseResult } from '@/lib/api/api-response';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -18,21 +17,22 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const { response } = await requireAdminForApi("GET_ADMIN_VIDEO_DETAILS");
   if (response) return response;
 
-  let videoId = params.id;
+  const idOrSlug = params.id;
 
   try {
-    if (!isUuid(videoId)) {
-        const found = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
-        if (found) videoId = found.id;
-        else return NextResponse.json({ error: 'Video not found' }, { status: 404 });
-    }
-
     const actor = await getActorFromAuth();
     const ctx = createAppContext({ actor });
-    const result = await getVideoById(videoId, ctx);
+
+    // Core video lookup is now main-channel scoped through the video module.
+    const result = await getAdminVideoById({ idOrSlug }, ctx);
 
     if (!result.ok) return fromUseCaseResult(result);
 
+    const video = result.data;
+    const videoId = video.id;
+
+    // R6 blocker: admin video diagnostics/audit details still use legacy services/direct Prisma.
+    // Core video lookup is main-channel scoped through video module.
     const diagnostics = await VideosDiagnosticsService.diagnoseVideo(videoId);
 
     const auditLogs = await prisma.auditLog.findMany({
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     // Merge module DTO with admin-only details (diagnostics, audit)
     return NextResponse.json({
-        ...result.data,
+        ...video,
         diagnostics,
         auditLogs
     });

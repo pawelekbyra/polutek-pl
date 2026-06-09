@@ -10,6 +10,7 @@ describe('updateAdminVideo use-case', () => {
       findUnique: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
+      findFirst: vi.fn(),
     },
     auditLog: { create: vi.fn() },
     creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
@@ -56,6 +57,8 @@ describe('updateAdminVideo use-case', () => {
   it('succeeds and records audit on valid update', async () => {
     const existing = { id: 'v1', creatorId: 'c1', title: 'Old', tier: 'PUBLIC', status: 'PUBLISHED' };
     mockPrisma.video.findUnique.mockResolvedValue(existing);
+    mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.video.findFirst.mockResolvedValue({ ...existing, title: 'New' });
 
     const result = await updateAdminVideo({ id: 'v1', title: 'New' }, ctx);
 
