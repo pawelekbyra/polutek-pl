@@ -57,6 +57,29 @@ function checkModules() {
   return violations;
 }
 
+function checkLegacyChannelAdapter() {
+  let violations = 0;
+  let adapterImports = 0;
+
+  const files = getAllFiles(ROOT);
+  for (const file of files) {
+    const relativePath = path.relative(ROOT, file);
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
+
+    const content = fs.readFileSync(file, 'utf-8');
+    if (content.includes("@/lib/channel/main-channel.service")) {
+      adapterImports++;
+      if (relativePath.startsWith('lib/modules/')) {
+        console.error(`❌ Violation: Modular code must not import legacy channel adapter: ${relativePath}`);
+        violations++;
+      }
+    }
+  }
+
+  console.log(`- Files importing @/lib/channel/main-channel.service: ${adapterImports}`);
+  return violations;
+}
+
 const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
@@ -179,7 +202,7 @@ function getAllFiles(dir: string): string[] {
   return results;
 }
 
-const totalViolations = checkModules() + checkRoutes();
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);

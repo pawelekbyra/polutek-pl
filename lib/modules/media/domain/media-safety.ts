@@ -77,6 +77,10 @@ export function isSafeLocalPath(value: string) {
     && !decodedValue.split('/').some((segment) => segment === '..');
 }
 
+/**
+ * Detection exists for validation/classification only.
+ * It does not mean manifest rewriting or segment proxy delivery is implemented.
+ */
 export function isHlsOrDashManifest(url: string): boolean {
   const normalized = url.toLowerCase().split('?')[0];
   return normalized.endsWith('.m3u8') || normalized.endsWith('.mpd');

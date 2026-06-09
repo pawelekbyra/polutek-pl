@@ -63,4 +63,43 @@ describe('Audit Module', () => {
       },
     });
   });
+
+  it('should record an audit event with correct actor userId for user actor', async () => {
+    const mockPrisma = {
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: 'test-audit-id' }),
+      },
+    } as any;
+
+    const ctx = createAppContext({
+      prisma: mockPrisma,
+      actor: { type: 'user', userId: 'user-123', isPatron: false },
+    });
+
+    await recordAuditEvent(ctx, { action: 'USER_ACTION' });
+
+    expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        actorUserId: 'user-123',
+        action: 'USER_ACTION',
+      }),
+    }));
+  });
+
+  it('should support recording event within a transaction', async () => {
+    const mockTx = {
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: 'test-audit-id' }),
+      },
+    } as any;
+
+    const ctx = createAppContext({
+        prisma: {} as any, // Should NOT be used
+        actor: { type: 'system', reason: 'maintenance' }
+    });
+
+    await recordAuditEvent(ctx, { action: 'TX_ACTION' }, mockTx);
+
+    expect(mockTx.auditLog.create).toHaveBeenCalled();
+  });
 });
