@@ -1,7 +1,7 @@
 import { AppContext } from "../../shared/app-context";
 import { ResendWebhookInput, ResendWebhookResult } from "../domain/email.dto";
 import { UseCaseResult, ok, fail } from "../../shared/result";
-import { EmailError } from "../domain/email.errors";
+import { EmailError, WebhookUnsupportedEventError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
 
 /**
@@ -28,13 +28,33 @@ export async function handleResendWebhook(
       }
     });
 
-    // 2. Handle specific events
+    // 2. Normalize and handle specific events
+    const supportedTypes = [
+      'email.sent',
+      'email.delivered',
+      'email.delivery_delayed',
+      'email.bounced',
+      'email.complained',
+      'email.opened',
+      'email.clicked',
+      'email.unsubscribed',
+      'email.received'
+    ];
+
+    if (!supportedTypes.includes(type)) {
+      logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
+      return ok({ received: true, accepted: true, ignored: true });
+    }
+
     switch (type) {
       case 'email.sent':
         await updateRecipientStatus(ctx, resendEmailId, 'SENT', { sentAt: new Date() });
         break;
       case 'email.delivered':
         await updateRecipientStatus(ctx, resendEmailId, 'DELIVERED', { deliveredAt: new Date() });
+        break;
+      case 'email.delivery_delayed':
+        // We log it but don't necessarily update status to an error one yet
         break;
       case 'email.bounced':
         await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() }, true);
@@ -54,15 +74,12 @@ export async function handleResendWebhook(
       case 'email.received':
         await handleInboundEmail(ctx, data);
         break;
-      default:
-        logger.info(`[handleResendWebhook] Ignored unsupported event type: ${type}`);
     }
 
-    return ok({ received: true });
+    return ok({ received: true, accepted: true });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
-    // Even if it fails internally, we might return ok if we don't want Resend to retry
-    // for non-critical failures, but here we return fail for visibility.
+    // Return fail only for internal errors that might warrant a retry from Resend
     return fail(new EmailError(error.message || "Internal error during webhook handling"));
   }
 }
