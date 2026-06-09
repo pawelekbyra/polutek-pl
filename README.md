@@ -95,7 +95,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R5**  | Moduł Users                                     | [x stronger foundation]      |
 | **R6**  | Moduł Video                                     | [x stronger foundation]      |
 | **R6.5**| Access Foundation                               | [x certified]                 |
-| **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
+| **R7**  | Moduły Patron + Payments                        | [~ module foundation started] |
 | **R8**  | Moduł Comments                                  | [ ]                           |
 | **R9**  | Moduł Email                                     | [ ]                           |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
@@ -428,9 +428,7 @@ Certyfikowany fundament dostępu dla wideo.
 
 ### R7 — Patron + Payments (Patroni i Płatności)
 
-#### R7 audit status: [~ architecture audit started]
-
-R7 implementation is not yet certified to start, but the audit is in progress.
+#### R7 implementation status: [~ module foundation started]
 
 Cel:
 
@@ -447,8 +445,20 @@ Cel:
 Status:
 
 ```txt
-[~ architecture audit started]
+[~ module foundation started]
 ```
+
+Wypis prac R7:
+- Patron module foundation: [x foundation] (use cases, repository, policy)
+- Payments module foundation: [x foundation] (checkout use case, repository)
+- Checkout route migration: [x] (migrated to Payments module)
+- Admin patron route migration: [x] (migrated to Patron module)
+- Stripe webhook migration: [ ] (legacy PaymentService)
+- Fulfillment migration: [ ] (legacy PaymentFulfillmentService)
+- Refund/dispute migration: [ ] (legacy PaymentRefundService)
+- Payment settings migration: [ ] (legacy route)
+- Current source-of-truth: User.isPatron read model
+- Target source-of-truth: Patron module / active PatronGrant records
 
 R7 musi od początku zawierać minimalne elementy Fazy X:
 
@@ -465,14 +475,9 @@ Oczekuje się, że R7 będzie jedną z najbardziej krytycznych faz.
 
 R7 legacy blockers:
 - Stripe webhook still legacy PaymentService.
-- Checkout still legacy PaymentCheckoutService.
 - Fulfillment still legacy PaymentFulfillmentService.
-- Patron grant/revoke still legacy patron.service.
-- Admin patron management route still legacy.
-- Payment settings route still legacy.
 - Refund/dispute behavior needs R7 certification before implementation.
 - User.isPatron in DB is current source of truth; target R7 may move truth to Patron module/grants.
-- Checkout must never trust `creatorId` from client (must be server-side resolved).
 - R8 Comments and R10 Cleanup are NOT part of R7 and must remain untouched.
 
 ---

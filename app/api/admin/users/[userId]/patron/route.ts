@@ -1,19 +1,21 @@
 import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { grantPatronStatus, revokePatronStatus } from '@/lib/services/patron.service';
-import { syncPatronStatusToClerk } from '@/lib/services/patron.service';
+import { grantPatron, revokePatron } from '@/lib/modules/patron';
+import { UserAccessService } from '@/lib/services/user-access.service';
 import { handleApiError } from "@/lib/errors";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 
 type Context = { params: { userId: string } };
 
-// R7 blocker: admin patron mutations still use legacy patron service.
-// Do not migrate into Users. Patron grants/revoke belong to R7 Patron + Payments.
 export async function PATCH(request: NextRequest, { params }: Context) {
   const requestId = request.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_USER_PATRON");
-  if (response) return response;
+
+  const { adminUserId, response: authResponse } = await requireAdminForApi("PATCH_ADMIN_USER_PATRON");
+  if (authResponse) return authResponse;
+
+  const ctx = createAppContext({ type: 'admin', userId: adminUserId! });
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -25,26 +27,44 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     }
 
     if (action === 'grant') {
-      const result = await grantPatronStatus(params.userId, {
+      const result = await grantPatron({
+        userId: params.userId,
         source: 'admin',
         grantedByUserId: adminUserId!,
         note: reason,
-      });
-      await syncPatronStatusToClerk(params.userId, true, result.normalizedTotal).catch((error) => {
+      }, ctx);
+
+      if (!result.ok) return handleApiError(result.error);
+
+      await UserAccessService.syncClerkAccess(params.userId, true, result.data.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_GRANT_CLERK_SYNC_ERROR]', error);
       });
-      return NextResponse.json({ isPatron: true, patronSince: result.user.patronSince, patronSource: result.user.patronSource });
+
+      return NextResponse.json({
+        isPatron: true,
+        patronSince: result.data.patronSince,
+        patronSource: result.data.patronSource
+      });
     }
 
     if (action === 'revoke') {
-      const result = await revokePatronStatus(params.userId, {
+      const result = await revokePatron({
+        userId: params.userId,
         revokedByUserId: adminUserId!,
         note: reason,
-      });
-      await syncPatronStatusToClerk(params.userId, false, result.normalizedTotal).catch((error) => {
+      }, ctx);
+
+      if (!result.ok) return handleApiError(result.error);
+
+      await UserAccessService.syncClerkAccess(params.userId, false, result.data.normalizedTotal).catch((error) => {
         scopedLogger.error('[ADMIN_PATRON_REVOKE_CLERK_SYNC_ERROR]', error);
       });
-      return NextResponse.json({ isPatron: false, patronSince: null, patronSource: null });
+
+      return NextResponse.json({
+        isPatron: false,
+        patronSince: null,
+        patronSource: null
+      });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

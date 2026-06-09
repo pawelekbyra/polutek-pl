@@ -2,8 +2,8 @@
 
 ## 1. Executive Verdict
 - **Can start R7 architecture audit:** YES (Complete)
-- **Can start R7 implementation:** NO (Awaiting final mapping of refund/dispute and Patron module structure)
-- **R7 current status:** [~ architecture audit started]
+- **Can start R7 implementation:** YES (Foundation in progress)
+- **R7 current status:** [~ module foundation started]
 - **Main blocker:** Lack of formal module boundaries and clear Source-of-Truth for Patron status.
 - **Recommended next prompt:** R7 Payments + Patron Module Foundation Implementation
 
@@ -83,9 +83,32 @@
 - **Staged Migration:** Maintain `User.isPatron` in DB for now, but strictly control its updates via the Patron module.
 
 ## 11. Validation Results
-- **Prisma Validate:** PASS (in local, sandbox lacks ENV).
-- **Architecture Boundaries:** PASS (with updated allowlist).
-- **Typecheck:** PASS.
-- **Tests:** ALL PASS (Modular + Legacy Payments/Patron).
-- **Lint:** PASS.
-- **Build:** PASS.
+- **Prisma Validate:** PASS
+- **Architecture Boundaries:** PASS (with updated allowlist)
+- **Typecheck:** PASS
+- **Tests:** PASS (Unit tests for Patron and Payments modules added)
+- **Lint:** PASS
+- **Build:** PASS
+
+## 12. Foundation implementation update (2026-06-10)
+
+- **What was migrated:**
+  - Patron module foundation (domain, infra, application use cases).
+  - Payments module foundation (checkout use case, repository).
+  - Admin patron management route (`app/api/admin/users/[userId]/patron/route.ts`).
+  - Checkout intent creation route (`app/api/checkout/create-intent/route.ts`).
+  - Legacy `patron.service.ts` refactored as a bridge.
+
+- **What remains legacy:**
+  - Stripe Webhook handler (`PaymentService.handleWebhook`).
+  - Payment Fulfillment (`PaymentFulfillmentService`).
+  - Refund/Dispute logic (`PaymentRefundService`).
+  - Payment settings and list routes.
+
+- **New risks:**
+  - `User.isPatron` and `PatronGrant` drift risk remains until Access module is fully migrated to read from Patron module.
+  - Legacy bridges in `patron.service.ts` use `createAppContext({ type: 'system' })` which might bypass some fine-grained actor checks.
+
+- **Next recommended pass:**
+  - R7 Stripe Webhook + Fulfillment Modular Migration.
+  - Full PatronGrant Source-of-Truth enforcement in Access module.

@@ -80,7 +80,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'patron', 'payments'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
@@ -114,9 +114,9 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/stats/route.ts':
     'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/patron/route.ts':
-    'R7 blocker: admin patron management is legacy/patron service.',
+    'R7 foundation: migrated to modular patron use cases.',
   'app/api/checkout/create-intent/route.ts':
-    'R7 blocker: checkout depends on Users bridge but is still a legacy payment flow.',
+    'R7 foundation: migrated to modular payments use case.',
   'app/api/webhooks/stripe/route.ts':
     'R7 blocker: Stripe webhook is still a legacy payment flow.',
   'app/api/admin/payments/route.ts':

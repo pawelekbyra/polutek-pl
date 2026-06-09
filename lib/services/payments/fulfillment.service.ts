@@ -116,7 +116,7 @@ export class PaymentFulfillmentService {
                 paymentId: updatedPayment.id,
                 note: 'Granted after successful one-time Stripe tip',
             }, tx);
-            user = grantResult.user;
+            user = grantResult.user as any;
             becamePatronNow = grantResult.becamePatronNow;
             normalizedTotal = grantResult.normalizedTotal;
         }
