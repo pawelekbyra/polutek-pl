@@ -45,51 +45,100 @@ describe('sendAdminBroadcastEmail use case', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects invalid test payload when no email provided', async () => {
+  it('rejects missing subject or body', async () => {
     const result = await sendAdminBroadcastEmail(ctx, {
-      subjectPl: 'Test',
-      htmlPl: 'Test',
-      subjectEn: 'Test',
-      htmlEn: 'Test',
-      isTest: true,
-      testEmail: null,
+      subject: '',
+      body: '',
+      audience: 'ALL_SUBSCRIBERS',
     });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-        expect(result.error.code).toBe('INVALID_BROADCAST_PAYLOAD');
+        expect(result.error.code).toBe('EMAIL_INVALID_PAYLOAD');
     }
   });
 
-  it('creates a broadcast and triggers background sending for valid input', async () => {
+  it('rejects missing test recipient for TEST audience', async () => {
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Test',
+      body: 'Test',
+      audience: 'TEST',
+      testRecipientEmail: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+        expect(result.error.code).toBe('EMAIL_TEST_RECIPIENT_REQUIRED');
+    }
+  });
+
+  it('implements dryRun: true correctly', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'u1@ex.com', language: 'pl', name: 'U1' },
+      { id: 'u1', email: 'u1@ex.com', language: 'pl', name: 'U1', isPatron: false },
+      { id: 'u2', email: 'u2@ex.com', language: 'pl', name: 'U2', isPatron: false },
+    ]);
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Dry Run',
+      body: 'Body',
+      audience: 'ALL_SUBSCRIBERS',
+      dryRun: true,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data.dryRun).toBe(true);
+        expect(result.data.recipientCount).toBe(2);
+        expect(result.data.skipped).toBe(2);
+    }
+    expect(prismaMock.broadcastEmail.create).not.toHaveBeenCalled();
+    expect(EmailService.sendBroadcast).not.toHaveBeenCalled();
+  });
+
+  it('supports PATRONS audience', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+        { id: 'p1', email: 'p1@ex.com', language: 'pl', name: 'P1', isPatron: true },
     ]);
     prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
 
     const result = await sendAdminBroadcastEmail(ctx, {
-      subjectPl: 'Pl',
-      htmlPl: 'Pl',
-      subjectEn: 'En',
-      htmlEn: 'En',
-      recipientGroup: 'ALL',
+      subject: 'Patrons Only',
+      body: 'Body',
+      audience: 'PATRONS',
     });
 
     expect(result.ok).toBe(true);
-    expect(prismaMock.broadcastEmail.create).toHaveBeenCalled();
-    expect(prismaMock.broadcastEmailRecipient.createMany).toHaveBeenCalled();
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ isPatron: true })
+    }));
     expect(EmailService.sendBroadcast).toHaveBeenCalledWith('b1');
   });
 
-  it('handles empty recipient list gracefully', async () => {
+  it('supports NON_PATRONS audience', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+        { id: 'np1', email: 'np1@ex.com', language: 'pl', name: 'NP1', isPatron: false },
+    ]);
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Non-Patrons Only',
+      body: 'Body',
+      audience: 'NON_PATRONS',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ isPatron: false })
+    }));
+  });
+
+  it('handles empty recipient list correctly', async () => {
     prismaMock.user.findMany.mockResolvedValue([]);
 
     const result = await sendAdminBroadcastEmail(ctx, {
-      subjectPl: 'Pl',
-      htmlPl: 'Pl',
-      subjectEn: 'En',
-      htmlEn: 'En',
-      recipientGroup: 'PATRONS',
+      subject: 'Nobody',
+      body: 'Body',
+      audience: 'ALL_SUBSCRIBERS',
     });
 
     expect(result.ok).toBe(true);

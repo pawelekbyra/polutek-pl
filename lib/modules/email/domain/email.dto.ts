@@ -1,19 +1,45 @@
+export type BroadcastAudience =
+  | "ALL_SUBSCRIBERS"
+  | "PATRONS"
+  | "NON_PATRONS"
+  | "TEST";
+
 export type AdminBroadcastEmailInput = {
-  subjectPl: string;
-  htmlPl: string;
-  subjectEn: string;
-  htmlEn: string;
-  recipientGroup?: 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL';
-  isTest?: boolean;
-  testEmail?: string | null;
+  subject: string;
+  body: string; // Used for content if not using templates
+  audience: BroadcastAudience;
+  testRecipientEmail?: string | null;
+  dryRun?: boolean;
+  requestedByAdminId?: string;
+  // Legacy fields to be mapped for backward compatibility if needed
+  subjectPl?: string;
+  htmlPl?: string;
+  subjectEn?: string;
+  htmlEn?: string;
   manualEmails?: string | null;
 };
 
+export type BroadcastRecipientDto = {
+  userId?: string | null;
+  email: string;
+  name?: string | null;
+  isPatron?: boolean;
+  language: string;
+};
+
 export type AdminBroadcastEmailResult = {
-  success: boolean;
-  broadcastId?: string;
+  dryRun: boolean;
+  audience: BroadcastAudience;
   recipientCount: number;
-  message?: string;
+  sent: number;
+  skipped: number;
+  failed: number;
+  broadcastId?: string;
+  messageIds: string[];
+  failures?: Array<{
+    email: string;
+    reason: string;
+  }>;
 };
 
 export type ResendWebhookInput = {
@@ -34,4 +60,7 @@ export type ResendWebhookInput = {
 
 export type ResendWebhookResult = {
   received: boolean;
+  accepted: boolean;
+  ignored?: boolean;
+  duplicate?: boolean;
 };
