@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserAccessProfile, getActorAccessProfile, updateUserLanguage } from '@/lib/modules/users';
+import { getUserAccessProfile, getActorAccessProfile, updateUserLanguage, GetUserProfileUseCase, SyncCurrentUserUseCase, GetOrCreateUserUseCase } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SystemRole } from '@prisma/client';
 
@@ -144,5 +144,111 @@ describe('Users Module', () => {
         await expect(updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider))
           .rejects.toThrow('Cannot update language for deleted user');
       });
+  });
+
+  describe('GetUserProfileUseCase', () => {
+    it('returns minimal profile and hides email from non-admins', async () => {
+      const mockUser = {
+        id: 'user_1',
+        email: 'private@example.com',
+        name: 'User One',
+        username: 'user1',
+        imageUrl: 'http://img.com',
+        language: 'pl',
+        isDeleted: false,
+        createdAt: new Date(),
+        referralCode: 'ref1',
+        referralCount: 5,
+        referralPoints: 100,
+      };
+
+      const mockPrisma = {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(mockUser),
+        },
+      } as any;
+
+      const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_1', isPatron: false } });
+      const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
+
+      expect(profile).toBeDefined();
+      expect(profile?.id).toBe('user_1');
+      expect((profile as any).email).toBeUndefined(); // Email should not be in DTO
+      expect(profile?.referralCount).toBe(5);
+    });
+
+    it('returns null for deleted user when accessed by non-admin', async () => {
+        const mockUser = { id: 'user_1', isDeleted: true };
+        const mockPrisma = { user: { findUnique: vi.fn().mockResolvedValue(mockUser) } } as any;
+        const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_2', isPatron: false } });
+
+        const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
+        expect(profile).toBeNull();
+    });
+  });
+
+  describe('SyncCurrentUserUseCase', () => {
+    it('returns isPatron from DB and ignores other sources', async () => {
+      const mockUser = {
+        id: 'user_1',
+        isPatron: true,
+        language: 'en',
+        paymentTotals: [{ amountMinor: 5000, currency: 'PLN' }]
+      };
+
+      const mockPrisma = {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(mockUser),
+        },
+      } as any;
+
+      // isPatron: false in actor (e.g. from clerk metadata) should be overridden by DB true
+      const ctx = createAppContext({
+        prisma: mockPrisma,
+        actor: { type: 'user', userId: 'user_1', isPatron: false }
+      });
+
+      const result = await SyncCurrentUserUseCase.execute(ctx);
+
+      expect(result.isPatron).toBe(true);
+      expect(result.totalPaid).toBe(50); // 5000 / 100
+    });
+  });
+
+  describe('GetOrCreateUserUseCase', () => {
+    it('does not allow escalating isPatron or role through sync', async () => {
+       const mockUser = { id: 'user_1', role: 'USER', isPatron: false };
+       const mockPrisma = {
+         user: {
+           findUnique: vi.fn().mockResolvedValue(mockUser),
+           update: vi.fn().mockImplementation(({ data }) => Promise.resolve({ ...mockUser, ...data })),
+         }
+       } as any;
+
+       const ctx = createAppContext({ prisma: mockPrisma });
+
+       // Payload trying to escalate
+       const payload = {
+           id: 'user_1',
+           email: 'test@test.com',
+           isPatron: true,
+           role: 'ADMIN'
+       } as any;
+
+       const result = await GetOrCreateUserUseCase.execute(ctx, payload);
+
+       expect(result.role).toBe('USER');
+       expect(result.isPatron).toBe(false);
+       expect(mockPrisma.user.update).toHaveBeenCalledWith({
+           where: { id: 'user_1' },
+           data: {
+               email: 'test@test.com',
+               name: undefined,
+               username: undefined,
+               imageUrl: undefined,
+               language: undefined,
+           }
+       });
+    });
   });
 });

@@ -1,41 +1,40 @@
-import { logger, createScopedLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { prisma } from '@/lib/prisma';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { SyncCurrentUserUseCase, GetOrCreateUserUseCase } from '@/lib/modules/users';
 import { handleApiError } from '@/lib/errors';
+import { clerkClient } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const requestId = req.headers.get('x-request-id');
-  const scopedLogger = createScopedLogger(requestId);
-  const { userId } = await auth();
-  if (!userId) {
+  const actor = await getActorFromAuth();
+  if (actor.type === 'guest' || actor.type === 'system') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    // Ensure user exists
-    await UserService.getOrCreateUser(userId);
+    const ctx = createAppContext({ actor });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { paymentTotals: true }
-    });
+    // Ensure user exists using modular use case
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(actor.userId);
+    const email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress;
 
-    if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (email) {
+        await GetOrCreateUserUseCase.execute(ctx, {
+            id: actor.userId,
+            email,
+            name: clerkUser.fullName,
+            username: clerkUser.username,
+            imageUrl: clerkUser.imageUrl,
+        });
     }
 
-    return NextResponse.json({
-      totalPaid: normalizePaymentTotals(user.paymentTotals),
-      isPatron: user.isPatron,
-      language: user.language
-    });
+    const result = await SyncCurrentUserUseCase.execute(ctx);
+
+    return NextResponse.json(result);
   } catch (error) {
-    scopedLogger.error('[USER_SYNC_API_ERROR]', error);
     return handleApiError(error);
   }
 }

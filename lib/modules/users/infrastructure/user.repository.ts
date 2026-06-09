@@ -62,7 +62,7 @@ export class UserRepository {
   }
 
   async updateLanguage(id: string, language: string) {
-    return await (this.db as any).user.update({
+    return await this.user.update({
       where: { id },
       data: { language },
     });
@@ -77,7 +77,7 @@ export class UserRepository {
     language?: string;
     referralCode?: string;
   }) {
-    return await (this.db as any).user.upsert({
+    return await this.user.upsert({
       where: { id: data.id },
       update: {
         email: data.email,
@@ -99,18 +99,18 @@ export class UserRepository {
   }
 
   async findWithPaymentTotals(id: string) {
-    return await (this.db as any).user.findUnique({
+    return await this.user.findUnique({
       where: { id },
-      include: { paymentTotals: true }
+      include: { paymentTotals: true } as any
     });
   }
 
   async create(data: any) {
-      return await (this.db as any).user.create({ data });
+      return await this.user.create({ data });
   }
 
   async update(id: string, data: any) {
-      return await (this.db as any).user.update({
+      return await this.user.update({
           where: { id },
           data
       });
