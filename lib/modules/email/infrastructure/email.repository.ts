@@ -1,6 +1,5 @@
 import { DbClient } from "../../shared/db";
 import { BroadcastAudience, BroadcastRecipientDto, AdminBroadcastEmailListItemDto } from "../domain/email.dto";
-import { Prisma } from "@prisma/client";
 
 export class EmailRepository {
   constructor(private readonly prisma: DbClient) {}
@@ -8,7 +7,7 @@ export class EmailRepository {
   async findRecipientsForAudience(audience: BroadcastAudience): Promise<BroadcastRecipientDto[]> {
     if (audience === "TEST" || audience === "MANUAL") return [];
 
-    const where: Prisma.UserWhereInput = { isDeleted: false };
+    let where: any = { isDeleted: false };
 
     if (audience === "PATRONS") {
       where.isPatron = true;

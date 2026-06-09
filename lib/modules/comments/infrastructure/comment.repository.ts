@@ -1,5 +1,38 @@
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
-import { VideoLike, VideoDislike, CommentReaction, CommentReactionType } from "@prisma/client";
+import { VideoLike, VideoDislike, CommentReaction, CommentReactionType, CommentStatus, CommentDeletedReason, Comment, Prisma } from "@prisma/client";
+import { publicCommentAuthorSelect } from "@/lib/comments-public-author";
+
+export interface ListCommentsOptions {
+  videoId: string;
+  userId?: string | null;
+  sortBy: 'newest' | 'top' | 'oldest';
+  cursor?: string;
+  limit: number;
+  includeHidden?: boolean;
+}
+
+export interface CreateCommentInput {
+  authorId: string;
+  videoId: string;
+  creatorId: string;
+  text: string;
+  parentId?: string | null;
+  imageUrl?: string | null;
+}
+
+export const commentInclude = (userId?: string | null, includeHidden?: boolean) => ({
+  author: { select: publicCommentAuthorSelect },
+  replies: {
+    where: includeHidden ? undefined : { status: CommentStatus.VISIBLE },
+    take: 3,
+    orderBy: { createdAt: 'asc' as const },
+    include: {
+      author: { select: publicCommentAuthorSelect },
+      reactions: userId ? { where: { userId } } : false
+    }
+  },
+  reactions: userId ? { where: { userId } } : false
+});
 
 export class CommentRepository {
   constructor(private db: ReadDb) {}
@@ -57,7 +90,9 @@ export class CommentRepository {
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({
       where: { id },
-      select: { id: true, videoId: true, authorId: true }
+      include: {
+        author: { select: publicCommentAuthorSelect }
+      }
     });
   }
 
@@ -87,7 +122,7 @@ export class CommentRepository {
       where: { id: commentId },
       data: {
         likesCount: { decrement: 1 },
-        score: { decrement: 1 }
+        score: { increment: -1 } // Using score: { increment: -1 } to match CommentReactionService logic if needed, or just score: { decrement: 1 }
       }
     });
 
@@ -96,5 +131,121 @@ export class CommentRepository {
       where: { id: commentId, likesCount: { lt: 0 } },
       data: { likesCount: 0, score: 0 }
     });
+  }
+
+  async findMany(options: ListCommentsOptions) {
+    const { videoId, userId, sortBy, cursor, limit, includeHidden } = options;
+
+    const where: Prisma.CommentWhereInput = {
+      videoId,
+      parentId: null,
+      status: includeHidden ? undefined : CommentStatus.VISIBLE
+    };
+
+    const orderBy: Prisma.CommentOrderByWithRelationInput[] = [];
+    if (sortBy === 'top') {
+      orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } });
+      orderBy.push({ likesCount: 'desc' });
+      orderBy.push({ createdAt: 'desc' });
+    } else if (sortBy === 'oldest') {
+      orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } });
+      orderBy.push({ createdAt: 'asc' });
+    } else {
+      orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } });
+      orderBy.push({ createdAt: 'desc' });
+    }
+
+    return await this.db.comment.findMany({
+      where,
+      take: limit,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy,
+      include: commentInclude(userId, includeHidden)
+    });
+  }
+
+  async findReplies(parentId: string, userId: string | null, includeHidden: boolean, cursor?: string, limit: number = 10) {
+    return await this.db.comment.findMany({
+      where: {
+        parentId,
+        status: includeHidden ? undefined : CommentStatus.VISIBLE
+      },
+      take: limit,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        author: { select: publicCommentAuthorSelect },
+        reactions: userId ? { where: { userId } } : false
+      }
+    });
+  }
+
+  async count(options: Partial<ListCommentsOptions>) {
+    const { videoId, includeHidden } = options;
+    return await this.db.comment.count({
+      where: {
+        videoId,
+        parentId: null,
+        status: includeHidden ? undefined : CommentStatus.VISIBLE
+      }
+    });
+  }
+
+  async create(input: CreateCommentInput): Promise<Comment> {
+    const { authorId, videoId, creatorId, text, parentId, imageUrl } = input;
+    return await (this.db as WriteTx).comment.create({
+      data: {
+        authorId,
+        videoId,
+        creatorId,
+        text,
+        parentId,
+        imageUrl,
+        status: CommentStatus.VISIBLE
+      }
+    });
+  }
+
+  async incrementRepliesCount(commentId: string): Promise<void> {
+    await (this.db as WriteTx).comment.update({
+      where: { id: commentId },
+      data: { repliesCount: { increment: 1 } }
+    });
+  }
+
+  async update(id: string, data: { text: string; editedAt: Date }): Promise<Comment> {
+    return await (this.db as WriteTx).comment.update({
+      where: { id },
+      data
+    });
+  }
+
+  async softDelete(id: string, data: { status: CommentStatus; deletedAt: Date; deletedById: string; deletedReason: CommentDeletedReason }): Promise<void> {
+    await (this.db as WriteTx).comment.update({
+      where: { id },
+      data
+    });
+  }
+
+  async findVideoByCommentId(commentId: string) {
+    const comment = await this.db.comment.findUnique({
+      where: { id: commentId },
+      select: { videoId: true }
+    });
+    if (!comment) return null;
+    return await this.db.video.findUnique({
+      where: { id: comment.videoId },
+      select: { creator: { select: { userId: true } } }
+    });
+  }
+
+  async findVideoCreatorId(videoId: string): Promise<string | null> {
+    const video = await this.db.video.findUnique({
+      where: { id: videoId },
+      select: { creator: { select: { userId: true } } }
+    });
+    return video?.creator?.userId || null;
   }
 }

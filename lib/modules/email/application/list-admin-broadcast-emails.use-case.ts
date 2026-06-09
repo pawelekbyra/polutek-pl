@@ -16,8 +16,7 @@ export async function listAdminBroadcastEmails(
     const history = await repository.listBroadcastHistory();
 
     return ok(history);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to fetch broadcast history";
-    return fail(new EmailError(message));
+  } catch (error: any) {
+    return fail(new EmailError(error.message || "Failed to fetch broadcast history"));
   }
 }

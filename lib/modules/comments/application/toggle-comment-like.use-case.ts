@@ -34,9 +34,15 @@ export async function toggleCommentLike(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // Use the same policy for now: if you can view comments, you can react
-  if (!accessResult.data.hasAccess && accessResult.data.reason !== 'PATRON_REQUIRED') {
-    return fail({ type: "FORBIDDEN", message: "Brak dostępu do tego filmu." });
+  // P0 Fix: Reacting to a comment requires full access to the video.
+  // We don't allow it if reason is PATRON_REQUIRED.
+  if (!CommentPolicy.canInteractWithVideo(actor, accessResult.data)) {
+    return fail({
+      type: "FORBIDDEN",
+      message: accessResult.data.reason === "PATRON_REQUIRED"
+        ? "Interakcje pod tym filmem są dostępne tylko dla Patronów."
+        : "Brak dostępu do interakcji pod tym filmem."
+    });
   }
 
   try {
