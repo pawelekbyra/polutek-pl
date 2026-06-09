@@ -2,25 +2,22 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
-import { prisma } from '@/lib/prisma';
-// R6/R3 delivery blocker: playback still uses legacy access policy.
-// Do not expose raw videoUrl to public UI; gated playback migration remains future work.
-import { AccessPolicy } from '@/lib/access/access-policy';
-import { flags } from '@/lib/feature-flags';
-import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { PlaybackService } from '@/lib/services/playback/playback.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
 import { recordAlert } from '@/lib/observability';
 import { handleApiError } from '@/lib/errors';
 import crypto from 'crypto';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { MediaPolicy } from '@/lib/modules/media';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, { params }: { params: { videoId: string } }) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId } = await auth();
+  const actor = await getActorFromAuth();
   const videoId = params.videoId;
 
   if (!videoId) {
@@ -29,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
 
   try {
     const rateLimitResult = await rateLimit({
-      key: `media-source:${buildMediaRateLimitKey({ userId, ip: getMediaClientIp(req), mediaId: videoId })}`,
+      key: `media-source:${buildMediaRateLimitKey({ userId: actor.type === 'user' ? actor.userId : null, ip: getMediaClientIp(req), mediaId: videoId })}`,
       limit: 60,
       windowMs: 60 * 1000
     });
@@ -47,7 +44,19 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
     const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
     const uaHash = crypto.createHash('sha256').update(ua).digest('hex');
 
-    const playbackPlan = await PlaybackService.createPlaybackPlan(videoId, userId, ipHash, uaHash);
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+    const playbackPlan = await PlaybackService.createPlaybackPlanWithContext(videoId, ctx, ipHash, uaHash);
+
+    // Safety: ensure no raw URLs leak in the public response
+    if (playbackPlan.source) {
+        if (MediaPolicy.isProbablyRawMediaUrl(playbackPlan.source.playbackUrl)) {
+            // If it's a raw URL that wasn't proxied or handled, redact it for public safety
+            // We expect PlaybackService to already use /api/media proxy for most cases.
+            if (!playbackPlan.source.playbackUrl.startsWith('/api/media/')) {
+                 playbackPlan.source.playbackUrl = `/api/media/${videoId}`;
+            }
+        }
+    }
 
     // Maintain legacy compatibility for now
     const response = {

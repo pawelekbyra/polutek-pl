@@ -6,11 +6,12 @@
 
 import { logger } from "@/lib/logger";
 import { recordAlert, recordMetric } from "@/lib/observability";
-import type { AccessVideo } from '@/lib/access/access-policy';
 import { get } from "@vercel/blob";
-import { AccessPolicy } from "./access/access-policy";
 import { NextResponse } from 'next/server';
 import { MediaPolicy, MediaHostEnv, parseMediaHosts as _parseMediaHosts } from "@/lib/modules/media";
+import { checkVideoAccess } from "@/lib/modules/access";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { getActorFromAuth } from "@/lib/api/auth";
 
 /** @deprecated Use MediaPolicy.getAllowedMediaHosts */
 export function getAllowedMediaHosts(env: MediaHostEnv = process.env) {
@@ -84,11 +85,20 @@ export async function getGatedBlobResponse(
   videoId: string,
   blobUrl: string,
   headers?: Headers,
-  prefetchedVideo?: AccessVideo | null
+  _prefetchedVideo?: any // Ignored in modular access
 ) {
-  const decision = await AccessPolicy.canViewVideo(userId, videoId, prefetchedVideo);
+  // R6/R3 delivery: Use modular access check
+  const actor = await getActorFromAuth();
+  const ctx = createAppContext({ actor });
+  const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
 
-  if (!decision.allowed) {
+  if (!accessResult.ok) {
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+
+  const decision = accessResult.data;
+
+  if (!decision.hasAccess) {
     recordMetric('media_proxy.access_denied', { videoId, reason: decision.reason || 'unknown', requiredTier: decision.requiredTier || 'unknown' }, { level: 'warn' });
     return new NextResponse('Forbidden', { status: 403 });
   }

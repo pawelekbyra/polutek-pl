@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { getGatedBlobResponse } from '@/lib/blob';
 import { prisma } from '@/lib/prisma';
-import { flags } from '@/lib/feature-flags';
+import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { INITIAL_VIDEOS } from '@/lib/data/initial-content';
 import { rateLimit } from '@/lib/rate-limit';
 import { buildMediaRateLimitKey, getMediaClientIp } from '@/lib/media/rate-limit';
@@ -10,6 +9,7 @@ import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
 import { recordAlert } from '@/lib/observability';
+import { getActorFromAuth } from '@/lib/api/auth';
 
 function rateLimitedResponse(videoId: string) {
   recordAlert('media_proxy.rate_limited', { videoId });
@@ -29,7 +29,8 @@ export async function GET(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId } = await auth();
+  const actor = await getActorFromAuth();
+  const userId = actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null);
 
   const videoId = params.path[0];
 
@@ -50,43 +51,27 @@ export async function GET(
 
     const video = await prisma.video.findUnique({
       where: { id: videoId },
-      include: {
-        creator: {
-          select: { id: true, slug: true, isApproved: true, isPrimary: true }
-        }
-      }
     });
 
     if (!video) {
       const videoBySlug = await prisma.video.findUnique({
           where: { slug: videoId },
-          include: {
-            creator: {
-              select: { id: true, slug: true, isApproved: true, isPrimary: true }
-            }
-          }
       });
 
       if (!videoBySlug) {
-          if (flags.demoFallbacks) {
+          if (canUseDemoFallbacks()) {
               const fallback = INITIAL_VIDEOS.find(v => v.id === videoId || v.slug === videoId);
               if (fallback) {
-                  return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers, {
-                      id: fallback.id,
-                      creatorId: fallback.creatorId || 'demo-creator',
-                      tier: fallback.tier,
-                      status: fallback.status,
-                      publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : null,
-                  });
+                  return getGatedBlobResponse(userId, fallback.id, fallback.videoUrl, req.headers);
               }
           }
           return NextResponse.json({ error: 'Video not found' }, { status: 404 });
       }
 
-      return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers, videoBySlug);
+      return getGatedBlobResponse(userId, videoBySlug.id, videoBySlug.videoUrl, req.headers);
     }
 
-    return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers, video);
+    return getGatedBlobResponse(userId, videoId, video.videoUrl, req.headers);
   } catch (error) {
     scopedLogger.error("[MEDIA_PROXY_ERROR]", error);
     return handleApiError(error);
