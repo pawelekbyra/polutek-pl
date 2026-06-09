@@ -80,7 +80,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
@@ -92,11 +92,11 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
   'app/api/comments/[commentId]/reaction/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/report/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/comments/[commentId]/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':

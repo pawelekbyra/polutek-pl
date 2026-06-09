@@ -96,8 +96,8 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R6**  | Moduł Video                                     | [x stronger foundation]      |
 | **R6.5**| Access Foundation                               | [x certified]                 |
 | **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
-| **R8**  | Moduł Comments                                  | [ ]                           |
-| **R9**  | Moduł Email                                     | [~ production hardening]      |
+| **R8**  | Moduły Comments                                  | [~ foundation started]        |
+| **R9**  | Moduł Email                                     | [ ]                           |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
@@ -493,8 +493,15 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ foundation started]
 ```
+
+Certyfikowany fundament:
+- Moduł `comments` istnieje.
+- `CommentPolicy` używa modularnego `checkVideoAccess`.
+- Interakcje wideo (Like/Dislike) zmigrowane do use case'ów.
+- Reakcje do komentarzy zmigrowane do use case'ów.
+- Usunięto bezpośrednie użycie legacy `AccessPolicy` z interakcji wideo i reakcji komentarzy.
 
 R8 musi zawierać minimalne elementy Fazy X:
 
@@ -1177,6 +1184,18 @@ Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a tes
 * Szczegóły admina (diagnostyka/audyt) pozostają jako rozszerzenie legacy (R6 blocker).
 * Migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość (R10/R11).
 * Dostarczanie mediów/proxy/media-source (R3/R6 delivery) jest certyfikowane i zabezpieczone przed leakami URL.
+
+---
+
+### Blokery R8 Comments / Interactions
+
+* Video comments list route: mixed/legacy (Direct Prisma).
+* Create/Update/Delete comment: mixed/legacy (Direct Prisma).
+* Comment reactions/reports/context/pin: mixed/legacy (Direct Prisma).
+* Admin comments management: mixed/legacy (Direct Prisma).
+* Remaining legacy AccessPolicy usage in `CommentAccessService`.
+* R8 must not change R7 Payments/Patron or R9 Email.
+* R8 uses current Access module and DB User.isPatron truth.
 
 ---
 
