@@ -197,7 +197,8 @@ export class VideoRepository {
     }
 
     const updated = await tx.video.findFirst({
-        where: { id, creatorId: mainChannelId }
+        where: { id, creatorId: mainChannelId },
+        include: { _count: { select: { comments: true } } }
     });
 
     if (!updated) throw new VideoNotFoundError(id);
@@ -225,10 +226,14 @@ export class VideoRepository {
       data: { isMainFeatured: false }
     });
 
-    await tx.video.update({
-      where: { id: videoId },
+    const updateResult = await tx.video.updateMany({
+      where: { id: videoId, creatorId: mainChannelId },
       data: { isMainFeatured: true }
     });
+
+    if (updateResult.count !== 1) {
+        throw new VideoNotOnMainChannelError(videoId);
+    }
   }
 
   async clearHero(mainChannelId: string, except: string, tx: WriteTx): Promise<void> {

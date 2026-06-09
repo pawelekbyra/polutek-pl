@@ -43,9 +43,9 @@ describe('VideoRepository Safety', () => {
   });
 
   describe('archiveVideo', () => {
-    it('archives only main-channel video', async () => {
+    it('archives only main-channel video and includes comments count', async () => {
       mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
-      mockPrisma.video.findFirst.mockResolvedValue({ id: 'v1', status: 'ARCHIVED' });
+      mockPrisma.video.findFirst.mockResolvedValue({ id: 'v1', status: 'ARCHIVED', _count: { comments: 0 } });
 
       const result = await repository.archiveVideo('v1', mainChannelId, mockPrisma);
 
@@ -53,6 +53,9 @@ describe('VideoRepository Safety', () => {
         where: { id: 'v1', creatorId: mainChannelId },
         data: { status: 'ARCHIVED' },
       });
+      expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+          include: { _count: { select: { comments: true } } }
+      }));
       expect(result.status).toBe('ARCHIVED');
     });
 
@@ -84,7 +87,7 @@ describe('VideoRepository Safety', () => {
         .rejects.toThrow(VideoInvalidHeroError);
     });
 
-    it('sets hero for valid video', async () => {
+    it('sets hero for valid video and enforces scoping on update', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'v1',
         creatorId: mainChannelId,
@@ -92,7 +95,6 @@ describe('VideoRepository Safety', () => {
         status: VideoStatus.PUBLISHED
       });
       mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
-      mockPrisma.video.update.mockResolvedValue({ id: 'v1', isMainFeatured: true });
 
       await repository.setHero('v1', mainChannelId, mockPrisma);
 
@@ -100,8 +102,8 @@ describe('VideoRepository Safety', () => {
         where: { creatorId: mainChannelId, isMainFeatured: true },
         data: { isMainFeatured: false }
       });
-      expect(mockPrisma.video.update).toHaveBeenCalledWith({
-        where: { id: 'v1' },
+      expect(mockPrisma.video.updateMany).toHaveBeenCalledWith({
+        where: { id: 'v1', creatorId: mainChannelId },
         data: { isMainFeatured: true }
       });
     });

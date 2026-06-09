@@ -1,12 +1,5 @@
 import { AccessTier } from "@prisma/client";
-
-export type AccessDecisionReason =
-  | "LOGIN_REQUIRED"
-  | "PATRON_REQUIRED"
-  | "ADMIN_REQUIRED"
-  | "NOT_FOUND"
-  | "DELETED"
-  | "FORBIDDEN";
+import { AccessDecisionReason } from "./access-reason";
 
 export type AccessDecisionDto = {
   hasAccess: boolean;
