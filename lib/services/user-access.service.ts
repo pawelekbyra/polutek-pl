@@ -38,33 +38,23 @@ export function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
 export class UserAccessService {
   /**
    * Recalculates and updates the user's isPatron status based on active grants.
+   * @deprecated Use recalculatePatronStatus use case from @/lib/modules/patron
    */
   static async recalculateUserPatronStatus(userId: string, tx?: DbClient) {
-    const db = tx || prisma;
+    const { recalculatePatronStatus } = await import('@/lib/modules/patron');
+    const { createAppContext } = await import('@/lib/modules/shared/app-context');
 
-    const activeGrant = await db.patronGrant.findFirst({
-        where: {
-            userId,
-            revokedAt: null
-        },
-        orderBy: { createdAt: 'asc' }
-    });
+    const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });
+    const result = await recalculatePatronStatus(userId, ctx, tx);
 
-    const isPatron = !!activeGrant;
+    if (!result.ok) {
+        throw new Error(result.error.message);
+    }
 
-    const user = await db.user.update({
-        where: { id: userId },
-        data: {
-            isPatron,
-            patronSince: isPatron ? activeGrant.createdAt : null,
-            patronSource: isPatron ? activeGrant.source : null
-        },
-        include: {
-          paymentTotals: true
-        }
-    });
-
-    return { isPatron, normalizedTotal: normalizePaymentTotals(user.paymentTotals) };
+    return {
+        isPatron: result.data.isPatron,
+        normalizedTotal: result.data.normalizedTotal
+    };
   }
 
   /**

@@ -1,17 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
-import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
+import { createCheckoutIntent } from '@/lib/modules/payments';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
 import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
-import { isUuid } from '@/lib/utils/uuid';
 import { handleApiError } from '@/lib/errors';
+import { Actor } from '@/lib/modules/shared/actor';
 
 export const dynamic = 'force-dynamic';
-
 
 export async function POST(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
@@ -41,8 +40,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Lazy Sync Fallback via Bridge
-    const userCtx = createAppContext();
-    await getOrCreateCurrentUser(userCtx, userId);
+    const tempCtx = createAppContext();
+    const userResult = await getOrCreateCurrentUser(tempCtx, userId);
+
+    // Create actor from user result or auth session
+    const actor: Actor = {
+      type: 'user',
+      userId,
+      isPatron: userResult?.isPatron ?? false
+    };
+    const ctx = createAppContext(actor);
 
     const body = await req.json();
     const result = checkoutSchema.safeParse(body);
@@ -63,17 +70,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: amountError }, { status: 400 });
     }
 
-    const payment = await PaymentService.createPayment({
+    const checkoutResult = await createCheckoutIntent({
       userId,
       amountMinor,
       currency,
       title,
       requestId: inputRequestId,
-    });
+    }, ctx);
+
+    if (!checkoutResult.ok) {
+      return handleApiError(checkoutResult.error);
+    }
 
     return NextResponse.json({
-        clientSecret: payment.clientSecret,
-        paymentId: payment.id
+        clientSecret: checkoutResult.data.clientSecret,
+        paymentId: checkoutResult.data.paymentId
     });
   } catch (error: unknown) {
     return handleApiError(error);
