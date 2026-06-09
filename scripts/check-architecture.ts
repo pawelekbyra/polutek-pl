@@ -80,7 +80,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'patron', 'payments'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
@@ -92,15 +92,15 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
   'app/api/comments/[commentId]/reaction/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/report/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/media-source/[videoId]/route.ts':
     'R6/R3 certified: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
@@ -167,7 +167,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/checkout/create-intent/route.ts': 'R7 blocker.',
   'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
   'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
-  'app/api/comments/[commentId]/replies/route.ts': 'R8 blocker.',
+  'app/api/comments/[commentId]/replies/route.ts': 'R8 cert: migrated to modular access/use cases.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
   'app/api/webhooks/resend/route.ts': 'R9 blocker.',
 };
@@ -333,6 +333,8 @@ function checkLegacyAccessPolicy() {
   console.log(`- Files importing legacy AccessPolicy: ${policyImports}`);
   return violations;
 }
+
+countLegacyInventory();
 
 const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
 

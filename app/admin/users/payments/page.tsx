@@ -210,7 +210,7 @@ export default function AdminPaymentsListPage() {
                         <TableHeader>
                             <TableRow className="bg-muted/30 hover:bg-muted/30">
                                 <TableHead className="text-[10px] uppercase font-bold">Użytkownik</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold">Dla twórcy</TableHead>
+                                <TableHead className="text-[10px] uppercase font-bold">Odbiorca</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Kwota & Waluta</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Stripe ID</TableHead>

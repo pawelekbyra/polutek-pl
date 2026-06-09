@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GET as getComments, POST as postComment, PATCH as patchComment, DELETE as deleteComment } from '../videos/[id]/comments/route';
+import { GET as getComments, POST as postComment } from '../videos/[id]/comments/route';
+import { PATCH as patchComment, DELETE as deleteComment } from './[commentId]/route';
 
 export const dynamic = 'force-dynamic';
 

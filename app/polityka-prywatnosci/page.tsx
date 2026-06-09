@@ -17,7 +17,7 @@ export default function PolitykaPrywatnosciPage() {
             <p>
               Dla bezpieczeństwa i wygody użytkowników, {APP_NAME} korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>.
               Clerk zarządza procesem rejestracji, logowania oraz danymi profilowymi użytkowników. Rejestrując się, zgadzasz się na
-              przetwarzanie danych przez tę platformę zgodnie z jej polityką prywatności.
+              przetwarzanie danych przez ten system zgodnie z jego polityką prywatności.
             </p>
           </section>
 

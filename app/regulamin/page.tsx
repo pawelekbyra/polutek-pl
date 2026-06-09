@@ -13,10 +13,10 @@ export default function RegulaminPage() {
         <h1 className="text-3xl font-black uppercase tracking-tighter mb-12 border-b-2 border-[#1a1a1a]/10 pb-8">Regulamin Serwisu {APP_NAME}</h1>
         <div className="prose prose-md prose-neutral space-y-8 text-[#1a1a1a]">
           <section>
-            <h2 className="text-lg font-black uppercase tracking-tight text-[#1a1a1a]">1. Charakter platformy</h2>
+            <h2 className="text-lg font-black uppercase tracking-tight text-[#1a1a1a]">1. Charakter serwisu</h2>
             <p>
-              Serwis {APP_NAME} jest prywatną, autorską platformą wideo.
-              Platforma działa w modelu dożywotniego patronatu. Dostęp do treści cyfrowych jest uzależniony od łącznej kwoty wsparcia przekazanego twórcy.
+              Serwis {APP_NAME} jest prywatnym, autorskim kanałem wideo.
+              Działa on w modelu dożywotniego patronatu. Dostęp do treści cyfrowych jest uzależniony od łącznej kwoty wsparcia przekazanego na rzecz kanału.
             </p>
           </section>
 
@@ -61,7 +61,7 @@ export default function RegulaminPage() {
         <div className="mt-24 pt-12 border-t border-[#1a1a1a]/5">
            <Link href="/" className="group flex items-center gap-3 text-sm font-black uppercase tracking-widest hover:text-primary transition-colors">
               <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-2" />
-              Wróć do platformy
+              Wróć na stronę główną
            </Link>
         </div>
       </main>

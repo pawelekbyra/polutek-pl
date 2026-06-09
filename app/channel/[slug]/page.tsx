@@ -199,10 +199,10 @@ export default async function ChannelPage({ params }: { params: { slug: string }
         ) : (
           <div className="py-20 text-center space-y-4">
              <div className="text-4xl opacity-20">🎬</div>
-             <h3 className="text-xl font-bold uppercase tracking-tight text-[#0f0f0f]">Ten kanał nie ma jeszcze publicznych filmów</h3>
-             <p className="text-[#606060] max-w-md mx-auto">Wróć tu później lub sprawdź inne kanały na naszej platformie.</p>
+             <h3 className="text-xl font-bold uppercase tracking-tight text-[#0f0f0f]">Brak publicznych materiałów</h3>
+             <p className="text-[#606060] max-w-md mx-auto">Na kanale nie ma jeszcze opublikowanych materiałów. Wróć tu później.</p>
              <Link href="/" className="inline-block mt-4 text-[14px] font-bold uppercase tracking-widest border-b-2 border-[#0f0f0f] pb-1 hover:opacity-70 transition-opacity">
-                Eksploruj platformę
+                Przejdź do strony głównej
              </Link>
           </div>
         )}

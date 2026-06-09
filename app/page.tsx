@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { creator, mainVideo } = content;
   return {
     title: APP_NAME,
-    description: creator?.bio ?? `${APP_NAME} — platforma wideo`,
+    description: creator?.bio ?? `${APP_NAME} — kanał wideo`,
     openGraph: {
       title: mainVideo?.title ?? APP_NAME,
       images: mainVideo?.thumbnailUrl ? [{ url: mainVideo.thumbnailUrl }] : [],
