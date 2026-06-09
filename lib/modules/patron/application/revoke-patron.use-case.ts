@@ -6,10 +6,12 @@ import { InvalidPatronActionError, UserNotFoundError } from "../domain/patron.er
 import { PatronRepository } from "../infrastructure/patron.repository";
 import { normalizePaymentTotals } from "@/lib/modules/users";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { WriteTx } from "@/lib/modules/shared/db";
 
 export async function revokePatron(
   input: RevokePatronInput,
-  ctx: AppContext
+  ctx: AppContext,
+  tx?: WriteTx
 ): Promise<UseCaseResult<PatronStatusDto, InvalidPatronActionError | UserNotFoundError>> {
   if (!PatronPolicy.canRevokePatron(ctx.actor)) {
     return failure(new InvalidPatronActionError("Actor not authorized to revoke patron status."));
@@ -17,24 +19,24 @@ export async function revokePatron(
 
   const repo = new PatronRepository();
 
-  return await ctx.db.writeTransaction(async (tx) => {
-    const user = await repo.findUserWithPaymentTotals(input.userId, tx);
+  const work = async (currentTx: WriteTx) => {
+    const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
-    await repo.revokeActiveGrants(input.userId, input.note || 'Patron status revoked', tx);
+    await repo.revokeActiveGrants(input.userId, input.note || 'Patron status revoked', currentTx);
 
     const updatedUser = await repo.updateUserPatronFields(input.userId, {
       isPatron: false,
       patronSince: null,
       patronSource: null,
-    }, tx);
+    }, currentTx);
 
     await recordAuditEvent(ctx, {
       action: 'PATRON_REVOKED',
       targetType: 'User',
       targetId: input.userId,
       metadata: { note: input.note },
-    }, tx);
+    }, currentTx);
 
     return success({
       userId: updatedUser.id,
@@ -44,5 +46,7 @@ export async function revokePatron(
       activeGrants: [],
       normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
     });
-  });
+  };
+
+  return tx ? await work(tx) : await ctx.db.writeTransaction(work);
 }

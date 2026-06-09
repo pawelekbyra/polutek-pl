@@ -82,6 +82,10 @@ export async function applyLostChargeback(
   });
 }
 
+/**
+ * @deprecated Use handleRefund or handleDispute use cases from @/lib/modules/payments.
+ * R10 cleanup candidate.
+ */
 export class PaymentRefundService {
   static calculateRefundAdjustment = calculateRefundAdjustment;
   static calculateChargebackNetAdjustment = calculateChargebackNetAdjustment;

@@ -7,6 +7,7 @@ import { InvalidPatronActionError, UserNotFoundError } from "../domain/patron.er
 import { PatronRepository } from "../infrastructure/patron.repository";
 import { normalizePaymentTotals } from "@/lib/modules/users";
 import { Prisma } from "@prisma/client";
+import { WriteTx } from "@/lib/modules/shared/db";
 
 const SOURCE_MAP: Record<string, PatronGrantSource> = {
   stripe_tip: PatronGrantSource.STRIPE_TIP,
@@ -17,7 +18,8 @@ const SOURCE_MAP: Record<string, PatronGrantSource> = {
 
 export async function grantPatron(
   input: GrantPatronInput,
-  ctx: AppContext
+  ctx: AppContext,
+  tx?: WriteTx
 ): Promise<UseCaseResult<PatronStatusDto, InvalidPatronActionError | UserNotFoundError>> {
   if (!PatronPolicy.canGrantPatron(ctx.actor)) {
     return failure(new InvalidPatronActionError("Actor not authorized to grant patron status."));
@@ -26,15 +28,15 @@ export async function grantPatron(
   const repo = new PatronRepository();
   const source = SOURCE_MAP[input.source];
 
-  return await ctx.db.writeTransaction(async (tx) => {
+  const work = async (currentTx: WriteTx) => {
     // 0. Idempotency check for admin (manual) grants
     if (source === PatronGrantSource.ADMIN) {
-      const existingActiveAdminGrant = await repo.findActiveGrantByAdmin(input.userId, tx);
+      const existingActiveAdminGrant = await repo.findActiveGrantByAdmin(input.userId, currentTx);
       if (existingActiveAdminGrant) {
-        const user = await repo.findUserWithPaymentTotals(input.userId, tx);
+        const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
         if (!user) return failure(new UserNotFoundError(input.userId));
 
-        const activeGrants = await repo.listActiveGrants(input.userId, tx);
+        const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
         return success({
           userId: user.id,
@@ -49,12 +51,12 @@ export async function grantPatron(
 
     // 1. Idempotency check for paymentId
     if (input.paymentId) {
-      const existingGrant = await repo.findGrantByPaymentId(input.paymentId, tx);
+      const existingGrant = await repo.findGrantByPaymentId(input.paymentId, currentTx);
       if (existingGrant) {
-        const user = await repo.findUserWithPaymentTotals(input.userId, tx);
+        const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
         if (!user) return failure(new UserNotFoundError(input.userId));
 
-        const activeGrants = await repo.listActiveGrants(input.userId, tx);
+        const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
         return success({
           userId: user.id,
@@ -69,12 +71,12 @@ export async function grantPatron(
 
     // 2. Idempotency check for referralId
     if (input.referralId) {
-      const existingGrant = await repo.findGrantByReferralId(input.referralId, tx);
+      const existingGrant = await repo.findGrantByReferralId(input.referralId, currentTx);
       if (existingGrant) {
-        const user = await repo.findUserWithPaymentTotals(input.userId, tx);
+        const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
         if (!user) return failure(new UserNotFoundError(input.userId));
 
-        const activeGrants = await repo.listActiveGrants(input.userId, tx);
+        const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
         return success({
           userId: user.id,
@@ -88,7 +90,7 @@ export async function grantPatron(
     }
 
     // 3. Fetch user and update status
-    const user = await repo.findUserWithPaymentTotals(input.userId, tx);
+    const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
     const now = new Date();
@@ -96,7 +98,7 @@ export async function grantPatron(
       isPatron: true,
       patronSince: PatronPolicy.shouldPreservePatronSince(user.isPatron, user.patronSince) ? user.patronSince : now,
       patronSource: source,
-    }, tx);
+    }, currentTx);
 
     // 4. Create grant record
     await repo.createGrant({
@@ -106,9 +108,9 @@ export async function grantPatron(
       referralId: input.referralId,
       grantedById: input.grantedByUserId,
       reason: input.note,
-    }, tx);
+    }, currentTx);
 
-    const activeGrants = await repo.listActiveGrants(input.userId, tx);
+    const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
     return success({
       userId: updatedUser.id,
@@ -118,7 +120,11 @@ export async function grantPatron(
       activeGrants,
       normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
     });
-  }).catch(async (error) => {
+  };
+
+  try {
+    return tx ? await work(tx) : await ctx.db.writeTransaction(work);
+  } catch (error) {
       // Handle Race Condition (P2002: Unique constraint failed)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           const target = (error.meta?.target as string[]) || [];
@@ -126,11 +132,12 @@ export async function grantPatron(
           const referralIdMatch = input.referralId && target.includes('referralId');
 
           if (paymentIdMatch || referralIdMatch) {
-              const existingGrant = await repo.findGrantByPaymentId(input.paymentId!, ctx.db.read) || await repo.findGrantByReferralId(input.referralId!, ctx.db.read);
+              const db = tx || ctx.db.read;
+              const existingGrant = await repo.findGrantByPaymentId(input.paymentId!, db) || await repo.findGrantByReferralId(input.referralId!, db);
               if (existingGrant) {
-                  const user = await repo.findUserWithPaymentTotals(input.userId, ctx.db.read);
+                  const user = await repo.findUserWithPaymentTotals(input.userId, db);
                   if (!user) return failure(new UserNotFoundError(input.userId));
-                  const activeGrants = await repo.listActiveGrants(input.userId, ctx.db.read);
+                  const activeGrants = await repo.listActiveGrants(input.userId, db);
                   return success({
                       userId: user.id,
                       isPatron: user.isPatron,
@@ -143,5 +150,5 @@ export async function grantPatron(
           }
       }
       throw error;
-  });
+  }
 }
