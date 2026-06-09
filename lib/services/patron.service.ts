@@ -44,10 +44,9 @@ export async function grantPatronStatus(
     : { type: 'system' as const, reason: 'legacy_bridge' };
 
   const ctx = createAppContext(actor);
-  // Note: We are ignoring the 'db' parameter if it's passed as a transaction client for now,
-  // because use cases manage their own transactions or take tx from ctx.
-  // However, grantPatron use case supports writeTransaction.
-  // To strictly preserve behavior if db is a transaction:
+
+  // Pass transaction if provided
+  const tx = db && '$transaction' in db ? undefined : (db as any);
 
   const result = await grantPatron({
       userId,
@@ -56,7 +55,7 @@ export async function grantPatronStatus(
       grantedByUserId: options.grantedByUserId,
       paymentId: options.paymentId,
       referralId: options.referralId,
-  }, ctx);
+  }, ctx, tx);
 
   if (!result.ok) {
       throw new PatronStatusError(result.error.message);
@@ -89,12 +88,13 @@ export async function revokePatronStatus(
     : { type: 'system' as const, reason: 'legacy_bridge' };
 
   const ctx = createAppContext(actor);
+  const tx = db && '$transaction' in db ? undefined : (db as any);
 
   const result = await revokePatron({
       userId,
       note: options.note,
       revokedByUserId: options.revokedByUserId,
-  }, ctx);
+  }, ctx, tx);
 
   if (!result.ok) {
       throw new PatronStatusError(result.error.message);

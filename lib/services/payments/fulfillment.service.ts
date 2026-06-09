@@ -8,6 +8,10 @@ import { writeAuditLog } from '../audit.service';
 import Stripe from 'stripe';
 
 
+/**
+ * @deprecated Use fulfillPayment use case from @/lib/modules/payments.
+ * R10 cleanup candidate.
+ */
 export class PaymentFulfillmentService {
   private static async sendPaymentEmailSafely(
     type: 'DONATION' | 'PATRON',
