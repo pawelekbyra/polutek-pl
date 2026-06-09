@@ -287,8 +287,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
                 <div className="prose prose-sm prose-neutral max-w-none text-foreground">
                   <section className="space-y-6">
                     <div>
-                      <h2 className="text-lg font-black uppercase tracking-tight">1. Charakter platformy</h2>
-                      <p>Serwis kanału {MAIN_CREATOR_NAME} jest prywatną, autorską platformą wideo. Platforma działa w modelu patronatu.</p>
+                      <h2 className="text-lg font-black uppercase tracking-tight">1. Charakter serwisu</h2>
+                      <p>Serwis kanału {MAIN_CREATOR_NAME} jest prywatnym, autorskim kanałem wideo. Działa on w modelu patronatu.</p>
                     </div>
                   </section>
                 </div>
@@ -304,7 +304,7 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
                   <section className="space-y-6">
                     <div>
                       <h2 className="text-lg font-black uppercase tracking-tight">1. Dane osobowe i logowanie</h2>
-                      <p>Dla bezpieczeństwa i wygody użytkowników, platforma korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>.</p>
+                      <p>Dla bezpieczeństwa i wygody użytkowników, serwis korzysta z zewnętrznego systemu uwierzytelniania <strong>Clerk</strong>.</p>
                     </div>
                   </section>
                 </div>
