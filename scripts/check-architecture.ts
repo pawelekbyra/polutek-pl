@@ -334,6 +334,8 @@ function checkLegacyAccessPolicy() {
   return violations;
 }
 
+countLegacyInventory();
+
 const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
 
 if (totalViolations > 0) {
