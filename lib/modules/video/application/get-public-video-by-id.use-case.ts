@@ -1,17 +1,17 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
+import { PublicVideoDto, toPublicVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
 
-export async function getVideoById(
+export async function getPublicVideoById(
   id: string,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError>> {
+): Promise<UseCaseResult<PublicVideoDto, VideoNotFoundError>> {
   const repository = new VideoRepository(ctx.prisma);
   const video = await repository.findById(id);
 
   if (!video) return fail(new VideoNotFoundError(id));
 
-  return ok(toAdminVideoDto(video));
+  return ok(toPublicVideoDto(video));
 }
