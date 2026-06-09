@@ -4,7 +4,6 @@ import { UserPolicy } from "../domain/user.policy";
 
 export interface UserProfileDTO {
   id: string;
-  email: string | null;
   name: string | null;
   username: string | null;
   imageUrl: string | null;
@@ -26,13 +25,11 @@ export class GetUserProfileUseCase {
     }
 
     if (!UserPolicy.canSeeProfile(ctx.actor, user)) {
-       // If it's deleted and actor shouldn't see it, or other policy rules
        return null;
     }
 
     return {
       id: user.id,
-      email: user.email,
       name: user.name,
       username: user.username,
       imageUrl: user.imageUrl,
