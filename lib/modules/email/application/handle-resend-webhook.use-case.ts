@@ -34,7 +34,18 @@ export async function handleResendWebhook(
   }
 
   // 2. Best-effort idempotency check
-  if (resendEmailId) {
+  // We deduplicate state-changing events.
+  // Multiple 'opened' or 'clicked' events ARE allowed for engagement tracking.
+  const stateChangingTypes = [
+      'email.sent',
+      'email.delivered',
+      'email.delivery_delayed',
+      'email.bounced',
+      'email.complained',
+      'email.unsubscribed'
+  ];
+
+  if (resendEmailId && stateChangingTypes.includes(type)) {
       const existingEvent = await ctx.prisma.emailEvent.findFirst({
           where: {
               resendEmailId,
@@ -43,7 +54,7 @@ export async function handleResendWebhook(
       });
 
       if (existingEvent) {
-          logger.info(`[handleResendWebhook] Duplicate event detected and ignored: ${type}`, { email_id: resendEmailId });
+          logger.info(`[handleResendWebhook] Duplicate state event detected and ignored: ${type}`, { email_id: resendEmailId });
           return ok({
               received: true,
               accepted: true,
@@ -68,14 +79,9 @@ export async function handleResendWebhook(
 
     // 4. Normalize and handle specific events
     const supportedTypes = [
-      'email.sent',
-      'email.delivered',
-      'email.delivery_delayed',
-      'email.bounced',
-      'email.complained',
+      ...stateChangingTypes,
       'email.opened',
       'email.clicked',
-      'email.unsubscribed',
       'email.received'
     ];
 
@@ -148,11 +154,22 @@ async function updateRecipientStatus(
 
   const currentStatus = recipient.status;
 
+  // Terminal states protection: don't overwrite terminal states with engagement states.
   const terminalStates: BroadcastRecipientStatus[] = ['BOUNCED', 'COMPLAINED', 'FAILED', 'UNSUBSCRIBED'];
-  if (terminalStates.includes(currentStatus) && !terminalStates.includes(status)) {
-      logger.info(`[handleResendWebhook] Skipping status update from ${currentStatus} to ${status} for ${resendEmailId}`);
+  const isCurrentlyTerminal = terminalStates.includes(currentStatus);
+  const isEngagementEvent = ['OPENED', 'CLICKED'].includes(status);
+
+  if (isCurrentlyTerminal && isEngagementEvent) {
+      // Just update timestamps if needed but preserve the terminal status
+      await ctx.prisma.broadcastEmailRecipient.update({
+          where: { id: recipient.id },
+          data: extraData
+      });
       return;
   }
+
+  // General safety: don't overwrite a more specific state with a generic one
+  if (currentStatus === 'DELIVERED' && status === 'SENT') return;
 
   await ctx.prisma.broadcastEmailRecipient.update({
     where: { id: recipient.id },

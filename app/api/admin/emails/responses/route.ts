@@ -1,33 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { createScopedLogger } from '@/lib/logger';
-import { handleApiError } from '@/lib/errors';
+import { listInboundEmails, updateInboundEmailStatus } from '@/lib/modules/email';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { InboundEmailStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
-  const scopedLogger = createScopedLogger(requestId);
+  const scopedLogger = createScopedLogger(requestId || null);
   const { response } = await requireAdminForApi("GET_ADMIN_EMAIL_RESPONSES");
   if (response) return response;
 
-  try {
-    const responses = await prisma.inboundEmail.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
+  const ctx = createAppContext({
+      requestId: requestId || undefined,
+      actor: { type: 'system', reason: 'Admin Responses Request' }
+  });
 
-    return NextResponse.json(responses);
-  } catch (err) {
-    scopedLogger.error("[GET_ADMIN_EMAIL_RESPONSES_ERROR]", err);
-    return handleApiError(err);
+  const result = await listInboundEmails(ctx);
+
+  if (!result.ok) {
+      scopedLogger.error("[GET_ADMIN_EMAIL_RESPONSES_ERROR]", result.error);
+      return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
   }
+
+  return NextResponse.json(result.data);
 }
 
 export async function PATCH(req: NextRequest) {
     const requestId = req.headers.get('x-request-id');
-    const scopedLogger = createScopedLogger(requestId);
+    const scopedLogger = createScopedLogger(requestId || null);
     const { response } = await requireAdminForApi("PATCH_ADMIN_EMAIL_RESPONSES");
     if (response) return response;
 
@@ -38,14 +41,21 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Missing id or status' }, { status: 400 });
         }
 
-        const updated = await prisma.inboundEmail.update({
-            where: { id },
-            data: { status }
+        const ctx = createAppContext({
+            requestId: requestId || undefined,
+            actor: { type: 'system', reason: 'Admin Responses Update' }
         });
 
-        return NextResponse.json(updated);
+        const result = await updateInboundEmailStatus(ctx, id, status as InboundEmailStatus);
+
+        if (!result.ok) {
+            scopedLogger.error("[PATCH_ADMIN_EMAIL_RESPONSES_ERROR]", result.error);
+            return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
+        }
+
+        return NextResponse.json(result.data);
     } catch (err) {
         scopedLogger.error("[PATCH_ADMIN_EMAIL_RESPONSES_ERROR]", err);
-        return handleApiError(err);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -97,7 +97,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R6.5**| Access Foundation                               | [x video foundation]         |
 | **R7**  | Moduły Patron + Payments                        | [ ]                           |
 | **R8**  | Moduł Comments                                  | [ ]                           |
-| **R9**  | Moduł Email                                     | [~ production hardening]      |
+| **R9**  | Moduł Email                                     | [~ near-certification]        |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
@@ -521,30 +521,30 @@ Cel:
 Status:
 
 ```txt
-[~ production hardening]
+[~ near-certification]
 ```
 
-R9 Email jest na poziomie ~70–76%. Posiada utwardzony fundament, czyste granice i testy kontraktowe.
+R9 Email jest na poziomie ~78–84%. Posiada utwardzony fundament, czyste granice i testy kontraktowe. Zidentyfikowano ścieżki migracji dla idempotencji i outboxa.
 
 R9 musi zawierać minimalne elementy Fazy X:
 
-* idempotentna obsługa webhooków (obecnie: best-effort),
-* semantyka ponowień/statusów,
+* idempotentna obsługa webhooków (obecnie: best-effort, patrz `docs/audit/R9-Email-Idempotency-Decision.md`),
+* semantyka ponowień/statusów (plan: `docs/audit/R9-Outbox-Retry-Plan.md`),
 * audyt broadcastów,
 * podstawowe notatki operacyjne (runbook),
 * brak admin broadcast typu "fire-and-forget" jako docelowy projekt.
 
 ### Blokery R9 Email
 
-* **Broadcast route**: Zmigrowany do modułu (POST). POST /api/admin/emails/broadcast używa domain use case.
-* **Broadcast history GET**: Zmigrowany do modułu. GET /api/admin/emails/broadcast używa domain use case.
-* **Resend webhook**: Zmigrowany. Route weryfikuje podpis i deleguje do modułu.
-* **Webhook idempotency**: Best-effort (svix-id). Durable idempotency wymaga unikalnego pola w schema.
+* **Broadcast route**: Zmigrowany (POST/GET).
+* **Resend webhook**: Zmigrowany. Działa best-effort idempotency.
+* **Webhook idempotency**: Best-effort. Durable wymaga unikalnego pola (rekomendacja: `providerEventId`).
 * **Delivery aggregate counts**: Zabezpieczone przed duplikatami i terminal-state overwrite.
-* **Email preferences/unsubscribe**: Policy istnieje, sprawdzana przed wysyłką broadcastu.
-* **Outbox/retry**: NIE zaimplementowano (Future R9/R10).
-* **EmailService legacy bridge**: Nadal używany jako adapter dla Resend/szablonów.
-* **Admin templates/responses/subscriber resync**: Pozostają legacy (Future R9/R10).
+* **Inbound Responses**: Zmigrowany. `/api/admin/emails/responses` używa use case'ów.
+* **Email preferences/unsubscribe**: Policy istnieje i jest egzekwowana.
+* **Outbox/retry**: Zaplanowano (Future R9/R10), obecnie fire-and-forget.
+* **EmailService legacy bridge**: Nadal używany jako adapter.
+* **Admin templates/subscriber resync**: Pozostają legacy (Future R9/R10).
 
 ---
 

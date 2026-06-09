@@ -1,6 +1,6 @@
 import { DbClient } from "../../shared/db";
 import { BroadcastAudience, BroadcastRecipientDto, AdminBroadcastEmailListItemDto } from "../domain/email.dto";
-import { Prisma } from "@prisma/client";
+import { Prisma, InboundEmailStatus } from "@prisma/client";
 
 export class EmailRepository {
   constructor(private readonly prisma: DbClient) {}
@@ -56,5 +56,19 @@ export class EmailRepository {
           createdAt: h.createdAt,
           createdById: h.createdById
       }));
+  }
+
+  async listInboundEmails(): Promise<unknown[]> {
+      return await this.prisma.inboundEmail.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 50
+      });
+  }
+
+  async updateInboundEmailStatus(id: string, status: InboundEmailStatus): Promise<unknown> {
+      return await this.prisma.inboundEmail.update({
+          where: { id },
+          data: { status }
+      });
   }
 }

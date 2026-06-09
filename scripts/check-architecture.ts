@@ -135,7 +135,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/admin/comments/route.ts': 'R8 blocker.',
   'app/api/admin/emails/broadcast/route.ts': 'R9 cert: route delegates to email module, remaining limitation: provider/outbox/idempotency.',
-  'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
+  'app/api/admin/emails/responses/route.ts': 'R9 cert: migrated to email module.',
   'app/api/admin/payment-settings/route.ts': 'R7 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
   'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
