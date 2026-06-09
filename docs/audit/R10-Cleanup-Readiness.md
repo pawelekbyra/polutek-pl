@@ -8,9 +8,9 @@ This report evaluates the readiness of various domains for the final R10 cleanup
 | **Video** | **PARTIAL** | 70% | Core logic moved to `lib/modules/video`. Mixed routes remain for analytics/playback events. |
 | **Access** | **READY** | 85% | `lib/modules/access` is active. Only `lib/actions` and legacy `comments` still use the old `AccessPolicy`. |
 | **Email** | **NOT READY** | 40% | Blocked by R9. Currently uses a legacy provider adapting `EmailService`. |
-| **Comments** | **NOT READY** | 10% | Blocked by R8. Entirely dependent on legacy `lib/services/comments`. |
-| **Payments** | **PARTIAL** | 30% | Blocked by R7. Many routes still use direct Prisma and legacy `PaymentService`. |
-| **Patron** | **PARTIAL** | 50% | Closely tied to Payments. `patron.service.ts` is still active. |
+| **Comments** | **PARTIAL** | 60% | R8 core comments migrated to modular use cases and repository. |
+| **Payments** | **PARTIAL** | 50% | R7 module foundation and checkout intent migrated. Webhook remains legacy. |
+| **Patron** | **READY** | 80% | R7 module foundation and admin patron management migrated. |
 | **Admin** | **PARTIAL** | 20% | Admin routes are the biggest "offenders" for direct Prisma and legacy audit service usage. |
 
 ## Detailed Breakdown
@@ -28,9 +28,9 @@ This report evaluates the readiness of various domains for the final R10 cleanup
 - **Next Steps**: Switch Comments and interactions to use `checkVideoAccess`.
 
 ### Comments (R8)
-- **Status**: Pre-migration.
-- **Next Steps**: Complete R8 to move all logic to `lib/modules/comments`.
+- **Status**: Core migrated.
+- **Next Steps**: Migrate admin comments, pin, and context routes to full modular implementation.
 
 ### Payments (R7) & Patron
-- **Status**: In progress.
-- **Next Steps**: Finish R7 to eliminate `PaymentService` and direct Prisma usage in checkout/subscriptions.
+- **Status**: Foundation ready.
+- **Next Steps**: Migrate Stripe webhook, fulfillment, and refund logic to Payments module.

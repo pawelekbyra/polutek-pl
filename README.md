@@ -95,39 +95,27 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R5**  | Moduł Users                                     | [x stronger foundation]      |
 | **R6**  | Moduł Video                                     | [x stronger foundation]      |
 | **R6.5**| Access Foundation                               | [x certified]                 |
-| **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
+| **R7**  | Moduły Patron + Payments                        | [~ module foundation started] |
 | **R8**  | Moduły Comments                                  | [~ core comments migrated]    |
-| **R9**  | Moduł Email                                     | [ ]                           |
-| **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
+| **R9**  | Moduł Email                                     | [~ pending certification PR #774] |
+| **R10** | Czyszczenie przestarzałych fasad                | [~ preparation inventory]     |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
 Aktualna interpretacja projektu:
 
 * R0/R1 są certyfikowane jako obecny fundament.
 * R2/R3/R4 są certyfikowane jako fundamenty, a nie pełne usunięcie wszystkich zależności legacy.
-* R5/R6 to aktywne migracje częściowe i muszą zostać domknięte przed R7.
-* R7 nie może się rozpocząć, dopóki blokery R5/R6 nie zostaną przejrzane i naprawione lub jawnie zaakceptowane.
+* R5/R6 to aktywne migracje częściowe.
+* R7 foundation i R8 core zostały zmigrowane.
 
 ---
 
 ## 5. Bieżące zadanie
 
 ```txt
-R7 Patron + Payments architecture audit:
-- inventory Stripe checkout/webhook/fulfillment/refund/dispute,
-- define Patron module and Payments module boundaries,
-- decide source-of-truth migration,
-- prepare implementation prompt.
+Post-merge reconciliation after R7/R8/R10;
+next: choose R7 webhook/fulfillment, R8 moderation/admin, or review R9 PR #774.
 ```
-
-R7 implementation has not started yet.
-
-R7 may start only after:
-
-* przejrzeniu blokerów R5 Users (admin users core identity is modular, extensions remain legacy),
-* przejrzeniu blokerów R6 Video (delivery/playback),
-* certyfikacji granicy dostarczania mediów (playback),
-* uzgodnieniu README i architecture guard co do tego, co pozostaje legacy.
 
 ---
 
@@ -453,10 +441,10 @@ Wypis prac R7:
 - Payments module foundation: [x foundation] (checkout use case, repository)
 - Checkout route migration: [x] (migrated to Payments module)
 - Admin patron route migration: [x] (migrated to Patron module)
-- Stripe webhook migration: [ ] (legacy PaymentService)
-- Fulfillment migration: [ ] (legacy PaymentFulfillmentService)
-- Refund/dispute migration: [ ] (legacy PaymentRefundService)
-- Payment settings migration: [ ] (legacy route)
+- Stripe webhook migration: [ ] (legacy PaymentService) - R7 blocker
+- Fulfillment migration: [ ] (legacy PaymentFulfillmentService) - R7 blocker
+- Refund/dispute migration: [ ] (legacy PaymentRefundService) - R7 blocker
+- Payment settings migration: [ ] (legacy route) - R7 blocker
 - Current source-of-truth: User.isPatron read model
 - Target source-of-truth: Patron module / active PatronGrant records
 
@@ -508,6 +496,7 @@ Certyfikowany fundament:
 - Reakcje do komentarzy zmigrowane do use case'ów.
 - Główny przepływ (list/create/update/delete/replies/report) zmigrowany do modularnych use case'ów.
 - Usunięto bezpośrednie użycie legacy `AccessPolicy` z interakcji wideo, reakcji i głównych przepływów.
+- Pozostałe blokery: admin comments, pin, context, moderation UI (R8 blocker).
 
 R8 musi zawierać minimalne elementy Fazy X:
 
@@ -535,8 +524,13 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ pending certification PR #774]
 ```
+
+Uwagi R9:
+- PR #774 jest otwarty i dostarcza fundamenty modułu Email oraz integrację z Resend.
+- Wymaga review, rebase'u i reconcile z obecnym `main` przed merge.
+- Nie może mutować `User.isPatron` ani płatności.
 
 R9 musi zawierać minimalne elementy Fazy X:
 
@@ -560,7 +554,7 @@ Cel:
 Status:
 
 ```txt
-[~ foundation preparation]
+[~ preparation inventory]
 ```
 
 R10 Foundation Preparation Pass (2026-06-09):

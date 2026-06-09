@@ -36,12 +36,12 @@ This report identifies all legacy services in `lib/services/**` and their curren
 | `admin/admin-query-parser.ts` | **ACTIVE** | Various `app/api/admin/**` routes | - |
 | `admin/videos-diagnostics.service.ts` | **ACTIVE** | `app/api/admin/videos/[id]/route.ts` | - |
 | `admin/payments-admin.service.ts` | **ACTIVE** | `app/api/admin/payments/route.ts` | - |
-| `comments/comment.service.ts` | **ACTIVE** | `app/api/comments/**`, `app/api/videos/[id]/comments/route.ts` | `lib/modules/comments` (in progress) |
-| `comments/comment-reaction.service.ts` | **ACTIVE** | `app/api/comments/[commentId]/reaction/route.ts` | `lib/modules/comments` (in progress) |
+| `comments/comment.service.ts` | **ACTIVE** | `app/api/admin/comments/**`, `app/api/comments/[commentId]/context/route.ts` | `lib/modules/comments` |
+| `comments/comment-reaction.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/comments` |
 | `comments/comment-audit.service.ts` | **DEAD** | None | `lib/modules/audit` |
-| `comments/comment-report.service.ts` | **ACTIVE** | `app/api/comments/[commentId]/report/route.ts` | `lib/modules/comments` (in progress) |
-| `comments/comment-access.service.ts` | **ACTIVE** | `app/api/videos/[id]/comments/route.ts` | `lib/modules/comments` (in progress) |
-| `comments/comment-moderation.service.ts` | **ACTIVE** | `app/api/comments/[commentId]/route.ts` | `lib/modules/comments` (in progress) |
+| `comments/comment-report.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/comments` |
+| `comments/comment-access.service.ts` | **ACTIVE** | `app/api/comments/[commentId]/pin/**` | `lib/modules/comments` |
+| `comments/comment-moderation.service.ts` | **ACTIVE** | `app/api/comments/[commentId]/pin/**` | `lib/modules/comments` |
 | `storage/storage.service.ts` | **ACTIVE** | `lib/services/playback/playback.service.ts` | `lib/modules/media` |
 | `user.service.ts` | **DEAD** | None | Replaced by specialized services and modules |
 

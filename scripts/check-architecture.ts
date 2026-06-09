@@ -97,6 +97,8 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/route.ts':
     'R8 cert: migrated to modular access/use cases.',
+  'app/api/comments/[commentId]/replies/route.ts':
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
@@ -117,6 +119,8 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R7 foundation: migrated to modular patron use cases.',
   'app/api/checkout/create-intent/route.ts':
     'R7 foundation: migrated to modular payments use case.',
+  'app/api/webhooks/resend/route.ts':
+    'R9 foundation: migrated to modular email use case.',
   'app/api/webhooks/stripe/route.ts':
     'R7 blocker: Stripe webhook is still a legacy payment flow.',
   'app/api/admin/payments/route.ts':
@@ -148,10 +152,6 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/export/route.ts': 'R5 blocker: admin export still legacy.',
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
   'app/api/subscriptions/route.ts': 'R5/R7 blocker: mixed route.',
-  'app/api/videos/[id]/comments/route.ts': 'R2/R8 blocker.',
-  'app/api/comments/[commentId]/reaction/route.ts': 'R2/R8 blocker.',
-  'app/api/comments/[commentId]/report/route.ts': 'R2/R8 blocker.',
-  'app/api/comments/[commentId]/route.ts': 'R2/R8 blocker.',
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
@@ -164,12 +164,9 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/templates/route.ts': 'R9 blocker.',
   'app/api/admin/videos/[id]/comments/route.ts': 'R8/R6 blocker.',
   'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
-  'app/api/checkout/create-intent/route.ts': 'R7 blocker.',
   'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
   'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
-  'app/api/comments/[commentId]/replies/route.ts': 'R8 cert: migrated to modular access/use cases.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
-  'app/api/webhooks/resend/route.ts': 'R9 blocker.',
 };
 
 function checkRoutes() {
@@ -334,7 +331,6 @@ function checkLegacyAccessPolicy() {
   return violations;
 }
 
-countLegacyInventory();
 
 const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
 
