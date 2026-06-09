@@ -102,9 +102,9 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/videos/[id]/comments/route.ts':
     'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
   'app/api/media-source/[videoId]/route.ts':
-    'R6/R3 delivery blocker: media-source still uses legacy AccessPolicy until playback/media delivery pass.',
+    'R6/R3 cert: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
-    'R6/R3 delivery blocker: playback-event still uses legacy AccessPolicy until playback/media delivery pass.',
+    'R6/R3 cert: uses modular access, but still uses direct Prisma for event/view persistence.',
   'app/api/admin/users/route.ts':
     'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/route.ts':
@@ -129,8 +129,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/comments/[commentId]/reaction/route.ts': 'R2/R8 blocker.',
   'app/api/comments/[commentId]/report/route.ts': 'R2/R8 blocker.',
   'app/api/comments/[commentId]/route.ts': 'R2/R8 blocker.',
-  'app/api/media-source/[videoId]/route.ts': 'R6/R3 delivery blocker.',
-  'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 delivery blocker.',
+  'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/admin/comments/route.ts': 'R8 blocker.',
@@ -271,8 +270,6 @@ function checkLegacyAccessPolicy() {
 
       const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
       const isExpectedLegacy = relativePath.includes('services/comments') ||
-                               relativePath.includes('services/playback') ||
-                               relativePath.includes('lib/blob.ts') ||
                                relativePath.includes('lib/actions/interactions.ts') ||
                                relativePath.includes('services/content/video.service.ts');
 
