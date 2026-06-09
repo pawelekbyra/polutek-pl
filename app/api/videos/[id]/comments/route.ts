@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { CommentService } from '@/lib/services/comments/comment.service';
 import { CommentModerationService } from '@/lib/services/comments/comment-moderation.service';
@@ -13,6 +12,9 @@ import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
 import { countGraphemes } from '@/lib/utils/graphemes';
 import { isUuid } from '@/lib/utils/uuid';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,20 +57,20 @@ export async function GET(
   const { userId } = await getSafeAuth();
 
   try {
-    const canView = await CommentAccessService.canViewComments(userId, videoId);
+    const canView = await CommentAccessService.canViewComments(userId as any, videoId);
     // Even if canView is technically always true now in Service, we keep the check for future-proofing or if we decide to revert.
     if (!canView) return NextResponse.json({ success: false, message: 'Brak dostępu do komentarzy' }, { status: 403 });
 
     const [video, canModerate] = await Promise.all([
         isUuid(videoId) ? prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }) : null,
-        CommentAccessService.canModerate(userId, videoId)
+        CommentAccessService.canModerate(userId as any, videoId)
     ]);
     const videoCreatorId = video?.creator?.userId || null;
     const context = { userId, canModerate, videoCreatorId };
 
     const [commentsData, canComment] = await Promise.all([
-      CommentService.getComments(videoId, userId, sortBy, cursor, limit, true),
-      CommentAccessService.canComment(userId, videoId)
+      CommentService.getComments(videoId, userId as any, sortBy, cursor, limit, true),
+      CommentAccessService.canComment(userId as any, videoId)
     ]);
 
     return NextResponse.json({
@@ -96,14 +98,23 @@ export async function PATCH(
 ) {
     const requestId = getCorrelationId();
     const scopedLogger = createScopedLogger(requestId);
-    const { userId, sessionClaims } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const actor = await getActorFromAuth();
+    if (actor.type === 'guest' || actor.type === 'system') return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
         const commentId = params.commentId;
         if (!commentId) return NextResponse.json({ success: false, message: 'commentId is required' }, { status: 400 });
 
-        const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const ctx = createAppContext({ actor });
+        const { sessionClaims } = await auth();
+        const email = (sessionClaims as any)?.email as string;
+        const localUser = await GetOrCreateUserUseCase.execute(ctx, {
+            id: actor.userId,
+            email,
+            name: (sessionClaims as any)?.name,
+            username: (sessionClaims as any)?.username,
+            imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+        });
         if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
         const result = z.object({ pinned: z.boolean().optional(), text: z.string().trim().min(1).optional() }).safeParse(await request.json());
@@ -119,8 +130,8 @@ export async function PATCH(
         if (!comment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
         const context = {
-            userId: localUser.id,
-            canModerate: await CommentAccessService.canModerate(localUser.id, comment.videoId),
+            userId: (localUser as any).id,
+            canModerate: await CommentAccessService.canModerate((localUser as any).id, comment.videoId),
             videoCreatorId: null // We could fetch it if needed for AUTHOR badge
         };
 
@@ -153,14 +164,23 @@ export async function DELETE(
 ) {
     const requestId = getCorrelationId();
     const scopedLogger = createScopedLogger(requestId);
-    const { userId, sessionClaims } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const actor = await getActorFromAuth();
+    if (actor.type === 'guest' || actor.type === 'system') return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
         const commentId = params.commentId;
-        if (!commentId) return NextResponse.json({ error: "Bad request" }, { status: 400 });
+        if (!commentId) return NextResponse.json({ success: false, message: 'Bad request' }, { status: 400 });
 
-        const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const ctx = createAppContext({ actor });
+        const { sessionClaims } = await auth();
+        const email = (sessionClaims as any)?.email as string;
+        const localUser = await GetOrCreateUserUseCase.execute(ctx, {
+            id: actor.userId,
+            email,
+            name: (sessionClaims as any)?.name,
+            username: (sessionClaims as any)?.username,
+            imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+        });
         if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
         const comment = await prisma.comment.findUnique({
@@ -191,8 +211,9 @@ export async function POST(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId, sessionClaims } = await getSafeAuth();
-  if (!userId) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
+  const actor = await getActorFromAuth();
+  if (actor.type === 'guest' || !('userId' in actor)) return NextResponse.json({ success: false, message: 'Musisz być zalogowany.' }, { status: 401 });
+  const userId = actor.userId;
 
   let videoId = params.id;
   if (!isUuid(videoId)) {
@@ -204,7 +225,16 @@ export async function POST(
   if (!rateLimitResult.success) return NextResponse.json({ success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę." }, { status: 429 });
 
   try {
-    const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    const ctx = createAppContext({ actor });
+    const { sessionClaims } = await auth();
+    const email = (sessionClaims as any)?.email as string;
+    const localUser = await GetOrCreateUserUseCase.execute(ctx, {
+        id: actor.userId,
+        email,
+        name: (sessionClaims as any)?.name,
+        username: (sessionClaims as any)?.username,
+        imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+    });
     if (!localUser) return NextResponse.json({ success: false, message: 'Nie udało się zsynchronizować profilu użytkownika.' }, { status: 500 });
 
     const result = postCommentSchema.safeParse(await request.json());
@@ -227,12 +257,12 @@ export async function POST(
 
     const [video, canModerate] = await Promise.all([
         isUuid(videoId) ? prisma.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } }) : null,
-        CommentAccessService.canModerate(userId, videoId)
+        CommentAccessService.canModerate(userId as any, videoId)
     ]);
     const videoCreatorId = video?.creator?.userId || null;
     const context = { userId, canModerate, videoCreatorId };
 
-    const newComment = await CommentService.createComment(localUser.id, videoId, text || '', parentId || undefined, imageUrl || undefined);
+    const newComment = await CommentService.createComment((localUser as any).id, videoId, text || '', parentId || undefined, imageUrl || undefined);
 
     return NextResponse.json({
         success: true,

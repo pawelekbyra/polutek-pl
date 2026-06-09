@@ -1,6 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
-import { normalizePaymentTotals } from "@/lib/services/user-access.service"; // Boundary: keeping legacy for totals calculation
+import { normalizePaymentTotals } from "../domain/payment-totals";
 
 export interface UserSyncStatusDTO {
   totalPaid: number;

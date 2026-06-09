@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { VideoContentService as ContentService } from '@/lib/services/content/video.service';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
+import { AccessPolicy } from '@/lib/access/access-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,16 +18,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const { userId } = await auth();
-    const { hasAccess, requiredTier, reason } = await ContentService.getVideoAccess(userId, videoId);
+    const decision = await AccessPolicy.canViewVideo(userId, videoId);
 
-    if (!hasAccess) {
-        scopedLogger.warn(`Access denied for video ${videoId}. Reason: ${reason}`);
+    if (!decision.allowed) {
+        scopedLogger.warn(`Access denied for video ${videoId}. Reason: ${decision.reason}`);
     }
 
     return NextResponse.json({
-      hasAccess,
-      requiredTier,
-      reason
+      hasAccess: decision.allowed,
+      requiredTier: decision.requiredTier,
+      reason: decision.reason
     });
   } catch (error: unknown) {
     scopedLogger.error("[GET_ACCESS_ERROR]", error);

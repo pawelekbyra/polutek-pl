@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { rateLimit } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/errors';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,18 +35,25 @@ async function requireUser(): Promise<
   | { userId: string; error?: never }
   | { error: NextResponse; userId?: never }
 > {
-  const { userId, sessionClaims } = await auth();
+  const actor = await getActorFromAuth();
 
-  if (!userId) {
+  if (actor.type === 'guest' || !('userId' in actor)) {
     return { error: NextResponse.json({ error: 'UNAUTHORIZED', message: 'Sign in to manage email notifications.' }, { status: 401 }) };
   }
 
-  if (typeof UserService.getOrCreateUserFromAuth === 'function') {
-    await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
-  } else {
-    await UserService.getOrCreateUser(userId);
-  }
-  return { userId };
+  const ctx = createAppContext({ actor });
+  const { sessionClaims } = await auth();
+  const email = (sessionClaims as any)?.email as string;
+
+  await GetOrCreateUserUseCase.execute(ctx, {
+      id: actor.userId,
+      email,
+      name: (sessionClaims as any)?.name,
+      username: (sessionClaims as any)?.username,
+      imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+  });
+
+  return { userId: actor.userId };
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {

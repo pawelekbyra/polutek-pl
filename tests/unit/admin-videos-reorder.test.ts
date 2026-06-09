@@ -63,6 +63,31 @@ describe('Admin Video Reorder API', () => {
     expect(prisma.video.update).toHaveBeenCalled();
   });
 
+  it('rejects entire reorder if any video is outside main channel', async () => {
+    const payload = {
+        videos: [
+            { id: 'v1', sidebarOrder: 1, showInSidebar: true, isMainFeatured: false },
+            { id: 'v_evil', sidebarOrder: 2, showInSidebar: true, isMainFeatured: false }
+        ]
+    };
+
+    // First video ok, second is evil
+    vi.mocked(prisma.video.findUnique)
+        .mockResolvedValueOnce({ id: 'v1', creatorId: 'c1' } as any)
+        .mockResolvedValueOnce({ id: 'v_evil', creatorId: 'other' } as any);
+
+    const res = await POST(new NextRequest('http://localhost/api/admin/videos/reorder', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    }));
+
+    // Should return 500 or 400 depending on error handler, but definitely not success
+    expect(res.status).not.toBe(200);
+    const data = await res.json();
+    expect(data.error).toBe('VIDEO_NOT_ON_MAIN_CHANNEL');
+    expect(data.message).toMatch(/does not belong to main channel/);
+  });
+
   it('blocks unauthorized access', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'USER', isDeleted: false } as any);
 

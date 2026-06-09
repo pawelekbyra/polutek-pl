@@ -1,5 +1,5 @@
 import { prisma as defaultPrisma } from '@/lib/prisma';
-import { DbClient } from './db';
+import { DbClient, ReadDb } from './db';
 import { Actor } from './actor';
 
 export interface AppContext {

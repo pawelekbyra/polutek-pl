@@ -6,18 +6,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
-import { Plus, ArrowLeft, Search, Filter } from "@/app/components/icons";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, ArrowLeft } from "@/app/components/icons";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import Navbar from "@/app/components/Navbar";
-import { VideoTable } from "./components/VideoTable";
 import { VideoForm } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
-import { AdminVideosPageSkeleton, AdminFormSkeleton } from "@/components/skeletons/admin";
+import { AdminFormSkeleton, AdminVideosPageSkeleton } from "@/components/skeletons/admin";
+import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
+import { VideoFilters } from "./components/VideoFilters";
+import { VideoTableWrapper } from "./components/VideoTableWrapper";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -67,6 +63,30 @@ export default function AdminVideosPage() {
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
   const [orderBy, setOrderBy] = useState<string>("createdAt");
 
+  const fetchVideos = useCallback(async (p = page) => {
+    try {
+      let url = `/api/admin/videos?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
+      if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
+      if (tierFilter !== "ALL") url += `&tier=${tierFilter}`;
+      if (sourceKindFilter !== "ALL") url += `&sourceKind=${sourceKindFilter}`;
+      if (isMainFeatured !== "ALL") url += `&isMainFeatured=${isMainFeatured}`;
+      if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
+      if (needsAttention) url += `&needsAttention=true`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        setVideos(data.items);
+        setTotal(data.total);
+        setPage(data.page);
+        setTotalPages(data.totalPages);
+        setStats(data.stats);
+      }
+    } catch (err) {
+      logger.error("Failed to fetch videos", err);
+    }
+  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
+
   const fetchVideoForEdit = useCallback(async (id: string) => {
     try {
       const res = await fetch(`/api/admin/videos/${id}`);
@@ -101,30 +121,6 @@ export default function AdminVideosPage() {
     }
   }, [toast]);
 
-  const fetchVideos = useCallback(async (p = page) => {
-    try {
-      let url = `/api/admin/videos?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
-      if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
-      if (tierFilter !== "ALL") url += `&tier=${tierFilter}`;
-      if (sourceKindFilter !== "ALL") url += `&sourceKind=${sourceKindFilter}`;
-      if (isMainFeatured !== "ALL") url += `&isMainFeatured=${isMainFeatured}`;
-      if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
-      if (needsAttention) url += `&needsAttention=true`;
-
-      const res = await fetch(url);
-      const data = await res.json();
-      if (res.ok) {
-        setVideos(data.items);
-        setTotal(data.total);
-        setPage(data.page);
-        setTotalPages(data.totalPages);
-        setStats(data.stats);
-      }
-    } catch (err) {
-      logger.error("Failed to fetch videos", err);
-    }
-  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
-
   const checkAdmin = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/stats", { cache: "no-store" });
@@ -145,13 +141,11 @@ export default function AdminVideosPage() {
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
-
     if (!user) {
       setError("Zaloguj się, aby uzyskać dostęp do panelu.");
       setIsLoading(false);
       return;
     }
-
     checkAdmin();
   }, [user, userLoaded, authLoaded, checkAdmin]);
 
@@ -162,23 +156,12 @@ export default function AdminVideosPage() {
     }
   }, [searchParams, isAdmin, fetchVideoForEdit]);
 
-  // Refetch when filters change (except search which has its own button)
   useEffect(() => {
       if (isAdmin) fetchVideos(1);
   }, [statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
 
-
   const slugify = (text: string) => {
-    return text
-      .toString()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]+/g, '')
-      .replace(/--+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
+    return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
   };
 
   const handleTitleChange = (val: string) => {
@@ -201,7 +184,7 @@ export default function AdminVideosPage() {
       descriptionEn: vid.descriptionEn || "",
       videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
-      duration: "", // Would need from detail
+      duration: "",
       tier: vid.tier as any,
       status: (vid.status || "PUBLISHED") as any,
       likesCount: vid.likesCount,
@@ -244,23 +227,7 @@ export default function AdminVideosPage() {
     setFormError(null);
     setIsSlugManual(false);
     setFormData({
-      id: "",
-      title: "",
-      titleEn: "",
-      slug: "",
-      description: "",
-      descriptionEn: "",
-      videoUrl: "",
-      thumbnailUrl: "",
-      duration: "",
-      tier: "PUBLIC",
-      status: "PUBLISHED",
-      likesCount: 0,
-      dislikesCount: 0,
-      views: 0,
-      isMainFeatured: false,
-      showInSidebar: true,
-      sidebarOrder: 0
+      id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", videoUrl: "", thumbnailUrl: "", duration: "", tier: "PUBLIC", status: "PUBLISHED", likesCount: 0, dislikesCount: 0, views: 0, isMainFeatured: false, showInSidebar: true, sidebarOrder: 0
     });
     setIsEditing(true);
   };
@@ -269,26 +236,22 @@ export default function AdminVideosPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
-    const submissionData = {
-      ...formData,
-      title: formData.title?.trim(),
-      description: formData.description?.trim() || null,
-      titleEn: formData.titleEn?.trim() || null,
-      descriptionEn: formData.descriptionEn?.trim() || null,
-    };
-
     try {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionData)
+        body: JSON.stringify({
+          ...formData,
+          title: formData.title?.trim(),
+          description: formData.description?.trim() || null,
+          titleEn: formData.titleEn?.trim() || null,
+          descriptionEn: formData.descriptionEn?.trim() || null,
+        })
       });
       const data = await res.json();
       if (res.ok) {
         setIsEditing(false);
-        if (searchParams.get("edit")) {
-            router.replace("/admin/videos");
-        }
+        if (searchParams.get("edit")) router.replace("/admin/videos");
         fetchVideos(page);
       } else {
         setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
@@ -317,14 +280,7 @@ export default function AdminVideosPage() {
       }
   }
 
-
-  if (isLoading) {
-    return (
-      <AdminLayoutShell>
-        <AdminVideosPageSkeleton />
-      </AdminLayoutShell>
-    );
-  }
+  if (isLoading) return <AdminLayoutShell><AdminVideosPageSkeleton /></AdminLayoutShell>;
 
   if (error) {
     return (
@@ -340,13 +296,7 @@ export default function AdminVideosPage() {
     );
   }
 
-  if (!isAdmin) {
-     return (
-      <AdminLayoutShell>
-        <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div>
-      </AdminLayoutShell>
-    );
-  }
+  if (!isAdmin) return <AdminLayoutShell><div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div></AdminLayoutShell>;
 
   if (isEditing) {
     return (
@@ -361,10 +311,7 @@ export default function AdminVideosPage() {
           onCancel={() => setIsEditing(false)}
           onSubmit={handleSubmit}
           onTitleChange={handleTitleChange}
-          onSlugChange={(val) => {
-            setIsSlugManual(true);
-            setFormData({...formData, slug: slugify(val)});
-          }}
+          onSlugChange={(val) => { setIsSlugManual(true); setFormData({...formData, slug: slugify(val)}); }}
           slugify={slugify}
         />
       </AdminLayoutShell>
@@ -381,17 +328,9 @@ export default function AdminVideosPage() {
             <p className="text-sm text-muted-foreground">Dodawanie, edycja, status publikacji, miniatury i dostęp.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/admin">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/admin/videos/layout">Układ kanału</Link>
-            </Button>
-            <Button onClick={handleCreateNew}>
-              <Plus className="mr-2 h-4 w-4" /> Nowy Film
-            </Button>
+            <Button variant="outline" asChild><Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link></Button>
+            <Button variant="outline" asChild><Link href="/admin/videos/layout">Układ kanału</Link></Button>
+            <Button onClick={handleCreateNew}><Plus className="mr-2 h-4 w-4" /> Nowy Film</Button>
           </div>
         </header>
 
@@ -407,176 +346,23 @@ export default function AdminVideosPage() {
           </div>
         )}
 
-        <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4 items-start">
-                <form onSubmit={(e) => { e.preventDefault(); fetchVideos(1); }} className="w-full lg:w-1/3 flex gap-2">
-                <div className="relative flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        placeholder="Szukaj po tytule, slugu..."
-                        className="pl-9"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                <Button type="submit">Szukaj</Button>
-                </form>
+        <VideoFilters
+            searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1)}
+            statusFilter={statusFilter} onStatusFilterChange={setStatusFilter}
+            tierFilter={tierFilter} onTierFilterChange={setTierFilter}
+            sourceKindFilter={sourceKindFilter} onSourceKindFilterChange={setSourceKindFilter}
+            isMainFeatured={isMainFeatured} onIsMainFeaturedChange={setIsMainFeatured}
+            showInSidebar={showInSidebar} onShowInSidebarChange={setShowInSidebar}
+            orderBy={orderBy} onOrderByChange={setOrderBy}
+            needsAttention={needsAttention} onNeedsAttentionChange={setNeedsAttention}
+        />
 
-                <div className="flex flex-wrap gap-2 items-center flex-1">
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "ALL")}>
-                        <SelectTrigger className="w-[140px] h-9">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Wszystkie statusy</SelectItem>
-                            <SelectItem value="PUBLISHED">Opublikowane</SelectItem>
-                            <SelectItem value="DRAFT">Szkice</SelectItem>
-                            <SelectItem value="ARCHIVED">Zarchiwizowane</SelectItem>
-                            <SelectItem value="UNLISTED">Niepubliczne</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={tierFilter} onValueChange={(v) => setTierFilter(v || "ALL")}>
-                        <SelectTrigger className="w-[140px] h-9">
-                            <SelectValue placeholder="Poziom" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Wszystkie poziomy</SelectItem>
-                            <SelectItem value="PUBLIC">Publiczne</SelectItem>
-                            <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                            <SelectItem value="PATRON">Patroni</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={sourceKindFilter} onValueChange={(v) => setSourceKindFilter(v || "ALL")}>
-                        <SelectTrigger className="w-[140px] h-9">
-                            <SelectValue placeholder="Źródło" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Wszystkie źródła</SelectItem>
-                            <SelectItem value="YOUTUBE">YouTube</SelectItem>
-                            <SelectItem value="VIMEO">Vimeo</SelectItem>
-                            <SelectItem value="VERCEL_BLOB">Vercel Blob</SelectItem>
-                            <SelectItem value="HLS">HLS</SelectItem>
-                            <SelectItem value="DASH">DASH</SelectItem>
-                            <SelectItem value="MP4">MP4</SelectItem>
-                            <SelectItem value="DIRECT">Direct (Legacy)</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={isMainFeatured} onValueChange={(v) => setIsMainFeatured(v || "ALL")}>
-                        <SelectTrigger className="w-[120px] h-9">
-                            <SelectValue placeholder="Hero" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Hero: Dowolny</SelectItem>
-                            <SelectItem value="true">Tylko Hero</SelectItem>
-                            <SelectItem value="false">Bez Hero</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={showInSidebar} onValueChange={(v) => setShowInSidebar(v || "ALL")}>
-                        <SelectTrigger className="w-[120px] h-9">
-                            <SelectValue placeholder="Sidebar" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Sidebar: Dowolny</SelectItem>
-                            <SelectItem value="true">W sidebarze</SelectItem>
-                            <SelectItem value="false">Ukryte</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={orderBy} onValueChange={(v) => setOrderBy(v || "createdAt")}>
-                        <SelectTrigger className="w-[160px] h-9">
-                            <div className="flex items-center gap-2">
-                                <Filter className="h-3 w-3 opacity-70" />
-                                <SelectValue placeholder="Sortuj" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="createdAt">Najnowsze</SelectItem>
-                            <SelectItem value="views">Najwięcej wyświetleń</SelectItem>
-                            <SelectItem value="likesCount">Najwięcej polubień</SelectItem>
-                            <SelectItem value="sidebarOrder">Kolejność sidebar</SelectItem>
-                            <SelectItem value="updatedAt">Ostatnio zmienione</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-md h-9">
-                        <Checkbox id="attention" checked={needsAttention} onCheckedChange={(val) => setNeedsAttention(!!val)} />
-                        <Label htmlFor="attention" className="text-xs font-medium cursor-pointer">Wymaga uwagi</Label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div className="space-y-4 pt-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <div>
-                            <CardTitle>Zarządzaj Materiałami</CardTitle>
-                            <CardDescription>Znaleziono {total} filmów.</CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <VideoTable
-                          videos={videos}
-                          onEdit={handleEdit}
-                          onDuplicate={handleDuplicate}
-                          onDelete={handleDelete}
-                        />
-
-                        {totalPages > 1 && (
-                            <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={page === 1}
-                                    onClick={() => fetchVideos(page - 1)}
-                                >
-                                    Poprzednia
-                                </Button>
-                                <div className="text-sm font-medium">
-                                    Strona <span className="text-primary">{page}</span> z {totalPages}
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={page === totalPages}
-                                    onClick={() => fetchVideos(page + 1)}
-                                >
-                                    Następna
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-        </div>
+        <VideoTableWrapper
+            isLoading={isLoading} total={total} videos={videos} page={page} totalPages={totalPages}
+            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} onPageChange={fetchVideos}
+        />
       </div>
       </div>
     </AdminLayoutShell>
   );
-}
-
-function AdminLayoutShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-      <main>{children}</main>
-    </div>
-  );
-}
-
-function StatMiniCard({ label, value, color }: { label: string, value: number, color?: string }) {
-    const colorClasses: any = {
-        green: "text-green-600 border-green-100 bg-green-50/50",
-        amber: "text-amber-600 border-amber-100 bg-amber-50/50",
-        red: "text-red-600 border-red-100 bg-red-50/50",
-    };
-    return (
-        <div className={`p-2 rounded-lg border text-center ${colorClasses[color || ''] || 'bg-muted/30'}`}>
-            <p className="text-[9px] uppercase font-bold opacity-60 truncate">{label}</p>
-            <p className="text-lg font-black">{value}</p>
-        </div>
-    );
 }
