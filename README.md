@@ -164,8 +164,8 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R6.5** | Access Foundation                          | `[x certified]`                                             |
 | **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`         |
 | **R8**   | Comments                                   | `[~ core comments migrated]`                                |
-| **R9**   | Email                                      | `[~ pending certification PR #774]`                         |
-| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile after R7 #777]` |
+| **R9**   | Email                                      | `[~ foundation migrated / pending certification]`           |
+| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`     |
 | **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                       |
 
 Aktualna interpretacja:
@@ -174,10 +174,10 @@ Aktualna interpretacja:
 * R2/R3/R4 są certyfikowanymi foundation, nie pełnym usunięciem każdego legacy.
 * R5/R6 są mocno zaawansowane, ale nadal mają znane legacy extensions.
 * R6.5 certyfikuje dostęp dla wideo.
-* R7 core runtime został przesunięty do modułów po PR #777, ale wymaga certyfikacji i dokumentacyjnego reconcile.
+* R7 core runtime został przesunięty do modułów, ale wymaga certyfikacji i dokumentacyjnego reconcile.
 * R8 core comments są zmigrowane, ale admin/moderation/pin/context pozostają blokerami.
-* R9 ma pending PR #774 i nie może być traktowany jako merged main.
-* R10 inventory istnieje, ale część Payments/Patron jest nieaktualna po PR #777.
+* R9 ma fundamenty i webhook zmigrowane, ale wymaga finalnej weryfikacji i domknięcia broadcast flows w main.
+* R10 inventory wymaga okresowego reconcile z aktualnym main po większych zmianach modułowych (szczególnie Payments/Comments/Email).
 * R11 jeszcze nie wystartowało.
 
 ---
@@ -189,7 +189,7 @@ Najbliższe zadanie:
 R8/R9 rebase/reconcile planning.
 
 Cel:
-PR #774 i PR #775 są otwarte i mają status mergeable=false, więc nie traktuj ich jako zmergowany main.
+R8 (Comments) i R9 (Email) mają istniejące prace w toku poza main, które wymagają weryfikacji i reconcile przed certyfikacją.
 Zanim pójdziesz dalej z R8/R9, sprawdź aktualny main i stwórz prompt rebase/reconcile.
 
 Nie zaczynać dużego R10 cleanup.
@@ -203,9 +203,9 @@ Następny dobry prompt dla agenta kodowania:
 Wykonaj planowanie rebase/reconcile dla R8/R9.
 
 Sprawdź stan main i otwórz plan dla:
-- PR #774 (Email foundation/Resend),
-- PR #775 (Comments reconcile/admin),
-- Ustalenie co z tych PR jest faktycznie gotowe do ręcznego przeniesienia lub rebase.
+- R9 (Email foundation/Resend),
+- R8 (Comments reconcile/admin),
+- Ustalenie co z tych obszarów jest faktycznie gotowe w main do certyfikacji.
 - Nie ruszaj R7 poza finalną certyfikacją.
 - Nie zaczynaj R11.
 ```
@@ -664,18 +664,15 @@ Już zrobione / aktualny core:
 * moduł `comments` istnieje,
 * `CommentPolicy` używa modularnego access tam, gdzie core flow zostało zmigrowane,
 * interakcje wideo i reakcje komentarzy zostały przesunięte w stronę use case’ów,
-* główne przepływy list/create/update/delete/replies/report są przynajmniej częściowo modularne,
+* główne przepływy list/create/update/delete/replies/report są zmigrowane do modułu w main,
 * R8 nie powinno dotykać R7 Payments/Patron ani R9 Email.
 
 Znane blokery R8:
 
-* admin comments management pozostaje legacy/mixed,
+* admin comments management pozostaje legacy/mixed (wymaga pełnego use case i DTO),
 * pin pozostaje blockerem,
 * context/thread route pozostaje blockerem,
-* moderation UI pozostaje blockerem,
-* audyt moderacji nie jest pełny,
-* część legacy CommentService/CommentAccessService może nadal istnieć,
-* otwarty PR #775 może zawierać dodatkowy reconcile, ale nie wolno traktować go jako merged main, dopóki nie zostanie zmergowany.
+* moderation UI/audit pending.
 
 R8 musi zawierać minimalne elementy Fazy X:
 
@@ -692,7 +689,7 @@ R8 musi zawierać minimalne elementy Fazy X:
 Status:
 
 ```txt
-[~ pending certification PR #774]
+[~ foundation migrated / pending certification]
 ```
 
 Cel:
@@ -708,19 +705,17 @@ Cel:
 
 Aktualna interpretacja:
 
-* R9 ma fundamenty i production hardening w toku.
-* PR #774 jest pending i nie może być traktowany jako merged main.
-* PR #774 deklaruje near-certification, ale dopóki nie jest merged/rebased, README main powinno pozostać ostrożne.
+* R9 ma fundamenty i Resend webhook zmigrowane do modułu w main.
+* Admin broadcast flows są częściowo zmigrowane, ale wymagają weryfikacji.
 * R9 nie może mutować `User.isPatron`, `PatronGrant`, płatności ani dostępu patrona.
 
 Znane blokery / pending:
 
-* PR #774 wymaga review/rebase/reconcile.
-* Durable idempotency może wymagać trwałego unikalnego pola provider event id.
+* Durable idempotency (eventId w DB).
 * Outbox/retry pozostaje future R9/R10.
 * EmailService legacy bridge może nadal istnieć jako adapter.
 * Admin templates/subscriber resync mogą pozostać legacy.
-* Broadcast nie powinien docelowo być fire-and-forget bez obserwowalności.
+* Inbound responses logic requires verification in main.
 
 R9 musi zawierać minimalne elementy Fazy X:
 
@@ -754,7 +749,7 @@ Aktualny stan:
 * R10 Direct Prisma inventory istnieje.
 * R10 Legacy Service inventory istnieje.
 * R10 Cleanup Readiness istnieje.
-* Część R10 inventory jest przestarzała po PR #777.
+* Część R10 inventory jest przestarzała i wymaga okresowego reconcile z aktualnym main.
 * Szczególnie sekcje Payments/Patron muszą zostać zreconciliowane.
 
 Nie wolno:
@@ -1286,12 +1281,12 @@ Posiada:
 Status:
 
 ```txt
-[~ pending certification PR #774]
+[~ foundation migrated / pending certification]
 ```
 
 Pozostaje:
 
-* PR #774 reconcile,
+* R9 foundation reconcile,
 * durable idempotency,
 * outbox/retry,
 * templates/subscriber resync.
@@ -1439,7 +1434,7 @@ Route nie jest zmigrowany, dopóki runtime nie używa modułu.
 * `User.isPatron` vs `PatronGrant` drift risk.
 * Access nadal czyta read-model, nie docelowo Patron module.
 * Full refund -> revoke patron atomicity wymaga sprawdzenia.
-* R10 docs/guards mogą być stale po PR #777.
+* R10 docs/guards mogą być stale i wymagać reconcile.
 * Legacy payment services są cleanup candidates, nie powinny wracać jako runtime path.
 
 ---
@@ -1451,13 +1446,13 @@ Route nie jest zmigrowany, dopóki runtime nie używa modułu.
 * Context route legacy/mixed.
 * Moderation UI pending.
 * Moderation audit pending.
-* PR #775 pending/reconcile, jeśli nadal open.
+* R8 core reconcile,
 
 ---
 
 ### R9 Email
 
-* PR #774 pending/reconcile, jeśli nadal open.
+* R9 foundation reconcile,
 * Durable idempotency pending.
 * Outbox/retry pending.
 * Admin templates/subscriber resync legacy.
@@ -1540,7 +1535,7 @@ Zakres:
 
 ---
 
-### R7 Core Runtime Migration — post PR #777
+### R7 Core Runtime Migration
 
 Status:
 
@@ -1589,7 +1584,7 @@ Pending:
 * context,
 * moderation UI,
 * moderation audit,
-* PR #775 reconcile if still open.
+* R8 core reconcile.
 
 ---
 
@@ -1598,13 +1593,12 @@ Pending:
 Status:
 
 ```txt
-R9 [~ pending certification PR #774]
+R9 [~ foundation migrated / pending certification]
 ```
 
 Pending:
 
-* PR #774 review/rebase/reconcile,
-* durable idempotency,
+* durable idempotency (eventId in DB),
 * outbox/retry,
 * templates/subscriber resync,
 * no mutation of patron/payment/access state.
@@ -1684,28 +1678,7 @@ Każdy agent kończy zadanie raportem:
 
 ## 17. Plan pracy w najbliższym czasie
 
-### Krok 1 — R7/R10 Reconciliation after PR #777
-
-Cel:
-
-* poprawić README, guardy i R10 docs po migracji Stripe webhook/fulfillment/refund/dispute do modułu payments,
-* nie oznaczać R7 jako `[x]`,
-* opisać R7 jako core runtime migrated / pending certification,
-* usunąć stare opisy “Stripe webhook still legacy”,
-* sprawdzić refund atomicity.
-
-Zakres:
-
-* README,
-* `scripts/check-architecture.ts`,
-* `docs/audit/R10-Cleanup-Readiness.md`,
-* `docs/audit/R10-Legacy-Service-Inventory.md`,
-* `docs/audit/R10-Direct-Prisma-Inventory.md`, jeśli wymaga aktualizacji,
-* opcjonalnie test/fix dla refund full revoke transaction sharing.
-
----
-
-### Krok 2 — R7 Certification Pass
+### Krok 1 — R7 Final Certification Pass
 
 Certyfikuj:
 
@@ -1721,20 +1694,20 @@ Certyfikuj:
 
 ---
 
-### Krok 3 — R8 Admin/Moderation albo R9 Reconcile
+### Krok 2 — R8 Admin/Moderation albo R9 Reconcile
 
 Po R7 certification wybierz jedno:
 
 ```txt
 A) R8 admin comments / pin / context / moderation audit
-B) R9 PR #774 rebase/reconcile/certification
+B) R9 broadcast/templates/reconcile
 ```
 
 Nie robić obu naraz.
 
 ---
 
-### Krok 4 — R10 Cleanup dopiero po R7/R8/R9
+### Krok 3 — R10 Cleanup dopiero po R7/R8/R9
 
 Dopiero gdy R7/R8/R9 mają realne zastępcze flows, zacznij usuwać legacy.
 
