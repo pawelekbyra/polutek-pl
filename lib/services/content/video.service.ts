@@ -142,6 +142,37 @@ export class VideoContentService {
     }
   }
 
+  /**
+   * Returns only PUBLIC videos for sitemap indexing.
+   * Never includes LOGGED_IN or PATRON content.
+   */
+  static async getSitemapVideos(): Promise<PublicVideoDTO[]> {
+    try {
+      const videos = await prisma.video.findMany({
+        where: {
+          ...(await buildPublicVideoWhere()),
+          showInSidebar: true,
+          tier: AccessTier.PUBLIC
+        },
+        include: {
+          creator: {
+            include: {
+              user: {
+                select: { imageUrl: true, email: true }
+              }
+            }
+          }
+        },
+        orderBy: publicVideoOrderBy
+      });
+
+      return videos.map(v => this.mapToPublicVideoDTO(v));
+    } catch (e: unknown) {
+      console.error("[GET_SITEMAP_VIDEOS_ERROR]", e);
+      return [];
+    }
+  }
+
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {
     try {
       const publicWhere = await buildPublicVideoWhere();

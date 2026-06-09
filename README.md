@@ -1145,11 +1145,13 @@ Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a tes
 
 ### Blokery R5 Users
 
-* Użytkownicy admina nie są w pełni zmigrowani (R5 blocker).
+* Admin users list contract preserved for legacy UI (R5 cert).
+* Complex user sync (conflict/merge) migrated to modular use case (R5 cert).
+* Użytkownicy admina (stats) zmigrowani do modularnego use case'u.
 * Ukończenie webhooka Clerk pozostaje (R5/R9 boundary).
 * Granica synchronizacji użytkownik-dostęp pozostaje.
 * Granica patron/płatności pozostaje.
-* Serwisy użytkownika legacy mogą nadal istnieć.
+* Serwisy użytkownika legacy (`UserProfileService`) mogą nadal istnieć dla pozostałych blokerów.
 * `User.isPatron` w DB musi pozostać źródłem prawdy.
 * Metadane Clerk muszą pozostać tylko cache'em.
 
@@ -1157,6 +1159,7 @@ Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a tes
 
 ### Blokery R6 Video
 
+* Sitemap leak fixed: only PUBLIC videos are indexed (R6 cert).
 * Szczegóły admina (diagnostyka/audyt) pozostają jako rozszerzenie legacy (R6 blocker).
 * Migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość.
 * Publiczne DTO jest bezpieczne, ale publiczny route dostarczania mediów/playbacku wciąż wymaga dedykowanego domknięcia (R3/R6 delivery blocker).

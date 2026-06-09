@@ -6,6 +6,8 @@ export * from "./application/update-user-language.use-case";
 export * from "./application/get-user-profile.use-case";
 export * from "./application/sync-current-user.use-case";
 export * from "./application/get-or-create-user.use-case";
+export * from "./application/sync-user.use-case";
+export * from "./application/get-admin-users-stats.use-case";
 export * from "./application/sync-user-from-webhook.use-case";
 export * from "./domain/user.policy";
 export * from "./domain/payment-totals";

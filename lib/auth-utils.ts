@@ -1,7 +1,9 @@
 import { logger } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
-import { UserProfileService as UserService } from "./services/user/profile.service";
+import { GetOrCreateUserUseCase } from "./modules/users";
+import { getActorFromAuth } from "./api/auth";
+import { createAppContext } from "./modules/shared/app-context";
 import { NextResponse } from "next/server";
 import { isConfiguredAdminUserId } from "./admin-config";
 
@@ -45,7 +47,9 @@ export async function requireUser() {
   const { userId } = await auth();
   if (!userId) throw new AuthError("UNAUTHORIZED");
 
-  await UserService.getOrCreateUser(userId);
+  const actor = await getActorFromAuth();
+  const ctx = createAppContext({ actor });
+  await GetOrCreateUserUseCase.execute(ctx, userId);
   return userId;
 }
 

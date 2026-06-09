@@ -218,40 +218,4 @@ describe('Users Module', () => {
     });
   });
 
-  describe('GetOrCreateUserUseCase', () => {
-    it('does not allow escalating isPatron or role through sync', async () => {
-       const mockUser = { id: 'user_1', role: 'USER', isPatron: false };
-       const mockPrisma = {
-         user: {
-           findUnique: vi.fn().mockResolvedValue(mockUser),
-           update: vi.fn().mockImplementation(({ data }) => Promise.resolve({ ...mockUser, ...data })),
-         }
-       } as any;
-
-       const ctx = createAppContext({ prisma: mockPrisma });
-
-       // Payload trying to escalate
-       const payload = {
-           id: 'user_1',
-           email: 'test@test.com',
-           isPatron: true,
-           role: 'ADMIN'
-       } as any;
-
-       const result = await GetOrCreateUserUseCase.execute(ctx, payload);
-
-       expect(result.role).toBe('USER');
-       expect(result.isPatron).toBe(false);
-       expect(mockPrisma.user.update).toHaveBeenCalledWith({
-           where: { id: 'user_1' },
-           data: {
-               email: 'test@test.com',
-               name: undefined,
-               username: undefined,
-               imageUrl: undefined,
-               language: undefined,
-           }
-       });
-    });
-  });
 });

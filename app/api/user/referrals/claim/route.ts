@@ -1,10 +1,11 @@
 import { logger, createScopedLogger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { ReferralService } from '@/lib/services/referral.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { GetOrCreateUserUseCase } from '@/lib/modules/users';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { handleApiError } from '@/lib/errors';
 
 export async function POST(req: Request) {
@@ -24,12 +25,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    await UserService.getOrCreateUser(userId);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+    await GetOrCreateUserUseCase.execute(ctx, userId);
 
     const { referralCode } = await req.json();
     if (!referralCode) return NextResponse.json({ error: "Referral code is required" }, { status: 400 });
 
-    const referrer = await prisma.user.findFirst({
+    const referrer = await (ctx.prisma as any).user.findFirst({
       where: { OR: [{ referralCode: referralCode }, { id: referralCode }] }
     });
 

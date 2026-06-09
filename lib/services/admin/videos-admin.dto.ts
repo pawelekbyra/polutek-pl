@@ -3,17 +3,17 @@ export type AdminVideoListItem = {
   slug: string;
   title: string;
   titleEn: string | null;
-  description?: string | null;
-  descriptionEn?: string | null;
+  description: string | null;
+  descriptionEn: string | null;
   status: string;
   tier: string;
   videoUrl: string | null;
   thumbnailUrl: string | null;
   isMainFeatured: boolean;
   showInSidebar: boolean;
-  sidebarOrder: number | null;
-  sourceKind: string | null;
-  provider?: string | null;
+  sidebarOrder: number;
+  sourceKind: string;
+  provider: string;
   views: number;
   likesCount: number;
   dislikesCount: number;
@@ -44,14 +44,10 @@ export type AdminVideosListResponse = {
 export const VIDEO_SORT_FIELDS = [
   'createdAt',
   'updatedAt',
-  'publishedAt',
   'title',
   'views',
-  'likesCount',
-  'dislikesCount',
-  'sidebarOrder',
   'status',
-  'tier'
+  'sidebarOrder'
 ] as const;
 
 export type VideoSortField = typeof VIDEO_SORT_FIELDS[number];

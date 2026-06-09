@@ -22,6 +22,7 @@ export interface AdminUserListItemDto {
   email: string | null;
   name: string | null;
   username: string | null;
+  imageUrl: string | null;
   role: string;
   isPatron: boolean;
   isDeleted: boolean;
@@ -29,11 +30,25 @@ export interface AdminUserListItemDto {
   patronSource: string | null;
   language: string | null;
   createdAt: Date;
+  updatedAt: Date;
+  hasSubscriptions: boolean;
+  paymentCount: number;
+  paymentTotals: Array<{
+    currency: string;
+    totalPaidMinor: number;
+    refundedAmountMinor?: number;
+  }>;
+  lastPaymentAt: Date | null;
+  referralPoints: number;
+  referralCount: number;
 }
 
 export interface ListAdminUsersResult {
   items: AdminUserListItemDto[];
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export async function listAdminUsers(
@@ -68,6 +83,21 @@ export async function listAdminUsers(
   const [users, total] = await Promise.all([
     prisma.user.findMany({
       where,
+      include: {
+        paymentTotals: true,
+        subscriptions: { take: 1 },
+        _count: {
+          select: {
+            payments: true,
+            subscriptions: true
+          }
+        },
+        payments: {
+          where: { status: 'SUCCEEDED' },
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      },
       orderBy: { [input.orderBy || 'createdAt']: input.order || 'desc' },
       skip,
       take: limit,
@@ -81,14 +111,29 @@ export async function listAdminUsers(
         email: u.email,
         name: u.name,
         username: u.username,
+        imageUrl: u.imageUrl,
         role: u.role,
         isPatron: u.isPatron,
         isDeleted: u.isDeleted,
         patronSince: u.patronSince,
         patronSource: u.patronSource,
         language: u.language,
-        createdAt: u.createdAt
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+        hasSubscriptions: u._count.subscriptions > 0,
+        paymentCount: u._count.payments,
+        paymentTotals: u.paymentTotals.map(pt => ({
+          currency: pt.currency,
+          totalPaidMinor: pt.amountMinor,
+          refundedAmountMinor: 0
+        })),
+        lastPaymentAt: u.payments[0]?.createdAt || null,
+        referralPoints: u.referralPoints,
+        referralCount: u.referralCount,
     })),
-    total
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit)
   };
 }

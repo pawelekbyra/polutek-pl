@@ -112,9 +112,39 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/export/route.ts':
     'R5 blocker: admin user export is still legacy/direct Prisma.',
   'app/api/admin/users/stats/route.ts':
-    'R5 blocker: admin user stats are still legacy/direct Prisma.',
+    'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/patron/route.ts':
     'R7 blocker: admin patron management is legacy/patron service.',
+  'app/api/admin/comments/route.ts':
+    'R8 blocker: comments are not yet migrated.',
+  'app/api/admin/emails/broadcast/route.ts':
+    'R9 blocker: email/broadcast is not yet migrated.',
+  'app/api/admin/emails/responses/route.ts':
+    'R9 blocker: email/responses is not yet migrated.',
+  'app/api/admin/payment-settings/route.ts':
+    'R7 blocker: payment settings are not yet migrated.',
+  'app/api/admin/stats/route.ts':
+    'R11 blocker: general admin stats are not yet migrated.',
+  'app/api/admin/subscribers/resync/route.ts':
+    'R5/R9 blocker: subscriber resync is not yet migrated.',
+  'app/api/admin/templates/route.ts':
+    'R9 blocker: email templates are not yet migrated.',
+  'app/api/admin/videos/[id]/comments/route.ts':
+    'R8 blocker: video comments list is not yet migrated.',
+  'app/api/checkout/create-intent/route.ts':
+    'R7 blocker: checkout intent is mixed with legacy payment service.',
+  'app/api/comments/[commentId]/context/route.ts':
+    'R8 blocker: comment context is not yet migrated.',
+  'app/api/comments/[commentId]/pin/route.ts':
+    'R8 blocker: comment pinning is not yet migrated.',
+  'app/api/comments/[commentId]/replies/route.ts':
+    'R8 blocker: comment replies are not yet migrated.',
+  'app/api/media/[...path]/route.ts':
+    'R3/R6 delivery blocker: media delivery is not yet migrated.',
+  'app/api/user/referrals/claim/route.ts':
+    'R5 blocker: referral claim is mixed with legacy referral service.',
+  'app/api/webhooks/resend/route.ts':
+    'R9 blocker: resend webhooks are not yet migrated.',
 };
 
 function checkRoutes() {
@@ -132,7 +162,13 @@ function checkRoutes() {
     const relativePath = path.relative(ROOT, file);
     const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
 
-    if (content.includes("@/lib/prisma")) prismaImports++;
+    if (content.includes("@/lib/prisma")) {
+        prismaImports++;
+        if (!allowReason) {
+            console.error(`❌ Violation: Direct Prisma import in route ${relativePath}. Use modular use cases instead.`);
+            violations++;
+        }
+    }
     if (content.includes("@/lib/services/")) servicesImports++;
 
     // 1. Internal module imports check

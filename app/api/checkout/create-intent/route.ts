@@ -2,12 +2,13 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
 import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { GetOrCreateUserUseCase } from '@/lib/modules/users';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
 import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
 import { isUuid } from '@/lib/utils/uuid';
-import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Lazy Sync Fallback via Service
-    await UserService.getOrCreateUser(userId);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+    await GetOrCreateUserUseCase.execute(ctx, userId);
 
     const body = await req.json();
     const result = checkoutSchema.safeParse(body);

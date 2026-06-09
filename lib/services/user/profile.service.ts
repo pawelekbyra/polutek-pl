@@ -66,7 +66,7 @@ export class UserProfileService {
    * Primary entry point for ensuring a user exists and is up to date.
    * Handles Clerk integration, ID mapping, and local DB sync.
    */
-  static async getOrCreateUser(clerkUserId: string) {
+  static async getOrCreateUser(clerkUserId: string): Promise<any> {
     try {
       let clerkUser = await currentUser();
 
@@ -118,7 +118,7 @@ export class UserProfileService {
     language?: string,
     username?: string | null,
     _clerkRole?: string | null
-  ) {
+  ): Promise<any> {
     try {
       return await prisma.$transaction(async (tx) => {
         const existingUserById = await tx.user.findUnique({
@@ -305,7 +305,7 @@ export class UserProfileService {
    * Ensures comment authors have a local row even when Clerk's user API is
    * temporarily unavailable in a route handler.
    */
-  static async getOrCreateUserFromAuth(userId: string, sessionClaims?: AuthSessionClaims) {
+  static async getOrCreateUserFromAuth(userId: string, sessionClaims?: AuthSessionClaims): Promise<any> {
     try {
       const user = await this.getOrCreateUser(userId);
       if (hasIdentityClaim(sessionClaims)) {
@@ -337,7 +337,7 @@ export class UserProfileService {
       imageUrl?: string | null;
     } | null,
     allowPlaceholderEmail = false
-  ) {
+  ): Promise<any> {
     if (!allowPlaceholderEmail && !hasIdentityClaim(sessionClaims)) return null;
 
     const email = stringClaim(sessionClaims, 'email', 'primary_email_address', 'email_address')

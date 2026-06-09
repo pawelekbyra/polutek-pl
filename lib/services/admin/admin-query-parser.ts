@@ -1,6 +1,17 @@
 import { NextRequest } from 'next/server';
 import { VIDEO_SORT_FIELDS, VideoSortField } from './videos-admin.dto';
-import { USER_SORT_FIELDS, UserSortField } from './users-admin.dto';
+const USER_SORT_FIELDS = [
+  'createdAt',
+  'updatedAt',
+  'email',
+  'name',
+  'patronSince',
+  'referralPoints',
+  'referralCount',
+  'role'
+] as const;
+
+type UserSortField = typeof USER_SORT_FIELDS[number];
 import { PAYMENT_SORT_FIELDS, PaymentSortField } from './payments-admin.dto';
 import { VideoStatus, AccessTier, SystemRole, PatronGrantSource, PaymentStatus } from '@prisma/client';
 

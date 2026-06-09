@@ -15,7 +15,7 @@ import { ArrowLeft, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
-import { AdminUserListItem } from "@/lib/services/admin/users-admin.dto";
+import { AdminUserListItemDto as AdminUserListItem } from "@/lib/modules/users";
 import { AdminUsersPageSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {

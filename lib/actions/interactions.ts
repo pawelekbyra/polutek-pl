@@ -3,7 +3,9 @@
 import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { UserProfileService as UserService } from "@/lib/services/user/profile.service";
+import { GetOrCreateUserUseCase } from "@/lib/modules/users";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { revalidatePath } from "next/cache";
 import { AccessPolicy } from "@/lib/access/access-policy";
 
@@ -40,7 +42,16 @@ export async function toggleVideoLike(videoId: string) {
   try {
     // 1. Sync/Fetch user record
     try {
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const actor = await getActorFromAuth();
+        const ctx = createAppContext({ actor });
+        const email = (sessionClaims as any)?.email as string;
+        await GetOrCreateUserUseCase.execute(ctx, {
+            id: userId,
+            email,
+            name: (sessionClaims as any)?.name,
+            username: (sessionClaims as any)?.username,
+            imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture,
+        });
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
@@ -117,7 +128,16 @@ export async function toggleVideoDislike(videoId: string) {
 
   try {
     try {
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const actor = await getActorFromAuth();
+        const ctx = createAppContext({ actor });
+        const email = (sessionClaims as any)?.email as string;
+        await GetOrCreateUserUseCase.execute(ctx, {
+            id: userId,
+            email,
+            name: (sessionClaims as any)?.name,
+            username: (sessionClaims as any)?.username,
+            imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture,
+        });
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
