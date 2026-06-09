@@ -1,6 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { UserRepository } from "../infrastructure/user.repository";
-import { User, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { normalizePaymentTotals } from "../domain/payment-totals";
 
 export interface ListAdminUsersInput {
   query?: string;
@@ -12,9 +12,9 @@ export interface ListAdminUsersInput {
   hasPayments?: boolean;
   hasSubscriptions?: boolean;
   page?: number;
-  limit?: number;
+  pageSize?: number;
   orderBy?: string;
-  order?: 'asc' | 'desc';
+  orderDir?: 'asc' | 'desc';
 }
 
 export interface AdminUserListItemDto {
@@ -40,6 +40,7 @@ export interface AdminUserListItemDto {
     currency: string;
     totalPaidMinor: number;
   }>;
+  normalizedTotal: number;
 }
 
 export interface ListAdminUsersResult {
@@ -57,8 +58,8 @@ export async function listAdminUsers(
   const { prisma } = ctx;
 
   const page = input.page || 1;
-  const limit = input.limit || 50;
-  const skip = (page - 1) * limit;
+  const pageSize = input.pageSize || 50;
+  const skip = (page - 1) * pageSize;
 
   const where: Prisma.UserWhereInput = {
       AND: [
@@ -97,41 +98,51 @@ export async function listAdminUsers(
             take: 1
         }
       },
-      orderBy: { [input.orderBy || 'createdAt']: input.order || 'desc' },
+      orderBy: { [input.orderBy || 'createdAt']: input.orderDir || 'desc' },
       skip,
-      take: limit,
+      take: pageSize,
     }),
     prisma.user.count({ where })
   ]);
 
   return {
-    items: users.map(u => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        username: u.username,
-        imageUrl: u.imageUrl,
-        role: u.role,
-        isPatron: u.isPatron,
-        isDeleted: u.isDeleted,
-        patronSince: u.patronSince,
-        patronSource: u.patronSource,
-        language: u.language,
-        createdAt: u.createdAt,
-        updatedAt: u.updatedAt,
-        hasSubscriptions: u._count.subscriptions > 0,
-        paymentCount: u._count.payments,
-        lastPaymentAt: u.payments[0]?.createdAt || null,
-        referralPoints: u.referralPoints,
-        referralCount: u.referralCount,
-        paymentTotals: u.paymentTotals.map((pt: any) => ({
+    items: users.map(u => {
+        const domainTotals = u.paymentTotals.map((pt: any) => ({
             currency: pt.currency,
-            totalPaidMinor: pt.amountMinor
-        }))
-    })),
+            amountMinor: pt.amountMinor
+        }));
+
+        const dtoTotals = domainTotals.map(t => ({
+            currency: t.currency,
+            totalPaidMinor: t.amountMinor
+        }));
+
+        return {
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            username: u.username,
+            imageUrl: u.imageUrl,
+            role: u.role,
+            isPatron: u.isPatron,
+            isDeleted: u.isDeleted,
+            patronSince: u.patronSince,
+            patronSource: u.patronSource,
+            language: u.language,
+            createdAt: u.createdAt,
+            updatedAt: u.updatedAt,
+            hasSubscriptions: u._count.subscriptions > 0,
+            paymentCount: u._count.payments,
+            lastPaymentAt: u.payments[0]?.createdAt || null,
+            referralPoints: u.referralPoints,
+            referralCount: u._count.referrals,
+            paymentTotals: dtoTotals,
+            normalizedTotal: normalizePaymentTotals(domainTotals)
+        };
+    }),
     total,
     page,
-    pageSize: limit,
-    totalPages: Math.ceil(total / limit)
+    pageSize,
+    totalPages: Math.ceil(total / pageSize)
   };
 }
