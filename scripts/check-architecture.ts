@@ -102,7 +102,7 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/videos/[id]/comments/route.ts':
     'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
   'app/api/media-source/[videoId]/route.ts':
-    'R6/R3 cert: uses PlaybackService and modular access.',
+    'R6/R3 certified: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
     'R6/R3 cert: uses modular access, but still uses direct Prisma for event/view persistence.',
   'app/api/admin/users/route.ts':
@@ -117,6 +117,14 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R7 blocker: admin patron management is legacy/patron service.',
   'app/api/checkout/create-intent/route.ts':
     'R7 blocker: checkout depends on Users bridge but is still a legacy payment flow.',
+  'app/api/webhooks/stripe/route.ts':
+    'R7 blocker: Stripe webhook is still a legacy payment flow.',
+  'app/api/admin/payments/route.ts':
+    'R7 blocker: admin payments list is still a legacy payment flow.',
+  'app/api/admin/payments/stats/route.ts':
+    'R7 blocker: admin payment stats is still a legacy payment flow.',
+  'app/api/admin/payment-settings/route.ts':
+    'R7 blocker: admin payment settings is still a legacy payment flow.',
   'app/api/user/referrals/claim/route.ts':
     'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
 };

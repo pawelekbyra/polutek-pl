@@ -95,7 +95,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R5**  | Moduł Users                                     | [x stronger foundation]      |
 | **R6**  | Moduł Video                                     | [x stronger foundation]      |
 | **R6.5**| Access Foundation                               | [x certified]                 |
-| **R7**  | Moduły Patron + Payments                        | [ ]                           |
+| **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
 | **R8**  | Moduł Comments                                  | [ ]                           |
 | **R9**  | Moduł Email                                     | [ ]                           |
 | **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
@@ -113,12 +113,16 @@ Aktualna interpretacja projektu:
 ## 5. Bieżące zadanie
 
 ```txt
-R5/R6/R6.5 readiness review before R7 Patron + Payments architecture audit.
+R7 Patron + Payments architecture audit:
+- inventory Stripe checkout/webhook/fulfillment/refund/dispute,
+- define Patron module and Payments module boundaries,
+- decide source-of-truth migration,
+- prepare implementation prompt.
 ```
 
-Nie zaczynaj jeszcze R7 Patron + Payments.
+R7 implementation has not started yet.
 
-R7 może wystartować dopiero po:
+R7 may start only after:
 
 * przejrzeniu blokerów R5 Users (admin users core identity is modular, extensions remain legacy),
 * przejrzeniu blokerów R6 Video (delivery/playback),
@@ -424,17 +428,9 @@ Certyfikowany fundament dostępu dla wideo.
 
 ### R7 — Patron + Payments (Patroni i Płatności)
 
-#### R7 readiness notes
+#### R7 audit status: [~ architecture audit started]
 
-R7 may start only after a readiness audit confirms:
-- Users source-of-truth is clear.
-- Access decisions use lib/modules/access.
-- DB User.isPatron remains the current source of truth until Patron module introduces a grant model.
-- Checkout never accepts client creatorId.
-- Stripe webhook idempotency strategy is defined.
-- Refund/revoke updates DB source-of-truth and audit.
-- Clerk metadata sync happens after DB commit and remains cache only.
-- Legacy patron/payment services are mapped before migration.
+R7 implementation is not yet certified to start, but the audit is in progress.
 
 Cel:
 
@@ -451,10 +447,8 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ architecture audit started]
 ```
-
-Nie zaczynaj R7, dopóki blokery R5/R6 nie zostaną przejrzane.
 
 R7 musi od początku zawierać minimalne elementy Fazy X:
 
@@ -469,13 +463,17 @@ R7 musi od początku zawierać minimalne elementy Fazy X:
 
 Oczekuje się, że R7 będzie jedną z najbardziej krytycznych faz.
 
-Blokery gotowości R7:
-- obecne przepływy patron/payment to serwisy legacy,
-- idempotencja webhooków Stripe musi zostać certyfikowana,
-- checkout nie może akceptować `creatorId` od klienta,
-- refund/revoke musi aktualizować DB `User.isPatron` jako źródło prawdy,
-- synchronizacja metadanych Clerk musi być post-commit i służyć wyłącznie jako cache,
-- decyzje o dostępie muszą używać `lib/modules/access`, a nie bezpośrednio płatności/patrona.
+R7 legacy blockers:
+- Stripe webhook still legacy PaymentService.
+- Checkout still legacy PaymentCheckoutService.
+- Fulfillment still legacy PaymentFulfillmentService.
+- Patron grant/revoke still legacy patron.service.
+- Admin patron management route still legacy.
+- Payment settings route still legacy.
+- Refund/dispute behavior needs R7 certification before implementation.
+- User.isPatron in DB is current source of truth; target R7 may move truth to Patron module/grants.
+- Checkout must never trust `creatorId` from client (must be server-side resolved).
+- R8 Comments and R10 Cleanup are NOT part of R7 and must remain untouched.
 
 ---
 
