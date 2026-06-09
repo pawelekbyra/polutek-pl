@@ -2,99 +2,45 @@
 
 import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
 import { getOrCreateCurrentUser } from "@/lib/modules/users";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { revalidatePath } from "next/cache";
-import { AccessPolicy } from "@/lib/access/access-policy";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { toggleVideoLike as toggleLikeUseCase, toggleVideoDislike as toggleDislikeUseCase } from "@/lib/modules/comments";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function isDatabaseTableMissingError(error: unknown) {
-  if (error instanceof Error && error.message.includes("DATABASE_TABLES_MISSING")) return true;
-  if (error instanceof Error && error.message.includes("P2021")) return true;
-  return typeof error === "object" && error !== null && "code" in error && error.code === "P2021";
 }
 
 /**
  * Toggles a 'Like' on a video.
  */
 export async function toggleVideoLike(videoId: string) {
-  let userId: string | null = null;
-  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
-      const authData = await auth();
-      userId = authData.userId;
-      sessionClaims = authData.sessionClaims;
-  } catch (e: unknown) {
-      logger.error("[Interaction] Clerk Handshake Failed:", getErrorMessage(e));
-      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
-  }
+      const actor = await getActorFromAuth();
+      const ctx = createAppContext({ actor });
 
-  if (!userId) return { error: "AUTH_REQUIRED" };
-
-  const decision = await AccessPolicy.canReactToVideo(userId, videoId);
-  if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
-
-  try {
-    // 1. Sync/Fetch user record
-    try {
-        const ctx = createAppContext({
-          actor: { type: "user", userId, isPatron: false },
-        });
-        await getOrCreateCurrentUser(ctx, userId, sessionClaims);
-    } catch (err: unknown) {
-        logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
-        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      // 0. Check user exists
-      const user = await tx.user.findUnique({ where: { id: userId! } });
-      if (!user) throw new Error("USER_NOT_FOUND");
-
-      const existingDislike = await tx.videoDislike.findUnique({
-        where: { userId_videoId: { userId: userId!, videoId } }
-      });
-
-      if (existingDislike) {
-        await tx.videoDislike.delete({ where: { id: existingDislike.id } });
-        await tx.video.updateMany({
-          where: { id: videoId, dislikesCount: { gt: 0 } },
-          data: { dislikesCount: { decrement: 1 } }
-        });
+      // 1. Sync/Fetch user record (Legacy requirement for Server Actions to ensure user exists in DB)
+      if (actor.type === 'user') {
+          try {
+              const { sessionClaims } = await auth();
+              await getOrCreateCurrentUser(ctx, actor.userId, sessionClaims);
+          } catch (err: unknown) {
+              logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
+              return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
+          }
       }
 
-      const existingLike = await tx.videoLike.findUnique({
-        where: { userId_videoId: { userId: userId!, videoId } }
-      });
+      const result = await toggleLikeUseCase({ videoId }, ctx);
 
-      if (existingLike) {
-        await tx.videoLike.delete({ where: { id: existingLike.id } });
-        await tx.video.updateMany({
-          where: { id: videoId, likesCount: { gt: 0 } },
-          data: { likesCount: { decrement: 1 } }
-        });
-        return { liked: false, disliked: false };
-      } else {
-        await tx.videoLike.create({ data: { userId: userId!, videoId } });
-        await tx.video.update({
-          where: { id: videoId },
-          data: { likesCount: { increment: 1 } }
-        });
-        return { liked: true, disliked: false };
+      if (!result.ok) {
+          return { error: result.error.type, message: result.error.message };
       }
-    });
 
-    revalidatePath('/', 'layout');
-    return result;
+      revalidatePath('/', 'layout');
+      return result.data;
   } catch (error: unknown) {
     logger.error("[TOGGLE_LIKE_ERROR]", error);
-    if (isDatabaseTableMissingError(error)) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma migrate deploy' z aktualnymi migracjami." };
-    }
     return { error: "INTERNAL_ERROR", message: getErrorMessage(error) };
   }
 }
@@ -103,78 +49,30 @@ export async function toggleVideoLike(videoId: string) {
  * Toggles a 'Dislike' on a video.
  */
 export async function toggleVideoDislike(videoId: string) {
-  let userId: string | null = null;
-  let sessionClaims: Record<string, unknown> | null | undefined = null;
   try {
-      const authData = await auth();
-      userId = authData.userId;
-      sessionClaims = authData.sessionClaims;
-  } catch (e: unknown) {
-      logger.error("[Interaction] Clerk Handshake Failed:", getErrorMessage(e));
-      return { error: "CLERK_ERROR", message: "Błąd weryfikacji sesji (Clerk Handshake). Sprawdź klucze API w Vercel." };
-  }
+      const actor = await getActorFromAuth();
+      const ctx = createAppContext({ actor });
 
-  if (!userId) return { error: "AUTH_REQUIRED" };
-
-  const decision = await AccessPolicy.canReactToVideo(userId, videoId);
-  if (!decision.allowed) return { error: "FORBIDDEN", message: decision.reason };
-
-  try {
-    try {
-        const ctx = createAppContext({
-          actor: { type: "user", userId, isPatron: false },
-        });
-        await getOrCreateCurrentUser(ctx, userId, sessionClaims);
-    } catch (err: unknown) {
-        logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
-        return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      // 0. Check user exists
-      const user = await tx.user.findUnique({ where: { id: userId! } });
-      if (!user) throw new Error("USER_NOT_FOUND");
-
-      const existingLike = await tx.videoLike.findUnique({
-        where: { userId_videoId: { userId: userId!, videoId } }
-      });
-
-      if (existingLike) {
-        await tx.videoLike.delete({ where: { id: existingLike.id } });
-        await tx.video.updateMany({
-          where: { id: videoId, likesCount: { gt: 0 } },
-          data: { likesCount: { decrement: 1 } }
-        });
+      if (actor.type === 'user') {
+          try {
+              const { sessionClaims } = await auth();
+              await getOrCreateCurrentUser(ctx, actor.userId, sessionClaims);
+          } catch (err: unknown) {
+              logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
+              return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
+          }
       }
 
-      const existingDislike = await tx.videoDislike.findUnique({
-        where: { userId_videoId: { userId: userId!, videoId } }
-      });
+      const result = await toggleDislikeUseCase({ videoId }, ctx);
 
-      if (existingDislike) {
-        await tx.videoDislike.delete({ where: { id: existingDislike.id } });
-        await tx.video.updateMany({
-          where: { id: videoId, dislikesCount: { gt: 0 } },
-          data: { dislikesCount: { decrement: 1 } }
-        });
-        return { liked: false, disliked: false };
-      } else {
-        await tx.videoDislike.create({ data: { userId: userId!, videoId } });
-        await tx.video.update({
-          where: { id: videoId },
-          data: { dislikesCount: { increment: 1 } }
-        });
-        return { liked: false, disliked: true };
+      if (!result.ok) {
+          return { error: result.error.type, message: result.error.message };
       }
-    });
 
-    revalidatePath('/', 'layout');
-    return result;
+      revalidatePath('/', 'layout');
+      return result.data;
   } catch (error: unknown) {
     logger.error("[TOGGLE_DISLIKE_ERROR]", error);
-    if (isDatabaseTableMissingError(error)) {
-        return { error: "DATABASE_ERROR", message: "Baza danych nie jest gotowa (P2021). Uruchom 'npx prisma migrate deploy' z aktualnymi migracjami." };
-    }
     return { error: "INTERNAL_ERROR", message: getErrorMessage(error) };
   }
 }

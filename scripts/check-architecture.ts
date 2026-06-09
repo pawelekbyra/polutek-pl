@@ -80,33 +80,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-function countLegacyInventory() {
-    const services = getAllFiles(path.join(ROOT, 'lib/services'));
-    const prismaRoutes = getAllFiles(path.join(ROOT, 'app/api')).filter(file => {
-        const content = fs.readFileSync(file, 'utf-8');
-        return content.includes("@/lib/prisma");
-    });
-
-    let policyUsage = 0;
-    const allFiles = getAllFiles(ROOT);
-    for (const file of allFiles) {
-        const relativePath = path.relative(ROOT, file);
-        if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('tests/')) continue;
-        if (relativePath === 'lib/access/access-policy.ts') continue;
-        const content = fs.readFileSync(file, 'utf-8');
-        if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
-            policyUsage++;
-        }
-    }
-
-    console.log(`\n--- R10 PREPARATION INVENTORY ---`);
-    console.log(`LEGACY SERVICES COUNT: ${services.length}`);
-    console.log(`DIRECT PRISMA ROUTES: ${prismaRoutes.length}`);
-    console.log(`ACCESSPOLICY USAGE: ${policyUsage}`);
-    console.log(`---------------------------------\n`);
-}
-
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
@@ -118,11 +92,11 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
   'app/api/comments/[commentId]/reaction/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/report/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/comments/[commentId]/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
