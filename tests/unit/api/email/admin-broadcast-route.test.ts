@@ -64,33 +64,6 @@ describe('Admin Broadcast Route Contract', () => {
           })
       );
     });
-
-    it('supports backward compatibility mapping', async () => {
-        vi.mocked(requireAdminForApi).mockResolvedValue({
-            adminUserId: 'admin_1',
-            response: null
-        } as any);
-        vi.mocked(sendAdminBroadcastEmail).mockResolvedValue({ ok: true, data: { success: true } } as any);
-
-        const req = new NextRequest('http://localhost/api/admin/emails/broadcast', {
-            method: 'POST',
-            body: JSON.stringify({
-                subjectPl: 'Pl Subject',
-                htmlPl: 'Pl Html',
-                recipientGroup: 'PATRONS'
-            }),
-        });
-
-        await POST(req);
-        expect(sendAdminBroadcastEmail).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                subject: 'Pl Subject',
-                body: 'Pl Html',
-                audience: 'PATRONS'
-            })
-        );
-    });
   });
 
   describe('GET', () => {

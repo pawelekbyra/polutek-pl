@@ -12,13 +12,6 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { EmailRepository } from "../infrastructure/email.repository";
 import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
 import { EmailPolicy } from "../domain/email.policy";
-import { BroadcastRecipientStatus, Prisma } from "@prisma/client";
-import { EmailProvider } from "../domain/email-provider";
-
-export interface SendAdminBroadcastEmailDeps {
-    repository?: EmailRepository;
-    provider?: EmailProvider;
-}
 
 /**
  * sendAdminBroadcastEmail use case.
@@ -29,8 +22,7 @@ export interface SendAdminBroadcastEmailDeps {
  */
 export async function sendAdminBroadcastEmail(
   ctx: AppContext,
-  input: AdminBroadcastEmailInput,
-  deps: SendAdminBroadcastEmailDeps = {}
+  input: AdminBroadcastEmailInput
 ): Promise<UseCaseResult<AdminBroadcastEmailResult, EmailError>> {
   const {
     subject, body,
@@ -57,8 +49,8 @@ export async function sendAdminBroadcastEmail(
   }
 
   try {
-    const repository = deps.repository || new EmailRepository(ctx.prisma);
-    const provider = deps.provider || new LegacyEmailServiceProvider();
+    const repository = new EmailRepository(ctx.prisma);
+    const provider = new LegacyEmailServiceProvider();
 
     // 2. Audience / Recipient selection
     let recipients: BroadcastRecipientDto[] = [];
@@ -100,6 +92,10 @@ export async function sendAdminBroadcastEmail(
     });
 
     // 3. Apply Domain Policy (Opt-out check)
+    // For large lists, this should be optimized. For now we do it per recipient or keep it in bridge.
+    // Actually, LegacyEmailServiceProvider calls EmailService which already checks preferences.
+    // For R9 certification, we add the boundary check here but keep it async-safe.
+
     if (audience !== "TEST") {
         const eligibleRecipients: BroadcastRecipientDto[] = [];
         for (const r of recipients) {
@@ -189,7 +185,7 @@ export async function sendAdminBroadcastEmail(
         userId: r.userId,
         email: r.email,
         language: r.language || 'pl',
-        status: 'PENDING' as BroadcastRecipientStatus
+        status: 'PENDING'
       }))
     });
 
@@ -219,9 +215,8 @@ export async function sendAdminBroadcastEmail(
       messageIds: []
     });
 
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal error during broadcast creation";
+  } catch (error: any) {
     logger.error("[sendAdminBroadcastEmail] Error", error);
-    return fail(new EmailProviderError(message));
+    return fail(new EmailProviderError(error.message || "Internal error during broadcast creation"));
   }
 }

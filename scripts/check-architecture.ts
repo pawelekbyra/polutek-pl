@@ -94,13 +94,13 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/comments/[commentId]/reaction/route.ts':
     'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/report/route.ts':
-    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/route.ts':
-    'R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
-    'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
+    'R8 cert: migrated to modular access/use cases.',
   'app/api/media-source/[videoId]/route.ts':
     'R6/R3 certified: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
@@ -156,7 +156,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/admin/comments/route.ts': 'R8 blocker.',
-  'app/api/admin/emails/broadcast/route.ts': 'R9 cert: route delegates to email module, remaining limitation: provider/outbox/idempotency.',
+  'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
   'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
   'app/api/admin/payment-settings/route.ts': 'R7 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
@@ -167,9 +167,9 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/checkout/create-intent/route.ts': 'R7 blocker.',
   'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
   'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
-  'app/api/comments/[commentId]/replies/route.ts': 'R8 blocker.',
+  'app/api/comments/[commentId]/replies/route.ts': 'R8 cert: migrated to modular access/use cases.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
-  'app/api/webhooks/resend/route.ts': 'R9 cert: route delegates to email module, remaining limitation: provider/outbox/idempotency.',
+  'app/api/webhooks/resend/route.ts': 'R9 blocker.',
 };
 
 function checkRoutes() {

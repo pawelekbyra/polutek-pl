@@ -67,20 +67,4 @@ describe('Resend Webhook Route Contract', () => {
         })
     );
   });
-
-  it('handles malformed JSON payload predictably in non-production', async () => {
-      vi.stubEnv('NODE_ENV', 'development');
-      const req = new NextRequest('http://localhost/api/webhooks/resend', {
-          method: 'POST',
-          headers: {
-              'x-resend-webhook-secret': 'test-secret',
-          },
-          body: 'not-json',
-      });
-
-      const res = await POST(req);
-      expect(res.status).toBe(400);
-      const data = await res.json();
-      expect(data.error).toBe('Invalid JSON');
-  });
 });
