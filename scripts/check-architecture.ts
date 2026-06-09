@@ -80,6 +80,32 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
+function countLegacyInventory() {
+    const services = getAllFiles(path.join(ROOT, 'lib/services'));
+    const prismaRoutes = getAllFiles(path.join(ROOT, 'app/api')).filter(file => {
+        const content = fs.readFileSync(file, 'utf-8');
+        return content.includes("@/lib/prisma");
+    });
+
+    let policyUsage = 0;
+    const allFiles = getAllFiles(ROOT);
+    for (const file of allFiles) {
+        const relativePath = path.relative(ROOT, file);
+        if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('tests/')) continue;
+        if (relativePath === 'lib/access/access-policy.ts') continue;
+        const content = fs.readFileSync(file, 'utf-8');
+        if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
+            policyUsage++;
+        }
+    }
+
+    console.log(`\n--- R10 PREPARATION INVENTORY ---`);
+    console.log(`LEGACY SERVICES COUNT: ${services.length}`);
+    console.log(`DIRECT PRISMA ROUTES: ${prismaRoutes.length}`);
+    console.log(`ACCESSPOLICY USAGE: ${policyUsage}`);
+    console.log(`---------------------------------\n`);
+}
+
 const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
@@ -333,6 +359,8 @@ function checkLegacyAccessPolicy() {
   console.log(`- Files importing legacy AccessPolicy: ${policyImports}`);
   return violations;
 }
+
+countLegacyInventory();
 
 const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
 

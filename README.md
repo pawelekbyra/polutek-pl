@@ -98,7 +98,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R7**  | Moduły Patron + Payments                        | [~ architecture audit started] |
 | **R8**  | Moduł Comments                                  | [ ]                           |
 | **R9**  | Moduł Email                                     | [~ production hardening]      |
-| **R10** | Czyszczenie przestarzałych fasad                | [ ]                           |
+| **R10** | Czyszczenie przestarzałych fasad                | [~ foundation preparation]    |
 | **R11** | Frontend admina / kokpit operacyjny             | [ ]                           |
 
 Aktualna interpretacja projektu:
@@ -561,10 +561,18 @@ Cel:
 Status:
 
 ```txt
-[ ]
+[~ foundation preparation]
 ```
 
-Nie zaczynaj R10 zbyt wcześnie.
+R10 Foundation Preparation Pass (2026-06-09):
+- Audyt legacy services (ACTIVE/BRIDGE/DEPRECATED/DEAD).
+- Mapa direct Prisma usage w API routes (R7-R11 ownership).
+- Inwentaryzacja runtime usage legacy AccessPolicy.
+- Identyfikacja dead code candidates (HIGH/MEDIUM/LOW confidence).
+- Ocena readiness per domena.
+- Rozszerzenie architecture guard o raportowanie statystyk legacy.
+
+Nie zaczynaj pełnego czyszczenia R10 zbyt wcześnie. Blokery R7/R8/R9 muszą zostać rozwiązane przed masowym usuwaniem kodu.
 
 R10 następuje po istnieniu przepływów zastępczych.
 
