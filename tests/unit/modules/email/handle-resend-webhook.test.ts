@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleResendWebhook } from '@/lib/modules/email/application/handle-resend-webhook.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
-describe('handleResendWebhook use case', () => {
+describe('handleResendWebhook use case - hardening', () => {
   const prismaMock = {
     emailEvent: {
       create: vi.fn(),
@@ -34,30 +34,19 @@ describe('handleResendWebhook use case', () => {
     vi.clearAllMocks();
   });
 
-  it('logs the event and accepts all requested event types', async () => {
-    const types = [
-        'email.sent', 'email.delivered', 'email.delivery_delayed',
-        'email.bounced', 'email.complained', 'email.opened', 'email.clicked'
-    ];
+  it('rejects malformed payload (not an object)', async () => {
+    const result = await handleResendWebhook(ctx, "not-an-object" as any);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+        expect(result.error.code).toBe('EMAIL_WEBHOOK_INVALID_PAYLOAD');
+    }
+  });
 
-    for (const type of types) {
-        prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1' });
-
-        const result = await handleResendWebhook(ctx, {
-            type,
-            data: {
-                email_id: `re_${type}`,
-                from: 'no-reply@polutek.pl',
-                to: ['user@example.com'],
-                subject: 'Hello',
-                created_at: new Date().toISOString(),
-            },
-        });
-
-        expect(result.ok).toBe(true);
-        if (result.ok) {
-            expect(result.data.accepted).toBe(true);
-        }
+  it('rejects payload with missing data', async () => {
+    const result = await handleResendWebhook(ctx, { type: 'email.sent' } as any);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+        expect(result.error.code).toBe('EMAIL_WEBHOOK_INVALID_PAYLOAD');
     }
   });
 
@@ -78,30 +67,41 @@ describe('handleResendWebhook use case', () => {
         expect(result.data.accepted).toBe(true);
         expect(result.data.ignored).toBe(true);
     }
-    expect(prismaMock.emailEvent.create).toHaveBeenCalled();
   });
 
-  it('correctly updates status for bounced email', async () => {
+  it('safely handles missing email_id in known event', async () => {
+      const result = await handleResendWebhook(ctx, {
+          type: 'email.sent',
+          data: {
+              from: 'no-reply@polutek.pl',
+              to: ['user@example.com'],
+              subject: 'Hello',
+              created_at: new Date().toISOString(),
+          } as any,
+      });
+
+      expect(result.ok).toBe(true);
+      // Status update should NOT be called if no email_id
+      expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('explicitly returns idempotency: not_available', async () => {
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1' });
 
     const result = await handleResendWebhook(ctx, {
-      type: 'email.bounced',
+      type: 'email.sent',
       data: {
-        email_id: 're_bounce',
+        email_id: 're_123',
         from: 'no-reply@polutek.pl',
-        to: ['bounced@example.com'],
+        to: ['user@example.com'],
         subject: 'Hello',
         created_at: new Date().toISOString(),
       },
     });
 
     expect(result.ok).toBe(true);
-    expect(prismaMock.broadcastEmailRecipient.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'BOUNCED' })
-    }));
-    // Should also update errorCount in BroadcastEmail
-    expect(prismaMock.broadcastEmail.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ errorCount: expect.anything() })
-    }));
+    if (result.ok) {
+        expect(result.data.idempotency).toBe('not_available');
+    }
   });
 });

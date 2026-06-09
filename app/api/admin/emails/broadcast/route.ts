@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { logger } from '@/lib/logger';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { sendAdminBroadcastEmail, BroadcastAudience } from '@/lib/modules/email';
+import { sendAdminBroadcastEmail, listAdminBroadcastEmails, BroadcastAudience } from '@/lib/modules/email';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 export async function POST(req: NextRequest) {
@@ -17,6 +15,10 @@ export async function POST(req: NextRequest) {
       body: z.string().optional(),
       audience: z.enum(['ALL_SUBSCRIBERS', 'PATRONS', 'NON_PATRONS', 'TEST', 'MANUAL']).optional(),
       testRecipientEmail: z.string().email().optional().nullable(),
+      manualRecipients: z.array(z.object({
+          email: z.string().email(),
+          name: z.string().optional().nullable()
+      })).optional(),
       dryRun: z.boolean().optional(),
       // Backward compatibility mapping
       subjectPl: z.string().optional(),
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
       if (data.recipientGroup === 'ALL') audience = "ALL_SUBSCRIBERS";
       else if (data.recipientGroup === 'SUBSCRIBERS') audience = "ALL_SUBSCRIBERS";
       else if (data.recipientGroup === 'PATRONS') audience = "PATRONS";
-      else if (data.recipientGroup === 'MANUAL') audience = "ALL_SUBSCRIBERS"; // Fallback
+      else if (data.recipientGroup === 'MANUAL') audience = "MANUAL";
   }
   if (data.isTest) audience = "TEST";
 
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
       body: data.body || data.htmlPl || '',
       audience,
       testRecipientEmail: data.testRecipientEmail || data.testEmail,
+      manualRecipients: data.manualRecipients,
       dryRun: data.dryRun,
       requestedByAdminId: adminUserId,
       // Pass raw legacy fields too
@@ -88,13 +91,18 @@ export async function GET(req: NextRequest) {
   const { response } = await requireAdminForApi("GET_ADMIN_EMAILS_BROADCAST_HISTORY");
   if (response) return response;
 
-  try {
-    const history = await prisma.broadcastEmail.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
-    return NextResponse.json(history);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 });
+  const ctx = createAppContext({
+      actor: { type: 'system', reason: 'Admin History Request' }
+  });
+
+  const result = await listAdminBroadcastEmails(ctx);
+
+  if (!result.ok) {
+      return NextResponse.json(
+          { error: result.error.message, code: result.error.code },
+          { status: result.error.statusCode }
+      );
   }
+
+  return NextResponse.json(result.data);
 }

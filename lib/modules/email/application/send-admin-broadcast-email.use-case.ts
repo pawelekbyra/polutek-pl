@@ -6,22 +6,11 @@ import {
     InvalidBroadcastPayloadError,
     EmailProviderError,
     TestRecipientRequiredError,
-    NoRecipientsError
 } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
-import { APP_NAME } from "@/lib/constants";
-import { Resend } from "resend";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { EmailRepository } from "../infrastructure/email.repository";
 import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
-
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    throw new Error('RESEND_API_KEY is missing');
-  }
-  return new Resend(apiKey);
-}
 
 /**
  * sendAdminBroadcastEmail use case.
@@ -40,7 +29,7 @@ export async function sendAdminBroadcastEmail(
     requestedByAdminId,
     // Support for legacy mapping
     subjectPl, htmlPl, subjectEn, htmlEn,
-    manualEmails
+    manualEmails, manualRecipients
   } = input;
 
   const adminUserId = requestedByAdminId || ((ctx.actor.type === 'user' || ctx.actor.type === 'admin') ? ctx.actor.userId : 'system');
@@ -52,6 +41,10 @@ export async function sendAdminBroadcastEmail(
 
   if (audience === "TEST" && !testRecipientEmail) {
     return fail(new TestRecipientRequiredError());
+  }
+
+  if (audience === "MANUAL" && (!manualRecipients || manualRecipients.length === 0) && !manualEmails) {
+    return fail(new InvalidBroadcastPayloadError("Recipients are required for MANUAL audience"));
   }
 
   try {
@@ -68,17 +61,34 @@ export async function sendAdminBroadcastEmail(
         name: testRecipientEmail.split('@')[0],
         isPatron: false,
       }];
-    } else if (input.audience as any === 'MANUAL' && manualEmails) {
-        const emails = manualEmails.split(',').map((e: string) => e.trim()).filter(Boolean);
-        recipients = emails.map((email: string) => ({
-          email,
-          language: 'pl',
-          name: email.split('@')[0],
-          isPatron: false,
-        }));
+    } else if (audience === "MANUAL") {
+        if (manualRecipients && manualRecipients.length > 0) {
+            recipients = manualRecipients.map(r => ({
+                email: r.email,
+                language: 'pl',
+                name: r.name || r.email.split('@')[0],
+                isPatron: false
+            }));
+        } else if (manualEmails) {
+            const emails = manualEmails.split(',').map((e: string) => e.trim()).filter(Boolean);
+            recipients = emails.map((email: string) => ({
+              email,
+              language: 'pl',
+              name: email.split('@')[0],
+              isPatron: false,
+            }));
+        }
     } else {
       recipients = await repository.findRecipientsForAudience(audience);
     }
+
+    // Deduplicate recipients by email
+    const seenEmails = new Set<string>();
+    recipients = recipients.filter(r => {
+        if (!r.email || seenEmails.has(r.email.toLowerCase())) return false;
+        seenEmails.add(r.email.toLowerCase());
+        return true;
+    });
 
     if (recipients.length === 0) {
       return ok({
@@ -106,16 +116,12 @@ export async function sendAdminBroadcastEmail(
       });
     }
 
-    // 3. Special handling for TEST via Resend directly (to maintain current behavior)
+    // 3. Handling for TEST via Provider
     if (audience === "TEST") {
-      const resend = getResendClient();
-      const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
-
-      await resend.emails.send({
-        from,
-        to: [testRecipientEmail!],
-        subject: `[TEST] ${subject}`,
-        html: body || htmlPl || ''
+      const { messageId } = await provider.sendTestEmail({
+        to: testRecipientEmail!,
+        subject,
+        body: body || htmlPl || ''
       });
 
       await recordAuditEvent(ctx, {
@@ -131,25 +137,33 @@ export async function sendAdminBroadcastEmail(
         sent: 1,
         skipped: 0,
         failed: 0,
-        messageIds: ['test-id'],
+        messageIds: [messageId],
       });
     }
 
-    // 4. Create BroadcastEmail record
+    // 4. Map audience to DB Enum (BroadcastRecipientGroup)
+    let dbGroup: 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL' = 'SUBSCRIBERS';
+    if (audience === 'ALL_SUBSCRIBERS') dbGroup = 'ALL';
+    else if (audience === 'PATRONS') dbGroup = 'PATRONS';
+    else if (audience === 'MANUAL') dbGroup = 'MANUAL';
+    // NON_PATRONS and TEST don't have a direct 1:1 match in the old enum, using MANUAL/ALL as fallback for record keeping
+    else if (audience === 'NON_PATRONS') dbGroup = 'ALL';
+
+    // 5. Create BroadcastEmail record
     const broadcast = await ctx.prisma.broadcastEmail.create({
       data: {
         subjectPl: subjectPl || subject,
         htmlPl: htmlPl || body,
         subjectEn: subjectEn || subject,
         htmlEn: htmlEn || body,
-        recipientGroup: (audience as any) === 'ALL_SUBSCRIBERS' ? 'ALL' : (audience as any),
+        recipientGroup: dbGroup,
         recipientCount: recipients.length,
         status: 'READY',
         createdById: adminUserId
       }
     });
 
-    // 5. Create individual recipient records
+    // 6. Create individual recipient records
     await ctx.prisma.broadcastEmailRecipient.createMany({
       data: recipients.map(r => ({
         broadcastEmailId: broadcast.id,
@@ -160,7 +174,7 @@ export async function sendAdminBroadcastEmail(
       }))
     });
 
-    // 6. Trigger bridge provider
+    // 7. Trigger bridge provider
     await provider.sendBroadcast({
         subject,
         body,

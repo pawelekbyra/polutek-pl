@@ -2,13 +2,18 @@ export type BroadcastAudience =
   | "ALL_SUBSCRIBERS"
   | "PATRONS"
   | "NON_PATRONS"
-  | "TEST";
+  | "TEST"
+  | "MANUAL";
 
 export type AdminBroadcastEmailInput = {
   subject: string;
   body: string; // Used for content if not using templates
   audience: BroadcastAudience;
   testRecipientEmail?: string | null;
+  manualRecipients?: Array<{
+    email: string;
+    name?: string | null;
+  }>;
   dryRun?: boolean;
   requestedByAdminId?: string;
   // Legacy fields to be mapped for backward compatibility if needed
@@ -40,6 +45,20 @@ export type AdminBroadcastEmailResult = {
     email: string;
     reason: string;
   }>;
+  message?: string;
+};
+
+export type AdminBroadcastEmailListItemDto = {
+  id: string;
+  subjectPl: string;
+  status: string;
+  recipientGroup: string;
+  recipientCount: number;
+  sentCount: number;
+  errorCount: number;
+  sentAt: Date | null;
+  createdAt: Date;
+  createdById: string | null;
 };
 
 export type ResendWebhookInput = {
@@ -63,4 +82,5 @@ export type ResendWebhookResult = {
   accepted: boolean;
   ignored?: boolean;
   duplicate?: boolean;
+  idempotency?: "available" | "not_available";
 };

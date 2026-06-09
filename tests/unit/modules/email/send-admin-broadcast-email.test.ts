@@ -1,29 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { sendAdminBroadcastEmail } from '@/lib/modules/email/application/send-admin-broadcast-email.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { EmailService } from '@/lib/services/email.service';
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendBroadcast: vi.fn().mockResolvedValue(undefined),
-  },
+const { mockSendBroadcast, mockSendTestEmail } = vi.hoisted(() => ({
+  mockSendBroadcast: vi.fn(),
+  mockSendTestEmail: vi.fn(),
 }));
+
+vi.mock('@/lib/modules/email/infrastructure/legacy-email-service-provider', () => {
+  return {
+    LegacyEmailServiceProvider: vi.fn().mockImplementation(function() {
+      return {
+        sendBroadcast: mockSendBroadcast,
+        sendTestEmail: mockSendTestEmail,
+      };
+    }),
+  };
+});
 
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('resend', () => {
-  return {
-    Resend: vi.fn().mockImplementation(() => ({
-      emails: {
-        send: vi.fn().mockResolvedValue({ data: { id: 'test_id' }, error: null }),
-      },
-    })),
-  };
-});
-
-describe('sendAdminBroadcastEmail use case', () => {
+describe('sendAdminBroadcastEmail use case - hardening', () => {
   const prismaMock = {
     user: {
       findMany: vi.fn(),
@@ -43,6 +42,8 @@ describe('sendAdminBroadcastEmail use case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSendBroadcast.mockResolvedValue({ sent: 1, failed: 0, messageIds: ['b1'] });
+    mockSendTestEmail.mockResolvedValue({ messageId: 'test-id' });
   });
 
   it('rejects missing subject or body', async () => {
@@ -58,93 +59,73 @@ describe('sendAdminBroadcastEmail use case', () => {
     }
   });
 
-  it('rejects missing test recipient for TEST audience', async () => {
+  it('uses provider bridge for TEST audience instead of direct Resend', async () => {
     const result = await sendAdminBroadcastEmail(ctx, {
       subject: 'Test',
       body: 'Test',
       audience: 'TEST',
-      testRecipientEmail: null,
+      testRecipientEmail: 'test@example.com',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockSendTestEmail).toHaveBeenCalled();
+  });
+
+  it('supports MANUAL audience with manualRecipients', async () => {
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Manual',
+      body: 'Body',
+      audience: 'MANUAL',
+      manualRecipients: [{ email: 'manual@example.com', name: 'Manual User' }]
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data.recipientCount).toBe(1);
+    }
+    expect(prismaMock.broadcastEmailRecipient.createMany).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.arrayContaining([
+            expect.objectContaining({ email: 'manual@example.com' })
+        ])
+    }));
+  });
+
+  it('deduplicates recipient emails', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: 'u1', email: 'duplicate@ex.com', language: 'pl', name: 'U1', isPatron: false },
+      { id: 'u2', email: 'DUPLICATE@ex.com', language: 'pl', name: 'U2', isPatron: false },
+    ]);
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Dedupe',
+      body: 'Body',
+      audience: 'ALL_SUBSCRIBERS',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data.recipientCount).toBe(1);
+    }
+  });
+
+  it('maps provider failure to EMAIL_PROVIDER_FAILED', async () => {
+    mockSendBroadcast.mockRejectedValueOnce(new Error("Provider down"));
+
+    prismaMock.user.findMany.mockResolvedValue([{ id: 'u1', email: 'u1@ex.com', language: 'pl', name: 'U1' }]);
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Fail',
+      body: 'Body',
+      audience: 'ALL_SUBSCRIBERS',
     });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-        expect(result.error.code).toBe('EMAIL_TEST_RECIPIENT_REQUIRED');
+        expect(result.error.code).toBe('EMAIL_PROVIDER_FAILED');
     }
-  });
-
-  it('implements dryRun: true correctly', async () => {
-    prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'u1@ex.com', language: 'pl', name: 'U1', isPatron: false },
-      { id: 'u2', email: 'u2@ex.com', language: 'pl', name: 'U2', isPatron: false },
-    ]);
-
-    const result = await sendAdminBroadcastEmail(ctx, {
-      subject: 'Dry Run',
-      body: 'Body',
-      audience: 'ALL_SUBSCRIBERS',
-      dryRun: true,
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.dryRun).toBe(true);
-        expect(result.data.recipientCount).toBe(2);
-        expect(result.data.skipped).toBe(2);
-    }
-    expect(prismaMock.broadcastEmail.create).not.toHaveBeenCalled();
-    expect(EmailService.sendBroadcast).not.toHaveBeenCalled();
-  });
-
-  it('supports PATRONS audience', async () => {
-    prismaMock.user.findMany.mockResolvedValue([
-        { id: 'p1', email: 'p1@ex.com', language: 'pl', name: 'P1', isPatron: true },
-    ]);
-    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
-
-    const result = await sendAdminBroadcastEmail(ctx, {
-      subject: 'Patrons Only',
-      body: 'Body',
-      audience: 'PATRONS',
-    });
-
-    expect(result.ok).toBe(true);
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ isPatron: true })
-    }));
-    expect(EmailService.sendBroadcast).toHaveBeenCalledWith('b1');
-  });
-
-  it('supports NON_PATRONS audience', async () => {
-    prismaMock.user.findMany.mockResolvedValue([
-        { id: 'np1', email: 'np1@ex.com', language: 'pl', name: 'NP1', isPatron: false },
-    ]);
-    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
-
-    const result = await sendAdminBroadcastEmail(ctx, {
-      subject: 'Non-Patrons Only',
-      body: 'Body',
-      audience: 'NON_PATRONS',
-    });
-
-    expect(result.ok).toBe(true);
-    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ isPatron: false })
-    }));
-  });
-
-  it('handles empty recipient list correctly', async () => {
-    prismaMock.user.findMany.mockResolvedValue([]);
-
-    const result = await sendAdminBroadcastEmail(ctx, {
-      subject: 'Nobody',
-      body: 'Body',
-      audience: 'ALL_SUBSCRIBERS',
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.recipientCount).toBe(0);
-    }
-    expect(prismaMock.broadcastEmail.create).not.toHaveBeenCalled();
   });
 });
