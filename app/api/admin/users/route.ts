@@ -1,9 +1,11 @@
 import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { UsersAdminService } from '@/lib/services/admin/users-admin.service';
 import { handleApiError } from '@/lib/errors';
 import { parseUserQueryParams } from '@/lib/services/admin/admin-query-parser';
+import { listAdminUsers } from '@/lib/modules/users';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +18,10 @@ export async function GET(req: NextRequest) {
   const options = parseUserQueryParams(req);
 
   try {
-    const result = await UsersAdminService.getUsers(options);
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+
+    const result = await listAdminUsers(options, ctx);
 
     return NextResponse.json(result);
   } catch (error: unknown) {

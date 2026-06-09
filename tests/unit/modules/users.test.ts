@@ -25,11 +25,14 @@ describe('Users Module', () => {
     const profile = await getUserAccessProfile(ctx, 'user_123');
 
     expect(profile).toEqual({
-      userId: 'user_123',
+      id: 'user_123',
+      clerkId: 'user_123',
+      email: undefined,
       role: 'USER',
       isPatron: true,
       isAdmin: false,
       isDeleted: false,
+      language: undefined,
     });
   });
 
@@ -78,7 +81,7 @@ describe('Users Module', () => {
         actor: { type: 'user', userId: 'user_123', isPatron: false }
       });
       const profile = await getActorAccessProfile(ctx);
-      expect(profile?.userId).toBe('user_123');
+      expect(profile?.id).toBe('user_123');
     });
 
     it('should return null for soft-deleted user actor', async () => {

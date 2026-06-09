@@ -1,9 +1,9 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { getUserAccessProfile, UserAccessProfile } from "./get-user-access-profile.use-case";
+import { getUserAccessProfile, UserAccessProfileDto } from "./get-user-access-profile.use-case";
 
 export async function getActorAccessProfile(
   ctx: AppContext
-): Promise<UserAccessProfile | null> {
+): Promise<UserAccessProfileDto | null> {
   const { actor } = ctx;
 
   if (actor.type === 'guest' || actor.type === 'system') {

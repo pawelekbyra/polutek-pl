@@ -7,6 +7,8 @@ import { handleApiError } from "@/lib/errors";
 
 type Context = { params: { userId: string } };
 
+// R7 blocker: admin patron mutations still use legacy patron service.
+// Do not migrate into Users. Patron grants/revoke belong to R7 Patron + Payments.
 export async function PATCH(request: NextRequest, { params }: Context) {
   const requestId = request.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);

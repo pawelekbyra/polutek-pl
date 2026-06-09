@@ -92,7 +92,7 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R2**  | Moduł Audit                                     | [x foundation]                |
 | **R3**  | Moduł Media                                     | [x safety foundation]         |
 | **R4**  | Moduł Channel / ścisły jednokanałowy            | [x single-channel foundation] |
-| **R5**  | Moduł Users                                     | [~]                           |
+| **R5**  | Moduł Users                                     | [~ stronger]                  |
 | **R6**  | Moduł Video                                     | [~ stronger]                  |
 | **R6.5**| Access Foundation                               | [x video foundation]         |
 | **R7**  | Moduły Patron + Payments                        | [ ]                           |
@@ -113,15 +113,15 @@ Aktualna interpretacja projektu:
 ## 5. Bieżące zadanie
 
 ```txt
-R5 Users Admin/Webhook Completion + R6 playback/media-source delivery readiness before R7 readiness review.
+R5/R6/R6.5 readiness review before R7 Patron + Payments architecture audit.
 ```
 
 Nie zaczynaj jeszcze R7 Patron + Payments.
 
 R7 może wystartować dopiero po:
 
-* przejrzeniu blokerów R5 Users,
-* przejrzeniu blokerów R6 Video,
+* przejrzeniu blokerów R5 Users (admin users core identity is modular, extensions remain legacy),
+* przejrzeniu blokerów R6 Video (delivery/playback),
 * certyfikacji granicy dostarczania mediów (playback),
 * uzgodnieniu README i architecture guard co do tego, co pozostaje legacy.
 
@@ -343,10 +343,10 @@ Znane pozostałe prace:
 
 R5 nie jest ukończone dopóki:
 
-* route'y profilu/synchronizacji/języka/poleceń użytkownika są zmigrowane lub jawnie zaklasyfikowane,
+* route'y profilu/synchronizacji/języka są zmigrowane,
 * webhook Clerk importuje tylko publiczne API modułu,
-* użytkownicy admina są obsłużeni lub jawnie odroczeni,
-* `User.isPatron` w bazie jako źródło prawdy jest chronione testami,
+* użytkownicy admina (core lookup) są zmigrowani,
+* `User.isPatron` w bazie jako źródło prawdy jest chronione testami i nie jest nadpisywane przez identity sync,
 * metadane Clerk pozostają tylko cache'em.
 
 ---
@@ -420,6 +420,18 @@ Certyfikowany fundament dostępu dla wideo.
 ---
 
 ### R7 — Patron + Payments (Patroni i Płatności)
+
+#### R7 readiness notes
+
+R7 may start only after a readiness audit confirms:
+- Users source-of-truth is clear.
+- Access decisions use lib/modules/access.
+- DB User.isPatron remains the current source of truth until Patron module introduces a grant model.
+- Checkout never accepts client creatorId.
+- Stripe webhook idempotency strategy is defined.
+- Refund/revoke updates DB source-of-truth and audit.
+- Clerk metadata sync happens after DB commit and remains cache only.
+- Legacy patron/payment services are mapped before migration.
 
 Cel:
 
@@ -1252,6 +1264,24 @@ Status:
 
 ```txt
 R6 [~ stronger]
+```
+
+---
+
+### R5 Users Admin/Webhook Pass — 2026-06-09
+
+* Clerk webhook boundary jest czysty; logika identity sync i soft-delete w use case.
+* Identity sync nie nadpisuje `User.isPatron` (source-of-truth protected).
+* Admin users (list/details) zmigrowane do modularnych use case'ów (core identity).
+* `getUserAccessProfile` dostarcza stabilny read-model dla decyzji access.
+* Route'y profilu, synchronizacji i języka użytkownika są modularne.
+* Admin patron management route jawnie sklasyfikowany jako R7 blocker.
+* Referrals sklasyfikowane jako future domain blocker.
+
+Status:
+
+```txt
+R5 [~ stronger]
 ```
 
 ---

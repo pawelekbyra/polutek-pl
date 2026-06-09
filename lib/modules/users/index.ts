@@ -1,4 +1,6 @@
 export * from "./application/get-user-access-profile.use-case";
+export * from "./application/get-admin-user-details.use-case";
+export * from "./application/list-admin-users.use-case";
 export * from "./application/get-actor-access-profile.use-case";
 export * from "./application/update-user-language.use-case";
 export * from "./application/get-user-profile.use-case";
