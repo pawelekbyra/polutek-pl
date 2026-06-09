@@ -57,7 +57,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </h1>
             <div className="h-1.5 w-24 bg-blue-600 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.8)]" />
             <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-blue-600/30 pl-6 py-2">
-              &quot;{videoTitle || (language === 'pl' ? "Wsparcie twórcy" : "Creator Support")}&quot;
+              &quot;{videoTitle || (language === 'pl' ? "Wsparcie kanału" : "Channel Support")}&quot;
             </p>
           </div>
 

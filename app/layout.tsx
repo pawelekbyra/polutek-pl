@@ -16,7 +16,7 @@ const gluten = Gluten({ weight: '400', subsets: ['latin'], display: 'swap', vari
 
 export const metadata = {
   title: APP_NAME,
-  description: `${APP_NAME} — niezależna platforma wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`
+  description: `${APP_NAME} — niezależny kanał wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

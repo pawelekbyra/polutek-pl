@@ -167,7 +167,7 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                 </div>
 
                 <Card>
-                    <CardHeader><CardTitle className="text-base">Subskrypcje kanałów</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Subskrybowany kanał</CardTitle></CardHeader>
                     <CardContent>
                         {user.subscriptions.length === 0 ? (
                             <p className="text-sm text-muted-foreground py-4 italic">Brak subskrypcji.</p>
@@ -282,7 +282,7 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                                 <MessageSquare className="h-5 w-5 text-blue-500" />
                                 <div>
                                     <p className="text-sm font-bold">Komentarze</p>
-                                    <p className="text-xs text-muted-foreground">Użytkownik napisał {user._count.comments} komentarzy na platformie.</p>
+                                    <p className="text-xs text-muted-foreground">Użytkownik napisał {user._count.comments} komentarzy w serwisie.</p>
                                 </div>
                             </div>
                             <div className="flex gap-4 p-4 rounded-lg bg-green-50/30 border border-green-100">
