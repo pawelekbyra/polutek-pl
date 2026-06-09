@@ -41,9 +41,7 @@ describe('Actor & AppContext', () => {
   it('should strip userId and role if passed in overrides', () => {
     const ctx = createAppContext({
       actor: { type: 'user', userId: 'u1', isPatron: true },
-      // @ts-expect-error - testing legacy removal
       userId: 'legacy-id',
-      // @ts-expect-error - testing legacy removal
       role: 'legacy-role'
     } as any);
     expect((ctx as any).userId).toBeUndefined();

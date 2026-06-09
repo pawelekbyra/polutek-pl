@@ -60,6 +60,7 @@ export class VideoRepository {
             { publishedAt: { lte: now } }
         ],
         showInSidebar: true,
+        tier: { in: ['PUBLIC', 'LOGGED_IN', 'PATRON'] },
         creator: {
             isApproved: true,
             isPrimary: true
@@ -108,9 +109,22 @@ export class VideoRepository {
     return { items, total };
   }
 
-  async findHero(mainChannelId: string): Promise<Video | null> {
+  async findHero(mainChannelId: string, now: Date): Promise<Video | null> {
     return await this.db.video.findFirst({
-      where: { creatorId: mainChannelId, isMainFeatured: true, status: 'PUBLISHED' }
+      where: {
+        creatorId: mainChannelId,
+        isMainFeatured: true,
+        status: 'PUBLISHED',
+        tier: 'PUBLIC',
+        OR: [
+            { publishedAt: null },
+            { publishedAt: { lte: now } }
+        ],
+        creator: {
+            isApproved: true,
+            isPrimary: true
+        }
+      }
     });
   }
 

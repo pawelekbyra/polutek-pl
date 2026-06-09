@@ -29,7 +29,9 @@
 | **R11** | Admin frontend | [ ] |
 
 ## 4. Current next task
-`R7 patron + payments — migracja lib/services/patron.service.ts i lib/services/payments/ do lib/modules/patron i lib/modules/payments`
+`R5/R6 blocker completion — access route, resync scoping, admin video details, users webhook/admin users boundary, then decide whether R7 can start.`
+
+R7 Patron + Payments must not start until R5/R6 blockers are reviewed and either fixed or explicitly accepted.
 
 ## 5. Mandatory agent rules
 - **do not just move files**: Każdy etap ma być kompletny (kod, testy, typy, boundary guards).
