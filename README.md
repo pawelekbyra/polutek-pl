@@ -29,7 +29,7 @@
 | **R11** | Admin frontend | [ ] |
 
 ## 4. Current next task
-`R5 users module migration phase 1`
+`R5 users module migration phase 3 — admin users/webhook/access sync boundary`
 
 ## 5. Mandatory agent rules
 - **do not just move files**: Każdy etap ma być kompletny (kod, testy, typy, boundary guards).

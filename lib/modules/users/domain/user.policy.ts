@@ -8,4 +8,9 @@ export class UserPolicy {
   static isPatron(isPatron: boolean): boolean {
     return isPatron;
   }
+
+  static canSeeProfile(actor: any, user: { id: string, isDeleted: boolean }): boolean {
+    if (user.isDeleted && actor.role !== 'ADMIN') return false;
+    return true;
+  }
 }

@@ -7,8 +7,8 @@ import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { UserLanguageService } from '@/lib/services/user/language.service';
 import { prisma } from '@/lib/prisma';
+import { GetUserProfileUseCase, SyncCurrentUserUseCase, updateUserLanguage } from '@/lib/modules/users';
 import { AccessPolicy } from '@/lib/access/access-policy';
 import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
 
@@ -52,9 +52,13 @@ vi.mock('@/lib/services/user/profile.service', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user/language.service', () => ({
-  UserLanguageService: {
-    updateUserLanguage: vi.fn(),
+vi.mock('@/lib/modules/users', () => ({
+  updateUserLanguage: vi.fn(),
+  GetUserProfileUseCase: {
+    execute: vi.fn(),
+  },
+  SyncCurrentUserUseCase: {
+    execute: vi.fn(),
   },
 }));
 
@@ -89,8 +93,8 @@ describe('API Contracts', () => {
 
   describe('PATCH /api/user/language', () => {
     it('matches the documented response shape for success', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(UserLanguageService.updateUserLanguage).mockResolvedValue({} as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', sessionClaims: { metadata: { role: 'user' } } } as any);
+      vi.mocked(updateUserLanguage).mockResolvedValue({} as any);
 
       const req = new NextRequest('http://localhost/api/user/language', {
         method: 'PATCH',
