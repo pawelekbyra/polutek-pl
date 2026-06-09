@@ -90,11 +90,11 @@ Faza może być certyfikowana jako fundament (foundation) bez udawania, że wszy
 | **R0**  | Zasady, infrastruktura, projektowe bariery      | [x]                           |
 | **R1**  | Shared, granica API, błędy, Actor, AppContext   | [x]                           |
 | **R2**  | Moduł Audit                                     | [x foundation]                |
-| **R3**  | Moduł Media                                     | [x safety foundation]         |
+| **R3**  | Moduł Media                                     | [x stronger foundation]      |
 | **R4**  | Moduł Channel / ścisły jednokanałowy            | [x single-channel foundation] |
-| **R5**  | Moduł Users                                     | [~ stronger]                  |
-| **R6**  | Moduł Video                                     | [~ stronger]                  |
-| **R6.5**| Access Foundation                               | [x video foundation]         |
+| **R5**  | Moduł Users                                     | [x stronger foundation]      |
+| **R6**  | Moduł Video                                     | [x stronger foundation]      |
+| **R6.5**| Access Foundation                               | [x certified]                 |
 | **R7**  | Moduły Patron + Payments                        | [ ]                           |
 | **R8**  | Moduł Comments                                  | [ ]                           |
 | **R9**  | Moduł Email                                     | [ ]                           |
@@ -1163,9 +1163,8 @@ Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a tes
 ### Blokery R6 Video
 
 * Szczegóły admina (diagnostyka/audyt) pozostają jako rozszerzenie legacy (R6 blocker).
-* Migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość.
-* Publiczne DTO jest bezpieczne, ale publiczny route dostarczania mediów/playbacku wciąż wymaga dedykowanego domknięcia (R3/R6 delivery blocker).
-* Dostarczanie mediów/proxy/media-source nie są w pełni zmodularyzowane.
+* Migracja frontendu publicznego do DTO modułu pozostaje zadaniem na przyszłość (R10/R11).
+* Dostarczanie mediów/proxy/media-source (R3/R6 delivery) jest certyfikowane i zabezpieczone przed leakami URL.
 
 ---
 
