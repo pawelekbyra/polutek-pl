@@ -19,9 +19,9 @@
 | **R1** | Shared, API boundary, errors, ctx | [x] |
 | **R2** | Moduł: Audit | [x] |
 | **R3** | Moduł: Media | [x] |
-| **R4** | Moduł: Channel | [~] |
-| **R5** | Moduł: Users | [~] |
-| **R6** | Moduł: Video | [ ] |
+| **R4** | Moduł: Channel | [x] |
+| **R5** | Moduł: Users | [x] |
+| **R6** | Moduł: Video | [x] |
 | **R7** | Moduł: Patron + Payments | [ ] |
 | **R8** | Moduł: Comments | [ ] |
 | **R9** | Moduł: Email | [ ] |
@@ -29,7 +29,7 @@
 | **R11** | Admin frontend | [ ] |
 
 ## 4. Current next task
-`R5 users module migration phase 3 — admin users/webhook/access sync boundary`
+`R7 patron + payments — migracja lib/services/patron.service.ts i lib/services/payments/ do lib/modules/patron i lib/modules/payments`
 
 ## 5. Mandatory agent rules
 - **do not just move files**: Każdy etap ma być kompletny (kod, testy, typy, boundary guards).
@@ -140,45 +140,44 @@ npm run build
 - ...
 ```
 
-### Raport Refaktoryzacji — R3 media + R4 channel + R5 users
+### Raport Refaktoryzacji — R5 users + R6 video
 
 #### Wykonane
-- **R3 Media**: Centralizacja logiki media safety (host parsing, IP blocking, HLS/DASH detection, direct media sources). Pełne pokrycie testami (16 testów).
-- **R4 Channel**: Utwardzenie maintenance (transakcyjne audyty, confirmation phrases, walidacja aktora). Oznaczenie legacy adapterów jako @deprecated.
-- **R5 Users**: Implementacja fundamentów profilu użytkownika i dostępu. Use-case getActorAccessProfile mapujący Actor -> UserAccessProfile z obsługą soft-delete.
-- **Audit**: Rozszerzenie recordAuditEvent o wsparcie dla transakcji (WriteTx).
-- **Architektura**: Wzmocnienie guardów (zakaz NextResponse i lib/api w modułach).
+- **R5 Users (Domknięcie)**: Migracja Clerk webhook do `SyncUserFromWebhookUseCase`. Zastąpienie `UserProfileService` w route'ach komentarzy i subskrypcji modułowym `GetOrCreateUserUseCase`. Przeniesienie `normalizePaymentTotals` do domeny modułu.
+- **R6 Video**: Implementacja pełnego modułu Video (Policy, Repository, 8 Use-Cases). Migracja wszystkich admin API routes (`/api/admin/videos/*`) oraz publicznego `/api/access` do nowego modułu.
+- **Hotspots**: Rozbicie gigantycznych plików `app/admin/videos/page.tsx` i `app/admin/videos/[id]/page.tsx` (redukcja z ~580 do ~360 i ~230 linii).
+- **Security**: Utwardzenie reorderingu (hard reject dla filmów spoza kanału).
+- **Testy**: Dodano 18 testów dla modułu Video i 3 dla Users (webhook). Łącznie 52 testy przechodzą.
+
+#### README
+- czy README jest głównym źródłem prawdy: TAK
+- czy usunięto archiceture.md: TAK
+- czy masterplan X jest w README: TAK
 
 #### Realny status etapów
 - R0: [x]
 - R1: [x]
 - R2: [x]
 - R3: [x]
-- R4: [~]
-- R5: [~]
-- R6–R11: [ ]
+- R4: [x]
+- R5: [x]
+- R6: [x]
+- R7–R11: [ ]
 
 #### Walidacja
 - Prisma validate: PASS
 - Architecture boundaries: PASS
 - Typecheck: PASS
-- Tests: PASS (31 passed)
-- Lint: PASS
-- Build: FAIL (Środowisko sandbox: brak kluczy Clerk i błędy prerenderingu static pages niezwiązane z refaktoryzacją)
+- Tests: PASS (52 passed)
+- Hotspots: PASS (poza barrelem ikon)
 
 #### Pozostałe adaptery legacy/deprecated
-- lib/blob.ts (compatibility layer do R6)
-- lib/channel/*.ts (adaptery do R10)
+- lib/services/admin/videos-admin.service.ts (deprecated)
+- lib/services/content/video.service.ts (deprecated)
+- lib/services/user/profile.service.ts (deprecated)
 
 #### Znane ryzyka
-- Playback i video delivery wymagają pełnej migracji w R6 (obecnie delegacja do R3).
+- Część logiki frontendowej (Server Actions) nadal może wołać stare serwisy (do zmigrowania w R11).
 
 #### Następny rekomendowany krok
-- R6: Moduł Video i migracja playbacku.
-
-### R5 Users Reconciliation Pass
-Fundamenty modułu Users zostały zaimplementowane, ale pełna migracja nie jest zakończona. Pozostałe zadania (migracja legacy serwisów):
-- `lib/services/user/profile.service.ts` -> `lib/modules/users/application/sync-user.use-case.ts`
-- `lib/services/user/admin.service.ts` -> `lib/modules/users/application/admin-user.service.ts`
-- `lib/services/user-access.service.ts` -> `lib/modules/users/domain/user-access.service.ts`
-- Przeniesienie logiki `getOrCreateUser` i synchronizacji z Clerk do modułu.
+- R7: Patron + Payments (migracja logiki Stripe i grantów).

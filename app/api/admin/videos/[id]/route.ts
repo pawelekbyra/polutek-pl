@@ -5,6 +5,10 @@ import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
 import { VideosDiagnosticsService } from '@/lib/services/admin/videos-diagnostics.service';
 import { isUuid } from '@/lib/utils/uuid';
+import { getVideoById } from '@/lib/modules/video';
+import { fromUseCaseResult } from '@/lib/api/api-response';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,38 +27,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         else return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    const video = await prisma.video.findUnique({
-      where: { id: videoId },
-      include: {
-        creator: true,
-        asset: true,
-        _count: {
-          select: {
-            comments: true,
-            videoLikes: true,
-            videoDislikes: true,
-            playbackSessions: true
-          }
-        },
-        comments: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-            include: {
-                author: {
-                    select: {
-                        email: true,
-                        name: true,
-                        username: true
-                    }
-                }
-            }
-        }
-      }
-    });
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor });
+    const result = await getVideoById(videoId, ctx);
 
-    if (!video) {
-        return NextResponse.json({ error: 'Video not found' }, { status: 404 });
-    }
+    if (!result.ok) return fromUseCaseResult(result);
 
     const diagnostics = await VideosDiagnosticsService.diagnoseVideo(videoId);
 
@@ -64,8 +41,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         take: 50
     });
 
+    // Merge module DTO with admin-only details (diagnostics, audit)
     return NextResponse.json({
-        ...video,
+        ...result.data,
         diagnostics,
         auditLogs
     });

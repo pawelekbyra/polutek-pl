@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { CommentReactionService } from '@/lib/services/comments/comment-reaction.service';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,13 +17,23 @@ export async function PUT(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId, sessionClaims } = await auth();
-  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  const actor = await getActorFromAuth();
+  if (actor.type === 'guest' || !('userId' in actor)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = actor.userId;
 
   const { commentId } = params;
 
   try {
-    const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    const ctx = createAppContext({ actor });
+    const { sessionClaims } = await auth();
+    const email = (sessionClaims as any)?.email as string;
+    const localUser = await GetOrCreateUserUseCase.execute(ctx, {
+        id: actor.userId,
+        email,
+        name: (sessionClaims as any)?.name,
+        username: (sessionClaims as any)?.username,
+        imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+    });
     if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
     const decision = await CommentAccessService.canReact(userId, commentId);
@@ -43,13 +55,23 @@ export async function DELETE(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId, sessionClaims } = await auth();
-  if (!userId) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  const actor = await getActorFromAuth();
+  if (actor.type === 'guest' || !('userId' in actor)) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  const userId = actor.userId;
 
   const { commentId } = params;
 
   try {
-    const localUser = await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+    const ctx = createAppContext({ actor });
+    const { sessionClaims } = await auth();
+    const email = (sessionClaims as any)?.email as string;
+    const localUser = await GetOrCreateUserUseCase.execute(ctx, {
+        id: actor.userId,
+        email,
+        name: (sessionClaims as any)?.name,
+        username: (sessionClaims as any)?.username,
+        imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+    });
     if (!localUser) return NextResponse.json({ success: false, message: 'User sync failed' }, { status: 500 });
 
     const decision = await CommentAccessService.canReact(userId, commentId);

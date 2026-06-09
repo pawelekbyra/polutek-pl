@@ -3,11 +3,12 @@ import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 import { Prisma, WebhookEventStatus } from '@prisma/client';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 
@@ -141,7 +142,16 @@ export async function POST(req: Request) {
       const userLanguage = resolveLanguage(publicMetadata, unsafeMetadata);
 
       if (id && email) {
-        const user = await UserService.syncUser(id, email, name, image_url, referrerId, userLanguage, username || undefined);
+        const ctx = createAppContext({ actor: { type: 'system', reason: 'clerk_webhook' } });
+        await SyncUserFromWebhookUseCase.execute(ctx, {
+            id,
+            email,
+            name,
+            username: username || undefined,
+            imageUrl: image_url,
+            language: userLanguage,
+            referrerId
+        });
         scopedLogger.info(`User ${id} synced via webhook. Referrer: ${referrerId || 'None'}, Language: ${userLanguage}`);
 
         if (eventType === 'user.created') {
@@ -176,7 +186,8 @@ export async function POST(req: Request) {
             });
 
             if (user) {
-                await UserService.softDeleteUser(id);
+                const ctx = createAppContext({ actor: { type: 'system', reason: 'clerk_webhook' } });
+                await SyncUserFromWebhookUseCase.softDelete(ctx, id);
                 scopedLogger.info(`User ${id} soft-deleted/anonymized via webhook.`);
             }
 
