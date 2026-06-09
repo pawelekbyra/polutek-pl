@@ -3,6 +3,7 @@ import { UserRepository } from "../infrastructure/user.repository";
 import { logger } from "@/lib/logger";
 import crypto from "crypto";
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
+import { UserDeletedError, UserHasNoEmailError } from "../domain/user.errors";
 
 export interface IdentityProvider {
     getUserSyncData(userId: string): Promise<{
@@ -30,7 +31,7 @@ export async function updateUserLanguage(
   const existingUser = await repository.findById(userId);
 
   if (existingUser?.isDeleted) {
-    throw new Error("Cannot update language for deleted user");
+    throw new UserDeletedError(userId);
   }
 
   let email = existingUser?.email ?? null;
@@ -42,7 +43,7 @@ export async function updateUserLanguage(
     const syncData = await identityProvider.getUserSyncData(userId);
     email = syncData.email;
 
-    if (!email) throw new Error("USER_HAS_NO_EMAIL");
+    if (!email) throw new UserHasNoEmailError(userId);
 
     username = syncData.username;
     const displayUsername = isGeneratedClerkUsername(username)

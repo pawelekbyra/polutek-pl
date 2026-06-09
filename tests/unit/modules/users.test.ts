@@ -142,7 +142,7 @@ describe('Users Module', () => {
 
         const ctx = createAppContext({ prisma: mockPrisma });
         await expect(updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider))
-          .rejects.toThrow('Cannot update language for deleted user');
+          .rejects.toThrow('User user_123 is deleted');
       });
   });
 

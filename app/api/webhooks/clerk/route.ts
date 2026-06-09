@@ -8,7 +8,7 @@ import { EmailService } from '@/lib/services/email.service';
 import { prisma } from '@/lib/prisma';
 import { Prisma, WebhookEventStatus } from '@prisma/client';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
+import { SyncUserFromWebhookUseCase } from '@/lib/modules/users';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 

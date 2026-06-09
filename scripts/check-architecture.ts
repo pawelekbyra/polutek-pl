@@ -57,35 +57,88 @@ function checkModules() {
   return violations;
 }
 
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media'];
+
+const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
+  'app/api/webhooks/clerk/route.ts':
+    'R5 cert: webhook still has direct prisma/legacy boundary or was just migrated; fix fully in R5 pass.',
+  'app/api/admin/videos/resync/route.ts':
+    'R6 blocker: resync is still legacy/direct Prisma; needs resyncAdminVideoStats use case.',
+  'app/api/access/route.ts':
+    'R6/R7 blocker: uses legacy AccessPolicy; needs dedicated Access migration pass.',
+  'app/api/admin/videos/[id]/route.ts':
+    'R6 blocker: mixed route, uses Video module but still relies on direct Prisma/Services for some fields.',
+  'app/api/admin/videos/route.ts':
+    'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
+  'app/api/comments/[commentId]/reaction/route.ts':
+    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+  'app/api/comments/[commentId]/report/route.ts':
+    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+  'app/api/comments/[commentId]/route.ts':
+    'R2/R8 blocker: mixed route, uses Audit module but comments are not yet fully migrated.',
+  'app/api/subscriptions/route.ts':
+    'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
+  'app/api/videos/[id]/comments/route.ts':
+    'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
+};
+
 function checkRoutes() {
   let violations = 0;
   const apiDir = path.join(ROOT, 'app/api');
   if (!fs.existsSync(apiDir)) return 0;
 
+  let prismaImports = 0;
+  let servicesImports = 0;
+  let internalModuleImportsCount = 0;
+
   const files = getAllFiles(apiDir);
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
     const relativePath = path.relative(ROOT, file);
+    const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
 
-    // 3. Direct repository/infrastructure imports in routes
-    if (content.includes('.repository') || content.includes('/infrastructure/') || content.includes('@/lib/prisma') || content.includes('@/lib/services/')) {
-       // Search for any import from @/lib/modules that contains .repository or /infrastructure/
+    if (content.includes("@/lib/prisma")) prismaImports++;
+    if (content.includes("@/lib/services/")) servicesImports++;
+
+    // 1. Internal module imports check
+    const internalMatches = [...content.matchAll(/from ['"]@\/lib\/modules\/([^'"\/]+)\/(?!index|db|app-context|actor|app-error|result)([^'"]+)['"]/g)];
+    for (const match of internalMatches) {
+        internalModuleImportsCount++;
+        if (!allowReason) {
+            console.error(`❌ Route bypasses module index: ${relativePath}. Import from '@/lib/modules/${match[1]}' instead.`);
+            violations++;
+        }
+    }
+
+    // 2. Closed module mixed with Prisma/Services check
+    const usesClosedModule = CLOSED_MODULES.some(mod =>
+        content.includes(`from '@/lib/modules/${mod}'`) ||
+        content.includes(`from "@/lib/modules/${mod}"`)
+    );
+
+    if (usesClosedModule && !allowReason) {
+        if (content.includes("@/lib/prisma")) {
+            console.error(`❌ Route uses closed module but still imports @/lib/prisma: ${relativePath}`);
+            violations++;
+        }
+        if (content.includes("@/lib/services/")) {
+            console.error(`❌ Route uses closed module but still imports @/lib/services/: ${relativePath}`);
+            violations++;
+        }
+    }
+
+    // 3. Direct repository/infrastructure imports in routes (older check, still valid)
+    if (content.includes('.repository') || content.includes('/infrastructure/')) {
        const matches = content.match(/from ['"]@\/lib\/modules\/[^'"]+['"]/g);
        if (matches) {
            for (const match of matches) {
                if (match.includes('.repository') || match.includes('/infrastructure/')) {
-                   console.error(`❌ Violation: Direct infrastructure/repository import in route ${relativePath}: ${match}`);
-                   violations++;
+                   if (!allowReason) {
+                        console.error(`❌ Violation: Direct infrastructure/repository import in route ${relativePath}: ${match}`);
+                        violations++;
+                   }
                }
            }
-       }
-
-       // 4. Forbidden direct Prisma/Services in refactored routes (example: /api/user/language)
-       if (relativePath.includes('app/api/user/language') || relativePath.includes('app/api/admin/channel')) {
-            if (content.includes('@/lib/prisma') || content.includes('@/lib/services/')) {
-                console.error(`❌ Violation: Forbidden direct Prisma/Service import in refactored route ${relativePath}`);
-                violations++;
-            }
        }
 
        // Check relative imports as well
@@ -93,13 +146,21 @@ function checkRoutes() {
        if (relativeMatches) {
            for (const match of relativeMatches) {
                if (match.includes(".repository") || match.includes("/infrastructure/")) {
-                   console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}: ${match}`);
-                   violations++;
+                   if (!allowReason) {
+                        console.error(`❌ Violation: Direct relative infrastructure/repository import in route ${relativePath}: ${match}`);
+                        violations++;
+                   }
                }
            }
        }
     }
   }
+
+  console.log(`\nRoute check statistics:`);
+  console.log(`- Routes importing @/lib/prisma: ${prismaImports}`);
+  console.log(`- Routes importing @/lib/services/: ${servicesImports}`);
+  console.log(`- Routes with internal module imports: ${internalModuleImportsCount}`);
+
   return violations;
 }
 

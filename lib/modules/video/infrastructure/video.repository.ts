@@ -1,5 +1,7 @@
 import { Video, Prisma, AccessTier, VideoStatus } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
+import { AppError } from "@/lib/modules/shared/app-error";
+import { VideoNotFoundError } from "../domain/video.errors";
 
 export interface CreateVideoInput {
   title: string;
@@ -53,9 +55,21 @@ export class VideoRepository {
       where: {
         creatorId: mainChannelId,
         status: 'PUBLISHED',
-        publishedAt: { lte: now }
+        OR: [
+            { publishedAt: null },
+            { publishedAt: { lte: now } }
+        ],
+        showInSidebar: true,
+        creator: {
+            isApproved: true,
+            isPrimary: true
+        }
       },
-      orderBy: { publishedAt: 'desc' }
+      orderBy: [
+        { sidebarOrder: 'asc' },
+        { publishedAt: 'desc' },
+        { createdAt: 'desc' }
+      ]
     });
   }
 
@@ -101,7 +115,7 @@ export class VideoRepository {
   }
 
   async createForMainChannel(input: CreateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
-    if (!mainChannelId) throw new Error("Main channel ID is required to create a video.");
+    if (!mainChannelId) throw new AppError("Main channel ID is required to create a video.", 400, "VIDEO_MISSING_CHANNEL");
 
     return await tx.video.create({
       data: {
@@ -133,7 +147,7 @@ export class VideoRepository {
         where: { id },
         include: { _count: { select: { comments: true } } }
     });
-    if (!updated) throw new Error("Video not found after update");
+    if (!updated) throw new VideoNotFoundError(id);
     return updated;
   }
 
@@ -143,7 +157,7 @@ export class VideoRepository {
       data: { status: 'ARCHIVED' }
     });
     const updated = await tx.video.findUnique({ where: { id } });
-    if (!updated) throw new Error("Video not found");
+    if (!updated) throw new VideoNotFoundError(id);
     return updated;
   }
 
@@ -171,7 +185,7 @@ export class VideoRepository {
     for (const v of updates) {
         const video = await tx.video.findUnique({ where: { id: v.id }, select: { creatorId: true } });
         if (!video || video.creatorId !== mainChannelId) {
-            throw new Error(`Video ${v.id} does not belong to main channel. Reorder aborted.`);
+            throw new AppError(`Video ${v.id} does not belong to main channel. Reorder aborted.`, 403, "VIDEO_NOT_ON_MAIN_CHANNEL");
         }
 
         await tx.video.update({

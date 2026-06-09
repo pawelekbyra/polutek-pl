@@ -1,4 +1,5 @@
 import { SystemRole } from "@prisma/client";
+import type { Actor } from "@/lib/modules/shared/actor";
 
 export class UserPolicy {
   static isAdmin(role: SystemRole): boolean {
@@ -9,8 +10,8 @@ export class UserPolicy {
     return isPatron;
   }
 
-  static canSeeProfile(actor: any, user: { id: string, isDeleted: boolean }): boolean {
-    if (user.isDeleted && actor.role !== 'ADMIN') return false;
+  static canSeeProfile(actor: Actor, user: { id: string, isDeleted: boolean }): boolean {
+    if (user.isDeleted && actor.type !== 'admin') return false;
     return true;
   }
 }
