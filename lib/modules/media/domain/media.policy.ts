@@ -1,4 +1,6 @@
 import { MediaHostEnv, parseMediaHosts, isBlockedPrivateHostname, isSafeLocalPath } from './media-safety';
+import { InternalMediaSource, PublicMediaDescriptor, GatedMediaReference } from './media.dto';
+import { UnsafePublicMediaDtoError, RawVideoUrlExposedError } from './media.errors';
 
 export class MediaPolicy {
   static getAllowedMediaHosts(env: MediaHostEnv) {
@@ -67,7 +69,6 @@ export class MediaPolicy {
     const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
 
     if (hostname === 'vimeo.com') {
-      // Allows /123456 or /channels/anything/123456
       return /^\/\d+$/.test(pathname) || /\/\d+$/.test(pathname) || /\/\d+$/.test(pathname.split('/').pop() || '');
     }
 
@@ -145,5 +146,91 @@ export class MediaPolicy {
     return {
       OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
     };
+  }
+
+  /**
+   * Asserts that a PublicMediaDescriptor is safe and does not leak raw URLs.
+   */
+  static assertPublicMediaDescriptorSafe(descriptor: PublicMediaDescriptor): void {
+    const forbiddenFields = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
+
+    for (const field of forbiddenFields) {
+      if ((descriptor as any)[field]) {
+        throw new UnsafePublicMediaDtoError(`Forbidden field detected: ${field}`);
+      }
+    }
+
+    if (this.isProbablyRawMediaUrl(descriptor.playbackUrl)) {
+      throw new RawVideoUrlExposedError();
+    }
+  }
+
+  /**
+   * Redacts an InternalMediaSource into a safe PublicMediaDescriptor.
+   */
+  static redactInternalMediaSource(source: InternalMediaSource): PublicMediaDescriptor {
+    return {
+      videoId: source.videoId,
+      playbackUrl: `/api/media/${source.videoId}`,
+    };
+  }
+
+  /**
+   * Creates a GatedMediaReference for a video.
+   */
+  static createGatedMediaReference(videoId: string): GatedMediaReference {
+    return {
+      videoId,
+      endpoint: `/api/media-source/${videoId}`,
+      requiresAccessCheck: true,
+    };
+  }
+
+  /**
+   * Detects if a URL looks like a raw/private storage URL.
+   */
+  static isProbablyRawMediaUrl(url: string): boolean {
+    if (!url) return false;
+
+    const lowerUrl = url.toLowerCase();
+
+    // Direct S3/Blob storage patterns
+    const rawPatterns = [
+      '.s3.',
+      'amazonaws.com',
+      '.blob.core.windows.net',
+      '.digitaloceanspaces.com',
+      '.backblazeb2.com',
+      '.r2.cloudflarestorage.com',
+      'storage.googleapis.com',
+      'supabase.co/storage',
+    ];
+
+    if (rawPatterns.some(pattern => lowerUrl.includes(pattern))) {
+      return true;
+    }
+
+    // URLs with signatures/tokens
+    const signatureParams = ['X-Amz-Signature', 'token=', 'sig=', 'signature=', 'key='];
+    if (signatureParams.some(param => lowerUrl.includes(param.toLowerCase()))) {
+      return true;
+    }
+
+    // Direct media extensions but NOT on our gated routes
+    const isGatedRoute = lowerUrl.startsWith('/api/media/') || lowerUrl.startsWith('/api/media-source/');
+    if (!isGatedRoute) {
+      const mediaExtensions = ['.mp4', '.m4v', '.webm', '.m3u8', '.mpd', '.mov'];
+      const urlWithoutQuery = lowerUrl.split('?')[0];
+      if (mediaExtensions.some(ext => urlWithoutQuery.endsWith(ext))) {
+        // If it's a full URL (starts with http), it's probably raw if it's not our gated domain
+        // For simplicity, we consider any full URL with media extension as potentially raw
+        // unless it's handled by a specific provider (YouTube/Vimeo) which is checked elsewhere.
+        if (lowerUrl.startsWith('http')) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }
