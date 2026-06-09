@@ -61,21 +61,23 @@ export type AdminBroadcastEmailListItemDto = {
   createdById: string | null;
 };
 
+export type ResendWebhookData = {
+  email_id: string;
+  from: string;
+  to: string[];
+  subject: string;
+  created_at: string;
+  status?: string;
+  text?: string;
+  html?: string;
+  headers?: Record<string, string>;
+  attachments?: unknown[];
+};
+
 export type ResendWebhookInput = {
   eventId?: string; // Internal or provider event ID
   type: string;
-  data: {
-    email_id: string;
-    from: string;
-    to: string[];
-    subject: string;
-    created_at: string;
-    status?: string;
-    text?: string;
-    html?: string;
-    headers?: Record<string, string>;
-    attachments?: any[];
-  };
+  data: ResendWebhookData;
 };
 
 export type ResendWebhookResult = {

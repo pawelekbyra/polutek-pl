@@ -1,8 +1,9 @@
 import { AppContext } from "../../shared/app-context";
-import { ResendWebhookInput, ResendWebhookResult } from "../domain/email.dto";
+import { ResendWebhookInput, ResendWebhookResult, ResendWebhookData } from "../domain/email.dto";
 import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
+import { BroadcastRecipientStatus, Prisma } from "@prisma/client";
 
 /**
  * handleResendWebhook use case.
@@ -33,9 +34,6 @@ export async function handleResendWebhook(
   }
 
   // 2. Best-effort idempotency check
-  // We check if an event with the same resendEmailId and type already exists.
-  // Note: multiple events of same type for same email_id might be rare but possible in some providers.
-  // Resend usually sends one for each state change.
   if (resendEmailId) {
       const existingEvent = await ctx.prisma.emailEvent.findFirst({
           where: {
@@ -64,7 +62,7 @@ export async function handleResendWebhook(
         type,
         resendEmailId,
         email: data.to?.[0],
-        payload: input as any,
+        payload: input as unknown as Prisma.InputJsonValue,
       }
     });
 
@@ -128,18 +126,33 @@ export async function handleResendWebhook(
         duplicate: false,
         idempotency: "best_effort"
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal error during webhook handling";
     logger.error("[handleResendWebhook] Error processing webhook", error);
-    return fail(new EmailError(error.message || "Internal error during webhook handling"));
+    return fail(new EmailError(message));
   }
 }
 
-async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: any, extraData: any = {}, isError = false) {
+async function updateRecipientStatus(
+    ctx: AppContext,
+    resendEmailId: string,
+    status: BroadcastRecipientStatus,
+    extraData: Prisma.BroadcastEmailRecipientUpdateInput = {},
+    isError = false
+) {
   const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
     where: { resendEmailId }
   });
 
   if (!recipient) return;
+
+  const currentStatus = recipient.status;
+
+  const terminalStates: BroadcastRecipientStatus[] = ['BOUNCED', 'COMPLAINED', 'FAILED', 'UNSUBSCRIBED'];
+  if (terminalStates.includes(currentStatus) && !terminalStates.includes(status)) {
+      logger.info(`[handleResendWebhook] Skipping status update from ${currentStatus} to ${status} for ${resendEmailId}`);
+      return;
+  }
 
   await ctx.prisma.broadcastEmailRecipient.update({
     where: { id: recipient.id },
@@ -150,12 +163,12 @@ async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, sta
   });
 
   // Update aggregate counts in BroadcastEmail
-  if (status === 'SENT') {
+  if (status === 'SENT' && currentStatus !== 'SENT') {
     await ctx.prisma.broadcastEmail.update({
         where: { id: recipient.broadcastEmailId },
         data: { sentCount: { increment: 1 } }
     });
-  } else if (isError) {
+  } else if (isError && !['BOUNCED', 'COMPLAINED', 'FAILED'].includes(currentStatus)) {
     await ctx.prisma.broadcastEmail.update({
         where: { id: recipient.broadcastEmailId },
         data: { errorCount: { increment: 1 } }
@@ -181,7 +194,7 @@ async function handleUnsubscribe(ctx: AppContext, email: string) {
     });
 }
 
-async function handleInboundEmail(ctx: AppContext, data: any) {
+async function handleInboundEmail(ctx: AppContext, data: ResendWebhookData) {
     const user = await ctx.prisma.user.findUnique({ where: { email: data.from } });
     await ctx.prisma.inboundEmail.create({
         data: {
