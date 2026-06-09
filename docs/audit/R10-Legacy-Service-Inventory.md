@@ -52,5 +52,5 @@ This report identifies all legacy services in `lib/services/**` and their curren
 - **Audit overlap**: Both `audit.service.ts` and `lib/modules/audit` exist. The legacy one is still used by admin routes.
 - **Modularization status**:
     - Users (R5): Mostly bridged or moved to modules.
-    - Payments (R7): Still relies on legacy `payment.service.ts` and its sub-services.
+    - Payments (R7): Core runtime and administrative flows moved to modular use cases. Legacy services are deprecated.
     - Comments (R8): Still relies entirely on legacy `comments/` services.

@@ -100,18 +100,14 @@ export class PaymentRepository {
   }
 
   async decrementUserPaymentTotal(userId: string, currency: string, amountMinor: number, tx: WriteTx) {
-    const total = await tx.userPaymentTotal.findUnique({
-      where: { userId_currency: { userId, currency } },
-      select: { amountMinor: true }
-    });
-
-    if (total) {
-      return await tx.userPaymentTotal.update({
-        where: { userId_currency: { userId, currency } },
-        data: { amountMinor: Math.max(0, total.amountMinor - amountMinor) }
-      });
-    }
-    return null;
+    // Use raw SQL for atomic decrement with a clamp-to-zero invariant.
+    // This prevents race conditions and ensures the total never goes below zero.
+    // We use double quotes for Postgres table and column names as Prisma does.
+    return await tx.$executeRaw`
+      UPDATE "UserPaymentTotal"
+      SET "amountMinor" = GREATEST(0, "amountMinor" - ${amountMinor})
+      WHERE "userId" = ${userId} AND "currency" = ${currency}
+    `;
   }
 
   async getCurrencySettings(db: ReadDb) {

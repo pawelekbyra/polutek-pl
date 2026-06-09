@@ -41,6 +41,7 @@ describe('handleRefund', () => {
         findUnique: vi.fn(),
         update: vi.fn(),
       },
+      $executeRaw: vi.fn(),
     };
 
     ctx = {
@@ -81,6 +82,7 @@ describe('handleRefund', () => {
 
     expect(result.ok).toBe(true);
     expect(ctx.db.writeTransaction).toHaveBeenCalled();
+    expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(revokePatron).toHaveBeenCalledWith(
       expect.objectContaining({ userId }),
       ctx,
@@ -115,6 +117,7 @@ describe('handleRefund', () => {
     const result = await handleRefund({ paymentId, reportedRefundedMinor: refundMinor }, ctx);
 
     expect(result.ok).toBe(true);
+    expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(recalculatePatronStatus).toHaveBeenCalledWith(userId, ctx, mockTx);
     expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith(userId, true, 500);
   });
@@ -137,6 +140,55 @@ describe('handleRefund', () => {
 
     expect(result.ok).toBe(true);
     expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
+    expect(mockTx.$executeRaw).not.toHaveBeenCalled();
+    expect(revokePatron).not.toHaveBeenCalled();
+    expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
+  });
+
+  it('should handle CAS conflict by not performing further actions', async () => {
+    const paymentId = 'pay_123';
+    const userId = 'user_123';
+    const amountMinor = 1000;
+
+    mockTx.payment.findUnique.mockResolvedValue({
+      id: paymentId,
+      userId,
+      amountMinor,
+      refundedAmountMinor: 0,
+      currency: 'PLN',
+      status: PaymentStatus.SUCCEEDED,
+    });
+
+    // Simulate CAS conflict
+    mockTx.payment.updateMany.mockResolvedValue({ count: 0 });
+
+    const result = await handleRefund({ paymentId, reportedRefundedMinor: amountMinor }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockTx.$executeRaw).not.toHaveBeenCalled();
+    expect(revokePatron).not.toHaveBeenCalled();
+    expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
+  });
+
+  it('should handle zero delta refund', async () => {
+    const paymentId = 'pay_123';
+    const userId = 'user_123';
+    const amountMinor = 1000;
+
+    mockTx.payment.findUnique.mockResolvedValue({
+      id: paymentId,
+      userId,
+      amountMinor,
+      refundedAmountMinor: 500,
+      currency: 'PLN',
+      status: PaymentStatus.PARTIALLY_REFUNDED,
+    });
+
+    const result = await handleRefund({ paymentId, reportedRefundedMinor: 500 }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
+    expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
     expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
   });

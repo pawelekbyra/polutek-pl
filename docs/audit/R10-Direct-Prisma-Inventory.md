@@ -25,6 +25,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 ## Analysis
 
 - **Comments (R8)** is the largest remaining user of direct Prisma in the API. Most comment actions bypass the (not yet fully implemented) comment module.
-- **Payments (R7)** still has critical paths (subscriptions, settings) using direct Prisma.
+- **Payments (R7)** core runtime and administrative flows are modular. Subscriptions still use direct Prisma.
 - **Users (R5)** is mostly done, but admin extensions (export, resync) remain legacy.
 - **Video (R6)** and **Media (R3)** have some remaining "certified" mixed routes that use Prisma for specific persistence tasks not yet moved to repositories.

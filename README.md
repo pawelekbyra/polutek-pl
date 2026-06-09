@@ -186,29 +186,28 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-R7/R10 README reconciliation after PR #777.
+R8/R9 rebase/reconcile planning.
 
 Cel:
-Ujednolicić README z realnym stanem main po migracji Stripe webhook + fulfillment/refund/dispute do modułu payments.
+PR #774 i PR #775 są otwarte i mają status mergeable=false, więc nie traktuj ich jako zmergowany main.
+Zanim pójdziesz dalej z R8/R9, sprawdź aktualny main i stwórz prompt rebase/reconcile.
 
 Nie zaczynać dużego R10 cleanup.
 Nie zaczynać R11.
-Nie oznaczać R7 jako [x].
-Nie traktować PR #774 ani PR #775 jako merged main.
+Nie oznaczać R7 jako [x certified].
 ```
 
 Następny dobry prompt dla agenta kodowania:
 
 ```txt
-Wykonaj R7/R10 reconciliation pass.
+Wykonaj planowanie rebase/reconcile dla R8/R9.
 
-Zaktualizuj guardy i docs po PR #777:
-- Stripe webhook route nie jest już legacy R7 blockerem.
-- Payments webhook/fulfillment/refund/dispute są core runtime migrated do lib/modules/payments.
-- R7 nadal pending certification, bo payment settings, admin payments, source-of-truth PatronGrant/User.isPatron oraz refund atomicity wymagają weryfikacji.
-- R10 inventory/readiness muszą zostać poprawione po R7 #777.
-- Nie zaczynaj pełnego R10 cleanup.
-- Nie ruszaj R8/R9 poza opisaniem ich jako pending/partial.
+Sprawdź stan main i otwórz plan dla:
+- PR #774 (Email foundation/Resend),
+- PR #775 (Comments reconcile/admin),
+- Ustalenie co z tych PR jest faktycznie gotowe do ręcznego przeniesienia lub rebase.
+- Nie ruszaj R7 poza finalną certyfikacją.
+- Nie zaczynaj R11.
 ```
 
 ---

@@ -60,14 +60,45 @@ describe('listAdminPayments Use Case', () => {
       statusCounts: [{ status: PaymentStatus.SUCCEEDED, count: 1 }]
     });
 
-    const result = await listAdminPayments({ page: 1, pageSize: 20 }, ctx);
+    const result = await listAdminPayments({ page: 2, pageSize: 10 }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
         expect(result.data.items).toHaveLength(1);
         expect(result.data.total).toBe(100);
+        expect(result.data.page).toBe(2);
+        expect(result.data.pageSize).toBe(10);
+        expect(result.data.totalPages).toBe(10);
         expect(result.data.summary?.totalSucceeded[0].amountMinor).toBe(1000);
+        expect(result.data.summary?.countByStatus[PaymentStatus.SUCCEEDED]).toBe(1);
     }
+  });
+
+  it('should apply filters and search query', async () => {
+    mockRepo.countPayments.mockResolvedValue(1);
+    mockRepo.findPaymentsWithRelations.mockResolvedValue([]);
+    mockRepo.getFinancialStats.mockResolvedValue({ succeeded: [], refunded: [], statusCounts: [] });
+
+    await listAdminPayments({
+        search: 'test@example.com',
+        status: PaymentStatus.REFUNDED,
+        currency: 'USD',
+        refundedOnly: true
+    }, ctx);
+
+    expect(mockRepo.findPaymentsWithRelations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+            status: PaymentStatus.REFUNDED,
+            currency: 'USD',
+            AND: expect.arrayContaining([
+                expect.objectContaining({ OR: expect.any(Array) }), // Search OR block
+                expect.objectContaining({ refundedAmountMinor: { gt: 0 } })
+            ])
+        })
+      }),
+      expect.anything()
+    );
   });
 
   it('should reject non-admin actors', async () => {
