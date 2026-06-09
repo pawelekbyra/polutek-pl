@@ -3,6 +3,7 @@ import { UserRepository } from "../infrastructure/user.repository";
 import { User, Prisma } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { UserNotFoundError } from "../domain/user.errors";
+import { normalizePaymentTotals } from "../domain/payment-totals";
 
 export interface AdminUserDetailsDto {
   id: string;
@@ -27,6 +28,7 @@ export interface AdminUserDetailsDto {
     videoLikes: number;
     videoDislikes: number;
   };
+  normalizedTotal: number;
 }
 
 export async function getAdminUserDetails(
@@ -38,6 +40,7 @@ export async function getAdminUserDetails(
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
+      paymentTotals: true,
       _count: {
           select: {
               comments: true,
@@ -67,6 +70,10 @@ export async function getAdminUserDetails(
       imageUrl: user.imageUrl,
       stripeCustomerId: user.stripeCustomerId,
       referralCode: user.referralCode,
-      _count: user._count
+      _count: user._count,
+      normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({
+          currency: pt.currency,
+          amountMinor: pt.amountMinor
+      })))
   });
 }
