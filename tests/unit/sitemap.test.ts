@@ -17,6 +17,7 @@ vi.mock('@/lib/services/content.service', () => ({
   },
   VideoContentService: {
     getAllVideos: vi.fn(),
+    getSitemapVideos: vi.fn(),
   },
 }));
 
@@ -28,7 +29,7 @@ describe('sitemap', () => {
 
   it('generates basic routes and creator/video routes', async () => {
     vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ slug: 'main' } as any);
-    vi.mocked(VideoContentService.getAllVideos).mockResolvedValue([{ id: 'v1', publishedAt: new Date() }] as any);
+    vi.mocked(VideoContentService.getSitemapVideos).mockResolvedValue([{ id: 'v1', publishedAt: new Date() }] as any);
 
     const result = await sitemap();
 

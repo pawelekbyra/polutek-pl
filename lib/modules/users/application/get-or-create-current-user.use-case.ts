@@ -12,8 +12,12 @@ import { UserProfileService } from "@/lib/services/user/profile.service";
  */
 export async function getOrCreateCurrentUser(
   ctx: AppContext,
-  clerkUserId: string
+  clerkUserId: string,
+  sessionClaims?: Record<string, unknown> | null | undefined
 ) {
+  if (sessionClaims) {
+    return await UserProfileService.getOrCreateUserFromAuth(clerkUserId, sessionClaims);
+  }
   // Delegate to legacy service while keeping the call site modular
   return await UserProfileService.getOrCreateUser(clerkUserId);
 }

@@ -8,7 +8,6 @@ import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
 import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
 import { isUuid } from '@/lib/utils/uuid';
-import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';

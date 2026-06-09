@@ -3,7 +3,8 @@
 import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { UserProfileService as UserService } from "@/lib/services/user/profile.service";
+import { getOrCreateCurrentUser } from "@/lib/modules/users";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { revalidatePath } from "next/cache";
 import { AccessPolicy } from "@/lib/access/access-policy";
 
@@ -40,7 +41,10 @@ export async function toggleVideoLike(videoId: string) {
   try {
     // 1. Sync/Fetch user record
     try {
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const ctx = createAppContext({
+          actor: { type: "user", userId, isPatron: false },
+        });
+        await getOrCreateCurrentUser(ctx, userId, sessionClaims);
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };
@@ -117,7 +121,10 @@ export async function toggleVideoDislike(videoId: string) {
 
   try {
     try {
-        await UserService.getOrCreateUserFromAuth(userId, sessionClaims);
+        const ctx = createAppContext({
+          actor: { type: "user", userId, isPatron: false },
+        });
+        await getOrCreateCurrentUser(ctx, userId, sessionClaims);
     } catch (err: unknown) {
         logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
         return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika. Spróbuj zalogować się ponownie." };

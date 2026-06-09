@@ -329,12 +329,13 @@ Cel:
 Status:
 
 ```txt
-[~]
+[~ stronger]
 ```
 
 Znane pozostałe prace:
 
-* użytkownicy admina nie są w pełni zmigrowani,
+* użytkownicy admina (lista/detale/statystyki) są zmigrowani, kontrakt API przetestowany,
+* UserProfileService legacy bridge jest odizolowany w `@/lib/modules/users`,
 * ukończenie webhooka Clerk pozostaje,
 * granica synchronizacji użytkownik-dostęp pozostaje,
 * granica patron/płatności musi pozostać wyraźnie oddzielona,
@@ -345,7 +346,7 @@ R5 nie jest ukończone dopóki:
 
 * route'y profilu/synchronizacji/języka są zmigrowane,
 * webhook Clerk importuje tylko publiczne API modułu,
-* użytkownicy admina (core lookup) są zmigrowani,
+* użytkownicy admina (core lookup/lista/detale) są zmigrowani,
 * `User.isPatron` w bazie jako źródło prawdy jest chronione testami i nie jest nadpisywane przez identity sync,
 * metadane Clerk pozostają tylko cache'em.
 
@@ -375,7 +376,7 @@ Już poprawione:
 
 * moduł video istnieje,
 * fundament admin CRUD/reorder istnieje,
-* `PublicVideoDto` nie wystawia surowego `videoUrl`,
+* `PublicVideoDto` nie wystawia już `videoUrl`,
 * `AdminVideoDto` może zawierać `videoUrl`,
 * predykaty listy publicznej/hero zostały zbliżone do reguł widoczności legacy,
 * core lookup wideo admina jest main-channel scoped przez use case,
@@ -399,6 +400,8 @@ R6 nie jest ukończone dopóki:
 ---
 
 ### R6.5 — Access Foundation (Fundament Dostępu)
+
+Sitemap video entries are PUBLIC-only. LOGGED_IN and PATRON content must not be indexed.
 
 Cel:
 * `access` jest centralnym modułem decyzji: allow/deny/reason,
@@ -498,7 +501,7 @@ Status:
 R8 musi zawierać minimalne elementy Fazy X:
 
 * sprawdzenia dostępu,
-* powody odmowy dostępu tam, gdzie to praktyczne,
+* powody odmowy dostępu tam, gdzie praktyczne,
 * audyt moderacji,
 * testy scenariuszowe dla treści patronów/publicznych,
 * przepływy zgłoszeń/moderacji.
@@ -1109,7 +1112,7 @@ Architecture guard powinien raportować:
 * pliki importujące przestarzały adapter kanału,
 * dozwolone (allowlisted) znane blokery z fazą/powodem.
 
-Obecny guard może używać allowlist, dopóki R5–R11 są niekompletne.
+Obecny guard może używać allowlist, dopóki R5–R11 are incomplete.
 
 Allowlisty muszą być jawne i uzasadnione.
 
@@ -1145,7 +1148,9 @@ Route nie jest zmigrowany, dopóki przepływ w runtime nie używa modułu, a tes
 
 ### Blokery R5 Users
 
-* Użytkownicy admina nie są w pełni zmigrowani (R5 blocker).
+* Użytkownicy admina (lista/detale/statystyki) są zmigrowani, kontrakt API przetestowany (R5 cert).
+* UserProfileService legacy bridge jest odizolowany w `@/lib/modules/users`. Bezpośrednie użycie w `auth-utils` i `interactions` zostało usunięte.
+* New direct imports of UserProfileService/UserService.getOrCreateUser are blocked by architecture guard outside explicit phase allowlist.
 * Ukończenie webhooka Clerk pozostaje (R5/R9 boundary).
 * Granica synchronizacji użytkownik-dostęp pozostaje.
 * Granica patron/płatności pozostaje.

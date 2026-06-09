@@ -1,7 +1,8 @@
 import { logger } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
-import { UserProfileService as UserService } from "./services/user/profile.service";
+import { getOrCreateCurrentUser } from "@/lib/modules/users";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { NextResponse } from "next/server";
 import { isConfiguredAdminUserId } from "./admin-config";
 
@@ -42,10 +43,14 @@ export async function requireAdminForApi(scope: string) {
 }
 
 export async function requireUser() {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
   if (!userId) throw new AuthError("UNAUTHORIZED");
 
-  await UserService.getOrCreateUser(userId);
+  const ctx = createAppContext({
+    actor: { type: "user", userId, isPatron: false }, // isPatron will be resolved from DB if needed
+  });
+
+  await getOrCreateCurrentUser(ctx, userId, sessionClaims);
   return userId;
 }
 
