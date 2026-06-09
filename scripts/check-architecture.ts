@@ -156,7 +156,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/admin/comments/route.ts': 'R8 blocker.',
-  'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
+  'app/api/admin/emails/broadcast/route.ts': 'R9 cert: route delegates to email module, remaining limitation: provider/outbox/idempotency.',
   'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
   'app/api/admin/payment-settings/route.ts': 'R7 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
@@ -169,7 +169,7 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
   'app/api/comments/[commentId]/replies/route.ts': 'R8 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
-  'app/api/webhooks/resend/route.ts': 'R9 blocker.',
+  'app/api/webhooks/resend/route.ts': 'R9 cert: route delegates to email module, remaining limitation: provider/outbox/idempotency.',
 };
 
 function checkRoutes() {
