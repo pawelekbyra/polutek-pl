@@ -10,7 +10,7 @@ export async function getHeroVideo(
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await repository.findHero(mainChannel.id);
+  const video = await repository.findHero(mainChannel.id, ctx.now());
 
   if (!video) return ok(null);
 
