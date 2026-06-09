@@ -1,6 +1,7 @@
 import { VideoStatus, Prisma, PrismaClient } from '@prisma/client';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
+import { AppError } from '@/lib/modules/shared/app-error';
 import { flags } from '@/lib/feature-flags';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { WriteTx } from '@/lib/modules/shared/db';
@@ -71,15 +72,15 @@ export class MainChannelMaintenance {
   static async applyMainChannelSetup(ctx: AppContext, confirmationPhrase: string) {
     const EXPECTED_PHRASE = "CONFIRM SETUP MAIN CHANNEL";
     if (confirmationPhrase !== EXPECTED_PHRASE) {
-        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+        throw new AppError(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`, 400, "INVALID_CONFIRMATION_PHRASE");
     }
 
     if (ctx.actor.type !== 'admin') {
-        throw new Error("Only admins can perform main channel setup");
+        throw new AppError("Only admins can perform main channel setup", 403, "FORBIDDEN");
     }
 
     const slug = flags.mainCreatorSlug;
-    if (!slug) throw new Error("MAIN_CREATOR_SLUG not configured");
+    if (!slug) throw new AppError("MAIN_CREATOR_SLUG not configured", 500, "MAINTENANCE_ERROR");
 
     const result = await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
         let mainChannel = await tx.creator.findUnique({ where: { slug } });
@@ -87,12 +88,12 @@ export class MainChannelMaintenance {
         if (!mainChannel) {
             const totalCreators = await tx.creator.count();
             if (totalCreators > 0) {
-                throw new Error(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`);
+                throw new AppError(`There are ${totalCreators} existing creators but none matches the configured slug "${slug}". Silently renaming is prohibited.`, 400, "MAINTENANCE_ERROR");
             }
 
             const userId = ctx.actor.type !== 'guest' && 'userId' in ctx.actor ? ctx.actor.userId : null;
             if (!userId) {
-                throw new Error("Cannot create main channel without a valid user actor");
+                throw new AppError("Cannot create main channel without a valid user actor", 400, "MAINTENANCE_ERROR");
             }
 
             mainChannel = await tx.creator.create({
@@ -131,11 +132,11 @@ export class MainChannelMaintenance {
   static async applyOwnershipRepair(ctx: AppContext, mainChannelId: string, confirmationPhrase: string) {
     const EXPECTED_PHRASE = "CONFIRM OWNERSHIP REPAIR";
     if (confirmationPhrase !== EXPECTED_PHRASE) {
-        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+        throw new AppError(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`, 400, "INVALID_CONFIRMATION_PHRASE");
     }
 
     if (ctx.actor.type !== 'admin') {
-        throw new Error("Only admins can perform ownership repair");
+        throw new AppError("Only admins can perform ownership repair", 403, "FORBIDDEN");
     }
 
     const result = await (ctx.prisma as PrismaClient).$transaction(async (tx) => {
@@ -185,11 +186,11 @@ export class MainChannelMaintenance {
   static async applyPrimaryRepair(ctx: AppContext, mainChannelId: string, confirmationPhrase: string) {
     const EXPECTED_PHRASE = "CONFIRM PRIMARY REPAIR";
     if (confirmationPhrase !== EXPECTED_PHRASE) {
-        throw new Error(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`);
+        throw new AppError(`Invalid confirmation phrase. Expected: "${EXPECTED_PHRASE}"`, 400, "INVALID_CONFIRMATION_PHRASE");
     }
 
     if (ctx.actor.type !== 'admin') {
-        throw new Error("Only admins can perform primary repair");
+        throw new AppError("Only admins can perform primary repair", 403, "FORBIDDEN");
     }
 
     await (ctx.prisma as PrismaClient).$transaction(async (tx) => {

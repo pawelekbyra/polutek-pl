@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { AppError } from "@/lib/modules/shared/app-error";
 
 export interface UpdateAdminChannelSettingsInput {
   name: string;
@@ -15,7 +16,7 @@ export async function updateAdminChannelSettings(
   input: UpdateAdminChannelSettingsInput
 ) {
   if (ctx.actor.type !== 'admin') {
-    throw new Error("Only admins can update channel settings");
+    throw new AppError("Only admins can update channel settings", 403, "FORBIDDEN");
   }
 
   const db = ctx.prisma as PrismaClient;

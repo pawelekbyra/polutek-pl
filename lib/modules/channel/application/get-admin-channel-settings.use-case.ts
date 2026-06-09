@@ -1,10 +1,11 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
+import { AppError } from "@/lib/modules/shared/app-error";
 
 export async function getAdminChannelSettings(ctx: AppContext) {
   if (ctx.actor.type !== 'admin') {
-    throw new Error("Only admins can access channel settings");
+    throw new AppError("Only admins can access channel settings", 403, "FORBIDDEN");
   }
 
   const db = ctx.prisma as PrismaClient;

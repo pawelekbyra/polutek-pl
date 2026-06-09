@@ -1,13 +1,12 @@
 import { AccessTier, VideoStatus } from "@prisma/client";
 
-export interface PublicVideoDto {
+export interface BaseVideoDto {
   id: string;
   slug: string;
   title: string;
   titleEn?: string | null;
   description?: string | null;
   descriptionEn?: string | null;
-  videoUrl: string;
   thumbnailUrl: string;
   duration?: string | null;
   tier: AccessTier;
@@ -20,7 +19,10 @@ export interface PublicVideoDto {
   sidebarOrder: number;
 }
 
-export interface AdminVideoDto extends PublicVideoDto {
+export interface PublicVideoDto extends BaseVideoDto {}
+
+export interface AdminVideoDto extends BaseVideoDto {
+  videoUrl: string;
   status: VideoStatus;
   creatorId: string;
   createdAt: Date;
@@ -36,7 +38,6 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
     titleEn: video.titleEn,
     description: video.description,
     descriptionEn: video.descriptionEn,
-    videoUrl: video.videoUrl,
     thumbnailUrl: video.thumbnailUrl,
     duration: video.duration,
     tier: video.tier,
@@ -53,6 +54,7 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
 export function toAdminVideoDto(video: any): AdminVideoDto {
   return {
     ...toPublicVideoDto(video),
+    videoUrl: video.videoUrl,
     status: video.status,
     creatorId: video.creatorId,
     createdAt: video.createdAt,

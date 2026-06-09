@@ -20,8 +20,8 @@
 | **R2** | Moduł: Audit | [x] |
 | **R3** | Moduł: Media | [x] |
 | **R4** | Moduł: Channel | [x] |
-| **R5** | Moduł: Users | [x] |
-| **R6** | Moduł: Video | [x] |
+| **R5** | Moduł: Users | [~] |
+| **R6** | Moduł: Video | [~] |
 | **R7** | Moduł: Patron + Payments | [ ] |
 | **R8** | Moduł: Comments | [ ] |
 | **R9** | Moduł: Email | [ ] |
@@ -120,7 +120,9 @@ npm run build
 - R2: [x/~/!]
 - R3: [x/~/!]
 - R4: [x/~/!]
-- R5–R11: [ ]
+- R5: [x/~/!]
+- R6: [x/~/!]
+- R7–R11: [ ]
 
 #### Walidacja
 - Prisma validate: PASS/FAIL
@@ -140,14 +142,34 @@ npm run build
 - ...
 ```
 
-### Raport Refaktoryzacji — R5 users + R6 video
+## 13. Certification notes
+
+### R0/R1 Certification Pass — 2024-05-22
+- Usunięto deprecated pola `userId`/`role` z `AppContext`.
+- Naprawiono `UserPolicy.canSeeProfile()` (`actor.role` -> `actor.type`).
+- Udokumentowano `isPatron` z Clerk jako cache, nie source of truth w `lib/api/auth.ts`.
+- Stworzono `user.errors.ts` i zintegrowano z modułem Users.
+- Zamieniono przewidywalne `throw new Error` w modułach na `AppError`/typed errors.
+- Rozszerzono `check-architecture.ts` o guard dla internal module imports i mixed closed-module routes.
+- Dodano `lib/modules/**` do coverage w `vitest.config.ts`.
+- Dodano testy dla Actor/AppContext, UseCaseResult, UserPolicy i user errors.
+- Wykonano minimalne security hardening: `PublicVideoDto` nie eksponuje już `videoUrl`.
+- Zsynchronizowano `findPublicList()` w repository z regułami widoczności (approval, primary, sidebar).
+
+### Remaining R5/R6 blockers
+- `app/api/access/route.ts` uses legacy AccessPolicy and deprecated channel adapter.
+- `app/api/admin/videos/resync/route.ts` remains legacy/direct Prisma.
+- Admin users, user-access sync boundary, and Clerk webhook completion remain R5 work.
+- Public Video DTO is safe, but public frontend migration to module DTO remains future work.
+- Payments, Comments, Referrals and Email are not started as full module migrations.
+
+### Raport Refaktoryzacji — R0/R1 Certification Pass
 
 #### Wykonane
-- **R5 Users (Domknięcie)**: Migracja Clerk webhook do `SyncUserFromWebhookUseCase`. Zastąpienie `UserProfileService` w route'ach komentarzy i subskrypcji modułowym `GetOrCreateUserUseCase`. Przeniesienie `normalizePaymentTotals` do domeny modułu.
-- **R6 Video**: Implementacja pełnego modułu Video (Policy, Repository, 8 Use-Cases). Migracja wszystkich admin API routes (`/api/admin/videos/*`) oraz publicznego `/api/access` do nowego modułu.
-- **Hotspots**: Rozbicie gigantycznych plików `app/admin/videos/page.tsx` i `app/admin/videos/[id]/page.tsx` (redukcja z ~580 do ~360 i ~230 linii).
-- **Security**: Utwardzenie reorderingu (hard reject dla filmów spoza kanału).
-- **Testy**: Dodano 18 testów dla modułu Video i 3 dla Users (webhook). Łącznie 52 testy przechodzą.
+- Pełny cleanup fundamentów R0/R1 (Actor, AppContext, Errors, Result).
+- Foundation hardening (visibility rules, DTO leaks, internal imports).
+- Architecture Guards (strict routes, no mixed mode).
+- 19 nowych testów fundamentów.
 
 #### README
 - czy README jest głównym źródłem prawdy: TAK
@@ -160,16 +182,16 @@ npm run build
 - R2: [x]
 - R3: [x]
 - R4: [x]
-- R5: [x]
-- R6: [x]
-- R7–R11: [ ]
+- R5: [~]
+- R6: [~]
+- R7: [ ]
 
 #### Walidacja
 - Prisma validate: PASS
-- Architecture boundaries: PASS
-- Typecheck: PASS
-- Tests: PASS (52 passed)
-- Hotspots: PASS (poza barrelem ikon)
+- Architecture boundaries: PASS (with allowlist)
+- Typecheck: FAIL (external dependencies/env issues in sandbox)
+- Tests: PASS (foundation tests: 33 passed)
+- Lint: PASS
 
 #### Pozostałe adaptery legacy/deprecated
 - lib/services/admin/videos-admin.service.ts (deprecated)
@@ -177,7 +199,7 @@ npm run build
 - lib/services/user/profile.service.ts (deprecated)
 
 #### Znane ryzyka
-- Część logiki frontendowej (Server Actions) nadal może wołać stare serwisy (do zmigrowania w R11).
+- R5/R6 oznaczone jako [~] z powodu znanych blockerów w `app/api/access` i resync.
 
 #### Następny rekomendowany krok
-- R7: Patron + Payments (migracja logiki Stripe i grantów).
+- R5/R6: Domknięcie blockerów i pełna migracja Users/Video przed wejściem w R7.

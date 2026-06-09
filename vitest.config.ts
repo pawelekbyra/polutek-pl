@@ -13,6 +13,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: [
         'app/api/**',
+        'lib/modules/**',
         'lib/services/**',
         'lib/access/**',
         'lib/webhooks/**',
