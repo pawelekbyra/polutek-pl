@@ -17,9 +17,9 @@
 | :--- | :--- | :--- |
 | **R0** | Zasady i infrastruktura | [x] |
 | **R1** | Shared, API boundary, errors, ctx | [x] |
-| **R2** | Moduł: Audit | [x] |
-| **R3** | Moduł: Media | [x] |
-| **R4** | Moduł: Channel | [x] |
+| **R2** | Moduł: Audit | [x foundation] |
+| **R3** | Moduł: Media | [x safety foundation] |
+| **R4** | Moduł: Channel | [x single-channel foundation] |
 | **R5** | Moduł: Users | [~] |
 | **R6** | Moduł: Video | [~] |
 | **R7** | Moduł: Patron + Payments | [ ] |
@@ -145,6 +145,12 @@ npm run build
 ```
 
 ## 13. Certification notes
+
+### R2/R3/R4 Certification Pass — 2024-05-22
+- **R2 Audit**: Foundation certified. Module API uses `AppContext`/`Actor` and supports transactions. Used by migrated channel/video/users actions.
+- **R3 Media**: Safety foundation certified. `MediaPolicy` includes comprehensive URL allowlists and private host blocking. `PublicVideoDto` no-leak confirmed.
+- **R4 Channel**: Strict single-channel invariant certified. No runtime fallback/guessing. Maintenance preview/apply is explicit and auditable. Legacy adapter usage mapped.
+- **Guard**: Updated `check-architecture.ts` to report legacy channel adapter imports (current count: 7 files).
 
 ### R0/R1 Certification Pass — 2024-05-22
 - Usunięto deprecated pola `userId`/`role` z `AppContext`.

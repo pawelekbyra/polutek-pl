@@ -1,4 +1,4 @@
-import { AppError } from "@/lib/errors";
+import { AppError } from "@/lib/modules/shared/app-error";
 
 export class MainChannelError extends AppError {
   constructor(message: string, statusCode: number = 400, code: string = 'CHANNEL_ERROR') {
