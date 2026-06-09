@@ -162,7 +162,7 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R5**   | Users                                      | `[x stronger foundation]`                                   |
 | **R6**   | Video                                      | `[x stronger foundation]`                                   |
 | **R6.5** | Access Foundation                          | `[x certified]`                                             |
-| **R7**   | Patron + Payments                          | `[~ core runtime migrated / pending certification]`         |
+| **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`         |
 | **R8**   | Comments                                   | `[~ core comments migrated]`                                |
 | **R9**   | Email                                      | `[~ pending certification PR #774]`                         |
 | **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile after R7 #777]` |
@@ -529,14 +529,13 @@ Docelowo R7 powinno umożliwić, by access czytał status patrona przez moduł p
 ### Status R7
 
 ```txt
-[~ core runtime migrated / pending certification]
+[~ stronger foundation / certification candidate]
 ```
 
-R7 jest po dużym przesunięciu runtime do modułów po PR #777.
+R7 core runtime i przepływy administracyjne (settings, admin list) są zmigrowane i zweryfikowane.
+Atomiczność refund -> revoke patron jest zabezpieczona i przetestowana.
 
-Nie jest już prawdą, że cały Stripe webhook/fulfillment/refund/dispute jest legacy.
-
-Nie wolno jednak oznaczyć R7 jako `[x]`, bo pozostały blokery certyfikacyjne i administracyjne.
+Nie wolno jednak oznaczyć R7 jako `[x]`, bo subskrypcje i pełny source-of-truth switch pozostają.
 
 ### Cel R7
 
@@ -603,14 +602,10 @@ Nie wolno:
 
 R7 pozostaje pending certification, bo trzeba sprawdzić i/lub domknąć:
 
-* `app/api/admin/payment-settings/route.ts` pozostaje legacy/direct Prisma.
-* Admin payments list route używa legacy `PaymentsAdminService`.
 * Subscriptions/payment boundary pozostaje mixed.
 * `User.isPatron` vs `PatronGrant` drift risk nadal istnieje.
 * Access module nadal czyta read-model zamiast docelowo pytać Patron module.
-* Payment settings nie są jeszcze w module payments.
-* Admin payments stats/list nie są jeszcze w module payments.
-* Refund full revoke wymaga sprawdzenia atomiczności: jeżeli `handleRefund` jest już w transakcji, `revokePatron` powinno używać tego samego transaction clienta.
+* Refund full revoke atomicity secured: `handleRefund` passes `tx` to `revokePatron`.
 * Legacy payment services mogą pozostać jako deprecated compatibility/R10 cleanup candidates, ale nie mogą być mylone z aktywnym webhook runtime.
 
 ### R7 — minimalne elementy Fazy X
@@ -1551,7 +1546,7 @@ Zakres:
 Status:
 
 ```txt
-R7 [~ core runtime migrated / pending certification]
+R7 [~ stronger foundation / certification candidate]
 ```
 
 Zakres:
@@ -1561,17 +1556,16 @@ Zakres:
 * admin patron route modular,
 * Stripe webhook route delegates to payments module,
 * fulfillment/refund/dispute have modular use cases,
+* Payment settings and Admin list migrated to modular use cases,
 * Stripe event lock/idempotency moved to modular path,
-* grant/revoke patron support transaction sharing.
+* grant/revoke patron support transaction sharing,
+* Refund full revoke atomicity verified and tested.
 
 Niecertyfikowane / pending:
 
-* refund full revoke transaction sharing must be verified,
-* payment settings route remains legacy,
-* admin payments remain legacy,
+* Subscriptions/payment boundary,
 * `User.isPatron` vs `PatronGrant` source-of-truth not fully switched,
-* R10 docs/guards stale after #777,
-* CI/validation must be checked honestly.
+* Access -> Patron module integration.
 
 ---
 
