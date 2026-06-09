@@ -34,6 +34,40 @@ export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
 ];
 
 export class VideoContentService {
+  /**
+   * Returns only PUBLIC and PUBLISHED videos for sitemap indexing.
+   * Strictly excludes PATRON and LOGGED_IN tiers.
+   */
+  static async getSitemapVideos(): Promise<PublicVideoDTO[]> {
+    const mainChannel = await MainChannelService.getOptional();
+    const now = new Date();
+
+    const videos = await prisma.video.findMany({
+      where: {
+        status: VideoStatus.PUBLISHED,
+        tier: AccessTier.PUBLIC,
+        creatorId: mainChannel?.id || 'none',
+        ...visiblePublishedAtFilter(now),
+        creator: {
+          isApproved: true,
+          isPrimary: true,
+        },
+      },
+      include: {
+        creator: {
+          include: {
+            user: {
+              select: { imageUrl: true, email: true }
+            }
+          }
+        }
+      },
+      orderBy: publicVideoOrderBy
+    });
+
+    return videos.map(v => this.mapToPublicVideoDTO(v));
+  }
+
   static async getVideoById(videoId: string) {
     try {
       const video = await prisma.video.findUnique({

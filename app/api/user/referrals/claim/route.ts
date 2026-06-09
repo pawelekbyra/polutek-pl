@@ -4,7 +4,8 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { ReferralService } from '@/lib/services/referral.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { getOrCreateCurrentUser } from '@/lib/modules/users';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { handleApiError } from '@/lib/errors';
 
 export async function POST(req: Request) {
@@ -24,7 +25,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    await UserService.getOrCreateUser(userId);
+    const userCtx = createAppContext();
+    await getOrCreateCurrentUser(userCtx, userId);
 
     const { referralCode } = await req.json();
     if (!referralCode) return NextResponse.json({ error: "Referral code is required" }, { status: 400 });

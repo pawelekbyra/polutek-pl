@@ -8,7 +8,8 @@ import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Metadata } from 'next';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { getOrCreateCurrentUser } from '@/lib/modules/users';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { APP_NAME } from '@/lib/constants';
 import ChannelHome from './components/ChannelHome';
 import Navbar from './components/Navbar';
@@ -65,7 +66,8 @@ export default async function Home({ searchParams }: { searchParams: { v?: strin
     const targetVideoId = targetVideo?.id;
 
     // We run getOrCreateUser sequentially before other DB calls to ensure record exists for relations
-    await UserService.getOrCreateUser(userId).catch((e) => {
+    const userCtx = createAppContext();
+    await getOrCreateCurrentUser(userCtx, userId).catch((e) => {
       logger.error("[HOME_USER_FETCH_ERROR]", e);
     });
 

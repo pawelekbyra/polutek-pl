@@ -15,7 +15,7 @@ import { ArrowLeft, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
-import { AdminUserListItem } from "@/lib/services/admin/users-admin.dto";
+import { AdminUserListItemDto as AdminUserListItem } from "@/lib/modules/users";
 import { AdminUsersPageSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
                             <div className="flex gap-2 items-center">
                                 <span className="text-[11px] font-bold">
                                     {user.paymentTotals?.length > 0 ? (
-                                        user.paymentTotals.map(t => `${(t.totalPaidMinor/100).toFixed(2)} ${t.currency}`).join(', ')
+                                        user.paymentTotals.map((t: any) => `${(t.totalPaidMinor/100).toFixed(2)} ${t.currency}`).join(', ')
                                     ) : "0.00 PLN"}
                                 </span>
                                 <Badge variant="secondary" className="h-4 text-[9px]">{user.paymentCount} płatności</Badge>

@@ -1278,6 +1278,16 @@ R6 [~ stronger]
 * Admin patron management route jawnie sklasyfikowany jako R7 blocker.
 * Referrals sklasyfikowane jako future domain blocker.
 
+### P0 R5/R6 Integrity Pass — 2026-06-09
+
+* Naprawiono wyciek treści dla patronów w sitemap.xml (teraz tylko PUBLIC).
+* Przywrócono pełny kontrakt API dla listy użytkowników admina (paymentTotals, normalizedTotal, relation counts).
+* Wprowadzono modularny bridge `getOrCreateCurrentUser` dla zachowania trudnej logiki legacy conflict-resolution.
+* Usunięto osierocony serwis `VideosAdminService`.
+* Zmigrowano statystyki użytkowników admina do modularnego use case.
+* Wzmocniono architecture guard: direct Prisma w nowych route'ach jest teraz blokowana.
+* Wszystkie pozostałe importy Prisma w route'ach zostały sklasyfikowane w allowliście.
+
 Status:
 
 ```txt
