@@ -30,6 +30,37 @@ export class UserRepository {
     });
   }
 
+  async findProfileById(id: string) {
+    return await this.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+        imageUrl: true,
+        language: true,
+        referralCode: true,
+        referralCount: true,
+        referralPoints: true,
+        isDeleted: true,
+        createdAt: true,
+      }
+    });
+  }
+
+  async findSyncStatusById(id: string) {
+    return await this.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        isPatron: true,
+        language: true,
+        isDeleted: true,
+      }
+    });
+  }
+
   async updateLanguage(id: string, language: string) {
     return await (this.db as any).user.update({
       where: { id },
@@ -65,5 +96,23 @@ export class UserRepository {
         referralCode: data.referralCode,
       },
     });
+  }
+
+  async findWithPaymentTotals(id: string) {
+    return await (this.db as any).user.findUnique({
+      where: { id },
+      include: { paymentTotals: true }
+    });
+  }
+
+  async create(data: any) {
+      return await (this.db as any).user.create({ data });
+  }
+
+  async update(id: string, data: any) {
+      return await (this.db as any).user.update({
+          where: { id },
+          data
+      });
   }
 }
