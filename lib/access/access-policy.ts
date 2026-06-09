@@ -45,8 +45,10 @@ export type AccessDecision = {
 
 /**
  * @deprecated Legacy access policy.
- * New access decisions must go through lib/modules/access.
- * Remaining usage is limited to playback/media-source/comment legacy flows until R6/R3 delivery and R8 comments passes.
+ *
+ * New video/media access decisions must go through lib/modules/access.
+ * Remaining usage is limited to explicitly tracked legacy flows
+ * until R3/R6 playback delivery and R8 comments/interactions are migrated.
  */
 export class AccessPolicy {
   static async canViewVideo(

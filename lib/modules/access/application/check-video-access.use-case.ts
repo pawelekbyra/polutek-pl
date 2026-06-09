@@ -3,6 +3,7 @@ import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { AccessDecisionDto } from "../domain/access-decision.dto";
 import { MainChannelService } from "@/lib/modules/channel";
 import { AccessTier, VideoStatus } from "@prisma/client";
+import { canUseDemoFallbacks } from "@/lib/feature-flags";
 
 export type CheckVideoAccessInput = {
   videoIdOrSlug: string;
@@ -25,7 +26,7 @@ export async function checkVideoAccess(
 
   // 2. Resolve video
   const { isUuid } = await import("@/lib/utils/uuid");
-  const video = await prisma.video.findFirst({
+  let video = await prisma.video.findFirst({
     where: isUuid(videoIdOrSlug)
       ? { id: videoIdOrSlug, creatorId: mainChannel.id }
       : { slug: videoIdOrSlug, creatorId: mainChannel.id },
@@ -35,6 +36,21 @@ export async function checkVideoAccess(
         }
     }
   });
+
+  // Handle demo fallbacks if enabled
+  if (!video && canUseDemoFallbacks()) {
+      const { INITIAL_VIDEOS } = await import("@/lib/data/initial-content");
+      const fallback = INITIAL_VIDEOS.find(v => v.id === videoIdOrSlug || v.slug === videoIdOrSlug);
+      if (fallback) {
+          // Map fallback to expected shape
+          video = {
+              ...fallback,
+              publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+          } as any;
+      }
+  }
 
   // Admin bypass check (only within main channel)
   const isAdmin = actor.type === 'admin';
@@ -47,7 +63,8 @@ export async function checkVideoAccess(
                              video.creator?.isApproved &&
                              video.creator?.isPrimary;
 
-  if (!isMainChannelVideo) {
+  // For fallbacks, we might not have a full creator object in the same way, but MainChannelService.getRequired ensures mainChannel is valid.
+  if (!isMainChannelVideo && !canUseDemoFallbacks()) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 

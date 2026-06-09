@@ -1,12 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
 import { setNxEx, rateLimit } from '@/lib/rate-limit';
 import { getMediaClientIp } from '@/lib/media/rate-limit';
-import { AccessPolicy } from '@/lib/access/access-policy';
-import { countGraphemes } from '@/lib/utils/graphemes';
+import { checkVideoAccess } from '@/lib/modules/access';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +60,8 @@ function sanitizePlaybackMetadata(metadata: any) {
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const { userId } = await auth();
+  const actor = await getActorFromAuth();
+  const userId = actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null);
   const videoId = params.id;
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
@@ -105,23 +106,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         return NextResponse.json({ error: 'INVALID_EVENT_TYPE' }, { status: 400 });
     }
 
-    // Check video existence and fetch basic info for access check
-    const video = await prisma.video.findUnique({
-        where: { id: videoId },
-        include: {
-            creator: {
-                select: { id: true, slug: true, isApproved: true, isPrimary: true }
-            }
-        }
-    });
+    // Backend access check - don't trust the frontend
+    const ctx = createAppContext({ actor, requestId: requestId || undefined });
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
 
-    if (!video) {
-        return NextResponse.json({ error: 'VIDEO_NOT_FOUND' }, { status: 404 });
+    if (!accessResult.ok) {
+        return handleApiError(accessResult.error);
     }
 
-    // Backend access check - don't trust the frontend
-    const access = await AccessPolicy.canViewVideo(userId, videoId, video);
-    if (!access.allowed && type !== 'ACCESS_ERROR') {
+    const access = accessResult.data;
+
+    if (!access.hasAccess && type !== 'ACCESS_ERROR') {
         return NextResponse.json({ error: 'ACCESS_DENIED', reason: access.reason }, { status: 403 });
     }
 
