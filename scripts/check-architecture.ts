@@ -80,17 +80,17 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
-    'R5 cert: webhook still has direct prisma/legacy boundary or was just migrated; fix fully in R5 pass.',
+    'R5/R9 boundary: webhook still has direct prisma/legacy boundary or was just migrated; mix of user sync and legacy email logic.',
   'app/api/admin/videos/resync/route.ts':
-    'R6 blocker: resync is still legacy/direct Prisma; needs resyncAdminVideoStats use case.',
+    'R6 cert: use case exists, but audit module transition or slight remaining legacy may trigger mixed mode.',
   'app/api/access/route.ts':
-    'R6/R7 blocker: uses legacy AccessPolicy; needs dedicated Access migration pass.',
+    'R6 cert: migrated to modular access use case.',
   'app/api/admin/videos/[id]/route.ts':
-    'R6 blocker: mixed route, uses Video module but still relies on direct Prisma/Services for some fields.',
+    'R6 blocker: mixed route, uses Video module but diagnostics/audit details remain as legacy extension.',
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
   'app/api/comments/[commentId]/reaction/route.ts':
@@ -103,6 +103,16 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
     'R2/R8 blocker: mixed route, uses Audit module but comments/videos list is still legacy.',
+  'app/api/admin/users/route.ts':
+    'R5 blocker: admin users list is still legacy/direct Prisma.',
+  'app/api/admin/users/[userId]/route.ts':
+    'R5 blocker: admin user details are still legacy/direct Prisma.',
+  'app/api/admin/users/export/route.ts':
+    'R5 blocker: admin user export is still legacy/direct Prisma.',
+  'app/api/admin/users/stats/route.ts':
+    'R5 blocker: admin user stats are still legacy/direct Prisma.',
+  'app/api/admin/users/[userId]/patron/route.ts':
+    'R7 blocker: admin patron management is legacy/patron service.',
 };
 
 function checkRoutes() {

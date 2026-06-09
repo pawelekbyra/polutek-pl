@@ -1,7 +1,7 @@
 import { Video, Prisma, AccessTier, VideoStatus } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
-import { VideoNotFoundError } from "../domain/video.errors";
+import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError } from "../domain/video.errors";
 
 export interface CreateVideoInput {
   title: string;
@@ -41,6 +41,28 @@ export class VideoRepository {
         where: { id },
         include: { _count: { select: { comments: true } } }
     });
+  }
+
+  async findByIdForMainChannel(id: string, mainChannelId: string): Promise<Video | null> {
+    return await this.db.video.findFirst({
+        where: { id, creatorId: mainChannelId },
+        include: { _count: { select: { comments: true } } }
+    });
+  }
+
+  async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<Video | null> {
+    return await this.db.video.findFirst({
+        where: { slug, creatorId: mainChannelId },
+        include: { _count: { select: { comments: true } } }
+    });
+  }
+
+  async findAdminByIdOrSlugForMainChannel(idOrSlug: string, mainChannelId: string): Promise<Video | null> {
+    const { isUuid } = await import("@/lib/utils/uuid");
+    if (isUuid(idOrSlug)) {
+        return await this.findByIdForMainChannel(idOrSlug, mainChannelId);
+    }
+    return await this.findBySlugForMainChannel(idOrSlug, mainChannelId);
   }
 
   async findBySlug(slug: string): Promise<Video | null> {
@@ -143,13 +165,7 @@ export class VideoRepository {
   async updateForMainChannel(input: UpdateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
     const { id, ...data } = input;
 
-    // We use updateMany + find to enforce creatorId boundary without extra fetch first if possible,
-    // but update returns number of records. So we use update with compound where if supported,
-    // or just check id existence. Prisma update only takes unique id.
-    // So we'll use updateMany then fetch or just a simple update and rely on policy check before.
-    // Masterplan says: use updateMany with where {id, creatorId}
-
-    await tx.video.updateMany({
+    const result = await tx.video.updateMany({
         where: { id, creatorId: mainChannelId },
         data: {
             ...data,
@@ -157,26 +173,53 @@ export class VideoRepository {
         }
     });
 
-    const updated = await tx.video.findUnique({
-        where: { id },
+    if (result.count !== 1) {
+        throw new VideoNotOnMainChannelError(id);
+    }
+
+    const updated = await tx.video.findFirst({
+        where: { id, creatorId: mainChannelId },
         include: { _count: { select: { comments: true } } }
     });
+
     if (!updated) throw new VideoNotFoundError(id);
     return updated;
   }
 
   async archiveVideo(id: string, mainChannelId: string, tx: WriteTx): Promise<Video> {
-    await tx.video.updateMany({
+    const result = await tx.video.updateMany({
       where: { id, creatorId: mainChannelId },
       data: { status: 'ARCHIVED' }
     });
-    const updated = await tx.video.findUnique({ where: { id } });
+
+    if (result.count !== 1) {
+        throw new VideoNotOnMainChannelError(id);
+    }
+
+    const updated = await tx.video.findFirst({
+        where: { id, creatorId: mainChannelId }
+    });
+
     if (!updated) throw new VideoNotFoundError(id);
     return updated;
   }
 
   async setHero(videoId: string, mainChannelId: string, tx: WriteTx): Promise<void> {
-    // Transactional: clear other heroes and set this one
+    // 1. Scoped fetch to verify ownership and requirements
+    const video = await tx.video.findFirst({
+        where: { id: videoId, creatorId: mainChannelId }
+    });
+
+    if (!video) {
+        throw new VideoNotOnMainChannelError(videoId);
+    }
+
+    // Requirement: only public and published can be hero
+    if (video.tier !== 'PUBLIC' || video.status !== 'PUBLISHED') {
+        throw new VideoInvalidHeroError();
+    }
+
+    // 2. Transactional: clear other heroes and set this one
     await tx.video.updateMany({
       where: { creatorId: mainChannelId, isMainFeatured: true },
       data: { isMainFeatured: false }
@@ -199,7 +242,7 @@ export class VideoRepository {
     for (const v of updates) {
         const video = await tx.video.findUnique({ where: { id: v.id }, select: { creatorId: true } });
         if (!video || video.creatorId !== mainChannelId) {
-            throw new AppError(`Video ${v.id} does not belong to main channel. Reorder aborted.`, 403, "VIDEO_NOT_ON_MAIN_CHANNEL");
+            throw new VideoNotOnMainChannelError(v.id);
         }
 
         await tx.video.update({

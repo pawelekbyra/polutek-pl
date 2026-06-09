@@ -8,6 +8,7 @@ describe('archiveAdminVideo use-case', () => {
     video: {
       findUnique: vi.fn(),
       updateMany: vi.fn(),
+      findFirst: vi.fn(),
     },
     auditLog: { create: vi.fn() },
     creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
@@ -35,6 +36,8 @@ describe('archiveAdminVideo use-case', () => {
 
   it('succeeds and records audit on valid archive', async () => {
     mockPrisma.video.findUnique.mockResolvedValue({ id: 'v1', creatorId: 'c1', status: 'PUBLISHED' });
+    mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.video.findFirst.mockResolvedValue({ id: 'v1', status: 'ARCHIVED' });
 
     const result = await archiveAdminVideo('v1', ctx);
 
