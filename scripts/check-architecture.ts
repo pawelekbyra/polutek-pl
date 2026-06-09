@@ -112,9 +112,42 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/export/route.ts':
     'R5 blocker: admin user export is still legacy/direct Prisma.',
   'app/api/admin/users/stats/route.ts':
-    'R5 blocker: admin user stats are still legacy/direct Prisma.',
+    'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/patron/route.ts':
     'R7 blocker: admin patron management is legacy/patron service.',
+  'app/api/checkout/create-intent/route.ts':
+    'R7 blocker: checkout depends on Users bridge but is still a legacy payment flow.',
+  'app/api/user/referrals/claim/route.ts':
+    'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
+};
+
+const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
+  'app/api/admin/users/export/route.ts': 'R5 blocker: admin export still legacy.',
+  'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
+  'app/api/subscriptions/route.ts': 'R5/R7 blocker: mixed route.',
+  'app/api/videos/[id]/comments/route.ts': 'R2/R8 blocker.',
+  'app/api/comments/[commentId]/reaction/route.ts': 'R2/R8 blocker.',
+  'app/api/comments/[commentId]/report/route.ts': 'R2/R8 blocker.',
+  'app/api/comments/[commentId]/route.ts': 'R2/R8 blocker.',
+  'app/api/media-source/[videoId]/route.ts': 'R6/R3 delivery blocker.',
+  'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 delivery blocker.',
+  'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
+  'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
+  'app/api/admin/comments/route.ts': 'R8 blocker.',
+  'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
+  'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
+  'app/api/admin/payment-settings/route.ts': 'R7 blocker.',
+  'app/api/admin/stats/route.ts': 'R11 blocker.',
+  'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
+  'app/api/admin/templates/route.ts': 'R9 blocker.',
+  'app/api/admin/videos/[id]/comments/route.ts': 'R8/R6 blocker.',
+  'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
+  'app/api/checkout/create-intent/route.ts': 'R7 blocker.',
+  'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
+  'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
+  'app/api/comments/[commentId]/replies/route.ts': 'R8 blocker.',
+  'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
+  'app/api/webhooks/resend/route.ts': 'R9 blocker.',
 };
 
 function checkRoutes() {
@@ -122,7 +155,7 @@ function checkRoutes() {
   const apiDir = path.join(ROOT, 'app/api');
   if (!fs.existsSync(apiDir)) return 0;
 
-  let prismaImports = 0;
+  let prismaImportsCount = 0;
   let servicesImports = 0;
   let internalModuleImportsCount = 0;
 
@@ -132,7 +165,13 @@ function checkRoutes() {
     const relativePath = path.relative(ROOT, file);
     const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
 
-    if (content.includes("@/lib/prisma")) prismaImports++;
+    if (content.includes("@/lib/prisma")) {
+        prismaImportsCount++;
+        if (!PRISMA_ROUTES_ALLOWLIST[relativePath]) {
+            console.error(`❌ Violation: Direct Prisma import in new route: ${relativePath}. Use modules instead.`);
+            violations++;
+        }
+    }
     if (content.includes("@/lib/services/")) servicesImports++;
 
     // 1. Internal module imports check
@@ -192,7 +231,7 @@ function checkRoutes() {
   }
 
   console.log(`\nRoute check statistics:`);
-  console.log(`- Routes importing @/lib/prisma: ${prismaImports}`);
+  console.log(`- Routes importing @/lib/prisma: ${prismaImportsCount} (${Object.keys(PRISMA_ROUTES_ALLOWLIST).length} allowlisted)`);
   console.log(`- Routes importing @/lib/services/: ${servicesImports}`);
   console.log(`- Routes with internal module imports: ${internalModuleImportsCount}`);
 

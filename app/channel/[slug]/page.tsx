@@ -8,7 +8,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search } from '@/app/components/icons';
 import { CreatorContentService as ContentService } from '@/lib/services/content/creator.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { getOrCreateCurrentUser } from '@/lib/modules/users';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount } from '@/lib/utils';
@@ -78,8 +79,9 @@ export default async function ChannelPage({ params }: { params: { slug: string }
     );
   }
 
+  const userCtx = createAppContext();
   const [userDb, initialSubscribed] = await Promise.all([
-    userId ? UserService.getOrCreateUser(userId).catch(() => null) : Promise.resolve(null),
+    userId ? getOrCreateCurrentUser(userCtx, userId).catch(() => null) : Promise.resolve(null),
     userId
       ? prisma.subscription.findUnique({
           where: { userId_creatorId: { userId, creatorId: creator.id } },

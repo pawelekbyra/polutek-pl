@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   ] : [];
 
-  const videos = await VideoContentService.getAllVideos();
+  const videos = await VideoContentService.getSitemapVideos();
 
   const videoRoutes = videos.map((v) => ({
     url: `${baseUrl}/?v=${v.id}`,

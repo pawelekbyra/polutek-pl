@@ -1,8 +1,20 @@
 import { NextRequest } from 'next/server';
 import { VIDEO_SORT_FIELDS, VideoSortField } from './videos-admin.dto';
-import { USER_SORT_FIELDS, UserSortField } from './users-admin.dto';
 import { PAYMENT_SORT_FIELDS, PaymentSortField } from './payments-admin.dto';
 import { VideoStatus, AccessTier, SystemRole, PatronGrantSource, PaymentStatus } from '@prisma/client';
+
+export const USER_SORT_FIELDS = [
+  'createdAt',
+  'updatedAt',
+  'email',
+  'name',
+  'patronSince',
+  'referralPoints',
+  'referralCount',
+  'role'
+] as const;
+
+export type UserSortField = typeof USER_SORT_FIELDS[number];
 
 export type BasePaginationOptions = {
   page: number;

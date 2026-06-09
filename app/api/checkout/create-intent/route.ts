@@ -2,7 +2,8 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
 import { PaymentCheckoutService as PaymentService } from '@/lib/services/payments/checkout.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
+import { getOrCreateCurrentUser } from '@/lib/modules/users';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
 import { validatePaymentAmountMinorAsync } from '@/lib/payments/currency-settings';
@@ -40,8 +41,9 @@ export async function POST(req: NextRequest) {
         }, { status: 429 });
     }
 
-    // Lazy Sync Fallback via Service
-    await UserService.getOrCreateUser(userId);
+    // Lazy Sync Fallback via Bridge
+    const userCtx = createAppContext();
+    await getOrCreateCurrentUser(userCtx, userId);
 
     const body = await req.json();
     const result = checkoutSchema.safeParse(body);
