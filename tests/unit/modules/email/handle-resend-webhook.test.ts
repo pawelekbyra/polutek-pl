@@ -6,6 +6,7 @@ describe('handleResendWebhook use case - hardening', () => {
   const prismaMock = {
     emailEvent: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
@@ -51,6 +52,8 @@ describe('handleResendWebhook use case - hardening', () => {
   });
 
   it('accepts unsupported event type as ignored, not failure', async () => {
+    prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+
     const result = await handleResendWebhook(ctx, {
       type: 'email.unknown_type',
       data: {
@@ -70,6 +73,8 @@ describe('handleResendWebhook use case - hardening', () => {
   });
 
   it('safely handles missing email_id in known event', async () => {
+      prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+
       const result = await handleResendWebhook(ctx, {
           type: 'email.sent',
           data: {
@@ -85,7 +90,8 @@ describe('handleResendWebhook use case - hardening', () => {
       expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
   });
 
-  it('explicitly returns idempotency: not_available', async () => {
+  it('explicitly returns idempotency: best_effort', async () => {
+    prismaMock.emailEvent.findFirst.mockResolvedValue(null);
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1' });
 
     const result = await handleResendWebhook(ctx, {
@@ -101,7 +107,29 @@ describe('handleResendWebhook use case - hardening', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-        expect(result.data.idempotency).toBe('not_available');
+        expect(result.data.idempotency).toBe('best_effort');
     }
+  });
+
+  it('detects and ignores duplicate events', async () => {
+    prismaMock.emailEvent.findFirst.mockResolvedValue({ id: 'existing' });
+
+    const result = await handleResendWebhook(ctx, {
+      type: 'email.sent',
+      data: {
+        email_id: 're_123',
+        from: 'no-reply@polutek.pl',
+        to: ['user@example.com'],
+        subject: 'Hello',
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+        expect(result.data.duplicate).toBe(true);
+    }
+    // Should NOT create a second log record
+    expect(prismaMock.emailEvent.create).not.toHaveBeenCalled();
   });
 });
