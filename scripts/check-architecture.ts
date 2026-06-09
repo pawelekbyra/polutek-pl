@@ -121,6 +121,21 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
 };
 
+const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
+  'lib/modules/users/application/get-or-create-current-user.use-case.ts': 'R5 bridge: only allowed production bridge to legacy get-or-create behavior.',
+  'lib/services/user.service.ts': 'R5 legacy facade: temporary compatibility wrapper.',
+  'tests/unit/api-contracts.test.ts': 'Test usage.',
+  'tests/unit/bola-protection.test.ts': 'Test usage.',
+  'tests/unit/comment-reactions-route.test.ts': 'Test usage.',
+  'tests/unit/admin-access.test.ts': 'Test usage.',
+  'tests/unit/clerk-webhook-route.test.ts': 'Test usage.',
+  'tests/unit/subscriptions-route.test.ts': 'Test usage.',
+  'tests/unit/user-service.test.ts': 'Test usage.',
+  'tests/unit/api-route-smoke.test.ts': 'Test usage.',
+  'tests/unit/comments-route.test.ts': 'Test usage.',
+  'tests/unit/admin-videos-crud.test.ts': 'Test usage.',
+};
+
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/export/route.ts': 'R5 blocker: admin export still legacy.',
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
@@ -253,6 +268,33 @@ function getAllFiles(dir: string): string[] {
   return results;
 }
 
+function checkUserProfileServiceUsage() {
+  let violations = 0;
+  let usageCount = 0;
+
+  const files = getAllFiles(ROOT);
+  for (const file of files) {
+    const relativePath = path.relative(ROOT, file);
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
+    if (relativePath === 'lib/services/user/profile.service.ts') continue;
+    if (relativePath === 'scripts/check-architecture.ts') continue;
+
+    const content = fs.readFileSync(file, 'utf-8');
+    if (content.includes("UserProfileService") || content.includes("UserService.getOrCreateUser") || content.includes("@/lib/services/user/profile.service") || content.includes("@/lib/services/user.service")) {
+      usageCount++;
+
+      const allowReason = USER_PROFILE_SERVICE_ALLOWLIST[relativePath];
+      if (!allowReason) {
+        console.error(`❌ Violation: Direct UserProfileService/getOrCreateUser usage forbidden: ${relativePath}. Use @/lib/modules/users bridge instead.`);
+        violations++;
+      }
+    }
+  }
+
+  console.log(`- Files with UserProfileService usage: ${usageCount} (${Object.keys(USER_PROFILE_SERVICE_ALLOWLIST).length} allowlisted)`);
+  return violations;
+}
+
 function checkLegacyAccessPolicy() {
   let violations = 0;
   let policyImports = 0;
@@ -287,7 +329,7 @@ function checkLegacyAccessPolicy() {
   return violations;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy();
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);
