@@ -172,6 +172,11 @@ export async function sendWelcomeEmail(to: string, firstName?: string | null, la
   });
 }
 
+/**
+ * R9 legacy email bridge.
+ * Keeps existing provider/template behavior while moving route ownership to lib/modules/email.
+ * Future R9 pass should split provider adapter, templates, delivery logs and retry/outbox.
+ */
 export class EmailService {
   static async sendWelcomeEmail(toEmail: string, firstName?: string | null, language: string = 'pl') {
     return sendWelcomeEmail(toEmail, firstName, language);
