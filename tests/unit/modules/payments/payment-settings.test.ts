@@ -49,6 +49,10 @@ describe('Payment Settings Use Cases', () => {
       if (result.ok) {
           expect(result.data.PLN.minAmount).toBe(20); // Default for PLN from lib/constants.ts
           expect(result.data.USD.minAmount).toBe(5); // Default for USD from lib/constants.ts
+          // Verify response shape
+          expect(result.data).toHaveProperty('PLN');
+          expect(result.data.PLN).toHaveProperty('currency', 'PLN');
+          expect(result.data.PLN).toHaveProperty('minAmountMinor');
       }
     });
 
@@ -90,6 +94,10 @@ describe('Payment Settings Use Cases', () => {
 
       expect(result.ok).toBe(true);
       expect(mockRepo.upsertCurrencySetting).toHaveBeenCalledWith('PLN', 3000, expect.anything());
+      // Verify response shape of update is same as get
+      if (result.ok) {
+        expect(result.data.PLN.minAmount).toBe(20); // Note: getPaymentSettings called with fresh mock repo result
+      }
     });
   });
 });
