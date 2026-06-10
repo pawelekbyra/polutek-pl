@@ -155,23 +155,23 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 
 ---
 
-## 4. Aktualny status refaktoryzacji
+## 4. Aktualny status roadmapy R0–R11
 
-| Faza     | Opis                                       | Status                                                      |
-| :------- | :----------------------------------------- | :---------------------------------------------------------- |
-| **R0**   | Zasady, infrastruktura, bariery projektowe | `[x]`                                                       |
-| **R1**   | Shared, Result, błędy, Actor, AppContext   | `[x]`                                                       |
-| **R2**   | Audit                                      | `[x foundation]`                                            |
-| **R3**   | Media                                      | `[x safety foundation]`                                     |
-| **R4**   | Channel / ścisły single-channel            | `[x single-channel foundation]`                             |
-| **R5**   | Users                                      | `[x stronger foundation]`                                   |
-| **R6**   | Video                                      | `[x stronger foundation]`                                   |
-| **R6.5** | Access Foundation                          | `[x certified]`                                             |
-| **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`         |
-| **R8**   | Comments                                   | `[~ certification candidate]`                               |
-| **R9**   | Email                                      | `[~ foundation migrated / pending certification]`           |
-| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`     |
-| **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                       |
+| Faza     | Opis                                       | Status                                                   |
+| :------- | :----------------------------------------- | :------------------------------------------------------- |
+| **R0**   | Zasady, infrastruktura, bariery projektowe | `[x]`                                                    |
+| **R1**   | Shared, Result, błędy, Actor, AppContext   | `[x]`                                                    |
+| **R2**   | Audit                                      | `[x foundation]`                                         |
+| **R3**   | Media                                      | `[x safety foundation]`                                  |
+| **R4**   | Channel / ścisły single-channel            | `[x single-channel foundation]`                          |
+| **R5**   | Users                                      | `[x stronger foundation]`                                |
+| **R6**   | Video                                      | `[x stronger foundation]`                                |
+| **R6.5** | Access Foundation                          | `[x certified]`                                          |
+| **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`      |
+| **R8**   | Comments                                   | `[~ certification candidate / pending final validation]` |
+| **R9**   | Email                                      | `[~ code-only pass / pending docs+guard reconcile]`      |
+| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`  |
+| **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                    |
 
 Aktualna interpretacja:
 
@@ -180,7 +180,7 @@ Aktualna interpretacja:
 * R5/R6 są mocno zaawansowane i po ostatnich passach mają mocniejszą ochronę, ale nadal mogą mieć jawne legacy extensions.
 * R6.5 certyfikuje access foundation dla wideo.
 * R7 core runtime został przesunięty do modułów, ale nie jest jeszcze pełnym `[x certified]`.
-* R8 core comments są zmigrowane, ale `admin`, `moderation`, `pin`, `context` i część flow administracyjnych pozostają blokerami.
+* R8 ma PR z certification candidate pass, który domyka główne znane blokery komentarzy, ale nie może być oznaczony jako certified przed zielonym CI, guardami, typecheckiem, testami i finalnym README/guard reconcile.
 * R9 ma code-only preparation pass w main, ale wymaga dokumentacyjnego i guardowego reconcile przed zmianą statusu.
 * R10 inventory istnieje, ale musi być okresowo uzgadniane z aktualnym main po większych zmianach modułowych.
 * R11 jeszcze nie wystartowało.
@@ -191,33 +191,35 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-Post-merge docs/guard reconcile po ostatnich passach R5/R6/R9.
+Review i final reconcile PR #785 — R8 Comments Certification Candidate Pass.
 
 Cel:
-Uzgodnić README, guardy architektoniczne i dokumentację audytową z aktualnym main.
+Domknąć R8 Comments jako certification candidate bez cofania README, bez psucia R9 i bez przedwczesnego oznaczania R8 jako certified.
 
-Nie zaczynać dużego R10 cleanup.
-Nie zaczynać R11.
-Nie oznaczać R7 jako [x certified].
-Nie oznaczać R8 jako [x certified].
-Nie oznaczać R9 jako [x certified].
-Nie implementować R8 Comments Certification Candidate Pass, dopóki docs/guard reconcile nie zostanie wykonany.
+Warunki przed merge PR #785:
+- CI musi być zielone albo failure musi być jednoznacznie wyjaśnione i naprawione.
+- README nie może cofać ostrożnego statusu R9.
+- R9 musi pozostać jako [~ code-only pass / pending docs+guard reconcile].
+- R8 może być oznaczone najwyżej jako [~ certification candidate / pending final validation].
+- Nie wolno oznaczać R8 jako [x certified].
+- Nie zaczynać dużego R10 cleanup.
+- Nie zaczynać R11.
+- Nie oznaczać R7 jako [x certified].
 ```
 
 Następny dobry prompt dla agenta kodowania:
 
 ```txt
-Wykonaj post-merge docs/guard reconcile po ostatnich passach R5/R6/R9.
+Dokończ review/reconcile PR #785 — R8 Comments Certification Candidate Pass.
 
 Zakres:
-- Sprawdź aktualny main.
-- Sprawdź README.md.
-- Sprawdź scripts/check-architecture.ts.
-- Sprawdź docs/audit, jeżeli zawierają inventory dla R5/R6/R8/R9/R10.
-- Usuń albo popraw stale allowlisty, które opisują route jako legacy, mimo że aktualny kod jest już modularny.
-- Nie zmieniaj runtime poza oczywistym usunięciem stale guard entries.
-- Nie aktualizuj statusów faz optymistycznie.
-- Nie oznaczaj R8/R9/R7 jako certified.
+- Nie zmieniaj runtime poza naprawą błędów wykrytych przez CI/typecheck/testy.
+- Napraw README tak, żeby nie cofało aktualnego ostrożnego source of truth.
+- R8 ustaw najwyżej jako [~ certification candidate / pending final validation].
+- R9 zostaw jako [~ code-only pass / pending docs+guard reconcile].
+- Nie oznaczaj R7/R8/R9 jako certified.
+- Sprawdź scripts/check-architecture.ts pod kątem stale allowlist.
+- Zweryfikuj, czy R8 route’y nie importują już @/lib/prisma ani legacy comment services.
 - Nie zaczynaj R10.
 - Nie zaczynaj R11.
 
@@ -228,14 +230,6 @@ npm test -- --run
 
 Jeżeli coś nie zostało uruchomione, oznacz jako NOT RUN i podaj powód.
 ```
-
-Po tym kroku następny bezpieczny prompt to osobny:
-
-```txt
-R8 Comments Certification Candidate Implementation Pass.
-```
-
-Ten pass musi być oddzielny, kontrolowany i nie może być mieszany z R9, R10 ani R11.
 
 ---
 
@@ -313,9 +307,7 @@ Status:
 [x]
 ```
 
-R1 jest certyfikowanym fundamentem.
-
-Dalsze szlify mogą nastąpić później, ale R1 jest wystarczająco stabilne jako baza dla dalszych prac domenowych.
+R1 jest ukończone jako fundament dla dalszych faz.
 
 ---
 
@@ -334,9 +326,19 @@ Status:
 [x foundation]
 ```
 
-R2 jest certyfikowanym foundation.
+Oznacza to:
 
-Nie oznacza to, że każdy legacy audit call został usunięty. Oznacza to, że istnieje stabilny kierunek i bezpieczna warstwa audytu dla modułów.
+* `lib/modules/audit/**` istnieje,
+* publiczne API przechodzi przez `lib/modules/audit/index.ts`,
+* audyt używa `AppContext` / `Actor`,
+* wsparcie dla transakcji istnieje tam, gdzie jest potrzebne,
+* zmigrowane domeny mogą rejestrować zdarzenia przez moduł audytu.
+
+Nie oznacza jeszcze:
+
+* każda akcja legacy w komentarzach/płatnościach/e-mailach/szczegółach admina jest w pełni zmigrowana do modułu audytu.
+
+Pozostałe pokrycie audytem dla komentarzy, płatności, e-maila i szczegółów admina należy do ich własnych przejść domenowych.
 
 ---
 
@@ -344,11 +346,12 @@ Nie oznacza to, że każdy legacy audit call został usunięty. Oznacza to, że 
 
 Cel:
 
-* prywatne media,
-* bezpieczne źródła odtwarzania,
-* ochrona raw/signed/internal media URL,
-* separacja storage od publicznego API,
-* polityka dostępu do źródeł mediów.
+* bezpieczeństwo mediów,
+* allowlisty URL,
+* blokowanie prywatnych hostów,
+* walidacja miniatur/wideo/awatarów/obrazków w komentarzach,
+* wykrywanie źródeł HLS/DASH/bezpośrednich,
+* gwarancje braku wycieku danych w publicznych DTO.
 
 Status:
 
@@ -356,25 +359,40 @@ Status:
 [x safety foundation]
 ```
 
-R3 ma certyfikowaną warstwę bezpieczeństwa.
+Oznacza to:
 
-Zasada trwała:
+* warstwa bezpieczeństwa MediaPolicy istnieje,
+* bezpieczeństwo URL i blokowanie prywatnych hostów są przetestowane,
+* publiczne DTO wideo nie wystawia surowego `videoUrl`,
+* wykrywanie HLS/DASH istnieje jako klasyfikacja.
+
+Nie oznacza jeszcze:
+
+* pełna migracja dostarczania mediów/proxy jest ukończona,
+* przepisywanie manifestów istnieje,
+* proxy segmentów istnieje,
+* `app/api/media/**`, `app/api/media-source/**` oraz `lib/blob.ts` są w pełni zmodularyzowane.
+
+Ważne zastrzeżenie dot. HLS/DASH:
 
 ```txt
-Publiczne API/UI nie może wystawiać surowego videoUrl ani prywatnych storage URL.
+Wykrywanie HLS/DASH istnieje wyłącznie do celów walidacji/klasyfikacji.
+Nie oznacza to, że przepisywanie manifestów lub dostarczanie przez proxy segmentów jest zaimplementowane.
 ```
+
+Pełne dostarczanie mediów przez proxy to osobny pass, nie warunek obecnej certyfikacji R3.
 
 ---
 
-## R4 — Channel / single-channel
+## R4 — Channel / ścisły single-channel
 
 Cel:
 
-* ścisły single-channel invariant,
-* jeden oficjalny kanał,
-* brak fallbacków twórcy,
-* brak multi-creator runtime,
-* jasne mapowanie legacy `Creator` na `MainChannel`.
+* jeden kanał,
+* brak fallbacków creator,
+* brak fake creator slug,
+* brak automatycznego tworzenia creatorów w runtime,
+* `Creator` traktowany jako legacy reprezentacja `MainChannel`.
 
 Status:
 
@@ -382,9 +400,19 @@ Status:
 [x single-channel foundation]
 ```
 
-R4 certyfikuje inwariant produktu.
+Oznacza to:
 
-Nie zmieniaj `Creator -> Channel` w bazie bez osobnego migration plan.
+* inwariant single-channel jest jawny,
+* fallbacki typu `polutek`, `demo-creator`, `default-creator` są zabronione,
+* runtime nie powinien tworzyć domyślnego creatora,
+* nowe prace muszą respektować jeden kanał.
+
+Nie oznacza jeszcze:
+
+* model Prisma `Creator` został przemianowany na `Channel`,
+* wszystkie historyczne nazwy i helpery zostały usunięte.
+
+Zmiana nazwy modelu to osobna migracja i nie wolno jej robić przy okazji innej fazy.
 
 ---
 
@@ -392,14 +420,13 @@ Nie zmieniaj `Creator -> Channel` w bazie bez osobnego migration plan.
 
 Cel:
 
-* moduł Users,
-* profile użytkowników,
-* admin users,
-* user access profile,
-* aktor,
-* synchronizacja z Clerk,
-* bezpieczne bridge’e dla legacy,
-* eksport użytkowników przez use case.
+* uporządkowanie użytkowników,
+* admin user flows,
+* role,
+* profile,
+* eksport admina,
+* subscriber/subscription flows,
+* ochrona przed mieszaniem `Subscription` i `Patron`.
 
 Status:
 
@@ -407,18 +434,26 @@ Status:
 [x stronger foundation]
 ```
 
-R5 ma mocny fundament.
+Oznacza to:
 
-Istnieją modularne use case’y dla kluczowych admin/user flows, w tym listowania, szczegółów, statystyk i exportu.
+* moduł Users istnieje,
+* część admin/user flows została przesunięta w stronę use case’ów,
+* admin users export został przesunięty z route’a do modułowego use case’a,
+* obecny stan jest mocniejszy niż pierwotny legacy.
 
-Pozostające ryzyka R5:
+Nie oznacza jeszcze:
 
-* część rozszerzeń użytkownika może nadal dotykać płatności/subskrypcji,
-* nie każdy legacy bridge musi być usunięty,
-* część route’ów może pozostać jawnie allowlisted do przyszłego cleanupu,
-* `User.isPatron` nadal może być read-modelem, a nie docelowym źródłem prawdy.
+* wszystkie user/subscription/referral flows są w pełni certyfikowane,
+* każdy route użytkowników jest czysty,
+* wszystkie stare serwisy users są martwe.
 
-Nie oznaczaj R5 jako pełne `[x certified]`, jeżeli guardy albo inventory nadal wskazują legacy extensions.
+Zasada:
+
+```txt
+Subscription != Patron.
+```
+
+Subskrypcje i patronat nie mogą być traktowane jako to samo.
 
 ---
 
@@ -426,12 +461,12 @@ Nie oznaczaj R5 jako pełne `[x certified]`, jeżeli guardy albo inventory nadal
 
 Cel:
 
-* moduł Video,
-* publiczne DTO,
-* admin/public separation,
-* ochrona raw media URL,
-* playback access,
-* bezpieczne mapowanie video data.
+* DTO publicznego wideo,
+* ochrona przed wyciekiem `videoUrl`,
+* publiczne API wideo,
+* admin video flows,
+* media-source safety,
+* playback event safety.
 
 Status:
 
@@ -439,19 +474,24 @@ Status:
 [x stronger foundation]
 ```
 
-R6 ma mocny fundament i dodatkowy safety pass dla publicznych DTO / raw URL leak prevention.
+Oznacza to:
+
+* publiczne DTO wideo zostało wzmocnione,
+* publiczne API nie powinno wystawiać surowego `videoUrl`,
+* runtime publiczny ma silniejsze zabezpieczenia,
+* raw media URL leak safety jest jawnie chronione.
+
+Nie oznacza jeszcze:
+
+* każdy admin video route jest w pełni certyfikowany,
+* cała analityka/playback jest w pełni zmodularyzowana,
+* każdy fragment media delivery przeszedł pełną migrację.
 
 Zasada trwała:
 
 ```txt
-Żaden publiczny DTO ani publiczny route nie może przypadkowo przepuścić raw/signed/internal media URL.
+Nigdy nie wystawiaj surowego videoUrl do publicznego UI/API.
 ```
-
-Pozostające ryzyka R6:
-
-* część admin video route’ów może nadal zawierać legacy extensions,
-* event/view persistence może nadal wymagać dalszego cleanupu,
-* R6 nie powinno być rozszerzane w kierunku dużego R10 cleanup bez osobnego planu.
 
 ---
 
@@ -459,11 +499,10 @@ Pozostające ryzyka R6:
 
 Cel:
 
-* centralne decyzje dostępu,
-* dostęp do wideo,
-* patron-only gating,
-* ochrona przed BOLA,
-* wspólny model access decisions.
+* ujednolicony access foundation,
+* sprawdzanie dostępu do wideo,
+* odróżnienie public/patron-only/deleted/not-found,
+* podstawa dla R7/R8/R9.
 
 Status:
 
@@ -471,12 +510,17 @@ Status:
 [x certified]
 ```
 
-R6.5 jest certyfikowane dla aktualnego zakresu access foundation.
+Oznacza to:
 
-Zasada trwała:
+* access foundation jest certyfikowany dla aktualnego zakresu,
+* nowe domeny powinny korzystać z modułowego access,
+* R8 Comments musi dziedziczyć dostęp z filmu,
+* R7 Patron/Payments musi respektować DB jako źródło prawdy.
+
+Zasada:
 
 ```txt
-UI może pokazywać stan dostępu, ale nie jest źródłem prawdy dla decyzji dostępowych.
+Access decision ma wynikać z bazy danych i polityki domenowej, nie z luźnych metadanych Clerk.
 ```
 
 ---
@@ -487,14 +531,13 @@ Cel:
 
 * moduł Patron,
 * moduł Payments,
+* checkout,
 * Stripe webhook,
-* payment fulfillment,
-* refund/dispute handling,
+* fulfillment,
+* refunds,
+* disputes,
 * patron grants,
-* atomiczne grant/revoke,
-* idempotencja zdarzeń płatniczych,
-* admin payments,
-* payment settings.
+* spójność transakcyjna payment -> patron access.
 
 Status:
 
@@ -502,111 +545,112 @@ Status:
 [~ stronger foundation / certification candidate]
 ```
 
-R7 core runtime został przesunięty do modułów i jest mocno zaawansowany.
+Oznacza to:
 
-Nie oznacza to jeszcze `[x certified]`.
+* core runtime płatności został przesunięty do modułów,
+* Stripe webhook orchestration został przesunięty w stronę use case’a,
+* refund/revoke patron flow został wzmocniony,
+* payment admin flows zostały częściowo zmodularyzowane,
+* idempotency i transakcyjność są wyraźnie ważne.
 
-R7 może zostać certyfikowane dopiero po:
+Nie oznacza jeszcze:
 
-* reconciliation pass na aktualnym main,
-* sprawdzeniu guardów,
-* sprawdzeniu testów dla grant/revoke/refund/dispute,
-* sprawdzeniu braku rozjazdu między `User.isPatron`, `PatronGrant` i payment state,
-* uczciwym opisaniu pozostałych legacy extensions.
+* R7 jest pełnym `[x certified]`,
+* wszystkie edge-case’y płatności zostały ręcznie zweryfikowane,
+* każdy admin/payment route jest ostatecznie certyfikowany,
+* każda ścieżka patron access została przepisana do docelowego `PatronGrant`.
+
+Warunki certyfikacji R7:
+
+* zielone guardy,
+* zielony typecheck,
+* zielone testy,
+* jasny raport transakcyjności,
+* brak mieszania Clerk metadata jako source of truth,
+* brak regresji w refund/dispute/fulfillment,
+* README i docs/audit zgodne z aktualnym kodem.
 
 Zasada trwała:
 
 ```txt
-Płatność i dostęp patrona muszą być spójne transakcyjnie.
+Payment fulfillment i dostęp patrona muszą być spójne transakcyjnie.
 ```
 
 ---
 
 ## R8 — Comments
 
-Status:
-
-```txt
-[~ certification candidate]
-```
-
 Cel:
 
 * moduł Comments,
 * list/create/update/delete,
 * replies,
-* report,
-* pin/heart,
-* context/thread,
-* admin moderation,
-* polityka dostępu,
-* audyt moderacji.
-
-Już zrobione / aktualny core:
-
-* moduł `comments` istnieje,
-* `CommentPolicy` używa modularnego access i wymusza dziedziczenie dostępu filmu,
-* interakcje wideo i reakcje komentarzy zostały przesunięte w stronę use case’ów,
-* główne przepływy list/create/update/delete/replies/report/pin/context/admin-list są zmigrowane do modułu,
-* R8 nie dotyka R7 Payments/Patron ani R9 Email.
-* Wszystkie publiczne i adminowe route'y komentarzy są cienkimi adapterami.
-* Usunięto legacy `pinned` PATCH hack.
-
-Znane blokery R8:
-
-* Moderation UI (frontend) pending.
-* Pełny audyt moderacji (moderation log UI) pending.
-
-R8 musi zawierać minimalne elementy Fazy X:
-
-* sprawdzenia dostępu,
-* powody odmowy dostępu tam, gdzie praktyczne,
-* audyt moderacji,
-* testy scenariuszowe dla patron/public,
-* przepływy zgłoszeń/moderacji.
-
----
-
-## R9 — Email
+* reactions,
+* reports,
+* pin/unpin,
+* context,
+* admin comments,
+* admin video comments,
+* moderation,
+* access control dla patron-only videos,
+* audyt operacji moderacyjnych.
 
 Status:
 
 ```txt
-[~ core comments migrated / blockers remain]
+[~ certification candidate / pending final validation]
 ```
 
 Co jest aktualnie interpretowane jako zrobione:
 
-* core comment flows są w dużej części zmigrowane,
-* publiczne list/create comments używają modułu,
-* część update/delete/replies/reactions/report została przesunięta do modułów,
-* P0 access bug przy reakcjach na patron-only content został zaadresowany w core flow,
-* istnieje fundament `CommentPolicy` / `CommentRepository` / comments use cases.
+* moduł `comments` istnieje,
+* core comment flows są zmigrowane do modułu,
+* publiczne list/create/update/delete/replies/reactions/report działają przez modularne use case’y,
+* `context` route został przesunięty w stronę modularnego `getCommentContext`,
+* `pin/unpin` zostały przesunięte w stronę modularnych use case’ów,
+* `admin/comments` został przesunięty w stronę modularnego `listAdminComments`,
+* `admin/videos/[id]/comments` korzysta z modularnego listowania komentarzy,
+* komentarze dziedziczą dostęp z filmu,
+* interakcje z komentarzami pod patron-only video wymagają właściwego dostępu,
+* legacy `pinned` PATCH hack został usunięty,
+* guardy R8 zostały zaktualizowane w kierunku usunięcia R8 z Prisma allowlist.
 
-Pozostające blokery R8:
+R8 nie jest jeszcze `[x certified]`.
 
-* `context` route wymaga migracji albo jawnego pozostawienia jako legacy,
-* `pin/unpin` route wymaga migracji albo jawnego pozostawienia jako legacy,
-* `admin/comments` wymaga migracji albo jawnego pozostawienia jako legacy,
-* `admin/videos/[id]/comments` wymaga migracji albo jawnego pozostawienia jako legacy,
-* moderacja powinna być spójna i audytowalna,
-* status R8 nie może być certified bez osobnego certification candidate pass.
+Warunki certyfikacji R8:
 
-Następny docelowy krok dla R8:
+* CI zielone,
+* `npm run quality:architecture-boundaries` zielone,
+* `npm run typecheck` zielone,
+* `npm test -- --run` zielone,
+* README nie cofa aktualnego source of truth,
+* guardy nie zawierają stale allowlist dla R8,
+* route’y R8 nie importują bezpośrednio `@/lib/prisma`,
+* route’y R8 nie importują legacy comment services,
+* admin permission behavior nie został osłabiony przy przejściu z `requireAdminForApi(...)` na `getActorFromAuth()`,
+* znane pozostałe braki są jawnie opisane.
+
+Pozostające możliwe ryzyka R8:
+
+* frontend moderation UI może nadal wymagać osobnego passu,
+* pełny moderation log UI może nadal wymagać osobnego passu,
+* admin permission granularity wymaga ręcznego review,
+* R8 certification candidate nie oznacza jeszcze pełnej certyfikacji.
+
+Zasada trwała:
 
 ```txt
-R8 Comments Certification Candidate Implementation Pass
+Komentarze dziedziczą dostęp z filmu.
+Jeżeli użytkownik nie ma prawa zobaczyć patron-only video, nie powinien widzieć ani używać komentarzy pod tym filmem.
 ```
 
-Ten pass powinien być uruchomiony dopiero po aktualizacji README/guardów po ostatnich merge’ach.
+Następny bezpieczny krok po merge PR #785:
 
-Zakres przyszłego R8 passu powinien być minimalny i kontrolowany:
+```txt
+R8 final validation + docs/guard reconcile.
+```
 
-* nie mieszać R8 z R9,
-* nie zaczynać R10,
-* nie zaczynać R11,
-* nie przepisywać całego systemu komentarzy,
-* skupić się na jawnych blockerach: context, pin, admin comments, admin video comments, moderation audit.
+Dopiero po tym można rozważyć zmianę statusu R8 na `[x certified]`.
 
 ---
 
@@ -614,18 +658,13 @@ Zakres przyszłego R8 passu powinien być minimalny i kontrolowany:
 
 Cel:
 
-* moduł Email,
-* admin broadcast,
-* broadcast history,
+* inbound email management,
+* admin email responses,
+* broadcast flows,
 * Resend webhook,
-* inbound responses,
-* templates,
-* subscriber resync,
-* preferences/unsubscribe,
-* delivery logs,
+* delivery state,
 * idempotency,
-* outbox/retry,
-* brak wpływu na paid access.
+* safety boundary: email module nie może modyfikować patron access.
 
 Status:
 
@@ -633,32 +672,33 @@ Status:
 [~ code-only pass / pending docs+guard reconcile]
 ```
 
-Co jest aktualnie interpretowane jako zrobione:
+Oznacza to:
 
-* istnieje moduł Email,
-* Resend webhook jest przepięty do modularnego use case,
-* inbound email management ma code-only pass,
-* webhook delivery state ma dodatkowe hardening logic,
-* istnieją testy bezpieczeństwa, które pilnują, żeby Email nie mutował `User.isPatron`, `PatronGrant` ani `Payment`,
-* część flows działa przez publiczne API modułu.
+* istnieje code-only preparation pass w main,
+* część inbound email management została przesunięta do modułu,
+* admin email responses route został przesunięty w stronę modularnych use case’ów,
+* webhook delivery status ma silniejsze zasady status priority,
+* istnieją testy chroniące przed tym, aby email module modyfikował patron/payment domains.
 
-Pozostające blokery R9:
+Nie oznacza jeszcze:
 
-* README/docs/guard reconcile po code-only pass,
-* sprawdzenie stale allowlist w `scripts/check-architecture.ts`,
-* pełne domknięcie broadcast flows,
-* templates mogą pozostać legacy,
-* subscriber resync może pozostać boundary między Users i Email,
-* outbox/retry może wymagać osobnego schema/model pass,
-* R9 nie może zostać oznaczone jako certified po samym code-only pass.
+* R9 jest certyfikowane,
+* wszystkie docs/guardy zostały uzgodnione,
+* broadcast flows są w pełni certyfikowane,
+* wszystkie admin email route’y są czyste,
+* R9 można oznaczyć jako `[x certified]`.
 
 Zasada trwała:
 
 ```txt
-Email nie nadaje i nie odbiera dostępu patrona.
+Email module nie może nadawać, odbierać ani zmieniać patron access.
 ```
 
-Email może komunikować się z użytkownikiem, ale nie jest źródłem prawdy dla płatnego dostępu.
+R9 nie może pisać do:
+
+* `User.isPatron`,
+* `PatronGrant`,
+* `Payment`.
 
 ---
 
@@ -666,12 +706,11 @@ Email może komunikować się z użytkownikiem, ale nie jest źródłem prawdy d
 
 Cel:
 
-* usunięcie lub zamrożenie legacy fasad,
-* uporządkowanie allowlist,
-* usunięcie martwego kodu,
-* finalne zmniejszenie `@/lib/services/**`,
-* reconcile inventory z main,
-* zamiana tymczasowych bridge’y na trwałe modułowe API.
+* inventory legacy services,
+* inventory direct Prisma route’ów,
+* usuwanie martwych fasad,
+* uporządkowanie bridge/facade warstw,
+* redukcja starych usług po zakończeniu domenowych migracji.
 
 Status:
 
@@ -679,21 +718,27 @@ Status:
 [~ preparation inventory / needs reconcile with main]
 ```
 
-R10 nie powinno być zaczynane jako duży cleanup, dopóki R7/R8/R9 mają znane blokery.
+Oznacza to:
 
-Dozwolone teraz:
+* istnieje przygotowawcze inventory,
+* część legacy services została sklasyfikowana,
+* część direct Prisma route’ów została rozpoznana,
+* R10 ma być cleanupem po stabilizacji R7/R8/R9.
 
-* aktualizowanie inventory,
-* oznaczanie stale allowlist,
-* usuwanie oczywiście martwych wpisów w guardach po merge’ach,
-* dokumentacyjny reconcile.
+Nie oznacza jeszcze:
 
-Niedozwolone teraz:
+* można zacząć masowy cleanup,
+* można usuwać serwisy bez sprawdzenia runtime usage,
+* można reorganizować cały projekt,
+* można przepisywać domeny przy okazji.
 
-* masowe usuwanie legacy services,
-* przepisywanie wielu domen naraz,
-* rozpoczynanie dużego cleanupu przed certyfikacją R7/R8/R9,
-* usuwanie bridge’y bez potwierdzenia runtime.
+Zasada:
+
+```txt
+R10 nie może wyprzedzać R7/R8/R9.
+```
+
+Najpierw trzeba domknąć i uzgodnić domeny wysokiego ryzyka.
 
 ---
 
@@ -701,15 +746,11 @@ Niedozwolone teraz:
 
 Cel:
 
-* spójny panel admina,
-* kokpit operacyjny właściciela,
-* przegląd treści,
-* przegląd patronów,
-* przegląd płatności,
-* moderacja,
-* komunikacja e-mail,
-* diagnostyka,
-* audyt.
+* admin cockpit,
+* moderation UI,
+* operational dashboard,
+* lepszy frontend admina,
+* narzędzia dla właściciela/twórcy.
 
 Status:
 
@@ -717,42 +758,169 @@ Status:
 [ ]
 ```
 
-R11 jeszcze nie wystartowało.
+R11 jeszcze nie startuje.
 
-Nie zaczynaj R11, dopóki R7/R8/R9/R10 nie zostaną ustabilizowane w minimalnym zakresie.
+Nie wolno zaczynać R11, dopóki:
 
----
-
-## 8. Guardy architektoniczne
-
-Guardy są częścią produktu.
-
-Guardy mają chronić projekt przed:
-
-* bezpośrednimi importami Prismy w nowych route’ach,
-* importowaniem prywatnych wnętrzności modułów,
-* mieszaniem zamkniętych modułów z legacy services,
-* wystawianiem prywatnych media URL,
-* regresją single-channel invariant,
-* użyciem Clerk metadata jako źródła prawdy dla patronatu,
-* przypadkowym powrotem logiki biznesowej do route’ów.
-
-Jeżeli guard blokuje zmianę, agent nie ma go obchodzić.
-
-Agent ma najpierw sprawdzić:
-
-* czy guard wykrył realny problem,
-* czy allowlista jest nadal aktualna,
-* czy route rzeczywiście jest legacy,
-* czy dokumentacja zgadza się z kodem.
-
-Stale allowlist są błędem dokumentacyjnym.
+* R7/R8/R9 nie są wystarczająco stabilne,
+* guardy i docs nie są uzgodnione,
+* R10 nie ma jasnego zakresu,
+* bieżące PR-y nie są rozliczone.
 
 ---
 
-## 9. Walidacja
+# 8. Moduły domenowe
 
-Podstawowe komendy:
+## Shared
+
+Shared zawiera wspólne typy i helpery:
+
+* `Actor`,
+* `AppContext`,
+* `UseCaseResult`,
+* `AppError`,
+* `ReadDb`,
+* `WriteTx`,
+* mapowanie błędów,
+* helpery route/API.
+
+Shared nie powinien zawierać logiki biznesowej konkretnej domeny.
+
+---
+
+## Audit
+
+Audit odpowiada za zapisywanie zdarzeń.
+
+Zasady:
+
+* audyt używa `Actor`,
+* audyt powinien działać z transakcją tam, gdzie operacja domenowa jest transakcyjna,
+* audyt nie powinien samodzielnie rozstrzygać policy domenowych,
+* audyt nie zastępuje testów ani guardów.
+
+---
+
+## Channel
+
+Channel reprezentuje single-channel product invariant.
+
+Zasady:
+
+* jeden kanał,
+* bez fallbacków creator,
+* bez runtime auto-create,
+* bez multi-creator SaaS behavior.
+
+---
+
+## Users
+
+Users odpowiada za użytkowników, profile, role, admin user flows i subscription-related flows.
+
+Zasady:
+
+* Users nie może mylić subskrypcji z patronatem.
+* Users może prezentować read model, ale source of truth patron access należy do domeny patron/access.
+* Users route’y powinny być cienkie.
+
+---
+
+## Access
+
+Access odpowiada za decyzje dostępu.
+
+Zasady:
+
+* access decision wynika z DB i polityki,
+* Clerk metadata nie jest source of truth,
+* patron-only content wymaga właściwego dostępu,
+* comments dziedziczą access z video.
+
+---
+
+## Patron
+
+Patron odpowiada za status patrona i granty dostępu.
+
+Zasady:
+
+* patron access musi być kontrolowany przez DB,
+* docelowo aktywne `PatronGrant` są source of truth,
+* `User.isPatron` może być read-model/cache, ale nie powinien być jedyną długoterminową prawdą.
+
+---
+
+## Payments
+
+Payments odpowiada za Stripe, checkout, fulfillment, refunds i disputes.
+
+Zasady:
+
+* idempotency jest obowiązkowa,
+* fulfillment musi być bezpieczny transakcyjnie,
+* refund/dispute musi konsekwentnie cofać dostęp,
+* payment module nie może polegać na optymistycznych metadanych Clerk.
+
+---
+
+## Video
+
+Video odpowiada za publiczne i adminowe wideo.
+
+Zasady:
+
+* publiczne DTO nie wystawia `videoUrl`,
+* route’y powinny używać modułowego public API,
+* media/source delivery nie może przeciekać raw storage URL,
+* playback event persistence musi być jawnie opisane, jeśli pozostaje mixed.
+
+---
+
+## Media
+
+Media odpowiada za bezpieczeństwo URL, klasyfikację źródeł i docelowo delivery/proxy.
+
+Zasady:
+
+* blokowanie prywatnych hostów,
+* allowlisty,
+* brak raw URL leak,
+* HLS/DASH detection nie oznacza HLS/DASH proxy.
+
+---
+
+## Comments
+
+Comments odpowiada za komentarze, replies, reactions, reports, pin/unpin, context i admin moderation.
+
+Zasady:
+
+* komentarze dziedziczą dostęp z wideo,
+* guest nie może raportować ani reagować,
+* non-patron nie może widzieć/interagować z komentarzami pod patron-only video,
+* route’y comments nie powinny importować `@/lib/prisma`,
+* route’y comments nie powinny importować legacy comment services,
+* admin permission behavior musi pozostać co najmniej tak silne jak przed migracją.
+
+---
+
+## Email
+
+Email odpowiada za broadcast, inbound responses, webhook delivery i admin email flows.
+
+Zasady:
+
+* email module nie modyfikuje patron access,
+* status delivery nie powinien cofać terminalnych/zaawansowanych stanów,
+* provider boundary powinien być jawny,
+* webhook idempotency musi być bezpieczne.
+
+---
+
+# 9. Skrypty jakości
+
+Najważniejsze komendy:
 
 ```bash
 npm run quality:architecture-boundaries
@@ -766,219 +934,160 @@ Pełniejsza walidacja:
 npm run quality
 ```
 
-Testy coverage:
-
-```bash
-npm run test:coverage
-```
-
 E2E:
 
 ```bash
 npm run e2e
+npm run e2e:list
+npm run e2e:install
 ```
 
-Env validation:
-
-```bash
-npm run env:validate
-npm run env:validate:prod
-```
-
-Przed deployem produkcyjnym:
-
-```bash
-npm run db:migrate:deploy
-npm run db:generate
-npm run db:smoke
-npm run emails:ensure-required
-npm run build
-```
-
-Jeżeli walidacja nie została uruchomiona, raport musi zawierać:
+Jeżeli agent nie uruchomi komendy, musi napisać:
 
 ```txt
 NOT RUN — reason: ...
 ```
 
-Nie wolno pisać, że coś przeszło, jeżeli nie zostało uruchomione.
+Nie wolno pisać, że testy przeszły, jeśli nie zostały uruchomione.
 
 ---
 
-## 10. Standard raportu po pracy
+# 10. Guardy architektoniczne
 
-Każdy istotny pass powinien zakończyć się raportem:
+Guardy mają pilnować granic.
+
+Guard nie może być traktowany jako przeszkoda do obejścia.
+
+Jeżeli guard krzyczy:
+
+* sprawdź, czy kod łamie zasadę,
+* sprawdź, czy allowlist jest stale,
+* sprawdź, czy README/docs mówią prawdę,
+* nie dodawaj allowlist bez powodu,
+* nie usuwaj guardów, żeby PR przeszedł.
+
+Allowlist musi mieć:
+
+* konkretny plik,
+* konkretny powód,
+* fazę roadmapy,
+* informację, czy to blocker, bridge, certified mixed route, czy legacy extension.
+
+---
+
+# 11. Standard raportu agenta
+
+Każdy większy pass powinien zakończyć się raportem.
+
+Format raportu:
 
 ```md
-# Work Report
+# Report
 
-## Cel
-Co miało zostać zrobione.
+## Scope
+Co było zakresem.
 
-## Zakres
-Jakie domeny i pliki zostały dotknięte.
+## Changed files
+Lista głównych zmian.
 
-## Zmiany
-Co faktycznie zmieniono.
+## Architecture
+Jak zmiana wpływa na route/use-case/policy/repository.
 
-## Decyzje
-Jakie decyzje domenowe albo techniczne podjęto.
+## Runtime behavior
+Co zmienia się w zachowaniu aplikacji.
 
-## Guardy
-Czy guardy były aktualizowane.
-Czy usunięto stale allowlist.
-Czy dodano nowe allowlist i dlaczego.
+## Tests
+Co uruchomiono.
 
-## Ryzyka
-Co może wymagać dalszej obserwacji.
-
-## Walidacja
+## Validation
 - npm run quality:architecture-boundaries:
 - npm run typecheck:
 - npm test -- --run:
 
-## Następny bezpieczny krok
-Jedna konkretna rekomendacja.
+## NOT RUN
+Co nie zostało uruchomione i dlaczego.
+
+## Remaining blockers
+Co nadal zostaje.
+
+## Merge recommendation
+SAFE TO MERGE / NOT SAFE TO MERGE.
 ```
+
+Nie wolno pisać „done” bez listy walidacji i znanych blockerów.
 
 ---
 
-## 11. Zasady dokumentacji
+# 12. Czego nie robić
 
-README nie jest miejscem na marketing.
+Nie rób:
 
-README ma być narzędziem operacyjnym.
-
-Zasady:
-
-* opisuj stan ostrożnie,
-* nie podbijaj statusu po samym code-only pass,
-* nie usuwaj blokerów bez sprawdzenia kodu,
-* nie zakładaj, że guardy są aktualne,
-* nie zakładaj, że docs/audit są aktualne,
-* nie opieraj się na nazwie PR-a,
-* source of truth to aktualny `main` + testy + guardy + README po reconcile.
-
-Jeżeli dokumentacja i kod się różnią:
-
-```txt
-Najpierw reconcile, potem implementacja.
-```
+* masowego rewrite,
+* zmiany kilku faz naraz,
+* R10 cleanup przed stabilizacją R7/R8/R9,
+* R11 frontend przed stabilizacją domen,
+* optymistycznego README,
+* certyfikacji bez testów,
+* usuwania legacy services bez inventory,
+* dodawania fallback creator/channel,
+* publicznego wystawiania raw media URL,
+* traktowania PR body jako dowodu, że kod przeszedł walidację,
+* traktowania otwartego PR jako source of truth.
 
 ---
 
-## 12. Zasady dla obecnego momentu projektu
+# 13. Obecny najbezpieczniejszy proces
 
-Aktualnie projekt jest w profesjonalnym, kontrolowanym przejściu z mocnego modularnego fundamentu do certyfikacji kolejnych domen.
-
-Nie należy przyspieszać przez mieszanie zadań.
-
-Najbliższa poprawna kolejność:
+Aktualny proces dla PR #785:
 
 ```txt
-1. Post-merge docs/guard reconcile po R5/R6/R9 passach.
-2. R8 Comments Certification Candidate Implementation Pass.
-3. R9 docs/guard/certification follow-up, jeśli po reconcile nadal wymagany.
-4. R7 final certification reconcile.
-5. Dopiero później ograniczony R10 cleanup.
-6. R11 dopiero po stabilizacji R7/R8/R9/R10.
+1. Przywrócić poprawny README.md zaczynający się od # Polutek.pl.
+2. Utrzymać R8 jako [~ certification candidate / pending final validation].
+3. Utrzymać R9 jako [~ code-only pass / pending docs+guard reconcile].
+4. Naprawić konflikt README bez wklejania helper textu.
+5. Naprawić CI / npm ci failure.
+6. Uruchomić guardy, typecheck i testy.
+7. Dopiero wtedy rozważyć merge PR #785.
+8. Po merge zrobić krótki R8 final validation + docs/guard reconcile.
 ```
 
-Nie zmieniaj tej kolejności bez bardzo dobrego powodu.
+Nie merge’ować PR #785, dopóki:
+
+* README nie jest poprawny,
+* CI nie jest zielone albo failure nie jest naprawione i wyjaśnione,
+* R9 nie zostało podbite optymistycznie,
+* R8 nie zostało oznaczone jako `[x certified]`.
 
 ---
 
-## 13. Minimalny następny prompt
+# 14. Krótki opis projektu
 
-```txt
-Pracujesz w repozytorium Polutek.pl.
+Polutek.pl jest prywatną platformą mediową jednego twórcy.
 
-Wykonaj post-merge docs/guard reconcile po ostatnich passach R5/R6/R9.
+Produkt ma umożliwiać:
 
-Cel:
-README, scripts/check-architecture.ts i docs/audit mają mówić prawdę o aktualnym main.
+* publikację treści wideo,
+* dostęp publiczny i patron-only,
+* patronat i płatności,
+* komentarze i społeczność,
+* newsletter/e-mail,
+* admin moderation,
+* audyt działań,
+* operacyjny kokpit dla właściciela.
 
-Zakres:
-- Sprawdź aktualny main.
-- Sprawdź README.md.
-- Sprawdź scripts/check-architecture.ts.
-- Sprawdź docs/audit, jeśli zawierają inventory dla R5/R6/R8/R9/R10.
-- Usuń stale allowlisty dla route’ów, które nie importują już Prismy ani legacy services.
-- Nie zmieniaj runtime, chyba że jest to absolutnie minimalna korekta wymagana przez guard.
-- Nie oznaczaj R7/R8/R9 jako certified.
-- Nie zaczynaj R8 implementation pass.
-- Nie zaczynaj R10.
-- Nie zaczynaj R11.
-
-Szczególnie sprawdź:
-- app/api/admin/users/export/route.ts
-- app/api/admin/emails/responses/route.ts
-- app/api/comments/[commentId]/context/route.ts
-- app/api/comments/[commentId]/pin/route.ts
-- app/api/admin/comments/route.ts
-- app/api/admin/videos/[id]/comments/route.ts
-
-Na końcu uruchom:
-npm run quality:architecture-boundaries
-npm run typecheck
-npm test -- --run
-
-Raport:
-- Co było stale w README.
-- Co było stale w guardach.
-- Co zostało zmienione.
-- Co pozostaje blockerem R8.
-- Co pozostaje blockerem R9.
-- Czy można bezpiecznie przejść do R8 Comments Certification Candidate Implementation Pass.
-```
+Produkt nie ma być platformą dla wielu twórców.
 
 ---
 
-## 14. Inwarianty, których nie wolno złamać
+# 15. Zasada końcowa
+
+Najważniejsza zasada prowadzenia projektu:
 
 ```txt
-Polutek.pl ma jeden oficjalny kanał.
-Polutek.pl ma jednego właściciela / twórcę.
-Polutek.pl nie jest marketplace’em.
-Polutek.pl nie jest SaaS-em dla wielu twórców.
-Dostęp patrona pochodzi z bazy danych.
-Clerk nie jest źródłem prawdy dla patronatu.
-Email nie nadaje dostępu płatnego.
-Route’y nie zawierają logiki biznesowej.
-Moduły wystawiają publiczne API przez index.ts.
-Prywatne media nie są wystawiane jako surowe URL-e.
-Każda istotna operacja administracyjna powinna być audytowalna.
-Guardy mają chronić architekturę, nie udawać zielonego stanu.
+Najpierw prawda o stanie systemu.
+Potem mały zakres.
+Potem walidacja.
+Dopiero potem status.
 ```
 
----
-
-## 15. Filozofia kodu
-
-Kod Polutek.pl ma być prosty, jawny i trudny do przypadkowego zepsucia.
-
-Preferowane są:
-
-* krótkie route’y,
-* czytelne use case’y,
-* jednoznaczne policy,
-* małe repository,
-* bezpieczne DTO,
-* jawne błędy,
-* małe testy,
-* silne guardy,
-* minimalne zależności,
-* brak magicznych wyjątków,
-* brak przypadkowego mieszania domen.
-
-Nie chodzi o maksymalną abstrakcję.
-
-Chodzi o system, w którym:
-
-```txt
-każda linijka ma powód,
-każda domena ma granice,
-każdy wyjątek jest nazwany,
-każda decyzja jest sprawdzalna,
-a README mówi prawdę.
-```
+Jeżeli agent nie wie, czy coś jest gotowe, ma założyć, że nie jest certyfikowane.
