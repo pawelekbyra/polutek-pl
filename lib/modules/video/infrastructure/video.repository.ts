@@ -43,6 +43,13 @@ export class VideoRepository {
     });
   }
 
+  async findByIdWithAsset(id: string): Promise<(Video & { asset: any | null }) | null> {
+    return await this.db.video.findUnique({
+        where: { id },
+        include: { asset: true }
+    }) as any;
+  }
+
   async findByIdForMainChannel(id: string, mainChannelId: string): Promise<Video | null> {
     return await this.db.video.findFirst({
         where: { id, creatorId: mainChannelId },
@@ -241,6 +248,13 @@ export class VideoRepository {
       where: { creatorId: mainChannelId, isMainFeatured: true, id: { not: except } },
       data: { isMainFeatured: false }
     });
+  }
+
+  async existsBySlugExcludingId(slug: string, id: string): Promise<boolean> {
+    const count = await this.db.video.count({
+        where: { slug, id: { not: id } }
+    });
+    return count > 0;
   }
 
   async reorder(updates: Array<{ id: string; sidebarOrder: number; showInSidebar: boolean }>, mainChannelId: string, tx: WriteTx): Promise<void> {

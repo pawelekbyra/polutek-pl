@@ -87,8 +87,6 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R5/R9 boundary: webhook boundary clean but mixed with legacy EmailService until R9.',
   'app/api/admin/videos/resync/route.ts':
     'R6 cert: use case exists, but audit module transition or slight remaining legacy may trigger mixed mode.',
-  'app/api/admin/videos/[id]/route.ts':
-    'R6 blocker: mixed route, uses Video module but diagnostics/audit details remain as legacy extension.',
   'app/api/admin/videos/route.ts':
     'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
   'app/api/comments/[commentId]/reaction/route.ts':
@@ -158,7 +156,6 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
 
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
-  'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
 };
 

@@ -4,10 +4,10 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
 
 ## Safe Cleanup Order
 
-### 1. Admin Videos [id] (R6)
-- **Task**: Modularize audit details extension and remove direct Prisma.
+### 2. Admin Users [userId] (R5)
+- **Task**: Modularize user details extension (payments, subscriptions) and remove direct Prisma.
 - **Affected Routes**:
-    - `app/api/admin/videos/[id]/route.ts`
+    - `app/api/admin/users/[userId]/route.ts`
 
 ### 4. Media/[...path] (R3)
 - **Task**: Replace legacy media delivery checks with modular access/media logic.
