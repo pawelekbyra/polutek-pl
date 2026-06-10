@@ -115,7 +115,7 @@ export async function createVideoComment(
 
     // Global admin or creator of the video can moderate.
     const canModerate = actor.type === 'admin' || videoCreatorId === userId;
-    const context = { userId, canModerate, videoCreatorId };
+    const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
 
     return ok(mapCommentToDto(commentWithAuthor, context));
   } catch (error: any) {

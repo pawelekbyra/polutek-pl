@@ -52,15 +52,13 @@ describe('Comments Core Use Cases', () => {
       if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
     });
 
-    it('allows viewing comments even if PATRON_REQUIRED (standard behavior)', async () => {
+    it('denies viewing comments if PATRON_REQUIRED and not patron', async () => {
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
-      mockPrisma.comment.findMany.mockResolvedValue([]);
-      mockPrisma.comment.count.mockResolvedValue(0);
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'admin' } });
 
       const result = await listVideoComments({ videoId, sortBy: 'newest', limit: 10 }, createCtx({ type: 'guest' }));
-      expect(result.ok).toBe(true);
-      if (result.ok) expect(result.data.viewer.canComment).toBe(false);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });
   });
 

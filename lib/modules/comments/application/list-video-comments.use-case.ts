@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError } from "../domain/comment.errors";
+import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { isUuid } from "@/lib/utils/uuid";
@@ -46,10 +47,17 @@ export async function listVideoComments(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // In this project, comments are generally viewable even if the video is PATRON_REQUIRED,
-  // but we hide them for NOT_FOUND or DELETED.
-  if (!accessResult.data.hasAccess && (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED')) {
-      return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
+  // Comments inherit video access
+  if (!accessResult.data.hasAccess) {
+    if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
+        return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
+    }
+    return fail({
+        type: "FORBIDDEN",
+        message: accessResult.data.reason === "PATRON_REQUIRED"
+            ? "Komentarze pod tym filmem są dostępne tylko dla Patronów."
+            : "Brak dostępu do komentarzy."
+    });
   }
 
   const repo = new CommentRepository(prisma);
@@ -80,7 +88,7 @@ export async function listVideoComments(
     })
   ]);
 
-  const context = { userId, canModerate, videoCreatorId };
+  const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
   const mappedComments = comments.map(c => mapCommentToDto(c, context));
 
   return ok({
@@ -88,10 +96,10 @@ export async function listVideoComments(
     totalCount,
     nextCursor: comments.length === limit ? comments[limit - 1].id : null,
     viewer: {
-        canComment: actor.type !== 'guest' && accessResult.data.hasAccess,
-        canReact: actor.type !== 'guest',
-        canReport: actor.type !== 'guest',
-        canModerate: canModerate
+        canComment: CommentPolicy.canCreateComment(actor, accessResult.data),
+        canReact: CommentPolicy.canReactToComment(actor, accessResult.data),
+        canReport: CommentPolicy.canReportComment(actor, accessResult.data),
+        canModerate: CommentPolicy.canModerateComment(actor, canModerate)
     }
   });
 }

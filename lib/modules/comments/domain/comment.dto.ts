@@ -49,10 +49,11 @@ export function mapCommentToDto(
     context: {
         userId: string | null,
         canModerate: boolean,
-        videoCreatorId: string | null
+        videoCreatorId: string | null,
+        hasVideoAccess?: boolean
     }
 ): CommentDto {
-    const { userId, canModerate, videoCreatorId } = context;
+    const { userId, canModerate, videoCreatorId, hasVideoAccess = true } = context;
     const isDeleted = comment.status === CommentStatus.DELETED;
     const isHidden = comment.status === CommentStatus.HIDDEN;
 
@@ -78,11 +79,11 @@ export function mapCommentToDto(
       repliesCount: comment.repliesCount,
       reportsCount: canModerate ? comment.reportsCount : undefined,
       viewerReaction: comment.reactions?.[0]?.type || null,
-      viewerCanEdit: userId === comment.authorId && !isDeleted && !isHidden,
-      viewerCanDelete: (userId === comment.authorId && !isDeleted) || canModerate,
-      viewerCanReport: !!userId && userId !== comment.authorId && !isDeleted && !isHidden,
-      viewerCanModerate: canModerate,
-      viewerCanPin: canModerate && !comment.parentId,
+      viewerCanEdit: userId === comment.authorId && !isDeleted && !isHidden && hasVideoAccess,
+      viewerCanDelete: ((userId === comment.authorId && !isDeleted) || canModerate) && hasVideoAccess,
+      viewerCanReport: !!userId && userId !== comment.authorId && !isDeleted && !isHidden && hasVideoAccess,
+      viewerCanModerate: canModerate && hasVideoAccess,
+      viewerCanPin: canModerate && !comment.parentId && hasVideoAccess,
       isPinned: !!comment.pinnedAt,
       isHearted: (comment as any).isHearted || false,
       repliesPreview: comment.replies?.map((r: any) => mapCommentToDto(r, context)) || []

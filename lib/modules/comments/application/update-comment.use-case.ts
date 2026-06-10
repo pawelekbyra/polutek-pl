@@ -4,6 +4,7 @@ import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
+import { checkVideoAccess } from "@/lib/modules/access";
 import { countGraphemes } from "@/lib/utils/graphemes";
 import { CommentStatus } from "@prisma/client";
 
@@ -29,6 +30,20 @@ export async function updateComment(
   const comment = await repo.findCommentById(commentId);
   if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
+  // 0. Access Check (inheritance)
+  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
+  if (!accessResult.ok) {
+     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
+  }
+  if (!accessResult.data.hasAccess) {
+    return fail({
+        type: "FORBIDDEN",
+        message: accessResult.data.reason === "PATRON_REQUIRED"
+            ? "Ten film jest dostępny tylko dla Patronów."
+            : "Brak dostępu."
+    });
+  }
+
   // 1. Authorization check
   if (!CommentPolicy.canUpdateComment(actor, comment.authorId)) {
     return fail({ type: "FORBIDDEN", message: "Nie masz uprawnień do edycji tego komentarza." });
@@ -52,7 +67,7 @@ export async function updateComment(
 
     const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
     const canModerate = actor.type === 'admin' || videoCreatorId === userId;
-    const context = { userId, canModerate, videoCreatorId };
+    const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
 
     // Need full author details for DTO
     const fullComment = await repo.findCommentById(commentId);

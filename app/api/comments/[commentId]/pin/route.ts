@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
-import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
-import { CommentModerationService } from '@/lib/services/comments/comment-moderation.service';
 import { handleApiError } from '@/lib/errors';
 import { createScopedLogger } from '@/lib/logger';
 import { getCorrelationId } from '@/lib/utils/correlation';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { pinComment, unpinComment } from '@/lib/modules/comments';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,25 +14,18 @@ export async function POST(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+  const actor = await getActorFromAuth();
   const { commentId } = params;
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      select: { videoId: true, parentId: true, status: true }
-    });
+    const ctx = createAppContext({ actor });
+    const result = await pinComment({ commentId }, ctx);
 
-    if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    if (comment.parentId) return NextResponse.json({ error: 'Only top-level comments can be pinned' }, { status: 400 });
-    if (comment.status !== 'VISIBLE') return NextResponse.json({ error: 'Only visible comments can be pinned' }, { status: 400 });
+    if (!result.ok) {
+        const status = result.error.type === 'UNAUTHORIZED' ? 401 : result.error.type === 'FORBIDDEN' ? 403 : result.error.type === 'NOT_FOUND' ? 404 : 400;
+        return NextResponse.json({ success: false, message: result.error.message }, { status });
+    }
 
-    const canPin = await CommentAccessService.canModerate(userId, comment.videoId);
-    if (!canPin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    await CommentModerationService.pinComment(userId, commentId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     scopedLogger.error("[PIN_COMMENT_ERROR]", error);
@@ -47,23 +39,18 @@ export async function DELETE(
 ) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+  const actor = await getActorFromAuth();
   const { commentId } = params;
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      select: { videoId: true }
-    });
+    const ctx = createAppContext({ actor });
+    const result = await unpinComment({ commentId }, ctx);
 
-    if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!result.ok) {
+        const status = result.error.type === 'UNAUTHORIZED' ? 401 : result.error.type === 'FORBIDDEN' ? 403 : result.error.type === 'NOT_FOUND' ? 404 : 400;
+        return NextResponse.json({ success: false, message: result.error.message }, { status });
+    }
 
-    const canUnpin = await CommentAccessService.canModerate(userId, comment.videoId);
-    if (!canUnpin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    await CommentModerationService.unpinComment(userId, commentId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     scopedLogger.error("[UNPIN_COMMENT_ERROR]", error);

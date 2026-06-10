@@ -30,6 +30,38 @@ describe('CommentPolicy Boundary', () => {
     });
   });
 
+  describe('canReactToComment', () => {
+    it('denies guest even if video is public', () => {
+      expect(CommentPolicy.canReactToComment(guest, accessAllowed)).toBe(false);
+    });
+
+    it('allows user if video access is allowed', () => {
+      expect(CommentPolicy.canReactToComment(user, accessAllowed)).toBe(true);
+    });
+
+    it('denies user if video access is denied', () => {
+      expect(CommentPolicy.canReactToComment(user, accessDeniedPatron)).toBe(false);
+    });
+
+    it('allows admin if video access is allowed', () => {
+      expect(CommentPolicy.canReactToComment(admin, accessAllowed)).toBe(true);
+    });
+  });
+
+  describe('canReportComment', () => {
+    it('denies guest even if video is public', () => {
+      expect(CommentPolicy.canReportComment(guest, accessAllowed)).toBe(false);
+    });
+
+    it('denies user if video access is denied', () => {
+      expect(CommentPolicy.canReportComment(user, accessDeniedPatron)).toBe(false);
+    });
+
+    it('allows user if video access is allowed', () => {
+      expect(CommentPolicy.canReportComment(user, accessAllowed)).toBe(true);
+    });
+  });
+
   describe('canUpdateComment', () => {
     it('allows owner', () => {
       expect(CommentPolicy.canUpdateComment(user, 'u1')).toBe(true);

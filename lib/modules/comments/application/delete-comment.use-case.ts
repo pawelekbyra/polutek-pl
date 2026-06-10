@@ -3,6 +3,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
+import { checkVideoAccess } from "@/lib/modules/access";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentStatus, CommentDeletedReason } from "@prisma/client";
 
@@ -27,6 +28,25 @@ export async function deleteComment(
   const comment = await repo.findCommentById(commentId);
   if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
+  // 0. Access Check (inheritance)
+  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
+  if (!accessResult.ok) {
+     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
+  }
+
+  // Inheritance: to delete you must have access to the video
+  // (Exception: Global Admin bypass is usually handled by checkVideoAccess or policy)
+  if (!accessResult.data.hasAccess) {
+    return fail({
+        type: "FORBIDDEN",
+        message: accessResult.data.reason === "PATRON_REQUIRED"
+            ? "Ten film jest dostępny tylko dla Patronów."
+            : "Brak dostępu."
+    });
+  }
+
+  const isAuthor = comment.authorId === userId;
+
   // 1. Authorization check
   const isGlobalAdmin = actor.type === 'admin';
   const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
@@ -42,7 +62,6 @@ export async function deleteComment(
       return ok(undefined);
   }
 
-  const isAuthor = comment.authorId === userId;
   const reason: CommentDeletedReason = isAuthor ? 'AUTHOR_DELETED' : 'MODERATOR_DELETED';
 
   try {

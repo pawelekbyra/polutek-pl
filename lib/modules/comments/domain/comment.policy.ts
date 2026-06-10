@@ -23,6 +23,16 @@ export class CommentPolicy {
     return this.canInteractWithVideo(actor, videoAccess);
   }
 
+  static canReactToComment(actor: Actor, videoAccess: AccessDecisionDto): boolean {
+    return this.canInteractWithVideo(actor, videoAccess);
+  }
+
+  static canReportComment(actor: Actor, videoAccess: AccessDecisionDto): boolean {
+    if (actor.type === 'guest') return false;
+    // To report, you must be able to see the comments (inherit video access)
+    return videoAccess.hasAccess;
+  }
+
   static canUpdateComment(actor: Actor, commentAuthorId: string): boolean {
     if (actor.type === 'admin') return true;
     if (actor.type === 'user') {

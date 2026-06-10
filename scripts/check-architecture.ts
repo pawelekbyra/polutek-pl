@@ -99,10 +99,16 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R8 cert: migrated to modular access/use cases.',
   'app/api/comments/[commentId]/replies/route.ts':
     'R8 cert: migrated to modular access/use cases.',
+  'app/api/comments/[commentId]/pin/route.ts':
+    'R8 cert: migrated to modular use cases.',
+  'app/api/comments/[commentId]/context/route.ts':
+    'R8 cert: migrated to modular use cases.',
   'app/api/subscriptions/route.ts':
     'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
     'R8 cert: migrated to modular access/use cases.',
+  'app/api/admin/comments/route.ts':
+    'R8 cert: migrated to modular use case.',
   'app/api/media-source/[videoId]/route.ts':
     'R6/R3 certified: uses PlaybackService and modular access.',
   'app/api/videos/[id]/playback-event/route.ts':
@@ -127,6 +133,8 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R7 foundation: migrated to modular payments use case.',
   'app/api/admin/payment-settings/route.ts':
     'R7 foundation: migrated to modular payments use case.',
+  'app/api/admin/videos/[id]/comments/route.ts':
+    'R8 cert: migrated to modular use case.',
   'app/api/user/referrals/claim/route.ts':
     'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
 };
@@ -153,16 +161,12 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
-  'app/api/admin/comments/route.ts': 'R8 blocker.',
   'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
   'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
   'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
   'app/api/admin/templates/route.ts': 'R9 blocker.',
-  'app/api/admin/videos/[id]/comments/route.ts': 'R8/R6 blocker.',
   'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
-  'app/api/comments/[commentId]/context/route.ts': 'R8 blocker.',
-  'app/api/comments/[commentId]/pin/route.ts': 'R8 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
 };
 
