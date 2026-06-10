@@ -1,4 +1,4 @@
-import { ReadDb } from "@/lib/modules/shared/db";
+import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { flags } from "@/lib/feature-flags";
 import { PrismaClient } from "@prisma/client";
 
@@ -25,10 +25,19 @@ export class ChannelRepository {
     });
   }
 
-  async updateSubscribersCount(id: string, increment: number) {
-     return await (this.db as any).creator.update({
-         where: { id },
-         data: { subscribersCount: { increment } }
-     });
+  async updateSubscribersCount(id: string, increment: number, tx?: WriteTx) {
+    const db = tx || (this.db as any);
+
+    if (increment < 0) {
+      return await db.creator.updateMany({
+        where: { id, subscribersCount: { gt: 0 } },
+        data: { subscribersCount: { increment } }
+      });
+    }
+
+    return await db.creator.update({
+      where: { id },
+      data: { subscribersCount: { increment } }
+    });
   }
 }
