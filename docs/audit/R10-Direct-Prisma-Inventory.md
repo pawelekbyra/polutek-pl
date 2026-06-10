@@ -6,7 +6,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 
 | Route | Domain | Prisma Usage Count | Roadmap Stage | Reason |
 |-------|--------|--------------------|---------------|--------|
-| `app/api/videos/[id]/playback-event/route.ts` | Video/Analytics | 1 | R6/R3 | Persistence of events/views |
 | `app/api/admin/videos/[id]/route.ts` | Video | 1 | R6 | Audit details extension |
 | `app/api/admin/users/[userId]/route.ts` | Users | 1 | R5 | Extensions (payments, subs) |
 | `app/api/media/[...path]/route.ts` | Media | 1 | R3 | Legacy media delivery check |

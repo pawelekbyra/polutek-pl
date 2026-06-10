@@ -75,3 +75,66 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     commentsCount: video._count?.comments || video.commentsCount || 0,
   };
 }
+
+export type PlaybackEventType =
+  | "PLAYER_READY"
+  | "PLAY_REQUESTED"
+  | "PLAY_STARTED"
+  | "PLAY_PAUSED"
+  | "PLAY_RESUMED"
+  | "BUFFERING_STARTED"
+  | "BUFFERING_ENDED"
+  | "SEEKED"
+  | "PROGRESS"
+  | "HEARTBEAT"
+  | "WATCHED_10_SECONDS"
+  | "WATCHED_25_PERCENT"
+  | "WATCHED_50_PERCENT"
+  | "WATCHED_75_PERCENT"
+  | "WATCHED_90_PERCENT"
+  | "ENDED"
+  | "PLAYER_ERROR"
+  | "SOURCE_ERROR"
+  | "ACCESS_ERROR";
+
+export const PLAYBACK_EVENT_TYPES: PlaybackEventType[] = [
+  "PLAYER_READY",
+  "PLAY_REQUESTED",
+  "PLAY_STARTED",
+  "PLAY_PAUSED",
+  "PLAY_RESUMED",
+  "BUFFERING_STARTED",
+  "BUFFERING_ENDED",
+  "SEEKED",
+  "PROGRESS",
+  "HEARTBEAT",
+  "WATCHED_10_SECONDS",
+  "WATCHED_25_PERCENT",
+  "WATCHED_50_PERCENT",
+  "WATCHED_75_PERCENT",
+  "WATCHED_90_PERCENT",
+  "ENDED",
+  "PLAYER_ERROR",
+  "SOURCE_ERROR",
+  "ACCESS_ERROR"
+];
+
+export interface RecordPlaybackEventInput {
+  videoId: string;
+  sessionId?: string;
+  type: PlaybackEventType;
+  positionMs?: number;
+  durationMs?: number;
+  bufferedMs?: number;
+  volume?: number;
+  muted?: boolean;
+  fullscreen?: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+  provider?: string;
+  sourceKind?: string;
+  metadata?: any;
+  ipHash: string;
+  uaHash: string;
+  fingerprint: string;
+}

@@ -4,12 +4,7 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
 
 ## Safe Cleanup Order
 
-### 1. Playback-event route (R6/R3)
-- **Task**: Move remaining persistence logic (playback events) to repositories.
-- **Affected Routes**:
-    - `app/api/videos/[id]/playback-event/route.ts`
-
-### 3. Admin Videos [id] (R6)
+### 1. Admin Videos [id] (R6)
 - **Task**: Modularize audit details extension and remove direct Prisma.
 - **Affected Routes**:
     - `app/api/admin/videos/[id]/route.ts`
