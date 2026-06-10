@@ -16,7 +16,16 @@ Najważniejszy cel produktowy: użytkownik ma mieć jasne doświadczenie:
 * może komentować zgodnie z regułami dostępu,
 * może zostać patronem przez płatność, decyzję admina albo system referencyjny,
 * może subskrybować mailing, ale subskrypcja mailingu nie oznacza patrona.
+Locked video rendering invariant:
 
+If a viewer cannot play a video because it requires login or patron access, the UI must render a locked placeholder/overlay instead of mounting the real video player underneath it.
+
+This applies consistently to:
+- the main feed / featured video area
+- playlist/sidebar video entries
+- any embedded video card
+
+The app must not download the video stream, request playback tokens, or mount a heavy player when the viewer is not allowed to play the video. Locked state is not a cosmetic overlay over a playable video; it is a separate rendering state based on the PlaybackPlan. ai usadz  to w odpowiednim iejscu bo ten akapit wkleilem gdzie sie da. usadz w najblizszej okazji. 
 ---
 
 # 1. Obecny etap: R10 / faza X
