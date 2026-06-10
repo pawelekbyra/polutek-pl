@@ -25,9 +25,9 @@ This report identifies all legacy services in `lib/services/**` and their curren
 | `payments/checkout.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/payments` |
 | `payments/fulfillment.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/payments` |
 | `payments/refund.service.ts` | **DEAD** | None | `lib/modules/payments` |
-| `audit.service.ts` | **ACTIVE** | `app/api/admin/templates/route.ts`, `lib/modules/users` | `lib/modules/audit` |
+| `audit.service.ts` | **ACTIVE** | `lib/modules/users`, `lib/modules/payments` | `lib/modules/audit` |
 | `payment.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/payments` |
-| `email.service.ts` | **BRIDGE** | `lib/modules/email/infrastructure`, `lib/modules/payments` | `lib/modules/email` |
+| `email.service.ts` | **BRIDGE** | `lib/modules/email/infrastructure`, `lib/modules/payments`, `lib/modules/users` | `lib/modules/email` |
 | `content/video.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/video` |
 | `content/creator.service.ts` | **ACTIVE** | `app/page.tsx`, `app/channel/[slug]/page.tsx` | `lib/modules/channel` |
 | `channel/channel-layout.service.ts` | **ACTIVE** | `app/api/channel/sidebar/route.ts` | `lib/modules/channel` |
@@ -55,4 +55,4 @@ This report identifies all legacy services in `lib/services/**` and their curren
     - Users (R5): Mostly bridged or moved to modules.
     - Payments (R7): Core runtime moved to modular use cases. Subscriptions and some admin views remain legacy.
     - Comments (R8): Fully migrated for public routes; admin moderation remains legacy.
-    - Email (R9): Webhooks and Broadcast are modular. Templates remain legacy (direct Prisma + AuditService).
+    - Email (R9): Fully certified. Webhooks, Broadcast, and Templates are modular. `EmailService` remains only as a bridge for legacy callers.
