@@ -40,7 +40,7 @@ describe('handleStripeWebhook', () => {
         },
         user: {
             findUnique: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [] }),
-            update: vi.fn().mockResolvedValue({})
+            update: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [] })
         },
         userPaymentTotal: {
             upsert: vi.fn().mockResolvedValue({ amountMinor: 1000 }),
@@ -49,6 +49,7 @@ describe('handleStripeWebhook', () => {
         },
         patronGrant: {
             create: vi.fn().mockResolvedValue({}),
+            findUnique: vi.fn().mockResolvedValue(null),
             findFirst: vi.fn().mockResolvedValue(null),
             findMany: vi.fn().mockResolvedValue([]),
             updateMany: vi.fn().mockResolvedValue({ count: 1 })
