@@ -149,4 +149,11 @@ export class UserRepository {
           data
       });
   }
+
+  async findPatronGrants(userId: string) {
+    return await (this.db as PrismaClient).patronGrant.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }

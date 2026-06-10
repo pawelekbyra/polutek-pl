@@ -111,8 +111,6 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R6/R3 cert: uses modular access, but still uses direct Prisma for event/view persistence.',
   'app/api/admin/users/route.ts':
     'R5 cert: migrated to modular use case.',
-  'app/api/admin/users/[userId]/route.ts':
-    'R5 blocker: mixed route, core user identity is modular, but extensions (payments, subscriptions) are legacy.',
   'app/api/admin/users/export/route.ts':
     'R5 cert: migrated to modular use case.',
   'app/api/admin/users/stats/route.ts':
@@ -155,7 +153,6 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
 };
 
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
-  'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
 };
 
