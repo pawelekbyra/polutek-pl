@@ -24,9 +24,17 @@ describe('Video DTOs', () => {
     _count: { comments: 5 }
   };
 
-  it('toPublicVideoDto should not contain videoUrl', () => {
-    const dto = toPublicVideoDto(mockVideo);
+  it('toPublicVideoDto should not contain videoUrl or other raw fields', () => {
+    const dto = toPublicVideoDto({
+        ...mockVideo,
+        sourceUrl: 'https://example.com/raw.mp4',
+        rawUrl: 'https://example.com/raw.mp4',
+        signedUrl: 'https://example.com/raw.mp4?sig=123',
+    });
     expect((dto as any).videoUrl).toBeUndefined();
+    expect((dto as any).sourceUrl).toBeUndefined();
+    expect((dto as any).rawUrl).toBeUndefined();
+    expect((dto as any).signedUrl).toBeUndefined();
     expect(dto.id).toBe('v1');
     expect(dto.title).toBe('Video 1');
   });

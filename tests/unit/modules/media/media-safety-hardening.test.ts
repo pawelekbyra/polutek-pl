@@ -7,8 +7,10 @@ describe('Media Safety Hardening', () => {
     it('detects S3 and storage URLs as raw', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('https://my-bucket.s3.amazonaws.com/video.mp4')).toBe(true);
       expect(MediaPolicy.isProbablyRawMediaUrl('https://my-bucket.s3.eu-central-1.amazonaws.com/video.mp4')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://my-bucket.s3.eu-central-1.amazonaws.com/video.mp4')).toBe(true);
       expect(MediaPolicy.isProbablyRawMediaUrl('https://account.blob.core.windows.net/container/video.mp4')).toBe(true);
       expect(MediaPolicy.isProbablyRawMediaUrl('https://bucket.r2.cloudflarestorage.com/video.mp4')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://kraufanding-media.s3.amazonaws.com/video.mp4')).toBe(true);
     });
 
     it('detects signed URLs with tokens as raw', () => {
@@ -25,6 +27,30 @@ describe('Media Safety Hardening', () => {
     it('allows gated API routes', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('/api/media/video-123')).toBe(false);
       expect(MediaPolicy.isProbablyRawMediaUrl('/api/media-source/video-123')).toBe(false);
+    });
+
+    it('should detect raw media extensions in full URLs', () => {
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://other-host.com/video.mp4')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://other-host.com/video.m3u8')).toBe(true);
+    });
+
+    it('should allow YouTube and Vimeo as safe hosts (handled elsewhere)', () => {
+        // isProbablyRawMediaUrl is a heuristic, specific hosts are allowed in isAllowedVideoSourceUrl
+        // But isProbablyRawMediaUrl should generally return true for external .mp4 etc.
+        expect(MediaPolicy.isProbablyRawMediaUrl('https://www.youtube.com/watch?v=123')).toBe(false);
+    });
+  });
+
+  describe('assertPublicVideoDtoSafe', () => {
+    it('should throw if forbidden fields are present', () => {
+        expect(() => MediaPolicy.assertPublicVideoDtoSafe({ id: '1', videoUrl: 'leak' })).toThrow();
+        expect(() => MediaPolicy.assertPublicVideoDtoSafe({ id: '1', sourceUrl: 'leak' })).toThrow();
+        expect(() => MediaPolicy.assertPublicVideoDtoSafe({ id: '1', rawUrl: 'leak' })).toThrow();
+        expect(() => MediaPolicy.assertPublicVideoDtoSafe({ id: '1', internalAssetProviderUrl: 'leak' })).toThrow();
+    });
+
+    it('should not throw for safe DTOs', () => {
+        expect(() => MediaPolicy.assertPublicVideoDtoSafe({ id: '1', title: 'Safe' })).not.toThrow();
     });
   });
 
