@@ -6,13 +6,13 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 
 | Route | Domain | Prisma Usage Count | Roadmap Stage | Reason |
 |-------|--------|--------------------|---------------|--------|
-| `app/api/media/[...path]/route.ts` | Media | 1 | R3 | Legacy media delivery check |
 
-## Analysis (Reconciled After Admin Subscribers Resync / Referrals)
+## Analysis (Reconciled After R10 Direct-Prisma Cleanup)
 
-- **PR #795 & #797 Merged**: `app/api/admin/stats/route.ts` and `app/api/subscriptions/route.ts` are now fully modularized and removed from this inventory.
-- **R9 Email & R8 Comments** are no longer direct Prisma blockers. All email routes, including template management, are now modular.
-- **R5 Users/Referrals/Resync**: Admin user details remain a blocker. Subscriber resync and referral claims are now modular and removed from this inventory. `app/api/user/referrals/route.ts` is clean.
-- **R6/R3 Video/Media/Playback**: Persistence of playback events and legacy media checks still bypass repositories in some routes.
+- **R10 Complete**: All API routes in `app/api/**` have been modularized and no longer import `@/lib/prisma` directly.
+- **PR #795 & #797 Merged**: `app/api/admin/stats/route.ts` and `app/api/subscriptions/route.ts` are modularized.
+- **R9 Email & R8 Comments**: All email routes and core comments routes are modular.
+- **R5 Users**: Admin user details and webhook sync are modular.
+- **R6/R3 Video/Media**: Media delivery and playback events are now handled via domain modules.
 - **R11 Admin Stats**: Global dashboard statistics are now modular.
 - **R10 Dead Service Candidates**: While not all are direct Prisma routes, many legacy services (e.g., `referral.service.ts`) are the reason these routes still use direct Prisma. `referral.service.ts` is now removed.

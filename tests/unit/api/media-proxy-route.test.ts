@@ -3,8 +3,9 @@ import { GET } from '@/app/api/media/[...path]/route';
 import { NextRequest } from 'next/server';
 import { getGatedBlobResponse } from '@/lib/blob';
 import { getActorFromAuth } from '@/lib/api/auth';
-import { prisma } from '@/lib/prisma';
-import { rateLimit } from '@/lib/rate-limit';
+import { getGatedMedia } from '@/lib/modules/media';
+import { ok, fail } from '@/lib/modules/shared/result';
+import { MediaSourceNotFoundError } from '@/lib/modules/media/domain/media.errors';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
@@ -18,12 +19,8 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    video: {
-      findUnique: vi.fn(),
-    },
-  },
+vi.mock('@/lib/modules/media', () => ({
+    getGatedMedia: vi.fn(),
 }));
 
 describe('Media Proxy Route Safety', () => {
@@ -35,10 +32,10 @@ describe('Media Proxy Route Safety', () => {
 
   it('calls getGatedBlobResponse with userId if found', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'u1' });
-    (prisma.video.findUnique as any).mockResolvedValue({
+    (getGatedMedia as any).mockResolvedValue(ok({
       id: 'v1',
       videoUrl: 'https://blob.com/v1.mp4'
-    });
+    }));
 
     await GET(createReq(), { params: { path: ['v1'] } });
     expect(getGatedBlobResponse).toHaveBeenCalledWith('u1', 'v1', 'https://blob.com/v1.mp4', expect.anything());
@@ -46,7 +43,7 @@ describe('Media Proxy Route Safety', () => {
 
   it('handles missing video correctly', async () => {
       (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
-      (prisma.video.findUnique as any).mockResolvedValue(null);
+      (getGatedMedia as any).mockResolvedValue(fail(new MediaSourceNotFoundError('missing')));
 
       const res = await GET(createReq(), { params: { path: ['missing'] } });
       expect(res.status).toBe(404);

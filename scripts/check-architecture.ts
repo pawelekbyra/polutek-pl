@@ -152,9 +152,7 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
   'tests/unit/admin-videos-crud.test.ts': 'Test usage.',
 };
 
-const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
-  'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
-};
+const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {};
 
 function checkRoutes() {
   let violations = 0;
