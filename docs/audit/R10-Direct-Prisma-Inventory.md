@@ -9,7 +9,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 | `app/api/user/referrals/claim/route.ts` | Referrals | 1 | R10 | Legacy referral logic |
 | `app/api/subscriptions/route.ts` | Users/Patron | 6 | R7 | Mixed route, subscriptions direct Prisma |
 | `app/api/videos/[id]/playback-event/route.ts` | Video/Analytics | 8 | R6/R3 | Persistence of events/views |
-| `app/api/admin/payment-settings/route.ts` | Payments | 2 | R7 | Admin payment settings |
 | `app/api/admin/templates/route.ts` | Email | 5 | R9 | Legacy email templates |
 | `app/api/admin/videos/[id]/comments/route.ts` | Comments | 1 | R8 | Mixed admin route (legacy CommentService) |
 | `app/api/admin/videos/[id]/route.ts` | Video | 1 | R6 | Audit details extension |
@@ -26,6 +25,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 ## Analysis
 
 - **Comments (R8)** is the largest remaining user of direct Prisma in the API. Most comment actions bypass the (not yet fully implemented) comment module.
-- **Payments (R7)** still has critical paths (subscriptions, settings) using direct Prisma.
+- **Payments (R7)** core runtime and administrative flows are modular. Subscriptions still use direct Prisma.
 - **Users (R5)** is mostly done, but admin extensions (export, resync) remain legacy.
 - **Video (R6)** and **Media (R3)** have some remaining "certified" mixed routes that use Prisma for specific persistence tasks not yet moved to repositories.

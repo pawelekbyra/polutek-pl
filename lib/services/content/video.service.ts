@@ -95,7 +95,7 @@ export class VideoContentService {
   }
 
   static mapToPublicVideoDTO(video: any): PublicVideoDTO {
-    return {
+    const dto: PublicVideoDTO = {
         id: video.id,
         creatorId: video.creatorId ?? '',
         title: getCanonicalVideoTitle(video),
@@ -121,6 +121,14 @@ export class VideoContentService {
             subscribersCount: video.creator.displaySubscribersCount ?? video.creator.subscribersCount ?? 0,
         } : undefined,
     };
+
+    // Safety redaction
+    const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
+    for (const field of forbidden) {
+        if (field in dto) delete (dto as any)[field];
+    }
+
+    return dto;
   }
 
   static async getAllVideos(): Promise<PublicVideoDTO[]> {

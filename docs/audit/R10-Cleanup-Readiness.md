@@ -9,8 +9,8 @@ This report evaluates the readiness of various domains for the final R10 cleanup
 | **Access** | **READY** | 85% | `lib/modules/access` is active. Only `lib/actions` and legacy `comments` still use the old `AccessPolicy`. |
 | **Email** | **NOT READY** | 40% | Blocked by R9. Currently uses a legacy provider adapting `EmailService`. |
 | **Comments** | **PARTIAL** | 60% | R8 core comments migrated to modular use cases and repository. |
-| **Payments** | **PARTIAL** | 50% | R7 module foundation and checkout intent migrated. Webhook remains legacy. |
-| **Patron** | **READY** | 80% | R7 module foundation and admin patron management migrated. |
+| **Payments** | **READY** | 80% | R7 module foundation, checkout, webhook, fulfillment, refund, dispute, settings and admin list migrated. |
+| **Patron** | **READY** | 85% | R7 module foundation and admin patron management migrated. Atomicity verified. |
 | **Admin** | **PARTIAL** | 20% | Admin routes are the biggest "offenders" for direct Prisma and legacy audit service usage. |
 
 ## Detailed Breakdown
@@ -32,5 +32,5 @@ This report evaluates the readiness of various domains for the final R10 cleanup
 - **Next Steps**: Migrate admin comments, pin, and context routes to full modular implementation.
 
 ### Payments (R7) & Patron
-- **Status**: Foundation ready.
-- **Next Steps**: Migrate Stripe webhook, fulfillment, and refund logic to Payments module.
+- **Status**: Core runtime and administrative flows migrated.
+- **Next Steps**: Subscriptions/payment boundary, PatronGrant as full source-of-truth.

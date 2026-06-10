@@ -12,4 +12,8 @@ export class PaymentPolicy {
   static getDbCurrency(currency: string): string {
     return currency.toUpperCase();
   }
+
+  static canManagePaymentSettings(actor: Actor): boolean {
+    return actor.type === 'admin';
+  }
 }

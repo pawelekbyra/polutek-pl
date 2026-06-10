@@ -74,6 +74,10 @@ export interface PublicVideoDTO {
   sidebarOrder?: number;
   publishedAt?: Date | string | null;
   creator?: PublicCreatorDTO;
+  // Ensure no raw fields are present
+  videoUrl?: never;
+  sourceUrl?: never;
+  rawUrl?: never;
 }
 
 export interface PlaybackDTO {

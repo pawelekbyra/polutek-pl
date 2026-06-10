@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { requireAdminForApi } from '@/lib/auth-utils';
-import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/constants';
-import { getPaymentCurrencyLimits } from '@/lib/payments/currency-settings';
-import { writeAuditLog } from '@/lib/services/audit.service';
+import { SUPPORTED_CURRENCIES } from '@/lib/constants';
 import { handleApiError } from '@/lib/errors';
+import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
+import { getPaymentSettings, updatePaymentSettings } from '@/lib/modules/payments';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,43 +14,38 @@ const settingsSchema = z.object({
   })).min(1),
 });
 
-export async function GET() {
-  const { response } = await requireAdminForApi('GET_PAYMENT_SETTINGS');
-  if (response) return response;
-
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json({ limits: await getPaymentCurrencyLimits() });
+    const ctx = await createAppContextFromRequest(request.headers.get('x-request-id') || undefined);
+    const result = await getPaymentSettings(ctx);
+
+    if (!result.ok) {
+        return NextResponse.json({ error: result.error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ limits: result.data });
   } catch (error) {
     return handleApiError(error);
   }
 }
 
 export async function PATCH(request: NextRequest) {
-  const { adminUserId, response } = await requireAdminForApi('PATCH_PAYMENT_SETTINGS');
-  if (response) return response;
-
   try {
-    const parsed = settingsSchema.safeParse(await request.json());
+    const ctx = await createAppContextFromRequest(request.headers.get('x-request-id') || undefined);
+    const body = await request.json();
+    const parsed = settingsSchema.safeParse(body);
+
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    await prisma.$transaction(parsed.data.limits.map(({ currency, minAmount }) => (
-      prisma.paymentCurrencySetting.upsert({
-        where: { currency },
-        create: { currency, minAmountMinor: Math.round(minAmount * 100) },
-        update: { minAmountMinor: Math.round(minAmount * 100) },
-      })
-    )));
+    const result = await updatePaymentSettings({ limits: parsed.data.limits }, ctx);
 
-    await writeAuditLog({
-      actorUserId: adminUserId,
-      action: 'PAYMENT_SETTINGS_UPDATED',
-      targetType: 'PaymentCurrencySetting',
-      metadata: { currencies: parsed.data.limits.map((limit) => limit.currency) },
-    });
+    if (!result.ok) {
+        return NextResponse.json({ error: result.error.message }, { status: result.error.message.includes('Forbidden') ? 403 : 400 });
+    }
 
-    return NextResponse.json({ limits: await getPaymentCurrencyLimits() });
+    return NextResponse.json({ limits: result.data });
   } catch (error) {
     return handleApiError(error);
   }

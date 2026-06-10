@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { listInboundEmails, updateInboundEmail } from '@/lib/modules/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +14,20 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
-    const responses = await prisma.inboundEmail.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50
+    const ctx = createAppContext({
+      actor: { type: 'system', reason: 'Admin Responses Request' }
     });
 
-    return NextResponse.json(responses);
+    const result = await listInboundEmails(ctx);
+
+    if (!result.ok) {
+        return NextResponse.json(
+            { error: result.error.message, code: result.error.code },
+            { status: result.error.statusCode }
+        );
+    }
+
+    return NextResponse.json(result.data);
   } catch (err) {
     scopedLogger.error("[GET_ADMIN_EMAIL_RESPONSES_ERROR]", err);
     return handleApiError(err);
@@ -34,16 +43,20 @@ export async function PATCH(req: NextRequest) {
     try {
         const { id, status } = await req.json();
 
-        if (!id || !status) {
-            return NextResponse.json({ error: 'Missing id or status' }, { status: 400 });
-        }
-
-        const updated = await prisma.inboundEmail.update({
-            where: { id },
-            data: { status }
+        const ctx = createAppContext({
+            actor: { type: 'system', reason: 'Admin Response Update' }
         });
 
-        return NextResponse.json(updated);
+        const result = await updateInboundEmail(ctx, { id, status });
+
+        if (!result.ok) {
+            return NextResponse.json(
+                { error: result.error.message, code: result.error.code },
+                { status: result.error.statusCode }
+            );
+        }
+
+        return NextResponse.json(result.data);
     } catch (err) {
         scopedLogger.error("[PATCH_ADMIN_EMAIL_RESPONSES_ERROR]", err);
         return handleApiError(err);

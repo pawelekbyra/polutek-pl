@@ -58,6 +58,13 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
         }
     }
 
+    // Ensure diagnostics don't leak anything sensitive
+    if (playbackPlan.diagnostics.warnings) {
+        playbackPlan.diagnostics.warnings = playbackPlan.diagnostics.warnings.map(w =>
+            MediaPolicy.isProbablyRawMediaUrl(w) ? "[REDACTED]" : w
+        );
+    }
+
     // Maintain legacy compatibility for now
     const response = {
         ...playbackPlan,

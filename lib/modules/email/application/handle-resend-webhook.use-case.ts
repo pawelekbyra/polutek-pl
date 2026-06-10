@@ -134,28 +134,52 @@ export async function handleResendWebhook(
   }
 }
 
-async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: any, extraData: any = {}, isError = false) {
+const STATUS_PRIORITY: Record<string, number> = {
+  'PENDING': 0,
+  'SKIPPED': 1,
+  'SENT': 2,
+  'DELIVERED': 3,
+  'OPENED': 4,
+  'CLICKED': 5,
+  'BOUNCED': 100, // Terminal
+  'COMPLAINED': 100, // Terminal
+  'FAILED': 100, // Terminal
+  'UNSUBSCRIBED': 100, // Terminal
+};
+
+async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
   const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
     where: { resendEmailId }
   });
 
   if (!recipient) return;
 
+  // Terminal state protection and status hierarchy
+  const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
+  const newPriority = STATUS_PRIORITY[status] || 0;
+
+  // Don't downgrade status (e.g., if DELIVERED arrives after OPENED due to race condition)
+  // And never overwrite terminal states (priority 100)
+  if (newPriority <= currentPriority && currentPriority !== 0) {
+      logger.info(`[handleResendWebhook] Skipping status update for ${resendEmailId}: ${recipient.status} -> ${status} (priority check)`);
+      return;
+  }
+
   await ctx.prisma.broadcastEmailRecipient.update({
     where: { id: recipient.id },
     data: {
-      status,
+      status: status as any,
       ...extraData
     }
   });
 
   // Update aggregate counts in BroadcastEmail
-  if (status === 'SENT') {
+  if (status === 'SENT' && recipient.status === 'PENDING') {
     await ctx.prisma.broadcastEmail.update({
         where: { id: recipient.broadcastEmailId },
         data: { sentCount: { increment: 1 } }
     });
-  } else if (isError) {
+  } else if (isError && currentPriority < 100) {
     await ctx.prisma.broadcastEmail.update({
         where: { id: recipient.broadcastEmailId },
         data: { errorCount: { increment: 1 } }

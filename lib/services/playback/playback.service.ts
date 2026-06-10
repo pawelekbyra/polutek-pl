@@ -6,6 +6,7 @@ import { isAllowedVideoSourceUrl } from '@/lib/blob';
 import { StorageService } from '../storage/storage.service';
 import type { PlaybackPlan } from './playback.dto';
 import { AppContext, createAppContext } from '@/lib/modules/shared/app-context';
+import { MediaPolicy } from '@/lib/modules/media';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -39,6 +40,7 @@ export class PlaybackService {
             videoId,
             canPlay: false,
             access: { allowed: false, reason: "FORBIDDEN" as any },
+            source: undefined,
             player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: '', title: '' },
             diagnostics: { warnings: ["Internal error during access check"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
@@ -78,6 +80,7 @@ export class PlaybackService {
                 reason: decision.reason as any,
                 requiredTier: decision.requiredTier
             },
+            source: undefined,
             player: {
                 autoplayAllowed: false,
                 mutedAutoplay: false,
@@ -85,7 +88,10 @@ export class PlaybackService {
                 poster: video?.thumbnailUrl || '',
                 title: video?.title || ''
             },
-            diagnostics: { warnings: [decision.reason || "Access denied"], sourceConfidence: "LOW" },
+            diagnostics: {
+                warnings: [decision.reason || "Access denied"],
+                sourceConfidence: "LOW"
+            },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
         };
     }
@@ -125,6 +131,7 @@ export class PlaybackService {
             videoId,
             canPlay: false,
             access: { allowed: true },
+            source: undefined,
             player: { autoplayAllowed: false, mutedAutoplay: false, controls: false, poster: thumbnailUrl, title: title },
             diagnostics: { warnings: ["Video URL not allowed"], sourceConfidence: "LOW" },
             tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 }
@@ -152,6 +159,11 @@ export class PlaybackService {
     }
 
     const sourceInfo = getVideoSourceInfo(sourceUrl, `/api/media/${videoId}`);
+
+    // Leak safety: ensure playbackUrl is redacted if it's a raw URL
+    if (MediaPolicy.isProbablyRawMediaUrl(sourceInfo.playbackUrl) && !sourceInfo.playbackUrl.startsWith('/api/media/')) {
+        sourceInfo.playbackUrl = `/api/media/${videoId}`;
+    }
 
     const isAdminPreview = actor.type === 'admin';
 

@@ -65,10 +65,10 @@ export async function handleRefund(
         const revokeResult = await revokePatron({
           userId: payment.userId,
           note: 'Payment fully refunded',
-        }, ctx);
+        }, ctx, tx);
 
         if (!revokeResult.ok) {
-            throw new Error(`PATRON_REVOKE_FAILED: ${revokeResult.error.message}`);
+          throw new Error(`PATRON_REVOKE_FAILED: ${revokeResult.error.message}`);
         }
 
         return { userId: payment.userId, isPatron: revokeResult.data.isPatron, normalizedTotal: revokeResult.data.normalizedTotal };

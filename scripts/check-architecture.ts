@@ -122,13 +122,11 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/resend/route.ts':
     'R9 foundation: migrated to modular email use case.',
   'app/api/webhooks/stripe/route.ts':
-    'R7 blocker: Stripe webhook is still a legacy payment flow.',
+    'R7 core runtime migrated / modular webhook route.',
   'app/api/admin/payments/route.ts':
-    'R7 blocker: admin payments list is still a legacy payment flow.',
-  'app/api/admin/payments/stats/route.ts':
-    'R7 blocker: admin payment stats is still a legacy payment flow.',
+    'R7 foundation: migrated to modular payments use case.',
   'app/api/admin/payment-settings/route.ts':
-    'R7 blocker: admin payment settings is still a legacy payment flow.',
+    'R7 foundation: migrated to modular payments use case.',
   'app/api/user/referrals/claim/route.ts':
     'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
 };
@@ -158,7 +156,6 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/comments/route.ts': 'R8 blocker.',
   'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
   'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
-  'app/api/admin/payment-settings/route.ts': 'R7 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
   'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
   'app/api/admin/templates/route.ts': 'R9 blocker.',

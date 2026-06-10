@@ -100,17 +100,108 @@ export class PaymentRepository {
   }
 
   async decrementUserPaymentTotal(userId: string, currency: string, amountMinor: number, tx: WriteTx) {
-    const total = await tx.userPaymentTotal.findUnique({
-      where: { userId_currency: { userId, currency } },
-      select: { amountMinor: true }
+    // Use raw SQL for atomic decrement with a clamp-to-zero invariant.
+    // This prevents race conditions and ensures the total never goes below zero.
+    // We use double quotes for Postgres table and column names as Prisma does.
+    return await tx.$executeRaw`
+      UPDATE "UserPaymentTotal"
+      SET "amountMinor" = GREATEST(0, "amountMinor" - ${amountMinor})
+      WHERE "userId" = ${userId} AND "currency" = ${currency}
+    `;
+  }
+
+  async getCurrencySettings(db: ReadDb) {
+    return await db.paymentCurrencySetting.findMany();
+  }
+
+  async upsertCurrencySetting(currency: string, minAmountMinor: number, tx: WriteTx) {
+    return await tx.paymentCurrencySetting.upsert({
+      where: { currency },
+      create: { currency, minAmountMinor },
+      update: { minAmountMinor }
+    });
+  }
+
+  async countPayments(where: Prisma.PaymentWhereInput, db: ReadDb): Promise<number> {
+    return await db.payment.count({ where });
+  }
+
+  async findPaymentsWithRelations(params: {
+    where: Prisma.PaymentWhereInput;
+    orderBy: Prisma.PaymentOrderByWithRelationInput;
+    skip: number;
+    take: number;
+  }, db: ReadDb) {
+    return await db.payment.findMany({
+      where: params.where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            username: true,
+            imageUrl: true
+          }
+        },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      },
+      orderBy: params.orderBy,
+      skip: params.skip,
+      take: params.take,
+    });
+  }
+
+  async getFinancialStats(where: Prisma.PaymentWhereInput, db: ReadDb) {
+    const succeededWhere = { ...where, status: PaymentStatus.SUCCEEDED };
+
+    const succeeded = await db.payment.groupBy({
+      by: ['currency'],
+      where: succeededWhere,
+      _sum: {
+        amountMinor: true
+      },
+      _count: {
+        id: true
+      }
     });
 
-    if (total) {
-      return await tx.userPaymentTotal.update({
-        where: { userId_currency: { userId, currency } },
-        data: { amountMinor: Math.max(0, total.amountMinor - amountMinor) }
-      });
-    }
-    return null;
+    const refunded = await db.payment.groupBy({
+      by: ['currency'],
+      where,
+      _sum: {
+        refundedAmountMinor: true
+      }
+    });
+
+    const countsPerStatus = await db.payment.groupBy({
+      by: ['status'],
+      where,
+      _count: {
+        id: true
+      }
+    });
+
+    return {
+      succeeded: succeeded.map(s => ({
+        currency: s.currency,
+        totalAmount: s._sum.amountMinor || 0,
+        count: s._count.id
+      })),
+      refunded: refunded.map(r => ({
+        currency: r.currency,
+        totalAmount: r._sum.refundedAmountMinor || 0
+      })),
+      statusCounts: countsPerStatus.map(c => ({
+        status: c.status,
+        count: c._count.id
+      }))
+    };
   }
 }

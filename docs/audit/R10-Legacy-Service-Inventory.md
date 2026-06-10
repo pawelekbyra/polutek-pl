@@ -22,11 +22,11 @@ This report identifies all legacy services in `lib/services/**` and their curren
 | `user/profile.service.ts` | **BRIDGE** | `lib/modules/users/application/get-or-create-current-user.use-case.ts` | `lib/modules/users` |
 | `user/admin.service.ts` | **DEPRECATED** | Only referenced via `user.service.ts` (dead) | - |
 | `user/subscription.service.ts` | **DEPRECATED** | Only referenced via `user.service.ts` (dead) | - |
-| `payments/checkout.service.ts` | **ACTIVE** | `app/api/webhooks/stripe/route.ts` (via `payment.service.ts`) | `lib/modules/payments` (in progress) |
-| `payments/fulfillment.service.ts` | **ACTIVE** | `app/api/webhooks/stripe/route.ts` (via `payment.service.ts`) | `lib/modules/payments` (in progress) |
-| `payments/refund.service.ts` | **ACTIVE** | `app/api/webhooks/stripe/route.ts` (via `payment.service.ts`) | `lib/modules/payments` (in progress) |
-| `audit.service.ts` | **ACTIVE** | Admin routes (`payment-settings`, `templates`, `users/export`) | `lib/modules/audit` |
-| `payment.service.ts` | **ACTIVE** | `app/api/webhooks/stripe/route.ts` | `lib/modules/payments` |
+| `payments/checkout.service.ts` | **DEPRECATED** | - | `lib/modules/payments` |
+| `payments/fulfillment.service.ts` | **DEPRECATED** | - | `lib/modules/payments` |
+| `payments/refund.service.ts` | **DEPRECATED** | - | `lib/modules/payments` |
+| `audit.service.ts` | **ACTIVE** | Admin routes (`templates`, `users/export`) | `lib/modules/audit` |
+| `payment.service.ts` | **DEPRECATED** | - | `lib/modules/payments` |
 | `email.service.ts` | **BRIDGE** | `lib/modules/email/infrastructure/legacy-email-service-provider.ts` | `lib/modules/email` |
 | `content/video.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/video` |
 | `content/creator.service.ts` | **ACTIVE** | `app/page.tsx`, `app/channel/[slug]/page.tsx` | `lib/modules/channel`? |
@@ -35,7 +35,7 @@ This report identifies all legacy services in `lib/services/**` and their curren
 | `referral.service.ts` | **ACTIVE** | `app/api/user/referrals/claim/route.ts` | - |
 | `admin/admin-query-parser.ts` | **ACTIVE** | Various `app/api/admin/**` routes | - |
 | `admin/videos-diagnostics.service.ts` | **ACTIVE** | `app/api/admin/videos/[id]/route.ts` | - |
-| `admin/payments-admin.service.ts` | **ACTIVE** | `app/api/admin/payments/route.ts` | - |
+| `admin/payments-admin.service.ts` | **DEPRECATED** | - | `lib/modules/payments` |
 | `comments/comment.service.ts` | **ACTIVE** | `app/api/admin/comments/**`, `app/api/comments/[commentId]/context/route.ts` | `lib/modules/comments` |
 | `comments/comment-reaction.service.ts` | **DEPRECATED** | Only test usage | `lib/modules/comments` |
 | `comments/comment-audit.service.ts` | **DEAD** | None | `lib/modules/audit` |
@@ -52,5 +52,5 @@ This report identifies all legacy services in `lib/services/**` and their curren
 - **Audit overlap**: Both `audit.service.ts` and `lib/modules/audit` exist. The legacy one is still used by admin routes.
 - **Modularization status**:
     - Users (R5): Mostly bridged or moved to modules.
-    - Payments (R7): Still relies on legacy `payment.service.ts` and its sub-services.
+    - Payments (R7): Core runtime and administrative flows moved to modular use cases. Legacy services are deprecated.
     - Comments (R8): Still relies entirely on legacy `comments/` services.
