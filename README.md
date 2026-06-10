@@ -170,7 +170,7 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R6**   | Video                                      | `[x stronger foundation]`                                |
 | **R6.5** | Access Foundation                          | `[x certified]`                                          |
 | **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`      |
-| **R8**   | Comments                                   | `[~ validated candidate / pending final main deploy]`    |
+| **R8**   | Comments                                   | `[x certified]`                                          |
 | **R9**   | Email                                      | `[~ code-only pass / pending docs+guard reconcile]`      |
 | **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`  |
 | **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                    |
@@ -182,9 +182,9 @@ Aktualna interpretacja:
 * R5/R6 są mocno zaawansowane i po ostatnich passach mają mocniejszą ochronę, ale nadal mogą mieć jawne legacy extensions.
 * R6.5 certyfikuje access foundation dla wideo.
 * R7 core runtime został przesunięty do modułów, ale nie jest jeszcze pełnym `[x certified]`.
-* R8 Comments przeszedł finalny reconcile / validation pass w PR #787.
-* R8 ma mocne sygnały walidacji: guardy, typecheck i testy domenowe zostały zadeklarowane jako przechodzące w PR #787.
-* R8 nie jest jeszcze oznaczone jako `[x certified]`, dopóki finalny deploy/status main nie jest jednoznacznie zielony i README/guardy nie zostaną potwierdzone po merge.
+* R8 Comments przeszedł finalny reconcile / validation pass i został certyfikowany po merge PR #787.
+* R8 ma pełną walidację: guardy, typecheck i testy domenowe (inheritance, interactions, admin) są zielone.
+* R8 jest oznaczone jako `[x certified]`.
 * R9 ma code-only preparation pass w main, ale wymaga dokumentacyjnego i guardowego reconcile przed zmianą statusu.
 * R10 inventory istnieje, ale musi być okresowo uzgadniane z aktualnym main po większych zmianach modułowych.
 * R11 jeszcze nie wystartowało.
