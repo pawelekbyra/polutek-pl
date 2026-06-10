@@ -25,6 +25,24 @@ export class ChannelRepository {
     });
   }
 
+  async findAllCreators() {
+    return await this.creator.findMany({
+      select: { id: true },
+    });
+  }
+
+  async syncSubscribersCount(id: string, tx?: WriteTx) {
+    const db = tx || (this.db as PrismaClient);
+    const realCount = await db.subscription.count({
+      where: { creatorId: id },
+    });
+
+    return await db.creator.update({
+      where: { id },
+      data: { subscribersCount: realCount },
+    });
+  }
+
   async updateSubscribersCount(id: string, increment: number, tx?: WriteTx) {
     const db = tx || (this.db as any);
 

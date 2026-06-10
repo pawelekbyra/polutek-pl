@@ -6,9 +6,12 @@ export function handleApiResponse<T>(data: T, status: number = 200) {
   return NextResponse.json(data, { status });
 }
 
-export function fromUseCaseResult<T>(result: UseCaseResult<T>) {
+export function fromUseCaseResult<T>(
+  result: UseCaseResult<T>,
+  mapper?: (data: T) => NextResponse
+) {
   if (result.ok) {
-    return handleApiResponse(result.data);
+    return mapper ? mapper(result.data) : handleApiResponse(result.data);
   } else {
     return handleApiError(result.error);
   }

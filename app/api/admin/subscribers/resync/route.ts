@@ -1,33 +1,28 @@
-import { prisma } from '@/lib/prisma';
 import { NextResponse, NextRequest } from 'next/server';
-import { requireAdminForApi } from '@/lib/auth-utils';
 import { handleApiError } from '@/lib/errors';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { resyncSubscribers } from '@/lib/modules/channel';
+import { fromUseCaseResult } from '@/lib/api/api-response';
+import { requireAdminForApi } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const { response } = await requireAdminForApi('RESYNC_SUBSCRIBERS');
+  const { response, adminUserId } = await requireAdminForApi('RESYNC_SUBSCRIBERS');
   if (response) return response;
 
   try {
-    const creators = await prisma.creator.findMany({
-      select: { id: true }
+    const requestId = req.headers.get('x-request-id') || undefined;
+    const ctx = createAppContext({
+        actor: { type: 'admin', userId: adminUserId! },
+        requestId
     });
 
-    const results = await Promise.all(
-      creators.map(async (creator) => {
-        const realCount = await prisma.subscription.count({
-          where: { creatorId: creator.id }
-        });
-        await prisma.creator.update({
-          where: { id: creator.id },
-          data: { subscribersCount: realCount }
-        });
-        return { creatorId: creator.id, subscribersCount: realCount };
-      })
-    );
+    const result = await resyncSubscribers(ctx);
 
-    return NextResponse.json({ success: true, updated: results });
+    return fromUseCaseResult(result, (data) =>
+        NextResponse.json({ success: true, updated: data.updated })
+    );
   } catch (error) {
     return handleApiError(error);
   }

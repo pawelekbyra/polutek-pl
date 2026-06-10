@@ -4,15 +4,7 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
 
 ## Safe Cleanup Order
 
-### 1. Admin Subscribers Resync or Referrals
-- **Task**: Migrate legacy subscriber sync and referral logic to modular use cases.
-- **Affected Routes**:
-    - `app/api/admin/subscribers/resync/route.ts`
-    - `app/api/user/referrals/claim/route.ts`
-- **Legacy Services to Remove**:
-    - `lib/services/referral.service.ts`
-
-### 2. Playback-event route (R6/R3)
+### 1. Playback-event route (R6/R3)
 - **Task**: Move remaining persistence logic (playback events) to repositories.
 - **Affected Routes**:
     - `app/api/videos/[id]/playback-event/route.ts`
