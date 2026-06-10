@@ -34,7 +34,8 @@ describe('Media-Source Route Access', () => {
       source: {
         playbackUrl: 'https://s3.amazonaws.com/private-bucket/v1.mp4?signature=123',
         kind: 'video'
-      }
+      },
+      diagnostics: { warnings: [] }
     });
 
     const res = await GET(createReq(), { params: { videoId: 'v1' } });
@@ -49,6 +50,7 @@ describe('Media-Source Route Access', () => {
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
       access: { allowed: false, reason: 'PATRON_REQUIRED' },
+      diagnostics: { warnings: [] }
     });
 
     const res = await GET(createReq(), { params: { videoId: 'v1' } });

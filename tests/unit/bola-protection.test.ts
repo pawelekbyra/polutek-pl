@@ -1,87 +1,57 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
-import { POST, DELETE, PATCH } from '@/app/api/comments/route';
-import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { PATCH, DELETE } from '@/app/api/comments/[commentId]/route';
+import { NextRequest, NextResponse } from 'next/server';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { updateComment, deleteComment } from '@/lib/modules/comments';
 
-vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn(),
+vi.mock('@/lib/api/auth', () => ({
+  getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-    },
-    comment: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    creator: {
-      findFirst: vi.fn(),
-    },
-    auditLog: {
-        create: vi.fn(),
-    },
-    $transaction: vi.fn((cb) => cb(prisma)),
-  },
+vi.mock('@/lib/modules/comments', () => ({
+  updateComment: vi.fn(),
+  deleteComment: vi.fn(),
 }));
 
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    getOrCreateUserFromAuth: vi.fn(),
-  },
+vi.mock('@/lib/modules/shared/app-context', () => ({
+  createAppContext: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock('@/lib/services/comments/comment-access.service', () => ({
-  CommentAccessService: {
-    canModerate: vi.fn(),
-  },
-}));
-
-vi.mock('@/lib/rate-limit', () => ({
-  rateLimit: vi.fn().mockResolvedValue({ success: true }),
-}));
-
-describe('Comments API BOLA protection', () => {
+describe('Comments API BOLA protection (Modularized)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(UserService.getOrCreateUserFromAuth).mockImplementation(async (userId) => ({ id: userId } as any));
   });
 
-  it('DELETE /api/comments: blocks unauthorized user from deleting others comment', async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: 'attacker_1' } as any);
-    vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-      id: 'comment_1',
-      authorId: 'victim_1',
-      videoId: 'video_1'
-    } as any);
-    vi.mocked(CommentAccessService.canModerate).mockResolvedValue(false);
+  it('DELETE /api/comments/[commentId]: blocks unauthorized user from deleting others comment', async () => {
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'attacker_1', isPatron: false });
+    vi.mocked(deleteComment).mockResolvedValue({
+        ok: false,
+        error: { type: 'FORBIDDEN', message: 'Forbidden' }
+    });
 
-    const req = new NextRequest('http://localhost/api/comments?id=comment_1', { method: 'DELETE' });
-    const res = await DELETE(req);
+    const req = new NextRequest('http://localhost/api/comments/comment_1', { method: 'DELETE' });
+    const res = await DELETE(req, { params: { commentId: 'comment_1' } });
 
     expect(res.status).toBe(403);
+    expect(deleteComment).toHaveBeenCalledWith({ commentId: 'comment_1' }, expect.any(Object));
   });
 
-  it('PATCH /api/comments: blocks non-creator from pinning comment', async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: 'random_user' } as any);
-    vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-      id: 'comment_1',
-      authorId: 'victim_1',
-      videoId: 'video_1'
-    } as any);
-    vi.mocked(CommentAccessService.canModerate).mockResolvedValue(false);
+  it('PATCH /api/comments/[commentId]: blocks non-creator from pinning comment', async () => {
+    // Note: pinning is now a separate route /api/comments/[commentId]/pin
+    // This test in bola-protection.test.ts was testing PATCH /api/comments?id=comment_1 with { pinned: true }
+    // Our new PATCH route only accepts { text: string } and doesn't allow pinning.
+    // So we should verify it returns 400 or ignoring 'pinned' field if it's not in the schema.
 
-    const req = new NextRequest('http://localhost/api/comments?id=comment_1', {
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'random_user', isPatron: false });
+
+    const req = new NextRequest('http://localhost/api/comments/comment_1', {
       method: 'PATCH',
       body: JSON.stringify({ pinned: true })
     });
-    const res = await PATCH(req);
+    const res = await PATCH(req, { params: { commentId: 'comment_1' } });
 
-    expect(res.status).toBe(403);
+    // It should be 400 because 'text' is missing and 'pinned' is not allowed/ignored
+    expect(res.status).toBe(400);
   });
 });
