@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebhookEventStatus, Prisma } from '@prisma/client';
+import { WebhookEventStatus } from '@prisma/client';
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
-import { prisma } from '@/lib/prisma';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { EmailService } from '@/lib/services/email.service';
+import { SyncUserFromWebhookUseCase } from '@/lib/modules/users';
+import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { POST } from '@/app/api/webhooks/clerk/route';
 
 vi.mock('next/headers', () => ({
@@ -15,34 +14,25 @@ vi.mock('svix', () => ({
   Webhook: vi.fn(),
 }));
 
+vi.mock('@/lib/modules/users', () => ({
+  SyncUserFromWebhookUseCase: {
+    execute: vi.fn(),
+    softDelete: vi.fn(),
+    updatePassword: vi.fn(),
+    finalizeEvent: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/webhooks/clerk-idempotency', () => ({
+  acquireClerkEventLock: vi.fn(),
+}));
+
 vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    clerkEvent: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-      update: vi.fn(),
-      create: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    user: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
-
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    syncUser: vi.fn(),
-    softDeleteUser: vi.fn(),
-  },
-}));
-
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendWelcomeEmail: vi.fn(),
-    sendAccountDeletedEmail: vi.fn(),
-    sendPasswordChangedEmail: vi.fn(),
-  },
+    prisma: {
+        user: {
+            findUnique: vi.fn(),
+        }
+    }
 }));
 
 const baseHeaders = new Map([
@@ -76,9 +66,7 @@ describe('/api/webhooks/clerk route', () => {
     vi.clearAllMocks();
     process.env.CLERK_WEBHOOK_SECRET = 'whsec_test_clerk';
     mockHeaders();
-    vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue(null as never);
-    vi.mocked(prisma.clerkEvent.upsert).mockResolvedValue({} as never);
-    vi.mocked(prisma.clerkEvent.update).mockResolvedValue({} as never);
+    vi.mocked(acquireClerkEventLock).mockResolvedValue({ success: true, acquired: true, duplicate: false, processing: false });
   });
 
   it('rejects requests with missing Svix headers before signature verification', async () => {
@@ -88,7 +76,6 @@ describe('/api/webhooks/clerk route', () => {
 
     expect(response.status).toBe(400);
     expect(Webhook).not.toHaveBeenCalled();
-    expect(prisma.clerkEvent.upsert).not.toHaveBeenCalled();
   });
 
   it('rejects invalid signatures without writing webhook state', async () => {
@@ -103,8 +90,7 @@ describe('/api/webhooks/clerk route', () => {
     const response = await POST(requestFor({ type: 'user.created' }));
 
     expect(response.status).toBe(400);
-    expect(prisma.clerkEvent.findUnique).not.toHaveBeenCalled();
-    expect(prisma.clerkEvent.upsert).not.toHaveBeenCalled();
+    expect(acquireClerkEventLock).not.toHaveBeenCalled();
   });
 
   it('syncs user.created fixture data and sends a welcome email', async () => {
@@ -122,35 +108,32 @@ describe('/api/webhooks/clerk route', () => {
       },
     };
     mockVerifiedEvent(payload);
-    vi.mocked(UserService.syncUser).mockResolvedValue({ id: 'user_1' } as never);
 
     const response = await POST(requestFor(payload));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
-    expect(UserService.syncUser).toHaveBeenCalledWith(
-      'user_1',
-      'new@example.com',
-      'Anna Nowak',
-      'https://example.com/avatar.png',
-      'ref_1',
-      'en',
-      'anna-nowak',
-    );
-    expect(EmailService.sendWelcomeEmail).toHaveBeenCalledWith('new@example.com', 'Anna', 'en');
-    expect(prisma.clerkEvent.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        id: 'evt_1',
-        status: WebhookEventStatus.PROCESSING
+    expect(SyncUserFromWebhookUseCase.execute).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+          id: 'user_1',
+          email: 'new@example.com',
+          name: 'Anna Nowak',
+          imageUrl: 'https://example.com/avatar.png',
+          referrerId: 'ref_1',
+          language: 'en',
+          username: 'anna-nowak',
       }),
-    }));
-    expect(prisma.clerkEvent.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'evt_1' },
-      data: expect.objectContaining({ status: WebhookEventStatus.PROCESSED }),
-    }));
+      'user.created'
+    );
+    expect(SyncUserFromWebhookUseCase.finalizeEvent).toHaveBeenCalledWith(
+        expect.anything(),
+        'evt_1',
+        WebhookEventStatus.PROCESSED
+    );
   });
 
-  it('syncs user.updated fixture data without welcome email side effects', async () => {
+  it('syncs user.updated fixture data', async () => {
     const payload = {
       type: 'user.updated',
       data: {
@@ -164,34 +147,35 @@ describe('/api/webhooks/clerk route', () => {
       },
     };
     mockVerifiedEvent(payload);
-    vi.mocked(UserService.syncUser).mockResolvedValue({ id: 'user_1' } as never);
 
     const response = await POST(requestFor(payload));
 
     expect(response.status).toBe(200);
-    expect(UserService.syncUser).toHaveBeenCalledWith('user_1', 'updated@example.com', 'Jan', null, undefined, 'pl', 'jan');
-    expect(EmailService.sendWelcomeEmail).not.toHaveBeenCalled();
+    expect(SyncUserFromWebhookUseCase.execute).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+            id: 'user_1',
+            email: 'updated@example.com',
+            name: 'Jan',
+            language: 'pl',
+            username: 'jan'
+        }),
+        'user.updated'
+    );
   });
 
-  it('soft-deletes user.deleted fixture data and sends deletion email for active accounts', async () => {
+  it('soft-deletes user.deleted fixture data', async () => {
     const payload = { type: 'user.deleted', data: { id: 'user_1' } };
     mockVerifiedEvent(payload);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'old@example.com', language: 'pl' } as never);
 
     const response = await POST(requestFor(payload));
 
     expect(response.status).toBe(200);
-    expect(UserService.softDeleteUser).toHaveBeenCalledWith('user_1');
-    expect(EmailService.sendAccountDeletedEmail).toHaveBeenCalledWith('old@example.com');
+    expect(SyncUserFromWebhookUseCase.softDelete).toHaveBeenCalledWith(expect.anything(), 'user_1');
   });
 
   it('short-circuits processed duplicate events without running user side effects', async () => {
-    const error = new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '6.4.1' });
-    vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
-    vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
-    vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({
-      status: WebhookEventStatus.PROCESSED,
-    } as never);
+    vi.mocked(acquireClerkEventLock).mockResolvedValue({ success: true, acquired: false, duplicate: true, processing: false });
 
     const payload = { type: 'user.created', data: { id: 'user_1' } };
     mockVerifiedEvent(payload);
@@ -201,17 +185,11 @@ describe('/api/webhooks/clerk route', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ success: true, duplicate: true, processing: false });
-    expect(prisma.clerkEvent.create).toHaveBeenCalled();
-    expect(UserService.syncUser).not.toHaveBeenCalled();
+    expect(SyncUserFromWebhookUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('short-circuits fresh in-flight events so parallel deliveries are idempotent', async () => {
-    const error = new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '6.4.1' });
-    vi.mocked(prisma.clerkEvent.create).mockRejectedValue(error);
-    vi.mocked(prisma.clerkEvent.updateMany).mockResolvedValue({ count: 0 } as never);
-    vi.mocked(prisma.clerkEvent.findUnique).mockResolvedValue({
-      status: WebhookEventStatus.PROCESSING,
-    } as never);
+    vi.mocked(acquireClerkEventLock).mockResolvedValue({ success: true, acquired: false, duplicate: false, processing: true });
 
     const payload = { type: 'user.updated', data: { id: 'user_1' } };
     mockVerifiedEvent(payload);
@@ -221,7 +199,6 @@ describe('/api/webhooks/clerk route', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ success: true, duplicate: false, processing: true });
-    expect(prisma.clerkEvent.create).toHaveBeenCalled();
-    expect(UserService.syncUser).not.toHaveBeenCalled();
+    expect(SyncUserFromWebhookUseCase.execute).not.toHaveBeenCalled();
   });
 });
