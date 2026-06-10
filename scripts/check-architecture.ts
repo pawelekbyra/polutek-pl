@@ -161,8 +161,6 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
-  'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
-  'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
   'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
 };
