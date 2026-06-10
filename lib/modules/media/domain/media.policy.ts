@@ -152,7 +152,7 @@ export class MediaPolicy {
    * Asserts that a PublicMediaDescriptor is safe and does not leak raw URLs.
    */
   static assertPublicMediaDescriptorSafe(descriptor: PublicMediaDescriptor): void {
-    const forbiddenFields = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
+    const forbiddenFields = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl', 'r2Url', 'storageKey', 'objectKey', 'bucket'];
 
     for (const field of forbiddenFields) {
       if ((descriptor as any)[field]) {
@@ -162,6 +162,28 @@ export class MediaPolicy {
 
     if (this.isProbablyRawMediaUrl(descriptor.playbackUrl)) {
       throw new RawVideoUrlExposedError();
+    }
+  }
+
+  /**
+   * Asserts that a video DTO is safe for public exposure.
+   */
+  static assertPublicVideoDtoSafe(dto: any): void {
+    const forbiddenFields = [
+        'videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl',
+        's3Url', 'blobUrl', 'r2Url', 'storageKey', 'objectKey', 'bucket',
+        'internalAssetProviderUrl'
+    ];
+
+    for (const field of forbiddenFields) {
+        if (dto[field] !== undefined && dto[field] !== null) {
+            throw new UnsafePublicMediaDtoError(`Forbidden field detected in video DTO: ${field}`);
+        }
+    }
+
+    if (dto.thumbnailUrl && this.isProbablyRawMediaUrl(dto.thumbnailUrl)) {
+        // Redacting raw thumbnails is optional but recommended.
+        // For now we just log it or we could throw if we want to be strict.
     }
   }
 

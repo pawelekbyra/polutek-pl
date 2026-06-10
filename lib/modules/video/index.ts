@@ -1,6 +1,6 @@
 // lib/modules/video/index.ts
 export * from './application/get-public-video-list.use-case';
-export * from './application/get-video-by-id.use-case';
+export * from './application/get-public-video-by-id.use-case';
 export * from './application/get-admin-video-by-id.use-case';
 export * from './application/get-admin-video-list.use-case';
 export * from './application/resync-admin-video-stats.use-case';

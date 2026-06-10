@@ -19,7 +19,12 @@ export interface BaseVideoDto {
   sidebarOrder: number;
 }
 
-export interface PublicVideoDto extends BaseVideoDto {}
+export interface PublicVideoDto extends BaseVideoDto {
+  videoUrl?: never;
+  sourceUrl?: never;
+  rawUrl?: never;
+  providerUrl?: never;
+}
 
 export interface AdminVideoDto extends BaseVideoDto {
   videoUrl: string;
@@ -31,7 +36,7 @@ export interface AdminVideoDto extends BaseVideoDto {
 }
 
 export function toPublicVideoDto(video: any): PublicVideoDto {
-  return {
+  const dto = {
     id: video.id,
     slug: video.slug,
     title: video.title,
@@ -49,6 +54,14 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
     showInSidebar: video.showInSidebar,
     sidebarOrder: video.sidebarOrder,
   };
+
+  // Strip any accidental sensitive fields if they exist in the input object
+  const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
+  for (const field of forbidden) {
+      if (field in dto) delete (dto as any)[field];
+  }
+
+  return dto as PublicVideoDto;
 }
 
 export function toAdminVideoDto(video: any): AdminVideoDto {

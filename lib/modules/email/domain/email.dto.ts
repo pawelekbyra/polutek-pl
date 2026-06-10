@@ -85,3 +85,24 @@ export type ResendWebhookResult = {
   duplicate?: boolean;
   idempotency?: "available" | "not_available" | "best_effort";
 };
+
+export type InboundEmailDto = {
+  id: string;
+  fromEmail: string;
+  fromName: string | null;
+  toEmail: string;
+  subject: string | null;
+  text: string | null;
+  html: string | null;
+  resendId: string;
+  status: "NEW" | "READ" | "ARCHIVED" | "RESOLVED";
+  userId: string | null;
+  broadcastEmailId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type UpdateInboundEmailInput = {
+  id: string;
+  status: "NEW" | "READ" | "ARCHIVED" | "RESOLVED";
+};
