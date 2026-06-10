@@ -9,6 +9,9 @@ import {
   InvalidReferralCodeError,
   ReferralError
 } from "../domain/referral.errors";
+import { grantPatron } from "@/lib/modules/patron";
+import { UserAccessService } from "@/lib/services/user-access.service";
+import { logger } from "@/lib/logger";
 
 export interface ClaimReferralInput {
   referralCode: string;
@@ -33,9 +36,11 @@ export async function claimReferral(
     return failure(new SelfReferralError());
   }
 
+  const syncData: { current: { userId: string; isPatron: boolean; totalPaid: number } | null } = { current: null };
+
   try {
     await ctx.db.writeTransaction(async (tx) => {
-      const referredUser = await userRepo.findProfileById(referredUserId);
+      const referredUser = await userRepo.findProfileById(referredUserId, tx);
       if (!referredUser) {
         throw new ReferredUserNotFoundError();
       }
@@ -49,7 +54,7 @@ export async function claimReferral(
         throw new UserAlreadyReferredError();
       }
 
-      await referralRepo.create({
+      const referral = await referralRepo.create({
         referrerId: referrer.id,
         referredId: referredUserId,
         status: 'CLAIMED',
@@ -59,7 +64,36 @@ export async function claimReferral(
 
       await userRepo.setReferredBy(referredUserId, referrer.id, tx);
       await userRepo.incrementReferralStats(referrer.id, tx);
+
+      const freshReferrer = await userRepo.findProfileById(referrer.id, tx);
+
+      if (freshReferrer && freshReferrer.referralPoints >= 5) {
+        const patronResult = await grantPatron({
+          userId: referrer.id,
+          source: 'referral',
+          referralId: referral.id,
+          note: 'Granted by referral reward',
+        }, ctx, tx);
+
+        if (patronResult.ok) {
+          syncData.current = {
+            userId: referrer.id,
+            isPatron: patronResult.data.isPatron,
+            totalPaid: patronResult.data.normalizedTotal
+          };
+        }
+      }
     });
+
+    if (syncData.current) {
+      await UserAccessService.syncClerkAccess(
+        syncData.current.userId,
+        syncData.current.isPatron,
+        syncData.current.totalPaid
+      ).catch(err => {
+        logger.error("[ClaimReferralUseCase] Clerk sync failed after transaction:", err);
+      });
+    }
 
     return success({ success: true });
   } catch (error) {

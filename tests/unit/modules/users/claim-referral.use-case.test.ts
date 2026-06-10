@@ -17,11 +17,18 @@ const mockUserRepo = {
   findProfileById: vi.fn(),
   setReferredBy: vi.fn(),
   incrementReferralStats: vi.fn(),
+  user: {
+      update: vi.fn(),
+  }
 };
 
 const mockReferralRepo = {
   findByReferredId: vi.fn(),
   create: vi.fn(),
+  referral: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+  }
 };
 
 (UserRepository as any).prototype.findByReferralCodeOrId = mockUserRepo.findByReferralCodeOrId;
@@ -32,13 +39,27 @@ const mockReferralRepo = {
 (ReferralRepository as any).prototype.findByReferredId = mockReferralRepo.findByReferredId;
 (ReferralRepository as any).prototype.create = mockReferralRepo.create;
 
+vi.mock('@/lib/modules/patron', () => ({
+  grantPatron: vi.fn().mockResolvedValue({ ok: true, data: { isPatron: true, normalizedTotal: 0 } })
+}));
+
+vi.mock('@/lib/services/user-access.service', () => ({
+  UserAccessService: {
+    syncClerkAccess: vi.fn().mockResolvedValue(true)
+  }
+}));
+
 describe('ClaimReferralUseCase', () => {
   const ctx = createAppContext({
     actor: { type: 'user', userId: 'referred-1', isPatron: false }
   });
 
-  // Mock writeTransaction
-  ctx.db.writeTransaction = vi.fn().mockImplementation((cb) => cb({}));
+  // Mock writeTransaction with a tx client that has the expected structure
+  const mockTx = {
+      user: { update: vi.fn() },
+      referral: { findUnique: vi.fn(), create: vi.fn() }
+  };
+  ctx.db.writeTransaction = vi.fn().mockImplementation((cb) => cb(mockTx));
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,9 +77,9 @@ describe('ClaimReferralUseCase', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(mockReferralRepo.create).toHaveBeenCalled();
-    expect(mockUserRepo.setReferredBy).toHaveBeenCalledWith('referred-1', 'referrer-1', expect.anything());
-    expect(mockUserRepo.incrementReferralStats).toHaveBeenCalledWith('referrer-1', expect.anything());
+    expect(mockReferralRepo.create).toHaveBeenCalledWith(expect.anything(), mockTx);
+    expect(mockUserRepo.setReferredBy).toHaveBeenCalledWith('referred-1', 'referrer-1', mockTx);
+    expect(mockUserRepo.incrementReferralStats).toHaveBeenCalledWith('referrer-1', mockTx);
   });
 
   it('should fail on self-referral', async () => {
@@ -102,5 +123,29 @@ describe('ClaimReferralUseCase', () => {
     if (!result.ok) {
         expect(result.error).toBeInstanceOf(UserAlreadyReferredError);
     }
+  });
+
+  it('should grant patron if referrer reaches 5 points', async () => {
+    const { grantPatron } = await import('@/lib/modules/patron');
+
+    mockUserRepo.findByReferralCodeOrId.mockResolvedValue({ id: 'referrer-1' });
+    mockUserRepo.findProfileById
+      .mockResolvedValueOnce({ id: 'referred-1', referredById: null }) // Initial check
+      .mockResolvedValueOnce({ id: 'referrer-1', referralPoints: 5 }); // After update check
+
+    mockReferralRepo.findByReferredId.mockResolvedValue(null);
+    mockReferralRepo.create.mockResolvedValue({ id: 'ref-1' });
+
+    const result = await claimReferral(ctx, {
+      referralCode: 'REF123',
+      referredUserId: 'referred-1'
+    });
+
+    expect(result.ok).toBe(true);
+    expect(grantPatron).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'referrer-1', source: 'referral' }),
+        expect.anything(),
+        mockTx
+    );
   });
 });

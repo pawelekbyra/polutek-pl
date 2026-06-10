@@ -139,8 +139,6 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R7 foundation: migrated to modular payments use case.',
   'app/api/admin/videos/[id]/comments/route.ts':
     'R8 cert: migrated to modular use case.',
-  'app/api/user/referrals/claim/route.ts':
-    'R5 future blocker: referrals claim depends on Users bridge but is still a legacy flow.',
 };
 
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {

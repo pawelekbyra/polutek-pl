@@ -1,4 +1,4 @@
-import { ReadDb } from "@/lib/modules/shared/db";
+import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { PrismaClient } from "@prisma/client";
 
 export class UserRepository {
@@ -30,8 +30,9 @@ export class UserRepository {
     });
   }
 
-  async findProfileById(id: string) {
-    return await this.user.findUnique({
+  async findProfileById(id: string, tx?: WriteTx) {
+    const db = tx || (this.db as any);
+    return await db.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -61,9 +62,9 @@ export class UserRepository {
     });
   }
 
-  async incrementReferralStats(id: string, tx?: any) {
-    const db = tx || this.user;
-    return await db.update({
+  async incrementReferralStats(id: string, tx?: WriteTx) {
+    const db = tx || (this.db as any);
+    return await db.user.update({
       where: { id },
       data: {
         referralCount: { increment: 1 },
@@ -72,9 +73,9 @@ export class UserRepository {
     });
   }
 
-  async setReferredBy(userId: string, referrerId: string, tx?: any) {
-    const db = tx || this.user;
-    return await db.update({
+  async setReferredBy(userId: string, referrerId: string, tx?: WriteTx) {
+    const db = tx || (this.db as any);
+    return await db.user.update({
       where: { id: userId },
       data: {
         referredById: referrerId,

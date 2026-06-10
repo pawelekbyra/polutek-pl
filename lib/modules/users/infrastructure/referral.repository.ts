@@ -4,13 +4,9 @@ import { ReferralStatus } from "@prisma/client";
 export class ReferralRepository {
   constructor(private db: ReadDb) {}
 
-  private get referral() {
-    return (this.db as any).referral;
-  }
-
   async findByReferredId(referredId: string, tx?: WriteTx) {
-    const db = tx || this.referral;
-    return await db.findUnique({
+    const db = tx || (this.db as any);
+    return await db.referral.findUnique({
       where: { referredId },
     });
   }
@@ -22,8 +18,8 @@ export class ReferralRepository {
     source: string;
     claimedAt: Date;
   }, tx?: WriteTx) {
-    const db = tx || this.referral;
-    return await db.create({
+    const db = tx || (this.db as any);
+    return await db.referral.create({
       data,
     });
   }
