@@ -126,7 +126,13 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/checkout/create-intent/route.ts':
     'R7 foundation: migrated to modular payments use case.',
   'app/api/webhooks/resend/route.ts':
-    'R9 foundation: migrated to modular email use case.',
+    'R9 cert: migrated to modular email use case.',
+  'app/api/admin/templates/route.ts':
+    'R9 cert: migrated to modular use cases.',
+  'app/api/admin/emails/broadcast/route.ts':
+    'R9 cert: migrated to modular use case.',
+  'app/api/admin/emails/responses/route.ts':
+    'R9 cert: migrated to modular use case.',
   'app/api/webhooks/stripe/route.ts':
     'R7 core runtime migrated / modular webhook route.',
   'app/api/admin/payments/route.ts':
@@ -160,11 +166,8 @@ const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
-  'app/api/admin/emails/broadcast/route.ts': 'R9 blocker.',
-  'app/api/admin/emails/responses/route.ts': 'R9 blocker.',
   'app/api/admin/stats/route.ts': 'R11 blocker.',
   'app/api/admin/subscribers/resync/route.ts': 'R5 blocker.',
-  'app/api/admin/templates/route.ts': 'R9 blocker.',
   'app/api/admin/videos/[id]/route.ts': 'R6 blocker.',
   'app/api/media/[...path]/route.ts': 'R3 delivery blocker.',
 };

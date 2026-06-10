@@ -1,5 +1,12 @@
+import { SYSTEM_TEMPLATE_SLUGS, SystemTemplateSlug } from "@/lib/email-defaults";
 import { DbClient } from "../../shared/db";
-import { BroadcastAudience, BroadcastRecipientDto, AdminBroadcastEmailListItemDto } from "../domain/email.dto";
+import {
+  BroadcastAudience,
+  BroadcastRecipientDto,
+  AdminBroadcastEmailListItemDto,
+  EmailTemplateDto,
+  UpsertEmailTemplateInput,
+} from "../domain/email.dto";
 
 export class EmailRepository {
   constructor(private readonly prisma: DbClient) {}
@@ -55,5 +62,44 @@ export class EmailRepository {
           createdAt: h.createdAt,
           createdById: h.createdById
       }));
+  }
+
+  async findAllTemplates(): Promise<EmailTemplateDto[]> {
+    const templates = await this.prisma.emailTemplate.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+    return templates as EmailTemplateDto[];
+  }
+
+  async findTemplateBySlug(slug: string): Promise<EmailTemplateDto | null> {
+    const template = await this.prisma.emailTemplate.findUnique({
+      where: { slug }
+    });
+    return template as EmailTemplateDto | null;
+  }
+
+  async upsertTemplate(data: UpsertEmailTemplateInput): Promise<EmailTemplateDto> {
+    const { slug, ...rest } = data;
+    const isSystem = SYSTEM_TEMPLATE_SLUGS.includes(slug as SystemTemplateSlug);
+
+    const template = await this.prisma.emailTemplate.upsert({
+      where: { slug },
+      update: {
+        ...rest,
+      },
+      create: {
+        slug,
+        ...rest,
+        isSystem,
+      },
+    });
+
+    return template as EmailTemplateDto;
+  }
+
+  async deleteTemplate(slug: string): Promise<void> {
+    await this.prisma.emailTemplate.delete({
+      where: { slug }
+    });
   }
 }
