@@ -1,0 +1,1180 @@
+# Polutek.pl — Product & Architecture Blueprint Notes for Future AI
+
+## Cel tej notatki
+
+Ta notatka opisuje docelową wizję projektu Polutek.pl oraz zasady, których przyszłe AI/agenci kodujący mają przestrzegać. Projekt powstał częściowo jako prototyp/vibe-coded aplikacja sklejona z wielu gałęzi i iteracji. Obecnym celem nie jest dalsze doklejanie funkcji do prototypu, tylko stopniowa przebudowa w solidny, czysty, przewidywalny system.
+
+Docelowo Polutek.pl ma być prostą, dopracowaną, jednokanałową platformą VOD/patron-content dla jednego twórcy. To nie jest marketplace, nie jest multi-creator SaaS, nie jest platforma typu Patreon clone dla wielu twórców. Ma to być solidny, minimalistyczny, szybki i dobrze zaprojektowany system do publikacji filmów, obsługi patronów, komentarzy, mailingów i panelu admina.
+
+Najważniejszy cel techniczny: kod ma być możliwie prosty, modułowy, przewidywalny i pozbawiony niepotrzebnych linii, starych obejść, martwych usług i mieszania odpowiedzialności.
+
+Najważniejszy cel produktowy: użytkownik ma mieć jasne doświadczenie:
+
+* może oglądać publiczne filmy,
+* może oglądać filmy dla zalogowanych po zalogowaniu,
+* może oglądać filmy patron-only jako patron,
+* może komentować zgodnie z regułami dostępu,
+* może zostać patronem przez płatność, decyzję admina albo system referencyjny,
+* może subskrybować mailing, ale subskrypcja mailingu nie oznacza patrona.
+
+---
+
+# 1. Obecny etap: R10 / faza X
+
+Obecna faza w README to R10, czyli cleanup legacy fasad. W rozmowie nazywaliśmy ją też fazą X. Ta faza jest teraz najważniejsza operacyjnie.
+
+R10 nie ma jeszcze wdrażać całej nowej architektury Cloudflare Stream, nie ma od razu przepisywać całego systemu patronów, nie ma budować finalnego admin cockpit. R10 ma przygotować grunt: usunąć najgorsze pozostałości prototypu, direct Prisma z route’ów, stare `lib/services/**`, fałszywe allowlisty i miejsca, gdzie route miesza HTTP, biznes, dostęp i bazę.
+
+Celem R10 jest doprowadzenie aplikacji do stanu, w którym dalsze prace można prowadzić czysto:
+
+* route’y są cienkie,
+* logika biznesowa jest w use-case’ach,
+* dostęp jest w policy/modułach,
+* baza jest za repository,
+* legacy services są usunięte albo jawnie sklasyfikowane,
+* README i dokumenty są źródłem prawdy,
+* architecture guard mówi prawdę,
+* agenci AI mają jednoznaczne zasady.
+
+Docelowy wzorzec nadal jest:
+
+```txt
+route -> use-case -> policy/service/repository -> Prisma
+```
+
+Route może robić:
+
+* auth,
+* parsing inputu,
+* stworzenie AppContext,
+* wywołanie publicznego API modułu,
+* zbudowanie HTTP response.
+
+Route nie może:
+
+* importować `@/lib/prisma`,
+* importować `@/lib/services/**`,
+* importować wewnętrznych plików modułu zamiast publicznego `index.ts`,
+* zawierać logiki biznesowej,
+* podejmować decyzji o patronie, płatności, dostępie, mailingach albo mediach lokalnie.
+
+---
+
+# 2. Sposób pracy z AI i agentami
+
+Ten projekt powinien być prowadzony jak praca kilku inżynierów pod kontrolą tech leada.
+
+Użytkownik / właściciel projektu:
+
+* ustala wizję produktu,
+* decyduje o priorytetach,
+* akceptuje poziom ryzyka,
+* wybiera kierunek biznesowy,
+* pilnuje, żeby produkt był prosty i sensowny.
+
+AI / ChatGPT w roli architekta i tech leada:
+
+* rozbija duże cele na małe, bezpieczne zadania,
+* pisze precyzyjne prompty dla agentów,
+* pilnuje scope’u,
+* reviewuje PR-y,
+* decyduje merge/no merge,
+* aktualizuje strategię po każdym PR-ze,
+* pilnuje architektury i roadmapy.
+
+Jules/agenci:
+
+* dostają mały, precyzyjny ticket,
+* pracują na branchu,
+* zgłaszają changed files, testy, ryzyka,
+* nie zgadują produktu,
+* nie rozszerzają scope’u,
+* nie aktualizują README/docs, jeśli ticket tego nie mówi.
+
+GitHub/main:
+
+* jest źródłem prawdy,
+* merge odbywa się po review,
+* po każdym większym merge trzeba sprawdzić main,
+* nie mergować PR-ów, które mieszają domeny albo dotykają niedozwolonych plików.
+
+Zasada pracy:
+
+* maksymalnie dwa aktywne zadania kodujące naraz,
+* zadania równoległe muszą być izolowane domenowo,
+* nie odpalać wielu agentów w tej samej domenie,
+* zawsze zostawić rezerwę na rescue/closer,
+* docs/README aktualizować w osobnych, kontrolowanych PR-ach,
+* po większych zmianach robić reconcile/certification.
+
+Ten tryb pracy z roadmapą, zasadami i AI-promptami powinien stać się normą projektu. Nawet jeśli obecna roadmapa R0–R11 kiedyś zniknie z README, trzeba zachować mechanizm:
+
+* aktualna faza,
+* cel fazy,
+* zasady agentów,
+* zakazane pliki,
+* definicja done,
+* stop-loss conditions,
+* następne taski.
+
+---
+
+# 3. Główna wizja produktu
+
+Polutek.pl to prosta platforma VOD/patron-content dla jednego twórcy.
+
+Nie budujemy:
+
+* marketplace’u,
+* platformy dla wielu twórców,
+* SaaS-a z tenantami,
+* skomplikowanych planów subskrypcyjnych,
+* niepotrzebnych warstw abstrakcji,
+* feature’ów „na kiedyś”, jeśli zwiększają złożoność teraz.
+
+Budujemy:
+
+* katalog filmów,
+* player,
+* trzy poziomy dostępu,
+* komentarze,
+* patronów,
+* mailing/subskrypcję,
+* panel admina,
+* płatności,
+* system referencyjny,
+* email/broadcasty,
+* prostą analitykę,
+* diagnostykę dostępu,
+* czysty kod.
+
+Platforma ma być maksymalnie zrozumiała:
+
+* film ma status,
+* film ma tier dostępu,
+* użytkownik ma stan dostępu,
+* patron wynika z PatronGrant,
+* subscription/follow oznacza mailing,
+* Cloudflare Stream dostarcza video,
+* admin ma jasne narzędzia operacyjne.
+
+---
+
+# 4. Poziomy dostępu do filmów
+
+System dostępu do filmów ma mieć trzy podstawowe poziomy:
+
+```txt
+PUBLIC
+LOGGED_IN
+PATRON
+```
+
+## PUBLIC
+
+Film publiczny:
+
+* każdy może zobaczyć film,
+* każdy może zobaczyć sekcję komentarzy,
+* tylko zalogowani użytkownicy mogą komentować,
+* niezalogowany użytkownik widzi komentarze i zachętę do logowania, ale nie może pisać.
+
+## LOGGED_IN
+
+Film dla zalogowanych:
+
+* każdy może zobaczyć, że film istnieje,
+* niezalogowany użytkownik nie może odtworzyć filmu,
+* zalogowany użytkownik może odtworzyć film,
+* każdy może zobaczyć sekcję komentarzy,
+* tylko zalogowani mogą komentować.
+
+## PATRON
+
+Film dla patronów:
+
+* każdy może zobaczyć, że film istnieje,
+* każdy może zobaczyć sekcję komentarzy,
+* nie-patron widzi locked state / zachętę do zostania patronem,
+* tylko patron lub admin może odtworzyć film,
+* tylko patron lub admin może komentować pod filmem patron-only,
+* zalogowany nie-patron może widzieć sekcję komentarzy, ale nie może pisać,
+* niezalogowany może widzieć sekcję komentarzy, ale nie może pisać.
+
+Reguła komentarzy:
+
+```txt
+Sekcja komentarzy jest widoczna dla wszystkich.
+Komentowanie filmów PUBLIC i LOGGED_IN wymaga zalogowania.
+Komentowanie filmów PATRON wymaga statusu patrona albo admina.
+```
+
+Dostęp do oglądania i dostęp do komentowania są powiązane, ale nie powinny być chaotycznie sprawdzane lokalnie w komponentach. Powinny przechodzić przez Access module / policy.
+
+---
+
+# 5. Patron nie może być nadawany bezpośrednio przez Stripe
+
+Jedna z najważniejszych decyzji architektonicznych:
+
+```txt
+Stripe nigdy nie nadaje patrona bezpośrednio.
+```
+
+Stripe może tylko powiedzieć, że zaszło zdarzenie finansowe, np. successful payment.
+
+Błąd obecnej/prototypowej architektury polega na tym, że udana płatność może bezpośrednio ustawiać stan patrona. Docelowo tak nie wolno robić.
+
+Poprawny model:
+
+```txt
+Payment
+  jest faktem finansowym
+
+PatronGrant
+  jest faktem dostępu
+
+AccessDecision
+  jest wynikiem polityki dostępu
+```
+
+Stripe webhook powinien robić:
+
+```txt
+Stripe event received
+  -> Payments module records payment
+  -> Payment status becomes SUCCEEDED
+  -> PatronEligibilityPolicy evaluates whether this payment creates patron access
+  -> Patron module creates PatronGrant(source=PAYMENT)
+  -> Access read model updates effective patron status
+```
+
+A nie:
+
+```txt
+Stripe webhook
+  -> user.isPatron = true
+```
+
+Płatność może być jednym ze źródeł patrona, ale nie powinna być technicznie tym samym co patron.
+
+---
+
+# 6. PatronGrant jako źródło prawdy
+
+Docelowe źródło prawdy dla patron access:
+
+```txt
+PatronGrant
+```
+
+Patronem można zostać przez:
+
+* jednorazową kwalifikującą się wpłatę,
+* ręczne nadanie statusu przez admina,
+* spełnienie warunku z systemu referencyjnego,
+* migrację/legacy import, jeśli kiedyś potrzebne.
+
+Źródła patrona:
+
+```txt
+PAYMENT
+ADMIN
+REFERRAL
+MIGRATION
+LEGACY
+```
+
+`User.isPatron` może istnieć jako read model/cache dla wygody, ale nie powinno być źródłem prawdy. Prawdziwa decyzja powinna wynikać z aktywnych PatronGrantów.
+
+`Clerk metadata` także nie jest źródłem prawdy. Może być cachem/synchronizacją UI, ale decyzje dostępu muszą być w backendzie/modułach.
+
+Reguła:
+
+```txt
+Patron access is granted only through PatronGrant.
+Payments, admin actions, and referrals may create PatronGrants through explicit use-cases.
+Stripe, Clerk metadata, Subscriptions, and UI components must never directly decide patron access.
+```
+
+---
+
+# 7. Jednorazowa wpłata i patron
+
+Decyzja biznesowa:
+
+```txt
+Jednorazowa kwalifikująca się wpłata może przyznać status patrona.
+```
+
+Ale to musi być zapisane jako polityka, nie jako przypadkowy efekt webhooka.
+
+Przykładowa polityka:
+
+```txt
+Any successful eligible support payment creates a PatronGrant.
+```
+
+Słowo „eligible” jest ważne, bo zostawia miejsce na:
+
+* test payments,
+* cancelled payments,
+* refunded payments,
+* chargebacks,
+* fraud,
+* payments niebędące wsparciem,
+* przyszłe reguły minimalnej kwoty, jeśli kiedykolwiek będą potrzebne.
+
+Na start można przyjąć:
+
+* każda udana realna wpłata tworzy PatronGrant,
+* admin może ręcznie odebrać status,
+* chargeback/dispute może być później obsłużony jako auto-revoke,
+* nie komplikować systemu expiration, jeśli produkt tego nie potrzebuje.
+
+---
+
+# 8. Admin jako źródło patrona
+
+Admin powinien móc ręcznie nadać i odebrać patrona.
+
+To musi przechodzić przez Patron module:
+
+```txt
+Admin action
+  -> Patron module creates PatronGrant(source=ADMIN)
+  -> AuditLog records actor, target, reason
+  -> Access read model updates
+```
+
+Nie wolno robić prostego:
+
+```txt
+user.isPatron = true
+```
+
+Admin powinien podać powód lub notatkę:
+
+* ręczny grant,
+* specjalny przypadek,
+* korekta,
+* nagroda,
+* migracja,
+* support issue.
+
+Każda taka akcja powinna być audytowalna.
+
+---
+
+# 9. Referral jako źródło patrona
+
+System referencyjny może przyznawać patrona po spełnieniu określonych zadań.
+
+Przykładowy flow:
+
+```txt
+Referral task completed
+  -> Referrals module marks reward as eligible
+  -> PatronEligibilityPolicy evaluates reward
+  -> Patron module creates PatronGrant(source=REFERRAL)
+  -> AuditLog records event
+  -> Access read model updates
+```
+
+Nie wolno, żeby referral route sam bezpośrednio modyfikował `User.isPatron`.
+
+Referral jest źródłem zdarzenia, Patron module jest źródłem dostępu.
+
+---
+
+# 10. Subscription / Sub button oznacza mailing, nie patrona
+
+Bardzo ważne rozróżnienie:
+
+```txt
+Subscription != Patron
+```
+
+Przycisk `Sub` / `Subscribe` nie oznacza patrona, płatności ani premium access.
+
+Subskrypcja oznacza:
+
+```txt
+Użytkownik zalogowany zgadza się otrzymywać maile / aktualizacje.
+```
+
+To jest mailing/follow consent.
+
+Reguły:
+
+* subskrybować może zalogowany użytkownik,
+* subskrypcja daje zgodę na mailing,
+* subskrypcja nie daje dostępu do filmów patron-only,
+* subskrypcja nie tworzy PatronGrant,
+* unsub usuwa zgodę na mailing,
+* admin może wysłać email do subscriberów,
+* admin może wysłać email do patronów,
+* admin może wysłać email do wszystkich użytkowników lub ręcznej listy, jeśli system na to pozwala.
+
+Docelowo moduł powinien nazywać się raczej `subscriptions` albo `mailing-subscriptions`, ale jego znaczenie musi być w dokumentach jednoznaczne.
+
+Publiczne API modułu subscriptions powinno być mniej więcej:
+
+```txt
+subscribeToChannel(ctx, { userId })
+unsubscribeFromChannel(ctx, { userId })
+getSubscriptionStatus(ctx, { userId })
+listSubscribers(ctx)
+```
+
+Nie powinno być używane do access decisions.
+
+---
+
+# 11. Email i broadcasty
+
+Email module powinien obsługiwać:
+
+* templates,
+* broadcasty,
+* recipient groups,
+* delivery events,
+* unsubscribe/preferences,
+* inbound/replies, jeśli potrzebne.
+
+Admin powinien móc wysyłać:
+
+* mail do wszystkich subscriberów,
+* mail tylko do patronów,
+* mail do wszystkich użytkowników,
+* mail do ręcznej listy,
+* systemowe maile,
+* payment/patron/referral-related maile.
+
+Segmenty muszą być jasne:
+
+```txt
+SUBSCRIBERS
+  ludzie, którzy kliknęli Sub / zgodzili się na mailing
+
+PATRONS
+  ludzie z aktywnym PatronGrant / effective patron status
+
+ALL_USERS
+  wszyscy użytkownicy, jeśli legalnie i produktowo dopuszczalne
+
+MANUAL
+  ręczna lista
+```
+
+Subscriber i patron mogą być tą samą osobą, ale to są różne statusy.
+
+Email module nie powinien sam decydować o patron access. Może pytać Patron/Access module o listę patronów albo korzystać z przygotowanego read modelu.
+
+---
+
+# 12. Cloudflare Stream jako docelowe video
+
+Docelowa decyzja produktowo-techniczna:
+
+```txt
+Cloudflare Stream is the target video delivery provider.
+```
+
+Artplayer jest prawdopodobnie niepotrzebny. Vercel Blob jako storage dla video także prawdopodobnie niepotrzebny. Jeśli idziemy w Cloudflare Stream, nie potrzebujemy utrzymywać wielu providerów video bez powodu.
+
+Docelowo:
+
+* upload video idzie do Cloudflare Stream,
+* Cloudflare robi storage/encoding/delivery,
+* app przechowuje identyfikator Cloudflare Stream,
+* app kontroluje access i generuje playback plan,
+* Cloudflare signed URLs/tokens zabezpieczają patron content,
+* app nie streamuje ciężkich plików przez Next server,
+* app nie robi własnego transcodingu.
+
+Docelowy flow uploadu:
+
+```txt
+Admin wybiera film
+  -> backend tworzy Cloudflare direct upload URL
+  -> browser admina uploaduje film bezpośrednio do Cloudflare
+  -> Cloudflare przetwarza video
+  -> Cloudflare webhook informuje app o statusie
+  -> app aktualizuje VideoAsset: PROCESSING / READY / ERROR
+```
+
+Docelowy flow odtwarzania:
+
+```txt
+Client asks for playback plan
+  -> backend checks access
+  -> if allowed, backend returns Cloudflare playback info/token
+  -> player renders stream
+  -> playback events go to tracking endpoint
+```
+
+Nie wolno mieszać:
+
+* Cloudflare logic w komponencie UI,
+* Stripe logic w playerze,
+* PatronGrant logic w playerze,
+* direct Prisma w playback route.
+
+---
+
+# 13. Video model i media model
+
+Video module powinien odpowiadać za:
+
+* tytuł,
+* opis,
+* slug,
+* status,
+* tier dostępu,
+* kolejność w playliście/sidebarze,
+* featured video,
+* publikację,
+* admin CRUD.
+
+Media/Stream module powinien odpowiadać za:
+
+* Cloudflare Stream UID,
+* upload,
+* processing status,
+* playback URL/token,
+* thumbnail/poster,
+* duration,
+* deletion/sync.
+
+Przykładowy docelowy model logiczny:
+
+```txt
+Video
+  title
+  description
+  slug
+  tier: PUBLIC | LOGGED_IN | PATRON
+  status: DRAFT | PUBLISHED | UNLISTED | ARCHIVED
+  publishedAt
+  sidebarOrder
+  isMainFeatured
+
+VideoAsset
+  videoId
+  provider: CLOUDFLARE_STREAM
+  cloudflareStreamUid
+  status: UPLOAD_URL_CREATED | UPLOADING | PROCESSING | READY | ERROR | DELETED
+  thumbnailUrl
+  durationSeconds
+  readyToStream
+  requireSignedUrls
+```
+
+Jeśli Cloudflare Stream jest jedynym providerem, nie dodawać niepotrzebnych abstrakcji R2/S3/Vercel Blob w runtime video.
+
+---
+
+# 14. Player
+
+Player powinien być prosty i święty.
+
+Player nie powinien decydować:
+
+* czy user jest patronem,
+* czy payment się kwalifikuje,
+* czy subscription daje dostęp,
+* czy Cloudflare token jest valid,
+* czy user może komentować.
+
+Player powinien dostać `PlaybackPlan`.
+
+Przykładowe playback plan states:
+
+```txt
+READY
+LOCKED_LOGGED_OUT
+LOCKED_PATRON_REQUIRED
+PROCESSING
+UNAVAILABLE
+ERROR
+```
+
+Player renderuje:
+
+* video,
+* loading state,
+* locked state,
+* processing state,
+* retry/error,
+* admin debug info, jeśli admin,
+* tracking events.
+
+Player tracking powinien być osobnym hookiem/usługą:
+
+* play started,
+* pause,
+* heartbeat,
+* watched 10s,
+* watched 25/50/75/90%,
+* error,
+* ended.
+
+Nie wolno mieszać tracking persistence z UI.
+
+---
+
+# 15. Playback events i analytics
+
+Playback events są potrzebne, ale powinny być dobrze kontrolowane.
+
+Zasady:
+
+* event endpoint nie powinien importować Prisma bezpośrednio,
+* tracking powinien iść przez use-case/repository,
+* nie liczyć view wielokrotnie bez reguł,
+* rozróżnić heartbeat, event i counted view,
+* admin preview nie powinien zawyżać statystyk,
+* patron locked attempts mogą być analizowane oddzielnie,
+* błędy playera powinny być widoczne w admin/system health.
+
+Docelowo:
+
+```txt
+VideoPlaybackSession
+VideoPlaybackEvent
+VideoView / counted view
+```
+
+ale route ma być cienki.
+
+---
+
+# 16. Komentarze
+
+Sekcja komentarzy jest widoczna dla wszystkich.
+
+Komentowanie:
+
+* pod PUBLIC: tylko zalogowany,
+* pod LOGGED_IN: tylko zalogowany,
+* pod PATRON: tylko patron/admin.
+
+Komentarze powinny obsługiwać:
+
+* listę komentarzy,
+* composer,
+* replies,
+* edit,
+* delete,
+* pin,
+* heart/creator highlight, jeśli potrzebne,
+* reports,
+* moderation,
+* statusy: visible/held/hidden/deleted,
+* pagination,
+* empty/loading/error states,
+* rate limiting/anti-spam.
+
+Comments module powinien pytać Access module:
+
+```txt
+canCommentOnVideo(ctx, { userId, videoId })
+```
+
+Nie powinien sam zgadywać po `User.isPatron`, Clerk metadata albo subscription.
+
+UI komentarzy może pokazać:
+
+* komentarze wszystkim,
+* composer tylko tym, którzy mogą komentować,
+* locked message dla niezalogowanych,
+* patron-only comment locked message dla nie-patronów,
+* informację, że komentowanie wymaga patrona.
+
+---
+
+# 17. Access module
+
+Access module jest jednym z najważniejszych modułów systemu.
+
+Odpowiada za:
+
+* czy user może obejrzeć film,
+* czy user może komentować,
+* czy user może dostać playback plan,
+* czy admin może ominąć ograniczenia,
+* jaki jest effective access viewer.
+
+Publiczne API może wyglądać tak:
+
+```txt
+canViewVideo(ctx, { userId, videoId })
+canCommentOnVideo(ctx, { userId, videoId })
+getViewerAccess(ctx, { userId })
+requireVideoAccess(ctx, { userId, videoId })
+```
+
+Access module korzysta z:
+
+* video tier,
+* viewer identity,
+* active PatronGrant/effective patron status,
+* admin role,
+* login state.
+
+Access module nie korzysta z:
+
+* Stripe bezpośrednio,
+* subscription/mailing jako dostępu,
+* UI state,
+* Clerk metadata jako źródła prawdy.
+
+---
+
+# 18. Patron module
+
+Patron module zarządza PatronGrantami i effective patron state.
+
+Publiczne API:
+
+```txt
+grantPatronAccess(ctx, { userId, source, sourceId, grantedById, reason })
+revokePatronAccess(ctx, { userId, grantId, revokedById, reason })
+getPatronStatus(ctx, { userId })
+listPatrons(ctx)
+syncUserPatronReadModel(ctx, { userId })
+```
+
+Każdy grant powinien być audytowalny.
+
+PatronGrant może mieć:
+
+* userId,
+* source,
+* paymentId,
+* referralId,
+* grantedById,
+* reason,
+* createdAt,
+* revokedAt.
+
+Jeśli `User.isPatron` zostaje, to tylko jako read model:
+
+* ustawiany przez patron module,
+* nigdy ręcznie przez Stripe route,
+* nigdy ręcznie przez referral route,
+* nigdy ręcznie przez UI component.
+
+---
+
+# 19. Payments module
+
+Payments module robi tylko pieniądze.
+
+Odpowiada za:
+
+* checkout,
+* Stripe webhook,
+* payment lifecycle,
+* idempotency,
+* refunds/disputes,
+* payment totals,
+* payment audit.
+
+Nie odpowiada za:
+
+* docelową decyzję access,
+* mailing subscription,
+* komentarze,
+* UI player,
+* bezpośrednie `isPatron = true`.
+
+Po udanej płatności Payments module może wywołać explicit use-case:
+
+```txt
+evaluatePaymentForPatronGrant
+```
+
+Ten use-case może stworzyć PatronGrant przez Patron module.
+
+---
+
+# 20. Referrals module
+
+Referrals module obsługuje:
+
+* linki referencyjne,
+* rejestrację przez referral,
+* status referral,
+* warunki nagrody,
+* claim/reward,
+* audyt.
+
+Nie powinien bezpośrednio ustawiać patrona.
+
+Jeśli referral daje patrona:
+
+```txt
+Referral reward completed
+  -> Patron module creates PatronGrant(source=REFERRAL)
+```
+
+---
+
+# 21. Admin cockpit
+
+Admin panel ma być centrum dowodzenia, nie losową listą CRUD-ów.
+
+Docelowe sekcje:
+
+* Dashboard,
+* Videos,
+* Upload,
+* Media/Stream Health,
+* Comments moderation,
+* Patrons,
+* Subscribers,
+* Emails/Broadcasts,
+* Payments,
+* Referrals,
+* Access Diagnostics,
+* Settings,
+* Audit Log,
+* System Health.
+
+Admin powinien móc:
+
+* dodać film,
+* wysłać film do Cloudflare Stream,
+* sprawdzić processing/ready/error,
+* ustawić tier filmu,
+* ustawić featured/main video,
+* ustawić kolejność playlisty,
+* moderować komentarze,
+* zobaczyć patronów,
+* nadać/odebrać patrona,
+* zobaczyć subscriberów mailingowych,
+* wysłać mail do subscriberów,
+* wysłać mail do patronów,
+* zobaczyć płatności,
+* zobaczyć referrals,
+* zdiagnozować czemu user ma lub nie ma dostępu.
+
+Bardzo ważna funkcja:
+
+```txt
+Access Diagnostics
+```
+
+Admin wpisuje usera i widzi:
+
+* user id/email,
+* active PatronGrants,
+* source grantów,
+* isPatron read model,
+* mailing subscription status,
+* ostatnie płatności,
+* referral status,
+* czy user może oglądać PATRON video,
+* czemu może/nie może,
+* potencjalne niespójności.
+
+---
+
+# 22. README i dokumenty jako źródło prawdy
+
+Nawet jeśli obecna roadmapa R0–R11 zostanie później usunięta z README, projekt powinien zachować sposób pracy z jasnymi instrukcjami dla AI.
+
+README powinno zawierać krótką wersję:
+
+* product invariants,
+* architecture rules,
+* AI/agent rules,
+* current phase,
+* forbidden patterns,
+* target domain decisions.
+
+Pełny dokument powinien być w:
+
+```txt
+docs/architecture/Product-Architecture-Blueprint.md
+```
+
+Możliwe dodatkowe dokumenty:
+
+```txt
+docs/architecture/Access-And-Patron-Model.md
+docs/architecture/Cloudflare-Stream-Video-Architecture.md
+docs/architecture/Admin-Cockpit-Blueprint.md
+docs/architecture/AI-Agent-Working-Protocol.md
+```
+
+README nie powinno stać się powieścią. README ma być szybkim źródłem prawdy. Blueprint ma być pełnym projektem domu.
+
+---
+
+# 23. Co wpisać do README przy najbliższej okazji
+
+Przy najbliższej czystej okazji trzeba dodać krótką sekcję zasad:
+
+```txt
+Target Product Architecture Decisions
+
+- Polutek.pl is a single-creator VOD/patron platform, not a marketplace or multi-creator SaaS.
+- Cloudflare Stream is the target video delivery provider.
+- Video access tiers are PUBLIC, LOGGED_IN, and PATRON.
+- Comment sections are visible to everyone.
+- Commenting on PUBLIC and LOGGED_IN videos requires login.
+- Commenting on PATRON videos requires active patron access or admin role.
+- Subscription means mailing/follow consent, not patron access.
+- Patron access is granted only through PatronGrant.
+- Stripe never directly grants patron status.
+- Eligible payments, admin actions, and referral rewards may create PatronGrants through explicit use-cases.
+- Clerk metadata and User.isPatron are read/cache/read-model only, not source of truth.
+- Access decisions must go through access/patron modules, not route-local checks.
+```
+
+Nie oznaczać jeszcze tych rzeczy jako wykonanych, jeśli nie są wykonane. To są target decisions / planned architecture.
+
+---
+
+# 24. Co usunąć docelowo
+
+Po potwierdzeniu użyć i migracji:
+
+* Artplayer, jeśli nie jest używany,
+* Vercel Blob jako video storage, jeśli Cloudflare Stream only,
+* niepotrzebne multi-provider video abstractions,
+* direct Prisma imports from routes,
+* `@/lib/services/**` z runtime,
+* legacy services dublujące moduły,
+* Stripe jako bezpośrednie źródło patrona,
+* Subscription jako access,
+* Clerk metadata jako źródło prawdy,
+* UI components podejmujące decyzje biznesowe.
+
+Nie usuwać wszystkiego naraz. Każde usunięcie powinno być po inventory i testach.
+
+---
+
+# 25. Kolejność strategiczna po R10
+
+Najpierw kończymy R10.
+
+Po R10:
+
+## Faza 1 — Product Architecture Blueprint
+
+Docs-only:
+
+* zapisać Cloudflare Stream only,
+* zapisać PatronGrant jako source of truth,
+* zapisać Subscription = mailing consent,
+* zapisać reguły komentarzy,
+* zapisać AI agent working protocol,
+* dodać skróconą sekcję do README.
+
+## Faza 2 — Access/Patron Hard Reset
+
+Kod:
+
+* PatronGrant jako centrum,
+* User.isPatron jako read model,
+* Stripe przez explicit use-case,
+* admin grant przez Patron module,
+* referral grant przez Patron module,
+* AccessPolicy jako jedyne miejsce decyzji.
+
+## Faza 3 — Cloudflare Stream Foundation
+
+Kod:
+
+* Cloudflare Stream adapter,
+* direct upload URL,
+* webhook,
+* VideoAsset status,
+* playback plan,
+* signed token/secure playback,
+* usunięcie Vercel Blob/video provider chaosu.
+
+## Faza 4 — Player Simplification
+
+Kod/UI:
+
+* jeden PlaybackPlan,
+* jeden player flow,
+* locked states,
+* processing states,
+* error/retry states,
+* tracking hook,
+* admin debug.
+
+## Faza 5 — Admin Cockpit Foundation
+
+Kod/UI:
+
+* dashboard,
+* video management,
+* upload,
+* stream health,
+* comments moderation,
+* patrons,
+* subscribers,
+* emails,
+* payments,
+* referrals,
+* access diagnostics.
+
+## Faza 6 — Product Excellence Passes
+
+Dopiero potem dopieszczanie:
+
+* najlepszy player,
+* najlepsze komentarze,
+* najlepsza playlista,
+* najlepszy admin,
+* najlepsze maile,
+* UX/mobile/performance/accessibility.
+
+---
+
+# 26. Zasady dla przyszłych promptów AI
+
+Nie pytać AI ogólnie:
+
+```txt
+Ulepsz projekt.
+```
+
+Zamiast tego:
+
+```txt
+Jesteś senior product engineerem VOD.
+Zaprojektuj idealny Player UX dla single-creator patron VOD.
+Nie pisz kodu.
+Najpierw daj specyfikację i decyzje produktowe.
+Uwzględnij PUBLIC / LOGGED_IN / PATRON, locked states, Cloudflare Stream, analytics, admin preview, mobile.
+```
+
+Potem:
+
+```txt
+Porównaj obecną implementację z tą specyfikacją.
+Daj gap analysis.
+Nie zmieniaj kodu.
+```
+
+Potem:
+
+```txt
+Zaimplementuj tylko Pass 1.
+Scope: loading/error/locked states.
+Nie dotykaj tracking, access, payments, comments ani admina.
+```
+
+Każda duża domena powinna iść schematem:
+
+```txt
+inventory
+ideal spec
+gap analysis
+small PRs
+review
+merge
+reconcile
+certification
+```
+
+---
+
+# 27. Definicja dobrej architektury w tym projekcie
+
+Dobry kod w Polutek.pl oznacza:
+
+* mały route,
+* jasny use-case,
+* repository do bazy,
+* policy do reguł,
+* publiczne API modułu,
+* brak direct Prisma w route,
+* brak legacy services w route,
+* brak biznesu w komponencie React,
+* brak Stripe logic poza payments,
+* brak patron logic poza patron/access,
+* brak mailing logic poza subscriptions/email,
+* brak Cloudflare details poza media-stream,
+* testy tam, gdzie decyzje są ważne,
+* guardy, które blokują regresje.
+
+System powinien opierać się na faktach:
+
+```txt
+User exists
+Video exists
+Video has tier
+User paid
+PatronGrant exists
+User subscribed to mailing
+Comment exists
+Video asset is ready
+Email was sent
+```
+
+I politykach:
+
+```txt
+Payment may create PatronGrant
+Admin may create PatronGrant
+Referral may create PatronGrant
+PatronGrant gives PATRON access
+Subscription gives mailing eligibility
+Login gives comment rights for PUBLIC/LOGGED_IN
+Patron gives comment rights for PATRON
+```
+
+A widoki/UI tylko renderują wynik tych decyzji.
+
+---
+
+# 28. Najważniejsze zdania do zapamiętania
+
+```txt
+To jest prototyp, z którego budujemy solidny dom.
+```
+
+```txt
+Prostota produktu jest przewagą: jeden twórca, jeden katalog, trzy poziomy dostępu.
+```
+
+```txt
+Stripe nie nadaje patrona. Stripe zapisuje płatność. PatronGrant nadaje dostęp.
+```
+
+```txt
+Subscription to mailing/follow consent, nie patron.
+```
+
+```txt
+Patron access comes only from PatronGrant.
+```
+
+```txt
+Komentarze są widoczne dla wszystkich, ale pisanie zależy od login/patron access.
+```
+
+```txt
+Cloudflare Stream is the target video delivery provider.
+```
+
+```txt
+README i docs są instrukcją dla AI, nie ozdobą projektu.
+```
+
+```txt
+Najpierw kończymy R10 cleanup. Potem Blueprint. Potem Access/Patron. Potem Cloudflare Stream. Potem player/admin/comments excellence.
+```
+
+```txt
+Nie dokładamy funkcji do lepionki. Najpierw porządkujemy fundament, potem budujemy premium VOD.
+```
