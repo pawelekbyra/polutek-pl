@@ -9,6 +9,7 @@ export * from './application/create-admin-video.use-case';
 export * from './application/archive-admin-video.use-case';
 export * from './application/reorder-admin-videos.use-case';
 export * from './application/get-hero-video.use-case';
+export * from './application/record-playback-event.use-case';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';

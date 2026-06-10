@@ -29,3 +29,51 @@ export class VideoUrlNotAllowedError extends AppError {
     super(`Video URL ${url} is not allowed by media policy`, 400, 'VIDEO_URL_NOT_ALLOWED');
   }
 }
+
+export class InvalidPlaybackSessionError extends AppError {
+  constructor() {
+    super('Invalid playback session', 403, 'INVALID_SESSION');
+  }
+}
+
+export class PlaybackSessionOwnershipMismatchError extends AppError {
+  constructor() {
+    super('Session user mismatch', 403, 'SESSION_USER_MISMATCH');
+  }
+}
+
+export class PlaybackSessionAnonymousForbiddenError extends AppError {
+  constructor() {
+    super('Anonymous sessions are forbidden for this video', 403, 'SESSION_ANONYMOUS_FORBIDDEN');
+  }
+}
+
+export class PlaybackSessionRequiresAuthError extends AppError {
+  constructor() {
+    super('This session requires authentication', 403, 'SESSION_REQUIRES_AUTH');
+  }
+}
+
+export class PlaybackSessionFingerprintMismatchError extends AppError {
+  constructor() {
+    super('Session ownership mismatch', 403, 'SESSION_OWNERSHIP_MISMATCH');
+  }
+}
+
+export class PlaybackSessionExpiredError extends AppError {
+  constructor() {
+    super('Session expired', 403, 'SESSION_EXPIRED');
+  }
+}
+
+export class PlaybackSessionRequiredError extends AppError {
+  constructor() {
+    super('Session required for this event type', 400, 'SESSION_REQUIRED');
+  }
+}
+
+export class InvalidPlaybackEventTypeError extends AppError {
+  constructor() {
+    super('Invalid event type', 400, 'INVALID_EVENT_TYPE');
+  }
+}
