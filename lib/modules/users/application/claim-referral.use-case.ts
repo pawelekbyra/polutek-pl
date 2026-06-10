@@ -1,4 +1,4 @@
-import { AppContext } from "@/lib/modules/shared/app-context";
+import { AppContext, createAppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok as success, fail as failure } from "@/lib/modules/shared/result";
 import { UserRepository } from "../infrastructure/user.repository";
 import { ReferralRepository } from "../infrastructure/referral.repository";
@@ -68,12 +68,20 @@ export async function claimReferral(
       const freshReferrer = await userRepo.findProfileById(referrer.id, tx);
 
       if (freshReferrer && freshReferrer.referralPoints >= 5) {
+        // Referral rewards grant Patron through a system actor context to bypass user-level restrictions
+        const rewardCtx = createAppContext({
+            actor: { type: 'system', reason: 'referral_reward' },
+            requestId: ctx.requestId,
+            prisma: ctx.prisma,
+            now: ctx.now
+        });
+
         const patronResult = await grantPatron({
           userId: referrer.id,
           source: 'referral',
           referralId: referral.id,
           note: 'Granted by referral reward',
-        }, ctx, tx);
+        }, rewardCtx, tx);
 
         if (patronResult.ok) {
           syncData.current = {
@@ -81,6 +89,8 @@ export async function claimReferral(
             isPatron: patronResult.data.isPatron,
             totalPaid: patronResult.data.normalizedTotal
           };
+        } else {
+            logger.error(`[ClaimReferralUseCase] Failed to grant patron reward for referrer ${referrer.id}:`, patronResult.error);
         }
       }
     });
