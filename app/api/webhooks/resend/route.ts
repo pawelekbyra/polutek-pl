@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
   }
 
   const ctx = createAppContext({
-      actor: { type: 'system', reason: 'Resend Webhook' }
+      actor: { type: 'system', reason: 'Resend Webhook' },
+      requestId: svixId || undefined
   });
 
   const result = await handleResendWebhook(ctx, payload);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
-import { createAppContext } from '@/lib/modules/shared/app-context';
+import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
 import { listInboundEmails, updateInboundEmail } from '@/lib/modules/email';
 
 export const dynamic = 'force-dynamic';
@@ -14,9 +14,7 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
-    const ctx = createAppContext({
-      actor: { type: 'system', reason: 'Admin Responses Request' }
-    });
+    const ctx = await createAppContextFromRequest(requestId ?? undefined);
 
     const result = await listInboundEmails(ctx);
 
@@ -43,9 +41,7 @@ export async function PATCH(req: NextRequest) {
     try {
         const { id, status } = await req.json();
 
-        const ctx = createAppContext({
-            actor: { type: 'system', reason: 'Admin Response Update' }
-        });
+        const ctx = await createAppContextFromRequest(requestId ?? undefined);
 
         const result = await updateInboundEmail(ctx, { id, status });
 

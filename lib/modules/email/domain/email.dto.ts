@@ -106,3 +106,31 @@ export type UpdateInboundEmailInput = {
   id: string;
   status: "NEW" | "READ" | "ARCHIVED" | "RESOLVED";
 };
+
+export type EmailTemplateDto = {
+  id: string;
+  slug: string;
+  name: string | null;
+  description: string | null;
+  category: string;
+  isActive: boolean;
+  isSystem: boolean;
+  subject: string;
+  html: string;
+  subjectEn: string | null;
+  htmlEn: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type SaveEmailTemplateInput = {
+  slug: string;
+  name?: string | null;
+  description?: string | null;
+  category: 'SYSTEM' | 'WELCOME' | 'PAYMENT' | 'PATRON' | 'BROADCAST' | 'MANUAL' | 'OTHER';
+  isActive: boolean;
+  subject: string;
+  html: string;
+  subjectEn?: string | null;
+  htmlEn?: string | null;
+};

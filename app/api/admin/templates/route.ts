@@ -1,13 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { z } from 'zod';
-import { writeAuditLog } from '@/lib/services/audit.service';
-import { auth } from '@clerk/nextjs/server';
-import sanitizeHtml from 'sanitize-html';
 import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
-import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS, SystemTemplateSlug } from '@/lib/email-defaults';
+import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
+import { listEmailTemplates, getEmailTemplate, upsertEmailTemplate, deleteEmailTemplate } from '@/lib/modules/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,23 +20,6 @@ const templateSchema = z.object({
   htmlEn: z.string().max(50_000).optional().nullable(),
 });
 
-const sanitizeOptions = {
-  allowedTags: sanitizeHtml.defaults.allowedTags.concat([
-    'div', 'h1', 'h2', 'h3', 'br', 'span', 'section', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'ul', 'ol', 'li', 'img',
-  ]),
-  allowedAttributes: {
-    ...sanitizeHtml.defaults.allowedAttributes,
-    '*': ['style', 'class'],
-    a: ['style', 'class', 'href', 'target', 'rel'],
-    img: ['style', 'class', 'src', 'alt', 'width', 'height'],
-  },
-  allowedSchemes: ['http', 'https', 'mailto'],
-  allowedSchemesByTag: {
-    a: ['http', 'https', 'mailto'],
-    img: ['http', 'https'],
-  },
-};
-
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get('x-request-id');
   const scopedLogger = createScopedLogger(requestId);
@@ -47,53 +27,23 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   try {
+    const ctx = await createAppContextFromRequest(requestId ?? undefined);
     const slug = req.nextUrl.searchParams.get('slug');
+
     if (slug) {
-        const template = await prisma.emailTemplate.findUnique({
-            where: { slug },
-        });
-
-        if (!template && SYSTEM_TEMPLATE_SLUGS.includes(slug as SystemTemplateSlug)) {
-            const defaults = EMAIL_DEFAULTS[slug as SystemTemplateSlug];
-            return NextResponse.json({
-                slug,
-                isSystem: true,
-                category: 'SYSTEM',
-                isActive: true,
-                ...defaults
-            });
+        const result = await getEmailTemplate(ctx, slug);
+        if (!result.ok) {
+            return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
         }
-
-        return NextResponse.json(template || { slug, subject: '', html: '' });
+        return NextResponse.json(result.data || { slug, subject: '', html: '' });
     }
 
-    const templates = await prisma.emailTemplate.findMany({
-        orderBy: { updatedAt: 'desc' }
-    });
-
-    // Ensure system templates are at least represented even if not in DB
-    const dbSlugs = new Set(templates.map(t => t.slug));
-    const allTemplates = [...templates];
-
-    for (const sysSlug of SYSTEM_TEMPLATE_SLUGS) {
-        if (!dbSlugs.has(sysSlug)) {
-            const defaults = EMAIL_DEFAULTS[sysSlug];
-            allTemplates.push({
-                id: `sys-${sysSlug}`,
-                slug: sysSlug,
-                name: `System: ${sysSlug}`,
-                description: 'Domyślny szablon systemowy',
-                category: 'SYSTEM',
-                isSystem: true,
-                isActive: true,
-                createdAt: new Date(0),
-                updatedAt: new Date(0),
-                ...defaults
-            } as any);
-        }
+    const result = await listEmailTemplates(ctx);
+    if (!result.ok) {
+        return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
     }
 
-    return NextResponse.json(allTemplates);
+    return NextResponse.json(result.data);
   } catch (err) {
     scopedLogger.error("[GET_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
@@ -108,51 +58,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const result = templateSchema.safeParse(data);
+    const parseResult = templateSchema.safeParse(data);
 
-    if (!result.success) {
-      return NextResponse.json({ error: 'Invalid data', details: result.error.flatten() }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json({ error: 'Invalid data', details: parseResult.error.flatten() }, { status: 400 });
     }
 
-    const { slug, subject, html, subjectEn, htmlEn, name, description, category, isActive } = result.data;
-    const cleanHtml = sanitizeHtml(html, sanitizeOptions);
-    const cleanHtmlEn = htmlEn ? sanitizeHtml(htmlEn, sanitizeOptions) : null;
+    const ctx = await createAppContextFromRequest(requestId ?? undefined);
+    const result = await upsertEmailTemplate(ctx, parseResult.data);
 
-    const updated = await prisma.emailTemplate.upsert({
-      where: { slug },
-      update: {
-        subject,
-        html: cleanHtml,
-        subjectEn,
-        htmlEn: cleanHtmlEn,
-        name,
-        description,
-        category,
-        isActive
-      },
-      create: {
-        slug,
-        subject,
-        html: cleanHtml,
-        subjectEn,
-        htmlEn: cleanHtmlEn,
-        name,
-        description,
-        category,
-        isActive,
-        isSystem: SYSTEM_TEMPLATE_SLUGS.includes(slug as SystemTemplateSlug)
-      },
-    });
+    if (!result.ok) {
+        return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
+    }
 
-    await writeAuditLog({
-      actorUserId: (await auth()).userId,
-      action: 'TEMPLATE_SAVED',
-      targetType: 'EmailTemplate',
-      targetId: updated.id,
-      metadata: { slug: updated.slug },
-    });
-
-    return NextResponse.json(updated);
+    return NextResponse.json(result.data);
   } catch (err) {
     scopedLogger.error("[POST_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
@@ -169,24 +88,14 @@ export async function DELETE(req: NextRequest) {
         const slug = req.nextUrl.searchParams.get('slug');
         if (!slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
 
-        const template = await prisma.emailTemplate.findUnique({ where: { slug } });
-        if (!template) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        const ctx = await createAppContextFromRequest(requestId ?? undefined);
+        const result = await deleteEmailTemplate(ctx, slug);
 
-        if (template.isSystem) {
-            return NextResponse.json({ error: 'Cannot delete system template' }, { status: 403 });
+        if (!result.ok) {
+            return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode });
         }
 
-        await prisma.emailTemplate.delete({ where: { slug } });
-
-        await writeAuditLog({
-            actorUserId: (await auth()).userId,
-            action: 'TEMPLATE_DELETED',
-            targetType: 'EmailTemplate',
-            targetId: template.id,
-            metadata: { slug },
-        });
-
-        return NextResponse.json({ success: true });
+        return NextResponse.json(result.data);
     } catch (err) {
         scopedLogger.error("[DELETE_ADMIN_TEMPLATES_ERROR]", err);
         return handleApiError(err);

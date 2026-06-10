@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { sendAdminBroadcastEmail, listAdminBroadcastEmails, BroadcastAudience } from '@/lib/modules/email';
-import { createAppContext } from '@/lib/modules/shared/app-context';
+import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
 
 export async function POST(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_EMAILS_BROADCAST");
@@ -65,9 +65,8 @@ export async function POST(req: NextRequest) {
       manualEmails: data.manualEmails,
   };
 
-  const ctx = createAppContext({
-      actor: { type: 'admin', userId: adminUserId }
-  });
+  const requestId = req.headers.get('x-request-id');
+  const ctx = await createAppContextFromRequest(requestId ?? undefined);
 
   // If testEmail is missing and it's a test, try to get it from session
   if (input.audience === "TEST" && !input.testRecipientEmail) {
@@ -91,9 +90,8 @@ export async function GET(req: NextRequest) {
   const { response } = await requireAdminForApi("GET_ADMIN_EMAILS_BROADCAST_HISTORY");
   if (response) return response;
 
-  const ctx = createAppContext({
-      actor: { type: 'system', reason: 'Admin History Request' }
-  });
+  const requestId = req.headers.get('x-request-id');
+  const ctx = await createAppContextFromRequest(requestId ?? undefined);
 
   const result = await listAdminBroadcastEmails(ctx);
 

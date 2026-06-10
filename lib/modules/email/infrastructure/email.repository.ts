@@ -1,5 +1,5 @@
 import { DbClient } from "../../shared/db";
-import { BroadcastAudience, BroadcastRecipientDto, AdminBroadcastEmailListItemDto } from "../domain/email.dto";
+import { BroadcastAudience, BroadcastRecipientDto, AdminBroadcastEmailListItemDto, EmailTemplateDto, SaveEmailTemplateInput } from "../domain/email.dto";
 
 export class EmailRepository {
   constructor(private readonly prisma: DbClient) {}
@@ -55,5 +55,54 @@ export class EmailRepository {
           createdAt: h.createdAt,
           createdById: h.createdById
       }));
+  }
+
+  async findTemplateBySlug(slug: string): Promise<EmailTemplateDto | null> {
+    const template = await this.prisma.emailTemplate.findUnique({
+      where: { slug }
+    });
+    return template ? (template as EmailTemplateDto) : null;
+  }
+
+  async listTemplates(): Promise<EmailTemplateDto[]> {
+    const templates = await this.prisma.emailTemplate.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+    return templates as EmailTemplateDto[];
+  }
+
+  async upsertTemplate(data: SaveEmailTemplateInput & { isSystem?: boolean }): Promise<EmailTemplateDto> {
+    const template = await this.prisma.emailTemplate.upsert({
+      where: { slug: data.slug },
+      update: {
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        isActive: data.isActive,
+        subject: data.subject,
+        html: data.html,
+        subjectEn: data.subjectEn,
+        htmlEn: data.htmlEn,
+      },
+      create: {
+        slug: data.slug,
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        isActive: data.isActive,
+        isSystem: data.isSystem || false,
+        subject: data.subject,
+        html: data.html,
+        subjectEn: data.subjectEn,
+        htmlEn: data.htmlEn,
+      }
+    });
+    return template as EmailTemplateDto;
+  }
+
+  async deleteTemplate(slug: string): Promise<void> {
+    await this.prisma.emailTemplate.delete({
+      where: { slug }
+    });
   }
 }
