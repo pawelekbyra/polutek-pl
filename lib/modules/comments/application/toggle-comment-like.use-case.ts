@@ -34,9 +34,8 @@ export async function toggleCommentLike(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // P0 Fix: Reacting to a comment requires full access to the video.
-  // We don't allow it if reason is PATRON_REQUIRED.
-  if (!CommentPolicy.canInteractWithVideo(actor, accessResult.data)) {
+  // Reacting to a comment requires video access (inheritance)
+  if (!CommentPolicy.canReactToComment(actor, accessResult.data)) {
     return fail({
       type: "FORBIDDEN",
       message: accessResult.data.reason === "PATRON_REQUIRED"

@@ -96,6 +96,23 @@ export class CommentRepository {
     });
   }
 
+  async findAdminComments(options: { q?: string; status?: CommentStatus; limit: number }) {
+    const { q, status, limit } = options;
+    return await this.db.comment.findMany({
+      where: {
+        AND: [
+          q ? { text: { contains: q, mode: 'insensitive' } } : {},
+          status ? { status } : {}
+        ]
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: { select: publicCommentAuthorSelect }
+      }
+    });
+  }
+
   async findCommentReaction(userId: string, commentId: string): Promise<CommentReaction | null> {
     return await this.db.commentReaction.findUnique({
       where: { userId_commentId: { userId, commentId } }
@@ -247,5 +264,19 @@ export class CommentRepository {
       select: { creator: { select: { userId: true } } }
     });
     return video?.creator?.userId || null;
+  }
+
+  async pin(commentId: string): Promise<void> {
+    await (this.db as WriteTx).comment.update({
+      where: { id: commentId },
+      data: { pinnedAt: new Date() }
+    });
+  }
+
+  async unpin(commentId: string): Promise<void> {
+    await (this.db as WriteTx).comment.update({
+      where: { id: commentId },
+      data: { pinnedAt: null }
+    });
   }
 }

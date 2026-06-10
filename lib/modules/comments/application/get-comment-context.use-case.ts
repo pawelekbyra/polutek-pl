@@ -4,27 +4,34 @@ import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
-import { CommentStatus } from "@prisma/client";
 
-export interface ListCommentRepliesInput {
+export interface GetCommentContextInput {
   commentId: string;
-  cursor?: string;
-  limit: number;
 }
 
-export async function listCommentReplies(
-  input: ListCommentRepliesInput,
+export interface GetCommentContextResult {
+  comment: CommentDto;
+  parentComment: CommentDto | null;
+  videoId: string;
+  canView: boolean;
+}
+
+export async function getCommentContext(
+  input: GetCommentContextInput,
   ctx: AppContext
-): Promise<UseCaseResult<{ replies: CommentDto[], nextCursor: string | null }, CommentError>> {
-  const { commentId, cursor, limit } = input;
+): Promise<UseCaseResult<GetCommentContextResult, CommentError>> {
+  const { commentId } = input;
   const { actor, prisma } = ctx;
 
   const repo = new CommentRepository(prisma);
-  const parentComment = await repo.findCommentById(commentId);
-  if (!parentComment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
+  const comment = await repo.findCommentById(commentId);
 
-  // 1. Access Check for the video the comment belongs to
-  const accessResult = await checkVideoAccess({ videoIdOrSlug: parentComment.videoId }, ctx);
+  if (!comment) {
+    return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
+  }
+
+  // Access Check for the video the comment belongs to
+  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
   if (!accessResult.ok) {
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
@@ -44,16 +51,23 @@ export async function listCommentReplies(
 
   const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
   const isGlobalAdmin = actor.type === 'admin';
-  const videoCreatorId = await repo.findVideoCreatorId(parentComment.videoId);
+  const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
   const canModerate = isGlobalAdmin || (userId !== null && videoCreatorId === userId);
 
-  const replies = await repo.findReplies(commentId, userId, canModerate, cursor, limit);
-
   const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
-  const mappedReplies = replies.map(r => mapCommentToDto(r, context));
+
+  let parentCommentDto: CommentDto | null = null;
+  if (comment.parentId) {
+      const parent = await repo.findCommentById(comment.parentId);
+      if (parent) {
+          parentCommentDto = mapCommentToDto(parent, context);
+      }
+  }
 
   return ok({
-    replies: mappedReplies,
-    nextCursor: replies.length === limit ? replies[limit - 1].id : null
+    comment: mapCommentToDto(comment, context),
+    parentComment: parentCommentDto,
+    videoId: comment.videoId,
+    canView: true
   });
 }

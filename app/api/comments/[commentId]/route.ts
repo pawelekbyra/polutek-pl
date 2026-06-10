@@ -26,22 +26,9 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-
-    // Support legacy "pinned" field for now if it was in the route (as seen in bola-protection tests)
-    const pinResult = z.object({ pinned: z.boolean() }).safeParse(body);
-    if (pinResult.success) {
-        if (actor.type !== 'admin') {
-            return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
-        }
-    }
-
     const resultJson = z.object({ text: z.string().trim().min(1) }).safeParse(body);
 
     if (!resultJson.success) {
-        if (pinResult.success) {
-            // It was just a pin request, we could handle it or just return success if we don't want to break tests
-            return NextResponse.json({ success: true });
-        }
         return NextResponse.json({ success: false, message: 'Nieprawidłowe dane.' }, { status: 400 });
     }
 

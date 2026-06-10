@@ -1,42 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
-import { CommentService } from '@/lib/services/comments/comment.service';
 import { handleApiError } from '@/lib/errors';
-import { requireAdminForApi } from '@/lib/auth-utils';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { listAdminComments } from '@/lib/modules/comments';
+import { CommentStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_COMMENTS");
-  if (response) return response;
+  const actor = await getActorFromAuth();
 
-  const userId = adminUserId;
+  if (actor.type !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+  }
 
   try {
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get('q') || "";
-    const status = searchParams.get('status') as any;
+    const q = searchParams.get('q') || undefined;
+    const status = searchParams.get('status') as CommentStatus | undefined;
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    const comments = await prisma.comment.findMany({
-      where: {
-        AND: [
-            q ? { text: { contains: q, mode: 'insensitive' } } : {},
-            status ? { status } : {}
-        ]
-      },
-      take: 50,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: { select: { id: true, name: true, username: true, imageUrl: true, isPatron: true, role: true } },
-      }
-    });
+    const ctx = createAppContext({ actor });
+    const result = await listAdminComments({ q, status, limit }, ctx);
 
-    const context = { userId, canModerate: true, videoCreatorId: null };
+    if (!result.ok) {
+        return NextResponse.json({ success: false, message: result.error.message }, { status: 403 });
+    }
+
     return NextResponse.json({
       success: true,
-      comments: comments.map(c => CommentService.mapToDto(c, context))
+      comments: result.data
     });
   } catch (error: unknown) {
     return handleApiError(error);

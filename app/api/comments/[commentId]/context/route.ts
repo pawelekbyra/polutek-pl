@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-import { CommentService } from '@/lib/services/comments/comment.service';
-import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
 import { handleApiError } from '@/lib/errors';
-import { publicCommentAuthorSelect } from '@/lib/comments-public-author';
+import { getActorFromAuth } from '@/lib/api/auth';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+import { getCommentContext } from '@/lib/modules/comments';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,41 +10,20 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { commentId: string } }
 ) {
-  const { userId } = await auth();
+  const actor = await getActorFromAuth();
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: params.commentId },
-      include: {
-        author: { select: publicCommentAuthorSelect },
-        parent: {
-          include: {
-            author: { select: publicCommentAuthorSelect }
-          }
-        },
-        reactions: userId ? { where: { userId } } : false
-      }
-    });
+    const ctx = createAppContext({ actor });
+    const result = await getCommentContext({ commentId: params.commentId }, ctx);
 
-    if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!result.ok) {
+        const status = result.error.type === 'NOT_FOUND' ? 404 : 403;
+        return NextResponse.json({ success: false, message: result.error.message }, { status });
+    }
 
-    const canView = await CommentAccessService.canViewComments(userId, comment.videoId);
-    if (!canView) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    const [video, canModerate] = await Promise.all([
-        prisma.video.findUnique({ where: { id: comment.videoId }, select: { creator: { select: { userId: true } } } }),
-        CommentAccessService.canModerate(userId, comment.videoId)
-    ]);
-    const videoCreatorId = video?.creator?.userId || null;
-    const context = { userId, canModerate, videoCreatorId };
-
-    // For context, we might want nearby comments, but for now let's just return the comment and its parent
     return NextResponse.json({
       success: true,
-      comment: CommentService.mapToDto(comment, context),
-      parentComment: comment.parent ? CommentService.mapToDto(comment.parent, context) : null,
-      videoId: comment.videoId,
-      canView: true
+      ...result.data
     });
   } catch (error: unknown) {
     return handleApiError(error);

@@ -163,7 +163,7 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R6**   | Video                                      | `[x stronger foundation]`                                   |
 | **R6.5** | Access Foundation                          | `[x certified]`                                             |
 | **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`         |
-| **R8**   | Comments                                   | `[~ core comments migrated]`                                |
+| **R8**   | Comments                                   | `[~ certification candidate]`                               |
 | **R9**   | Email                                      | `[~ foundation migrated / pending certification]`           |
 | **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`     |
 | **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                       |
@@ -642,7 +642,7 @@ Sprawdź:
 Status:
 
 ```txt
-[~ core comments migrated]
+[~ certification candidate]
 ```
 
 Cel:
@@ -662,17 +662,17 @@ Cel:
 Już zrobione / aktualny core:
 
 * moduł `comments` istnieje,
-* `CommentPolicy` używa modularnego access tam, gdzie core flow zostało zmigrowane,
+* `CommentPolicy` używa modularnego access i wymusza dziedziczenie dostępu filmu,
 * interakcje wideo i reakcje komentarzy zostały przesunięte w stronę use case’ów,
-* główne przepływy list/create/update/delete/replies/report są zmigrowane do modułu w main,
-* R8 nie powinno dotykać R7 Payments/Patron ani R9 Email.
+* główne przepływy list/create/update/delete/replies/report/pin/context/admin-list są zmigrowane do modułu,
+* R8 nie dotyka R7 Payments/Patron ani R9 Email.
+* Wszystkie publiczne i adminowe route'y komentarzy są cienkimi adapterami.
+* Usunięto legacy `pinned` PATCH hack.
 
 Znane blokery R8:
 
-* admin comments management pozostaje legacy/mixed (wymaga pełnego use case i DTO),
-* pin pozostaje blockerem,
-* context/thread route pozostaje blockerem,
-* moderation UI/audit pending.
+* Moderation UI (frontend) pending.
+* Pełny audyt moderacji (moderation log UI) pending.
 
 R8 musi zawierać minimalne elementy Fazy X:
 

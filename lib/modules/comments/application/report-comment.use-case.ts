@@ -42,9 +42,14 @@ export async function reportComment(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // To report, you must have access to view the video
-  if (!accessResult.data.hasAccess) {
-      return fail({ type: "FORBIDDEN", message: "Brak dostępu do zgłaszania komentarzy pod tym filmem." });
+  // To report, you must have access to view the video (inheritance)
+  if (!CommentPolicy.canReportComment(actor, accessResult.data)) {
+      return fail({
+          type: "FORBIDDEN",
+          message: accessResult.data.reason === "PATRON_REQUIRED"
+            ? "Zgłaszanie komentarzy pod tym filmem jest dostępne tylko dla Patronów."
+            : "Brak dostępu do zgłaszania komentarzy pod tym filmem."
+      });
   }
 
   try {

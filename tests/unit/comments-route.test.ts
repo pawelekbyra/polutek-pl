@@ -1,91 +1,55 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
-import { CommentAccessService } from '@/lib/services/comments/comment-access.service';
-import { CommentService } from '@/lib/services/comments/comment.service';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
-import { POST } from '@/app/api/comments/route';
+import { createVideoComment } from '@/lib/modules/comments';
+import { POST } from '@/app/api/videos/[id]/comments/route';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
-}));
-
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    comment: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-    video: {
-      findUnique: vi.fn(),
-    },
-    $transaction: vi.fn((cb) => (typeof cb === 'function' ? cb(prisma) : Promise.resolve(cb))),
-  },
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock('@/lib/services/comments/comment-access.service', () => ({
-  CommentAccessService: {
-    canComment: vi.fn(),
-    canModerate: vi.fn(),
-  },
+vi.mock('@/lib/modules/comments', () => ({
+  createVideoComment: vi.fn(),
+  listVideoComments: vi.fn(),
 }));
 
-vi.mock('@/lib/services/comments/comment.service', () => ({
-  CommentService: {
-    createComment: vi.fn(),
-    mapToDto: vi.fn(),
-  },
-}));
-
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    getOrCreateUserFromAuth: vi.fn(),
-  },
-}));
-
-describe('/api/comments POST', () => {
+describe('/api/videos/[id]/comments POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 4 });
-    vi.mocked(CommentAccessService.canComment).mockResolvedValue({ allowed: true });
-    vi.mocked(UserService.getOrCreateUserFromAuth).mockResolvedValue({
-      id: 'local-user-id',
-      email: 'fan@example.com',
-      language: 'pl',
-      role: 'USER',
-    } as any);
   });
 
-  it('persists the comment with the synchronized local user id', async () => {
+  it('persists the comment via modular createVideoComment', async () => {
     vi.mocked(auth).mockResolvedValue({
       userId: 'clerk-user-id',
       sessionClaims: { email: 'fan@example.com' },
     } as any);
 
     const mockComment = { id: 'comment-id', text: 'Komentarz fana' };
-    vi.mocked(CommentService.createComment).mockResolvedValue(mockComment as any);
-    vi.mocked(CommentService.mapToDto).mockReturnValue({ id: 'comment-id', text: 'Komentarz fana' } as any);
+    vi.mocked(createVideoComment).mockResolvedValue({ ok: true, data: mockComment } as any);
 
-    const request = new NextRequest('http://localhost/api/comments', {
+    const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',
-      body: JSON.stringify({ videoId: 'video-id', text: '  Komentarz fana  ' }),
+      body: JSON.stringify({ text: '  Komentarz fana  ' }),
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } });
     const body = await response.json();
 
     expect(response.status).toBe(201);
     expect(body.success).toBe(true);
-    expect(UserService.getOrCreateUserFromAuth).toHaveBeenCalledWith('clerk-user-id', { email: 'fan@example.com' });
-    expect(CommentAccessService.canComment).toHaveBeenCalledWith('clerk-user-id', 'video-id');
-    expect(CommentService.createComment).toHaveBeenCalledWith('local-user-id', 'video-id', 'Komentarz fana', undefined, undefined);
+    expect(createVideoComment).toHaveBeenCalledWith({
+        videoId: 'video-id',
+        text: 'Komentarz fana',
+        parentId: undefined,
+        imageUrl: undefined
+    }, expect.anything());
   });
 
   it('returns 401 for guests', async () => {
@@ -93,30 +57,30 @@ describe('/api/comments POST', () => {
       userId: null,
     } as any);
 
-    const request = new NextRequest('http://localhost/api/comments', {
+    const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',
-      body: JSON.stringify({ videoId: 'video-id', text: 'Komentarz' }),
+      body: JSON.stringify({ text: 'Komentarz' }),
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } });
     expect(response.status).toBe(401);
   });
 
-  it('returns 403 when AccessPolicy denies commenting', async () => {
+  it('returns 403 when modular use case returns FORBIDDEN', async () => {
     vi.mocked(auth).mockResolvedValue({
       userId: 'clerk-user-id',
       sessionClaims: { email: 'fan@example.com' },
     } as any);
-    vi.mocked(CommentAccessService.canComment).mockResolvedValue({ allowed: false, reason: 'PATRON_REQUIRED' });
+    vi.mocked(createVideoComment).mockResolvedValue({ ok: false, error: { type: 'FORBIDDEN', message: 'Patron only' } } as any);
 
-    const request = new NextRequest('http://localhost/api/comments', {
+    const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',
-      body: JSON.stringify({ videoId: 'video-id', text: 'Komentarz' }),
+      body: JSON.stringify({ text: 'Komentarz' }),
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request, { params: { id: 'video-id' } });
     expect(response.status).toBe(403);
   });
 });
