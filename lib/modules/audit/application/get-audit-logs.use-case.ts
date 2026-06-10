@@ -3,8 +3,9 @@ import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { AuditRepository } from "../infrastructure/audit.repository";
 
 export type GetAuditLogsInput = {
-  targetType: string;
-  targetId: string;
+  targetType?: string;
+  targetId?: string;
+  userId?: string;
   limit?: number;
 };
 
@@ -14,11 +15,19 @@ export async function getAuditLogs(
 ): Promise<UseCaseResult<any[]>> {
   const repository = new AuditRepository(ctx.db.read);
 
-  const logs = await repository.findManyByTarget(
-    input.targetType,
-    input.targetId,
-    input.limit
-  );
+  if (input.userId) {
+    const logs = await repository.findUserAuditLogs(input.userId, input.limit);
+    return ok(logs);
+  }
 
-  return ok(logs);
+  if (input.targetType && input.targetId) {
+    const logs = await repository.findManyByTarget(
+        input.targetType,
+        input.targetId,
+        input.limit
+    );
+    return ok(logs);
+  }
+
+  return ok([]);
 }

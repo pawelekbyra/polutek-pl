@@ -35,6 +35,14 @@ export class PaymentRepository {
     }) as PaymentDto | null;
   }
 
+  async findManyByUserId(userId: string, limit: number, db: ReadDb): Promise<PaymentDto[]> {
+    return await db.payment.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    }) as PaymentDto[];
+  }
+
   async findByIntentId(stripeIntentId: string, db: ReadDb): Promise<PaymentDto | null> {
     return await db.payment.findUnique({
       where: { stripeIntentId }

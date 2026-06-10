@@ -46,4 +46,11 @@ export class SubscriptionRepository {
       },
     });
   }
+
+  async findManyByUserId(userId: string) {
+    return await this.subscription.findMany({
+      where: { userId },
+      include: { creator: true }
+    });
+  }
 }

@@ -1,9 +1,13 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { UserRepository } from "../infrastructure/user.repository";
 import { User, Prisma } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { UserNotFoundError } from "../domain/user.errors";
 import { normalizePaymentTotals } from "../domain/payment-totals";
+
+import { UserRepository } from "../infrastructure/user.repository";
+import { getUserPayments } from "@/lib/modules/payments";
+import { getUserSubscriptions } from "@/lib/modules/subscriptions";
+import { getAuditLogs } from "@/lib/modules/audit";
 
 export interface AdminUserDetailsDto {
   id: string;
@@ -28,7 +32,12 @@ export interface AdminUserDetailsDto {
     videoLikes: number;
     videoDislikes: number;
   };
+  paymentTotals: any[];
+  patronGrants: any[];
+  payments: any[];
+  subscriptions: any[];
   normalizedTotal: number;
+  auditLogs: any[];
 }
 
 export async function getAdminUserDetails(
@@ -54,6 +63,20 @@ export async function getAdminUserDetails(
 
   if (!user) return fail(new UserNotFoundError(userId));
 
+  const userRepository = new UserRepository(ctx.db.read);
+
+  const [patronGrants, paymentsResult, subscriptionsResult, auditLogsResult] = await Promise.all([
+      userRepository.findPatronGrants(userId),
+      getUserPayments(userId, 50, ctx),
+      getUserSubscriptions(userId, ctx),
+      getAuditLogs({ userId, limit: 100 }, ctx)
+  ]);
+
+  const payments = paymentsResult.ok ? paymentsResult.data : [];
+  const subscriptions = subscriptionsResult.ok ? subscriptionsResult.data : [];
+
+  const auditLogs = auditLogsResult.ok ? auditLogsResult.data : [];
+
   return ok({
       id: user.id,
       email: user.email,
@@ -71,9 +94,14 @@ export async function getAdminUserDetails(
       stripeCustomerId: user.stripeCustomerId,
       referralCode: user.referralCode,
       _count: user._count,
+      paymentTotals: user.paymentTotals,
+      patronGrants,
+      payments,
+      subscriptions,
       normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({
           currency: pt.currency,
           amountMinor: pt.amountMinor
-      })))
+      }))),
+      auditLogs
   });
 }

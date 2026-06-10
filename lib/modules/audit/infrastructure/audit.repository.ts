@@ -33,4 +33,17 @@ export class AuditRepository {
       take: limit,
     });
   }
+
+  async findUserAuditLogs(userId: string, limit: number = 100) {
+    return await (this.db as any).auditLog.findMany({
+      where: {
+        OR: [
+          { targetType: 'User', targetId: userId },
+          { actorUserId: userId }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
 }
