@@ -25,4 +25,12 @@ export class AuditRepository {
       },
     });
   }
+
+  async findManyByTarget(targetType: string, targetId: string, limit: number = 50) {
+    return await (this.db as any).auditLog.findMany({
+      where: { targetType, targetId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
 }
