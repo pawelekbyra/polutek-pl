@@ -17,41 +17,47 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
     - `lib/services/comments/comment-report.service.ts`
     - `lib/services/comments/comment-moderation.service.ts`
 
-### 2. Dead Code Removal (Safe Now)
-- **Task**: Remove services with no runtime usage.
+### 2. R10 Dead Code Removal (Safe Now)
+- **Task**: Remove services with no runtime usage found in the inventory.
 - **Candidates**:
     - `lib/services/user.service.ts`
-    - `lib/services/content.visibility.ts`
     - `lib/services/patron.service.ts`
+    - `lib/services/content.visibility.ts`
+    - `lib/services/user/admin.service.ts`
+    - `lib/services/user/subscription.service.ts`
+    - `lib/services/payments/refund.service.ts`
+    - `lib/services/admin/payments-admin.service.ts`
+    - `lib/services/comments/comment-reaction.service.ts`
     - `lib/services/comments/comment-audit.service.ts`
+    - `lib/services/comments/comment-access.service.ts`
 
-### 3. R9 Email Finalization
-- **Task**: Migrate email templates and broadcast logic to modular repositories.
+### 3. R9 Email Finalization (Templates)
+- **Task**: Modularize template management and remove direct Prisma usage.
 - **Affected Routes**:
     - `app/api/admin/templates/route.ts`
 - **Legacy Services to Remove**:
-    - `lib/services/email.service.ts` (after BRIDGE is no longer needed)
+    - `lib/services/email.service.ts` (once all callers moved to modules)
 
 ### 4. R7 Payments/Patron Subscriptions
-- **Task**: Migrate subscription management to `lib/modules/payments`.
+- **Task**: Migrate subscription management to `lib/modules/payments` and remove direct Prisma.
 - **Affected Routes**:
     - `app/api/subscriptions/route.ts`
 - **Legacy Services to Remove**:
     - `lib/services/payment.service.ts`
 
 ### 5. Media/Video (R3/R6) Mixed Routes
-- **Task**: Move remaining persistence logic (playback events, diagnostics) to repositories.
+- **Task**: Move remaining persistence logic (playback events) to repositories.
 - **Affected Routes**:
     - `app/api/videos/[id]/playback-event/route.ts`
-    - `app/api/admin/videos/[id]/route.ts`
+    - `app/api/admin/videos/[id]/route.ts` (audit details)
     - `app/api/media/[...path]/route.ts`
 
 ### 6. R11 Admin Dashboard
-- **Task**: Modularize global stats.
+- **Task**: Modularize global stats and remove direct Prisma.
 - **Affected Routes**:
     - `app/api/admin/stats/route.ts`
 
 ## Verification Strategy
-- For each step, run `npx ts-node scripts/check-architecture.ts`.
+- For each step, run `npm run quality:architecture-boundaries`.
 - Ensure all unit tests pass, especially those in `tests/unit/modules/`.
 - Verify that the `PRISMA_ROUTES_ALLOWLIST` in `scripts/check-architecture.ts` can be reduced.

@@ -22,4 +22,4 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 - **Payments (R7)** core runtime and administrative flows are modular. Subscriptions still use direct Prisma in `app/api/subscriptions/route.ts`.
 - **Users (R5)** is mostly done, but admin extensions (resync, mixed user detail route) remain legacy.
 - **Video (R6)** and **Media (R3)** have some remaining "certified" mixed routes that use Prisma for specific persistence tasks (playback events) or delivery checks not yet moved to repositories.
-- **Email (R9)** foundation is done, but templates still use direct Prisma. `app/api/admin/emails/responses/route.ts` has been modularized and removed from this list.
+- **Email (R9)** foundation is done. `app/api/admin/emails/responses/route.ts` and `app/api/admin/emails/broadcast/route.ts` are modular. Templates in `app/api/admin/templates/route.ts` still use direct Prisma.
