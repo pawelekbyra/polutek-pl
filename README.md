@@ -159,21 +159,21 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 
 ## 4. Aktualny status roadmapy R0–R11
 
-| Faza     | Opis                                       | Status                                                   |
-| :------- | :----------------------------------------- | :------------------------------------------------------- |
-| **R0**   | Zasady, infrastruktura, bariery projektowe | `[x]`                                                    |
-| **R1**   | Shared, Result, błędy, Actor, AppContext   | `[x]`                                                    |
-| **R2**   | Audit                                      | `[x foundation]`                                         |
-| **R3**   | Media                                      | `[x safety foundation]`                                  |
-| **R4**   | Channel / ścisły single-channel            | `[x single-channel foundation]`                          |
-| **R5**   | Users                                      | `[x stronger foundation]`                                |
-| **R6**   | Video                                      | `[x stronger foundation]`                                |
-| **R6.5** | Access Foundation                          | `[x certified]`                                          |
-| **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`      |
-| **R8**   | Comments                                   | `[x certified]`                                          |
-| **R9**   | Email                                      | `[~ code-only pass / pending docs+guard reconcile]`      |
-| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / needs reconcile with main]`  |
-| **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                    |
+| Faza     | Opis                                       | Status                                                  |
+| :------- | :----------------------------------------- | :------------------------------------------------------ |
+| **R0**   | Zasady, infrastruktura, bariery projektowe | `[x]`                                                   |
+| **R1**   | Shared, Result, błędy, Actor, AppContext   | `[x]`                                                   |
+| **R2**   | Audit                                      | `[x foundation]`                                        |
+| **R3**   | Media                                      | `[x safety foundation]`                                 |
+| **R4**   | Channel / ścisły single-channel            | `[x single-channel foundation]`                         |
+| **R5**   | Users                                      | `[x stronger foundation]`                               |
+| **R6**   | Video                                      | `[x stronger foundation]`                               |
+| **R6.5** | Access Foundation                          | `[x certified]`                                         |
+| **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`     |
+| **R8**   | Comments                                   | `[x certified]`                                         |
+| **R9**   | Email                                      | `[x certified]`                                         |
+| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / post-R9 reconcile needed]`  |
+| **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                   |
 
 Aktualna interpretacja:
 
@@ -181,13 +181,12 @@ Aktualna interpretacja:
 * R2/R3/R4 są certyfikowanymi foundation, nie pełnym usunięciem każdego legacy.
 * R5/R6 są mocno zaawansowane i po ostatnich passach mają mocniejszą ochronę, ale nadal mogą mieć jawne legacy extensions.
 * R6.5 certyfikuje access foundation dla wideo.
-* R7 core runtime został przesunięty do modułów, ale nie jest jeszcze pełnym `[x certified]`.
-* R8 Comments przeszedł finalny reconcile / validation pass i został certyfikowany po merge PR #787.
-* R8 ma pełną walidację: guardy, typecheck i testy domenowe (inheritance, interactions, admin) są zielone.
-* R8 jest oznaczone jako `[x certified]`.
-* R9 ma code-only preparation pass w main, ale wymaga dokumentacyjnego i guardowego reconcile przed zmianą statusu.
-* R10 inventory istnieje, ale musi być okresowo uzgadniane z aktualnym main po większych zmianach modułowych.
+* R7 core runtime został przesunięty do modułów i wzmocniony testami, ale nie jest jeszcze pełnym `[x certified]`.
+* R8 Comments przeszedł finalny reconcile / validation pass i został certyfikowany jako `[x certified]`.
+* R9 Email został domknięty po templates completion: admin templates CRUD przeniesiony do modułu email, R9 routes usunięte z direct Prisma allowlist, dodane testy template use-case’ów.
+* R10 inventory zostało odświeżone, ale po certyfikacji R9 wymaga lekkiego post-R9 reconcile przed realnym cleanupem.
 * R11 jeszcze nie wystartowało.
+* Otwarte PR-y #791 i #792 są stare/duplikujące R9 i nie powinny być mergowane po merge #793.
 
 ---
 
@@ -195,47 +194,62 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-Post-merge verification po PR #787 — R8 Comments Final Reconcile / Certification Candidate Validation.
+Post-R9 README / R10 reconcile po merge R9 Email Templates Completion.
 
 Cel:
-Potwierdzić, że stan main po merge PR #787 jest zgodny z raportem walidacji i że można bezpiecznie rozważyć zmianę R8 z validated candidate na [x certified].
+Uzgodnić dokumentację i inventory z aktualnym main po certyfikacji R9, bez ruszania runtime.
 
-Warunki przed zmianą R8 na [x certified]:
-- finalny deploy/status main musi być zielony,
-- README musi mówić prawdę o PR #787,
-- guardy architektoniczne muszą przechodzić,
-- typecheck musi przechodzić,
-- testy comments/access/BOLA muszą przechodzić,
-- R9 musi pozostać ostrożnie oznaczone jako [~ code-only pass / pending docs+guard reconcile],
-- R7 nie może zostać podbite do [x certified] bez osobnego passu,
-- nie zaczynać dużego R10 cleanup,
-- nie zaczynać R11.
+Stan:
+- #793 R9 Email Templates Completion został zmergowany.
+- R9 może być traktowane jako [x certified].
+- #790 R10 Inventory został zmergowany wcześniej i może zawierać stale wpisy o R9 templates.
+- #791 i #792 są stare R9 duplicate PRs i nie powinny być mergowane.
 ```
 
-Następny dobry prompt dla agenta kodowania:
+Następny dobry prompt dla agenta kodowania/dokumentacji:
 
 ```txt
-Wykonaj post-merge verification po PR #787 — R8 Comments Final Reconcile.
+Start from current main.
 
-Zakres:
-- Sprawdź aktualny main po merge PR #787.
-- Nie zmieniaj runtime poza naprawą ewentualnych błędów wykrytych przez walidację.
-- Zweryfikuj, czy R8 comments routes nie importują bezpośrednio @/lib/prisma ani legacy comment services.
-- Zweryfikuj, czy admin comments routes używają właściwego admin auth boundary.
-- Zweryfikuj, czy comments dziedziczą access z video dla patron-only content.
-- Zweryfikuj, czy guardy i R10 inventory nie cofają stanu R8.
-- R8 ustaw najwyżej jako [x certified] tylko jeśli walidacja main jest zielona.
-- R9 zostaw jako [~ code-only pass / pending docs+guard reconcile].
-- Nie oznaczaj R7/R9 jako certified.
-- Nie zaczynaj R10 cleanup.
-- Nie zaczynaj R11.
+Task: R10 Inventory Post-R9 Reconcile.
 
-Na końcu uruchom:
-npm run quality:architecture-boundaries
-npm run typecheck
-npm test -- --run
+Do not touch runtime code.
+Do not touch README.md unless explicitly asked.
+Do not touch R9 email code.
+Do not touch R7/R8 runtime.
 
-Jeżeli coś nie zostało uruchomione, oznacz jako NOT RUN i podaj powód.
+Update only:
+- docs/audit/R10-Direct-Prisma-Inventory.md
+- docs/audit/R10-Legacy-Service-Inventory.md
+- docs/audit/R10-Next-Cleanup-Plan.md
+
+Goal:
+Reconcile R10 inventory with current main after R9 Email Templates Completion.
+
+Required:
+- Confirm that app/api/admin/templates/route.ts no longer imports @/lib/prisma.
+- Remove app/api/admin/templates/route.ts from direct Prisma inventory if current main confirms it.
+- Remove R9 Email Finalization/Templates from pending cleanup order if current main confirms it.
+- Recount remaining direct Prisma routes.
+- Reclassify remaining blockers by domain:
+  - R7 subscriptions
+  - R5 users/referrals/resync
+  - R6/R3 video/media
+  - R11 admin stats
+  - R10 dead service candidates
+- Keep R10 as inventory/cleanup pending, not complete.
+- Do not mark R10 [x].
+- Do not change README.
+
+Validation:
+- Static grep/search is enough.
+- If any command is not run, report NOT RUN.
+
+Output:
+- updated direct Prisma route count
+- removed stale R9 entries
+- remaining blockers
+- recommended cleanup order
 ```
 
 ---
@@ -559,7 +573,8 @@ Oznacza to:
 * Stripe webhook orchestration został przesunięty w stronę use case’a,
 * refund/revoke patron flow został wzmocniony,
 * payment admin flows zostały częściowo zmodularyzowane,
-* idempotency i transakcyjność są wyraźnie ważne.
+* idempotency i transakcyjność są wyraźnie ważne,
+* testy R7 zostały dodatkowo wzmocnione w PR #789.
 
 Nie oznacza jeszcze:
 
@@ -606,7 +621,7 @@ Cel:
 Status:
 
 ```txt
-[~ validated candidate / pending final main deploy]
+[x certified]
 ```
 
 Co jest aktualnie interpretowane jako zrobione:
@@ -623,32 +638,16 @@ Co jest aktualnie interpretowane jako zrobione:
 * interakcje z komentarzami pod patron-only video wymagają właściwego dostępu,
 * guest nie może raportować ani reagować,
 * legacy `pinned` PATCH hack został usunięty,
-* R8 routes nie powinny już importować bezpośrednio `@/lib/prisma`,
-* R8 routes nie powinny już importować legacy comment services,
-* guardy R8 zostały zaktualizowane w kierunku usunięcia R8 z Prisma allowlist,
-* PR #787 wykonał final reconcile / validation pass dla R8.
+* R8 routes nie powinny importować bezpośrednio `@/lib/prisma`,
+* R8 routes nie powinny importować legacy comment services,
+* guardy R8 zostały zaktualizowane,
+* R8 został oznaczony jako `[x certified]` po finalnym reconcile i certyfikacji.
 
-R8 nie jest jeszcze automatycznie `[x certified]`.
-
-Warunki certyfikacji R8:
-
-* finalny deploy/status main zielony,
-* `npm run quality:architecture-boundaries` zielone,
-* `npm run typecheck` zielone,
-* `npm test -- --run` zielone albo jawnie rozdzielone domain/full validation,
-* README nie cofa aktualnego source of truth,
-* guardy nie zawierają stale allowlist dla R8,
-* route’y R8 nie importują bezpośrednio `@/lib/prisma`,
-* route’y R8 nie importują legacy comment services,
-* admin permission behavior nie został osłabiony przy migracji,
-* znane pozostałe braki są jawnie opisane.
-
-Pozostające możliwe ryzyka R8:
+Pozostające możliwe prace poza certyfikacją R8:
 
 * frontend moderation UI może nadal wymagać osobnego passu,
 * pełny moderation log UI może nadal wymagać osobnego passu,
-* finalny status main/deploy musi zostać potwierdzony po merge,
-* R8 validated candidate nie oznacza jeszcze pełnej certyfikacji.
+* admin cockpit/moderation UX należy do R11.
 
 Zasada trwała:
 
@@ -656,14 +655,6 @@ Zasada trwała:
 Komentarze dziedziczą dostęp z filmu.
 Jeżeli użytkownik nie ma prawa zobaczyć patron-only video, nie powinien widzieć ani używać komentarzy pod tym filmem.
 ```
-
-Następny bezpieczny krok:
-
-```txt
-R8 post-merge verification na main.
-```
-
-Dopiero po tym można rozważyć zmianę statusu R8 na `[x certified]`.
 
 ---
 
@@ -673,6 +664,7 @@ Cel:
 
 * inbound email management,
 * admin email responses,
+* admin email templates,
 * broadcast flows,
 * Resend webhook,
 * delivery state,
@@ -682,24 +674,28 @@ Cel:
 Status:
 
 ```txt
-[~ code-only pass / pending docs+guard reconcile]
+[x certified]
 ```
 
 Oznacza to:
 
-* istnieje code-only preparation pass w main,
-* część inbound email management została przesunięta do modułu,
-* admin email responses route został przesunięty w stronę modularnych use case’ów,
-* webhook delivery status ma silniejsze zasady status priority,
-* istnieją testy chroniące przed tym, aby email module modyfikował patron/payment domains.
+* broadcast admin route używa modułowych use case’ów,
+* admin email responses route używa modułowych use case’ów,
+* Resend webhook używa modułowego use case’a,
+* admin email templates route został refaktoryzowany do cienkiego adaptera,
+* email template CRUD został przeniesiony do `lib/modules/email/**`,
+* sanitization HTML dla templates zostało przeniesione do warstwy use case,
+* audit logging `TEMPLATE_SAVED` i `TEMPLATE_DELETED` został przeniesiony do warstwy use case/module,
+* R9 routes zostały usunięte z direct Prisma allowlist,
+* dodane zostały testy dla email template use-case’ów,
+* R9 jest certyfikowane dla aktualnego zakresu roadmapy.
 
 Nie oznacza jeszcze:
 
-* R9 jest certyfikowane,
-* wszystkie docs/guardy zostały uzgodnione,
-* broadcast flows są w pełni certyfikowane,
-* wszystkie admin email route’y są czyste,
-* R9 można oznaczyć jako `[x certified]`.
+* cały przyszły email cockpit UI jest gotowy,
+* retry/outbox/advanced delivery UI jest gotowy,
+* pełny admin email UX jest finalny,
+* wszystkie przyszłe funkcje newslettera są zaimplementowane.
 
 Zasada trwała:
 
@@ -728,19 +724,21 @@ Cel:
 Status:
 
 ```txt
-[~ preparation inventory / needs reconcile with main]
+[~ preparation inventory / post-R9 reconcile needed]
 ```
 
 Oznacza to:
 
-* istnieje przygotowawcze inventory,
+* inventory R10 zostało przygotowane i zmergowane,
 * część legacy services została sklasyfikowana,
 * część direct Prisma route’ów została rozpoznana,
-* R10 ma być cleanupem po stabilizacji R7/R8/R9.
+* R10 ma być cleanupem po stabilizacji R7/R8/R9,
+* po merge R9 templates completion inventory R10 może zawierać stale wpisy dotyczące R9 i wymaga lekkiego reconcile.
 
 Nie oznacza jeszcze:
 
-* można zacząć masowy cleanup,
+* R10 jest ukończone,
+* można zacząć masowy cleanup bez dodatkowego sprawdzenia,
 * można usuwać serwisy bez sprawdzenia runtime usage,
 * można reorganizować cały projekt,
 * można przepisywać domeny przy okazji.
@@ -751,7 +749,17 @@ Zasada:
 R10 nie może wyprzedzać R7/R8/R9.
 ```
 
-Najpierw trzeba domknąć i uzgodnić domeny wysokiego ryzyka.
+Po certyfikacji R9 najbezpieczniejszy kolejny krok R10 to:
+
+```txt
+R10 Inventory Post-R9 Reconcile.
+```
+
+Dopiero potem:
+
+```txt
+R10 Dead Services Removal / Cleanup PRs.
+```
 
 ---
 
@@ -773,12 +781,19 @@ Status:
 
 R11 jeszcze nie startuje.
 
-Nie wolno zaczynać R11, dopóki:
+Nie wolno zaczynać runtime R11, dopóki:
 
 * R7/R8/R9 nie są wystarczająco stabilne,
 * guardy i docs nie są uzgodnione,
 * R10 nie ma jasnego zakresu,
 * bieżące PR-y nie są rozliczone.
+
+Dozwolone przed R11 runtime:
+
+* docs-only Admin Operations Spec,
+* docs-only Admin Action Policy Matrix,
+* docs-only Admin Cockpit UX plan,
+* docs-only Sidebar Playlist Product Spec.
 
 ---
 
@@ -921,14 +936,16 @@ Zasady:
 
 ## Email
 
-Email odpowiada za broadcast, inbound responses, webhook delivery i admin email flows.
+Email odpowiada za broadcast, inbound responses, webhook delivery, template management i admin email flows.
 
 Zasady:
 
 * email module nie modyfikuje patron access,
 * status delivery nie powinien cofać terminalnych/zaawansowanych stanów,
 * provider boundary powinien być jawny,
-* webhook idempotency musi być bezpieczne.
+* webhook idempotency musi być bezpieczne,
+* template CRUD nie powinien być wykonywany bezpośrednio w route,
+* sanitization i audit dla templates należą do use-case/module layer.
 
 ---
 
@@ -991,8 +1008,9 @@ Szczególnie ważne:
 
 * R8 comments routes nie powinny być direct Prisma blockers.
 * R8 comments routes nie powinny importować legacy comment services.
-* Jeżeli R8 pojawia się w allowlist, agent musi sprawdzić, czy allowlist nie jest stale.
-* R7/R9/R10 allowlist nie wolno usuwać bez realnej migracji runtime.
+* R9 email routes nie powinny być direct Prisma blockers po certyfikacji R9.
+* Jeżeli R8 albo R9 pojawia się w direct Prisma allowlist, agent musi sprawdzić, czy allowlist nie jest stale.
+* R7/R10/R11 allowlist nie wolno usuwać bez realnej migracji runtime.
 * R10 inventory musi być zgodne z aktualnym main.
 
 ---
@@ -1046,7 +1064,7 @@ Nie rób:
 
 * masowego rewrite,
 * zmiany kilku faz naraz,
-* R10 cleanup przed stabilizacją R7/R8/R9,
+* R10 cleanup bez aktualnego inventory,
 * R11 frontend przed stabilizacją domen,
 * optymistycznego README,
 * certyfikacji bez testów,
@@ -1056,33 +1074,36 @@ Nie rób:
 * traktowania PR body jako dowodu, że kod przeszedł walidację,
 * traktowania otwartego PR jako source of truth,
 * traktowania samego merge jako dowodu finalnego zielonego main,
-* podbijania R8 do `[x certified]` bez post-merge verification.
+* mergowania starych duplikatów PR po tym, jak ich zakres został zrealizowany nowszym PR-em.
 
 ---
 
 # 13. Obecny najbezpieczniejszy proces
 
-Aktualny proces po PR #787:
+Aktualny proces po merge R9 Email Templates Completion:
 
 ```txt
-1. Sprawdzić finalny status deploy/status checks dla merge commit na main.
-2. Uruchomić albo potwierdzić:
-   - npm run quality:architecture-boundaries
-   - npm run typecheck
-   - npm test -- --run
-3. Zweryfikować, czy README mówi prawdę o R8/R9/R10.
-4. Zweryfikować, czy R8 nie wróciło do direct Prisma ani legacy comments services.
-5. Zweryfikować, czy admin comments auth boundary nie został osłabiony.
-6. Jeżeli wszystko zielone, zrobić mały docs/status pass dla R8.
-7. Dopiero wtedy rozważyć zmianę R8 na [x certified].
+1. Nie mergować #791 ani #792 — są superseded przez #793.
+2. Zaktualizować README tak, aby R8 i R9 były [x certified].
+3. Wykonać R10 Inventory Post-R9 Reconcile:
+   - usunąć stale wpisy R9 templates z direct Prisma inventory,
+   - przeliczyć pozostałe direct Prisma route’y,
+   - poprawić kolejność R10 cleanup.
+4. Dopiero potem zacząć małe R10 cleanup PR-y:
+   - dead services scan/removal,
+   - subscriptions route,
+   - admin comments leftovers,
+   - admin stats,
+   - media/video leftovers.
+5. R11 tylko jako docs/spec przed runtime implementation.
 ```
 
-Nie oznaczać R8 jako `[x certified]`, dopóki:
+Nie oznaczać R10 jako `[x]`, dopóki:
 
-* finalny main/deploy nie jest zielony,
-* full validation albo jawnie opisany validation matrix nie jest dostępny,
-* README/guardy/docs nie są spójne,
-* R9 nie pozostaje ostrożnie oznaczone jako code-only/pending reconcile.
+* cleanup nie jest faktycznie wykonany,
+* dead services nie są potwierdzone jako martwe,
+* direct Prisma inventory nie jest aktualne,
+* guardy i README nie są spójne.
 
 ---
 
