@@ -132,4 +132,103 @@ describe('handleResendWebhook use case - hardening', () => {
     // Should NOT create a second log record
     expect(prismaMock.emailEvent.create).not.toHaveBeenCalled();
   });
+
+  it('implements status hierarchy: OPENED does not overwrite CLICKED', async () => {
+    prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+      id: 'r1',
+      broadcastEmailId: 'b1',
+      status: 'CLICKED'
+    });
+
+    const result = await handleResendWebhook(ctx, {
+      type: 'email.opened',
+      data: {
+        email_id: 're_123',
+        from: 'no-reply@polutek.pl',
+        to: ['user@example.com'],
+        subject: 'Hello',
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    // update should NOT be called because CLICKED (priority 5) > OPENED (priority 4)
+    expect(prismaMock.broadcastEmailRecipient.update).not.toHaveBeenCalled();
+  });
+
+  it('terminal status protection: DELIVERED does not overwrite BOUNCED', async () => {
+    prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+      id: 'r1',
+      broadcastEmailId: 'b1',
+      status: 'BOUNCED'
+    });
+
+    const result = await handleResendWebhook(ctx, {
+      type: 'email.delivered',
+      data: {
+        email_id: 're_123',
+        from: 'no-reply@polutek.pl',
+        to: ['user@example.com'],
+        subject: 'Hello',
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    // update should NOT be called because BOUNCED (priority 100) > DELIVERED (priority 3)
+    expect(prismaMock.broadcastEmailRecipient.update).not.toHaveBeenCalled();
+  });
+
+  it('updates aggregate counts correctly on first SENT event', async () => {
+      prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+      prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+          id: 'r1',
+          broadcastEmailId: 'b1',
+          status: 'PENDING'
+      });
+
+      const result = await handleResendWebhook(ctx, {
+          type: 'email.sent',
+          data: {
+              email_id: 're_123',
+              from: 'no-reply@polutek.pl',
+              to: ['user@example.com'],
+              subject: 'Hello',
+              created_at: new Date().toISOString(),
+          },
+      });
+
+      expect(result.ok).toBe(true);
+      expect(prismaMock.broadcastEmail.update).toHaveBeenCalledWith(expect.objectContaining({
+          where: { id: 'b1' },
+          data: { sentCount: { increment: 1 } }
+      }));
+  });
+
+  it('does NOT update aggregate counts if already SENT', async () => {
+      prismaMock.emailEvent.findFirst.mockResolvedValue(null);
+      prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+          id: 'r1',
+          broadcastEmailId: 'b1',
+          status: 'SENT'
+      });
+
+      const result = await handleResendWebhook(ctx, {
+          type: 'email.delivered',
+          data: {
+              email_id: 're_123',
+              from: 'no-reply@polutek.pl',
+              to: ['user@example.com'],
+              subject: 'Hello',
+              created_at: new Date().toISOString(),
+          },
+      });
+
+      expect(result.ok).toBe(true);
+      // It should update recipient to DELIVERED, but NOT increment BroadcastEmail.sentCount again
+      expect(prismaMock.broadcastEmailRecipient.update).toHaveBeenCalled();
+      expect(prismaMock.broadcastEmail.update).not.toHaveBeenCalled();
+  });
 });
