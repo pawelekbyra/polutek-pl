@@ -24,6 +24,11 @@ const prismaMock = vi.hoisted(() => ({
     create: vi.fn(),
     deleteMany: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  },
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -33,11 +38,6 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    getOrCreateUser: vi.fn(),
-  },
-}));
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
@@ -54,8 +54,17 @@ describe('/api/subscriptions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as Awaited<ReturnType<typeof auth>>);
-    vi.mocked(UserService.getOrCreateUser).mockResolvedValue({ id: 'user_1' } as any);
+    vi.mocked(auth).mockResolvedValue({
+        userId: 'user_1',
+        sessionClaims: {
+            email: 'user1@example.com',
+            name: 'User One',
+            username: 'user1',
+            image_url: 'http://example.com/image.png'
+        }
+    } as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'user_1', isPatron: false } as any);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: 'user_1', isPatron: false } as any);
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 119 });
     vi.mocked(MainChannelService.getRequired).mockResolvedValue(mainChannel as any);
     vi.mocked(prisma.creator.findUnique).mockResolvedValue(mainChannel as any);
