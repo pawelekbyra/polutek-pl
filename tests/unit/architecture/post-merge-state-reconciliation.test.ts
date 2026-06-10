@@ -15,7 +15,7 @@ describe('Post-Merge State Reconciliation Invariants', () => {
 
   it('README should reflect core comments status', () => {
     const readme = fs.readFileSync(readmePath, 'utf-8');
-    expect(readme).toContain('[~ certification candidate / pending final validation]');
+    expect(readme).toContain('[x certified]');
   });
 
   it('README should correctly report R9 status', () => {
