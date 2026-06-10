@@ -77,3 +77,9 @@ export class InvalidPlaybackEventTypeError extends AppError {
     super('Invalid event type', 400, 'INVALID_EVENT_TYPE');
   }
 }
+
+export class PlaybackAccessDeniedError extends AppError {
+  constructor(reason?: string) {
+    super(reason || 'Access denied', 403, 'ACCESS_DENIED');
+  }
+}

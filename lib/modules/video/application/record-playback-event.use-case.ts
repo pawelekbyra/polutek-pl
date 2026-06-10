@@ -11,7 +11,8 @@ import {
     PlaybackSessionFingerprintMismatchError,
     PlaybackSessionExpiredError,
     PlaybackSessionRequiredError,
-    InvalidPlaybackEventTypeError
+    InvalidPlaybackEventTypeError,
+    PlaybackAccessDeniedError
 } from "../domain/video.errors";
 import { VideoPlaybackRepository } from "../infrastructure/video-playback.repository";
 
@@ -66,7 +67,7 @@ export async function recordPlaybackEventUseCase(
 
     const access = accessResult.data;
     if (!access.hasAccess && type !== 'ACCESS_ERROR') {
-        return { ok: false, error: { ...new Error("ACCESS_DENIED"), code: 'ACCESS_DENIED', status: 403, reason: access.reason } as any };
+        return { ok: false, error: new PlaybackAccessDeniedError(access.reason) };
     }
 
     // For writes, we use rawPrisma or db.writeTransaction.
