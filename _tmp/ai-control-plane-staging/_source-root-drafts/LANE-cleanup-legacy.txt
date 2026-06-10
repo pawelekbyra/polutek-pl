@@ -1,0 +1,941 @@
+# LANE-cleanup-legacy
+
+## 0. Purpose
+
+This lane owns legacy cleanup after the R-phase refactor.
+
+It exists to remove or reconcile:
+
+```txt id="vc2d6p"
+direct Prisma imports in routes
+route-local business logic
+legacy lib/services/** usage from routes
+stale allowlists
+stale audit inventories
+dead service candidates
+README/docs drift
+guard drift
+old R-phase leftovers
+```
+
+This lane is not a product-feature lane.
+
+It prepares the system so later lanes can safely build:
+
+```txt id="vljghc"
+payments/patron safety
+access hard reset
+video provider foundation
+PlaybackPlan/player simplification
+admin cockpit
+product excellence
+```
+
+Core rule:
+
+```txt id="9ary37"
+Do not build premium VOD on top of legacy glue.
+```
+
+---
+
+## 1. Lane identity
+
+Lane ID:
+
+```txt id="u68nbn"
+cleanup-legacy
+```
+
+Primary phase:
+
+```txt id="2f3pyo"
+X0 — Control Plane & Truth Reconciliation
+```
+
+Also supports:
+
+```txt id="afsxcz"
+X1-X6 as needed for cleanup and reconciliation
+```
+
+Primary owner roles:
+
+```txt id="rzlsm3"
+Integrator
+Certifier
+Builder for small scoped cleanup tickets
+```
+
+Parallel safety:
+
+```txt id="j4lw5t"
+CAUTION
+```
+
+Reason:
+
+```txt id="ncm3af"
+Legacy cleanup may touch files used by many lanes.
+Dead-service deletion can break active runtime work.
+Guard/audit updates are global.
+```
+
+---
+
+## 2. Source of truth
+
+Use this order:
+
+```txt id="2n4794"
+1. actual code on current main
+2. README.md
+3. docs/audit/**
+4. scripts/check-architecture.ts
+5. docs/roadmap/Active-Execution-Roadmap.md
+6. this lane file
+7. Product-Architecture-Blueprint.md
+```
+
+This lane must never assume a service is dead because a blueprint says so.
+
+A service is dead only after:
+
+```txt id="996s9o"
+inventory
+usage search
+tests
+runtime migration or proof of no runtime usage
+safe deletion PR
+post-merge validation
+```
+
+---
+
+## 3. Current handoff assumptions
+
+This lane assumes the R-phase refactor has reduced most direct route/database coupling.
+
+Expected current state near handoff:
+
+```txt id="s9axj4"
+most R0-R9 foundations are complete or certified
+R10 direct Prisma inventory is near zero
+some allowlists may still be stale
+some legacy services may remain
+some admin/comment/media leftovers may remain
+README may need reconciliation
+notatka/blueprint may need to be moved into docs/architecture
+```
+
+Do not trust these assumptions blindly.
+
+The first cleanup tickets must verify current main.
+
+---
+
+## 4. Lane goals
+
+### Goal 1 — Zero direct Prisma imports in routes
+
+Target:
+
+```txt id="if61am"
+app/api/**/route.ts should not import @/lib/prisma directly.
+```
+
+Allowed exception:
+
+```txt id="pk44cc"
+Only temporary documented allowlist entries with owner, reason, phase, and removal condition.
+```
+
+Final target:
+
+```txt id="rwc5fq"
+PRISMA_ROUTES_ALLOWLIST is empty or contains only explicitly accepted temporary blockers.
+```
+
+### Goal 2 — No legacy services in routes
+
+Target:
+
+```txt id="h3uoga"
+app/api/**/route.ts should not import @/lib/services/** directly.
+```
+
+Routes should call public module APIs.
+
+### Goal 3 — Thin routes
+
+Target:
+
+```txt id="r42zsh"
+route -> use-case -> policy/service/repository -> Prisma
+```
+
+Routes may:
+
+```txt id="zzmx7p"
+authenticate
+parse input
+create AppContext
+call module API
+map result to HTTP
+```
+
+Routes must not:
+
+```txt id="3sg05n"
+perform business decisions
+query database directly
+own access/patron/payment/media/comment rules
+import module internals
+```
+
+### Goal 4 — Honest guards
+
+Architecture guards must reflect current main.
+
+Do not keep allowlists for violations that no longer exist.
+
+Do not add broad allowlists to make CI green.
+
+### Goal 5 — Honest docs
+
+Docs must not claim cleanup is complete unless code and guards prove it.
+
+Current-state docs must be conservative.
+
+### Goal 6 — Dead service cleanup
+
+Legacy services may be deleted only after usage is proven absent or runtime has been migrated.
+
+Do not delete legacy services first.
+
+Correct sequence:
+
+```txt id="fx75pe"
+inventory -> migrate runtime -> tests -> delete -> guard/audit reconciliation
+```
+
+---
+
+## 5. Owned paths
+
+This lane may own or edit these paths when the ticket explicitly allows them.
+
+### Audit and reports
+
+```txt id="20ic8g"
+docs/audit/**
+docs/reports/reconciliation/**
+docs/reports/certification/**
+```
+
+### Guard files
+
+```txt id="94lw4u"
+scripts/check-architecture.ts
+```
+
+Guard files are single-writer.
+
+Only guard-specific tickets may edit them.
+
+### Legacy services
+
+```txt id="4wayct"
+lib/services/**
+```
+
+Deletion or modification requires inventory.
+
+### Route cleanup targets
+
+```txt id="n4xpcq"
+app/api/**
+```
+
+Only route files listed in a ticket may be edited.
+
+### Module migration targets
+
+```txt id="pdkmdx"
+lib/modules/**
+```
+
+Only module files listed in a ticket may be edited.
+
+### Test targets
+
+```txt id="aec78e"
+tests/unit/**
+tests/integration/**
+```
+
+Only relevant tests may be edited.
+
+---
+
+## 6. Forbidden by default
+
+Builder agents in this lane must not edit:
+
+```txt id="kr85rz"
+README.md
+AGENTS.md
+docs/roadmap/Active-Execution-Roadmap.md
+docs/roadmap/Parallel-Work-Matrix.md
+docs/roadmap/Phase-Gates.md
+docs/architecture/Product-Architecture-Blueprint.md
+prisma/schema.prisma
+package.json
+package-lock.json
+```
+
+unless the ticket explicitly allows it.
+
+This lane must not change product behavior while doing cleanup.
+
+Forbidden unless explicit:
+
+```txt id="a6y2nu"
+changing patron access rules
+changing payment fulfillment
+changing comments visibility
+changing video access tiers
+changing player locked-state behavior
+changing admin permissions
+changing provider strategy
+```
+
+---
+
+## 7. Parallel safety
+
+Default mode:
+
+```txt id="e1wnar"
+CAUTION
+```
+
+This lane can run in parallel with another lane only if:
+
+```txt id="pcr3zj"
+it is docs/report-only in separate files
+it touches no shared route/module/service
+it does not edit guards
+it does not edit global docs
+it does not delete shared legacy services
+```
+
+### Safe-ish parallel examples
+
+```txt id="6jkc6m"
+cleanup-legacy inventory report
++
+email-subscriptions runtime task
+```
+
+Safe only if inventory writes a separate report file and does not edit global docs.
+
+```txt id="m4uxby"
+dead service usage search
++
+video-provider docs-only spec
+```
+
+Safe only if neither edits shared files.
+
+### Unsafe parallel examples
+
+```txt id="nj1r77"
+cleanup agent deletes lib/services/comments/comment.service.ts
++
+comments agent migrates route still importing that service
+```
+
+Verdict:
+
+```txt id="fxi7zk"
+SERIAL
+```
+
+```txt id="8h4ecz"
+cleanup agent edits scripts/check-architecture.ts
++
+access agent edits scripts/check-architecture.ts
+```
+
+Verdict:
+
+```txt id="dm8yjy"
+SERIAL
+```
+
+```txt id="onbcm8"
+cleanup agent updates README
++
+integrator updates README
+```
+
+Verdict:
+
+```txt id="ml1ymo"
+SERIAL
+```
+
+---
+
+## 8. Work types
+
+### 8.1 Inventory
+
+Purpose:
+
+```txt id="yyilzq"
+Find actual current usage before changing code.
+```
+
+Allowed:
+
+```txt id="7x9xhk"
+search code
+write report
+suggest tickets
+```
+
+Forbidden:
+
+```txt id="1lb7wf"
+runtime changes
+deleting files
+marking cleanup done
+```
+
+### 8.2 Route cleanup
+
+Purpose:
+
+```txt id="q7xqkm"
+Move a route from direct Prisma/services/business logic to module API.
+```
+
+Allowed:
+
+```txt id="2jcyqh"
+edit one route family
+add/update use case
+add/update repository
+add/update module index export
+add/update focused tests
+```
+
+Forbidden:
+
+```txt id="m9q1sm"
+touch unrelated routes
+change product policy
+delete broad services
+edit global docs unless ticket allows it
+```
+
+### 8.3 Service deletion
+
+Purpose:
+
+```txt id="1fceev"
+Remove legacy service after it is no longer used.
+```
+
+Allowed:
+
+```txt id="xw147k"
+delete specific service
+delete tests that only cover deleted dead service if replaced
+update imports/tests
+update inventory
+```
+
+Forbidden:
+
+```txt id="agcuez"
+delete multiple unrelated services in one PR
+delete service with active imports
+delete service because blueprint says it is legacy
+```
+
+### 8.4 Guard update
+
+Purpose:
+
+```txt id="tt7m06"
+Make architecture guard match desired current rules.
+```
+
+Allowed:
+
+```txt id="oxjxru"
+remove stale allowlist
+add specific check
+tighten violation detection
+update guard tests if they exist
+```
+
+Forbidden:
+
+```txt id="w8o7xs"
+weaken guard to pass current bad code
+add broad allowlist without removal condition
+mix guard update with unrelated runtime cleanup
+```
+
+### 8.5 Reconciliation
+
+Purpose:
+
+```txt id="3kufzn"
+Make docs/audit/roadmap reflect current main after merged PRs.
+```
+
+Allowed:
+
+```txt id="a0geir"
+docs/audit/**
+docs/reports/reconciliation/**
+ticket status updates
+lane status updates
+```
+
+Forbidden:
+
+```txt id="i9oinq"
+runtime changes
+schema changes
+product changes
+```
+
+---
+
+## 9. Initial cleanup sequence
+
+After R-phase handoff, run cleanup in this order.
+
+### CL-0 — Current-state verification
+
+Goal:
+
+```txt id="vj9adn"
+Verify actual main before trusting old README or old audit docs.
+```
+
+Checks:
+
+```txt id="yt5vj2"
+direct @/lib/prisma imports in app/api/**/route.ts
+@/lib/services/** imports in app/api/**/route.ts
+internal module imports from routes
+known allowlists in scripts/check-architecture.ts
+legacy service usage
+docs/audit vs code
+README vs code
+```
+
+Output:
+
+```txt id="z2r6ml"
+docs/reports/reconciliation/CL-0-current-state-verification.md
+follow-up tickets
+```
+
+### CL-1 — Direct Prisma route cleanup
+
+Goal:
+
+```txt id="78cwe1"
+Remove remaining direct Prisma route imports.
+```
+
+Known likely target near handoff:
+
+```txt id="xxrb2k"
+app/api/media/[...path]/route.ts
+```
+
+Do not assume this is still the only target. Verify current main.
+
+Done when:
+
+```txt id="cj6blu"
+no app/api route imports @/lib/prisma directly
+PRISMA_ROUTES_ALLOWLIST is empty or only documented temporary blocker remains
+quality:architecture-boundaries passes
+```
+
+### CL-2 — Admin comments leftovers
+
+Goal:
+
+```txt id="sqd82i"
+Remove admin comments route dependency on legacy comment services.
+```
+
+Known likely route family:
+
+```txt id="2w4sbx"
+app/api/admin/comments/**
+```
+
+Known likely legacy services:
+
+```txt id="1t0ipt"
+lib/services/comments/comment.service.ts
+lib/services/comments/comment-report.service.ts
+lib/services/comments/comment-moderation.service.ts
+```
+
+Do not delete services before usage inventory and route migration.
+
+### CL-3 — Dead service candidates
+
+Goal:
+
+```txt id="g0pg6a"
+Verify and remove legacy services with no runtime usage.
+```
+
+Candidate examples from previous cleanup planning:
+
+```txt id="6qrk2n"
+lib/services/user.service.ts
+lib/services/patron.service.ts
+lib/services/content.visibility.ts
+lib/services/user/admin.service.ts
+lib/services/user/subscription.service.ts
+lib/services/payments/refund.service.ts
+lib/services/admin/payments-admin.service.ts
+lib/services/comments/comment-reaction.service.ts
+lib/services/comments/comment-audit.service.ts
+lib/services/comments/comment-access.service.ts
+```
+
+These are candidates, not deletion instructions.
+
+Each service needs:
+
+```txt id="5u359p"
+usage inventory
+replacement confirmation
+test coverage
+single focused deletion ticket
+```
+
+### CL-4 — Stale allowlist cleanup
+
+Goal:
+
+```txt id="xsics3"
+Reduce allowlists after runtime cleanup.
+```
+
+Targets:
+
+```txt id="v6d56z"
+PRISMA_ROUTES_ALLOWLIST
+KNOWN_ROUTE_VIOLATIONS_ALLOWLIST
+other temporary compatibility allowlists
+```
+
+Done when:
+
+```txt id="ubzcyv"
+allowlists reflect only real current blockers
+stale entries are removed
+guard passes
+docs/audit updated
+```
+
+### CL-5 — R-phase final certification
+
+Goal:
+
+```txt id="6bhhq2"
+Close the old R-phase cleanup and hand over to Post-R lanes.
+```
+
+Output:
+
+```txt id="3l5ed5"
+docs/reports/certification/R-phase-final-cleanup-certification.md
+```
+
+---
+
+## 10. Suggested first tickets
+
+These tickets should be created under:
+
+```txt id="7m6uxd"
+docs/tickets/ready/
+```
+
+### CL-001 — Current cleanup inventory
+
+```txt id="lgx01t"
+ID: CL-001
+Lane: cleanup-legacy
+Type: inventory
+Parallel safety: CAUTION
+Goal: Verify current main for direct Prisma, services imports, internal module imports, stale allowlists, and legacy service usage.
+```
+
+Allowed paths:
+
+```txt id="qfi80n"
+docs/reports/reconciliation/**
+```
+
+Read-only inspection:
+
+```txt id="adfc9u"
+app/api/**
+lib/services/**
+lib/modules/**
+scripts/check-architecture.ts
+docs/audit/**
+README.md
+```
+
+Forbidden:
+
+```txt id="zr6oky"
+runtime edits
+README edits
+guard edits
+service deletion
+```
+
+### CL-002 — Media route direct Prisma cleanup
+
+```txt id="y3qjvg"
+ID: CL-002
+Lane: cleanup-legacy
+Type: runtime
+Parallel safety: SERIAL with video-provider/playback-player
+Goal: Remove direct Prisma usage from app/api/media/[...path]/route.ts through public module API.
+```
+
+Allowed paths:
+
+```txt id="4c53r3"
+app/api/media/[...path]/route.ts
+lib/modules/media/**
+lib/modules/video/**
+lib/modules/access/**
+tests/unit/modules/media/**
+tests/unit/api-media*.test.ts
+docs/audit/R10-Direct-Prisma-Inventory.md only if ticket allows docs update
+```
+
+Forbidden:
+
+```txt id="m8gty3"
+README.md
+global roadmap files
+provider architecture implementation beyond what is required
+player rewrite
+payment/access policy changes outside media delivery need
+```
+
+### CL-003 — Admin comments leftover inventory
+
+```txt id="3yfvs3"
+ID: CL-003
+Lane: cleanup-legacy
+Type: inventory
+Parallel safety: CAUTION with comments lane
+Goal: Inventory admin comments routes and legacy comment services before migration/deletion.
+```
+
+Allowed output:
+
+```txt id="tkpp8r"
+docs/reports/reconciliation/CL-003-admin-comments-leftovers.md
+```
+
+### CL-004 — Admin comments route migration
+
+```txt id="lj229c"
+ID: CL-004
+Lane: cleanup-legacy
+Type: runtime
+Parallel safety: SERIAL with comments lane
+Goal: Migrate one admin comments route family away from legacy services into comments module public API.
+```
+
+This should be split further if route family is large.
+
+### CL-005 — Dead service inventory
+
+```txt id="sguxxl"
+ID: CL-005
+Lane: cleanup-legacy
+Type: inventory
+Parallel safety: SAFE/CAUTION
+Goal: Verify which legacy services are still used and which can become deletion tickets.
+```
+
+Forbidden:
+
+```txt id="yr505w"
+deleting services in inventory PR
+```
+
+### CL-006 — Stale allowlist cleanup
+
+```txt id="l6j2qm"
+ID: CL-006
+Lane: cleanup-legacy
+Type: guard
+Parallel safety: SERIAL
+Goal: Remove stale allowlist entries after current-state verification.
+```
+
+Allowed paths:
+
+```txt id="c7ukrg"
+scripts/check-architecture.ts
+docs/audit/**
+docs/reports/reconciliation/**
+```
+
+### CL-007 — R-phase final cleanup certification
+
+```txt id="j2gkp9"
+ID: CL-007
+Lane: cleanup-legacy
+Type: certification
+Parallel safety: SERIAL
+Goal: Certify cleanup state after CL-001 through CL-006.
+```
+
+Output:
+
+```txt id="cdz7rb"
+docs/reports/certification/R-phase-final-cleanup-certification.md
+```
+
+---
+
+## 11. Validation
+
+Default validation for runtime cleanup:
+
+```bash id="j0n5kt"
+npm run quality
+```
+
+Minimum validation for docs/inventory-only work:
+
+```bash id="f9me3f"
+npm run quality:architecture-boundaries
+```
+
+If runtime files changed, expected validation:
+
+```bash id="qwdk1w"
+npm run quality:architecture-boundaries
+npm run typecheck
+npm test -- --run
+```
+
+If service deletion happened, also consider:
+
+```bash id="wlre9v"
+npm test -- --run
+```
+
+Agents must report exact commands.
+
+Do not claim route cleanup is complete without architecture-boundaries passing or an explicit documented exception.
+
+---
+
+## 12. Done criteria
+
+This lane is done when:
+
+```txt id="rk9pxd"
+direct Prisma route imports are zero or explicitly documented temporary blockers
+routes do not import legacy services directly
+known stale allowlists are removed
+legacy service candidates are either deleted or documented as still used
+docs/audit reflect current main
+README/Active Roadmap do not claim false state
+guard passes
+R-phase final cleanup certification exists
+```
+
+---
+
+## 13. Certified criteria
+
+This lane is certified when:
+
+```txt id="5s5glo"
+Certifier reviewed current main
+npm run quality passed or exception documented
+architecture guard is honest
+docs/audit are current
+dead services are not guessed
+all remaining blockers have tickets
+no Builder is editing global docs
+human owner accepts cleanup handoff
+```
+
+Certification report:
+
+```txt id="4ws2bj"
+docs/reports/certification/LANE-cleanup-legacy-certification.md
+```
+
+or, if closing old R-phase cleanup:
+
+```txt id="04p86s"
+docs/reports/certification/R-phase-final-cleanup-certification.md
+```
+
+---
+
+## 14. Anti-patterns
+
+Do not:
+
+```txt id="rgz7yv"
+delete services because they look old
+delete services because blueprint says target module exists
+mark allowlists clean without running guard
+update README optimistically
+mix service deletion with unrelated route migration
+change product behavior during cleanup
+run cleanup in parallel with same-domain Builder work
+hide remaining blockers
+```
+
+---
+
+## 15. Final lane rule
+
+Cleanup work is successful when later agents do not need to understand legacy glue.
+
+The lane should leave behind:
+
+```txt id="hl4f2p"
+thin routes
+module APIs
+honest guards
+current inventories
+small follow-up tickets
+no fake completion
+```

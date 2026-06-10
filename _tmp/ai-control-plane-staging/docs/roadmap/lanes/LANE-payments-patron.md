@@ -1,0 +1,952 @@
+# LANE-payments-patron
+
+## 0. Purpose
+
+This lane owns the payment-to-patron lifecycle.
+
+It exists to make sure that:
+
+```txt
+payments are financial facts
+PatronGrant is the access fact
+Stripe never grants access directly
+refunds/disputes affect related PatronGrants safely
+duplicate webhooks do not create duplicate grants
+admin/referral/payment patron grants go through explicit domain use cases
+```
+
+This lane must be completed before the full Access / Patron Hard Reset.
+
+Core invariant:
+
+```txt
+Payment is money.
+PatronGrant is access.
+```
+
+---
+
+## 1. Lane identity
+
+Lane ID:
+
+```txt
+payments-patron
+```
+
+Primary phase:
+
+```txt
+X1 — Payments / Patron Safety
+```
+
+Supports later phases:
+
+```txt
+X2 — Access / Patron Hard Reset
+X5 — Admin Cockpit Foundation
+```
+
+Primary owner roles:
+
+```txt
+Builder
+Reviewer
+Certifier
+```
+
+Planner/Integrator may update this file during roadmap reconciliation.
+
+Parallel safety:
+
+```txt
+CAUTION / SERIAL
+```
+
+Reason:
+
+```txt
+This lane affects money, access, patron status, refunds, disputes, admin corrections, and later Access behavior.
+```
+
+Default rule:
+
+```txt
+Run only one payments-patron runtime Builder at a time.
+```
+
+---
+
+## 2. Product rules
+
+### 2.1 Patron is not a subscription
+
+Patron access is a reward/status from support.
+
+It is not:
+
+```txt
+recurring subscription
+premium SaaS seat
+monthly entitlement
+newsletter subscription
+Stripe subscription state
+```
+
+Product language should prefer:
+
+```txt
+support
+donation
+become a patron
+reward for support
+patron status
+patron access
+```
+
+Avoid for patron access unless product decision changes:
+
+```txt
+subscription
+renewal
+pay for access
+monthly service
+buy access
+```
+
+### 2.2 Subscription is mailing
+
+```txt
+Subscription != Patron
+```
+
+Subscription means:
+
+```txt
+mailing / follow / notifications / consent to receive updates
+```
+
+Subscription does not grant patron access.
+
+Unsubscribe must never remove patron access.
+
+### 2.3 Payment is not access
+
+Payment is a financial fact.
+
+A successful eligible payment may create a PatronGrant.
+
+The payment itself is not the access decision.
+
+Correct model:
+
+```txt
+Payment
+  records money
+
+PatronGrant
+  records access
+
+AccessDecision
+  is computed from PatronGrant and policy
+```
+
+### 2.4 Stripe never grants patron directly
+
+Forbidden:
+
+```txt
+Stripe webhook
+  -> user.isPatron = true
+```
+
+Correct:
+
+```txt
+Stripe webhook
+  -> Payments module records event/payment
+  -> payment becomes SUCCEEDED
+  -> PatronEligibilityPolicy evaluates payment
+  -> Patron module creates PatronGrant(source=PAYMENT)
+  -> Access module sees active PatronGrant
+```
+
+### 2.5 PatronGrant source of truth
+
+Target access invariant:
+
+```txt
+User is patron if exists PatronGrant where status=ACTIVE and expiresAt is null or in future.
+```
+
+Not source of truth:
+
+```txt
+User.isPatron
+Clerk metadata
+Subscription
+Payment alone
+Stripe state alone
+frontend state
+```
+
+---
+
+## 3. Domain concepts
+
+### Payment
+
+A Payment is a financial record.
+
+It may include:
+
+```txt
+provider
+providerPaymentId
+amount
+currency
+status
+userId
+email
+createdAt
+updatedAt
+metadata
+```
+
+Payment statuses may include:
+
+```txt
+PENDING
+SUCCEEDED
+FAILED
+REFUNDED
+PARTIALLY_REFUNDED
+DISPUTED
+CHARGEBACK
+```
+
+### PatronGrant
+
+A PatronGrant is an access grant.
+
+It may include:
+
+```txt
+id
+userId
+status
+source
+sourceId
+paymentId
+referralId
+grantedById
+reason
+createdAt
+expiresAt
+suspendedAt
+suspendedById
+suspendedReason
+reactivatedAt
+reactivatedById
+reactivatedReason
+revokedAt
+revokedById
+revokedReason
+metadata
+```
+
+PatronGrant statuses:
+
+```txt
+ACTIVE
+SUSPENDED
+REVOKED
+EXPIRED
+```
+
+PatronGrant sources:
+
+```txt
+PAYMENT
+ADMIN
+REFERRAL
+MIGRATION
+LEGACY
+SYSTEM
+```
+
+### Patron access
+
+Access rule:
+
+```txt
+User has patron access if at least one PatronGrant is ACTIVE and not expired.
+```
+
+If one grant is revoked or suspended, user remains patron if another ACTIVE grant exists.
+
+---
+
+## 4. Owned paths
+
+This lane may own or edit these paths when the ticket explicitly allows them.
+
+### Payment module
+
+```txt
+lib/modules/payments/**
+```
+
+### Patron module
+
+```txt
+lib/modules/patron/**
+lib/modules/patrons/**
+```
+
+Use the actual current module name from code.
+Do not invent a new module if one already exists.
+
+### Stripe webhook route
+
+```txt
+app/api/webhooks/stripe/route.ts
+```
+
+### Payment admin routes
+
+```txt
+app/api/admin/payments/**
+app/api/admin/payment-settings/**
+```
+
+### Patron admin routes
+
+```txt
+app/api/admin/users/[userId]/patron/**
+app/api/admin/patrons/**
+```
+
+Use actual current routes.
+
+### Payment / patron tests
+
+```txt
+tests/unit/modules/payments/**
+tests/unit/modules/patron/**
+tests/unit/modules/patrons/**
+tests/unit/*payment*.test.ts
+tests/unit/*patron*.test.ts
+tests/unit/*stripe*.test.ts
+```
+
+### Audit docs and reports
+
+```txt
+docs/reports/**
+docs/audit/**
+```
+
+Only if ticket explicitly allows docs/report updates.
+
+---
+
+## 5. Forbidden by default
+
+Builder agents in this lane must not edit:
+
+```txt
+README.md
+AGENTS.md
+docs/roadmap/Active-Execution-Roadmap.md
+docs/roadmap/Parallel-Work-Matrix.md
+docs/roadmap/Phase-Gates.md
+docs/architecture/Product-Architecture-Blueprint.md
+package.json
+package-lock.json
+```
+
+Builder agents must not edit Prisma schema unless ticket is schema-locked:
+
+```txt
+prisma/schema.prisma
+prisma/migrations/**
+```
+
+Forbidden product changes unless explicit:
+
+```txt
+turning patron into recurring subscription
+making mailing subscription grant access
+making Clerk metadata grant backend access
+making User.isPatron the target access source
+removing User.isPatron before Access migration proves it safe
+changing video access tiers
+changing comments visibility
+changing player behavior
+```
+
+---
+
+## 6. Parallel safety
+
+Default mode:
+
+```txt
+CAUTION / SERIAL
+```
+
+Runtime tickets in this lane should usually run one at a time.
+
+### Conflicts with
+
+This lane conflicts with:
+
+```txt
+access lane when changing PatronGrant truth or access source
+admin-cockpit lane when building patron/payment diagnostics
+cleanup-legacy lane when deleting legacy payment/patron services
+email-subscriptions lane when changing subscriber vs patron segments
+Prisma schema tasks
+guard tasks
+global docs tasks
+```
+
+### Can run with
+
+This lane may run in parallel with:
+
+```txt
+video-provider docs-only inventory
+playback-player docs-only inventory
+comments docs-only inventory
+email-subscriptions work that does not touch patron segments
+cleanup-legacy inventory-only reports
+```
+
+only if paths do not overlap.
+
+### Serial-only examples
+
+```txt
+payment creates PatronGrant
++
+Access reads PatronGrant as source of truth
+```
+
+Verdict:
+
+```txt
+SERIAL or requires frozen interface contract first
+```
+
+```txt
+refund revokes PatronGrant
++
+admin diagnostics displays PatronGrant lifecycle
+```
+
+Verdict:
+
+```txt
+SERIAL unless lifecycle DTO is already stable
+```
+
+```txt
+Stripe webhook idempotency
++
+payment fulfillment use-case rewrite
+```
+
+Verdict:
+
+```txt
+SERIAL
+```
+
+---
+
+## 7. Work sequence
+
+This lane must run in order.
+
+Do not jump to runtime rewrite before inventory.
+
+### PP-0 — Inventory
+
+Goal:
+
+```txt
+Understand current payment, Stripe, patron, refund, dispute, admin grant, referral grant, User.isPatron, and Clerk metadata behavior.
+```
+
+Inventory must answer:
+
+```txt
+Where are payments recorded?
+Where is Stripe webhook handled?
+Where is patron access granted?
+Where is User.isPatron read?
+Where is User.isPatron written?
+Where is Clerk metadata used?
+Where are refunds handled?
+Where are disputes handled?
+Where are admin grants handled?
+Where are referral rewards handled?
+What tests already exist?
+What legacy services are still used?
+```
+
+Output:
+
+```txt
+docs/reports/reconciliation/PP-0-current-payment-patron-inventory.md
+follow-up tickets
+```
+
+### PP-1 — Webhook safety
+
+Goal:
+
+```txt
+Make Stripe webhook handling safe and idempotent.
+```
+
+Required behavior:
+
+```txt
+verify Stripe signature
+use raw body correctly
+record event/payment fact
+handle duplicate webhook as no-op or return existing outcome
+do not create duplicate PatronGrant
+do not mark event fully processed if fulfillment failed
+```
+
+### PP-2 — PatronGrant creation from eligible payment
+
+Goal:
+
+```txt
+Create PatronGrant through explicit domain use case after eligible successful payment.
+```
+
+Required behavior:
+
+```txt
+payment succeeded
+amount meets minimum at payment time
+payment is eligible support/donation
+no duplicate grant for same payment
+PatronGrant(source=PAYMENT) created
+audit event recorded where appropriate
+```
+
+Forbidden:
+
+```txt
+user.isPatron = true as fulfillment
+Clerk metadata as source of truth
+Subscription as access
+```
+
+### PP-3 — Minimum donation policy
+
+Goal:
+
+```txt
+Make minimum donation behavior explicit.
+```
+
+Rules:
+
+```txt
+minimum amount is admin-configurable or documented
+change to minimum affects future payments only
+old PatronGrants remain valid
+payment below minimum records payment but creates no PatronGrant
+```
+
+### PP-4 — Refund lifecycle
+
+Goal:
+
+```txt
+Make refund behavior deterministic.
+```
+
+Rules:
+
+```txt
+full refund revokes related PatronGrant
+partial refund does not automatically revoke grant unless product decision changes
+partial refund may create admin review/audit
+refund affects related grant, not global user status
+user remains patron if another ACTIVE grant exists
+```
+
+### PP-5 — Dispute / chargeback lifecycle
+
+Goal:
+
+```txt
+Make dispute and chargeback behavior deterministic.
+```
+
+Rules:
+
+```txt
+dispute created -> related PatronGrant SUSPENDED
+dispute won -> related PatronGrant ACTIVE
+dispute lost / chargeback confirmed -> related PatronGrant REVOKED
+user remains patron if another ACTIVE grant exists
+```
+
+### PP-6 — Admin grant lifecycle
+
+Goal:
+
+```txt
+Make manual patron grants safe and auditable.
+```
+
+Rules:
+
+```txt
+admin grant requires reason
+admin revoke requires reason
+admin suspend requires reason
+admin reactivate requires reason
+every manual access-affecting action creates audit log
+REVOKED grants are not reanimated
+restoring access after REVOKE creates a new PatronGrant
+```
+
+### PP-7 — Referral grant integration
+
+Goal:
+
+```txt
+Ensure referrals never bypass Patron module if they grant patron access.
+```
+
+Rules:
+
+```txt
+Referral module marks reward eligible
+Patron module creates PatronGrant(source=REFERRAL)
+Audit records event
+Referral route does not directly set User.isPatron
+Referral route does not directly mutate Clerk metadata as truth
+```
+
+### PP-8 — Tests and certification
+
+Goal:
+
+```txt
+Prove the lifecycle with tests and certify the lane.
+```
+
+Required tests:
+
+```txt
+pending payment -> no grant
+succeeded eligible payment -> PatronGrant ACTIVE
+duplicate webhook -> no duplicate grant
+below-minimum payment -> no grant
+full refund -> related grant REVOKED
+partial refund -> grant unchanged or documented review behavior
+dispute created -> related grant SUSPENDED
+dispute won -> grant ACTIVE
+dispute lost -> grant REVOKED
+multiple grants -> user remains patron while at least one ACTIVE
+admin grant requires reason
+admin revoke/suspend/reactivate requires reason
+referral grant goes through Patron module
+```
+
+---
+
+## 8. Suggested tickets
+
+Tickets should be created under:
+
+```txt
+docs/tickets/ready/
+```
+
+### PP-001 — Payment/patron current-state inventory
+
+```txt
+ID: PP-001
+Lane: payments-patron
+Type: inventory
+Parallel safety: CAUTION
+Goal: Inventory current payment, Stripe, patron grant, User.isPatron, Clerk metadata, refund, dispute, admin grant, and referral grant behavior.
+```
+
+Allowed output:
+
+```txt
+docs/reports/reconciliation/PP-001-payment-patron-inventory.md
+```
+
+Forbidden:
+
+```txt
+runtime changes
+schema changes
+README changes
+roadmap changes
+```
+
+### PP-002 — Stripe webhook idempotency safety
+
+```txt
+ID: PP-002
+Lane: payments-patron
+Type: runtime
+Parallel safety: SERIAL
+Goal: Ensure Stripe webhook processing is signature-safe, raw-body-safe, idempotent, and does not duplicate payment/grant effects.
+```
+
+Allowed paths:
+
+```txt
+app/api/webhooks/stripe/route.ts
+lib/modules/payments/**
+lib/modules/patron/**
+tests/unit/modules/payments/**
+tests/unit/*stripe*.test.ts
+```
+
+Forbidden:
+
+```txt
+Access hard reset
+User.isPatron removal
+player changes
+video provider changes
+README changes
+```
+
+### PP-003 — Eligible payment creates PatronGrant
+
+```txt
+ID: PP-003
+Lane: payments-patron
+Type: runtime
+Parallel safety: SERIAL
+Goal: Ensure successful eligible support payment creates PatronGrant(source=PAYMENT) through explicit domain use case.
+```
+
+### PP-004 — Minimum donation eligibility
+
+```txt
+ID: PP-004
+Lane: payments-patron
+Type: runtime/test
+Parallel safety: SERIAL
+Goal: Enforce/document minimum donation policy for PatronGrant creation.
+```
+
+### PP-005 — Refund lifecycle
+
+```txt
+ID: PP-005
+Lane: payments-patron
+Type: runtime/test
+Parallel safety: SERIAL
+Goal: Implement/certify full and partial refund behavior against related PatronGrant.
+```
+
+### PP-006 — Dispute and chargeback lifecycle
+
+```txt
+ID: PP-006
+Lane: payments-patron
+Type: runtime/test
+Parallel safety: SERIAL
+Goal: Implement/certify dispute/chargeback suspend/reactivate/revoke behavior.
+```
+
+### PP-007 — Admin patron grant audit safety
+
+```txt
+ID: PP-007
+Lane: payments-patron
+Type: runtime/test
+Parallel safety: CAUTION / SERIAL with admin-cockpit
+Goal: Ensure admin grant/revoke/suspend/reactivate requires reason and audit.
+```
+
+### PP-008 — Referral patron grant path
+
+```txt
+ID: PP-008
+Lane: payments-patron
+Type: runtime/test
+Parallel safety: CAUTION / SERIAL with access/referrals
+Goal: Ensure referral rewards create patron access only through Patron module use case.
+```
+
+### PP-009 — Payment/patron lifecycle certification
+
+```txt
+ID: PP-009
+Lane: payments-patron
+Type: certification
+Parallel safety: SERIAL
+Goal: Certify X1 Payments / Patron Safety.
+```
+
+Output:
+
+```txt
+docs/reports/certification/X1-payments-patron-certification.md
+```
+
+---
+
+## 9. Validation
+
+Inventory-only minimum:
+
+```bash
+npm run quality:architecture-boundaries
+```
+
+Runtime minimum:
+
+```bash
+npm run quality:architecture-boundaries
+npm run typecheck
+npm test -- --run
+```
+
+Preferred:
+
+```bash
+npm run quality
+```
+
+If schema is changed:
+
+```bash
+npm run db:validate
+npm run prisma:generate
+npm run typecheck
+npm test -- --run
+```
+
+Agents must report exact commands.
+
+Do not claim payment/patron safety without tests.
+
+---
+
+## 10. Done criteria
+
+This lane is done when:
+
+```txt
+payment/patron inventory exists
+Stripe webhook is signature/raw-body/idempotency safe
+duplicate webhook does not duplicate grants
+eligible payment creates PatronGrant through explicit domain use case
+below-minimum payment creates no grant
+refund/dispute behavior is deterministic
+admin grant lifecycle is reasoned and auditable
+referral grants go through Patron module
+tests cover critical lifecycle
+docs reflect current implementation
+```
+
+---
+
+## 11. Certified criteria
+
+This lane is certified when:
+
+```txt
+Certifier reviewed current main
+payment/patron tests pass
+Stripe does not directly grant access
+User.isPatron is not treated as target source of truth
+Clerk metadata is not backend access truth
+Subscription is not access
+PatronGrant lifecycle is explicit
+refund/dispute lifecycle is explicit
+all remaining blockers have tickets
+certification report exists
+human owner accepts certification
+```
+
+Certification report:
+
+```txt
+docs/reports/certification/X1-payments-patron-certification.md
+```
+
+---
+
+## 12. Review checklist
+
+Reviewer must check:
+
+```txt
+Does PR keep Payment separate from PatronGrant?
+Does PR avoid direct user.isPatron fulfillment?
+Does PR avoid Clerk metadata as backend source of truth?
+Does PR avoid Subscription as access?
+Does PR handle duplicate webhook/idempotency?
+Does PR avoid duplicate PatronGrant per payment?
+Does PR require reason/audit for admin access-affecting actions?
+Does PR affect Access lane contracts?
+Does PR include focused tests?
+Does PR avoid global docs unless allowed?
+```
+
+Return:
+
+```txt
+MERGE
+FIX
+REJECT
+BLOCKED
+```
+
+---
+
+## 13. Anti-patterns
+
+Do not:
+
+```txt
+set user.isPatron = true from Stripe fulfillment
+use Clerk metadata as backend access source
+treat Subscription as Patron
+create PatronGrant directly from route
+let payment route decide final access
+create duplicate grants for duplicate webhook
+revoke all user access on one refunded payment if another active grant exists
+reactivate REVOKED grants
+hide payment/patron behavior inside UI
+mix payment lifecycle rewrite with player/admin/video work
+```
+
+---
+
+## 14. Final lane rule
+
+This lane is successful when Access can later say:
+
+```txt
+I do not care about Stripe.
+I do not care about Subscription.
+I do not care about Clerk metadata.
+I only need to know whether an ACTIVE PatronGrant exists.
+```
+
+That is the handoff from Payments / Patron to Access.
