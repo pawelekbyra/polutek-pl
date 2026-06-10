@@ -1,14 +1,30 @@
-# Reconciliation Template
+# Reconciliation: [Batch/Phase/Lane]
 
-## Date
-<!-- Today's date -->
+- **Batch/Phase/Lane**: [e.g., R10-Cleanup]
+- **Merged PRs**:
+  - [PR #123]
+  - [PR #456]
 
-## Discrepancies Found
-- File A says X, but Code says Y.
+## Current Main State
+[Brief summary of the codebase state after merges.]
 
-## Action Plan
-- How to align the state.
+## Docs Updated
+- [ ] README.md
+- [ ] AGENTS.md
+- [ ] Roadmap files
 
-## Status
-- [ ] Balanced
-- [ ] Out of Sync
+## Tickets Moved
+- [ ] [Ticket ID] -> done
+- [ ] [Ticket ID] -> done
+
+## Follow-up Tickets Created
+- [Ticket ID]: [Summary]
+
+## Stale Docs/Guards Found
+- [List any documentation or automated checks that are now out of date.]
+
+## Remaining Blockers
+- [What is stopping the next batch?]
+
+## Next Recommended Batch
+[Suggestions for the next set of tickets.]

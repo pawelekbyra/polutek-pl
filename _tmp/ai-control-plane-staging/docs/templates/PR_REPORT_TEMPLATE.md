@@ -1,13 +1,38 @@
-# PR Report Template
+# PR Report: [Ticket ID] - [TITLE]
+
+## Ticket ID
+[e.g., ES-001]
 
 ## Summary
-<!-- What was changed and why. -->
+[Brief explanation of the changes introduced.]
 
-## Changes
-- List of modified files and key changes.
+## Files Changed
+- `[Path/to/file]`
+- `[Path/to/file]`
 
-## Verification
-- Results of tests and manual verification.
+## What Changed
+- [Key change 1]
+- [Key change 2]
 
-## Architecture Compliance
-- Confirmation that architecture guards passed.
+## What Did Not Change
+- [Clarify any boundaries or things explicitly left untouched as per ticket constraints.]
+
+## Validation Run
+[Description of the validation process performed.]
+
+## Tests Result
+```text
+[Paste relevant test output here]
+```
+
+## Known Risks
+- [Any potential side effects or areas for caution.]
+
+## Follow-up Tickets
+- [Ticket ID]: [Description of remaining or secondary work.]
+
+## Screenshots (if UI)
+[Link to screenshots or media]
+
+## Reviewer Notes
+[Anything specific the reviewer should look for.]

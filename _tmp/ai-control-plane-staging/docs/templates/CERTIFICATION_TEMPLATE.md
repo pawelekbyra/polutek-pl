@@ -1,14 +1,35 @@
-# Certification Template
+# Certification: [Phase/Lane Name]
 
-## Phase
-<!-- e.g., R9 (Email) -->
+- **Phase/Lane**: [e.g., R9 (Email)]
+- **Certification Status**: [IN PROGRESS / CERTIFIED]
 
-## Requirements Checklist
-- [ ] Requirement 1
-- [ ] Requirement 2
+## Merged PRs Reviewed
+- [PR #123] - [Ticket ID]
+- [PR #456] - [Ticket ID]
+
+## Validation Commands
+```bash
+# List commands run for final certification
+```
+
+## Guards Status
+- [ ] Architecture boundaries pass.
+- [ ] Typecheck passes.
+- [ ] All module tests pass.
+
+## Docs/Audit Status
+- [ ] README is updated.
+- [ ] Roadmap reflects completion.
+- [ ] Audit logs for critical actions are verified.
+
+## Known Blockers
+- [Any issues that are preventing full certification.]
+
+## Deferred Work
+- [Tasks that were moved to future tickets.]
 
 ## Evidence
-- Link to tests, reports, or logs.
+[Links to logs, screenshots, or other proof.]
 
-## Certification Statement
-- Final confirmation of phase completion.
+## Final Certification Verdict
+[Final statement on phase readiness.]
