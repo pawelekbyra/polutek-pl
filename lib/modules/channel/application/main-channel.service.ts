@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { ChannelRepository } from "../infrastructure/channel.repository";
 import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from "../domain/channel.errors";
 import { flags } from "@/lib/feature-flags";
+import { WriteTx } from "../../shared/db";
 
 export class MainChannelService {
   static async getOptional(ctx: AppContext) {
@@ -30,6 +31,16 @@ export class MainChannelService {
 
   static getConfiguredSlug() {
       return flags.mainCreatorSlug;
+  }
+
+  static async incrementSubscribersCount(ctx: AppContext, channelId: string, tx: WriteTx) {
+    const repository = new ChannelRepository(tx);
+    return await repository.updateSubscribersCount(channelId, 1, tx);
+  }
+
+  static async decrementSubscribersCount(ctx: AppContext, channelId: string, tx: WriteTx) {
+    const repository = new ChannelRepository(tx);
+    return await repository.updateSubscribersCount(channelId, -1, tx);
   }
 }
 

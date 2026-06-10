@@ -80,7 +80,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments'];
+const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments', 'subscriptions'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/webhooks/clerk/route.ts':
@@ -103,8 +103,6 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
     'R8 cert: migrated to modular use cases.',
   'app/api/comments/[commentId]/context/route.ts':
     'R8 cert: migrated to modular use cases.',
-  'app/api/subscriptions/route.ts':
-    'R5/R7 blocker: mixed route, uses Users module but subscriptions are direct Prisma.',
   'app/api/videos/[id]/comments/route.ts':
     'R8 cert: migrated to modular access/use cases.',
   'app/api/admin/comments/route.ts':
@@ -162,7 +160,6 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
 
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
-  'app/api/subscriptions/route.ts': 'R5/R7 blocker: mixed route.',
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',
   'app/api/user/referrals/route.ts': 'R5 future blocker: referrals legacy.',
   'app/api/user/referrals/claim/route.ts': 'R5 future blocker: referrals legacy.',
