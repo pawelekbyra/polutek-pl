@@ -26,8 +26,15 @@ export class ChannelRepository {
   }
 
   async updateSubscribersCount(id: string, increment: number) {
-     return await (this.db as any).creator.update({
-         where: { id },
+     if (increment >= 0) {
+       return await (this.db as any).creator.update({
+           where: { id },
+           data: { subscribersCount: { increment } }
+       });
+     }
+
+     return await (this.db as any).creator.updateMany({
+         where: { id, subscribersCount: { gt: 0 } },
          data: { subscribersCount: { increment } }
      });
   }

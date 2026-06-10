@@ -4,4 +4,4 @@ export * from "./application/get-admin-channel-settings.use-case";
 export * from "./application/update-admin-channel-settings.use-case";
 export * from "./domain/channel.policy";
 export * from "./domain/channel.errors";
-// Repository is internal to the module
+export * from "./infrastructure/channel.repository";

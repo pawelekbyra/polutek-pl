@@ -31,21 +31,28 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
     - `lib/services/comments/comment-audit.service.ts`
     - `lib/services/comments/comment-access.service.ts`
 
-### 3. R7 Payments/Patron Subscriptions
+### 3. R9 Email Finalization (Templates)
+- **Task**: Modularize template management and remove direct Prisma usage.
+- **Affected Routes**:
+    - `app/api/admin/templates/route.ts`
+- **Legacy Services to Remove**:
+    - `lib/services/email.service.ts` (once all callers moved to modules)
+
+### 4. R7 Payments/Patron Subscriptions
 - **Task**: Migrate subscription management to `lib/modules/payments` and remove direct Prisma.
 - **Affected Routes**:
     - `app/api/subscriptions/route.ts`
 - **Legacy Services to Remove**:
     - `lib/services/payment.service.ts`
 
-### 4. Media/Video (R3/R6) Mixed Routes
+### 5. Media/Video (R3/R6) Mixed Routes
 - **Task**: Move remaining persistence logic (playback events) to repositories.
 - **Affected Routes**:
     - `app/api/videos/[id]/playback-event/route.ts`
     - `app/api/admin/videos/[id]/route.ts` (audit details)
     - `app/api/media/[...path]/route.ts`
 
-### 5. R11 Admin Dashboard
+### 6. R11 Admin Dashboard
 - **Task**: Modularize global stats and remove direct Prisma.
 - **Affected Routes**:
     - `app/api/admin/stats/route.ts`
