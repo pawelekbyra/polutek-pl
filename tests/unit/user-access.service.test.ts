@@ -1,17 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PatronGrantSource } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
 import { UserAccessService } from '@/lib/services/user-access.service';
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    patronGrant: {
-      findFirst: vi.fn(),
-    },
-    user: {
-      update: vi.fn(),
-    },
-  },
+// We need to mock the modules that are dynamically imported
+vi.mock('@/lib/modules/patron', () => ({
+  recalculatePatronStatus: vi.fn(),
+}));
+
+vi.mock('@/lib/modules/shared/app-context', () => ({
+  createAppContext: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock('@/lib/clerk', () => ({ getClerkClient: vi.fn() }));
@@ -22,73 +18,50 @@ describe('UserAccessService.recalculateUserPatronStatus', () => {
     vi.clearAllMocks();
   });
 
-  it('keeps the user as Patron when another active grant remains after a payment grant is revoked', async () => {
-    const activeReferralGrant = {
-      id: 'grant_referral_1',
-      userId: 'user_1',
-      source: PatronGrantSource.REFERRAL,
-      createdAt: new Date('2026-01-02T00:00:00Z'),
-      revokedAt: null,
-    };
-
-    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(activeReferralGrant as any);
-    vi.mocked(prisma.user.update).mockResolvedValue({
-      id: 'user_1',
-      isPatron: true,
-      patronSince: activeReferralGrant.createdAt,
-      patronSource: PatronGrantSource.REFERRAL,
-      paymentTotals: [],
+  it('keeps the user as Patron when use case returns isPatron true', async () => {
+    const { recalculatePatronStatus } = await import('@/lib/modules/patron');
+    vi.mocked(recalculatePatronStatus).mockResolvedValue({
+      ok: true,
+      data: {
+        isPatron: true,
+        normalizedTotal: 100,
+        patronSince: new Date(),
+        patronSource: 'REFERRAL'
+      }
     } as any);
 
     const result = await UserAccessService.recalculateUserPatronStatus('user_1');
 
     expect(result.isPatron).toBe(true);
-    expect(prisma.patronGrant.findFirst).toHaveBeenCalledWith({
-      where: { userId: 'user_1', revokedAt: null },
-      orderBy: { createdAt: 'asc' },
-    });
-    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'user_1' },
-      data: expect.objectContaining({
-        isPatron: true,
-        patronSince: activeReferralGrant.createdAt,
-        patronSource: PatronGrantSource.REFERRAL,
-      }),
-    }));
+    expect(result.normalizedTotal).toBe(100);
+    expect(recalculatePatronStatus).toHaveBeenCalledWith('user_1', expect.anything(), undefined);
   });
 
-  it('revokes Patron access when no active grants remain', async () => {
-    vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.user.update).mockResolvedValue({
-      id: 'user_1',
-      isPatron: false,
-      patronSince: null,
-      patronSource: null,
-      paymentTotals: [],
+  it('revokes Patron access when use case returns isPatron false', async () => {
+    const { recalculatePatronStatus } = await import('@/lib/modules/patron');
+    vi.mocked(recalculatePatronStatus).mockResolvedValue({
+      ok: true,
+      data: {
+        isPatron: false,
+        normalizedTotal: 0,
+        patronSince: null,
+        patronSource: null
+      }
     } as any);
 
     const result = await UserAccessService.recalculateUserPatronStatus('user_1');
 
     expect(result.isPatron).toBe(false);
-    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'user_1' },
-      data: expect.objectContaining({
-        isPatron: false,
-        patronSince: null,
-        patronSource: null,
-      }),
-    }));
+    expect(result.normalizedTotal).toBe(0);
   });
 
-  it('picks the earliest active grant for patronSince when multiple exist', async () => {
-      const grant1 = { id: 'g1', createdAt: new Date('2026-01-01'), source: 'stripe_tip' };
-      vi.mocked(prisma.patronGrant.findFirst).mockResolvedValue(grant1 as any);
-      vi.mocked(prisma.user.update).mockResolvedValue({ id: 'user_1', paymentTotals: [] } as any);
+  it('throws error if use case fails', async () => {
+      const { recalculatePatronStatus } = await import('@/lib/modules/patron');
+      vi.mocked(recalculatePatronStatus).mockResolvedValue({
+          ok: false,
+          error: { message: 'DB_ERROR' }
+      } as any);
 
-      await UserAccessService.recalculateUserPatronStatus('user_1');
-
-      expect(prisma.patronGrant.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-          orderBy: { createdAt: 'asc' }
-      }));
+      await expect(UserAccessService.recalculateUserPatronStatus('user_1')).rejects.toThrow('DB_ERROR');
   });
 });
