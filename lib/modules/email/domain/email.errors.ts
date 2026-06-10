@@ -48,3 +48,15 @@ export class WebhookUnsupportedEventError extends EmailError {
     super(message, 202, 'EMAIL_WEBHOOK_UNSUPPORTED_EVENT');
   }
 }
+
+export class EmailTemplateNotFoundError extends EmailError {
+  constructor(slug: string) {
+    super(`Email template with slug '${slug}' not found`, 404, 'EMAIL_TEMPLATE_NOT_FOUND');
+  }
+}
+
+export class SystemTemplateDeleteError extends EmailError {
+  constructor() {
+    super('System templates cannot be deleted', 403, 'EMAIL_SYSTEM_TEMPLATE_DELETE_FORBIDDEN');
+  }
+}
