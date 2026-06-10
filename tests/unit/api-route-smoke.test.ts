@@ -29,6 +29,7 @@ vi.mock('@/lib/feature-flags', () => ({
   flags: {
     demoFallbacks: false,
   },
+  canUseDemoFallbacks: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock('@/lib/rate-limit', () => ({

@@ -16,7 +16,7 @@ This report identifies all legacy services in `lib/services/**` and their curren
 | `playback/playback.service.ts` | **ACTIVE** | `app/api/media-source/[videoId]/route.ts` | - |
 | `content.visibility.ts` | **DEAD** | None | `lib/modules/video`? |
 | `patron.service.ts` | **ACTIVE** | `app/api/admin/users/[userId]/patron/route.ts` | - |
-| `user-access.service.ts` | **ACTIVE** | `app/api/admin/users/export/route.ts`, `app/page.tsx` | - |
+| `user-access.service.ts` | **ACTIVE** | `app/page.tsx` | - |
 | `home-content.loader.ts` | **ACTIVE** | `app/page.tsx` | - |
 | `user/language.service.ts` | **ACTIVE** | `lib/actions/user.ts` | `lib/modules/users` |
 | `user/profile.service.ts` | **BRIDGE** | `lib/modules/users/application/get-or-create-current-user.use-case.ts` | `lib/modules/users` |
@@ -53,4 +53,4 @@ This report identifies all legacy services in `lib/services/**` and their curren
 - **Modularization status**:
     - Users (R5): Mostly bridged or moved to modules.
     - Payments (R7): Core runtime and administrative flows moved to modular use cases. Legacy services are deprecated.
-    - Comments (R8): Still relies entirely on legacy `comments/` services.
+    - Comments (R8): Fully migrated to modular use cases. Legacy services are deprecated.

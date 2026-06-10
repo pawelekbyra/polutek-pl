@@ -118,7 +118,7 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
   'app/api/admin/users/[userId]/route.ts':
     'R5 blocker: mixed route, core user identity is modular, but extensions (payments, subscriptions) are legacy.',
   'app/api/admin/users/export/route.ts':
-    'R5 blocker: admin user export is still legacy/direct Prisma.',
+    'R5 cert: migrated to modular use case.',
   'app/api/admin/users/stats/route.ts':
     'R5 cert: migrated to modular use case.',
   'app/api/admin/users/[userId]/patron/route.ts':
@@ -155,7 +155,6 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
 };
 
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {
-  'app/api/admin/users/export/route.ts': 'R5 blocker: admin export still legacy.',
   'app/api/admin/users/[userId]/route.ts': 'R5 blocker: mixed route with legacy extensions.',
   'app/api/subscriptions/route.ts': 'R5/R7 blocker: mixed route.',
   'app/api/videos/[id]/playback-event/route.ts': 'R6/R3 certified mixed route.',

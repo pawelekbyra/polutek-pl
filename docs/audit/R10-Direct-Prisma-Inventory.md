@@ -12,7 +12,6 @@ This report lists all API routes in `app/api/**` that still import `@/lib/prisma
 | `app/api/admin/templates/route.ts` | Email | 5 | R9 | Legacy email templates |
 | `app/api/admin/videos/[id]/route.ts` | Video | 1 | R6 | Audit details extension |
 | `app/api/admin/stats/route.ts` | Admin | 4 | R11 | Global dashboard stats |
-| `app/api/admin/users/export/route.ts` | Users | 1 | R5 | Admin user export still legacy |
 | `app/api/admin/users/[userId]/route.ts` | Users | 5 | R5 | Extensions (payments, subs) |
 | `app/api/admin/subscribers/resync/route.ts` | Users | 3 | R5 | Legacy subscriber sync |
 | `app/api/admin/emails/responses/route.ts` | Email | 2 | R9 | Email response tracking |

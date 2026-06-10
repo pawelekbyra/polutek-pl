@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/errors';
-import { getActorFromAuth } from '@/lib/api/auth';
-import { createAppContext } from '@/lib/modules/shared/app-context';
+import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
 import { listAdminComments } from '@/lib/modules/comments';
 import { CommentStatus } from '@prisma/client';
+import { requireAdminForApi } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const actor = await getActorFromAuth();
-
-  if (actor.type !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
-  }
+  const { response } = await requireAdminForApi("GET_ADMIN_COMMENTS");
+  if (response) return response;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -20,7 +17,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as CommentStatus | undefined;
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-    const ctx = createAppContext({ actor });
+    const ctx = await createAppContextFromRequest();
     const result = await listAdminComments({ q, status, limit }, ctx);
 
     if (!result.ok) {
