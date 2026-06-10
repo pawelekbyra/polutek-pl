@@ -104,6 +104,9 @@
     "tsx": "^4.22.4",
     "vitest": "^4.1.8"
   },
+  "overrides": {
+    "magicast": "0.5.3"
+  },
   "engines": {
     "node": "22.x"
   }
