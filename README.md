@@ -172,7 +172,7 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`     |
 | **R8**   | Comments                                   | `[x certified]`                                         |
 | **R9**   | Email                                      | `[x certified]`                                         |
-| **R10**  | Cleanup legacy fasad                       | `[~ cleanup pending / inventory reconciled after #795/#797]` |
+| **R10**  | Cleanup legacy fasad                       | `[~ core cleanup complete / direct Prisma routes modularized]` |
 | **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                   |
 
 Aktualna interpretacja:
@@ -194,16 +194,16 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-R10 Cleanup: Admin Subscribers Resync / Referrals.
+R10 Cleanup: R8 Comments Admin Leftovers & Dead Code.
 
 Cel:
-Zmigrować pozostałą logikę resync subskrybentów i claimowania poleceń do modułów, usuwając direct Prisma usage.
+Zmigrować pozostałe route'y moderacji komentarzy do use case'ów oraz usunąć zidentyfikowane martwe serwisy.
 
 Stan:
-- #795 Admin Stats modularization zmergowany.
-- #797 Subscriptions modularization zmergowany.
-- R10 Inventory został uzgodniony po modularizacji subskrypcji i statystyk.
-- app/api/user/referrals/route.ts jest już czysty.
+- R10 Direct-Prisma Cleanup ukończony.
+- Wszystkie API routes w app/api/** są wolne od bezpośredniego importu @/lib/prisma.
+- R8 core jest certified, ale pozostały admin moderation routes do doczyszczenia.
+- R10 Inventory raportuje 0 blokad direct-Prisma dla route'ów.
 ```
 
 Następny dobry prompt dla agenta kodowania/dokumentacji:
@@ -211,27 +211,27 @@ Następny dobry prompt dla agenta kodowania/dokumentacji:
 ```txt
 Start from current main.
 
-Task: R10 Cleanup: Admin Subscribers Resync / Referrals.
+Task: R10 Cleanup: R8 Comments Admin Leftovers.
 
 Goal:
-Zmigrować pozostałą logikę resync subskrybentów i claimowania poleceń do modułów, usuwając direct Prisma usage w app/api/admin/subscribers/resync/route.ts oraz app/api/user/referrals/claim/route.ts.
+Zmigrować pozostałe admin moderation routes dla komentarzy do modularnych use case'ów i usunąć ich wpisy z KNOWN_ROUTE_VIOLATIONS_ALLOWLIST w scripts/check-architecture.ts.
+
+Affected Routes:
+- app/api/admin/comments/reports/route.ts
+- app/api/admin/comments/[commentId]/heart/route.ts
+- app/api/admin/comments/[commentId]/hide/route.ts
+- app/api/admin/comments/[commentId]/delete/route.ts
+- app/api/admin/comments/[commentId]/restore/route.ts
 
 Required:
-- Runtime code modifications allowed ONLY for the narrow scope of Admin Subscribers Resync / Referrals.
-- Update docs/audit/R10-Direct-Prisma-Inventory.md and R10-Next-Cleanup-Plan.md after cleanup.
-- Do not touch README/notatka/docs/architecture unless explicitly asked.
-- Do not touch R9 email code or R7/R8 runtime.
-- Use modular Use Cases and Repositories.
+- Use modular Use Cases in lib/modules/comments.
+- Ensure audit logging for moderation actions.
+- Update scripts/check-architecture.ts.
 
 Validation:
 - npm run quality:architecture-boundaries
 - npm run typecheck
 - npm test -- --run
-
-Output:
-- confirmed Prisma removal from target routes
-- updated R10 inventory count
-- list of removed legacy services
 ```
 
 ---
@@ -1062,17 +1062,13 @@ Nie rób:
 
 # 13. Obecny najbezpieczniejszy proces
 
-Aktualny proces po merge R9 Email Templates Completion:
+Aktualny proces po merge R10 Direct-Prisma Cleanup:
 
 ```txt
 1. R8 i R9 są [x certified].
-2. R10 Inventory został uzgodniony po modularizacji subskrypcji (#797) i statystyk (#795).
+2. R10 Direct-Prisma API routes cleanup jest zakończony.
 3. Kolejny krok to R10 cleanup PR-y:
-   - Admin subscribers resync / referrals (current target),
-   - Playback-event route,
-   - Admin videos [id] audit extension,
-   - Media/[...path] delivery check,
-   - Admin comments moderation leftovers,
+   - Admin comments moderation leftovers (R8 leftovers),
    - Dead services scan/removal.
 4. R11 tylko jako docs/spec przed runtime implementation.
 ```

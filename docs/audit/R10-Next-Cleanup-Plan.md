@@ -4,10 +4,8 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
 
 ## Safe Cleanup Order
 
-### 4. Media/[...path] (R3)
-- **Task**: Replace legacy media delivery checks with modular access/media logic.
-- **Affected Routes**:
-    - `app/api/media/[...path]/route.ts`
+### 1. R10 Direct-Prisma Cleanup (Completed)
+- All API routes in `app/api/**` no longer import `@/lib/prisma` directly.
 
 ### 5. R8 Comments Admin Leftovers
 - **Task**: Migrate admin moderation routes to modular use cases.
