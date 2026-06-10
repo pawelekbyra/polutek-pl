@@ -194,16 +194,16 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-Post-R9 README / R10 reconcile po merge R9 Email Templates Completion.
+R10 Cleanup: Admin Subscribers Resync / Referrals.
 
 Cel:
-Uzgodnić dokumentację i inventory z aktualnym main po certyfikacji R9, bez ruszania runtime.
+Zmigrować pozostałą logikę resync subskrybentów i claimowania poleceń do modułów, usuwając direct Prisma usage.
 
 Stan:
-- #793 R9 Email Templates Completion został zmergowany.
-- R9 może być traktowane jako [x certified].
-- #790 R10 Inventory został zmergowany wcześniej i może zawierać stale wpisy o R9 templates.
-- #791 i #792 są stare R9 duplicate PRs i nie powinny być mergowane.
+- #795 Admin Stats modularization zmergowany.
+- #797 Subscriptions modularization zmergowany.
+- R10 Inventory został uzgodniony po modularizacji subskrypcji i statystyk.
+- app/api/user/referrals/route.ts jest już czysty.
 ```
 
 Następny dobry prompt dla agenta kodowania/dokumentacji:
@@ -211,7 +211,7 @@ Następny dobry prompt dla agenta kodowania/dokumentacji:
 ```txt
 Start from current main.
 
-Task: R10 Inventory Post-R9 Reconcile.
+Task: R10 Cleanup: Admin Subscribers Resync / Referrals.
 
 Do not touch runtime code.
 Do not touch README.md unless explicitly asked.
@@ -1083,19 +1083,16 @@ Nie rób:
 Aktualny proces po merge R9 Email Templates Completion:
 
 ```txt
-1. Nie mergować #791 ani #792 — są superseded przez #793.
-2. Zaktualizować README tak, aby R8 i R9 były [x certified].
-3. Wykonać R10 Inventory Post-R9 Reconcile:
-   - usunąć stale wpisy R9 templates z direct Prisma inventory,
-   - przeliczyć pozostałe direct Prisma route’y,
-   - poprawić kolejność R10 cleanup.
-4. Dopiero potem zacząć małe R10 cleanup PR-y:
-   - dead services scan/removal,
-   - subscriptions route,
-   - admin comments leftovers,
-   - admin stats,
-   - media/video leftovers.
-5. R11 tylko jako docs/spec przed runtime implementation.
+1. R8 i R9 są [x certified].
+2. R10 Inventory został uzgodniony po modularizacji subskrypcji (#797) i statystyk (#795).
+3. Kolejny krok to R10 cleanup PR-y:
+   - Admin subscribers resync / referrals (current target),
+   - Playback-event route,
+   - Admin videos [id] audit extension,
+   - Media/[...path] delivery check,
+   - Admin comments moderation leftovers,
+   - Dead services scan/removal.
+4. R11 tylko jako docs/spec przed runtime implementation.
 ```
 
 Nie oznaczać R10 jako `[x]`, dopóki:
