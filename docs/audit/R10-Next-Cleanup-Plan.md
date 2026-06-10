@@ -4,7 +4,30 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
 
 ## Safe Cleanup Order
 
-### 1. R8 Comments Admin Leftovers
+### 1. Admin Subscribers Resync or Referrals
+- **Task**: Migrate legacy subscriber sync and referral logic to modular use cases.
+- **Affected Routes**:
+    - `app/api/admin/subscribers/resync/route.ts`
+    - `app/api/user/referrals/claim/route.ts`
+- **Legacy Services to Remove**:
+    - `lib/services/referral.service.ts`
+
+### 2. Playback-event route (R6/R3)
+- **Task**: Move remaining persistence logic (playback events) to repositories.
+- **Affected Routes**:
+    - `app/api/videos/[id]/playback-event/route.ts`
+
+### 3. Admin Videos [id] (R6)
+- **Task**: Modularize audit details extension and remove direct Prisma.
+- **Affected Routes**:
+    - `app/api/admin/videos/[id]/route.ts`
+
+### 4. Media/[...path] (R3)
+- **Task**: Replace legacy media delivery checks with modular access/media logic.
+- **Affected Routes**:
+    - `app/api/media/[...path]/route.ts`
+
+### 5. R8 Comments Admin Leftovers
 - **Task**: Migrate admin moderation routes to modular use cases.
 - **Affected Routes**:
     - `app/api/admin/comments/reports/route.ts`
@@ -17,8 +40,8 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
     - `lib/services/comments/comment-report.service.ts`
     - `lib/services/comments/comment-moderation.service.ts`
 
-### 2. R10 Dead Code Removal (Safe Now)
-- **Task**: Remove services with no runtime usage found in the inventory.
+### 6. Dead Code Candidates — verify usage before deletion
+- **Task**: Identify and remove services with no runtime usage found in the inventory.
 - **Candidates**:
     - `lib/services/user.service.ts`
     - `lib/services/patron.service.ts`
@@ -30,25 +53,6 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
     - `lib/services/comments/comment-reaction.service.ts`
     - `lib/services/comments/comment-audit.service.ts`
     - `lib/services/comments/comment-access.service.ts`
-
-### 3. R7 Payments/Patron Subscriptions
-- **Task**: Migrate subscription management to `lib/modules/payments` and remove direct Prisma.
-- **Affected Routes**:
-    - `app/api/subscriptions/route.ts`
-- **Legacy Services to Remove**:
-    - `lib/services/payment.service.ts`
-
-### 4. Media/Video (R3/R6) Mixed Routes
-- **Task**: Move remaining persistence logic (playback events) to repositories.
-- **Affected Routes**:
-    - `app/api/videos/[id]/playback-event/route.ts`
-    - `app/api/admin/videos/[id]/route.ts` (audit details)
-    - `app/api/media/[...path]/route.ts`
-
-### 5. R11 Admin Dashboard
-- **Task**: Modularize global stats and remove direct Prisma.
-- **Affected Routes**:
-    - `app/api/admin/stats/route.ts`
 
 ## Verification Strategy
 - For each step, run `npm run quality:architecture-boundaries`.
