@@ -40,8 +40,8 @@ This document outlines the safe cleanup order for R10 work, targeting the remova
     - `lib/services/comments/comment-report.service.ts`
     - `lib/services/comments/comment-moderation.service.ts`
 
-### 6. R10 Dead Code Removal (Safe Now)
-- **Task**: Remove services with no runtime usage found in the inventory.
+### 6. Dead Code Candidates — verify usage before deletion
+- **Task**: Identify and remove services with no runtime usage found in the inventory.
 - **Candidates**:
     - `lib/services/user.service.ts`
     - `lib/services/patron.service.ts`

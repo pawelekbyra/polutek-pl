@@ -172,7 +172,7 @@ Faza może zostać oznaczona jako certyfikowana tylko wtedy, gdy:
 | **R7**   | Patron + Payments                          | `[~ stronger foundation / certification candidate]`     |
 | **R8**   | Comments                                   | `[x certified]`                                         |
 | **R9**   | Email                                      | `[x certified]`                                         |
-| **R10**  | Cleanup legacy fasad                       | `[~ preparation inventory / post-R9 reconcile needed]`  |
+| **R10**  | Cleanup legacy fasad                       | `[~ cleanup pending / inventory reconciled after #795/#797]` |
 | **R11**  | Frontend admina / kokpit operacyjny        | `[ ]`                                                   |
 
 Aktualna interpretacja:
@@ -213,43 +213,25 @@ Start from current main.
 
 Task: R10 Cleanup: Admin Subscribers Resync / Referrals.
 
-Do not touch runtime code.
-Do not touch README.md unless explicitly asked.
-Do not touch R9 email code.
-Do not touch R7/R8 runtime.
-
-Update only:
-- docs/audit/R10-Direct-Prisma-Inventory.md
-- docs/audit/R10-Legacy-Service-Inventory.md
-- docs/audit/R10-Next-Cleanup-Plan.md
-
 Goal:
-Reconcile R10 inventory with current main after R9 Email Templates Completion.
+Zmigrować pozostałą logikę resync subskrybentów i claimowania poleceń do modułów, usuwając direct Prisma usage w app/api/admin/subscribers/resync/route.ts oraz app/api/user/referrals/claim/route.ts.
 
 Required:
-- Confirm that app/api/admin/templates/route.ts no longer imports @/lib/prisma.
-- Remove app/api/admin/templates/route.ts from direct Prisma inventory if current main confirms it.
-- Remove R9 Email Finalization/Templates from pending cleanup order if current main confirms it.
-- Recount remaining direct Prisma routes.
-- Reclassify remaining blockers by domain:
-  - R7 subscriptions
-  - R5 users/referrals/resync
-  - R6/R3 video/media
-  - R11 admin stats
-  - R10 dead service candidates
-- Keep R10 as inventory/cleanup pending, not complete.
-- Do not mark R10 [x].
-- Do not change README.
+- Runtime code modifications allowed ONLY for the narrow scope of Admin Subscribers Resync / Referrals.
+- Update docs/audit/R10-Direct-Prisma-Inventory.md and R10-Next-Cleanup-Plan.md after cleanup.
+- Do not touch README/notatka/docs/architecture unless explicitly asked.
+- Do not touch R9 email code or R7/R8 runtime.
+- Use modular Use Cases and Repositories.
 
 Validation:
-- Static grep/search is enough.
-- If any command is not run, report NOT RUN.
+- npm run quality:architecture-boundaries
+- npm run typecheck
+- npm test -- --run
 
 Output:
-- updated direct Prisma route count
-- removed stale R9 entries
-- remaining blockers
-- recommended cleanup order
+- confirmed Prisma removal from target routes
+- updated R10 inventory count
+- list of removed legacy services
 ```
 
 ---
