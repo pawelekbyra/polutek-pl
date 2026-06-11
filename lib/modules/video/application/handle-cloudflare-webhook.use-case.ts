@@ -2,7 +2,8 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { StorageProvider, VideoAssetProcessingState } from "@prisma/client";
+import type { VideoAssetProcessingState } from "@prisma/client";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { createScopedLogger } from "@/lib/logger";
 
 export interface CloudflareStreamWebhookPayload {
@@ -27,7 +28,7 @@ export async function handleCloudflareStreamWebhook(
   const logger = createScopedLogger("handleCloudflareStreamWebhook");
   const repository = new VideoRepository(ctx.prisma);
 
-  const asset = await repository.findAssetByProviderId(StorageProvider.CLOUDFLARE_STREAM, payload.uid);
+  const asset = await repository.findAssetByProviderId(VIDEO_PROVIDER.CLOUDFLARE_STREAM, payload.uid);
 
   if (!asset) {
     logger.warn("Received Cloudflare Stream webhook for unknown asset", { uid: payload.uid });
@@ -47,15 +48,15 @@ export async function handleCloudflareStreamWebhook(
       providerSyncedAt: new Date(),
     };
 
-    if (newState === VideoAssetProcessingState.PROCESSING && !asset.processingStartedAt) {
+    if (newState === VIDEO_ASSET_PROCESSING_STATE.PROCESSING && !asset.processingStartedAt) {
       dataToUpdate.processingStartedAt = new Date();
     }
 
-    if (newState === VideoAssetProcessingState.READY || newState === VideoAssetProcessingState.FAILED) {
+    if (newState === VIDEO_ASSET_PROCESSING_STATE.READY || newState === VIDEO_ASSET_PROCESSING_STATE.FAILED) {
       dataToUpdate.processingEndedAt = new Date();
     }
 
-    if (newState === VideoAssetProcessingState.FAILED) {
+    if (newState === VIDEO_ASSET_PROCESSING_STATE.FAILED) {
       dataToUpdate.failureReason = payload.status.errorReasonText || payload.status.errorReasonCode || "Unknown Cloudflare error";
     }
 
@@ -67,7 +68,7 @@ export async function handleCloudflareStreamWebhook(
       targetId: asset.videoId,
       metadata: {
         assetId: asset.id,
-        provider: StorageProvider.CLOUDFLARE_STREAM,
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: payload.uid,
         oldState: asset.processingState,
         newState: newState,
@@ -85,22 +86,22 @@ function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcess
   switch (cfState) {
     case "pendingupload":
     case "downloading":
-      return VideoAssetProcessingState.UPLOADING;
+      return VIDEO_ASSET_PROCESSING_STATE.UPLOADING;
     case "queued":
     case "processing":
-      return VideoAssetProcessingState.PROCESSING;
+      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
     case "ready":
-      return VideoAssetProcessingState.READY;
+      return VIDEO_ASSET_PROCESSING_STATE.READY;
     case "error":
-      return VideoAssetProcessingState.FAILED;
+      return VIDEO_ASSET_PROCESSING_STATE.FAILED;
     default:
-      return VideoAssetProcessingState.PROCESSING;
+      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
   }
 }
 
 function isRedundantTransition(currentState: VideoAssetProcessingState, newState: VideoAssetProcessingState): boolean {
   // If already READY, don't move back to any other state
-  if (currentState === VideoAssetProcessingState.READY) return true;
+  if (currentState === VIDEO_ASSET_PROCESSING_STATE.READY) return true;
 
   // If already FAILED, don't move back to processing/uploading (but maybe READY if it was a transient error?
   // Usually provider webhooks are final for a state, but let's be strict: only READY can overwrite FAILED if we want,

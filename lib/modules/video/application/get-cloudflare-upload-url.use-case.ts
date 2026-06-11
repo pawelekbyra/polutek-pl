@@ -5,7 +5,7 @@ import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
-import { StorageProvider, VideoAssetProcessingState } from "@prisma/client";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 
 export interface GetCloudflareUploadUrlInput {
   videoId: string;
@@ -33,9 +33,9 @@ export async function getCloudflareUploadUrl(
 
     await (ctx.prisma as any).$transaction(async (tx: any) => {
       await repository.upsertAsset(video.id, {
-        provider: StorageProvider.CLOUDFLARE_STREAM,
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: uploadResponse.result.uid,
-        processingState: VideoAssetProcessingState.PENDING,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false, // Not primary until actually uploaded/ready
         providerSyncedAt: new Date()
       }, tx);

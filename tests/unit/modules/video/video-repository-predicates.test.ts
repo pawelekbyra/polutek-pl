@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VideoRepository } from '@/lib/modules/video/infrastructure/video.repository';
-import { AccessTier, VideoStatus, VideoAssetProcessingState, StorageProvider } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from '@/lib/modules/video/domain/video-asset.constants';
 
 describe('VideoRepository Predicates', () => {
   const mockDb = {
@@ -78,7 +79,7 @@ describe('VideoRepository Predicates', () => {
 
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
-          asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY }
+          asset: { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } }
         })
       }));
     });
@@ -92,7 +93,7 @@ describe('VideoRepository Predicates', () => {
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
           OR: [
-            { asset: { provider: { in: ['R2', 'S3', 'VERCEL_BLOB'] } } },
+            { asset: { is: { provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
             { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
           ]
         })

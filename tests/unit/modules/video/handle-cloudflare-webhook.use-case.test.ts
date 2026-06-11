@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleCloudflareStreamWebhook } from '@/lib/modules/video/application/handle-cloudflare-webhook.use-case';
 import { AppContext } from '@/lib/modules/shared/app-context';
-import { StorageProvider, VideoAssetProcessingState } from '@prisma/client';
+import { VIDEO_ASSET_PROCESSING_STATE } from '@/lib/modules/video/domain/video-asset.constants';
 
 describe('handleCloudflareStreamWebhook', () => {
   const mockPrisma = {
@@ -28,10 +28,10 @@ describe('handleCloudflareStreamWebhook', () => {
     const asset = {
       id: 'asset-1',
       videoId: 'video-1',
-      processingState: VideoAssetProcessingState.PROCESSING
+      processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
     };
     mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
-    mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: VideoAssetProcessingState.READY });
+    mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
 
     const payload = {
       uid: 'cf-uid-123',
@@ -42,12 +42,12 @@ describe('handleCloudflareStreamWebhook', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.status).toBe(VideoAssetProcessingState.READY);
+      expect(result.data.status).toBe(VIDEO_ASSET_PROCESSING_STATE.READY);
     }
     expect(mockPrisma.videoAsset.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'asset-1' },
       data: expect.objectContaining({
-        processingState: VideoAssetProcessingState.READY,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
         processingEndedAt: expect.any(Date)
       })
     }));
@@ -58,10 +58,10 @@ describe('handleCloudflareStreamWebhook', () => {
     const asset = {
       id: 'asset-1',
       videoId: 'video-1',
-      processingState: VideoAssetProcessingState.PROCESSING
+      processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
     };
     mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
-    mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: VideoAssetProcessingState.FAILED });
+    mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED });
 
     const payload = {
       uid: 'cf-uid-123',
@@ -75,11 +75,11 @@ describe('handleCloudflareStreamWebhook', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.status).toBe(VideoAssetProcessingState.FAILED);
+      expect(result.data.status).toBe(VIDEO_ASSET_PROCESSING_STATE.FAILED);
     }
     expect(mockPrisma.videoAsset.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
-        processingState: VideoAssetProcessingState.FAILED,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED,
         failureReason: 'Transcoding failed'
       })
     }));
@@ -89,7 +89,7 @@ describe('handleCloudflareStreamWebhook', () => {
     const asset = {
       id: 'asset-1',
       videoId: 'video-1',
-      processingState: VideoAssetProcessingState.READY
+      processingState: VIDEO_ASSET_PROCESSING_STATE.READY
     };
     mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
 

@@ -2,7 +2,8 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
-import { VideoStatus, AccessTier, StorageProvider } from "@prisma/client";
+import { VideoStatus, AccessTier } from "@prisma/client";
+import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
 import { MediaPolicy } from "@/lib/modules/media";
 
@@ -50,7 +51,7 @@ export async function getAdminVideoDiagnostics(
 
   // 4. Migration & Storage
   const asset = video.asset;
-  const isCloudflare = asset?.provider === StorageProvider.CLOUDFLARE_STREAM;
+  const isCloudflare = asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
 
   if (isCloudflare) {
     if (asset.processingState === 'READY') {
