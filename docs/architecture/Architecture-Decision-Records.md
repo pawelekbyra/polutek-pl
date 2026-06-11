@@ -1,45 +1,74 @@
-# Architecture Decision Records — active
+# Architecture Decision Records
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
-## ADR-001 — Single creator place, not platform
+## ADR-0001 — Polutek.pl is a place, not a platform
 
-Decision: Polutek.pl pozostaje jednym miejscem jednego twórcy. Nie projektujemy marketplace, tenant onboarding ani multi-creator SaaS.
+Decision:
+Polutek.pl is a single-creator VOD place, not a marketplace, multi-creator SaaS, mini-Patreon, white-label CMS or tenant platform.
 
-Consequence: wszystkie lane'y i tickety muszą odrzucać uogólnienia multi-tenant, chyba że właściciel wyda osobną decyzję.
+Consequences:
+- No tenant model.
+- No marketplace creator onboarding.
+- No generic social network scope.
+- Product architecture optimizes for one creator, one official channel, one patron/access model.
 
-## ADR-002 — PatronGrant is access truth
+## ADR-0002 — Patron access is based on PatronGrant, not payment/subscription/cache
 
-Decision: aktywny `PatronGrant` jest docelowym źródłem prawdy dla access. `User.isPatron` jest target-deprecated migration/diagnostic field.
+Decision:
+Active PatronGrant is the target backend source of truth for patron access.
 
-Consequence: payment, Clerk metadata i Subscription nie mogą samodzielnie dawać access.
+Consequences:
+- Payment is financial evidence, not access itself.
+- Subscription is email consent, not patron status.
+- User.isPatron and Clerk metadata may exist only as legacy/read-model/cache until cleaned up.
+- Playback/access decisions must not rely on frontend state.
 
-## ADR-003 — One-time support, not recurring subscription
+## ADR-0003 — Cloudflare Stream first, Mux later per VideoAsset
 
-Decision: patronat jest reward za kwalifikujące jednorazowe wsparcie/donację. Domyślne progi launch: 10 PLN/USD/EUR/CHF, admin-editable.
+Decision:
+Cloudflare Stream is the first video provider. Mux must remain design-compatible per VideoAsset, but no heavy enterprise multi-provider framework is allowed now.
 
-Consequence: nie budować recurring patron subscription model bez nowej decyzji właściciela.
+Consequences:
+- Build the smallest provider abstraction needed.
+- No active R2/S3/Vercel Blob private playback fallback without future architecture decision.
+- Provider calls must only happen after backend access allow.
 
-## ADR-004 — Cloudflare first, Mux optional by design
+## ADR-0004 — Patronat is one-time support, not recurring subscription
 
-Decision: Cloudflare Stream jest pierwszym providerem. Mux jest wspierany przez cienką abstrakcję per `VideoAsset`.
+Decision:
+Patronat is a reward for qualifying one-time support/donation, not a recurring subscription. Launch thresholds are 10 PLN, 10 USD, 10 EUR and 10 CHF by default, admin-configurable per currency.
 
-Consequence: nie budować ciężkiego enterprise frameworka i nie używać R2/S3 jako aktywnego prywatnego playback fallbacku.
+Consequences:
+- Do not build recurring patron subscription scope without a new owner decision.
+- Payment records remain financial evidence; access lifecycle is managed through PatronGrant policy.
+- Access is permanent/lifetime/no-expiry by default unless suspended or revoked by policy.
 
-## ADR-005 — Locked state is not an overlay on player
+## ADR-0005 — Locked state is not an overlay on player
 
-Decision: denied `PlaybackPlan` renderuje locked placeholder bez playera, streamu, tokenu i provider call.
+Decision:
+Denied PlaybackPlan renders a locked placeholder without mounting the real player, requesting streams or tokens, calling the provider for playback source or counting playback/view events.
 
-Consequence: frontend nie może ukrywać realnego playera overlayem przy denied access.
+Consequences:
+- Frontend must not hide a real player behind an overlay for denied access.
+- Denied playback plans must not leak playback URL or playback token.
+- Provider calls must be gated by backend access allow.
 
-## ADR-006 — Comments visible, writing gated
+## ADR-0006 — Comments are visible, writing is gated
 
-Decision: komentarze pod patron-only wideo są widoczne dla wszystkich, ale pisanie/reagowanie wymaga patrona/admina.
+Decision:
+Comments under patron-only video are visible publicly, but commenting, reacting and writing require patron or admin access.
 
-Consequence: `Comment visibility != comment permission` jest inwariantem specs i testów.
+Consequences:
+- Comment visibility is not the same as comment permission.
+- Guests may read published comments but cannot write, react or report.
+- Generic social network scope remains out of bounds.
 
-## ADR-007 — Admin cockpit starts with Access Diagnostics
+## ADR-0007 — Admin cockpit starts with Access Diagnostics
 
-Decision: Access Diagnostics jest pierwszym priorytetem admin cockpit. Generic dashboard jest później.
+Decision:
+Access Diagnostics is the first priority for the admin cockpit. Generic dashboard work comes later.
 
-Consequence: owner ma diagnozować paid-but-locked bez ręcznego sprawdzania DB/Stripe/Clerk.
+Consequences:
+- Owner support must be able to diagnose paid-but-locked cases without direct database/Stripe/Clerk inspection.
+- Manual access-impacting actions require reason, audit and appropriate confirmation for dangerous operations.
