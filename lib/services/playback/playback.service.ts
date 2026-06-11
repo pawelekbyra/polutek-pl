@@ -6,6 +6,7 @@ import { StorageService } from '../storage/storage.service';
 import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from './playback.dto';
 import { AppContext, createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
+import { VideoPolicy } from '@/lib/modules/video/domain/video.policy';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -250,6 +251,18 @@ export class PlaybackService {
           tracking: emptyPlaybackRuntime(),
         };
       }
+    }
+
+    if (VideoPolicy.shouldBlockLegacyPrivatePlaybackFallback({ tier, asset })) {
+        return unavailablePlan({
+          videoId,
+          status: 'NO_PRIMARY_ASSET',
+          video: { thumbnailUrl, title },
+          accessAllowed: true,
+          warnings: ['Private patron playback requires a READY provider-backed asset; legacy videoUrl is migration-only'],
+          sourceMode: asset ? 'PROVIDER_ASSET' : 'LEGACY_URL',
+          asset: safeAsset,
+        });
     }
 
     if (!videoUrl) {

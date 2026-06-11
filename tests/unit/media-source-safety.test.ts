@@ -60,6 +60,7 @@ describe('PlaybackService Safety', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
   });
 
   it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
@@ -140,6 +141,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.access.allowed).toBe(true);
     expect(plan.canPlay).toBe(false);
     expect(plan.source).toBeUndefined();
+    expect(JSON.stringify(plan)).not.toContain(baseVideo.videoUrl);
     expect(plan.tracking.playbackSessionId).toBe('');
     expect(plan.diagnostics.sourceMode).toBe('PROVIDER_ASSET');
     expect(plan.diagnostics.asset?.provider).toBe('CLOUDFLARE_STREAM');
@@ -160,6 +162,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.status).toBe('UNAVAILABLE');
     expect(plan.access.allowed).toBe(true);
     expect(plan.source).toBeUndefined();
+    expect(JSON.stringify(plan)).not.toContain(baseVideo.videoUrl);
     expect(plan.tracking.playbackSessionId).toBe('');
     expect(plan.diagnostics.warnings).toEqual(['Video asset processing failed']);
     expect(plan.diagnostics.asset?.providerAssetId).toBe('cf-asset-id');
@@ -203,6 +206,73 @@ describe('PlaybackService Safety', () => {
     expect(plan.diagnostics.sourceMode).toBe('LEGACY_URL');
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks allowed patron-only legacy videoUrl playback when no READY provider asset exists', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: null,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('NO_PRIMARY_ASSET');
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.canPlay).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.sourceMode).toBe('LEGACY_URL');
+    expect(plan.diagnostics.warnings).toContain('Private patron playback requires a READY provider-backed asset; legacy videoUrl is migration-only');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks allowed patron-only READY legacy asset playback and does not sign object storage URLs', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: {
+        ...cloudflareAsset,
+        provider: 'R2',
+        objectKey: 'legacy/private.mp4',
+        bucket: 'legacy-bucket',
+        providerAssetId: null,
+        providerPlaybackId: null,
+        processingState: 'READY',
+      },
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('NO_PRIMARY_ASSET');
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.canPlay).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.sourceMode).toBe('PROVIDER_ASSET');
+    expect(plan.diagnostics.asset?.provider).toBe('R2');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('allows patron-only legacy fallback only when the server-side migration flag is explicitly enabled', async () => {
+    process.env.ALLOW_LEGACY_PRIVATE_FALLBACK = 'true';
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: null,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 'legacy-session' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.canPlay).toBe(true);
+    expect(plan.source?.playbackUrl).toBe('/api/media/v1');
+    expect(plan.source?.playbackUrl).not.toContain('s3.amazonaws.com');
+    expect(plan.tracking.playbackSessionId).toBe('legacy-session');
   });
 
   it('exposes only safe provider metadata for allowed READY Cloudflare asset without resolving provider source or token and without session creation', async () => {

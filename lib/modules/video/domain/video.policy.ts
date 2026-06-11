@@ -1,6 +1,27 @@
 import { Prisma, AccessTier, VideoStatus } from "@prisma/client";
 
+const PROVIDER_BACKED_PLAYBACK_PROVIDERS = new Set(['CLOUDFLARE_STREAM', 'MUX']);
+
 export class VideoPolicy {
+  static isLegacyPrivatePlaybackFallbackAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+    return env.ALLOW_LEGACY_PRIVATE_FALLBACK === 'true';
+  }
+
+  static hasReadyProviderBackedPlaybackAsset(asset?: { provider?: string | null; processingState?: string | null; isPrimary?: boolean | null } | null): boolean {
+    return Boolean(
+      asset?.isPrimary
+        && asset.processingState === 'READY'
+        && asset.provider
+        && PROVIDER_BACKED_PLAYBACK_PROVIDERS.has(asset.provider)
+    );
+  }
+
+  static shouldBlockLegacyPrivatePlaybackFallback(video?: { tier?: string | null; asset?: { provider?: string | null; processingState?: string | null; isPrimary?: boolean | null } | null } | null, env: NodeJS.ProcessEnv = process.env): boolean {
+    if (this.isLegacyPrivatePlaybackFallbackAllowed(env)) return false;
+    if (video?.tier !== 'PATRON') return false;
+    return !this.hasReadyProviderBackedPlaybackAsset(video.asset);
+  }
+
   static canBeHero(video: { tier: AccessTier; status: VideoStatus }): boolean {
     return video.tier === 'PUBLIC' && video.status === 'PUBLISHED';
   }

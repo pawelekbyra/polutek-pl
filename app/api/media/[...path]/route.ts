@@ -9,6 +9,7 @@ import { recordAlert } from '@/lib/observability';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { getGatedMedia } from '@/lib/modules/media';
+import { VideoPolicy } from '@/lib/modules/video';
 
 function rateLimitedResponse(videoId: string) {
   recordAlert('media_proxy.rate_limited', { videoId });
@@ -59,6 +60,32 @@ export async function GET(
     }
 
     const { id, videoUrl } = result.data;
+
+    const videoPlaybackPolicy = await ctx.prisma.video.findUnique({
+      where: { id },
+      select: {
+        tier: true,
+        asset: {
+          select: {
+            provider: true,
+            processingState: true,
+            isPrimary: true,
+          },
+        },
+      },
+    });
+
+    if (VideoPolicy.shouldBlockLegacyPrivatePlaybackFallback(videoPlaybackPolicy)) {
+      recordAlert('media_proxy.legacy_private_fallback_blocked', { videoId: id });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'NO_PRIMARY_ASSET',
+          message: 'Private playback requires a ready provider-backed video asset.',
+        },
+        { status: 403 },
+      );
+    }
 
     return getGatedBlobResponse(userId, id, videoUrl, req.headers);
   } catch (error) {

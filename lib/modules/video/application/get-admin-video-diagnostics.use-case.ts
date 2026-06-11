@@ -6,6 +6,7 @@ import { VideoStatus, AccessTier } from "@prisma/client";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
 import { MediaPolicy } from "@/lib/modules/media";
+import { VideoPolicy } from "../domain/video.policy";
 
 export type DiagnosticIssue = {
   severity: "ERROR" | "WARNING";
@@ -75,6 +76,14 @@ export async function getAdminVideoDiagnostics(
     if (MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
       issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego linku legacy.", field: "videoUrl" });
     }
+  }
+
+  if (VideoPolicy.shouldBlockLegacyPrivatePlaybackFallback({ tier: video.tier, asset })) {
+    issues.push({
+      severity: "ERROR",
+      message: "Film dla patronów nie ma gotowego aktywnego zasobu Cloudflare Stream/Mux; legacy videoUrl jest wyłącznie źródłem migracji i nie zostanie użyty do prywatnego playbacku.",
+      field: asset ? "asset" : "videoUrl",
+    });
   }
 
   // 5. Layout & Logic

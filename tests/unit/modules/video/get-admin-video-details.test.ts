@@ -16,6 +16,7 @@ describe('Admin Video Details & Diagnostics', () => {
   const mainChannel = { id: 'main-channel-id', slug: 'main' };
 
   beforeEach(() => {
+    delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
     mockPrisma = {
       video: {
         findUnique: vi.fn(),
@@ -112,6 +113,7 @@ describe('Admin Video Details & Diagnostics', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego linku legacy'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('nie ma gotowego aktywnego zasobu Cloudflare Stream/Mux'))).toBe(true);
       }
     });
 
