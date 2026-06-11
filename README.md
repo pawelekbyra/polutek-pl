@@ -194,44 +194,37 @@ Aktualna interpretacja:
 
 ```txt
 Najbliższe zadanie:
-R10 Cleanup: R8 Comments Admin Leftovers & Dead Code.
+R10/R11 Docs Reconciliation & Activation Readiness Cleanup.
 
 Cel:
-Zmigrować pozostałe route'y moderacji komentarzy do use case'ów oraz usunąć zidentyfikowane martwe serwisy.
+Usunąć nieaktualne instrukcje po R10 cleanupie, zsynchronizować README z audytem R10/R11, dopisać jawne follow-upy i przygotować właściciela do decyzji o osobnym activation PR.
 
 Stan:
-- R10 Direct-Prisma Cleanup ukończony.
-- Wszystkie API routes w app/api/** są wolne od bezpośredniego importu @/lib/prisma.
-- R8 core jest certified, ale pozostały admin moderation routes do doczyszczenia.
-- R10 Inventory raportuje 0 blokad direct-Prisma dla route'ów.
+- R10 Direct-Prisma Cleanup jest ukończony dla app/api routes.
+- Admin comments cleanup z #815 jest wykonany.
+- Post-R AI Delivery Control Plane jest staged only i nieaktywny.
+- Audit R10/R11 mówi READY_WITH_MINOR_DOC_FIXES.
+- Przed activation PR trzeba domknąć docs reconciliation, guard follow-up plan, legacy service ticketing i PR hygiene (#817/#814).
 ```
 
-Następny dobry prompt dla agenta kodowania/dokumentacji:
+Następny dobry prompt dla agenta dokumentacji:
 
 ```txt
 Start from current main.
 
-Task: R10 Cleanup: R8 Comments Admin Leftovers.
+Task: R10/R11 Docs Reconciliation & Activation Readiness Cleanup.
 
 Goal:
-Zmigrować pozostałe admin moderation routes dla komentarzy do modularnych use case'ów i usunąć ich wpisy z KNOWN_ROUTE_VIOLATIONS_ALLOWLIST w scripts/check-architecture.ts.
-
-Affected Routes:
-- app/api/admin/comments/reports/route.ts
-- app/api/admin/comments/[commentId]/heart/route.ts
-- app/api/admin/comments/[commentId]/hide/route.ts
-- app/api/admin/comments/[commentId]/delete/route.ts
-- app/api/admin/comments/[commentId]/restore/route.ts
+Zsynchronizować README i krótką notę audytową z docs/audit/R10-R11-HANDOFF-READINESS-REVIEW.md, bez aktywowania Post-R control plane.
 
 Required:
-- Use modular Use Cases in lib/modules/comments.
-- Ensure audit logging for moderation actions.
-- Update scripts/check-architecture.ts.
+- Nie modyfikuj runtime.
+- Nie twórz root AGENTS.md.
+- Nie przenoś staged docs do root docs.
+- Zostaw X0-X7 jako staged/inactive.
 
 Validation:
-- npm run quality:architecture-boundaries
-- npm run typecheck
-- npm test -- --run
+- git diff --check
 ```
 
 ---
@@ -284,7 +277,7 @@ Po R10/R11 handoff lub explicit owner approval osobny Integrator activation PR m
 Planowany kształt po aktywacji:
 
 * root `README.md` staje się krótkim control panelem,
-* root `AGENTS.md` staje się stałym kontraktem agentów,
+* root `AGENTS.md` staje się stałym kontraktem agentów, utworzonym z `_tmp/ai-control-plane-staging/AGENTS.template.md`,
 * `docs/roadmap/Active-Execution-Roadmap.md` staje się aktywną kolejką egzekucji,
 * `docs/roadmap/OWNER-TIMELINE.md` staje się dashboardem postępu dla właściciela,
 * `docs/tickets/ready/` staje się kolejką dla Codex/Jules Builder agents.
@@ -1084,15 +1077,15 @@ Nie rób:
 
 # 13. Obecny najbezpieczniejszy proces
 
-Aktualny proces po merge R10 Direct-Prisma Cleanup:
+Aktualny proces po merge #815/#819:
 
 ```txt
 1. R8 i R9 są [x certified].
 2. R10 Direct-Prisma API routes cleanup jest zakończony.
-3. Kolejny krok to R10 cleanup PR-y:
-   - Admin comments moderation leftovers (R8 leftovers),
-   - Dead services scan/removal.
-4. R11 tylko jako docs/spec przed runtime implementation.
+3. Admin comments cleanup z #815 jest wykonany.
+4. Kolejny krok to mały docs reconciliation po audycie R10/R11.
+5. Potem właściciel decyduje: guard-only cleanup PR albo osobny activation PR.
+6. R11 tylko jako docs/spec przed runtime implementation.
 ```
 
 Nie oznaczać R10 jako `[x]`, dopóki:
