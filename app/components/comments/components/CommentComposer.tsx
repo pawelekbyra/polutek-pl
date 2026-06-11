@@ -115,17 +115,36 @@ export function CommentComposer({
             </div>
           )}
           {!canComment ? (
-            <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
-              {isPatronGated && !isPatron ? (
-                <span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                  {t.becomePatronToComment}
-                </span>
+            <div className="w-full bg-neutral-50 border border-dashed border-neutral-300 rounded-xl py-8 px-4 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-100/50">
+              {userProfile ? (
+                // Logged in but no patron access (and it's gated)
+                <>
+                   <span className="text-[15px] font-bold text-neutral-800 text-center">
+                    {language === "pl" ? "Chcesz dołączyć do dyskusji?" : "Want to join the discussion?"}
+                  </span>
+                  <a
+                    href="#support"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('support')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white rounded-full text-sm font-black uppercase tracking-wider hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95"
+                  >
+                    {t.becomePatronToComment}
+                  </a>
+                </>
               ) : (
-                <SignInButton mode="modal">
-                  <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                    {t.signInToComment}
-                  </button>
-                </SignInButton>
+                // Not logged in
+                <>
+                  <span className="text-[15px] font-bold text-neutral-800 text-center">
+                    {language === "pl" ? "Zaloguj się, aby komentować" : "Sign in to comment"}
+                  </span>
+                  <SignInButton mode="modal">
+                    <button className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white rounded-full text-sm font-black uppercase tracking-wider hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95">
+                      {language === "pl" ? "WEJŚCIE" : "ENTER"}
+                    </button>
+                  </SignInButton>
+                </>
               )}
             </div>
           ) : (

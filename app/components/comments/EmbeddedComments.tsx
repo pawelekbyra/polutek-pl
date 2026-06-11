@@ -314,13 +314,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <MessageSquare size={48} className="text-neutral-300" />
             <div className="space-y-1">
               <p className="font-black uppercase tracking-widest text-[11px]">
-                {language === "pl" ? "Brak komentarzy" : "No comments yet"}
+                {language === "pl" ? "Ten film nie ma jeszcze komentarzy." : "This video has no comments yet."}
               </p>
               <p className="text-xs italic">
-                {viewer?.canComment
-                  ? (language === "pl" ? "Bądź pierwszy i napisz coś sensownego." : "Be the first to say something meaningful.")
-                  : (language === "pl" ? "Ten film nie ma jeszcze komentarzy." : "This video has no comments yet.")
-                }
+                {viewer?.canComment && (language === "pl" ? "Bądź pierwszy i napisz coś sensownego." : "Be the first to say something meaningful.") }
               </p>
             </div>
           </div>
