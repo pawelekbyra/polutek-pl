@@ -35,7 +35,8 @@ describe('Media-Source Route Access', () => {
         playbackUrl: 'https://s3.amazonaws.com/private-bucket/v1.mp4?signature=123',
         kind: 'video'
       },
-      diagnostics: { warnings: [] }
+      diagnostics: { warnings: [] },
+      tracking: { playbackSessionId: 's1' }
     });
 
     const res = await GET(createReq(), { params: { videoId: 'v1' } });
@@ -45,12 +46,13 @@ describe('Media-Source Route Access', () => {
     expect(data.source.playbackUrl).toBe('/api/media/v1');
   });
 
-  it('returns 403 when access is denied', async () => {
+  it('returns 403 when access is denied and redacts all source fields', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
       access: { allowed: false, reason: 'PATRON_REQUIRED' },
-      diagnostics: { warnings: [] }
+      diagnostics: { warnings: ['PATRON_REQUIRED'] },
+      tracking: { playbackSessionId: '' }
     });
 
     const res = await GET(createReq(), { params: { videoId: 'v1' } });
@@ -61,6 +63,25 @@ describe('Media-Source Route Access', () => {
     expect(data.source).toBeUndefined();
     expect(data.playbackUrl).toBeUndefined();
     expect(data.embedUrl).toBeUndefined();
+    // Verify no signed URL or provider tokens leaked in diagnostics
+    expect(data.diagnostics.warnings).toEqual(['PATRON_REQUIRED']);
+  });
+
+  it('returns 403 when LOGIN_REQUIRED and redacts all source fields', async () => {
+    (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'v1',
+      access: { allowed: false, reason: 'LOGIN_REQUIRED' },
+      diagnostics: { warnings: ['LOGIN_REQUIRED'] },
+      tracking: { playbackSessionId: '' }
+    });
+
+    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.hasAccess).toBe(false);
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
   });
 
   it('requires videoId param', async () => {

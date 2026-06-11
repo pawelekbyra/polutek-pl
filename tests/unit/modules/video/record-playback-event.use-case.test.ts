@@ -12,18 +12,21 @@ vi.mock('@/lib/rate-limit', () => ({
   setNxEx: vi.fn().mockResolvedValue(true),
 }));
 
-// Mock the repository to avoid DB calls
+// Create a mock repo object that we can inspect
+const mockRepo = {
+  findSessionById: vi.fn().mockResolvedValue(null),
+  updateSession: vi.fn().mockResolvedValue({}),
+  createEvent: vi.fn().mockResolvedValue({}),
+  recordView: vi.fn().mockResolvedValue({}),
+  markSessionAsViewed: vi.fn().mockResolvedValue({}),
+};
+
+// Mock the repository to return our mock object
 vi.mock('@/lib/modules/video/infrastructure/video-playback.repository', () => {
   return {
-    VideoPlaybackRepository: function() {
-      return {
-        findSessionById: vi.fn().mockResolvedValue(null),
-        updateSession: vi.fn().mockResolvedValue({}),
-        createEvent: vi.fn().mockResolvedValue({}),
-        recordView: vi.fn().mockResolvedValue({}),
-        markSessionAsViewed: vi.fn().mockResolvedValue({}),
-      };
-    }
+    VideoPlaybackRepository: vi.fn().mockImplementation(function() {
+        return mockRepo;
+    })
   };
 });
 
@@ -55,6 +58,10 @@ describe('recordPlaybackEventUseCase', () => {
         expect(result.error.code).toBe('ACCESS_DENIED');
         expect(result.error.message).toBe('PATRON_REQUIRED');
     }
+
+    // Verify view counting was NOT triggered
+    expect(mockRepo.recordView).not.toHaveBeenCalled();
+    expect(mockRepo.createEvent).not.toHaveBeenCalled();
   });
 
   it('allows access error even if access is denied', async () => {
@@ -72,5 +79,26 @@ describe('recordPlaybackEventUseCase', () => {
     }, mockCtx);
 
     expect(result.ok).toBe(true);
+    expect(mockRepo.createEvent).toHaveBeenCalled();
+  });
+
+  it('does not record view for WATCHED_10_SECONDS if access is denied', async () => {
+    (checkVideoAccess as any).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+    });
+
+    const result = await recordPlaybackEventUseCase({
+      videoId: 'v1',
+      type: 'WATCHED_10_SECONDS',
+      sessionId: 's1',
+      ipHash: 'ip1',
+      uaHash: 'ua1',
+      fingerprint: 'f1'
+    }, mockCtx);
+
+    expect(result.ok).toBe(false);
+    expect(mockRepo.recordView).not.toHaveBeenCalled();
+    expect(mockRepo.markSessionAsViewed).not.toHaveBeenCalled();
   });
 });
