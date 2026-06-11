@@ -3,8 +3,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { parseJsonResponse } from "@/lib/client/api";
 import { CommentView } from "../types";
-import { useToast } from "@/app/hooks/useToast";
-import { useLanguage } from "../../LanguageContext";
 
 type CommentsPage = {
   comments: CommentView[];
@@ -65,8 +63,6 @@ function updateCommentReactionInCache(
 
 export function useComments(videoId: string, sortBy: "newest" | "top") {
   const queryClient = useQueryClient();
-  const toast = useToast();
-  const { language } = useLanguage();
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch } =
     useInfiniteQuery({
@@ -145,10 +141,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
           queryClient.setQueryData(queryKey, data);
         }
       }
-      toast(
-        language === "pl" ? "Nie udało się dodać komentarza." : "Failed to add comment.",
-        "error"
-      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
@@ -194,10 +186,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
           queryClient.setQueryData(queryKey, data);
         }
       }
-      toast(
-        language === "pl" ? "Błąd podczas oceniania." : "Error while reacting.",
-        "error"
-      );
     },
     onSettled: (data, error, commentId) => {
       if (queryClient.isMutating({ mutationKey: ["comment-reaction", videoId] }) === 1) {
@@ -256,10 +244,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       if (context?.previousData) {
         queryClient.setQueryData(context.queryKey, context.previousData);
       }
-      toast(
-        language === "pl" ? "Błąd podczas przypinania." : "Error while pinning.",
-        "error"
-      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
@@ -329,10 +313,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
           queryClient.setQueryData(queryKey, data);
         }
       }
-      toast(
-        language === "pl" ? "Nie udało się usunąć komentarza." : "Failed to delete comment.",
-        "error"
-      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
@@ -351,12 +331,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
     },
-    onError: () => {
-      toast(
-        language === "pl" ? "Nie udało się zapisać zmian." : "Failed to save changes.",
-        "error"
-      );
-    }
   });
 
   const reportMutation = useMutation({
@@ -368,12 +342,6 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       });
       return parseJsonResponse(res);
     },
-    onError: () => {
-      toast(
-        language === "pl" ? "Błąd podczas zgłaszania." : "Error while reporting.",
-        "error"
-      );
-    }
   });
 
   return {

@@ -13,6 +13,14 @@ type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentA
 
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 
+/**
+ * Maps a user record to a public comment author DTO.
+ *
+ * NOTE ON BADGE TRUTH:
+ * The "PATRON" badge is derived from the denormalized `User.isPatron` field.
+ * This is for DISPLAY ONLY and may be stale (e.g. if a PatronGrant was recently revoked
+ * but the user record hasn't been re-synced). It must NEVER be used for access control.
+ */
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
 
