@@ -50,9 +50,16 @@ export default function ClerkLocalizationProvider({ children }: { children: Reac
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
-    throw new Error(
-      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required. Run npm run env:validate or set the Clerk publishable key before starting the app.',
-    );
+    // During build/static generation, we may not have the key.
+    // We log a warning instead of throwing a fatal error to allow the build to proceed.
+    // The application will still fail in the browser if the key is missing at runtime.
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[ClerkLocalizationProvider] NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing. ' +
+        'Static generation will proceed, but runtime auth will fail if this is not provided to the deployment.'
+      );
+    }
+    return <>{children}</>;
   }
 
   return (

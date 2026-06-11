@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 import { CreatorContentService as ContentService, VideoContentService } from '@/lib/services/content.service';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polutek.pl';
 
