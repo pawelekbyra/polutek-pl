@@ -264,6 +264,22 @@ export class UserProfileService {
           // PatronGrants
           await tx.patronGrant.updateMany({ where: { userId: oldId }, data: { userId: id } });
 
+          // Rebuild the denormalized user patron cache from PatronGrant truth after
+          // moving grants between identity records. Patron access itself must keep
+          // using active PatronGrant reads; these User fields are only a cache/read model.
+          const activeGrant = await tx.patronGrant.findFirst({
+            where: { userId: id, revokedAt: null },
+            orderBy: { createdAt: 'asc' },
+          });
+          await tx.user.update({
+            where: { id },
+            data: {
+              isPatron: Boolean(activeGrant),
+              patronSince: activeGrant ? activeGrant.createdAt : null,
+              patronSource: activeGrant ? activeGrant.source : null,
+            },
+          });
+
           // Subscriptions (Handle potential duplicates)
           const oldSubs = await tx.subscription.findMany({ where: { userId: oldId } });
           for (const sub of oldSubs) {
