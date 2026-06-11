@@ -22,7 +22,7 @@
 
 ## Forbidden Files
 - `README.md`
-- `AGENTS.md`
+- przyszły root `AGENTS.md` (w stagingu: `_tmp/ai-control-plane-staging/AGENTS.template.md`)
 - `package.json`
 - `prisma/schema.prisma`
 - `[Other sensitive files]`

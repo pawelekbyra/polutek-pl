@@ -1,48 +1,75 @@
-# AI Control Plane Staging Manifest
+# Manifest stagingu Post-R AI Delivery Control Plane
 
-## 1. Purpose
-This staging folder serves as a temporary, inactive environment for future AI control-plane activation. It contains converted documentation, operational protocols, and standardized templates.
+Status aktywacji:
 
-## 2. Final Staged Structure
-- `_source-root-drafts/`: Original source files moved from the root (if non-empty).
-- `docs/architecture/`: Core architectural blueprints.
-- `docs/roadmap/`: Strategic execution plans and lane definitions.
-- `docs/tickets/`: Operational task management (ready, active, done, blocked).
-- `docs/reports/`: Evidence of progress (PR reports, reviews, certifications).
-- `docs/templates/`: Standardized documents for agents.
-- `docs/operations/`: Rules of engagement and collaboration protocols.
+```txt
+STAGED ONLY — NIEAKTYWNE
+```
 
-## 3. Source Mapping
-- `README.md`: Converted from root draft.
-- `AGENTS.md`: Converted from root draft.
-- `docs/architecture/Product-Architecture-Blueprint.md`: Converted from root `notatka`.
-- `docs/roadmap/`: Converted from corresponding root `.txt` files.
-- `docs/roadmap/lanes/`: Converted from corresponding root `.txt` files, or generated if source was missing/empty.
+Ten folder nie jest aktywnym źródłem prawdy, dopóki Integrator activation PR nie przeniesie/skopiuje go do docelowych ścieżek i nie zaktualizuje root `README.md`. Do tego czasu aktywnym źródłem prawdy pozostaje root `README.md` R-phase.
 
-## 4. Files Copied from Root Drafts
-All root `.txt` files were moved to `_source-root-drafts/`. Converted versions are in their respective `docs/` paths.
+## Po co istnieje ten folder
 
-## 5. Files Generated as Missing/Fixed
-- `docs/roadmap/lanes/LANE-email-subscriptions.md`: Regenerated with full content (sources were 0-byte duplicates).
-- `docs/tickets/README.md`: Expanded with a detailed operational guide.
-- `docs/reports/README.md`: Expanded with a detailed operational guide.
-- All files in `docs/templates/`: Replaced with robust, specific versions.
-- All files in `docs/operations/`: Expanded with detailed protocols and roles.
+`_tmp/ai-control-plane-staging/` zawiera gotowy do aktywacji szkic przyszłego systemu pracy AI dla Polutek.pl po zakończeniu R-phase. Jest to control plane dla pracy Plannerów, Builderów, Reviewerów, Integratorów i Certifierów.
 
-## 6. Removed Unnecessary Files
-- `_tmp/ai-control-plane-staging/_source-root-drafts/LANE-email-subscriptions.txt`: Removed (0-byte duplicate).
-- `_tmp/ai-control-plane-staging/_source-root-drafts/LANE-email-subscriptions (2).txt`: Removed (0-byte duplicate).
+Celem nie jest aktywowanie nowej roadmapy dzisiaj. Celem jest przygotowanie ścisłego, nudnego i operacyjnego systemu, który po R10/R11 handoff pozwoli właścicielowi uruchamiać małe tickety bez chaosu.
 
-## 7. Activation Warning
-**This staging folder is not the active source of truth yet.**
-The control plane is currently in a "Staged" state. A later Integrator PR must move these files into their final repo paths to activate them.
+## Co jest staged
 
-## 8. Remaining Activation Steps
-- Final human review of staged documentation.
-- Integrator PR to copy/move files to root/docs/ etc.
-- Deletion of `_tmp/` after successful activation.
+- `README.md` — przyszły krótki panel sterowania dla właściciela i agentów.
+- `AGENTS.template.md` — przyszła treść root `AGENTS.md`; celowo nie nazywa się `AGENTS.md` w stagingu, żeby nie działała jako aktywne instrukcje agentów przed aktywacją.
+- `docs/architecture/**` — target-only blueprint i decyzje architektoniczne.
+- `docs/strategy/**` — synteza badań, decyzje właściciela, standard produktu, zakres launch i do-not-build.
+- `docs/specs/**` — specyfikacje domenowe X1-X7.
+- `docs/roadmap/**` — roadmapa aktywacyjna, timeline właściciela, workflow Codex, bramki jakości i launch readiness.
+- `docs/roadmap/lanes/**` — lane'y domenowe i operacyjne.
+- `docs/tickets/**` — kolejka ticketów staged-ready po aktywacji.
+- `docs/reports/**` — miejsca raportów PR, review, reconciliation i certification.
+- `docs/templates/**` — szablony ticketów, raportów, decyzji i promptów Codex.
+- `docs/operations/**` — protokoły multi-agent, merge, review, integrator, certifier i manual właściciela.
 
-## 9. Validation
-- Staged markdown file count: 25.
-- No empty `.md` files found.
-- No accidental ChatGPT wrapper text detected.
+## Root files affected at activation
+
+Integrator activation PR, po R10/R11 handoff lub jawnej zgodzie właściciela, może:
+
+1. Zamienić root `README.md` w krótki control panel.
+2. Skopiować/zmienić nazwę `_tmp/ai-control-plane-staging/AGENTS.template.md` -> root `AGENTS.md`.
+3. Przenieść/skopiować staged `docs/**` do docelowego root `docs/**`.
+4. Ustawić `docs/roadmap/Active-Execution-Roadmap.md` jako aktywną kolejkę egzekucji.
+5. Ustawić `docs/roadmap/OWNER-TIMELINE.md` jako dashboard właściciela.
+6. Ustawić `docs/tickets/ready/` jako kolejkę dla Codex/Jules Builder agents.
+
+## Bezpieczeństwo nazwy AGENTS
+
+`AGENTS.template.md` jest przyszłą treścią root `AGENTS.md`. Jest celowo nazwany jako template, nie `AGENTS.md`, aby staging nie był interpretowany przez agentów jako aktywny kontrakt przed activation PR.
+
+## Co blokuje aktywację
+
+- R10/R11 handoff/certification albo jawna zgoda właściciela.
+- Reconciliation aktualnego kodu, docs, auditów i guardów.
+- Decyzja Integratora, że root README może zostać slimmed/replaced.
+- Potwierdzenie, że staged docs nie udają aktualnej implementacji.
+- Integrator activation PR z walidacją i raportem.
+
+## Jak aktywować później
+
+1. Uruchom ticket X0 activation checklist.
+2. Zweryfikuj aktualny main, guardy, README i audity.
+3. Otwórz osobny docs-only Integrator PR aktywacyjny.
+4. Przenieś/skopiuj staged pliki do finalnych ścieżek.
+5. Zaktualizuj root README na krótki control panel.
+6. Oznacz staged folder jako migrated.
+7. Dopiero po merge owner może uruchamiać Builderów z `docs/tickets/ready/`.
+
+## Jak usunąć `_tmp` po aktywacji
+
+Po aktywacji i certyfikacji X0 Integrator może usunąć `_tmp/ai-control-plane-staging/`, jeśli:
+
+- wszystkie potrzebne pliki zostały przeniesione do finalnych ścieżek,
+- root README nie wskazuje już stagingu jako źródła przyszłego control plane,
+- certifier potwierdził brak utraconych plików,
+- właściciel zaakceptował cleanup.
+
+## Zakaz
+
+Żaden Builder nie może traktować plików w tym folderze jako aktywnych ticketów przed aktywacją. Żaden agent nie może na ich podstawie zmieniać runtime bez osobnego aktywnego ticketu po aktywacji.

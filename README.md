@@ -269,6 +269,28 @@ Ale R7–R11 muszą zawierać minimalne elementy Fazy X naturalne dla swojej dom
 
 ---
 
+## Post-R AI Delivery Control Plane — staging only
+
+Przyszły **Post-R AI Delivery Control Plane** jest staged w:
+
+```txt
+_tmp/ai-control-plane-staging/
+```
+
+Ten staged engine **nie jest jeszcze aktywny**. Aktualne root `README.md` pozostaje źródłem prawdy dla R-phase do czasu R10/R11 handoff/certification albo jawnej zgody właściciela.
+
+Po R10/R11 handoff lub explicit owner approval osobny Integrator activation PR może aktywować staged control plane przez przeniesienie/skopiowanie staged plików do finalnych ścieżek i aktualizację root README. Żaden Builder nie może traktować staged docs jako aktywnych ticketów przed aktywacją.
+
+Planowany kształt po aktywacji:
+
+* root `README.md` staje się krótkim control panelem,
+* root `AGENTS.md` staje się stałym kontraktem agentów tworzonym z `_tmp/ai-control-plane-staging/AGENTS.template.md`,
+* `docs/roadmap/Active-Execution-Roadmap.md` staje się aktywną kolejką egzekucji,
+* `docs/roadmap/OWNER-TIMELINE.md` staje się dashboardem postępu dla właściciela,
+* `docs/tickets/ready/` staje się kolejką dla Codex/Jules Builder agents.
+
+Do aktywacji staged control plane fazy X pozostają nieaktywne, a niniejsze README pozostaje ostrożnym źródłem prawdy dla aktualnego R-phase.
+
 # 7. Roadmapa R0–R11
 
 ## R0 — Zasady i infrastruktura

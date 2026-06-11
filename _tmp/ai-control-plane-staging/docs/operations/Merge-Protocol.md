@@ -1,22 +1,31 @@
 # Merge Protocol
 
-## Rules for Merging
-- **Human Merges Only:** Only a human can perform the final merge into the `main` branch.
-- **No Self-Certification:** A Builder agent cannot certify their own work or move their own ticket to `done/`.
-- **Review Required:** Every PR must have a corresponding Review Report with a "MERGE" verdict.
+Status: STAGED ONLY — NIEAKTYWNE.
 
-## Merge Order
-- Merges should be handled sequentially if they overlap.
-- Critical infrastructure or schema changes must be merged and reconciled before dependent feature work proceeds.
+## Summary
 
-## Conditions to Pause / Reject
-- Failed architecture boundary checks.
-- Vercel build failures.
-- Unplanned changes to protected files.
-- Conflicts with concurrent lanes.
+Merge tylko po ticket scope check, validation, Reviewer verdict MERGE i decyzji właściciela. Po merge Integrator przesuwa tickety i reconciles docs.
 
-## Documentation Staging PRs
-- PRs that only modify files in `_tmp/` (like this cleanup) follow a simplified path but still require a review for accuracy and compliance with staging rules.
+## Required flow
 
-## Post-Merge Reconciliation
-- Immediately after a merge, the Reconciler must check if the Roadmap, README, or any architecture guards need updating to reflect the new state.
+1. Start from `OWNER-TIMELINE.md`.
+2. Pick one ticket from `docs/tickets/ready/`.
+3. Check `Parallel-Work-Matrix.md`.
+4. Give Builder exactly one ticket.
+5. Review PR with Reviewer protocol.
+6. Owner merges only safe PRs.
+7. Integrator reconciles after batch.
+8. Certifier checks phase gates.
+
+## Hard stops
+
+- No ticket.
+- Forbidden paths needed.
+- Product policy unclear.
+- Same files touched by another active PR.
+- Schema/package/guard/global docs required without explicit ticket.
+- Validation cannot be run and risk is high.
+
+## Required report
+
+Every role must report status, evidence, validation, blockers, risks and next recommended action.

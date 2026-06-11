@@ -10,7 +10,7 @@
 
 ## Docs Updated
 - [ ] README.md
-- [ ] AGENTS.md
+- [ ] przyszły root `AGENTS.md` (w stagingu: `_tmp/ai-control-plane-staging/AGENTS.template.md`)
 - [ ] Roadmap files
 
 ## Tickets Moved
