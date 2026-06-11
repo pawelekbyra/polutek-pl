@@ -8,6 +8,8 @@ import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { normalizePaymentTotals } from "@/lib/modules/users";
 import { grantPatron } from "@/lib/modules/patron";
+import { getPaymentCurrencyLimits, SupportedCurrency } from "@/lib/payments/currency-settings";
+import { PaymentPolicy } from "../domain/payment.policy";
 import { EmailService } from "@/lib/services/email.service";
 import { UserAccessService } from "@/lib/services/user-access.service";
 import { writeAuditLog } from "@/lib/services/audit.service";
@@ -26,8 +28,12 @@ export async function fulfillPayment(
   const repo = new PaymentRepository();
 
   try {
-    const result = await ctx.db.writeTransaction(async (tx) => {
-      // 1. CAS Update status PENDING -> SUCCEEDED
+    const result = await ctx.db.writeTransaction(async (tx): Promise<any> => {
+      // 1. Fetch user first to avoid TDZ in replay block
+      const user = await repo.findUserWithTotals(input.userId, tx);
+      if (!user) throw new Error('USER_NOT_FOUND');
+
+      // 2. CAS Update status PENDING -> SUCCEEDED
       const count = await repo.updatePaymentStatusWithCAS(input.paymentId, PaymentStatus.PENDING, PaymentStatus.SUCCEEDED, tx);
 
       const payment = await repo.findById(input.paymentId, tx);
@@ -36,15 +42,24 @@ export async function fulfillPayment(
       }
 
       if (count === 0) {
-        if (payment.status === PaymentStatus.SUCCEEDED) {
-          logger.info(`[FulfillPayment] Payment ${input.paymentId} already SUCCEEDED; proceeding with replay-safe sync.`);
-        } else {
+        if (payment.status !== PaymentStatus.SUCCEEDED) {
           logger.info(`[FulfillPayment] Payment ${input.paymentId} already fulfilled or not in a fulfillable state.`);
           return null;
         }
+        logger.info(`[FulfillPayment] Payment ${input.paymentId} already SUCCEEDED; proceeding with replay-safe sync.`);
+        return {
+          userId: user.id,
+          email: user.email,
+          language: (user.language as 'pl' | 'en') || 'pl',
+          isPatron: user.isPatron,
+          normalizedTotal: normalizePaymentTotals(user.paymentTotals),
+          becamePatronNow: false,
+          isFirstFulfillment: false,
+          wasEligible: false // Eligibility was checked in first fulfillment
+        };
       }
 
-      // 2. Verification
+      // 3. Verification
       if (payment.amountMinor !== input.amountMinor) {
         throw new Error(`PAYMENT_AMOUNT_MISMATCH: Expected ${payment.amountMinor}, got ${input.amountMinor}`);
       }
@@ -52,10 +67,7 @@ export async function fulfillPayment(
         throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${payment.currency}, got ${input.currency}`);
       }
 
-      // 3. Update User Totals
-      const user = await repo.findUserWithTotals(input.userId, tx);
-      if (!user) throw new Error('USER_NOT_FOUND');
-
+      // 4. Update User Totals
       let updatedTotal;
       if (count > 0) {
         updatedTotal = await repo.incrementUserPaymentTotal(input.userId, payment.currency, payment.amountMinor, tx);
@@ -65,26 +77,57 @@ export async function fulfillPayment(
       }
 
       // 4. Grant Patron Status
-      // Current business rule: any successful one-time tip grants Patron status
-      const grantResult = await grantPatron({
-        userId: input.userId,
-        source: 'stripe_tip',
-        paymentId: payment.id,
-        note: 'Granted after successful one-time Stripe tip',
-      }, ctx, tx);
+      const limits = await getPaymentCurrencyLimits();
+      const currency = payment.currency.toUpperCase() as SupportedCurrency;
+      const thresholdMinor = limits[currency]?.minAmountMinor;
 
-      if (!grantResult.ok) {
-        throw new Error(`PATRON_GRANT_FAILED: ${grantResult.error.message}`);
+      const eligibility = PaymentPolicy.evaluatePaymentPatronEligibility({
+        status: payment.status,
+        amountMinor: payment.amountMinor,
+        currency: payment.currency,
+        thresholdMinor,
+      });
+
+      let isPatron = user.isPatron;
+      let normalizedTotal = normalizePaymentTotals(user.paymentTotals);
+      let becamePatronNow = false;
+
+      if (eligibility.eligible) {
+        const grantResult = await grantPatron({
+          userId: input.userId,
+          source: 'stripe_tip',
+          paymentId: payment.id,
+          note: 'Granted after successful one-time Stripe tip',
+        }, ctx, tx);
+
+        if (!grantResult.ok) {
+          throw new Error(`PATRON_GRANT_FAILED: ${grantResult.error.message}`);
+        }
+
+        isPatron = grantResult.data.isPatron;
+        normalizedTotal = grantResult.data.normalizedTotal;
+        becamePatronNow = true; // simplified for bridge compatibility
+      } else {
+        logger.info(`[FulfillPayment] Payment ${payment.id} not eligible for PatronGrant: ${eligibility.code}`);
+        // If not eligible, we still might have updated user totals (which normalizePaymentTotals uses)
+        // If count > 0, we updated them, so let's use the incremented values
+        if (count > 0) {
+           const updatedUser = await repo.findUserWithTotals(input.userId, tx);
+           if (updatedUser) {
+             normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
+           }
+        }
       }
 
       return {
         userId: user.id,
         email: user.email,
         language: (user.language as 'pl' | 'en') || 'pl',
-        isPatron: grantResult.data.isPatron,
-        normalizedTotal: grantResult.data.normalizedTotal,
-        becamePatronNow: true, // simplified for bridge compatibility, though grant-patron has its own logic
-        isFirstFulfillment: count > 0
+        isPatron,
+        normalizedTotal,
+        becamePatronNow,
+        isFirstFulfillment: count > 0,
+        wasEligible: eligibility.eligible
       };
     });
 
@@ -96,12 +139,13 @@ export async function fulfillPayment(
     await UserAccessService.syncClerkAccess(result.userId, result.isPatron, result.normalizedTotal);
 
     if (result.isFirstFulfillment) {
-      const { email, language, userId, isPatron } = result;
+      const { email, language, userId, becamePatronNow, wasEligible, isPatron } = result;
       const amount = input.amountMinor / 100;
       const currency = input.currency.toUpperCase();
+      const shouldSendPatronEmail = becamePatronNow || (wasEligible && isPatron);
 
       try {
-        if (isPatron) {
+        if (shouldSendPatronEmail) {
           await EmailService.sendBecomePatronEmail(email, amount, currency, language);
         } else {
           await EmailService.sendDonationThankYouEmail(email, amount, currency, language);
@@ -114,7 +158,7 @@ export async function fulfillPayment(
           targetId: input.paymentId,
           actorUserId: userId,
           metadata: {
-            emailType: isPatron ? "become_patron" : "donation_thank_you",
+            emailType: shouldSendPatronEmail ? "become_patron" : "donation_thank_you",
             error: error instanceof Error ? error.message : String(error),
           },
         });
