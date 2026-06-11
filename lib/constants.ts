@@ -1,17 +1,17 @@
 export const DEFAULT_AVATAR_URL = 'https://www.dicebear.com/api/avataaars/anonymous.svg';
 
-export const MIN_PATRON_AMOUNT = 5; // EUR/USD
-export const MIN_PATRON_AMOUNT_PLN = 20; // PLN
+export const MIN_PATRON_AMOUNT = 10; // EUR/USD/CHF
+export const MIN_PATRON_AMOUNT_PLN = 10; // PLN
 
 export const SUPPORTED_CURRENCIES = ["PLN", "EUR", "USD", "CHF", "GBP"] as const;
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 
 export const MIN_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
-  PLN: 20,
-  EUR: 5,
-  USD: 5,
-  CHF: 5,
-  GBP: 5,
+  PLN: 10,
+  EUR: 10,
+  USD: 10,
+  CHF: 10,
+  GBP: 5, // GBP remains unchanged as per X1-FIX-002 instructions
 };
 
 export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {

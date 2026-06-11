@@ -13,8 +13,8 @@ vi.mock('@/lib/services/audit.service');
 // Mock getPaymentCurrencyLimits
 vi.mock('@/lib/payments/currency-settings', () => ({
   getPaymentCurrencyLimits: vi.fn().mockResolvedValue({
-    PLN: { minAmountMinor: 2000 },
-    EUR: { minAmountMinor: 500 },
+    PLN: { minAmountMinor: 1000 },
+    EUR: { minAmountMinor: 1000 },
   }),
 }));
 
@@ -74,7 +74,7 @@ describe('fulfillPayment use case', () => {
     const input = {
       paymentId: 'pay_123',
       userId: 'user_123',
-      amountMinor: 2500,
+      amountMinor: 1000,
       currency: 'PLN',
     };
 
@@ -82,7 +82,7 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
       userId: 'user_123',
-      amountMinor: 2500,
+      amountMinor: 1000,
       currency: 'PLN',
       status: PaymentStatus.SUCCEEDED,
     });
@@ -95,7 +95,7 @@ describe('fulfillPayment use case', () => {
     mockPrisma.user.update.mockResolvedValue({
       id: 'user_123',
       isPatron: true,
-      paymentTotals: [{ currency: 'PLN', amountMinor: 2500 }],
+      paymentTotals: [{ currency: 'PLN', amountMinor: 1000 }],
     });
 
     const result = await fulfillPayment(input, ctx);
@@ -108,7 +108,7 @@ describe('fulfillPayment use case', () => {
     const input = {
       paymentId: 'pay_123',
       userId: 'user_123',
-      amountMinor: 1000, // 10 PLN < 20 PLN threshold
+      amountMinor: 999, // 9.99 PLN < 10 PLN threshold
       currency: 'PLN',
     };
 
@@ -116,7 +116,7 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
       userId: 'user_123',
-      amountMinor: 1000,
+      amountMinor: 999,
       currency: 'PLN',
       status: PaymentStatus.SUCCEEDED,
     });
