@@ -101,4 +101,23 @@ describe('recordPlaybackEventUseCase', () => {
     expect(mockRepo.recordView).not.toHaveBeenCalled();
     expect(mockRepo.markSessionAsViewed).not.toHaveBeenCalled();
   });
+
+  it('blocks PLAY_STARTED and records no event when access is denied', async () => {
+    (checkVideoAccess as any).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+    });
+
+    const result = await recordPlaybackEventUseCase({
+      videoId: 'v1',
+      type: 'PLAY_STARTED',
+      ipHash: 'ip1',
+      uaHash: 'ua1',
+      fingerprint: 'f1'
+    }, mockCtx);
+
+    expect(result.ok).toBe(false);
+    expect(mockRepo.createEvent).not.toHaveBeenCalled();
+    expect(mockRepo.updateSession).not.toHaveBeenCalled();
+  });
 });

@@ -87,6 +87,31 @@ describe('PlaybackService Safety', () => {
     expect(plan.diagnostics.warnings).toContain('PATRON_REQUIRED');
   });
 
+  it('should not return source, session, or provider data for logged-in non-patron denied on patron-only video', async () => {
+    const userCtx = createAppContext({
+      actor: { type: 'user', userId: 'u1', isPatron: false },
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any,
+    });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', userCtx);
+
+    expect(plan.status).toBe('PATRON_REQUIRED');
+    expect(plan.access.allowed).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
   it('should not return source, session, or provider data if access is denied (LOGIN_REQUIRED)', async () => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       ...baseVideo,
@@ -166,6 +191,8 @@ describe('PlaybackService Safety', () => {
     expect(plan.diagnostics.asset?.providerAssetId).toBe('cf-asset-id');
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+    expect(plan.source).toBeUndefined();
+    expect(JSON.stringify(plan)).not.toContain('secret.mp4');
   });
 
   it('returns no-primary-asset plan with no source, session, or provider call when current asset is not primary', async () => {
@@ -184,6 +211,8 @@ describe('PlaybackService Safety', () => {
     expect(plan.diagnostics.providerResolutionAllowed).toBe(false);
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+    expect(plan.source).toBeUndefined();
+    expect(JSON.stringify(plan)).not.toContain('secret.mp4');
   });
 
 
@@ -328,5 +357,27 @@ describe('PlaybackService Safety', () => {
     expect(plan.access.allowed).toBe(true);
     expect(plan.source?.kind).toBe('youtube');
     expect(plan.source?.playbackUrl).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  });
+
+  it('READY Cloudflare asset for allowed patron does not create a session or resolve provider source yet', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.canPlay).toBe(false); // Provider-backed is not immediately playable
+    expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
+    expect(plan.source?.playbackUrl).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe(''); // No session yet
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 });

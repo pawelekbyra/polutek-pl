@@ -88,4 +88,74 @@ describe('Media-Source Route Access', () => {
     const res = await GET(createReq(), { params: { videoId: '' } });
     expect(res.status).toBe(400);
   });
+
+  it('returns safe asset metadata but no playbackUrl for READY Cloudflare video', async () => {
+    (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'v1',
+      status: 'READY',
+      canPlay: false,
+      access: { allowed: true },
+      source: {
+        provider: 'CLOUDFLARE_STREAM',
+        kind: 'cloudflare_stream',
+        asset: {
+          provider: 'CLOUDFLARE_STREAM',
+          processingState: 'READY',
+          providerPlaybackId: 'cf-playback-id'
+        }
+      },
+      diagnostics: { warnings: ['Provider resolution gated'] },
+      tracking: { playbackSessionId: '' }
+    });
+
+    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.access.allowed).toBe(true);
+    expect(data.source.provider).toBe('CLOUDFLARE_STREAM');
+    expect(data.source.asset.providerPlaybackId).toBe('cf-playback-id');
+    expect(data.playbackUrl).toBeUndefined();
+    expect(data.source.playbackUrl).toBeUndefined();
+  });
+
+  it('redacts PROCESSING Cloudflare video for allowed patron', async () => {
+    (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'v1',
+      status: 'PROCESSING',
+      canPlay: false,
+      access: { allowed: true },
+      source: undefined,
+      diagnostics: { warnings: ['Video asset is PROCESSING'] },
+      tracking: { playbackSessionId: '' }
+    });
+
+    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe('PROCESSING');
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
+  });
+
+  it('redacts FAILED Cloudflare video for allowed patron', async () => {
+    (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'v1',
+      status: 'UNAVAILABLE',
+      canPlay: false,
+      access: { allowed: true },
+      source: undefined,
+      diagnostics: { warnings: ['Video asset processing failed'] },
+      tracking: { playbackSessionId: '' }
+    });
+
+    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe('UNAVAILABLE');
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
+  });
 });
