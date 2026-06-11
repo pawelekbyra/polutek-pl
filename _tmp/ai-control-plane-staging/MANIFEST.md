@@ -17,7 +17,7 @@ Celem nie jest aktywowanie nowej roadmapy dzisiaj. Celem jest przygotowanie ści
 ## Co jest staged
 
 - `README.md` — przyszły krótki panel sterowania dla właściciela i agentów.
-- `AGENTS.md` — przyszły stały kontrakt agentów.
+- `AGENTS.template.md` — template przyszłego stałego kontraktu agentów.
 - `docs/architecture/**` — target-only blueprint i decyzje architektoniczne.
 - `docs/strategy/**` — synteza badań, decyzje właściciela, standard produktu, zakres launch i do-not-build.
 - `docs/specs/**` — specyfikacje domenowe X1-X7.
@@ -33,7 +33,9 @@ Celem nie jest aktywowanie nowej roadmapy dzisiaj. Celem jest przygotowanie ści
 Integrator activation PR, po R10/R11 handoff lub jawnej zgodzie właściciela, może:
 
 1. Zamienić root `README.md` w krótki control panel.
-2. Przenieść/skopiować `_tmp/ai-control-plane-staging/AGENTS.md` do root `AGENTS.md`.
+2. Podczas przyszłego Integrator activation PR skopiować/zmienić nazwę:
+   `_tmp/ai-control-plane-staging/AGENTS.template.md`
+   -> root `AGENTS.md`.
 3. Przenieść/skopiować staged `docs/**` do docelowego root `docs/**`.
 4. Ustawić `docs/roadmap/Active-Execution-Roadmap.md` jako aktywną kolejkę egzekucji.
 5. Ustawić `docs/roadmap/OWNER-TIMELINE.md` jako dashboard właściciela.
