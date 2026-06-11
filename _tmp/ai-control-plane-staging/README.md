@@ -139,7 +139,7 @@ Fazy X nie mogą stać się aktywne przed zatwierdzonym R-phase handoff albo jaw
 
 ## Najważniejsze pliki po aktywacji
 
-- `AGENTS.md` — obowiązkowy kontrakt agentów.
+- `AGENTS.template.md` — staged template przyszłego obowiązkowego kontraktu agentów; podczas aktywacji zostanie skopiowany/zmieniony na root `AGENTS.md`.
 - `docs/roadmap/Active-Execution-Roadmap.md` — aktywna kolejka i status faz.
 - `docs/roadmap/OWNER-TIMELINE.md` — dashboard właściciela.
 - `docs/roadmap/CODEX-WORKFLOW.md` — instrukcja pracy z Codex Cloud.
@@ -149,4 +149,11 @@ Fazy X nie mogą stać się aktywne przed zatwierdzonym R-phase handoff albo jaw
 
 ## Aktywacja
 
-Aktywacja następuje tylko przez Integrator activation PR po R10/R11 handoff/certification lub jawnej zgodzie właściciela. Do tego czasu staged control plane jest planem przyszłym, nie obowiązującą instrukcją runtime.
+Aktywacja następuje tylko przez Integrator activation PR po R10/R11 handoff/certification lub jawnej zgodzie właściciela. Podczas przyszłego Integrator activation PR należy skopiować/zmienić nazwę:
+
+```txt
+_tmp/ai-control-plane-staging/AGENTS.template.md
+-> AGENTS.md
+```
+
+Do tego czasu staged control plane jest planem przyszłym, nie obowiązującą instrukcją runtime.
