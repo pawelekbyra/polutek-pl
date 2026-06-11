@@ -284,7 +284,7 @@ Po R10/R11 handoff lub explicit owner approval osobny Integrator activation PR m
 Planowany kształt po aktywacji:
 
 * root `README.md` staje się krótkim control panelem,
-* root `AGENTS.md` staje się stałym kontraktem agentów,
+* root `AGENTS.md` staje się stałym kontraktem agentów, utworzonym z `_tmp/ai-control-plane-staging/AGENTS.template.md`,
 * `docs/roadmap/Active-Execution-Roadmap.md` staje się aktywną kolejką egzekucji,
 * `docs/roadmap/OWNER-TIMELINE.md` staje się dashboardem postępu dla właściciela,
 * `docs/tickets/ready/` staje się kolejką dla Codex/Jules Builder agents.
