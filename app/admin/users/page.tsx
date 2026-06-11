@@ -281,14 +281,18 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
-                            {user.isPatron ? (
+                            {user.patronTruth?.isPatron ? (
                                 <div className="flex flex-col gap-0.5">
-                                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200 text-[10px] w-fit">PATRON</Badge>
-                                    <div className="text-[9px] text-muted-foreground">Od: {formatDate(user.patronSince)}</div>
-                                    <div className="text-[8px] uppercase font-bold opacity-60">Źródło: {user.patronSource || "ADMIN"}</div>
+                                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200 text-[10px] w-fit">PATRON (GRANT)</Badge>
+                                    <div className="text-[9px] text-muted-foreground">Od: {formatDate(user.patronTruth.firstActiveGrantAt)}</div>
+                                    <div className="text-[8px] uppercase font-bold opacity-60">Źródło: {user.patronTruth.source || "ACTIVE_GRANT"}</div>
+                                    {user.patronCacheTruthMismatch && <Badge variant="destructive" className="text-[8px] w-fit">CACHE MISMATCH</Badge>}
                                 </div>
                             ) : (
-                                <Badge variant="outline" className="text-[10px] w-fit opacity-50">BRAK</Badge>
+                                <div className="flex flex-col gap-0.5">
+                                    <Badge variant="outline" className="text-[10px] w-fit opacity-50">BRAK AKTYWNEGO GRANTU</Badge>
+                                    {user.patronCacheTruthMismatch && <Badge variant="destructive" className="text-[8px] w-fit">CACHE MISMATCH</Badge>}
+                                </div>
                             )}
                         </div>
                       </TableCell>
@@ -323,7 +327,7 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                            <UserPatronActions userId={user.id} isPatron={user.isPatron} />
+                            <UserPatronActions userId={user.id} isPatron={user.patronTruth?.isPatron === true} />
                             <Button variant="ghost" size="icon" asChild title="Wyślij wiadomość"><Link href={`/admin/emails?to=${user.email}`}><Mail className="h-4 w-4" /></Link></Button>
                         </div>
                       </TableCell>

@@ -3,7 +3,9 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 export interface AdminUsersStatsDto {
   totalUsers: number;
   activeUsers: number;
+  /** Count of distinct users with at least one active PatronGrant. */
   patrons: number;
+  patronCountSource: 'ACTIVE_PATRON_GRANT';
   totalPayments: number;
   totalComments: number;
   financials: Array<{
@@ -20,13 +22,17 @@ export async function getAdminUsersStats(
   const [
     totalUsers,
     activeUsers,
-    patrons,
+    activePatronUsers,
     totalPayments,
     totalComments
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { isDeleted: false } }),
-    prisma.user.count({ where: { isPatron: true } }),
+    prisma.patronGrant.findMany({
+      where: { revokedAt: null },
+      select: { userId: true },
+      distinct: ['userId'],
+    }),
     prisma.payment.count({ where: { status: 'SUCCEEDED' } }),
     prisma.comment.count({ where: { deletedAt: null } })
   ]);
@@ -41,7 +47,8 @@ export async function getAdminUsersStats(
   return {
     totalUsers,
     activeUsers,
-    patrons,
+    patrons: activePatronUsers.length,
+    patronCountSource: 'ACTIVE_PATRON_GRANT',
     totalPayments,
     totalComments,
     financials: paymentTotals.map(pt => ({

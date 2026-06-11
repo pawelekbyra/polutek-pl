@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { Prisma, SystemRole, PatronGrantSource } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { normalizePaymentTotals } from "../domain/payment-totals";
+import { PatronCacheReadModel, PatronTruthReadModel, buildPatronCacheReadModel, buildPatronTruthReadModel } from "./patron-read-model";
 import { writeAuditLog } from "@/lib/services/audit.service";
 
 export interface ExportAdminUsersInput {
@@ -21,9 +22,13 @@ export interface ExportAdminUserDto {
   name: string | null;
   username: string | null;
   role: string;
+  /** Deprecated admin export cache field. Use patronTruth.isPatron for access truth. */
   isPatron: boolean;
   patronSince: Date | null;
   patronSource: string | null;
+  patronCache: PatronCacheReadModel;
+  patronTruth: PatronTruthReadModel;
+  patronCacheTruthMismatch: boolean;
   normalizedTotal: number;
   language: string | null;
   isDeleted: boolean;
@@ -50,10 +55,14 @@ export async function exportAdminUsers(
         ]
       } : {},
       input.role ? { role: input.role } : {},
-      input.isPatron !== undefined ? { isPatron: input.isPatron } : {},
+      input.isPatron !== undefined
+        ? input.isPatron
+          ? { patronGrants: { some: { revokedAt: null } } }
+          : { patronGrants: { none: { revokedAt: null } } }
+        : {},
       input.language ? { language: input.language } : {},
       input.isDeleted !== undefined ? { isDeleted: input.isDeleted } : {},
-      input.patronSource ? { patronSource: input.patronSource } : {},
+      input.patronSource ? { patronGrants: { some: { source: input.patronSource, revokedAt: null } } } : {},
       input.hasPayments ? { payments: { some: {} } } : {},
       input.hasSubscriptions ? { subscriptions: { some: {} } } : {},
     ]
@@ -63,27 +72,39 @@ export async function exportAdminUsers(
     where,
     include: {
       paymentTotals: true,
+      patronGrants: {
+        where: { revokedAt: null },
+        orderBy: { createdAt: 'asc' },
+      },
     },
     orderBy: { createdAt: 'desc' }
   });
 
-  const items: ExportAdminUserDto[] = users.map(user => ({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    username: user.username,
-    role: user.role,
-    isPatron: user.isPatron,
-    patronSince: user.patronSince,
-    patronSource: user.patronSource,
-    normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({
-      currency: pt.currency,
-      amountMinor: pt.amountMinor
-    }))),
-    language: user.language,
-    isDeleted: user.isDeleted,
-    createdAt: user.createdAt
-  }));
+  const items: ExportAdminUserDto[] = users.map(user => {
+    const patronCache = buildPatronCacheReadModel(user);
+    const patronTruth = buildPatronTruthReadModel(user.patronGrants);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      username: user.username,
+      role: user.role,
+      isPatron: user.isPatron,
+      patronSince: user.patronSince,
+      patronSource: user.patronSource,
+      patronCache,
+      patronTruth,
+      patronCacheTruthMismatch: patronCache.isPatron !== patronTruth.isPatron,
+      normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({
+        currency: pt.currency,
+        amountMinor: pt.amountMinor
+      }))),
+      language: user.language,
+      isDeleted: user.isDeleted,
+      createdAt: user.createdAt
+    };
+  });
 
   await writeAuditLog({
     actorUserId: actor.userId,

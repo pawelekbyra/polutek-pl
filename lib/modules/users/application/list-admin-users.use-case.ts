@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { Prisma } from "@prisma/client";
 import { normalizePaymentTotals } from "../domain/payment-totals";
+import { PatronCacheReadModel, PatronTruthReadModel, buildPatronCacheReadModel, buildPatronTruthReadModel } from "./patron-read-model";
 
 export interface ListAdminUsersInput {
   query?: string;
@@ -24,10 +25,14 @@ export interface AdminUserListItemDto {
   username: string | null;
   imageUrl: string | null;
   role: string;
+  /** Deprecated admin cache field. Use patronTruth.isPatron for access truth. */
   isPatron: boolean;
   isDeleted: boolean;
   patronSince: Date | null;
   patronSource: string | null;
+  patronCache: PatronCacheReadModel;
+  patronTruth: PatronTruthReadModel;
+  patronCacheTruthMismatch: boolean;
   language: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -71,10 +76,14 @@ export async function listAdminUsers(
           ]
         } : {},
         input.role ? { role: input.role as any } : {},
-        input.isPatron !== undefined ? { isPatron: input.isPatron } : {},
+        input.isPatron !== undefined
+          ? input.isPatron
+            ? { patronGrants: { some: { revokedAt: null } } }
+            : { patronGrants: { none: { revokedAt: null } } }
+          : {},
         input.language ? { language: input.language } : {},
         input.isDeleted !== undefined ? { isDeleted: input.isDeleted } : {},
-        input.patronSource ? { patronSource: input.patronSource as any } : {},
+        input.patronSource ? { patronGrants: { some: { source: input.patronSource as any, revokedAt: null } } } : {},
         input.hasPayments ? { payments: { some: {} } } : {},
         input.hasSubscriptions ? { subscriptions: { some: {} } } : {},
       ]
@@ -96,6 +105,10 @@ export async function listAdminUsers(
             where: { status: 'SUCCEEDED' },
             orderBy: { createdAt: 'desc' },
             take: 1
+        },
+        patronGrants: {
+            where: { revokedAt: null },
+            orderBy: { createdAt: 'asc' }
         }
       },
       orderBy: { [input.orderBy || 'createdAt']: input.orderDir || 'desc' },
@@ -117,6 +130,9 @@ export async function listAdminUsers(
             totalPaidMinor: t.amountMinor
         }));
 
+        const patronCache = buildPatronCacheReadModel(u);
+        const patronTruth = buildPatronTruthReadModel(u.patronGrants);
+
         return {
             id: u.id,
             email: u.email,
@@ -128,6 +144,9 @@ export async function listAdminUsers(
             isDeleted: u.isDeleted,
             patronSince: u.patronSince,
             patronSource: u.patronSource,
+            patronCache,
+            patronTruth,
+            patronCacheTruthMismatch: patronCache.isPatron !== patronTruth.isPatron,
             language: u.language,
             createdAt: u.createdAt,
             updatedAt: u.updatedAt,

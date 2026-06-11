@@ -83,6 +83,7 @@ describe('listAdminUsers API contract', () => {
           subscriptions: 1,
         },
         payments: [{ createdAt: new Date('2023-06-01') }],
+        patronGrants: [{ id: 'pg1', source: 'STRIPE_TIP', createdAt: new Date('2023-01-01'), revokedAt: null }],
       },
     ]);
     mockPrisma.user.count.mockResolvedValue(1);
@@ -96,8 +97,62 @@ describe('listAdminUsers API contract', () => {
       paymentCount: 5,
       referralCount: 2,
       hasSubscriptions: true,
+      patronTruth: expect.objectContaining({ isPatron: true, activeGrantCount: 1 }),
+      patronCache: expect.objectContaining({ isPatron: true, readModelSource: 'USER_PATRON_CACHE' }),
+      patronCacheTruthMismatch: false,
     });
 
     expect(result.items[0].normalizedTotal).toBeGreaterThanOrEqual(100);
   });
+
+  it('uses active PatronGrant-backed filters for patron status and source', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([]);
+    mockPrisma.user.count.mockResolvedValue(0);
+
+    await listAdminUsers({ isPatron: true, patronSource: 'ADMIN' }, ctx);
+
+    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        AND: expect.arrayContaining([
+          { patronGrants: { some: { revokedAt: null } } },
+          { patronGrants: { some: { source: 'ADMIN', revokedAt: null } } },
+        ]),
+      },
+    }));
+  });
+
+  it('returns cache/truth mismatch while preserving cache fields in list DTO', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([
+      {
+        id: 'u-cache-stale',
+        email: 'stale@example.com',
+        name: null,
+        username: null,
+        imageUrl: null,
+        role: 'USER',
+        isPatron: false,
+        isDeleted: false,
+        patronSince: null,
+        patronSource: null,
+        language: 'pl',
+        createdAt: new Date('2022-01-01'),
+        updatedAt: new Date('2022-01-02'),
+        referralPoints: 0,
+        paymentTotals: [],
+        _count: { payments: 0, referrals: 0, subscriptions: 0 },
+        payments: [],
+        patronGrants: [{ id: 'pg-active', source: 'ADMIN', createdAt: new Date('2024-01-01'), revokedAt: null }],
+      },
+    ]);
+    mockPrisma.user.count.mockResolvedValue(1);
+
+    const result = await listAdminUsers({}, ctx);
+
+    expect(result.items[0]).toMatchObject({
+      isPatron: false,
+      patronTruth: expect.objectContaining({ isPatron: true, activeGrantCount: 1 }),
+      patronCacheTruthMismatch: true,
+    });
+  });
+
 });
