@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { AccessDecisionDto } from "../domain/access-decision.dto";
 import { MainChannelService } from "@/lib/modules/channel";
+import { getPatronStatus } from "@/lib/modules/patron";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 
@@ -114,8 +115,13 @@ export async function checkVideoAccess(
   if (video.tier === AccessTier.LOGGED_IN) return ok({ hasAccess: true });
 
   if (video.tier === AccessTier.PATRON) {
-    // DB User.isPatron is the single source of truth. actor.isPatron cache is ignored here.
-    if (user.isPatron) return ok({ hasAccess: true });
+    // X2 Standard: Active PatronGrant is the ground truth for access.
+    // User.isPatron may be stale; we rely on real-time grant lookup.
+    const patronStatusResult = await getPatronStatus(user.id, ctx);
+
+    if (patronStatusResult.ok && patronStatusResult.data.activeGrants.length > 0) {
+      return ok({ hasAccess: true });
+    }
 
     return ok({
         hasAccess: false,

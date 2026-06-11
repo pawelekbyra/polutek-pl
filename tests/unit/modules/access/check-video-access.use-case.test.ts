@@ -2,12 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkVideoAccess } from '@/lib/modules/access/application/check-video-access.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/modules/channel';
+import { getPatronStatus } from '@/lib/modules/patron';
 import { AccessTier, VideoStatus } from '@prisma/client';
+import { ok } from '@/lib/modules/shared/result';
 
 vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/modules/patron', () => ({
+  getPatronStatus: vi.fn(),
 }));
 
 describe('checkVideoAccess Use Case Matrix', () => {
@@ -108,9 +114,11 @@ describe('checkVideoAccess Use Case Matrix', () => {
       }
     });
 
-    it('denies logged-in non-patron with PATRON_REQUIRED', async () => {
+    it('denies logged-in non-patron with PATRON_REQUIRED (no active grants)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
+
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -119,17 +127,21 @@ describe('checkVideoAccess Use Case Matrix', () => {
       }
     });
 
-    it('allows patron based on DB state', async () => {
+    it('allows patron based on active PatronGrant (ignoring User.isPatron false)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: true });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] }));
+
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
     });
 
-    it('denies when actor cache is true but DB is false', async () => {
+    it('denies patron based on missing active PatronGrant (ignoring User.isPatron true)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: true });
+      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
+
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: true }));
       expect(result.ok).toBe(true);
       if (result.ok) {
