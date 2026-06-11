@@ -151,4 +151,56 @@ describe('Video DTOs', () => {
     expect((dto.asset as any).playbackUrl).toBeUndefined();
     expect((dto.asset as any).playbackToken).toBeUndefined();
   });
+
+  describe('migrationStatus calculation', () => {
+    it('READY when Cloudflare Stream asset is READY', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY' }
+      });
+      expect(dto.migrationStatus).toBe('READY');
+    });
+
+    it('MIGRATION_REQUIRED when using R2 asset', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        asset: { provider: 'R2', processingState: 'READY' }
+      });
+      expect(dto.migrationStatus).toBe('MIGRATION_REQUIRED');
+    });
+
+    it('MIGRATION_REQUIRED when no asset but has videoUrl', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        videoUrl: 'https://example.com/video.mp4',
+        asset: null
+      });
+      expect(dto.migrationStatus).toBe('MIGRATION_REQUIRED');
+    });
+
+    it('PROCESSING when Cloudflare Stream asset is PROCESSING', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'PROCESSING' }
+      });
+      expect(dto.migrationStatus).toBe('PROCESSING');
+    });
+
+    it('FAILED when Cloudflare Stream asset is FAILED', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'FAILED' }
+      });
+      expect(dto.migrationStatus).toBe('FAILED');
+    });
+
+    it('MISSING_SOURCE when no asset and no videoUrl', () => {
+      const dto = toAdminVideoDto({
+        ...mockVideo,
+        videoUrl: '',
+        asset: null
+      });
+      expect(dto.migrationStatus).toBe('MISSING_SOURCE');
+    });
+  });
 });

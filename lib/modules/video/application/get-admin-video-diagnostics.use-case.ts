@@ -2,8 +2,9 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
-import { VideoStatus, AccessTier } from "@prisma/client";
+import { VideoStatus, AccessTier, StorageProvider } from "@prisma/client";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
+import { MediaPolicy } from "@/lib/modules/media";
 
 export type DiagnosticIssue = {
   severity: "ERROR" | "WARNING";
@@ -47,7 +48,35 @@ export async function getAdminVideoDiagnostics(
       issues.push({ severity: "WARNING", message: "Miniatura pochodzi z niezaufanego hosta.", field: "thumbnailUrl" });
   }
 
-  // 4. Layout & Logic
+  // 4. Migration & Storage
+  const asset = video.asset;
+  const isCloudflare = asset?.provider === StorageProvider.CLOUDFLARE_STREAM;
+
+  if (isCloudflare) {
+    if (asset.processingState === 'READY') {
+      // No warning needed for READY state.
+    } else if (asset.processingState === 'FAILED') {
+      issues.push({ severity: "ERROR", message: "Przetwarzanie Cloudflare Stream nie powiodło się.", field: "asset" });
+    } else {
+      issues.push({ severity: "WARNING", message: `Zasób Cloudflare jest w stanie: ${asset.processingState}`, field: "asset" });
+    }
+  } else if (asset) {
+    // R2, S3, VERCEL_BLOB
+    issues.push({ severity: "WARNING", message: `Wykryto legacy asset provider: ${asset.provider}. Wymagana migracja do Cloudflare Stream.`, field: "asset" });
+  } else if (video.videoUrl) {
+    issues.push({ severity: "WARNING", message: "Wykryto legacy videoUrl bez dedykowanego zasobu providera. Wymagana migracja do Cloudflare Stream.", field: "videoUrl" });
+  } else {
+    issues.push({ severity: "ERROR", message: "Brak źródła wideo (brak assetu i brak legacy URL).", field: "videoUrl" });
+  }
+
+  // Security Check for Private Legacy URLs
+  if (video.tier === AccessTier.PATRON && !isCloudflare && video.videoUrl) {
+    if (MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
+      issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego linku legacy.", field: "videoUrl" });
+    }
+  }
+
+  // 5. Layout & Logic
   if (video.isMainFeatured && video.status !== VideoStatus.PUBLISHED) {
       issues.push({ severity: "ERROR", message: "Film Hero musi być opublikowany.", field: "status" });
   }
@@ -61,7 +90,7 @@ export async function getAdminVideoDiagnostics(
       issues.push({ severity: "WARNING", message: "Tylko opublikowane filmy powinny być widoczne w sidebarze.", field: "showInSidebar" });
   }
 
-  // 5. Uniqueness
+  // 6. Uniqueness
   const hasDuplicateSlug = await repository.existsBySlugExcludingId(video.slug, video.id);
   if (hasDuplicateSlug) {
       issues.push({ severity: "ERROR", message: "Slug jest już używany przez inny film.", field: "slug" });

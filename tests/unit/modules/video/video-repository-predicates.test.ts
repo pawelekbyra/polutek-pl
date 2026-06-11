@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VideoRepository } from '@/lib/modules/video/infrastructure/video.repository';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus, VideoAssetProcessingState, StorageProvider } from '@prisma/client';
 
 describe('VideoRepository Predicates', () => {
   const mockDb = {
@@ -66,6 +66,37 @@ describe('VideoRepository Predicates', () => {
           }
         }
       });
+    });
+  });
+
+  describe('findAdminList filters', () => {
+    it('should correctly filter by migrationStatus READY', async () => {
+      mockDb.video.findMany = vi.fn().mockResolvedValue([]);
+      mockDb.video.count = vi.fn().mockResolvedValue(0);
+
+      await repository.findAdminList(mainChannelId, { migrationStatus: 'READY' });
+
+      expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY }
+        })
+      }));
+    });
+
+    it('should correctly filter by migrationStatus MIGRATION_REQUIRED', async () => {
+      mockDb.video.findMany = vi.fn().mockResolvedValue([]);
+      mockDb.video.count = vi.fn().mockResolvedValue(0);
+
+      await repository.findAdminList(mainChannelId, { migrationStatus: 'MIGRATION_REQUIRED' });
+
+      expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            { asset: { provider: { in: ['R2', 'S3', 'VERCEL_BLOB'] } } },
+            { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
+          ]
+        })
+      }));
     });
   });
 });

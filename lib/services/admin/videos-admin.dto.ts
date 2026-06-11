@@ -18,6 +18,7 @@ export type AdminVideoListItem = {
   likesCount: number;
   dislikesCount: number;
   commentsCount: number;
+  migrationStatus: string;
   diagnosticsIssuesCount: number;
   createdAt: string;
   updatedAt: string;
