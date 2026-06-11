@@ -69,6 +69,7 @@ const allowedAppRoutes = [
   "app/api/videos/[id]/comments/route.ts",
   "app/api/videos/[id]/playback-event/route.ts",
   "app/api/webhooks/clerk/route.ts",
+  "app/api/webhooks/cloudflare-stream/route.ts",
   "app/api/webhooks/resend/route.ts",
   "app/api/webhooks/stripe/route.ts",
   "app/channel/[slug]/page.tsx",
