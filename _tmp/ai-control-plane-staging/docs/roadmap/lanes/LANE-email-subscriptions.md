@@ -1,92 +1,96 @@
-# Lane: Email & Subscriptions
+# LANE-email-subscriptions
 
-## Purpose
-This lane governs the implementation and maintenance of the mailing system, subscriber management, and email notification logic. It ensures that communication with users is reliable, permission-based, and architecturally separated from access control.
+Status: STAGED ONLY — NIEAKTYWNE.
 
-## Lane Identity
-- **Name:** Email & Subscriptions
-- **ID:** LANE-ES
-- **Scope:** `lib/modules/email/`, `lib/modules/subscriptions/`, and associated API routes/admin UI components.
+## Lane identity
 
-## Product Rules
-- **Subscription means mailing/follow/notification consent.** It is a signal of interest, not a purchase.
-- **Unsubscribe never removes patron access.** Access and interest are independent.
-- **Email module sends messages; it does not decide access.** Logic for *who can see what* belongs to the Access module.
-- **Auditable actions:** Every broadcast or bulk send action must be recorded in the audit log or a delivery report.
+- Lane ID: `email-subscriptions`
+- Primary phase: X6 support / email domain
+- Goal: Subscription = mailing consent only; unsubscribe != patron access
+- Parallel safety: SAFE/CAUTION
 
-## Subscription != Patron
-- **Subscription never grants patron access.** A user can be a subscriber without being a patron.
-- **Patron access comes from active PatronGrant only.** Being on a mailing list is not a substitute for a grant.
-- **Clarity in UI:** Admin tools and user settings must clearly distinguish between "Subscribed to mailing" and "Patron status".
+## Product rules
 
-## Email/Subscriber Concepts
-- **Subscriber:** A user who has explicitly opted in to receive updates/newsletters.
-- **Patron:** A user with an active PatronGrant. They may or may not be a subscriber.
-- **User:** Any registered account.
-- **Segments:**
-  - `SUBSCRIBERS`: Opted-in users.
-  - `PATRONS`: Active access holders.
-  - `ALL_USERS`: Everyone in the system (use with caution for transactional/legal notices only).
-  - `MANUAL`: A specific, hand-picked list of recipients.
+Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 
-## Owned Paths
-- `lib/modules/email/`
-- `lib/modules/subscriptions/`
-- `app/api/subscriptions/`
-- `app/api/admin/emails/`
-- `app/api/admin/subscribers/`
+- Patronat nie jest subskrypcją cykliczną.
+- Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
+- Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
+- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Cloudflare Stream jest pierwszym providerem wideo.
+- Mux ma być wspierany projektowo per `VideoAsset`, bez budowania ciężkiego enterprise multi-provider frameworka.
+- R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
+- Komentarze pod patron-only wideo są widoczne dla wszystkich; komentowanie/reagowanie/pisanie wymaga patrona lub admina.
+- Launch jest publiczny, nie prywatna beta.
+- Cel jakości: produkt excellent, nie szybkie minimum; excellence osiągane fazami i ticketami, nie jednym wielkim PR-em.
 
-## Forbidden by Default
-- Modifying `lib/modules/access/` or `lib/modules/payments/`.
-- Directly changing `User.isPatron` or `PatronGrant` models.
-- Editing global documentation (README, AGENTS.md, etc.) unless explicitly assigned.
+## Domain invariants
 
-## Parallel Safety
-- This lane is safe to run alongside **LANE-video-provider** or **LANE-comments**.
-- It must be carefully coordinated with **LANE-admin-cockpit** to avoid UI conflicts in the admin panel.
+Inwarianty domenowe:
 
-## Work Sequence
-1. Inventory of current mailing/subscription code.
-2. Hardening of the "Subscription != Patron" invariant in logic and tests.
-3. Modularization of email delivery and segment resolution.
-4. Implementation of auditable broadcast reports.
-5. Final UI/Admin cleanup and certification.
+```txt
+Payment = money/support event
+PatronGrant = access/right/status
+Subscription = mailing/follow/newsletter consent
+```
 
-## Suggested Tickets
-- **ES-001** Current email/subscription inventory
-- **ES-002** Subscription is not patron tests
-- **ES-003** Subscriber segment definitions
-- **ES-004** Email send/report protocol
-- **ES-005** Admin subscribers panel handoff
-- **ES-006** Email unsubscribe safety
-- **ES-007** Email/subscriptions lane certification
+Zakazane modele:
 
-## Validation
-- Verify that `unsubscribe` does not affect `PatronGrant`.
-- Verify that email segments correctly filter users based on their respective statuses.
-- Verify that all bulk email actions produce an audit entry.
+```txt
+Stripe webhook -> User.isPatron = true
+Subscription -> patron access
+Clerk metadata -> backend access truth
+Payment alone -> patron access
+frontend state -> patron access
+```
 
-## Done Criteria
-- Code is modularized within `lib/modules/email` and `lib/modules/subscriptions`.
-- No direct Prisma imports in associated API routes.
-- Tests confirm Subscription/Patron independence.
-- Documentation for the module is updated.
+Poprawny model docelowy:
 
-## Certified Criteria
-- Full end-to-end verification of subscription flow.
-- Admin broadcast functionality verified with audit logs.
-- Technical debt in the module is cleared.
+```txt
+Stripe webhook
+  -> verify signature/raw body
+  -> record StripeEvent / webhook ledger
+  -> record Payment as financial fact
+  -> Patron eligibility policy checks amount/currency/status
+  -> Patron module creates PatronGrant
+  -> Access module reads active PatronGrant
+```
 
-## Review Checklist
-- Is "Subscription" used anywhere as a synonym for "Patron"?
-- Does the email module depend on the Access module instead of the other way around?
-- Are raw provider secrets/URLs handled securely?
-- Is the UI clear about what "Subscribing" does?
+Źródło prawdy dostępu patrona:
 
-## Anti-patterns
-- Using mailing list membership to gate video content.
-- Automatically subscribing users to marketing emails without consent upon becoming a Patron.
-- Hardcoding recipient lists in the application logic.
+```txt
+exists ACTIVE PatronGrant
+```
 
-## Final Lane Rule
-Subscription is about communication. Patron is about access. Keep them separate.
+Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
+
+
+
+## Allowed work after activation
+
+- Inventory current code vs specs.
+- Gap analysis.
+- One route family/use-case/repository/policy migration per ticket.
+- Test-only hardening tickets.
+- Docs reconciliation after merged work.
+- Certification support as read-only evidence.
+
+## Forbidden work
+
+- Mega-refactor.
+- Product policy changes without owner decision.
+- Schema/package/guard/global roadmap changes unless ticket explicitly allows.
+- Runtime work without active ticket.
+- Marking target architecture as current implementation.
+
+## Launch-critical checks
+
+- Does this lane preserve Payment/PatronGrant/Subscription separation?
+- Does it preserve denied PlaybackPlan no URL/token/provider call where relevant?
+- Does it avoid Clerk/User.isPatron/Subscription as access truth?
+- Does it create audit trail for admin/manual actions where relevant?
+- Does it avoid parallel conflicts listed in `Parallel-Work-Matrix.md`?
+
+## Seed ticket direction
+
+Initial tickets should be inventory/spec/gap-analysis until X0 activation is complete. Runtime implementation tickets may be created only after current-state inventory and owner/Planner approval.

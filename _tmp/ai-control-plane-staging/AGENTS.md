@@ -1,934 +1,243 @@
-# AGENTS.md
+# AGENTS.md — Post-R AI Delivery Control Plane
 
-## 0. Purpose
-
-This file defines the mandatory rules for AI coding agents working on Polutek.pl.
-
-It applies to:
+Status aktywacji:
 
 ```txt
-Codex
-Jules
-ChatGPT-generated coding prompts
-review agents
-reconciliation agents
-certification agents
-any future AI coding agent
+STAGED ONLY — NIEAKTYWNE
 ```
 
-This file is not optional.
+Ten folder nie jest aktywnym źródłem prawdy, dopóki Integrator activation PR nie przeniesie/skopiuje go do docelowych ścieżek i nie zaktualizuje root `README.md`. Do tego czasu aktywnym źródłem prawdy pozostaje root `README.md` R-phase.
 
-If an instruction in a prompt conflicts with this file, the agent must stop and report the conflict unless the prompt explicitly says that the human owner intentionally overrides `AGENTS.md`.
+## 0. Zakres
 
----
+Ten plik jest przyszłym obowiązkowym kontraktem dla Codex, Jules, Reviewerów, Integratorów, Certifierów i innych agentów AI pracujących nad Polutek.pl po aktywacji control plane.
 
-## 1. Product identity
+Jeżeli prompt konfliktuje z tym plikiem, agent ma zatrzymać się i zgłosić konflikt, chyba że prompt zawiera jawną decyzję właściciela nadpisującą regułę.
 
-Polutek.pl is a single-creator VOD / patron-content platform.
+## 1. Tożsamość produktu
 
-It is:
+Polutek.pl jest jednokanałowym miejscem VOD twórcy: jeden oficjalny kanał, jeden katalog wideo, jeden system patronów/dostępu, jedna społeczność, jedna lista mailingowa i jeden kokpit admina. Polutek.pl nie jest marketplace, multi-creator SaaS, mini-Patreonem, white-label CMS, tenant platformą ani generyczną siecią społecznościową.
+
+Zdanie rdzeniowe:
 
 ```txt
-one creator
-one official channel
-one video catalog
-one patron/access system
-one community
-one mailing system
-one admin cockpit
-one simple product
+Polutek.pl is not a platform.
+Polutek.pl is a place.
 ```
 
-It is not:
+## 2. Decyzje właściciela
 
-```txt
-a marketplace
-a multi-creator SaaS
-a mini-Patreon for many creators
-a white-label CMS
-a tenant platform
-a generic creator platform
-a project for endless feature creep
-```
+Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 
-Do not design for multi-creator unless an explicit human-approved architecture decision says so.
+- Patronat nie jest subskrypcją cykliczną.
+- Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
+- Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
+- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Cloudflare Stream jest pierwszym providerem wideo.
+- Mux ma być wspierany projektowo per `VideoAsset`, bez budowania ciężkiego enterprise multi-provider frameworka.
+- R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
+- Komentarze pod patron-only wideo są widoczne dla wszystkich; komentowanie/reagowanie/pisanie wymaga patrona lub admina.
+- Launch jest publiczny, nie prywatna beta.
+- Cel jakości: produkt excellent, nie szybkie minimum; excellence osiągane fazami i ticketami, nie jednym wielkim PR-em.
 
----
+## 3. Źródła prawdy
 
-## 2. Source of truth order
+Po aktywacji kolejność źródeł prawdy jest następująca:
 
-When information conflicts, use this order:
+1. Aktualny kod na bieżącym main.
+2. Root `README.md`.
+3. `AGENTS.md`.
+4. `docs/roadmap/Active-Execution-Roadmap.md`.
+5. `docs/tickets/**`.
+6. `docs/strategy/OWNER-DECISIONS.md`.
+7. `docs/specs/**`.
+8. `docs/audit/**`.
+9. `docs/roadmap/lanes/**`.
+10. `docs/architecture/Product-Architecture-Blueprint.md`.
+11. PR body / historyczne raporty.
 
-```txt
-1. actual code on current main
-2. README.md
-3. docs/roadmap/Active-Execution-Roadmap.md
-4. docs/tickets/**
-5. docs/audit/**
-6. docs/roadmap/lanes/**
-7. docs/architecture/Product-Architecture-Blueprint.md
-8. PR body / old agent report
-```
-
-Important:
+Zasada stała:
 
 ```txt
 Target architecture != current implementation.
 ```
 
-The architecture blueprint describes the target direction.
-It does not prove that the current runtime has already been migrated.
+Blueprint jest target-only. Nie wolno udawać, że docelowa architektura już istnieje w runtime.
 
-Before making runtime changes, inspect the actual code.
+## 4. Role agentów
 
----
+### Planner
 
-## 3. Agent roles
+Może czytać stan, dzielić pracę na tickety, identyfikować zależności, proponować batch i przygotowywać prompty. Nie może implementować runtime ani oznaczać faz jako done bez certyfikacji.
 
-An agent must know which role it is performing.
+### Builder
 
-Allowed roles:
+Builder implementuje dokładnie jeden ticket. Może edytować tylko ścieżki dozwolone przez ticket. Musi uruchomić walidację z ticketu i zwrócić PR report. Builder nie edytuje README, roadmap globalnych, AGENTS, schema, package files ani guardów, chyba że ticket jawnie na to pozwala.
 
-```txt
-Planner
-Builder
-Reviewer
-Integrator
-Certifier
-```
+### Reviewer
 
-Do not mix roles unless the task explicitly asks for it.
+Reviewer sprawdza diff, scope, ścieżki, walidację, architekturę, produktowe inwarianty i ryzyko. Verdict musi być jednym z: `MERGE`, `FIX`, `BLOCKED`, `REJECT`.
 
-### 3.1 Planner
+### Integrator
 
-Planner may:
+Integrator po batchu synchronizuje docs, przesuwa tickety, aktualizuje timeline/roadmapę i pisze reconciliation report. Integrator nie robi runtime zmian, chyba że ma osobny aktywny ticket.
 
-```txt
-read current state
-split work into small tickets
-update lane plans if asked
-prepare prompts for builders
-identify dependencies
-identify parallel-safe work
-```
+### Certifier
 
-Planner must not:
+Certifier weryfikuje bramki faz, testy, guardy, docs reconciliation i znane blokery. Certifier może rekomendować certyfikację, ale tylko właściciel merge'uje.
+
+## 5. One ticket rule
 
 ```txt
-change runtime code
-pretend future blueprint is current implementation
-mark work done without merged code and validation
+one ticket = one agent task = one branch = one PR
 ```
 
-### 3.2 Builder
-
-Builder may:
+Builder nie może pracować z vague promptu. Zakazane prompty:
 
 ```txt
-implement exactly one ticket
-edit files allowed by the ticket
-add or update tests required by the ticket
-run validation
-open a PR
-write a PR report
+continue
+improve everything
+build the app
+do next phase
+clean up everything
 ```
 
-Builder must not:
+Prawidłowy prompt wskazuje jeden plik `docs/tickets/ready/<ticket>.md` i nakazuje przestrzeganie `AGENTS.md`.
+
+## 6. Docs vs runtime
+
+- Docs-only ticket nie może zmieniać runtime.
+- Runtime ticket nie może aktualizować globalnych docs poza własnym raportem, chyba że ticket pozwala.
+- Schema, migrations, package files i architecture guard są single-writer/serial-only.
+- Roadmapa nie jest dowodem implementacji. Kod i testy są dowodem implementacji.
+
+## 7. Single-writer files
+
+Serial-only, chyba że ticket jawnie pozwala:
+
+- `README.md`
+- `AGENTS.md`
+- `docs/roadmap/Active-Execution-Roadmap.md`
+- `docs/roadmap/OWNER-TIMELINE.md`
+- `docs/roadmap/Phase-Gates.md`
+- `docs/architecture/Product-Architecture-Blueprint.md`
+- `docs/strategy/OWNER-DECISIONS.md`
+- `scripts/check-architecture.ts`
+- `prisma/schema.prisma`
+- `prisma/migrations/**`
+- `package.json`
+- `package-lock.json`
+
+## 8. Parallel work rules
+
+Domyślnie maksymalnie 2 Builderów. Do 3 tylko po stabilizacji control plane i tylko dla izolowanych docs/inventory/UI tasków. Nigdy nie równoleglić ticketów dotykających tej samej rodziny route'ów, modułu, modelu Prisma, test suite, global doc, guard file, package files lub migrations.
+
+## 9. Inwarianty płatności/access/patron
+
+Inwarianty domenowe:
 
 ```txt
-expand scope
-edit README.md unless explicitly allowed
-edit global roadmap files unless explicitly allowed
-edit unrelated docs
-touch another lane
-change product policy
-change Prisma schema unless the ticket is schema-locked
-update package-lock unless the ticket explicitly requires it
+Payment = money/support event
+PatronGrant = access/right/status
+Subscription = mailing/follow/newsletter consent
 ```
 
-### 3.3 Reviewer
-
-Reviewer may:
+Zakazane modele:
 
 ```txt
-inspect PR diff
-check scope
-check architecture
-check validation
-check forbidden files
-recommend MERGE / FIX / REJECT / BLOCKED
+Stripe webhook -> User.isPatron = true
+Subscription -> patron access
+Clerk metadata -> backend access truth
+Payment alone -> patron access
+frontend state -> patron access
 ```
 
-Reviewer must not:
-
-```txt
-silently rewrite the PR
-approve scope creep
-ignore missing validation
-trust PR body without checking diff
-```
-
-### 3.4 Integrator
-
-Integrator may:
-
-```txt
-update README.md
-update Active-Execution-Roadmap.md
-move tickets between ready/active/done/blocked
-update audit docs
-update reconciliation reports
-sync docs with merged code
-```
-
-Integrator must not:
-
-```txt
-change runtime behavior unless explicitly requested
-mix large runtime changes with reconciliation
-mark future target as current implementation
-```
-
-### 3.5 Certifier
-
-Certifier may:
-
-```txt
-verify a phase or lane
-check code vs docs
-check guards
-check tests
-check stale allowlists
-write certification reports
-recommend phase status change
-```
-
-Certifier must not:
-
-```txt
-certify without validation
-certify based only on PR body
-ignore known blockers
-```
-
----
-
-## 4. Work must come from a ticket
-
-Builder agents must not take vague work from README or blueprint.
-
-Builder work must come from a ticket file:
-
-```txt
-docs/tickets/ready/<ticket-id>.md
-```
-
-A valid ticket must include:
-
-```txt
-ID
-Status
-Lane
-Type
-Goal
-Scope
-Allowed paths
-Forbidden paths
-Required changes
-Validation
-Definition of done
-Expected PR report
-Parallel safety
-```
-
-If no ticket exists, the correct task is planning, not coding.
-
-Do not ask or answer:
-
-```txt
-Improve the project.
-Continue the roadmap.
-Implement the blueprint.
-Clean up everything.
-```
-
-Use:
-
-```txt
-Start from current main.
-
-Implement this ticket:
-docs/tickets/ready/<ticket-id>.md
-
-Follow AGENTS.md.
-Do not modify files outside allowed paths.
-Return a PR with the required report.
-```
-
----
-
-## 5. Scope discipline
-
-Every task must be small.
-
-Allowed:
-
-```txt
-one route cleanup
-one use-case migration
-one repository extraction
-one policy/test pass
-one docs-only reconciliation
-one guard improvement
-one ticket batch planning pass
-```
-
-Forbidden unless explicitly approved:
-
-```txt
-mega-refactor
-multi-domain rewrite
-runtime + global docs + schema change in one PR
-blueprint implementation without ticket
-changing product rules while doing cleanup
-touching many unrelated modules
-```
-
-If the agent finds a bigger issue, it must report it as a follow-up.
-It must not silently fix it inside the current PR.
-
----
-
-## 6. Architecture rules
-
-The target architecture is a modular monolith.
-
-Expected flow:
-
-```txt
-route -> use-case -> policy/service/repository -> Prisma
-```
-
-Routes may:
-
-```txt
-authenticate
-parse input
-create AppContext
-call public module API
-map result to HTTP response
-```
-
-Routes must not:
-
-```txt
-import @/lib/prisma directly
-import @/lib/services/** directly
-import module internals
-contain business logic
-decide access/patron/payment locally
-perform large DTO mapping locally
-```
-
-Allowed:
-
-```ts
-import { handleStripeWebhook } from "@/lib/modules/payments";
-```
-
-Forbidden:
-
-```ts
-import { HandleStripeWebhookUseCase } from "@/lib/modules/payments/application/handle-stripe-webhook.use-case";
-```
-
-Modules must expose public API through:
-
-```txt
-lib/modules/<module>/index.ts
-```
-
----
-
-## 7. Product rules that must not be violated
-
-### 7.1 Subscription is not Patron
-
-```txt
-Subscription != Patron
-```
-
-Subscription means mailing/follow/notifications.
-Subscription must never grant video access.
-
-Unsubscribe must never remove patron access.
-
-### 7.2 Payment is money, PatronGrant is access
-
-```txt
-Payment is money.
-PatronGrant is access.
-```
-
-Stripe never grants patron access directly.
-
-Forbidden:
-
-```txt
-Stripe webhook -> user.isPatron = true
-```
-
-Correct direction:
+Poprawny model docelowy:
 
 ```txt
 Stripe webhook
-  -> Payments module records payment
-  -> Patron eligibility policy evaluates payment
+  -> verify signature/raw body
+  -> record StripeEvent / webhook ledger
+  -> record Payment as financial fact
+  -> Patron eligibility policy checks amount/currency/status
   -> Patron module creates PatronGrant
   -> Access module reads active PatronGrant
 ```
 
-### 7.3 Clerk metadata is not access truth
-
-Clerk metadata may be:
+Źródło prawdy dostępu patrona:
 
 ```txt
-UI hint
-cache
-display optimization
-sync target
+exists ACTIVE PatronGrant
 ```
 
-Clerk metadata must not be:
+Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
+
+Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu.
+
+## 10. Inwarianty wideo/playera
+
+Inwarianty wideo/playera:
 
 ```txt
-backend source of truth for patron access
-reason to generate playback source
-reason to bypass DB access check
-manual fix for patron access
-```
-
-### 7.4 User.isPatron is target-deprecated
-
-`User.isPatron` may exist during migration.
-
-It must not become the target source of truth.
-
-Do not remove it before access migration and reconciliation prove it is safe.
-
-### 7.5 Access is server-side
-
-Do not trust:
-
-```txt
-hidden button
-frontend guard
-CSS overlay
-Clerk metadata
-Stripe event without verification
-raw private media URL
-```
-
-Backend must decide access.
-
----
-
-## 8. Video and player rules
-
-Locked video is not a video with an overlay.
-
-Correct model:
-
-```txt
-allowed PlaybackPlan -> player
+allowed PlaybackPlan -> mount player
 denied PlaybackPlan -> locked placeholder
 ```
 
-Forbidden for locked states:
+Dla denied/locked:
 
 ```txt
-mounting real player
-fetching stream
-requesting playback token
-calling provider for playback source
-counting real playback event
-counting real view
-hiding a working player under overlay
+do not mount real player
+do not fetch stream
+do not request playback token
+do not call Cloudflare/Mux for playback source
+do not count playback/view event
+do not leak playbackUrl
+do not leak playbackToken
 ```
 
-Denied PlaybackPlan must have:
+Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VIDEO_NOT_READY`, `NO_PRIMARY_ASSET`, `PROCESSING`, `UNAVAILABLE`, `ERROR`. Denied plan nie zawiera playable URL ani tokenu. Provider call następuje dopiero po backendowej zgodzie Access.
 
-```txt
-playbackUrl: null
-playbackToken: null
-allowed: false
-```
+## 11. Inwarianty komentarzy
 
-Provider must be called only after backend access allows playback.
+- Widoczność komentarzy != uprawnienie do komentowania.
+- Komentarze pod opublikowanymi wideo są widoczne dla wszystkich.
+- PUBLIC/LOGGED_IN: komentowanie wymaga loginu.
+- PATRON: komentowanie/reagowanie/pisanie wymaga patrona lub admina.
+- Goście mogą czytać, ale nie pisać ani reportować.
+- Moderation states: `VISIBLE`, `HELD_FOR_REVIEW`, `HIDDEN`, `DELETED`.
+- No shadow bans.
+- Hide/delete/restore/dismiss wymagają audytu.
 
-R2/S3 may remain legacy/migration storage.
-Do not introduce active R2/S3 fallback playback unless a human-approved architecture decision says so.
+## 12. Inwarianty email/subscription
 
----
+- Subscription = mailing consent only.
+- Patron != newsletter subscriber.
+- Unsubscribe nigdy nie usuwa PatronGrant.
+- Patron nie oznacza automatycznej zgody marketingowej.
+- Transactional emails są oddzielone od marketingu.
+- Broadcast wymaga preview/test-send i audytu.
+- Bounce/complaint suppression jest launch-critical.
 
-## 9. Comments rules
+## 13. Admin/action/audit
 
-Important invariant:
+Admin cockpit jest support operations center, nie vanity dashboard. Access Diagnostics ma pierwszeństwo przed generic dashboard. Każda manualna akcja wpływająca na dostęp wymaga reason + audit + confirmation dla działań niebezpiecznych.
 
-```txt
-Comment visibility != comment permission.
-```
+## 14. Walidacja i raportowanie
 
-Target model:
+Każdy PR musi zawierać:
 
-```txt
-PUBLIC:
-  comments visible to everyone
-  commenting requires logged-in user
+- summary,
+- intent,
+- changed files,
+- validation commands with result,
+- scope confirmation,
+- what did not change,
+- risks,
+- follow-ups,
+- ticket status.
 
-LOGGED_IN:
-  comments visible to everyone
-  commenting requires logged-in user
+Nie wolno twierdzić, że testy przeszły, jeśli nie zostały uruchomione.
 
-PATRON:
-  comments visible to everyone
-  commenting requires patron/admin
-```
+## 15. Blocked behavior
 
-Comments module should ask Access module whether the viewer can comment.
-
-Do not decide comment permission from:
-
-```txt
-User.isPatron
-Clerk metadata
-subscription
-frontend state
-payment state
-```
-
----
-
-## 10. Single-writer files
-
-These files are high-conflict files.
-
-Builder agents must not edit them unless the ticket explicitly allows it:
-
-```txt
-README.md
-AGENTS.md
-docs/roadmap/Active-Execution-Roadmap.md
-docs/roadmap/Parallel-Work-Matrix.md
-docs/roadmap/Phase-Gates.md
-scripts/check-architecture.ts
-prisma/schema.prisma
-package.json
-package-lock.json
-```
-
-Default owner:
-
-```txt
-README.md                                Integrator
-AGENTS.md                                Integrator / Architect
-Active-Execution-Roadmap.md              Planner / Integrator
-Parallel-Work-Matrix.md                  Planner / Integrator
-Phase-Gates.md                           Planner / Certifier
-scripts/check-architecture.ts            Guard task only
-prisma/schema.prisma                     Schema-locked task only
-package-lock.json                        Dependency/CI task only
-```
-
-If a builder needs to touch a single-writer file but the ticket does not allow it, the builder must stop and report a blocker.
-
----
-
-## 11. Parallel work rules
-
-Before running work in parallel, check:
-
-```txt
-docs/roadmap/Parallel-Work-Matrix.md
-```
-
-Default rule:
-
-```txt
-Two agents must not edit the same route, module, Prisma model, guard file, global doc, or test file family at the same time.
-```
-
-Safe parallel work usually means:
-
-```txt
-different lane
-different files
-different tests
-no schema change
-no global docs
-no package-lock
-no guard mutation
-```
-
-Serial-only work:
-
-```txt
-README update
-global roadmap update
-architecture guard update
-Prisma schema change
-package-lock change
-final certification
-large reconciliation
-migration plan
-```
-
-If uncertain, treat the work as serial.
-
----
-
-## 12. Validation
-
-Default validation:
-
-```bash
-npm run quality
-```
-
-This should include:
-
-```txt
-architecture boundary check
-typecheck
-unit tests
-```
-
-Lower-level commands:
-
-```bash
-npm run quality:architecture-boundaries
-npm run typecheck
-npm test -- --run
-npm run db:validate
-npm run env:validate
-```
-
-A PR must report exactly which commands were run.
-
-If validation was not run, the PR body must say:
-
-```txt
-Validation: NOT RUN
-Reason:
-Risk:
-```
-
-Never claim certification if validation was not run.
-
----
-
-## 13. PR report format
-
-Every Builder PR must include:
-
-```txt
-## Summary
-
-## Ticket
-- ID:
-- Lane:
-- Type:
-
-## Changed files
-
-## What changed
-
-## What did not change
-
-## Validation
-- [ ] npm run quality:architecture-boundaries
-- [ ] npm run typecheck
-- [ ] npm test -- --run
-- [ ] npm run quality
-- Other:
-
-## Risk
-Low / Medium / High
-
-## Follow-up suggestions
-
-## Merge recommendation
-MERGE / FIX / REJECT / BLOCKED
-```
-
-The report must be honest.
-
-Do not hide skipped validation.
-
-Do not overstate completion.
-
-Do not mark a phase certified unless the ticket explicitly performs certification.
-
----
-
-## 14. Reviewer verdict format
-
-Reviewer must return one of:
-
-```txt
-MERGE
-FIX
-REJECT
-BLOCKED
-```
-
-Reviewer must check:
-
-```txt
-ticket scope
-forbidden files
-architecture boundaries
-route/module rules
-product invariants
-tests and validation
-docs changes if any
-risk of conflicts
-```
-
-`MERGE` means:
-
-```txt
-The PR is within scope, validation is acceptable, and risk is understood.
-```
-
-`FIX` means:
-
-```txt
-The PR is basically correct but needs targeted changes.
-```
-
-`REJECT` means:
-
-```txt
-The PR violates scope, architecture, product rules, or creates unsafe changes.
-```
-
-`BLOCKED` means:
-
-```txt
-The task cannot safely continue until another dependency is resolved.
-```
-
----
-
-## 15. Documentation rules
-
-There are two types of documentation.
-
-### 15.1 Current-state documentation
-
-Examples:
-
-```txt
-README.md
-docs/roadmap/Active-Execution-Roadmap.md
-docs/audit/**
-docs/reports/reconciliation/**
-```
-
-These must describe actual current state.
-
-Do not make them optimistic.
-
-Do not mark future target as done.
-
-### 15.2 Target architecture documentation
-
-Examples:
-
-```txt
-docs/architecture/Product-Architecture-Blueprint.md
-docs/roadmap/lanes/**
-```
-
-These may describe target direction.
-
-They must clearly say when something is target-only.
-
----
-
-## 16. Docs vs runtime separation
-
-Do not mix docs-only and runtime changes unless the ticket explicitly allows it.
-
-Preferred PR types:
-
-```txt
-docs-only
-inventory
-runtime
-test
-guard
-reconciliation
-certification
-```
-
-Bad PR type:
-
-```txt
-runtime + huge docs rewrite + schema change + roadmap update
-```
-
-If runtime code changes, docs may be updated only when directly required by the ticket.
-
-If global docs need reconciliation after runtime PRs, create a separate Integrator task.
-
----
-
-## 17. Guard rules
-
-Architecture guards must not lie.
-
-Allowlists must be reduced when violations are removed.
-
-Do not add allowlist entries casually.
-
-A new allowlist entry requires:
-
-```txt
-reason
-roadmap stage
-owner lane
-planned removal condition
-```
-
-If a guard allows a violation that no longer exists, the guard should detect or the docs should record that it must be cleaned up.
-
----
-
-## 18. Database and schema rules
-
-Prisma schema changes are high-risk.
-
-Only schema-locked tickets may edit:
-
-```txt
-prisma/schema.prisma
-prisma/migrations/**
-```
-
-A schema-locked ticket must include:
-
-```txt
-migration reason
-affected models
-runtime impact
-test impact
-rollback risk
-parallel work restrictions
-```
-
-Do not remove fields like `User.isPatron` before:
-
-```txt
-Access no longer uses it
-tests prove backend access ignores it
-migration/reconciliation plan exists
-admin diagnostics can expose mismatches
-docs and guards are updated
-```
-
----
-
-## 19. Dependency and lockfile rules
-
-Do not edit:
-
-```txt
-package.json
-package-lock.json
-```
-
-unless the ticket explicitly allows dependency or CI work.
-
-If `package-lock.json` changes, the PR must explain why.
-
-Never mix dependency changes with unrelated feature/refactor work.
-
----
-
-## 20. Error handling
-
-If blocked, do not improvise.
-
-Report:
-
-```txt
-Blocker:
-Why it blocks:
-Files involved:
-Suggested next ticket:
-Risk if ignored:
-```
-
-If the code and docs disagree, do not guess.
-
-Run or request reconciliation.
-
----
-
-## 21. Anti-chaos rules
-
-Do not:
-
-```txt
-open huge PRs
-touch many lanes
-edit README as builder
-update active roadmap as builder
-silently change product rules
-silently change access behavior
-silently change payment fulfillment
-silently change comment visibility
-silently add fallback behavior
-silently weaken security
-silently skip tests
-claim done without validation
-claim merged without checking main
-```
-
----
-
-## 22. Final instruction to agents
-
-Be boring.
-
-The ideal PR is:
-
-```txt
-small
-scoped
-reviewable
-validated
-honest
-easy to merge
-easy to revert
-```
-
-Polutek.pl is built through:
-
-```txt
-small tickets
-small diffs
-clear reports
-review gates
-human merge authority
-post-merge reconciliation
-phase certification
-```
-
-Do not be clever.
-Do not be broad.
-Do not be optimistic.
-
-Do the ticket.
+Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.

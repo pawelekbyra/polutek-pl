@@ -1,20 +1,31 @@
 # Conflict Prevention
 
-## Strategic Isolation
-The most effective way to prevent conflicts is to isolate work by domain (Lane).
+Status: STAGED ONLY — NIEAKTYWNE.
 
-## Locks & Protected Files
-- **Single-Writer Files:** Documentation files like the Roadmap or the Architecture Blueprint should only be modified by one agent at a time, usually during reconciliation.
-- **Protected Files:** `package-lock.json`, `prisma/schema.prisma`, `scripts/check-architecture.ts`, and the root `README.md`/`AGENTS.md` are locked for Builder agents.
-- **Guard Lock:** Changes that weaken or modify architecture guards require high-level approval and a dedicated ticket.
+## Summary
 
-## Picking Parallel Tickets
-- Ensure tickets do not share the same `Allowed Files`.
-- Cross-reference the `Conflicts with` metadata in tickets.
-- Prefer running agents in separate modules (e.g., one in `email`, one in `video`).
+Nie równoleglić tych samych plików, route family, module, Prisma model, test suite, global docs, guard, package files ani migrations.
 
-## Emergency Stop Conditions
-- Detection of unplanned overlapping file changes.
-- Inconsistent state between the DB schema and the application modules.
-- Discovery of shared global state that was not identified during planning.
-- Any regression in "Subscription != Patron" or other core product invariants.
+## Required flow
+
+1. Start from `OWNER-TIMELINE.md`.
+2. Pick one ticket from `docs/tickets/ready/`.
+3. Check `Parallel-Work-Matrix.md`.
+4. Give Builder exactly one ticket.
+5. Review PR with Reviewer protocol.
+6. Owner merges only safe PRs.
+7. Integrator reconciles after batch.
+8. Certifier checks phase gates.
+
+## Hard stops
+
+- No ticket.
+- Forbidden paths needed.
+- Product policy unclear.
+- Same files touched by another active PR.
+- Schema/package/guard/global docs required without explicit ticket.
+- Validation cannot be run and risk is high.
+
+## Required report
+
+Every role must report status, evidence, validation, blockers, risks and next recommended action.
