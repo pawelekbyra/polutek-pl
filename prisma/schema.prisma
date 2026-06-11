@@ -234,25 +234,50 @@ model Video {
 }
 
 enum StorageProvider {
+  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
   R2
+  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
   S3
+  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
   VERCEL_BLOB
+  /// Owner-approved first private video provider for new video assets.
+  CLOUDFLARE_STREAM
+  /// Design-compatible optional provider identity; runtime integration is intentionally not implemented here.
+  MUX
+}
+
+enum VideoAssetProcessingState {
+  PENDING
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
 }
 
 model VideoAsset {
-  id        String          @id @default(uuid())
-  videoId   String          @unique
-  provider  StorageProvider
-  objectKey String
-  bucket    String?
-  mimeType  String?
-  sizeBytes Int?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id                  String                    @id @default(uuid())
+  videoId             String                    @unique
+  provider            StorageProvider
+  objectKey           String
+  bucket              String?
+  providerAssetId     String?
+  providerPlaybackId  String?
+  processingState     VideoAssetProcessingState @default(READY)
+  isPrimary           Boolean                   @default(true)
+  failureReason       String?
+  providerSyncedAt    DateTime?
+  processingStartedAt DateTime?
+  processingEndedAt   DateTime?
+  mimeType            String?
+  sizeBytes           Int?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
 
   video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@index([provider])
+  @@index([processingState])
+  @@index([provider, providerAssetId])
 }
 
 enum ReferralStatus {

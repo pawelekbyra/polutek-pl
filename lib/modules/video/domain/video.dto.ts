@@ -1,4 +1,4 @@
-import { AccessTier, VideoStatus } from "@prisma/client";
+import { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
 
 export interface BaseVideoDto {
   id: string;
@@ -26,6 +26,29 @@ export interface PublicVideoDto extends BaseVideoDto {
   providerUrl?: never;
 }
 
+export interface AdminVideoAssetDto {
+  id: string;
+  videoId: string;
+  provider: StorageProvider;
+  objectKey: string;
+  bucket?: string | null;
+  providerAssetId?: string | null;
+  providerPlaybackId?: string | null;
+  processingState: VideoAssetProcessingState;
+  isPrimary: boolean;
+  failureReason?: string | null;
+  providerSyncedAt?: Date | null;
+  processingStartedAt?: Date | null;
+  processingEndedAt?: Date | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+  playbackUrl?: never;
+  playbackToken?: never;
+  signedUrl?: never;
+}
+
 export interface AdminVideoDto extends BaseVideoDto {
   videoUrl: string;
   status: VideoStatus;
@@ -33,6 +56,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   createdAt: Date;
   updatedAt: Date;
   commentsCount: number;
+  asset?: AdminVideoAssetDto | null;
 }
 
 export function toPublicVideoDto(video: any): PublicVideoDto {
@@ -64,6 +88,30 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
   return dto as PublicVideoDto;
 }
 
+export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
+  if (!asset) return null;
+
+  return {
+    id: asset.id,
+    videoId: asset.videoId,
+    provider: asset.provider,
+    objectKey: asset.objectKey,
+    bucket: asset.bucket,
+    providerAssetId: asset.providerAssetId,
+    providerPlaybackId: asset.providerPlaybackId,
+    processingState: asset.processingState,
+    isPrimary: asset.isPrimary,
+    failureReason: asset.failureReason,
+    providerSyncedAt: asset.providerSyncedAt,
+    processingStartedAt: asset.processingStartedAt,
+    processingEndedAt: asset.processingEndedAt,
+    mimeType: asset.mimeType,
+    sizeBytes: asset.sizeBytes,
+    createdAt: asset.createdAt,
+    updatedAt: asset.updatedAt,
+  };
+}
+
 export function toAdminVideoDto(video: any): AdminVideoDto {
   return {
     ...toPublicVideoDto(video),
@@ -73,6 +121,7 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     commentsCount: video._count?.comments || video.commentsCount || 0,
+    asset: toAdminVideoAssetDto(video.asset),
   };
 }
 
