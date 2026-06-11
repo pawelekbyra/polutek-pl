@@ -12,7 +12,7 @@ No runtime activation was performed. The review found that R10 direct-Prisma cle
 
 Remaining issues are mostly reconciliation issues:
 
-- Root `README.md` and older R10 audit docs still contain stale next-step wording about admin comments cleanup, even though current code has modular admin comments routes and the old comment moderation services are gone.
+- Root `README.md` and older R10 audit docs still contain stale next-step wording that says admin comments moderation cleanup remains next, even though current code has modular admin comments routes and the old comment moderation services are gone.
 - The architecture guard still carries stale allowlist entries for routes that are now clean, and it counts but does not fail direct `@/lib/services/` imports in routes.
 - Legacy payment/patron/user-access bridges remain and should be explicitly ticketed for Post-R cleanup rather than silently treated as fully gone.
 - Open PR status for #817/#814 could not be verified from this environment; owner should close or refresh them before activation.
