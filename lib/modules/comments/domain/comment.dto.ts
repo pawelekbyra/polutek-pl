@@ -1,14 +1,19 @@
 import { CommentStatus } from "@prisma/client";
 import { toPublicCommentAuthor, publicCommentAuthorSelect } from "@/lib/comments-public-author";
 
+/**
+ * Public comment author data.
+ *
+ * NOTE ON BADGE TRUTH:
+ * The `badges` array may contain "PATRON", which is derived from denormalized user metadata.
+ * This is for DISPLAY ONLY and may be stale. It must NEVER be used for authorization decisions.
+ */
 export interface CommentAuthorDto {
   id: string;
-  name: string | null;
+  displayName: string;
   username: string | null;
   imageUrl: string | null;
-  role: string;
-  isPatron: boolean;
-  isAuthor?: boolean;
+  badges: Array<"ADMIN" | "PATRON" | "AUTHOR">;
 }
 
 export interface CommentDto {
