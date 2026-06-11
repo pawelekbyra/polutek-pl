@@ -22,7 +22,8 @@ type ClerkPublicMetadata = {
 
 /**
  * Estimated lifetime total in PLN for display purposes.
- * Note: Access decisions should rely on User.isPatron, not this normalized sum.
+ * Note: Access decisions must rely on active PatronGrant truth; User.isPatron
+ * is only a denormalized cache/read model.
  */
 export function normalizePaymentTotals(paymentTotals: PaymentTotal[]) {
   const totalPLN = paymentTotals.find((t) => t.currency === 'PLN')?.amountMinor || 0;
@@ -58,8 +59,9 @@ export class UserAccessService {
   }
 
   /**
-   * Synchronizes user's access status (Patron) and metadata to Clerk.
-   * Clerk metadata is used for quick frontend checks, while DB is the source of truth.
+   * Synchronizes denormalized patron cache metadata to Clerk.
+   * Callers must pass values derived from grant/revoke or PatronGrant-backed recalculation.
+   * Clerk metadata is for quick frontend display only, not backend access truth.
    */
   static async syncClerkAccess(userId: string, isPatron: boolean, totalPaid?: number) {
     const role: ClerkRole = isPatron ? 'PATRON' : 'USER';
