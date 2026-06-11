@@ -60,6 +60,7 @@ describe('PlaybackService Safety', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
   });
 
   it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
@@ -201,6 +202,54 @@ describe('PlaybackService Safety', () => {
     expect(plan.source).toBeUndefined();
     expect(plan.tracking.playbackSessionId).toBe('');
     expect(plan.diagnostics.sourceMode).toBe('LEGACY_URL');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks patron-only legacy videoUrl fallback when no READY provider-backed asset exists', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/private.mp4',
+      asset: null,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('NO_PRIMARY_ASSET');
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.canPlay).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.player.controls).toBe(false);
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.sourceMode).toBe('LEGACY_URL');
+    expect(plan.diagnostics.warnings).toContain('Patron-only legacy playback fallback is disabled until a READY provider-backed asset is available');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks patron-only READY legacy storage asset fallback without signing storage URLs', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: {
+        ...cloudflareAsset,
+        provider: 'S3',
+        providerAssetId: null,
+        providerPlaybackId: null,
+        objectKey: 'private/video.mp4',
+        bucket: 'private-bucket',
+        processingState: 'READY',
+      },
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('NO_PRIMARY_ASSET');
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.sourceMode).toBe('PROVIDER_ASSET');
+    expect(plan.diagnostics.asset?.provider).toBe('S3');
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
