@@ -58,6 +58,9 @@ describe('Media-Source Route Access', () => {
     const data = await res.json();
     expect(data.hasAccess).toBe(false);
     expect(data.access.reason).toBe('PATRON_REQUIRED');
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
+    expect(data.embedUrl).toBeUndefined();
   });
 
   it('requires videoId param', async () => {

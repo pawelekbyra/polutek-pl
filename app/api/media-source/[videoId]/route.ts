@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: { videoId: str
     const playbackPlan = await PlaybackService.createPlaybackPlanWithContext(videoId, ctx, ipHash, uaHash);
 
     // Safety: ensure no raw URLs leak in the public response
-    if (playbackPlan.source) {
+    if (playbackPlan.source?.playbackUrl) {
         if (MediaPolicy.isProbablyRawMediaUrl(playbackPlan.source.playbackUrl)) {
             // If it's a raw URL that wasn't proxied or handled, redact it for public safety
             // We expect PlaybackService to already use /api/media proxy for most cases.
