@@ -61,10 +61,11 @@ export async function handleRefund(
       await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
 
       if (cappedRefunded >= payment.amountMinor) {
-        // Full refund: Revoke Patron status
+        // Full refund: Revoke Patron status linked to this payment
         const revokeResult = await revokePatron({
           userId: payment.userId,
-          note: 'Payment fully refunded',
+          paymentId: payment.id,
+          note: `Payment ${payment.id} fully refunded`,
         }, ctx, tx);
 
         if (!revokeResult.ok) {
