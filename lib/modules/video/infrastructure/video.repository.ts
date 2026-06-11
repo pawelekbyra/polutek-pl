@@ -1,4 +1,4 @@
-import { Video, VideoAsset, Prisma, AccessTier, VideoStatus } from "@prisma/client";
+import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError } from "../domain/video.errors";
@@ -300,6 +300,19 @@ export class VideoRepository {
         objectKey: data.objectKey || `video-${videoId}`,
         processingState: data.processingState || 'READY'
       }
+    });
+  }
+
+  async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {
+    return await this.db.videoAsset.findFirst({
+      where: { provider, providerAssetId }
+    });
+  }
+
+  async updateAsset(assetId: string, data: Partial<VideoAsset>, tx: WriteTx): Promise<VideoAsset> {
+    return await tx.videoAsset.update({
+      where: { id: assetId },
+      data
     });
   }
 }
