@@ -3,17 +3,17 @@ import { validatePaymentAmountMinor } from '@/lib/payments/checkout.schema';
 
 describe('Payment Validation', () => {
   it('rejects amounts below the minimum for PLN', () => {
-    const result = validatePaymentAmountMinor(1000, 'PLN'); // 10 PLN < 20 PLN min
+    const result = validatePaymentAmountMinor(999, 'PLN'); // 9.99 PLN < 10 PLN min
     expect(result).toContain(' zbyt niska');
   });
 
   it('accepts valid amounts for PLN', () => {
-    const result = validatePaymentAmountMinor(2500, 'PLN');
+    const result = validatePaymentAmountMinor(1000, 'PLN');
     expect(result).toBeNull();
   });
 
   it('rejects amounts below the minimum for EUR', () => {
-    const result = validatePaymentAmountMinor(200, 'EUR'); // 2 EUR < 5 EUR min
+    const result = validatePaymentAmountMinor(999, 'EUR'); // 9.99 EUR < 10 EUR min
     expect(result).toContain(' zbyt niska');
   });
 

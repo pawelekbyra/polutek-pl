@@ -47,8 +47,8 @@ describe('Payment Settings Use Cases', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-          expect(result.data.PLN.minAmount).toBe(20); // Default for PLN from lib/constants.ts
-          expect(result.data.USD.minAmount).toBe(5); // Default for USD from lib/constants.ts
+          expect(result.data.PLN.minAmount).toBe(10); // Default for PLN from lib/constants.ts
+          expect(result.data.USD.minAmount).toBe(10); // Default for USD from lib/constants.ts
           // Verify response shape
           expect(result.data).toHaveProperty('PLN');
           expect(result.data.PLN).toHaveProperty('currency', 'PLN');
@@ -58,15 +58,15 @@ describe('Payment Settings Use Cases', () => {
 
     it('should return overridden settings when they exist', async () => {
       mockRepo.getCurrencySettings.mockResolvedValue([
-        { currency: 'PLN', minAmountMinor: 1000 },
+        { currency: 'PLN', minAmountMinor: 2000 },
       ]);
 
       const result = await getPaymentSettings(ctx);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-          expect(result.data.PLN.minAmount).toBe(10);
-          expect(result.data.USD.minAmount).toBe(5); // Still default
+          expect(result.data.PLN.minAmount).toBe(20);
+          expect(result.data.USD.minAmount).toBe(10); // Still default
       }
     });
   });
@@ -96,7 +96,7 @@ describe('Payment Settings Use Cases', () => {
       expect(mockRepo.upsertCurrencySetting).toHaveBeenCalledWith('PLN', 3000, expect.anything());
       // Verify response shape of update is same as get
       if (result.ok) {
-        expect(result.data.PLN.minAmount).toBe(20); // Note: getPaymentSettings called with fresh mock repo result
+        expect(result.data.PLN.minAmount).toBe(10); // Note: getPaymentSettings called with fresh mock repo result
       }
     });
   });
