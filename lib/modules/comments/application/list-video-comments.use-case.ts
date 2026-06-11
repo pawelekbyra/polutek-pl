@@ -47,17 +47,21 @@ export async function listVideoComments(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // Comments inherit video access
+  // Comments inherit video access for writing/interacting, but are publicly readable
+  // if the video is published (even if it's patron-only).
   if (!accessResult.data.hasAccess) {
-    if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
-        return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
+    const isPubliclyReadableReason = accessResult.data.reason === 'PATRON_REQUIRED' ||
+                                     accessResult.data.reason === 'LOGIN_REQUIRED';
+
+    if (!isPubliclyReadableReason) {
+      if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
+          return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
+      }
+      return fail({
+          type: "FORBIDDEN",
+          message: "Brak dostępu do komentarzy."
+      });
     }
-    return fail({
-        type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Komentarze pod tym filmem są dostępne tylko dla Patronów."
-            : "Brak dostępu do komentarzy."
-    });
   }
 
   const repo = new CommentRepository(prisma);

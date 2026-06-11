@@ -26,6 +26,8 @@ describe('R8 Comments Access and Permissions', () => {
     mockPrisma = {
       comment: {
         findUnique: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn(),
         update: vi.fn(),
         updateMany: vi.fn(),
       },
@@ -99,6 +101,42 @@ describe('R8 Comments Access and Permissions', () => {
         (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
     });
 
+    it('allows guest to list comments on patron-only video but blocks interaction', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([]);
+      mockPrisma.comment.count.mockResolvedValue(0);
+      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creator: { userId: creatorId } });
+
+      const result = await (await import('@/lib/modules/comments/application/list-video-comments.use-case')).listVideoComments(
+        { videoId, sortBy: 'newest', limit: 10 },
+        createCtx({ type: 'guest' })
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.viewer.canComment).toBe(false);
+        expect(result.data.viewer.canReact).toBe(false);
+        expect(result.data.viewer.canReport).toBe(false);
+      }
+    });
+
+    it('allows non-patron to list comments on patron-only video but blocks interaction', async () => {
+        mockPrisma.comment.findMany.mockResolvedValue([]);
+        mockPrisma.comment.count.mockResolvedValue(0);
+        mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creator: { userId: creatorId } });
+
+        const result = await (await import('@/lib/modules/comments/application/list-video-comments.use-case')).listVideoComments(
+          { videoId, sortBy: 'newest', limit: 10 },
+          createCtx({ type: 'user', userId, isPatron: false })
+        );
+
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+          expect(result.data.viewer.canComment).toBe(false);
+          expect(result.data.viewer.canReact).toBe(false);
+          expect(result.data.viewer.canReport).toBe(false);
+        }
+    });
+
     it('blocks non-patron from liking a comment on patron-only video', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId });
       const result = await toggleCommentLike({ commentId: 'c1', action: 'LIKE' }, createCtx({ type: 'user', userId, isPatron: false }));
@@ -111,6 +149,32 @@ describe('R8 Comments Access and Permissions', () => {
       const result = await reportComment({ commentId: 'c1', reason: 'SPAM' }, createCtx({ type: 'user', userId, isPatron: false }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('Read Denial Persistence', () => {
+    it('blocks comment reading if video is NOT_FOUND', async () => {
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'NOT_FOUND' } });
+
+      const result = await (await import('@/lib/modules/comments/application/list-video-comments.use-case')).listVideoComments(
+        { videoId, sortBy: 'newest', limit: 10 },
+        createCtx({ type: 'guest' })
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
+    });
+
+    it('blocks comment reading if video is DELETED', async () => {
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'DELETED' } });
+
+      const result = await (await import('@/lib/modules/comments/application/list-video-comments.use-case')).listVideoComments(
+        { videoId, sortBy: 'newest', limit: 10 },
+        createCtx({ type: 'guest' })
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
     });
   });
 });
