@@ -117,6 +117,24 @@ describe('Video DTOs', () => {
     }
   });
 
+  it('toPublicVideoDto still does not expose playback behavior when a Cloudflare import is pending', () => {
+    const dto = toPublicVideoDto({
+      ...mockVideo,
+      asset: {
+        provider: 'CLOUDFLARE_STREAM',
+        providerAssetId: 'cloudflare-uid-1',
+        processingState: 'PENDING',
+      },
+      playbackUrl: 'https://customer.cloudflarestream.com/leak',
+      playbackToken: 'token-leak',
+    });
+
+    expect((dto as any).videoUrl).toBeUndefined();
+    expect((dto as any).playbackUrl).toBeUndefined();
+    expect((dto as any).playbackToken).toBeUndefined();
+    expect((dto as any).asset).toBeUndefined();
+  });
+
   it('toAdminVideoDto includes asset metadata but does not introduce playback/upload behavior', () => {
     const providerSyncedAt = new Date('2026-06-11T00:00:00Z');
     const dto = toAdminVideoDto({
