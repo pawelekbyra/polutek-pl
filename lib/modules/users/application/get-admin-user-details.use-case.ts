@@ -1,8 +1,8 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { User, Prisma } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { UserNotFoundError } from "../domain/user.errors";
 import { normalizePaymentTotals } from "../domain/payment-totals";
+import { PatronDiagnosticsReadModel, buildPatronDiagnosticsReadModel } from "./patron-read-model";
 
 import { UserRepository } from "../infrastructure/user.repository";
 import { getUserPayments } from "@/lib/modules/payments";
@@ -33,7 +33,10 @@ export interface AdminUserDetailsDto {
     videoDislikes: number;
   };
   paymentTotals: any[];
+  /** All patron grants for audit/history; active (revokedAt === null) grants are access truth. */
   patronGrants: any[];
+  /** Patron truth and cache diagnostics. Access truth is active PatronGrant, not User cache fields. */
+  patronDiagnostics: PatronDiagnosticsReadModel;
   payments: any[];
   subscriptions: any[];
   normalizedTotal: number;
@@ -76,6 +79,7 @@ export async function getAdminUserDetails(
   const subscriptions = subscriptionsResult.ok ? subscriptionsResult.data : [];
 
   const auditLogs = auditLogsResult.ok ? auditLogsResult.data : [];
+  const patronDiagnostics = buildPatronDiagnosticsReadModel(user, patronGrants);
 
   return ok({
       id: user.id,
@@ -96,6 +100,7 @@ export async function getAdminUserDetails(
       _count: user._count,
       paymentTotals: user.paymentTotals,
       patronGrants,
+      patronDiagnostics,
       payments,
       subscriptions,
       normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({

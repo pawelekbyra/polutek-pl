@@ -56,6 +56,11 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
   }
   if (error || !user) return <div className="p-8 text-center text-destructive">{error || "Użytkownik nie znaleziony."}</div>;
 
+  const patronTruth = user.patronDiagnostics?.truth;
+  const patronCache = user.patronDiagnostics?.cache;
+  const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;
+  const isPatronByGrantTruth = patronTruth?.isPatron === true;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
       <Navbar />
@@ -76,11 +81,12 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                   <div className="flex flex-wrap justify-center gap-2 mt-4">
                     <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>{user.role}</Badge>
-                    {user.isPatron ? (
-                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">Patron</Badge>
+                    {isPatronByGrantTruth ? (
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">Patron (grant truth)</Badge>
                     ) : (
-                      <Badge variant="outline">Podstawowy</Badge>
+                      <Badge variant="outline">Podstawowy (brak aktywnego grantu)</Badge>
                     )}
+                    {patronMismatch?.hasMismatch && <Badge variant="destructive">Cache mismatch</Badge>}
                     {user.isDeleted && <Badge variant="destructive">Usunięty</Badge>}
                   </div>
                 </div>
@@ -126,10 +132,18 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                     <CardTitle className="text-sm font-bold flex items-center gap-2"><Heart className="h-4 w-4 text-amber-500" /> Zarządzanie Patronem</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <UserPatronActions userId={user.id} isPatron={user.isPatron} onActionComplete={fetchUser} />
-                    {user.patronSince && (
-                        <p className="mt-4 text-[10px] text-muted-foreground text-center">Patron od: {formatDate(user.patronSince)}</p>
-                    )}
+                    <UserPatronActions userId={user.id} isPatron={isPatronByGrantTruth} onActionComplete={fetchUser} />
+                    <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-1">
+                        <p className="font-bold text-foreground">Access truth: {user.patronDiagnostics?.finalPatronStatusSource || "ACTIVE_PATRON_GRANT"}</p>
+                        <p>Aktywne granty: {patronTruth?.activeGrantCount ?? 0}</p>
+                        <p>Pierwszy aktywny grant: {formatDate(patronTruth?.firstActiveGrantAt || null)}</p>
+                        <p>Cache User.isPatron: {String(patronCache?.isPatron ?? user.isPatron)}</p>
+                        <p>Cache patronSince: {formatDate(patronCache?.patronSince || user.patronSince)}</p>
+                        <p>Cache patronSource: {patronCache?.patronSource || user.patronSource || "—"}</p>
+                        {patronMismatch?.hasMismatch && (
+                            <p className="font-bold text-destructive">Mismatch: cache={String(patronMismatch.cacheSaysPatron)} truth={String(patronMismatch.truthSaysPatron)}</p>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
           </div>
