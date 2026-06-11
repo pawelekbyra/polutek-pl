@@ -21,4 +21,14 @@ describe('Payment Validation', () => {
     const result = validatePaymentAmountMinor(1000, 'EUR');
     expect(result).toBeNull();
   });
+
+  it('rejects amounts below the minimum for GBP', () => {
+    const result = validatePaymentAmountMinor(999, 'GBP'); // 9.99 GBP < 10 GBP min
+    expect(result).toContain(' zbyt niska');
+  });
+
+  it('accepts valid amounts for GBP', () => {
+    const result = validatePaymentAmountMinor(1000, 'GBP');
+    expect(result).toBeNull();
+  });
 });

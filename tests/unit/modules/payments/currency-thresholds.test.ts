@@ -25,17 +25,11 @@ describe('Currency Threshold Defaults and Eligibility', () => {
     expect(limits.EUR.minAmount).toBe(10);
     expect(limits.USD.minAmount).toBe(10);
     expect(limits.CHF.minAmount).toBe(10);
-  });
-
-  it('preserves GBP at 5 as per instructions', async () => {
-    vi.mocked(prisma.paymentCurrencySetting.findMany).mockResolvedValue([]);
-    const limits = await getPaymentCurrencyLimits();
-
-    expect(limits.GBP.minAmount).toBe(5);
+    expect(limits.GBP.minAmount).toBe(10);
   });
 
   it('handles 9.99 (fail) and 10.00 (pass) for launch currencies', async () => {
-    const currencies = ['PLN', 'EUR', 'USD', 'CHF'] as const;
+    const currencies = ['PLN', 'EUR', 'USD', 'CHF', 'GBP'] as const;
 
     for (const currency of currencies) {
       const failEligibility = PaymentPolicy.evaluatePaymentPatronEligibility({

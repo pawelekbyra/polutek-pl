@@ -11,7 +11,7 @@ export const MIN_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   EUR: 10,
   USD: 10,
   CHF: 10,
-  GBP: 5, // GBP remains unchanged as per X1-FIX-002 instructions
+  GBP: 10, // Updated to 10 as per X1-FIX-003 owner decision
 };
 
 export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
