@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { updateAdminVideo, archiveAdminVideo, getCloudflareUploadUrl, attachCloudflareAsset } from '@/lib/modules/video';
+import { updateAdminVideo, archiveAdminVideo, getCloudflareUploadUrl, attachCloudflareAsset, importLegacyVideoToCloudflare } from '@/lib/modules/video';
 import { fromUseCaseResult } from '@/lib/api/api-response';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -51,6 +51,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             case 'attach-asset':
                 const { providerAssetId, providerPlaybackId, processingState } = await req.json();
                 return fromUseCaseResult(await attachCloudflareAsset({ videoId, providerAssetId, providerPlaybackId, processingState }, ctx));
+            case 'import-legacy-to-cloudflare':
+                return fromUseCaseResult(await importLegacyVideoToCloudflare({ videoId }, ctx));
             default:
                 return fromUseCaseResult({ ok: false, error: { code: 'INVALID_ACTION', message: `Action ${action} not supported`, statusCode: 400 } as any });
         }

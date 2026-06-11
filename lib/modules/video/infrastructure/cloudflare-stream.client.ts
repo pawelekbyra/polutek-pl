@@ -10,6 +10,15 @@ export interface CloudflareDirectUploadResponse {
   messages: any[];
 }
 
+export interface CloudflareImportByUrlResponse {
+  result: {
+    uid: string;
+  };
+  success: boolean;
+  errors: any[];
+  messages: any[];
+}
+
 export class CloudflareStreamClient {
   private logger = createScopedLogger("CloudflareStreamClient");
 
@@ -47,6 +56,29 @@ export class CloudflareStreamClient {
       const errorText = await response.text();
       this.logger.error("Cloudflare API error", { status: response.status, errorText });
       throw new Error(`Cloudflare API error: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+  }
+
+  async importVideoByUrl(url: string): Promise<CloudflareImportByUrlResponse> {
+    const { accountId, apiToken } = this.config;
+
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/copy`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      }
+    );
+
+    if (!response.ok) {
+      this.logger.error("Cloudflare API error (importVideoByUrl)", { status: response.status });
+      throw new Error(`Cloudflare Stream import failed with status ${response.status}`);
     }
 
     return await response.json();

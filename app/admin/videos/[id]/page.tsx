@@ -30,6 +30,7 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
   const [video, setVideo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isImportingLegacy, setIsImportingLegacy] = useState(false);
   const toast = useToast();
 
   const fetchVideo = useCallback(async () => {
@@ -162,6 +163,30 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                                       }
                                   } catch (e) { toast('Błąd połączenia.', 'error'); }
                               }}>Generuj Upload URL</Button>
+                              {video.videoUrl && video.asset?.provider !== 'CLOUDFLARE_STREAM' && (
+                                  <Button variant="outline" size="sm" disabled={isImportingLegacy} onClick={async () => {
+                                      setIsImportingLegacy(true);
+                                      try {
+                                          const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ action: 'import-legacy-to-cloudflare' })
+                                          });
+                                          if (res.ok) {
+                                              const data = await res.json();
+                                              toast(`Import Cloudflare rozpoczęty. UID: ${data.asset?.providerAssetId || '—'}`, 'success');
+                                              fetchVideo();
+                                          } else {
+                                              const err = await res.json();
+                                              toast(`Błąd: ${err.error?.message || 'Nie udało się rozpocząć importu'}`, 'error');
+                                          }
+                                      } catch (e) {
+                                          toast('Błąd połączenia.', 'error');
+                                      } finally {
+                                          setIsImportingLegacy(false);
+                                      }
+                                  }}>{isImportingLegacy ? 'Importuję…' : 'Importuj do Cloudflare z legacy URL'}</Button>
+                              )}
                           </div>
                       </CardHeader>
                       <CardContent className="space-y-6">
