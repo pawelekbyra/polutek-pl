@@ -3,6 +3,7 @@ import { Prisma, SystemRole, PatronGrantSource } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { normalizePaymentTotals } from "../domain/payment-totals";
 import { PatronCacheReadModel, PatronTruthReadModel, buildPatronCacheReadModel, buildPatronTruthReadModel } from "./patron-read-model";
+import { ADMIN_PATRON_QUERY_SORT_CONTRACT, AdminPatronQuerySortContractDto } from "./list-admin-users.use-case";
 import { writeAuditLog } from "@/lib/services/audit.service";
 
 export interface ExportAdminUsersInput {
@@ -24,8 +25,16 @@ export interface ExportAdminUserDto {
   role: string;
   /** Deprecated admin export cache field. Use patronTruth.isPatron for access truth. */
   isPatron: boolean;
+  /** Deprecated admin export cache field retained for existing CSV/header compatibility. */
   patronSince: Date | null;
+  /** Deprecated admin export cache field retained for existing CSV/header compatibility. */
   patronSource: string | null;
+  /** Grant-backed first active PatronGrant date for new admin exports/readers. */
+  activeGrantSince: Date | null;
+  /** Grant-backed first active PatronGrant source for new admin exports/readers. */
+  activeGrantSource: string | null;
+  /** Grant-backed active PatronGrant count for new admin exports/readers. */
+  activeGrantCount: number;
   patronCache: PatronCacheReadModel;
   patronTruth: PatronTruthReadModel;
   patronCacheTruthMismatch: boolean;
@@ -33,6 +42,7 @@ export interface ExportAdminUserDto {
   language: string | null;
   isDeleted: boolean;
   createdAt: Date;
+  patronQuerySortContract: AdminPatronQuerySortContractDto;
 }
 
 export async function exportAdminUsers(
@@ -93,6 +103,9 @@ export async function exportAdminUsers(
       isPatron: user.isPatron,
       patronSince: user.patronSince,
       patronSource: user.patronSource,
+      activeGrantSince: patronTruth.activeGrantSince,
+      activeGrantSource: patronTruth.activeGrantSource,
+      activeGrantCount: patronTruth.activeGrantCount,
       patronCache,
       patronTruth,
       patronCacheTruthMismatch: patronCache.isPatron !== patronTruth.isPatron,
@@ -102,7 +115,8 @@ export async function exportAdminUsers(
       }))),
       language: user.language,
       isDeleted: user.isDeleted,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      patronQuerySortContract: ADMIN_PATRON_QUERY_SORT_CONTRACT
     };
   });
 

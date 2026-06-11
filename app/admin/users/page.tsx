@@ -211,7 +211,7 @@ export default function AdminUsersPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="createdAt">Data dołączenia</SelectItem>
-                            <SelectItem value="patronSince">Od kiedy patron</SelectItem>
+                            <SelectItem value="patronSince">Od kiedy patron (aktywny grant)</SelectItem>
                             <SelectItem value="email">E-mail (alfabetycznie)</SelectItem>
                             <SelectItem value="referralPoints">Punkty poleceń</SelectItem>
                         </SelectContent>
@@ -284,8 +284,8 @@ export default function AdminUsersPage() {
                             {user.patronTruth?.isPatron ? (
                                 <div className="flex flex-col gap-0.5">
                                     <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200 text-[10px] w-fit">PATRON (GRANT)</Badge>
-                                    <div className="text-[9px] text-muted-foreground">Od: {formatDate(user.patronTruth.firstActiveGrantAt)}</div>
-                                    <div className="text-[8px] uppercase font-bold opacity-60">Źródło: {user.patronTruth.source || "ACTIVE_GRANT"}</div>
+                                    <div className="text-[9px] text-muted-foreground">Aktywny grant od: {formatDate(user.activeGrantSince || user.patronTruth.firstActiveGrantAt)}</div>
+                                    <div className="text-[8px] uppercase font-bold opacity-60">Źródło grantu: {user.activeGrantSource || user.patronTruth.source || "ACTIVE_GRANT"} · aktywne: {user.activeGrantCount ?? user.patronTruth.activeGrantCount}</div>
                                     {user.patronCacheTruthMismatch && <Badge variant="destructive" className="text-[8px] w-fit">CACHE MISMATCH</Badge>}
                                 </div>
                             ) : (

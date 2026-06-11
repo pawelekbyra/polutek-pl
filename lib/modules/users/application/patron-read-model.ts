@@ -9,6 +9,10 @@ export interface PatronTruthReadModel {
   isPatron: boolean;
   activeGrantCount: number;
   activeGrantIds: string[];
+  /** First active PatronGrant date; canonical grant-backed replacement for legacy User.patronSince sorting. */
+  activeGrantSince: Date | null;
+  /** Source of the first active PatronGrant; canonical grant-backed replacement for legacy User.patronSource filtering display. */
+  activeGrantSource: string | null;
   firstActiveGrantAt: Date | null;
   latestActiveGrantAt: Date | null;
   source: string | null;
@@ -65,6 +69,8 @@ export function buildPatronTruthReadModel(
     isPatron: activeGrants.length > 0,
     activeGrantCount: activeGrants.length,
     activeGrantIds: activeGrants.map((grant) => grant.id),
+    activeGrantSince: firstActiveGrant?.createdAt ?? null,
+    activeGrantSource: firstActiveGrant?.source ?? null,
     firstActiveGrantAt: firstActiveGrant?.createdAt ?? null,
     latestActiveGrantAt: latestActiveGrant?.createdAt ?? null,
     source: firstActiveGrant?.source ?? null,
