@@ -82,59 +82,24 @@ function checkLegacyChannelAdapter() {
 
 const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments', 'subscriptions'];
 
-const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {
-  'app/api/webhooks/clerk/route.ts':
-    'R5/R9 boundary: webhook boundary clean but mixed with legacy EmailService until R9.',
-  'app/api/admin/videos/resync/route.ts':
-    'R6 cert: use case exists, but audit module transition or slight remaining legacy may trigger mixed mode.',
-  'app/api/admin/videos/route.ts':
-    'R6 blocker: mixed route, uses Video module but still relies on legacy services for list filters.',
-  'app/api/comments/[commentId]/reaction/route.ts':
-    'R8 cert: migrated to modular access/use cases.',
-  'app/api/comments/[commentId]/report/route.ts':
-    'R8 cert: migrated to modular access/use cases.',
-  'app/api/comments/[commentId]/route.ts':
-    'R8 cert: migrated to modular access/use cases.',
-  'app/api/comments/[commentId]/replies/route.ts':
-    'R8 cert: migrated to modular access/use cases.',
-  'app/api/comments/[commentId]/pin/route.ts':
-    'R8 cert: migrated to modular use cases.',
-  'app/api/comments/[commentId]/context/route.ts':
-    'R8 cert: migrated to modular use cases.',
-  'app/api/videos/[id]/comments/route.ts':
-    'R8 cert: migrated to modular access/use cases.',
-  'app/api/admin/comments/route.ts':
-    'R8 cert: migrated to modular use case.',
+const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {};
+
+const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
   'app/api/media-source/[videoId]/route.ts':
-    'R6/R3 certified: uses PlaybackService and modular access.',
-  'app/api/videos/[id]/playback-event/route.ts':
-    'R6/R3 cert: uses modular access, but still uses direct Prisma for event/view persistence.',
-  'app/api/admin/users/route.ts':
-    'R5 cert: migrated to modular use case.',
-  'app/api/admin/users/export/route.ts':
-    'R5 cert: migrated to modular use case.',
-  'app/api/admin/users/stats/route.ts':
-    'R5 cert: migrated to modular use case.',
+    'Temporary legacy playback service bridge; tracked for Post-R media/provider cleanup.',
+  'app/api/channel/sidebar/route.ts':
+    'Temporary channel layout read-side bridge; tracked for future content/channel module cleanup.',
   'app/api/admin/users/[userId]/patron/route.ts':
-    'R7 foundation: migrated to modular patron use cases.',
-  'app/api/checkout/create-intent/route.ts':
-    'R7 foundation: migrated to modular payments use case.',
-  'app/api/webhooks/resend/route.ts':
-    'R9 certified: migrated to modular email use case.',
-  'app/api/admin/emails/broadcast/route.ts':
-    'R9 certified: migrated to modular use cases.',
-  'app/api/admin/emails/responses/route.ts':
-    'R9 certified: migrated to modular use cases.',
-  'app/api/admin/templates/route.ts':
-    'R9 certified: migrated to modular use cases.',
-  'app/api/webhooks/stripe/route.ts':
-    'R7 core runtime migrated / modular webhook route.',
-  'app/api/admin/payments/route.ts':
-    'R7 foundation: migrated to modular payments use case.',
-  'app/api/admin/payment-settings/route.ts':
-    'R7 foundation: migrated to modular payments use case.',
-  'app/api/admin/videos/[id]/comments/route.ts':
-    'R8 cert: migrated to modular use case.',
+    'Temporary user access bridge; tracked for PatronGrant/UserAccess cleanup.',
+  'app/api/admin/users/route.ts':
+    'Temporary admin query parser helper; move to route-local/module query DTO parser.',
+  'app/api/admin/videos/route.ts':
+    'Temporary admin query parser helper; move to route-local/module query DTO parser.',
+};
+
+const LEGACY_ACCESS_POLICY_ALLOWLIST: Record<string, string> = {
+  'lib/services/content/video.service.ts':
+    'Deprecated content/video service bridge; tracked for future content/media cleanup.',
 };
 
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
@@ -161,6 +126,7 @@ function checkRoutes() {
 
   let prismaImportsCount = 0;
   let servicesImports = 0;
+  let allowedServicesImports = 0;
   let internalModuleImportsCount = 0;
 
   const files = getAllFiles(apiDir);
@@ -176,7 +142,19 @@ function checkRoutes() {
             violations++;
         }
     }
-    if (content.includes("@/lib/services/")) servicesImports++;
+    const serviceImportMatches = [...content.matchAll(/(?:from\s+['"]|import\(['"])@\/lib\/services\/([^'")]+)/g)];
+    if (serviceImportMatches.length > 0) {
+        servicesImports++;
+        const routeServiceAllowReason = ROUTE_SERVICE_IMPORT_ALLOWLIST[relativePath];
+        if (!routeServiceAllowReason) {
+            const imports = serviceImportMatches.map((match) => `@/lib/services/${match[1]}`).join(', ');
+            console.error(`❌ Violation: Direct @/lib/services/ import in route ${relativePath}: ${imports}. Add an explicit temporary allowlist reason or move through modules.`);
+            violations++;
+        } else {
+            allowedServicesImports++;
+            console.log(`⚠️ Allowed temporary route service import: ${relativePath} — ${routeServiceAllowReason}`);
+        }
+    }
 
     // 1. Internal module imports check
     const internalMatches = [...content.matchAll(/from ['"]@\/lib\/modules\/([^'"\/]+)\/(?!index|db|app-context|actor|app-error|result)([^'"]+)['"]/g)];
@@ -199,8 +177,8 @@ function checkRoutes() {
             console.error(`❌ Route uses closed module but still imports @/lib/prisma: ${relativePath}`);
             violations++;
         }
-        if (content.includes("@/lib/services/")) {
-            console.error(`❌ Route uses closed module but still imports @/lib/services/: ${relativePath}`);
+        if (content.includes("@/lib/services/") && !ROUTE_SERVICE_IMPORT_ALLOWLIST[relativePath]) {
+            console.error(`❌ Route uses closed module but still imports unapproved @/lib/services/: ${relativePath}`);
             violations++;
         }
     }
@@ -236,7 +214,7 @@ function checkRoutes() {
 
   console.log(`\nRoute check statistics:`);
   console.log(`- Routes importing @/lib/prisma: ${prismaImportsCount} (${Object.keys(PRISMA_ROUTES_ALLOWLIST).length} allowlisted)`);
-  console.log(`- Routes importing @/lib/services/: ${servicesImports}`);
+  console.log(`- Routes importing @/lib/services/: ${servicesImports} (${allowedServicesImports} explicitly allowlisted)`);
   console.log(`- Routes with internal module imports: ${internalModuleImportsCount}`);
 
   return violations;
@@ -300,12 +278,9 @@ function checkLegacyAccessPolicy() {
     if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
       policyImports++;
 
-      const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
-      const isExpectedLegacy = relativePath.includes('services/comments') ||
-                               relativePath.includes('lib/actions/interactions.ts') ||
-                               relativePath.includes('services/content/video.service.ts');
+      const allowReason = LEGACY_ACCESS_POLICY_ALLOWLIST[relativePath];
 
-      if (!allowReason && !isExpectedLegacy) {
+      if (!allowReason) {
         console.error(`❌ Violation: New code must not import legacy AccessPolicy: ${relativePath}. Use lib/modules/access instead.`);
         violations++;
       }
