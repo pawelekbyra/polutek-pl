@@ -19,7 +19,7 @@ Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni.
 - Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
 - Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
 - Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta.
-- Domyślne progi launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Domyślne progi launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP (na podstawie decyzji właściciela).
 - `Payment != PatronGrant`.
 - `Subscription/email != Patron`.
 - Active `PatronGrant` jest docelowym backendowym źródłem prawdy dla patron access.
