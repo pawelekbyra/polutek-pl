@@ -65,7 +65,21 @@ describe('exportAdminUsers use-case', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].id).toBe('u1');
       expect(result.data[0].normalizedTotal).toBe(100);
-      expect(result.data[0].patronTruth).toMatchObject({ isPatron: true, activeGrantCount: 1 });
+      expect(result.data[0]).toMatchObject({
+        activeGrantSince: new Date('2023-01-01'),
+        activeGrantSource: 'STRIPE_TIP',
+        activeGrantCount: 1,
+        patronQuerySortContract: expect.objectContaining({
+          patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT',
+          cacheFieldSource: 'USER_PATRON_CACHE',
+        }),
+      });
+      expect(result.data[0].patronTruth).toMatchObject({
+        isPatron: true,
+        activeGrantCount: 1,
+        activeGrantSince: new Date('2023-01-01'),
+        activeGrantSource: 'STRIPE_TIP',
+      });
       expect(result.data[0].patronCacheTruthMismatch).toBe(false);
     }
 
@@ -153,6 +167,9 @@ describe('exportAdminUsers use-case', () => {
     if (result.ok) {
       expect(result.data[0]).toMatchObject({
         isPatron: true,
+        activeGrantSince: null,
+        activeGrantSource: null,
+        activeGrantCount: 0,
         patronTruth: expect.objectContaining({ isPatron: false, activeGrantCount: 0 }),
         patronCacheTruthMismatch: true,
       });

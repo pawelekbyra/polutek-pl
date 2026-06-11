@@ -97,12 +97,113 @@ describe('listAdminUsers API contract', () => {
       paymentCount: 5,
       referralCount: 2,
       hasSubscriptions: true,
-      patronTruth: expect.objectContaining({ isPatron: true, activeGrantCount: 1 }),
+      activeGrantSince: new Date('2023-01-01'),
+      activeGrantSource: 'STRIPE_TIP',
+      activeGrantCount: 1,
+      patronTruth: expect.objectContaining({
+        isPatron: true,
+        activeGrantCount: 1,
+        activeGrantSince: new Date('2023-01-01'),
+        activeGrantSource: 'STRIPE_TIP',
+      }),
       patronCache: expect.objectContaining({ isPatron: true, readModelSource: 'USER_PATRON_CACHE' }),
       patronCacheTruthMismatch: false,
     });
 
     expect(result.items[0].normalizedTotal).toBeGreaterThanOrEqual(100);
+  });
+
+
+  it('maps orderBy=patronSince to grant-backed first active PatronGrant sorting for compatibility', async () => {
+    const earlyGrant = new Date('2024-01-01');
+    const lateGrant = new Date('2024-03-01');
+    const staleCacheDate = new Date('2020-01-01');
+    const baseUser = {
+      name: null,
+      username: null,
+      imageUrl: null,
+      role: 'USER',
+      isDeleted: false,
+      language: 'pl',
+      updatedAt: new Date('2024-04-01'),
+      referralPoints: 0,
+      paymentTotals: [],
+      _count: { payments: 0, referrals: 0, subscriptions: 0 },
+      payments: [],
+    };
+
+    mockPrisma.user.findMany.mockResolvedValue([
+      {
+        ...baseUser,
+        id: 'u-late-grant-stale-cache',
+        email: 'late@example.com',
+        isPatron: true,
+        patronSince: staleCacheDate,
+        patronSource: 'LEGACY',
+        createdAt: new Date('2022-01-01'),
+        patronGrants: [{ id: 'pg-late', source: 'ADMIN', createdAt: lateGrant, revokedAt: null }],
+      },
+      {
+        ...baseUser,
+        id: 'u-early-grant',
+        email: 'early@example.com',
+        isPatron: true,
+        patronSince: new Date('2023-01-01'),
+        patronSource: 'STRIPE_TIP',
+        createdAt: new Date('2022-02-01'),
+        patronGrants: [{ id: 'pg-early', source: 'STRIPE_TIP', createdAt: earlyGrant, revokedAt: null }],
+      },
+      {
+        ...baseUser,
+        id: 'u-cache-only',
+        email: 'cache-only@example.com',
+        isPatron: true,
+        patronSince: new Date('2019-01-01'),
+        patronSource: 'LEGACY',
+        createdAt: new Date('2022-03-01'),
+        patronGrants: [],
+      },
+    ]);
+    mockPrisma.user.count.mockResolvedValue(3);
+
+    const result = await listAdminUsers({ orderBy: 'patronSince', orderDir: 'asc' }, ctx);
+
+    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.not.objectContaining({
+      orderBy: { patronSince: 'asc' },
+    }));
+    expect(result.items.map((item) => item.id)).toEqual([
+      'u-early-grant',
+      'u-late-grant-stale-cache',
+      'u-cache-only',
+    ]);
+    expect(result.items[1]).toMatchObject({
+      patronSince: staleCacheDate,
+      activeGrantSince: lateGrant,
+      activeGrantSource: 'ADMIN',
+      patronCacheTruthMismatch: false,
+    });
+    expect(result.items[2]).toMatchObject({
+      activeGrantSince: null,
+      activeGrantCount: 0,
+      patronTruth: expect.objectContaining({ isPatron: false }),
+      patronCacheTruthMismatch: true,
+    });
+    expect(result.patronQuerySortContract).toMatchObject({
+      patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT',
+      compatibilityAliases: { orderByPatronSince: 'activeGrantSince' },
+      cacheFieldSource: 'USER_PATRON_CACHE',
+    });
+  });
+
+  it('supports activeGrantSince as the explicit grant-backed patron sort field', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([]);
+    mockPrisma.user.count.mockResolvedValue(0);
+
+    await listAdminUsers({ orderBy: 'activeGrantSince', orderDir: 'desc' }, ctx);
+
+    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.not.objectContaining({
+      orderBy: { activeGrantSince: 'desc' },
+    }));
   });
 
   it('uses active PatronGrant-backed filters for patron status and source', async () => {
