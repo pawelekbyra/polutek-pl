@@ -127,11 +127,87 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
               <TabsContent value="content"><VideoDetailsPanel video={video} /></TabsContent>
               <TabsContent value="media" className="space-y-6">
                   <Card className="shadow-sm">
-                      <CardHeader><CardTitle className="text-lg">Zasoby multimedialne</CardTitle></CardHeader>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle className="text-lg">Cloudflare Stream (Primary)</CardTitle>
+                          <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={async () => {
+                                  const providerAssetId = prompt("Wpisz Cloudflare UID:");
+                                  if (providerAssetId) {
+                                      try {
+                                          const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ action: 'attach-asset', providerAssetId })
+                                          });
+                                          if (res.ok) { toast('Zasób podpięty.', 'success'); fetchVideo(); }
+                                          else { const err = await res.json(); toast(`Błąd: ${err.error?.message || 'Nieznany błąd'}`, 'error'); }
+                                      } catch (e) { toast('Błąd połączenia.', 'error'); }
+                                  }
+                              }}>Podepnij UID</Button>
+                              <Button variant="default" size="sm" onClick={async () => {
+                                  try {
+                                      const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ action: 'create-upload-url' })
+                                      });
+                                      if (res.ok) {
+                                          const data = await res.json();
+                                          toast('URL do uploadu wygenerowany. UID: ' + data.providerAssetId, 'success');
+                                          window.open(data.uploadUrl, '_blank');
+                                          fetchVideo();
+                                      } else {
+                                          const err = await res.json();
+                                          toast(`Błąd: ${err.error?.message || 'Nieznany błąd'}`, 'error');
+                                      }
+                                  } catch (e) { toast('Błąd połączenia.', 'error'); }
+                              }}>Generuj Upload URL</Button>
+                          </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                          {video.asset?.provider === 'CLOUDFLARE_STREAM' ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Stan przetwarzania</Label><div><Badge variant={video.asset.processingState === 'READY' ? 'default' : 'outline'}>{video.asset.processingState}</Badge></div></div>
+                                          <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Primary Asset</Label><div>{video.asset.isPrimary ? <Badge className="bg-green-600">TAK</Badge> : <Badge variant="outline">NIE</Badge>}</div></div>
+                                      </div>
+                                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider Asset ID (UID)</Label><div className="p-2 bg-muted rounded font-mono text-xs">{video.asset.providerAssetId}</div></div>
+                                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Playback ID</Label><div className="p-2 bg-muted rounded font-mono text-xs">{video.asset.providerPlaybackId || '—'}</div></div>
+                                      {video.asset.failureReason && (
+                                          <div className="p-3 bg-red-50 border border-red-100 rounded text-red-800 text-xs">
+                                              <p className="font-bold">Błąd:</p>
+                                              <p>{video.asset.failureReason}</p>
+                                          </div>
+                                      )}
+                                  </div>
+                                  <div className="space-y-4">
+                                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Ostatnia synchronizacja</Label><div className="text-sm">{formatDate(video.asset.providerSyncedAt)}</div></div>
+                                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Rozpoczęto przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingStartedAt)}</div></div>
+                                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Zakończono przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingEndedAt)}</div></div>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div className="py-6 text-center border-dashed border-2 rounded-xl bg-muted/20">
+                                  <p className="text-sm text-muted-foreground italic">Brak przypisanego zasobu Cloudflare Stream.</p>
+                              </div>
+                          )}
+                      </CardContent>
+                  </Card>
+
+                  <Card className="shadow-sm">
+                      <CardHeader><CardTitle className="text-lg flex items-center gap-2">Legacy / Migration <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">INTERNAL ONLY</Badge></CardTitle></CardHeader>
                       <CardContent className="space-y-6">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                               <div className="md:col-span-2 space-y-4">
-                                  <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Video URL</Label><div className="flex gap-2"><div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.videoUrl}</div><Button variant="ghost" size="icon" asChild><a href={video.videoUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button></div></div>
+                                  <div className="space-y-2">
+                                      <Label className="text-xs font-bold uppercase text-muted-foreground">Video URL (Legacy)</Label>
+                                      <div className="flex gap-2">
+                                          <div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.videoUrl}</div>
+                                          <Button variant="ghost" size="icon" asChild><a href={video.videoUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>
+                                      </div>
+                                      <p className="text-[10px] text-amber-700 italic">Ten URL jest używany tylko jako fallback lub w celach migracyjnych. Playback dla patronów docelowo odbywa się przez Cloudflare Stream.</p>
+                                  </div>
                                   <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Thumbnail URL</Label><div className="flex gap-2"><div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.thumbnailUrl}</div><Button variant="ghost" size="icon" asChild><a href={video.thumbnailUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button></div></div>
                                   <div className="grid grid-cols-2 gap-4 pt-4"><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Dostawca</Label><div className="text-sm font-medium uppercase">{video.asset?.provider || "External / Direct"}</div></div><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Typ</Label><div className="text-sm font-medium">{video.asset?.mimeType || "—"}</div></div></div>
                               </div>

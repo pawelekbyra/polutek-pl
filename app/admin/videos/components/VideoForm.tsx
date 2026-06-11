@@ -148,9 +148,13 @@ export function VideoForm({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="videoUrl">URL Wideo</Label>
+                                    <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                                        URL Wideo
+                                        <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
+                                    </Label>
                                     <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
                                     {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
+                                    <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest ścieżką migracyjną. Docelowo używaj Cloudflare Stream w panelu szczegółów filmu.</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="thumbnailUrl">URL Miniatury</Label>

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import { updateAdminVideo, archiveAdminVideo } from '@/lib/modules/video';
+import { updateAdminVideo, archiveAdminVideo, getCloudflareUploadUrl, attachCloudflareAsset } from '@/lib/modules/video';
 import { fromUseCaseResult } from '@/lib/api/api-response';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -46,6 +46,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 return fromUseCaseResult(await updateAdminVideo({ id: videoId, status: VideoStatus.DRAFT }, ctx));
             case 'set-hero':
                 return fromUseCaseResult(await updateAdminVideo({ id: videoId, isMainFeatured: true, status: VideoStatus.PUBLISHED, tier: AccessTier.PUBLIC }, ctx));
+            case 'create-upload-url':
+                return fromUseCaseResult(await getCloudflareUploadUrl({ videoId }, ctx));
+            case 'attach-asset':
+                const { providerAssetId, providerPlaybackId, processingState } = await req.json();
+                return fromUseCaseResult(await attachCloudflareAsset({ videoId, providerAssetId, providerPlaybackId, processingState }, ctx));
             default:
                 return fromUseCaseResult({ ok: false, error: { code: 'INVALID_ACTION', message: `Action ${action} not supported`, statusCode: 400 } as any });
         }
