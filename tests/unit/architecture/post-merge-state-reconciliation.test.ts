@@ -7,43 +7,57 @@ describe('Post-Merge State Reconciliation Invariants', () => {
   const readmePath = join(rootDir, 'README.md');
   const guardPath = join(rootDir, 'scripts/check-architecture.ts');
 
-  it('README should not have contradictory R7 status', () => {
-    const readme = readFileSync(readmePath, 'utf-8');
-    // It should say foundation or certification candidate
-    expect(readme).toContain('[~ stronger foundation / certification candidate]');
+  const readText = (path: string) => readFileSync(path, 'utf-8');
+
+  it('README identifies the current Post-R owner control panel state', () => {
+    const readme = readText(readmePath);
+
+    expect(readme).toContain('# Polutek.pl — Post-R AI Delivery Control Panel');
+    expect(readme).toContain('Post-R AI Delivery Control Plane jest aktywny.');
+    expect(readme).toContain('Nie oznacza launch-ready');
   });
 
-  it('README should reflect core comments status', () => {
-    const readme = readFileSync(readmePath, 'utf-8');
-    expect(readme).toContain('[x certified]');
+  it('README points agents to the active contract and one-ticket workflow', () => {
+    const readme = readText(readmePath);
+
+    expect(readme).toContain('Kontrakt agentów: `AGENTS.md`.');
+    expect(readme).toContain('`AGENTS.md` jest aktywnym kontraktem agentów AI.');
+    expect(readme).toContain('Jeden ticket = jeden agent task = jeden branch = jeden PR.');
   });
 
-  it('README should correctly report R9 status', () => {
-    const readme = readFileSync(readmePath, 'utf-8');
-    // R9 is fully certified
-    expect(readme).toContain('[x certified]');
+  it('README blocks stale PR merge instructions instead of reviving them', () => {
+    const readme = readText(readmePath);
+
+    expect(readme).toContain('#817 powinien zostać zamknięty');
+    expect(readme).toContain('#814 powinien zostać zamknięty');
+    expect(readme).toContain('Nie merge’ować #817 ani #814');
+    expect(readme).not.toMatch(/(?:^|\n)\s*(?:merge|merge’ować)\s+#(?:817|814)\b/i);
   });
 
-  it('Architecture guard should not mark core comment routes as prisma blockers', () => {
-    const guard = readFileSync(guardPath, 'utf-8');
+  it('Architecture guard remains readable and enforces current boundary categories', () => {
+    const guard = readText(guardPath);
 
-    // Core comment routes should be removed from PRISMA_ROUTES_ALLOWLIST
-    const forbidden = [
-        'app/api/videos/[id]/comments/route.ts',
-        'app/api/comments/[commentId]/route.ts',
-        'app/api/comments/[commentId]/reaction/route.ts',
-        'app/api/comments/[commentId]/report/route.ts'
+    expect(guard).toContain('const FORBIDDEN_IMPORTS = [');
+    expect(guard).toContain("'next/server'");
+    expect(guard).toContain("'@clerk/nextjs'");
+    expect(guard).toContain("const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments', 'subscriptions'];");
+    expect(guard).toContain('const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {');
+    expect(guard).toContain('const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {};');
+    expect(guard).toContain('process.exit(1)');
+    expect(guard).toContain('✅ Architecture check passed.');
+  });
+
+  it('Architecture guard does not re-allow core comment route Prisma bypasses', () => {
+    const guard = readText(guardPath);
+    const forbiddenPrismaBypassRoutes = [
+      'app/api/videos/[id]/comments/route.ts',
+      'app/api/comments/[commentId]/route.ts',
+      'app/api/comments/[commentId]/reaction/route.ts',
+      'app/api/comments/[commentId]/report/route.ts',
     ];
 
-    for (const route of forbidden) {
-        // We check if it is in the PRISMA_ROUTES_ALLOWLIST object
-        const regex = new RegExp(`'${route}':`);
-        expect(guard).not.toMatch(regex);
+    for (const route of forbiddenPrismaBypassRoutes) {
+      expect(guard).not.toContain(`'${route}':`);
     }
-  });
-
-  it('Architecture guard should mark R9 webhook as foundation', () => {
-    const guard = readFileSync(guardPath, 'utf-8');
-    expect(guard).toContain('R9 certified: migrated to modular email use case.');
   });
 });
