@@ -70,6 +70,72 @@ describe('Admin Video Details & Diagnostics', () => {
           expect(result.data.some(i => i.message.includes('Slug jest już używany'))).toBe(true);
         }
       });
+
+    it('flags legacy storage source when no CF asset', async () => {
+      const video = {
+        id: 'v1',
+        title: 'Video',
+        slug: 'slug',
+        status: VideoStatus.PUBLISHED,
+        tier: AccessTier.PUBLIC,
+        videoUrl: 'https://example.com/legacy.mp4',
+        asset: null
+      };
+      mockPrisma.video.findUnique.mockResolvedValue(video);
+      mockPrisma.video.count.mockResolvedValue(0);
+
+      const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
+      const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.some(i => i.message.includes('Wykryto legacy videoUrl'))).toBe(true);
+      }
+    });
+
+    it('flags insecure private source for patron video', async () => {
+      const video = {
+        id: 'v1',
+        title: 'Video',
+        slug: 'slug',
+        status: VideoStatus.PUBLISHED,
+        tier: AccessTier.PATRON,
+        videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
+        asset: null
+      };
+      mockPrisma.video.findUnique.mockResolvedValue(video);
+      mockPrisma.video.count.mockResolvedValue(0);
+
+      const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
+      const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego linku legacy'))).toBe(true);
+      }
+    });
+
+    it('returns missing source error when neither asset nor url exists', async () => {
+      const video = {
+        id: 'v1',
+        title: 'Video',
+        slug: 'slug',
+        status: VideoStatus.DRAFT,
+        tier: AccessTier.PUBLIC,
+        videoUrl: '',
+        asset: null
+      };
+      mockPrisma.video.findUnique.mockResolvedValue(video);
+      mockPrisma.video.count.mockResolvedValue(0);
+
+      const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
+      const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.some(i => i.message.includes('Brak źródła wideo'))).toBe(true);
+      }
+    });
   });
 
   describe('getAdminVideoDetails', () => {

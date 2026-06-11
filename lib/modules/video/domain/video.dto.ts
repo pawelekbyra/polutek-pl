@@ -49,6 +49,13 @@ export interface AdminVideoAssetDto {
   signedUrl?: never;
 }
 
+export type MigrationStatus =
+  | "READY"
+  | "MIGRATION_REQUIRED"
+  | "MISSING_SOURCE"
+  | "PROCESSING"
+  | "FAILED";
+
 export interface AdminVideoDto extends BaseVideoDto {
   videoUrl: string;
   status: VideoStatus;
@@ -57,6 +64,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   updatedAt: Date;
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
+  migrationStatus: MigrationStatus;
 }
 
 export function toPublicVideoDto(video: any): PublicVideoDto {
@@ -113,6 +121,22 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
 }
 
 export function toAdminVideoDto(video: any): AdminVideoDto {
+  const asset = video.asset;
+  let migrationStatus: MigrationStatus = "MISSING_SOURCE";
+
+  if (asset) {
+    if (asset.provider === "CLOUDFLARE_STREAM") {
+      if (asset.processingState === "READY") migrationStatus = "READY";
+      else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
+      else migrationStatus = "PROCESSING";
+    } else {
+      // R2, S3, Vercel Blob
+      migrationStatus = "MIGRATION_REQUIRED";
+    }
+  } else if (video.videoUrl) {
+    migrationStatus = "MIGRATION_REQUIRED";
+  }
+
   return {
     ...toPublicVideoDto(video),
     videoUrl: video.videoUrl,
@@ -121,7 +145,8 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     createdAt: video.createdAt,
     updatedAt: video.updatedAt,
     commentsCount: video._count?.comments || video.commentsCount || 0,
-    asset: toAdminVideoAssetDto(video.asset),
+    asset: toAdminVideoAssetDto(asset),
+    migrationStatus,
   };
 }
 

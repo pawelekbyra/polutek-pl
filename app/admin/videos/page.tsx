@@ -58,6 +58,7 @@ export default function AdminVideosPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tierFilter, setTierFilter] = useState<string>("ALL");
   const [sourceKindFilter, setSourceKindFilter] = useState<string>("ALL");
+  const [migrationStatusFilter, setMigrationStatusFilter] = useState<string>("ALL");
   const [needsAttention, setNeedsAttention] = useState<boolean>(false);
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
@@ -69,6 +70,7 @@ export default function AdminVideosPage() {
       if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
       if (tierFilter !== "ALL") url += `&tier=${tierFilter}`;
       if (sourceKindFilter !== "ALL") url += `&sourceKind=${sourceKindFilter}`;
+      if (migrationStatusFilter !== "ALL") url += `&migrationStatus=${migrationStatusFilter}`;
       if (isMainFeatured !== "ALL") url += `&isMainFeatured=${isMainFeatured}`;
       if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
       if (needsAttention) url += `&needsAttention=true`;
@@ -158,7 +160,7 @@ export default function AdminVideosPage() {
 
   useEffect(() => {
       if (isAdmin) fetchVideos(1);
-  }, [statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
+  }, [statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
 
   const slugify = (text: string) => {
     return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
@@ -351,6 +353,7 @@ export default function AdminVideosPage() {
             statusFilter={statusFilter} onStatusFilterChange={setStatusFilter}
             tierFilter={tierFilter} onTierFilterChange={setTierFilter}
             sourceKindFilter={sourceKindFilter} onSourceKindFilterChange={setSourceKindFilter}
+            migrationStatusFilter={migrationStatusFilter} onMigrationStatusFilterChange={setMigrationStatusFilter}
             isMainFeatured={isMainFeatured} onIsMainFeaturedChange={setIsMainFeatured}
             showInSidebar={showInSidebar} onShowInSidebarChange={setShowInSidebar}
             orderBy={orderBy} onOrderByChange={setOrderBy}

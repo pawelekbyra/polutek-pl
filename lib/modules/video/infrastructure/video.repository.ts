@@ -1,4 +1,4 @@
-import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider } from "@prisma/client";
+import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider, VideoAssetProcessingState } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError } from "../domain/video.errors";
@@ -28,6 +28,7 @@ export interface VideoFilterOptions {
   tier?: string;
   isMainFeatured?: string;
   showInSidebar?: string;
+  migrationStatus?: string;
   page?: number;
   limit?: number;
   orderBy?: string;
@@ -119,6 +120,24 @@ export class VideoRepository {
     if (filters.showInSidebar === 'true') where.showInSidebar = true;
     if (filters.showInSidebar === 'false') where.showInSidebar = false;
 
+    if (filters.migrationStatus && filters.migrationStatus !== 'ALL') {
+      if (filters.migrationStatus === 'READY') {
+        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY };
+      } else if (filters.migrationStatus === 'PROCESSING') {
+        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: { in: [VideoAssetProcessingState.PENDING, VideoAssetProcessingState.UPLOADING, VideoAssetProcessingState.PROCESSING] } };
+      } else if (filters.migrationStatus === 'FAILED') {
+        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.FAILED };
+      } else if (filters.migrationStatus === 'MISSING_SOURCE') {
+        where.asset = null;
+        where.videoUrl = '';
+      } else if (filters.migrationStatus === 'MIGRATION_REQUIRED') {
+        where.OR = [
+          { asset: { provider: { in: [StorageProvider.R2, StorageProvider.S3, StorageProvider.VERCEL_BLOB] } } },
+          { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
+        ];
+      }
+    }
+
     if (filters.query) {
       where.OR = [
         { title: { contains: filters.query, mode: 'insensitive' } },
@@ -136,7 +155,10 @@ export class VideoRepository {
         orderBy: { [filters.orderBy || 'createdAt']: 'desc' },
         skip,
         take: limit,
-        include: { _count: { select: { comments: true } } }
+        include: {
+            _count: { select: { comments: true } },
+            asset: true
+        }
       }),
       this.db.video.count({ where })
     ]);

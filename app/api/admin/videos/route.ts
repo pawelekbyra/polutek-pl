@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
         ...options,
         isMainFeatured: options.isMainFeatured === undefined ? 'ALL' : String(options.isMainFeatured),
         showInSidebar: options.showInSidebar === undefined ? 'ALL' : String(options.showInSidebar),
+        migrationStatus: options.migrationStatus || 'ALL',
     }, ctx);
     return fromUseCaseResult(result);
   } catch (error: unknown) {

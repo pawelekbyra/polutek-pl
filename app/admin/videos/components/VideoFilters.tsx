@@ -21,6 +21,8 @@ interface VideoFiltersProps {
     onShowInSidebarChange: (val: string) => void;
     orderBy: string;
     onOrderByChange: (val: string) => void;
+    migrationStatusFilter: string;
+    onMigrationStatusFilterChange: (val: string) => void;
     needsAttention: boolean;
     onNeedsAttentionChange: (val: boolean) => void;
 }
@@ -41,6 +43,8 @@ export function VideoFilters({
     onShowInSidebarChange,
     orderBy,
     onOrderByChange,
+    migrationStatusFilter,
+    onMigrationStatusFilterChange,
     needsAttention,
     onNeedsAttentionChange
 }: VideoFiltersProps) {
@@ -99,6 +103,20 @@ export function VideoFilters({
                             <SelectItem value="DASH">DASH</SelectItem>
                             <SelectItem value="MP4">MP4</SelectItem>
                             <SelectItem value="DIRECT">Direct (Legacy)</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={migrationStatusFilter} onValueChange={(v) => onMigrationStatusFilterChange(v || 'ALL')}>
+                        <SelectTrigger className="w-[140px] h-9">
+                            <SelectValue placeholder="Migracja" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Stan migracji</SelectItem>
+                            <SelectItem value="READY">Gotowe (CF)</SelectItem>
+                            <SelectItem value="MIGRATION_REQUIRED">Wymaga migracji</SelectItem>
+                            <SelectItem value="PROCESSING">Przetwarzanie (CF)</SelectItem>
+                            <SelectItem value="FAILED">Błąd (CF)</SelectItem>
+                            <SelectItem value="MISSING_SOURCE">Brak źródła</SelectItem>
                         </SelectContent>
                     </Select>
 

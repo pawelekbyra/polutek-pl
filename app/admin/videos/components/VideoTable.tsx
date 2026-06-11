@@ -93,7 +93,25 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                     {vid.tier === 'PUBLIC' ? <Globe className="h-2.5 w-2.5" /> : vid.tier === 'LOGGED_IN' ? <Lock className="h-2.5 w-2.5" /> : <ShieldCheck className="h-2.5 w-2.5" />}
                     {vid.tier === 'PUBLIC' ? 'Publiczny' : vid.tier === 'LOGGED_IN' ? 'Zalogowani' : 'Patroni'}
                     </Badge>
-                    <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider || vid.sourceKind}</div>
+                    <div className="flex flex-col gap-1 mt-1">
+                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider || vid.sourceKind}</div>
+                        {vid.migrationStatus !== 'READY' && (
+                            <Badge
+                                variant="outline"
+                                className={cn(
+                                    "text-[9px] h-4 px-1 w-fit",
+                                    vid.migrationStatus === 'MIGRATION_REQUIRED' && "border-amber-500 text-amber-600 bg-amber-50",
+                                    vid.migrationStatus === 'MISSING_SOURCE' && "border-red-500 text-red-600 bg-red-50",
+                                    vid.migrationStatus === 'FAILED' && "border-red-700 text-red-700 bg-red-100",
+                                    vid.migrationStatus === 'PROCESSING' && "border-blue-500 text-blue-600 bg-blue-50 animate-pulse"
+                                )}
+                            >
+                                {vid.migrationStatus === 'MIGRATION_REQUIRED' ? 'MIGRACJA' :
+                                 vid.migrationStatus === 'MISSING_SOURCE' ? 'BRAK' :
+                                 vid.migrationStatus}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
               </TableCell>
               <TableCell className="text-[10px] text-muted-foreground leading-relaxed">
