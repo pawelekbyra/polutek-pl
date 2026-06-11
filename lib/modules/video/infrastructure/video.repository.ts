@@ -1,4 +1,5 @@
-import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider, VideoAssetProcessingState } from "@prisma/client";
+import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider } from "@prisma/client";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError } from "../domain/video.errors";
@@ -122,17 +123,17 @@ export class VideoRepository {
 
     if (filters.migrationStatus && filters.migrationStatus !== 'ALL') {
       if (filters.migrationStatus === 'READY') {
-        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY };
+        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } };
       } else if (filters.migrationStatus === 'PROCESSING') {
-        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: { in: [VideoAssetProcessingState.PENDING, VideoAssetProcessingState.UPLOADING, VideoAssetProcessingState.PROCESSING] } };
+        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: { in: [VIDEO_ASSET_PROCESSING_STATE.PENDING, VIDEO_ASSET_PROCESSING_STATE.UPLOADING, VIDEO_ASSET_PROCESSING_STATE.PROCESSING] } } };
       } else if (filters.migrationStatus === 'FAILED') {
-        where.asset = { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.FAILED };
+        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED } };
       } else if (filters.migrationStatus === 'MISSING_SOURCE') {
         where.asset = null;
         where.videoUrl = '';
       } else if (filters.migrationStatus === 'MIGRATION_REQUIRED') {
         where.OR = [
-          { asset: { provider: { in: [StorageProvider.R2, StorageProvider.S3, StorageProvider.VERCEL_BLOB] } } },
+          { asset: { is: { provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
           { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
         ];
       }

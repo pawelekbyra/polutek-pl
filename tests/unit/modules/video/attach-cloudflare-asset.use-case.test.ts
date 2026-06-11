@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { attachCloudflareAsset } from '@/lib/modules/video/application/attach-cloudflare-asset.use-case';
 import { AppContext } from '@/lib/modules/shared/app-context';
-import { StorageProvider, VideoAssetProcessingState, AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
+import { VIDEO_PROVIDER } from '@/lib/modules/video/domain/video-asset.constants';
 
 describe('attachCloudflareAsset', () => {
   const mockPrisma = {
@@ -50,7 +51,7 @@ describe('attachCloudflareAsset', () => {
     expect(result.ok).toBe(true);
     expect(mockPrisma.videoAsset.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
-        provider: StorageProvider.CLOUDFLARE_STREAM,
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: 'cf-uid-123',
         videoId,
       })

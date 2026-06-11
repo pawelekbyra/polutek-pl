@@ -5,7 +5,8 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
-import { StorageProvider, VideoAssetProcessingState } from "@prisma/client";
+import type { VideoAssetProcessingState } from "@prisma/client";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 
 export interface AttachCloudflareAssetInput {
   videoId: string;
@@ -26,10 +27,10 @@ export async function attachCloudflareAsset(
 
   const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
     await repository.upsertAsset(video.id, {
-      provider: StorageProvider.CLOUDFLARE_STREAM,
+      provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId: input.providerAssetId,
       providerPlaybackId: input.providerPlaybackId || input.providerAssetId, // For Cloudflare, assetId is often the playbackId
-      processingState: input.processingState || VideoAssetProcessingState.READY,
+      processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.READY,
       isPrimary: true,
       providerSyncedAt: new Date()
     }, tx);
@@ -39,7 +40,7 @@ export async function attachCloudflareAsset(
       targetType: 'Video',
       targetId: video.id,
       metadata: {
-          provider: StorageProvider.CLOUDFLARE_STREAM,
+          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
           providerAssetId: input.providerAssetId
       }
     }, tx);
