@@ -4,9 +4,9 @@ import { RevokePatronInput, PatronStatusDto } from "../domain/patron.dto";
 import { PatronPolicy } from "../domain/patron.policy";
 import { InvalidPatronActionError, UserNotFoundError } from "../domain/patron.errors";
 import { PatronRepository } from "../infrastructure/patron.repository";
-import { normalizePaymentTotals } from "@/lib/modules/users";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { WriteTx } from "@/lib/modules/shared/db";
+import { recalculatePatronStatus } from "./recalculate-patron-status.use-case";
 
 export async function revokePatron(
   input: RevokePatronInput,
@@ -23,29 +23,31 @@ export async function revokePatron(
     const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
-    await repo.revokeActiveGrants(input.userId, input.note || 'Patron status revoked', currentTx);
+    const note = input.note || 'Patron status revoked';
 
-    const updatedUser = await repo.updateUserPatronFields(input.userId, {
-      isPatron: false,
-      patronSince: null,
-      patronSource: null,
-    }, currentTx);
+    if (input.paymentId) {
+      await repo.revokeGrantByPaymentId(input.paymentId, note, currentTx);
+    } else {
+      await repo.revokeActiveGrants(input.userId, note, currentTx);
+    }
+
+    const recalcResult = await recalculatePatronStatus(input.userId, ctx, currentTx);
+    if (!recalcResult.ok) {
+      throw new Error(`RECALC_FAILED: ${recalcResult.error.message}`);
+    }
 
     await recordAuditEvent(ctx, {
       action: 'PATRON_REVOKED',
       targetType: 'User',
       targetId: input.userId,
-      metadata: { note: input.note },
+      metadata: {
+        note: input.note,
+        paymentId: input.paymentId,
+        targeted: !!input.paymentId
+      },
     }, currentTx);
 
-    return success({
-      userId: updatedUser.id,
-      isPatron: updatedUser.isPatron,
-      patronSince: updatedUser.patronSince,
-      patronSource: updatedUser.patronSource,
-      activeGrants: [],
-      normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
-    });
+    return success(recalcResult.data);
   };
 
   return tx ? await work(tx) : await ctx.db.writeTransaction(work);
