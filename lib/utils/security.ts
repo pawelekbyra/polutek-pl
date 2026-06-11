@@ -1,4 +1,4 @@
-import { parseMediaHosts } from "@/lib/modules/media";
+import { parseMediaHosts } from "@/lib/modules/media/domain/media-safety";
 
 export function generateCSP() {
   const clerkDomains = [
