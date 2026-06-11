@@ -50,21 +50,27 @@ export class VideoRepository {
     }) as (Video & { asset: VideoAsset | null }) | null;
   }
 
-  async findByIdForMainChannel(id: string, mainChannelId: string): Promise<Video | null> {
+  async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
     return await this.db.video.findFirst({
         where: { id, creatorId: mainChannelId },
-        include: { _count: { select: { comments: true } } }
-    });
+        include: {
+            _count: { select: { comments: true } },
+            asset: true
+        }
+    }) as (Video & { asset: VideoAsset | null }) | null;
   }
 
-  async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<Video | null> {
+  async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
     return await this.db.video.findFirst({
         where: { slug, creatorId: mainChannelId },
-        include: { _count: { select: { comments: true } } }
-    });
+        include: {
+            _count: { select: { comments: true } },
+            asset: true
+        }
+    }) as (Video & { asset: VideoAsset | null }) | null;
   }
 
-  async findAdminByIdOrSlugForMainChannel(idOrSlug: string, mainChannelId: string): Promise<Video | null> {
+  async findAdminByIdOrSlugForMainChannel(idOrSlug: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
     const { isUuid } = await import("@/lib/utils/uuid");
     if (isUuid(idOrSlug)) {
         return await this.findByIdForMainChannel(idOrSlug, mainChannelId);
@@ -272,5 +278,28 @@ export class VideoRepository {
             }
         });
     }
+  }
+
+  async upsertAsset(videoId: string, data: Partial<VideoAsset>, tx: WriteTx): Promise<VideoAsset> {
+    const existing = await tx.videoAsset.findUnique({
+      where: { videoId }
+    });
+
+    if (existing) {
+      return await tx.videoAsset.update({
+        where: { videoId },
+        data
+      });
+    }
+
+    return await tx.videoAsset.create({
+      data: {
+        ...data as any,
+        videoId,
+        provider: data.provider!,
+        objectKey: data.objectKey || `video-${videoId}`,
+        processingState: data.processingState || 'READY'
+      }
+    });
   }
 }

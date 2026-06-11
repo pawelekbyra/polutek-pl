@@ -12,6 +12,8 @@ export * from './application/reorder-admin-videos.use-case';
 export * from './application/get-hero-video.use-case';
 export * from './application/get-admin-video-diagnostics.use-case';
 export * from './application/record-playback-event.use-case';
+export * from './application/attach-cloudflare-asset.use-case';
+export * from './application/get-cloudflare-upload-url.use-case';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
