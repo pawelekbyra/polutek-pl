@@ -59,6 +59,23 @@ export async function GET(
     }
 
     const { id, videoUrl } = result.data;
+    const playbackPolicyVideo = await ctx.prisma.video.findUnique({
+      where: { id },
+      select: {
+        tier: true,
+      },
+    });
+
+    if (playbackPolicyVideo?.tier === 'PATRON' && process.env.ALLOW_LEGACY_PRIVATE_FALLBACK !== 'true') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'NO_PRIMARY_ASSET',
+          message: 'Patron-only video must use provider-backed playback, not the legacy media proxy.',
+        },
+        { status: 409 },
+      );
+    }
 
     return getGatedBlobResponse(userId, id, videoUrl, req.headers);
   } catch (error) {

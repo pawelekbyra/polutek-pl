@@ -6,6 +6,7 @@ import { VideoStatus, AccessTier } from "@prisma/client";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
 import { MediaPolicy } from "@/lib/modules/media";
+import { hasReadyProviderBackedPlaybackAsset, isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/services/playback/legacy-private-fallback.policy";
 
 export type DiagnosticIssue = {
   severity: "ERROR" | "WARNING";
@@ -71,8 +72,12 @@ export async function getAdminVideoDiagnostics(
   }
 
   // Security Check for Private Legacy URLs
-  if (video.tier === AccessTier.PATRON && !isCloudflare && video.videoUrl) {
-    if (MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
+  if (video.tier === AccessTier.PATRON && !hasReadyProviderBackedPlaybackAsset(asset)) {
+    if (!isLegacyPrivatePlaybackFallbackAllowed()) {
+      issues.push({ severity: "ERROR", message: "Film dla patronów nie ma gotowego assetu Cloudflare Stream/Mux; legacy playback fallback jest wyłączony i film będzie nieodtwarzalny do czasu migracji.", field: asset ? "asset" : "videoUrl" });
+    }
+
+    if (!isCloudflare && video.videoUrl && MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
       issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego linku legacy.", field: "videoUrl" });
     }
   }

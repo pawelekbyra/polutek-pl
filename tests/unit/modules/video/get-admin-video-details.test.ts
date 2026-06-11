@@ -111,7 +111,35 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
+        expect(result.data.some(i => i.message.includes('legacy playback fallback jest wyłączony'))).toBe(true);
         expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego linku legacy'))).toBe(true);
+      }
+    });
+
+    it('flags patron Cloudflare asset that is not ready as unplayable until migration completes', async () => {
+      const video = {
+        id: 'v1',
+        title: 'Video',
+        slug: 'slug',
+        status: VideoStatus.PUBLISHED,
+        tier: AccessTier.PATRON,
+        videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
+        asset: {
+          provider: 'CLOUDFLARE_STREAM',
+          processingState: 'PROCESSING',
+          isPrimary: true,
+        },
+      };
+      mockPrisma.video.findUnique.mockResolvedValue(video);
+      mockPrisma.video.count.mockResolvedValue(0);
+
+      const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
+      const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.some(i => i.message.includes('Zasób Cloudflare jest w stanie: PROCESSING'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('legacy playback fallback jest wyłączony'))).toBe(true);
       }
     });
 
