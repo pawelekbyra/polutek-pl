@@ -48,6 +48,16 @@ export class PatronRepository {
     });
   }
 
+  async revokeGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx) {
+    return await tx.patronGrant.updateMany({
+      where: { paymentId, revokedAt: null },
+      data: {
+        revokedAt: new Date(),
+        reason: reason,
+      },
+    });
+  }
+
   async updateUserPatronFields(userId: string, data: {
     isPatron: boolean;
     patronSince: Date | null;

@@ -84,7 +84,11 @@ describe('handleRefund', () => {
     expect(ctx.db.writeTransaction).toHaveBeenCalled();
     expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(revokePatron).toHaveBeenCalledWith(
-      expect.objectContaining({ userId }),
+      expect.objectContaining({
+        userId,
+        paymentId: paymentId,
+        note: `Payment ${paymentId} fully refunded`
+      }),
       ctx,
       mockTx // Critical: verify tx sharing
     );
