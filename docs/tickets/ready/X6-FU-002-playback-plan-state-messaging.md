@@ -1,6 +1,6 @@
 # X6-FU-002 — Playback plan state messaging
 
-Status: READY
+Status: DONE — merged on main (PR #877).
 Type: runtime UI + focused tests
 Source finding: `docs/reports/reconciliation/X6-EX-001-UI-CONSISTENCY-INVENTORY.md`
 

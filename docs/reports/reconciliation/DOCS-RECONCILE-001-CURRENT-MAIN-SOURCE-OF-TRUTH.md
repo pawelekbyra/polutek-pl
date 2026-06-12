@@ -1,4 +1,6 @@
-# DOCS-RECONCILE-001 — Current Main Source of Truth
+# DOCS-RECONCILE-001 — Current Main Source of Truth (SUPERSEDED)
+
+**Status: SUPERSEDED by [DOCS-RECONCILE-002-CURRENT-MAIN.md](./DOCS-RECONCILE-002-CURRENT-MAIN.md)**
 
 ## 1. Executive summary
 

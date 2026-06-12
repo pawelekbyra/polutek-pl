@@ -2,7 +2,7 @@
 
 Status: `IMPLEMENTED_VERIFIED` for automated/local evidence in this PR.
 
-This report covers PR #871 branch `LAUNCH-FIX-007-stripe-lifecycle-smoke-test-14361623944252925867` after reconciliation with current `main` containing PR #873 documentation. It is not an X7 certification report and does not declare public launch readiness.
+This report covers the Stripe lifecycle hardening (merged on main via PR #871). It is not an X7 certification report and does not declare public launch readiness.
 
 ## Intent
 
@@ -88,9 +88,9 @@ Changed only focused payment/patron runtime, focused payment tests, and this PR 
 - No live Stripe calls.
 - No public-launch or X7 certification claim.
 
-## Conflict resolution
+## Implementation on Main
 
-Current working copy started from current `main` after PR #873. The PR #873 global documentation state was preserved. No global-doc conflict was resolved by editing PR #873 files. The Stripe lifecycle branch work was reapplied as focused payment/patron changes plus this PR report.
+This logic is now fully integrated on `main`. The Stripe lifecycle work includes focused payment/patron changes and automated smoke tests.
 
 ## Validation
 
@@ -116,7 +116,7 @@ Final command results are recorded in the PR body and final agent response.
 
 - `OQ-001`: owner decision for partial-refund patron policy remains required.
 - Production Stripe refund/dispute evidence remains required before X7 launch certification.
-- Recommended next executable ticket from current `main` / PR #873 documentation remains `docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md` after PR #871 is resolved/merged.
+- Recommended next executable ticket from current `main` (PR #885) is `OWNER-LAUNCH-DECISIONS-001`.
 
 ## Ticket status
 

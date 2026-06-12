@@ -6,7 +6,7 @@ LAUNCH-FIX-002
 
 ## Status
 
-READY
+DONE — merged on main (PR #884)
 
 ## Lane
 

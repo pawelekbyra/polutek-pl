@@ -1,7 +1,7 @@
 # X6-EX-001-ui-consistency-inventory
 
 ID: `X6-EX-001`
-Status: `READY`
+Status: `DONE`
 Lane: X6 Product Excellence
 Type: Docs/inventory only
 
@@ -11,7 +11,7 @@ Create a UI consistency inventory for launch-critical user and admin screens wit
 
 ## Entry criteria
 
-- Current-main reconciliation report exists: `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`.
+- Current-main reconciliation report exists: `docs/reports/reconciliation/DOCS-RECONCILE-002-CURRENT-MAIN.md`.
 - Launch-critical runtime foundations are stable enough for inventory work.
 - PR #871 remains separately tracked and must not be merged/recreated by this ticket.
 - No production/manual X7 certification is claimed.
