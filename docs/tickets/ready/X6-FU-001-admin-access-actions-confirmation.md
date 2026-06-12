@@ -1,7 +1,7 @@
 # X6-FU-001-admin-access-actions-confirmation
 
 ID: `X6-FU-001`
-Status: `PROPOSED`
+Status: `IMPLEMENTED`
 Lane: X6 Product Excellence
 Type: Runtime/UI follow-up
 Source: `docs/reports/reconciliation/X6-EX-001-UI-CONSISTENCY-INVENTORY.md`
@@ -55,4 +55,4 @@ Add targeted tests only after owner/reviewer confirms the implementation scope.
 
 ## Ticket status
 
-`PROPOSED` — created by docs-only inventory because a launch-critical UI safety gap was found. Requires owner activation before implementation.
+`IMPLEMENTED` — owner-activated and implemented by this PR. Awaiting review/merge.

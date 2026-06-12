@@ -11,6 +11,7 @@ import { ArrowLeft, User, Heart, CreditCard, MessageSquare, History, Share2, Shi
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { UserPatronActions } from "../UserPatronActions";
+import { AdminAccessDiagnostics } from "../AdminAccessDiagnostics";
 import { AdminUserDetailsSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {
@@ -57,7 +58,6 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
   if (error || !user) return <div className="p-8 text-center text-destructive">{error || "Użytkownik nie znaleziony."}</div>;
 
   const patronTruth = user.patronDiagnostics?.truth;
-  const patronCache = user.patronDiagnostics?.cache;
   const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;
   const isPatronByGrantTruth = patronTruth?.isPatron === true;
 
@@ -133,17 +133,7 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                 </CardHeader>
                 <CardContent>
                     <UserPatronActions userId={user.id} isPatron={isPatronByGrantTruth} onActionComplete={fetchUser} />
-                    <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-1">
-                        <p className="font-bold text-foreground">Access truth: {user.patronDiagnostics?.finalPatronStatusSource || "ACTIVE_PATRON_GRANT"}</p>
-                        <p>Aktywne granty: {patronTruth?.activeGrantCount ?? 0}</p>
-                        <p>Pierwszy aktywny grant: {formatDate(patronTruth?.firstActiveGrantAt || null)}</p>
-                        <p>Cache User.isPatron: {String(patronCache?.isPatron ?? user.isPatron)}</p>
-                        <p>Cache patronSince: {formatDate(patronCache?.patronSince || user.patronSince)}</p>
-                        <p>Cache patronSource: {patronCache?.patronSource || user.patronSource || "—"}</p>
-                        {patronMismatch?.hasMismatch && (
-                            <p className="font-bold text-destructive">Mismatch: cache={String(patronMismatch.cacheSaysPatron)} truth={String(patronMismatch.truthSaysPatron)}</p>
-                        )}
-                    </div>
+                    <AdminAccessDiagnostics user={user} formatDate={formatDate} />
                 </CardContent>
             </Card>
           </div>
