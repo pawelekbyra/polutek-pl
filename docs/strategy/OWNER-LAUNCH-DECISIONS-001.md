@@ -101,7 +101,7 @@ Launch status: NO_GO
 - Przycisk `Subskrajb / Subscribe` oznacza wyłącznie zgodę na powiadomienia o nowych treściach i istotnych nowościach Polutek.pl.
 - Brak reklam, sponsorowanych ofert, promocji innych firm czy profilowanych reklam.
 - Dane nie są sprzedawane ani udostępniane do celów reklamowych.
-- Wymagany osobny, świadomy opt-in (checkbox nie może być domyślnie zaznaczony).
+- Wymagany osobny, świadomy opt-in; decyzja właściciela nie narzuca konkretnego kontrolnego UI. Jeśli implementacja używa checkboxa, nie może być domyślnie zaznaczony.
 - Rejestracja, napiwek ani PatronGrant nie włączają content notifications.
 - Wypisanie nie cofa PatronGrant.
 - Każda wiadomość zawiera bezpieczny link wypisania działający bez logowania.

@@ -7,14 +7,15 @@ This directory contains both genuinely ready tickets and historical/superseded t
 ## Exactly one recommended next ticket
 
 ```txt
-OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
+LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
 ```
 
 ## Current queue classification
 
 | Group | Status | Files / examples | Action |
 | --- | --- | --- | --- |
-| Current primary next | `READY_FOR_REVIEW` | `OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` | Assign exactly one agent to consolidate decisions. |
+| Current primary next | `READY` | `LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | Assign exactly one Builder to implement the email consent / Resend Audience runtime boundary. |
+| Merged owner-decision consolidation | `READY_FOR_REVIEW / MERGED BASELINE` | `OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md`, `OWNER-LAUNCH-DECISIONS-001.md` | Preserve for review history; do not assign as next runtime work. |
 | Merged control-plane hotfix | `MERGED / HISTORICAL` | `DOCS-RECONCILE-003-operator-evidence-status-hotfix.md` | Status semantics correction; preserve for history. |
 | Historical/superseded tickets | `SUPERSEDED` | `X0-*`, `X0.5-*`, `DOCS-RECONCILE-001/002` | Preserve for history. |
 | Merged runtime / local implementation | `DONE / MERGED` | `X1/X2/X3/X4/X5/X6-FU-*`, `LAUNCH-FIX-007`, `STABILIZE-*` | Foundational work merged on main. |
@@ -25,16 +26,19 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 | Owner-decision blockers | `BLOCKED` | `LAUNCH-LEGAL-*`, `LAUNCH-EMAIL-002` | Owner decision required before execution/certification. |
 | Launch proof | `NOT_READY_UNTIL_PRODUCTION_PROOF` | `X7-READY-001-launch-readiness-gap-analysis.md` | Do not certify X7 before evidence exists. |
 
+## Queue source-of-truth rule
+
+This index is the sole source for the next executable ticket. Do not infer the next ticket from filename order, roadmap prose, historical reports, or unchecked items inside already-merged ticket files. If this section and another document disagree, stop and reconcile the queue before assigning Builder work.
+
 ## Planned follow-ups (not yet ticketed)
 
-1. Email consent boundary and Resend Audience safety.
-2. Signed public unsubscribe and suppression.
-3. System email event wiring and idempotency.
-4. Language persistence and first-email language.
-5. Optional referral progress emails.
-6. Legal/privacy/terms PL+EN.
-7. Operator evidence.
-8. X6 and X7.
+1. Signed public unsubscribe and suppression.
+2. System email event wiring and idempotency.
+3. Language persistence and first-email language.
+4. Optional referral progress emails.
+5. Legal/privacy/terms PL+EN.
+6. Operator evidence.
+7. X6 and X7.
 
 ## PR #871 and #868 reconciliation
 

@@ -16,6 +16,12 @@
 ## Context
 [Why is this work being done? Any relevant background info.]
 
+## Control-plane provenance
+- Source ticket / owner decision: [link]
+- Product-policy sources checked: `AGENTS.md`, `docs/strategy/OWNER-DECISIONS.md`, and any cited owner-decision record
+- Current queue source checked: `docs/tickets/ready/README.md`
+- Launch status impact: [must not claim public-launch readiness without X7 evidence]
+
 ## Allowed Files
 - `[Path to file or directory]`
 - `[Path to file or directory]`
@@ -38,6 +44,15 @@
 npm run quality:architecture-boundaries
 npm test -- path/to/relevant/tests
 ```
+
+## Semantic preservation checklist
+- [ ] Product identity invariants preserved.
+- [ ] Payment/access/patron invariants preserved when relevant.
+- [ ] Playback safety invariants preserved when relevant.
+- [ ] Comments visibility/write-boundary invariants preserved when relevant.
+- [ ] Email/subscription consent invariants preserved when relevant.
+- [ ] Admin/action/audit requirements preserved when relevant.
+- [ ] Ticket does not declare public launch ready without X7 evidence.
 
 ## Definition of Done
 - [ ] Code is implemented and follows modular standards.
