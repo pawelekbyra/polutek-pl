@@ -1,398 +1,406 @@
-# LAUNCH-FIX-001 — Vercel Production Env Validation
+# LAUNCH-FIX-001 — Vercel production environment validation
 
-## Status
+## 1. Executive summary
 
-Merge recommendation: **MERGE**.
+`LAUNCH-FIX-001` was executed as a docs-only operational evidence task in `Mode B — Vercel/operator access unavailable`.
 
-Ticket/task: `LAUNCH-FIX-001-vercel-production-env-validation`.
+The repository-required production environment inventory, operator checklist, safe evidence template, current code variable discovery, previous build-blocker reconciliation, and exact owner actions are now documented. Actual Vercel project settings, actual environment scopes, actual deployment logs, provider dashboard endpoints, deployment protection settings, and production/preview separation could not be verified from this container.
 
-## Intent
+No runtime code, tests, scripts, build configuration, schema, packages, environment files, global roadmap, strategy docs, email docs, or active `LAUNCH-SECURITY-002` files were modified.
 
-Create a repeatable, repository-backed launch validation artifact for Vercel production environment readiness so future launch checks do not depend on chat memory, screenshots without context, or unreviewable secret values.
+Verdict: `BLOCKED_OPERATOR_ACCESS`.
 
-This report is **ops/validation oriented**. It does not configure secrets, does not call provider APIs, does not certify launch readiness by itself, and does not change production runtime behavior.
+## 2. Baseline main SHA
 
-## Sources inspected
-
-- `AGENTS.md`
-- `docs/tickets/ready/LAUNCH-FIX-001-vercel-production-env-validation.md`
-- `docs/reports/reconciliation/LAUNCH-OPS-001-PRODUCTION-ENV-AND-SMOKE-TEST-INVENTORY.md`
-- `DEPLOY_CHECKLIST.md`
-- `vercel.json`
-- `package.json` script names, read-only
-- `scripts/validate-env.ts`
-- `scripts/validate-e2e-env.ts`
-- `lib/env/validation.ts`, read-only existing env contract
-- `tests/unit/env-validation.test.ts`, read-only existing env validation pattern
-- Existing webhook/env references, read-only: Clerk, Stripe, Resend, Cloudflare Stream, health, email, and Cloudflare upload paths
-
-## Files changed
-
-- Added `docs/reports/reconciliation/LAUNCH-FIX-001-VERCEL-PRODUCTION-ENV-VALIDATION.md`
-- Added `scripts/validate-vercel-production-env.mjs`
-
-## Scope confirmation
-
-Allowed scope used:
-
-- `docs/reports/reconciliation/**`
-- `scripts/**` only for a no-dependency, non-secret, explicitly run validator allowed by the task prompt
-
-Forbidden paths remain unchanged:
-
-- `lib/modules/video/**`
-- `app/admin/videos/**`
-- `app/api/admin/videos/**`
-- `lib/services/playback/**`
-- `app/api/media-source/**`
-- `app/api/media/**`
-- `lib/modules/comments/**`
-- `lib/modules/payments/**`
-- `lib/modules/patron/**`
-- `lib/modules/access/**`
-- `lib/modules/users/**`
-- `prisma/schema.prisma`
-- `prisma/migrations/**`
-- `package.json`
-- `package-lock.json`
-- `README.md`
-- `AGENTS.md`
-- `docs/roadmap/**`
-- `docs/strategy/**`
-
-## Secret-safety confirmation
-
-- **Never commit secrets.** Do not paste secret values into commits, PR bodies, issue comments, screenshots, or reconciliation reports.
-- This report names required environment variable keys and verification evidence only.
-- The validator prints category names only: present groups and missing groups.
-- The validator never prints env values and never calls Clerk, Stripe, Resend, Cloudflare, Vercel, or database APIs.
-- Any future evidence should redact values as `configured`, `present`, `scoped to Production`, or `last checked at <timestamp>`, never as raw values.
-
-## Required env groups documented
-
-### 1. Clerk
-
-Production presence requirements:
-
-- Public/browser-safe:
-  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- Server-only:
-  - `CLERK_SECRET_KEY`
-  - `CLERK_WEBHOOK_SECRET`
-
-Manual checks:
-
-- Vercel Production env contains all three keys.
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is intentionally public and matches the intended production Clerk application.
-- `CLERK_SECRET_KEY` and `CLERK_WEBHOOK_SECRET` are server-only secrets and must not be exposed through `NEXT_PUBLIC_` names.
-- Clerk Dashboard webhook endpoint points to the production URL: `https://<production-domain>/api/webhooks/clerk`.
-- Clerk webhook endpoint is not configured to a preview URL, stale deployment URL, or local tunnel.
-
-### 2. Stripe
-
-Production presence requirements:
-
-- Public/browser-safe:
-  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- Server-only:
-  - `STRIPE_SECRET_KEY`
-  - `STRIPE_WEBHOOK_SECRET`
-
-Manual checks:
-
-- Vercel Production env contains all three keys.
-- The public publishable key belongs to the same Stripe mode/account as `STRIPE_SECRET_KEY`.
-- `STRIPE_WEBHOOK_SECRET` belongs to the production endpoint URL: `https://<production-domain>/api/webhooks/stripe`.
-- Stripe Dashboard webhook endpoint is not configured to a preview URL, stale deployment URL, or local tunnel.
-- Do not treat successful payment configuration as patron access by itself; production smoke must still prove `Payment -> PatronGrant -> Access`.
-
-### 3. Resend/email
-
-Production presence requirements:
-
-- Server-only:
-  - `RESEND_API_KEY`
-  - `EMAIL_FROM`
-  - `RESEND_WEBHOOK_SECRET`
-- Optional/feature-dependent, if audience synchronization is used:
-  - `RESEND_AUDIENCE_ID`
-
-Manual checks:
-
-- Vercel Production env contains `RESEND_API_KEY`, `EMAIL_FROM`, and `RESEND_WEBHOOK_SECRET`.
-- `EMAIL_FROM` is an approved sender/domain for production mail.
-- Resend webhook endpoint points to the production URL: `https://<production-domain>/api/webhooks/resend`.
-- Resend webhook is not configured to a preview URL, stale deployment URL, or local tunnel.
-- Marketing/broadcast readiness remains separate from patron access; newsletter subscription must not be used as patron access truth.
-
-### 4. Cloudflare Stream
-
-Production presence requirements:
-
-- Server-only:
-  - `CLOUDFLARE_ACCOUNT_ID`
-  - `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_WEBHOOK_SECRET`
-
-Manual checks:
-
-- Vercel Production env contains all three keys.
-- `CLOUDFLARE_API_TOKEN` has only the Cloudflare Stream permissions needed for upload/status workflows.
-- Cloudflare Stream webhook endpoint points to the production URL: `https://<production-domain>/api/webhooks/cloudflare-stream`.
-- Cloudflare webhook is not configured to a preview URL, stale deployment URL, or local tunnel.
-- Private playback still requires backend access approval; env presence alone is not playback certification.
-
-### 5. Database
-
-Production presence requirements:
-
-- Server-only:
-  - `DATABASE_URL`
-  - `DATABASE_URL_UNPOOLED`
-
-Manual checks:
-
-- Both URLs point to the intended production database, not staging/preview/dev.
-- The pooled/unpooled split matches the database provider recommendation for Vercel/Prisma.
-- `npm run vercel-build` uses `npm run db:generate && next build` from `vercel.json`; production migrations must be handled by the agreed production migration/predeploy process before or during release operations.
-- Production logs after deploy contain no Prisma missing-env, migration, or missing-column errors.
-
-### 6. App/base URL/public URL
-
-Production presence requirements:
-
-- Public/browser-safe:
-  - `NEXT_PUBLIC_APP_URL`
-- Server-only/ops/content launch dependencies:
-  - `MAIN_CREATOR_SLUG`
-  - `ADMIN_CLERK_USER_IDS`
-  - `HEALTHCHECK_TOKEN`
-
-Manual checks:
-
-- `NEXT_PUBLIC_APP_URL` uses the canonical HTTPS production origin, for example `https://polutek.pl` if that is the owner-approved launch domain.
-- No production env points to `localhost`, a Vercel preview deployment, or a staging domain unless explicitly intended for Preview/Staging only.
-- `MAIN_CREATOR_SLUG` points to the official single Polutek channel.
-- `ADMIN_CLERK_USER_IDS` contains the immutable production admin Clerk user IDs.
-- `HEALTHCHECK_TOKEN` is present and kept server-only.
-
-### 7. Webhook secrets
-
-Production presence requirements:
-
-- `CLERK_WEBHOOK_SECRET`
-- `STRIPE_WEBHOOK_SECRET`
-- `RESEND_WEBHOOK_SECRET`
-- `CLOUDFLARE_WEBHOOK_SECRET`
-
-Manual checks:
-
-- Every provider dashboard endpoint uses the same canonical production base URL.
-- Every provider dashboard secret is the secret copied into the Vercel **Production** environment for that same endpoint.
-- Webhook URLs are reachable without Vercel Deployment Protection, password protection, or preview-only auth blocking provider calls.
-- A future webhook smoke PR must attach provider dashboard evidence showing endpoint URL, delivery attempt status, timestamp, event ID, and redacted secret status.
-
-### 8. Additional production readiness envs already represented by existing repo checks
-
-These are not provider groups from the goal, but they are launch-relevant because existing validation and checklists require them:
-
-- Patron policy/config:
-  - `PATRON_MIN_TIP_AMOUNT`
-  - `PATRON_MIN_TIP_CURRENCY`
-  - `REFERRAL_PATRON_THRESHOLD`
-- Rate limiting, one complete pair:
-  - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, or
-  - `KV_REST_API_URL` + `KV_REST_API_TOKEN`
-- Media host allowlist, at least one exact allowlist source:
-  - `MEDIA_BUCKET_HOST`, or
-  - `NEXT_PUBLIC_R2_PUBLIC_HOST`, or
-  - `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or
-  - `ALLOWED_MEDIA_HOSTS`
-
-## Server-only vs public env distinction
-
-Public variables are bundled into browser/client code because they use the `NEXT_PUBLIC_` prefix. Treat them as non-secret identifiers only:
-
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_R2_PUBLIC_HOST` and `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, if used as public host allowlist inputs
-
-Server-only variables must not be renamed with `NEXT_PUBLIC_`, exposed in screenshots, or printed by scripts:
-
-- Database URLs
-- Secret/API keys
-- Webhook secrets
-- Healthcheck token
-- Admin Clerk user IDs
-- Rate-limit tokens
-- Cloudflare API token/account operational config
-- Resend API key/audience operational config
-
-## Production vs Preview/Staging distinction
-
-Vercel env scoping must be explicit:
-
-- Production envs are for the canonical public launch domain only.
-- Preview/Staging envs may use test-mode or staging provider projects, but must not be confused with production launch evidence.
-- Provider dashboard webhooks for production must point to the canonical production origin, not a branch preview or staging URL.
-- Provider dashboard webhooks for Preview/Staging should remain separate and use their own test/staging secrets.
-- A passing preview deploy is not evidence that Production envs are present.
-- A production deployment built before env changes may need a redeploy so the current env set is applied.
-
-## Exact manual verification steps for Vercel dashboard
-
-1. Open Vercel Dashboard.
-2. Select the Polutek.pl project.
-3. Go to **Settings → Environment Variables**.
-4. Filter or visually inspect variables scoped to **Production**.
-5. For each group above, confirm the variable names exist in Production scope.
-6. Do not reveal values. Record only `present`, `missing`, or `wrong scope`.
-7. Confirm public variables are limited to expected `NEXT_PUBLIC_` values.
-8. Confirm server-only secrets do not use `NEXT_PUBLIC_` names.
-9. Confirm Preview/Staging variables are separately scoped and do not substitute for Production evidence.
-10. Go to **Settings → Domains** and confirm the canonical production domain is assigned to the project.
-11. Confirm HTTPS is active for the canonical production domain.
-12. Go to **Settings → Git** and confirm the production deployment branch mapping is the expected launch branch.
-13. Go to **Deployments**, open the latest Production deployment, and confirm it was created after the relevant env changes.
-14. Open deployment logs and search for missing-env, provider-auth, Prisma, Clerk, Stripe, Resend, Cloudflare, and webhook configuration errors.
-15. Confirm deployment protection does not block provider webhook POSTs to production webhook routes.
-16. If any value is missing or wrong-scoped, stop and record a blocker; do not paste the secret value into the PR.
-
-## Exact deployment/build verification steps
-
-Run these only in an environment with the intended production env loaded, or use Vercel's deployment logs where Vercel injects Production envs.
-
-1. Confirm the Vercel build command:
-   ```bash
-   cat vercel.json
-   ```
-   Expected evidence: `buildCommand` is `npm run vercel-build`.
-
-2. Run the non-secret production env presence validator against a securely loaded env:
-   ```bash
-   node scripts/validate-vercel-production-env.mjs
-   ```
-   Expected evidence: output lists only present/missing category names. No values appear.
-
-   Optional with a local Vercel-pulled env file on Node versions supporting `--env-file`:
-   ```bash
-   node --env-file=.env.vercel.production.local scripts/validate-vercel-production-env.mjs
-   ```
-   The env file must remain local, untracked, and secret-safe.
-
-3. Run the existing application env validator when production envs are securely loaded:
-   ```bash
-   npm run env:validate:prod
-   ```
-   Expected evidence: validation passes or reports only variable names/errors, not values.
-
-4. Confirm build/deploy path from Vercel Production logs:
-   ```bash
-   npm run vercel-build
-   ```
-   Expected evidence: Vercel logs show the configured command and no missing-env/provider-auth failures.
-
-5. After deployment, verify production URLs manually:
-   - `https://<production-domain>/`
-   - `https://<production-domain>/channel/<MAIN_CREATOR_SLUG>`
-   - Auth login entry points
-   - Admin route as admin only
-   - Webhook route reachability by provider dashboard delivery/test-event tools, not by unauthenticated browser GETs
-
-## Expected evidence to include in future PRs
-
-Future launch PRs should include evidence in this shape:
-
-- Vercel project name: redacted if needed, but identify the project unambiguously.
-- Production domain: canonical URL only, no secrets.
-- Env group matrix with `present`, `missing`, or `wrong scope` statuses.
-- Deployment ID or URL for the checked Production deployment.
-- UTC timestamp of verification.
-- Confirmation that deployment happened after env changes.
-- Build command observed in Vercel logs.
-- Redacted provider webhook dashboard screenshots or textual summaries showing:
-  - provider name,
-  - endpoint URL,
-  - event type,
-  - delivery timestamp,
-  - delivery status,
-  - secret present/redacted.
-- Production logs summary with no missing-env/provider-auth errors.
-- Explicit list of unresolved blockers and owner actions.
-
-## Lightweight validator added
-
-Added `scripts/validate-vercel-production-env.mjs`.
-
-Properties:
-
-- Uses only Node.js built-ins.
-- Adds no package dependencies.
-- Does not modify `package.json`.
-- Does not run unless explicitly invoked.
-- Does not load or fetch secrets on its own.
-- Does not call live provider APIs.
-- Prints category names only.
-- Exits with non-zero status if one or more required categories are incomplete.
-
-Expected output shape when envs are missing:
+Baseline commands requested by the ticket were captured before edits:
 
 ```txt
-Vercel production env presence validation (non-secret)
-This script prints category names only. It never prints env values.
-Present groups: <category names or none>
-Missing groups: <category names or none>
+git status --short
+# clean
+
+git branch --show-current
+# work
+
+git rev-parse HEAD
+# 2b2d2ea335dff8555ac9db2ba16f3a948ed570fc
+
+git log --oneline -15
+# 2b2d2ea Merge pull request #883 from pawelekbyra/codex/create-email-consent-audit-documentation
+# 081b173 Add email consent readiness pack
+# 01f6c6a Merge pull request #882 from pawelekbyra/codex/execute-security-boundary-audit-ticket
+# e27c0f3 test: add launch security boundary audit pack
+# 8123d90 Merge pull request #881 from pawelekbyra/codex/create-deterministic-vercel-build-recovery-ticket
+# 8f315d1 fix: stabilize vercel build without google fonts
+# b0ad1dc Merge pull request #880 from pawelekbyra/codex/create-legal/privacy-terms-readiness-pack
+# 0918011 Add legal privacy terms readiness pack
+# cd6e9f9 Merge pull request #879 from pawelekbyra/launch-ops-002-db-backup-drill-18057823859520263300
+# f89365b I have completed the implementation of the database backup and recovery drill pack for LAUNCH-OPS-002. Here is a summary of my work:
+# 3d5afb7 Merge pull request #878 from pawelekbyra/codex/create-launch-candidate-rehearsal-ticket
+# 2511f8f test: add launch candidate critical path rehearsal
+# 7ae657b Merge pull request #877 from pawelekbyra/codex/implement-playback-plan-state-messaging
+# 8a509b7 X6-FU-002 playback state messaging
+# 3635b6e Merge pull request #876 from pawelekbyra/codex/implement-confirmation-workflow-for-patron-access
 ```
 
-## Blockers and owner actions
+Attempted latest-main synchronization:
 
-Current blockers before public launch certification:
+```txt
+git fetch origin main
+# fatal: 'origin' does not appear to be a git repository
+```
 
-1. Owner/operator with Vercel Production access must verify actual env presence and scoping in the Vercel dashboard.
-2. Owner/operator with provider dashboard access must verify production webhook URLs and production webhook secrets in Clerk, Stripe, Resend, and Cloudflare.
-3. Owner/operator must confirm the canonical production domain and HTTPS state.
-4. Owner/operator must confirm the production branch mapping and that the checked deployment was created after env changes.
-5. Future smoke-test tickets must prove payment-to-PatronGrant access, Cloudflare playback gating, comments access, and admin upload/import behavior in production-like conditions.
+The container has no configured `origin` remote. Work proceeded from the current local main-equivalent branch at `2b2d2ea335dff8555ac9db2ba16f3a948ed570fc`, then a local ticket branch was created: `launch-fix-001-vercel-production-env-validation`.
 
-## What did not change
+## 3. Execution mode
 
-- No runtime application code changed.
-- No middleware changed.
-- No payment behavior changed.
-- No patron/access behavior changed.
-- No video/playback behavior changed.
-- No comments behavior changed.
-- No schema or migration changed.
-- No package dependency or package script changed.
-- No secrets were configured, printed, or committed.
+`Mode B — Vercel/operator access unavailable`.
 
-## Risks
+Evidence for this mode:
 
-- The validator can confirm presence categories only; it cannot prove values are correct, rotated, scoped to the intended provider project, or authorized.
-- Vercel Production env changes may not affect an already-built deployment until redeploy.
-- Provider dashboards can still point to stale preview URLs even if Vercel envs are present.
-- Production smoke tests remain required; env presence is not launch certification.
+- No configured Git remote: `git remote -v` returned no remotes.
+- No Vercel CLI: `command -v vercel` returned no path.
+- No GitHub CLI: `gh auth status` failed because `gh` is not installed.
+- Public route checks to `https://polutek.pl` and `https://www.polutek.pl` could not reach the application from this container because curl failed with `CONNECT tunnel failed, response 403` before an HTTP response from the app.
 
-## Validation results
+This report therefore does not guess actual Vercel variable presence, values, scopes, project mappings, provider endpoints, deployment logs, or production/preview separation.
 
-- `git diff --check`: passed.
-- `node scripts/validate-vercel-production-env.mjs`: ran locally with no production env loaded; exited non-zero as expected and printed only missing/present category names.
-- Dummy complete-env validator run: passed with placeholder `present` values and printed only category names.
-- Forbidden file check: passed; changed files are limited to this report and `scripts/validate-vercel-production-env.mjs`.
+## 4. Vercel project and branch mapping
 
-## Remaining blockers
+| Item | Evidence | Status |
+| --- | --- | --- |
+| Vercel project name | Not available without Vercel/operator access. | `BLOCKED_OPERATOR_ACCESS` |
+| GitHub repository mapping | Not available from local git because no remote is configured. | `BLOCKED_OPERATOR_ACCESS` |
+| Production branch | Not available without Vercel/operator access. | `BLOCKED_OPERATOR_ACCESS` |
+| Preview branch behavior | Not available without Vercel/operator access. | `BLOCKED_OPERATOR_ACCESS` |
+| Latest deployment SHA | Not available without Vercel/operator access or deployment status from GitHub. | `BLOCKED_OPERATOR_ACCESS` |
+| Production deployment target | Not available without Vercel/operator access. | `BLOCKED_OPERATOR_ACCESS` |
+| Source branch | Not available for the actual latest Vercel deployment. Local baseline branch was `work`. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment timestamp | Not available without Vercel/operator access. | `BLOCKED_OPERATOR_ACCESS` |
+| Old fork/project check | Cannot verify without Vercel project mapping. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment protection | Cannot verify from this container because public route checks were blocked before reaching the app. | `BLOCKED_OPERATOR_ACCESS` |
 
-- Actual Vercel dashboard and provider dashboard verification require owner/operator credentials unavailable to this repository-only agent.
-- Production env values cannot and must not be committed as proof.
-- Launch remains uncertified until the follow-up launch smoke tickets provide production evidence.
+Operator action: open Vercel project settings and latest Production deployment, then record the redacted project reference, repo mapping, production branch, preview rules, deployment id/reference, deployment SHA, target, source branch, timestamp, domain assignment, and protection state.
 
-## Next recommended ticket
+## 5. Canonical domain and HTTPS
 
-`LAUNCH-FIX-002-cloudflare-webhook-production-check` should verify the Cloudflare Stream production webhook URL, deployment protection state, delivery evidence, and redacted webhook-secret alignment.
+Repository/product context points to Polutek.pl, and the likely canonical production origin is `https://polutek.pl`, but this task could not verify owner-approved canonical-domain configuration in Vercel.
 
-## Ticket status
+Container route-check result:
 
-Implemented as focused ops validation artifact with a safe non-secret validator.
+| URL | Result | Status |
+| --- | --- | --- |
+| `https://polutek.pl/` | `curl: (56) CONNECT tunnel failed, response 403`; no app status code. | `BLOCKED_OPERATOR_ACCESS` |
+| `https://www.polutek.pl/` | `curl: (56) CONNECT tunnel failed, response 403`; no app status code. | `BLOCKED_OPERATOR_ACCESS` |
 
-Merge recommendation: **MERGE**.
+`www`/apex redirects, HTTPS certificate state, deployment protection, and `NEXT_PUBLIC_APP_URL` alignment remain operator-only.
+
+## 6. Current deployment evidence
+
+| Field | Evidence | Status |
+| --- | --- | --- |
+| Latest Vercel deployment identifier/reference | Not available. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment state | Not available. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment target | Not available. | `BLOCKED_OPERATOR_ACCESS` |
+| Production domain | Not verified; likely candidate `https://polutek.pl` requires owner/operator confirmation. | `BLOCKED_OPERATOR_ACCESS` |
+| Source branch | Not available for Vercel deployment. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment timestamp | Not available. | `BLOCKED_OPERATOR_ACCESS` |
+| Deployment logs | Not available. | `BLOCKED_OPERATOR_ACCESS` |
+
+## 7. Environment variable matrix
+
+The variable names below were derived from the current code and validation contract only. Actual Vercel presence and scopes were not inspected.
+
+| Category | Variable | Required/optional | Production | Preview | Development | Format verified | Cross-variable alignment | Evidence | Status |
+| -------- | -------- | ----------------- | ---------- | ------- | ----------- | --------------- | ------------------------ | -------- | ------ |
+| Core/runtime | `NEXT_PUBLIC_APP_URL` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var; URL validator exists. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Required runtime | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required runtime var. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `DATABASE_URL` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `DATABASE_URL_UNPOOLED` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health env boolean. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `MAIN_CREATOR_SLUG` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `ADMIN_CLERK_USER_IDS` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var. | `BLOCKED_OPERATOR_ACCESS` |
+| Core/runtime | `HEALTHCHECK_TOKEN` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health token guard. | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Required runtime | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Public Clerk key used by app/provider. | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk | `CLERK_SECRET_KEY` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health env boolean. | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk | `CLERK_WEBHOOK_SECRET` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Clerk webhook route requires it. | `BLOCKED_OPERATOR_ACCESS` |
+| Stripe | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var; client loads Stripe only when set. | `BLOCKED_OPERATOR_ACCESS` |
+| Stripe | `STRIPE_SECRET_KEY` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health env boolean. | `BLOCKED_OPERATOR_ACCESS` |
+| Stripe | `STRIPE_WEBHOOK_SECRET` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health env boolean. | `BLOCKED_OPERATOR_ACCESS` |
+| Database | `DATABASE_URL` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and Prisma runtime dependency. | `BLOCKED_OPERATOR_ACCESS` |
+| Database | `DATABASE_URL_UNPOOLED` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and health env boolean. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend/email | `RESEND_API_KEY` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var and legacy email provider dependency. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend/email | `EMAIL_FROM` | Required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend/email | `RESEND_AUDIENCE_ID` | Optional/feature-dependent | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Admin email page displays this variable when present. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend/email | `RESEND_WEBHOOK_SECRET` | Required for production Resend webhook route | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Resend webhook route requires it in production. | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare Stream | `CLOUDFLARE_ACCOUNT_ID` | Required for Stream operations | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Cloudflare Stream client reads it. | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare Stream | `CLOUDFLARE_API_TOKEN` | Required for Stream operations | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Cloudflare Stream client reads it. | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare Stream | `CLOUDFLARE_WEBHOOK_SECRET` | Required for production Cloudflare webhook route | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Cloudflare webhook route requires it in production. | `BLOCKED_OPERATOR_ACCESS` |
+| Rate limiting | `UPSTASH_REDIS_REST_URL` | Required as complete pair unless KV pair used | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Production validator accepts URL+token pair. | `BLOCKED_OPERATOR_ACCESS` |
+| Rate limiting | `UPSTASH_REDIS_REST_TOKEN` | Required as complete pair unless KV pair used | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Production validator accepts URL+token pair. | `BLOCKED_OPERATOR_ACCESS` |
+| Rate limiting | `KV_REST_API_URL` | Required as complete pair unless Upstash pair used | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Production validator accepts URL+token pair. | `BLOCKED_OPERATOR_ACCESS` |
+| Rate limiting | `KV_REST_API_TOKEN` | Required as complete pair unless Upstash pair used | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Production validator accepts URL+token pair. | `BLOCKED_OPERATOR_ACCESS` |
+| Media allowlist | `MEDIA_BUCKET_HOST` | One of four media allowlist vars required in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Validator/security allowlist source. | `BLOCKED_OPERATOR_ACCESS` |
+| Media allowlist | `NEXT_PUBLIC_R2_PUBLIC_HOST` | Alternative media allowlist var | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Validator/security allowlist source. | `BLOCKED_OPERATOR_ACCESS` |
+| Media allowlist | `NEXT_PUBLIC_BLOB_PUBLIC_HOST` | Alternative media allowlist var | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Validator/security allowlist source. | `BLOCKED_OPERATOR_ACCESS` |
+| Media allowlist | `ALLOWED_MEDIA_HOSTS` | Alternative media allowlist var | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Validator/security allowlist source. | `BLOCKED_OPERATOR_ACCESS` |
+| Product config | `PATRON_MIN_TIP_AMOUNT` | Required in production by current validator | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var; positive integer validator exists. | `BLOCKED_OPERATOR_ACCESS` |
+| Product config | `PATRON_MIN_TIP_CURRENCY` | Required in production by current validator | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var; currency validator exists. | `BLOCKED_OPERATOR_ACCESS` |
+| Product config | `REFERRAL_PATRON_THRESHOLD` | Required in production by current validator | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Required production var; positive integer validator exists. | `BLOCKED_OPERATOR_ACCESS` |
+| Product config | `DISPLAY_EUR_TO_PLN_RATE` | Optional but recommended in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Optional/recommended production var. | `BLOCKED_OPERATOR_ACCESS` |
+| Product config | `DISPLAY_USD_TO_PLN_RATE` | Optional but recommended in production | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `BLOCKED_OPERATOR_ACCESS` | `FORMAT_UNVERIFIED` | `VALUE_ALIGNMENT_UNVERIFIED` | Optional/recommended production var. | `BLOCKED_OPERATOR_ACCESS` |
+
+## 8. Production/preview separation
+
+Actual separation could not be verified without Vercel/operator and provider dashboard access.
+
+| Area | Result | Status |
+| --- | --- | --- |
+| Database | Cannot verify production vs preview credentials or logical database separation. | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk | Cannot verify production instance, preview instance, callback URLs, or webhook secret separation. | `BLOCKED_OPERATOR_ACCESS` |
+| Stripe | Cannot verify live/test mode, production/preview keys, or webhook endpoint separation. | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare | Cannot verify account/token/webhook-secret separation. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend | Cannot verify sender/domain/audience/webhook-secret separation. | `BLOCKED_OPERATOR_ACCESS` |
+| Rate limiting | Cannot verify persistent production store or preview isolation. | `BLOCKED_OPERATOR_ACCESS` |
+| Canonical app URL | Cannot verify production `NEXT_PUBLIC_APP_URL` value or preview URL isolation. | `BLOCKED_OPERATOR_ACCESS` |
+| Webhook endpoints | Cannot verify provider dashboards use canonical production endpoints. | `BLOCKED_OPERATOR_ACCESS` |
+
+## 9. Clerk alignment
+
+Current code requires `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for runtime, `CLERK_SECRET_KEY` for server-side Clerk access, and `CLERK_WEBHOOK_SECRET` for Clerk webhook verification.
+
+Actual Vercel scopes, production instance alignment, callback URL alignment, and webhook endpoint alignment were not available. No key prefixes or values were inspected, copied, or inferred.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 10. Stripe alignment
+
+Current code requires `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET`. The Stripe webhook route rejects requests missing `stripe-signature` with `400`, which is an expected safe network-reachability response if the route is reachable without sending a valid event.
+
+Actual key mode, publishable/secret alignment, webhook endpoint URL, and webhook-secret scope were not available. No payment was created and no webhook event was sent.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 11. Database alignment
+
+Current code requires both `DATABASE_URL` and `DATABASE_URL_UNPOOLED` in production. The privileged health path reports only booleans and a coarse database status when a valid health token is supplied.
+
+Actual database URLs, pooled/direct role alignment, same-logical-production-database alignment, and preview isolation were not available. No database connection or migration was attempted.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 12. Cloudflare alignment
+
+Current-main Cloudflare Stream variable names discovered from code:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_WEBHOOK_SECRET`
+
+The API token and webhook signing secret are distinct variable names. Actual Vercel presence/scope, token permissions, account alignment, and production webhook URL could not be verified. No Cloudflare provider API was called. Cloudflare webhook signature semantics were not certified because `LAUNCH-SECURITY-002` may change that route contract.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 13. Resend/email alignment
+
+Current-main Resend/email variable names discovered from code:
+
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+- `RESEND_AUDIENCE_ID`
+- `RESEND_WEBHOOK_SECRET`
+
+`RESEND_API_KEY` and `EMAIL_FROM` are required by the production validator. `RESEND_AUDIENCE_ID` is feature-dependent/currently used by the admin email surface. `RESEND_WEBHOOK_SECRET` is required by the production webhook route. Actual sender-domain alignment, audience status, webhook endpoint, and production/preview isolation could not be verified.
+
+No email was sent. Email/subscription remains separate from PatronGrant access.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 14. Rate-limit persistence
+
+Current production validation accepts one complete writable pair:
+
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`; or
+- `KV_REST_API_URL` + `KV_REST_API_TOKEN`.
+
+Current code resolves URL and token independently from those pairs, and production throws rather than falling back to the in-memory store when no complete pair exists. Actual Vercel values/scopes and production persistence could not be verified.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 15. Media-host allowlist assessment
+
+Current production validator requires at least one of:
+
+- `MEDIA_BUCKET_HOST`
+- `NEXT_PUBLIC_R2_PUBLIC_HOST`
+- `NEXT_PUBLIC_BLOB_PUBLIC_HOST`
+- `ALLOWED_MEDIA_HOSTS`
+
+Current security utilities also include these variables in media/connect allowlists. Given the owner decision that Cloudflare Stream is the first video provider and R2/S3/Vercel Blob are legacy/migration unless future architecture changes, this requirement is classified as: **legacy but still required by current code**.
+
+Follow-up need: reassess whether the production validator should keep public-media allowlist requirements under Cloudflare-first private playback architecture, without changing that validator in this ticket.
+
+Status: `BLOCKED_OPERATOR_ACCESS` for actual variable presence; assessment completed from code.
+
+## 16. Product configuration assessment
+
+Current production validator requires:
+
+- `PATRON_MIN_TIP_AMOUNT`
+- `PATRON_MIN_TIP_CURRENCY`
+- `REFERRAL_PATRON_THRESHOLD`
+
+It recommends:
+
+- `DISPLAY_EUR_TO_PLN_RATE`
+- `DISPLAY_USD_TO_PLN_RATE`
+
+Format rules discovered from code are positive integer strings for `PATRON_MIN_TIP_AMOUNT` and `REFERRAL_PATRON_THRESHOLD`, and a three-letter uppercase currency code for `PATRON_MIN_TIP_CURRENCY`.
+
+Current code also has DB-backed payment settings for per-currency minimums, so this task does not infer that legacy/default environment variables override database-configured thresholds. Precedence remains ambiguous for launch operations until an owner/operator confirms intended runtime behavior with current production data.
+
+Status: `BLOCKED_OPERATOR_ACCESS` for actual production values; format contract documented from code.
+
+## 17. Route reachability
+
+Safe route checks were attempted against the likely canonical origin from the container:
+
+| Route | Command shape | Result | Status |
+| --- | --- | --- | --- |
+| Home | `curl -L https://polutek.pl/` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| `www` apex behavior | `curl -L https://www.polutek.pl/` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Privacy policy | `curl -L https://polutek.pl/polityka-prywatnosci` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Terms | `curl -L https://polutek.pl/regulamin` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Health | `curl -L https://polutek.pl/api/health` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+
+No destructive route was called.
+
+## 18. Webhook reachability
+
+Webhook network reachability was attempted without valid signatures and without event payloads:
+
+| Route | Command shape | Expected safe app response if reachable | Actual result | Status |
+| --- | --- | --- | --- | --- |
+| Stripe | `curl -X POST https://polutek.pl/api/webhooks/stripe` | `400` for missing `stripe-signature` | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk | `curl -X POST https://polutek.pl/api/webhooks/clerk` | `400` or similar for missing Svix headers | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare Stream | `curl -X POST https://polutek.pl/api/webhooks/cloudflare-stream` | `401` for missing/invalid signature or `400` for invalid payload, depending active route contract | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+| Resend | `curl -X POST https://polutek.pl/api/webhooks/resend` | `401` for missing Svix/legacy signature or `500` if secret missing in production | `CONNECT tunnel failed, response 403`; no app response. | `BLOCKED_OPERATOR_ACCESS` |
+
+No valid webhook signatures, mutation payloads, customer data, payment events, Cloudflare status events, Clerk account events, or Resend delivery events were sent.
+
+## 19. Health verification
+
+Current route contract from code:
+
+- `GET /api/health` reads the `x-health-token` header.
+- Missing/invalid token returns `{ ok: true }` without privileged database/env/content details.
+- Valid token enables a database check and returns coarse booleans/statuses, not secret values.
+
+Live deployed health behavior could not be verified because public route checks were blocked before reaching the app.
+
+Status: `BLOCKED_OPERATOR_ACCESS`.
+
+## 20. Production log review
+
+Production logs were not available from this container.
+
+Required operator log review:
+
+| Category | Query/filter | Window | Evidence | Status |
+| --- | --- | --- | --- | --- |
+| Missing environment variable | `missing env`, `required in production`, exact variable-name searches | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Database connection failure | Prisma/database connection errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Clerk initialization failure | Clerk init/auth errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Stripe initialization failure | Stripe key/webhook construction errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Cloudflare authentication failure | Cloudflare credentials/API auth errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Resend configuration failure | Resend API/from/webhook-secret errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Rate-limit store fallback/failure | Redis/KV missing/failing, memory fallback | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Sitemap/static-generation error | sitemap/page-data/static-generation errors | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+| Healthcheck failure | health endpoint failures | Narrow post-deployment window | Redacted count/presence only | `BLOCKED_OPERATOR_ACCESS` |
+
+Do not commit raw logs.
+
+## 21. Resolved previous build blockers
+
+Read report: `docs/reports/reconciliation/STABILIZE-LAUNCH-BUILD-002-CURRENT-MAIN-VERCEL-BUILD-RECOVERY.md`.
+
+Previous report conclusions:
+
+- Remote Google Fonts build blocker was resolved by code changes in that prior task.
+- Final local build blocker was `BLOCKED_OPERATOR_ENV` for `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `DATABASE_URL`.
+- The previous report explicitly warned not to infer production readiness from local code or a green deployment without actual env evidence.
+
+Current reconciliation:
+
+| Previous item | Current status | Reason |
+| --- | --- | --- |
+| Remote Google Fonts dependency | Resolved in previous build-fix report. | This ticket did not re-run build by instruction. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `BLOCKED_OPERATOR_ACCESS` | Actual Vercel production env presence/scope not available. Cannot move to `PRESENT_VERIFIED`. |
+| `DATABASE_URL` | `BLOCKED_OPERATOR_ACCESS` | Actual Vercel production env presence/scope not available. Cannot move to `PRESENT_VERIFIED`. |
+| Successful current deployment | Not verifiable | No Vercel/GitHub deployment status access in this container. |
+
+## 22. Missing/unverified items
+
+Everything below remains unverified due to operator access constraints:
+
+- Vercel project name.
+- GitHub repository mapping.
+- Production branch and preview branch behavior.
+- Latest deployment id/reference, SHA, state, target, source branch, and timestamp.
+- Canonical production domain, HTTPS, and `www` redirect behavior.
+- Deployment protection state for public routes and webhook callbacks.
+- Every actual Vercel production/preview/development variable presence and scope.
+- Production/preview/development separation for database, Clerk, Stripe, Cloudflare, Resend, rate limiting, app URL, and webhooks.
+- Provider dashboard endpoint URL alignment.
+- Safe route reachability and webhook network reachability from outside this restricted container.
+- Production log review.
+- Privileged health-token behavior on the deployed app.
+
+No variable was confirmed missing; the status is access-blocked, not `MISSING`.
+
+## 23. Operator actions required
+
+1. In Vercel, record the redacted project identity, repo mapping, production branch, preview behavior, latest Production deployment id/reference, deployment SHA, deployment state, deployment target, source branch, and deployment timestamp.
+2. In Vercel, complete the environment matrix in `docs/operations/vercel-production-environment-checklist.md` using only statuses/evidence references, never values.
+3. In provider dashboards, verify Clerk, Stripe, Cloudflare Stream, and Resend endpoints use the canonical production domain and that webhook secrets are scoped intentionally.
+4. Verify Production/Preview/Development separation for database, Clerk, Stripe, Cloudflare, Resend, rate limiting, app URL, and webhook endpoints.
+5. From an unrestricted operator network, run the safe route and webhook reachability checks from the checklist without valid signatures or event payloads.
+6. Review a narrow post-deployment Vercel log window for the listed failure categories and record only counts/presence with redacted evidence references.
+7. Use the health token only from authorized operator access to verify privileged health behavior; do not publish the token or response details containing sensitive identifiers.
+
+## 24. Files changed
+
+- `docs/operations/vercel-production-environment-checklist.md`
+- `docs/reports/reconciliation/LAUNCH-FIX-001-VERCEL-PRODUCTION-ENV-VALIDATION.md`
+- `docs/tickets/ready/LAUNCH-FIX-001-vercel-production-env-validation.md`
+
+## 25. What did not change
+
+- No runtime code changed.
+- No build configuration changed.
+- No scripts changed.
+- No tests changed.
+- No schema or migrations changed.
+- No packages changed.
+- No environment files changed.
+- No Vercel settings or environment values changed.
+- No provider dashboard settings changed.
+- No email-specific docs/tickets/reports changed.
+- No `LAUNCH-SECURITY-002` route, tests, ticket, or reconciliation report changed.
+- No global README, roadmap, strategy, architecture, or spec files changed.
+
+## 26. Risks
+
+- Public launch-candidate smoke tests remain blocked until an owner/operator completes the Vercel and provider checks.
+- A green Vercel deployment, if one exists, still would not prove runtime integration alignment, production/preview isolation, webhook reachability, or clean logs without the evidence requested here.
+- The likely canonical domain could be wrong or mapped to a different project until Vercel confirms project/domain ownership.
+- Preview and production may share sensitive resources unless explicitly verified otherwise.
+- Media allowlist requirements may reflect legacy public-media compatibility rather than the Cloudflare-first target architecture, but they remain required by current code.
+
+## 27. Exactly one next recommendation
+
+Owner/operator should complete `docs/operations/vercel-production-environment-checklist.md` in Vercel and provider dashboards, then return the redacted completed matrix/evidence references so `LAUNCH-FIX-001` can be updated from `BLOCKED_OPERATOR_ACCESS` to a verified or specific-blocker verdict.
+
+## 28. Verdict
+
+`BLOCKED_OPERATOR_ACCESS`
+
+This ticket produced the docs-only checklist/report and reconciled current code requirements, but actual production environment validation cannot be completed without Vercel/operator access.
