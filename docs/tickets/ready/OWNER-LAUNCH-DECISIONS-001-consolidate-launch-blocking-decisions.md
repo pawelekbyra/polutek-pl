@@ -11,7 +11,7 @@ Consolidate all remaining launch-blocking owner decisions, legal gaps, and email
 
 ## Context
 
-Current reconciliation (DOCS-RECONCILE-002) shows that core foundations (payments, access, video, admin safety) are merged on main. The remaining blockers are primarily product decisions, legal copy approval, and email compliance policies.
+This is the next agent-executable task because several implementation tickets depend on owner decisions. It is not the only remaining launch work. Production/operator evidence, email runtime implementation, X6.2–X6.8 and X7 remain outstanding. This ticket must not mark operator-evidence tickets complete.
 
 ## Required Scope
 
