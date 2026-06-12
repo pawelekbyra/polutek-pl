@@ -7,6 +7,24 @@ Implementation status: NOT IMPLEMENTED / PARTIAL
 Legal status: PROFESSIONAL REVIEW REQUIRED
 Launch status: NO_GO
 
+## Decision provenance
+
+- Decision source: direct owner workshop and explicit owner approval.
+- Approved by: Paweł Perfect.
+- Approval date: 2026-06-12.
+- Recorded by: documentation Integrator.
+- Implementation-agent authority: none; the recording agent did not make product decisions.
+- Supersedes: the OPEN statuses of OQ-001 through OQ-007 only, according to their recorded resolutions.
+- Does not supersede: existing payment/access, PatronGrant, playback, comments, email/subscription, admin/audit, safety, ticketing or launch invariants.
+- Implementation status: NOT IMPLEMENTED / PARTIAL.
+- Legal status: PROFESSIONAL REVIEW REQUIRED.
+- Operator-evidence status: INCOMPLETE / OPERATOR_PENDING.
+- Launch status: NO_GO.
+
+This record is product-policy truth.
+It is not implementation evidence, legal approval, operator evidence,
+production certification or launch certification.
+
 ## A. Tożsamość produktu i napiwki
 
 ### OWNER DECISION
@@ -39,7 +57,9 @@ Launch status: NO_GO
   - 10 CHF (jeśli CHF pozostaje aktywne w runtime).
 - Kwoty nie są wyrównywane według kursu walut (zasada „dychy” w każdej walucie).
 - Bramka napiwkowa nie pozwala skutecznie zapłacić mniej niż aktywne minimum.
-- Każda skutecznie przyjęta płatność spełniająca minimum może prowadzić do nadania PatronGrant.
+- Każdy zweryfikowany, skutecznie przyjęty napiwek spełniający aktywne minimum musi, poprzez idempotentną obsługę zdarzenia płatniczego, utworzyć albo uzgodnić dokładnie jeden aktywny PatronGrant.
+- Jeżeli użytkownik ma już aktywny PatronGrant, kolejny napiwek nie tworzy duplikatu ani nie przedłuża czasu dostępu.
+- Payment pozostaje osobnym faktem finansowym i sam nie jest źródłem prawdy dostępu.
 - Próg pozostaje technicznie konfigurowalny per waluta.
 
 ## C. Dostęp Patrona
@@ -101,7 +121,10 @@ Launch status: NO_GO
 - Przycisk `Subskrajb / Subscribe` oznacza wyłącznie zgodę na powiadomienia o nowych treściach i istotnych nowościach Polutek.pl.
 - Brak reklam, sponsorowanych ofert, promocji innych firm czy profilowanych reklam.
 - Dane nie są sprzedawane ani udostępniane do celów reklamowych.
-- Wymagany osobny, świadomy opt-in; decyzja właściciela nie narzuca konkretnego kontrolnego UI. Jeśli implementacja używa checkboxa, nie może być domyślnie zaznaczony.
+- Content notifications wymagają odrębnego, jednoznacznego i świadomego potwierdzenia zainicjowanego przez użytkownika po użyciu akcji Subskrajb / Subscribe.
+- Obecny dialog lub modal TAK/NIE może realizować tę zasadę.
+- Decyzja właściciela nie narzuca toggle, modala ani innego konkretnego komponentu UI.
+- Wymagany rezultat: bez jednoznacznej akcji potwierdzającej użytkownika nie powstaje subskrypcja.
 - Rejestracja, napiwek ani PatronGrant nie włączają content notifications.
 - Wypisanie nie cofa PatronGrant.
 - Każda wiadomość zawiera bezpieczny link wypisania działający bez logowania.

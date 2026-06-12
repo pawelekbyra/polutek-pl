@@ -17,7 +17,9 @@ Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni. Szczegóły t
 ### Patronat / payments / access
 
 - Patronat nie jest subskrypcją cykliczną; jest nagrodą za dobrowolne, kwalifikujące jednorazowe wsparcie/napiwek.
-- Skutecznie przyjęty kwalifikujący napiwek tworzy uprawnienie przez `PatronGrant`; sama płatność jest faktem finansowym, a nie źródłem prawdy dostępu.
+- Każdy zweryfikowany, skutecznie przyjęty napiwek spełniający aktywne minimum musi, poprzez idempotentną obsługę zdarzenia płatniczego, utworzyć albo uzgodnić dokładnie jeden aktywny PatronGrant.
+- Jeżeli użytkownik ma już aktywny PatronGrant, kolejny napiwek nie tworzy duplikatu ani nie przedłuża czasu dostępu.
+- Payment pozostaje osobnym faktem finansowym i sam nie jest źródłem prawdy dostępu.
 - Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie i nie wymaga kolejnych wpłat, chyba że zostanie zawieszony albo cofnięty polityką.
 - Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne progi launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP.
 - `Payment != PatronGrant`.
@@ -56,7 +58,10 @@ Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni. Szczegóły t
 - Trzy klasy maili: System/Transactional, Content Notifications, Referral Notifications.
 - Systemowy mail nie może automatycznie dodawać do Resend Audience ani włączać subskrypcji treści.
 - Każdy wspierany mail systemowy ma edytowalny szablon PL/EN w panelu admina.
-- Content notifications wymagają osobnego, świadomego opt-in; decyzja właściciela nie narzuca konkretnego kontrolnego UI, ale jeśli użyty jest checkbox, nie może być domyślnie zaznaczony.
+- Content notifications wymagają odrębnego, jednoznacznego i świadomego potwierdzenia zainicjowanego przez użytkownika po użyciu akcji Subskrajb / Subscribe.
+- Obecny dialog lub modal TAK/NIE może realizować tę zasadę.
+- Decyzja właściciela nie narzuca toggle, modala ani innego konkretnego komponentu UI.
+- Wymagany rezultat: bez jednoznacznej akcji potwierdzającej użytkownika nie powstaje subskrypcja.
 - Link unsubscribe musi być bezpieczny (podpisany token) i nie zawierać e-maila w query string.
 - Newsletter/content subscription jest zgodą mailingową wyłącznie; nie daje patron access.
 - Unsubscribe z emaila nigdy nie cofa `PatronGrant`.
@@ -93,7 +98,7 @@ This matrix records why this file deliberately preserves both the pre-PR #890 in
 | Area | Preserved invariant / decision | Provenance | Current launch implication |
 | --- | --- | --- | --- |
 | Product identity | One official creator VOD place; never marketplace, tenant platform, mini-Patreon, white-label CMS or generic social network. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`; `OWNER-LAUNCH-DECISIONS-001` section A. | Feature proposals that imply multi-tenant/platform behavior are out of scope unless owner explicitly changes the decision. |
-| Payment/access | Qualifying one-time tip/support may create `PatronGrant`; payment alone is only a financial fact. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`; `OWNER-LAUNCH-DECISIONS-001` sections A-B. | Runtime work must preserve Payment -> eligibility policy -> PatronGrant -> Access reads active PatronGrant. |
+| Payment/access | Każdy zweryfikowany, skutecznie przyjęty napiwek spełniający aktywne minimum musi utworzyć albo uzgodnić dokładnie jeden aktywny PatronGrant; Payment pozostaje osobnym faktem finansowym. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`; `OWNER-LAUNCH-DECISIONS-001` sections A-B. | Runtime work must preserve Payment -> eligibility policy -> PatronGrant -> Access reads active PatronGrant. |
 | Patron truth | Active `PatronGrant` is backend access truth; not `User.isPatron`, Clerk metadata, Subscription, Payment, Stripe state or frontend state. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`. | Any legacy mismatch must be treated as diagnostic/follow-up, not a policy change. |
 | Lifecycle/audit | Full refund revokes, dispute suspends, dispute won reactivates, dispute lost/chargeback revokes; manual access actions need reason and audit. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`; `OWNER-LAUNCH-DECISIONS-001` section B. | Missing lifecycle edges remain blockers/follow-ups until implemented and validated. |
 | Playback safety | Denied/locked playback must not mount player, fetch stream, request token, call provider, count views or leak playback URL/token. | `AGENTS.md`; pre-PR #890 `OWNER-DECISIONS.md`; active playback/video specs. | Provider source lookup only after backend Access allows playback. |

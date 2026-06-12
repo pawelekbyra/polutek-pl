@@ -1,63 +1,61 @@
 # OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 
-ID: `OWNER-LAUNCH-DECISIONS-001`
-Status: `READY_FOR_REVIEW`
-Lane: docs/strategy
-Type: docs-only consolidation
-
-## Goal
-
-Consolidate all remaining launch-blocking owner decisions, legal gaps, and email compliance requirements into a single reviewable document to unblock X7 Launch Certification.
+Status: MERGED / HISTORICAL
+Merged PR: #890
+Merge commit: 537042952bf5beaf7f1164eeb5eb6bb2b3fc67f4
+Corrective follow-up PR: #891
+Corrective merge commit: fbe326e39e254761193d07e4f0b0b5ba5014813b
+Launch status: NO_GO
 
 ## Context
 
-This is the next agent-executable task because several implementation tickets depend on owner decisions. It is not the only remaining launch work. Production/operator evidence, email runtime implementation, X6.2–X6.8 and X7 remain outstanding. This ticket must not mark operator-evidence tickets complete.
+This ticket is retained as historical evidence for the owner-decision consolidation that was merged in PR #890 and corrected/hardened in PR #891. It is not the next executable task and must not be used as an active Builder assignment.
 
-## Owner decisions received
+The current executable ticket pointer is maintained only in `docs/tickets/ready/README.md`.
 
-Date: 2026-06-12
+## Decision provenance
 
-## Progress
+- Decisions were supplied directly and explicitly by owner Paweł Perfect.
+- Owner workshop date: 2026-06-12.
+- The recording agent was authorized only to record the decisions.
+- The recording agent was not authorized to invent product policy.
 
-- [x] Product/tipping/access decisions recorded
-- [x] Refund/dispute decision recorded
-- [x] Email boundary decisions recorded
-- [x] Language decision recorded
-- [x] Privacy/contact direction recorded
-- [x] Ops RPO/RTO and alert channel recorded
-- [x] Cloudflare/original-file policy recorded
-- [x] Launch scope recorded
-- [x] Legal review boundary recorded
-- [ ] Runtime implementation
-- [ ] Operator evidence
-- [ ] Legal copy publication
-- [ ] X6.2–X6.8
-- [ ] X7 certification
+## Original pre-decision constraint
 
-*Note: Unchecked items are outside the scope of this docs-only consolidation ticket.*
+Before the owner workshop, an agent was not allowed to make these product
+decisions and could only present options and gaps.
 
-## Required Scope
+The owner subsequently supplied explicit decisions on 2026-06-12.
+The consolidation agent was then authorized to record them.
 
-- Consolidate the following into exactly one summary document:
-  - **Legal readiness**: privacy policy provider list, terms of service alignment (permanent vs subscription wording).
-  - **Email readiness**: public unsubscribe landing page requirement, suppression audit requirement, marketing consent policy.
-  - **Payment policy**: partial refund impact on PatronGrant.
-  - **Ops readiness**: alert channels, thresholds, RPO/RTO approval.
-  - **Launch scope**: reactions/hearts critical status, mobile device baseline.
-- Do not make the decisions; only present the options and current gaps.
-- Do not modify runtime, tests, or schema.
+## Post-merge outcome
 
-## Allowed Paths
+- Owner direction recorded.
+- Runtime implementation remains incomplete.
+- Legal review remains required.
+- Operator evidence remains incomplete.
+- X6.2–X6.8 remain incomplete.
+- X7 remains incomplete.
+- Public launch remains NO_GO.
 
-- `docs/strategy/**`
-- `docs/reports/reconciliation/**` for the summary report
-- `docs/tickets/ready/README.md` for index updates
+## Historical scope
 
-## Validation
+The ticket recorded launch-blocking decisions for:
 
-- `git diff --check`
-- Confirm exactly one summary document is produced.
+- tipping/access language and legal review boundaries;
+- minimum tip thresholds and PatronGrant access model;
+- refunds/disputes and manual review for unexpected partial refunds;
+- moderation and access termination principles;
+- system/content/referral email classes;
+- Resend Audience and unsubscribe guardrails;
+- PL/EN language behavior;
+- privacy/contact/operations decisions;
+- Cloudflare originals/retention decisions;
+- X6/X7 and legal-review launch blockers.
 
-## Ticket Status
+## What did not change
 
-`READY_FOR_REVIEW`
+- No runtime implementation was performed by this historical ticket.
+- No legal-compliance claim was made.
+- No production/operator evidence was added.
+- Public launch remained NO_GO.

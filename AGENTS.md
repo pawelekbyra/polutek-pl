@@ -259,6 +259,102 @@ Każdy PR musi zawierać:
 
 Nie wolno twierdzić, że testy przeszły, jeśli nie zostały uruchomione.
 
-## 15. Blocked behavior
+## 15. Portable handoff and decision precision
+
+### Portable workspace baseline
+
+Agent must not assume that every execution environment contains a local
+`main` branch or a configured Git remote.
+
+Preferred baseline verification:
+
+1. verify the expected merge commit is an ancestor of `HEAD`;
+2. if history is unavailable, verify the required structural snapshot;
+3. require a clean working tree;
+4. report the actual branch and verification mode.
+
+Absence of `main` or `origin` alone is not a blocker in an isolated
+Codex workspace.
+
+A task may return `BLOCKED` only when neither commit ancestry nor
+structural verification can prove the required baseline.
+
+### Product-policy supersession
+
+A newer, shorter or consolidated document does not automatically supersede
+an older, more precise invariant.
+
+A normative statement may be removed or weakened only when:
+
+- an explicit owner-approved record identifies the exact superseded rule;
+- the record includes owner provenance;
+- the replacement is at least equally precise;
+- the PR report lists the supersession.
+
+When `Supersedes: none`, all earlier non-conflicting invariants remain binding.
+
+### Owner-decision provenance
+
+New or updated owner-decision records must state these fields when they record
+a new decision or materially update an existing one:
+
+```txt
+Decision source
+Approved by
+Approval date
+Recorded by
+Supersedes
+Does not supersede
+Implementation status
+Legal status
+Operator-evidence status
+Launch status
+```
+
+Without explicit owner provenance, a new decision is PROPOSED, not DECIDED.
+
+This rule does not require retroactive rebuilding of every historical decision
+record; it applies to new or updated records going forward.
+
+### Current-ticket source of truth
+
+`docs/tickets/ready/README.md` is the sole canonical pointer to the current
+executable agent ticket.
+
+README, roadmaps, owner timelines, reports and individual historical ticket
+files may link to the queue, but must not maintain an independent current
+ticket pointer.
+
+If another document disagrees with the queue, stop runtime assignment and
+reconcile the control plane first.
+
+### Backlog versus executable queue
+
+`docs/roadmap/Launch-Execution-Backlog.md` describes the full remaining path,
+dependencies and ownership.
+
+It is not an executable queue.
+
+The backlog may contain many planned items, but only the ready-ticket index
+may designate exactly one current executable ticket.
+
+### Precision contract
+
+For owner-decided behavior:
+
+- `MUST` / `musi` means mandatory;
+- `MUST NOT` / `nie może` means prohibited;
+- `SHOULD` requires documented justification for deviation;
+- `MAY` means optional.
+
+Do not use `may`, `może`, `should` or `powinno` when the owner has made the
+behavior mandatory.
+
+Do not convert an owner-required result into a specific UI component unless
+the owner selected that component.
+
+For example: explicit confirmation does not automatically mean checkbox.
+
+## 16. Blocked behavior
 
 Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.

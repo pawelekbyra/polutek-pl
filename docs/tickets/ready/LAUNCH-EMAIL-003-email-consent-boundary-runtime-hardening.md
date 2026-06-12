@@ -1,106 +1,118 @@
 # LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
 
-- **Ticket ID**: LAUNCH-EMAIL-003
-- **Lane**: Email & Subscriptions
-- **Phase**: X7 Launch Readiness
-- **Type**: Runtime fix
-- **Status**: READY
-- **Parallel Safety**: Unsafe with other email/subscription/runtime mail delivery tickets
-- **Conflicts with**: LAUNCH-EMAIL-002, any ticket editing the same email subscription, unsubscribe, suppression, or Resend bridge modules
-- **Can run with**: Docs-only or operator-evidence tickets that do not touch email runtime or shared test suites
-- **Owner role**: Builder
+Status: READY
+Ticket ID: LAUNCH-EMAIL-003
+Launch status: NO_GO
 
-## Goal
+## Purpose
 
-Implement the owner-decided email consent boundary in runtime so system/transactional email delivery cannot create or reset content-notification consent, cannot silently add users to Resend Audience, and cannot undo an unsubscribe/suppression state.
+This ticket is the sole new runtime ticket currently executable through `docs/tickets/ready/README.md`.
 
-## Context
+Primary invariant: system/transactional email delivery must never create, enable, restore or mutate content-notification consent.
 
-`OWNER-LAUNCH-DECISIONS-001` decided that system email is separate from content notifications/referral notifications, system email must not auto-add recipients to Resend Audience or set `unsubscribed: false`, and secure unsubscribe/suppression remains launch-critical. The current decision-control-plane hardening keeps public launch as `NO_GO` until this is implemented, tested, and reconciled with legal/operator evidence.
+System emails must not add to Resend Audience.
+Unsubscribe never revokes `PatronGrant`.
+Public launch remains `NO_GO`.
 
-This ticket is the sole new runtime ticket created by the decision-control-plane hardening task. It does not authorize legal copy publication, package/schema changes, or a subscription-to-patron shortcut.
+## Background
 
-## Product Invariants
+Owner decisions have been recorded. This ticket implements only the narrow email-consent boundary required before later unsubscribe/suppression/email-event work. It must not implement the full launch email backlog.
 
-- `Subscription` / content-notification consent is mailing consent only.
-- Patron access is based on active `PatronGrant`, never newsletter/content consent.
-- A patron is not automatically subscribed to marketing/content notifications.
+## Absolute invariants
+
+- System/transactional email delivery must never create, enable, restore or mutate content-notification consent.
+- Missing content-notification preference means NOT OPTED IN.
+- It must never be interpreted as implicit consent.
+- System mail does not create a Resend Audience contact.
+- System mail does not set `unsubscribed: false`.
+- System mail does not clear an existing opt-out.
+- System mail does not clear bounce/complaint state.
+- Explicit subscribe remains the only opt-in path.
+- Explicit unsubscribe remains functional.
 - Unsubscribe never revokes `PatronGrant`.
-- Transactional/system emails are separate from marketing/content notifications.
-- System emails must not add to Resend Audience, set `unsubscribed: false`, or reverse a prior opt-out/suppression.
-- Content notifications require separate, conscious opt-in; the owner decision does not mandate a specific checkbox UI.
+- No `PatronGrant` mutation is allowed in this ticket.
 
-## Allowed Files
+## Suppression boundary
 
-- `app/**/email*/**`
-- `app/**/unsubscribe*/**`
-- `app/**/subscription*/**`
-- `app/**/newsletter*/**`
-- `components/**/email*/**`
-- `components/**/subscription*/**`
-- `lib/**/email*/**`
-- `lib/**/subscription*/**`
-- `lib/**/resend*/**`
-- `tests/**/email*/**`
-- `tests/**/subscription*/**`
-- Existing email/subscription test files needed to cover this behavior
-- `docs/reports/reconciliation/**` for the ticket report only
+This ticket must preserve existing suppression/opt-out state and must not reset it.
 
-## Forbidden Files
+This ticket does not implement a full new bounce/complaint webhook system.
 
-- `README.md`
-- `AGENTS.md`
-- `docs/strategy/OWNER-DECISIONS.md`
-- `docs/strategy/OWNER-LAUNCH-DECISIONS-001.md`
-- `docs/roadmap/**`
-- `docs/tickets/ready/README.md`
-- `package.json`
-- `package-lock.json`
-- `prisma/schema.prisma`
-- `prisma/migrations/**`
-- `scripts/check-architecture.ts`
+Full suppression implementation and deliverability evidence are a separate later ticket/workstream.
 
-## Required Steps
+## Non-goals
 
-1. Inventory the current system-email, content-notification, unsubscribe, suppression, and Resend Audience paths before editing.
-2. Ensure transactional/system email sending does not create content-notification consent, does not add to Resend Audience, and does not reset unsubscribe/suppression state.
-3. Ensure content-notification subscription changes happen only through explicit content-notification opt-in flows.
-4. Ensure unsubscribe and suppression behavior is idempotent and cannot remove or revoke `PatronGrant`.
-5. Add focused tests for negative boundaries: system email delivery, first qualifying tip / `FIRST_TIP_AND_PATRON_GRANTED`, later system emails, unsubscribe, bounce/complaint suppression, and existing subscriber behavior.
-6. Produce a reconciliation report under `docs/reports/reconciliation/**` that lists implemented behavior, validations, known gaps, and whether LAUNCH-EMAIL-002 remains blocked or can be superseded.
+- signed unsubscribe token;
+- unsubscribe landing page;
+- full bounce/complaint webhook redesign;
+- first-tip combined email implementation;
+- new system-email events;
+- language detection;
+- referral emails;
+- schema rename;
+- legal copy;
+- admin email-template redesign.
 
-## Validation Commands
+A focused test may confirm that a system first-tip mail does not write a subscription, but this ticket does not implement the combined first-tip template.
 
-```bash
-git diff --check
-npm run quality:architecture-boundaries
-npm run typecheck
-npm test -- --run
+## Allowed paths
+
+```text
+lib/services/email.service.ts
+lib/modules/email/**
+lib/modules/subscriptions/**
+app/api/subscriptions/**
+tests/unit/modules/email/**
+tests/unit/modules/subscriptions/**
+tests/integration/**/email*
+tests/integration/**/subscription*
+docs/reports/reconciliation/LAUNCH-EMAIL-003-*.md
 ```
 
-Add and run any narrower email/subscription test command introduced or touched by the implementation.
+If a genuinely required implementation file is outside this allowlist,
+Builder must return BLOCKED with the exact path and reason.
+Builder must not broaden the allowlist autonomously.
 
-## Definition of Done
+## Disallowed paths
 
-- [ ] System/transactional emails do not mutate content-notification consent or Resend Audience membership.
-- [ ] Explicit opt-in remains the only route into content notifications / Resend Audience sync.
-- [ ] Unsubscribe/suppression does not affect `PatronGrant`.
-- [ ] Negative tests cover the consent boundary.
-- [ ] Reconciliation report documents what changed and what remains launch-blocking.
-- [ ] Public launch remains `NO_GO` unless X7 certification evidence is separately produced.
+- Runtime outside the allowlist.
+- `prisma/schema.prisma`.
+- `prisma/migrations/**`.
+- `package.json`.
+- `package-lock.json`.
+- Global docs except a ticket-specific reconciliation report under the allowed report path.
 
-## Stop Conditions
+## Acceptance criteria
 
-- A schema or migration change appears necessary.
-- A package dependency change appears necessary.
-- The implementation would require changing owner policy, legal copy, global roadmap, or control-plane docs.
-- The runtime currently cannot distinguish transactional from content-notification paths without a broader architecture decision.
-- Tests reveal patron access is derived from subscription/email state.
+- system mail does not create Resend Audience contact;
+- system mail does not set `unsubscribed: false`;
+- system mail does not mutate local content consent;
+- system mail does not clear opt-out;
+- system mail does not clear bounce/complaint state;
+- missing preference is not opted in;
+- explicit subscribe remains the only opt-in path;
+- explicit unsubscribe remains functional;
+- no PatronGrant mutation;
+- no schema/package change;
+- focused tests pass.
 
-## Final Report Requirements
+## Required validation
 
-- Summary, intent, and changed files.
-- Validation commands with result.
-- Scope confirmation and what did not change.
-- Risks and follow-ups.
-- Ticket status recommendation: `MERGE`, `FIX`, `BLOCKED`, or `REJECT`.
+Run the focused tests that cover changed email/subscription behavior, plus repository validation required by the ticket report. Do not claim full launch compliance from passing tests.
+
+## Reconciliation report
+
+The report may recommend whether LAUNCH-EMAIL-002 should be marked
+SUPERSEDED, PARTIAL or HISTORICAL.
+
+Only a later Integrator/queue reconciliation may change that ticket's
+canonical classification.
+
+## Out of scope for this ticket
+
+- Public legal copy.
+- Professional legal review.
+- Operator evidence.
+- X6.2–X6.8 evidence.
+- X7 certification.
+- Any launch status change.
