@@ -85,6 +85,7 @@ export async function handleStripeWebhook(
         const dispute = event.data.object as Stripe.Dispute;
         await handleDispute({
           stripeIntentId: (typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id)!,
+          disputeId: dispute.id,
           status: dispute.status,
           isLost: dispute.status === 'lost',
           isWon: dispute.status === 'won'
