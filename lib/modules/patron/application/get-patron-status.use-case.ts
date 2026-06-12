@@ -17,12 +17,13 @@ export async function getPatronStatus(
   }
 
   const activeGrants = await repo.listActiveGrants(userId, ctx.db.read);
+  const primaryGrant = activeGrants[0] ?? null;
 
   return success({
     userId: user.id,
-    isPatron: user.isPatron,
-    patronSince: user.patronSince,
-    patronSource: user.patronSource,
+    isPatron: primaryGrant !== null,
+    patronSince: primaryGrant?.createdAt ?? null,
+    patronSource: primaryGrant?.source ?? null,
     activeGrants,
     normalizedTotal: normalizePaymentTotals(user.paymentTotals),
   });
