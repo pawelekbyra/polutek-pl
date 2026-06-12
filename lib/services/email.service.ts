@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '../constants';
+import { flags } from '@/lib/feature-flags';
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
 
@@ -120,22 +121,6 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
     throw new Error(`Resend failed to send "${slug}" email: ${JSON.stringify(error)}`);
   }
 
-  // Auto-subscribe to audience if configured
-  const audienceId = process.env.RESEND_AUDIENCE_ID;
-  if (audienceId) {
-    try {
-      await resend.contacts.create({
-        email: to,
-        firstName: variables?.firstName as string | undefined,
-        unsubscribed: false,
-        audienceId,
-      });
-      logger.info(`[EmailService] User ${to} synchronized with Resend audience ${audienceId}. First Name: ${variables?.firstName || 'None'}`);
-    } catch (e) {
-      logger.warn(`[EmailService] Failed to sync contact ${to} to audience ${audienceId}:`, e);
-    }
-  }
-
   logger.info(`[EmailService] Email "${slug}" sent successfully to ${to}. ID: ${data?.id}`);
   return data;
 }
@@ -205,23 +190,46 @@ export class EmailService {
     const batchSize = 50;
     const recipients = broadcast.recipients;
 
-    // Issue 20: Optimize preferences check - fetch all once
+    const mainCreatorSlug = flags.mainCreatorSlug;
+    const mainCreator = mainCreatorSlug ? await prisma.creator.findUnique({
+        where: { slug: mainCreatorSlug },
+        select: { id: true }
+    }) : null;
     const allEmails = recipients.map(r => r.email);
+    const userIds = recipients.map(r => r.userId).filter((id): id is string => !!id);
     const allPrefs = await prisma.emailPreference.findMany({
-        where: { email: { in: allEmails } }
+        where: { email: { in: allEmails } },
+        select: { email: true, marketingEmails: true }
     });
     const prefMap = new Map(allPrefs.map(p => [p.email, p.marketingEmails]));
+    const activeSubscriptions = mainCreator
+      ? await prisma.subscription.findMany({
+          where: { creatorId: mainCreator.id, userId: { in: userIds } },
+          select: { userId: true }
+        })
+      : [];
+    const activeSubscriptionUserIds = new Set(activeSubscriptions.map(s => s.userId));
 
     for (let i = 0; i < recipients.length; i += batchSize) {
         const batch = recipients.slice(i, i + batchSize);
 
         await Promise.all(batch.map(async (recipient) => {
-            // Check preferences
-            const marketingEmailsEnabled = prefMap.get(recipient.email) ?? true;
-            if (!marketingEmailsEnabled) {
+            if (!recipient.userId || !activeSubscriptionUserIds.has(recipient.userId)) {
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },
-                    data: { status: 'SKIPPED', error: 'User opted out of marketing emails' }
+                    data: { status: 'SKIPPED', error: 'NO_VERIFIABLE_CONTENT_OPT_IN' }
+                });
+                return;
+            }
+
+            // LEGACY: marketingEmails is the historical technical field name for
+            // consent to content notifications. Only false is a negative override;
+            // true or missing preference is not consent without active Subscription.
+            const marketingEmailsEnabled = prefMap.get(recipient.email);
+            if (marketingEmailsEnabled === false) {
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: { status: 'SKIPPED', error: 'CONTENT_NOTIFICATIONS_OPTED_OUT' }
                 });
                 return;
             }
