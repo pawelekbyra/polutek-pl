@@ -213,6 +213,29 @@ Public launch: NO_GO.
 
 Recommendation: MERGE.
 
+## P2002 consent persistence correction after PR #895
+
+- Baseline merge commit: `f729c8068f681bceb28276db5899143dd3631c20`.
+- Defect: P2002 handlers returned record IDs without ensuring that the requested opt-in or opt-out state was persisted, leading to potential inconsistency between `Subscription` and `EmailPreference`.
+- Fix:
+  - Unified repository logic into a private `upsertPreference` helper.
+  - Implemented fallback consent-only update (omitting the `email` field) after an email migration conflict (P2002).
+  - Hardened create race retry to ensure the resulting record (found after conflict) has the requested consent state via an explicit update.
+  - Ensured safe legacy-row adoption retry: if a race occurs during `userId` assignment, the user's record is found and updated.
+  - Foreign preference rows (belonging to another `userId`) are never mutated or returned as owned success; the repository returns `{ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' }`.
+- Test results:
+  - EmailPreferenceRepository: PASS (12 tests covering all race/conflict scenarios).
+  - Subscriptions Use-Cases: PASS (11 tests).
+  - Subscriptions Route: PASS (7 tests).
+  - Full suite: PASS.
+- Implementation evidence: local/automated only.
+- Production evidence: not added.
+- Professional legal approval: not added.
+- FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
+- Public launch: NO_GO.
+
+Recommendation: MERGE.
+
 ## Final Acceptance Patch
 
 - Baseline: `f7f352fa2ef133bc9411e6df3f5e64f0db0e99a8`.
