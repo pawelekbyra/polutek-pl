@@ -9,29 +9,31 @@ describe('Post-Merge State Reconciliation Invariants', () => {
 
   const readText = (path: string) => readFileSync(path, 'utf-8');
 
-  it('README identifies the current Post-R owner control panel state', () => {
+  it('README identifies the current control-plane state', () => {
     const readme = readText(readmePath);
 
-    expect(readme).toContain('# Polutek.pl — Post-R AI Delivery Control Panel');
-    expect(readme).toContain('Post-R AI Delivery Control Plane jest aktywny.');
-    expect(readme).toContain('Nie oznacza launch-ready');
+    expect(readme).toContain('# Polutek.pl — Current Main Control Panel');
+    expect(readme).toContain('ACTIVE — POST-R AI DELIVERY CONTROL PLANE');
+    expect(readme).toContain('Public launch: NO_GO');
+    expect(readme).toContain('Owner product direction is recorded.');
+    expect(readme).toContain('Professional legal review, public legal copy, email runtime corrections, production/operator evidence, X6.2–X6.8 and X7 certification remain incomplete.');
   });
 
-  it('README points agents to the active contract and one-ticket workflow', () => {
+  it('README points agents to canonical control-plane sources', () => {
     const readme = readText(readmePath);
 
-    expect(readme).toContain('Kontrakt agentów: `AGENTS.md`.');
-    expect(readme).toContain('`AGENTS.md` jest aktywnym kontraktem agentów AI.');
-    expect(readme).toContain('Jeden ticket = jeden agent task = jeden branch = jeden PR.');
+    expect(readme).toContain('AGENTS.md');
+    expect(readme).toContain('docs/strategy/OWNER-DECISIONS.md');
+    expect(readme).toContain('docs/tickets/ready/README.md');
+    expect(readme).toContain('docs/roadmap/Launch-Execution-Backlog.md');
   });
 
-  it('README blocks stale PR merge instructions instead of reviving them', () => {
+  it('README delegates the current ticket pointer to the canonical queue', () => {
     const readme = readText(readmePath);
 
-    expect(readme).toContain('#817 powinien zostać zamknięty');
-    expect(readme).toContain('#814 powinien zostać zamknięty');
-    expect(readme).toContain('Nie merge’ować #817 ani #814');
-    expect(readme).not.toMatch(/(?:^|\n)\s*(?:merge|merge’ować)\s+#(?:817|814)\b/i);
+    expect(readme).toContain('The sole canonical current-ticket pointer is maintained in:');
+    expect(readme).toContain('docs/tickets/ready/README.md');
+    expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
   });
 
   it('Architecture guard remains readable and enforces current boundary categories', () => {

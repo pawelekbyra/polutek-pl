@@ -1,102 +1,69 @@
-# Active Execution Roadmap — Current Main Reconciled
+# Active Execution Roadmap — Current Main
 
-Status: `ACTIVE — CURRENT-MAIN RECONCILED`
+Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE
+Launch status: NO_GO
 
-This roadmap describes current execution status after `DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION`. It separates merged implementation, automated verification, production/manual verification and formal certification.
+This roadmap is a current-status dashboard. It is not an executable queue, not production evidence, and not launch certification.
 
-## Status vocabulary
+## Canonical execution pointers
 
-Use only these shared truth statuses in current-state summaries:
+- Current executable ticket: `docs/tickets/ready/README.md`
+- Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 
-- `IMPLEMENTED_VERIFIED`: implementation exists and relevant automated/local evidence was found or rerun.
-- `IMPLEMENTED_UNVERIFIED`: implementation exists, but current task did not rerun enough proof or production/manual proof is missing.
-- `PARTIAL`: some scope exists, but material gaps remain.
-- `MISSING`: required scope/evidence is absent.
-- `BLOCKED`: cannot proceed without merge/access/fix.
-- `OWNER_DECISION_REQUIRED`: owner must decide before implementation/certification.
-- `DEFERRED_POST_LAUNCH`: explicitly not launch-critical.
-- `NOT_APPLICABLE`: not relevant to this phase/domain.
+Every next-ticket field in this roadmap resolves to: See canonical ticket queue.
 
-`DONE`, `CERTIFIED`, `LAUNCH_READY`, and similar labels are not used unless a certification report proves them.
+## X0.5 — Owner direction and launch blockers
 
-### Operational Subtypes
+Owner product direction recorded; legal review and implementation remain.
 
-The following labels are refinements of the shared statuses above, used for operational clarity:
-
-- `BLOCKED_OPERATOR_ACCESS`: subtype of `BLOCKED`; authorized external access (Vercel, Cloudflare, Stripe) is required.
-- `OPERATOR_PENDING`: execution marker for a documented operator procedure (e.g., restore drill) that has not been run.
-- `IMPLEMENTATION_MISSING`: mapped to `MISSING`; required runtime behavior does not exist yet.
-- `PRODUCTION_EVIDENCE_PENDING`: evidence marker; implementation is merged and locally verified, but required live proof has not been collected.
-
-## Current source-of-truth rule
-
-- Implementation truth: current code/tests on current main.
-- Product-policy truth: `AGENTS.md` and `docs/strategy/OWNER-DECISIONS.md`.
-- Execution-status truth: this roadmap, root `README.md`, `docs/roadmap/OWNER-TIMELINE.md`, and ticket queue indexes.
-- Target/specification truth: specs, Product Standard, Phase Gates, Blueprint.
-- Historical evidence: PR bodies, reports and audits from their original point in time.
-
-```txt
-Target architecture != current implementation.
-```
-
-## Canonical phase/domain mapping
-
-| Current phase | Canonical domain | Notes / aliases |
+| Area | Current status | Notes |
 | --- | --- | --- |
-| X0 | Control plane and source-of-truth reconciliation | Historical activation/inventory work is superseded by current reconciliation. |
-| X0.5 | Product standard and owner decisions | Product Standard exists; owner questions remain open. |
-| X1 | Payments / patron lifecycle | Includes payment eligibility, `Payment`, `PatronGrant`, refunds/disputes and audit. |
-| X2 | Access / PatronGrant truth | Active `PatronGrant` is backend access truth; cache mismatch handling remains diagnostic. |
-| X3 | Video provider foundation | Cloudflare Stream foundation, upload/import/webhook lifecycle and legacy cutoff. |
-| X4 | PlaybackPlan / player safety | Current canonical X4 is playback/player. Historical `X4-*` comments reports are historical lane IDs. |
-| X5 | Admin cockpit / diagnostics | Support diagnostics, not a vanity dashboard. |
-| X6 | Product Excellence passes | Standard exists; passes not executed/certified. |
-| X7 | Launch Evidence Pack / final certification | Evidence pack incomplete; public launch not certified. |
+| Owner product decisions | `RECORDED` | Owner decisions from 2026-06-12 are product-policy truth, not implementation or legal evidence. |
+| Partial refund policy | `IMPLEMENTATION_MISSING` | Owner direction recorded: no standard partial refunds; unexpected partial refund requires manual review. |
+| Email/content-notification boundary | `IMPLEMENTATION_MISSING` | Owner direction recorded; runtime hardening remains. |
+| Legal/privacy/cookies/support copy | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | Professional legal review and public PL/EN copy remain. |
+| RPO/RTO | `OPERATOR_PENDING` | Owner direction recorded: RPO 24h, RTO 48h; evidence remains. |
+| Alert channel | `OPERATOR_PENDING` | Owner direction recorded: `support@polutek.pl`; setup/evidence remains. |
+| Cloudflare originals/retention | `OPERATOR_PENDING` | Owner direction recorded; originals preserved outside Cloudflare require evidence. |
+| Reactions/hearts launch scope | `RECORDED / NOT_LAUNCH_CRITICAL` | Owner direction recorded: reactions/hearts are not launch-critical. |
 
-Future tickets must use the canonical domain in the title, for example `X4-PLAYBACK-*` for playback/player and `COMMENTS-*` or a lane-qualified ID for comments work, to avoid the historical X4 collision.
+Next executable ticket: See canonical ticket queue.
 
-## Phase status dashboard
+## Current phase status
 
-| Phase | Correct status | Merged implementation evidence | Automated/Local evidence | Production/operator evidence | Formal certification | Next executable ticket |
-| --- | --- | --- | --- | --- | --- | --- |
-| X0 | `IMPLEMENTED_VERIFIED` | Control plane docs, ticket/report structure and reconciliation reports exist. | `git diff --check`, docs searches. | Not applicable beyond owner review. | Not certified as a phase; current docs reconciled. | None; historical X0 tickets are superseded. |
-| X0.5 | `IMPLEMENTED_VERIFIED` | Product Standard and owner decisions exist. | Docs consistency searches. | Owner questions remain. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
-| X1 | `PARTIAL` | Payment fulfillment, eligibility policy, Stripe ledger, full refund handling and dispute suspension/reactivation exist on main. | Payment/access smoke reports and focused tests exist. | Production Stripe lifecycle proof incomplete. | Not certified. | Production Stripe smoke test. |
-| X2 | `PARTIAL` | `checkVideoAccess` reads active `PatronGrant`; cache/Clerk are diagnostics. | Access tests and PatronGrant-backed comments/access tests exist. | Production paid/locked diagnostics proof incomplete. | Not certified. | Production access diagnostic proof. |
-| X3 | `PARTIAL` | `VideoAsset`, Cloudflare upload/import/webhook lifecycle, signature hardening and signed playback runtime are merged. | Video and media-source tests and security checks. | Production Cloudflare upload/import/webhook/playback proof incomplete. | Not certified. | Production Cloudflare E2E evidence. |
-| X4 | `PARTIAL` | PlaybackPlan/player fail-closed behavior, clear state messaging, and session-after-resolution ordering are merged. | Media-source route and safety tests exist. | Production playback proof incomplete. | Not certified. | Production playback evidence. |
-| X5 | `PARTIAL` | Admin payment/video/comment/health surfaces and support diagnostics exist. | Admin and module tests exist. | Owner support usability proof incomplete. | Not certified. | Admin diagnostics usability inventory. |
-| X6 | `PARTIAL` | X6.1 inventory complete; admin action confirmation and safety hardening merged. | Docs validation and UI tests. | X6.2-X6.8 passes not executed/certified. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
-| X7 | `MISSING` | Launch readiness spec and evidence-pack standard exist. | Docs validation only. | X7 Launch Evidence Pack incomplete; legal/email gaps documented. | Public launch not certified. | After production evidence blockers. |
-
-## Legal and Email Gaps (Launch Blockers)
-
-The following areas are currently unaddressed and represent significant risks for public launch:
-
-- **Privacy Policy**: Missing full list of actual providers (Stripe, Clerk, Cloudflare, Resend, etc.).
-- **Unsubscribe**: Lack of a public, secure, token-based unsubscribe landing page for emails.
-- **Suppression**: Global bounce/complaint suppression not yet proven in production.
-- **Marketing Consent**: Risk of re-enabling marketing emails without explicit user preference record.
-- **Partial Refund Policy**: Owner decision required on whether partial refunds affect PatronGrant status.
-- **Terms of Service**: Discrepancy between current `PatronGrant` policy (permanent) and public terms (subscription-like wording).
-
-## Active blockers and owner decisions
-
-| Area | Status | Blocker / owner action |
+| Phase / Workstream | Status | Evidence needed before launch |
 | --- | --- | --- |
-| Partial refund policy | `OWNER_DECISION_REQUIRED` | Preserve existing open question; do not resolve by agent. |
-| Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Required before X7. |
-| Email unsubscribe/suppression | `OWNER_DECISION_REQUIRED` | Compliance/compliance blocker. |
-| Alert channels/thresholds/RPO/RTO | `OWNER_DECISION_REQUIRED` | Required before production certification. |
-| Cloudflare cost/retention/original preservation | `OWNER_DECISION_REQUIRED` | Required before launch operations signoff. |
-| Production environment/provider proof | `OPERATOR_PENDING` | Requires owner/operator access and redacted evidence. |
-| Backup/restore drill | `OPERATOR_PENDING` | Tooling exists; operator drill evidence required. |
+| X1–X5 implementation foundations | `SUBSTANTIALLY_MERGED` | Code/tests exist, but production/manual evidence is still separate. |
+| X6.1 UI consistency | `COMPLETE` | Historical inventory/evidence exists. |
+| X6.2 State completeness | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6.3 Responsive/browser | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6.4 Accessibility | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6.5 Performance | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6.6 Copy/trust | `MISSING / NOT_EXECUTED` | Pass evidence required after legal/public copy. |
+| X6.7 Owner/admin usability | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6.8 Representative user validation | `MISSING / NOT_EXECUTED` | Pass evidence required. |
+| X6 certification | `MISSING / NOT_EXECUTED` | Requires X6.2–X6.8 evidence. |
+| X7 Launch Evidence Pack | `INCOMPLETE` | Requires legal/runtime/operator/evidence completion. |
+| X7 certification | `INCOMPLETE` | Public launch cannot proceed before certification. |
 
-## Current recommended next ticket
+## Production/operator evidence blockers
 
-```txt
-OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
-```
+| Evidence area | Status | Notes |
+| --- | --- | --- |
+| Vercel production environment verification | `BLOCKED_OPERATOR_ACCESS` | Operator access and redacted evidence required. |
+| Stripe production evidence | `OPERATOR_PENDING` | Controlled minimum tip, PatronGrant, full refund and redacted evidence required. |
+| Cloudflare production evidence | `BLOCKED_OPERATOR_ACCESS` | Upload/import, webhook, signed playback, denied playback and original-file evidence required. |
+| Backup, restore and alerts | `OPERATOR_PENDING` | Restore drill, RPO 24h, RTO 48h and alert delivery to `support@polutek.pl` required. |
 
-Reason: foundations for payments, access, video, and admin safety are merged. Work now moves toward consolidating launch-blocking owner decisions and collecting production evidence.
+## Remaining launch path
+
+See the full non-executable backlog: `docs/roadmap/Launch-Execution-Backlog.md`.
+
+See the canonical current executable ticket queue: `docs/tickets/ready/README.md`.
+
+## Guardrails
+
+- Public launch remains `NO_GO`.
+- Guard PASS means documentation consistency only; it does not mean legal compliance or production evidence.
+- Runtime work must start from the single current ticket in `docs/tickets/ready/README.md`.
+- Roadmap entries must not maintain an independent current-ticket pointer.

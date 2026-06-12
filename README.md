@@ -6,7 +6,9 @@ This README is the owner-facing dashboard for the current documentation reconcil
 
 ## Current project stage
 
-Polutek.pl has moved beyond the foundation phase. Current `main` contains substantial merged X1/X2/X3/X4/X5 foundations, X6.1 UI consistency, and technical production-readiness tooling. Public launch is **not certified** because production/manual evidence, X6.2–X6.8 passes, and owner decisions are incomplete.
+Owner product direction is recorded.
+
+Professional legal review, public legal copy, email runtime corrections, production/operator evidence, X6.2–X6.8 and X7 certification remain incomplete.
 
 Current classification:
 
@@ -25,6 +27,7 @@ Public launch: NO_GO / not certified.
 - **Access:** active `PatronGrant` is the sole backend access truth; admin actions are guarded by confirmation workflows.
 - **Video/playback:** Cloudflare Stream with signed tokens and hardened webhook signature verification is merged.
 - **Operations:** backup/restore tooling and Vercel production environment checklist exist.
+- **Owner decisions:** owner product direction is recorded in `docs/strategy/OWNER-DECISIONS.md` and `docs/strategy/OWNER-LAUNCH-DECISIONS-001.md`; it is not legal approval or production evidence.
 - **X6 excellence:** X6.1 UI Consistency Inventory is complete.
 
 ## Outstanding Production Evidence and Certification
@@ -36,7 +39,7 @@ Merged code and local tests are evidence of implementation, not evidence of publ
 - **Cloudflare:** production E2E evidence (upload/import/webhook/playback).
 - **Reliability:** database backup/restore operator drill evidence.
 - **Quality:** X6.2–X6.8 evidence passes and formal certification.
-- **Legal:** privacy/terms copy approval and publication.
+- **Legal:** privacy/terms/cookies/support copy professional review, owner approval and publication.
 - **Compliance:** email runtime/suppression implementation.
 - **X7:** Launch Evidence Pack completion.
 
@@ -48,19 +51,23 @@ Merged code and local tests are evidence of implementation, not evidence of publ
 | Cloudflare production webhook/E2E evidence | `BLOCKED_OPERATOR_ACCESS` | Evidence pack blocker; authorized Cloudflare/Vercel access is required. |
 | Backup/restore operator drill | `OPERATOR_PENDING` | Reliability blocker. |
 | X6.2–X6.8 evidence passes | `MISSING / NOT_EXECUTED` | Certification blocker. |
-| Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Public launch blocker. |
-| Email unsubscribe/suppression | `OWNER_DECISION_REQUIRED / IMPLEMENTATION_MISSING` | Compliance blocker; both decisions and runtime behavior required. |
+| Legal/privacy/cookies/support copy | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | Public launch blocker. |
+| Email unsubscribe/suppression | `IMPLEMENTATION_MISSING` | Compliance blocker; runtime behavior required. |
 | X7 Launch Evidence Pack | `MISSING` | Public launch not certified. |
 
-## Recommended next agent ticket
+## Current executable ticket
 
-Exactly one primary next task is recommended to consolidate launch-blocking requirements:
+The sole canonical current-ticket pointer is maintained in:
 
-```txt
-OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
-```
+`docs/tickets/ready/README.md`
 
-*Note: Operator prerequisites remain open and are not closed by this next agent ticket.*
+This README is a project-status dashboard, not an executable queue.
+
+## Launch backlog
+
+The full non-executable map of remaining launch work is maintained in:
+
+`docs/roadmap/Launch-Execution-Backlog.md`
 
 ## Canonical docs
 
@@ -72,6 +79,7 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 - Reconciliation report index: `docs/reports/reconciliation/README.md`
 - Current reconciliation report: `docs/reports/reconciliation/DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION.md`
 - Ticket queue: `docs/tickets/ready/README.md`
+- Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 
 ## Source-of-truth categories
 

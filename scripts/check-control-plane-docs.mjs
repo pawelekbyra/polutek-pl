@@ -1,83 +1,196 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
+const root = process.cwd();
 const checks = [];
 const fail = (message) => checks.push({ ok: false, message });
 const pass = (message) => checks.push({ ok: true, message });
-const read = (path) => readFileSync(path, 'utf8');
-const requireFile = (path) => {
-  if (!existsSync(path)) fail(`missing required file: ${path}`);
-  else pass(`found ${path}`);
+const filePath = (file) => path.join(root, file);
+const requireFile = (file) => {
+  if (!existsSync(filePath(file))) fail(`missing required file: ${file}`);
+  else pass(`required file exists: ${file}`);
 };
+const read = (file) => readFileSync(filePath(file), 'utf8');
 const requireIncludes = (label, text, needle) => {
-  if (!text.includes(needle)) fail(`${label} missing: ${needle}`);
-  else pass(`${label} contains: ${needle}`);
+  if (!text.includes(needle)) fail(`${label} must include: ${needle}`);
+  else pass(`${label} includes: ${needle}`);
 };
-const requireMatch = (label, text, regex) => {
-  if (!regex.test(text)) fail(`${label} missing pattern: ${regex}`);
-  else pass(`${label} matches: ${regex}`);
+const forbidIncludes = (label, text, needle) => {
+  if (text.includes(needle)) fail(`${label} must not include: ${needle}`);
+  else pass(`${label} excludes: ${needle}`);
 };
+const requireRegex = (label, text, regex, message = String(regex)) => {
+  if (!regex.test(text)) fail(`${label} must match: ${message}`);
+  else pass(`${label} matches: ${message}`);
+};
+const count = (text, needle) => text.split(needle).length - 1;
 
-const files = [
+const requiredFiles = [
+  'AGENTS.md',
+  'README.md',
+  'docs/roadmap/Active-Execution-Roadmap.md',
+  'docs/roadmap/OWNER-TIMELINE.md',
+  'docs/roadmap/Launch-Execution-Backlog.md',
   'docs/strategy/OWNER-DECISIONS.md',
   'docs/strategy/OWNER-LAUNCH-DECISIONS-001.md',
   'docs/tickets/ready/README.md',
+  'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md',
   'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md',
   'docs/templates/TICKET_TEMPLATE.md',
   'docs/templates/PR_REPORT_TEMPLATE.md',
   '.github/pull_request_template.md',
 ];
-for (const file of files) requireFile(file);
+for (const file of requiredFiles) requireFile(file);
 
 if (checks.some((check) => !check.ok)) {
   for (const check of checks) console.error(`${check.ok ? 'PASS' : 'FAIL'} ${check.message}`);
   process.exit(1);
 }
 
+const agents = read('AGENTS.md');
+const readme = read('README.md');
+const roadmap = read('docs/roadmap/Active-Execution-Roadmap.md');
+const timeline = read('docs/roadmap/OWNER-TIMELINE.md');
+const backlog = read('docs/roadmap/Launch-Execution-Backlog.md');
 const owner = read('docs/strategy/OWNER-DECISIONS.md');
 const launch = read('docs/strategy/OWNER-LAUNCH-DECISIONS-001.md');
 const queue = read('docs/tickets/ready/README.md');
+const historicalTicket = read('docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md');
 const runtimeTicket = read('docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md');
 const ticketTemplate = read('docs/templates/TICKET_TEMPLATE.md');
 const prReportTemplate = read('docs/templates/PR_REPORT_TEMPLATE.md');
 const githubPrTemplate = read('.github/pull_request_template.md');
 
-requireIncludes('OWNER-DECISIONS', owner, 'Polutek.pl is not a platform. Polutek.pl is a place.');
-requireIncludes('OWNER-DECISIONS', owner, 'Payment != PatronGrant');
-requireIncludes('OWNER-DECISIONS', owner, 'Subscription/email != Patron');
-requireIncludes('OWNER-DECISIONS', owner, 'Active `PatronGrant` jest backendowym źródłem prawdy');
-requireIncludes('OWNER-DECISIONS', owner, '`User.isPatron`, Clerk metadata, `Subscription`, `Payment` alone, Stripe state alone i frontend state');
-requireIncludes('OWNER-DECISIONS', owner, 'nie wywoływać Cloudflare/Mux po źródło playbacku');
-requireIncludes('OWNER-DECISIONS', owner, 'Widoczność komentarzy nie jest tym samym co uprawnienie do komentowania');
-requireIncludes('OWNER-DECISIONS', owner, 'Unsubscribe z emaila nigdy nie cofa `PatronGrant`');
-requireIncludes('OWNER-DECISIONS', owner, 'Każda manualna akcja wpływająca na dostęp wymaga reason + audit + confirmation');
-requireIncludes('OWNER-DECISIONS', owner, 'Semantic preservation matrix');
-requireIncludes('OWNER-DECISIONS', owner, 'Publiczny launch pozostaje: `NO_GO`');
+for (const phrase of [
+  'Portable workspace baseline',
+  'Product-policy supersession',
+  'Owner-decision provenance',
+  'Current-ticket source of truth',
+  'Backlog versus executable queue',
+  'Precision contract',
+]) requireIncludes('AGENTS.md', agents, phrase);
 
-requireMatch('OWNER-LAUNCH-DECISIONS-001', launch, /^Status: DECIDED$/m);
-requireMatch('OWNER-LAUNCH-DECISIONS-001', launch, /^Implementation status: NOT IMPLEMENTED \/ PARTIAL$/m);
-requireMatch('OWNER-LAUNCH-DECISIONS-001', launch, /^Legal status: PROFESSIONAL REVIEW REQUIRED$/m);
-requireMatch('OWNER-LAUNCH-DECISIONS-001', launch, /^Launch status: NO_GO$/m);
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'FIRST_TIP_AND_PATRON_GRANTED');
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'Resend Audience');
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'support@polutek.pl');
+for (const field of [
+  'Decision source:',
+  'Approved by:',
+  'Approval date:',
+  'Recorded by:',
+  'Supersedes:',
+  'Does not supersede:',
+  'Implementation status:',
+  'Legal status:',
+  'Operator-evidence status:',
+  'Launch status:',
+]) requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, field);
+requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'This record is product-policy truth.');
+requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'It is not implementation evidence, legal approval, operator evidence,');
 
-const recommended = [...queue.matchAll(/```txt\n([\s\S]*?)\n```/g)]
-  .map((match) => match[1].trim())
-  .filter(Boolean);
-if (recommended.length === 0) fail('ready queue has no fenced recommended next ticket block');
-const exactRecommended = recommended.filter((block) => block.includes('—'));
-if (exactRecommended.length !== 1) fail(`ready queue must contain exactly one recommended next ticket block, found ${exactRecommended.length}`);
-else pass('ready queue contains exactly one recommended next ticket block');
-requireIncludes('ready queue', queue, 'LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior');
-requireIncludes('ready queue', queue, 'This index is the sole source for the next executable ticket');
-requireIncludes('ready queue', queue, 'OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md');
+for (const text of [owner, launch]) {
+  forbidIncludes('owner decision files', text, 'może prowadzić do nadania PatronGrant');
+  forbidIncludes('owner decision files', text, 'may create PatronGrant');
+  forbidIncludes('owner decision files', text, 'checkbox');
+  requireIncludes('owner decision files', text, 'musi');
+  requireIncludes('owner decision files', text, 'dokładnie jeden aktywny PatronGrant');
+  requireIncludes('owner decision files', text, 'Payment pozostaje osobnym faktem finansowym');
+  requireIncludes('owner decision files', text, 'nie narzuca');
+  requireIncludes('owner decision files', text, 'konkretnego komponentu UI');
+  requireIncludes('owner decision files', text, 'jednoznacznego');
+  requireIncludes('owner decision files', text, 'potwierdzenia');
+}
 
-requireIncludes('runtime ticket', runtimeTicket, 'Status**: READY');
-requireIncludes('runtime ticket', runtimeTicket, 'This ticket is the sole new runtime ticket');
-requireIncludes('runtime ticket', runtimeTicket, 'System emails must not add to Resend Audience');
-requireIncludes('runtime ticket', runtimeTicket, 'Unsubscribe never revokes `PatronGrant`');
-requireIncludes('runtime ticket', runtimeTicket, 'Public launch remains `NO_GO`');
+if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');
+else pass('queue contains exactly one current-ticket ID marker');
+if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_FILE') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_FILE marker');
+else pass('queue contains exactly one current-ticket file marker');
+requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->');
+requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->');
+requireFile('docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md');
+requireIncludes('runtime ticket', runtimeTicket, 'Ticket ID: LAUNCH-EMAIL-003');
+requireRegex('runtime ticket', runtimeTicket, /Status\*\*: READY|Status:\s*READY/, 'status READY');
+const readyRows = [...queue.matchAll(/^\|[^\n]*LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior[^\n]*\|\s*`READY`\s*\|$/gm)];
+if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary READY row, found ${readyRows.length}`);
+else pass('queue contains exactly one current-primary READY row');
+
+requireIncludes('historical owner ticket', historicalTicket, 'MERGED / HISTORICAL');
+requireIncludes('historical owner ticket', historicalTicket, 'PR #890');
+requireIncludes('historical owner ticket', historicalTicket, '#891');
+forbidIncludes('historical owner ticket', historicalTicket, 'Status: READY_FOR_REVIEW');
+
+for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline]]) {
+  forbidIncludes(label, text, 'OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
+  requireIncludes(label, text, 'docs/tickets/ready/README.md');
+  requireIncludes(label, text, 'docs/roadmap/Launch-Execution-Backlog.md');
+}
+
+const closedDecisionContexts = [
+  /partial refund[^\n|]*OWNER_DECISION_REQUIRED/i,
+  /email[^\n|]*(content[- ]notifications|content notifications)[^\n|]*OWNER_DECISION_REQUIRED/i,
+  /RPO\/RTO[^\n|]*OWNER_DECISION_REQUIRED/i,
+  /alert channel[^\n|]*OWNER_DECISION_REQUIRED/i,
+  /Cloudflare originals[^\n|]*OWNER_DECISION_REQUIRED/i,
+  /(reactions|hearts)[^\n|]*OWNER_DECISION_REQUIRED/i,
+];
+for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline], ['ready queue', queue]]) {
+  for (const regex of closedDecisionContexts) requireRegex(`${label} closed-decision context`, text, /LEGAL_REVIEW_REQUIRED|IMPLEMENTATION_MISSING|OPERATOR_PENDING|BLOCKED_OPERATOR_ACCESS|MISSING \/ NOT_EXECUTED|RECORDED|HISTORICAL|SUPERSEDED|NOT_LAUNCH_CRITICAL/, 'valid post-decision status present');
+  for (const regex of closedDecisionContexts) {
+    if (regex.test(text)) fail(`${label} must not use OWNER_DECISION_REQUIRED for closed owner-decision context: ${regex}`);
+    else pass(`${label} has no stale OWNER_DECISION_REQUIRED context: ${regex}`);
+  }
+}
+requireIncludes('control plane docs', readme + roadmap + timeline + queue, 'LEGAL_REVIEW_REQUIRED');
+
+for (const [label, text] of [
+  ['README.md', readme],
+  ['Active roadmap', roadmap],
+  ['Owner timeline', timeline],
+  ['Launch backlog', backlog],
+  ['OWNER-LAUNCH-DECISIONS-001', launch],
+]) requireIncludes(label, text, 'NO_GO');
+for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline], ['Launch backlog', backlog], ['OWNER-LAUNCH-DECISIONS-001', launch]]) {
+  forbidIncludes(label, text, 'Public launch: GO');
+  forbidIncludes(label, text, 'LAUNCH_READY');
+  forbidIncludes(label, text, 'X7: CERTIFIED');
+}
+
+for (const workstream of [
+  'Email consent boundary',
+  'Signed unsubscribe',
+  'Bounce/complaint suppression',
+  'System email events',
+  'Language persistence',
+  'Referral notifications',
+  'Runtime/provider privacy inventory',
+  'Legal copy PL/EN',
+  'Vercel production evidence',
+  'Stripe production evidence',
+  'Cloudflare production evidence',
+  'Backup, restore and alerts',
+  'X6.2',
+  'X6.3',
+  'X6.4',
+  'X6.5',
+  'X6.6',
+  'X6.7',
+  'X6.8',
+  'X6 certification',
+  'X7 Launch Evidence Pack',
+  'X7 certification',
+  'Final owner launch decision',
+]) requireIncludes('Launch backlog', backlog, workstream);
+requireIncludes('Launch backlog', backlog, 'This document is not an executable queue.');
+
+for (const phrase of [
+  'Missing content-notification preference means NOT OPTED IN',
+  'System emails must not add to Resend Audience',
+  'Unsubscribe never revokes `PatronGrant`',
+  'signed unsubscribe token',
+  'Non-goals',
+]) requireIncludes('LAUNCH-EMAIL-003', runtimeTicket, phrase);
+const nonGoalsIndex = runtimeTicket.indexOf('## Non-goals');
+const signedIndex = runtimeTicket.indexOf('signed unsubscribe token');
+if (nonGoalsIndex === -1 || signedIndex === -1 || signedIndex < nonGoalsIndex) fail('signed unsubscribe token must appear in the Non-goals section');
+else pass('signed unsubscribe token appears in the Non-goals section');
 
 requireIncludes('ticket template', ticketTemplate, 'Control-plane provenance');
 requireIncludes('ticket template', ticketTemplate, 'Semantic preservation checklist');
@@ -85,19 +198,6 @@ requireIncludes('PR report template', prReportTemplate, 'Semantic Preservation M
 requireIncludes('GitHub PR template', githubPrTemplate, 'Semantic Preservation Matrix');
 requireIncludes('GitHub PR template', githubPrTemplate, 'Public launch remains `NO_GO`');
 
-const forbiddenOwnerPhrases = [
-  'Content notifications wymagają osobnego, świadomego opt-in (checkbox nie może być domyślnie zaznaczony).',
-];
-for (const phrase of forbiddenOwnerPhrases) {
-  if (owner.includes(phrase)) fail(`OWNER-DECISIONS retains inferred checkbox requirement phrase: ${phrase}`);
-  else pass(`OWNER-DECISIONS does not contain inferred checkbox-only phrasing`);
-  if (launch.includes(phrase)) fail(`OWNER-LAUNCH-DECISIONS-001 retains inferred checkbox requirement phrase: ${phrase}`);
-  else pass(`OWNER-LAUNCH-DECISIONS-001 does not contain inferred checkbox-only phrasing`);
-}
-requireIncludes('OWNER-DECISIONS', owner, 'decyzja właściciela nie narzuca konkretnego kontrolnego UI');
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'decyzja właściciela nie narzuca konkretnego kontrolnego UI');
-
-for (const check of checks) {
-  console.log(`${check.ok ? 'PASS' : 'FAIL'} ${check.message}`);
-}
+for (const check of checks) console.log(`${check.ok ? 'PASS' : 'FAIL'} ${check.message}`);
 if (checks.some((check) => !check.ok)) process.exit(1);
+console.log('CONTROL_PLANE_CHECK: PASS');
