@@ -2,8 +2,11 @@
 
 ## A. Metadata
 * **Date:** 2026-06-12
-* **Baseline HEAD SHA:** 2ca4477611b4e2d7d251739539ab2840cd666510
-* **Branch:** `docs-reconcile-003-status-hotfix`
+* **PR:** #887
+* **Baseline / PR base SHA:** e01f2ab9e9c2d532a04ea4a8ea7b21a405f5d61d
+* **PR head SHA:** bdf3aaf8c3d026a746443e68e55f4454f84ba732
+* **PR merge SHA:** 40607a92e0e10559a8ab2c4b398cffe2d0d50f8e
+* **PR head branch:** docs-reconcile-002-current-main-10206317442280191701
 * **Scope:** Docs-only hotfix after PR #886 to correct operator-evidence and X6 status semantics.
 
 ## B. Trigger
@@ -17,7 +20,7 @@ Post-merge review of PR #886 detected a P1 status conflation:
 | Area | Implementation/checklist | Local evidence | Production/operator evidence | Certification |
 | ------ | ------------------------ | -------------- | ---------------------------- | ------------- |
 | Vercel production env | Merged (PR #885) | Not applicable | **BLOCKED_OPERATOR_ACCESS** | `NO_GO` |
-| Cloudflare webhook | Merged (PR #884) | `VERIFIED` | **OPERATOR_PENDING** | `NO_GO` |
+| Cloudflare webhook | Merged (PR #884) | `VERIFIED` | **BLOCKED_OPERATOR_ACCESS** | `NO_GO` |
 | Stripe lifecycle | Merged (PR #871) | `VERIFIED` | **PRODUCTION_EVIDENCE_PENDING** | `NO_GO` |
 | backup/restore | Tooling merged | `VERIFIED` | **OPERATOR_PENDING** | `NO_GO` |
 | X6.1 (Inventory) | Merged (X6-EX-001) | `VERIFIED` | Not applicable | `PARTIAL` |
@@ -73,9 +76,9 @@ Operator prerequisites remain pending and are not closed by selecting the next a
 
 ## G. Validation
 - `git diff --check`: PASS
-- `git status --short`: Verified docs-only
+- `git status --short`: Verified docs-only.
 - `rg` searches for stale phrases: Completed and corrected.
-- Path verification: All paths in reports/indices confirmed.
+- Canonical indicator check: Root README, Roadmap, and indices correctly point to this canonical report and establish the one next agent task. All Cloudflare statuses are aligned to `BLOCKED_OPERATOR_ACCESS`.
 
 ## H. Verdict
 **VERDICT: MERGE**

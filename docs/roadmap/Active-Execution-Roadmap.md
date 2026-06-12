@@ -2,7 +2,7 @@
 
 Status: `ACTIVE — CURRENT-MAIN RECONCILED`
 
-This roadmap describes current execution status after `DOCS-RECONCILE-002`. It separates merged implementation, automated verification, production/manual verification and formal certification.
+This roadmap describes current execution status after `DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION`. It separates merged implementation, automated verification, production/manual verification and formal certification.
 
 ## Status vocabulary
 
@@ -18,6 +18,15 @@ Use only these shared truth statuses in current-state summaries:
 - `NOT_APPLICABLE`: not relevant to this phase/domain.
 
 `DONE`, `CERTIFIED`, `LAUNCH_READY`, and similar labels are not used unless a certification report proves them.
+
+### Operational Subtypes
+
+The following labels are refinements of the shared statuses above, used for operational clarity:
+
+- `BLOCKED_OPERATOR_ACCESS`: subtype of `BLOCKED`; authorized external access (Vercel, Cloudflare, Stripe) is required.
+- `OPERATOR_PENDING`: execution marker for a documented operator procedure (e.g., restore drill) that has not been run.
+- `IMPLEMENTATION_MISSING`: mapped to `MISSING`; required runtime behavior does not exist yet.
+- `PRODUCTION_EVIDENCE_PENDING`: evidence marker; implementation is merged and locally verified, but required live proof has not been collected.
 
 ## Current source-of-truth rule
 
