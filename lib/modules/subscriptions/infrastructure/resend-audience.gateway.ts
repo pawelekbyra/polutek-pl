@@ -3,57 +3,88 @@ import { logger } from '@/lib/logger';
 import { maskEmailForLog } from '../domain/email-address';
 import { ProviderSyncStatus } from '../domain/provider-sync-status';
 
-let resendClient: Resend | null = null;
-
-
 function isMissingContactError(error: unknown): boolean {
-  const candidate = error as { statusCode?: number; status?: number; message?: string } | null;
+  const candidate = error as { statusCode?: number; status?: number; message?: string; name?: string } | null;
   const message = String(candidate?.message ?? '').toLowerCase();
-  return candidate?.statusCode === 404 || candidate?.status === 404 || message.includes('not found');
+  const name = String(candidate?.name ?? '').toLowerCase();
+  return (
+    candidate?.statusCode === 404 ||
+    candidate?.status === 404 ||
+    message.includes('not found') ||
+    name.includes('not_found')
+  );
 }
 
-function getResendClient() {
-  if (!resendClient) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY is missing. Add it to Vercel/environment variables.');
-    }
-    resendClient = new Resend(apiKey);
-  }
-  return resendClient;
+function isConflictError(error: unknown): boolean {
+  const candidate = error as { statusCode?: number; status?: number; message?: string; name?: string } | null;
+  const message = String(candidate?.message ?? '').toLowerCase();
+  const name = String(candidate?.name ?? '').toLowerCase();
+  return (
+    candidate?.statusCode === 409 ||
+    candidate?.status === 409 ||
+    message.includes('already exists') ||
+    message.includes('conflict') ||
+    name.includes('conflict') ||
+    name.includes('already_exists')
+  );
+}
+
+export interface ResendContactsClient {
+  contacts: {
+    get(payload: { email: string; audienceId: string }): Promise<{ data: any; error: any }>;
+    create(payload: { email: string; audienceId: string; unsubscribed?: boolean }): Promise<{ data: any; error: any }>;
+    update(payload: { email: string; audienceId: string; unsubscribed?: boolean }): Promise<{ data: any; error: any }>;
+  };
 }
 
 export class ResendAudienceGateway {
-  constructor(private readonly resend = getResendClient()) {}
+  constructor(private readonly injectedResend?: ResendContactsClient) {}
+
+  private getClient(): ResendContactsClient | null {
+    if (this.injectedResend) return this.injectedResend;
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return null;
+    return new Resend(apiKey);
+  }
 
   async syncExplicitSubscribe(email: string): Promise<ProviderSyncStatus> {
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) return 'NOT_CONFIGURED';
 
+    const client = this.getClient();
+    if (!client) {
+      logger.warn('[ResendAudienceGateway] sync skipped: RESEND_API_KEY missing');
+      return 'FAILED';
+    }
+
     try {
-      const existing = await this.resend.contacts.get({ email, audienceId });
-      if (existing.data?.id) {
-        const updated = await this.resend.contacts.update({ email, audienceId, unsubscribed: false });
-        if (updated.error) throw new Error('Resend contact update failed');
-        return 'SYNCED';
+      const getResult = await client.contacts.get({ email, audienceId });
+
+      if (getResult.data?.id) {
+        const updateResult = await client.contacts.update({ email, audienceId, unsubscribed: false });
+        if (!updateResult.error) return 'SYNCED';
+        throw updateResult.error;
       }
 
-      const created = await this.resend.contacts.create({ email, audienceId, unsubscribed: false });
-      if (created.error) throw new Error('Resend contact create failed');
-      return 'SYNCED';
-    } catch (error) {
-      try {
-        const created = await this.resend.contacts.create({ email, audienceId, unsubscribed: false });
-        if (!created.error) return 'SYNCED';
-        const updated = await this.resend.contacts.update({ email, audienceId, unsubscribed: false });
-        if (!updated.error) return 'SYNCED';
-      } catch (_) {
-        // Fall through to controlled warning below.
+      if (getResult.error && !isMissingContactError(getResult.error)) {
+        throw getResult.error;
       }
+
+      const createResult = await client.contacts.create({ email, audienceId, unsubscribed: false });
+      if (!createResult.error) return 'SYNCED';
+
+      if (isConflictError(createResult.error)) {
+        const updateRetryResult = await client.contacts.update({ email, audienceId, unsubscribed: false });
+        if (!updateRetryResult.error) return 'SYNCED';
+        throw updateRetryResult.error;
+      }
+
+      throw createResult.error;
+    } catch (error) {
       logger.warn('[ResendAudienceGateway] explicit subscribe sync failed', {
         operation: 'explicit_subscribe',
         email: maskEmailForLog(email),
-        status: 'FAILED',
+        error: error instanceof Error ? error.message : String(error),
       });
       return 'FAILED';
     }
@@ -63,19 +94,30 @@ export class ResendAudienceGateway {
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) return 'NOT_CONFIGURED';
 
+    const client = this.getClient();
+    if (!client) {
+      logger.warn('[ResendAudienceGateway] unsubscribe sync skipped: RESEND_API_KEY missing');
+      return 'FAILED';
+    }
+
     try {
-      const updated = await this.resend.contacts.update({ email, audienceId, unsubscribed: true });
-      if (updated.error) {
-        if (isMissingContactError(updated.error)) return 'SYNCED';
-        throw new Error('Resend contact unsubscribe failed');
+      const updateResult = await client.contacts.update({ email, audienceId, unsubscribed: true });
+
+      if (updateResult.error) {
+        if (isMissingContactError(updateResult.error)) {
+          return 'SYNCED';
+        }
+        throw updateResult.error;
       }
+
       return 'SYNCED';
     } catch (error) {
       if (isMissingContactError(error)) return 'SYNCED';
+
       logger.warn('[ResendAudienceGateway] explicit unsubscribe sync failed', {
         operation: 'explicit_unsubscribe',
         email: maskEmailForLog(email),
-        status: 'FAILED',
+        error: error instanceof Error ? error.message : String(error),
       });
       return 'FAILED';
     }

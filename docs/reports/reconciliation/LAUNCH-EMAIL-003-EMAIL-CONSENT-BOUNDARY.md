@@ -151,3 +151,64 @@ Public launch: NO_GO.
 ## Recommended ticket status
 
 MERGE, subject to final validation passing in the PR handoff.
+
+## Corrective pass after PR #893
+
+- Baseline merge commit: `8a98179fdcb30ec521e565743ac5bac45a30b606`.
+- Verified defects:
+  1. Missing `RESEND_AUDIENCE_ID` or `RESEND_API_KEY` could throw exceptions during subscribe/unsubscribe flows.
+  2. User email changes caused unique constraint violations in `EmailPreference` table, blocking local unsubscribe.
+  3. `GET /api/subscriptions` required a trusted email claim and triggered `GetOrCreateUserUseCase`, causing unnecessary side effects and potential 400 errors for authenticated actors without verified emails.
+  4. Resend Audience gateway performed blind "get -> create -> update" sequences on errors, potentially masking authentication or network failures.
+
+### Deterministic provider-error hardening
+- Added `isNotFoundError` and `isConflictError` helpers using SDK status codes (404, 409) and error names.
+- Explicit Subscribe: Only attempts `create` if `get` returns 404. Retries `update` only if `create` returns 409.
+- Explicit Unsubscribe: Never creates contacts. Treats 404 as successful sync.
+- Network/Auth/5xx errors now return `FAILED` immediately without retries that could create false states.
+
+### Gateway configuration behavior
+- Lazy client initialization: `Resend` client is created only when needed.
+- `RESEND_AUDIENCE_ID` missing -> `NOT_CONFIGURED`.
+- `RESEND_API_KEY` missing -> `FAILED` (with controlled warning).
+- No provider exceptions escape the gateway; all SDK calls are wrapped in try/catch returning `FAILED`.
+
+### EmailPreference identity-resolution algorithm
+- Primary lookup by `userId`.
+- Email identity migration: if email changed but is taken by another user, the user's record is updated (consent change) but the foreign email is not hijacked.
+- Secondary lookup by `email` for legacy records without `userId`.
+- Foreign records (different `userId`) are never mutated.
+- Unsubscribe always succeeds locally even if an email conflict exists.
+
+### GET behavior
+- Before: Required trusted email, synced user profile, could return 400 or 401.
+- After: Requires authenticated actor only, read-only, no user sync, no email required.
+
+### POST/DELETE trusted-email behavior
+- Still requires trusted email from session claims.
+- Performs user profile sync before mutation.
+- Verified no email is read from request body.
+
+### Changed files
+- `app/api/subscriptions/route.ts`
+- `lib/modules/subscriptions/infrastructure/email-preference.repository.ts`
+- `lib/modules/subscriptions/infrastructure/resend-audience.gateway.ts`
+- `tests/unit/modules/subscriptions/resend-audience.gateway.test.ts`
+- `tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts`
+- `tests/unit/modules/subscriptions/subscriptions.use-cases.test.ts`
+- `tests/unit/modules/subscriptions/email-preference.repository.test.ts`
+
+### Test results
+- Focused tests: PASS (31 tests across 4 files).
+- Architecture check: PASS.
+- Typecheck: PASS.
+- Full suite: PASS.
+
+### Evidence & Recommendation
+Implementation evidence: local/automated only.
+Production/operator evidence: not added.
+Professional legal approval: not added.
+FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
+Public launch: NO_GO.
+
+Recommendation: MERGE.

@@ -37,7 +37,7 @@ async function enforceSubscriptionRateLimit(userId: string, action: 'read' | 'wr
   return null;
 }
 
-async function requireUserAndGetContext() {
+async function requireAuthenticatedActor() {
   const actor = await getActorFromAuth();
 
   if (actor.type === 'guest' || actor.type === 'system') {
@@ -49,6 +49,10 @@ async function requireUserAndGetContext() {
     requestId: getCorrelationId() ?? undefined
   });
 
+  return { ctx, userId: actor.userId };
+}
+
+async function requireTrustedEmail(ctx: any) {
   const { sessionClaims } = await auth();
   const claims = sessionClaims as any;
   const email = normalizeTrustedEmail(
@@ -59,28 +63,29 @@ async function requireUserAndGetContext() {
     return { error: NextResponse.json({ error: 'TRUSTED_EMAIL_REQUIRED', message: 'A verified account email is required to manage email notifications.' }, { status: 400 }) };
   }
 
+  // Sync user profile on write operations
   await GetOrCreateUserUseCase.execute(ctx, {
-      id: actor.userId,
+      id: ctx.actor.userId,
       email,
       name: (sessionClaims as any)?.name,
       username: (sessionClaims as any)?.username,
       imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
   });
 
-  return { ctx, userId: actor.userId, email };
+  return { email };
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   try {
-    const userResult = await requireUserAndGetContext();
-    if (userResult.error) return userResult.error;
+    const authResult = await requireAuthenticatedActor();
+    if (authResult.error) return authResult.error;
 
-    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'read');
+    const rateLimited = await enforceSubscriptionRateLimit(authResult.userId, 'read');
     if (rateLimited) return rateLimited;
 
-    const result = await GetSubscriptionStatusUseCase.execute(userResult.ctx);
+    const result = await GetSubscriptionStatusUseCase.execute(authResult.ctx);
 
     return NextResponse.json(result);
   } catch (error) {
@@ -93,13 +98,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   try {
-    const userResult = await requireUserAndGetContext();
-    if (userResult.error) return userResult.error;
+    const authResult = await requireAuthenticatedActor();
+    if (authResult.error) return authResult.error;
 
-    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
+    const emailResult = await requireTrustedEmail(authResult.ctx);
+    if (emailResult.error) return emailResult.error;
+
+    const rateLimited = await enforceSubscriptionRateLimit(authResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const result = await SubscribeUseCase.execute(userResult.ctx, { trustedEmail: userResult.email });
+    const result = await SubscribeUseCase.execute(authResult.ctx, { trustedEmail: emailResult.email });
 
     return NextResponse.json(result);
   } catch (error) {
@@ -112,13 +120,16 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   try {
-    const userResult = await requireUserAndGetContext();
-    if (userResult.error) return userResult.error;
+    const authResult = await requireAuthenticatedActor();
+    if (authResult.error) return authResult.error;
 
-    const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
+    const emailResult = await requireTrustedEmail(authResult.ctx);
+    if (emailResult.error) return emailResult.error;
+
+    const rateLimited = await enforceSubscriptionRateLimit(authResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const result = await UnsubscribeUseCase.execute(userResult.ctx, { trustedEmail: userResult.email });
+    const result = await UnsubscribeUseCase.execute(authResult.ctx, { trustedEmail: emailResult.email });
 
     return NextResponse.json(result);
   } catch (error) {
