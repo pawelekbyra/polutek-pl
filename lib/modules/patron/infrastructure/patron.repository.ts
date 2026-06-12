@@ -50,9 +50,19 @@ export class PatronRepository {
 
   async revokeGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx) {
     return await tx.patronGrant.updateMany({
-      where: { paymentId, revokedAt: null },
+      where: { paymentId },
       data: {
         revokedAt: new Date(),
+        reason: reason,
+      },
+    });
+  }
+
+  async reactivateGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx) {
+    return await tx.patronGrant.updateMany({
+      where: { paymentId, revokedAt: { not: null } },
+      data: {
+        revokedAt: null,
         reason: reason,
       },
     });

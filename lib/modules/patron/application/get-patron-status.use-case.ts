@@ -20,7 +20,7 @@ export async function getPatronStatus(
 
   return success({
     userId: user.id,
-    isPatron: user.isPatron,
+    isPatron: activeGrants.length > 0,
     patronSince: user.patronSince,
     patronSource: user.patronSource,
     activeGrants,

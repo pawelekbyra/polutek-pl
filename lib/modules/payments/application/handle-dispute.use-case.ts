@@ -6,7 +6,7 @@ import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { UserAccessService } from "@/lib/services/user-access.service";
-import { recalculatePatronStatus } from "@/lib/modules/patron";
+import { recalculatePatronStatus, PatronRepository } from "@/lib/modules/patron";
 
 export interface HandleDisputeInput {
   stripeIntentId: string;
@@ -20,6 +20,7 @@ export async function handleDispute(
   ctx: AppContext
 ): Promise<UseCaseResult<void, PaymentError>> {
   const repo = new PaymentRepository();
+  const patronRepo = new PatronRepository();
 
   try {
     const syncData = await ctx.db.writeTransaction(async (tx) => {
@@ -39,13 +40,7 @@ export async function handleDispute(
         const netAdjustment = Math.max(0, payment.amountMinor - (payment.refundedAmountMinor ?? 0));
         await repo.decrementUserPaymentTotal(payment.userId, payment.currency, netAdjustment, tx);
 
-        // Revoke via recalculate (grants tied to this payment should be revoked in a more formal outbox/event pattern,
-        // but for now we follow legacy decrementUserNetPaymentTotals pattern which didn't explicitly revoke grants but recalculated user status)
-        // Actually, legacy applyLostChargeback DID revoke grants.
-        await tx.patronGrant.updateMany({
-            where: { paymentId: payment.id, revokedAt: null },
-            data: { revokedAt: new Date(), reason: `Payment disputed: lost` }
-        });
+        await patronRepo.revokeGrantByPaymentId(payment.id, `Payment disputed: lost`, tx);
 
         const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
         if (!recalcResult.ok) {
@@ -58,6 +53,7 @@ export async function handleDispute(
 
       if (input.isWon) {
         await repo.updatePayment(payment.id, { status: PaymentStatus.SUCCEEDED }, tx);
+        await patronRepo.reactivateGrantByPaymentId(payment.id, `Dispute WON: access restored`, tx);
         const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
         if (!recalcResult.ok) {
             throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
@@ -67,10 +63,16 @@ export async function handleDispute(
         return { userId: payment.userId, isPatron, normalizedTotal };
       }
 
-      // Default: DISPUTED
+      // Default: DISPUTED (Opened)
       await repo.updatePayment(payment.id, { status: PaymentStatus.DISPUTED }, tx);
+      await patronRepo.revokeGrantByPaymentId(payment.id, `DISPUTE_OPENED`, tx);
+      const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+      if (!recalcResult.ok) {
+        throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
+      }
+      const { isPatron, normalizedTotal } = recalcResult.data;
       recordAlert('payment.dispute_opened', { paymentId: payment.id, status: input.status });
-      return null;
+      return { userId: payment.userId, isPatron, normalizedTotal };
     });
 
     if (syncData) {
