@@ -212,3 +212,27 @@ FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
 Public launch: NO_GO.
 
 Recommendation: MERGE.
+
+## Final Acceptance Patch
+
+- Baseline: `f7f352fa2ef133bc9411e6df3f5e64f0db0e99a8`.
+- Hardened Subscriptions API Route tests: replaced static source scans with actual handler behavior tests (GET/POST/DELETE) using Vitest and mocks.
+- Hardened `EmailPreferenceRepository`: added `P2002` (unique constraint) catch blocks to `create` and `update` operations to handle potential race conditions during concurrent consent updates or email migrations.
+- Verified that `GET /api/subscriptions` remains read-only and does not require email claims even at the handler level.
+
+### Test results
+- Subscriptions route behavior tests: PASS (7 tests).
+- EmailPreferenceRepository race condition tests: PASS (9 tests).
+- Focused tests suite: PASS.
+- Architecture check: PASS.
+- Typecheck: PASS.
+- Full suite: PASS.
+
+### Evidence & Recommendation
+Implementation evidence: local/automated only.
+Production/operator evidence: not added.
+Professional legal approval: not added.
+FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
+Public launch: NO_GO.
+
+Recommendation: MERGE.
