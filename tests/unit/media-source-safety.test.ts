@@ -199,7 +199,9 @@ describe('PlaybackService Safety', () => {
     expect(plan.source).toBeUndefined();
     expect(plan.tracking.playbackSessionId).toBe('');
     expect(plan.diagnostics.warnings).toEqual(['Video asset processing failed']);
-    expect(plan.diagnostics.asset?.providerAssetId).toBe('cf-asset-id');
+    expect(plan.diagnostics.asset?.providerAssetId).toBeNull();
+    expect(plan.diagnostics.asset?.providerPlaybackId).toBeNull();
+    expect(JSON.stringify(plan)).not.toContain('cf-asset-id');
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
     expect(plan.source).toBeUndefined();

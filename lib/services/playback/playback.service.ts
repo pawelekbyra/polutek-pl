@@ -54,8 +54,11 @@ function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
     provider: asset.provider,
     processingState: asset.processingState,
     isPrimary: Boolean(asset.isPrimary),
-    providerAssetId: asset.providerAssetId ?? null,
-    providerPlaybackId: asset.providerPlaybackId ?? null,
+    // Public playback plans intentionally redact provider identifiers. Even
+    // denied/non-ready states may include diagnostics.asset for safe state
+    // messaging, so never expose private Cloudflare/Mux asset IDs here.
+    providerAssetId: null,
+    providerPlaybackId: null,
     mimeType: asset.mimeType ?? null,
     sizeBytes: asset.sizeBytes ?? null,
   };
