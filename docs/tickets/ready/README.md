@@ -14,7 +14,7 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 
 | Group | Status | Files / examples | Action |
 | --- | --- | --- | --- |
-| Current primary next | `READY` | `OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` | Assign exactly one agent to consolidate decisions. |
+| Current primary next | `READY_FOR_REVIEW` | `OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` | Assign exactly one agent to consolidate decisions. |
 | Merged control-plane hotfix | `MERGED / HISTORICAL` | `DOCS-RECONCILE-003-operator-evidence-status-hotfix.md` | Status semantics correction; preserve for history. |
 | Historical/superseded tickets | `SUPERSEDED` | `X0-*`, `X0.5-*`, `DOCS-RECONCILE-001/002` | Preserve for history. |
 | Merged runtime / local implementation | `DONE / MERGED` | `X1/X2/X3/X4/X5/X6-FU-*`, `LAUNCH-FIX-007`, `STABILIZE-*` | Foundational work merged on main. |
@@ -24,6 +24,17 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 | Production-access tickets | `READY_WHEN_OPERATOR_ACCESS_EXISTS` | `LAUNCH-FIX-004-video-access-smoke-test.md`, `LAUNCH-FIX-006-admin-cloudflare-smoke-test.md` | Require current production/operator access and redacted evidence. |
 | Owner-decision blockers | `BLOCKED` | `LAUNCH-LEGAL-*`, `LAUNCH-EMAIL-002` | Owner decision required before execution/certification. |
 | Launch proof | `NOT_READY_UNTIL_PRODUCTION_PROOF` | `X7-READY-001-launch-readiness-gap-analysis.md` | Do not certify X7 before evidence exists. |
+
+## Planned follow-ups (not yet ticketed)
+
+1. Email consent boundary and Resend Audience safety.
+2. Signed public unsubscribe and suppression.
+3. System email event wiring and idempotency.
+4. Language persistence and first-email language.
+5. Optional referral progress emails.
+6. Legal/privacy/terms PL+EN.
+7. Operator evidence.
+8. X6 and X7.
 
 ## PR #871 and #868 reconciliation
 

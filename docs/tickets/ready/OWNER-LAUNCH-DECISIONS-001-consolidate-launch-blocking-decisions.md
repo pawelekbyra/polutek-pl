@@ -1,7 +1,7 @@
 # OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 
 ID: `OWNER-LAUNCH-DECISIONS-001`
-Status: `READY`
+Status: `READY_FOR_REVIEW`
 Lane: docs/strategy
 Type: docs-only consolidation
 
@@ -12,6 +12,29 @@ Consolidate all remaining launch-blocking owner decisions, legal gaps, and email
 ## Context
 
 This is the next agent-executable task because several implementation tickets depend on owner decisions. It is not the only remaining launch work. Production/operator evidence, email runtime implementation, X6.2–X6.8 and X7 remain outstanding. This ticket must not mark operator-evidence tickets complete.
+
+## Owner decisions received
+
+Date: 2026-06-12
+
+## Progress
+
+- [x] Product/tipping/access decisions recorded
+- [x] Refund/dispute decision recorded
+- [x] Email boundary decisions recorded
+- [x] Language decision recorded
+- [x] Privacy/contact direction recorded
+- [x] Ops RPO/RTO and alert channel recorded
+- [x] Cloudflare/original-file policy recorded
+- [x] Launch scope recorded
+- [x] Legal review boundary recorded
+- [ ] Runtime implementation
+- [ ] Operator evidence
+- [ ] Legal copy publication
+- [ ] X6.2–X6.8
+- [ ] X7 certification
+
+*Note: Unchecked items are outside the scope of this docs-only consolidation ticket.*
 
 ## Required Scope
 
@@ -37,4 +60,4 @@ This is the next agent-executable task because several implementation tickets de
 
 ## Ticket Status
 
-`READY`
+`READY_FOR_REVIEW`
