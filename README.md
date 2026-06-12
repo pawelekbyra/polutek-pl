@@ -45,7 +45,7 @@ Merged code and local tests are evidence of implementation, not evidence of publ
 | Blocker | Status | Launch impact |
 | --- | --- | --- |
 | Vercel production environment verification | `BLOCKED_OPERATOR_ACCESS` | Evidence pack blocker. |
-| Cloudflare production webhook/E2E evidence | `OPERATOR_PENDING` | Evidence pack blocker. |
+| Cloudflare production webhook/E2E evidence | `BLOCKED_OPERATOR_ACCESS` | Evidence pack blocker; authorized Cloudflare/Vercel access is required. |
 | Backup/restore operator drill | `OPERATOR_PENDING` | Reliability blocker. |
 | X6.2–X6.8 evidence passes | `MISSING / NOT_EXECUTED` | Certification blocker. |
 | Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Public launch blocker. |
