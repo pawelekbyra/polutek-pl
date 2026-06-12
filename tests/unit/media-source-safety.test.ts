@@ -30,6 +30,17 @@ vi.mock('@/lib/services/storage/storage.service', () => ({
   },
 }));
 
+const mockCreateSignedPlaybackToken = vi.fn();
+vi.mock('@/lib/modules/video/infrastructure/cloudflare-stream.client', () => {
+    return {
+      CloudflareStreamClient: vi.fn().mockImplementation(function() {
+        return {
+          createSignedPlaybackToken: mockCreateSignedPlaybackToken,
+        };
+      }),
+    };
+  });
+
 const baseVideo = {
   id: 'v1',
   title: 'Secret Video',
@@ -283,28 +294,6 @@ describe('PlaybackService Safety', () => {
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
-  it('exposes only safe provider metadata for allowed READY Cloudflare asset without resolving provider source or token and without session creation', async () => {
-    vi.mocked(prisma.video.findUnique).mockResolvedValue({
-      ...baseVideo,
-      asset: cloudflareAsset,
-    } as any);
-    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
-
-    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
-
-    expect(plan.status).toBe('READY');
-    expect(plan.access.allowed).toBe(true);
-    expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
-    expect(plan.source?.asset?.providerPlaybackId).toBe('cf-playback-id');
-    expect(plan.source?.playbackUrl).toBeUndefined();
-    expect((plan.source as any)?.playbackToken).toBeUndefined();
-    expect(JSON.stringify(plan)).not.toContain('cloudflare/cf-provider-object-key');
-    expect(plan.tracking.playbackSessionId).toBe('');
-    expect(plan.diagnostics.providerResolutionAllowed).toBe(true);
-    expect(plan.diagnostics.providerResolutionAttempted).toBe(false);
-    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
-    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
-  });
 
   it('should redact raw videoUrl while preserving legacy URL playback behavior when access is allowed', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
@@ -359,7 +348,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.source?.playbackUrl).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   });
 
-  it('READY Cloudflare asset for allowed patron does not create a session or resolve provider source yet', async () => {
+  it('resolves Cloudflare signed playback and creates a session for allowed patron with READY asset', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: true } as any,
@@ -370,14 +359,49 @@ describe('PlaybackService Safety', () => {
       asset: cloudflareAsset,
     } as any);
 
+    const mockToken = 'cf-signed-token';
+    const mockSession = { id: 's-cf-1' };
+
+    mockCreateSignedPlaybackToken.mockResolvedValue({ token: mockToken });
+
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue(mockSession as any);
+
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
 
     expect(plan.status).toBe('READY');
     expect(plan.access.allowed).toBe(true);
-    expect(plan.canPlay).toBe(false); // Provider-backed is not immediately playable
+    expect(plan.canPlay).toBe(true);
     expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
-    expect(plan.source?.playbackUrl).toBeUndefined();
-    expect(plan.tracking.playbackSessionId).toBe(''); // No session yet
+    expect(plan.source?.kind).toBe('cloudflare_stream');
+    expect(plan.source?.playbackUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
+    expect(plan.source?.isSignedUrl).toBe(true);
+    expect(plan.tracking.playbackSessionId).toBe('s-cf-1');
+
+    expect(mockCreateSignedPlaybackToken).toHaveBeenCalledWith('cf-playback-id');
+    expect(prisma.videoPlaybackSession.create).toHaveBeenCalled();
+  });
+
+  it('fails closed when Cloudflare resolution fails for allowed patron', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    mockCreateSignedPlaybackToken.mockRejectedValue(new Error('CF API Down'));
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.canPlay).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.warnings).toContain('Failed to resolve secure playback source');
+    expect(plan.diagnostics.providerResolutionAttempted).toBe(true);
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 });
