@@ -15,10 +15,10 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 | Group | Status | Files / examples | Action |
 | --- | --- | --- | --- |
 | Current primary next | `READY` | `OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` | Assign exactly one agent to consolidate decisions. |
-| Current hotfix ticket | `EXECUTED_IN_THIS_PR` | `DOCS-RECONCILE-003-operator-evidence-status-hotfix.md` | Serial-only status correction; not independently assignable. |
+| Merged control-plane hotfix | `MERGED / HISTORICAL` | `DOCS-RECONCILE-003-operator-evidence-status-hotfix.md` | Status semantics correction; preserve for history. |
 | Historical/superseded tickets | `SUPERSEDED` | `X0-*`, `X0.5-*`, `DOCS-RECONCILE-001/002` | Preserve for history. |
 | Merged runtime / local implementation | `DONE / MERGED` | `X1/X2/X3/X4/X5/X6-FU-*`, `LAUNCH-FIX-007`, `STABILIZE-*` | Foundational work merged on main. |
-| Operator evidence pending | `OPERATOR_PENDING` | `LAUNCH-FIX-001`, `LAUNCH-FIX-002`, `LAUNCH-OPS-002`, `LAUNCH-FIX-004/006` | Do not reimplement merged runtime/checklists. Execute procedure when authorized access exists. |
+| Operator evidence pending | `OPERATOR_PENDING` | `LAUNCH-FIX-001 (PARTIAL / BLOCKED_OPERATOR_ACCESS)`, `LAUNCH-FIX-002 (BLOCKED_OPERATOR_ACCESS)`, `LAUNCH-OPS-002 (OPERATOR_PENDING)`, `LAUNCH-FIX-004/006 (READY_WHEN_OPERATOR_ACCESS_EXISTS)` | Do not reimplement merged runtime/checklists. Execute procedure when authorized access exists. |
 | UI Excellence/Inventory | `DONE` | `X6-EX-001-ui-consistency-inventory.md` | Inventory complete; safety follow-ups merged. |
 | Operator drill tickets | `OPERATOR_PENDING` | `database-backup-restore-drill.md`, `production-healthcheck-hardening.md` | Tooling exists; operator drill evidence required. |
 | Production-access tickets | `READY_WHEN_OPERATOR_ACCESS_EXISTS` | `LAUNCH-FIX-004-video-access-smoke-test.md`, `LAUNCH-FIX-006-admin-cloudflare-smoke-test.md` | Require current production/operator access and redacted evidence. |

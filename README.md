@@ -49,7 +49,7 @@ Merged code and local tests are evidence of implementation, not evidence of publ
 | Backup/restore operator drill | `OPERATOR_PENDING` | Reliability blocker. |
 | X6.2–X6.8 evidence passes | `MISSING / NOT_EXECUTED` | Certification blocker. |
 | Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Public launch blocker. |
-| Email unsubscribe/suppression | `IMPLEMENTATION_MISSING` | Compliance blocker. |
+| Email unsubscribe/suppression | `OWNER_DECISION_REQUIRED / IMPLEMENTATION_MISSING` | Compliance blocker; both decisions and runtime behavior required. |
 | X7 Launch Evidence Pack | `MISSING` | Public launch not certified. |
 
 ## Recommended next agent ticket
@@ -70,7 +70,7 @@ OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 - Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
 - Phase gates: `docs/roadmap/Phase-Gates.md`
 - Reconciliation report index: `docs/reports/reconciliation/README.md`
-- Current reconciliation report: `docs/reports/reconciliation/DOCS-RECONCILE-002-CURRENT-MAIN.md`
+- Current reconciliation report: `docs/reports/reconciliation/DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION.md`
 - Ticket queue: `docs/tickets/ready/README.md`
 
 ## Source-of-truth categories

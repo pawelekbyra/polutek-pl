@@ -4,8 +4,11 @@
 * **ID:** DOCS-RECONCILE-003
 * **Lane:** control-plane / reconciliation
 * **Type:** serial-only docs hotfix
-* **Status:** EXECUTED_IN_THIS_PR — NOT INDEPENDENTLY ASSIGNABLE
-* **Baseline SHA:** 2ca4477611b4e2d7d251739539ab2840cd666510
+* **Status:** MERGED / HISTORICAL — NOT INDEPENDENTLY ASSIGNABLE
+* **PR:** #887
+* **Baseline / PR base SHA:** e01f2ab9e9c2d532a04ea4a8ea7b21a405f5d61d
+* **PR head SHA:** bdf3aaf8c3d026a746443e68e55f4454f84ba732
+* **PR merge SHA:** 40607a92e0e10559a8ab2c4b398cffe2d0d50f8e
 
 ## Goal
 Correct the semantic status of operator evidence and X6 passes after PR #886. PR #886 correctly updated much information but introduced over-optimistic status classifications that conflated merged implementation/checklists with completed production evidence.
