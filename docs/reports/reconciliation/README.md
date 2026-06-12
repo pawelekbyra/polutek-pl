@@ -14,27 +14,23 @@ Reconciliation reports explain how current code, tests, docs, tickets and owner 
 
 ## Current canonical report
 
-- Current global source-of-truth reconciliation: `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`.
+- Current global source-of-truth reconciliation: `docs/reports/reconciliation/DOCS-RECONCILE-002-CURRENT-MAIN.md`.
 
 ## Domain index
 
 | Domain | Current canonical evidence | Historical / superseded notes |
 | --- | --- | --- |
-| Control plane / product standard | `DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`, `DNA-EXCELLENCE-001-PRODUCT-EXCELLENCE-AND-LAUNCH-PROOF.md`, `X0-READY-001-R-PHASE-HANDOFF-INVENTORY.md` | X0 activation reports are historical after current reconciliation. |
-| Payments / patron / access | `X1-FIX-001-PAYMENT-ELIGIBILITY-POLICY.md`, `X1-FIX-002-LAUNCH-PAYMENT-THRESHOLD-DEFAULTS.md`, `X1-FIX-003-SUPPORTED-CURRENCIES-LAUNCH-SCOPE.md`, `X1-FIX-005-FULL-REFUND-REVOKES-LINKED-GRANT-ONLY.md`, `LAUNCH-FIX-003-PAYMENT-TO-PATRONGRANT-SMOKE-TEST.md`, `X2-FIX-001-CHECK-VIDEO-ACCESS-PATRONGRANT-TRUTH.md`, `X2-FIX-003-STANDARDIZE-PATRON-MUTATIONS-VIA-GRANTS.md` | PR #871 report is open/unmerged and not listed as current-main evidence. |
-| Video / playback | `X3-FIX-001-CLOUDFLARE-STREAM-VIDEO-ASSET-FOUNDATION.md`, `X3-FIX-003-ADMIN-CLOUDFLARE-UPLOAD-AND-ASSET-STATUS.md`, `X3-FIX-004-PROVIDER-WEBHOOK-ASSET-STATE.md`, `X3-FIX-008-CLOUDFLARE-IMPORT-LEGACY-VIDEO.md`, `X3-FIX-009-DISABLE-LEGACY-PRIVATE-PLAYBACK-FALLBACK.md`, `X3-FIX-011-CLOUDFLARE-SIGNED-PLAYBACK-RUNTIME.md` | `LAUNCH-FIX-004-VIDEO-ACCESS-AND-TOKEN-LEAK-SMOKE-TEST.md` is historical for placeholder behavior before signed playback. |
-| Comments | `X4-READY-001-COMMENTS-PUBLIC-READ-PATRON-WRITE-INVENTORY.md`, `X4-FIX-001-COMMENT-READ-PRODUCT-CONTRACT.md`, `X4-FIX-002-COMMENT-WRITE-ERROR-AND-EMPTY-STATES.md`, `X4-FIX-003-COMMENT-BADGE-TRUTH-HARDENING.md`, `X4-FIX-004-COMMENT-ACCESS-TRUTH-NEGATIVE-TESTS.md`, `LAUNCH-FIX-005-COMMENTS-PUBLIC-READ-PATRON-WRITE-SMOKE-TEST.md` | These `X4-*` IDs are historical comments lane IDs; current canonical X4 phase is playback/player. |
-| Admin | `X3-FIX-007-LEGACY-VIDEO-INVENTORY-ADMIN-DIAGNOSTICS.md`, `X2-FIX-004-GRANT-BACKED-ADMIN-PATRON-READ-MODELS.md`, `X2-FIX-005-ADMIN-GRANT-BACKED-PATRON-QUERY-SORT-CONTRACT.md`, `LAUNCH-FIX-006-ADMIN-CLOUDFLARE-UPLOAD-IMPORT-SMOKE-TEST.md` | X5 owner usability proof remains pending. |
-| Email / consent | `DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md` | Suppression/provider proof remains pending. |
-| Launch operations | `LAUNCH-OPS-001-PRODUCTION-ENV-AND-SMOKE-TEST-INVENTORY.md`, `LAUNCH-FIX-001-VERCEL-PRODUCTION-ENV-VALIDATION.md`, `LAUNCH-FIX-002-CLOUDFLARE-WEBHOOK-PRODUCTION-CHECK.md`, `LAUNCH-FIX-006-ADMIN-CLOUDFLARE-UPLOAD-IMPORT-SMOKE-TEST.md` | Production proof must be current and redacted. |
-| Monitoring / incidents | `LAUNCH-OPS-003-PRODUCTION-MONITORING-AND-INCIDENT-RUNBOOK.md` | Operational adoption and alert thresholds remain owner-dependent. |
-| X6 excellence | `DNA-EXCELLENCE-001-PRODUCT-EXCELLENCE-AND-LAUNCH-PROOF.md` | X6 passes are standard-defined, not executed/certified. |
-| X7 launch proof | `DNA-EXCELLENCE-001-PRODUCT-EXCELLENCE-AND-LAUNCH-PROOF.md`, `DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md` | X7 Launch Evidence Pack incomplete; public launch not certified. |
+| Control plane / product standard | `DOCS-RECONCILE-002-CURRENT-MAIN.md`, `DNA-EXCELLENCE-001-PRODUCT-EXCELLENCE-AND-LAUNCH-PROOF.md` | X0 activation and DOCS-RECONCILE-001 are historical/superseded. |
+| Payments / patron / access | `LAUNCH-FIX-007-STRIPE-REFUND-DISPUTE-PATRONGRANT-LIFECYCLE-SMOKE-TEST.md`, `X1-FIX-001-PAYMENT-ELIGIBILITY-POLICY.md`, `X2-FIX-001-CHECK-VIDEO-ACCESS-PATRONGRANT-TRUTH.md` | Full Stripe lifecycle foundations are now merged on main (PR #871 integrated). |
+| Video / playback | `X3-FIX-011-CLOUDFLARE-SIGNED-PLAYBACK-RUNTIME.md`, `LAUNCH-FIX-002-CLOUDFLARE-WEBHOOK-PRODUCTION-CHECK.md` | Webhook signature hardening is merged. |
+| Comments | `LAUNCH-FIX-005-COMMENTS-PUBLIC-READ-PATRON-WRITE-SMOKE-TEST.md` | These `X4-*` IDs are historical comments lane IDs. |
+| Admin | `X6-FU-001-admin-access-actions-confirmation.md`, `X6-EX-001-UI-CONSISTENCY-INVENTORY.md` | Admin confirmation safety is merged. |
+| Email / consent | `LAUNCH-EMAIL-001-EMAIL-CONSENT-UNSUBSCRIBE-SUPPRESSION-READINESS.md` | Suppression/provider proof remains pending. |
+| Launch operations | `LAUNCH-FIX-001-VERCEL-PRODUCTION-ENV-VALIDATION.md`, `LAUNCH-OPS-002-DATABASE-BACKUP-RESTORE-READINESS.md` | Production env validation (PR #885) and backup tooling are merged. |
+| Monitoring / incidents | `LAUNCH-OPS-003-PRODUCTION-MONITORING-AND-INCIDENT-RUNBOOK.md` | Alert thresholds remain owner-dependent. |
+| X6 excellence | `X6-EX-001-UI-CONSISTENCY-INVENTORY.md` | X6 safety hardening is merged. |
+| X7 launch proof | `DOCS-RECONCILE-002-CURRENT-MAIN.md` | X7 Launch Evidence Pack incomplete; public launch not certified. |
 
-## Reports tied to open/unmerged PRs
+## PR #871 and #868 reconciliation
 
-- PR #871 is open/pending; any report created only on that branch is pending evidence and must not be treated as current-main truth until merge.
-
-## Closed-unmerged PR evidence
-
-- PR #868 is closed without merge. Its body and commit can explain historical attempted fixes, but they are not current-main implementation evidence.
+PR #871 (Stripe lifecycle) and PR #868 (Vercel build stabilization) are now fully merged/integrated on main (up to PR #885).

@@ -2,7 +2,7 @@
 
 Status: `ACTIVE — CURRENT-MAIN RECONCILED`
 
-This roadmap describes current execution status after `DOCS-RECONCILE-001`. It separates merged implementation, automated verification, production/manual verification and formal certification.
+This roadmap describes current execution status after `DOCS-RECONCILE-002`. It separates merged implementation, automated verification, production/manual verification and formal certification.
 
 ## Status vocabulary
 
@@ -51,32 +51,43 @@ Future tickets must use the canonical domain in the title, for example `X4-PLAYB
 
 | Phase | Correct status | Merged implementation evidence | Automated evidence | Production/manual evidence | Formal certification | Next executable ticket |
 | --- | --- | --- | --- | --- | --- | --- |
-| X0 | `IMPLEMENTED_VERIFIED` | Control plane docs, ticket/report structure and reconciliation report exist. | `git diff --check`, docs searches in `DOCS-RECONCILE-001`. | Not applicable beyond owner review. | Not certified as a phase; current docs reconciled. | None; historical X0 tickets are superseded. |
-| X0.5 | `IMPLEMENTED_VERIFIED` with open questions | Product Standard and owner decisions exist. | Docs consistency searches. | Owner questions remain. | Not certified. | Owner decisions only as needed. |
-| X1 | `PARTIAL` | Payment fulfillment, eligibility policy, Stripe ledger, full refund handling and dispute-lost revocation exist on main. PR #871 remains open for dispute suspension/reactivation hardening. | Payment/access smoke reports and focused tests exist; current reconciliation did not claim #871-only tests. | Production Stripe lifecycle proof incomplete. | Not certified. | Resolve/merge/fix PR #871 or create a follow-up if it is rejected. |
-| X2 | `IMPLEMENTED_VERIFIED` for core access truth; `IMPLEMENTED_UNVERIFIED` for production proof | `checkVideoAccess` reads active `PatronGrant`; cache/Clerk are diagnostics. | Access tests and PatronGrant-backed comments/access tests exist. | Production paid/locked diagnostics proof incomplete. | Not certified. | Production access diagnostic proof after X1 lifecycle is stable. |
-| X3 | `IMPLEMENTED_VERIFIED` for local foundation; `IMPLEMENTED_UNVERIFIED` for production provider proof | `VideoAsset`, Cloudflare upload/import/webhook lifecycle, legacy private fallback cutoff and signed playback runtime are merged. | Video and media-source tests plus reports through PR #870. | Production Cloudflare upload/import/webhook/playback proof incomplete. | Not certified. | Production Cloudflare E2E evidence after environment access. |
-| X4 | `IMPLEMENTED_VERIFIED` for playback safety; comments aliases historical | PlaybackPlan/player fail-closed behavior and session-after-resolution ordering are merged. | Media-source route and safety tests exist. | Production playback proof incomplete. | Not certified. | Production playback evidence, not a rewrite. |
-| X5 | `PARTIAL` | Admin payment/video/comment/health surfaces and runbooks exist. | Admin and module tests exist. | Owner support usability proof incomplete. | Not certified. | Admin diagnostics usability inventory/proof after X6 inventory. |
-| X6 | `MISSING` execution / `IMPLEMENTED_VERIFIED` standard | Product Excellence standard and phase gates exist. | Docs validation only. | X6.1-X6.8 evidence not executed. | Not certified. | `docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md`. |
-| X7 | `MISSING` evidence pack | Launch readiness spec and evidence-pack standard exist. | Docs validation only. | X7 Launch Evidence Pack incomplete. | Public launch not certified. | After X6 and production evidence blockers. |
+| X0 | `IMPLEMENTED_VERIFIED` | Control plane docs, ticket/report structure and reconciliation reports exist. | `git diff --check`, docs searches. | Not applicable beyond owner review. | Not certified as a phase; current docs reconciled. | None; historical X0 tickets are superseded. |
+| X0.5 | `IMPLEMENTED_VERIFIED` with open questions | Product Standard and owner decisions exist. | Docs consistency searches. | Owner questions remain. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
+| X1 | `IMPLEMENTED_VERIFIED` for core lifecycle | Payment fulfillment, eligibility policy, Stripe ledger, full refund handling and dispute suspension/reactivation exist on main (PR #871 merged). | Payment/access smoke reports and focused tests exist. | Production Stripe lifecycle proof incomplete. | Not certified. | Production Stripe smoke test. |
+| X2 | `IMPLEMENTED_VERIFIED` for core access truth; `IMPLEMENTED_UNVERIFIED` for production proof | `checkVideoAccess` reads active `PatronGrant`; cache/Clerk are diagnostics. | Access tests and PatronGrant-backed comments/access tests exist. | Production paid/locked diagnostics proof incomplete. | Not certified. | Production access diagnostic proof. |
+| X3 | `IMPLEMENTED_VERIFIED` for local foundation; `IMPLEMENTED_UNVERIFIED` for production provider proof | `VideoAsset`, Cloudflare upload/import/webhook lifecycle, signature hardening and signed playback runtime are merged. | Video and media-source tests and security checks. | Production Cloudflare upload/import/webhook/playback proof incomplete. | Not certified. | Production Cloudflare E2E evidence. |
+| X4 | `IMPLEMENTED_VERIFIED` for playback safety | PlaybackPlan/player fail-closed behavior, clear state messaging, and session-after-resolution ordering are merged. | Media-source route and safety tests exist. | Production playback proof incomplete. | Not certified. | Production playback evidence. |
+| X5 | `IMPLEMENTED_VERIFIED` for admin surfaces | Admin payment/video/comment/health surfaces and support diagnostics exist. | Admin and module tests exist. | Owner support usability proof incomplete. | Not certified. | Admin diagnostics usability inventory. |
+| X6 | `IMPLEMENTED_VERIFIED` for inventory and safety | Product Excellence inventory (X6-EX-001) is complete; admin action confirmation and safety hardening are merged. | Docs validation and UI tests. | X6.2-X6.8 passes not fully executed. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
+| X7 | `MISSING` evidence pack | Launch readiness spec and evidence-pack standard exist. | Docs validation only. | X7 Launch Evidence Pack incomplete; legal/email gaps documented. | Public launch not certified. | After production evidence blockers. |
+
+## Legal and Email Gaps (Launch Blockers)
+
+The following areas are currently unaddressed and represent significant risks for public launch:
+
+- **Privacy Policy**: Missing full list of actual providers (Stripe, Clerk, Cloudflare, Resend, etc.).
+- **Unsubscribe**: Lack of a public, secure, token-based unsubscribe landing page for emails.
+- **Suppression**: Global bounce/complaint suppression not yet proven in production.
+- **Marketing Consent**: Risk of re-enabling marketing emails without explicit user preference record.
+- **Partial Refund Policy**: Owner decision required on whether partial refunds affect PatronGrant status.
+- **Terms of Service**: Discrepancy between current `PatronGrant` policy (permanent) and public terms (subscription-like wording).
 
 ## Active blockers and owner decisions
 
 | Area | Status | Blocker / owner action |
 | --- | --- | --- |
-| PR #871 | `BLOCKED` | Open/pending merge; do not claim its runtime changes on main. |
 | Partial refund policy | `OWNER_DECISION_REQUIRED` | Preserve existing open question; do not resolve by agent. |
 | Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Required before X7. |
+| Email unsubscribe/suppression | `OWNER_DECISION_REQUIRED` | Compliance/compliance blocker. |
 | Alert channels/thresholds/RPO/RTO | `OWNER_DECISION_REQUIRED` | Required before production certification. |
 | Cloudflare cost/retention/original preservation | `OWNER_DECISION_REQUIRED` | Required before launch operations signoff. |
-| Production environment/provider proof | `PARTIAL` | Requires owner/operator access and redacted evidence. |
-| Backup/restore | `MISSING` | Ticket exists; drill evidence required. |
+| Production environment/provider proof | `OPERATOR_PENDING` | Requires owner/operator access and redacted evidence. |
+| Backup/restore drill | `OPERATOR_PENDING` | Tooling exists; operator drill evidence required. |
 
 ## Current recommended next ticket
 
 ```txt
-docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md
+OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 ```
 
-Reason: current main has enough merged payments/access/video/comments foundations to begin a docs/inventory-only X6.1 UI consistency pass, while PR #871 remains tracked separately as the payment lifecycle blocker and no new runtime work should be hidden inside a reconciliation PR.
+Reason: foundations for payments, access, video, and admin safety are merged. Work now moves toward consolidating launch-blocking owner decisions and collecting production evidence.

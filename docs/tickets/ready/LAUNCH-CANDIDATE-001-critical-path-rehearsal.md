@@ -1,6 +1,6 @@
 # LAUNCH-CANDIDATE-001 — Integrated money-to-access-to-playback rehearsal
 
-Status: `IMPLEMENTED_VERIFIED` locally, production/manual runbook `IMPLEMENTED_UNVERIFIED`.
+Status: `DONE` — merged on main (PR #878).
 
 ## Intent
 

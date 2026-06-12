@@ -1,3 +1,9 @@
+# Historical / superseded ticket
+
+Status: `SUPERSEDED_BY_DOCS_RECONCILE_002`
+
+This ticket remains in place as historical evidence. It is not the current next action. Current execution status and next ticket are defined by `docs/tickets/ready/README.md` and `docs/reports/reconciliation/DOCS-RECONCILE-002-CURRENT-MAIN.md`.
+
 # DOCS-RECONCILE-001-current-main-source-of-truth
 
 Status: `INTEGRATOR_PR_ACTIVE`

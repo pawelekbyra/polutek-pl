@@ -1,7 +1,7 @@
 # Ticket: database-backup-restore-drill
 
 ## Status
-Status: **IMPLEMENTED_AWAITING_OPERATOR_DRILL**
+Status: **OPERATOR_PENDING** (Tooling implemented, operator drill pending)
 Lane: Operations / Reliability
 Task ID: `LAUNCH-OPS-002`
 

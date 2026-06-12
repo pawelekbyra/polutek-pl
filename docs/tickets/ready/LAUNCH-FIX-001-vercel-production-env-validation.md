@@ -6,7 +6,7 @@ LAUNCH-FIX-001
 
 ## Status
 
-BLOCKED_OPERATOR_ACCESS
+DONE — merged on main (PR #885)
 
 ## Lane
 

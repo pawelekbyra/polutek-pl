@@ -40,7 +40,7 @@ To be confirmed by owner before activation:
 - Prisma schema or migrations.
 - Package updates.
 - Global roadmap/docs updates.
-- Any change to PR #871 branch/report/files.
+- Any change to global roadmap or strategy documents beyond current-main reconciliation.
 
 ## Validation to define when activated
 
@@ -55,4 +55,4 @@ Add targeted tests only after owner/reviewer confirms the implementation scope.
 
 ## Ticket status
 
-`IMPLEMENTED` — owner-activated and implemented by this PR. Awaiting review/merge.
+`DONE` — implemented and merged on main (PR #876).
