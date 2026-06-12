@@ -94,3 +94,50 @@ Launch-critical obejmuje bezpieczeństwo pieniędzy, PatronGrant, access, playba
 - Brak edit comments, deep threads, profiles i rozbudowanych reactions, chyba że owner oznaczy je jako launch-critical.
 - Brak generic owner dashboard, jeśli Access Diagnostics i critical health są spełnione.
 - Brak pełnego preference center polish, jeśli consent, unsubscribe i suppression są bezpieczne.
+
+## Product Excellence and Launch Proof scope mapping
+
+This mapping extends the existing launch-critical / should-have / post-launch / owner questions split. It is a planning standard, not evidence that runtime has passed X6 or X7. Target architecture != current implementation.
+
+### Truth statuses for scope evidence
+
+Use the shared Product Excellence classification when mapping current state: `IMPLEMENTED_VERIFIED`, `IMPLEMENTED_UNVERIFIED`, `PARTIAL`, `MISSING`, `BLOCKED`, `OWNER_DECISION_REQUIRED`, `DEFERRED_POST_LAUNCH`, `NOT_APPLICABLE`. Plain `DONE` is not precise enough for launch proof.
+
+### Scope rules
+
+- Basic safety for accessibility, mobile and performance is launch-critical where failure prevents use of checkout, access, playback, comments, newsletter, support diagnostics, admin recovery or legal/privacy flows.
+- Full polish can be should-have when lack of polish does not block safe use, comprehension, support or legal obligations.
+- Bugs that make a launch-critical flow unusable MUST NOT be moved to post-launch.
+- Cosmetic perfection MUST NOT block safe launch.
+- Security, access integrity, payment integrity, token/source secrecy, privacy and supportability take priority over vanity polish.
+- Should-have może zostać odłożone tylko z zapisanym uzasadnieniem, właścicielem follow-upu i potwierdzeniem braku launch-critical wpływu.
+
+### X6 pass mapping
+
+| X6 pass | Launch-critical | Should-have | Post-launch | Owner questions |
+| --- | --- | --- | --- | --- |
+| X6.1 Design System Consistency | Destructive actions, status names, confirmations and mobile/desktop patterns that affect payments/access/video/support. | Visual consolidation where safe behavior is already clear. | Redesign, animation and non-critical brand polish. | `OWNER_DECISION_REQUIRED` for intentional design exceptions. |
+| X6.2 State Completeness | Loading/error/locked/processing/unauthorized/forbidden/retry/destructive states for launch-critical screens and admin diagnostics. | Better illustrations and tone for non-critical states. | Personalization or advanced state variants. | `OWNER_DECISION_REQUIRED` for legal-sensitive or product-tone copy not covered elsewhere. |
+| X6.3 Responsive and Browser | Minimum matrix for flows required to pay, access, play, comment, subscribe, moderate and support. | Minor layout improvements that do not block use. | Broader device matrix from real traffic. | `OWNER_DECISION_REQUIRED` for minimum physical-device set beyond baseline. |
+| X6.4 Accessibility | WCAG 2.2 AA target for launch-critical public/admin flows; no keyboard traps or inaccessible critical actions. | Non-critical accessibility refinements. | Broader assistive technology coverage and media accessibility enhancements beyond launch scope. | `OWNER_DECISION_REQUIRED` for captions/subtitles scope and accepted exceptions. |
+| X6.5 Performance | Budgets for launch-critical pages/flows; no denied playback stream/token request; no performance fix that weakens correctness. | Non-critical page optimizations. | Field-data tuning after real traffic exists. | `OWNER_DECISION_REQUIRED` for performance exceptions and representative device/network baseline. |
+| X6.6 Copy, Trust and Comprehension | Patronat, threshold, access timing, lifetime/no-expiry, newsletter distinction, locked reason, paid-but-locked and irreversible actions are clear. | Tone/brand refinement. | Copy updates from user questions. | `OWNER_DECISION_REQUIRED` for legal-sensitive wording and waiver of validation findings. |
+| X6.7 Owner and Admin Usability | Owner can diagnose paid-but-locked, failed webhook, access decision, provider failure and recovery without DB/developer help. | Admin ergonomics after support-critical flows work. | Dashboard refinements based on real support load. | `OWNER_DECISION_REQUIRED` for rollback/recovery acceptance and escalation ownership. |
+| X6.8 Representative User Validation | Unresolved `BLOCKER` findings in patronat/payment/access/playback/mobile comprehension block launch unless owner waiver explicitly accepts non-critical scope. | Medium/low findings with follow-up owner. | Broader validation after launch. | `OWNER_DECISION_REQUIRED` for waiver, recruitment constraints and minimum validation panel changes. |
+
+### X7 proof relationship
+
+X6 creates excellence evidence per pass. X7 collects the final Launch Evidence Pack and cannot certify launch from local tests, documentation, green preview deploy or agent recommendation alone. Missing production/manual evidence is `IMPLEMENTED_UNVERIFIED`, `PARTIAL`, `MISSING` or `BLOCKED`, not `LAUNCH_READY`.
+
+### Additional owner questions before launch
+
+| ID | Question | Status | Required before |
+| --- | --- | --- | --- |
+| OQ-008 | What owner-approved RPO and RTO apply to production data and media-supporting state? | `OWNER_DECISION_REQUIRED` | X7 backup/recovery proof |
+| OQ-009 | What captions/subtitles scope is required for launch VOD by owner/legal decision? | `OWNER_DECISION_REQUIRED` | X6.4 / X7 accessibility proof |
+| OQ-010 | What physical devices are required beyond the baseline viewport/browser matrix? | `OWNER_DECISION_REQUIRED` | X6.3 / X7 mobile proof |
+| OQ-011 | Is the proposed 72h/14d/30d stabilization model accepted or adjusted? | `OWNER_DECISION_REQUIRED` | Post-launch stabilization |
+| OQ-012 | Is the minimum representative user validation set accepted, or does owner waive/adjust it? | `OWNER_DECISION_REQUIRED` | X6.8 |
+| OQ-013 | Which performance exceptions, if any, may be accepted without blocking launch? | `OWNER_DECISION_REQUIRED` | X6.5 / X7 performance proof |
+| OQ-014 | Which alert channels, owners and thresholds are approved for critical billing/access/video/email/comments events? | `OWNER_DECISION_REQUIRED` | X7 observability proof |
+| OQ-015 | What depth of risk-based OWASP ASVS 5.0.0 security verification is required for launch-critical areas? | `OWNER_DECISION_REQUIRED` | X7 security proof |
