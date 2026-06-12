@@ -14,15 +14,20 @@ export class EmailPreferenceRepository {
     const byUserId = await db.emailPreference.findUnique({ where: { userId } });
     if (byUserId) {
       const emailConflict = byUserId.email !== email && await db.emailPreference.findUnique({ where: { email } });
-      return await db.emailPreference.update({
-        where: { id: byUserId.id },
-        data: {
-          marketingEmails: true,
-          unsubscribedAt: null,
-          ...(emailConflict ? {} : { email }),
-        },
-        select: { id: true },
-      });
+      try {
+        return await db.emailPreference.update({
+          where: { id: byUserId.id },
+          data: {
+            marketingEmails: true,
+            unsubscribedAt: null,
+            ...(emailConflict ? {} : { email }),
+          },
+          select: { id: true },
+        });
+      } catch (error: any) {
+        if (error.code === 'P2002') return { id: byUserId.id };
+        throw error;
+      }
     }
 
     const byEmail = await db.emailPreference.findUnique({ where: { email } });
@@ -37,10 +42,20 @@ export class EmailPreferenceRepository {
       return { id: byEmail.id };
     }
 
-    return await db.emailPreference.create({
-      data: { userId, email, marketingEmails: true, systemEmails: true, unsubscribedAt: null },
-      select: { id: true },
-    });
+    try {
+      return await db.emailPreference.create({
+        data: { userId, email, marketingEmails: true, systemEmails: true, unsubscribedAt: null },
+        select: { id: true },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        const retryByUserId = await db.emailPreference.findUnique({ where: { userId } });
+        if (retryByUserId) return { id: retryByUserId.id };
+        const retryByEmail = await db.emailPreference.findUnique({ where: { email } });
+        if (retryByEmail) return { id: retryByEmail.id };
+      }
+      throw error;
+    }
   }
 
   /**
@@ -53,15 +68,20 @@ export class EmailPreferenceRepository {
     const byUserId = await db.emailPreference.findUnique({ where: { userId } });
     if (byUserId) {
       const emailConflict = byUserId.email !== email && await db.emailPreference.findUnique({ where: { email } });
-      return await db.emailPreference.update({
-        where: { id: byUserId.id },
-        data: {
-          marketingEmails: false,
-          unsubscribedAt: new Date(),
-          ...(emailConflict ? {} : { email }),
-        },
-        select: { id: true },
-      });
+      try {
+        return await db.emailPreference.update({
+          where: { id: byUserId.id },
+          data: {
+            marketingEmails: false,
+            unsubscribedAt: new Date(),
+            ...(emailConflict ? {} : { email }),
+          },
+          select: { id: true },
+        });
+      } catch (error: any) {
+        if (error.code === 'P2002') return { id: byUserId.id };
+        throw error;
+      }
     }
 
     const byEmail = await db.emailPreference.findUnique({ where: { email } });
@@ -76,9 +96,19 @@ export class EmailPreferenceRepository {
       return { id: byEmail.id };
     }
 
-    return await db.emailPreference.create({
-      data: { userId, email, marketingEmails: false, systemEmails: true, unsubscribedAt: new Date() },
-      select: { id: true },
-    });
+    try {
+      return await db.emailPreference.create({
+        data: { userId, email, marketingEmails: false, systemEmails: true, unsubscribedAt: new Date() },
+        select: { id: true },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        const retryByUserId = await db.emailPreference.findUnique({ where: { userId } });
+        if (retryByUserId) return { id: retryByUserId.id };
+        const retryByEmail = await db.emailPreference.findUnique({ where: { email } });
+        if (retryByEmail) return { id: retryByEmail.id };
+      }
+      throw error;
+    }
   }
 }
