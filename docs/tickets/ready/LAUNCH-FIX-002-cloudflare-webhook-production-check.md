@@ -6,7 +6,7 @@ LAUNCH-FIX-002
 
 ## Status
 
-DONE — merged on main (PR #884)
+BLOCKED_OPERATOR_ACCESS — live production webhook check not completed
 
 ## Lane
 
@@ -20,9 +20,30 @@ Ops smoke test / docs-only evidence
 
 Verify that Cloudflare Stream production webhook configuration reaches the deployed app and can update video asset lifecycle state safely.
 
-## Context
+## Related implementation already merged
 
-Cloudflare Stream is the first video provider. Production readiness requires account id, API token, webhook secret, webhook URL, and asset lifecycle event delivery to be correct in production. This ticket records evidence only and must not change runtime code.
+- Cloudflare webhook HMAC/timestamp verification has been merged (PR #884).
+- Local tests verify the security boundary and signature validation logic.
+- This is evidence of implementation, but not evidence of correct production configuration.
+
+## Outstanding production evidence
+
+The following must be verified by an authorized operator before this ticket is considered complete:
+
+1. Confirmation of the correct Cloudflare account/project.
+2. Confirmation of a properly scoped API token (without revealing the value).
+3. Confirmation of the production webhook signing secret.
+4. Confirmation of the canonical HTTPS webhook URL.
+5. Confirmation that Vercel deployment protection (if any) does not block the webhook.
+6. Triggering or observing a live Cloudflare Stream lifecycle event.
+7. Confirmation of the expected `VideoAsset` state transition in the database.
+8. Inspection of production logs to ensure no secret/PII leakage.
+9. Verified rejection of invalid/unsigned webhook requests.
+10. Recording of redacted evidence references in the reconciliation report.
+
+Do not reimplement PR #884.
+Do execute this production evidence ticket when operator access exists.
+The ticket becomes complete only after live evidence is captured and reconciled.
 
 ## Allowed files
 

@@ -49,17 +49,17 @@ Future tickets must use the canonical domain in the title, for example `X4-PLAYB
 
 ## Phase status dashboard
 
-| Phase | Correct status | Merged implementation evidence | Automated evidence | Production/manual evidence | Formal certification | Next executable ticket |
+| Phase | Correct status | Merged implementation evidence | Automated/Local evidence | Production/operator evidence | Formal certification | Next executable ticket |
 | --- | --- | --- | --- | --- | --- | --- |
 | X0 | `IMPLEMENTED_VERIFIED` | Control plane docs, ticket/report structure and reconciliation reports exist. | `git diff --check`, docs searches. | Not applicable beyond owner review. | Not certified as a phase; current docs reconciled. | None; historical X0 tickets are superseded. |
-| X0.5 | `IMPLEMENTED_VERIFIED` with open questions | Product Standard and owner decisions exist. | Docs consistency searches. | Owner questions remain. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
-| X1 | `IMPLEMENTED_VERIFIED` for core lifecycle | Payment fulfillment, eligibility policy, Stripe ledger, full refund handling and dispute suspension/reactivation exist on main (PR #871 merged). | Payment/access smoke reports and focused tests exist. | Production Stripe lifecycle proof incomplete. | Not certified. | Production Stripe smoke test. |
-| X2 | `IMPLEMENTED_VERIFIED` for core access truth; `IMPLEMENTED_UNVERIFIED` for production proof | `checkVideoAccess` reads active `PatronGrant`; cache/Clerk are diagnostics. | Access tests and PatronGrant-backed comments/access tests exist. | Production paid/locked diagnostics proof incomplete. | Not certified. | Production access diagnostic proof. |
-| X3 | `IMPLEMENTED_VERIFIED` for local foundation; `IMPLEMENTED_UNVERIFIED` for production provider proof | `VideoAsset`, Cloudflare upload/import/webhook lifecycle, signature hardening and signed playback runtime are merged. | Video and media-source tests and security checks. | Production Cloudflare upload/import/webhook/playback proof incomplete. | Not certified. | Production Cloudflare E2E evidence. |
-| X4 | `IMPLEMENTED_VERIFIED` for playback safety | PlaybackPlan/player fail-closed behavior, clear state messaging, and session-after-resolution ordering are merged. | Media-source route and safety tests exist. | Production playback proof incomplete. | Not certified. | Production playback evidence. |
-| X5 | `IMPLEMENTED_VERIFIED` for admin surfaces | Admin payment/video/comment/health surfaces and support diagnostics exist. | Admin and module tests exist. | Owner support usability proof incomplete. | Not certified. | Admin diagnostics usability inventory. |
-| X6 | `IMPLEMENTED_VERIFIED` for inventory and safety | Product Excellence inventory (X6-EX-001) is complete; admin action confirmation and safety hardening are merged. | Docs validation and UI tests. | X6.2-X6.8 passes not fully executed. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
-| X7 | `MISSING` evidence pack | Launch readiness spec and evidence-pack standard exist. | Docs validation only. | X7 Launch Evidence Pack incomplete; legal/email gaps documented. | Public launch not certified. | After production evidence blockers. |
+| X0.5 | `IMPLEMENTED_VERIFIED` | Product Standard and owner decisions exist. | Docs consistency searches. | Owner questions remain. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
+| X1 | `PARTIAL` | Payment fulfillment, eligibility policy, Stripe ledger, full refund handling and dispute suspension/reactivation exist on main. | Payment/access smoke reports and focused tests exist. | Production Stripe lifecycle proof incomplete. | Not certified. | Production Stripe smoke test. |
+| X2 | `PARTIAL` | `checkVideoAccess` reads active `PatronGrant`; cache/Clerk are diagnostics. | Access tests and PatronGrant-backed comments/access tests exist. | Production paid/locked diagnostics proof incomplete. | Not certified. | Production access diagnostic proof. |
+| X3 | `PARTIAL` | `VideoAsset`, Cloudflare upload/import/webhook lifecycle, signature hardening and signed playback runtime are merged. | Video and media-source tests and security checks. | Production Cloudflare upload/import/webhook/playback proof incomplete. | Not certified. | Production Cloudflare E2E evidence. |
+| X4 | `PARTIAL` | PlaybackPlan/player fail-closed behavior, clear state messaging, and session-after-resolution ordering are merged. | Media-source route and safety tests exist. | Production playback proof incomplete. | Not certified. | Production playback evidence. |
+| X5 | `PARTIAL` | Admin payment/video/comment/health surfaces and support diagnostics exist. | Admin and module tests exist. | Owner support usability proof incomplete. | Not certified. | Admin diagnostics usability inventory. |
+| X6 | `PARTIAL` | X6.1 inventory complete; admin action confirmation and safety hardening merged. | Docs validation and UI tests. | X6.2-X6.8 passes not executed/certified. | Not certified. | OWNER-LAUNCH-DECISIONS-001. |
+| X7 | `MISSING` | Launch readiness spec and evidence-pack standard exist. | Docs validation only. | X7 Launch Evidence Pack incomplete; legal/email gaps documented. | Public launch not certified. | After production evidence blockers. |
 
 ## Legal and Email Gaps (Launch Blockers)
 

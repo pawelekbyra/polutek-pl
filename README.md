@@ -6,50 +6,53 @@ This README is the owner-facing dashboard for the current documentation reconcil
 
 ## Current project stage
 
-Polutek.pl has moved beyond the foundation phase. Current `main` (PR #885) contains substantial merged X1/X2/X3/X4/X5 foundations, X6 UI consistency and safety hardening, and Vercel/Cloudflare production validation readiness. Public launch is **not certified** because production/manual evidence and owner decisions are incomplete.
+Polutek.pl has moved beyond the foundation phase. Current `main` contains substantial merged X1/X2/X3/X4/X5 foundations, X6.1 UI consistency, and technical production-readiness tooling. Public launch is **not certified** because production/manual evidence, X6.2–X6.8 passes, and owner decisions are incomplete.
 
 Current classification:
 
 ```txt
-Implementation foundation: complete for payments, access, video, comments, and admin safety.
-Automated evidence: comprehensive for critical-path and security boundaries.
-Production/manual evidence: unverified / operator pending.
-Formal X6/X7 certification: not executed.
-Public launch: not certified.
+Implementation foundation: substantially implemented for core launch-critical domains.
+Automated/local evidence: focused evidence exists for critical boundaries, but it is not production certification.
+Production/manual evidence: incomplete and operator pending.
+X6: X6.1 complete; X6.2–X6.8 not executed/certified.
+X7: evidence pack incomplete.
+Public launch: NO_GO / not certified.
 ```
 
-## Recent current-main foundations (up to PR #885)
+## Core Foundations and Readiness (Current Main)
 
-- Payments/patron: full Stripe lifecycle (fulfillment, refund, dispute suspension/reactivation) is merged.
-- Access: active `PatronGrant` is the sole backend access truth; admin actions are guarded by confirmation workflows.
-- Video/playback: Cloudflare Stream with signed tokens and hardened webhook signature verification is merged.
-- Safety: sitemap is hardened against DB failures; remote font dependencies are removed; playback plan-state messaging is clear.
-- Operations: Vercel production environment validation and database backup/restore tooling are implemented.
-- Product standard: X6 UI Consistency Inventory is complete and reviewed.
+- **Payments/patron:** full Stripe lifecycle (fulfillment, refund, dispute suspension/reactivation) is merged.
+- **Access:** active `PatronGrant` is the sole backend access truth; admin actions are guarded by confirmation workflows.
+- **Video/playback:** Cloudflare Stream with signed tokens and hardened webhook signature verification is merged.
+- **Operations:** backup/restore tooling and Vercel production environment checklist exist.
+- **X6 excellence:** X6.1 UI Consistency Inventory is complete.
 
-## Implemented but not production-certified
+## Outstanding Production Evidence and Certification
 
-Merged code and local tests are evidence of implementation, not evidence of public-launch readiness. The following still require production/manual proof before launch certification:
+Merged code and local tests are evidence of implementation, not evidence of public-launch readiness. The following still require production/manual proof:
 
-- production Stripe lifecycle evidence (Stripe dashboard events),
-- production Cloudflare E2E evidence (upload/import/webhook/playback),
-- owner/admin support-diagnostics usability proof,
-- legal/privacy/cookie/support copy approval,
-- alert channels/thresholds and incident ownership approval,
-- database backup/restore operator drill evidence,
-- X7 Launch Evidence Pack.
+- **Vercel:** production environment variable validation and log review.
+- **Stripe:** production lifecycle evidence (dashboard events).
+- **Cloudflare:** production E2E evidence (upload/import/webhook/playback).
+- **Reliability:** database backup/restore operator drill evidence.
+- **Quality:** X6.2–X6.8 evidence passes and formal certification.
+- **Legal:** privacy/terms copy approval and publication.
+- **Compliance:** email runtime/suppression implementation.
+- **X7:** Launch Evidence Pack completion.
 
 ## Active blockers
 
 | Blocker | Status | Launch impact |
 | --- | --- | --- |
+| Vercel production environment verification | `BLOCKED_OPERATOR_ACCESS` | Evidence pack blocker. |
+| Cloudflare production webhook/E2E evidence | `OPERATOR_PENDING` | Evidence pack blocker. |
+| Backup/restore operator drill | `OPERATOR_PENDING` | Reliability blocker. |
+| X6.2–X6.8 evidence passes | `MISSING / NOT_EXECUTED` | Certification blocker. |
 | Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Public launch blocker. |
-| Email unsubscribe/suppression policy | `OWNER_DECISION_REQUIRED` | Compliance/launch blocker. |
-| Alert channels/thresholds/RPO/RTO | `OWNER_DECISION_REQUIRED` | X7 blocker. |
-| Production environment verification | `OPERATOR_PENDING` | Evidence pack blocker. |
-| X7 evidence pack | `MISSING` | Public launch not certified. |
+| Email unsubscribe/suppression | `IMPLEMENTATION_MISSING` | Compliance blocker. |
+| X7 Launch Evidence Pack | `MISSING` | Public launch not certified. |
 
-## Recommended next executable ticket
+## Recommended next agent ticket
 
 Exactly one primary next task is recommended to consolidate launch-blocking requirements:
 
@@ -57,7 +60,7 @@ Exactly one primary next task is recommended to consolidate launch-blocking requ
 OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions
 ```
 
-This is docs/inventory-only. It must not redesign UI, modify runtime, or certify X6/X7.
+*Note: Operator prerequisites remain open and are not closed by this next agent ticket.*
 
 ## Canonical docs
 

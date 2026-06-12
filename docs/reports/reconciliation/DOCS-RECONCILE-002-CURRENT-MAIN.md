@@ -1,5 +1,11 @@
 # DOCS-RECONCILE-002 — Current Main Reconciliation
 
+Status: SUPERSEDED FOR CURRENT-STATE STATUS SEMANTICS
+
+This report preserves the PR #886 point-in-time baseline.
+Its classification of LAUNCH-FIX-001/002 and full-X6 status was corrected by:
+docs/reports/reconciliation/DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION.md
+
 ## 1. Executive Summary
 
 Current `main` (PR #885) is the authoritative source of truth. It contains fully merged foundations for the Stripe lifecycle (including disputes and refunds), admin action confirmation workflows, playback plan-state messaging, Cloudflare webhook signature hardening, and Vercel build stabilization (font/sitemap hardening).
