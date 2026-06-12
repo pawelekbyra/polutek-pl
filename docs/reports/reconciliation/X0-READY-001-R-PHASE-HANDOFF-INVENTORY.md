@@ -1,3 +1,7 @@
+# Historical snapshot / superseded by DOCS-RECONCILE-001
+
+This report is historical evidence from the original X0 activation period. Its statements that only X0 was active are superseded for current execution status by `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`, root `README.md`, `docs/roadmap/Active-Execution-Roadmap.md` and `docs/roadmap/OWNER-TIMELINE.md`. Preserve the original findings below as historical validation, not current execution truth.
+
 # X0-READY-001 — R-phase handoff inventory
 
 ## Status

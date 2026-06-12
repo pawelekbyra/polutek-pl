@@ -1,3 +1,7 @@
+# Historical snapshot / superseded by signed playback
+
+This report is historical evidence from before PR #870 / `X3-FIX-011-CLOUDFLARE-SIGNED-PLAYBACK-RUNTIME.md`. Its READY Cloudflare placeholder conclusions are superseded for current main by signed Cloudflare Stream playback. Preserve the original findings below as historical validation, not current playback truth.
+
 # Launch Evidence Report: LAUNCH-FIX-004 Video Access and Token Leak Smoke Test
 
 ## Summary

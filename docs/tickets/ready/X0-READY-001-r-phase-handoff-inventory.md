@@ -1,3 +1,9 @@
+# Historical / superseded ticket
+
+Status: `SUPERSEDED_BY_DOCS_RECONCILE_001`
+
+This ticket remains in place as historical evidence. It is not the current next action. Current execution status and next ticket are defined by `docs/tickets/ready/README.md` and `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`.
+
 # X0-READY-001 — Zinwentaryzować stan R0-R11 po handoff i porównać root README, docs/audit, guardy i aktualny kod.
 
 ## ID

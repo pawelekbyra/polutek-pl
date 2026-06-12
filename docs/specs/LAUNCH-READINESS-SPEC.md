@@ -247,3 +247,8 @@ Final certification report MUST state exactly one:
 - `GO` — no launch-critical blockers.
 - `CONDITIONAL_GO` — only explicit non-critical exceptions accepted by owner; never valid for access, payments, token leakage, legal/privacy, broken production deploy or missing backup/recovery proof.
 - `NO_GO` — at least one launch-critical blocker exists or mandatory evidence is missing.
+## Current implementation snapshot
+
+This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
+
+Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.
