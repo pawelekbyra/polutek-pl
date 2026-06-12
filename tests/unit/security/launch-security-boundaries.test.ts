@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -135,14 +136,34 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     expect(mockRevokePatron).not.toHaveBeenCalled();
   });
 
-  it('rejects invalid Cloudflare Stream webhook signatures with zero side effects', async () => {
-    process.env.CLOUDFLARE_WEBHOOK_SECRET = 'expected-secret';
+  it('rejects invalid Cloudflare Stream official HMAC webhook signatures with zero side effects', async () => {
+    const secret = 'expected-cloudflare-signing-secret';
+    const rawBody = JSON.stringify({ uid: 'cf-asset', status: { state: 'ready' } });
+    const timestamp = Math.floor(Date.now() / 1000);
+    const invalidSignature = createHmac('sha256', 'wrong-secret')
+      .update(`${timestamp}.${rawBody}`, 'utf8')
+      .digest('hex');
+    vi.stubEnv('CLOUDFLARE_WEBHOOK_SECRET', secret);
     mockHandleCloudflareStreamWebhook.mockResolvedValue(ok({ assetId: 'asset-1', status: 'READY' }));
 
     const { POST } = await import('@/app/api/webhooks/cloudflare-stream/route');
     const response = await POST(new NextRequest('http://localhost/api/webhooks/cloudflare-stream', {
       method: 'POST',
-      headers: { 'cf-webhook-signature': 'wrong-secret' },
+      headers: { 'Webhook-Signature': `time=${timestamp},sig1=${invalidSignature}` },
+      body: rawBody,
+    }));
+
+    expect(response.status).toBe(401);
+    expect(mockHandleCloudflareStreamWebhook).not.toHaveBeenCalled();
+  });
+
+  it('does not accept the obsolete cf-webhook-signature shared-secret equality scheme', async () => {
+    vi.stubEnv('CLOUDFLARE_WEBHOOK_SECRET', 'expected-cloudflare-signing-secret');
+
+    const { POST } = await import('@/app/api/webhooks/cloudflare-stream/route');
+    const response = await POST(new NextRequest('http://localhost/api/webhooks/cloudflare-stream', {
+      method: 'POST',
+      headers: { 'cf-webhook-signature': 'expected-cloudflare-signing-secret' },
       body: JSON.stringify({ uid: 'cf-asset', status: { state: 'ready' } }),
     }));
 
@@ -150,13 +171,14 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     expect(mockHandleCloudflareStreamWebhook).not.toHaveBeenCalled();
   });
 
-  it('fails Cloudflare Stream webhook closed in production when the shared secret is missing', async () => {
+  it('fails Cloudflare Stream webhook closed in production when the signing secret is missing', async () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('CLOUDFLARE_WEBHOOK_SECRET', '');
 
     const { POST } = await import('@/app/api/webhooks/cloudflare-stream/route');
     const response = await POST(new NextRequest('http://localhost/api/webhooks/cloudflare-stream', {
       method: 'POST',
-      headers: { 'cf-webhook-signature': 'anything' },
+      headers: { 'Webhook-Signature': 'time=1735689600,sig1=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
       body: JSON.stringify({ uid: 'cf-asset', status: { state: 'ready' } }),
     }));
 
