@@ -7,6 +7,7 @@ import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from './
 import { AppContext, createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
 import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
+import { CloudflareStreamClient } from '@/lib/modules/video/infrastructure/cloudflare-stream.client';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -72,6 +73,7 @@ function unavailablePlan(args: {
   providerResolutionAllowed?: boolean;
   sourceMode?: 'PROVIDER_ASSET' | 'LEGACY_URL' | 'NONE';
   asset?: PlaybackAssetContract;
+  providerResolutionAttempted?: boolean;
 }): PlaybackPlan {
   return {
     videoId: args.videoId,
@@ -88,7 +90,7 @@ function unavailablePlan(args: {
       warnings: args.warnings,
       sourceConfidence: args.sourceConfidence ?? 'LOW',
       providerResolutionAllowed: args.providerResolutionAllowed ?? false,
-      providerResolutionAttempted: false,
+      providerResolutionAttempted: args.providerResolutionAttempted ?? false,
       sourceMode: args.sourceMode ?? 'NONE',
       asset: args.asset,
     },
@@ -221,6 +223,82 @@ export class PlaybackService {
           sourceMode: 'PROVIDER_ASSET',
           asset: safeAsset,
         });
+      }
+
+      if (asset.provider === 'CLOUDFLARE_STREAM') {
+        try {
+            const cfClient = new CloudflareStreamClient();
+            const providerId = asset.providerPlaybackId || asset.providerAssetId;
+
+            if (!providerId) {
+                throw new Error('Cloudflare asset missing provider identifiers');
+            }
+
+            const { token } = await cfClient.createSignedPlaybackToken(providerId);
+
+            // Using the generic videodelivery.net domain which is official for Cloudflare Stream
+            const playbackUrl = `https://iframe.videodelivery.net/${token}`;
+
+            const isAdminPreview = actor.type === 'admin';
+
+            // Create a session only after successful resolution
+            const session = await prisma.videoPlaybackSession.create({
+                data: {
+                    videoId,
+                    userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
+                    ipHash,
+                    userAgentHash,
+                    sourceKind: 'cloudflare_stream',
+                    accessTier: tier as any,
+                    isAdminPreview: isAdminPreview
+                }
+            });
+
+            return {
+                videoId,
+                status: 'READY',
+                canPlay: true,
+                access: { allowed: true },
+                source: {
+                    provider: 'CLOUDFLARE_STREAM',
+                    kind: 'cloudflare_stream',
+                    playbackUrl: playbackUrl,
+                    embedUrl: playbackUrl,
+                    posterUrl: thumbnailUrl,
+                    mimeType: asset.mimeType ?? undefined,
+                    needsProxy: false,
+                    isExternalEmbed: true,
+                    isSignedUrl: true,
+                    asset: safeAsset,
+                },
+                player: playerFor({ thumbnailUrl, title }, true),
+                diagnostics: {
+                    warnings: [],
+                    sourceConfidence: 'HIGH',
+                    providerResolutionAllowed: true,
+                    providerResolutionAttempted: true,
+                    sourceMode: 'PROVIDER_ASSET',
+                    asset: safeAsset,
+                },
+                tracking: {
+                    playbackSessionId: session.id,
+                    heartbeatIntervalSeconds: 15
+                }
+            };
+        } catch (e) {
+            console.error('[PLAYBACK_SERVICE] Cloudflare resolution failed', e);
+            return unavailablePlan({
+                videoId,
+                status: 'READY',
+                video: { thumbnailUrl, title },
+                accessAllowed: true,
+                warnings: ['Failed to resolve secure playback source'],
+                providerResolutionAllowed: true,
+                providerResolutionAttempted: true,
+                sourceMode: 'PROVIDER_ASSET',
+                asset: safeAsset,
+            });
+        }
       }
 
       if (PROVIDER_BACKED_PLAYBACK_PROVIDERS.has(asset.provider)) {

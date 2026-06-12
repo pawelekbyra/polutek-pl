@@ -106,4 +106,31 @@ export class CloudflareStreamClient {
 
       return await response.json();
   }
+
+  async createSignedPlaybackToken(uid: string, expirationSeconds: number = 3600): Promise<{ token: string }> {
+    const { accountId, apiToken } = this.config;
+
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}/token`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          exp: Math.floor(Date.now() / 1000) + expirationSeconds,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error("Cloudflare API error (createSignedPlaybackToken)", { status: response.status, errorText });
+      throw new Error(`Cloudflare API error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    return { token: data.result.token };
+  }
 }

@@ -122,7 +122,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     }
 
     const normalizedKind = String(videoSourceKind || '').toLowerCase();
-    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo';
+    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || normalizedKind === 'cloudflare_stream';
     const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
     if (!src) {

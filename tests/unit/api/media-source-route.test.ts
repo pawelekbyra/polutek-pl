@@ -89,34 +89,37 @@ describe('Media-Source Route Access', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns safe asset metadata but no playbackUrl for READY Cloudflare video', async () => {
+  it('returns playable signed URL for allowed patron with READY Cloudflare video', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
       status: 'READY',
-      canPlay: false,
+      canPlay: true,
       access: { allowed: true },
       source: {
         provider: 'CLOUDFLARE_STREAM',
         kind: 'cloudflare_stream',
+        playbackUrl: 'https://iframe.videodelivery.net/cf-signed-token',
+        embedUrl: 'https://iframe.videodelivery.net/cf-signed-token',
         asset: {
           provider: 'CLOUDFLARE_STREAM',
           processingState: 'READY',
           providerPlaybackId: 'cf-playback-id'
         }
       },
-      diagnostics: { warnings: ['Provider resolution gated'] },
-      tracking: { playbackSessionId: '' }
+      diagnostics: { warnings: [] },
+      tracking: { playbackSessionId: 's-cf-1' }
     });
 
     const res = await GET(createReq(), { params: { videoId: 'v1' } });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.access.allowed).toBe(true);
+    expect(data.canPlay).toBe(true);
     expect(data.source.provider).toBe('CLOUDFLARE_STREAM');
-    expect(data.source.asset.providerPlaybackId).toBe('cf-playback-id');
-    expect(data.playbackUrl).toBeUndefined();
-    expect(data.source.playbackUrl).toBeUndefined();
+    expect(data.playbackUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
+    expect(data.source.playbackUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
+    expect(data.tracking.playbackSessionId).toBe('s-cf-1');
   });
 
   it('redacts PROCESSING Cloudflare video for allowed patron', async () => {
