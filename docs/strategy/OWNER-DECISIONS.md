@@ -4,75 +4,68 @@ Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
 ## Obowiązujące decyzje właściciela
 
-Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni.
+Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni. Szczegóły techniczne i operacyjne dotyczące launchu zostały skonsolidowane w: [docs/strategy/OWNER-LAUNCH-DECISIONS-001.md](OWNER-LAUNCH-DECISIONS-001.md).
 
 ### Product identity
 
 - Polutek.pl nie jest platformą, marketplace, multi-creator SaaS, mini-Patreonem, white-label CMS, tenant platformą ani generyczną siecią społecznościową.
-- Polutek.pl jest jednym oficjalnym miejscem VOD twórcy: jeden oficjalny kanał, jeden katalog wideo, jeden system patronów/dostępu, jedna społeczność, jedna lista mailingowa i jeden kokpit admina.
+- Polutek.pl jest osobistym serwisem jednego twórcy i jednej społeczności: Paweł Perfect.
 - Zdanie rdzeniowe: `Polutek.pl is not a platform. Polutek.pl is a place.`
-- Nie budować marketplace, mini-Patreon, multi-creator SaaS, white-label CMS, generic social network ani tenant platformy.
 
 ### Patronat / payments / access
 
-- Patronat nie jest subskrypcją cykliczną.
-- Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
-- Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
-- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta.
-- Domyślne progi launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP (na podstawie decyzji właściciela).
-- `Payment != PatronGrant`.
-- `Subscription/email != Patron`.
-- Active `PatronGrant` jest docelowym backendowym źródłem prawdy dla patron access.
-- `User.isPatron`, Clerk metadata, `Subscription`, `Payment` alone i frontend state nie są docelowym backendowym źródłem prawdy dla patron access.
+- Patronat nie jest subskrypcją cykliczną; jest nagrodą za dobrowolne, jednorazowe wsparcie (napiwek).
+- Dostęp patrona nie wygasa z upływem czasu i nie wymaga kolejnych wpłat (lifetime tak długo, jak serwis istnieje).
+- Próg kwalifikującego wsparcia (napiwku): min. 10 jednostek aktywnej waluty (PLN, USD, EUR, CHF, GBP).
+- Active `PatronGrant` jest backendowym źródłem prawdy dla dostępu.
 - Pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes.
-- Manual grant/suspend/reactivate/revoke wymaga powodu i audytu.
+- Brak standardowych częściowych zwrotów (unexpected partial refund wymaga manual review).
 
 ### Video / playback
 
-- Cloudflare Stream jest pierwszym providerem wideo.
-- Mux ma być wspierany projektowo per `VideoAsset` później.
-- Nie budować ciężkiego enterprise video frameworka.
-- R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
-- Dla denied/locked playback: nie montować realnego playera, nie pobierać streamu, nie żądać tokenu, nie wywoływać Cloudflare/Mux po źródło playbacku, nie liczyć view event i nie ujawniać playback URL/tokenu.
-- Provider call następuje dopiero po backendowej zgodzie Access.
+- Cloudflare Stream jest aktywnym providerem playbacku.
+- Prywatne oryginały muszą istnieć poza Cloudflare; Cloudflare nie jest jedyną kopią.
+- Dla denied/locked playback: nie montować realnego playera, nie pobierać streamu, nie żądać tokenu.
 
 ### Comments / community
 
-- Komentarze pod patron-only video są widoczne publicznie.
-- Komentowanie/reagowanie/pisanie przy treści patron-only wymaga patrona albo admina.
-- Widoczność komentarzy nie jest tym samym co uprawnienie do komentowania.
-- Goście mogą czytać opublikowane komentarze, ale nie pisać, reagować ani reportować.
-- Nie budować generic social network.
+- Strefa Patrona jest moderowaną społecznością.
+- Właściciel może usuwać komentarze lub cofać dostęp z ważnej przyczyny (spam, nękanie, treści bezprawne).
+- Reakcje/hearts nie są launch-critical i mogą zostać odłożone.
 
 ### Email / subscriptions
 
-- Newsletter subscription nie daje patron access.
-- Unsubscribe z emaila nie cofa `PatronGrant`.
-- Patron nie oznacza automatycznej zgody marketingowej.
-- Transactional emails są oddzielone od marketingu.
-- Broadcast wymaga preview/test-send i audytu.
-- Bounce/complaint suppression jest launch-critical.
+- Trzy klasy maili: System/Transactional, Content Notifications, Referral Notifications.
+- Systemowy mail nie może automatycznie dodawać do Resend Audience ani włączać subskrypcji treści.
+- Każdy wspierany mail systemowy ma edytowalny szablon PL/EN w panelu admina.
+- Content notifications wymagają osobnego, świadomego opt-in (checkbox nie może być domyślnie zaznaczony).
+- Link unsubscribe musi być bezpieczny (podpisany token) i nie zawierać e-maila w query string.
 
 ### Launch / quality
 
-- Launch jest publiczny, nie private beta.
-- Cel jakości: excellent product przez fazy i tickety, nie szybkie minimum.
-- Excellence osiągane jest przez aktywne tickety, walidację, review, reconciliation i certyfikację faz; roadmapa sama w sobie nie jest dowodem implementacji.
-- Nie uruchamiać runtime work bez aktywnego ticketu.
+- Launch PL i EN (główny UX, płatności, Patron Zone, komentarze, kontakt, dokumenty).
+- Minimalna macierz urządzeń i przeglądarek (X6) jest wymagana.
+- Przed startem wymagany profesjonalny przegląd prawny (LEGAL_REVIEW_REQUIRED).
+- Publiczny launch pozostaje: `NO_GO` do czasu certyfikacji X7.
 
-## Otwarte pytania właściciela
+### Ops / privacy
 
-Pytania wymagające decyzji. Nie są jeszcze obowiązującymi decyzjami.
+- RPO: 24h, RTO: 48h (cele wewnętrzne).
+- Kanał alertów: `support@polutek.pl`.
+- Brak modelu reklamowego, brak sprzedaży danych, brak profilowania.
+- Kontakt: `support@polutek.pl`, adres do korespondencji: Złota 75A/7, 00-819 Warszawa.
 
-| ID | Status | Pytanie | Obszar | Dlaczego ważne | Najpóźniej przed |
-| --- | --- | --- | --- | --- | --- |
-| OQ-001 | OPEN | Polityka partial refund: czy częściowy refund redukuje/oznacza grant, czy pozostaje manual review? | Payments / patron access | Wpływa na lifecycle `Payment` -> `PatronGrant`, admin support, audyt i edge-case access. | X1 Payments / Patron Safety |
-| OQ-002 | OPEN | Czy reakcje/hearts w komentarzach są launch-critical, jeśli obecny runtime je posiada? | Comments / community | Decyduje, czy reakcje muszą wejść do launch-critical scope, testów i moderacji, czy mogą zostać ograniczone/odłożone. | X6 Product Excellence Passes |
-| OQ-003 | OPEN | Jakie dokładnie PL/EN legal/cookie copy ma być użyte przed X7? | Legal / privacy / UX copy | Public launch wymaga spójnego legal, privacy, cookies i consent copy w językach launchu. | X7 Launch Readiness |
-| OQ-004 | OPEN | Jakie limity rate limiting dla komentarzy i broadcastów są akceptowalne na launch? | Comments / email / abuse prevention | Limity wpływają na UX, ochronę przed spamem, deliverability i operacje supportowe. | X6/X7 Launch Readiness |
-| OQ-005 | OPEN | Jakie dokładne alert channels i thresholds są akceptowalne na launch dla billing/access/video/email failures? | Observability / support | Owner musi widzieć awarie krytyczne bez przecieku sekretów/tokenów i z jasnymi progami eskalacji. | X7 Launch Readiness |
-| OQ-006 | OPEN | Czy owner wymaga dodatkowej polityki preservation/migration dla oryginalnych plików wideo poza aktywną specyfikacją Video Provider? | Video / storage / migration | Decyduje o polityce przechowywania oryginałów, migracji legacy storage i przyszłym koszcie operacyjnym. | X3 Video Provider Foundation |
-| OQ-007 | OPEN | Czy istnieją dodatkowe wymogi prawne/UX/accessibility, których nie ma jeszcze w aktywnych specs? | Legal / UX / accessibility | Pozwala zamknąć launch scope bez ukrytych wymagań certyfikacyjnych. | X7 Launch Readiness |
+## Resolved owner questions
+
+| ID | Status | Decyzja |
+| --- | --- | --- |
+| OQ-001 | DECIDED | Brak standardowych partial refunds; unexpected partial refund -> manual review; full refund cofa grant. |
+| OQ-002 | DECIDED | Reactions/hearts nie są launch-critical. |
+| OQ-003 | OWNER_DIRECTION_DECIDED / LEGAL_COPY_PENDING | Filozofia i dane robocze ustalone; dokładne PL/EN legal copy wymaga profesjonalnego przeglądu i późniejszego ticketu. |
+| OQ-004 | DECIDED / DELEGATED_TECHNICAL_THRESHOLD | Bezpieczne limity rate limiting dobiera implementacja w celu ochrony przed nadużyciem bez blokowania normalnego UX. |
+| OQ-005 | DECIDED | Alert channel `support@polutek.pl`, RPO 24h, RTO 48h, progi techniczne delegowane do implementacji. |
+| OQ-006 | DECIDED | Prywatne oryginały muszą istnieć poza Cloudflare; Cloudflare nie jest jedyną kopią. |
+| OQ-007 | DECIDED_WITH_LEGAL_REVIEW_REQUIRED | PL+EN launch, minimalna macierz X6, brak reklam/profilowania; profesjonalny legal review pozostaje blockerem. |
 
 ## Decision log rules
 
