@@ -1,9 +1,17 @@
-# Tickets — Post-R AI Delivery Control Plane
+# Tickets
 
-Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE
+Status: `ACTIVE — CURRENT-MAIN RECONCILED`
 
-Ten katalog jest aktywnym systemem ticketów po R-phase. Właściciel/Integrator uruchamia jeden ticket naraz zgodnie z `AGENTS.md` i `docs/roadmap/Active-Execution-Roadmap.md`.
+Current ticket truth is maintained in:
 
-Pierwszy aktywny krok właściciela: `docs/tickets/ready/X0-READY-001-r-phase-handoff-inventory.md`.
+- `docs/tickets/ready/README.md`
+- `docs/tickets/blocked/README.md`
+- `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`
 
-X1-X7 nie są aktywne runtime’owo, dopóki bramki X0/X0.5 nie przejdą i właściciel/Integrator nie uruchomi konkretnego ticketu.
+The original X0 handoff ticket is historical/superseded and is not the current next action. The current recommended next executable ticket is:
+
+```txt
+docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md
+```
+
+Do not use vague prompts like `continue`. Assign exactly one ticket and obey `AGENTS.md` plus the ticket's allowed/forbidden paths.

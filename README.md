@@ -1,66 +1,92 @@
-# Polutek.pl — Post-R AI Delivery Control Panel
+# Polutek.pl — Current Main Control Panel
 
-Status:
+Status: `ACTIVE — POST-R AI DELIVERY CONTROL PLANE`
 
-```txt
-Post-R AI Delivery Control Plane jest aktywny.
-```
+This README is the owner-facing dashboard for the current documentation reconciliation state. It is not a certification report and it does not declare public launch readiness.
 
-Ten root `README.md` jest krótkim panelem właściciela po R-phase. Nie oznacza launch-ready i nie uruchamia runtime X1-X7.
+## Current project stage
 
-## Gdzie jesteśmy
+Polutek.pl has moved beyond the obsolete "only X0 is active" snapshot. Current `main` contains substantial merged X1/X2/X3/X4/X5-era foundations plus X6/X7 documentation standards, but public launch is **not certified** because production/manual evidence is incomplete.
 
-- R0-R11 są traktowane jako `HANDOFF_COMPLETE` dla dalszej pracy Post-R.
-- Post-R AI Delivery Control Plane jest aktywny jako system pracy: kontrakt agentów, roadmapa, dashboard właściciela, kolejka ticketów, specs, operacje i raporty.
-- X0 jest pierwszym aktywnym etapem procesu.
-- X1-X7 nie są aktywne runtime’owo, dopóki właściciel/Integrator nie uruchomi konkretnych ticketów po przejściu bramek X0/X0.5.
-
-## Co jest aktywne
-
-- Kontrakt agentów: `AGENTS.md`.
-- Dashboard właściciela: `docs/roadmap/OWNER-TIMELINE.md`.
-- Aktywna roadmapa egzekucji: `docs/roadmap/Active-Execution-Roadmap.md`.
-- Aktywna kolejka ticketów: `docs/tickets/ready/**`.
-- Aktywne specs domenowe: `docs/specs/**`.
-- Aktywne protokoły agentów: `docs/operations/**`.
-- Aktywne miejsce raportów: `docs/reports/**`.
-
-## Następny krok właściciela
-
-Uruchomić pierwszy ticket X0:
+Current classification:
 
 ```txt
-docs/tickets/ready/X0-READY-001-r-phase-handoff-inventory.md
+Implementation foundation: substantially present for payments/access/video/comments.
+Automated evidence: present for many critical slices.
+Production/manual evidence: incomplete.
+Formal X6/X7 certification: not executed.
+Public launch: not certified.
 ```
 
-Prompt dla agenta powinien wskazywać dokładnie ten plik, kazać przestrzegać `AGENTS.md` i wymagać walidacji z ticketu. Nie używać promptów typu `continue`, `build the app`, `do next phase` albo `improve everything`.
+## Recent current-main foundations
 
-## Czego nie odpalać teraz
+- Payments/patron: one-time Stripe fulfillment records financial `Payment` facts, applies currency threshold eligibility, creates `PatronGrant`, and uses Stripe event ledger/idempotency.
+- Access: patron access checks are backed by active `PatronGrant`; `User.isPatron` and Clerk metadata are display/cache diagnostics, not backend access truth.
+- Video/playback: Cloudflare Stream is the first active private provider; signed Cloudflare patron playback is implemented with backend access approval before provider resolution.
+- Denied playback: denied/not-ready plans fail closed without a playable source/token/provider playback call/session/view event.
+- Comments: published comments are publicly readable while patron-only writing/reacting/reporting requires patron/admin access.
+- Operations: production monitoring checklist, incident runbook, postmortem template and Cloudflare/admin smoke-test runbooks exist.
+- Product standard: X6 Product Excellence and X7 Launch Evidence Pack standards exist, including `GO` / `CONDITIONAL_GO` / `NO_GO` semantics.
 
-- Nie uruchamiać X1/X2/X3/X4/X5/X6/X7 runtime.
-- Nie oznaczać produktu jako launch-ready.
-- Nie oznaczać X0.5 ani X1-X7 jako DONE/CERTIFIED.
-- Nie zmieniać runtime bez osobnego aktywnego ticketu i scope.
-- Nie traktować target architecture w `docs/architecture/**` jako dowodu aktualnej implementacji.
+## Implemented but not production-certified
 
-## Zasady pracy agentów
+Merged code and local tests are evidence of implementation, not evidence of public-launch readiness. The following still require production/manual proof before launch certification:
 
-1. `AGENTS.md` jest aktywnym kontraktem agentów AI.
-2. Jeden ticket = jeden agent task = jeden branch = jeden PR.
-3. Builder pracuje tylko w ścieżkach dozwolonych przez ticket.
-4. Runtime, Prisma, package files i global docs są serial-only, chyba że ticket jawnie pozwala inaczej.
-5. Integrator synchronizuje roadmapę/tickety/raporty po merge’ach; Builder nie certyfikuje faz.
-6. Każdy PR musi jasno raportować: co zmieniono, czego nie zmieniono, walidację, ryzyka i następny krok.
+- production Stripe webhook, refund/dispute and paid-but-locked evidence,
+- production Cloudflare upload/import/webhook/playback evidence,
+- owner/admin support-diagnostics usability proof,
+- legal/privacy/cookie/support copy approval,
+- alert channels/thresholds and incident ownership approval,
+- backup/restore drill evidence,
+- representative mobile/accessibility/performance evidence,
+- X6 evidence passes and X7 Launch Evidence Pack.
 
-## Audyty i dowody handoff
+## Current PR state checked during reconciliation
 
-- R10/R11 readiness review: `docs/audit/R10-R11-HANDOFF-READINESS-REVIEW.md`.
-- R10 guard cleanup note: `docs/audit/R10-GUARD-CLEANUP-NOTE.md`.
-- Activation report: `docs/audit/POST-R-CONTROL-PLANE-ACTIVATION-REPORT.md`.
+- PR #871, `Hardened Stripe Refund and Dispute PatronGrant Lifecycle`, is **OPEN / PENDING MERGE** and is not current-main truth. Its proposed refund/dispute lifecycle changes must not be described as implemented until merged.
+- PR #868, `Stabilize Vercel build: fix fonts, sitemap, and Clerk build errors`, is **CLOSED without merge** and is not current-main truth unless identical changes are independently present on main.
+- GitHub/Vercel API access from the shell was blocked by a proxy `403`; public GitHub HTML was used only to classify #871/#868 and preview deployment comments.
 
-## Stare PR-y do zamknięcia przez właściciela
+## Active blockers
 
-- #817 powinien zostać zamknięty jako superseded/conflicted broad staging PR.
-- #814 powinien zostać zamknięty jako stale activation review sprzed #815/#816/#818/#819/#820/#821.
+| Blocker | Status | Launch impact |
+| --- | --- | --- |
+| PR #871 refund/dispute lifecycle | `BLOCKED` by pending merge/review | Payment/access lifecycle cannot be certified while open. |
+| Production environment verification | `IMPLEMENTED_UNVERIFIED` / evidence incomplete | Build/deploy proof is not launch certification. |
+| Provider webhook production verification | `PARTIAL` | Cloudflare runtime exists; production webhook proof remains required. |
+| Legal/privacy/cookies/support copy | `OWNER_DECISION_REQUIRED` | Public launch blocker. |
+| Alert channels/thresholds/RPO/RTO | `OWNER_DECISION_REQUIRED` | X7 blocker. |
+| X6/X7 evidence | `MISSING` | Public launch not certified. |
 
-Nie merge’ować #817 ani #814 i nie importować ich diffów.
+## Recommended next executable ticket
+
+Exactly one primary next ticket is recommended after this reconciliation:
+
+```txt
+docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md
+```
+
+This is docs/inventory-only. It must not redesign UI, modify runtime, or certify X6/X7.
+
+## Canonical docs
+
+- Agent/product invariants: `AGENTS.md`
+- Owner decisions: `docs/strategy/OWNER-DECISIONS.md`
+- Current execution roadmap: `docs/roadmap/Active-Execution-Roadmap.md`
+- Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
+- Phase gates: `docs/roadmap/Phase-Gates.md`
+- Reconciliation report index: `docs/reports/reconciliation/README.md`
+- Current reconciliation report: `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`
+- Ticket queue: `docs/tickets/ready/README.md`
+
+## Source-of-truth categories
+
+- Implementation truth: current code and tests on current main.
+- Product-policy truth: explicit owner decisions, `AGENTS.md`, and `docs/strategy/OWNER-DECISIONS.md`.
+- Current execution-status truth: this README, `docs/roadmap/Active-Execution-Roadmap.md`, `docs/roadmap/OWNER-TIMELINE.md`, and the current ticket queue.
+- Target/specification truth: `docs/specs/**`, Product Standard, phase gates, and architecture blueprint.
+- Historical evidence: PR bodies, historical reconciliation reports, audits, and closed/superseded tickets.
+
+```txt
+Target architecture != current implementation.
+```

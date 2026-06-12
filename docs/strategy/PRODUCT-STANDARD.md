@@ -227,7 +227,7 @@ Launch może zostać rekomendowany dopiero wtedy, gdy launch-critical domeny maj
 - `PatronGrant` jest prawem dostępu / statusem patrona.
 - Stripe Checkout dla patronatu jest jednorazowym wsparciem/donacją, nie recurring subscription.
 - Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta.
-- Domyślne launch thresholds: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Domyślne launch thresholds: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP.
 - Stripe webhook musi weryfikować signature na raw body.
 - Stripe webhook processing musi być idempotentne przez event ledger.
 - Client-side amount nie jest zaufanym źródłem prawdy.

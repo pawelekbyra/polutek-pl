@@ -61,3 +61,8 @@ Read-only diagnostics first; corrective use-cases later through domain modules w
 - Czy dana rzecz jest launch-critical czy post-launch, jeśli nie wynika to z owner decisions?
 - Czy istnieją dodatkowe ograniczenia prawne/UX dla tej domeny?
 - Czy obecny runtime ma elementy, które warto zachować zamiast przepisywać?
+## Current implementation snapshot
+
+This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
+
+Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.

@@ -1,65 +1,45 @@
-# Owner Timeline — Post-R AI Delivery Control Plane
+# Owner Timeline — Current Main Dashboard
 
-Status aktywacji:
+Status: `ACTIVE — CURRENT-MAIN RECONCILED`
 
-```txt
-ACTIVE — POST-R AI DELIVERY CONTROL PLANE
-```
+This owner dashboard replaces the obsolete instruction to start the original X0 inventory. It does not certify public launch.
 
-Ten plik jest aktywnym dashboardem właściciela po aktywacji Post-R AI Delivery Control Plane. Pokazuje, gdzie jesteśmy, który etap jest aktywny i którego ticketu nie wolno pomylić z runtime startem X1-X7.
+## Owner summary
 
-## Dashboard właściciela
+- Current main includes substantial payment/access/video/playback/comments/admin/ops foundations.
+- PR #871 is open and pending; its refund/dispute lifecycle changes are not current-main truth.
+- PR #868 is closed without merge; do not treat its font/sitemap/Clerk changes as current implementation unless independently present.
+- X6 Product Excellence and X7 Launch Evidence Pack standards exist, but X6/X7 are not executed or certified.
+- Public launch is `NO_GO` until X7 evidence exists and owner decisions are resolved.
 
-| Faza | Znaczenie dla właściciela | Status | Zrobione | Aktywne | Blokery | Następny ticket / akcja | Co ma zrobić właściciel | Dowód |
+## Dashboard
+
+| Phase / domain | Status | Implementation evidence | Verification status | Active PR | Blocker | Owner action | Next ticket | Launch impact |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| R0-R11 | Era fundamentów/refaktoru i handoff przed Post-R. | HANDOFF_COMPLETE | R8/R9 certified, R10 direct-Prisma cleanup, R10 comments admin cleanup, R10/R11 docs reconciliation i guard-only cleanup zostały rozliczone dokumentacyjnie. | Nie jako bieżąca faza pracy; pozostają historią/audytem. | Stare PR-y #817 i #814 wymagają zamknięcia przez właściciela jako superseded/stale. | Pracować dalej przez X0. | Zamknąć #817 jako superseded i #814 jako stale, jeśli nadal są otwarte. | `docs/audit/R10-R11-HANDOFF-READINESS-REVIEW.md`, `docs/audit/R10-GUARD-CLEANUP-NOTE.md` |
-| X0 | Control Plane & Truth Reconciliation. | AKTYWNE | Root `AGENTS.md`, root `README.md`, aktywne `docs/**` i kolejka `docs/tickets/ready/**` są uruchomione. | Tak — wyłącznie proces/docs/inventory. | Nie uruchamiać runtime X1-X7; najpierw inventory/handoff. | `docs/tickets/ready/X0-READY-001-r-phase-handoff-inventory.md` | Uruchomić/przypisać pierwszy ticket X0. | `AGENTS.md`, `README.md`, `docs/roadmap/Active-Execution-Roadmap.md` |
-| X0.5 | Product Standard & Research Synthesis. | STAGED_READY | Seed tickets i dokumenty strategii są aktywne jako backlog, ale etap nie jest rozpoczęty. | Nie. | Czeka na pierwszy pass X0 i decyzję właściciela. | `docs/tickets/ready/X0.5-READY-001-research-synthesis.md` po bramce X0. | Nie startować przed decyzją po X0. | `docs/strategy/**`, `docs/tickets/ready/X0.5-READY-001-research-synthesis.md` |
-| X1 | Payments / Patron Safety. | STAGED_READY | Spec i inventory ticket są gotowe. | Nie runtime’owo. | Czeka na X0/X0.5 gates. | `docs/tickets/ready/X1-READY-001-payment-patron-current-state-inventory.md` dopiero po zgodzie. | Nie odpalać runtime X1. | `docs/specs/PAYMENTS-PATRON-SAFETY-SPEC.md` |
-| X2 | Access / Patron truth hard reset. | STAGED_READY | Spec i inventory ticket są gotowe. | Nie runtime’owo. | Czeka na sequencing po X0/X1. | `docs/tickets/ready/X2-READY-001-access-truth-inventory.md` dopiero po zgodzie. | Nie odpalać runtime X2. | `docs/specs/ACCESS-PATRON-SPEC.md` |
-| X3 | Video provider foundation. | STAGED_READY | Spec i inventory ticket są gotowe. | Nie runtime’owo. | Czeka na X0 i wcześniejsze inventory. | `docs/tickets/ready/X3-READY-001-video-provider-current-state-inventory.md` dopiero po zgodzie. | Nie odpalać runtime X3. | `docs/specs/VIDEO-PROVIDER-SPEC.md` |
-| X4 | PlaybackPlan / player simplification. | STAGED_READY | Spec i inventory ticket są gotowe. | Nie runtime’owo. | Czeka na access/video truth. | `docs/tickets/ready/X4-READY-001-playbackplan-current-state-inventory.md` dopiero po zgodzie. | Nie odpalać player rewrite. | `docs/specs/PLAYBACKPLAN-PLAYER-SPEC.md` |
-| X5 | Admin cockpit / diagnostics. | STAGED_READY | Spec i inventory ticket są gotowe. | Nie runtime’owo. | Czeka na access/payments/video truth. | `docs/tickets/ready/X5-READY-001-admin-cockpit-current-state-inventory.md` dopiero po zgodzie. | Nie zaczynać runtime admin cockpit. | `docs/specs/ADMIN-COCKPIT-SPEC.md` |
-| X6 | Product excellence passes. | NIEZACZĘTE | Kierunek jest opisany, ale brak aktywnego runtime ticketu. | Nie. | Czeka na X1-X5. | Przygotować ticket jakościowy po X5. | Nie traktować produktu jako excellence-ready. | `docs/specs/LAUNCH-READINESS-SPEC.md` |
-| X7 | Launch readiness / final certification. | STAGED_READY | Gap-analysis ticket jest gotowy jako późny backlog. | Nie. | Czeka na wszystkie wcześniejsze fazy i certyfikację. | `docs/tickets/ready/X7-READY-001-launch-readiness-gap-analysis.md` dopiero po zgodzie. | Nie ogłaszać launch-ready. | `docs/specs/LAUNCH-READINESS-SPEC.md` |
+| X0 control plane | `IMPLEMENTED_VERIFIED` | Current docs hierarchy and reconciliation report. | Docs validation required in PR. | This PR. | None after merge. | Review reconciliation. | None. | Keeps agents aligned. |
+| X0.5 standard/decisions | `IMPLEMENTED_VERIFIED` + open questions | Product Standard, OWNER-DECISIONS and Phase Gates. | Docs consistency. | None. | Open owner questions. | Decide only when prompted by specific ticket. | None. | Prevents accidental policy drift. |
+| X1 payments/patron | `PARTIAL` | Payment fulfillment, eligibility, Stripe ledger, refunds and dispute-lost handling. | Local tests/reports exist; PR #871-only tests excluded while open. | #871 `OPEN / PENDING MERGE`. | Dispute suspension/reactivation and Codex review concern in #871. | Review/merge/fix #871. | If #871 remains blocked, create targeted lifecycle follow-up. | Launch blocker until lifecycle proof exists. |
+| X2 access truth | `IMPLEMENTED_VERIFIED` locally | Active PatronGrant-backed access decisions. | Access tests exist; production proof missing. | None. | Production paid/locked evidence missing. | Provide production/operator access when ready. | Production access proof. | Launch-critical. |
+| X3 video provider | `IMPLEMENTED_VERIFIED` locally | Cloudflare VideoAsset/upload/import/webhook/legacy cutoff/signed playback. | Video/media tests and reports through PR #870. | None. | Production Cloudflare E2E proof missing. | Provide Cloudflare/Vercel production evidence path. | Production provider proof. | Launch-critical. |
+| X4 playback/player | `IMPLEMENTED_VERIFIED` locally | PlaybackPlan denies fail closed; allowed Cloudflare uses signed source. | Media-source safety tests exist. | None. | Production playback proof missing. | Approve smoke-test asset/process. | Production playback evidence. | Launch-critical. |
+| Comments lane | `IMPLEMENTED_VERIFIED` locally | Public read; patron/admin write/react/report under patron videos. | Comment tests/reports exist. | None. | Abuse thresholds and owner decisions remain. | Decide rate limits/launch scope for reactions if needed. | X6 evidence later. | Launch-critical for community safety. |
+| X5 admin/diagnostics | `PARTIAL` | Payment/video/comment/admin/health surfaces and runbooks. | Unit docs evidence present. | None. | Owner usability proof missing. | Perform/admin-review support tasks when requested. | Admin diagnostics proof. | Launch-critical for support. |
+| X6 excellence | `MISSING` execution | Standard exists only. | Not executed. | None. | Needs inventory/evidence. | Start the recommended X6 docs inventory ticket. | `docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md` | Blocks X7. |
+| X7 launch proof | `MISSING` | Launch Evidence Pack standard exists. | Evidence pack incomplete. | None. | Production/manual proof and owner decisions. | Do not launch/certify yet. | After X6 and production proof. | Public launch `NO_GO`. |
 
-## Następny krok właściciela
+## Current recommended owner action
 
-Uruchomić pierwszy aktywny ticket X0:
+Assign exactly one ticket:
 
 ```txt
-docs/tickets/ready/X0-READY-001-r-phase-handoff-inventory.md
+docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md
 ```
 
-Nie proś agentów o `continue`. Wybierz dokładnie jeden ticket, wskaż `AGENTS.md`, trzymaj się dozwolonych ścieżek i wymagaj raportu walidacji.
+Do not ask an agent to `continue`. Do not request runtime fixes inside this docs/inventory ticket.
 
-## Jak czytać dashboard
+## Launch status
 
-- `HANDOFF_COMPLETE` oznacza, że R-phase została przekazana do historii/audytu jako baza dla Post-R.
-- `AKTYWNE` oznacza jawnie uruchomione przez właściciela/Integrator PR.
-- `STAGED_READY` oznacza przygotowane w aktywnym backlogu, ale jeszcze nieuruchomione runtime’owo.
-- `NIEZACZĘTE` oznacza brak aktywnego ticketu do wykonania teraz.
-- `DONE/CERTIFIED` wymaga zgodności kodu, testów, docs, ticketów, blockerów i raportu certyfikacyjnego.
-
-## Decyzje właściciela
-
-Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
-
-- Patronat nie jest subskrypcją cykliczną.
-- Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
-- Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
-- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
-- Cloudflare Stream jest pierwszym providerem wideo.
-- Mux ma być wspierany projektowo per `VideoAsset`, bez budowania ciężkiego enterprise multi-provider frameworka.
-- R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
-- Komentarze pod patron-only wideo są widoczne dla wszystkich; komentowanie/reagowanie/pisanie wymaga patrona lub admina.
-- Launch jest publiczny, nie prywatna beta.
-- Cel jakości: produkt excellent, nie szybkie minimum; excellence osiągane fazami i ticketami, nie jednym wielkim PR-em.
-
-## Co zostaje do public launch
-
-1. X0 inventory/handoff i stabilizacja control plane.
-2. X0.5 product standard lock.
-3. X1-X5 critical domain safety.
-4. X6 excellence passes.
-5. X7 final launch gate.
+```txt
+Current public-launch classification: NO_GO
+Reason: implementation foundation is substantially present, but production/manual evidence, X6 evidence and X7 Launch Evidence Pack are incomplete.
+```

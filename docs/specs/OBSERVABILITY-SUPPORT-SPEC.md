@@ -151,3 +151,8 @@ X7 Launch Evidence Pack must show diagnostics for:
 - comments health.
 
 Each diagnostic must answer: what happened, who/what is affected, whether access/payment/video/email/comment integrity is at risk, next safe action, retry/recovery path and where audit evidence is stored if an admin action is taken.
+## Current implementation snapshot
+
+This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
+
+Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.

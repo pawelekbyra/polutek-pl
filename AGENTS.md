@@ -14,6 +14,8 @@ Ten plik jest aktywnym kontraktem agentów AI pracujących nad Polutek.pl po akt
 
 Jeżeli prompt konfliktuje z tym plikiem, agent ma zatrzymać się i zgłosić konflikt, chyba że prompt zawiera jawną decyzję właściciela nadpisującą regułę.
 
+Aktualny stage operacyjny: current `main` zawiera znaczące scalone fundamenty X1/X2/X3/X4/X5 oraz standardy X6/X7, ale produkt nie jest public-launch certified. Agentom nie wolno cofać dokumentów do stanu "tylko X0 aktywne" ani deklarować launch-ready bez X7 evidence.
+
 ## 1. Tożsamość produktu
 
 Polutek.pl jest jednokanałowym miejscem VOD twórcy: jeden oficjalny kanał, jeden katalog wideo, jeden system patronów/dostępu, jedna społeczność, jedna lista mailingowa i jeden kokpit admina. Polutek.pl nie jest marketplace, multi-creator SaaS, mini-Patreonem, white-label CMS, tenant platformą ani generyczną siecią społecznościową.
@@ -32,7 +34,7 @@ Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 - Patronat nie jest subskrypcją cykliczną.
 - Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
 - Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
-- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP.
 - Cloudflare Stream jest pierwszym providerem wideo.
 - Mux ma być wspierany projektowo per `VideoAsset`, bez budowania ciężkiego enterprise multi-provider frameworka.
 - R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
@@ -42,19 +44,37 @@ Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 
 ## 3. Źródła prawdy
 
-Po aktywacji kolejność źródeł prawdy jest następująca:
+Nie używać jednej liniowej hierarchii, w której stary README może nadpisać runtime albo decyzje właściciela. Obowiązują kategorie prawdy:
 
-1. Aktualny kod na bieżącym main.
-2. Root `README.md`.
-3. `AGENTS.md`.
-4. `docs/roadmap/Active-Execution-Roadmap.md`.
-5. `docs/tickets/**`.
-6. `docs/strategy/OWNER-DECISIONS.md`.
-7. `docs/specs/**`.
-8. `docs/audit/**`.
-9. `docs/roadmap/lanes/**`.
-10. `docs/architecture/Product-Architecture-Blueprint.md`.
-11. PR body / historyczne raporty.
+### Implementation truth
+
+- Aktualny kod i testy na bieżącym `main`.
+- Kod/testy są dowodem implementacji, ale nie dowodem produkcyjnej certyfikacji.
+
+### Product-policy truth
+
+- Jawne decyzje właściciela.
+- `AGENTS.md`.
+- `docs/strategy/OWNER-DECISIONS.md`.
+
+### Current execution-status truth
+
+- Root `README.md`.
+- `docs/roadmap/Active-Execution-Roadmap.md`.
+- `docs/roadmap/OWNER-TIMELINE.md`.
+- Aktualna kolejka ticketów.
+
+### Target/specification truth
+
+- `docs/specs/**`.
+- `docs/strategy/PRODUCT-STANDARD.md`.
+- `docs/roadmap/Phase-Gates.md`.
+- `docs/architecture/Product-Architecture-Blueprint.md`.
+
+### Historical evidence
+
+- PR body, historyczne reconciliation reports, audits, review/certification notes i closed/superseded tickets.
+- Historyczny raport opisuje stan z czasu powstania. Jeżeli jest superseded, musi wskazywać nowsze źródło, ale nie wolno przepisywać jego dawnych wyników jako obecnych.
 
 Zasada stała:
 
@@ -80,7 +100,7 @@ Reviewer sprawdza diff, scope, ścieżki, walidację, architekturę, produktowe 
 
 ### Integrator
 
-Integrator po batchu synchronizuje docs, przesuwa tickety, aktualizuje timeline/roadmapę i pisze reconciliation report. Integrator nie robi runtime zmian, chyba że ma osobny aktywny ticket.
+Integrator po batchu synchronizuje docs, przesuwa tickety, aktualizuje timeline/roadmapę i pisze reconciliation report. Integrator nie robi runtime zmian, chyba że ma osobny aktywny ticket. Global docs są serial-only i wymagają jawnej autoryzacji właściciela.
 
 ### Certifier
 
@@ -110,6 +130,7 @@ Prawidłowy prompt wskazuje jeden plik `docs/tickets/ready/<ticket>.md` i nakazu
 - Runtime ticket nie może aktualizować globalnych docs poza własnym raportem, chyba że ticket pozwala.
 - Schema, migrations, package files i architecture guard są single-writer/serial-only.
 - Roadmapa nie jest dowodem implementacji. Kod i testy są dowodem implementacji.
+- Merged code/local tests nie oznaczają public-launch certification; X7 wymaga production/manual evidence.
 
 ## 7. Single-writer files
 
@@ -172,7 +193,7 @@ exists ACTIVE PatronGrant
 
 Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
 
-Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu.
+Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu. Jeżeli current main nie spełnia pełnego lifecycle, dokumentować jako blocker/follow-up, a nie jako zmianę polityki.
 
 ## 10. Inwarianty wideo/playera
 

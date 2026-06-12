@@ -16,7 +16,7 @@ Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 - Patronat nie jest subskrypcją cykliczną.
 - Patronat jest nagrodą za kwalifikujące jednorazowe wsparcie/donację.
 - Dostęp patrona jest permanentny/lifetime/no-expiry domyślnie, chyba że zostanie zawieszony lub cofnięty polityką.
-- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF.
+- Próg kwalifikującego wsparcia jest admin-konfigurowalny per waluta; domyślne wartości launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP.
 - Cloudflare Stream jest pierwszym providerem wideo.
 - Mux ma być wspierany projektowo per `VideoAsset`, bez budowania ciężkiego enterprise multi-provider frameworka.
 - R2/S3/Vercel Blob mogą istnieć jako legacy/migracja, ale nie są aktywnym bezpiecznym providerem prywatnego playbacku patronów bez przyszłej decyzji architektonicznej.
