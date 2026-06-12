@@ -99,7 +99,7 @@ export async function sendAdminBroadcastEmail(
     if (audience !== "TEST") {
         const eligibleRecipients: BroadcastRecipientDto[] = [];
         for (const r of recipients) {
-            if (await EmailPolicy.canReceiveBroadcastEmail(ctx.prisma, r.email)) {
+            if (await EmailPolicy.canReceiveBroadcastEmail(ctx.prisma, r.email, r.userId)) {
                 eligibleRecipients.push(r);
             }
         }

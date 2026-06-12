@@ -9,6 +9,13 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
 
+function normalizeTrustedEmail(email: string | null | undefined): string | null {
+  if (!email || typeof email !== 'string') return null;
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : null;
+}
+
 export const dynamic = 'force-dynamic';
 
 async function enforceSubscriptionRateLimit(userId: string, action: 'read' | 'write') {
@@ -43,7 +50,14 @@ async function requireUserAndGetContext() {
   });
 
   const { sessionClaims } = await auth();
-  const email = (sessionClaims as any)?.email as string;
+  const claims = sessionClaims as any;
+  const email = normalizeTrustedEmail(
+    claims?.email || claims?.primary_email_address || claims?.email_address || claims?.primaryEmailAddress
+  );
+
+  if (!email) {
+    return { error: NextResponse.json({ error: 'TRUSTED_EMAIL_REQUIRED', message: 'A verified account email is required to manage email notifications.' }, { status: 400 }) };
+  }
 
   await GetOrCreateUserUseCase.execute(ctx, {
       id: actor.userId,
@@ -53,7 +67,7 @@ async function requireUserAndGetContext() {
       imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
   });
 
-  return { ctx, userId: actor.userId };
+  return { ctx, userId: actor.userId, email };
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -85,7 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const result = await SubscribeUseCase.execute(userResult.ctx);
+    const result = await SubscribeUseCase.execute(userResult.ctx, { trustedEmail: userResult.email });
 
     return NextResponse.json(result);
   } catch (error) {
@@ -104,7 +118,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     const rateLimited = await enforceSubscriptionRateLimit(userResult.userId, 'write');
     if (rateLimited) return rateLimited;
 
-    const result = await UnsubscribeUseCase.execute(userResult.ctx);
+    const result = await UnsubscribeUseCase.execute(userResult.ctx, { trustedEmail: userResult.email });
 
     return NextResponse.json(result);
   } catch (error) {
