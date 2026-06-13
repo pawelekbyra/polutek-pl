@@ -284,3 +284,29 @@ Recommendation: MERGE.
 - **Production evidence:** none added.
 - **Builder recommendation:** READY_FOR_INDEPENDENT_REVIEW
 - **Public launch:** NO_GO
+
+## Governance Correction Pass for PR #900 (2026-06-13)
+
+### Context & Baseline
+- **Baseline:** `70147ebfc784014d4e604b1b467b7d1f4c43a803`
+- **Reconciliation PR:** #900
+- **Replacement Note:** Continues on the existing branch for LAUNCH-EMAIL-003.
+
+### Implemented Governance
+- **Owner Authorization:** Recorded `AUTOMATIC_BOLEK_MERGE_AUTHORIZED` in `docs/governance/BOLEK-OPERATING-MODEL.md`, defining conditions for automatic squash-merges by Bolek.
+- **Baseline Terminology:** Updated `docs/MASTERPLAN.md` to use `Accepted Implementation Baseline SHA` instead of volatile "Current Main SHA" claims.
+- **Guard Hardening:** Hardened `scripts/check-control-plane-docs.mjs` with dynamic current-ticket validation, trim/escape logic, and restored historical safeguards for `OWNER-LAUNCH-DECISIONS-001` and `LAUNCH-EMAIL-003`.
+- **Reconciliation reports:** Standardized status as Builder-only recommendation and added explicit canonicality rules.
+
+### Validation Results
+- **git diff --check:** PASS
+- **Control-plane guard:** PASS (`node scripts/check-control-plane-docs.mjs`)
+- **Architecture check:** PASS (`npm run quality:architecture-boundaries`)
+- **Focused tests:** PASS (36 tests)
+- **Full test suite:** PASS (694 tests)
+
+### Evidence & Recommendation
+- **Implementation evidence:** local/automated only.
+- **Production evidence:** none added.
+- **Builder recommendation:** READY_FOR_INDEPENDENT_REVIEW
+- **Public launch:** NO_GO

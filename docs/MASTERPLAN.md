@@ -7,11 +7,16 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 ## 1. Baseline State
 
-- **Current Main SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
+- **Accepted Implementation Baseline SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
 - **Current Control-Plane Ticket:** `LAUNCH-EMAIL-003`
-- **Current Gate:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
-- **Candidate State:** `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`.
+- **Current Gate:** Independent review of candidate commit `3edea7587547666f2b8d3a91a84384f2e201d60e`.
+- **Candidate State:** `BRANCH_WITH_PR / PENDING_INDEPENDENT_REVIEW`.
 - **Next Builder Ticket:** NONE until independent review of the candidate gate is complete.
+
+### Baseline Note
+- The **Accepted Implementation Baseline SHA** identifies the implementation baseline accepted through PR #899.
+- The live current main head must be read from GitHub; reconciliation and documentation merges may advance main without changing the accepted implementation baseline.
+- No documentation file should claim to contain an eternally current Git head SHA.
 
 ## 2. Evidence Taxonomy
 
@@ -35,7 +40,7 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 - **Production Commit:** `f729c8068f681bceb28276db5899143dd3631c20` was `READY` (`VERCEL_PRODUCTION_EVIDENCE`).
 - **Build Incidents:** No failed production build incident was confirmed.
-- **Candidate Commit:** `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
+- **Candidate Commit:** `3edea7587547666f2b8d3a91a84384f2e201d60e` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
 - **Runtime Anomaly:** `HOME_CONTENT_LOAD_...` with HTTP 200 observed (`PRODUCTION_RUNTIME_EVIDENCE`). Root cause `UNPROVEN`.
 - **Vercel Project Topology:** `OPERATOR_RECONCILIATION_REQUIRED`. Discrepancies noted between project locations (`polutek-pl` vs `kraufanding`).
 
@@ -66,7 +71,7 @@ This is the proposed canonical entry point for the project's technical state, ri
 ## 5. Ordered Masterplan
 
 ### CURRENT_GATE
-- **Independent Review of Candidate Gate** (Commit `3911de9` for `LAUNCH-EMAIL-003`).
+- **Independent Review of Candidate Gate** (Commit `3edea75` for `LAUNCH-EMAIL-003`).
 
 ### NEXT_CONFIRMED_TASK
 - **`PAYMENT-WEBHOOK-RESULT-001`**: Ensure Stripe webhook failures are handled and not marked as success (`HIGH_CONFIDENCE_CODE_FINDING`).

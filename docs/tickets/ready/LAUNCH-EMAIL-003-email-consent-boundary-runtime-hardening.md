@@ -1,8 +1,10 @@
 # LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
 
-Status: NOT_ACCEPTED
+Status: MERGED / ACCEPTED
 Ticket ID: LAUNCH-EMAIL-003
-Launch status: NO_GO
+Accepted PR: #899
+Merge SHA: f7fc603183120895359e9e52464de2d01e100980
+Public launch: NO_GO
 
 ## Purpose
 

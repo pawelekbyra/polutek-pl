@@ -99,23 +99,63 @@ for (const text of [owner, launch]) {
   requireIncludes('owner decision files', text, 'potwierdzenia');
 }
 
-if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');
-else pass('queue contains exactly one current-ticket ID marker');
-if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_FILE') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_FILE marker');
-else pass('queue contains exactly one current-ticket file marker');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->');
-requireFile('docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md');
-requireIncludes('runtime ticket', runtimeTicket, 'Ticket ID: LAUNCH-EMAIL-003');
-requireRegex('runtime ticket', runtimeTicket, /Status\*\*: READY|Status:\s*READY/, 'status READY');
-const readyRows = [...queue.matchAll(/^\|[^\n]*LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior[^\n]*\|\s*`READY`\s*\|$/gm)];
-if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary READY row, found ${readyRows.length}`);
-else pass('queue contains exactly one current-primary READY row');
+// Hardened dynamic parsing
+const idMarker = 'CONTROL_PLANE_CURRENT_TICKET_ID';
+const fileMarker = 'CONTROL_PLANE_CURRENT_TICKET_FILE';
 
+if (count(queue, idMarker) !== 1) fail(`queue must contain exactly one ${idMarker} marker`);
+if (count(queue, fileMarker) !== 1) fail(`queue must contain exactly one ${fileMarker} marker`);
+
+const extractMarker = (text, marker) => {
+  const regex = new RegExp(`<!--\\s*${marker}:\\s*([^\\s-][^>]*?)\\s*-->`);
+  const match = text.match(regex);
+  const val = match ? match[1].trim() : '';
+  if (!val) fail(`empty or missing marker value: ${marker}`);
+  return val;
+};
+
+const currentTicketId = extractMarker(queue, idMarker);
+const currentTicketFile = extractMarker(queue, fileMarker);
+
+const escapeRegex = (string) => string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+const escapedId = escapeRegex(currentTicketId);
+
+requireIncludes('ready queue', queue, `<!-- ${idMarker}: ${currentTicketId} -->`);
+requireIncludes('ready queue', queue, `<!-- ${fileMarker}: ${currentTicketFile} -->`);
+requireFile(currentTicketFile);
+
+const currentTicketContent = read(currentTicketFile);
+requireIncludes('current ticket', currentTicketContent, `Ticket ID: ${currentTicketId}`);
+requireRegex('current ticket', currentTicketContent, /Status\*\*: READY|Status:\s*READY/, 'status READY');
+forbidIncludes('current ticket', currentTicketContent, 'Status: MERGED / ACCEPTED');
+
+const readyRows = [...queue.matchAll(new RegExp(`^\\|[^\n]*${escapedId}[^\n]*\\|[^\n]*\`READY\`\\s*\\|$`, 'gm'))];
+if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary READY row for ${currentTicketId}, found ${readyRows.length}`);
+
+// Historical owner ticket checks
 requireIncludes('historical owner ticket', historicalTicket, 'MERGED / HISTORICAL');
 requireIncludes('historical owner ticket', historicalTicket, 'PR #890');
 requireIncludes('historical owner ticket', historicalTicket, '#891');
 forbidIncludes('historical owner ticket', historicalTicket, 'Status: READY_FOR_REVIEW');
+
+// Accepted LAUNCH-EMAIL-003 ticket checks
+requireIncludes('accepted LAUNCH-EMAIL-003', runtimeTicket, 'Ticket ID: LAUNCH-EMAIL-003');
+requireIncludes('accepted LAUNCH-EMAIL-003', runtimeTicket, 'Status: MERGED / ACCEPTED');
+requireIncludes('accepted LAUNCH-EMAIL-003', runtimeTicket, 'Accepted PR: #899');
+requireIncludes('accepted LAUNCH-EMAIL-003', runtimeTicket, 'Merge SHA: f7fc603183120895359e9e52464de2d01e100980');
+requireIncludes('accepted LAUNCH-EMAIL-003', runtimeTicket, 'Public launch: NO_GO');
+
+for (const phrase of [
+  'Missing content-notification preference means NOT OPTED IN',
+  'System emails must not add to Resend Audience',
+  'Unsubscribe never revokes `PatronGrant`',
+  'signed unsubscribe token',
+  'Non-goals',
+]) requireIncludes('LAUNCH-EMAIL-003', runtimeTicket, phrase);
+
+const nonGoalsIndex = runtimeTicket.indexOf('## Non-goals');
+const signedIndex = runtimeTicket.indexOf('signed unsubscribe token');
+if (nonGoalsIndex === -1 || signedIndex === -1 || signedIndex < nonGoalsIndex) fail('signed unsubscribe token must appear in the Non-goals section');
 
 for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline]]) {
   forbidIncludes(label, text, 'OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
@@ -179,18 +219,6 @@ for (const workstream of [
   'Final owner launch decision',
 ]) requireIncludes('Launch backlog', backlog, workstream);
 requireIncludes('Launch backlog', backlog, 'This document is not an executable queue.');
-
-for (const phrase of [
-  'Missing content-notification preference means NOT OPTED IN',
-  'System emails must not add to Resend Audience',
-  'Unsubscribe never revokes `PatronGrant`',
-  'signed unsubscribe token',
-  'Non-goals',
-]) requireIncludes('LAUNCH-EMAIL-003', runtimeTicket, phrase);
-const nonGoalsIndex = runtimeTicket.indexOf('## Non-goals');
-const signedIndex = runtimeTicket.indexOf('signed unsubscribe token');
-if (nonGoalsIndex === -1 || signedIndex === -1 || signedIndex < nonGoalsIndex) fail('signed unsubscribe token must appear in the Non-goals section');
-else pass('signed unsubscribe token appears in the Non-goals section');
 
 requireIncludes('ticket template', ticketTemplate, 'Control-plane provenance');
 requireIncludes('ticket template', ticketTemplate, 'Semantic preservation checklist');
