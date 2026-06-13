@@ -56,7 +56,7 @@ Establish the durable repository memory, governance model, and technical masterp
 
 ## 7. Validation Results
 - `git diff --check`: Passed.
-- Internal link verification: Checked 9 relative links across 7 files, 0 failures found. (Command: grep -oP links + resolve relative target + test -e)
+- Internal link verification: Checked 9 relative links across 7 files, 0 failures found. (Command: `CHECKED=0; FAILED=0; for FILE in $FILES; do DIR=$(dirname "$FILE"); for LINK in $(grep -oP '\[.*?\]\(\K.*?(?=\))' "$FILE" | grep -v '^http'); do CLEAN_LINK="${LINK%%#*}"; if [[ -n "$CLEAN_LINK" ]]; then CHECKED=$((CHECKED+1)); if ! test -e "$DIR/$CLEAN_LINK"; then FAILED=$((FAILED+1)); fi; fi; done; done;`)
 - Scope confirmation: Documents only. No runtime, schema, or test changes.
 
 ## 8. Unresolved Uncertainty
