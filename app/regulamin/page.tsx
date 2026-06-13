@@ -5,6 +5,8 @@ import Footer from '@/app/components/Footer';
 import Link from 'next/link';
 import { ArrowLeft } from '@/app/components/icons';
 
+export const dynamic = 'force-dynamic';
+
 export default function RegulaminPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1a1a1a] font-serif leading-relaxed">

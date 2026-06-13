@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import { CreatorContentService as ContentService, VideoContentService } from '@/lib/services/content.service';
 
+export const dynamic = 'force-dynamic';
+
 const DEFAULT_BASE_URL = 'https://polutek.pl';
 
 function getBaseUrl() {
