@@ -20,7 +20,7 @@ describe('handleResendWebhook use case - hardening', () => {
       update: vi.fn(),
     },
     user: {
-      findUnique: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn(),
     },
     emailPreference: {
       upsert: vi.fn(),
@@ -36,7 +36,7 @@ describe('handleResendWebhook use case - hardening', () => {
     actor: { type: 'system', reason: 'test' },
   });
 
-  // Ensure ctx.db.writeTransaction uses our mock
+  // Specifically override db.writeTransaction to use our prismaMock.$transaction
   (ctx.db as any).writeTransaction = prismaMock.$transaction;
 
   beforeEach(() => {
@@ -198,6 +198,29 @@ describe('handleResendWebhook use case - hardening', () => {
     const result = await handleResendWebhook(ctx, {
       type: 'email.sent',
       eventId: 'evt_sent_late',
+      data: {
+        email_id: 're_123',
+        from: 'no-reply@polutek.pl',
+        to: ['user@example.com'],
+        subject: 'Hello',
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(prismaMock.broadcastEmailRecipient.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('implements status hierarchy: DELIVERED does not overwrite OPENED', async () => {
+    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+      id: 'r1',
+      broadcastEmailId: 'b1',
+      status: 'OPENED'
+    });
+
+    const result = await handleResendWebhook(ctx, {
+      type: 'email.delivered',
+      eventId: 'evt_delivered_late',
       data: {
         email_id: 're_123',
         from: 'no-reply@polutek.pl',

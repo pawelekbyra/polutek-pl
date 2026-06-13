@@ -31,7 +31,7 @@ export async function handleResendWebhook(
   }
 
   // 2. Atomic Idempotency check via Lock Service
-  // eventId (from svix-id) is REQUIRED for all events to ensure idempotency.
+  // eventId (from svix-id) is REQUIRED for all events to ensure strict idempotency.
   const providerEventId = eventId;
 
   if (!providerEventId) {
@@ -46,27 +46,31 @@ export async function handleResendWebhook(
 
   const lockService = new EmailEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-  if (providerEventId) {
-    const lockStatus = await lockService.acquireLock({
-        providerEventId,
-        type,
-        payload: input as any
-    });
+  // Privacy: minimize stored payload to essential identifiers only
+  const minimalPayload = {
+      type,
+      created_at: (input as any).created_at,
+      email_id: resendEmailId,
+  };
 
-    if (lockStatus === 'ALREADY_PROCESSED') {
-        return ok({
-            received: true,
-            accepted: true,
-            duplicate: true,
-            idempotency: "available"
-        });
-    }
+  const lockStatus = await lockService.acquireLock({
+      providerEventId,
+      type,
+      payload: minimalPayload
+  });
 
-    if (lockStatus === 'CONFLICT') {
-        // Another process is currently handling this event
-        // 503 Service Unavailable triggers a retry by most webhook providers
-        return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry.", 503, 'LOCK_CONFLICT'));
-    }
+  if (lockStatus === 'ALREADY_PROCESSED') {
+      return ok({
+          received: true,
+          accepted: true,
+          duplicate: true,
+          idempotency: "available"
+      });
+  }
+
+  if (lockStatus === 'CONFLICT') {
+      // 503 Service Unavailable triggers a retry by most webhook providers
+      return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry.", 503, 'LOCK_CONFLICT'));
   }
 
   logger.info(`[handleResendWebhook] Processing event: ${type}`, { email_id: resendEmailId, event_id: eventId });
@@ -87,22 +91,17 @@ export async function handleResendWebhook(
 
     if (!supportedTypes.includes(type)) {
       logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
-      if (providerEventId) {
-        try {
-          await lockService.releaseWithSuccess(providerEventId, {
-              resendEmailId,
-              // email: data.to?.[0] // Privacy: redacted
-          });
-        } catch (releaseError) {
-          logger.warn(`[handleResendWebhook] Failed to release lock with success for unsupported event ${providerEventId}`, releaseError);
-          // Don't fail the overall operation just because lock release failed for an ignored event
-        }
+      try {
+        await lockService.releaseWithSuccess(providerEventId, { resendEmailId });
+      } catch (releaseError) {
+        logger.error(`[handleResendWebhook] Failed to release lock with success for ignored event ${providerEventId}`, releaseError);
+        return fail(new EmailError("Failed to finalize event processing (lock release failure)", 503));
       }
       return ok({
           received: true,
           accepted: true,
           ignored: true,
-          idempotency: providerEventId ? "available" : "best_effort"
+          idempotency: "available"
       });
     }
 
@@ -129,7 +128,6 @@ export async function handleResendWebhook(
             await updateRecipientStatus(ctx, resendEmailId, 'CLICKED', { clickedAt: new Date() });
             break;
           case 'email.unsubscribed':
-            // Redact email in switch/case log context if any were added, but we don't log it here.
             await handleUnsubscribe(ctx, data.to?.[0]);
             break;
           case 'email.received':
@@ -139,41 +137,30 @@ export async function handleResendWebhook(
     }
 
     // 4. Success Release
-    if (providerEventId) {
-        try {
-            await lockService.releaseWithSuccess(providerEventId, {
-                resendEmailId,
-                // We could link to recipientId if we had it easily available here,
-                // but avoiding raw email is the priority.
-            });
-        } catch (releaseError) {
-            logger.error(`[handleResendWebhook] Critical failure: could not release lock with success for ${providerEventId}`, releaseError);
-            // If we can't mark it as PROCESSED, it might be retried.
-            // In some systems, we might still return OK if the domain logic committed.
-            // But following audit 6, we should ensure it cannot produce a misleading result.
-            return fail(new EmailError("Failed to finalize event processing (lock release failure)"));
-        }
+    try {
+        await lockService.releaseWithSuccess(providerEventId, { resendEmailId });
+    } catch (releaseError) {
+        logger.error(`[handleResendWebhook] Critical failure: could not release lock with success for ${providerEventId}`, releaseError);
+        return fail(new EmailError("Failed to finalize event processing (lock release failure)", 503));
     }
 
     return ok({
         received: true,
         accepted: true,
         duplicate: false,
-        idempotency: providerEventId ? "available" : "best_effort"
+        idempotency: "available"
     });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
     // 5. Failure Release
-    if (providerEventId) {
-        try {
-            await lockService.releaseWithFailure(providerEventId, error.message || String(error));
-        } catch (releaseError) {
-            logger.error(`[handleResendWebhook] Secondary failure: could not release lock with failure for ${providerEventId}`, {
-                originalError: error.message,
-                releaseError
-            });
-            // Audit 6: preserve original error as returned failure
-        }
+    try {
+        await lockService.releaseWithFailure(providerEventId, error.message || String(error));
+    } catch (releaseError) {
+        logger.error(`[handleResendWebhook] Secondary failure: could not release lock with failure for ${providerEventId}`, {
+            originalError: error.message,
+            releaseError
+        });
+        // Audit 6: preserve original error as returned failure
     }
     return fail(new EmailError(error.message || "Internal error during webhook handling"));
   }
@@ -194,59 +181,75 @@ const STATUS_PRIORITY: Record<string, number> = {
 
 async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
   const newPriority = STATUS_PRIORITY[status] || 0;
+  let attempts = 0;
+  const maxAttempts = 3;
 
-  // Transactional consistency for status check, update, and counter increment.
-  // outer providerEventId lock handles same-event concurrency;
-  // db.writeTransaction handles cross-event concurrency on the same recipient/aggregate.
-  await ctx.db.writeTransaction(async (tx) => {
-    // 1. Fetch current state
-    const recipient = await tx.broadcastEmailRecipient.findFirst({
-        where: { resendEmailId }
+  while (attempts < maxAttempts) {
+    attempts++;
+
+    // Transactional consistency for status check, update, and counter increment.
+    // outer providerEventId lock handles same-event concurrency;
+    // db.writeTransaction handles cross-event concurrency on the same recipient/aggregate.
+    const result = await ctx.db.writeTransaction(async (tx) => {
+      // 1. Fetch current state
+      const recipient = await tx.broadcastEmailRecipient.findFirst({
+          where: { resendEmailId }
+      });
+
+      if (!recipient) return 'NOT_FOUND';
+
+      const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
+
+      // 2. Priority check: don't downgrade or overwrite terminal states
+      if (newPriority <= currentPriority && currentPriority !== 0) {
+          logger.info(`[handleResendWebhook] Skipping stale or lower-priority event for recipient ${recipient.id}: ${recipient.status} -> ${status}`);
+          return 'NO_CHANGE';
+      }
+
+      // 3. Atomic transition using updateMany with status check (CAS)
+      const { count } = await tx.broadcastEmailRecipient.updateMany({
+          where: {
+              id: recipient.id,
+              status: recipient.status as any
+          },
+          data: {
+              status: status as any,
+              ...extraData
+          }
+      });
+
+      if (count === 0) {
+          // Conflict: someone else updated the status between findFirst and updateMany
+          return 'RETRY';
+      }
+
+      // 4. Update aggregate counts in BroadcastEmail
+      if (status === 'SENT' && recipient.status === 'PENDING') {
+          await tx.broadcastEmail.update({
+              where: { id: recipient.broadcastEmailId },
+              data: { sentCount: { increment: 1 } }
+          });
+      } else if (isError && currentPriority < 100) {
+          await tx.broadcastEmail.update({
+              where: { id: recipient.broadcastEmailId },
+              data: { errorCount: { increment: 1 } }
+          });
+      }
+
+      return 'UPDATED';
     });
 
-    if (!recipient) return;
-
-    const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
-
-    // 2. Priority check: don't downgrade or overwrite terminal states
-    if (newPriority <= currentPriority && currentPriority !== 0) {
-        logger.info(`[handleResendWebhook] Skipping stale or lower-priority event for recipient ${recipient.id}: ${recipient.status} -> ${status}`);
+    if (result !== 'RETRY') {
         return;
     }
 
-    // 3. Atomic transition using updateMany with status check
-    // This ensures that even if another transaction committed a change between our findFirst and now,
-    // we only proceed if the status is still what we expected.
-    const { count } = await tx.broadcastEmailRecipient.updateMany({
-        where: {
-            id: recipient.id,
-            status: recipient.status as any
-        },
-        data: {
-            status: status as any,
-            ...extraData
-        }
-    });
-
-    if (count === 0) {
-        logger.info(`[handleResendWebhook] Concurrent update won for recipient ${recipient.id}, skipping counter increment.`);
-        return;
+    if (attempts < maxAttempts) {
+        logger.warn(`[handleResendWebhook] Retrying status update for ${resendEmailId} due to concurrency conflict (attempt ${attempts})`);
+        // Small backoff could be added here if needed, but for webhooks simple retry is usually enough
     }
+  }
 
-    // 4. Update aggregate counts in BroadcastEmail
-    // We only reach here if THIS transaction actually performed the status transition.
-    if (status === 'SENT' && recipient.status === 'PENDING') {
-        await tx.broadcastEmail.update({
-            where: { id: recipient.broadcastEmailId },
-            data: { sentCount: { increment: 1 } }
-        });
-    } else if (isError && currentPriority < 100) {
-        await tx.broadcastEmail.update({
-            where: { id: recipient.broadcastEmailId },
-            data: { errorCount: { increment: 1 } }
-        });
-    }
-  });
+  throw new EmailError(`Failed to update recipient status after ${maxAttempts} attempts due to concurrency conflicts`, 503, 'CONCURRENCY_ERROR');
 }
 
 async function handleUnsubscribe(ctx: AppContext, email: string) {

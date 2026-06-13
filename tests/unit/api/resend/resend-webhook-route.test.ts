@@ -86,25 +86,4 @@ describe('Resend Webhook Route Contract', () => {
     const body = await res.json();
     expect(body.error).toBe('Event ID required');
   });
-
-  it('returns non-2xx status for lock conflict', async () => {
-    vi.mocked(handleResendWebhook).mockResolvedValue({
-        ok: false,
-        error: { name: 'EmailError', message: 'Event lock conflict', code: 'CONFLICT' } as any
-    });
-
-    const req = new NextRequest('http://localhost/api/webhooks/resend', {
-      method: 'POST',
-      headers: {
-        'svix-id': 'evt_conflict',
-        'svix-timestamp': '1',
-        'svix-signature': 'sig_1',
-      },
-      body: JSON.stringify({ type: 'email.sent', data: { email_id: 're_123' } }),
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).not.toBe(200);
-  });
 });

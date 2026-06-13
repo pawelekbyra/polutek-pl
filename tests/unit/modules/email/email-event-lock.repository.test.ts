@@ -35,10 +35,7 @@ describe('EmailEventLockService - Logic Proof', () => {
     prismaMock.emailEvent.updateMany.mockResolvedValue({ count: 0 });
 
     // 3. findUnique shows it is currently PROCESSING
-    prismaMock.emailEvent.findUnique.mockResolvedValue({
-        status: WebhookEventStatus.PROCESSING,
-        type: 't'
-    });
+    prismaMock.emailEvent.findUnique.mockResolvedValue({ status: WebhookEventStatus.PROCESSING });
 
     const result = await lockService.acquireLock({ providerEventId: 'p_1', type: 't', payload: {} });
 
@@ -48,10 +45,7 @@ describe('EmailEventLockService - Logic Proof', () => {
   it('returns ALREADY_PROCESSED if event is done', async () => {
     prismaMock.emailEvent.create.mockRejectedValue(new Prisma.PrismaClientKnownRequestError('msg', { code: 'P2002', clientVersion: 'v' }));
     prismaMock.emailEvent.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.emailEvent.findUnique.mockResolvedValue({
-        status: WebhookEventStatus.PROCESSED,
-        type: 't'
-    });
+    prismaMock.emailEvent.findUnique.mockResolvedValue({ status: WebhookEventStatus.PROCESSED });
 
     const result = await lockService.acquireLock({ providerEventId: 'p_1', type: 't', payload: {} });
 
