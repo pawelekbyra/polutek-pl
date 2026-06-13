@@ -47,35 +47,35 @@ The Product Owner authorizes Bolek to automatically squash-merge a pull request 
 2. Bolek’s verdict is exactly `MERGE`.
 3. The PR targets `main`.
 4. The head SHA has not changed since the review.
-5. All required status checks (tests, typecheck, architecture) are successful.
-6. The PR is mergeable, is not a draft, and has no unresolved blocking review threads.
+5. Required checks are successful.
+6. The PR is mergeable, is not a draft and has no unresolved blocking review threads.
 7. The changed-file scope matches the approved ticket.
-8. The merge uses the squash method and supplies the `expected_head_sha`.
+8. Merge uses squash and supplies `expected_head_sha`.
 
 ### Prohibited Automatic Merge
 Automatic merge is strictly prohibited when:
-- The verdict is `FIX` or `BLOCKED`.
-- The PR is superseded.
-- The head SHA changed after the review.
-- Required checks failed or are pending.
-- Unresolved blocking review threads exist.
-- Force merge or manual check bypass would be required.
+- verdict is exactly `FIX` or `BLOCKED`;
+- PR is superseded;
+- head changed after review;
+- required checks failed or are pending;
+- unresolved blocking review threads exist;
+- force merge or check bypass would be required.
 
 ### Superseded PRs
 Bolek is authorized to close a PR marked `SUPERSEDED / MUST_NOT_MERGE` when the replacing PR is identified.
 
 ### Post-Merge Requirements
-After every automatic merge, the system must:
-- Record the merge SHA.
-- Block the next implementation Builder until the required post-merge reconciliation is complete.
+After every automatic merge:
+- record the merge SHA;
+- block the next implementation Builder until required post-merge reconciliation is complete.
 
 ### Human-Only Exceptions
-Separate human approval remains mandatory for:
-- Destructive migrations or production-data operations.
-- Management of secrets, DNS, payment-provider, or production-provider configuration.
-- Manual production deployments.
-- Legal and business decisions.
-- Bypassing checks or executing a force merge.
+Separate human approval remains required for:
+- destructive migrations or production-data operations;
+- secrets, DNS, payment-provider or production-provider configuration;
+- manual production deployments;
+- legal and business decisions;
+- bypassing checks or force merge.
 
 ## 4. Human–AI Collaboration Principles
 

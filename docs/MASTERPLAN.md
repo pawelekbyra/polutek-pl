@@ -7,7 +7,7 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 ## 1. Baseline State
 
-- **Accepted Implementation Baseline SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
+- **Accepted Implementation Baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980`
 - **Current Control-Plane Ticket:** `LAUNCH-EMAIL-003`
 - **Current Gate:** Independent review of candidate commit `3edea7587547666f2b8d3a91a84384f2e201d60e`.
 - **Candidate State:** `BRANCH_WITH_PR / PENDING_INDEPENDENT_REVIEW`.
