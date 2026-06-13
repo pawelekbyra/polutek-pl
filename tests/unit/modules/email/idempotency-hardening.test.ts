@@ -35,11 +35,14 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     actor: { type: 'system', reason: 'test' },
   });
 
+  (ctx.db as any).writeTransaction = prismaMock.$transaction;
+
   beforeEach(() => {
     vi.resetAllMocks();
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1', status: 'PENDING' });
     prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.broadcastEmail.update.mockResolvedValue({});
+    vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ACQUIRED');
   });
 
   it('stops processing if event is already processed', async () => {
@@ -83,6 +86,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
+        expect(result.error.statusCode).toBe(503);
         expect(result.error.message).toContain('Event lock conflict');
     }
     expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
@@ -129,8 +133,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     expect(EmailEventLockService.prototype.releaseWithFailure).toHaveBeenCalledWith('evt_123', 'DB Error');
   });
 
-  it('correctly handles events without eventId (best effort)', async () => {
-      // Mocking acquireLock should not be called if eventId is missing
+  it('rejects events without eventId (svix-id)', async () => {
       const result = await handleResendWebhook(ctx, {
           type: 'email.sent',
           data: {
@@ -142,11 +145,8 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
           },
       });
 
-      expect(result.ok).toBe(true);
+      expect(result.ok).toBe(false);
       expect(EmailEventLockService.prototype.acquireLock).not.toHaveBeenCalled();
-      if (result.ok) {
-          expect(result.data.idempotency).toBe('best_effort');
-      }
   });
 
   describe('handleInboundEmail error handling', () => {

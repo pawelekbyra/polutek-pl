@@ -58,4 +58,24 @@ describe('EmailEventLockService - Real DB Idempotency', () => {
     expect(event?.status).toBe(WebhookEventStatus.PROCESSING);
     expect(event?.error).toBeNull();
   });
+
+  itWithDb('handles multiple concurrent acquisition attempts correctly', async () => {
+    const providerEventId = 'test_evt_concurrent';
+    const type = 'email.sent';
+
+    // Attempt to acquire lock 5 times simultaneously
+    const attempts = await Promise.all([
+        lockService.acquireLock({ providerEventId, type, payload: {} }),
+        lockService.acquireLock({ providerEventId, type, payload: {} }),
+        lockService.acquireLock({ providerEventId, type, payload: {} }),
+        lockService.acquireLock({ providerEventId, type, payload: {} }),
+        lockService.acquireLock({ providerEventId, type, payload: {} }),
+    ]);
+
+    const acquiredCount = attempts.filter(a => a === 'ACQUIRED').length;
+    const conflictCount = attempts.filter(a => a === 'CONFLICT').length;
+
+    expect(acquiredCount).toBe(1);
+    expect(conflictCount).toBe(4);
+  });
 });

@@ -37,6 +37,8 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     actor: { type: 'system', reason: 'test' },
   });
 
+  (ctx.db as any).writeTransaction = prismaMock.$transaction;
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -91,6 +93,7 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
       handleResendWebhook(ctx, payload)
     ]);
 
+    // One succeeds, one is recognized as duplicate (because we simulated PROCESSED status)
     expect(results[0].ok).toBe(true);
     expect(results[1].ok).toBe(true);
 

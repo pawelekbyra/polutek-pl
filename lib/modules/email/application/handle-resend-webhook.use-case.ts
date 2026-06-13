@@ -30,14 +30,20 @@ export async function handleResendWebhook(
       return fail(new WebhookInvalidPayloadError("Event data is required and must be an object"));
   }
 
+  // 2. Atomic Idempotency check via Lock Service
+  // eventId (from svix-id) is REQUIRED for all events to ensure idempotency.
+  const providerEventId = eventId;
+
+  if (!providerEventId) {
+      logger.error(`[handleResendWebhook] Webhook rejected: missing eventId (svix-id) for type=${type}`);
+      return fail(new WebhookInvalidPayloadError("eventId (svix-id) is required for idempotency"));
+  }
+
   const resendEmailId = data.email_id;
   if (!resendEmailId) {
       logger.warn(`[handleResendWebhook] Event ${type} missing email_id`);
   }
 
-  // 2. Atomic Idempotency check via Lock Service
-  // eventId (from svix-id) is preferred as canonical providerEventId
-  const providerEventId = eventId;
   const lockService = new EmailEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
   if (providerEventId) {
@@ -58,7 +64,8 @@ export async function handleResendWebhook(
 
     if (lockStatus === 'CONFLICT') {
         // Another process is currently handling this event
-        return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry."));
+        // 503 Service Unavailable triggers a retry by most webhook providers
+        return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry.", 503, 'LOCK_CONFLICT'));
     }
   }
 
