@@ -5,6 +5,7 @@ import { EmailPreferenceRepository } from "../infrastructure/email-preference.re
 import { ResendAudienceGateway } from "../infrastructure/resend-audience.gateway";
 import { normalizeTrustedEmail } from "../domain/email-address";
 import { ProviderSyncStatus } from "../domain/provider-sync-status";
+import { createScopedLogger } from "@/lib/logger";
 
 export interface UnsubscribeResultDto {
   isSubscribed: boolean;
@@ -24,6 +25,7 @@ export type UnsubscribeInput = {
 
 export class UnsubscribeUseCase {
   static async execute(ctx: AppContext, input: UnsubscribeInput): Promise<UnsubscribeResultDto> {
+    const logger = createScopedLogger(ctx.requestId ?? null);
     const mainChannel = await MainChannelService.getRequired(ctx);
     const userId = (ctx.actor.type === 'user' || ctx.actor.type === 'admin') ? ctx.actor.userId : null;
     if (!userId) {
@@ -40,7 +42,11 @@ export class UnsubscribeUseCase {
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
       const deleted = await subscriptionRepo.deleteByUserIdAndCreatorId(userId, mainChannel.id, tx);
-      await preferenceRepo.recordExplicitContentOptOut(userId, trustedEmail, tx);
+      const prefResult = await preferenceRepo.recordExplicitContentOptOut(userId, trustedEmail, tx);
+
+      if (!prefResult.recorded && prefResult.reason === 'FOREIGN_EMAIL_CONFLICT') {
+        logger.warn(`[SUBSCRIPTION_IDENTITY_CONFLICT] userId=${userId} reason=${prefResult.reason}`);
+      }
 
       if (deleted.count > 0) {
         await MainChannelService.decrementSubscribersCount(ctx, mainChannel.id, tx);

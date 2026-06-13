@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { AppError } from "@/lib/modules/shared/app-error";
 import { MainChannelService } from "@/lib/modules/channel";
 import { SubscriptionRepository } from "../infrastructure/subscription.repository";
 import { EmailPreferenceRepository } from "../infrastructure/email-preference.repository";
@@ -30,7 +31,15 @@ export class SubscribeUseCase {
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
       const existing = await subscriptionRepo.findByUserIdAndCreatorId(userId, mainChannel.id);
-      await preferenceRepo.recordExplicitContentOptIn(userId, trustedEmail, tx);
+      const prefResult = await preferenceRepo.recordExplicitContentOptIn(userId, trustedEmail, tx);
+
+      if (!prefResult.recorded) {
+        throw new AppError(
+          "Email notification preferences could not be updated for this account.",
+          409,
+          "EMAIL_PREFERENCE_IDENTITY_CONFLICT"
+        );
+      }
 
       if (existing) {
         return { subscription: existing, newlyCreated: false };

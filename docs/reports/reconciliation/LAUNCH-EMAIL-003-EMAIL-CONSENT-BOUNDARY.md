@@ -236,3 +236,51 @@ FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
 Public launch: NO_GO.
 
 Recommendation: MERGE.
+
+## Corrective pass for PR #899 (2026-06-13)
+
+### Baseline & Reference
+- **Main baseline:** `70147ebfc784014d4e604b1b467b7d1f4c43a803`
+- **Reference commits:** `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`, `5dbf5c8266c5b5bfc52c608865b61a83f5f18c71`
+- **Replacement Note:** This PR (#899) and branch `fix/launch-email-003-consent-persistence-main` replace the invalid PR #898.
+
+### Implemented Hardening
+- **Corrected opt-in:** `SubscribeUseCase` throws HTTP 409 `EMAIL_PREFERENCE_IDENTITY_CONFLICT` on foreign email conflicts, aborting the transaction and preventing all side effects.
+- **Fail-safe opt-out:** `UnsubscribeUseCase` handles conflicts gracefully, logging a structured warning via scoped logger (including correlation context and actor userId, excluding raw email data) and proceeding with local/provider unsubscription.
+- **Narrow Type Guards:** Replaced broad `any` checks in `EmailPreferenceRepository` with the existing `isPrismaErrorCode` structural guard from `@/lib/utils/db`.
+- **Deterministic Repository Logic:** Hardened lookup order (userId then email) and P2002 race handling to ensure consent is persisted without hijacking foreign records.
+
+### Validation Results
+- **Typecheck:** PASS (`npx tsc --noEmit`)
+- **Architecture check:** PASS (`npm run quality:architecture-boundaries`)
+- **Focused tests:** PASS (35 tests across 3 files)
+- **Full test suite:** PASS (692 tests passing)
+
+### Evidence & Recommendation
+- **Implementation evidence:** local/automated only.
+- **Production evidence:** none added.
+- **Builder recommendation:** READY_FOR_INDEPENDENT_REVIEW
+- **Public launch:** NO_GO
+
+## Final Corrective Pass for by-userId Conflict (2026-06-13)
+
+### Baseline & Refinement
+- **Main baseline:** `70147ebfc784014d4e604b1b467b7d1f4c43a803`
+- **Correction:** Addressed a missed conflict path where an existing by-userId record would produce a false success when the target email was owned by another registered user.
+
+### Implemented Fix
+- **Repository Hardening:** `EmailPreferenceRepository` now explicitly detects if a target email belongs to another registered user during a by-userId lookup for opt-in. It returns `FOREIGN_EMAIL_CONFLICT` instead of proceeding with a consent-only update on the old email.
+- **Fail-safe Opt-out:** Confirmed that opt-out remains fail-safe in the same scenario, allowing negative consent persistence on the actor's record without email hijacking.
+- **Enhanced Test Coverage:** Added unit tests in `EmailPreferenceRepository` to prove conflict detection for opt-in and fail-safe behavior for opt-out in by-userId scenarios.
+
+### Validation Results
+- **Typecheck:** PASS
+- **Architecture check:** PASS
+- **Focused tests:** PASS (36 tests across 3 files)
+- **Full test suite:** PASS (693 tests passing)
+
+### Evidence & Recommendation
+- **Implementation evidence:** local/automated only.
+- **Production evidence:** none added.
+- **Builder recommendation:** READY_FOR_INDEPENDENT_REVIEW
+- **Public launch:** NO_GO
