@@ -7,11 +7,11 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 ## 1. Baseline State
 
-- **Current Main SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
-- **Current Control-Plane Ticket:** `LAUNCH-EMAIL-003`
-- **Current Gate:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
-- **Candidate State:** `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`.
-- **Next Builder Ticket:** NONE until independent review of the candidate gate is complete.
+- **Current Main SHA:** `f7fc603183120895359e9e52464de2d01e100980`
+- **Current Control-Plane Ticket:** `PAYMENT-WEBHOOK-RESULT-001`
+- **Current Gate:** `PAYMENT-WEBHOOK-RESULT-001`
+- **Current State:** `AUDIT_COMPLETE / READY_FOR_BUILDER`.
+- **Next Builder Ticket:** `PAYMENT-WEBHOOK-RESULT-001`
 
 ## 2. Evidence Taxonomy
 
@@ -33,9 +33,9 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 ## 3. Vercel Evidence Record
 
-- **Production Commit:** `f729c8068f681bceb28276db5899143dd3631c20` was `READY` (`VERCEL_PRODUCTION_EVIDENCE`).
+- **Production Commit:** `f7fc603183120895359e9e52464de2d01e100980` was `READY` (`VERCEL_PRODUCTION_EVIDENCE`).
 - **Build Incidents:** No failed production build incident was confirmed.
-- **Candidate Commit:** `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
+- **Candidate Commit:** `0fce5a0b2fc4bb0ae965ff16b71e95d91fcf4f6a` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
 - **Runtime Anomaly:** `HOME_CONTENT_LOAD_...` with HTTP 200 observed (`PRODUCTION_RUNTIME_EVIDENCE`). Root cause `UNPROVEN`.
 - **Vercel Project Topology:** `OPERATOR_RECONCILIATION_REQUIRED`. Discrepancies noted between project locations (`polutek-pl` vs `kraufanding`).
 
@@ -43,8 +43,8 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 | Risk ID | Title | Evidence Class | Classification | Launch Impact |
 | --- | --- | --- | --- | --- |
-| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
-| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **HIGH** |
+| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` (#899) | **BLOCKER** |
+| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE` | `AUDIT_COMPLETE / READY_FOR_BUILDER` | **HIGH** |
 | `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
 | `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
 | `DELETION-GAP` | Account Deletion Incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
@@ -61,16 +61,16 @@ This is the proposed canonical entry point for the project's technical state, ri
 | `ARCH-DEBT` | Architecture Allowlist Ledger | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **LOW** |
 | `PII-LOGGING` | Unredacted PII in Logs | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **HIGH** |
 | `DATA-RETENTION` | Payload Retention Gaps | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
-| `PG-CONCURRENCY` | Postgres Transaction Races | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
+| `PG-CONCURRENCY` | Postgres Transaction Races | `REPOSITORY_EVIDENCE` | `STILL_ACTIVE / UNPROVEN` | **MEDIUM** |
 
 ## 5. Ordered Masterplan
 
 ### CURRENT_GATE
-- **Independent Review of Candidate Gate** (Commit `3911de9` for `LAUNCH-EMAIL-003`).
+- **`PAYMENT-WEBHOOK-RESULT-001`**: Fix ignored Stripe webhook results (`AUDIT_COMPLETE / READY_FOR_BUILDER`).
 
 ### NEXT_CONFIRMED_TASK
-- **`PAYMENT-WEBHOOK-RESULT-001`**: Ensure Stripe webhook failures are handled and not marked as success (`HIGH_CONFIDENCE_CODE_FINDING`).
-- **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: Fix Resend webhook deduplication race/ordering (`HIGH_CONFIDENCE_CODE_FINDING`).
+- **`LAUNCH-EMAIL-003`**: `MERGED / ACCEPTED` (PR #899).
+- **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: Fix Resend webhook deduplication race/ordering (`AUDIT_REPORTED / IMPLEMENTATION_NOT_STARTED / REVALIDATION_REQUIRED`).
 
 ### QUEUED_HIGH_PRIORITY
 - **`SECURE-UNSUBSCRIBE`**: Implement signed tokens and a functional public route (`CONFIRMED_GAP`).
@@ -102,4 +102,4 @@ This is the proposed canonical entry point for the project's technical state, ri
 - Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
 - Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
-- Latest Reconciliation: [reports/reconciliation/BOLEK-MASTERPLAN-001.md](reports/reconciliation/BOLEK-MASTERPLAN-001.md)
+- Latest Reconciliation: [reports/reconciliation/POST-MERGE-LAUNCH-EMAIL-003.md](reports/reconciliation/POST-MERGE-LAUNCH-EMAIL-003.md)

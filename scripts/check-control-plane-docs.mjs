@@ -103,12 +103,14 @@ if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must cont
 else pass('queue contains exactly one current-ticket ID marker');
 if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_FILE') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_FILE marker');
 else pass('queue contains exactly one current-ticket file marker');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->');
-requireFile('docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md');
-requireIncludes('runtime ticket', runtimeTicket, 'Ticket ID: LAUNCH-EMAIL-003');
-requireRegex('runtime ticket', runtimeTicket, /Status\*\*: READY|Status:\s*READY/, 'status READY');
-const readyRows = [...queue.matchAll(/^\|[^\n]*LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior[^\n]*\|\s*`READY`\s*\|$/gm)];
+requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_ID: PAYMENT-WEBHOOK-RESULT-001 -->');
+requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md -->');
+const currentTicketPath = 'docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md';
+requireFile(currentTicketPath);
+const currentTicket = read(currentTicketPath);
+requireIncludes('current ticket', currentTicket, 'Ticket ID: PAYMENT-WEBHOOK-RESULT-001');
+requireRegex('current ticket', currentTicket, /Status: AUDIT_COMPLETE \/ READY_FOR_BUILDER/, 'status AUDIT_COMPLETE / READY_FOR_BUILDER');
+const readyRows = [...queue.matchAll(/^\|[^\n]*PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results[^\n]*\|\s*`AUDIT_COMPLETE \/ READY_FOR_BUILDER`\s*\|$/gm)];
 if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary READY row, found ${readyRows.length}`);
 else pass('queue contains exactly one current-primary READY row');
 
