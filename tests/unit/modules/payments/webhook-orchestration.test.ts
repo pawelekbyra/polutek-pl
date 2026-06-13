@@ -1,17 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleStripeWebhook } from '@/lib/modules/payments/application/handle-stripe-webhook.use-case';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
+import * as fulfillModule from '@/lib/modules/payments/application/fulfill-payment.use-case';
+import * as refundModule from '@/lib/modules/payments/application/handle-refund.use-case';
+import * as disputeModule from '@/lib/modules/payments/application/handle-dispute.use-case';
+import { fail } from '@/lib/modules/shared/result';
+import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
+import Stripe from 'stripe';
 
 // Mock Stripe correctly using a dummy class
+const mockConstructEvent = vi.fn().mockReturnValue({
+    id: 'evt_123',
+    type: 'payment_intent.succeeded',
+    data: { object: { id: 'pi_123', amount: 1000, currency: 'pln', metadata: { paymentId: 'pay_123', userId: 'user_123' } } }
+});
+
 vi.mock('stripe', () => {
   return {
     default: class {
         webhooks = {
-            constructEvent: vi.fn().mockReturnValue({
-                id: 'evt_123',
-                type: 'payment_intent.succeeded',
-                data: { object: { id: 'pi_123', amount: 1000, currency: 'pln', metadata: { paymentId: 'pay_123', userId: 'user_123' } } }
-            })
+            constructEvent: (...args: any[]) => mockConstructEvent(...args)
         }
     }
   };
@@ -99,5 +107,62 @@ describe('handleStripeWebhook', () => {
 
     expect(result.ok).toBe(true);
     expect(mockPrisma.stripeEvent.update).not.toHaveBeenCalled(); // Should not re-process
+  });
+
+  it('should fail and release with failure when fulfillPayment fails', async () => {
+    vi.spyOn(fulfillModule, 'fulfillPayment').mockResolvedValueOnce(fail(new PaymentError('Mocked failure')));
+
+    const result = await handleStripeWebhook({ body: '{}', signature: 'sig' }, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(mockPrisma.stripeEvent.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'evt_123' },
+      data: expect.objectContaining({
+        status: WebhookEventStatus.FAILED,
+        error: 'Mocked failure'
+      })
+    }));
+  });
+
+  it('should fail and release with failure when handleRefund fails', async () => {
+    mockConstructEvent.mockReturnValueOnce({
+      id: 'evt_refund',
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_123', payment_intent: 'pi_123', amount_refunded: 1000 } }
+    } as any);
+
+    vi.spyOn(refundModule, 'handleRefund').mockResolvedValueOnce(fail(new PaymentError('Refund mocked failure')));
+
+    const result = await handleStripeWebhook({ body: '{}', signature: 'sig' }, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(mockPrisma.stripeEvent.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'evt_refund' },
+      data: expect.objectContaining({
+        status: WebhookEventStatus.FAILED,
+        error: 'Refund mocked failure'
+      })
+    }));
+  });
+
+  it('should fail and release with failure when handleDispute fails', async () => {
+    mockConstructEvent.mockReturnValueOnce({
+      id: 'evt_dispute',
+      type: 'charge.dispute.created',
+      data: { object: { id: 'dp_123', payment_intent: 'pi_123', status: 'needs_response' } }
+    } as any);
+
+    vi.spyOn(disputeModule, 'handleDispute').mockResolvedValueOnce(fail(new PaymentError('Dispute mocked failure')));
+
+    const result = await handleStripeWebhook({ body: '{}', signature: 'sig' }, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(mockPrisma.stripeEvent.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'evt_dispute' },
+      data: expect.objectContaining({
+        status: WebhookEventStatus.FAILED,
+        error: 'Dispute mocked failure'
+      })
+    }));
   });
 });
