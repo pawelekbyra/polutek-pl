@@ -3,10 +3,12 @@ import { ResendWebhookInput, ResendWebhookResult } from "../domain/email.dto";
 import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
+import { EmailEventLockService } from "../infrastructure/email-event-lock.service";
 
 /**
  * handleResendWebhook use case.
  * R9 foundation: handles Resend webhook events after signature verification.
+ * R10 hardened: atomic idempotency via EmailEventLockService.
  */
 export async function handleResendWebhook(
   ctx: AppContext,
@@ -32,43 +34,42 @@ export async function handleResendWebhook(
       logger.warn(`[handleResendWebhook] Event ${type} missing email_id`);
   }
 
-  // 2. Best-effort idempotency check
-  // We check if an event with the same resendEmailId and type already exists.
-  // Note: multiple events of same type for same email_id might be rare but possible in some providers.
-  // Resend usually sends one for each state change.
-  if (resendEmailId) {
-      const existingEvent = await ctx.prisma.emailEvent.findFirst({
-          where: {
-              resendEmailId,
-              type
-          }
-      });
+  // 2. Atomic Idempotency check via Lock Service
+  // eventId (from svix-id) is preferred as canonical providerEventId
+  const providerEventId = eventId;
+  const lockService = new EmailEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-      if (existingEvent) {
-          logger.info(`[handleResendWebhook] Duplicate event detected and ignored: ${type}`, { email_id: resendEmailId });
-          return ok({
-              received: true,
-              accepted: true,
-              duplicate: true,
-              idempotency: "best_effort"
-          });
-      }
-  }
-
-  logger.info(`[handleResendWebhook] Received event: ${type}`, { email_id: resendEmailId, event_id: eventId });
-
-  try {
-    // 3. Log the event
-    await ctx.prisma.emailEvent.create({
-      data: {
+  if (providerEventId) {
+    const lockStatus = await lockService.acquireLock({
+        providerEventId,
         type,
-        resendEmailId,
-        email: data.to?.[0],
-        payload: input as any,
-      }
+        payload: input as any
     });
 
-    // 4. Normalize and handle specific events
+    if (lockStatus === 'ALREADY_PROCESSED') {
+        return ok({
+            received: true,
+            accepted: true,
+            duplicate: true,
+            idempotency: "available"
+        });
+    }
+
+    if (lockStatus === 'CONFLICT') {
+        // Another process is currently handling this event
+        return ok({
+            received: true,
+            accepted: true,
+            duplicate: true,
+            idempotency: "available"
+        });
+    }
+  }
+
+  logger.info(`[handleResendWebhook] Processing event: ${type}`, { email_id: resendEmailId, event_id: eventId });
+
+  try {
+    // 3. Normalize and handle specific events
     const supportedTypes = [
       'email.sent',
       'email.delivered',
@@ -83,11 +84,17 @@ export async function handleResendWebhook(
 
     if (!supportedTypes.includes(type)) {
       logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
+      if (providerEventId) {
+        await lockService.releaseWithSuccess(providerEventId, {
+            resendEmailId,
+            email: data.to?.[0]
+        });
+      }
       return ok({
           received: true,
           accepted: true,
           ignored: true,
-          idempotency: "best_effort"
+          idempotency: providerEventId ? "available" : "best_effort"
       });
     }
 
@@ -122,14 +129,26 @@ export async function handleResendWebhook(
         }
     }
 
+    // 4. Success Release
+    if (providerEventId) {
+        await lockService.releaseWithSuccess(providerEventId, {
+            resendEmailId,
+            email: data.to?.[0]
+        });
+    }
+
     return ok({
         received: true,
         accepted: true,
         duplicate: false,
-        idempotency: "best_effort"
+        idempotency: providerEventId ? "available" : "best_effort"
     });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
+    // 5. Failure Release
+    if (providerEventId) {
+        await lockService.releaseWithFailure(providerEventId, error.message || String(error));
+    }
     return fail(new EmailError(error.message || "Internal error during webhook handling"));
   }
 }
@@ -148,6 +167,10 @@ const STATUS_PRIORITY: Record<string, number> = {
 };
 
 async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
+  // Use a transaction or at least ensure atomic check-and-update if possible.
+  // Given we have an outer lock on providerEventId, we are safe from same-event concurrency.
+  // But we still need status priority protection.
+
   const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
     where: { resendEmailId }
   });
@@ -207,16 +230,22 @@ async function handleUnsubscribe(ctx: AppContext, email: string) {
 
 async function handleInboundEmail(ctx: AppContext, data: any) {
     const user = await ctx.prisma.user.findUnique({ where: { email: data.from } });
-    await ctx.prisma.inboundEmail.create({
-        data: {
-            fromEmail: data.from,
-            toEmail: data.to?.[0] || 'unknown',
-            subject: data.subject,
-            text: data.text,
-            html: data.html,
-            resendId: data.email_id,
-            status: 'NEW',
-            userId: user?.id
-        }
-    });
+    // inboundEmail has a unique constraint on resendId
+    try {
+        await ctx.prisma.inboundEmail.create({
+            data: {
+                fromEmail: data.from,
+                toEmail: data.to?.[0] || 'unknown',
+                subject: data.subject,
+                text: data.text,
+                html: data.html,
+                resendId: data.email_id,
+                status: 'NEW',
+                userId: user?.id
+            }
+        });
+    } catch (e: any) {
+        // If it already exists, just log and continue
+        logger.info(`[handleResendWebhook] Inbound email ${data.email_id} already exists`);
+    }
 }

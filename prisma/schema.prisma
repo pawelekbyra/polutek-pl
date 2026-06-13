@@ -679,19 +679,25 @@ model InboundEmail {
 }
 
 model EmailEvent {
-  id               String   @id @default(uuid())
+  id               String             @id @default(uuid())
   type             String
+  status           WebhookEventStatus @default(PROCESSED)
+  providerEventId  String?            @unique
   resendEmailId    String?
   broadcastEmailId String?
   recipientId      String?
   userId           String?
   email            String?
   payload          Json
-  createdAt        DateTime @default(now())
+  error            String?
+  processedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([resendEmailId])
   @@index([broadcastEmailId])
   @@index([email])
+  @@index([providerEventId])
 }
 
 model VideoPlaybackSession {
