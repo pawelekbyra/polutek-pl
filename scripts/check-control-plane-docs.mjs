@@ -73,9 +73,9 @@ const acceptedTicketFile = 'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-bo
 const acceptedTicket = read(acceptedTicketFile);
 requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Ticket ID: LAUNCH-EMAIL-003');
 requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Status: MERGED / ACCEPTED');
-requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Accepted PR: #899');
-requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Merge SHA: f7fc603183120895359e9e52464de2d01e100980');
-requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Public launch: NO_GO');
+requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Accepted PR:\*\* #899|Accepted PR: #899/);
+requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Merge SHA:\*\* `f7fc603183120895359e9e52464de2d01e100980`|Merge SHA: f7fc603183120895359e9e52464de2d01e100980/);
+requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Public launch: NO_GO|Public launch remains `NO_GO`/);
 
 for (const phrase of [
   'Missing content-notification preference means NOT OPTED IN',
