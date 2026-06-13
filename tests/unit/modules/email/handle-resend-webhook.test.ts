@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleResendWebhook } from '@/lib/modules/email/application/handle-resend-webhook.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { EmailEventLockService } from '@/lib/modules/email/infrastructure/email-event-lock.service';
+
+vi.mock('@/lib/modules/email/infrastructure/email-event-lock.service');
 
 describe('handleResendWebhook use case - hardening', () => {
   const prismaMock = {
@@ -112,10 +115,11 @@ describe('handleResendWebhook use case - hardening', () => {
   });
 
   it('detects and ignores duplicate events', async () => {
-    prismaMock.emailEvent.findFirst.mockResolvedValue({ id: 'existing' });
+    vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ALREADY_PROCESSED');
 
     const result = await handleResendWebhook(ctx, {
       type: 'email.sent',
+      eventId: 'duplicate_id',
       data: {
         email_id: 're_123',
         from: 'no-reply@polutek.pl',
@@ -129,8 +133,8 @@ describe('handleResendWebhook use case - hardening', () => {
     if (result.ok) {
         expect(result.data.duplicate).toBe(true);
     }
-    // Should NOT create a second log record
-    expect(prismaMock.emailEvent.create).not.toHaveBeenCalled();
+    // Should NOT reach prisma create or updates
+    expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
   });
 
   it('implements status hierarchy: OPENED does not overwrite CLICKED', async () => {
