@@ -63,33 +63,36 @@ export async function handleStripeWebhook(
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const intent = event.data.object as Stripe.PaymentIntent;
-        await fulfillPayment({
+        const result = await fulfillPayment({
           paymentId: intent.metadata.paymentId,
           userId: intent.metadata.userId,
           amountMinor: intent.amount,
           currency: intent.currency
         }, ctx);
+        if (!result.ok) throw result.error;
         break;
       }
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge;
-        await handleRefund({
+        const result = await handleRefund({
           paymentId: charge.metadata?.paymentId,
           stripeIntentId: typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id,
           reportedRefundedMinor: charge.amount_refunded || 0
         }, ctx);
+        if (!result.ok) throw result.error;
         break;
       }
       case 'charge.dispute.created':
       case 'charge.dispute.closed': {
         const dispute = event.data.object as Stripe.Dispute;
-        await handleDispute({
+        const result = await handleDispute({
           stripeIntentId: (typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id)!,
           disputeId: dispute.id,
           status: dispute.status,
           isLost: dispute.status === 'lost',
           isWon: dispute.status === 'won'
         }, ctx);
+        if (!result.ok) throw result.error;
         break;
       }
       case 'payment_intent.payment_failed': {
