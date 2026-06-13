@@ -1,6 +1,6 @@
 # RECONCILIATION REPORT — BOLEK-MASTERPLAN-001
 
-Status: PROPOSED_CANONICAL — PROPOSED — becomes canonical after Bolek MERGE and repository merge
+Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
 Date: 2026-06-13
 Prepared by: Governance Documentation Builder
 Integrator review: Bolek — pending
