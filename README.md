@@ -69,6 +69,12 @@ The full non-executable map of remaining launch work is maintained in:
 
 `docs/roadmap/Launch-Execution-Backlog.md`
 
+## Governance & Masterplan
+
+- **Bolek Operating Model:** [docs/governance/BOLEK-OPERATING-MODEL.md](docs/governance/BOLEK-OPERATING-MODEL.md)
+- **Technical Masterplan:** [docs/MASTERPLAN.md](docs/MASTERPLAN.md)
+- **Core Architecture Invariants:** [docs/architecture/CORE-INVARIANTS.md](docs/architecture/CORE-INVARIANTS.md)
+
 ## Canonical docs
 
 - Agent/product invariants: `AGENTS.md`
@@ -77,7 +83,7 @@ The full non-executable map of remaining launch work is maintained in:
 - Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
 - Phase gates: `docs/roadmap/Phase-Gates.md`
 - Reconciliation report index: `docs/reports/reconciliation/README.md`
-- Current reconciliation report: `docs/reports/reconciliation/DOCS-RECONCILE-003-OPERATOR-EVIDENCE-STATUS-CORRECTION.md`
+- Current reconciliation report: `docs/reports/reconciliation/BOLEK-MASTERPLAN-001.md`
 - Ticket queue: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 

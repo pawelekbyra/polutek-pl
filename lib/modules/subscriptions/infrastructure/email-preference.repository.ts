@@ -4,14 +4,17 @@ import { PrismaClient } from "@prisma/client";
 export type EmailPreferenceResult = {
   id: string | null;
   recorded: boolean;
-  reason?: 'FOREIGN_EMAIL_CONFLICT' | 'DATABASE_ERROR';
+  reason?: 'FOREIGN_EMAIL_CONFLICT';
 };
 
-function isPrismaUniqueConstraintError(error: unknown): boolean {
+function isPrismaUniqueConstraintError(
+  error: unknown
+): error is { code: 'P2002' } {
   return (
     typeof error === 'object' &&
     error !== null &&
-    (error as any).code === 'P2002'
+    'code' in error &&
+    (error as { code?: unknown }).code === 'P2002'
   );
 }
 
@@ -32,8 +35,7 @@ export class EmailPreferenceRepository {
    * content notifications. It does not affect system/transactional email.
    */
   async recordExplicitContentOptOut(userId: string, email: string, tx?: WriteTx): Promise<EmailPreferenceResult> {
-    const optOutTimestamp = new Date();
-    const data = { marketingEmails: false, unsubscribedAt: optOutTimestamp };
+    const data = { marketingEmails: false, unsubscribedAt: new Date() };
     return this.upsertPreference(userId, email, data, tx);
   }
 
@@ -45,7 +47,7 @@ export class EmailPreferenceRepository {
   ): Promise<EmailPreferenceResult> {
     const db = tx || (this.db as PrismaClient);
 
-    // Krok 1 — lookup po userId
+    // lookup by userId
     const byUserId = await db.emailPreference.findUnique({ where: { userId } });
     if (byUserId) {
       const emailConflict = byUserId.email !== email && (await db.emailPreference.findUnique({ where: { email } }));
@@ -72,7 +74,7 @@ export class EmailPreferenceRepository {
       }
     }
 
-    // Krok 2 — brak rekordu po userId, lookup po email
+    // lookup by email
     const byEmail = await db.emailPreference.findUnique({ where: { email } });
     if (byEmail) {
       if (!byEmail.userId || byEmail.userId === userId) {
@@ -94,7 +96,6 @@ export class EmailPreferenceRepository {
               });
               return { id: fallback.id, recorded: true };
             }
-            // If still no record by userId, something is very wrong/racy, but let's try one last lookup by email
             const retryByEmail = await db.emailPreference.findUnique({ where: { email } });
             if (retryByEmail && (!retryByEmail.userId || retryByEmail.userId === userId)) {
                const fallback = await db.emailPreference.update({
@@ -111,7 +112,7 @@ export class EmailPreferenceRepository {
       return { id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' };
     }
 
-    // Krok 3 — brak obu rekordów, create
+    // create
     try {
       const created = await db.emailPreference.create({
         data: { userId, email, systemEmails: true, ...consentData },

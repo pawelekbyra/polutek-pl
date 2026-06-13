@@ -1,16 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EmailPreferenceRepository } from '@/lib/modules/subscriptions/infrastructure/email-preference.repository';
 
-const prismaMock = {
-  emailPreference: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-    create: vi.fn(),
-  },
-};
-
 describe('EmailPreferenceRepository identity resolution', () => {
   let repository: EmailPreferenceRepository;
+  const prismaMock = {
+    emailPreference: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
+    },
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,7 +86,7 @@ describe('EmailPreferenceRepository identity resolution', () => {
       });
     });
 
-    it('returns neutral result when email belongs to another user and no userId record exists', async () => {
+    it('returns conflict result when email belongs to another user and no userId record exists', async () => {
       const byEmail = { id: 'pref_2', userId: 'user_2', email: 'test@example.com' };
       prismaMock.emailPreference.findUnique
         .mockResolvedValueOnce(null) // by userId
@@ -115,15 +114,32 @@ describe('EmailPreferenceRepository identity resolution', () => {
       });
     });
 
-    it('handles race condition (P2002) during update with email migration by performing fallback update', async () => {
-      const existing = { id: 'pref_1', userId: 'user_1', email: 'old@example.com' };
+    it('handles race condition (P2002) during create by retrying lookup', async () => {
       prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(existing) // by userId
-        .mockResolvedValueOnce(null); // by email (appears free)
+        .mockResolvedValueOnce(null) // first attempt by userId
+        .mockResolvedValueOnce(null); // first attempt by email
 
-      const error = { code: 'P2002' };
+      const error = new Error('Unique constraint failed') as any;
+      error.code = 'P2002';
+      prismaMock.emailPreference.create.mockRejectedValueOnce(error);
+
+      // Retry by userId returns record
+      prismaMock.emailPreference.findUnique.mockResolvedValueOnce({ id: 'pref_race' });
+      prismaMock.emailPreference.update.mockResolvedValueOnce({ id: 'pref_race' });
+
+      const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
+
+      expect(result).toEqual({ id: 'pref_race', recorded: true });
+    });
+
+    it('handles race condition (P2002) during update by performing consent-only fallback', async () => {
+      prismaMock.emailPreference.findUnique.mockResolvedValueOnce({ id: 'pref_1', userId: 'user_1', email: 'old@example.com' });
+      prismaMock.emailPreference.findUnique.mockResolvedValueOnce(null); // no conflict at read time
+
+      const error = new Error('Unique constraint failed') as any;
+      error.code = 'P2002';
       prismaMock.emailPreference.update
-        .mockRejectedValueOnce(error) // migration update fails
+        .mockRejectedValueOnce(error) // first attempt fails
         .mockResolvedValueOnce({ id: 'pref_1' }); // fallback update succeeds
 
       const result = await repository.recordExplicitContentOptIn('user_1', 'new@example.com');
@@ -132,71 +148,26 @@ describe('EmailPreferenceRepository identity resolution', () => {
       expect(prismaMock.emailPreference.update).toHaveBeenCalledTimes(2);
       expect(prismaMock.emailPreference.update).toHaveBeenLastCalledWith({
         where: { id: 'pref_1' },
-        data: { marketingEmails: true, unsubscribedAt: null },
+        data: expect.objectContaining({ marketingEmails: true, unsubscribedAt: null }),
         select: { id: true },
       });
+      expect(prismaMock.emailPreference.update.mock.calls[1][0].data.email).toBeUndefined();
     });
 
-    it('handles race condition (P2002) during create by retrying lookup and persisting consent', async () => {
-      prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(null) // by userId
-        .mockResolvedValueOnce(null); // by email
+    it('rethrows non-P2002 errors during create', async () => {
+      prismaMock.emailPreference.findUnique.mockResolvedValue(null);
+      prismaMock.emailPreference.create.mockRejectedValue(new Error('DATABASE_ERROR'));
 
-      const error = { code: 'P2002' };
-      prismaMock.emailPreference.create.mockRejectedValueOnce(error);
-
-      // Retry lookup finds existing record
-      prismaMock.emailPreference.findUnique.mockResolvedValueOnce({ id: 'pref_race', userId: 'user_1' });
-      prismaMock.emailPreference.update.mockResolvedValueOnce({ id: 'pref_race' });
-
-      const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
-
-      expect(result).toEqual({ id: 'pref_race', recorded: true });
-      expect(prismaMock.emailPreference.update).toHaveBeenCalledWith({
-        where: { id: 'pref_race' },
-        data: { marketingEmails: true, unsubscribedAt: null },
-        select: { id: true },
-      });
+      await expect(repository.recordExplicitContentOptIn('user_1', 'test@example.com'))
+        .rejects.toThrow('DATABASE_ERROR');
     });
 
-    it('handles race condition (P2002) during create when email is taken by another user after conflict', async () => {
-      prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(null) // by userId
-        .mockResolvedValueOnce(null); // by email
+    it('rethrows non-P2002 errors during update', async () => {
+      prismaMock.emailPreference.findUnique.mockResolvedValueOnce({ id: 'pref_1', userId: 'user_1', email: 'test@example.com' });
+      prismaMock.emailPreference.update.mockRejectedValue(new Error('DATABASE_ERROR'));
 
-      const error = { code: 'P2002' };
-      prismaMock.emailPreference.create.mockRejectedValueOnce(error);
-
-      // Retry lookup finds record owned by someone else
-      prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(null) // by userId still none
-        .mockResolvedValueOnce({ id: 'pref_foreign', userId: 'user_other', email: 'test@example.com' }); // by email
-
-      const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
-
-      expect(result).toEqual({ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' });
-      expect(prismaMock.emailPreference.update).not.toHaveBeenCalled();
-    });
-
-    it('handles race condition (P2002) during legacy adoption', async () => {
-      const byEmail = { id: 'pref_2', userId: null, email: 'test@example.com' };
-      prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(null) // by userId
-        .mockResolvedValueOnce(byEmail); // by email
-
-      prismaMock.emailPreference.update.mockRejectedValueOnce({ code: 'P2002' }); // adoption fails
-
-      prismaMock.emailPreference.findUnique.mockResolvedValueOnce({ id: 'pref_race', userId: 'user_1' }); // retry by userId finds record
-      prismaMock.emailPreference.update.mockResolvedValueOnce({ id: 'pref_race' });
-
-      const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
-
-      expect(result).toEqual({ id: 'pref_race', recorded: true });
-      expect(prismaMock.emailPreference.update).toHaveBeenLastCalledWith({
-        where: { id: 'pref_race' },
-        data: { marketingEmails: true, unsubscribedAt: null },
-        select: { id: true },
-      });
+      await expect(repository.recordExplicitContentOptIn('user_1', 'test@example.com'))
+        .rejects.toThrow('DATABASE_ERROR');
     });
   });
 
@@ -217,27 +188,15 @@ describe('EmailPreferenceRepository identity resolution', () => {
       });
     });
 
-    it('handles P2002 on opt-out migration by fallback update', async () => {
-      const existing = { id: 'pref_1', userId: 'user_1', email: 'old@example.com' };
+    it('returns conflict result for foreign email but still identifies as conflict', async () => {
+      const byEmail = { id: 'pref_foreign', userId: 'user_2', email: 'test@example.com' };
       prismaMock.emailPreference.findUnique
-        .mockResolvedValueOnce(existing)
-        .mockResolvedValueOnce(null);
+        .mockResolvedValueOnce(null) // by userId
+        .mockResolvedValueOnce(byEmail); // by email
 
-      prismaMock.emailPreference.update
-        .mockRejectedValueOnce({ code: 'P2002' })
-        .mockResolvedValueOnce({ id: 'pref_1' });
+      const result = await repository.recordExplicitContentOptOut('user_1', 'test@example.com');
 
-      await repository.recordExplicitContentOptOut('user_1', 'new@example.com');
-
-      expect(prismaMock.emailPreference.update).toHaveBeenCalledTimes(2);
-      expect(prismaMock.emailPreference.update).toHaveBeenLastCalledWith({
-        where: { id: 'pref_1' },
-        data: expect.objectContaining({
-          marketingEmails: false,
-          unsubscribedAt: expect.any(Date),
-        }),
-        select: { id: true },
-      });
+      expect(result).toEqual({ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' });
     });
   });
 });

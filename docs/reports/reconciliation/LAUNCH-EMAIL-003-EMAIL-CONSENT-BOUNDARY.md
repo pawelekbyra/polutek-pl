@@ -32,6 +32,7 @@ Canonical ticket: `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-ru
 - `tests/unit/modules/subscriptions/resend-audience.gateway.test.ts`
 - `tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts`
 - `tests/unit/modules/subscriptions/subscriptions.use-cases.test.ts`
+- `tests/unit/modules/subscriptions/email-preference.repository.test.ts`
 - `docs/reports/reconciliation/LAUNCH-EMAIL-003-EMAIL-CONSENT-BOUNDARY.md`
 
 ## Current hazards found
@@ -213,29 +214,6 @@ Public launch: NO_GO.
 
 Recommendation: MERGE.
 
-## P2002 consent persistence correction after PR #895
-
-- Baseline merge commit: `f729c8068f681bceb28276db5899143dd3631c20`.
-- Defect: P2002 handlers returned record IDs without ensuring that the requested opt-in or opt-out state was persisted, leading to potential inconsistency between `Subscription` and `EmailPreference`.
-- Fix:
-  - Unified repository logic into a private `upsertPreference` helper.
-  - Implemented fallback consent-only update (omitting the `email` field) after an email migration conflict (P2002).
-  - Hardened create race retry to ensure the resulting record (found after conflict) has the requested consent state via an explicit update.
-  - Ensured safe legacy-row adoption retry: if a race occurs during `userId` assignment, the user's record is found and updated.
-  - Foreign preference rows (belonging to another `userId`) are never mutated or returned as owned success; the repository returns `{ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' }`.
-- Test results:
-  - EmailPreferenceRepository: PASS (12 tests covering all race/conflict scenarios).
-  - Subscriptions Use-Cases: PASS (11 tests).
-  - Subscriptions Route: PASS (7 tests).
-  - Full suite: PASS.
-- Implementation evidence: local/automated only.
-- Production evidence: not added.
-- Professional legal approval: not added.
-- FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
-- Public launch: NO_GO.
-
-Recommendation: MERGE.
-
 ## Final Acceptance Patch
 
 - Baseline: `f7f352fa2ef133bc9411e6df3f5e64f0db0e99a8`.
@@ -259,3 +237,43 @@ FULL_SUPPRESSION_IMPLEMENTATION_PENDING.
 Public launch: NO_GO.
 
 Recommendation: MERGE.
+
+## LAUNCH-EMAIL-003 Corrective Integration
+
+- Old candidate SHA: `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
+- Final rebased SHA: `PENDING`.
+- Current main baseline: `70147ebfc784014d4e604b1b467b7d1f4c43a803`.
+
+### Defect Resolution
+The previous candidate ignored the result of `recordExplicitContentOptIn` in `SubscribeUseCase`. If a foreign email conflict occurred (`recorded: false`), the use case would still create a local `Subscription`, increment subscriber count, and sync with the provider.
+
+### Final Behavioral Logic
+
+#### Explicit Opt-in (Subscribe)
+- When `EmailPreferenceRepository` returns `recorded: false`, the use case now throws an `AppError` with HTTP 409 and code `EMAIL_PREFERENCE_IDENTITY_CONFLICT`.
+- This ensures the database transaction is aborted.
+- No `Subscription` is created, and no subscriber count is incremented.
+- Resend Audience sync is skipped.
+- Error message is neutral and does not leak identities.
+
+#### Explicit Opt-out (Unsubscribe)
+- Opt-out remains fail-safe.
+- When `recorded: false` with `FOREIGN_EMAIL_CONFLICT` occurs, the use case still removes the actor's local `Subscription`, decrements count, and calls provider unsubscribe.
+- A structured warning `[SUBSCRIPTION_IDENTITY_CONFLICT]` is emitted to logs without sensitive data.
+
+#### Repository Hardening
+- Implemented `isPrismaUniqueConstraintError` as a type-safe guard (no `any`).
+- Shared `upsertPreference` logic handles complex lookup/update/create sequences with race-condition retries.
+- Non-P2002 database errors are explicitly rethrown.
+
+### Test Evidence
+- `email-preference.repository.test.ts`: 12 tests covering identity resolution, conflicts, race conditions (P2002), and non-P2002 error propagation.
+- `subscriptions.use-cases.test.ts`: 9 tests proving transactional integrity on opt-in conflict and fail-safe behavior on opt-out conflict.
+- `subscriptions-route-boundary.test.ts`: 9 tests verifying HTTP 409 mapping and route-level security invariants.
+
+### Production Evidence
+- None added. Implementation verified via automated tests only.
+
+### Status
+- Public launch: `NO_GO`.
+- Builder recommendation: `READY_FOR_INDEPENDENT_REVIEW`.

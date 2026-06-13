@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
 import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 import { NextRequest } from 'next/server';
+import { AppError } from '@/lib/modules/shared/app-error';
 
 vi.mock('@/lib/api/auth');
 vi.mock('@clerk/nextjs/server');
@@ -86,6 +87,25 @@ describe('subscriptions route behavior', () => {
       }));
       expect(SubscribeUseCase.execute).toHaveBeenCalledWith(expect.anything(), { trustedEmail: 'test@example.com' });
     });
+
+    it('maps EMAIL_PREFERENCE_IDENTITY_CONFLICT AppError to 409', async () => {
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(auth).mockResolvedValue({
+        sessionClaims: { email: 'conflict@example.com' }
+      } as any);
+      vi.mocked(SubscribeUseCase.execute).mockRejectedValue(new AppError(
+        'Email notification preferences could not be updated for this account.',
+        409,
+        'EMAIL_PREFERENCE_IDENTITY_CONFLICT'
+      ));
+
+      const req = new NextRequest('http://localhost/api/subscriptions', { method: 'POST' });
+      const res = await POST(req);
+
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.error).toBe('EMAIL_PREFERENCE_IDENTITY_CONFLICT');
+    });
   });
 
   describe('DELETE', () => {
@@ -112,6 +132,21 @@ describe('subscriptions route behavior', () => {
 
       expect(res.status).toBe(200);
       expect(UnsubscribeUseCase.execute).toHaveBeenCalledWith(expect.anything(), { trustedEmail: 'test@example.com' });
+    });
+
+    it('remains successful even if use case returns isSubscribed: false (fail-safe)', async () => {
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(auth).mockResolvedValue({
+        sessionClaims: { email: 'conflict@example.com' }
+      } as any);
+      vi.mocked(UnsubscribeUseCase.execute).mockResolvedValue({ isSubscribed: false, deleted: false } as any);
+
+      const req = new NextRequest('http://localhost/api/subscriptions', { method: 'DELETE' });
+      const res = await DELETE(req);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.isSubscribed).toBe(false);
     });
   });
 

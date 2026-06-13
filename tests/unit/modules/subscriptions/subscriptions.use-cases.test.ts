@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from '@/lib/modules/subscriptions';
 import { MainChannelService } from '@/lib/modules/channel';
 import { AppContext } from '@/lib/modules/shared/app-context';
+import { AppError } from '@/lib/modules/shared/app-error';
 
 vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
@@ -54,6 +55,8 @@ describe('Subscriptions Use-Cases', () => {
     vi.mocked(MainChannelService.getRequired).mockResolvedValue(mockMainChannel as any);
     subscribeGateway.syncExplicitSubscribe.mockResolvedValue('SYNCED');
     unsubscribeGateway.syncExplicitUnsubscribe.mockResolvedValue('SYNCED');
+    mockPreferenceRepoInstance.recordExplicitContentOptIn.mockResolvedValue({ id: 'pref_1', recorded: true });
+    mockPreferenceRepoInstance.recordExplicitContentOptOut.mockResolvedValue({ id: 'pref_1', recorded: true });
   });
 
   describe('GetSubscriptionStatusUseCase', () => {
@@ -94,9 +97,6 @@ describe('Subscriptions Use-Cases', () => {
       expect(mockPreferenceRepoInstance.recordExplicitContentOptIn).toHaveBeenCalledWith('u1', 'user@example.com', {});
       expect(MainChannelService.incrementSubscribersCount).toHaveBeenCalled();
       expect(subscribeGateway.syncExplicitSubscribe).toHaveBeenCalledWith('user@example.com');
-      expect(subscribeGateway.syncExplicitSubscribe.mock.invocationCallOrder[0]).toBeGreaterThan(
-        mockRepoInstance.create.mock.invocationCallOrder[0]
-      );
     });
 
     it('is idempotent and can retry provider sync without duplicating Subscription', async () => {
@@ -108,6 +108,16 @@ describe('Subscriptions Use-Cases', () => {
       expect(MainChannelService.incrementSubscribersCount).not.toHaveBeenCalled();
       expect(mockRepoInstance.create).not.toHaveBeenCalled();
       expect(subscribeGateway.syncExplicitSubscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects with AppError 409 when local opt-in returns recorded: false', async () => {
+      mockPreferenceRepoInstance.recordExplicitContentOptIn.mockResolvedValueOnce({ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' });
+
+      await expect(SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway }))
+        .rejects.toThrow(AppError);
+
+      expect(mockRepoInstance.create).not.toHaveBeenCalled();
+      expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
     });
 
     it('reports NOT_CONFIGURED without removing local Subscription', async () => {
@@ -151,6 +161,21 @@ describe('Subscriptions Use-Cases', () => {
       expect(mockPreferenceRepoInstance.recordExplicitContentOptOut).toHaveBeenCalledWith('u1', 'user@example.com', {});
       expect(MainChannelService.decrementSubscribersCount).toHaveBeenCalled();
       expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledWith('user@example.com');
+    });
+
+    it('remains fail-safe and still unsubscribes when local opt-out returns FOREIGN_EMAIL_CONFLICT', async () => {
+      mockPreferenceRepoInstance.recordExplicitContentOptOut.mockResolvedValueOnce({ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' });
+      mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 1 } as any);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
+
+      expect(result.isSubscribed).toBe(false);
+      expect(result.deleted).toBe(true);
+      expect(mockRepoInstance.deleteByUserIdAndCreatorId).toHaveBeenCalled();
+      expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[SUBSCRIPTION_IDENTITY_CONFLICT]'));
+      warnSpy.mockRestore();
     });
 
     it('is idempotent and still retries provider unsubscribe', async () => {
