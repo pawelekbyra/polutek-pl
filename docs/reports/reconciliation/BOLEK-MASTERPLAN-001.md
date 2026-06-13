@@ -1,6 +1,6 @@
 # RECONCILIATION REPORT — BOLEK-MASTERPLAN-001
 
-Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
+Status: PROPOSED_CANONICAL — PROPOSED — becomes canonical after Bolek MERGE and repository merge
 Date: 2026-06-13
 Prepared by: Governance Documentation Builder
 Integrator review: Bolek — pending
@@ -23,11 +23,11 @@ Establish the durable repository memory, governance model, and technical masterp
 
 ## 4. Reconciliation Findings
 
-### 4.1. Governance Established
+### 4.1. Governance Proposed
 - Roles defined: **Bolek** (Orchestrator), **Paweł** (Owner/Operator).
 - `docs/governance/BOLEK-OPERATING-MODEL.md` created.
 
-### 4.2. Architecture Formalized
+### 4.2. Architecture Invariants Proposed
 - `docs/architecture/CORE-INVARIANTS.md` created to protect the `Payment != PatronGrant != Subscription` DNA.
 - Source of truth for access confirmed as `active PatronGrant`.
 
