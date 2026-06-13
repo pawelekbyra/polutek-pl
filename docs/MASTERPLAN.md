@@ -43,7 +43,7 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 | Risk ID | Title | Evidence Class | Classification | Launch Impact |
 | --- | --- | --- | --- | --- |
-| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` (#899) | **BLOCKER** |
+| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` (#899) | **HISTORICAL BLOCKER — RESOLVED** |
 | `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE` | `AUDIT_COMPLETE / READY_FOR_BUILDER` | **HIGH** |
 | `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
 | `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
@@ -69,8 +69,11 @@ This is the proposed canonical entry point for the project's technical state, ri
 - **`PAYMENT-WEBHOOK-RESULT-001`**: Fix ignored Stripe webhook results (`AUDIT_COMPLETE / READY_FOR_BUILDER`).
 
 ### NEXT_CONFIRMED_TASK
-- **`LAUNCH-EMAIL-003`**: `MERGED / ACCEPTED` (PR #899).
 - **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: Fix Resend webhook deduplication race/ordering (`AUDIT_REPORTED / IMPLEMENTATION_NOT_STARTED / REVALIDATION_REQUIRED`).
+
+### RECENTLY_COMPLETED
+- **`LAUNCH-EMAIL-003`**: `MERGED / ACCEPTED` (PR #899)
+  - merge SHA `f7fc603183120895359e9e52464de2d01e100980`
 
 ### QUEUED_HIGH_PRIORITY
 - **`SECURE-UNSUBSCRIBE`**: Implement signed tokens and a functional public route (`CONFIRMED_GAP`).

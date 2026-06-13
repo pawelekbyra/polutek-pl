@@ -1,6 +1,6 @@
 # Post-Merge Reconciliation: LAUNCH-EMAIL-003
 
-Status: APPROVED_CANONICAL
+Status: READY_FOR_INDEPENDENT_REVIEW
 Reconciliation ID: POST-MERGE-LAUNCH-EMAIL-003
 Date: 2026-06-13
 Baseline Main SHA: `f7fc603183120895359e9e52464de2d01e100980`
@@ -43,13 +43,22 @@ The following canonical documents were synchronized:
 - **Status:** `AUDIT_COMPLETE / READY_FOR_BUILDER`
 - **Focus:** Fixing ignored domain use case failure results in Stripe webhook orchestration.
 
-## 6. Launch Status
+## 6. Control-plane guard scope expansion
+
+Authorized by Bolek during independent review because the existing script hardcoded the previous current ticket.
+
+**Result:**
+The script now validates current-ticket markers dynamically and does not hardcode `PAYMENT-WEBHOOK-RESULT-001`.
+
+## 7. Launch Status
 
 - **Public Launch:** **NO_GO**
 - **Evidence Gap:** Production environment verification and operator evidence are still missing.
+- **Production Evidence:** `f7fc603183120895359e9e52464de2d01e100980` is verified `READY` (`VERCEL_PRODUCTION_EVIDENCE`). This does not infer correct runtime behavior or launch readiness.
 
-## 7. Validation
+## 8. Validation
 
 - `git diff --check`: PASS
+- `node scripts/check-control-plane-docs.mjs`: PASS
 - `npm run quality:architecture-boundaries`: PASS
 - Control-plane consistency: Exactly one current executable ticket declared.

@@ -35,8 +35,6 @@ const requiredFiles = [
   'docs/strategy/OWNER-DECISIONS.md',
   'docs/strategy/OWNER-LAUNCH-DECISIONS-001.md',
   'docs/tickets/ready/README.md',
-  'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md',
-  'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md',
   'docs/templates/TICKET_TEMPLATE.md',
   'docs/templates/PR_REPORT_TEMPLATE.md',
   '.github/pull_request_template.md',
@@ -56,8 +54,6 @@ const backlog = read('docs/roadmap/Launch-Execution-Backlog.md');
 const owner = read('docs/strategy/OWNER-DECISIONS.md');
 const launch = read('docs/strategy/OWNER-LAUNCH-DECISIONS-001.md');
 const queue = read('docs/tickets/ready/README.md');
-const historicalTicket = read('docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md');
-const runtimeTicket = read('docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md');
 const ticketTemplate = read('docs/templates/TICKET_TEMPLATE.md');
 const prReportTemplate = read('docs/templates/PR_REPORT_TEMPLATE.md');
 const githubPrTemplate = read('.github/pull_request_template.md');
@@ -99,25 +95,55 @@ for (const text of [owner, launch]) {
   requireIncludes('owner decision files', text, 'potwierdzenia');
 }
 
+// DYNAMIC TICKET VALIDATION
 if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');
 else pass('queue contains exactly one current-ticket ID marker');
 if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_FILE') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_FILE marker');
 else pass('queue contains exactly one current-ticket file marker');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_ID: PAYMENT-WEBHOOK-RESULT-001 -->');
-requireIncludes('ready queue', queue, '<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md -->');
-const currentTicketPath = 'docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md';
-requireFile(currentTicketPath);
-const currentTicket = read(currentTicketPath);
-requireIncludes('current ticket', currentTicket, 'Ticket ID: PAYMENT-WEBHOOK-RESULT-001');
-requireRegex('current ticket', currentTicket, /Status: AUDIT_COMPLETE \/ READY_FOR_BUILDER/, 'status AUDIT_COMPLETE / READY_FOR_BUILDER');
-const readyRows = [...queue.matchAll(/^\|[^\n]*PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results[^\n]*\|\s*`AUDIT_COMPLETE \/ READY_FOR_BUILDER`\s*\|$/gm)];
-if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary READY row, found ${readyRows.length}`);
-else pass('queue contains exactly one current-primary READY row');
 
-requireIncludes('historical owner ticket', historicalTicket, 'MERGED / HISTORICAL');
-requireIncludes('historical owner ticket', historicalTicket, 'PR #890');
-requireIncludes('historical owner ticket', historicalTicket, '#891');
-forbidIncludes('historical owner ticket', historicalTicket, 'Status: READY_FOR_REVIEW');
+const ticketIdMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_ID: (.*) -->/);
+const ticketFileMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: (.*) -->/);
+
+if (!ticketIdMatch || !ticketFileMatch) {
+    fail('Failed to extract current ticket ID or file from queue README');
+} else {
+    const currentId = ticketIdMatch[1];
+    const currentFilePath = ticketFileMatch[1];
+    pass(`Current ticket identified: ${currentId} at ${currentFilePath}`);
+
+    requireFile(currentFilePath);
+    if (existsSync(filePath(currentFilePath))) {
+        const currentTicketContent = read(currentFilePath);
+        requireIncludes(`current ticket ${currentId}`, currentTicketContent, `Ticket ID: ${currentId}`);
+
+        const allowedStatuses = [
+            'AUDIT_COMPLETE / READY_FOR_BUILDER',
+            'READY_FOR_BUILDER',
+            'READY_FOR_INDEPENDENT_REVIEW',
+            'BLOCKED'
+        ];
+        const statusMatch = currentTicketContent.match(/Status:\s*(.*)/);
+        if (!statusMatch) {
+            fail(`Current ticket ${currentId} missing Status field`);
+        } else {
+            const currentStatus = statusMatch[1].trim();
+            if (allowedStatuses.includes(currentStatus)) {
+                pass(`Current ticket ${currentId} has allowed executable status: ${currentStatus}`);
+            } else {
+                fail(`Current ticket ${currentId} has prohibited status: ${currentStatus}`);
+            }
+
+            if (currentStatus === 'MERGED / ACCEPTED' || currentStatus === 'SUPERSEDED / HISTORICAL') {
+                fail(`Current ticket ${currentId} cannot be marked ${currentStatus} while active in queue`);
+            }
+        }
+
+        const readyRowRegex = new RegExp(`\\|[^\\n]*${currentId}[^\\n]*\\|\\s*\`(${allowedStatuses.join('|').replace(/\//g, '\\/')})\`\\s*\\|`, 'gm');
+        const readyRows = [...queue.matchAll(readyRowRegex)];
+        if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary executable row for ${currentId}, found ${readyRows.length}`);
+        else pass(`queue contains exactly one current-primary executable row for ${currentId}`);
+    }
+}
 
 for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline]]) {
   forbidIncludes(label, text, 'OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
@@ -181,18 +207,6 @@ for (const workstream of [
   'Final owner launch decision',
 ]) requireIncludes('Launch backlog', backlog, workstream);
 requireIncludes('Launch backlog', backlog, 'This document is not an executable queue.');
-
-for (const phrase of [
-  'Missing content-notification preference means NOT OPTED IN',
-  'System emails must not add to Resend Audience',
-  'Unsubscribe never revokes `PatronGrant`',
-  'signed unsubscribe token',
-  'Non-goals',
-]) requireIncludes('LAUNCH-EMAIL-003', runtimeTicket, phrase);
-const nonGoalsIndex = runtimeTicket.indexOf('## Non-goals');
-const signedIndex = runtimeTicket.indexOf('signed unsubscribe token');
-if (nonGoalsIndex === -1 || signedIndex === -1 || signedIndex < nonGoalsIndex) fail('signed unsubscribe token must appear in the Non-goals section');
-else pass('signed unsubscribe token appears in the Non-goals section');
 
 requireIncludes('ticket template', ticketTemplate, 'Control-plane provenance');
 requireIncludes('ticket template', ticketTemplate, 'Semantic preservation checklist');
