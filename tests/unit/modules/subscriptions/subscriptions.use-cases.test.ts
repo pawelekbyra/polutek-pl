@@ -139,6 +139,21 @@ describe('Subscriptions Use-Cases', () => {
       expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
     });
 
+    it('handles the by-userId foreign email conflict by throwing 409 and avoiding side effects', async () => {
+       // Proof that SubscribeUseCase handles ANY recorded: false from the repository as a 409
+       mockPreferenceRepoInstance.recordExplicitContentOptIn.mockResolvedValue({
+         id: null,
+         recorded: false,
+         reason: 'FOREIGN_EMAIL_CONFLICT'
+       });
+
+       const promise = SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
+
+       await expect(promise).rejects.toMatchObject({ statusCode: 409 });
+       expect(mockRepoInstance.create).not.toHaveBeenCalled();
+       expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
+    });
+
     it('is idempotent and can retry provider sync without duplicating Subscription', async () => {
       mockRepoInstance.findByUserIdAndCreatorId.mockResolvedValue({ id: 's1', createdAt: new Date() } as any);
 

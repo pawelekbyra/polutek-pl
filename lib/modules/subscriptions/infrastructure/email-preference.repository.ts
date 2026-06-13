@@ -42,6 +42,12 @@ export class EmailPreferenceRepository {
     const byUserId = await db.emailPreference.findUnique({ where: { userId } });
     if (byUserId) {
       const emailConflict = byUserId.email !== email && (await db.emailPreference.findUnique({ where: { email } }));
+
+      // If the email belongs to another registered user, it's a conflict for opt-in
+      if (emailConflict && emailConflict.userId && emailConflict.userId !== userId && consentData.marketingEmails) {
+        return { id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' };
+      }
+
       try {
         const updated = await db.emailPreference.update({
           where: { id: byUserId.id },
