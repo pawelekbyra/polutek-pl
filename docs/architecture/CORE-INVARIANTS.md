@@ -1,6 +1,6 @@
 # CORE-INVARIANTS
 
-Status: CANONICAL — ESTABLISHED 2026-06-13
+Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
 
 This document records the non-negotiable architectural and product invariants for Polutek.pl. Any implementation deviating from these must be recorded as a risk or architectural drift.
 
@@ -34,19 +34,23 @@ Access **must NOT** be inferred from:
 
 ### 2.1. The "Place" Philosophy
 - Polutek.pl is a **single-creator place**, not a platform or marketplace.
-- It is based on **voluntary creator support** (tips/napiwki).
+- It is based on **voluntary creator support** (tips).
+- Preferred public terminology: `napiwek`, `dobrowolne wsparcie twórcy`.
+- Avoid categorical use of `darowizna`.
 - It is **not** a recurring paid subscription service.
 
 ### 2.2. Qualifying Support
-- **Qualifying Minimum:** 10 units of an active currency (PLN, EUR, USD, GBP, CHF).
+- **Qualifying Minimum:** 10 units of an active currency (PLN, EUR, USD, GBP).
+- **CHF:** Included only when enabled/active.
 - **Indefinite Access:** A qualifying tip grants patron access that is indefinite while the service and Patron Zone exist. (Do not use "Lifetime Access" in legal text).
 
-### 2.3. Refund and Dispute Targets
-- **Full Refund:** Revokes the linked `PatronGrant`.
+### 2.3. Refund and Dispute Lifecycle
+- **Full Refund:** Normally revokes the linked `PatronGrant`.
 - **Open Dispute:** Suspends access.
 - **Won Dispute:** Restores access.
 - **Lost Dispute/Chargeback:** Revokes access.
 - **Partial Refund:** Requires manual review.
+- **Revocation Grounds:** Serious rule violations may justify revocation. Criticism alone is not a reason to revoke.
 
 ## 3. Playback and Media Safety
 
@@ -61,7 +65,7 @@ Access **must NOT** be inferred from:
 
 ### 3.2. Provider Hierarchy
 - **Cloudflare Stream:** Primary provider for private playback.
-- **Legacy Storage:** R2, S3, and Vercel Blob are legacy/migration paths and are considered insecure for private patron playback.
+- **Legacy Storage:** Vercel Blob, S3, and R2 are legacy/migration paths. They must not be automatically assumed to be active production providers or categorically labeled as insecure without bounded context and evidence.
 
 ## 4. Email and Consent Hardening
 

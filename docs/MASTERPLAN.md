@@ -1,6 +1,6 @@
 # Polutek.pl Masterplan
 
-Status: CANONICAL — ESTABLISHED 2026-06-13
+Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
 Launch Status: **NO_GO**
 
 This is the canonical entry point for the project's technical state, risk register, and ordered backlog.
@@ -8,9 +8,10 @@ This is the canonical entry point for the project's technical state, risk regist
 ## 1. Baseline State
 
 - **Current Main SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
-- **Current Gate:** `LAUNCH-EMAIL-003` (Harden Email Consent Boundary)
-- **Active Ticket:** `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md`
-- **Candidate Corrective Work:** `branch: launch-email-003-corrective-17820333385633550787` (Pending Review)
+- **Current Control-Plane Ticket:** `LAUNCH-EMAIL-003`
+- **Current Gate:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
+- **Candidate State:** `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`.
+- **Next Builder Ticket:** NONE until independent review of the candidate gate is complete.
 
 ## 2. Evidence Taxonomy
 
@@ -30,21 +31,41 @@ This is the canonical entry point for the project's technical state, risk regist
 | `UNPROVEN` | A claim without supporting evidence. |
 | `STALE` | Evidence that is no longer current. |
 
-## 3. Risk Register
+## 3. Vercel Evidence Record
 
-| Risk ID | Title | Evidence Class | Affected Invariant | Launch Impact |
+- **Production Commit:** `f729c8068f681bceb28276db5899143dd3631c20` was `READY` (`VERCEL_PRODUCTION_EVIDENCE`).
+- **Build Incidents:** No failed production build incident was confirmed.
+- **Candidate Commit:** `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
+- **Runtime Anomaly:** `HOME_CONTENT_LOAD_...` with HTTP 200 observed (`PRODUCTION_RUNTIME_EVIDENCE`). Root cause `UNPROVEN`.
+- **Vercel Project Topology:** `OPERATOR_RECONCILIATION_REQUIRED`. Discrepancies noted between project locations (`polutek-pl` vs `kraufanding`).
+
+## 4. Risk Register
+
+| Risk ID | Title | Evidence Class | Classification | Launch Impact |
 | --- | --- | --- | --- | --- |
-| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `VERCEL_PREVIEW` | Consent Hardening | **BLOCKER** |
-| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY` | Access Source of Truth | **HIGH** |
-| `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `REPOSITORY` | Email Reliability | **MEDIUM** |
-| `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY` | Privacy/Compliance | **BLOCKER** |
-| `DELETION-GAP` | Account Deletion Incomplete | `REPOSITORY` | Data Privacy | **HIGH** |
-| `COPY-MISMATCH` | Terms/Privacy Mismatch | `OWNER_DECISION`| Legal Compliance | **BLOCKER** |
-| `BACKUP-UNPROVEN` | Missing Backup/Restore Drill | `OPERATOR` | Reliability | **BLOCKER** |
+| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
+| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **HIGH** |
+| `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
+| `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
+| `DELETION-GAP` | Account Deletion Incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
+| `COPY-MISMATCH` | Terms/Privacy Mismatch | `OWNER_DECISION`| `CONFIRMED_GAP` | **BLOCKER** |
+| `BACKUP-UNPROVEN` | Missing Backup/Restore Drill | `OPERATOR_EVIDENCE` | `PRODUCTION_EVIDENCE_MISSING` | **BLOCKER** |
+| `EMAIL-TEMPLATE-001` | Inactive Template Runtime | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
+| `PRIVACY-SYNC` | Inventory vs Copy Sync | `OWNER_DECISION` | `CONFIRMED_GAP` | **BLOCKER** |
+| `PATRON-DNA-001` | Access Invariant Hardening | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **HIGH** |
+| `RELIABILITY-001` | Missing Outbox for Side Effects | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
+| `DEPLOY-DNA-001` | Deployment Validation Model | `UNPROVEN` | `REQUIRES_VERIFICATION` | **MEDIUM** |
+| `CONTROL-DNA-001` | Governance Traceability | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **MEDIUM** |
+| `HOME-ANOMALY` | Content Load Runtime Anomaly | `PRODUCTION_RUNTIME_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
+| `LEGACY-FALLBACK` | Allow Legacy Private Fallback | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **HIGH** |
+| `ARCH-DEBT` | Architecture Allowlist Ledger | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **LOW** |
+| `PII-LOGGING` | Unredacted PII in Logs | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **HIGH** |
+| `DATA-RETENTION` | Payload Retention Gaps | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
+| `PG-CONCURRENCY` | Postgres Transaction Races | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
 
-## 4. Ordered Backlog
+## 5. Ordered Backlog
 
-1. **Review & Accept `LAUNCH-EMAIL-003`** (Targeting P2002 and consent races).
+1. **Independent Review of Candidate Gate** (Commit `3911de9`).
 2. **`PAYMENT-WEBHOOK-RESULT-001`**: Ensure Stripe webhook failures are handled and not marked as success.
 3. **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: Fix Resend webhook deduplication race/ordering.
 4. **`SECURE-UNSUBSCRIBE`**: Implement signed tokens and a functional public route.
@@ -52,16 +73,6 @@ This is the canonical entry point for the project's technical state, risk regist
 6. **`ACCOUNT-DELETION-HARDENING`**: Ensure all PII and consents are cleared/anonymized.
 7. **`LEGAL-COPY-SYNC`**: Align public text with owner decisions and technical inventory.
 8. **`OPERATOR-EVIDENCE-PACK`**: Collect backup, restore, and provider configuration proof.
-
-## 5. Production & Operator Evidence Gaps
-
-The following are **NOT PROVEN** by repository code alone:
-- Production environment variable completeness.
-- Actual Upstash Redis usage/configuration.
-- Daily backup execution and 30-day retention.
-- Successful database restore drill.
-- Provider (Cloudflare, Resend, Stripe) production configuration.
-- Legal approval of Terms and Privacy Policy.
 
 ## 6. Discoverability Path
 

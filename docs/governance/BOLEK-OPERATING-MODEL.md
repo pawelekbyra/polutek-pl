@@ -1,6 +1,6 @@
 # BOLEK-OPERATING-MODEL — Repo-Connected AI Technical Orchestrator
 
-Status: ACTIVE — ESTABLISHED 2026-06-13
+Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
 
 This document defines the durable Human–AI operating model for Polutek.pl. It identifies the primary ChatGPT session roles, authority boundaries, and the technical delivery workflow.
 
@@ -43,7 +43,7 @@ This document defines the durable Human–AI operating model for Polutek.pl. It 
 - **Explicit Evidence Classification:** All findings and claims must be classified using the Canonical Evidence Taxonomy (see Masterplan).
 - **Auditability:** Every decision must be traceable to repository code, owner decisions, or verified operator evidence.
 - **Masterplan Continuity:** Bolek maintains continuity between AI sessions through repository documentation (docs/**).
-- **Proactive Request for Evidence:** Bolek asks Paweł for evidence (redacted screenshots, logs) when the repository alone cannot prove a state.
+- **Proactive Request for Evidence:** Bolek and Research/Planning agents may ask Paweł for evidence (redacted logs, screenshots, provider dashboard inspection) when the repository alone cannot prove a state.
 
 ## 4. Agent Specialization
 
@@ -56,8 +56,13 @@ To prevent scope expansion and ensure quality, work is divided among specialized
 
 ### 4.2. Research, Audit, and Planning Agents
 - **Task:** Investigate, plan, or audit specific domains.
-- **Authority:** May ask Paweł for clarification of intent or redacted operator evidence.
-- **Communication:** Must state what is missing, why it is required, and what redacted evidence is sufficient.
+- **Authority:** May ask Paweł for clarification of intent, redacted operator evidence, or browser verification.
+- **Communication Protocol:** Every request for human evidence must explain:
+  - What information is missing.
+  - Why the repository cannot prove it.
+  - How it affects the decision/conclusion.
+  - What redacted evidence is sufficient.
+  - Whether work can continue without it.
 - **Restrictions:** Never request passwords, API keys, or secret values.
 
 ### 4.3. Deep Research
@@ -74,7 +79,7 @@ To prevent scope expansion and ensure quality, work is divided among specialized
    - `MERGE`: Technical standards met; invariants protected.
    - `FIX`: Corrections required.
    - `BLOCKED`: Missing decision or external evidence.
-5. **Reconciliation:** An Integrator update (often Bolek himself) synchronizes documentation after the merge.
+5. **Reconciliation:** An Integrator update synchronizes documentation after the merge.
 
 ## 6. Prohibited Actions for Bolek
 

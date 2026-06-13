@@ -1,8 +1,9 @@
 # RECONCILIATION REPORT — BOLEK-MASTERPLAN-001
 
-Status: CANONICAL
+Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
 Date: 2026-06-13
-Actor: Bolek (Technical Orchestrator)
+Prepared by: Governance Documentation Builder
+Integrator review: Bolek — pending
 
 ## 1. Purpose
 Establish the durable repository memory, governance model, and technical masterplan for Polutek.pl. This report reconciles the historical state with the new AI-Human collaboration model.
@@ -18,7 +19,7 @@ Establish the durable repository memory, governance model, and technical masterp
 ## 3. Baseline Verification
 - **Current main SHA:** `f729c8068f681bceb28276db5899143dd3631c20`
 - **Baseline descent:** Verified as descendend from the known historical baseline.
-- **Candidate work:** Branch `launch-email-003-corrective-17820333385633550787` (commit `3911de9`) exists but is classified as `BRANCH_WITHOUT_PR` / `PENDING_REVIEW`. It is NOT merged.
+- **Candidate work:** Branch `launch-email-003-corrective-17820333385633550787` (commit `3911de9`) exists but is classified as `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`. It is NOT merged.
 
 ## 4. Reconciliation Findings
 
@@ -39,10 +40,10 @@ Establish the durable repository memory, governance model, and technical masterp
 - Removed or marked as historical any claims suggesting that `LAUNCH-EMAIL-003` was already accepted.
 - Clarified that `User.isPatron` and Clerk metadata are read-only caches, not access truth.
 
-## 5. Repository Evidence Summary
-- **Prisma Schema:** Confirms separate models for `Payment`, `PatronGrant`, and `Subscription`.
-- **Email Service:** Verified existing gaps in signed tokens and public unsubscribe routes.
-- **Vercel logs:** Observed `HOME_CONTENT_LOAD` anomalies (Production Runtime Anomaly).
+## 5. Evidence Summary
+- **REPOSITORY_EVIDENCE:** Prisma Schema confirms separate models for `Payment`, `PatronGrant`, and `Subscription`. Verified existing gaps in signed tokens and public unsubscribe routes in Email Service.
+- **VERCEL_PRODUCTION_EVIDENCE:** Production commit `f729c8068f681bceb28276db5899143dd3631c20` was `READY`.
+- **PRODUCTION_RUNTIME_EVIDENCE:** Observed `HOME_CONTENT_LOAD` anomalies (Production Runtime Anomaly) with HTTP 200.
 
 ## 6. Files Changed
 - `README.md` (updated with discoverability links)
@@ -55,14 +56,15 @@ Establish the durable repository memory, governance model, and technical masterp
 
 ## 7. Validation Results
 - `git diff --check`: Passed.
-- Internal links: Verified.
+- Internal link verification: `ls -l` confirmed paths.
 - Scope confirmation: Documents only. No runtime, schema, or test changes.
 
 ## 8. Unresolved Uncertainty
-- Production environment variables (requires Operator Evidence).
-- Upstash Redis status in production (requires Operator Evidence).
-- Exact legal wording for Terms/Privacy (requires Legal Review).
+- Production environment variables (`OPERATOR_EVIDENCE` required).
+- Upstash Redis status in production (`OPERATOR_EVIDENCE` required).
+- Exact legal wording for Terms/Privacy (`LEGAL_REVIEW` required).
+- Vercel Project Topology (`OPERATOR_RECONCILIATION_REQUIRED`).
 
 ## 9. Launch Status
 **Public Launch: NO_GO**
-Next Gate: Accept or fix `LAUNCH-EMAIL-003`.
+Next Gate: Independent review of candidate gate (Commit `3911de9`).

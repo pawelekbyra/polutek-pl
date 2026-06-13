@@ -6,11 +6,13 @@ Launch status: NO_GO
 
 ## Purpose
 
-This ticket is the sole new runtime ticket currently executable through `docs/tickets/ready/README.md`.
+This ticket is the current control-plane ticket.
 
-**Candidate Implementation:**
+**Current Gate:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
+
+**Candidate State:**
 - Branch: `launch-email-003-corrective-17820333385633550787`
-- Status: PENDING REVIEW
+- Status: `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`
 
 Primary invariant: system/transactional email delivery must never create, enable, restore or mutate content-notification consent.
 

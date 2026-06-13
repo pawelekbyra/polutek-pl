@@ -12,9 +12,9 @@ This index is the sole source for the next executable ticket. Dashboards, roadma
 
 The project is governed by the **Bolek Operating Model**. For state and risk details, see:
 - [Technical Masterplan](../../MASTERPLAN.md)
-- [Bolek Operating Model](../governance/BOLEK-OPERATING-MODEL.md)
+- [Bolek Operating Model](../../governance/BOLEK-OPERATING-MODEL.md)
 
-## Current executable ticket
+## Current Control-Plane Ticket
 
 ```txt
 LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
@@ -22,9 +22,9 @@ LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime b
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `NOT_ACCEPTED` |
+| Gate | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `PENDING_INDEPENDENT_REVIEW` |
 
-**Status Note:** Implementation exists in branch `launch-email-003-corrective-17820333385633550787` but remains `NOT_ACCEPTED` pending independent review by Bolek.
+**Current Status:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` is required. **Next Builder ticket: NONE** until this review is complete.
 
 Only the row above is the current-primary executable row.
 
