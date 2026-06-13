@@ -1,18 +1,21 @@
 # LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
 
-Status: NOT_ACCEPTED
+Status: MERGED / ACCEPTED
 Ticket ID: LAUNCH-EMAIL-003
 Launch status: NO_GO
 
+## Verification Evidence
+
+- **Accepted PR:** #899
+- **Reviewed head:** `0fce5a0b2fc4bb0ae965ff16b71e95d91fcf4f6a`
+- **Merge SHA:** `f7fc603183120895359e9e52464de2d01e100980`
+- **Bolek verdict:** `MERGE`
+- **Evidence:** `REPOSITORY_EVIDENCE + AUTOMATED_TEST_EVIDENCE`
+- **Production evidence:** none added
+
 ## Purpose
 
-This ticket is the current control-plane ticket.
-
-**Current Gate:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`.
-
-**Candidate State:**
-- Branch: `launch-email-003-corrective-17820333385633550787`
-- Status: `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`
+This ticket hardened the email consent boundary to ensure system/transactional email delivery never creates or mutates content-notification consent.
 
 Primary invariant: system/transactional email delivery must never create, enable, restore or mutate content-notification consent.
 

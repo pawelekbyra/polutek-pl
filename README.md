@@ -83,7 +83,7 @@ The full non-executable map of remaining launch work is maintained in:
 - Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
 - Phase gates: `docs/roadmap/Phase-Gates.md`
 - Reconciliation report index: `docs/reports/reconciliation/README.md`
-- Current reconciliation report: `docs/reports/reconciliation/BOLEK-MASTERPLAN-001.md`
+- Current reconciliation report: `docs/reports/reconciliation/POST-MERGE-LAUNCH-EMAIL-003.md`
 - Ticket queue: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 

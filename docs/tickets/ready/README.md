@@ -5,8 +5,8 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: PAYMENT-WEBHOOK-RESULT-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md -->
 
 ## Current Execution Gate
 
@@ -17,21 +17,22 @@ The project is governed by the **Bolek Operating Model**. For state and risk det
 ## Current Control-Plane Ticket
 
 ```txt
-LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
+PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Gate | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `PENDING_INDEPENDENT_REVIEW` |
+| Gate | PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results | `docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md` | `AUDIT_COMPLETE / READY_FOR_BUILDER` |
 
-**Current Status:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` is required. **Next Builder ticket: NONE** until this review is complete.
+**Current Status:** Verified repository evidence confirms that Stripe webhook orchestration invokes domain use cases but ignores failure results. **Next Builder ticket: PAYMENT-WEBHOOK-RESULT-001**.
 
 Only the row above is the current-primary executable row.
 
-## Historical owner-decision consolidation
+## Historical executable tickets
 
 | Ticket | Status | Evidence |
 | --- | --- | --- |
+| LAUNCH-EMAIL-003 | `MERGED / ACCEPTED` | PR #899; merge SHA `f7fc603183120895359e9e52464de2d01e100980` |
 | OWNER-LAUNCH-DECISIONS-001 | `MERGED / HISTORICAL` | PR #890; corrective PR #891 |
 
 `docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` is retained as historical evidence only. It is not the current executable ticket.
