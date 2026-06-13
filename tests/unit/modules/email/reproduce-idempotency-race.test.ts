@@ -15,6 +15,7 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     broadcastEmail: {
       update: vi.fn(),
@@ -28,6 +29,7 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     inboundEmail: {
       create: vi.fn(),
     },
+    $transaction: vi.fn((cb) => cb(prismaMock)),
   };
 
   const ctx = createAppContext({
@@ -60,7 +62,8 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     // Let's simulate that the first call is still PROCESSING or already PROCESSED.
     prismaMock.emailEvent.findUnique.mockResolvedValue({
         providerEventId: 'svix_123',
-        status: WebhookEventStatus.PROCESSED
+        status: WebhookEventStatus.PROCESSED,
+        type: 'email.sent'
     });
 
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
@@ -68,6 +71,7 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
         broadcastEmailId: 'b1',
         status: 'PENDING'
     });
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
 
     const payload = {
       type: 'email.sent',

@@ -58,12 +58,7 @@ export async function handleResendWebhook(
 
     if (lockStatus === 'CONFLICT') {
         // Another process is currently handling this event
-        return ok({
-            received: true,
-            accepted: true,
-            duplicate: true,
-            idempotency: "available"
-        });
+        return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry."));
     }
   }
 
@@ -86,10 +81,15 @@ export async function handleResendWebhook(
     if (!supportedTypes.includes(type)) {
       logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
       if (providerEventId) {
-        await lockService.releaseWithSuccess(providerEventId, {
-            resendEmailId,
-            email: data.to?.[0]
-        });
+        try {
+          await lockService.releaseWithSuccess(providerEventId, {
+              resendEmailId,
+              // email: data.to?.[0] // Privacy: redacted
+          });
+        } catch (releaseError) {
+          logger.warn(`[handleResendWebhook] Failed to release lock with success for unsupported event ${providerEventId}`, releaseError);
+          // Don't fail the overall operation just because lock release failed for an ignored event
+        }
       }
       return ok({
           received: true,
@@ -122,6 +122,7 @@ export async function handleResendWebhook(
             await updateRecipientStatus(ctx, resendEmailId, 'CLICKED', { clickedAt: new Date() });
             break;
           case 'email.unsubscribed':
+            // Redact email in switch/case log context if any were added, but we don't log it here.
             await handleUnsubscribe(ctx, data.to?.[0]);
             break;
           case 'email.received':
@@ -132,10 +133,19 @@ export async function handleResendWebhook(
 
     // 4. Success Release
     if (providerEventId) {
-        await lockService.releaseWithSuccess(providerEventId, {
-            resendEmailId,
-            email: data.to?.[0]
-        });
+        try {
+            await lockService.releaseWithSuccess(providerEventId, {
+                resendEmailId,
+                // We could link to recipientId if we had it easily available here,
+                // but avoiding raw email is the priority.
+            });
+        } catch (releaseError) {
+            logger.error(`[handleResendWebhook] Critical failure: could not release lock with success for ${providerEventId}`, releaseError);
+            // If we can't mark it as PROCESSED, it might be retried.
+            // In some systems, we might still return OK if the domain logic committed.
+            // But following audit 6, we should ensure it cannot produce a misleading result.
+            return fail(new EmailError("Failed to finalize event processing (lock release failure)"));
+        }
     }
 
     return ok({
@@ -148,7 +158,15 @@ export async function handleResendWebhook(
     logger.error("[handleResendWebhook] Error processing webhook", error);
     // 5. Failure Release
     if (providerEventId) {
-        await lockService.releaseWithFailure(providerEventId, error.message || String(error));
+        try {
+            await lockService.releaseWithFailure(providerEventId, error.message || String(error));
+        } catch (releaseError) {
+            logger.error(`[handleResendWebhook] Secondary failure: could not release lock with failure for ${providerEventId}`, {
+                originalError: error.message,
+                releaseError
+            });
+            // Audit 6: preserve original error as returned failure
+        }
     }
     return fail(new EmailError(error.message || "Internal error during webhook handling"));
   }
@@ -168,36 +186,48 @@ const STATUS_PRIORITY: Record<string, number> = {
 };
 
 async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
+  const newPriority = STATUS_PRIORITY[status] || 0;
+
   // Transactional consistency for status check, update, and counter increment.
   // outer providerEventId lock handles same-event concurrency;
   // db.writeTransaction handles cross-event concurrency on the same recipient/aggregate.
   await ctx.db.writeTransaction(async (tx) => {
+    // 1. Fetch current state
     const recipient = await tx.broadcastEmailRecipient.findFirst({
         where: { resendEmailId }
     });
 
     if (!recipient) return;
 
-    // Terminal state protection and status hierarchy
     const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
-    const newPriority = STATUS_PRIORITY[status] || 0;
 
-    // Don't downgrade status (e.g., if DELIVERED arrives after OPENED due to race condition)
-    // And never overwrite terminal states (priority 100)
+    // 2. Priority check: don't downgrade or overwrite terminal states
     if (newPriority <= currentPriority && currentPriority !== 0) {
-        logger.info(`[handleResendWebhook] Skipping status update for ${resendEmailId}: ${recipient.status} -> ${status} (priority check)`);
+        logger.info(`[handleResendWebhook] Skipping stale or lower-priority event for recipient ${recipient.id}: ${recipient.status} -> ${status}`);
         return;
     }
 
-    await tx.broadcastEmailRecipient.update({
-        where: { id: recipient.id },
+    // 3. Atomic transition using updateMany with status check
+    // This ensures that even if another transaction committed a change between our findFirst and now,
+    // we only proceed if the status is still what we expected.
+    const { count } = await tx.broadcastEmailRecipient.updateMany({
+        where: {
+            id: recipient.id,
+            status: recipient.status as any
+        },
         data: {
             status: status as any,
             ...extraData
         }
     });
 
-    // Update aggregate counts in BroadcastEmail
+    if (count === 0) {
+        logger.info(`[handleResendWebhook] Concurrent update won for recipient ${recipient.id}, skipping counter increment.`);
+        return;
+    }
+
+    // 4. Update aggregate counts in BroadcastEmail
+    // We only reach here if THIS transaction actually performed the status transition.
     if (status === 'SENT' && recipient.status === 'PENDING') {
         await tx.broadcastEmail.update({
             where: { id: recipient.broadcastEmailId },

@@ -12,17 +12,20 @@ describe('EmailEventLockService - Real DB Idempotency', () => {
   const lockService = new EmailEventLockService({ read: prisma, write: prisma });
 
   beforeEach(async () => {
-    // Skip if DB is not reachable to avoid breaking unrelated CI environments
     try {
         await prisma.emailEvent.deleteMany({
             where: { providerEventId: { startsWith: 'test_evt_' } }
         });
     } catch (e) {
+        if (process.env.RUN_INTEGRATION_TESTS === 'true') {
+            console.error('CRITICAL: Integration tests requested but database connection failed.');
+            throw e;
+        }
         console.warn('Skipping Real DB test - connection failed');
     }
   });
 
-  const itWithDb = (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost:5432')) || process.env.RUN_INTEGRATION_TESTS === 'true' ? it : it.skip;
+  const itWithDb = process.env.RUN_INTEGRATION_TESTS === 'true' ? it : it.skip;
 
   itWithDb('enforces atomic idempotency via unique constraint', async () => {
     const providerEventId = 'test_evt_1';

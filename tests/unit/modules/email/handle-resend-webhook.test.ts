@@ -14,6 +14,7 @@ describe('handleResendWebhook use case - hardening', () => {
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     broadcastEmail: {
       update: vi.fn(),
@@ -27,6 +28,7 @@ describe('handleResendWebhook use case - hardening', () => {
     inboundEmail: {
       create: vi.fn(),
     },
+    $transaction: vi.fn((cb) => cb(prismaMock)),
   };
 
   const ctx = createAppContext({
@@ -36,6 +38,7 @@ describe('handleResendWebhook use case - hardening', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it('rejects malformed payload (not an object)', async () => {
@@ -157,8 +160,8 @@ describe('handleResendWebhook use case - hardening', () => {
     });
 
     expect(result.ok).toBe(true);
-    // update should NOT be called because CLICKED (priority 5) > OPENED (priority 4)
-    expect(prismaMock.broadcastEmailRecipient.update).not.toHaveBeenCalled();
+    // updateMany should NOT be called because CLICKED (priority 5) > OPENED (priority 4)
+    expect(prismaMock.broadcastEmailRecipient.updateMany).not.toHaveBeenCalled();
   });
 
   it('terminal status protection: DELIVERED does not overwrite BOUNCED', async () => {
@@ -181,8 +184,8 @@ describe('handleResendWebhook use case - hardening', () => {
     });
 
     expect(result.ok).toBe(true);
-    // update should NOT be called because BOUNCED (priority 100) > DELIVERED (priority 3)
-    expect(prismaMock.broadcastEmailRecipient.update).not.toHaveBeenCalled();
+    // updateMany should NOT be called because BOUNCED (priority 100) > DELIVERED (priority 3)
+    expect(prismaMock.broadcastEmailRecipient.updateMany).not.toHaveBeenCalled();
   });
 
   it('updates aggregate counts correctly on first SENT event', async () => {
@@ -192,6 +195,7 @@ describe('handleResendWebhook use case - hardening', () => {
           broadcastEmailId: 'b1',
           status: 'PENDING'
       });
+      prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await handleResendWebhook(ctx, {
           type: 'email.sent',
@@ -218,6 +222,7 @@ describe('handleResendWebhook use case - hardening', () => {
           broadcastEmailId: 'b1',
           status: 'SENT'
       });
+      prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await handleResendWebhook(ctx, {
           type: 'email.delivered',
@@ -232,7 +237,7 @@ describe('handleResendWebhook use case - hardening', () => {
 
       expect(result.ok).toBe(true);
       // It should update recipient to DELIVERED, but NOT increment BroadcastEmail.sentCount again
-      expect(prismaMock.broadcastEmailRecipient.update).toHaveBeenCalled();
+      expect(prismaMock.broadcastEmailRecipient.updateMany).toHaveBeenCalled();
       expect(prismaMock.broadcastEmail.update).not.toHaveBeenCalled();
   });
 });

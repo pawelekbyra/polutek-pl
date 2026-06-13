@@ -10,6 +10,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     broadcastEmail: {
       update: vi.fn(),
@@ -25,7 +26,8 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     },
     emailEvent: {
         update: vi.fn(),
-    }
+    },
+    $transaction: vi.fn((cb) => cb(prismaMock)),
   };
 
   const ctx = createAppContext({
@@ -36,7 +38,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1', status: 'PENDING' });
-    prismaMock.broadcastEmailRecipient.update.mockResolvedValue({});
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.broadcastEmail.update.mockResolvedValue({});
   });
 
@@ -64,7 +66,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     expect(EmailEventLockService.prototype.releaseWithSuccess).not.toHaveBeenCalled();
   });
 
-  it('stops processing if there is a lock conflict (concurrently processing)', async () => {
+  it('fails processing if there is a lock conflict (concurrently processing) to trigger provider retry', async () => {
     vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('CONFLICT');
 
     const result = await handleResendWebhook(ctx, {
@@ -79,9 +81,9 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
       },
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.duplicate).toBe(true);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+        expect(result.error.message).toContain('Event lock conflict');
     }
     expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
   });
@@ -104,7 +106,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
 
     expect(result.ok).toBe(true);
     expect(EmailEventLockService.prototype.releaseWithSuccess).toHaveBeenCalledWith('evt_123', expect.anything());
-    expect(prismaMock.broadcastEmailRecipient.update).toHaveBeenCalled();
+    expect(prismaMock.broadcastEmailRecipient.updateMany).toHaveBeenCalled();
   });
 
   it('releases lock with failure if business logic throws', async () => {
