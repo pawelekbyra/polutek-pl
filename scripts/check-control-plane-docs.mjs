@@ -35,6 +35,8 @@ const requiredFiles = [
   'docs/strategy/OWNER-DECISIONS.md',
   'docs/strategy/OWNER-LAUNCH-DECISIONS-001.md',
   'docs/tickets/ready/README.md',
+  'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md',
+  'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md',
   'docs/templates/TICKET_TEMPLATE.md',
   'docs/templates/PR_REPORT_TEMPLATE.md',
   '.github/pull_request_template.md',
@@ -57,6 +59,38 @@ const queue = read('docs/tickets/ready/README.md');
 const ticketTemplate = read('docs/templates/TICKET_TEMPLATE.md');
 const prReportTemplate = read('docs/templates/PR_REPORT_TEMPLATE.md');
 const githubPrTemplate = read('.github/pull_request_template.md');
+
+// HISTORICAL SAFEGUARDS
+const historicalOwnerFile = 'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md';
+const historicalOwner = read(historicalOwnerFile);
+requireIncludes('historical owner ticket', historicalOwner, 'MERGED / HISTORICAL');
+requireIncludes('historical owner ticket', historicalOwner, 'PR #890');
+requireIncludes('historical owner ticket', historicalOwner, '#891');
+forbidIncludes('historical owner ticket', historicalOwner, 'Status: READY_FOR_REVIEW');
+
+// ACCEPTED TICKET SAFEGUARDS
+const acceptedTicketFile = 'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md';
+const acceptedTicket = read(acceptedTicketFile);
+requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Ticket ID: LAUNCH-EMAIL-003');
+requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Status: MERGED / ACCEPTED');
+requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Accepted PR: #899');
+requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Merge SHA: f7fc603183120895359e9e52464de2d01e100980');
+requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Public launch: NO_GO');
+
+for (const phrase of [
+  'Missing content-notification preference means NOT OPTED IN',
+  'System emails must not add to Resend Audience',
+  'Unsubscribe never revokes `PatronGrant`',
+]) requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, phrase);
+
+const nonGoalsIndex = acceptedTicket.indexOf('## Non-goals');
+const signedIndex = acceptedTicket.indexOf('signed unsubscribe token');
+if (nonGoalsIndex !== -1 && signedIndex !== -1 && signedIndex > nonGoalsIndex) {
+    pass('signed unsubscribe token remains a Non-goal in LAUNCH-EMAIL-003');
+} else {
+    fail('signed unsubscribe token must appear in the Non-goals section of LAUNCH-EMAIL-003');
+}
+
 
 for (const phrase of [
   'Portable workspace baseline',
@@ -107,41 +141,47 @@ const ticketFileMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: (.*
 if (!ticketIdMatch || !ticketFileMatch) {
     fail('Failed to extract current ticket ID or file from queue README');
 } else {
-    const currentId = ticketIdMatch[1];
-    const currentFilePath = ticketFileMatch[1];
-    pass(`Current ticket identified: ${currentId} at ${currentFilePath}`);
+    const currentId = ticketIdMatch[1].trim();
+    const currentFilePath = ticketFileMatch[1].trim();
 
-    requireFile(currentFilePath);
-    if (existsSync(filePath(currentFilePath))) {
-        const currentTicketContent = read(currentFilePath);
-        requireIncludes(`current ticket ${currentId}`, currentTicketContent, `Ticket ID: ${currentId}`);
+    if (!currentId || !currentFilePath) {
+        fail('Current ticket ID or file path is empty');
+    } else {
+        pass(`Current ticket identified: ${currentId} at ${currentFilePath}`);
+        requireFile(currentFilePath);
+        if (existsSync(filePath(currentFilePath))) {
+            const currentTicketContent = read(currentFilePath);
+            requireIncludes(`current ticket ${currentId}`, currentTicketContent, `Ticket ID: ${currentId}`);
 
-        const allowedStatuses = [
-            'AUDIT_COMPLETE / READY_FOR_BUILDER',
-            'READY_FOR_BUILDER',
-            'READY_FOR_INDEPENDENT_REVIEW',
-            'BLOCKED'
-        ];
-        const statusMatch = currentTicketContent.match(/Status:\s*(.*)/);
-        if (!statusMatch) {
-            fail(`Current ticket ${currentId} missing Status field`);
-        } else {
-            const currentStatus = statusMatch[1].trim();
-            if (allowedStatuses.includes(currentStatus)) {
-                pass(`Current ticket ${currentId} has allowed executable status: ${currentStatus}`);
+            const allowedStatuses = [
+                'AUDIT_COMPLETE / READY_FOR_BUILDER',
+                'READY_FOR_BUILDER',
+                'READY_FOR_INDEPENDENT_REVIEW',
+                'BLOCKED'
+            ];
+            const statusMatch = currentTicketContent.match(/Status:\s*(.*)/);
+            if (!statusMatch) {
+                fail(`Current ticket ${currentId} missing Status field`);
             } else {
-                fail(`Current ticket ${currentId} has prohibited status: ${currentStatus}`);
+                const currentStatus = statusMatch[1].trim();
+                if (allowedStatuses.includes(currentStatus)) {
+                    pass(`Current ticket ${currentId} has allowed executable status: ${currentStatus}`);
+                } else {
+                    fail(`Current ticket ${currentId} has prohibited status: ${currentStatus}`);
+                }
+
+                if (currentStatus === 'MERGED / ACCEPTED' || currentStatus === 'SUPERSEDED / HISTORICAL') {
+                    fail(`Current ticket ${currentId} cannot be marked ${currentStatus} while active in queue`);
+                }
             }
 
-            if (currentStatus === 'MERGED / ACCEPTED' || currentStatus === 'SUPERSEDED / HISTORICAL') {
-                fail(`Current ticket ${currentId} cannot be marked ${currentStatus} while active in queue`);
-            }
+            const escapedId = currentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const statusRegex = allowedStatuses.map(s => s.replace(/\//g, '\\/')).join('|');
+            const readyRowRegex = new RegExp(`\\|[^\\n]*${escapedId}[^\\n]*\\|\\s*\`(${statusRegex})\`\\s*\\|`, 'gm');
+            const readyRows = [...queue.matchAll(readyRowRegex)];
+            if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary executable row for ${currentId}, found ${readyRows.length}`);
+            else pass(`queue contains exactly one current-primary executable row for ${currentId}`);
         }
-
-        const readyRowRegex = new RegExp(`\\|[^\\n]*${currentId}[^\\n]*\\|\\s*\`(${allowedStatuses.join('|').replace(/\//g, '\\/')})\`\\s*\\|`, 'gm');
-        const readyRows = [...queue.matchAll(readyRowRegex)];
-        if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary executable row for ${currentId}, found ${readyRows.length}`);
-        else pass(`queue contains exactly one current-primary executable row for ${currentId}`);
     }
 }
 

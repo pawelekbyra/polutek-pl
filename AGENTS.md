@@ -16,7 +16,7 @@ Jeżeli prompt konfliktuje z tym plikiem, agent ma zatrzymać się i zgłosić k
 
 Aktualny stage operacyjny: current `main` zawiera znaczące scalone fundamenty X1/X2/X3/X4/X5 oraz standardy X6/X7, ale produkt nie jest public-launch certified. Agentom nie wolno cofać dokumentów do stanu "tylko X0 aktywne" ani deklarować launch-ready bez X7 evidence.
 
-Mandatory Rule: `POST_MERGE_RECONCILIATION_REQUIRED` (see `docs/governance/BOLEK-OPERATING-MODEL.md`). Every implementation task must be preceded by a verification of canonical documentation state.
+Mandatory Rules: `POST_MERGE_RECONCILIATION_REQUIRED` and `AUTOMATIC_BOLEK_MERGE_AUTHORIZED` (see `docs/governance/BOLEK-OPERATING-MODEL.md`). Every implementation task must be preceded by a verification of canonical documentation state.
 
 ## 1. Tożsamość produktu
 

@@ -53,6 +53,40 @@ This document defines the durable Human–AI operating model for Polutek.pl. It 
 7. When canonical control-plane files are stale, the next Builder task is blocked until reconciliation is complete.
 8. Audit completion and implementation completion must remain separate statuses.
 
+### Rule: AUTOMATIC_BOLEK_MERGE_AUTHORIZED
+
+The Product Owner authorizes Bolek to automatically squash-merge a pull request without requesting additional confirmation when all conditions are satisfied:
+
+1. Bolek independently reviewed the current PR head.
+2. Bolek’s verdict is exactly `MERGE`.
+3. The PR targets `main`.
+4. The head SHA has not changed since review.
+5. Required checks are successful.
+6. The PR is mergeable, is not a draft and has no unresolved blocking review threads.
+7. The changed-file scope matches the approved ticket.
+8. Merge uses squash and supplies `expected_head_sha`.
+
+**Automatic merge is strictly prohibited when:**
+- verdict is `FIX` or `BLOCKED`;
+- PR is superseded;
+- head changed after review;
+- required checks failed or are pending;
+- unresolved blocking review threads exist;
+- force merge or check bypass would be required.
+
+Bolek is authorized to close a PR marked `SUPERSEDED / MUST_NOT_MERGE` when the replacing PR is identified.
+
+**Post-Merge Protocol:**
+- record the merge SHA;
+- block the next implementation Builder until required post-merge reconciliation is complete.
+
+**Separate human approval remains required for:**
+- destructive migrations or production-data operations;
+- secrets, DNS, payment-provider or production-provider configuration;
+- manual production deployments;
+- legal and business decisions;
+- bypassing checks or force merge.
+
 Use explicit status vocabulary:
 - `AUDIT_COMPLETE / IMPLEMENTATION_NOT_STARTED`
 - `READY_FOR_BUILDER`

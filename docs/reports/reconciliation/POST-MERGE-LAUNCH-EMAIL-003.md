@@ -1,9 +1,11 @@
 # Post-Merge Reconciliation: LAUNCH-EMAIL-003
 
-Status: READY_FOR_INDEPENDENT_REVIEW
+Builder submission status: READY_FOR_INDEPENDENT_REVIEW
+Canonicality rule: This reconciliation becomes canonical only after Bolek issues MERGE and this PR is actually merged into main.
+Reconciliation PR: #900
 Reconciliation ID: POST-MERGE-LAUNCH-EMAIL-003
 Date: 2026-06-13
-Baseline Main SHA: `f7fc603183120895359e9e52464de2d01e100980`
+Pre-reconciliation baseline: `f7fc603183120895359e9e52464de2d01e100980`
 
 ## 1. Verified Merged State
 
@@ -50,13 +52,19 @@ Authorized by Bolek during independent review because the existing script hardco
 **Result:**
 The script now validates current-ticket markers dynamically and does not hardcode `PAYMENT-WEBHOOK-RESULT-001`.
 
-## 7. Launch Status
+## 7. Evidence terminology and authorization corrections
+
+- **Owner authorization:** Recorded `AUTOMATIC_BOLEK_MERGE_AUTHORIZED` in governance.
+- **Baseline terminology:** Masterplan now uses "Accepted Implementation Baseline SHA" to avoid stale state.
+- **Guard behavior:** Dynamic current-ticket validation implemented with preserved historical and accepted-ticket safeguards.
+
+## 8. Launch Status
 
 - **Public Launch:** **NO_GO**
 - **Evidence Gap:** Production environment verification and operator evidence are still missing.
 - **Production Evidence:** `f7fc603183120895359e9e52464de2d01e100980` is verified `READY` (`VERCEL_PRODUCTION_EVIDENCE`). This does not infer correct runtime behavior or launch readiness.
 
-## 8. Validation
+## 9. Validation
 
 - `git diff --check`: PASS
 - `node scripts/check-control-plane-docs.mjs`: PASS

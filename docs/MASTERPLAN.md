@@ -7,7 +7,11 @@ This is the proposed canonical entry point for the project's technical state, ri
 
 ## 1. Baseline State
 
-- **Current Main SHA:** `f7fc603183120895359e9e52464de2d01e100980`
+- **Accepted Implementation Baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980`
+  - *This SHA identifies the implementation baseline accepted through PR #899.*
+  - *The live current main head must be read from GitHub.*
+  - *Reconciliation and documentation merges may advance main without changing the accepted implementation baseline.*
+  - *No documentation file should claim to contain an eternally current Git head SHA.*
 - **Current Control-Plane Ticket:** `PAYMENT-WEBHOOK-RESULT-001`
 - **Current Gate:** `PAYMENT-WEBHOOK-RESULT-001`
 - **Current State:** `AUDIT_COMPLETE / READY_FOR_BUILDER`.
