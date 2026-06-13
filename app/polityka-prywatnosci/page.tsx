@@ -1,4 +1,5 @@
 import React from 'react';
+export const dynamic = 'force-dynamic';
 import { APP_NAME } from '@/lib/constants';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';

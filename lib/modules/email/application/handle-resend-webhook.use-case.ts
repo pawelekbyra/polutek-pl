@@ -4,6 +4,7 @@ import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
 import { EmailEventLockService } from "../infrastructure/email-event-lock.service";
+import { isPrismaErrorCode } from "@/lib/utils/db";
 
 /**
  * handleResendWebhook use case.
@@ -167,47 +168,48 @@ const STATUS_PRIORITY: Record<string, number> = {
 };
 
 async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
-  // Use a transaction or at least ensure atomic check-and-update if possible.
-  // Given we have an outer lock on providerEventId, we are safe from same-event concurrency.
-  // But we still need status priority protection.
+  // Transactional consistency for status check, update, and counter increment.
+  // outer providerEventId lock handles same-event concurrency;
+  // db.writeTransaction handles cross-event concurrency on the same recipient/aggregate.
+  await ctx.db.writeTransaction(async (tx) => {
+    const recipient = await tx.broadcastEmailRecipient.findFirst({
+        where: { resendEmailId }
+    });
 
-  const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
-    where: { resendEmailId }
-  });
+    if (!recipient) return;
 
-  if (!recipient) return;
+    // Terminal state protection and status hierarchy
+    const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
+    const newPriority = STATUS_PRIORITY[status] || 0;
 
-  // Terminal state protection and status hierarchy
-  const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
-  const newPriority = STATUS_PRIORITY[status] || 0;
+    // Don't downgrade status (e.g., if DELIVERED arrives after OPENED due to race condition)
+    // And never overwrite terminal states (priority 100)
+    if (newPriority <= currentPriority && currentPriority !== 0) {
+        logger.info(`[handleResendWebhook] Skipping status update for ${resendEmailId}: ${recipient.status} -> ${status} (priority check)`);
+        return;
+    }
 
-  // Don't downgrade status (e.g., if DELIVERED arrives after OPENED due to race condition)
-  // And never overwrite terminal states (priority 100)
-  if (newPriority <= currentPriority && currentPriority !== 0) {
-      logger.info(`[handleResendWebhook] Skipping status update for ${resendEmailId}: ${recipient.status} -> ${status} (priority check)`);
-      return;
-  }
+    await tx.broadcastEmailRecipient.update({
+        where: { id: recipient.id },
+        data: {
+            status: status as any,
+            ...extraData
+        }
+    });
 
-  await ctx.prisma.broadcastEmailRecipient.update({
-    where: { id: recipient.id },
-    data: {
-      status: status as any,
-      ...extraData
+    // Update aggregate counts in BroadcastEmail
+    if (status === 'SENT' && recipient.status === 'PENDING') {
+        await tx.broadcastEmail.update({
+            where: { id: recipient.broadcastEmailId },
+            data: { sentCount: { increment: 1 } }
+        });
+    } else if (isError && currentPriority < 100) {
+        await tx.broadcastEmail.update({
+            where: { id: recipient.broadcastEmailId },
+            data: { errorCount: { increment: 1 } }
+        });
     }
   });
-
-  // Update aggregate counts in BroadcastEmail
-  if (status === 'SENT' && recipient.status === 'PENDING') {
-    await ctx.prisma.broadcastEmail.update({
-        where: { id: recipient.broadcastEmailId },
-        data: { sentCount: { increment: 1 } }
-    });
-  } else if (isError && currentPriority < 100) {
-    await ctx.prisma.broadcastEmail.update({
-        where: { id: recipient.broadcastEmailId },
-        data: { errorCount: { increment: 1 } }
-    });
-  }
 }
 
 async function handleUnsubscribe(ctx: AppContext, email: string) {
@@ -244,8 +246,13 @@ async function handleInboundEmail(ctx: AppContext, data: any) {
                 userId: user?.id
             }
         });
-    } catch (e: any) {
+    } catch (e: unknown) {
         // If it already exists, just log and continue
-        logger.info(`[handleResendWebhook] Inbound email ${data.email_id} already exists`);
+        if (isPrismaErrorCode(e, 'P2002')) {
+            logger.info(`[handleResendWebhook] Inbound email ${data.email_id} already exists (duplicate)`);
+            return;
+        }
+        // Rethrow other errors to fail the webhook processing and allow retry
+        throw e;
     }
 }

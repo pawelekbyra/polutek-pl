@@ -310,13 +310,15 @@ function createHarness() {
         const session = {
           id: `session_${state.sessions.length + 1}`,
           ...data,
-          createdAt: new Date('2026-06-12T12:00:00Z'),
+          createdAt: new Date('2026-06-13T12:00:00Z'),
           lastHeartbeatAt: null,
           firstPlayAt: null,
           totalWatchMs: 0,
           maxProgressMs: 0,
           durationMs: null,
           countedAsView: false,
+          videoId: data.videoId || data.video?.connect?.id,
+          userId: data.userId || null,
         };
         state.sessions.push(session);
         return session;
@@ -326,7 +328,10 @@ function createHarness() {
         const session = state.sessions.find((item) => item.id === where.id);
         if (!session) throw new Error(`Session not found: ${where.id}`);
         if (data.totalWatchMs?.increment) session.totalWatchMs += data.totalWatchMs.increment;
-        Object.assign(session, Object.fromEntries(Object.entries(data).filter(([_, value]) => typeof value !== 'object')));
+        // Handle countedAsView correctly
+        if (data.countedAsView !== undefined) session.countedAsView = data.countedAsView;
+        Object.assign(session, Object.fromEntries(Object.entries(data).filter(([k, value]) => k !== 'totalWatchMs' && typeof value !== 'object')));
+        return session;
       }),
     },
     videoPlaybackEvent: {
@@ -356,7 +361,7 @@ function createHarness() {
   const ctx = (userId?: string | null, type: 'user' | 'admin' | 'guest' | 'system' = userId ? 'user' : 'guest') => ({
     prisma: db,
     actor: type === 'guest' ? { type: 'guest' as const } : type === 'system' ? { type: 'system' as const } : { type, userId: userId! } as any,
-    now: () => new Date('2026-06-12T12:00:00Z'),
+    now: () => new Date('2026-06-13T12:00:00Z'),
     db: { read: db, writeTransaction: async (fn: any) => fn(db) },
   });
 
@@ -507,6 +512,9 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
       fingerprint: 'fingerprint_a',
       metadata: { playbackUrl: 'must be removed', token: 'must be removed', quality: '720p' },
     }, harness.ctx('user_a'));
+    if (!viewed.ok) {
+        console.error('recordPlaybackEventUseCase failed:', viewed.error);
+    }
     expect(viewed.ok).toBe(true);
     expect(harness.state.views).toHaveLength(1);
     expect(harness.state.playbackEvents[0].metadata).toEqual({ quality: '720p' });

@@ -697,7 +697,6 @@ model EmailEvent {
   @@index([resendEmailId])
   @@index([broadcastEmailId])
   @@index([email])
-  @@index([providerEventId])
 }
 
 model VideoPlaybackSession {

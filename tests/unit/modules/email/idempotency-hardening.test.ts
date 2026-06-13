@@ -146,4 +146,47 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
           expect(result.data.idempotency).toBe('best_effort');
       }
   });
+
+  describe('handleInboundEmail error handling', () => {
+    it('safely ignores P2002 duplicate inbound email', async () => {
+        vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ACQUIRED');
+        const p2002 = { code: 'P2002' };
+        prismaMock.inboundEmail.create.mockRejectedValue(p2002);
+
+        const result = await handleResendWebhook(ctx, {
+            type: 'email.received',
+            eventId: 'evt_recv_1',
+            data: {
+                email_id: 're_recv_1',
+                from: 'sender@example.com',
+                to: ['inbound@polutek.pl'],
+                subject: 'Hello',
+                created_at: new Date().toISOString(),
+            },
+        });
+
+        expect(result.ok).toBe(true);
+        expect(EmailEventLockService.prototype.releaseWithSuccess).toHaveBeenCalled();
+    });
+
+    it('propagates non-P2002 inbound email errors', async () => {
+        vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ACQUIRED');
+        prismaMock.inboundEmail.create.mockRejectedValue(new Error('Generic DB Error'));
+
+        const result = await handleResendWebhook(ctx, {
+            type: 'email.received',
+            eventId: 'evt_recv_2',
+            data: {
+                email_id: 're_recv_2',
+                from: 'sender@example.com',
+                to: ['inbound@polutek.pl'],
+                subject: 'Hello',
+                created_at: new Date().toISOString(),
+            },
+        });
+
+        expect(result.ok).toBe(false);
+        expect(EmailEventLockService.prototype.releaseWithFailure).toHaveBeenCalledWith('evt_recv_2', expect.stringContaining('Generic DB Error'));
+    });
+  });
 });

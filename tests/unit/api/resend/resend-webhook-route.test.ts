@@ -67,4 +67,23 @@ describe('Resend Webhook Route Contract', () => {
         })
     );
   });
+
+
+  it('rejects legacy webhook missing event ID in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env.RESEND_WEBHOOK_SECRET = 'test-secret';
+
+    const req = new NextRequest('http://localhost/api/webhooks/resend', {
+      method: 'POST',
+      headers: {
+        'x-resend-webhook-secret': 'test-secret',
+      },
+      body: JSON.stringify({ type: 'email.sent', data: { email_id: 're_123' } }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('Event ID required');
+  });
 });
