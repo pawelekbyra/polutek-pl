@@ -8,7 +8,13 @@ This index is the sole source for the next executable ticket. Dashboards, roadma
 <!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->
 <!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->
 
-## Current executable ticket
+## Current Execution Gate
+
+The project is governed by the **Bolek Operating Model**. For state and risk details, see:
+- [Technical Masterplan](../../MASTERPLAN.md)
+- [Bolek Operating Model](../../governance/BOLEK-OPERATING-MODEL.md)
+
+## Current Control-Plane Ticket
 
 ```txt
 LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
@@ -16,9 +22,11 @@ LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime b
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `READY` |
+| Gate | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `PENDING_INDEPENDENT_REVIEW` |
 
-Only the row above is the current-primary READY row.
+**Current Status:** Independent review of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45` is required. **Next Builder ticket: NONE** until this review is complete.
+
+Only the row above is the current-primary executable row.
 
 ## Historical owner-decision consolidation
 
