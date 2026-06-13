@@ -1,6 +1,6 @@
 # BOLEK-OPERATING-MODEL — Repo-Connected AI Technical Orchestrator
 
-Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
+Status: APPROVED_CANONICAL — becomes effective on repository merge
 
 This document defines the durable Human–AI operating model for Polutek.pl. It identifies the primary ChatGPT session roles, authority boundaries, and the technical delivery workflow.
 

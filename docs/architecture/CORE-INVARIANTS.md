@@ -1,6 +1,6 @@
 # CORE-INVARIANTS
 
-Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
+Status: APPROVED_CANONICAL — becomes effective on repository merge
 
 This document records the non-negotiable architectural and product invariants for Polutek.pl. Any implementation deviating from these must be recorded as a risk or architectural drift.
 

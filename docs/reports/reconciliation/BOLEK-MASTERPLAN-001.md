@@ -1,9 +1,9 @@
 # RECONCILIATION REPORT — BOLEK-MASTERPLAN-001
 
-Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
+Status: APPROVED_CANONICAL — becomes effective on repository merge
 Date: 2026-06-13
 Prepared by: Governance Documentation Builder
-Integrator review: Bolek — pending
+Integrator review: Bolek — MERGE approved
 
 ## 1. Purpose
 Establish the durable repository memory, governance model, and technical masterplan for Polutek.pl. This report reconciles the historical state with the new AI-Human collaboration model.
@@ -56,7 +56,7 @@ Establish the durable repository memory, governance model, and technical masterp
 
 ## 7. Validation Results
 - `git diff --check`: Passed.
-- Internal link verification: `ls -l` confirmed paths.
+- Internal link verification: Checked 9 relative links across 7 files, 0 failures found. (Command: grep -oP links + resolve relative target + test -e)
 - Scope confirmation: Documents only. No runtime, schema, or test changes.
 
 ## 8. Unresolved Uncertainty

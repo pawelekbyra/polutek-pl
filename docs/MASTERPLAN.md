@@ -1,6 +1,6 @@
 # Polutek.pl Masterplan
 
-Status: PROPOSED_CANONICAL — becomes canonical after Bolek MERGE and repository merge
+Status: APPROVED_CANONICAL — becomes effective on repository merge
 Launch Status: **NO_GO**
 
 This is the proposed canonical entry point for the project's technical state, risk register, and ordered backlog.
