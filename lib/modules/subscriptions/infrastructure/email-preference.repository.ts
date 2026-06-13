@@ -1,19 +1,12 @@
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { PrismaClient } from "@prisma/client";
+import { isPrismaErrorCode } from "@/lib/utils/db";
 
 export type EmailPreferenceResult = {
   id: string | null;
   recorded: boolean;
   reason?: 'FOREIGN_EMAIL_CONFLICT';
 };
-
-function isPrismaUniqueConstraintError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    (error as any).code === 'P2002'
-  );
-}
 
 export class EmailPreferenceRepository {
   constructor(private db: ReadDb) {}
@@ -45,7 +38,7 @@ export class EmailPreferenceRepository {
   ): Promise<EmailPreferenceResult> {
     const db = tx || (this.db as PrismaClient);
 
-    // Krok 1 — lookup po userId
+    // Step 1 — lookup by userId
     const byUserId = await db.emailPreference.findUnique({ where: { userId } });
     if (byUserId) {
       const emailConflict = byUserId.email !== email && (await db.emailPreference.findUnique({ where: { email } }));
@@ -60,7 +53,7 @@ export class EmailPreferenceRepository {
         });
         return { id: updated.id, recorded: true };
       } catch (error) {
-        if (isPrismaUniqueConstraintError(error)) {
+        if (isPrismaErrorCode(error, 'P2002')) {
           const fallback = await db.emailPreference.update({
             where: { id: byUserId.id },
             data: consentData,
@@ -72,7 +65,7 @@ export class EmailPreferenceRepository {
       }
     }
 
-    // Krok 2 — brak rekordu po userId, lookup po email
+    // Step 2 — no record by userId, lookup by email
     const byEmail = await db.emailPreference.findUnique({ where: { email } });
     if (byEmail) {
       if (!byEmail.userId || byEmail.userId === userId) {
@@ -84,7 +77,7 @@ export class EmailPreferenceRepository {
           });
           return { id: updated.id, recorded: true };
         } catch (error) {
-          if (isPrismaUniqueConstraintError(error)) {
+          if (isPrismaErrorCode(error, 'P2002')) {
             const retryByUserId = await db.emailPreference.findUnique({ where: { userId } });
             if (retryByUserId) {
               const fallback = await db.emailPreference.update({
@@ -96,12 +89,12 @@ export class EmailPreferenceRepository {
             }
             const retryByEmail = await db.emailPreference.findUnique({ where: { email } });
             if (retryByEmail && (!retryByEmail.userId || retryByEmail.userId === userId)) {
-               const fallback = await db.emailPreference.update({
-                  where: { id: retryByEmail.id },
-                  data: { userId, ...consentData },
-                  select: { id: true }
-               });
-               return { id: fallback.id, recorded: true };
+              const fallback = await db.emailPreference.update({
+                where: { id: retryByEmail.id },
+                data: { userId, ...consentData },
+                select: { id: true }
+              });
+              return { id: fallback.id, recorded: true };
             }
           }
           throw error;
@@ -110,7 +103,7 @@ export class EmailPreferenceRepository {
       return { id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' };
     }
 
-    // Krok 3 — brak obu rekordów, create
+    // Step 3 — no records found, create
     try {
       const created = await db.emailPreference.create({
         data: { userId, email, systemEmails: true, ...consentData },
@@ -118,7 +111,7 @@ export class EmailPreferenceRepository {
       });
       return { id: created.id, recorded: true };
     } catch (error) {
-      if (isPrismaUniqueConstraintError(error)) {
+      if (isPrismaErrorCode(error, 'P2002')) {
         const retryByUserId = await db.emailPreference.findUnique({ where: { userId } });
         if (retryByUserId) {
           const fallback = await db.emailPreference.update({

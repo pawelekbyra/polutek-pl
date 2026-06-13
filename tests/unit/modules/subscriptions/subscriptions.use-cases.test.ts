@@ -35,11 +35,27 @@ vi.mock('@/lib/modules/subscriptions/infrastructure/email-preference.repository'
   }),
 }));
 
+vi.mock('@/lib/logger', () => {
+  return {
+    createScopedLogger: vi.fn().mockReturnValue({
+      warn: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+    }),
+    logger: {
+      warn: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+    }
+  };
+});
+
 describe('Subscriptions Use-Cases', () => {
   const mockMainChannel = { id: 'c1', slug: 'polutek', subscribersCount: 10 };
   const mockActor = { type: 'user', userId: 'u1', isPatron: false };
   const mockCtx = {
     actor: mockActor,
+    requestId: 'req_123',
     db: {
       read: {},
       writeTransaction: vi.fn((cb) => cb({})),
@@ -177,23 +193,27 @@ describe('Subscriptions Use-Cases', () => {
       expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledWith('user@example.com');
     });
 
-    it('is fail-safe on FOREIGN_EMAIL_CONFLICT', async () => {
+    it('is fail-safe on FOREIGN_EMAIL_CONFLICT and uses structured logging', async () => {
       mockPreferenceRepoInstance.recordExplicitContentOptOut.mockResolvedValue({
         id: null,
         recorded: false,
         reason: 'FOREIGN_EMAIL_CONFLICT'
       });
       mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 1 } as any);
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
 
       expect(result.isSubscribed).toBe(false);
       expect(result.deleted).toBe(true);
       expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledWith('user@example.com');
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[SUBSCRIPTION_IDENTITY_CONFLICT]'));
-      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('user@example.com'));
-      warnSpy.mockRestore();
+
+      const { createScopedLogger } = await import('@/lib/logger');
+      expect(createScopedLogger).toHaveBeenCalledWith('req_123');
+      const logger = vi.mocked(createScopedLogger).mock.results[0].value;
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('[SUBSCRIPTION_IDENTITY_CONFLICT]'));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('userId=u1'));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('reason=FOREIGN_EMAIL_CONFLICT'));
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('user@example.com'));
     });
 
     it('is idempotent and still retries provider unsubscribe', async () => {
