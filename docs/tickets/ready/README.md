@@ -5,20 +5,22 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-EMAIL-003 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md -->
+The project is governed by the **Bolek Operating Model**. For state and risk details, see:
+- [Bolek Operating Model](../../governance/BOLEK-OPERATING-MODEL.md)
+- [Masterplan](../../MASTERPLAN.md)
 
-## Current executable ticket
+## Current Control-Plane Ticket
+`LAUNCH-EMAIL-003` — Harden email consent boundary and Resend Audience runtime behavior
 
-```txt
-LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior
-```
+## Current Gate
+**PENDING_INDEPENDENT_REVIEW** of candidate commit `3911de91e34e2b4cff6cffd8bc0583c2b9e0be45`
 
-| Role | Ticket | File | Status |
-| --- | --- | --- | --- |
-| Builder | LAUNCH-EMAIL-003 — Harden email consent boundary and Resend Audience runtime behavior | `docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md` | `READY` |
+## Candidate State
+- State: `BRANCH_WITHOUT_PR / PENDING_INDEPENDENT_REVIEW`
+- Branch: `launch-email-003-corrective-17820333385633550787`
 
-Only the row above is the current-primary READY row.
+## Next Builder Ticket
+**NONE** until Bolek completes the current review.
 
 ## Historical owner-decision consolidation
 
@@ -30,8 +32,6 @@ Only the row above is the current-primary READY row.
 
 ## Closed owner-decision blockers
 
-Product decisions recorded on 2026-06-12 must not be reclassified as waiting for owner decision. Follow-up work uses the correct status per file/workstream:
-
 | Area | Current classification |
 | --- | --- |
 | Legal/privacy/cookies/support copy | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` |
@@ -39,18 +39,11 @@ Product decisions recorded on 2026-06-12 must not be reclassified as waiting for
 | Partial refund runtime handling | `IMPLEMENTATION_MISSING` |
 | RPO/RTO and alert channel evidence | `OPERATOR_PENDING` |
 | Cloudflare originals/retention evidence | `OPERATOR_PENDING` |
-| Reactions/hearts launch scope | `HISTORICAL / NOT_LAUNCH_CRITICAL` |
-| Superseded legacy owner-question prompts | `SUPERSEDED / HISTORICAL` |
-
-Do not mark older runtime tickets as READY without a later Integrator/queue reconciliation.
 
 ## Full backlog
-
-Full non-executable launch backlog:
-`docs/roadmap/Launch-Execution-Backlog.md`
+Full non-executable launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 
 ## Guardrails
-
 - Public launch remains `NO_GO`.
 - Guard PASS means control-plane consistency only; it is not legal compliance or production/operator evidence.
 - Runtime work must not start from any ticket other than the single current executable ticket declared above.
