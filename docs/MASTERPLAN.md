@@ -12,10 +12,10 @@ This is the proposed canonical entry point for the project's technical state, ri
   - The live current main head must be read from GitHub.
   - Reconciliation and documentation merges may advance main without changing the accepted implementation baseline.
   - No documentation file should claim to contain an eternally current Git head SHA.
-- **Current Control-Plane Ticket:** `PAYMENT-WEBHOOK-RESULT-001`
-- **Current Gate:** `PAYMENT-WEBHOOK-RESULT-001`
-- **Current State:** `AUDIT_COMPLETE / READY_FOR_BUILDER`.
-- **Next Builder Ticket:** `PAYMENT-WEBHOOK-RESULT-001`
+- **Current executable ticket:** see `docs/tickets/ready/README.md`.
+- **Current gate:** see `docs/tickets/ready/README.md`.
+- **Current state:** resolved by the canonical ready-ticket queue.
+- **Next Builder Ticket:** not maintained here; see `docs/tickets/ready/README.md`.
 
 ## 2. Evidence Taxonomy
 
@@ -48,8 +48,8 @@ This is the proposed canonical entry point for the project's technical state, ri
 | Risk ID | Title | Evidence Class | Classification | Launch Impact |
 | --- | --- | --- | --- | --- |
 | `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` (#899) | **HISTORICAL BLOCKER — RESOLVED** |
-| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE` | `AUDIT_COMPLETE / READY_FOR_BUILDER` | **HIGH** |
-| `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
+| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE + MERGED_PR` | `MERGED / HISTORICAL` (PR #902) | **HISTORICAL — VERIFY VIA QUEUE IF NEEDED** |
+| `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `MERGED_PR + POST_MERGE_VERIFICATION_PENDING` | `MERGED_UNVERIFIED` (PR #905) | **MEDIUM** |
 | `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
 | `DELETION-GAP` | Account Deletion Incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
 | `COPY-MISMATCH` | Terms/Privacy Mismatch | `OWNER_DECISION`| `CONFIRMED_GAP` | **BLOCKER** |
@@ -70,10 +70,10 @@ This is the proposed canonical entry point for the project's technical state, ri
 ## 5. Ordered Masterplan
 
 ### CURRENT_GATE
-- **`PAYMENT-WEBHOOK-RESULT-001`**: Fix ignored Stripe webhook results (`AUDIT_COMPLETE / READY_FOR_BUILDER`).
+- See the canonical queue: `docs/tickets/ready/README.md`.
 
 ### NEXT_CONFIRMED_TASK
-- **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: Fix Resend webhook deduplication race/ordering (`AUDIT_REPORTED / IMPLEMENTATION_NOT_STARTED / REVALIDATION_REQUIRED`).
+- See the canonical queue: `docs/tickets/ready/README.md`.
 
 ### RECENTLY_COMPLETED
 - **`LAUNCH-EMAIL-003`**: `MERGED / ACCEPTED` (PR #899)
@@ -109,4 +109,4 @@ This is the proposed canonical entry point for the project's technical state, ri
 - Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
 - Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
-- Latest Reconciliation: [reports/reconciliation/POST-MERGE-LAUNCH-EMAIL-003.md](reports/reconciliation/POST-MERGE-LAUNCH-EMAIL-003.md)
+- Latest Reconciliation: [reports/reconciliation/POST-910-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-910-CONTROL-PLANE-RECONCILIATION.md)
