@@ -75,124 +75,67 @@ The following invariants are non-negotiable:
 - Inventory of all admin-sensitive surfaces.
 - Tests for: database admin, configured admin, stale Clerk claims, regular user, guest.
 
-## 5. Repair Areas
+## 5. Area V: Resend Webhook Idempotency & Certification
 
-### Area A: Single Patron Access Truth
-- Only Access module issue `AccessDecision`.
-- Decision must be based on effective active `PatronGrant`.
-- **Tickets**: `ARCH-ACCESS-001`, `ARCH-GUARD-001`, `ARCH-TEST-001`.
+### A. Current Implementation State
+Foundation merged in PR #905 (`36b57dec5c763ca29ff708c836dae0601125c49d`). Uses `EmailEvent` table with unique `providerEventId`. Basic lock acquisition and release implemented in `EmailEventLockService`.
 
-### Area B: User.isPatron Cache and Drift
-- `User.isPatron` is strictly a read-model.
-- Implement drift reconciliation job and admin diagnostics.
-- **Ticket**: `ARCH-ACCESS-001`.
+### B. Confirmed Gaps
+- **Ownership Loss**: No identity for the current worker. Stale worker can finalize after takeover.
+- **Fencing Missing**: No monotonic version or lease token in CAS logic.
+- **Type Integrity**: Takeover filter does not strictly match `eventType`.
+- **Security**: Signature verification bypass possible in production via legacy secret fallback.
+- **Error disclosure**: Raw errors persisted to DB and potentially returned in API.
+- **Counter Semantics**: `sentCount` increment is not ordering-safe.
 
-### Area C: Clerk Synchronization and Drift
-- Local access must work during Clerk outages.
-- Durable retry for Clerk metadata sync failures.
-- **Ticket**: `ARCH-CLERK-001`.
+### C. Target Lease Model
+Every lock acquisition must create a unique ownership identity.
+- **Choice**: `leaseToken` (UUID) or monotonic `lockVersion`.
+- **Fields**: `providerEventId`, `eventType`, `leaseToken`, `attemptCount`, `acquiredAt`, `expiresAt`.
 
-### Area D: PatronGrant Lifecycle
-- Explicit states: ACTIVE, SUSPENDED, REVOKED.
-- Dispute opened -> SUSPEND. Dispute won -> REACTIVATE. Dispute lost -> REVOKE.
-- **Tickets**: `ARCH-PATRON-002`, `ARCH-PATRON-003`.
+### D. Finalization Invariant
+A worker may finalize (`PROCESSED` or `FAILED`) ONLY when:
+- `providerEventId` matches.
+- `eventType` matches.
+- Status is `PROCESSING`.
+- `leaseToken` (or version) matches the instance currently in the database.
+- Finalization must use conditional `updateMany`. `count === 0` indicates `LOST_OWNERSHIP`.
 
-### Area E: Grant Mutation Audit Completeness
-- Transactional audit for every grant transition.
-- Actor, Reason, State Before/After, RequestID.
-- **Ticket**: `ARCH-PATRON-001`.
+### E. HTTP Contract
+- **401**: Invalid signature or missing production svix headers.
+- **400**: Malformed supported payload or missing mandatory IDs.
+- **5xx (Retryable)**: Active lock conflict (already being processed).
+- **2xx (Safe)**: Duplicate event already PROCESSED.
+- **5xx (Generic)**: Internal failure (no leaking details).
 
-### Area F: Payment Eligibility Boundary
-- Payment fulfillment must call an explicit eligibility policy.
-- Below threshold or unsupported currency must not grant patron status.
-- **Ticket**: `ARCH-PAYMENT-001`.
+### F. Security Contract
+- **Production**: Strictly Svix-only.
+- **Non-Production**: Legacy fallback allowed ONLY with explicit ADR/Owner approval.
+- **Logs**: Zero raw secrets, signatures, provider payloads, or PII.
 
-### Area G: Central Access Module Boundary
-- Routes are transport adapters; they cannot locally reconstruct policy.
-- **Tickets**: `ARCH-ACCESS-001`, `ARCH-GUARD-001`.
+### G. Counter Semantics
+**Status: DECISION_REQUIRED**.
+Implementation forbidden before owner approval. Candidate definitions include occupancy-based (>= SENT) or event-exact counters.
 
-### Area H: Strict PlaybackPlan Contract
-- `READY` iff `canPlay === true` AND `access.allowed === true` AND source exists.
-- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-PLAYBACK-002`.
+### H. Privacy and Retention
+**Status: RETENTION_DECISION_REQUIRED**.
+Separate payload minimization (sanitizing raw JSON) from retention duration. Audit evidence required for cleanup.
 
-### Area I: Provider Gating and Credential Safety
-- Zero provider calls on deny/non-ready.
-- Provider token issued only after AccessDecision allow.
-- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-DI-003`.
+### I. Migration Contract
+- Proven upgrade path for legacy `EmailEvent` rows.
+- Handle NULL `providerEventId` without unique constraint violations in rollout.
+- Default status rationale documented.
 
-### Area J: Frontend Rendering Boundary
-- Frontend renders backend PlaybackPlan and does not authorize independently.
-- No player mount or provider iframe on denied access.
-- **Ticket**: `ARCH-E2E-001`.
+### J. Test Matrix
+- **Concurrency**: stale takeover, Old worker fencing, SENT vs DELIVERED races.
+- **Integrity**: Type mismatch rejection.
+- **Security**: Production fallback rejection.
 
-### Area K: Comments Visibility and Permission
-- Public-read, gated-write permission matrix.
-- Inherit video policy through Access module.
-- **Ticket**: `ARCH-COMMENTS-001`.
+### K. Dependency Order
+1. `POSTMERGE-VERIFY-001` (Baseline)
+2. `LOCK-OWNERSHIP-001` (Foundation)
+3. `TAKEOVER-INTEGRITY-001` + `ROUTE-SECURITY-001`
+4. All others.
 
-### Area L: Admin Override
-- Admin overrides must be explicit in `AccessDecision`.
-- Excluded from public metrics.
-- **Ticket**: `ARCH-ADMIN-002`.
-
-### Area M: Access Diagnostics
-- Admin view showing Identity, Patron truth, Cache/drift, Financial eligibility, and Audit.
-- **Ticket**: `ARCH-ADMIN-001`.
-
-### Area N: Sensitive Response Caching
-- Non-cacheable headers (private, no-store) for personalized access/playback/token responses.
-- **Ticket**: `ARCH-CACHE-001`.
-
-### Area O: Legacy Service Retirement
-- Inventory and retirement of `lib/services/**`.
-- **Tickets**: `ARCH-LEGACY-001` to `ARCH-LEGACY-007`.
-
-### Area P: AppContext, Prisma and Dependency Boundaries
-- Route -> Use Case -> Domain Ports -> Infrastructure Adapters.
-- Remove direct Prisma in application layer.
-- **Tickets**: `ARCH-DI-001` to `ARCH-DI-004`.
-
-### Area Q: Architecture Guard
-- Mandatory CI guard checking boundaries and forbidden sources.
-- **Tickets**: `ARCH-CI-001`, `ARCH-GUARD-001`.
-
-### Area R: Test Strategy
-- Multi-dimensional matrix: Actors x Tiers x Video States x Asset Status.
-- **Ticket**: `ARCH-TEST-001`.
-
-### Area S: Risk-Based Coverage
-- High coverage targets (90%) for Access and Playback gating.
-- **Ticket**: `ARCH-COVERAGE-001`.
-
-### Area T: Logging, Secrets and PII
-- No raw payloads, tokens, or PII in logs/errors.
-- Redaction helpers mandatory.
-- **Ticket**: `ARCH-LOG-001`.
-
-### Area U: Control-Plane Consistency
-- Exactly one ready ticket. No drift between documents and code.
-- **Ticket**: `ARCH-DOCS-001`.
-
-### Area V: Resend Webhook Idempotency, Lock Ownership and Post-Merge Certification
-- Fix lock ownership and fencing (lease tokens).
-- Svix-only production authenticity.
-- Real PostgreSQL concurrency evidence.
-- **Tickets**: `EMAIL-WEBHOOK-*`, `ARCH-CI-001`.
-
-## 6. Required ADR Program (Proposed)
-
-- **ADR-0008**: AccessDecision canonical output.
-- **ADR-0009**: `User.isPatron` and Clerk metadata non-authoritative.
-- **ADR-0010**: PatronGrant lifecycle representation.
-- **ADR-0011**: Strict PlaybackPlan discriminated union.
-- **ADR-0012**: Sensitive responses non-cacheable.
-- **ADR-0013**: Application layer dependency boundary.
-- **ADR-0014**: Architecture guard mandatory CI policy.
-- **ADR-0015**: Domain audit versus operational logs.
-- **ADR-0016**: Email webhook event lease ownership and fencing.
-- **ADR-0017**: Production Resend webhook authenticity.
-- **ADR-0018**: Canonical administrator authorization resolver.
-
-## 7. Definition of Completion
-
-The program is complete when the Access module is the sole source of authorization, Payment/Patron lifecycles are fully audited and deterministic, Playback gating is strict, and the Architecture Guard enforces all boundaries in CI. Final certification requires fresh/upgrade migration proof and real concurrency proof.
+### L. Definition of Completion
+The program is complete when the certifier provides an independent report verifying fencing correctness, production security enforcement, and accurate counter semantics against all arrival permutations.

@@ -1,13 +1,12 @@
 # EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 — Independently verify merged Resend webhook idempotency implementation
 
-Status: **READY_FOR_CERTIFIER**
-Ticket ID: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
-Role: Reviewer / Certifier
-Launch status: NO_GO
+* **Status**: READY_FOR_CERTIFIER
+* **Ticket ID**: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
+* **Role**: Reviewer / Certifier
+* **Launch status**: NO_GO
 
 ## Purpose
-
-Independently verify the current state of the `main` branch following the merge of PR #905. This ticket focuses on verifying the implementation, identifying gaps, and documenting the results without performing runtime repairs.
+Independently verify the current state of the `main` branch following the merge of PR #905. This ticket focuses on documenting baseline behavior, identified gaps, and providing evidence for follow-up repairs.
 
 ## Verification Requirements
 
@@ -22,11 +21,16 @@ Independently verify the current state of the `main` branch following the merge 
 ### 2. Validation Suite
 ```bash
 npm ci
+
 npm run env:validate:prod
 npx prisma validate
 npx prisma generate
+
 npm run quality:architecture-boundaries
+npm run quality:strict-escapes
+npm run quality:hotspots
 npm run typecheck
+
 npx vitest run tests/unit/api/resend/resend-webhook-route.test.ts
 npx vitest run tests/unit/modules/email/handle-resend-webhook.test.ts
 npx vitest run tests/unit/modules/email/idempotency-hardening.test.ts
@@ -35,47 +39,56 @@ npx vitest run tests/unit/modules/email/concurrency-retries.test.ts
 npx vitest run tests/unit/modules/email/reproduce-idempotency-race.test.ts
 
 # Run integration tests (Requires PG)
-RUN_INTEGRATION_TESTS=true npx vitest run tests/integration/email-event-idempotency.test.ts
+RUN_INTEGRATION_TESTS=true \
+npx vitest run tests/integration/email-event-idempotency.test.ts
 
 npm run test:coverage
 npm run lint
 npm run build
+npm audit --audit-level=high
 ```
 
-### 3. Migration Verification
-- **Fresh DB**: `npx prisma migrate deploy` on an empty PG16 database.
-- **Upgrade DB**:
-  - Create schema PRIOR to 20260614000000.
-  - Insert legacy `EmailEvent` rows.
-  - Run `migrate deploy`.
-  - Verify data integrity and index creation.
+### 3. Complete Upgrade Migration Evidence
+- Use schema BEFORE migration `20260614000000`.
+- Insert realistic legacy `EmailEvent` rows:
+  - Different `type` values.
+  - Valid `resendEmailId`.
+  - Valid `email`.
+  - Valid `payload`.
+  - `providerEventId` MUST be NULL.
+- Run `npx prisma migrate deploy`.
+- Verify:
+  - Old data is preserved.
+  - Default status is correctly set.
+  - Unique index allows NULLs or handled per database spec.
+  - No accidental re-processing of legacy rows.
 
-### 4. Concurrency Scenarios
-- Parallel requests with same `providerEventId`.
-- First worker still `PROCESSING`, second request result.
-- `FAILED` event retry.
-- Stale `PROCESSING` takeover.
-- Old worker finalizing after takeover (ownership loss).
-- Concurrent different event types for same `providerEventId`.
+### 4. Complete Concurrency / Negative Matrix
+- **Duplicate ID**: Identical `providerEventId` concurrent requests.
+- **Active PROCESSING**: Attempt to acquire while status is `PROCESSING`.
+- **FAILED Retry**: Re-acquire after `FAILED`.
+- **Stale Takeover**: Re-acquire after 10m in `PROCESSING`.
+- **Ownership Loss (Success)**: Old worker attempts `releaseWithSuccess` after takeover.
+- **Ownership Loss (Failure)**: Old worker attempts `releaseWithFailure` after takeover.
+- **Type Mismatch**: Re-acquire with same ID but different `type`.
+- **Recipient Isolation**: Two different `providerEventId` for one user.
+- **Order Race (SENT vs DELIVERED)**: Verify aggregate counters.
+- **Order Race (DELIVERED vs BOUNCED)**: Verify aggregate counters.
+- **Crash Recovery**: Mutation committed, but lock finalization failed.
+- **Acquire Error**: Non-P2002 error during `acquireLock`.
+- **Release Error**: Exception during finalization calls.
+- **Error Redaction**: Verify PII/Secrets removed from `EmailEvent.error`.
+- **Production Safety**: Reject legacy fallback when `svix` headers missing in PROD.
 
-## Expected Result
-
-The implementation in PR #905 is expected to fail certain concurrency and security invariants (specifically lock ownership and production signature bypass). This ticket MUST document these failures as evidence for follow-up repair tickets.
+## Expected Verdict
+**Do not force PASS.** The implementation in PR #905 is expected to fail ownership, fencing, and production security invariants. The expected verdict is `FIX_REQUIRED`.
 
 ## Allowed Paths
-
 - Read-only access to repository.
-- `docs/reports/reconciliation/EMAIL-WEBHOOK-IDEMPOTENCY-VERIFICATION-001.md` (new report).
-- Temporary uncommitted probes for verification.
-
-## Non-goals
-
-- Repairing runtime code.
-- Merging failing tests into main.
-- Changing schema or migrations.
+- `docs/reports/reconciliation/EMAIL-WEBHOOK-IDEMPOTENCY-VERIFICATION-001.md`.
+- Temporary uncommitted probes.
 
 ## Exit State
-
-- Verdict: `MERGE_CERTIFIED`, `FIX_REQUIRED`, or `BLOCKED`.
 - Detailed verification report created.
-- Repair tickets identified and promoted if necessary.
+- Verdict: `FIX_REQUIRED`.
+- All gaps mapped to repair tickets.

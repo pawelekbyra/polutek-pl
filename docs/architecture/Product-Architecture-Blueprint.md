@@ -27,13 +27,16 @@ Patronat jest reward za kwalifikujące jednorazowe wsparcie/donację. Nie jest r
 - `LOGGED_IN`: gość widzi istnienie wideo i komentarze, playback/komentowanie wymaga loginu.
 - `PATRON`: każdy widzi istnienie wideo i komentarze, playback i komentowanie wymagają patrona/admina.
 
-## Payments and PatronGrant
+## AccessDecision Contract
+Wszystkie decyzje autoryzacyjne bazują na kanonicznym kontrakcie `AccessDecision`, który zawiera `allowed`, `reason`, `decisionSource` oraz flagę `adminOverride`.
+
+## Payments and PatronGrant Lifecycle
 
 Inwarianty domenowe:
 
 ```txt
-Payment = money/support event
-PatronGrant = access/right/status
+Payment = financial fact
+PatronGrant = access right and lifecycle state
 Subscription = mailing/follow/newsletter consent
 ```
 
@@ -65,9 +68,12 @@ Stripe webhook
 exists ACTIVE PatronGrant
 ```
 
-Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
+Lifecycle:
+- ACTIVE: normalny dostęp.
+- SUSPENDED: wstrzymany (np. podczas dispute).
+- REVOKED: cofnięty permanentnie (np. po refundzie).
 
-Payment module zapisuje fakty finansowe. Patron module tworzy `PatronGrant`. Access module czyta aktywny `PatronGrant`. Stripe pozostaje źródłem finansowym, ale nie jest bezpośrednim źródłem access decision.
+Każda zmiana stanu musi być audytowalna (domain audit events).
 
 ## Subscription/email separation
 
@@ -80,21 +86,20 @@ Docelowy model:
 ```txt
 Video = content metadata
 VideoAsset = provider/media state
-VideoProvider = thin abstraction
+VideoProvider = thin abstraction (dependency injection)
 Cloudflare first
 Mux optional
 primary READY asset drives playback
 ```
 
-Cloudflare Stream jest pierwszym providerem. Mux jest wspierany projektowo per `VideoAsset`, dla bogatszych funkcji/analytics/4K/DRM później. R2/S3/Vercel Blob nie są aktywnym prywatnym playback fallbackiem.
+Cloudflare Stream jest pierwszym providerem. Mux jest wspierany projektowo per `VideoAsset`. R2/S3/Vercel Blob nie są aktywnym prywatnym playback fallbackiem.
 
 ## PlaybackPlan/player
 
 Inwarianty wideo/playera:
 
 ```txt
-allowed PlaybackPlan -> mount player
-denied PlaybackPlan -> locked placeholder
+READY iff (canPlay === true AND access.allowed === true AND playable source exists)
 ```
 
 Dla denied/locked:
@@ -111,35 +116,25 @@ do not leak playbackToken
 
 Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VIDEO_NOT_READY`, `NO_PRIMARY_ASSET`, `PROCESSING`, `UNAVAILABLE`, `ERROR`. Denied plan nie zawiera playable URL ani tokenu. Provider call następuje dopiero po backendowej zgodzie Access.
 
-Frontend renderuje backendowy `PlaybackPlan`; frontend nie podejmuje decyzji access. Locked state to osobne drzewo renderowania, nie overlay na prawdziwym playerze.
+Personalizowane odpowiedzi playback/token muszą być non-cacheable (`private, no-store`).
 
 ## Comments/community
 
-Komentarze pod opublikowanymi wideo są widoczne dla wszystkich. Uprawnienie do pisania zależy od tieru. Spoiler risk pod patron-only wymaga report reason. Moderacja jest audytowalna. Single-level replies na launch; edit/reactions mogą być później, chyba że runtime już je posiada i są certyfikowane.
+Komentarze pod opublikowanymi wideo są widoczne dla wszystkich. Uprawnienie do pisania zależy od tieru i integruje się z modułem Access. Moderacja jest audytowalna.
 
 ## Admin cockpit
 
-Admin cockpit jest support operations center. Priorytet: Access Diagnostics, potem patron/payment diagnostics, video/media/provider health, comments moderation, email/subscribers, audit log, system health, dopiero potem generic metrics. Owner ma móc obsłużyć paid-but-locked bez DB/Stripe/Clerk console.
+Admin cockpit jest support operations center. Priorytet: Access Diagnostics (pokazujące Identity, Patron truth, Cache drift, Financial facts, Audit). Jeden kanoniczny administrator authorization resolver. Admin override jest jawny i logowany.
 
-## Observability/system health
+## Dependency and AppContext Boundary
+Zalecany kierunek: `route -> use case -> domain ports -> infrastructure adapters`. Zakaz bezpośredniego importu Prisma w warstwie aplikacji.
 
-System health pokazuje failed/stuck webhooks, payment/grant mismatches, access mismatches, provider upload/playback health, email delivery health, comment health i alerty krytyczne. Audit trail jest oddzielony od operational logs. Logi nie mogą zawierać sekretów, tokenów ani niepotrzebnego PII.
-
-## Launch readiness
-
-Public launch wymaga: brak access leak, brak payment fulfillment gap, privacy/legal/cookie/email consent, accessibility, mobile, performance, security review, backups/recovery, owner runbook, manual QA i X7 final certification.
-
-## Security/privacy/legal/accessibility
-
-Deny by default, backend access validation, raw body webhook verification, token redaction, signed/private playback po access check, unsubscribe/consent compliance, keyboard/mobile accessibility i jasne PL/EN copy są launch-critical.
+## Architecture Guard
+Obowiązkowy strażnik w CI (`npm run quality:architecture-boundaries`) pilnujący granic modułów i zakazanych źródeł autoryzacji.
 
 ## AI delivery workflow
 
 Po aktywacji: one ticket = one task = one branch = one PR. Builderzy nie dotykają global docs bez ticketu. Reviewerzy wydają verdict. Integrator synchronizuje po batchu. Certifier zamyka phase gates.
-
-## Do-not-build list
-
-Nie budować: marketplace, white-label CMS, tenant onboarding, recurring patron subscription model, active R2/S3 private fallback playback, player hidden under overlay, provider call before access check, access on User.isPatron/Clerk/Subscription, generic admin dashboard before Access Diagnostics, AI mega-refactor.
 
 ## Phase order
 
@@ -155,5 +150,3 @@ Model faz:
 - X5 — Admin Cockpit Foundation.
 - X6 — Product Excellence Passes.
 - X7 — Launch Readiness / Final Certification.
-
-Fazy X nie mogą stać się aktywne przed zatwierdzonym R-phase handoff albo jawną zgodą właściciela.

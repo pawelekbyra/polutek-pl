@@ -7,19 +7,24 @@ Launch status: **NO_GO**
 
 This document is not an executable queue. It lists planned items and stages. Only `docs/tickets/ready/README.md` identifies the single current executable ticket.
 
-## Launch Stage Summary
+## Progress Summaries
 
-| Status | Count |
-| --- | --- |
-| **COMPLETED** | 5 |
-| **PARTIAL / IN_PROGRESS** | 2 |
-| **OPEN / NOT_STARTED** | 17 |
-| **BLOCKED** | 0 |
-| **Total Launch Stages** | 24 |
+### Execution Tickets by Status
+- **IMPLEMENTED_VERIFIED / HISTORICAL**: 21
+- **MERGED_UNVERIFIED**: 1
+- **READY**: 1
+- **BLOCKED / BACKLOG**: 42
+- **DECISION_REQUIRED**: 1
+- **Total Unique Ticket IDs**: 66
 
-*Note: A launch stage may consist of multiple execution tickets. These counts are not 1:1 with unique ticket IDs.*
+### Launch Stages by Status
+- **COMPLETED**: 5
+- **PARTIAL / IN_PROGRESS**: 2
+- **OPEN / NOT_STARTED**: 17
+- **BLOCKED**: 0
+- **Total Launch Stages**: 24
 
-## Backlog Table
+## Backlog Table (Stages 1-24)
 
 | Order | Workstream | Planned ticket / state | Depends on | Executor | Action | Completion evidence | Launch impact |
 | ---: | --- | --- | --- | --- | --- | --- | --- |
@@ -30,36 +35,30 @@ This document is not an executable queue. It lists planned items and stages. Onl
 | 2.3 | Idempotency repair: Errors | `EMAIL-WEBHOOK-ERROR-SAFETY-001` / **BLOCKED** | Verify-001 | Builder | None | Error redaction proof | High |
 | 2.4 | Idempotency repair: Validation | `EMAIL-WEBHOOK-PAYLOAD-VALIDATION-001` / **BLOCKED** | Verify-001 | Builder | None | Per-event schema proof | High |
 | 2.5 | Idempotency repair: Migration | `EMAIL-WEBHOOK-MIGRATION-VERIFY-001` / **BLOCKED** | Verify-001 | Builder | None | Legacy upgrade proof | High |
-| 2.6 | Idempotency repair: Counters | `EMAIL-WEBHOOK-COUNTER-SEMANTICS-001` / **BLOCKED** | Verify-001 | Builder | None | Ordering logic proof | Medium |
-| 2.7 | Idempotency repair: Privacy | `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` / **BLOCKED** | Verify-001 | Builder | None | Retention/PII proof | Medium |
+| 2.6 | Idempotency repair: Counters | `EMAIL-WEBHOOK-COUNTER-SEMANTICS-001` / **DECISION_REQUIRED** | Verify-001 | Builder | Owner | Ordering logic proof | Medium |
+| 2.7 | Idempotency repair: Privacy | `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` / **BLOCKED** | Verify-001 | Builder | Owner | Retention/PII proof | Medium |
+| 2.8 | Idempotency repair: Takeover | `EMAIL-WEBHOOK-TAKEOVER-INTEGRITY-001` / **BLOCKED** | Verify-001 | Builder | None | Integrity alert proof | High |
+| 2.9 | CI Hardening | `ARCH-CI-001` / **OPEN** | None | Builder | None | Green CI with all checks | High |
+| 2.10| Email Final Cert | `EMAIL-WEBHOOK-FINAL-CERT-001` / **BLOCKED** | Repairs | Certifier | None | Final report | Blocker |
 | 3 | Signed unsubscribe | `LAUNCH-EMAIL-002` / **OPEN** | Stage 1 | Builder | None | Signed tokens, no plain emails | Compliance blocker |
 | 4 | Bounce/suppression | **OPEN** | Stage 1 | Builder | Operator | Suppression working | Compliance blocker |
 | 5 | Language persistence | **OPEN** | Stage 2 | Builder | None | PL/EN persistence | Localization |
-| 10 | Legal copy PL/EN | `LAUNCH-LEGAL-001` / **OPEN** | Inventory | Agent | Legal | Terms/Privacy approved | Blocker |
+| 6 | Referral notifications | **OPEN** | Stage 5 | Builder | Owner | Counter independent from toggle | Non-core |
+| 7 | Privacy inventory | **OPEN** | Stage 5 | Agent | Owner | Data fields and cookies verified | Legal |
+| 8 | Legal copy drafting | **OPEN** | Stage 7 | Agent | Legal | Draft terms and privacy | Legal |
+| 9 | Legal professional review | **OPEN** | Stage 8 | Legal | Legal | Final approved legal text | Blocker |
+| 10 | Legal copy publication | `LAUNCH-LEGAL-001` / **OPEN** | Stage 9 | Builder | None | Terms/Privacy published | Blocker |
 | 11 | Vercel production evidence | **OPEN** | Prod access | Certifier | Operator | Redacted env/logs | X7 blocker |
 | 12 | Stripe production evidence | **OPEN** | Stage 2 | Certifier | Operator | Tip -> Grant -> Refund proof | X7 blocker |
 | 13 | Cloudflare production evidence| **OPEN** | Prod access | Certifier | Operator | Playback/denied proof | X7 blocker |
 | 14 | Backup, restore and alerts | `DB-BACKUP-RESTORE` / **OPEN** | Prod access | Certifier | Operator | Restore drill success | X7 blocker |
+| 15 | X6.2 State completeness | **OPEN** | Repairs | Certifier | None | X6.2 report | X6 blocker |
+| 16 | X6.3 Responsive/browser | **OPEN** | Repairs | Certifier | Devices | X6.3 report | X6 blocker |
+| 17 | X6.4 Accessibility | **OPEN** | Repairs | Certifier | None | X6.4 report | X6 blocker |
+| 18 | X6.5 Performance | **OPEN** | Repairs | Certifier | Measure | X6.5 report | X6 blocker |
+| 19 | X6.6 Copy/trust | **OPEN** | Stage 10 | Certifier | Legal | X6.6 report | X6 blocker |
+| 20 | X6.7 Owner/admin usability | **OPEN** | Repairs | Certifier | Owner | X6.7 report | X6 blocker |
+| 21 | X6.8 Representative user | **OPEN** | Stage 20 | Certifier | User | X6.8 report | X6 blocker |
 | 22 | X6 certification | **OPEN** | X6.2-X6.8 | Certifier | Owner | X6 cert report | X7 prerequisite |
 | 23 | X7 Launch Evidence Pack | **OPEN** | Stage 22 | Integrator | Operator | Complete Pack | Launch blocker |
 | 24 | Final launch decision | **OPEN** | Stage 23 | Owner | Owner | Recorded decision | Go/No-Go |
-
-## Architecture Repair Backlog (Ordered)
-
-| Priority | ID | Title | Status | Dependency | Launch Impact | Promotion Condition |
-| --- | --- | --- | --- | --- | --- | --- |
-| P0 | `ARCH-ADMIN-AUTH-001` | Canonical admin authorization | `TICKET_DETAIL_PENDING` | None | **BLOCKER** | Functional resolver + regression tests |
-| P0 | `ARCH-ACCESS-001` | Explicit AccessDecision contract | `TICKET_DETAIL_PENDING` | None | **BLOCKER** | Unified auth contract + drift sync |
-| P0 | `ARCH-PLAYBACK-001`| Strict PlaybackPlan union | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **BLOCKER** | READY iff playable |
-| P0 | `ARCH-PLAYBACK-002`| Remove READY + canPlay inconsistency | `TICKET_DETAIL_PENDING` | `ARCH-PLAYBACK-001` | **HIGH** | No player mount on deny |
-| P0 | `ARCH-CACHE-001` | Sensitive response non-cacheable | `TICKET_DETAIL_PENDING` | None | **HIGH** | private/no-store headers |
-| P0 | `ARCH-PATRON-001` | Audit successful grant creation | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **HIGH** | Every transition audited |
-| P0 | `ARCH-CLERK-001` | Durable Clerk repair/reconciliation | `TICKET_DETAIL_PENDING` | None | **HIGH** | Outbox/Retry for Clerk |
-| P0 | `ARCH-PAYMENT-001` | Explicit fulfillment eligibility | `TICKET_DETAIL_PENDING` | `ARCH-PATRON-001` | **HIGH** | Policy-based grants |
-| P0 | `ARCH-CI-001` | Architecture and Critical CI Guard | `OPEN` | None | **HIGH** | Boundaries + RUN_INTEGRATION_TESTS |
-| P0 | `ARCH-LOG-001` | Log sanitization (Secrets/PII) | `TICKET_DETAIL_PENDING` | None | **HIGH** | Redaction helpers in all flows |
-| P0 | `ARCH-COMMENTS-001`| Canonical comments permission | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **MEDIUM** | Read/Write matrix + Access integration |
-| P1 | `ARCH-DI-*` | Dependency Injection / Boundaries | `OPEN` | None | **MEDIUM** | Remove direct Prisma in app layer |
-| P1 | `ARCH-ADMIN-*` | Access Diagnostics / Admin Override | `OPEN` | None | **MEDIUM** | Complete admin support tools |
-| P2 | `ARCH-LEGACY-*` | Legacy service retirement (1-7) | `OPEN` | None | **LOW** | No imports from lib/services |
-| P2 | `ARCH-DOCS-001` | Final architecture reconciliation | `OPEN` | All repairs | **LOW** | No drift in control plane |

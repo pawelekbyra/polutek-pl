@@ -9,7 +9,7 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 
 - **OBSERVED_MAIN_HEAD_AT_TASK_START**: 36b57dec5c763ca29ff708c836dae0601125c49d
 - **DOCS_BRANCH_BASE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **FINAL_DOCS_BRANCH_HEAD**: [TBD]
+- **FINAL_DOCS_BRANCH_HEAD**: 52afac67dc481c171e642b5c24bc58f238a41620
 - **PR_902_MERGE_SHA**: 2c2a0f01f71e177145336051e97680bcc489e2b9
 - **PR_905_MERGE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
 - **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 (Payment Webhook Result) is part of the established baseline.
@@ -18,6 +18,8 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 
 - PR #905 is the corrective successor to PR #904. It has been merged into main.
 - PR #906 (and related previous docs attempts) is **SUPERSEDED / MUST_NOT_MERGE** by PR #907.
+- **PR #906 Actual State**: Observed as OPEN in external repository metadata.
+- **Limitation**: Agent lacks direct `close_pr` tooling. **HUMAN_ACTION_REQUIRED_BEFORE_MERGE** to formally close PR #906.
 
 ## 3. Implementation Summary (PR #905)
 
@@ -26,12 +28,13 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 - `app/api/webhooks/resend/route.ts`: Resend webhook entry point with Svix and legacy verification.
 
 ### Migration
-- `prisma/migrations/20260614000000_add_email_event_idempotency/migration.sql`: Adds `providerEventId` (unique), `status`, `error`, `processedAt`.
+- `prisma/migrations/20260614000000_add_email_event_idempotency/migration.sql`: Adds `providerEventId` (unique), `status`, `error`, `processedAt`. Default status is `PROCESSED`.
 
 ### Tests
 - `tests/integration/email-event-idempotency.test.ts`: Integration tests for locking.
 - `tests/unit/modules/email/handle-resend-webhook.test.ts`: Use case tests.
 - `tests/unit/api/resend/resend-webhook-route.test.ts`: Route tests.
+- `tests/unit/modules/email/idempotency-hardening.test.ts`: Hardening tests.
 
 ## 4. Evidence Table
 
@@ -43,27 +46,41 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 | Upgrade with existing rows | UNVERIFIED | No proof of testing on existing data. |
 | Real lock concurrency | UNVERIFIED | Tests use `Promise.all` but real PG concurrency not proven. |
 | Stale takeover ownership | CONFIRMED_GAP | Ownership/fencing missing; stale worker can overwrite. |
-| Full quality suite | BLOCKED_BY_ENVIRONMENT | tsx/tsc not available in current execution environment. |
-| tsx/tsc check | BLOCKED_BY_ENVIRONMENT | Binaries not found in sandbox. |
-| Security audit | FAILED | Confirmed security gap: production legacy secret fallback. |
+| Full quality suite | FAILED_GATE | env:validate:prod failure blocks remaining steps. |
+| tsx/tsc check | BLOCKED_BY_ENVIRONMENT | Binaries not found in sandbox environment. |
+| Security audit | FAILED | high-level vulnerabilities detected (npm audit high). |
 | Production migration | NOT_EXECUTED | |
 | Production webhook behavior | NOT_EXECUTED | |
+| Vercel | PREVIEW_READY_ONLY | Not correctness evidence. |
 
-## 5. Confirmed Gaps
+## 5. Observed CI Run Details (Workflow: 27494900252)
+
+| Job | Step | Conclusion |
+| --- | --- | --- |
+| `quality` | `env:validate:prod` | **FAILURE** |
+| `quality` | `architecture-boundaries` | SKIPPED |
+| `quality` | `typecheck` | SKIPPED |
+| `integration-postgres` | `migrate deploy` | **SUCCESS** (Fresh empty DB) |
+| `security` | `npm audit high` | **FAILURE** |
+
+## 6. Confirmed Gaps
 
 ### A. EmailEventLockService
 - **Ownership Loss**: No lock owner ID or lease token. Worker A can finalize after Worker B takes over a stale lock. (CONFIRMED_GAP)
 - **Type Integrity**: Takeover does not strictly enforce type matching in `updateMany`. (CONFIRMED_GAP)
 - **Error Disclosure**: Raw error messages are persisted to the database and potentially returned in the API. (CONFIRMED_GAP)
+- **Controlled Boundary**: `acquireLock` is called outside the main try/catch in some paths. (CONFIRMED_GAP)
 
 ### B. Security
 - **Legacy Fallback**: `app/api/webhooks/resend/route.ts` allows `x-resend-webhook-secret` in production if `svix` headers are missing. (CONFIRMED_SECURITY_GAP)
+- **Missing Env Validation**: `RESEND_WEBHOOK_SECRET` not strictly enforced for all envs. (CONFIRMED_GAP)
 
 ### C. Controls & Documentation
 - **Counter Semantics**: `sentCount` increment logic remains ambiguous for out-of-order events. (DECISION_REQUIRED)
 - **PII/Retention**: Raw emails and payloads stored without clear retention policy. (CONFIRMED_GAP)
+- **Wrong Path**: Payload timestamp `created_at` may be read from the wrong path in ledger. (CONFIRMED_GAP)
 
-## 6. Verdict
+## 7. Verdict
 
 **PR #905 is merged but not independently certified.** The implementation is NOT launch-safe. Post-merge verification and follow-up repair tickets are mandatory.
 
