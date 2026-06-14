@@ -1,14 +1,26 @@
 # EMAIL-SIGNED-UNSUBSCRIBE-001 — Implement secure signed logged-out unsubscribe
 
-Status: MERGED / IMPLEMENTATION_COMPLETE / VERIFICATION_PENDING / HISTORICAL
+Status: MERGED / IMPLEMENTATION_COMPLETE / VERIFIED_PASS / HISTORICAL
 Ticket ID: EMAIL-SIGNED-UNSUBSCRIBE-001
-Role: Builder / Historical implementation evidence
+Role: Builder / Historical verified implementation evidence
 Launch status: NO_GO
 
 
 ## Historical executability statement
 
-This ticket is no longer executable. PR #918 implemented this ticket and merged as implementation SHA `5710d14f82f5951c13d8d77f6a8eb4d899068c4b`. Independent post-merge verification is pending and is queued separately as `EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001`. Public launch remains `NO_GO`.
+This ticket is no longer executable. PR #918 implemented this ticket and merged as implementation SHA `5710d14f82f5951c13d8d77f6a8eb4d899068c4b`. Independent post-merge verification completed in PR #920 and merged as verification SHA `77081b64073ec77bf1df13217622a0f88d118011` with verdict `PASS`. Verification report: `docs/reports/verification/EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001.md`. Public launch remains `NO_GO`.
+
+Historical evidence:
+
+```txt
+implementation PR #918
+implementation merge SHA 5710d14f82f5951c13d8d77f6a8eb4d899068c4b
+independent verification PR #920
+verification merge SHA 77081b64073ec77bf1df13217622a0f88d118011
+verification verdict PASS
+verification report docs/reports/verification/EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001.md
+public launch remains NO_GO
+```
 
 The requirements and acceptance criteria below are preserved for historical traceability only. They must not be read as authorization for a new Builder implementation task.
 

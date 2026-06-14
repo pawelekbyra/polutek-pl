@@ -8,7 +8,7 @@ Do not execute. This broad ticket combined signed unsubscribe with bounce/compla
 Successors:
 
 - Signed unsubscribe successor: `EMAIL-SIGNED-UNSUBSCRIBE-001`
-- Suppression successor: planned separately, not executable in this reconciliation
+- Suppression successor: `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`
 
 ## Blocked on
 
