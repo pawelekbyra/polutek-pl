@@ -14,7 +14,7 @@ Allowed changed paths for this reconciliation were `README.md` and `docs/**`. Ru
 
 ## Verified baseline
 
-- Actual branch used for reconciliation: `docs/reconcile-control-plane-post-910`.
+- Actual GitHub PR head branch: `codex/synchronize-control-plane-documentation`.
 - Actual main/head checked locally: `49695941171a4de47a22b036a0b5255c8bbd16be`.
 - Baseline verification mode: Git commit ancestry verification against `HEAD`.
 - Working tree requirement: changes were made only after confirming the expected merge commits were ancestors of `HEAD`.
@@ -32,7 +32,7 @@ Allowed changed paths for this reconciliation were `README.md` and `docs/**`. Ru
 PR #907 and PR #908 are not merged evidence for this reconciliation. They are classified as:
 
 ```txt
-OPEN / UNMERGED / SUPERSEDED BY THIS RECONCILIATION / MUST_NOT_MERGE
+CLOSED / NOT MERGED / SUPERSEDED BY THIS RECONCILIATION / MUST_NOT_MERGE
 ```
 
 This reconciliation does not edit their branches and does not rely on their commits, SHA values, CI results or status declarations as current-main truth.
@@ -53,7 +53,7 @@ EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
 
 - Canonical file: `docs/tickets/ready/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md`.
 - Role: Reviewer / Certifier.
-- Status: `READY_FOR_CERTIFIER`.
+- Status: `READY_FOR_INDEPENDENT_REVIEW`.
 - Executable ticket count in the ready queue: exactly `1`.
 
 ## Changed documents
@@ -74,10 +74,6 @@ EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
 - `quality:strict-escapes`: must be checked by the next verification task from actual command/workflow output.
 - `npm audit --audit-level=high`: must be checked by the next verification task from actual command/workflow output.
 - Full quality/build certification: not declared in this reconciliation.
-
-## Validation note
-
-`node scripts/check-control-plane-docs.mjs` currently rejects `READY_FOR_CERTIFIER` because its executable-status allowlist only includes Builder/review-era statuses. This reconciliation did not edit the script because guard/script changes are out of scope for this docs-only PR. The queue and ticket intentionally keep the owner-required `READY_FOR_CERTIFIER` status.
 
 ## Remaining risks
 

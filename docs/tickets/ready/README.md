@@ -22,7 +22,7 @@ EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Reviewer / Certifier | EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 | `docs/tickets/ready/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md` | `READY_FOR_CERTIFIER` |
+| Reviewer / Certifier | EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 | `docs/tickets/ready/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md` | `READY_FOR_INDEPENDENT_REVIEW` |
 
 **Current Status:** PR #905 is merged but its post-merge verification is not complete. The next executable task is an independent read-only Reviewer / Certifier verification of `EMAIL-WEBHOOK-IDEMPOTENCY-001`.
 

@@ -1,6 +1,6 @@
 # EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 — Verify merged Resend webhook idempotency hardening
 
-Status: READY_FOR_CERTIFIER
+Status: READY_FOR_INDEPENDENT_REVIEW
 Ticket ID: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
 Role: Reviewer / Certifier
 Launch status: NO_GO
