@@ -54,6 +54,7 @@ This document is the canonical entry point for technical state, risk register, a
 
 ## 4. Canonical Ticket Inventory
 
+### Current & Future Tickets
 | Ticket ID | Title | Category | Status | Location | Dependency | Impact |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` | Post-merge verification | READY | `READY_FOR_CERTIFIER` | `ready/` | None | **BLOCKER** |
@@ -103,75 +104,77 @@ This document is the canonical entry point for technical state, risk register, a
 | `ARCH-LEGACY-007` | Remove User Profile bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **LOW** |
 | `ARCH-GUARD-002` | AST/Dependency Graph | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | CI-001 | **LOW** |
 | `ARCH-DOCS-001` | Final reconciliation | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | All repairs | **LOW** |
-| `DNA-EXCELLENCE-001` | Product excellence proof | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `DOCS-RECONCILE-001` | Current main truth | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `DOCS-RECONCILE-003` | Status hotfix | HISTORICAL | `VERIFIED` | `ready/` | PR | **HIGH** |
-| `LAUNCH-CANDIDATE-001` | Critical path rehearsal | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-EMAIL-001` | Readiness audit | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-EMAIL-003` | Email consent boundary | HISTORICAL | `VERIFIED` | `ready/` | PR #899 | **BLOCKER** |
-| `LAUNCH-FIX-001` | Vercel env validation | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-002` | CF webhook check | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-003` | Payment smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-004` | Video access smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-005` | Comments smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-006` | CF upload smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-FIX-007` | Lifecycle smoke test | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `LAUNCH-LEGAL-001` | Legal readiness pack | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-SECURITY-001` | Security audit | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `LAUNCH-SECURITY-002` | CF authenticity | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `OWNER-LAUNCH-DECISIONS-001` | Record owner decisions | HISTORICAL | `VERIFIED` | `ready/` | PR #890 | **BLOCKER** |
-| `PAYMENT-WEBHOOK-RESULT-001` | Fix ignored Stripe results | HISTORICAL | `VERIFIED` | `ready/` | PR #902 | **HIGH** |
-| `STABILIZE-LAUNCH-BUILD-002` | Vercel build recovery | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X0-READY-001` | handoff inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X0-READY-002` | Activation checklist | HISTORICAL | `VERIFIED` | `done/`  | PR | **BLOCKER** |
-| `X0-READY-003` | README slimming | HISTORICAL | `VERIFIED` | `done/`  | PR | **BLOCKER** |
-| `X0.5-READY-001` | Research synthesis | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X0.5-READY-002` | Decisions lock | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X0.5-READY-003` | Product standard | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X1-READY-001` | Payment inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X2-READY-001` | Access truth inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X3-READY-001` | Video provider inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X4-READY-001` | PlaybackPlan inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X5-READY-001` | Admin cockpit inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X6-EX-001` | UI consistency inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X6-FU-001` | Access actions confirmation | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X6-FU-002` | Playback messaging | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X7-READY-001` | Readiness gap analysis | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `BOLEK-MASTERPLAN-001` | Masterplan establishment | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `HOTFIX-VERCEL-001` | Vercel hotfix | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `STABILIZE-001` | Reconcile test suite | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `STABILIZE-X3-TYPECHECK-001` | CF Typecheck | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X1-FIX-001` | Eligibility policy | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X1-FIX-002` | Threshold defaults | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X1-FIX-003` | Currency scope | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X1-FIX-005` | Full refund revocation | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X2-FIX-001` | Video access check truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X2-FIX-002` | Comment write access truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X2-FIX-003` | Standardize mutations | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X2-FIX-004` | Admin read models | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X2-FIX-005` | Query sort contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-001` | Video asset foundation | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-002` | Gating contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-003` | Upload status | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-004` | Asset state | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-005` | Denied playback negative | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-006` | Storage migration plan | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-007` | Admin diagnostics | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-008` | CF Import legacy | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-009` | Disable legacy fallback | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X3-FIX-010` | Migration checklist | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X3-FIX-011` | Signed playback runtime | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X4-FIX-001` | Comment product contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X4-FIX-002` | Comment UI states | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
-| `X4-FIX-003` | Comment badge truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
-| `X4-FIX-004` | Comment negative tests | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+
+### Historical Ticket List (Verified Real IDs)
+1. `DNA-EXCELLENCE-001` | Product excellence proof
+2. `DOCS-RECONCILE-001` | Current main truth
+3. `DOCS-RECONCILE-003` | Status hotfix
+4. `LAUNCH-CANDIDATE-001` | Critical path rehearsal
+5. `LAUNCH-EMAIL-001` | Readiness audit
+6. `LAUNCH-EMAIL-003` | Email consent boundary
+7. `LAUNCH-FIX-001` | Vercel env validation
+8. `LAUNCH-FIX-002` | CF webhook check
+9. `LAUNCH-FIX-003` | Payment smoke test
+10. `LAUNCH-FIX-004` | Video access smoke test
+11. `LAUNCH-FIX-005` | Comments smoke test
+12. `LAUNCH-FIX-006` | CF upload smoke test
+13. `LAUNCH-FIX-007` | Lifecycle smoke test
+14. `LAUNCH-LEGAL-001` | Legal readiness pack
+15. `LAUNCH-SECURITY-001` | Security audit
+16. `LAUNCH-SECURITY-002` | CF authenticity
+17. `OWNER-LAUNCH-DECISIONS-001` | Record owner decisions
+18. `PAYMENT-WEBHOOK-RESULT-001` | Fix ignored Stripe results
+19. `STABILIZE-LAUNCH-BUILD-002` | Vercel build recovery
+20. `X0-READY-001` | handoff inventory
+21. `X0-READY-002` | Activation checklist
+22. `X0-READY-003` | README slimming
+23. `X0.5-READY-001` | Research synthesis
+24. `X0.5-READY-002` | Decisions lock
+25. `X0.5-READY-003` | Product standard
+26. `X1-READY-001` | Payment inventory
+27. `X2-READY-001` | Access truth inventory
+28. `X3-READY-001` | Video provider inventory
+29. `X4-READY-001` | PlaybackPlan inventory
+30. `X5-READY-001` | Admin cockpit inventory
+31. `X6-EX-001` | UI consistency inventory
+32. `X6-FU-001` | Access actions confirmation
+33. `X6-FU-002` | Playback messaging
+34. `X7-READY-001` | Readiness gap analysis
+35. `BOLEK-MASTERPLAN-001` | Masterplan establishment
+36. `HOTFIX-VERCEL-001` | Vercel hotfix
+37. `STABILIZE-001` | Reconcile test suite
+38. `STABILIZE-X3-TYPECHECK-001` | CF Typecheck
+39. `X1-FIX-001` | Eligibility policy
+40. `X1-FIX-002` | Threshold defaults
+41. `X1-FIX-003` | Currency scope
+42. `X1-FIX-005` | Full refund revocation
+43. `X2-FIX-001` | Video access check truth
+44. `X2-FIX-002` | Comment write access truth
+45. `X2-FIX-003` | Standardize mutations
+46. `X2-FIX-004` | Admin read models
+47. `X2-FIX-005` | Query sort contract
+48. `X3-FIX-001` | Video asset foundation
+49. `X3-FIX-002` | Gating contract
+50. `X3-FIX-003` | Upload status
+51. `X3-FIX-004` | Asset state
+52. `X3-FIX-005` | Denied playback negative
+53. `X3-FIX-006` | Storage migration plan
+54. `X3-FIX-007` | Admin diagnostics
+55. `X3-FIX-008` | CF Import legacy
+56. `X3-FIX-009` | Disable legacy fallback
+57. `X3-FIX-010` | Migration checklist
+58. `X3-FIX-011` | Signed playback runtime
+59. `X4-FIX-001` | Comment product contract
+60. `X4-FIX-002` | Comment UI states
+61. `X4-FIX-003` | Comment badge truth
+62. `X4-FIX-004` | Comment negative tests
 
 ## 5. Inventory Validation
 - **Inventory Row Count**: 109 (47 Current/Future + 62 Historical).
 - **Exact Category Sum**: 62 (Hist) + 1 (Unv) + 1 (Ready) + 13 (Blocked) + 1 (Dec) + 31 (Plan) = 109.
 - **Duplicate ID check**: PASSED.
-- **Placeholder ID check**: PASSED (No synthetic HIST-nn).
-- **Wildcard check**: PASSED (Enumerated only).
+- **Placeholder ID check**: PASSED.
+- **Wildcard check**: PASSED.
 - **Missing referenced ID check**: PASSED.
 
 ## 6. Risk Register

@@ -9,17 +9,15 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 
 - **OBSERVED_MAIN_HEAD_AT_TASK_START**: 36b57dec5c763ca29ff708c836dae0601125c49d
 - **DOCS_BRANCH_BASE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **FINAL_DOCS_BRANCH_HEAD**: fde45961df94687b74699fcbdd9088ab03bcfc89
+- **FINAL_DOCS_BRANCH_HEAD**: 862f48ca6b0eae242b95e6fc535cfe305640c6ae
 - **PR_902_MERGE_SHA**: 2c2a0f01f71e177145336051e97680bcc489e2b9
 - **PR_905_MERGE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 (Payment Webhook Result) is part of the established baseline.
+- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 merge SHA 2c2a0f01f71e177145336051e97680bcc489e2b9 is an ancestor of current main.
 
 ## 2. PR #904 / #905 / #906 Relationship
 
 - PR #905 is the corrective successor to PR #904. It has been merged into main.
-- PR #906 (and related previous docs attempts) is **SUPERSEDED / MUST_NOT_MERGE** by PR #907.
-- **PR #906 Actual State**: Observed as OPEN in external repository metadata.
-- **Limitation**: Agent lacks direct `close_pr` tooling. **HUMAN_ACTION_REQUIRED_BEFORE_MERGE** to formally close PR #906.
+- PR #906 is **CLOSED / NOT MERGED / SUPERSEDED / MUST_NOT_MERGE** by PR #907.
 
 ## 3. Implementation Summary (PR #905)
 
@@ -41,10 +39,10 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 | Evidence area | Status | Notes |
 | --- | --- | --- |
 | Code merged | IMPLEMENTED_UNVERIFIED | Merged to main, but gaps identified. |
-| Unit tests added | IMPLEMENTED_UNVERIFIED | Added in PR #905, status of independent execution: UNKNOWN. |
+| Unit tests added | IMPLEMENTED_UNVERIFIED | Added in PR #905, independent execution required. |
 | Fresh PostgreSQL migrate deploy | VERIFIED | Migration file exists and is consistent with schema. |
 | Upgrade with existing rows | UNVERIFIED | No proof of testing on existing data. |
-| Real lock concurrency | UNVERIFIED | Tests use `Promise.all` but real PG concurrency not proven. |
+| Real lock concurrency | UNVERIFIED | PG concurrency not proven. |
 | Stale takeover ownership | CONFIRMED_GAP | Ownership/fencing missing; stale worker can overwrite. |
 | Full quality suite | FAILED_GATE | env:validate:prod failure blocks remaining steps. |
 | tsx/tsc check | BLOCKED_BY_ENVIRONMENT | Binaries not found in sandbox environment. |
@@ -53,7 +51,7 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 | Production webhook behavior | NOT_EXECUTED | |
 | Vercel | PREVIEW_READY_ONLY | Not correctness evidence. |
 
-## 5. Observed CI Run Details (Workflow: 27499048531)
+## 5. Observed CI Run Details (Workflow: 27500924096)
 
 | Job | Step | Conclusion |
 | --- | --- | --- |
@@ -69,7 +67,7 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 ## 6. Progress Summary
 
 - **Exact Ticket Counts**: 62 HISTORICAL, 1 UNVERIFIED, 1 READY, 13 BLOCKED, 1 DECISION, 31 PLANNED (Total: 109 unique IDs).
-- **Exact Launch Stage Counts**: 5 COMPLETED, 2 PARTIAL, 17 OPEN (Total: 24).
+- **Exact Launch Stage Counts**: 5 COMPLETED, 2 PARTIAL, 17 OPEN (Total: 24 stages).
 - **Current Executable Ticket**: `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`.
 
 ## 7. Confirmed Gaps
@@ -86,7 +84,7 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 
 ### C. Controls & Documentation
 - **Counter Semantics**: `sentCount` increment logic remains ambiguous for out-of-order events. (DECISION_REQUIRED)
-- **PII/Retention**: Raw emails and payloads stored without clear retention policy. (CONFIRMED_GAP)
+- `PII/Retention`: Raw emails and payloads stored without clear retention policy. (CONFIRMED_GAP)
 - **Wrong Path**: Payload timestamp `created_at` may be read from the wrong path in ledger. (CONFIRMED_GAP)
 
 ## 8. Verdict
