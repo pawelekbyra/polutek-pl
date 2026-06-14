@@ -1,9 +1,14 @@
 # LAUNCH-EMAIL-002 — Implement secure unsubscribe and suppression
 
-Status: `BLOCKED`  
-Type: future runtime implementation ticket  
-Parent readiness ticket: `LAUNCH-EMAIL-001 — Email consent, unsubscribe and suppression readiness`  
-Do not execute until unblocked.
+Status: `SUPERSEDED_BY_SPLIT_TICKETS / HISTORICAL / NON_EXECUTABLE`
+Type: historical broad runtime implementation ticket
+Parent readiness ticket: `LAUNCH-EMAIL-001 — Email consent, unsubscribe and suppression readiness`
+Do not execute. This broad ticket combined signed unsubscribe with bounce/complaint suppression and has been split.
+
+Successors:
+
+- Signed unsubscribe successor: `EMAIL-SIGNED-UNSUBSCRIBE-001`
+- Suppression successor: planned separately, not executable in this reconciliation
 
 ## Blocked on
 
