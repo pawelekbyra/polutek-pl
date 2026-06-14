@@ -15,6 +15,7 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     broadcastEmail: {
       update: vi.fn(),
@@ -32,6 +33,10 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
 
   const ctx = createAppContext({
     prisma: prismaMock as any,
+    db: {
+        read: prismaMock as any,
+        writeTransaction: vi.fn((cb) => cb(prismaMock)),
+    } as any,
     actor: { type: 'system', reason: 'test' },
   });
 
@@ -60,9 +65,11 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
     // Let's simulate that the first call is still PROCESSING or already PROCESSED.
     prismaMock.emailEvent.findUnique.mockResolvedValue({
         providerEventId: 'svix_123',
-        status: WebhookEventStatus.PROCESSED
+        status: WebhookEventStatus.PROCESSED,
+        type: 'email.sent'
     });
 
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
         id: 'r1',
         broadcastEmailId: 'b1',
@@ -98,7 +105,8 @@ describe('handleResendWebhook - Idempotency Race Proof', () => {
 
     // Counter increment should be called exactly ONCE
     expect(prismaMock.broadcastEmail.update).toHaveBeenCalledTimes(1);
-    expect(prismaMock.emailEvent.update).toHaveBeenCalledTimes(1); // One successful release
+    // Success release should be called exactly ONCE on the write handle
+    expect(prismaMock.emailEvent.update).toHaveBeenCalledTimes(1);
     expect(prismaMock.broadcastEmail.update).toHaveBeenCalledWith(expect.objectContaining({
         data: { sentCount: { increment: 1 } }
     }));

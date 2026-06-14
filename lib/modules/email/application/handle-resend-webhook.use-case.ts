@@ -152,6 +152,7 @@ export async function handleResendWebhook(
     });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
+
     // 5. Failure Release
     try {
         await lockService.releaseWithFailure(providerEventId, error.message || String(error));
@@ -160,9 +161,14 @@ export async function handleResendWebhook(
             originalError: error.message,
             releaseError
         });
-        // Audit 6: preserve original error as returned failure
+        // We log the secondary failure but proceed to return the primary failure (Audit 6)
     }
-    return fail(new EmailError(error.message || "Internal error during webhook handling"));
+
+    if (error instanceof EmailError) {
+        return fail(error);
+    }
+
+    return fail(new EmailError(error.message || "Internal error during webhook handling", 500));
   }
 }
 

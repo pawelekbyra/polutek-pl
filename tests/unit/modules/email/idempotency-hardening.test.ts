@@ -10,6 +10,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     broadcastEmailRecipient: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     broadcastEmail: {
       update: vi.fn(),
@@ -30,13 +31,17 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
 
   const ctx = createAppContext({
     prisma: prismaMock as any,
+    db: {
+        read: prismaMock as any,
+        writeTransaction: vi.fn((cb) => cb(prismaMock)),
+    } as any,
     actor: { type: 'system', reason: 'test' },
   });
 
   beforeEach(() => {
     vi.resetAllMocks();
     prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1', status: 'PENDING' });
-    prismaMock.broadcastEmailRecipient.update.mockResolvedValue({});
+    prismaMock.broadcastEmailRecipient.updateMany = vi.fn().mockResolvedValue({ count: 1 });
     prismaMock.broadcastEmail.update.mockResolvedValue({});
   });
 
@@ -79,9 +84,9 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
       },
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.duplicate).toBe(true);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+        expect(result.error.statusCode).toBe(503);
     }
     expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
   });
@@ -104,7 +109,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
 
     expect(result.ok).toBe(true);
     expect(EmailEventLockService.prototype.releaseWithSuccess).toHaveBeenCalledWith('evt_123', expect.anything());
-    expect(prismaMock.broadcastEmailRecipient.update).toHaveBeenCalled();
+    expect(prismaMock.broadcastEmailRecipient.updateMany).toHaveBeenCalled();
   });
 
   it('releases lock with failure if business logic throws', async () => {
@@ -127,8 +132,7 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
     expect(EmailEventLockService.prototype.releaseWithFailure).toHaveBeenCalledWith('evt_123', 'DB Error');
   });
 
-  it('correctly handles events without eventId (best effort)', async () => {
-      // Mocking acquireLock should not be called if eventId is missing
+  it('rejects events without eventId', async () => {
       const result = await handleResendWebhook(ctx, {
           type: 'email.sent',
           data: {
@@ -138,13 +142,10 @@ describe('handleResendWebhook - Idempotency Hardening', () => {
               subject: 'Hello',
               created_at: new Date().toISOString(),
           },
-      });
+      } as any);
 
-      expect(result.ok).toBe(true);
+      expect(result.ok).toBe(false);
       expect(EmailEventLockService.prototype.acquireLock).not.toHaveBeenCalled();
-      if (result.ok) {
-          expect(result.data.idempotency).toBe('best_effort');
-      }
   });
 
   describe('handleInboundEmail error handling', () => {

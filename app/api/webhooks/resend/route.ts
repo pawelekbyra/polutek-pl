@@ -61,9 +61,15 @@ export async function POST(req: NextRequest) {
   const result = await handleResendWebhook(ctx, payload);
 
   if (!result.ok) {
-      // For webhooks, we often return 200 even if processing fails to avoid retries
-      // of non-fixable errors, but here we mirror the use case result.
-      return NextResponse.json({ error: result.error.message }, { status: 500 });
+      const status = result.error.statusCode || 500;
+
+      return NextResponse.json(
+        {
+          error: result.error.message,
+          code: result.error.code,
+        },
+        { status },
+      );
   }
 
   return NextResponse.json(result.data);
