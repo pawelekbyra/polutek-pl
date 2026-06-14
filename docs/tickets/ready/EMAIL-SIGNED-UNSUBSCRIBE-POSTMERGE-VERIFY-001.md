@@ -1,9 +1,23 @@
 # EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001 — Independent post-merge verification for signed unsubscribe
 
-Status: READY_FOR_INDEPENDENT_REVIEW
+Status: PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL
 Ticket ID: EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001
-Role: Reviewer / Certifier
+Role: Reviewer / Certifier / Historical verification evidence
 Launch status: NO_GO
+
+## Historical verification result
+
+This ticket is no longer executable. PR #920 independently verified the signed unsubscribe implementation and merged as verification SHA `77081b64073ec77bf1df13217622a0f88d118011` with verdict `PASS`.
+
+```txt
+verification PR #920
+verification merge SHA 77081b64073ec77bf1df13217622a0f88d118011
+verdict PASS
+report docs/reports/verification/EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001.md
+public launch remains NO_GO
+```
+
+The original verification requirements below are preserved for historical traceability only. They must not be read as authorization for another executable verification task.
 
 ## Purpose
 
@@ -18,7 +32,7 @@ Source implementation ticket: EMAIL-SIGNED-UNSUBSCRIBE-001
 Implementation PR: PR #918
 Implementation merge SHA: 5710d14f82f5951c13d8d77f6a8eb4d899068c4b
 Bolek implementation verdict: MERGE — KNOWN BASELINE CI FAILURES
-Independent post-merge verification: pending
+Independent post-merge verification: PASS in PR #920
 Public launch: NO_GO
 ```
 
