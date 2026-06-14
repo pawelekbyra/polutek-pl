@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
         'svix-signature': svixSignature,
       }) as ResendWebhookInput;
 
+
       // Preserve svix-id as internal eventId for idempotency
       payload.eventId = svixId;
     } catch (err) {
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest) {
     // Allow legacy verification if explicitly configured and matching
     payload = JSON.parse(rawBody) as ResendWebhookInput;
     payload.eventId = svixId || undefined;
+
+    if (!payload.eventId && process.env.NODE_ENV === 'production') {
+        logger.error("[ResendWebhook] Legacy webhook attempt missing event ID in production");
+        return NextResponse.json({ error: 'Event ID required' }, { status: 400 });
+    }
   } else {
     logger.warn("[ResendWebhook] Unauthorized access attempt - invalid or missing signature/secret.");
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -55,9 +61,15 @@ export async function POST(req: NextRequest) {
   const result = await handleResendWebhook(ctx, payload);
 
   if (!result.ok) {
-      // For webhooks, we often return 200 even if processing fails to avoid retries
-      // of non-fixable errors, but here we mirror the use case result.
-      return NextResponse.json({ error: result.error.message }, { status: 500 });
+      const status = result.error.statusCode || 500;
+
+      return NextResponse.json(
+        {
+          error: result.error.message,
+          code: result.error.code,
+        },
+        { status },
+      );
   }
 
   return NextResponse.json(result.data);
