@@ -195,9 +195,9 @@ Stripe webhook
 exists ACTIVE PatronGrant
 ```
 
-Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` jest wyłącznie denormalized read model.
+Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
 
-Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu.
+Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu. Jeżeli current main nie spełnia pełnego lifecycle, dokumentować jako blocker/follow-up, a nie jako zmianę polityki.
 
 ## 10. Inwarianty wideo/playera
 
@@ -242,8 +242,8 @@ Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VI
 - Unsubscribe nigdy nie usuwa PatronGrant.
 - Patron nie oznacza automatycznej zgody marketingowej.
 - Transactional emails are separated from marketing.
-- Broadcast requires preview/test-send and audit.
-- Bounce/complaint suppression is launch-critical.
+- Broadcast requires preview/test-send i audytu.
+- Bounce/complaint suppression jest launch-critical.
 - Webhook idempotency REQUIRES lease ownership and fencing.
 
 ## 13. Admin/action/audit
@@ -350,7 +350,11 @@ the owner selected that component.
 
 For example: explicit confirmation does not automatically mean checkbox.
 
-## 16. MERGED_UNVERIFIED rule
+## 16. Blocked behavior
+
+Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.
+
+## 17. MERGED_UNVERIFIED rule
 
 Jeśli runtime PR został zmergowany mimo failed/skipped required CI, jego status musi być **MERGED_UNVERIFIED**.
 - Integrator musi utworzyć post-merge verification ticket.
@@ -360,10 +364,6 @@ Jeśli runtime PR został zmergowany mimo failed/skipped required CI, jego statu
 - Vercel READY nie zastępuje typecheck/test/build/security evidence.
 - PR report musi odróżniać: passed, skipped, not_run, blocked, failed.
 - Implementation PR dotyczący locków, webhooków, płatności lub dostępu musi mieć negative concurrency tests właściwe dla ryzyka.
-
-## 17. Blocked behavior
-
-Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.
 
 ## 18. Security and Privacy
 

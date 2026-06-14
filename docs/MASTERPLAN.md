@@ -34,12 +34,23 @@ This document is the canonical entry point for technical state, risk register, a
 
 ## 3. Progress Counts
 
-| Category | Counts |
-| --- | --- |
-| **Unique Execution Ticket IDs** | 21 IMPLEMENTED_VERIFIED/HISTORICAL, 1 MERGED_UNVERIFIED, 1 READY, 10 BLOCKED, 1 DECISION_REQUIRED |
-| **Launch Stages** | 5 COMPLETED, 2 PARTIAL, 17 OPEN, 0 BLOCKED |
+### A. EXECUTION TICKET COUNTS
+- **IMPLEMENTED_VERIFIED / HISTORICAL**: 21
+- **MERGED_UNVERIFIED**: 1
+- **READY**: 1
+- **BLOCKED**: 10
+- **DECISION_REQUIRED**: 1
+- **DEFERRED_POST_LAUNCH**: 0
+- **Total Unique Ticket IDs**: 34
 
-*Note: Ticket IDs and Launch Stages are different units and should not be compared 1:1. A single launch stage may require multiple execution tickets.*
+### B. LAUNCH STAGE COUNTS
+- **COMPLETED**: 5
+- **PARTIAL / IN_PROGRESS**: 2
+- **OPEN / NOT_STARTED**: 17
+- **BLOCKED**: 0
+- **Total Launch Stages**: 24
+
+*Note: Ticket counts and Launch stages are different units. A single stage may contain multiple tickets. Corrective PRs do not increase unique ticket counts.*
 
 ## 4. Risk Register
 
@@ -76,6 +87,7 @@ This document is the canonical entry point for technical state, risk register, a
 | `LEGACY-SERVICE-RETIREMENT` | Active `lib/services/` | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **LOW** | `ARCH-LEGACY-*` |
 | `LOG-SECRET-PII-SAFETY` | Secret/PII leakage in logs | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** | `ARCH-LOG-001` |
 | `COMMENTS-PERMISSION-DRIFT` | Fragmented comments policy | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **MEDIUM** | `ARCH-COMMENTS-001` |
+| `DOC-CODE-QUEUE-DRIFT` | Document vs Queue mismatch | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** | `ARCH-DOCS-001` |
 
 ### Historical Risks (Resolved)
 | Risk ID | Title | Evidence Class | Classification | Status |
@@ -104,7 +116,7 @@ This document is the canonical entry point for technical state, risk register, a
 5. `ARCH-ADMIN-AUTH-001`
 
 ### ARCHITECTURE BACKLOG (P0)
-- `ARCH-ACCESS-001`, `ARCH-PLAYBACK-001`, `ARCH-CACHE-001`, `ARCH-PATRON-001`, `ARCH-CLERK-001`.
+- `ARCH-ACCESS-001`, `ARCH-PLAYBACK-001`, `ARCH-CACHE-001`, `ARCH-PATRON-001`, `ARCH-CLERK-001`, `ARCH-LOG-001`.
 
 ## 6. Discoverability Path
 

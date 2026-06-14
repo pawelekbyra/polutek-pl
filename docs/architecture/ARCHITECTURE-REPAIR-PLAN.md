@@ -34,6 +34,7 @@ The following invariants are non-negotiable:
 - Clerk provides authentication/identity, NOT canonical patron authorization.
 - Patron status does NOT subscribe a user to marketing.
 - Newsletter subscription does NOT grant patron access.
+- Transactional email and optional marketing consent are separate.
 
 ## 3. Current-State Matrix
 
@@ -47,13 +48,17 @@ The following invariants are non-negotiable:
 | Grant mutation audit | Partial | Incomplete audit for all transitions | `REPOSITORY_EVIDENCE` | `ARCH-PATRON-001` |
 | Playback provider gating | Check before token | `READY` + `canPlay=false` possible | `REPOSITORY_EVIDENCE` | `ARCH-PLAYBACK-002` |
 | PlaybackPlan semantics | Discriminated union | Non-strict mapping in some cases | `REPOSITORY_EVIDENCE` | `ARCH-PLAYBACK-001` |
+| Comments authorization | Tier based | No explicit AccessDecision use | `REPOSITORY_EVIDENCE` | `ARCH-COMMENTS-001` |
 | Admin authorization | `ADMIN_CLERK_USER_IDS` | Canonical resolver missing | `REPOSITORY_EVIDENCE` | `ARCH-ADMIN-AUTH-001` |
 | Access Diagnostics | Basic view | Missing drift/eligibility details | `REPOSITORY_EVIDENCE` | `ARCH-ADMIN-001` |
 | Architecture guard | Basic boundaries | Missing forbidden source rules | `REPOSITORY_EVIDENCE` | `ARCH-GUARD-001` |
 | Legacy services | `lib/services/` exists | Many active callers | `REPOSITORY_EVIDENCE` | `ARCH-LEGACY-*` |
+| AppContext boundary | Initial foundation | Context creation inconsistent | `REPOSITORY_EVIDENCE` | `ARCH-DI-001` |
 | Email idempotency | PR #905 merged | No lock ownership/fencing | `REPOSITORY_EVIDENCE` | `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` |
 | Email authenticity | Svix + Legacy | Legacy fallback in production | `REPOSITORY_EVIDENCE` | `EMAIL-WEBHOOK-ROUTE-SECURITY-001` |
 | Logging/PII/retention | Redaction helpers | Raw errors in DB/logs | `REPOSITORY_EVIDENCE` | `ARCH-LOG-001` |
+| Migration evidence | 20260614000000 | Upgrade path not proven | `REPOSITORY_EVIDENCE` | `EMAIL-WEBHOOK-MIGRATION-VERIFY-001` |
+| Control-plane consistency | Mixed | Historical tickets marked historical | `REPOSITORY_EVIDENCE` | `ARCH-DOCS-001` |
 
 ## 4. Known Gap — Canonical Admin Authorization
 
@@ -70,7 +75,7 @@ The following invariants are non-negotiable:
 - Inventory of all admin-sensitive surfaces.
 - Tests for: database admin, configured admin, stale Clerk claims, regular user, guest.
 
-## 5. Repair Program (Summary of Areas)
+## 5. Repair Areas
 
 ### Area A: Single Patron Access Truth
 - Only Access module issue `AccessDecision`.
@@ -87,37 +92,91 @@ The following invariants are non-negotiable:
 - Durable retry for Clerk metadata sync failures.
 - **Ticket**: `ARCH-CLERK-001`.
 
-### Area D & E: PatronGrant Lifecycle & Audit
-- Explicit status: ACTIVE, SUSPENDED, REVOKED.
-- Full audit log for every transition (Actor, Reason, RequestID).
-- **Tickets**: `ARCH-PATRON-001`, `ARCH-PATRON-002`, `ARCH-PATRON-003`.
+### Area D: PatronGrant Lifecycle
+- Explicit states: ACTIVE, SUSPENDED, REVOKED.
+- Dispute opened -> SUSPEND. Dispute won -> REACTIVATE. Dispute lost -> REVOKE.
+- **Tickets**: `ARCH-PATRON-002`, `ARCH-PATRON-003`.
+
+### Area E: Grant Mutation Audit Completeness
+- Transactional audit for every grant transition.
+- Actor, Reason, State Before/After, RequestID.
+- **Ticket**: `ARCH-PATRON-001`.
 
 ### Area F: Payment Eligibility Boundary
 - Payment fulfillment must call an explicit eligibility policy.
 - Below threshold or unsupported currency must not grant patron status.
 - **Ticket**: `ARCH-PAYMENT-001`.
 
-### Area H & I: PlaybackPlan & Provider Gating
+### Area G: Central Access Module Boundary
+- Routes are transport adapters; they cannot locally reconstruct policy.
+- **Tickets**: `ARCH-ACCESS-001`, `ARCH-GUARD-001`.
+
+### Area H: Strict PlaybackPlan Contract
 - `READY` iff `canPlay === true` AND `access.allowed === true` AND source exists.
+- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-PLAYBACK-002`.
+
+### Area I: Provider Gating and Credential Safety
 - Zero provider calls on deny/non-ready.
-- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-PLAYBACK-002`, `ARCH-DI-003`.
+- Provider token issued only after AccessDecision allow.
+- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-DI-003`.
+
+### Area J: Frontend Rendering Boundary
+- Frontend renders backend PlaybackPlan and does not authorize independently.
+- No player mount or provider iframe on denied access.
+- **Ticket**: `ARCH-E2E-001`.
+
+### Area K: Comments Visibility and Permission
+- Public-read, gated-write permission matrix.
+- Inherit video policy through Access module.
+- **Ticket**: `ARCH-COMMENTS-001`.
+
+### Area L: Admin Override
+- Admin overrides must be explicit in `AccessDecision`.
+- Excluded from public metrics.
+- **Ticket**: `ARCH-ADMIN-002`.
 
 ### Area M: Access Diagnostics
 - Admin view showing Identity, Patron truth, Cache/drift, Financial eligibility, and Audit.
 - **Ticket**: `ARCH-ADMIN-001`.
 
 ### Area N: Sensitive Response Caching
-- Non-cacheable headers for personalized access/playback/token responses.
+- Non-cacheable headers (private, no-store) for personalized access/playback/token responses.
 - **Ticket**: `ARCH-CACHE-001`.
 
 ### Area O: Legacy Service Retirement
 - Inventory and retirement of `lib/services/**`.
 - **Tickets**: `ARCH-LEGACY-001` to `ARCH-LEGACY-007`.
 
-### Area V: Resend Webhook Idempotency & Certification
-- Fix lock ownership and fencing.
-- Fix production security (Svix-only).
-- Independent post-merge certification.
+### Area P: AppContext, Prisma and Dependency Boundaries
+- Route -> Use Case -> Domain Ports -> Infrastructure Adapters.
+- Remove direct Prisma in application layer.
+- **Tickets**: `ARCH-DI-001` to `ARCH-DI-004`.
+
+### Area Q: Architecture Guard
+- Mandatory CI guard checking boundaries and forbidden sources.
+- **Tickets**: `ARCH-CI-001`, `ARCH-GUARD-001`.
+
+### Area R: Test Strategy
+- Multi-dimensional matrix: Actors x Tiers x Video States x Asset Status.
+- **Ticket**: `ARCH-TEST-001`.
+
+### Area S: Risk-Based Coverage
+- High coverage targets (90%) for Access and Playback gating.
+- **Ticket**: `ARCH-COVERAGE-001`.
+
+### Area T: Logging, Secrets and PII
+- No raw payloads, tokens, or PII in logs/errors.
+- Redaction helpers mandatory.
+- **Ticket**: `ARCH-LOG-001`.
+
+### Area U: Control-Plane Consistency
+- Exactly one ready ticket. No drift between documents and code.
+- **Ticket**: `ARCH-DOCS-001`.
+
+### Area V: Resend Webhook Idempotency, Lock Ownership and Post-Merge Certification
+- Fix lock ownership and fencing (lease tokens).
+- Svix-only production authenticity.
+- Real PostgreSQL concurrency evidence.
 - **Tickets**: `EMAIL-WEBHOOK-*`, `ARCH-CI-001`.
 
 ## 6. Required ADR Program (Proposed)
@@ -132,7 +191,8 @@ The following invariants are non-negotiable:
 - **ADR-0015**: Domain audit versus operational logs.
 - **ADR-0016**: Email webhook event lease ownership and fencing.
 - **ADR-0017**: Production Resend webhook authenticity.
+- **ADR-0018**: Canonical administrator authorization resolver.
 
 ## 7. Definition of Completion
 
-The program is complete when the Access module is the sole source of authorization, Payment/Patron lifecycles are fully audited and deterministic, Playback gating is strict, and the Architecture Guard enforces all boundaries in CI.
+The program is complete when the Access module is the sole source of authorization, Payment/Patron lifecycles are fully audited and deterministic, Playback gating is strict, and the Architecture Guard enforces all boundaries in CI. Final certification requires fresh/upgrade migration proof and real concurrency proof.

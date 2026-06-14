@@ -12,13 +12,12 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 - **FINAL_DOCS_BRANCH_HEAD**: [TBD]
 - **PR_902_MERGE_SHA**: 2c2a0f01f71e177145336051e97680bcc489e2b9
 - **PR_905_MERGE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 (Payment Webhook Result) is confirmed as part of the accepted baseline.
+- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 (Payment Webhook Result) is part of the established baseline.
 
-## 2. PR #904 / #905 Relationship
+## 2. PR #904 / #905 / #906 Relationship
 
-PR #905 is observed as the corrective successor to PR #904. It has been merged into main.
-
-PR #906 (and related previous docs attempts) is **SUPERSEDED / MUST_NOT_MERGE** by PR #907.
+- PR #905 is the corrective successor to PR #904. It has been merged into main.
+- PR #906 (and related previous docs attempts) is **SUPERSEDED / MUST_NOT_MERGE** by PR #907.
 
 ## 3. Implementation Summary (PR #905)
 
@@ -62,6 +61,7 @@ PR #906 (and related previous docs attempts) is **SUPERSEDED / MUST_NOT_MERGE** 
 
 ### C. Controls & Documentation
 - **Counter Semantics**: `sentCount` increment logic remains ambiguous for out-of-order events. (DECISION_REQUIRED)
+- **PII/Retention**: Raw emails and payloads stored without clear retention policy. (CONFIRMED_GAP)
 
 ## 6. Verdict
 
