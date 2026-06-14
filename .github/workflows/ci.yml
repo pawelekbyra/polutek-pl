@@ -31,6 +31,7 @@ jobs:
       PATRON_MIN_TIP_CURRENCY: EUR
       REFERRAL_PATRON_THRESHOLD: "5"
       HEALTHCHECK_TOKEN: ci-health-token
+      EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001
       MEDIA_BUCKET_HOST: media.example.com
       UPSTASH_REDIS_REST_URL: https://redis.example.com
       UPSTASH_REDIS_REST_TOKEN: ci-redis-token

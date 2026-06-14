@@ -1,6 +1,7 @@
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { flags } from '@/lib/feature-flags';
 import { verifyContentUnsubscribeToken } from '../domain/signed-unsubscribe-token';
+import { EmailPreferenceRepository } from '../infrastructure/email-preference.repository';
 
 export type SignedUnsubscribeResult = {
   ok: true;
@@ -30,21 +31,8 @@ export class SignedContentUnsubscribeUseCase {
           await tx.subscription.deleteMany({ where: { userId: user.id, creatorId: mainCreator.id } });
         }
 
-        await tx.emailPreference.upsert({
-          where: { email: user.email },
-          create: {
-            userId: user.id,
-            email: user.email,
-            marketingEmails: false,
-            systemEmails: true,
-            unsubscribedAt: ctx.now(),
-          },
-          update: {
-            userId: user.id,
-            marketingEmails: false,
-            unsubscribedAt: ctx.now(),
-          },
-        });
+        const preferenceRepo = new EmailPreferenceRepository(tx);
+        await preferenceRepo.recordExplicitContentOptOut(user.id, user.email, tx);
       });
     } catch {
       return { ok: true, message: GENERIC_MESSAGE };
