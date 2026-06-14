@@ -9,15 +9,17 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 
 - **OBSERVED_MAIN_HEAD_AT_TASK_START**: 36b57dec5c763ca29ff708c836dae0601125c49d
 - **DOCS_BRANCH_BASE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **FINAL_DOCS_BRANCH_HEAD**: 862f48ca6b0eae242b95e6fc535cfe305640c6ae
+- **CORRECTION_BASE_HEAD**: 2780c86bd8cda91b4ce61df775361bd09bbec4ad
+- **FINAL_CORRECTION_HEAD**: Recorded externally after the correction commit exists. Embedding a commit's own SHA in that same commit is self-referential.
+- **FINAL_CORRECTION_HEAD_CI**: Recorded externally after the final head exists; do not create another commit solely to embed CI metadata.
 - **PR_902_MERGE_SHA**: 2c2a0f01f71e177145336051e97680bcc489e2b9
 - **PR_905_MERGE_SHA**: 36b57dec5c763ca29ff708c836dae0601125c49d
-- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 merge SHA 2c2a0f01f71e177145336051e97680bcc489e2b9 is an ancestor of current main.
+- **ANCESTRY_VERIFICATION_RESULT**: **VERIFIED**. PR #902 merge SHA 2c2a0f01f71e177145336051e97680bcc489e2b9 is an ancestor of the observed main base.
 
 ## 2. PR #904 / #905 / #906 Relationship
 
 - PR #905 is the corrective successor to PR #904. It has been merged into main.
-- PR #906 is **CLOSED / NOT MERGED / SUPERSEDED / MUST_NOT_MERGE** by PR #907.
+- PR #906 is **CLOSED / NOT MERGED / SUPERSEDED BY PR #907 / MUST_NOT_MERGE**.
 
 ## 3. Implementation Summary (PR #905)
 
@@ -40,9 +42,10 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 | --- | --- | --- |
 | Code merged | IMPLEMENTED_UNVERIFIED | Merged to main, but gaps identified. |
 | Unit tests added | IMPLEMENTED_UNVERIFIED | Added in PR #905, independent execution required. |
-| Fresh PostgreSQL migrate deploy | VERIFIED | Migration file exists and is consistent with schema. |
+| Fresh PostgreSQL migrate deploy | VERIFIED | Verified only for the successful fresh empty DB migrate step in the observed pre-correction CI snapshot. |
 | Upgrade with existing rows | UNVERIFIED | No proof of testing on existing data. |
 | Real lock concurrency | UNVERIFIED | PG concurrency not proven. |
+| Real email integration suite | NOT_PROVEN_EXECUTED | No independent proof that the real suite executed. |
 | Stale takeover ownership | CONFIRMED_GAP | Ownership/fencing missing; stale worker can overwrite. |
 | Full quality suite | FAILED_GATE | env:validate:prod failure blocks remaining steps. |
 | tsx/tsc check | BLOCKED_BY_ENVIRONMENT | Binaries not found in sandbox environment. |
@@ -51,24 +54,34 @@ Merge SHA: 36b57dec5c763ca29ff708c836dae0601125c49d
 | Production webhook behavior | NOT_EXECUTED | |
 | Vercel | PREVIEW_READY_ONLY | Not correctness evidence. |
 
-## 5. Observed CI Run Details (Workflow: 27500924096)
+## 5. Observed Pre-Correction CI Snapshot
+
+This snapshot belongs only to starting head `2780c86bd8cda91b4ce61df775361bd09bbec4ad` and workflow run `27500924096`. It must not be described as CI for the final correction head.
+
+Overall conclusion: **FAILURE**
 
 | Job | Step | Conclusion |
 | --- | --- | --- |
 | `quality` | `env:validate:prod` | **FAILURE** |
-| `quality` | `architecture-boundaries` | SKIPPED |
+| `quality` | `prisma validate` | SKIPPED |
+| `quality` | `prisma generate` | SKIPPED |
+| `quality` | `quality:strict-escapes` | SKIPPED |
+| `quality` | `quality:hotspots` | SKIPPED |
 | `quality` | `typecheck` | SKIPPED |
-| `quality` | `strict-escapes` | SKIPPED |
-| `quality` | `hotspots` | SKIPPED |
-| `test` | `test:coverage` | SKIPPED |
-| `integration-postgres` | `migrate deploy` | **SUCCESS** (Fresh empty DB) |
+| `quality` | `test:coverage` | SKIPPED |
+| `quality` | `lint` | SKIPPED |
+| `quality` | `build` | SKIPPED |
+| `integration-postgres` | `migrate deploy` | **SUCCESS** (fresh empty DB only) |
 | `security` | `npm audit high` | **FAILURE** |
+
+Final correction head CI: **NOT RECORDED IN THIS COMMITTED REPORT**. Inspect and record it externally after the final head exists.
 
 ## 6. Progress Summary
 
 - **Exact Ticket Counts**: 62 HISTORICAL, 1 UNVERIFIED, 1 READY, 13 BLOCKED, 1 DECISION, 31 PLANNED (Total: 109 unique IDs).
 - **Exact Launch Stage Counts**: 5 COMPLETED, 2 PARTIAL, 17 OPEN (Total: 24 stages).
 - **Current Executable Ticket**: `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`.
+- **Executable Ticket Count**: exactly 1.
 
 ## 7. Confirmed Gaps
 
