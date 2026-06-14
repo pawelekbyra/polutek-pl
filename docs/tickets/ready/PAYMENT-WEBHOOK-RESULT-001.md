@@ -1,8 +1,17 @@
 # PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results
 
-Status: AUDIT_COMPLETE / READY_FOR_BUILDER
+Status: MERGED / HISTORICAL
 Ticket ID: PAYMENT-WEBHOOK-RESULT-001
+Implementation: PR #902
+Merge SHA: 2c2a0f01f71e177145336051e97680bcc489e2b9
 Launch status: NO_GO
+
+## Final Historical State
+
+- Status: `MERGED / HISTORICAL`.
+- Implementation: PR #902.
+- Merge SHA: `2c2a0f01f71e177145336051e97680bcc489e2b9`.
+- This ticket is retained as historical evidence only and is not executable.
 
 ## Purpose
 
@@ -76,8 +85,10 @@ The `UseCaseResult` returned by `fulfillPayment`, `handleRefund`, and `handleDis
 - Verify `handleStripeWebhook` returns a failure and calls `releaseWithFailure`.
 - Repeat for `handleRefund` and `handleDispute`.
 
-## Final State
+## Original Builder Exit Criteria
 
-- Status: `READY_FOR_INDEPENDENT_REVIEW` (when Builder is done).
+The original Builder exit criteria below are historical and no longer make this ticket executable.
+
+- Status after Builder completion was expected to become `READY_FOR_INDEPENDENT_REVIEW`.
 - Public launch remains `NO_GO`.
 - Evidence: `REPOSITORY_EVIDENCE + AUTOMATED_TEST_EVIDENCE`.
