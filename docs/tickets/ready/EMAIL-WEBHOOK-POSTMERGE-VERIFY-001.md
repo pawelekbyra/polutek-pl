@@ -16,7 +16,7 @@ Independently verify the implementation merged by PR #905 for `EMAIL-WEBHOOK-IDE
 - Merge SHA: `36b57dec5c763ca29ff708c836dae0601125c49d`.
 - CI fixture follow-up: PR #910 fixed the missing `ADMIN_CLERK_USER_IDS` CI production-env fixture.
 - PR #910 merge SHA: `49695941171a4de47a22b036a0b5255c8bbd16be`.
-- Public launch remains `NO_GO`; post-merge verification is not yet complete.
+- Public launch remains `NO_GO`; verification completed with verdict `FIX_REQUIRED`. Queue reconciliation and repair-ticket creation remain pending.
 
 ## Verification Goals
 
@@ -61,3 +61,12 @@ The Reviewer / Certifier must independently verify all of the following without 
 - Verification report records actual command/workflow results and any environment limitations.
 - Verification report gives one final verdict: `PASS`, `FIX_REQUIRED`, or `BLOCKED`.
 - Public launch remains `NO_GO` unless a later owner-approved launch-certification process changes it.
+
+
+## Final Verification Verdict
+
+Verdict: `FIX_REQUIRED`
+
+Evidence report: `docs/reports/verification/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md`
+
+Public launch remains `NO_GO`.
