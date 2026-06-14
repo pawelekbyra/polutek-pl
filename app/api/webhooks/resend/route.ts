@@ -7,7 +7,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 const SVIX_HEADER_NAMES = ['svix-id', 'svix-timestamp', 'svix-signature'] as const;
 
 function hasAnySvixHeader(req: NextRequest) {
-  return SVIX_HEADER_NAMES.some((header) => Boolean(req.headers.get(header)));
+  return SVIX_HEADER_NAMES.some((header) => req.headers.has(header));
 }
 
 function getCompleteSvixHeaders(req: NextRequest) {

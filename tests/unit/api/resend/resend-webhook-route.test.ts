@@ -170,6 +170,36 @@ describe('Resend Webhook Route Contract', () => {
     expect(handleResendWebhook).not.toHaveBeenCalled();
   });
 
+  it('rejects non-production legacy fallback when svix-id is present with an empty value', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const res = await POST(
+      makeRequest({
+        'x-resend-webhook-secret': 'test-secret',
+        'svix-id': '',
+      }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(Webhook).not.toHaveBeenCalled();
+    expect(handleResendWebhook).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-production legacy fallback when only a non-empty svix-id is supplied', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const res = await POST(
+      makeRequest({
+        'x-resend-webhook-secret': 'test-secret',
+        'svix-id': 'evt_partial',
+      }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(Webhook).not.toHaveBeenCalled();
+    expect(handleResendWebhook).not.toHaveBeenCalled();
+  });
+
   it('rejects non-production legacy requests when any Svix header is present but invalid', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     verifyMock.mockImplementationOnce(() => {
