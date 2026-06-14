@@ -44,6 +44,8 @@ require an active local User even for configured admin IDs
 never trust an admin claim for security bypass
 return a user actor with current, safely resolved patron state
 preserve existing PatronGrant semantics
+unauthenticated actor may resolve to guest only for routes that explicitly permit guest access
+admin and other privileged contexts must reject guest
 ```
 
 Session claims and public metadata may be used only as non-authoritative UI hints, never as server-side authorization truth.
