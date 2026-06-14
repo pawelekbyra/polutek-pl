@@ -39,12 +39,13 @@ describe('EmailService broadcast content consent boundary', () => {
     vi.clearAllMocks();
     process.env.RESEND_API_KEY = 'test_key';
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+    process.env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET = 'a'.repeat(32);
     emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
     broadcastUpdate.mockResolvedValue({});
     recipientUpdate.mockResolvedValue({});
     recipientGroupBy.mockResolvedValue([{ status: 'SENT', _count: 1 }]);
     creatorFindUnique.mockResolvedValue({ id: 'creator_1' });
-    preferenceFindMany.mockResolvedValue([]);
+    preferenceFindMany.mockResolvedValue([{ email: 'sub@example.com', marketingEmails: true }]);
     subscriptionFindMany.mockResolvedValue([{ userId: 'u1' }]);
   });
 
@@ -61,7 +62,7 @@ describe('EmailService broadcast content consent boundary', () => {
     await EmailService.sendBroadcast('b1');
   }
 
-  it('sends content broadcast only with active Subscription and no negative override', async () => {
+  it('sends content broadcast only with active Subscription and explicit preference opt-in', async () => {
     await sendBroadcastWithRecipients([{ id: 'r1', userId: 'u1', email: 'sub@example.com', language: 'pl' }]);
 
     expect(emailsSend).toHaveBeenCalledTimes(1);

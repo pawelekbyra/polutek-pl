@@ -45,7 +45,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     vi.clearAllMocks();
     mockSendBroadcast.mockResolvedValue({ sent: 1, failed: 0, messageIds: ['b1'] });
     mockSendTestEmail.mockResolvedValue({ messageId: 'test-id' });
-    prismaMock.emailPreference.findUnique.mockResolvedValue(null);
+    prismaMock.emailPreference.findUnique.mockResolvedValue({ marketingEmails: true });
     prismaMock.creator.findUnique.mockResolvedValue({ id: 'c1' });
     prismaMock.subscription.findUnique.mockResolvedValue({ id: 's1' });
   });
@@ -165,7 +165,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     expect(prismaMock.broadcastEmailRecipient.createMany).not.toHaveBeenCalled();
   });
 
-  it('allows active Subscription with missing EmailPreference', async () => {
+  it('skips active Subscription with missing EmailPreference', async () => {
     prismaMock.user.findMany.mockResolvedValue([
       { id: 'u1', email: 'subscribed@ex.com', language: 'pl', name: 'Sub', isPatron: false },
     ]);
@@ -180,9 +180,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.data.recipientCount).toBe(1);
-    expect(prismaMock.broadcastEmailRecipient.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: [expect.objectContaining({ email: 'subscribed@ex.com', userId: 'u1' })],
-    }));
+    if (result.ok) expect(result.data.recipientCount).toBe(0);
+    expect(prismaMock.broadcastEmailRecipient.createMany).not.toHaveBeenCalled();
   });
 });
