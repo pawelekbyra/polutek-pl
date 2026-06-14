@@ -5,8 +5,8 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: ADMIN-AUTH-ACTOR-CANONICALIZATION-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/ADMIN-AUTH-ACTOR-CANONICALIZATION-001.md -->
 
 ## Current Execution Gate
 
@@ -17,16 +17,16 @@ The project is governed by the **Bolek Operating Model**. For state and risk det
 ## Current Control-Plane Ticket
 
 ```txt
-ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001
+ADMIN-AUTH-ACTOR-CANONICALIZATION-001
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 | `docs/tickets/ready/ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001.md` | `READY_FOR_BUILDER` |
+| Builder | ADMIN-AUTH-ACTOR-CANONICALIZATION-001 | `docs/tickets/ready/ADMIN-AUTH-ACTOR-CANONICALIZATION-001.md` | `READY_FOR_BUILDER` |
 
-**Current Status:** Signed unsubscribe implementation and verification are complete: PR #918 implemented `EMAIL-SIGNED-UNSUBSCRIBE-001`, and PR #920 independently verified it `PASS` with verification merge SHA `77081b64073ec77bf1df13217622a0f88d118011`. Admin video creation/upload is the urgent current repair in `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001`. Bounce/complaint suppression remains the next planned non-executable ticket in `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`. Public launch remains `NO_GO`.
+**Current Status:** Signed unsubscribe implementation and verification are complete: PR #918 implemented `EMAIL-SIGNED-UNSUBSCRIBE-001`, and PR #920 independently verified it `PASS` with verification merge SHA `77081b64073ec77bf1df13217622a0f88d118011`. Admin auth actor canonicalization is the urgent current repair in `ADMIN-AUTH-ACTOR-CANONICALIZATION-001`. The explicit sequence is auth canonicalization → admin video repair → bounce/complaint suppression. Admin video repair remains urgent but non-executable until auth is implemented, independently verified PASS and reconciled. Bounce/complaint suppression remains deferred and non-executable until video repair is implemented, independently verified PASS and reconciled. Public launch remains `NO_GO`.
 
-Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**. Next planned ticket: `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`.
+Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**. Next planned ticket: `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001`; then `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`.
 
 ## Historical executable tickets
 

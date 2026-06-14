@@ -8,7 +8,7 @@ Launch status: NO_GO
 ## Deferred executability statement
 
 This ticket is complete enough for later execution, but it is not the current executable ticket.
-It becomes eligible only after `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is implemented, independently verified and reconciled.
+It becomes eligible only after `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is implemented, independently verified post-merge with verdict `PASS`, and reconciled.
 
 Next planned ticket after the urgent admin video repair: `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`.
 

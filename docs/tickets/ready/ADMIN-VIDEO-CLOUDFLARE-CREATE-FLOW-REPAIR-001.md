@@ -1,10 +1,17 @@
 # ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 — Repair Cloudflare-first admin video creation and publishing
 
-Status: READY_FOR_BUILDER
+Status: PLANNED / URGENT / NON_EXECUTABLE / NEXT_AFTER_AUTH_CANONICALIZATION
 Ticket ID: ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001
-Role: Builder
+Role: Builder / Planned
 Priority: URGENT
 Launch status: NO_GO
+
+## Deferred executability statement
+
+This ticket remains urgent and fully specified for later execution, but it is not the current executable ticket.
+It becomes eligible only after `ADMIN-AUTH-ACTOR-CANONICALIZATION-001` is implemented, merged, independently verified post-merge with verdict `PASS`, and reconciled in the control-plane.
+
+Next planned ticket after auth canonicalization: `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001`.
 
 ## Purpose
 
