@@ -1,13 +1,13 @@
 # EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001 — Verify PR #914 Resend Svix production repair
 
-Status: READY_FOR_INDEPENDENT_REVIEW
+Status: PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL
 Ticket ID: EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001
-Role: Reviewer / Certifier
+Role: Reviewer / Certifier / Historical verification evidence
 Launch status: NO_GO
 
 ## Scope boundary
 
-This is a read-only verification ticket.
+This is a historical, non-executable read-only verification ticket. PR #916 completed it with verdict `PASS` and merge SHA `62548c01cf2df66b88d608ebc751e68871b0ff3d`. Evidence report: `docs/reports/verification/EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001.md`.
 
 The Reviewer / Certifier must perform:
 
@@ -26,7 +26,10 @@ The Reviewer / Certifier must not commit runtime changes. A temporary uncommitte
 - Implementation PR: PR #914.
 - Implementation merge SHA: `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`.
 - Bolek implementation verdict: `MERGE`.
-- Independent post-merge verification: pending.
+- Independent post-merge verification: `PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL`.
+- Verification PR: PR #916.
+- Verification merge SHA: `62548c01cf2df66b88d608ebc751e68871b0ff3d`.
+- Verification report: `docs/reports/verification/EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001.md`.
 - Public launch remains `NO_GO`.
 
 The Reviewer / Certifier must not trust the Builder summary alone. The merged route and tests must be inspected directly on `main` at or after merge SHA `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`.
