@@ -9,7 +9,7 @@ This document is the canonical entry point for technical state, risk register, a
 
 - **Current Observed Main HEAD:** `36b57dec5c763ca29ff708c836dae0601125c49d`
 - **Last Merged Implementation:** PR #905 (Email Webhook Idempotency Hardening)
-- **Verification State:** MERGED_UNVERIFIED (PR #905). PR #902 is NOT FOUND in current ancestry.
+- **Verification State:** MERGED_UNVERIFIED (PR #905). PR #902 ancestry is VERIFIED.
 - **Current Execution Gate:** `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`
 - **Current State:** `POST_MERGE_RECONCILIATION / READY_FOR_CERTIFIER`.
 - **Next Builder Ticket:** [TBD after certification]
@@ -36,7 +36,7 @@ This document is the canonical entry point for technical state, risk register, a
 
 | Category | Counts |
 | --- | --- |
-| **Unique Execution Ticket IDs** | 20 IMPLEMENTED_VERIFIED/HISTORICAL, 1 MERGED_UNVERIFIED, 1 READY, 10 BLOCKED, 1 DECISION_REQUIRED |
+| **Unique Execution Ticket IDs** | 21 IMPLEMENTED_VERIFIED/HISTORICAL, 1 MERGED_UNVERIFIED, 1 READY, 10 BLOCKED, 1 DECISION_REQUIRED |
 | **Launch Stages** | 5 COMPLETED, 2 PARTIAL, 17 OPEN, 0 BLOCKED |
 
 *Note: Ticket IDs and Launch Stages are different units and should not be compared 1:1. A single launch stage may require multiple execution tickets.*
@@ -57,7 +57,7 @@ This document is the canonical entry point for technical state, risk register, a
 | `EMAIL-WEBHOOK-PAYLOAD-VALIDATION`| Missing per-event validation | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** | `EMAIL-WEBHOOK-PAYLOAD-VALIDATION-001` |
 | `EMAIL-WEBHOOK-RETENTION` | Payload privacy and retention | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **MEDIUM** | `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` |
 | `POST-MERGE-VERIFICATION-DEBT` | PR #905 merged without cert | `REPOSITORY_EVIDENCE` | `MERGED_UNVERIFIED` | **HIGH** | `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` |
-| `CONTROL-PLANE-TICKET-DRIFT` | Ancestry and queue drift | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** | `ARCH-DOCS-001` |
+| `CONTROL-PLANE-TICKET-DRIFT` | Ticket and queue drift | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** | `ARCH-DOCS-001` |
 
 ### Architecture Risks
 | Risk ID | Title | Evidence Class | Classification | Launch Impact | Ticket |
@@ -93,7 +93,7 @@ This document is the canonical entry point for technical state, risk register, a
 - **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: PR #905 (MERGED_UNVERIFIED).
 
 ### RECENTLY_COMPLETED
-- **`PAYMENT-WEBHOOK-RESULT-001`**: PR #902 (HISTORICAL/NOT IN ANCESTRY).
+- **`PAYMENT-WEBHOOK-RESULT-001`**: PR #902 (HISTORICAL).
 - **`LAUNCH-EMAIL-003`**: PR #899 (MERGED).
 
 ### QUEUED_HIGH_PRIORITY (Repairs)
