@@ -4,8 +4,8 @@ import { flags } from "@/lib/feature-flags";
 export class EmailPolicy {
   /**
    * Determines if a recipient can receive content/broadcast notifications.
-   * Local Subscription is the positive consent proof. The legacy
-   * marketingEmails field is only a negative override for content notifications.
+   * Content notifications require both an active local Subscription and
+   * explicit EmailPreference.marketingEmails consent.
    */
   static async canReceiveBroadcastEmail(
     prisma: DbClient,
@@ -34,6 +34,6 @@ export class EmailPolicy {
       select: { marketingEmails: true },
     });
 
-    return preference?.marketingEmails !== false;
+    return preference?.marketingEmails === true;
   }
 }

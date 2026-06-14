@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '../constants';
 import { flags } from '@/lib/feature-flags';
+import { buildContentUnsubscribeUrl } from '@/lib/modules/subscriptions';
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
 
@@ -88,7 +89,6 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     email: to,
     userLanguage: language,
-    unsubscribeLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/unsubscribe?email=${encodeURIComponent(to)}`,
     preferencesLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/profile/settings`
   };
   let subjectBase = template?.subject ?? fallback!.subject;
@@ -223,10 +223,10 @@ export class EmailService {
             }
 
             // LEGACY: marketingEmails is the historical technical field name for
-            // consent to content notifications. Only false is a negative override;
-            // true or missing preference is not consent without active Subscription.
+            // consent to content notifications. A missing preference is not
+            // consent even when a stale Subscription exists.
             const marketingEmailsEnabled = prefMap.get(recipient.email);
-            if (marketingEmailsEnabled === false) {
+            if (marketingEmailsEnabled !== true) {
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },
                     data: { status: 'SKIPPED', error: 'CONTENT_NOTIFICATIONS_OPTED_OUT' }
@@ -237,13 +237,22 @@ export class EmailService {
             const subject = recipient.language === 'en' ? broadcast.subjectEn : broadcast.subjectPl;
             const htmlBase = recipient.language === 'en' ? broadcast.htmlEn : broadcast.htmlPl;
 
+            const unsubscribeLink = recipient.userId ? buildContentUnsubscribeUrl(recipient.userId, appUrl) : null;
+            if (!unsubscribeLink) {
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: { status: 'SKIPPED', error: 'UNSUBSCRIBE_LINK_UNAVAILABLE' }
+                });
+                return;
+            }
+
             const vars = {
                 firstName: recipient.email.split('@')[0], // Fallback if no name
                 name: recipient.email.split('@')[0],
                 email: recipient.email,
                 appName: APP_NAME,
                 appUrl,
-                unsubscribeLink: `${appUrl}/unsubscribe?email=${encodeURIComponent(recipient.email)}`,
+                unsubscribeLink,
                 preferencesLink: `${appUrl}/profile/settings`,
                 userLanguage: recipient.language
             };
@@ -273,7 +282,7 @@ export class EmailService {
                     }
                 });
             } catch (e: any) {
-                logger.error(`[EmailService] Failed to send broadcast to ${recipient.email}`, e);
+                logger.error('[EmailService] Failed to send broadcast recipient', { broadcastId, recipientId: recipient.id });
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },
                     data: { status: 'FAILED', error: e.message || 'Unknown error' }
