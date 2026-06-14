@@ -1,17 +1,24 @@
-# Tickets
+# Ticket Queue and Handoff index
 
-Status: `ACTIVE — CURRENT-MAIN RECONCILED`
+Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE
+Launch status: **NO_GO**
 
-Current ticket truth is maintained in:
+## Canonical Current Ticket
 
-- `docs/tickets/ready/README.md`
-- `docs/tickets/blocked/README.md`
-- `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`
+The sole canonical pointer to the current executable ticket is:
+[**docs/tickets/ready/README.md**](ready/README.md)
 
-The original X0 handoff ticket is historical/superseded and is not the current next action. The current recommended next executable ticket is:
+Do NOT use any other pointer in this repository as the source of truth for the active task.
 
-```txt
-docs/tickets/ready/X6-EX-001-ui-consistency-inventory.md
-```
+## Queue Structure
 
-Do not use vague prompts like `continue`. Assign exactly one ticket and obey `AGENTS.md` plus the ticket's allowed/forbidden paths.
+- `ready/`: Contains the single current executable ticket and historical merged tickets.
+- `blocked/`: Contains tickets waiting for owner decisions, legal review, or upstream repairs.
+- `backlog/`: Long-term technical debt and non-launch-critical improvements.
+
+## Rules for Agents
+
+1. Always verify the current ticket ID in `ready/README.md` before starting work.
+2. If the current ticket is not what you were assigned, STOP and reconcile.
+3. No parallel runtime work on the same module/route family.
+4. Every ticket must have a clear exit state and evidence requirement.

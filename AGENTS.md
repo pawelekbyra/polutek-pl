@@ -18,7 +18,17 @@ Aktualny stage operacyjny: current `main` zawiera znaczące scalone fundamenty X
 
 Mandatory Rules: `POST_MERGE_RECONCILIATION_REQUIRED` and `AUTOMATIC_BOLEK_MERGE_AUTHORIZED` (see `docs/governance/BOLEK-OPERATING-MODEL.md`). Every implementation task must be preceded by a verification of canonical documentation state.
 
-## 1. Tożsamość produktu
+## 1. MERGED_UNVERIFIED Rule
+
+Jeśli runtime PR został zmergowany mimo failed/skipped required CI, jego status musi być **MERGED_UNVERIFIED**.
+- Integrator musi utworzyć post-merge verification ticket.
+- Dokumentacja nie może oznaczyć go jako VERIFIED ani CERTIFIED.
+- Następny unrelated runtime ticket nie powinien zostać aktywowany, dopóki current merged risk nie zostanie sklasyfikowany.
+- Skipped critical integration test != automated test evidence.
+- Vercel READY != correctness evidence.
+- PR report musi odróżniać: `passed`, `skipped`, `not_run`, `blocked`, `failed`.
+
+## 2. Tożsamość produktu
 
 Polutek.pl jest jednokanałowym miejscem VOD twórcy: jeden oficjalny kanał, jeden katalog wideo, jeden system patronów/dostępu, jedna społeczność, jedna lista mailingowa i jeden kokpit admina. Polutek.pl nie jest marketplace, multi-creator SaaS, mini-Patreonem, white-label CMS, tenant platformą ani generyczną siecią społecznościową.
 
@@ -29,7 +39,7 @@ Polutek.pl is not a platform.
 Polutek.pl is a place.
 ```
 
-## 2. Decyzje właściciela
+## 3. Decyzje właściciela
 
 Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 
@@ -44,7 +54,7 @@ Decyzje właściciela, wiążące dopóki właściciel jawnie ich nie zmieni:
 - Launch jest publiczny, nie prywatna beta.
 - Cel jakości: produkt excellent, nie szybkie minimum; excellence osiągane fazami i ticketami, nie jednym wielkim PR-em.
 
-## 3. Źródła prawdy
+## 4. Źródła prawdy
 
 Nie używać jednej liniowej hierarchii, w której stary README może nadpisać runtime albo decyzje właściciela. Obowiązują kategorie prawdy:
 
@@ -72,6 +82,7 @@ Nie używać jednej liniowej hierarchii, w której stary README może nadpisać 
 - `docs/strategy/PRODUCT-STANDARD.md`.
 - `docs/roadmap/Phase-Gates.md`.
 - `docs/architecture/Product-Architecture-Blueprint.md`.
+- `docs/architecture/ARCHITECTURE-REPAIR-PLAN.md`.
 
 ### Historical evidence
 
@@ -84,9 +95,9 @@ Zasada stała:
 Target architecture != current implementation.
 ```
 
-Blueprint jest target-only. Nie wolno udawać, że docelowa architektura już istnieje w runtime.
+Blueprint i Repair Plan są target-only. Nie wolno udawać, że docelowa architektura już istnieje w runtime.
 
-## 4. Role agentów
+## 5. Role agentów
 
 ### Planner
 
@@ -108,7 +119,7 @@ Integrator po batchu synchronizuje docs, przesuwa tickety, aktualizuje timeline/
 
 Certifier weryfikuje bramki faz, testy, guardy, docs reconciliation i znane blokery. Certifier może rekomendować certyfikację, ale tylko właściciel merge'uje.
 
-## 5. One ticket rule
+## 6. One ticket rule
 
 ```txt
 one ticket = one agent task = one branch = one PR
@@ -126,7 +137,7 @@ clean up everything
 
 Prawidłowy prompt wskazuje jeden plik `docs/tickets/ready/<ticket>.md` i nakazuje przestrzeganie `AGENTS.md`.
 
-## 6. Docs vs runtime
+## 7. Docs vs runtime
 
 - Docs-only ticket nie może zmieniać runtime.
 - Runtime ticket nie może aktualizować globalnych docs poza własnym raportem, chyba że ticket pozwala.
@@ -134,7 +145,7 @@ Prawidłowy prompt wskazuje jeden plik `docs/tickets/ready/<ticket>.md` i nakazu
 - Roadmapa nie jest dowodem implementacji. Kod i testy są dowodem implementacji.
 - Merged code/local tests nie oznaczają public-launch certification; X7 wymaga production/manual evidence.
 
-## 7. Single-writer files
+## 8. Single-writer files
 
 Serial-only, chyba że ticket jawnie pozwala:
 
@@ -144,6 +155,7 @@ Serial-only, chyba że ticket jawnie pozwala:
 - `docs/roadmap/OWNER-TIMELINE.md`
 - `docs/roadmap/Phase-Gates.md`
 - `docs/architecture/Product-Architecture-Blueprint.md`
+- `docs/architecture/ARCHITECTURE-REPAIR-PLAN.md`
 - `docs/strategy/OWNER-DECISIONS.md`
 - `scripts/check-architecture.ts`
 - `prisma/schema.prisma`
@@ -151,11 +163,11 @@ Serial-only, chyba że ticket jawnie pozwala:
 - `package.json`
 - `package-lock.json`
 
-## 8. Parallel work rules
+## 9. Parallel work rules
 
 Domyślnie maksymalnie 2 Builderów. Do 3 tylko po stabilizacji control plane i tylko dla izolowanych docs/inventory/UI tasków. Nigdy nie równoleglić ticketów dotykających tej samej rodziny route'ów, modułu, modelu Prisma, test suite, global doc, guard file, package files lub migrations.
 
-## 9. Inwarianty płatności/access/patron
+## 10. Inwarianty płatności/access/patron
 
 Inwarianty domenowe:
 
@@ -193,11 +205,11 @@ Stripe webhook
 exists ACTIVE PatronGrant
 ```
 
-Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
+Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` jest wyłącznie denormalized read model.
 
-Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu. Jeżeli current main nie spełnia pełnego lifecycle, dokumentować jako blocker/follow-up, a nie jako zmianę polityki.
+Dodatkowo: pełny refund cofa powiązany grant; dispute zawiesza; dispute won reactivates; dispute lost/chargeback revokes; manual grant/suspend/reactivate/revoke wymaga powodu i audytu.
 
-## 10. Inwarianty wideo/playera
+## 11. Inwarianty wideo/playera
 
 Inwarianty wideo/playera:
 
@@ -220,7 +232,9 @@ do not leak playbackToken
 
 Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VIDEO_NOT_READY`, `NO_PRIMARY_ASSET`, `PROCESSING`, `UNAVAILABLE`, `ERROR`. Denied plan nie zawiera playable URL ani tokenu. Provider call następuje dopiero po backendowej zgodzie Access.
 
-## 11. Inwarianty komentarzy
+**PlaybackPlan Invariant**: `READY` status MUST imply `canPlay === true` AND `access.allowed === true` AND presence of a playable source.
+
+## 12. Inwarianty komentarzy
 
 - Widoczność komentarzy != uprawnienie do komentowania.
 - Komentarze pod opublikowanymi wideo są widoczne dla wszystkich.
@@ -228,10 +242,9 @@ Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VI
 - PATRON: komentowanie/reagowanie/pisanie wymaga patrona lub admina.
 - Goście mogą czytać, ale nie pisać ani reportować.
 - Moderation states: `VISIBLE`, `HELD_FOR_REVIEW`, `HIDDEN`, `DELETED`.
-- No shadow bans.
 - Hide/delete/restore/dismiss wymagają audytu.
 
-## 12. Inwarianty email/subscription
+## 13. Inwarianty email/subscription
 
 - Subscription = mailing consent only.
 - Patron != newsletter subscriber.
@@ -240,123 +253,19 @@ Docelowe stany `PlaybackPlan`: `READY`, `LOGIN_REQUIRED`, `PATRON_REQUIRED`, `VI
 - Transactional emails są oddzielone od marketingu.
 - Broadcast wymaga preview/test-send i audytu.
 - Bounce/complaint suppression jest launch-critical.
+- Webhook idempotency REQUIRES lease ownership and fencing.
 
-## 13. Admin/action/audit
+## 14. Admin/action/audit
 
-Admin cockpit jest support operations center, nie vanity dashboard. Access Diagnostics ma pierwszeństwo przed generic dashboard. Każda manualna akcja wpływająca na dostęp wymaga reason + audit + confirmation dla działań niebezpiecznych.
+Admin cockpit jest support operations center, nie vanity dashboard. Access Diagnostics ma pierwszeństwo przed generic dashboard. Każda manualna akcja wpływająca na dostęp wymaga reason + audit + confirmation dla działań niebezpiecznych. Canonical admin authorization resolver MUST be used.
 
-## 14. Walidacja i raportowanie
+## 15. Walidacja i raportowanie
 
-Każdy PR musi zawierać:
+Każdy PR musi zawierać: summary, intent, changed files, validation commands with result, scope confirmation, what did not change, risks, follow-ups, ticket status. Nie wolno twierdzić, że testy przeszły, jeśli nie zostały uruchomione.
 
-- summary,
-- intent,
-- changed files,
-- validation commands with result,
-- scope confirmation,
-- what did not change,
-- risks,
-- follow-ups,
-- ticket status.
+## 16. Security and Privacy
 
-Nie wolno twierdzić, że testy przeszły, jeśli nie zostały uruchomione.
-
-## 15. Portable handoff and decision precision
-
-### Portable workspace baseline
-
-Agent must not assume that every execution environment contains a local
-`main` branch or a configured Git remote.
-
-Preferred baseline verification:
-
-1. verify the expected merge commit is an ancestor of `HEAD`;
-2. if history is unavailable, verify the required structural snapshot;
-3. require a clean working tree;
-4. report the actual branch and verification mode.
-
-Absence of `main` or `origin` alone is not a blocker in an isolated
-Codex workspace.
-
-A task may return `BLOCKED` only when neither commit ancestry nor
-structural verification can prove the required baseline.
-
-### Product-policy supersession
-
-A newer, shorter or consolidated document does not automatically supersede
-an older, more precise invariant.
-
-A normative statement may be removed or weakened only when:
-
-- an explicit owner-approved record identifies the exact superseded rule;
-- the record includes owner provenance;
-- the replacement is at least equally precise;
-- the PR report lists the supersession.
-
-When `Supersedes: none`, all earlier non-conflicting invariants remain binding.
-
-### Owner-decision provenance
-
-New or updated owner-decision records must state these fields when they record
-a new decision or materially update an existing one:
-
-```txt
-Decision source
-Approved by
-Approval date
-Recorded by
-Supersedes
-Does not supersede
-Implementation status
-Legal status
-Operator-evidence status
-Launch status
-```
-
-Without explicit owner provenance, a new decision is PROPOSED, not DECIDED.
-
-This rule does not require retroactive rebuilding of every historical decision
-record; it applies to new or updated records going forward.
-
-### Current-ticket source of truth
-
-`docs/tickets/ready/README.md` is the sole canonical pointer to the current
-executable agent ticket.
-
-README, roadmaps, owner timelines, reports and individual historical ticket
-files may link to the queue, but must not maintain an independent current
-ticket pointer.
-
-If another document disagrees with the queue, stop runtime assignment and
-reconcile the control plane first.
-
-### Backlog versus executable queue
-
-`docs/roadmap/Launch-Execution-Backlog.md` describes the full remaining path,
-dependencies and ownership.
-
-It is not an executable queue.
-
-The backlog may contain many planned items, but only the ready-ticket index
-may designate exactly one current executable ticket.
-
-### Precision contract
-
-For owner-decided behavior:
-
-- `MUST` / `musi` means mandatory;
-- `MUST NOT` / `nie może` means prohibited;
-- `SHOULD` requires documented justification for deviation;
-- `MAY` means optional.
-
-Do not use `may`, `może`, `should` or `powinno` when the owner has made the
-behavior mandatory.
-
-Do not convert an owner-required result into a specific UI component unless
-the owner selected that component.
-
-For example: explicit confirmation does not automatically mean checkbox.
-
-## 16. Blocked behavior
-
-Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.
+- personalized access/playback/token responses MUST be non-cacheable (private, no-store).
+- secrets, tokens, URLs and PII MUST be redacted from logs and `EmailEvent.error`.
+- no READY+canPlay=false.
+- no new legacy imports from `lib/services/**`.

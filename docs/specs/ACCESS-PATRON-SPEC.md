@@ -1,72 +1,38 @@
-# Access / Patron Hard Reset Spec
+# ACCESS-PATRON-SPEC: Patron Access and Identity Truth
 
-Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE. Ta specyfikacja jest target/product standard w aktywnym control plane, ale nie dowód aktualnego runtime.
+Status: ACTIVE
+Launch status: **NO_GO**
 
-## Purpose
+## 1. Domain Invariants
 
-Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandydatów ticketów i kryteria certyfikacji dla domeny: Access / Patron Hard Reset.
+- **Patron Access Truth**: Only the existence of an **ACTIVE PatronGrant** determines patron-level access.
+- **Identity != Authorization**: Clerk provides identity; the local `Access` module provides authorization.
+- **Denormalization**: `User.isPatron` is a read-only cache. If it conflicts with `PatronGrant`, the grant wins.
 
-## Product rules
+## 2. AccessDecision Contract
 
-- Deny by default.
-- Backend validates every sensitive request.
-- Active PatronGrant is source of truth.
-- `User.isPatron` is target-deprecated legacy diagnostic.
-- Clerk metadata is UI/cache only.
-- Subscription never grants access.
-- Admin override explicit and audited.
+All access-sensitive routes MUST use the canonical `AccessDecision` contract:
 
-## Launch-critical requirements
+```ts
+type AccessDecision = {
+  allowed: boolean;
+  reason:
+    | "PUBLIC" | "AUTHENTICATED" | "ACTIVE_PATRON_GRANT"
+    | "ADMIN_OVERRIDE" | "LOGIN_REQUIRED" | "PATRON_REQUIRED"
+    | "FORBIDDEN" | "ERROR";
+  decisionSource: "PUBLIC_POLICY" | "ACTIVE_PATRON_GRANT" | "ADMIN_OVERRIDE" | "DENY_POLICY";
+  adminOverride: boolean;
+  evaluatedAt: string;
+};
+```
 
-- All playback-sensitive paths ask Access module.
-- Denied PlaybackPlan has no token/source.
-- No provider call on denial.
-- Mismatch diagnostics show User.isPatron/Clerk/Subscription differences without trusting them.
+## 3. Drift Reconciliation
 
-## Target model
+- **Admin Diagnostics**: Admin dashboard must show both the cache (`User.isPatron`) and the truth (`PatronGrant`) and highlight mismatches.
+- **Durable Clerk Repair**: Sync failures to Clerk must be durable (retry table) and auditable.
 
-Access module centralizes decisions and returns explicit allow/deny reason consumed by PlaybackPlan and Admin Diagnostics.
+## 4. Forbidden Shortcuts
 
-## Forbidden shortcuts
-
-- Access based on User.isPatron.
-- Access based on Clerk metadata.
-- Access based on Subscription.
-- Frontend-only access checks.
-- Fail-open access.
-
-## Test strategy
-
-- Unit tests dla policy/use-case/repository granic.
-- Route/API contract tests dla wrażliwych przepływów.
-- Negative tests dla forbidden shortcuts.
-- Idempotency/security tests tam, gdzie domena dotyka webhooków, access, providerów lub tokenów.
-- Admin/support tests dla diagnostyki i audit trail.
-- Manual QA checklist przed certyfikacją fazy.
-
-## Codex ticket candidates
-
-- Inventory aktualnego kodu vs ta specyfikacja.
-- Gap analysis z podziałem launch-critical/should-have/post-launch.
-- Jedna migracja use-case albo route family per ticket.
-- Test-only ticket dla negative cases.
-- Docs reconciliation po merge batcha.
-
-## Certification criteria
-
-- Kod i docs są zgodne.
-- Guardy i testy nie kłamią.
-- Forbidden shortcuts są pokryte testem albo raportem braku użycia.
-- Znane blockery są zapisane w `docs/tickets/blocked/`.
-- Certifier rekomenduje status, właściciel merge'uje.
-
-## Open owner questions
-
-- Czy dana rzecz jest launch-critical czy post-launch, jeśli nie wynika to z owner decisions?
-- Czy istnieją dodatkowe ograniczenia prawne/UX dla tej domeny?
-- Czy obecny runtime ma elementy, które warto zachować zamiast przepisywać?
-## Current implementation snapshot
-
-This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
-
-Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.
+- **DO NOT** check `User.isPatron` in backend authorization paths.
+- **DO NOT** trust Clerk metadata for backend access truth.
+- **DO NOT** bypass the Access module in Playback or Comment routes.

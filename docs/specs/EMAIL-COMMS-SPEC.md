@@ -1,72 +1,50 @@
-# Email / Newsletter / Broadcast Spec
+# EMAIL-COMMS-SPEC: System Emails and Broadcast Hardening
 
-Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE. Ta specyfikacja jest target/product standard w aktywnym control plane, ale nie dowód aktualnego runtime.
+Status: ACTIVE
+Launch status: **NO_GO**
 
-## Purpose
+## 1. Core Invariants
 
-Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandydatów ticketów i kryteria certyfikacji dla domeny: Email / Newsletter / Broadcast.
+- **Subscription != Patron Access**: Unsubscribing from marketing never revokes a `PatronGrant`.
+- **Consent Boundary**: System/transactional emails do NOT change marketing consent.
+- **Privacy**: No plain-text emails in URLs; use signed tokens.
 
-## Product rules
+## 2. Resend Webhook Idempotency
 
-- Subscription = mailing consent only.
-- Patron != newsletter subscriber.
-- Unsubscribe never affects PatronGrant.
-- Patron does not imply marketing consent.
-- Transactional emails separate from marketing.
-- PL/EN templates.
-- Admin broadcast audit.
+### Webhook Authenticity
+- **Production**: MUST use Svix HMAC-SHA256 verification.
+- **Non-Production**: May use legacy `x-resend-webhook-secret` (requires ADR/Owner approval).
 
-## Launch-critical requirements
+### Identity and Lease Ownership
+- Every event is identified by `providerEventId` (Svix-id).
+- **Lease Ownership**: Every acquisition MUST create a unique `leaseToken`.
+- **Fencing**: Finalization (`PROCESSED` or `FAILED`) MUST check `leaseToken` to prevent stale workers from overwriting results.
+- **Type Integrity**: Takeover of stale/failed locks MUST strictly match the `eventType`.
 
-- Broadcast preview/test-send required.
-- Delivery webhooks.
-- Bounce/complaint suppression.
-- Preference center target.
-- Consent state must be visible to admin without implying access.
+### side effects
+- Business logic MUST be idempotent.
+- **Counter Semantics**: `sentCount` increments must handle out-of-order delivery. `DELIVERED` before `SENT` should still count as 1 send.
 
-## Target model
+### Validation
+- Strict per-event schema validation.
+- Return 400 for malformed supported events.
 
-Email/subscription module manages consent, templates, broadcast, delivery events and suppression. Patron module owns access.
+## 3. Error and Privacy Contract
 
-## Forbidden shortcuts
+- **Response Safety**: Webhook routes MUST return generic 500/400 messages without internal details.
+- **Redaction**: `EmailEvent.error` and logs MUST be redacted of secrets, tokens, and PII.
+- **Retention**: Webhook payloads are retained for 30 days.
 
-- Email unsubscribe revokes access.
-- Patron automatically subscribed to marketing.
-- Marketing and transactional mixed.
-- Broadcast without preview/test-send/audit.
+## 4. Required Evidence
 
-## Test strategy
+- **Real PostgreSQL Concurrency**: Integration tests proving fencing under race conditions.
+- **Migration Proof**: Proven upgrade path for legacy rows.
+- **Security Proof**: Production signature verification enforcement.
 
-- Unit tests dla policy/use-case/repository granic.
-- Route/API contract tests dla wrażliwych przepływów.
-- Negative tests dla forbidden shortcuts.
-- Idempotency/security tests tam, gdzie domena dotyka webhooków, access, providerów lub tokenów.
-- Admin/support tests dla diagnostyki i audit trail.
-- Manual QA checklist przed certyfikacją fazy.
+## 5. Post-Merge Certification
 
-## Codex ticket candidates
-
-- Inventory aktualnego kodu vs ta specyfikacja.
-- Gap analysis z podziałem launch-critical/should-have/post-launch.
-- Jedna migracja use-case albo route family per ticket.
-- Test-only ticket dla negative cases.
-- Docs reconciliation po merge batcha.
-
-## Certification criteria
-
-- Kod i docs są zgodne.
-- Guardy i testy nie kłamią.
-- Forbidden shortcuts są pokryte testem albo raportem braku użycia.
-- Znane blockery są zapisane w `docs/tickets/blocked/`.
-- Certifier rekomenduje status, właściciel merge'uje.
-
-## Open owner questions
-
-- Czy dana rzecz jest launch-critical czy post-launch, jeśli nie wynika to z owner decisions?
-- Czy istnieją dodatkowe ograniczenia prawne/UX dla tej domeny?
-- Czy obecny runtime ma elementy, które warto zachować zamiast przepisywać?
-## Current implementation snapshot
-
-This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
-
-Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.
+Implementation is only considered certified after an independent review of:
+1. Lock ownership/fencing correctness.
+2. Production security enforcement.
+3. Accurate counter semantics.
+4. Privacy/PII redaction.

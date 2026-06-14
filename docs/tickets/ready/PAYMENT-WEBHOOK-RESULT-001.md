@@ -1,8 +1,11 @@
 # PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results
 
-Status: AUDIT_COMPLETE / READY_FOR_BUILDER
-Ticket ID: PAYMENT-WEBHOOK-RESULT-001
+Status: **MERGED / HISTORICAL**
+Implemented by: PR #902
+Merge SHA: `2c2a0f01f71e177145336051e97680bcc489e2b9`
 Launch status: NO_GO
+
+***This file is retained as historical ticket evidence. It is NOT the current executable ticket.***
 
 ## Purpose
 
