@@ -10,13 +10,13 @@ This document is not an executable queue. It lists planned items and stages. Onl
 ## Progress Summaries
 
 ### Execution Tickets by Status
-- **IMPLEMENTED_VERIFIED / HISTORICAL**: 21
+- **IMPLEMENTED_VERIFIED / HISTORICAL**: 62
 - **MERGED_UNVERIFIED**: 1
 - **READY**: 1
-- **BLOCKED**: 10
+- **BLOCKED**: 13
 - **DECISION_REQUIRED**: 1
-- **PLANNED / TICKET_DETAIL_PENDING**: 32
-- **Total Unique Ticket IDs**: 66
+- **PLANNED / TICKET_DETAIL_PENDING**: 31
+- **Total Unique Ticket IDs**: 109
 
 ### Launch Stages by Status
 - **COMPLETED**: 5

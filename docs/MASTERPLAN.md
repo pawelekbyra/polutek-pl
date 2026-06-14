@@ -35,13 +35,13 @@ This document is the canonical entry point for technical state, risk register, a
 ## 3. Progress Counts
 
 ### A. EXECUTION TICKET COUNTS
-- **IMPLEMENTED_VERIFIED / HISTORICAL**: 21
+- **IMPLEMENTED_VERIFIED / HISTORICAL**: 62
 - **MERGED_UNVERIFIED**: 1
 - **READY**: 1
-- **BLOCKED**: 10
+- **BLOCKED**: 13
 - **DECISION_REQUIRED**: 1
-- **PLANNED / TICKET_DETAIL_PENDING**: 32
-- **Total Unique Ticket IDs**: 66
+- **PLANNED / TICKET_DETAIL_PENDING**: 31
+- **Total Unique Ticket IDs**: 109
 
 ### B. LAUNCH STAGE COUNTS
 - **COMPLETED**: 5
@@ -54,7 +54,7 @@ This document is the canonical entry point for technical state, risk register, a
 
 ## 4. Canonical Ticket Inventory
 
-| Ticket ID | Title | Category | Status | Location | Dependency | Launch Impact |
+| Ticket ID | Title | Category | Status | Location | Dependency | Impact |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` | Post-merge verification | READY | `READY_FOR_CERTIFIER` | `ready/` | None | **BLOCKER** |
 | `EMAIL-WEBHOOK-IDEMPOTENCY-001` | Resend Hardening Pass 1 | MERGED_UNVERIFIED | `MERGED_UNVERIFIED` | `ready/` | PR #905 | **BLOCKER** |
@@ -69,6 +69,9 @@ This document is the canonical entry point for technical state, risk register, a
 | `ARCH-CI-001` | CI Guard Enforcement | BLOCKED | `CONFIRMED_GAP` | `blocked/` | None | **HIGH** |
 | `EMAIL-WEBHOOK-FINAL-CERT-001` | Final email cert | BLOCKED | `BLOCKED` | `blocked/` | All repairs | **BLOCKER** |
 | `LAUNCH-EMAIL-002` | Secure unsubscribe | BLOCKED | `OPEN` | `blocked/` | Stage 1 | **BLOCKER** |
+| `LAUNCH-BLOCKED-001` | Legal/Privacy copy | BLOCKED | `BLOCKED` | `blocked/` | Legal Review | **BLOCKER** |
+| `LAUNCH-BLOCKED-002` | CF cost/retention | BLOCKED | `BLOCKED` | `blocked/` | Operator | **HIGH** |
+| `LAUNCH-LEGAL-002` | Approve legal copy | BLOCKED | `BLOCKED` | `blocked/` | Legal Review | **BLOCKER** |
 | `ARCH-ADMIN-AUTH-001` | Canonical admin auth | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **BLOCKER** |
 | `ARCH-ACCESS-001` | Explicit AccessDecision | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **BLOCKER** |
 | `ARCH-PLAYBACK-001` | Strict PlaybackPlan | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **BLOCKER** |
@@ -100,35 +103,78 @@ This document is the canonical entry point for technical state, risk register, a
 | `ARCH-LEGACY-007` | Remove User Profile bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **LOW** |
 | `ARCH-GUARD-002` | AST/Dependency Graph | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | CI-001 | **LOW** |
 | `ARCH-DOCS-001` | Final reconciliation | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | All repairs | **LOW** |
+| `DNA-EXCELLENCE-001` | Product excellence proof | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `DOCS-RECONCILE-001` | Current main truth | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `DOCS-RECONCILE-003` | Status hotfix | HISTORICAL | `VERIFIED` | `ready/` | PR | **HIGH** |
+| `LAUNCH-CANDIDATE-001` | Critical path rehearsal | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-EMAIL-001` | Readiness audit | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
 | `LAUNCH-EMAIL-003` | Email consent boundary | HISTORICAL | `VERIFIED` | `ready/` | PR #899 | **BLOCKER** |
+| `LAUNCH-FIX-001` | Vercel env validation | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-002` | CF webhook check | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-003` | Payment smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-004` | Video access smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-005` | Comments smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-006` | CF upload smoke test | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-FIX-007` | Lifecycle smoke test | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `LAUNCH-LEGAL-001` | Legal readiness pack | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-SECURITY-001` | Security audit | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `LAUNCH-SECURITY-002` | CF authenticity | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
 | `OWNER-LAUNCH-DECISIONS-001` | Record owner decisions | HISTORICAL | `VERIFIED` | `ready/` | PR #890 | **BLOCKER** |
 | `PAYMENT-WEBHOOK-RESULT-001` | Fix ignored Stripe results | HISTORICAL | `VERIFIED` | `ready/` | PR #902 | **HIGH** |
-| `HIST-04` | Legacy Ticket 4 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-05` | Legacy Ticket 5 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-06` | Legacy Ticket 6 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-07` | Legacy Ticket 7 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-08` | Legacy Ticket 8 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-09` | Legacy Ticket 9 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-10` | Legacy Ticket 10 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-11` | Legacy Ticket 11 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-12` | Legacy Ticket 12 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-13` | Legacy Ticket 13 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-14` | Legacy Ticket 14 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-15` | Legacy Ticket 15 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-16` | Legacy Ticket 16 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-17` | Legacy Ticket 17 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-18` | Legacy Ticket 18 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-19` | Legacy Ticket 19 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-20` | Legacy Ticket 20 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
-| `HIST-21` | Legacy Ticket 21 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `STABILIZE-LAUNCH-BUILD-002` | Vercel build recovery | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X0-READY-001` | handoff inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X0-READY-002` | Activation checklist | HISTORICAL | `VERIFIED` | `done/`  | PR | **BLOCKER** |
+| `X0-READY-003` | README slimming | HISTORICAL | `VERIFIED` | `done/`  | PR | **BLOCKER** |
+| `X0.5-READY-001` | Research synthesis | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X0.5-READY-002` | Decisions lock | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X0.5-READY-003` | Product standard | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X1-READY-001` | Payment inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X2-READY-001` | Access truth inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X3-READY-001` | Video provider inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X4-READY-001` | PlaybackPlan inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X5-READY-001` | Admin cockpit inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X6-EX-001` | UI consistency inventory | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X6-FU-001` | Access actions confirmation | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X6-FU-002` | Playback messaging | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X7-READY-001` | Readiness gap analysis | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `BOLEK-MASTERPLAN-001` | Masterplan establishment | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `HOTFIX-VERCEL-001` | Vercel hotfix | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `STABILIZE-001` | Reconcile test suite | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `STABILIZE-X3-TYPECHECK-001` | CF Typecheck | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X1-FIX-001` | Eligibility policy | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X1-FIX-002` | Threshold defaults | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X1-FIX-003` | Currency scope | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X1-FIX-005` | Full refund revocation | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X2-FIX-001` | Video access check truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X2-FIX-002` | Comment write access truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X2-FIX-003` | Standardize mutations | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X2-FIX-004` | Admin read models | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X2-FIX-005` | Query sort contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-001` | Video asset foundation | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-002` | Gating contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-003` | Upload status | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-004` | Asset state | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-005` | Denied playback negative | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-006` | Storage migration plan | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-007` | Admin diagnostics | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-008` | CF Import legacy | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-009` | Disable legacy fallback | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X3-FIX-010` | Migration checklist | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X3-FIX-011` | Signed playback runtime | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X4-FIX-001` | Comment product contract | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X4-FIX-002` | Comment UI states | HISTORICAL | `VERIFIED` | `ready/` | PR | **BLOCKER** |
+| `X4-FIX-003` | Comment badge truth | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
+| `X4-FIX-004` | Comment negative tests | HISTORICAL | `VERIFIED` | `reports/`| PR | **BLOCKER** |
 
-### Inventory Validation
-- **Row count**: 66.
-- **Category sum**: 21 (Hist) + 1 (Unv) + 1 (Ready) + 10 (Blocked) + 1 (Dec) + 32 (Plan) = 66.
+## 5. Inventory Validation
+- **Inventory Row Count**: 109 (47 Current/Future + 62 Historical).
+- **Exact Category Sum**: 62 (Hist) + 1 (Unv) + 1 (Ready) + 13 (Blocked) + 1 (Dec) + 31 (Plan) = 109.
 - **Duplicate ID check**: PASSED.
-- **Missing ID check**: PASSED.
+- **Placeholder ID check**: PASSED (No synthetic HIST-nn).
+- **Wildcard check**: PASSED (Enumerated only).
+- **Missing referenced ID check**: PASSED.
 
-## 5. Risk Register
+## 6. Risk Register
 
 ### Email & Webhook Risks
 | Risk ID | Title | Classification | Launch Impact | Ticket |
@@ -163,17 +209,24 @@ This document is the canonical entry point for technical state, risk register, a
 | `COMMENTS-PERMISSION-DRIFT` | Fragmented comments policy | `CONFIRMED_GAP` | **MEDIUM** | `ARCH-COMMENTS-001` |
 | `DOC-CODE-QUEUE-DRIFT` | Document vs Queue mismatch | `CONFIRMED_GAP` | **HIGH** | `ARCH-DOCS-001` |
 
-## 6. Ordered Masterplan
+### Historical Risks (Resolved)
+| Risk ID | Title | Classification | Status |
+| --- | --- | --- | --- |
+| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `RESOLVED_BY_MERGED_PR / HISTORICAL` | PR #902 |
+| `EMAIL-WEBHOOK-IDEMP` | Resend Webhook Idempotency | `MERGED_UNVERIFIED / CONFIRMED_FOLLOW_UP_GAPS`| PR #905 |
+| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `RESOLVED_BY_MERGED_PR` | PR #899 |
+
+## 7. Ordered Masterplan
 
 ### CURRENT_GATE
 - **`EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`**: Independently verify merged PR #905 implementation and gaps (`READY_FOR_CERTIFIER`).
 
 ### RECENTLY_MERGED_UNVERIFIED
-- **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: PR #905 (MERGED_UNVERIFIED).
+- **`EMAIL-WEBHOOK-IDEMPOTENCY-001`**: PR #905 (`MERGED_UNVERIFIED`).
 
 ### RECENTLY_COMPLETED
-- **`PAYMENT-WEBHOOK-RESULT-001`**: PR #902 (HISTORICAL).
-- **`LAUNCH-EMAIL-003`**: PR #899 (MERGED).
+- **`PAYMENT-WEBHOOK-RESULT-001`**: PR #902 (`HISTORICAL`).
+- **`LAUNCH-EMAIL-003`**: PR #899 (`MERGED`).
 
 ### QUEUED_HIGH_PRIORITY (Repairs)
 1. `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001`
@@ -201,7 +254,7 @@ This document is the canonical entry point for technical state, risk register, a
 ### LEGACY RETIREMENT (P2)
 - `ARCH-LEGACY-001` to `ARCH-LEGACY-007`, `ARCH-GUARD-002`, `ARCH-DOCS-001`.
 
-## 7. Discoverability Path
+## 8. Discoverability Path
 
 - Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
 - Architecture Repair: [architecture/ARCHITECTURE-REPAIR-PLAN.md](architecture/ARCHITECTURE-REPAIR-PLAN.md)
