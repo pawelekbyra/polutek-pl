@@ -4,72 +4,88 @@ import { Webhook } from 'svix';
 import { handleResendWebhook, ResendWebhookInput } from '@/lib/modules/email';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
-export async function POST(req: NextRequest) {
-  // Webhook signature verification using svix (HMAC-SHA256)
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
+const SVIX_HEADER_NAMES = ['svix-id', 'svix-timestamp', 'svix-signature'] as const;
 
-  if (process.env.NODE_ENV === 'production' && !secret) {
-    logger.error("[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.");
-    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
-  }
+function hasAnySvixHeader(req: NextRequest) {
+  return SVIX_HEADER_NAMES.some((header) => Boolean(req.headers.get(header)));
+}
 
-  // Get headers for svix verification
+function getCompleteSvixHeaders(req: NextRequest) {
   const svixId = req.headers.get('svix-id');
   const svixTimestamp = req.headers.get('svix-timestamp');
   const svixSignature = req.headers.get('svix-signature');
 
-  // Fallback to legacy header for dev/staging if svix headers are missing and secret matches
-  const legacySecret = req.headers.get('x-resend-webhook-secret');
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return null;
+  }
+
+  return {
+    svixId,
+    svixTimestamp,
+    svixSignature,
+  };
+}
+
+export async function POST(req: NextRequest) {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && !secret) {
+    logger.error('[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.');
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+  }
+
+  const rawBody = await req.text();
+  const svixHeaders = getCompleteSvixHeaders(req);
+  const containsSvixHeader = hasAnySvixHeader(req);
 
   let payload: ResendWebhookInput;
-  const rawBody = await req.text();
 
-  if (svixId && svixTimestamp && svixSignature && secret) {
+  if (svixHeaders && secret) {
     try {
       const wh = new Webhook(secret);
       payload = wh.verify(rawBody, {
-        'svix-id': svixId,
-        'svix-timestamp': svixTimestamp,
-        'svix-signature': svixSignature,
+        'svix-id': svixHeaders.svixId,
+        'svix-timestamp': svixHeaders.svixTimestamp,
+        'svix-signature': svixHeaders.svixSignature,
       }) as ResendWebhookInput;
 
-
-      // Preserve svix-id as internal eventId for idempotency
-      payload.eventId = svixId;
-    } catch (err) {
-      logger.warn("[ResendWebhook] svix verification failed", err);
+      // Preserve svix-id as internal eventId for idempotency.
+      payload.eventId = svixHeaders.svixId;
+    } catch {
+      logger.warn('[ResendWebhook] Svix verification failed.');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
-  } else if (secret && legacySecret === secret) {
-    // Allow legacy verification if explicitly configured and matching
-    payload = JSON.parse(rawBody) as ResendWebhookInput;
-    payload.eventId = svixId || undefined;
-
-    if (!payload.eventId && process.env.NODE_ENV === 'production') {
-        logger.error("[ResendWebhook] Legacy webhook attempt missing event ID in production");
-        return NextResponse.json({ error: 'Event ID required' }, { status: 400 });
+  } else if (containsSvixHeader) {
+    logger.warn('[ResendWebhook] Incomplete Svix header set.');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  } else if (!isProduction && secret && req.headers.get('x-resend-webhook-secret') === secret) {
+    try {
+      payload = JSON.parse(rawBody) as ResendWebhookInput;
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON' }, { status: 400 });
     }
   } else {
-    logger.warn("[ResendWebhook] Unauthorized access attempt - invalid or missing signature/secret.");
+    logger.warn('[ResendWebhook] Unauthorized access attempt.');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const ctx = createAppContext({
-      actor: { type: 'system', reason: 'Resend Webhook' }
+    actor: { type: 'system', reason: 'Resend Webhook' },
   });
 
   const result = await handleResendWebhook(ctx, payload);
 
   if (!result.ok) {
-      const status = result.error.statusCode || 500;
+    const status = result.error.statusCode || 500;
 
-      return NextResponse.json(
-        {
-          error: result.error.message,
-          code: result.error.code,
-        },
-        { status },
-      );
+    return NextResponse.json(
+      {
+        error: result.error.message,
+        code: result.error.code,
+      },
+      { status },
+    );
   }
 
   return NextResponse.json(result.data);
