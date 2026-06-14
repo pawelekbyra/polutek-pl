@@ -1,9 +1,13 @@
 # EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001 — Repair Resend production Svix webhook authentication
 
-Status: READY_FOR_BUILDER
+Status: MERGED / IMPLEMENTATION_COMPLETE / VERIFICATION_PENDING / HISTORICAL
 Ticket ID: EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001
-Role: Builder
+Role: Builder / Historical implementation evidence
 Launch status: NO_GO
+
+## Executability
+
+This ticket is non-executable implementation evidence after PR #914. It preserves the original requirements and acceptance criteria for historical traceability. Independent post-merge verification is pending and is queued separately as `EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001`.
 
 ## Control-plane provenance
 
@@ -13,6 +17,10 @@ Launch status: NO_GO
 - Evidence report: `docs/reports/verification/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md`.
 - Verification PR: PR #912.
 - Verification merge SHA: `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a`.
+- Implementation PR: PR #914.
+- Implementation merge SHA: `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`.
+- Independent verification: pending.
+- Implementation status: `MERGED / IMPLEMENTATION_COMPLETE / VERIFICATION_PENDING / HISTORICAL`.
 - Public launch remains `NO_GO`.
 
 ## Purpose

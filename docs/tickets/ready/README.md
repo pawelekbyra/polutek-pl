@@ -5,8 +5,8 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001.md -->
 
 ## Current Execution Gate
 
@@ -17,14 +17,14 @@ The project is governed by the **Bolek Operating Model**. For state and risk det
 ## Current Control-Plane Ticket
 
 ```txt
-EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001
+EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001 | `docs/tickets/ready/EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001.md` | `READY_FOR_BUILDER` |
+| Reviewer / Certifier | EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001 | `docs/tickets/ready/EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001.md` | `READY_FOR_INDEPENDENT_REVIEW` |
 
-**Current Status:** PR #912 completed independent verification for `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` with verdict `FIX_REQUIRED`. The next executable task is the Builder repair ticket for the production Resend/Svix webhook authentication defects identified by that verification.
+**Current Status:** PR #914 implemented `EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001` and merged under SHA `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`. The implementation is `MERGED / IMPLEMENTATION_COMPLETE / VERIFICATION_PENDING`; it has not yet passed independent post-merge verification. The next executable task is the read-only Reviewer / Certifier verification ticket for that merged Resend/Svix repair.
 
 Only the row above is the current-primary executable row. Executable ticket count: **1**.
 
@@ -32,11 +32,14 @@ Only the row above is the current-primary executable row. Executable ticket coun
 
 | Ticket | Status | Evidence |
 | --- | --- | --- |
+| EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001 | `MERGED / IMPLEMENTATION_COMPLETE / VERIFICATION_PENDING` | PR #914; merge SHA `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`; independent verification pending |
 | EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 | `FIX_REQUIRED / VERIFICATION_COMPLETE / HISTORICAL` | PR #912; merge SHA `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a` |
 | PAYMENT-WEBHOOK-RESULT-001 | `MERGED / HISTORICAL` | PR #902; merge SHA `2c2a0f01f71e177145336051e97680bcc489e2b9` |
 | EMAIL-WEBHOOK-IDEMPOTENCY-001 | `MERGED / VERIFIED_FIX_REQUIRED` | PR #905; verification PR #912; merge SHA `36b57dec5c763ca29ff708c836dae0601125c49d` |
 | LAUNCH-EMAIL-003 | `MERGED / ACCEPTED` | PR #899; merge SHA `f7fc603183120895359e9e52464de2d01e100980` |
 | OWNER-LAUNCH-DECISIONS-001 | `MERGED / HISTORICAL` | PR #890; corrective PR #891 |
+
+`docs/tickets/ready/EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001.md` is retained as non-executable implementation evidence only. It is not the current executable ticket and must not be treated as independently verified.
 
 `docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md` is retained as historical evidence only. It is not the current executable ticket.
 
