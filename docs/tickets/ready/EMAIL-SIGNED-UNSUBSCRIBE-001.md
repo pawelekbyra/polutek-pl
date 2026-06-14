@@ -79,10 +79,14 @@ a dedicated unsubscribe signing secret
 purpose-bound signed payload
 expiration
 constant-time or library-safe signature verification
-no raw email in the URL
-no token or secret logging
+the public URL must not contain a raw or encoded email address
+the signed token payload must not contain the email in plaintext, URL encoding, Base64 or another trivially reversible representation
+the implementation must use an opaque non-PII subject or another repository-compatible privacy-preserving identifier
+tokens, payloads, signatures and signing secrets must never be logged
 safe invalid/expired/replayed behavior
 ```
+
+A signature alone does not make an email address confidential. The Builder must not use a token format where decoding the token reveals the recipient email.
 
 A stateless signed token is preferred so this ticket does not require schema or migration changes.
 
@@ -90,21 +94,84 @@ Schema and migration changes are forbidden unless Bolek later issues an explicit
 
 Do not reuse the Resend webhook signing secret as the unsubscribe signing secret.
 
+## HTTP method and link-scanner safety
+
+Email security scanners and preview systems may automatically follow GET links. Opening or scanning an email link must not unsubscribe the recipient.
+
+The implementation must require:
+
+```txt
+GET must never change unsubscribe, Subscription, EmailPreference or consent state
+GET may validate the token only enough to render a generic confirmation page
+GET must not reveal whether the token or recipient exists
+GET must not consume, invalidate or mutate the token
+repeated or automated GET requests must be state-neutral
+the unsubscribe mutation must require an explicit POST action
+POST must be idempotent
+invalid, expired, replayed or unknown-recipient POST requests must return generic safe behavior
+```
+
+The Builder must not require or implement a state-changing GET endpoint.
+
+If standards-based one-click unsubscribe is later implemented, it must use an explicitly authorized POST mechanism and must not weaken the scanner-safe browser flow.
+
+Focused automated evidence is required for:
+
+```txt
+GET with a valid token does not modify Subscription
+GET with a valid token does not modify EmailPreference
+GET does not trigger the unsubscribe mutation
+multiple GET requests remain state-neutral
+POST with a valid token performs the unsubscribe
+repeated POST remains successful and idempotent
+```
+
 ## Required discovery before implementation
 
 Before modifying files, the Builder must inspect the current `main` implementation and identify the exact paths responsible for:
 
 ```txt
+Subscription creation and deletion
+EmailPreference fields and defaults
+content-notification recipient selection
+broadcast recipient selection
+manual/admin recipient filtering
 unsubscribe link generation
-content-notification sending
-Subscription records
-EmailPreference updates
 authenticated unsubscribe API
+content-notification sending
 email templates
 environment validation
 ```
 
 The Builder must report those paths before modification in the PR report.
+
+Before implementation, the Builder must document:
+
+```txt
+which model represents explicit content-notification consent
+which model is checked during recipient selection
+whether Subscription and EmailPreference can currently disagree
+which exact query or policy determines eligibility
+```
+
+## Local consent-state reconciliation requirements
+
+The implementation must reconcile actual local consent sources discovered in the current repository state.
+
+The implementation requirements are:
+
+```txt
+unsubscribe must reconcile every local state currently used to represent or evaluate content-notification consent
+Subscription and EmailPreference must not remain in a contradictory eligible state
+the current recipient-selection mechanism must exclude the unsubscribed recipient
+missing local preference must not be treated as opted in
+systemEmails must remain unchanged
+PatronGrant must remain unchanged
+```
+
+Do not prescribe deleting a specific record before discovery confirms the repository’s actual consent model.
+
+Do not implement provider-wide suppression or bounce/complaint handling in this ticket.
 
 ## Expected implementation areas
 
@@ -154,16 +221,28 @@ Focused automated evidence is required for:
 
 ```txt
 valid logged-out unsubscribe succeeds
+valid GET does not change state
+automated or repeated GET does not unsubscribe
+valid POST unsubscribes
+repeat POST is idempotent
 valid token disables content notifications
 repeat unsubscribe remains successful and idempotent
 URL does not contain a raw or encoded email address
+token decoding does not expose an email address
 invalid token returns generic safe response
+invalid POST is generic and non-enumerating
 expired token returns generic safe response
+expired POST is generic and non-enumerating
 unknown recipient does not reveal account existence
+Subscription and EmailPreference do not remain contradictory after unsubscribe
+the current recipient selector excludes the unsubscribed recipient
+missing EmailPreference is not treated as consent
 handler does not modify PatronGrant
+PatronGrant is unchanged
 registration/tip/patron flows remain unrelated to subscription consent
 system-email permission is not disabled by content unsubscribe
-token and secret are never logged
+systemEmails is unchanged
+tokens, payloads, signatures, and signing secrets are never logged
 missing signing-secret configuration fails safely
 ```
 
