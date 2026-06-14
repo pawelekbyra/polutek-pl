@@ -1,15 +1,12 @@
 import { logger } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "./prisma";
-import { getOrCreateCurrentUser } from "@/lib/modules/users";
-import { createAppContext } from "@/lib/modules/shared/app-context";
 import { NextResponse } from "next/server";
-import { isConfiguredAdminUserId } from "./admin-config";
+import { AppError } from "@/lib/errors";
+import { requireAdminActor } from "@/lib/api/auth";
 
 export class AuthError extends Error {
   constructor(
     public readonly code: "UNAUTHORIZED" | "FORBIDDEN",
-    message = code,
+    message: string = code,
   ) {
     super(message);
     this.name = "AuthError";
@@ -45,34 +42,27 @@ export async function requireAdminForApi(scope: string) {
 }
 
 export async function requireUser() {
-  const { userId, sessionClaims } = await auth();
-  if (!userId) throw new AuthError("UNAUTHORIZED");
-
-  const ctx = createAppContext({
-    actor: { type: "user", userId, isPatron: false }, // isPatron will be resolved from DB if needed
-  });
-
-  await getOrCreateCurrentUser(ctx, userId, sessionClaims);
-  return userId;
+  throw new AuthError(
+    "UNAUTHORIZED",
+    "requireUser is not valid for privileged admin authorization",
+  );
 }
 
 export async function requireAdmin() {
-  const userId = await requireUser();
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, isDeleted: true },
-  });
-
-  if (!user || user.isDeleted) {
-    throw new AuthError("FORBIDDEN");
+  try {
+    const actor = await requireAdminActor();
+    return actor.userId;
+  } catch (error) {
+    if (error instanceof AppError) {
+      if (error.code === "UNAUTHORIZED" || error.statusCode === 401) {
+        throw new AuthError("UNAUTHORIZED", error.message);
+      }
+      if (error.code === "FORBIDDEN" || error.statusCode === 403) {
+        throw new AuthError("FORBIDDEN", error.message);
+      }
+    }
+    throw error;
   }
-
-  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
-    return userId;
-  }
-
-  throw new AuthError("FORBIDDEN");
 }
 
 export async function isAdmin(): Promise<boolean> {

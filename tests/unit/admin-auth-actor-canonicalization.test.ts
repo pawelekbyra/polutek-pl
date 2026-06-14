@@ -194,3 +194,31 @@ describe("canonical server actor resolution", () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });
+
+describe("requireAdminForApi canonical privileged boundary regressions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.ADMIN_CLERK_USER_IDS = "";
+  });
+
+  it("returns 403 for configured admin ID with no local User", async () => {
+    process.env.ADMIN_CLERK_USER_IDS = "configured_missing";
+    mockAuth("configured_missing");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never);
+
+    const { response } = await requireAdminForApi("TEST_CONFIGURED_MISSING");
+
+    expect(response?.status).toBe(403);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for stale admin claim with no local User", async () => {
+    mockAuth("claim_only_admin", "admin");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never);
+
+    const { response } = await requireAdminForApi("TEST_CLAIM_ADMIN_MISSING");
+
+    expect(response?.status).toBe(403);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});

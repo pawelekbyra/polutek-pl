@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SignedIn,
   SignedOut,
@@ -14,6 +14,7 @@ import { Search, LogIn, ShieldCheck, X } from "./icons";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
+import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -41,7 +42,32 @@ const Navbar = () => {
   };
 
   const metadata = (user?.publicMetadata || {}) as NavbarMetadata;
-  const isAdmin = metadata.role === "ADMIN";
+  const [serverIsAdmin, setServerIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setServerIsAdmin(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    fetch("/api/user/profile", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((profile) => {
+        if (!cancelled) setServerIsAdmin(profile?.isAdmin === true);
+      })
+      .catch(() => {
+        if (!cancelled) setServerIsAdmin(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
 
   return (

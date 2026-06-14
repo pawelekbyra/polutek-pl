@@ -57,11 +57,27 @@ async function resolveDbBackedActor(userId: string): Promise<Actor> {
   };
 }
 
-export async function requireAdminSession() {
-  const actor = await getActorFromAuth({ allowGuest: false });
-  if (actor.type !== "admin") {
-    throw new AppError("Forbidden: Admin access required", 403, "FORBIDDEN");
+async function resolveDbBackedAdminActor(
+  userId: string,
+): Promise<{ type: "admin"; userId: string }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isDeleted: true },
+  });
+
+  if (!user || user.isDeleted) {
+    throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
+
+  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
+    return { type: "admin", userId };
+  }
+
+  throw new AppError("Forbidden: Admin access required", 403, "FORBIDDEN");
+}
+
+export async function requireAdminSession() {
+  const actor = await requireAdminActor();
   return { userId: actor.userId, role: "admin" as const, isPatron: undefined };
 }
 
@@ -85,6 +101,17 @@ export async function getActorFromAuth(
   }
 
   return resolveDbBackedActor(userId);
+}
+
+export async function requireAdminActor(): Promise<{
+  type: "admin";
+  userId: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
+  return resolveDbBackedAdminActor(userId);
 }
 
 export async function requireActorFromAuth(): Promise<
