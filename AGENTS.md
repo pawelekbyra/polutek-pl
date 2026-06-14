@@ -357,6 +357,19 @@ the owner selected that component.
 
 For example: explicit confirmation does not automatically mean checkbox.
 
-## 16. Blocked behavior
+## 16. MERGED_UNVERIFIED rule
+
+Jeśli runtime PR został zmergowany mimo failed/skipped required CI (np. skipped integration tests), jego status musi być **MERGED_UNVERIFIED**.
+
+Reguły postępowania:
+- Integrator musi utworzyć post-merge verification ticket.
+- Dokumentacja nie może wpisać statusu VERIFIED dla takiej implementacji.
+- Następny unrelated runtime ticket nie powinien zostać aktywowany, dopóki current merged risk nie zostanie sklasyfikowany lub naprawiony.
+- Skipped critical integration test (np. PostgreSQL concurrency) nie jest dowodem poprawności (automated test evidence).
+- Vercel READY nie zastępuje typecheck/test/build/security evidence.
+- Implementation PR dotyczący locków, webhooków, płatności lub dostępu MUSI posiadać negative concurrency tests właściwe dla ryzyka.
+- Raport z testów w PR musi jednoznacznie odróżniać: `test passed`, `test skipped`, `test not run`, `test blocked`, `test failed`.
+
+## 17. Blocked behavior
 
 Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.

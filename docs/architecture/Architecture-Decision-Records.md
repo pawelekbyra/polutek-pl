@@ -3,72 +3,40 @@
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
 ## ADR-0001 — Polutek.pl is a place, not a platform
+Decision: Polutek.pl is a single-creator VOD place.
 
-Decision:
-Polutek.pl is a single-creator VOD place, not a marketplace, multi-creator SaaS, mini-Patreon, white-label CMS or tenant platform.
+## ADR-0002 — Patron access is based on PatronGrant
+Decision: Active PatronGrant is the target backend source of truth.
 
-Consequences:
-- No tenant model.
-- No marketplace creator onboarding.
-- No generic social network scope.
-- Product architecture optimizes for one creator, one official channel, one patron/access model.
+## ADR-0003 — Cloudflare Stream first, Mux later
+Decision: Cloudflare Stream is the first provider. Thin abstraction required.
 
-## ADR-0002 — Patron access is based on PatronGrant, not payment/subscription/cache
+## ADR-0004 — Patronat is one-time support
+Decision: Reward for qualifying one-time support, not recurring subscription.
 
-Decision:
-Active PatronGrant is the target backend source of truth for patron access.
-
-Consequences:
-- Payment is financial evidence, not access itself.
-- Subscription is email consent, not patron status.
-- User.isPatron and Clerk metadata may exist only as legacy/read-model/cache until cleaned up.
-- Playback/access decisions must not rely on frontend state.
-
-## ADR-0003 — Cloudflare Stream first, Mux later per VideoAsset
-
-Decision:
-Cloudflare Stream is the first video provider. Mux must remain design-compatible per VideoAsset, but no heavy enterprise multi-provider framework is allowed now.
-
-Consequences:
-- Build the smallest provider abstraction needed.
-- No active R2/S3/Vercel Blob private playback fallback without future architecture decision.
-- Provider calls must only happen after backend access allow.
-
-## ADR-0004 — Patronat is one-time support, not recurring subscription
-
-Decision:
-Patronat is a reward for qualifying one-time support/donation, not a recurring subscription. Launch thresholds are 10 PLN, 10 USD, 10 EUR and 10 CHF by default, admin-configurable per currency.
-
-Consequences:
-- Do not build recurring patron subscription scope without a new owner decision.
-- Payment records remain financial evidence; access lifecycle is managed through PatronGrant policy.
-- Access is permanent/lifetime/no-expiry by default unless suspended or revoked by policy.
-
-## ADR-0005 — Locked state is not an overlay on player
-
-Decision:
-Denied PlaybackPlan renders a locked placeholder without mounting the real player, requesting streams or tokens, calling the provider for playback source or counting playback/view events.
-
-Consequences:
-- Frontend must not hide a real player behind an overlay for denied access.
-- Denied playback plans must not leak playback URL or playback token.
-- Provider calls must be gated by backend access allow.
+## ADR-0005 — Locked state is not an overlay
+Decision: Denied PlaybackPlan renders locked placeholder; no player mount.
 
 ## ADR-0006 — Comments are visible, writing is gated
-
-Decision:
-Comments under patron-only video are visible publicly, but commenting, reacting and writing require patron or admin access.
-
-Consequences:
-- Comment visibility is not the same as comment permission.
-- Guests may read published comments but cannot write, react or report.
-- Generic social network scope remains out of bounds.
+Decision: Visibility publicly; writing requires patron/admin.
 
 ## ADR-0007 — Admin cockpit starts with Access Diagnostics
+Decision: Priority on diagnostics over generic dashboard.
 
-Decision:
-Access Diagnostics is the first priority for the admin cockpit. Generic dashboard work comes later.
+## ADR-0016 — Email webhook event lease ownership and fencing
+Status: PROPOSED / REQUIRED_BEFORE_IMPLEMENTATION
+Context: PR #905 merged a basic lock service that lacks ownership identity.
+Decision Points:
+- Use unique `leaseToken` (UUID/ULID) per attempt.
+- Conditional finalization (release) using CAS on the token.
+- Explicit stale threshold (10m) and takeover logic.
+- Type integrity during takeover.
 
-Consequences:
-- Owner support must be able to diagnose paid-but-locked cases without direct database/Stripe/Clerk inspection.
-- Manual access-impacting actions require reason, audit and appropriate confirmation for dangerous operations.
+## ADR-0017 — Production Resend webhook authenticity
+Status: PROPOSED / REQUIRED_BEFORE_IMPLEMENTATION
+Context: Current route allows fallback to a shared secret without signature verification in production.
+Decision Points:
+- Production environment MUST require Svix ID, Timestamp, and Signature.
+- Replay protection via timestamp tolerance.
+- Shared-secret fallback limited to non-production environments.
+- Safe HTTP 400/401/503 response mapping.

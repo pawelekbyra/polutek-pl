@@ -16,57 +16,58 @@ Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandy
 - PL/EN templates.
 - Admin broadcast audit.
 
-## Launch-critical requirements
+## Technical Invariants
 
-- Broadcast preview/test-send required.
-- Delivery webhooks.
-- Bounce/complaint suppression.
-- Preference center target.
-- Consent state must be visible to admin without implying access.
+### 1. Resend Webhook Authenticity
+- Production environment requires Svix signature verification (ID, Timestamp, Signature).
+- Legacy shared-secret fallback is prohibited in production without an explicit ADR.
+- `RESEND_WEBHOOK_SECRET` must be validated as a required production variable.
 
-## Target model
+### 2. Event Identity and Idempotency
+- `providerEventId` (mapped from `svix-id`) is the mandatory unique identifier for all events.
+- Atomic idempotency is managed via `EmailEventLockService`.
+- Minimal payload retention: only essential identifiers are stored in the ledger.
 
-Email/subscription module manages consent, templates, broadcast, delivery events and suppression. Patron module owns access.
+### 3. Lease Ownership and Fencing
+- Every lock acquisition/takeover must generate a unique `leaseToken`.
+- Success/Failure release is conditional on holding the current valid lease.
+- Stale workers must be prevented from finalizing processing after a lease takeover (fencing).
+
+### 4. Event Type Integrity
+- Lock takeover query must enforce `type` match.
+- Type mismatch between a stored event and a new incoming event with the same ID must be handled as a conflict, not a takeover.
+
+### 5. Error Response Safety
+- Webhook route must return generic HTTP responses.
+- Raw internal error messages, SQL, tokens, and PII must never be disclosed in the response body.
+- Error codes returned to the provider must be stable and documented.
+
+### 6. Aggregate Counter Semantics
+- `sentCount` and `errorCount` must handle out-of-order events (e.g., DELIVERED before SENT).
+- Counter updates must be atomic and prevent double increments.
 
 ## Forbidden shortcuts
 
-- Email unsubscribe revokes access.
-- Patron automatically subscribed to marketing.
-- Marketing and transactional mixed.
-- Broadcast without preview/test-send/audit.
+- Release lock by `providerEventId` without ownership proof (lease token).
+- Stale takeover without `type` check.
+- Production legacy secret fallback without ADR.
+- Returning raw internal error messages in public responses.
+- Marking malformed supported events as `PROCESSED`.
+- Treating skipped integration tests as PASS.
+- Using Vercel READY status as idempotency certification.
+- Claiming migration verified from schema validation alone.
+- Claiming concurrency verified from mocked `Promise.all` alone.
 
-## Test strategy
+## Test Matrix
 
-- Unit tests dla policy/use-case/repository granic.
-- Route/API contract tests dla wrażliwych przepływów.
-- Negative tests dla forbidden shortcuts.
-- Idempotency/security tests tam, gdzie domena dotyka webhooków, access, providerów lub tokenów.
-- Admin/support tests dla diagnostyki i audit trail.
-- Manual QA checklist przed certyfikacją fazy.
+| Scenario | Expected Result |
+| --- | --- |
+| Duplicate `email.sent` | Second event ignored (200 OK, `duplicate: true`) |
+| `DELIVERED` before `SENT` | Counters reflect correctly; status is `DELIVERED` |
+| Lock takeover (stale) | New worker acquires; old worker release fails |
+| Production missing Svix | 401 Unauthorized |
+| Invalid payload | 400 Bad Request |
 
-## Codex ticket candidates
+## Certification and Post-Merge
 
-- Inventory aktualnego kodu vs ta specyfikacja.
-- Gap analysis z podziałem launch-critical/should-have/post-launch.
-- Jedna migracja use-case albo route family per ticket.
-- Test-only ticket dla negative cases.
-- Docs reconciliation po merge batcha.
-
-## Certification criteria
-
-- Kod i docs są zgodne.
-- Guardy i testy nie kłamią.
-- Forbidden shortcuts są pokryte testem albo raportem braku użycia.
-- Znane blockery są zapisane w `docs/tickets/blocked/`.
-- Certifier rekomenduje status, właściciel merge'uje.
-
-## Open owner questions
-
-- Czy dana rzecz jest launch-critical czy post-launch, jeśli nie wynika to z owner decisions?
-- Czy istnieją dodatkowe ograniczenia prawne/UX dla tej domeny?
-- Czy obecny runtime ma elementy, które warto zachować zamiast przepisywać?
-## Current implementation snapshot
-
-This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
-
-Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.
+Current implementation (PR #905) is classified as **MERGED_UNVERIFIED**. Independent post-merge certification (EMAIL-WEBHOOK-POSTMERGE-VERIFY-001) is required before this domain can be considered launch-ready.

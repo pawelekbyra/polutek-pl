@@ -5,8 +5,8 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: PAYMENT-WEBHOOK-RESULT-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md -->
 
 ## Current Execution Gate
 
@@ -17,14 +17,14 @@ The project is governed by the **Bolek Operating Model**. For state and risk det
 ## Current Control-Plane Ticket
 
 ```txt
-PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results
+EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 — Independently verify merged Resend webhook idempotency implementation
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Gate | PAYMENT-WEBHOOK-RESULT-001 — Fix ignored Stripe webhook use case results | `docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md` | `AUDIT_COMPLETE / READY_FOR_BUILDER` |
+| Gate | EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 — Independently verify merged Resend webhook idempotency implementation | `docs/tickets/ready/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md` | `READY_FOR_CERTIFIER` |
 
-**Current Status:** Verified repository evidence confirms that Stripe webhook orchestration invokes domain use cases but ignores failure results. **Next Builder ticket: PAYMENT-WEBHOOK-RESULT-001**.
+**Current Status:** PR #905 has been merged but requires independent post-merge verification of idempotency and security invariants. **Next Builder ticket: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001**.
 
 Only the row above is the current-primary executable row.
 
@@ -32,10 +32,12 @@ Only the row above is the current-primary executable row.
 
 | Ticket | Status | Evidence |
 | --- | --- | --- |
+| EMAIL-WEBHOOK-IDEMPOTENCY-001 | `MERGED_UNVERIFIED` | PR #905; requires post-merge verification and repair tickets |
+| PAYMENT-WEBHOOK-RESULT-001 | `MERGED / HISTORICAL` | PR #902; merge SHA `2c2a0f01f71e177145336051e97680bcc489e2b9` |
 | LAUNCH-EMAIL-003 | `MERGED / ACCEPTED` | PR #899; merge SHA `f7fc603183120895359e9e52464de2d01e100980` |
 | OWNER-LAUNCH-DECISIONS-001 | `MERGED / HISTORICAL` | PR #890; corrective PR #891 |
 
-`docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md` is retained as historical evidence only. It is not the current executable ticket.
+`docs/tickets/ready/PAYMENT-WEBHOOK-RESULT-001.md` is retained as historical evidence only. It is not the current executable ticket.
 
 ## Closed owner-decision blockers
 
