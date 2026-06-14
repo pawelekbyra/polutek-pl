@@ -4,7 +4,7 @@
 
 Verification verdict: PASS
 
-Independent read-only review of `EMAIL-SIGNED-UNSUBSCRIBE-001` found that the merged implementation satisfies the signed logged-out unsubscribe requirements for token security, scanner-safe GET behavior, generic logged-out POST responses, application-code transaction grouping, consent reconciliation, recipient filtering, signed unsubscribe-link generation, and production environment validation.
+Independent read-only review of `EMAIL-SIGNED-UNSUBSCRIBE-001` found that the merged implementation satisfies the signed logged-out unsubscribe requirements for token security, scanner-safe GET behavior, generic logged-out POST responses, application-code transaction grouping, consent reconciliation, recipient filtering, signed unsubscribe-link generation, and production environment validation. Authoritative PR #918 GitHub Actions run #575 evidence confirms `integration-postgres` passed, production environment validation and Prisma validation passed in the quality job before it reached the known `quality:strict-escapes` baseline, and the security job failed on the known `npm audit high` baseline. No ticket-specific blocker was found.
 
 Public launch status: NO_GO
 
@@ -138,14 +138,19 @@ Result: only signed-token builder/test references, template placeholder/editor p
 
 ## Environment and CI findings
 
-PASS with local-CI-evidence limitation noted.
+PASS with authoritative PR #918 CI evidence recorded.
 
 - `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` is required by production validation.
 - `.env.example` documents `EMAIL_UNSUBSCRIBE_SIGNING_SECRET=replace-with-at-least-32-random-characters`.
 - CI quality job sets deterministic CI-only `EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001`; this is not treated as a production secret.
 - CI triggers remain limited to `pull_request` and push to `main`, `master`, and `work`; no workflow permissions block was broadened.
 - The CI workflow includes `npm run env:validate:prod`, `npx prisma validate`, `npx prisma generate`, `npm run quality:strict-escapes`, typecheck, coverage, lint, build, an `integration-postgres` job, and `npm audit --audit-level=high`.
-- I could not independently inspect GitHub PR #918 checks from this workspace because no `origin` remote exists and `gh` is not installed. Local evidence confirms the implementation merge commit and workflow contents. The known `quality:strict-escapes` baseline reproduces locally; local `integration-postgres` workflow status for PR #918 is not claimed from this environment.
+- Authoritative implementation CI evidence: PR #918, implementation GitHub head `be4062d83f6f005f12d376498f17cc2ca22fa7ce`, CI workflow run #575, GitHub Actions run ID `27510171601`.
+- PR #918 GitHub Actions run #575 provided authoritative evidence that `integration-postgres` passed, production environment validation and Prisma validation passed, and the remaining failures were the known unrelated `quality:strict-escapes` and `npm audit high` baselines.
+- Authoritative job results: `integration-postgres` — PASS; `quality` — FAIL; `security` — FAIL. The overall workflow conclusion was failure due to the two known baseline jobs; this report does not claim the entire workflow passed.
+- Authoritative `integration-postgres` steps: `npm ci` — PASS; `prisma migrate deploy` — PASS; `prisma generate` — PASS; `db:smoke` — PASS; final job conclusion — SUCCESS. This proves repository migration/smoke integration, but it does not prove signed-unsubscribe transaction rollback against PostgreSQL.
+- Authoritative `quality` steps: `npm ci` — PASS; `env:validate:prod` — PASS; `prisma validate` — PASS; `prisma generate` — PASS; `quality:strict-escapes` — FAIL; later quality steps were skipped because of the known baseline failure.
+- Authoritative `security` steps: `npm ci` — PASS; `npm audit high` — FAIL.
 
 ## Commands and exact results
 
@@ -169,26 +174,30 @@ PASS with local-CI-evidence limitation noted.
 | Dummy token decode using local `node` script | PASS: payload keys `v,p,sub,exp`; no email-like `@` in decoded dummy payload. |
 | `npm run quality:strict-escapes` | FAIL / KNOWN UNRELATED BASELINE: exit `1`; repository-wide explicit `any` findings reproduced. |
 | `npm audit --audit-level=high` | FAIL / ENV LIMITATION: exit `1`; registry returned `403 Forbidden` for audit endpoint, so high-advisory status could not be independently refreshed locally. |
+| PR #918 GitHub Actions run #575 / run ID `27510171601` / `integration-postgres` | PASS: `npm ci`, `prisma migrate deploy`, `prisma generate`, and `db:smoke` passed; final job conclusion `SUCCESS`. |
+| PR #918 GitHub Actions run #575 / run ID `27510171601` / `quality` | FAIL / KNOWN UNRELATED BASELINE: `npm ci`, `env:validate:prod`, `prisma validate`, and `prisma generate` passed; `quality:strict-escapes` failed; later quality steps skipped. |
+| PR #918 GitHub Actions run #575 / run ID `27510171601` / `security` | FAIL / KNOWN UNRELATED BASELINE: `npm ci` passed; `npm audit high` failed. |
 
 ## Known unrelated baseline failures
 
-- `quality:strict-escapes`: reproduced locally as failing repository-wide with many explicit `any` findings. This ticket did not repair it.
-- `npm audit high`: known unrelated baseline per ticket. Local refresh was blocked by registry `403 Forbidden`, so no new advisory classification is made here.
+- `quality:strict-escapes`: reproduced locally as failing repository-wide with many explicit `any` findings, and authoritative PR #918 quality job reached the same known baseline after `npm ci`, `env:validate:prod`, `prisma validate`, and `prisma generate` passed. This ticket did not repair it.
+- `npm audit high`: authoritative PR #918 security job failed on `npm audit high` after `npm ci` passed. Local refresh was blocked by registry `403 Forbidden`, but the authoritative PR #918 CI result classifies this as the known unrelated baseline. This ticket did not repair it.
 
 ## Follow-up tickets required
 
 - Keep existing repository-wide `quality:strict-escapes` remediation outside this verification ticket.
-- Keep existing `npm audit high` remediation/confirmation outside this verification ticket; rerun in an environment with registry audit access.
-- If release certification requires database rollback proof for signed unsubscribe specifically, add a future integration test against PostgreSQL. This report verifies application-code atomicity and mock evidence only.
-- Obtain/attach authoritative GitHub Actions evidence for PR #918 `integration-postgres` if required by a later certifier, because this workspace could not query PR checks.
+- Keep existing `npm audit high` remediation outside this verification ticket.
+- If release certification requires database rollback proof for signed unsubscribe specifically, add a future integration test against PostgreSQL. PR #918 `integration-postgres` proves repository migration/smoke integration only; this report verifies application-code atomicity and mock rollback evidence only.
 
 ## Delivery footer
 
 branch: `verify/email-signed-unsubscribe-postmerge-001`
 
-commit SHA: to be filled after commit
+verification PR: PR #920
 
-PR number or URL: to be filled after PR creation
+verification PR URL: https://github.com/pawelekbyra/polutek-pl/pull/920
+
+report commit: recorded in PR #920 commit history
 
 changed files: `docs/reports/verification/EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001.md`
 
@@ -198,7 +207,7 @@ commands and exact results: see table above
 
 verification verdict: PASS
 
-known unrelated baseline failures: `quality:strict-escapes`; `npm audit high` baseline could not be refreshed locally due registry `403 Forbidden`
+known unrelated baseline failures: `quality:strict-escapes`; `npm audit high`
 
 public launch status: NO_GO
 
