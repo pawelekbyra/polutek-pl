@@ -72,8 +72,17 @@ A worker may finalize only when `providerEventId` and `eventType` match, and its
 Prevents race conditions that could lead to unauthorized state changes or duplicate event processing.
 
 ## Observability requirements
-- Metric for `email.lock.ownership_lost`.
-- Log entries must include the `leaseToken` or `attemptId`.
+- log `attemptId` or a non-reversible/short fingerprint of the lease token;
+- never log the raw lease token;
+- never log secrets, raw payloads, email addresses, or PII;
+- metric:
+  email.lock.ownership_lost;
+- structured operational fields:
+  providerEventId fingerprint,
+  eventType,
+  attemptId,
+  result,
+  duration.
 
 ## Rollout/rollback requirements
 - Standard Prisma migration deploy.

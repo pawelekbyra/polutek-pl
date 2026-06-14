@@ -12,7 +12,7 @@ This document is the canonical entry point for technical state, risk register, a
 - **Verification State:** MERGED_UNVERIFIED (PR #905). PR #902 ancestry is VERIFIED.
 - **Current Execution Gate:** `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`
 - **Current State:** `POST_MERGE_RECONCILIATION / READY_FOR_CERTIFIER`.
-- **Next Builder Ticket:** [TBD after certification]
+- **Next Builder Ticket:** `BLOCKED_PENDING_EMAIL_WEBHOOK_POSTMERGE_VERIFICATION`
 
 ## 2. Evidence Taxonomy
 
@@ -50,9 +50,85 @@ This document is the canonical entry point for technical state, risk register, a
 - **BLOCKED**: 0
 - **Total Launch Stages**: 24
 
-*Note: The category sum equals the exact unique ticket count.野生 Architecture repair IDs are counted as PLANNED/TICKET_DETAIL_PENDING until explicit ticket files are created. wildcard IDs are not counted.*
+*Note: The category sum equals the exact unique ticket count. Categories are mutually exclusive.*
 
-## 4. Risk Register
+## 4. Canonical Ticket Inventory
+
+| Ticket ID | Title | Category | Status | Location | Dependency | Launch Impact |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` | Post-merge verification | READY | `READY_FOR_CERTIFIER` | `ready/` | None | **BLOCKER** |
+| `EMAIL-WEBHOOK-IDEMPOTENCY-001` | Resend Hardening Pass 1 | MERGED_UNVERIFIED | `MERGED_UNVERIFIED` | `ready/` | PR #905 | **BLOCKER** |
+| `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001` | Add lease ownership | BLOCKED | `CONFIRMED_GAP` | `blocked/` | Verify-001 | **BLOCKER** |
+| `EMAIL-WEBHOOK-TAKEOVER-INTEGRITY-001` | Event type integrity | BLOCKED | `CONFIRMED_GAP` | `blocked/` | Ownership-001 | **HIGH** |
+| `EMAIL-WEBHOOK-ROUTE-SECURITY-001` | Svix Prod Enforcement | BLOCKED | `CONFIRMED_GAP` | `blocked/` | Verify-001 | **BLOCKER** |
+| `EMAIL-WEBHOOK-ERROR-SAFETY-001` | Prevent disclosure | BLOCKED | `CONFIRMED_GAP` | `blocked/` | Verify-001 | **HIGH** |
+| `EMAIL-WEBHOOK-PAYLOAD-VALIDATION-001` | Per-event schema | BLOCKED | `CONFIRMED_GAP` | `blocked/` | Verify-001 | **HIGH** |
+| `EMAIL-WEBHOOK-MIGRATION-VERIFY-001` | Verify legacy upgrade | BLOCKED | `EVIDENCE_MISSING` | `blocked/` | Verify-001 | **HIGH** |
+| `EMAIL-WEBHOOK-COUNTER-SEMANTICS-001` | Define aggregate counters | DECISION_REQUIRED | `DECISION_REQUIRED` | `blocked/` | Verify-001 | **MEDIUM** |
+| `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` | Minimize PII | BLOCKED | `PARTIAL` | `blocked/` | Verify-001 | **MEDIUM** |
+| `ARCH-CI-001` | CI Guard Enforcement | BLOCKED | `CONFIRMED_GAP` | `blocked/` | None | **HIGH** |
+| `EMAIL-WEBHOOK-FINAL-CERT-001` | Final email cert | BLOCKED | `BLOCKED` | `blocked/` | All repairs | **BLOCKER** |
+| `LAUNCH-EMAIL-002` | Secure unsubscribe | BLOCKED | `OPEN` | `blocked/` | Stage 1 | **BLOCKER** |
+| `ARCH-ADMIN-AUTH-001` | Canonical admin auth | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **BLOCKER** |
+| `ARCH-ACCESS-001` | Explicit AccessDecision | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **BLOCKER** |
+| `ARCH-PLAYBACK-001` | Strict PlaybackPlan | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **BLOCKER** |
+| `ARCH-PLAYBACK-002` | Remove READY inconsistencies | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Playback-001 | **HIGH** |
+| `ARCH-CACHE-001` | Sensitive caching | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **HIGH** |
+| `ARCH-PATRON-001` | Audit grant creation | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **HIGH** |
+| `ARCH-PATRON-002` | Suspend/reactivate lifecycle | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Patron-001 | **HIGH** |
+| `ARCH-PATRON-003` | Refund linked grant only | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Patron-001 | **HIGH** |
+| `ARCH-CLERK-001` | Durable Clerk sync | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **HIGH** |
+| `ARCH-PAYMENT-001` | Explicit fulfillment rules | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Patron-001 | **HIGH** |
+| `ARCH-LOG-001` | Log sanitization | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **HIGH** |
+| `ARCH-E2E-001` | Denied playback tests | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Playback-002 | **HIGH** |
+| `ARCH-COMMENTS-001` | Canonical comments policy | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **MEDIUM** |
+| `ARCH-DI-001` | Decide AppContext boundary | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **MEDIUM** |
+| `ARCH-DI-002` | Migrate Access to Ports | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | DI-001 | **MEDIUM** |
+| `ARCH-DI-003` | Inject Playback Provider | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | DI-001 | **MEDIUM** |
+| `ARCH-DI-004` | Inject Stripe dependencies | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | DI-001 | **MEDIUM** |
+| `ARCH-ADMIN-001` | Complete Access Diagnostics | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **MEDIUM** |
+| `ARCH-ADMIN-002` | Expose Admin Override | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **MEDIUM** |
+| `ARCH-GUARD-001` | Forbidden auth-source rules | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | CI-001 | **MEDIUM** |
+| `ARCH-TEST-001` | Complete access matrix | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | P0 repairs | **MEDIUM** |
+| `ARCH-COVERAGE-001` | Critical-domain coverage | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | CI-001 | **MEDIUM** |
+| `ARCH-LEGACY-001` | Remove PlaybackService dep | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | P0 repairs | **LOW** |
+| `ARCH-LEGACY-002` | Remove UserAccessService dep | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Access-001 | **LOW** |
+| `ARCH-LEGACY-003` | Replace ChannelLayout bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | DI-001 | **LOW** |
+| `ARCH-LEGACY-004` | Move Admin Query Parser | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **LOW** |
+| `ARCH-LEGACY-005` | Remove Email Service bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | Email repairs | **LOW** |
+| `ARCH-LEGACY-006` | Remove Storage Service bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | DI-003 | **LOW** |
+| `ARCH-LEGACY-007` | Remove User Profile bridge | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | None | **LOW** |
+| `ARCH-GUARD-002` | AST/Dependency Graph | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | CI-001 | **LOW** |
+| `ARCH-DOCS-001` | Final reconciliation | PLANNED | `TICKET_DETAIL_PENDING` | Backlog | All repairs | **LOW** |
+| `LAUNCH-EMAIL-003` | Email consent boundary | HISTORICAL | `VERIFIED` | `ready/` | PR #899 | **BLOCKER** |
+| `OWNER-LAUNCH-DECISIONS-001` | Record owner decisions | HISTORICAL | `VERIFIED` | `ready/` | PR #890 | **BLOCKER** |
+| `PAYMENT-WEBHOOK-RESULT-001` | Fix ignored Stripe results | HISTORICAL | `VERIFIED` | `ready/` | PR #902 | **HIGH** |
+| `HIST-04` | Legacy Ticket 4 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-05` | Legacy Ticket 5 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-06` | Legacy Ticket 6 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-07` | Legacy Ticket 7 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-08` | Legacy Ticket 8 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-09` | Legacy Ticket 9 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-10` | Legacy Ticket 10 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-11` | Legacy Ticket 11 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-12` | Legacy Ticket 12 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-13` | Legacy Ticket 13 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-14` | Legacy Ticket 14 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-15` | Legacy Ticket 15 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-16` | Legacy Ticket 16 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-17` | Legacy Ticket 17 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-18` | Legacy Ticket 18 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-19` | Legacy Ticket 19 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-20` | Legacy Ticket 20 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+| `HIST-21` | Legacy Ticket 21 | HISTORICAL | `VERIFIED` | `ready/` | - | **-** |
+
+### Inventory Validation
+- **Row count**: 66.
+- **Category sum**: 21 (Hist) + 1 (Unv) + 1 (Ready) + 10 (Blocked) + 1 (Dec) + 32 (Plan) = 66.
+- **Duplicate ID check**: PASSED.
+- **Missing ID check**: PASSED.
+
+## 5. Risk Register
 
 ### Email & Webhook Risks
 | Risk ID | Title | Classification | Launch Impact | Ticket |
@@ -87,14 +163,7 @@ This document is the canonical entry point for technical state, risk register, a
 | `COMMENTS-PERMISSION-DRIFT` | Fragmented comments policy | `CONFIRMED_GAP` | **MEDIUM** | `ARCH-COMMENTS-001` |
 | `DOC-CODE-QUEUE-DRIFT` | Document vs Queue mismatch | `CONFIRMED_GAP` | **HIGH** | `ARCH-DOCS-001` |
 
-### Historical Risks (Resolved)
-| Risk ID | Title | Classification | Status |
-| --- | --- | --- | --- |
-| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `RESOLVED_BY_MERGED_PR / HISTORICAL` | PR #902 |
-| `EMAIL-WEBHOOK-IDEMP` | Resend Webhook Idempotency | `MERGED_UNVERIFIED / CONFIRMED_FOLLOW_UP_GAPS`| PR #905 |
-| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `RESOLVED_BY_MERGED_PR` | PR #899 |
-
-## 5. Ordered Masterplan
+## 6. Ordered Masterplan
 
 ### CURRENT_GATE
 - **`EMAIL-WEBHOOK-POSTMERGE-VERIFY-001`**: Independently verify merged PR #905 implementation and gaps (`READY_FOR_CERTIFIER`).
@@ -107,7 +176,7 @@ This document is the canonical entry point for technical state, risk register, a
 - **`LAUNCH-EMAIL-003`**: PR #899 (MERGED).
 
 ### QUEUED_HIGH_PRIORITY (Repairs)
-1. `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001` (Blocked by verification)
+1. `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001`
 2. `EMAIL-WEBHOOK-TAKEOVER-INTEGRITY-001`
 3. `EMAIL-WEBHOOK-ROUTE-SECURITY-001`
 4. `EMAIL-WEBHOOK-ERROR-SAFETY-001`
@@ -132,7 +201,7 @@ This document is the canonical entry point for technical state, risk register, a
 ### LEGACY RETIREMENT (P2)
 - `ARCH-LEGACY-001` to `ARCH-LEGACY-007`, `ARCH-GUARD-002`, `ARCH-DOCS-001`.
 
-## 6. Discoverability Path
+## 7. Discoverability Path
 
 - Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
 - Architecture Repair: [architecture/ARCHITECTURE-REPAIR-PLAN.md](architecture/ARCHITECTURE-REPAIR-PLAN.md)

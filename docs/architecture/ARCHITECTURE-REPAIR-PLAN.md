@@ -61,7 +61,6 @@ The following invariants are non-negotiable:
 | Control-plane consistency | Mixed | Historical tickets marked historical | `REPOSITORY_EVIDENCE` | `ARCH-DOCS-001` |
 
 ## 4. Known Gap — Canonical Admin Authorization
-
 **Ticket/Backlog ID**: `ARCH-ADMIN-AUTH-001`
 **Risk ID**: `ADMIN-AUTHORITY-DRIFT`
 **Status**: `CONFIRMED_GAP`
@@ -75,7 +74,104 @@ The following invariants are non-negotiable:
 - Inventory of all admin-sensitive surfaces.
 - Tests for: database admin, configured admin, stale Clerk claims, regular user, guest.
 
-## 5. Area V: Resend Webhook Idempotency & Certification
+## 5. Repair Areas
+
+### Area A: Single Patron Access Truth
+- Only Access module issue `AccessDecision`.
+- Decision must be based on effective active `PatronGrant`.
+- **Tickets**: `ARCH-ACCESS-001`, `ARCH-GUARD-001`, `ARCH-TEST-001`.
+
+### Area B: User.isPatron Cache and Drift
+- `User.isPatron` is strictly a read-model.
+- Implement drift reconciliation job and admin diagnostics.
+- **Ticket**: `ARCH-ACCESS-001`.
+
+### Area C: Clerk Synchronization and Drift
+- Local access must work during Clerk outages.
+- Durable retry for Clerk metadata sync failures.
+- **Ticket**: `ARCH-CLERK-001`.
+
+### Area D: PatronGrant Lifecycle
+- Explicit states: ACTIVE, SUSPENDED, REVOKED.
+- Dispute opened -> SUSPEND. Dispute won -> REACTIVATE. Dispute lost -> REVOKE.
+- **Tickets**: `ARCH-PATRON-002`, `ARCH-PATRON-003`.
+
+### Area E: Grant Mutation Audit Completeness
+- Transactional audit for every grant transition.
+- Actor, Reason, State Before/After, RequestID.
+- **Ticket**: `ARCH-PATRON-001`.
+
+### Area F: Payment Eligibility Boundary
+- Payment fulfillment must call an explicit eligibility policy.
+- Below threshold or unsupported currency must not grant patron status.
+- **Ticket**: `ARCH-PAYMENT-001`.
+
+### Area G: Central Access Module Boundary
+- Routes are transport adapters; they cannot locally reconstruct policy.
+- **Tickets**: `ARCH-ACCESS-001`, `ARCH-GUARD-001`.
+
+### Area H: Strict PlaybackPlan Contract
+- `READY` iff `canPlay === true` AND `access.allowed === true` AND source exists.
+- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-PLAYBACK-002`.
+
+### Area I: Provider Gating and Credential Safety
+- Zero provider calls on deny/non-ready.
+- Provider token issued only after AccessDecision allow.
+- **Tickets**: `ARCH-PLAYBACK-001`, `ARCH-DI-003`.
+
+### Area J: Frontend Rendering Boundary
+- Frontend renders backend PlaybackPlan and does not authorize independently.
+- No player mount or provider iframe on denied access.
+- **Ticket**: `ARCH-E2E-001`.
+
+### Area K: Comments Visibility and Permission
+- Public-read, gated-write permission matrix.
+- Inherit video policy through Access module.
+- **Ticket**: `ARCH-COMMENTS-001`.
+
+### Area L: Admin Override
+- Admin overrides must be explicit in `AccessDecision`.
+- Excluded from public metrics.
+- **Ticket**: `ARCH-ADMIN-002`.
+
+### Area M: Access Diagnostics
+- Admin view showing Identity, Patron truth, Cache/drift, Financial eligibility, and Audit.
+- **Ticket**: `ARCH-ADMIN-001`.
+
+### Area N: Sensitive Response Caching
+- Non-cacheable headers (private, no-store) for personalized access/playback/token responses.
+- **Ticket**: `ARCH-CACHE-001`.
+
+### Area O: Legacy Service Retirement
+- Inventory and retirement of `lib/services/**`.
+- **Tickets**: `ARCH-LEGACY-001` to `ARCH-LEGACY-007`.
+
+### Area P: AppContext, Prisma and Dependency Boundaries
+- Route -> Use Case -> Domain Ports -> Infrastructure Adapters.
+- Remove direct Prisma in application layer.
+- **Tickets**: `ARCH-DI-001` to `ARCH-DI-004`.
+
+### Area Q: Architecture Guard
+- Mandatory CI guard checking boundaries and forbidden sources.
+- **Tickets**: `ARCH-CI-001`, `ARCH-GUARD-001`.
+
+### Area R: Test Strategy
+- Multi-dimensional matrix: Actors x Tiers x Video States x Asset Status.
+- **Ticket**: `ARCH-TEST-001`.
+
+### Area S: Risk-Based Coverage
+- High coverage targets (90%) for Access and Playback gating.
+- **Ticket**: `ARCH-COVERAGE-001`.
+
+### Area T: Logging, Secrets and PII
+- No raw payloads, tokens, or PII in logs/errors.
+- Redaction helpers mandatory.
+- **Ticket**: `ARCH-LOG-001`.
+
+### Area U: Control-Plane Consistency
+- Exactly one ready ticket. No drift between documents and code.
+- **Ticket**: `ARCH-DOCS-001`.
+### Area V: Resend Webhook Idempotency & Certification
 
 ### A. Current Implementation State
 Foundation merged in PR #905 (`36b57dec5c763ca29ff708c836dae0601125c49d`). Uses `EmailEvent` table with unique `providerEventId`. Basic lock acquisition and release implemented in `EmailEventLockService`.

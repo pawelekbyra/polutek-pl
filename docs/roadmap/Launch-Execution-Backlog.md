@@ -13,8 +13,9 @@ This document is not an executable queue. It lists planned items and stages. Onl
 - **IMPLEMENTED_VERIFIED / HISTORICAL**: 21
 - **MERGED_UNVERIFIED**: 1
 - **READY**: 1
-- **BLOCKED / BACKLOG**: 42
+- **BLOCKED**: 10
 - **DECISION_REQUIRED**: 1
+- **PLANNED / TICKET_DETAIL_PENDING**: 32
 - **Total Unique Ticket IDs**: 66
 
 ### Launch Stages by Status
@@ -30,16 +31,6 @@ This document is not an executable queue. It lists planned items and stages. Onl
 | ---: | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Email consent boundary | `LAUNCH-EMAIL-003` / **COMPLETED** | None | Builder | None | PR #899 | Compliance blocker |
 | 2 | System email events & idempotency | `EMAIL-WEBHOOK-POSTMERGE-VERIFY-001` / **READY** | PR #905 merge | Reviewer | None | Independent certification report | Launch blocker |
-| 2.1 | Idempotency repair: Ownership | `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001` / **BLOCKED** | Verify-001 | Builder | None | Fencing/ownership proof | Launch blocker |
-| 2.2 | Idempotency repair: Security | `EMAIL-WEBHOOK-ROUTE-SECURITY-001` / **BLOCKED** | Verify-001 | Builder | None | Svix-only production proof | Blocker |
-| 2.3 | Idempotency repair: Errors | `EMAIL-WEBHOOK-ERROR-SAFETY-001` / **BLOCKED** | Verify-001 | Builder | None | Error redaction proof | High |
-| 2.4 | Idempotency repair: Validation | `EMAIL-WEBHOOK-PAYLOAD-VALIDATION-001` / **BLOCKED** | Verify-001 | Builder | None | Per-event schema proof | High |
-| 2.5 | Idempotency repair: Migration | `EMAIL-WEBHOOK-MIGRATION-VERIFY-001` / **BLOCKED** | Verify-001 | Builder | None | Legacy upgrade proof | High |
-| 2.6 | Idempotency repair: Counters | `EMAIL-WEBHOOK-COUNTER-SEMANTICS-001` / **DECISION_REQUIRED** | Verify-001 | Builder | Owner | Ordering logic proof | Medium |
-| 2.7 | Idempotency repair: Privacy | `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` / **BLOCKED** | Verify-001 | Builder | Owner | Retention/PII proof | Medium |
-| 2.8 | Idempotency repair: Takeover | `EMAIL-WEBHOOK-TAKEOVER-INTEGRITY-001` / **BLOCKED** | Verify-001 | Builder | None | Integrity alert proof | High |
-| 2.9 | CI Hardening | `ARCH-CI-001` / **OPEN** | None | Builder | None | Green CI with all checks | High |
-| 2.10| Email Final Cert | `EMAIL-WEBHOOK-FINAL-CERT-001` / **BLOCKED** | Repairs | Certifier | None | Final report | Blocker |
 | 3 | Signed unsubscribe | `LAUNCH-EMAIL-002` / **OPEN** | Stage 1 | Builder | None | Signed tokens, no plain emails | Compliance blocker |
 | 4 | Bounce/suppression | **OPEN** | Stage 1 | Builder | Operator | Suppression working | Compliance blocker |
 | 5 | Language persistence | **OPEN** | Stage 2 | Builder | None | PL/EN persistence | Localization |
@@ -62,3 +53,36 @@ This document is not an executable queue. It lists planned items and stages. Onl
 | 22 | X6 certification | **OPEN** | X6.2-X6.8 | Certifier | Owner | X6 cert report | X7 prerequisite |
 | 23 | X7 Launch Evidence Pack | **OPEN** | Stage 22 | Integrator | Operator | Complete Pack | Launch blocker |
 | 24 | Final launch decision | **OPEN** | Stage 23 | Owner | Owner | Recorded decision | Go/No-Go |
+
+## Email Repair Program (Supporting Stage 2)
+
+| Order | ID | Title | Status | Dependency | Launch Impact |
+| --- | --- | --- | --- | --- | --- |
+| 2.1 | `EMAIL-WEBHOOK-LOCK-OWNERSHIP-001` | Add lease ownership | **BLOCKED** | Verify-001 | **BLOCKER** |
+| 2.2 | `EMAIL-WEBHOOK-TAKEOVER-INTEGRITY-001` | Event type integrity | **BLOCKED** | Ownership-001 | **HIGH** |
+| 2.3 | `EMAIL-WEBHOOK-ROUTE-SECURITY-001` | Svix Prod Enforcement | **BLOCKED** | Verify-001 | **BLOCKER** |
+| 2.4 | `EMAIL-WEBHOOK-ERROR-SAFETY-001` | Prevent disclosure | **BLOCKED** | Verify-001 | **HIGH** |
+| 2.5 | `EMAIL-WEBHOOK-PAYLOAD-VALIDATION-001` | Per-event schema | **BLOCKED** | Verify-001 | **HIGH** |
+| 2.6 | `EMAIL-WEBHOOK-MIGRATION-VERIFY-001` | Verify legacy upgrade | **BLOCKED** | Verify-001 | **HIGH** |
+| 2.7 | `EMAIL-WEBHOOK-COUNTER-SEMANTICS-001` | Define aggregate counters | **DECISION_REQUIRED**| Verify-001 | **MEDIUM** |
+| 2.8 | `EMAIL-WEBHOOK-PRIVACY-RETENTION-001` | Minimize PII | **BLOCKED** | Verify-001 | **MEDIUM** |
+| 2.9 | `ARCH-CI-001` | Architecture CI Guard | **OPEN** | None | **HIGH** |
+| 2.10| `EMAIL-WEBHOOK-FINAL-CERT-001` | Final email certification | **BLOCKED** | Repairs | **BLOCKER** |
+
+## Architecture Repair Backlog (P0 - Launch Correctness)
+
+| ID | Title | Priority | Status | Dependency | Launch Impact |
+| --- | --- | ---: | --- | --- | --- |
+| `ARCH-ADMIN-AUTH-001` | Canonical admin authorization | P0 | `TICKET_DETAIL_PENDING` | None | **BLOCKER** |
+| `ARCH-ACCESS-001` | Explicit AccessDecision contract | P0 | `TICKET_DETAIL_PENDING` | None | **BLOCKER** |
+| `ARCH-PLAYBACK-001` | Strict PlaybackPlan union | P0 | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **BLOCKER** |
+| `ARCH-PLAYBACK-002` | Remove READY + canPlay inconsistency | P0 | `TICKET_DETAIL_PENDING` | `ARCH-PLAYBACK-001` | **HIGH** |
+| `ARCH-CACHE-001` | Sensitive response non-cacheable | P0 | `TICKET_DETAIL_PENDING` | None | **HIGH** |
+| `ARCH-PATRON-001` | Audit successful grant creation | P0 | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **HIGH** |
+| `ARCH-PATRON-002` | Suspend/reactivate lifecycle | P0 | `TICKET_DETAIL_PENDING` | `ARCH-PATRON-001` | **HIGH** |
+| `ARCH-PATRON-003` | Refund revokes only linked grant | P0 | `TICKET_DETAIL_PENDING` | `ARCH-PATRON-001` | **HIGH** |
+| `ARCH-CLERK-001` | Durable Clerk sync repair | P0 | `TICKET_DETAIL_PENDING` | None | **HIGH** |
+| `ARCH-PAYMENT-001` | Explicit fulfillment eligibility | P0 | `TICKET_DETAIL_PENDING` | `ARCH-PATRON-001` | **HIGH** |
+| `ARCH-LOG-001` | Log sanitization (Secrets/PII) | P0 | `TICKET_DETAIL_PENDING` | None | **HIGH** |
+| `ARCH-E2E-001` | Denied playback regression tests | P0 | `TICKET_DETAIL_PENDING` | `ARCH-PLAYBACK-002` | **HIGH** |
+| `ARCH-COMMENTS-001` | Canonical comments permission | P0 | `TICKET_DETAIL_PENDING` | `ARCH-ACCESS-001` | **MEDIUM** |
