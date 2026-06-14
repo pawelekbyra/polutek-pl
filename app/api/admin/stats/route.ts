@@ -1,21 +1,20 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { requireAdminForApi } from '@/lib/auth-utils';
-import { createScopedLogger } from '@/lib/logger';
-import { getActorFromAuth } from '@/lib/api/auth';
-import { createAppContext } from '@/lib/modules/shared/app-context';
-import { getAdminDashboardStats } from '@/lib/modules/admin-stats';
-import { fromUseCaseResult } from '@/lib/api/api-response';
+import { NextResponse, NextRequest } from "next/server";
+import { requireAdminForApi } from "@/lib/auth-utils";
+import { createScopedLogger } from "@/lib/logger";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { getAdminDashboardStats } from "@/lib/modules/admin-stats";
+import { fromUseCaseResult } from "@/lib/api/api-response";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const requestId = req.headers.get('x-request-id');
+  const requestId = req.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
-  const { response } = await requireAdminForApi("GET_ADMIN_STATS");
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_STATS");
   if (response) return response;
 
   try {
-    const actor = await getActorFromAuth();
+    const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
     const result = await getAdminDashboardStats(ctx);

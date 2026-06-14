@@ -1,15 +1,12 @@
 import { logger } from "@/lib/logger";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { prisma } from "./prisma";
-import { getOrCreateCurrentUser } from "@/lib/modules/users";
-import { createAppContext } from "@/lib/modules/shared/app-context";
 import { NextResponse } from "next/server";
-import { isConfiguredAdminUserId } from "./admin-config";
+import { AppError } from "@/lib/errors";
+import { requireAdminActor } from "@/lib/api/auth";
 
 export class AuthError extends Error {
   constructor(
     public readonly code: "UNAUTHORIZED" | "FORBIDDEN",
-    message = code
+    message: string = code,
   ) {
     super(message);
     this.name = "AuthError";
@@ -25,8 +22,10 @@ export async function requireAdminForApi(scope: string) {
       return {
         adminUserId: null,
         response: NextResponse.json(
-          { error: error.code === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden" },
-          { status: error.code === "UNAUTHORIZED" ? 401 : 403 }
+          {
+            error: error.code === "UNAUTHORIZED" ? "Unauthorized" : "Forbidden",
+          },
+          { status: error.code === "UNAUTHORIZED" ? 401 : 403 },
         ),
       };
     }
@@ -36,51 +35,34 @@ export async function requireAdminForApi(scope: string) {
       adminUserId: null,
       response: NextResponse.json(
         { error: "Internal server error" },
-        { status: 500 }
+        { status: 500 },
       ),
     };
   }
 }
 
 export async function requireUser() {
-  const { userId, sessionClaims } = await auth();
-  if (!userId) throw new AuthError("UNAUTHORIZED");
-
-  const ctx = createAppContext({
-    actor: { type: "user", userId, isPatron: false }, // isPatron will be resolved from DB if needed
-  });
-
-  await getOrCreateCurrentUser(ctx, userId, sessionClaims);
-  return userId;
+  throw new AuthError(
+    "UNAUTHORIZED",
+    "requireUser is not valid for privileged admin authorization",
+  );
 }
 
 export async function requireAdmin() {
-  const userId = await requireUser();
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, isDeleted: true },
-  });
-
-  if (!user || user.isDeleted) {
-    throw new AuthError("FORBIDDEN");
-  }
-
-  if (isConfiguredAdminUserId(userId)) {
-    if (user.role !== "ADMIN") {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { role: "ADMIN" },
-      });
+  try {
+    const actor = await requireAdminActor();
+    return actor.userId;
+  } catch (error) {
+    if (error instanceof AppError) {
+      if (error.code === "UNAUTHORIZED" || error.statusCode === 401) {
+        throw new AuthError("UNAUTHORIZED", error.message);
+      }
+      if (error.code === "FORBIDDEN" || error.statusCode === 403) {
+        throw new AuthError("FORBIDDEN", error.message);
+      }
     }
-    return userId;
+    throw error;
   }
-
-  if (user.role !== "ADMIN") {
-    throw new AuthError("FORBIDDEN");
-  }
-
-  return userId;
 }
 
 export async function isAdmin(): Promise<boolean> {

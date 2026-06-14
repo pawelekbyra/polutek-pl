@@ -1,37 +1,123 @@
-import { auth } from '@clerk/nextjs/server';
-import { AppError } from '@/lib/errors';
-import { Actor } from '@/lib/modules/shared/actor';
+import { auth } from "@clerk/nextjs/server";
+import { AppError } from "@/lib/errors";
+import { Actor } from "@/lib/modules/shared/actor";
+import { prisma } from "@/lib/prisma";
+import { isConfiguredAdminUserId } from "@/lib/admin-config";
+import { getPatronStatus } from "@/lib/modules/patron";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+
+function metadataValue(claims: unknown, key: string): unknown {
+  if (!claims || typeof claims !== "object") return undefined;
+  const metadata = (claims as { metadata?: Record<string, unknown> }).metadata;
+  return metadata?.[key];
+}
 
 export async function getAuthSession() {
   const { userId, sessionClaims } = await auth();
+  const role = metadataValue(sessionClaims, "role");
+  const isPatron = metadataValue(sessionClaims, "isPatron");
   return {
     userId,
-    role: (sessionClaims?.metadata as any)?.role as string | undefined,
-    isPatron: (sessionClaims?.metadata as any)?.isPatron as boolean | undefined,
+    /** Non-authoritative UI hint only. Never use for server authorization. */
+    role: typeof role === "string" ? role : undefined,
+    /** Non-authoritative UI hint only. Never use for access-control decisions. */
+    isPatron: typeof isPatron === "boolean" ? isPatron : undefined,
   };
 }
 
-export async function requireAdminSession() {
-  const session = await getAuthSession();
-  if (session.role !== 'admin' && session.role !== 'org:admin') {
-    throw new AppError('Forbidden: Admin access required', 403, 'FORBIDDEN');
+type ActorResolverOptions = {
+  allowGuest?: boolean;
+};
+
+async function resolveDbBackedActor(userId: string): Promise<Actor> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isDeleted: true },
+  });
+
+  if (!user || user.isDeleted) {
+    throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
-  return session;
+
+  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
+    return { type: "admin", userId };
+  }
+
+  const ctx = createAppContext({
+    actor: { type: "user", userId, isPatron: false },
+  });
+  const patronStatus = await getPatronStatus(userId, ctx);
+
+  return {
+    type: "user",
+    userId,
+    isPatron: patronStatus.ok
+      ? patronStatus.data.activeGrants.length > 0
+      : false,
+  };
+}
+
+async function resolveDbBackedAdminActor(
+  userId: string,
+): Promise<{ type: "admin"; userId: string }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isDeleted: true },
+  });
+
+  if (!user || user.isDeleted) {
+    throw new AppError("Forbidden", 403, "FORBIDDEN");
+  }
+
+  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
+    return { type: "admin", userId };
+  }
+
+  throw new AppError("Forbidden: Admin access required", 403, "FORBIDDEN");
+}
+
+export async function requireAdminSession() {
+  const actor = await requireAdminActor();
+  return { userId: actor.userId, role: "admin" as const, isPatron: undefined };
 }
 
 /**
- * Builds an Actor from the current Clerk session.
+ * Builds a server-side Actor from Clerk identity plus current local DB truth.
  *
- * IMPORTANT: actor.isPatron reflects Clerk session metadata — a cache, not the DB.
- * For any access-control decision involving patron status, resolve the actor's
- * actual DB state via getUserAccessProfile() from @/lib/modules/users.
- * Do NOT rely on actor.isPatron for paywall enforcement.
+ * Clerk confirms identity. The local DB confirms role/account status. Session
+ * claims and publicMetadata are never authoritative for server authorization.
+ * Patron state is resolved from the current DB read model without changing
+ * PatronGrant semantics.
  */
-export async function getActorFromAuth(): Promise<Actor> {
-    const session = await getAuthSession();
-    if (!session.userId) return { type: 'guest' };
-    if (session.role === 'admin' || session.role === 'org:admin') return { type: 'admin', userId: session.userId };
-    // WARNING: isPatron here comes from Clerk session cache.
-    // For access-control decisions, always verify against DB via getUserAccessProfile().
-    return { type: 'user', userId: session.userId, isPatron: !!session.isPatron };
+export async function getActorFromAuth(
+  options: ActorResolverOptions = { allowGuest: true },
+): Promise<Actor> {
+  const { userId } = await auth();
+  if (!userId) {
+    if (options.allowGuest === false) {
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+    }
+    return { type: "guest" };
+  }
+
+  return resolveDbBackedActor(userId);
+}
+
+export async function requireAdminActor(): Promise<{
+  type: "admin";
+  userId: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
+  return resolveDbBackedAdminActor(userId);
+}
+
+export async function requireActorFromAuth(): Promise<
+  Exclude<Actor, { type: "guest" }>
+> {
+  return getActorFromAuth({ allowGuest: false }) as Promise<
+    Exclude<Actor, { type: "guest" }>
+  >;
 }

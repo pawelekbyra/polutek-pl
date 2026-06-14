@@ -1,31 +1,29 @@
-import { AppContext, createAppContext as baseCreateAppContext } from "@/lib/modules/shared/app-context";
-import { auth } from "@clerk/nextjs/server";
-import { isConfiguredAdminUserId } from "@/lib/admin-config";
-import { prisma } from "@/lib/prisma";
+import {
+  AppContext,
+  createAppContext as baseCreateAppContext,
+} from "@/lib/modules/shared/app-context";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { AppError } from "@/lib/errors";
 
-export async function createAppContextFromRequest(requestId?: string): Promise<AppContext> {
-  const { userId } = await auth();
+type AppContextFromRequestOptions = {
+  allowGuest?: boolean;
+  requireAdmin?: boolean;
+};
 
-  if (!userId) {
-    return baseCreateAppContext({
-        actor: { type: 'guest' }
-    });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, isPatron: true }
+export async function createAppContextFromRequest(
+  requestId?: string,
+  options: AppContextFromRequestOptions = { allowGuest: false },
+): Promise<AppContext> {
+  const actor = await getActorFromAuth({
+    allowGuest: options.allowGuest === true,
   });
 
-  if (user?.role === 'ADMIN' || isConfiguredAdminUserId(userId)) {
-    return baseCreateAppContext({
-        actor: { type: 'admin', userId },
-        requestId
-    });
+  if (options.requireAdmin !== false && actor.type !== "admin") {
+    throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
 
   return baseCreateAppContext({
-    actor: { type: 'user', userId, isPatron: user?.isPatron ?? false },
-    requestId
+    actor,
+    requestId,
   });
 }
