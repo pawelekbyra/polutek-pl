@@ -3,9 +3,11 @@ import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
-import { getAdminChannelSettings, updateAdminChannelSettings } from "@/lib/modules/channel";
+import {
+  getAdminChannelSettings,
+  updateAdminChannelSettings,
+} from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { getActorFromAuth } from "@/lib/api/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -31,19 +33,26 @@ const optionalUrl = z
 
 const channelPatchSchema = z.object({
   name: z.string().trim().min(1, "Nazwa kanału jest wymagana.").max(100),
-  bio: z.string().trim().max(1_000).optional().nullable().transform((value) => value || null),
+  bio: z
+    .string()
+    .trim()
+    .max(1_000)
+    .optional()
+    .nullable()
+    .transform((value) => value || null),
   bannerUrl: optionalUrl,
   displaySubscribersCount: z.number().int().min(0).nullable().optional(),
 });
 
 export async function GET(req: NextRequest) {
-  const requestId = req.headers.get('x-request-id');
+  const requestId = req.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
-  const { response } = await requireAdminForApi("GET_ADMIN_CHANNEL");
+  const { adminUserId, response } =
+    await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
 
   try {
-    const actor = await getActorFromAuth();
+    const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
     const creator = await getAdminChannelSettings(ctx);
@@ -56,9 +65,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const requestId = request.headers.get('x-request-id');
+  const requestId = request.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
-  const { response } = await requireAdminForApi("PATCH_ADMIN_CHANNEL");
+  const { adminUserId, response } = await requireAdminForApi(
+    "PATCH_ADMIN_CHANNEL",
+  );
   if (response) return response;
 
   try {
@@ -66,10 +77,13 @@ export async function PATCH(request: NextRequest) {
     const result = channelPatchSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: "Invalid data", details: result.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid data", details: result.error.flatten() },
+        { status: 400 },
+      );
     }
 
-    const actor = await getActorFromAuth();
+    const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
     const creator = await updateAdminChannelSettings(ctx, result.data);
