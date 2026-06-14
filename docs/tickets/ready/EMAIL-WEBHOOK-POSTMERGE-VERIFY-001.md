@@ -1,11 +1,13 @@
 # EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 — Verify merged Resend webhook idempotency hardening
 
-Status: READY_FOR_INDEPENDENT_REVIEW
+Status: FIX_REQUIRED / VERIFICATION_COMPLETE / HISTORICAL
 Ticket ID: EMAIL-WEBHOOK-POSTMERGE-VERIFY-001
-Role: Reviewer / Certifier
+Role: Reviewer / Certifier (historical)
 Launch status: NO_GO
 
 ## Purpose
+
+This ticket is no longer executable. PR #912 completed this independent verification with verdict `FIX_REQUIRED`; it is retained as historical verification evidence only.
 
 Independently verify the implementation merged by PR #905 for `EMAIL-WEBHOOK-IDEMPOTENCY-001` after the post-PR #910 control-plane reconciliation. This is a read-only verification task and must not implement repairs.
 
@@ -16,7 +18,10 @@ Independently verify the implementation merged by PR #905 for `EMAIL-WEBHOOK-IDE
 - Merge SHA: `36b57dec5c763ca29ff708c836dae0601125c49d`.
 - CI fixture follow-up: PR #910 fixed the missing `ADMIN_CLERK_USER_IDS` CI production-env fixture.
 - PR #910 merge SHA: `49695941171a4de47a22b036a0b5255c8bbd16be`.
-- Public launch remains `NO_GO`; verification completed with verdict `FIX_REQUIRED`. Queue reconciliation and repair-ticket creation remain pending.
+- Verification PR: PR #912.
+- Verification merge SHA: `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a`.
+- Verdict: `FIX_REQUIRED`.
+- Public launch remains `NO_GO`.
 
 ## Verification Goals
 
@@ -69,4 +74,8 @@ Verdict: `FIX_REQUIRED`
 
 Evidence report: `docs/reports/verification/EMAIL-WEBHOOK-POSTMERGE-VERIFY-001.md`
 
-Public launch remains `NO_GO`.
+PR #912
+
+merge SHA: `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a`
+
+Public launch: `NO_GO`.
