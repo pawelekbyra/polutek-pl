@@ -180,10 +180,12 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     onPlay={() => sendEvent('PLAY_STARTED')}
                     onPause={() => sendEvent('PLAY_PAUSED')}
                     onEnded={() => sendEvent('ENDED')}
-                    onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
+                    onSeeked={(e:
+any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
                     onWaiting={() => sendEvent('BUFFERING_STARTED')}
                     onPlaying={() => sendEvent('BUFFERING_ENDED')}
-                    onTimeUpdate={(e: any) => {
+                    onTimeUpdate={(e:
+any) => {
                         const { currentTime, duration } = e.detail;
                         if (!hasReached10s.current && currentTime >= 10) {
                             hasReached10s.current = true;

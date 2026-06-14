@@ -13,7 +13,8 @@ export async function restoreAdminComment(commentId: string, ctx: AppContext): P
     await repo.updateCommentStatus(commentId, { status: CommentStatus.VISIBLE, moderatedAt: null, moderatedById: null });
     await recordAuditEvent(ctx, { action: "COMMENT_RESTORE", targetType: "COMMENT", targetId: commentId, metadata: { actorId: ctx.actor.userId } });
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

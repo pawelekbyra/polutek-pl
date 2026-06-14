@@ -133,7 +133,8 @@ export async function listAdminUsers(
             { username: { contains: input.query, mode: 'insensitive' } },
           ]
         } : {},
-        input.role ? { role: input.role as any } : {},
+        input.role ? { role: input.role as
+any } : {},
         input.isPatron !== undefined
           ? input.isPatron
             ? { patronGrants: { some: { revokedAt: null } } }
@@ -141,7 +142,8 @@ export async function listAdminUsers(
           : {},
         input.language ? { language: input.language } : {},
         input.isDeleted !== undefined ? { isDeleted: input.isDeleted } : {},
-        input.patronSource ? { patronGrants: { some: { source: input.patronSource as any, revokedAt: null } } } : {},
+        input.patronSource ? { patronGrants: { some: { source: input.patronSource as
+any, revokedAt: null } } } : {},
         input.hasPayments ? { payments: { some: {} } } : {},
         input.hasSubscriptions ? { subscriptions: { some: {} } } : {},
       ]
@@ -184,7 +186,8 @@ export async function listAdminUsers(
 
   return {
     items: users.map(u => {
-        const domainTotals = u.paymentTotals.map((pt: any) => ({
+        const domainTotals = u.paymentTotals.map((pt:
+any) => ({
             currency: pt.currency,
             amountMinor: pt.amountMinor
         }));

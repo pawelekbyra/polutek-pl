@@ -13,7 +13,8 @@ export async function hideAdminComment(commentId: string, ctx: AppContext): Prom
     await repo.updateCommentStatus(commentId, { status: CommentStatus.HIDDEN, moderatedAt: new Date(), moderatedById: ctx.actor.userId });
     await recordAuditEvent(ctx, { action: "COMMENT_HIDE", targetType: "COMMENT", targetId: commentId, metadata: { actorId: ctx.actor.userId } });
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

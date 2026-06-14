@@ -32,15 +32,25 @@ export interface AdminUserDetailsDto {
     videoLikes: number;
     videoDislikes: number;
   };
-  paymentTotals: any[];
+  paymentTotals:
+Array<
+any>;
   /** All patron grants for audit/history; active (revokedAt === null) grants are access truth. */
-  patronGrants: any[];
+  patronGrants:
+Array<
+any>;
   /** Patron truth and cache diagnostics. Access truth is active PatronGrant, not User cache fields. */
   patronDiagnostics: PatronDiagnosticsReadModel;
-  payments: any[];
-  subscriptions: any[];
+  payments:
+Array<
+any>;
+  subscriptions:
+Array<
+any>;
   normalizedTotal: number;
-  auditLogs: any[];
+  auditLogs:
+Array<
+any>;
 }
 
 export async function getAdminUserDetails(

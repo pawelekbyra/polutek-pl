@@ -6,8 +6,10 @@ export async function getAuthSession() {
   const { userId, sessionClaims } = await auth();
   return {
     userId,
-    role: (sessionClaims?.metadata as any)?.role as string | undefined,
-    isPatron: (sessionClaims?.metadata as any)?.isPatron as boolean | undefined,
+    role: (sessionClaims?.metadata as
+any)?.role as string | undefined,
+    isPatron: (sessionClaims?.metadata as
+any)?.isPatron as boolean | undefined,
   };
 }
 

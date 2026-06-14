@@ -124,7 +124,8 @@ export async function exportAdminUsers(
     actorUserId: actor.userId,
     action: "USERS_EXPORT",
     targetType: "System",
-    metadata: { filterOptions: input as any, count: items.length }
+    metadata: { filterOptions: input as
+any, count: items.length }
   });
 
   return ok(items);

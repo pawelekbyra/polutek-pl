@@ -73,7 +73,8 @@ export async function updateComment(
     const fullComment = await repo.findCommentById(commentId);
 
     return ok(mapCommentToDto(fullComment, context));
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

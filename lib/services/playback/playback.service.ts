@@ -47,7 +47,8 @@ function toStatus(reason?: string): PlaybackPlanStatus {
   return 'ERROR';
 }
 
-function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
+function toSafeAssetContract(asset:
+any): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
   return {
@@ -122,7 +123,8 @@ export class PlaybackService {
       include: {
         asset: true,
       }
-    }) as VideoWithAsset & { asset?: any };
+    }) as VideoWithAsset & { asset?:
+any };
 
     const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
 
@@ -152,7 +154,8 @@ export class PlaybackService {
             videoId,
             status: toStatus(decision.reason),
             video,
-            accessReason: decision.reason as any,
+            accessReason: decision.reason as
+any,
             requiredTier: decision.requiredTier,
             warnings: [decision.reason || 'Access denied'],
         });
@@ -172,7 +175,8 @@ export class PlaybackService {
             videoUrl = fallback.videoUrl;
             thumbnailUrl = fallback.thumbnailUrl || '';
             title = fallback.title;
-            tier = fallback.tier as any;
+            tier = fallback.tier as
+any;
         }
     }
 
@@ -252,7 +256,8 @@ export class PlaybackService {
                     ipHash,
                     userAgentHash,
                     sourceKind: 'cloudflare_stream',
-                    accessTier: tier as any,
+                    accessTier: tier as
+any,
                     isAdminPreview: isAdminPreview
                 }
             });
@@ -409,7 +414,8 @@ export class PlaybackService {
             ipHash,
             userAgentHash,
             sourceKind: sourceInfo.kind,
-            accessTier: tier as any,
+            accessTier: tier as
+any,
             isAdminPreview: isAdminPreview
         }
     });

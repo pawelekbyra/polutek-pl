@@ -67,7 +67,8 @@ export interface AdminVideoDto extends BaseVideoDto {
   migrationStatus: MigrationStatus;
 }
 
-export function toPublicVideoDto(video: any): PublicVideoDto {
+export function toPublicVideoDto(video:
+any): PublicVideoDto {
   const dto = {
     id: video.id,
     slug: video.slug,
@@ -90,13 +91,15 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
   // Strip any accidental sensitive fields if they exist in the input object
   const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
   for (const field of forbidden) {
-      if (field in dto) delete (dto as any)[field];
+      if (field in dto) delete (dto as
+any)[field];
   }
 
   return dto as PublicVideoDto;
 }
 
-export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
+export function toAdminVideoAssetDto(asset:
+any): AdminVideoAssetDto | null {
   if (!asset) return null;
 
   return {
@@ -120,7 +123,8 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
   };
 }
 
-export function toAdminVideoDto(video: any): AdminVideoDto {
+export function toAdminVideoDto(video:
+any): AdminVideoDto {
   const asset = video.asset;
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
@@ -207,7 +211,8 @@ export interface RecordPlaybackEventInput {
   errorMessage?: string;
   provider?: string;
   sourceKind?: string;
-  metadata?: any;
+  metadata?:
+any;
   ipHash: string;
   uaHash: string;
   fingerprint: string;

@@ -52,9 +52,11 @@ async function requireAuthenticatedActor() {
   return { ctx, userId: actor.userId };
 }
 
-async function requireTrustedEmail(ctx: any) {
+async function requireTrustedEmail(ctx:
+any) {
   const { sessionClaims } = await auth();
-  const claims = sessionClaims as any;
+  const claims = sessionClaims as
+any;
   const email = normalizeTrustedEmail(
     claims?.email || claims?.primary_email_address || claims?.email_address || claims?.primaryEmailAddress
   );
@@ -67,9 +69,13 @@ async function requireTrustedEmail(ctx: any) {
   await GetOrCreateUserUseCase.execute(ctx, {
       id: ctx.actor.userId,
       email,
-      name: (sessionClaims as any)?.name,
-      username: (sessionClaims as any)?.username,
-      imageUrl: (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture
+      name: (sessionClaims as
+any)?.name,
+      username: (sessionClaims as
+any)?.username,
+      imageUrl: (sessionClaims as
+any)?.image_url || (sessionClaims as
+any)?.picture
   });
 
   return { email };

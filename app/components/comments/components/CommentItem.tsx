@@ -55,7 +55,8 @@ export function CommentItem({
   const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
-  const isHearted = (comment as any).isHearted || false;
+  const isHearted = (comment as
+any).isHearted || false;
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);

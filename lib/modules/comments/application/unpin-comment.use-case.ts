@@ -45,7 +45,8 @@ export async function unpinComment(
     });
 
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

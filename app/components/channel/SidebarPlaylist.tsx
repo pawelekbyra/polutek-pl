@@ -58,7 +58,8 @@ export function SidebarPlaylist({
     return null;
   };
 
-  const [layout, setLayout] = useState<any>(null);
+  const [layout, setLayout] = useState<
+any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
 
@@ -84,7 +85,8 @@ export function SidebarPlaylist({
     fetchLayout();
   }, [selectedVideoId]);
 
-  const renderVideoItem = (video: any) => {
+  const renderVideoItem = (video:
+any) => {
     const displayTitle = language === 'en' && video.titleEn ? video.titleEn : video.title;
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
@@ -209,8 +211,10 @@ export function SidebarPlaylist({
 
   const searchResultsSection = searchQuery ? (
       <div className="space-y-2">
-          {layout.sections.flatMap((s: any) => s.items)
-            .filter((v: any) => v.title.toLowerCase().includes(searchQuery.toLowerCase()))
+          {layout.sections.flatMap((s:
+any) => s.items)
+            .filter((v:
+any) => v.title.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(renderVideoItem)}
       </div>
   ) : null;
@@ -223,12 +227,17 @@ export function SidebarPlaylist({
   // The layout has sections: Publiczne (FREE), Dla zalogowanych (LOGGED_IN), Strefa Patrona (PATRON).
   // We want: Publiczne, Dla zalogowanych, TIP GATE, Strefa Patrona.
 
-  const publicSection = layout.sections.find((s: any) => s.type === 'FREE');
-  const loggedInSection = layout.sections.find((s: any) => s.type === 'LOGGED_IN');
-  const patronSection = layout.sections.find((s: any) => s.type === 'PATRON');
-  const otherSections = layout.sections.filter((s: any) => !['FREE', 'LOGGED_IN', 'PATRON'].includes(s.type));
+  const publicSection = layout.sections.find((s:
+any) => s.type === 'FREE');
+  const loggedInSection = layout.sections.find((s:
+any) => s.type === 'LOGGED_IN');
+  const patronSection = layout.sections.find((s:
+any) => s.type === 'PATRON');
+  const otherSections = layout.sections.filter((s:
+any) => !['FREE', 'LOGGED_IN', 'PATRON'].includes(s.type));
 
-  const renderSection = (section: any) => (
+  const renderSection = (section:
+any) => (
     <div key={section.id} className="space-y-2 mb-6">
       <div className="pb-1 border-b border-neutral-100">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">{section.title}</h3>

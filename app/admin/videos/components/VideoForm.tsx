@@ -61,7 +61,9 @@ export function VideoForm({
   slugify,
   className
 }: VideoFormProps) {
-  const [diagnostics, setDiagnostics] = useState<any[]>([]);
+  const [diagnostics, setDiagnostics] = useState<
+Array<
+any>>([]);
 
   useEffect(() => {
     const runDiagnostics = () => {
@@ -170,8 +172,10 @@ export function VideoForm({
                                 <div className="aspect-video bg-black rounded-lg overflow-hidden border relative">
                                     {formData.videoUrl ? (
                                         <div className="h-full w-full">
-                                            <PremiumWrapper videoId={formData.id || "preview"} requiredTier={formData.tier as any}>
-                                                <VideoPlayer video={formData as any} />
+                                            <PremiumWrapper videoId={formData.id || "preview"} requiredTier={formData.tier as
+any}>
+                                                <VideoPlayer video={formData as
+any} />
                                             </PremiumWrapper>
                                         </div>
                                     ) : (

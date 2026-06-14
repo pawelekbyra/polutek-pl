@@ -272,7 +272,8 @@ export class EmailService {
                         sentAt: new Date()
                     }
                 });
-            } catch (e: any) {
+            } catch (e:
+any) {
                 logger.error(`[EmailService] Failed to send broadcast to ${recipient.email}`, e);
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },

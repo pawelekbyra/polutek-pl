@@ -13,7 +13,9 @@ export async function reorderAdminVideos(
   const repository = new VideoRepository(ctx.prisma);
 
   try {
-    await (ctx.prisma as any).$transaction(async (tx: any) => {
+    await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
         await repository.reorder(updates, mainChannel.id, tx);
 
         await recordAuditEvent(ctx, {
@@ -24,7 +26,8 @@ export async function reorderAdminVideos(
         }, tx);
     });
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
       if (error.message?.includes('does not belong to main channel')) {
           return fail(new VideoNotOnMainChannelError('batch'));
       }

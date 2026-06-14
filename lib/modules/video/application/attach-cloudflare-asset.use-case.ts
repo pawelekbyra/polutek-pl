@@ -25,7 +25,9 @@ export async function attachCloudflareAsset(
   const video = await repository.findByIdForMainChannel(input.videoId, mainChannel.id);
   if (!video) return fail(new VideoNotFoundError(input.videoId));
 
-  const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updatedVideo = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
     await repository.upsertAsset(video.id, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId: input.providerAssetId,

@@ -24,7 +24,8 @@ function formatDate(value: string | Date | null) {
 
 export default function AdminPaymentsListPage() {
   const [payments, setPayments] = useState<AdminPaymentListItem[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<
+any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -108,7 +109,8 @@ export default function AdminPaymentsListPage() {
 
         {summary && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {summary.totalSucceeded.map((f: any) => (
+                {summary.totalSucceeded.map((f:
+any) => (
                     <Card key={f.currency} className="border-0 shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
@@ -122,7 +124,9 @@ export default function AdminPaymentsListPage() {
                         </CardContent>
                     </Card>
                 ))}
-                {summary.totalRefunded.some((r: any) => r.amountMinor > 0) && summary.totalRefunded.map((r: any) => r.amountMinor > 0 && (
+                {summary.totalRefunded.some((r:
+any) => r.amountMinor > 0) && summary.totalRefunded.map((r:
+any) => r.amountMinor > 0 && (
                     <Card key={`ref-${r.currency}`} className="border-0 shadow-sm border-l-4 border-red-500">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Zwroty {r.currency}</CardTitle>
@@ -301,6 +305,8 @@ export default function AdminPaymentsListPage() {
   );
 }
 
-function cn(...classes: any[]) {
+function cn(...classes:
+Array<
+any>) {
     return classes.filter(Boolean).join(' ');
 }

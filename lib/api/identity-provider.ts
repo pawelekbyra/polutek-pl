@@ -2,7 +2,8 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 export interface IdentityProvider {
     getUserEmail(userId: string): Promise<string | null>;
-    updateUserMetadata(userId: string, metadata: Record<string, any>): Promise<void>;
+    updateUserMetadata(userId: string, metadata: Record<string,
+any>): Promise<void>;
     getUserSyncData(userId: string): Promise<{
         email: string | null;
         name: string | null;
@@ -18,7 +19,8 @@ export class ClerkIdentityProvider implements IdentityProvider {
         return user.primaryEmailAddress?.emailAddress || user.emailAddresses[0]?.emailAddress || null;
     }
 
-    async updateUserMetadata(userId: string, metadata: Record<string, any>): Promise<void> {
+    async updateUserMetadata(userId: string, metadata: Record<string,
+any>): Promise<void> {
         const client = await clerkClient();
         await client.users.updateUserMetadata(userId, {
             publicMetadata: metadata

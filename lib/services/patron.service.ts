@@ -46,7 +46,8 @@ export async function grantPatronStatus(
   const ctx = createAppContext(actor);
 
   // Pass transaction if provided
-  const tx = db && '$transaction' in db ? undefined : (db as any);
+  const tx = db && '$transaction' in db ? undefined : (db as
+any);
 
   const result = await grantPatron({
       userId,
@@ -88,7 +89,8 @@ export async function revokePatronStatus(
     : { type: 'system' as const, reason: 'legacy_bridge' };
 
   const ctx = createAppContext(actor);
-  const tx = db && '$transaction' in db ? undefined : (db as any);
+  const tx = db && '$transaction' in db ? undefined : (db as
+any);
 
   const result = await revokePatron({
       userId,

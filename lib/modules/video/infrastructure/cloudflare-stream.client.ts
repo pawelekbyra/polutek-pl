@@ -6,8 +6,12 @@ export interface CloudflareDirectUploadResponse {
     uid: string;
   };
   success: boolean;
-  errors: any[];
-  messages: any[];
+  errors:
+Array<
+any>;
+  messages:
+Array<
+any>;
 }
 
 export interface CloudflareImportByUrlResponse {
@@ -15,8 +19,12 @@ export interface CloudflareImportByUrlResponse {
     uid: string;
   };
   success: boolean;
-  errors: any[];
-  messages: any[];
+  errors:
+Array<
+any>;
+  messages:
+Array<
+any>;
 }
 
 export class CloudflareStreamClient {

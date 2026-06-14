@@ -66,7 +66,8 @@ export class PaymentRepository {
     const { id, createdAt, updatedAt, ...updateData } = data;
     return await tx.payment.update({
       where: { id: paymentId },
-      data: updateData as any
+      data: updateData as
+any
     }) as PaymentDto;
   }
 

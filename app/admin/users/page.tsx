@@ -25,7 +25,8 @@ function formatDate(value: string | Date | null) {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<
+any>(null);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -301,7 +302,8 @@ export default function AdminUsersPage() {
                             <div className="flex gap-2 items-center">
                                 <span className="text-[11px] font-bold">
                                     {user.paymentTotals?.length > 0 ? (
-                                        user.paymentTotals.map((t: any) => `${(t.totalPaidMinor/100).toFixed(2)} ${t.currency}`).join(', ')
+                                        user.paymentTotals.map((t:
+any) => `${(t.totalPaidMinor/100).toFixed(2)} ${t.currency}`).join(', ')
                                     ) : "0.00 PLN"}
                                 </span>
                                 <Badge variant="secondary" className="h-4 text-[9px]">{user.paymentCount} płatności</Badge>

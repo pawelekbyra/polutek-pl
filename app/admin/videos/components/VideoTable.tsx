@@ -124,7 +124,8 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                   <Button variant="ghost" size="icon" onClick={() => onEdit(vid)} title="Edytuj"><Edit className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" asChild title="Podgląd"><Link href={`/watch/${vid.slug}`} target="_blank"><Eye className="h-4 w-4" /></Link></Button>
                   <Button variant="ghost" size="icon" onClick={() => copyLink(vid.slug)} title="Kopiuj link"><LinkIcon className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDuplicate(vid as any)} title="Duplikuj"><Plus className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onDuplicate(vid as
+any)} title="Duplikuj"><Plus className="h-4 w-4" /></Button>
                   {vid.status !== 'ARCHIVED' && (
                       <Button variant="ghost" size="icon" onClick={() => onDelete(vid.id)} className="text-destructive" title="Zarchiwizuj"><Trash2 className="h-4 w-4" /></Button>
                   )}

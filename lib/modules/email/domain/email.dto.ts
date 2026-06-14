@@ -74,7 +74,9 @@ export type ResendWebhookInput = {
     text?: string;
     html?: string;
     headers?: Record<string, string>;
-    attachments?: any[];
+    attachments?:
+Array<
+any>;
   };
 };
 

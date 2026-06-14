@@ -61,7 +61,9 @@ export async function importLegacyVideoToCloudflare(
   let updatedVideo: any;
 
   try {
-    updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
+    updatedVideo = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
       const current = await tx.video.findFirst({
         where: { id: input.videoId, creatorId: mainChannel.id },
         include: { asset: true, _count: { select: { comments: true } } }

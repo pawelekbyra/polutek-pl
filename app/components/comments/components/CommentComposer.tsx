@@ -141,7 +141,8 @@ export function CommentComposer({
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   if (newComment.trim() && !isPending && !isTooLong) {
-                    handleSubmit(e as any);
+                    handleSubmit(e as
+any);
                   }
                 }
               }}

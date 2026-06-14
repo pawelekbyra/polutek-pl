@@ -40,7 +40,8 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
       read: prisma,
       writeTransaction: async (fn) => {
         if (prisma && '$transaction' in prisma) {
-          return await (prisma as any).$transaction(fn);
+          return await (prisma as
+any).$transaction(fn);
         }
         return await fn(prisma as WriteTx);
       }

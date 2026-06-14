@@ -11,7 +11,8 @@ export class StripeEventLockService {
 
   async acquireLock(event: { id: string; type: string; payload: any }): Promise<'ACQUIRED' | 'ALREADY_PROCESSED' | 'CONFLICT'> {
     try {
-      await (this.db.write as any).stripeEvent.create({
+      await (this.db.write as
+any).stripeEvent.create({
         data: {
           id: event.id,
           type: event.type,
@@ -28,7 +29,8 @@ export class StripeEventLockService {
         const staleThreshold = new Date(now.getTime() - STRIPE_STALE_MS);
 
         // Try to recover from FAILED or STALE PROCESSING
-        const { count } = await (this.db.write as any).stripeEvent.updateMany({
+        const { count } = await (this.db.write as
+any).stripeEvent.updateMany({
           where: {
             id: event.id,
             OR: [
@@ -44,7 +46,8 @@ export class StripeEventLockService {
           return 'ACQUIRED';
         }
 
-        const existing = await (this.db.read as any).stripeEvent.findUnique({ where: { id: event.id } });
+        const existing = await (this.db.read as
+any).stripeEvent.findUnique({ where: { id: event.id } });
         if (existing?.status === WebhookEventStatus.PROCESSED) {
           logger.info(`[StripeEventLock] Event ${event.id} (${event.type}) already PROCESSED.`);
           recordMetric('stripe.webhook.duplicate_event', { eventType: event.type, status: existing.status });
@@ -60,14 +63,16 @@ export class StripeEventLockService {
   }
 
   async releaseWithSuccess(eventId: string): Promise<void> {
-    await (this.db.write as any).stripeEvent.update({
+    await (this.db.write as
+any).stripeEvent.update({
       where: { id: eventId },
       data: { status: WebhookEventStatus.PROCESSED, processedAt: new Date() }
     });
   }
 
   async releaseWithFailure(eventId: string, error: string): Promise<void> {
-    await (this.db.write as any).stripeEvent.update({
+    await (this.db.write as
+any).stripeEvent.update({
       where: { id: eventId },
       data: {
         status: WebhookEventStatus.FAILED,

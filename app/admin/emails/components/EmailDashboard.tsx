@@ -7,7 +7,8 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
 export function EmailDashboard() {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<
+any>(null);
 
     useEffect(() => {
         // Simplified stats for now

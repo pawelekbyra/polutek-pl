@@ -10,7 +10,8 @@ import { logger } from "@/lib/logger";
 import { AdminUsersDashboardSkeleton } from "@/components/skeletons/admin";
 
 export default function UserDashboardPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<
+any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,7 +64,8 @@ export default function UserDashboardPage() {
 
         <h2 className="text-xl font-bold mb-4">Finanse per waluta</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {stats.financials.map((f: any) => (
+            {stats.financials.map((f:
+any) => (
                 <Card key={f.currency}>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground uppercase">{f.currency}</CardTitle>

@@ -55,7 +55,8 @@ export class SyncUserFromWebhookUseCase {
         if (data.referrerId) {
             const referrer = await repository.findById(data.referrerId);
             if (referrer && referrer.id !== data.id) {
-                await (ctx.prisma as any).user.update({
+                await (ctx.prisma as
+any).user.update({
                     where: { id: data.id },
                     data: {
                         referredBy: { connect: { id: referrer.id } }
@@ -67,7 +68,8 @@ export class SyncUserFromWebhookUseCase {
 
     // Handle side effects (R5/R9 boundary)
     if (eventType === 'user.created') {
-        await EmailService.sendWelcomeEmail(data.email, data.name || undefined, data.language as any).catch(e => {
+        await EmailService.sendWelcomeEmail(data.email, data.name || undefined, data.language as
+any).catch(e => {
             console.error('[ClerkWebhook] Failed to send welcome email:', e);
         });
     }
@@ -86,7 +88,9 @@ export class SyncUserFromWebhookUseCase {
         select: { email: true }
     });
 
-    await (ctx.prisma as any).$transaction(async (tx: any) => {
+    await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
         // Revoke any active patron grants (pre-R7 grant logic)
         await tx.patronGrant.updateMany({
             where: { userId, revokedAt: null },

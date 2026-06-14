@@ -14,7 +14,9 @@ import { pl } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminCommentReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<
+Array<
+any>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchReports = async () => {
@@ -205,6 +207,8 @@ export default function AdminCommentReportsPage() {
   );
 }
 
-function cn(...classes: any[]) {
+function cn(...classes:
+Array<
+any>) {
     return classes.filter(Boolean).join(' ');
 }

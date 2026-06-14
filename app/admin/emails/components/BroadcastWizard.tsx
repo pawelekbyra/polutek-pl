@@ -31,7 +31,9 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     const [isTesting, setIsTesting] = useState(false);
     const toast = useToast();
 
-    const [templates, setTemplates] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<
+Array<
+any>>([]);
     const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
     useEffect(() => {

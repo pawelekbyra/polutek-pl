@@ -77,7 +77,8 @@ export class ChannelLayoutService {
         const loggedInVideos = videos.filter(v => v.tier === AccessTier.LOGGED_IN);
         const patronVideos = videos.filter(v => v.tier === AccessTier.PATRON);
 
-        const mapItem = (v: any): SidebarItem => ({
+        const mapItem = (v:
+any): SidebarItem => ({
             id: v.id,
             slug: v.slug,
             title: v.title,

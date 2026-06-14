@@ -27,7 +27,8 @@ import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 
 export default function VideoDetailsPage({ params }: { params: { id: string } }) {
-  const [video, setVideo] = useState<any>(null);
+  const [video, setVideo] = useState<
+any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isImportingLegacy, setIsImportingLegacy] = useState(false);
@@ -291,7 +292,8 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
                       <CardContent>
                           {video.comments?.length > 0 ? (
                               <div className="space-y-4">
-                                  {video.comments.map((comment: any) => (
+                                  {video.comments.map((comment:
+any) => (
                                       <div key={comment.id} className="p-4 rounded-lg border bg-muted/30">
                                           <div className="flex justify-between items-start mb-2"><div className="flex items-center gap-2"><SafeAvatar src={comment.author?.imageUrl} alt={comment.author?.name || "Avatar"} size={24} fallbackSeed={comment.author?.id} /><div className="flex flex-col"><span className="text-xs font-bold">{comment.author?.name || comment.author?.username || "Użytkownik"}</span><span className="text-[10px] opacity-50">{comment.author?.email}</span></div></div><div className="flex items-center gap-2"><span className="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span><Badge variant="outline" className="text-[9px] h-4">{comment.status}</Badge></div></div>
                                           <p className="text-sm leading-relaxed mb-3">{comment.text || <span className="italic opacity-50">Treść usunięta</span>}</p>

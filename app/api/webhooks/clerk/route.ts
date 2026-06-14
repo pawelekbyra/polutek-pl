@@ -66,7 +66,8 @@ function safeErrorMessage(error: unknown) {
   return message.replace(/(sk_(live|test)_[A-Za-z0-9_\-]+|whsec_[A-Za-z0-9_\-]+|Bearer\s+[A-Za-z0-9._\-]+)/g, '[redacted]').slice(0, 1000);
 }
 
-function getSafePayload(evt: WebhookEvent): any {
+function getSafePayload(evt: WebhookEvent):
+any {
   const data = getMetadataObject(evt.data);
   return {
     type: evt.type,

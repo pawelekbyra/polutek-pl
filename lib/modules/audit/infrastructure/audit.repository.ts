@@ -15,7 +15,8 @@ export class AuditRepository {
   async create(data: CreateAuditLogInput) {
     // Use type casting to any because of Prisma's complex union types for TransactionClient
     // but keep the interface clean and typed for the caller.
-    return await (this.db as any).auditLog.create({
+    return await (this.db as
+any).auditLog.create({
       data: {
         actorUserId: data.actorUserId,
         action: data.action,
@@ -27,7 +28,8 @@ export class AuditRepository {
   }
 
   async findManyByTarget(targetType: string, targetId: string, limit: number = 50) {
-    return await (this.db as any).auditLog.findMany({
+    return await (this.db as
+any).auditLog.findMany({
       where: { targetType, targetId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -35,7 +37,8 @@ export class AuditRepository {
   }
 
   async findUserAuditLogs(userId: string, limit: number = 100) {
-    return await (this.db as any).auditLog.findMany({
+    return await (this.db as
+any).auditLog.findMany({
       where: {
         OR: [
           { targetType: 'User', targetId: userId },

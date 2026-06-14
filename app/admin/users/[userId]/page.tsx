@@ -20,7 +20,8 @@ function formatDate(value: string | Date | null) {
 }
 
 export default function UserDetailsPage({ params }: { params: { userId: string } }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<
+any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,7 +178,8 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                             <p className="text-sm text-muted-foreground py-4 italic">Brak subskrypcji.</p>
                         ) : (
                             <div className="space-y-2">
-                                {user.subscriptions.map((s: any) => (
+                                {user.subscriptions.map((s:
+any) => (
                                     <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">{s.creator.name[0]}</div>
@@ -229,7 +231,8 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
-                                    {user.payments.map((p: any) => (
+                                    {user.payments.map((p:
+any) => (
                                         <tr key={p.id}>
                                             <td className="px-4 py-3 whitespace-nowrap text-xs">{formatDate(p.createdAt)}</td>
                                             <td className="px-4 py-3 font-medium">{(p.amountMinor / 100).toFixed(2)} {p.currency}</td>
@@ -254,7 +257,8 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                     <CardHeader><CardTitle className="text-base">Granty Patrona (Uprawnienia)</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {user.patronGrants.map((g: any) => (
+                            {user.patronGrants.map((g:
+any) => (
                                 <div key={g.id} className={`p-4 rounded-xl border ${g.revokedAt ? 'opacity-60 bg-muted/20' : 'bg-amber-50/30 border-amber-100'}`}>
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
@@ -306,7 +310,8 @@ export default function UserDetailsPage({ params }: { params: { userId: string }
                     <CardHeader><CardTitle className="text-base">Historia administracyjna (Audit Log)</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-3">
-                            {user.auditLogs.map((log: any) => (
+                            {user.auditLogs.map((log:
+any) => (
                                 <div key={log.id} className="p-3 rounded-lg border text-xs">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="font-bold uppercase text-primary">{log.action}</span>

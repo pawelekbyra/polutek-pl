@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     return fromUseCaseResult(result);
   } catch (error: unknown) {
     scopedLogger.error("[GET_ADMIN_STATS_ERROR]", error);
-    return fromUseCaseResult({ ok: false, error: error as any });
+    return fromUseCaseResult({ ok: false, error: error as
+any });
   }
 }

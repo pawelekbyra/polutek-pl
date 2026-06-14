@@ -5,7 +5,8 @@ export class ReferralRepository {
   constructor(private db: ReadDb) {}
 
   async findByReferredId(referredId: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
     return await db.referral.findUnique({
       where: { referredId },
     });
@@ -18,7 +19,8 @@ export class ReferralRepository {
     source: string;
     claimedAt: Date;
   }, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
     return await db.referral.create({
       data,
     });

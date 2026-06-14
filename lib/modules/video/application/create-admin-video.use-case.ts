@@ -13,13 +13,16 @@ export async function createAdminVideo(
 ): Promise<UseCaseResult<AdminVideoDto, VideoUrlNotAllowedError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
 
-  if (!MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
+  if (!MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as
+any)) {
     return fail(new VideoUrlNotAllowedError(input.videoUrl));
   }
 
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const video = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
     const created = await repository.createForMainChannel(input, mainChannel.id, tx);
 
     await recordAuditEvent(ctx, {

@@ -118,7 +118,8 @@ export async function handleDispute(
     }
 
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     logger.error(`[HandleDispute] Error handling dispute for ${input.stripeIntentId}:`, error);
     return fail(new PaymentError(error.message || 'Dispute processing failed'));
   }

@@ -42,7 +42,9 @@ export async function handleCloudflareStreamWebhook(
     return ok({ assetId: asset.id, status: "no-change" });
   }
 
-  const updatedAsset = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updatedAsset = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
     const dataToUpdate: any = {
       processingState: newState,
       providerSyncedAt: new Date(),

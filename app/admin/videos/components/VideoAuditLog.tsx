@@ -2,13 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "./utils";
 
-export function VideoAuditLog({ logs }: { logs: any[] }) {
+export function VideoAuditLog({ logs }: { logs:
+Array<
+any> }) {
     return (
         <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg">Dziennik zdarzeń</CardTitle></CardHeader>
             <CardContent>
                 <div className="space-y-3">
-                    {logs?.map((log: any) => (
+                    {logs?.map((log:
+any) => (
                         <div key={log.id} className="p-4 rounded-xl border text-xs bg-muted/20 hover:bg-muted/40 transition-colors">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-2">

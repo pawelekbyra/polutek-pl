@@ -29,7 +29,8 @@ export async function fulfillPayment(
   const repo = new PaymentRepository();
 
   try {
-    const result = await ctx.db.writeTransaction(async (tx): Promise<any> => {
+    const result = await ctx.db.writeTransaction(async (tx): Promise<
+any> => {
       // 1. Fetch user first to avoid TDZ in replay block
       const user = await repo.findUserWithTotals(input.userId, tx);
       if (!user) throw new Error('USER_NOT_FOUND');
@@ -167,7 +168,8 @@ export async function fulfillPayment(
     }
 
     return ok({ isFirstFulfillment: result.isFirstFulfillment });
-  } catch (error: any) {
+  } catch (error:
+any) {
     logger.error(`[FulfillPayment] Error fulfilling payment ${input.paymentId}:`, error);
     return fail(new PaymentError(error.message || 'Fulfillment failed'));
   }

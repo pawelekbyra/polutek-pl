@@ -31,7 +31,8 @@ export class UserRepository {
   }
 
   async findProfileById(id: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
     return await db.user.findUnique({
       where: { id },
       select: {
@@ -63,7 +64,8 @@ export class UserRepository {
   }
 
   async incrementReferralStats(id: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
     return await db.user.update({
       where: { id },
       data: {
@@ -74,7 +76,8 @@ export class UserRepository {
   }
 
   async setReferredBy(userId: string, referrerId: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
     return await db.user.update({
       where: { id: userId },
       data: {
@@ -135,15 +138,18 @@ export class UserRepository {
   async findWithPaymentTotals(id: string) {
     return await this.user.findUnique({
       where: { id },
-      include: { paymentTotals: true } as any
+      include: { paymentTotals: true } as
+any
     });
   }
 
-  async create(data: any) {
+  async create(data:
+any) {
       return await this.user.create({ data });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data:
+any) {
       return await this.user.update({
           where: { id },
           data

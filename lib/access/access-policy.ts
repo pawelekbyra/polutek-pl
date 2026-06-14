@@ -81,7 +81,8 @@ export class AccessPolicy {
               }
             });
           }
-      } catch (err: any) {
+      } catch (err:
+any) {
           if (err.code === 'P2023') {
               video = await prisma.video.findUnique({
                   where: { slug: videoId },

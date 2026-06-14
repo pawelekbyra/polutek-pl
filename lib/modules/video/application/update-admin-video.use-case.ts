@@ -27,7 +27,8 @@ export async function updateAdminVideo(
     return fail(new VideoNotOnMainChannelError(input.id));
   }
 
-  if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
+  if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as
+any)) {
     return fail(new VideoUrlNotAllowedError(input.videoUrl));
   }
 
@@ -40,7 +41,9 @@ export async function updateAdminVideo(
       }
   }
 
-  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updated = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
     const video = await repository.updateForMainChannel(input, mainChannel.id, tx);
 
     if (input.isMainFeatured) {

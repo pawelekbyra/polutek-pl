@@ -19,7 +19,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const result = await updateAdminVideo({ ...body, id: videoId }, ctx);
     return fromUseCaseResult(result);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fromUseCaseResult({ ok: false, error });
   }
 }
@@ -54,9 +55,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             case 'import-legacy-to-cloudflare':
                 return fromUseCaseResult(await importLegacyVideoToCloudflare({ videoId }, ctx));
             default:
-                return fromUseCaseResult({ ok: false, error: { code: 'INVALID_ACTION', message: `Action ${action} not supported`, statusCode: 400 } as any });
+                return fromUseCaseResult({ ok: false, error: { code: 'INVALID_ACTION', message: `Action ${action} not supported`, statusCode: 400 } as
+any });
         }
-    } catch (error: any) {
+    } catch (error:
+any) {
         return fromUseCaseResult({ ok: false, error });
     }
 }

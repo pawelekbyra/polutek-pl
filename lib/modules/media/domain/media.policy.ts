@@ -155,7 +155,8 @@ export class MediaPolicy {
     const forbiddenFields = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl', 'r2Url', 'storageKey', 'objectKey', 'bucket'];
 
     for (const field of forbiddenFields) {
-      if ((descriptor as any)[field]) {
+      if ((descriptor as
+any)[field]) {
         throw new UnsafePublicMediaDtoError(`Forbidden field detected: ${field}`);
       }
     }
@@ -168,7 +169,8 @@ export class MediaPolicy {
   /**
    * Asserts that a video DTO is safe for public exposure.
    */
-  static assertPublicVideoDtoSafe(dto: any): void {
+  static assertPublicVideoDtoSafe(dto:
+any): void {
     const forbiddenFields = [
         'videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl',
         's3Url', 'blobUrl', 'r2Url', 'storageKey', 'objectKey', 'bucket',

@@ -31,7 +31,8 @@ export async function checkHealth(
   }
 
   try {
-    await (ctx.prisma as any).$queryRaw`SELECT 1`;
+    await (ctx.prisma as
+any).$queryRaw`SELECT 1`;
   } catch (e) {
       return { ok: false, database: "failed" };
   }

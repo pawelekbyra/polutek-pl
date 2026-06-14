@@ -136,8 +136,10 @@ export class CommentRepository {
     return await (this.db as WriteTx).comment.update({ where: { id }, data });
   }
   async toggleHeart(id: string): Promise<{ isHearted: boolean }> {
-    const comment = await this.db.comment.findUnique({ where: { id }, select: { isHearted: true } as any });
-    const nextValue = !(comment as any)?.isHearted;
+    const comment = await this.db.comment.findUnique({ where: { id }, select: { isHearted: true } as
+any });
+    const nextValue = !(comment as
+any)?.isHearted;
     await (this.db as WriteTx).$executeRaw`UPDATE "Comment" SET "isHearted" = ${nextValue} WHERE id = ${id}`;
     return { isHearted: nextValue };
   }

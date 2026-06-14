@@ -68,7 +68,8 @@ export async function toggleVideoDislike(
     });
 
     return ok(result);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

@@ -21,7 +21,8 @@ export interface RecordPlaybackEventResult {
     throttled?: boolean;
 }
 
-function sanitizePlaybackMetadata(metadata: any) {
+function sanitizePlaybackMetadata(metadata:
+any) {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
 
   const forbiddenFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
@@ -33,7 +34,8 @@ function sanitizePlaybackMetadata(metadata: any) {
   });
 
   // Limit to 20 keys and values up to 500 chars
-  const result: Record<string, any> = {};
+  const result: Record<string,
+any> = {};
   const finalKeys = finalFilteredKeys.slice(0, 20);
 
   for (const key of finalKeys) {

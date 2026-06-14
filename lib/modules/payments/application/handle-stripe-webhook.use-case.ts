@@ -24,7 +24,8 @@ export async function handleStripeWebhook(
   const repo = new PaymentRepository();
   const lockService = new StripeEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' as any });
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' as
+any });
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!endpointSecret) {
@@ -34,7 +35,8 @@ export async function handleStripeWebhook(
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(input.body, input.signature, endpointSecret);
-  } catch (err: any) {
+  } catch (err:
+any) {
     return fail(new PaymentError(`Webhook Signature Error: ${err.message}`));
   }
 
@@ -99,7 +101,8 @@ export async function handleStripeWebhook(
         const intent = event.data.object as Stripe.PaymentIntent;
         const payment = await repo.findByIntentId(intent.id, ctx.db.read);
         if (payment) {
-          await repo.updatePayment(payment.id, { status: PaymentStatus.FAILED }, ctx.prisma as any);
+          await repo.updatePayment(payment.id, { status: PaymentStatus.FAILED }, ctx.prisma as
+any);
         }
         recordAlert('payment.failure', { stripeIntentId: intent.id });
         break;
@@ -110,7 +113,8 @@ export async function handleStripeWebhook(
     await lockService.releaseWithSuccess(event.id);
     recordDurationMetric('stripe.webhook.processing_time', startedAt, { eventType: event.type, status: 'processed' });
     return ok({ received: true });
-  } catch (error: any) {
+  } catch (error:
+any) {
     // 4. Failure Release
     logger.error(`[HandleStripeWebhook] Error processing event ${event.id}:`, error);
     await lockService.releaseWithFailure(event.id, error.message || String(error));

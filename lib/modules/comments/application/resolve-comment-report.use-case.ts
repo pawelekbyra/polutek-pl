@@ -13,7 +13,8 @@ export async function resolveCommentReport(reportId: string, status: CommentRepo
     const updated = await repo.resolveReport(reportId, { status, resolvedAt: new Date(), resolvedById: ctx.actor.userId! });
     await recordAuditEvent(ctx, { action: `REPORT_${status}`, targetType: "COMMENT", targetId: report.commentId, metadata: { reportId, actorId: ctx.actor.userId } });
     return ok(updated);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

@@ -15,7 +15,8 @@ export async function deleteAdminComment(input: { commentId: string, reason?: Co
     await repo.softDelete(commentId, { status: CommentStatus.DELETED, deletedAt: new Date(), deletedById: ctx.actor.userId!, deletedReason: reason });
     await recordAuditEvent(ctx, { action: "COMMENT_DELETE", targetType: "COMMENT", targetId: commentId, metadata: { reason, actorId: ctx.actor.userId } });
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

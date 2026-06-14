@@ -18,7 +18,6 @@ import type {
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { PlayerSkeleton } from "@/components/skeletons";
 import { PlayerStateFrame } from "./PlayerStateFrame";
-
 interface VideoAccessContextType {
   hasAccess: boolean;
   playbackPlan: PlaybackPlan | null;
@@ -26,7 +25,6 @@ interface VideoAccessContextType {
   effectiveTier: AccessTierDto;
   refreshPlaybackPlan: () => Promise<void>;
 }
-
 const VideoAccessContext = createContext<VideoAccessContextType>({
   hasAccess: false,
   playbackPlan: null,
@@ -34,7 +32,6 @@ const VideoAccessContext = createContext<VideoAccessContextType>({
   effectiveTier: "PUBLIC" as AccessTierDto,
   refreshPlaybackPlan: async () => {},
 });
-
 export const useVideoAccess = () => useContext(VideoAccessContext);
 
 interface PremiumWrapperProps {

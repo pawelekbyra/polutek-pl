@@ -88,7 +88,8 @@ export async function handleRefund(
     }
 
     return ok(undefined);
-  } catch (error: any) {
+  } catch (error:
+any) {
     logger.error(`[HandleRefund] Error handling refund for ${input.paymentId || input.stripeIntentId}:`, error);
     return fail(new PaymentError(error.message || 'Refund processing failed'));
   }

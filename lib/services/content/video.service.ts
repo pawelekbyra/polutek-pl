@@ -94,7 +94,8 @@ export class VideoContentService {
     }
   }
 
-  static mapToPublicVideoDTO(video: any): PublicVideoDTO {
+  static mapToPublicVideoDTO(video:
+any): PublicVideoDTO {
     const dto: PublicVideoDTO = {
         id: video.id,
         creatorId: video.creatorId ?? '',
@@ -125,7 +126,8 @@ export class VideoContentService {
     // Safety redaction
     const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
     for (const field of forbidden) {
-        if (field in dto) delete (dto as any)[field];
+        if (field in dto) delete (dto as
+any)[field];
     }
 
     return dto;

@@ -114,8 +114,10 @@ export class VideoRepository {
   async findAdminList(mainChannelId: string, filters: VideoFilterOptions): Promise<{ items: Video[]; total: number }> {
     const where: Prisma.VideoWhereInput = { creatorId: mainChannelId };
 
-    if (filters.status && filters.status !== 'ALL') where.status = filters.status as any;
-    if (filters.tier && filters.tier !== 'ALL') where.tier = filters.tier as any;
+    if (filters.status && filters.status !== 'ALL') where.status = filters.status as
+any;
+    if (filters.tier && filters.tier !== 'ALL') where.tier = filters.tier as
+any;
     if (filters.isMainFeatured === 'true') where.isMainFeatured = true;
     if (filters.isMainFeatured === 'false') where.isMainFeatured = false;
     if (filters.showInSidebar === 'true') where.showInSidebar = true;
@@ -317,7 +319,8 @@ export class VideoRepository {
 
     return await tx.videoAsset.create({
       data: {
-        ...data as any,
+        ...data as
+any,
         videoId,
         provider: data.provider!,
         objectKey: data.objectKey || `video-${videoId}`,

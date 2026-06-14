@@ -5,7 +5,9 @@ import { SubscriptionRepository } from "../infrastructure/subscription.repositor
 export async function getUserSubscriptions(
   userId: string,
   ctx: AppContext
-): Promise<UseCaseResult<any[]>> {
+): Promise<UseCaseResult<
+Array<
+any>>> {
   const repo = new SubscriptionRepository(ctx.db.read);
   const subscriptions = await repo.findManyByUserId(userId);
   return ok(subscriptions);

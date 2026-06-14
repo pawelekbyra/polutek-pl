@@ -24,7 +24,8 @@ export async function updateInboundEmail(
     });
 
     return ok(updated as InboundEmailDto);
-  } catch (error: any) {
+  } catch (error:
+any) {
     if (error.code === 'P2025') {
         return fail(new EmailError(`Inbound email with id ${id} not found`, 404, 'INBOUND_EMAIL_NOT_FOUND'));
     }

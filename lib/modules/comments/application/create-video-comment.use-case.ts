@@ -118,7 +118,8 @@ export async function createVideoComment(
     const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
 
     return ok(mapCommentToDto(commentWithAuthor, context));
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

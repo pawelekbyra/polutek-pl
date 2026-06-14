@@ -31,7 +31,9 @@ export async function getCloudflareUploadUrl(
   try {
     const uploadResponse = await client.createDirectUploadUrl();
 
-    await (ctx.prisma as any).$transaction(async (tx: any) => {
+    await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
       await repository.upsertAsset(video.id, {
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: uploadResponse.result.uid,
@@ -52,11 +54,13 @@ export async function getCloudflareUploadUrl(
       uploadUrl: uploadResponse.result.uploadURL,
       providerAssetId: uploadResponse.result.uid
     });
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({
       code: 'CLOUDFLARE_API_ERROR',
       message: error.message || 'Failed to communicate with Cloudflare Stream API',
       statusCode: 500
-    } as any);
+    } as
+any);
   }
 }

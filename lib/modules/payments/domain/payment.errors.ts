@@ -15,10 +15,12 @@ export class UserNotFoundError extends PaymentError {
 }
 
 export class InvalidPaymentRequestError extends PaymentError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?:
+any) {
     super(message, 'INVALID_PAYMENT_REQUEST', 400);
     this.name = 'InvalidPaymentRequestError';
-    (this as any).details = details;
+    (this as
+any).details = details;
   }
 }
 

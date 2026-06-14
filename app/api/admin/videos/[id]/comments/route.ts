@@ -15,7 +15,8 @@ export async function GET(
 
   try {
     const { searchParams } = new URL(request.url);
-    const sortBy = (searchParams.get('sortBy') as any) || 'newest';
+    const sortBy = (searchParams.get('sortBy') as
+any) || 'newest';
     const cursor = searchParams.get('cursor') || undefined;
     const limit = 50;
 

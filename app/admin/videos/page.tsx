@@ -24,7 +24,8 @@ export default function AdminVideosPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videos, setVideos] = useState<AdminVideoListItem[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<
+any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -104,8 +105,10 @@ export default function AdminVideosPage() {
           videoUrl: vid.videoUrl || "",
           thumbnailUrl: vid.thumbnailUrl || "",
           duration: vid.duration || "",
-          tier: vid.tier as any,
-          status: (vid.status || "PUBLISHED") as any,
+          tier: vid.tier as
+any,
+          status: (vid.status || "PUBLISHED") as
+any,
           likesCount: vid.likesCount,
           dislikesCount: vid.dislikesCount,
           views: vid.views,
@@ -187,8 +190,10 @@ export default function AdminVideosPage() {
       videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
       duration: "",
-      tier: vid.tier as any,
-      status: (vid.status || "PUBLISHED") as any,
+      tier: vid.tier as
+any,
+      status: (vid.status || "PUBLISHED") as
+any,
       likesCount: vid.likesCount,
       dislikesCount: vid.dislikesCount,
       views: vid.views,
@@ -213,7 +218,8 @@ export default function AdminVideosPage() {
       videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
       duration: "",
-      tier: vid.tier as any,
+      tier: vid.tier as
+any,
       status: "DRAFT",
       likesCount: 0,
       dislikesCount: 0,

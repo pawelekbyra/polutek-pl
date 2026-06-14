@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
       ['ID', 'Email', 'Name', 'Username', 'Role', 'IsPatron', 'PatronSince', 'PatronSource', 'NormalizedTotalPLN', 'Language', 'IsDeleted', 'CreatedAt'].join(',')
     ];
 
-    const sanitizeCsvField = (value: any) => {
+    const sanitizeCsvField = (value:
+any) => {
         const str = String(value ?? '');
         if (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@')) {
             return `"'${str}"`;

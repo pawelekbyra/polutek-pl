@@ -85,7 +85,8 @@ export async function getGatedBlobResponse(
   videoId: string,
   blobUrl: string,
   headers?: Headers,
-  _prefetchedVideo?: any // Ignored in modular access
+  _prefetchedVideo?:
+any // Ignored in modular access
 ) {
   // R6/R3 delivery: Use modular access check
   const actor = await getActorFromAuth();

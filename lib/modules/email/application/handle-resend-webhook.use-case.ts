@@ -49,7 +49,8 @@ export async function handleResendWebhook(
   // Privacy: minimize stored payload to essential identifiers only
   const minimalPayload = {
       type,
-      created_at: (input as any).created_at,
+      created_at: (input as
+any).created_at,
       email_id: resendEmailId,
   };
 
@@ -150,7 +151,8 @@ export async function handleResendWebhook(
         duplicate: false,
         idempotency: "available"
     });
-  } catch (error: any) {
+  } catch (error:
+any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
 
     // 5. Failure Release
@@ -216,10 +218,12 @@ async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, sta
       const { count } = await tx.broadcastEmailRecipient.updateMany({
           where: {
               id: recipient.id,
-              status: recipient.status as any
+              status: recipient.status as
+any
           },
           data: {
-              status: status as any,
+              status: status as
+any,
               ...extraData
           }
       });
@@ -276,7 +280,8 @@ async function handleUnsubscribe(ctx: AppContext, email: string) {
     });
 }
 
-async function handleInboundEmail(ctx: AppContext, data: any) {
+async function handleInboundEmail(ctx: AppContext, data:
+any) {
     const user = await ctx.prisma.user.findUnique({ where: { email: data.from } });
     // inboundEmail has a unique constraint on resendId
     try {

@@ -126,7 +126,8 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                           const res = await fetch('/api/admin/subscribers/resync', { method: 'POST' });
                           if (res.ok) {
                             const data = await res.json();
-                            const updated = data.updated.find((c: any) => c.creatorId === creator.id);
+                            const updated = data.updated.find((c:
+any) => c.creatorId === creator.id);
                             if (updated) {
                                 setCreator({ ...creator, subscribersCount: updated.subscribersCount });
                                 setStatus("saved");

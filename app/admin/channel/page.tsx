@@ -13,7 +13,8 @@ export default async function AdminChannelPage() {
   try {
     const actor = await getActorFromAuth();
     const ctx = createAppContext({ actor });
-    const creator = await getAdminChannelSettings(ctx) as any;
+    const creator = await getAdminChannelSettings(ctx) as
+any;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
@@ -21,7 +22,8 @@ export default async function AdminChannelPage() {
         <ChannelSettingsForm initialCreator={creator} clerkFallbackImageUrl={clerkUser?.imageUrl || null} />
       </div>
     );
-  } catch (err: any) {
+  } catch (err:
+any) {
     return (
         <div className="min-h-screen bg-muted/40 flex flex-col">
             <Navbar />

@@ -90,7 +90,9 @@ export function mapCommentToDto(
       viewerCanModerate: canModerate && hasVideoAccess,
       viewerCanPin: canModerate && !comment.parentId && hasVideoAccess,
       isPinned: !!comment.pinnedAt,
-      isHearted: (comment as any).isHearted || false,
-      repliesPreview: comment.replies?.map((r: any) => mapCommentToDto(r, context)) || []
+      isHearted: (comment as
+any).isHearted || false,
+      repliesPreview: comment.replies?.map((r:
+any) => mapCommentToDto(r, context)) || []
     };
 }

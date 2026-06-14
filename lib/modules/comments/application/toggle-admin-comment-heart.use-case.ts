@@ -12,7 +12,8 @@ export async function toggleAdminCommentHeart(commentId: string, ctx: AppContext
     const result = await repo.toggleHeart(commentId);
     await recordAuditEvent(ctx, { action: result.isHearted ? "COMMENT_HEART" : "COMMENT_UNHEART", targetType: "COMMENT", targetId: commentId, metadata: { actorId: ctx.actor.userId } });
     return ok(result);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
   }
 }

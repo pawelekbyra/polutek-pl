@@ -12,7 +12,8 @@ export interface IdentityProvider {
         username: string | null;
         imageUrl: string | null;
     }>;
-    updateUserMetadata(userId: string, metadata: Record<string, any>): Promise<void>;
+    updateUserMetadata(userId: string, metadata: Record<string,
+any>): Promise<void>;
 }
 
 export interface UpdateUserLanguageInput {

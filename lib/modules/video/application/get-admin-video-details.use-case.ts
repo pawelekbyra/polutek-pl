@@ -11,7 +11,9 @@ export type GetAdminVideoDetailsInput = {
 
 export type AdminVideoDetailsDto = AdminVideoDto & {
   diagnostics: DiagnosticIssue[];
-  auditLogs: any[];
+  auditLogs:
+Array<
+any>;
 };
 
 export async function getAdminVideoDetails(

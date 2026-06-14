@@ -29,7 +29,8 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const videoId = params.id;
 
-  const sortBy = (searchParams.get('sortBy') as any) || 'newest';
+  const sortBy = (searchParams.get('sortBy') as
+any) || 'newest';
   const cursor = searchParams.get('cursor') || undefined;
   const parsedLimit = parseInt(searchParams.get('limit') || '20', 10);
   const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 50);

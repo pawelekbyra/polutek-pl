@@ -215,7 +215,8 @@ export async function sendAdminBroadcastEmail(
       messageIds: []
     });
 
-  } catch (error: any) {
+  } catch (error:
+any) {
     logger.error("[sendAdminBroadcastEmail] Error", error);
     return fail(new EmailProviderError(error.message || "Internal error during broadcast creation"));
   }

@@ -12,7 +12,9 @@ export type GetAuditLogsInput = {
 export async function getAuditLogs(
   input: GetAuditLogsInput,
   ctx: AppContext
-): Promise<UseCaseResult<any[]>> {
+): Promise<UseCaseResult<
+Array<
+any>>> {
   const repository = new AuditRepository(ctx.db.read);
 
   if (input.userId) {

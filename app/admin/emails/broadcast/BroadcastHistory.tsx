@@ -17,7 +17,9 @@ interface BroadcastLog {
 }
 
 export function BroadcastHistory() {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<
+Array<
+any>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 

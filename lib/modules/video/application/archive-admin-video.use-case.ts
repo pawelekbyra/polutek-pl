@@ -21,7 +21,9 @@ export async function archiveAdminVideo(
     return fail(new VideoNotOnMainChannelError(videoId));
   }
 
-  const archived = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const archived = await (ctx.prisma as
+any).$transaction(async (tx:
+any) => {
     const video = await repository.archiveVideo(videoId, mainChannel.id, tx);
 
     await recordAuditEvent(ctx, {

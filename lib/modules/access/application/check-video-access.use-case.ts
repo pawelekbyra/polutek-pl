@@ -49,7 +49,8 @@ export async function checkVideoAccess(
               publishedAt: fallback.publishedAt ? new Date(fallback.publishedAt) : null,
               createdAt: new Date(),
               updatedAt: new Date(),
-          } as any;
+          } as
+any;
       }
   }
 

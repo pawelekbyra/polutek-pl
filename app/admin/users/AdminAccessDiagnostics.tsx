@@ -17,7 +17,8 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
   const patronCache = user.patronDiagnostics?.cache;
   const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;
   const activeGrantCount = patronTruth?.activeGrantCount ?? 0;
-  const revokedGrantCount = user.patronGrants?.filter((grant: any) => Boolean(grant.revokedAt)).length ?? 0;
+  const revokedGrantCount = user.patronGrants?.filter((grant:
+any) => Boolean(grant.revokedAt)).length ?? 0;
   const paymentCount = user.payments?.length ?? 0;
   const latestPayment = user.payments?.[0];
   const hasPaymentFacts = paymentCount > 0 || (user.normalizedTotal ?? 0) > 0;

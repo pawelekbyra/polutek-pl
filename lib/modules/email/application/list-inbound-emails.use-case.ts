@@ -17,7 +17,8 @@ export async function listInboundEmails(
     });
 
     return ok(responses as InboundEmailDto[]);
-  } catch (error: any) {
+  } catch (error:
+any) {
     return fail(new EmailError(error.message || "Failed to list inbound emails"));
   }
 }

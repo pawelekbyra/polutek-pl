@@ -44,7 +44,8 @@ export class ChannelRepository {
   }
 
   async updateSubscribersCount(id: string, increment: number, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = tx || (this.db as
+any);
 
     if (increment < 0) {
       return await db.creator.updateMany({

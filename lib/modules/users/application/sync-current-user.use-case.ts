@@ -26,7 +26,8 @@ export class SyncCurrentUserUseCase {
     }
 
     return {
-      totalPaid: normalizePaymentTotals(user.paymentTotals as any),
+      totalPaid: normalizePaymentTotals(user.paymentTotals as
+any),
       isPatron: user.isPatron,
       language: user.language || 'pl',
     };
