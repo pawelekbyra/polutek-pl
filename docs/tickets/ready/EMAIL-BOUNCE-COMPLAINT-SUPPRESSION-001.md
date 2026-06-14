@@ -1,9 +1,16 @@
 # EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001 — Durable bounce and complaint suppression
 
-Status: READY_FOR_BUILDER
+Status: PLANNED / DEFERRED / NON_EXECUTABLE / NEXT_AFTER_ADMIN_VIDEO_REPAIR
 Ticket ID: EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001
-Role: Builder
+Role: Builder / Planned
 Launch status: NO_GO
+
+## Deferred executability statement
+
+This ticket is complete enough for later execution, but it is not the current executable ticket.
+It becomes eligible only after `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is implemented, independently verified and reconciled.
+
+Next planned ticket after the urgent admin video repair: `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`.
 
 ## Goal
 

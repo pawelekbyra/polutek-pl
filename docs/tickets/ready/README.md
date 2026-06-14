@@ -5,8 +5,8 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001.md -->
 
 ## Current Execution Gate
 
@@ -17,16 +17,16 @@ The project is governed by the **Bolek Operating Model**. For state and risk det
 ## Current Control-Plane Ticket
 
 ```txt
-EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001
+ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001 | `docs/tickets/ready/EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001.md` | `READY_FOR_BUILDER` |
+| Builder | ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 | `docs/tickets/ready/ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001.md` | `READY_FOR_BUILDER` |
 
-**Current Status:** PR #918 implemented signed unsubscribe in `EMAIL-SIGNED-UNSUBSCRIBE-001`; PR #920 independently verified it `PASS` with verification merge SHA `77081b64073ec77bf1df13217622a0f88d118011`. Signed unsubscribe is `VERIFIED_PASS`. The next executable task is bounce/complaint suppression in `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`. Public launch remains `NO_GO`.
+**Current Status:** Signed unsubscribe implementation and verification are complete: PR #918 implemented `EMAIL-SIGNED-UNSUBSCRIBE-001`, and PR #920 independently verified it `PASS` with verification merge SHA `77081b64073ec77bf1df13217622a0f88d118011`. Admin video creation/upload is the urgent current repair in `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001`. Bounce/complaint suppression remains the next planned non-executable ticket in `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`. Public launch remains `NO_GO`.
 
-Only the row above is the current-primary executable row. Executable ticket count: **1**.
+Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**. Next planned ticket: `EMAIL-BOUNCE-COMPLAINT-SUPPRESSION-001`.
 
 ## Historical executable tickets
 
