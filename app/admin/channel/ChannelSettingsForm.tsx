@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
 
-type ChannelCreator = {
+export type ChannelCreator = {
   id: string;
   slug: string;
   name: string;

@@ -3,10 +3,7 @@ import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/clien
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.local";
-const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG as string;
-if (!MAIN_CREATOR_SLUG) {
-  throw new Error("MAIN_CREATOR_SLUG must be set in environment for seeding.");
-}
+const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG as string; if (!MAIN_CREATOR_SLUG) throw new Error("MAIN_CREATOR_SLUG must be set for seeding.");
 const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || "Configured Creator";
 
 async function main() {
