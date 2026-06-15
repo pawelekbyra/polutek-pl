@@ -10,20 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
-
-export type ChannelCreator = {
-  id: string;
-  slug: string;
-  name: string;
-  bio: string | null;
-  bannerUrl: string | null;
-  subscribersCount: number;
-  displaySubscribersCount: number | null;
-  user?: { imageUrl: string | null; name: string | null } | null;
-};
+import { AdminChannelDto } from "@/lib/modules/channel";
 
 type ChannelSettingsFormProps = {
-  initialCreator: ChannelCreator | null;
+  initialCreator: AdminChannelDto | null;
   clerkFallbackImageUrl: string | null;
 };
 

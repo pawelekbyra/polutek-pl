@@ -8,6 +8,7 @@ import {
   updateAdminChannelSettings,
 } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { getSafeErrorInfo } from "@/lib/utils/error-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -58,11 +59,11 @@ export async function GET(req: NextRequest) {
     const creator = await getAdminChannelSettings(ctx);
 
     return NextResponse.json({ creator });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const safeInfo = getSafeErrorInfo(error);
     scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
       requestId,
-      name: error?.name,
-      code: error?.code,
+      ...safeInfo,
       message: "[REDACTED]",
     });
     return handleApiError(error);
@@ -94,11 +95,11 @@ export async function PATCH(request: NextRequest) {
     const creator = await updateAdminChannelSettings(ctx, result.data);
 
     return NextResponse.json({ creator });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const safeInfo = getSafeErrorInfo(error);
     scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", {
       requestId,
-      name: error?.name,
-      code: error?.code,
+      ...safeInfo,
       message: "[REDACTED]",
     });
     return handleApiError(error);

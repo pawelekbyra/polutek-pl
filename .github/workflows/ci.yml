@@ -89,6 +89,7 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npx prisma generate
       - run: npm run db:smoke
+      - run: RUN_INTEGRATION_TESTS=true npm test -- --run tests/integration/admin-channel-postgres.test.ts
 
   security:
     name: security

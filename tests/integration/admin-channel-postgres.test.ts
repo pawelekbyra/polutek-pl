@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getAdminChannelSettings } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { prisma } from '@/lib/prisma';
@@ -9,16 +9,37 @@ import { classifyAdminChannelError } from '@/lib/admin-channel-error-classificat
 /**
  * Admin Channel Settings - Real Postgres Integration.
  * Requires a running PostgreSQL database (CI or local).
+ *
+ * It performs REAL queries against the database configured in DATABASE_URL.
  */
 describe('Admin Channel Settings - Real Postgres Integration', () => {
   const itWithDb = process.env.RUN_INTEGRATION_TESTS === 'true' ? it : it.skip;
 
-  beforeEach(async () => {
+  async function cleanup() {
     if (process.env.RUN_INTEGRATION_TESTS === 'true') {
-        // Clean up or prepare state if needed
-        await prisma.creator.deleteMany({ where: { slug: { in: ['test-integration-slug', 'non-approved-slug', 'non-primary-slug'] } } });
-        await prisma.user.deleteMany({ where: { email: { in: ['admin-test@example.com', 'admin-no-chan@example.com'] } } });
+        try {
+            await prisma.creator.deleteMany({
+                where: {
+                    slug: { in: ['test-integration-slug', 'non-approved-slug', 'non-primary-slug', 'sub-count-slug'] }
+                }
+            });
+            await prisma.user.deleteMany({
+                where: {
+                    id: { in: ['admin-test-id', 'admin-no-chan-id', 'admin-non-approved-id', 'admin-non-primary-id', 'admin-sub-count-id'] }
+                }
+            });
+        } catch (e) {
+            // Best effort cleanup
+        }
     }
+  }
+
+  beforeEach(async () => {
+    await cleanup();
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   itWithDb('poprawny admin dostaje dane kanału', async () => {
@@ -50,8 +71,8 @@ describe('Admin Channel Settings - Real Postgres Integration', () => {
     const result = await getAdminChannelSettings(ctx);
 
     expect(result).toBeDefined();
-    expect(result?.slug).toBe('test-integration-slug');
-    expect(result?.name).toBe('Integration Test Channel');
+    expect(result.slug).toBe('test-integration-slug');
+    expect(result.name).toBe('Integration Test Channel');
 
     vi.unstubAllEnvs();
   });
@@ -135,6 +156,42 @@ describe('Admin Channel Settings - Real Postgres Integration', () => {
     vi.stubEnv('MAIN_CREATOR_SLUG', 'non-primary-slug');
 
     await expect(getAdminChannelSettings(ctx)).rejects.toThrow(MainChannelNotPrimaryError);
+
+    vi.unstubAllEnvs();
+  });
+
+  itWithDb('odczytuje pole displaySubscribersCount', async () => {
+    const admin = await prisma.user.create({
+        data: {
+            id: 'admin-sub-count-id',
+            email: 'admin-sub-count@example.com',
+            role: 'ADMIN',
+        }
+    });
+
+    await prisma.creator.create({
+        data: {
+            userId: admin.id,
+            slug: 'sub-count-slug',
+            name: 'Sub Count Channel',
+            isApproved: true,
+            isPrimary: true,
+            displaySubscribersCount: 1234,
+            subscribersCount: 10,
+        }
+    });
+
+    const ctx = createAppContext({
+        actor: { type: 'admin', userId: admin.id },
+        prisma: prisma
+    });
+
+    vi.stubEnv('MAIN_CREATOR_SLUG', 'sub-count-slug');
+
+    const result = await getAdminChannelSettings(ctx);
+
+    expect(result.displaySubscribersCount).toBe(1234);
+    expect(result.subscribersCount).toBe(10);
 
     vi.unstubAllEnvs();
   });

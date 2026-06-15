@@ -4,8 +4,8 @@ import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { requireAdmin } from "@/lib/auth-utils";
 import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
-import { getAdminChannelSettings } from "@/lib/modules/channel";
-import { ChannelCreator } from "./ChannelSettingsForm";
+import { getAdminChannelSettings, AdminChannelDto } from "@/lib/modules/channel";
+import { getSafeErrorInfo } from "@/lib/utils/error-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +23,15 @@ export default async function AdminChannelPage() {
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
         <Navbar />
         <ChannelSettingsForm
-          initialCreator={creator as unknown as ChannelCreator}
+          initialCreator={creator}
           clerkFallbackImageUrl={clerkUser?.imageUrl || null}
         />
       </div>
     );
-  } catch (err: any) {
+  } catch (error: unknown) {
+    const safeInfo = getSafeErrorInfo(error);
     console.error("[ADMIN_CHANNEL_PAGE_ERROR]", {
-      name: err?.name,
-      code: err?.code,
+      ...safeInfo,
       message: "[REDACTED]",
     });
     return (
@@ -40,15 +40,15 @@ export default async function AdminChannelPage() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-md w-full bg-background border border-destructive/20 p-8 rounded-xl shadow-sm text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">
-              {classifyAdminChannelError(err).title}
+              {classifyAdminChannelError(error).title}
             </h1>
             <p className="text-muted-foreground mb-6">
-              {classifyAdminChannelError(err).message}
+              {classifyAdminChannelError(error).message}
             </p>
             <div className="bg-muted p-4 rounded text-xs text-left overflow-auto mb-6">
-              <code>Error: {classifyAdminChannelError(err).code}</code>
+              <code>Error: {classifyAdminChannelError(error).code}</code>
             </div>
-            {classifyAdminChannelError(err).showMaintenanceNote ? (
+            {classifyAdminChannelError(error).showMaintenanceNote ? (
               <p className="text-sm text-muted-foreground">
                 Review the main-channel configuration before running maintenance
                 manually.
