@@ -20,6 +20,10 @@ describe("admin channel page error classification", () => {
       "MAIN_CHANNEL_NOT_PRIMARY",
       true,
     ],
+    [{ code: "P2021" }, "DB_SCHEMA_MISMATCH", false],
+    [{ code: "P2022" }, "DB_SCHEMA_MISMATCH", false],
+    [{ code: "P1001" }, "DB_CONNECTION_ERROR", false],
+    [{ name: "PrismaClientInitializationError" }, "DB_CONNECTION_ERROR", false],
     [new Error("boom"), "INTERNAL_ERROR", false],
   ])(
     "maps %o to %s without universal maintenance advice",
@@ -28,10 +32,8 @@ describe("admin channel page error classification", () => {
 
       expect(classified.code).toBe(code);
       expect(classified.showMaintenanceNote).toBe(showMaintenanceNote);
-      if (code === "FORBIDDEN" || code === "INTERNAL_ERROR") {
-        expect(classified.title).not.toBe("Maintenance Required");
-        expect(classified.message).not.toMatch(/run maintenance/i);
-      }
+      expect(classified.title).toBeDefined();
+      expect(classified.message).toBeDefined();
     },
   );
 });

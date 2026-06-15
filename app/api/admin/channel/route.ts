@@ -1,4 +1,3 @@
-import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminForApi } from "@/lib/auth-utils";
@@ -6,8 +5,10 @@ import { handleApiError } from "@/lib/errors";
 import {
   getAdminChannelSettings,
   updateAdminChannelSettings,
+  AdminChannelSettingsDTO,
 } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { logAdminChannelError } from "@/lib/admin-channel-error-classification";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,6 @@ const channelPatchSchema = z.object({
 
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
-  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } =
     await requireAdminForApi("GET_ADMIN_CHANNEL");
   if (response) return response;
@@ -59,14 +59,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
+    logAdminChannelError(error, "ADMIN_CHANNEL_GET_ERROR", requestId);
     return handleApiError(error);
   }
 }
 
 export async function PATCH(request: NextRequest) {
   const requestId = request.headers.get("x-request-id");
-  const scopedLogger = createScopedLogger(requestId);
   const { adminUserId, response } = await requireAdminForApi(
     "PATCH_ADMIN_CHANNEL",
   );
@@ -86,11 +85,14 @@ export async function PATCH(request: NextRequest) {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-    const creator = await updateAdminChannelSettings(ctx, result.data);
+    const creator = (await updateAdminChannelSettings(
+      ctx,
+      result.data,
+    )) as AdminChannelSettingsDTO;
 
     return NextResponse.json({ creator });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
+    logAdminChannelError(error, "ADMIN_CHANNEL_PATCH_ERROR", requestId);
     return handleApiError(error);
   }
 }

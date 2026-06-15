@@ -9,25 +9,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
-
-type ChannelCreator = {
-  id: string;
-  slug: string;
-  name: string;
-  bio: string | null;
-  bannerUrl: string | null;
-  subscribersCount: number;
-  displaySubscribersCount: number | null;
-  user?: { imageUrl: string | null; name: string | null } | null;
-};
+import {
+  ArrowLeft,
+  ImageIcon,
+  Save,
+  Settings,
+  RotateCcw,
+} from "@/app/components/icons";
+import { AdminChannelSettingsDTO } from "@/lib/modules/channel";
 
 type ChannelSettingsFormProps = {
-  initialCreator: ChannelCreator | null;
+  initialCreator: AdminChannelSettingsDTO | null;
   clerkFallbackImageUrl: string | null;
 };
 
-export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: ChannelSettingsFormProps) {
+export function ChannelSettingsForm({
+  initialCreator,
+  clerkFallbackImageUrl,
+}: ChannelSettingsFormProps) {
   const [creator, setCreator] = useState(initialCreator);
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
@@ -125,11 +124,21 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                         try {
                           const res = await fetch('/api/admin/subscribers/resync', { method: 'POST' });
                           if (res.ok) {
-                            const data = await res.json();
-                            const updated = data.updated.find((c: any) => c.creatorId === creator.id);
+                            const data = (await res.json()) as {
+                              updated: Array<{
+                                creatorId: string;
+                                subscribersCount: number;
+                              }>;
+                            };
+                            const updated = data.updated.find(
+                              (c) => c.creatorId === creator.id,
+                            );
                             if (updated) {
-                                setCreator({ ...creator, subscribersCount: updated.subscribersCount });
-                                setStatus("saved");
+                              setCreator({
+                                ...creator,
+                                subscribersCount: updated.subscribersCount,
+                              });
+                              setStatus("saved");
                             }
                           }
                         } catch (e) {

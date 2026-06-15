@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAdminChannelSettings, updateAdminChannelSettings } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { SystemRole } from '@prisma/client';
 
 vi.mock('@/lib/feature-flags', () => ({
   flags: {
@@ -35,11 +34,35 @@ describe('Channel Admin Use Cases', () => {
         prisma: mockPrisma as any,
         actor: { type: 'admin', userId: 'admin-1' }
       });
-      mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', slug: 'test-slug', isApproved: true, isPrimary: true }); // for service check
-      mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', name: 'Test' }); // for actual return
+      // First call in service check
+      mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', slug: 'test-slug', isApproved: true, isPrimary: true });
+      // Second call for actual return
+      mockPrisma.creator.findUnique.mockResolvedValueOnce({
+        id: 'chan-1',
+        slug: 'test-slug',
+        name: 'Test',
+        bio: 'Bio',
+        bannerUrl: 'banner',
+        subscribersCount: 10,
+        displaySubscribersCount: null,
+        user: { name: 'Owner', imageUrl: 'avatar' }
+      });
 
       const result = await getAdminChannelSettings(ctx);
-      expect(result?.name).toBe('Test');
+      expect(result.name).toBe('Test');
+      expect(result.user?.name).toBe('Owner');
+    });
+
+    it('throws MainChannelNotFoundError if record disappears between check and fetch', async () => {
+      const ctx = createAppContext({
+        prisma: mockPrisma as any,
+        actor: { type: 'admin', userId: 'admin-1' }
+      });
+      mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', slug: 'test-slug', isApproved: true, isPrimary: true });
+      mockPrisma.creator.findUnique.mockResolvedValueOnce(null);
+
+      await expect(getAdminChannelSettings(ctx)).rejects.toThrow(/not found/i);
+      await expect(getAdminChannelSettings(ctx)).rejects.toMatchObject({ code: 'CHANNEL_NOT_FOUND' });
     });
   });
 
