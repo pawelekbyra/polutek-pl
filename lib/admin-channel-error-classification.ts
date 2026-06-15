@@ -45,6 +45,25 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
 
+  if (error.code === "P2021" || error.code === "P2022") {
+    return {
+      code: "DB_SCHEMA_MISMATCH",
+      title: "Database Schema Mismatch",
+      message:
+        "Database schema is out of date or missing tables/columns. Please run 'npm run db:migrate:deploy'.",
+      showMaintenanceNote: true,
+    };
+  }
+
+  if (error.code === "P1001" || error.code === "P1003" || error.code === "P1008") {
+    return {
+      code: "DB_CONNECTION_ERROR",
+      title: "Database Connection Error",
+      message: "Could not reach the database server. Please check your connection settings.",
+      showMaintenanceNote: false,
+    };
+  }
+
   return {
     code: "INTERNAL_ERROR",
     title: "Internal Error",

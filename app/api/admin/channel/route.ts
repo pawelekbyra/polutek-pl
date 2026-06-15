@@ -58,8 +58,14 @@ export async function GET(req: NextRequest) {
     const creator = await getAdminChannelSettings(ctx);
 
     return NextResponse.json({ creator });
-  } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
+  } catch (error: any) {
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+      error,
+    });
     return handleApiError(error);
   }
 }
@@ -89,8 +95,14 @@ export async function PATCH(request: NextRequest) {
     const creator = await updateAdminChannelSettings(ctx, result.data);
 
     return NextResponse.json({ creator });
-  } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
+  } catch (error: any) {
+    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+      error,
+    });
     return handleApiError(error);
   }
 }

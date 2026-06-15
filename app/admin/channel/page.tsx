@@ -28,6 +28,13 @@ export default async function AdminChannelPage() {
       </div>
     );
   } catch (err: any) {
+    console.error("[ADMIN_CHANNEL_PAGE_ERROR]", {
+      name: err?.name,
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack,
+      err,
+    });
     return (
       <div className="min-h-screen bg-muted/40 flex flex-col">
         <Navbar />
