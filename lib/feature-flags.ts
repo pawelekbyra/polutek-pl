@@ -1,5 +1,3 @@
-import { MAIN_CREATOR_SLUG } from './constants';
-
 export function canUseDemoFallbacks() {
   return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_FALLBACKS === "true";
 }
@@ -9,14 +7,14 @@ export const flags = {
     return canUseDemoFallbacks();
   },
   get mainCreatorSlug() {
-      const slug = process.env.MAIN_CREATOR_SLUG || MAIN_CREATOR_SLUG;
+      const slug = process.env.MAIN_CREATOR_SLUG;
 
       // Prerendering in Vercel runs with NODE_ENV=production but often without full ENV.
       // We must not crash during build time, only at runtime.
       const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
 
-      if (!slug && process.env.NODE_ENV === "production" && !isBuildTime) {
-          throw new Error("CRITICAL CONFIGURATION ERROR: MAIN_CREATOR_SLUG is missing in production.");
+      if (!slug && !isBuildTime) {
+          throw new Error("CRITICAL CONFIGURATION ERROR: MAIN_CREATOR_SLUG environment variable is missing.");
       }
       return slug || null;
   }

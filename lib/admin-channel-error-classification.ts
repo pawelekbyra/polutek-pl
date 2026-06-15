@@ -17,8 +17,8 @@ export function classifyAdminChannelError(err: unknown) {
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_FOUND",
-      title: "Main Channel Not Found",
-      message: error.message || "Main channel configuration is missing.",
+      title: "Main Channel Missing",
+      message: "The primary channel record was not found in the database. Please check your configuration and initialization status.",
       showMaintenanceNote: true,
     };
   }
@@ -28,8 +28,8 @@ export function classifyAdminChannelError(err: unknown) {
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_APPROVED",
-      title: "Main Channel Not Approved",
-      message: error.message || "Main channel exists but is not approved.",
+      title: "Channel Not Approved",
+      message: "The main channel is currently not approved. Public access and admin settings are restricted.",
       showMaintenanceNote: true,
     };
   }
@@ -39,8 +39,8 @@ export function classifyAdminChannelError(err: unknown) {
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_PRIMARY",
-      title: "Main Channel Not Primary",
-      message: error.message || "Main channel exists but is not primary.",
+      title: "Channel Not Primary",
+      message: "This channel is not marked as the primary channel. Admin settings can only be accessed for the primary channel.",
       showMaintenanceNote: true,
     };
   }
@@ -55,7 +55,12 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
 
-  if (error.code === "P1001" || error.code === "P1003" || error.code === "P1008") {
+  if (
+    error.code === "P1001" ||
+    error.code === "P1003" ||
+    error.code === "P1008" ||
+    error.name === "PrismaClientInitializationError"
+  ) {
     return {
       code: "DB_CONNECTION_ERROR",
       title: "Database Connection Error",

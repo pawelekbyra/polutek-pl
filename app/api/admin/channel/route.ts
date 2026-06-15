@@ -60,11 +60,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ creator });
   } catch (error: any) {
     scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
+      requestId,
       name: error?.name,
-      message: error?.message,
       code: error?.code,
-      stack: error?.stack,
-      error,
+      message: "[REDACTED]",
     });
     return handleApiError(error);
   }
@@ -97,11 +96,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ creator });
   } catch (error: any) {
     scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", {
+      requestId,
       name: error?.name,
-      message: error?.message,
       code: error?.code,
-      stack: error?.stack,
-      error,
+      message: "[REDACTED]",
     });
     return handleApiError(error);
   }
