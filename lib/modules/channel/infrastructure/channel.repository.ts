@@ -32,7 +32,7 @@ export class ChannelRepository {
   }
 
   async syncSubscribersCount(id: string, tx?: WriteTx) {
-    const db = tx || (this.db as PrismaClient);
+    const db = (tx || this.db) as unknown as PrismaClient;
     const realCount = await db.subscription.count({
       where: { creatorId: id },
     });
@@ -44,7 +44,7 @@ export class ChannelRepository {
   }
 
   async updateSubscribersCount(id: string, increment: number, tx?: WriteTx) {
-    const db = tx || (this.db as any);
+    const db = (tx || this.db) as unknown as PrismaClient;
 
     if (increment < 0) {
       return await db.creator.updateMany({

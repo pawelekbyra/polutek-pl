@@ -27,8 +27,8 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
   });
 
   it('returns channel data for authenticated admin', async () => {
-    (requireAdminForApi as any).mockResolvedValue({ adminUserId: 'admin-1', response: null });
-    (getAdminChannelSettings as any).mockResolvedValue({ id: 'c1', name: 'Polutek' });
+    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: 'admin-1', response: null });
+    (getAdminChannelSettings as unknown as { mockResolvedValue: (v: unknown) => void; mockRejectedValue: (v: unknown) => void }).mockResolvedValue({ id: 'c1', name: 'Polutek' });
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);
@@ -40,7 +40,7 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
 
   it('returns 403 when not an admin', async () => {
     const errorResponse = new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
-    (requireAdminForApi as any).mockResolvedValue({ adminUserId: null, response: errorResponse });
+    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: null, response: errorResponse });
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);
@@ -49,8 +49,8 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
   });
 
   it('returns 500 and redacted response for unexpected errors', async () => {
-    (requireAdminForApi as any).mockResolvedValue({ adminUserId: 'admin-1', response: null });
-    (getAdminChannelSettings as any).mockRejectedValue(new Error('Internal DB failure'));
+    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: 'admin-1', response: null });
+    (getAdminChannelSettings as unknown as { mockResolvedValue: (v: unknown) => void; mockRejectedValue: (v: unknown) => void }).mockRejectedValue(new Error('Internal DB failure'));
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);
