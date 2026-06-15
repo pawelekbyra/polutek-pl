@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GET } from '@/app/api/admin/channel/route';
 import { getAdminChannelSettings } from '@/lib/modules/channel';
+import { AdminChannelDto } from '@/lib/modules/channel/domain/channel.dto';
 
 vi.mock('@/lib/auth-utils', () => ({
   requireAdminForApi: vi.fn(),
@@ -27,8 +28,8 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
   });
 
   it('returns channel data for authenticated admin', async () => {
-    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: 'admin-1', response: null });
-    (getAdminChannelSettings as unknown as { mockResolvedValue: (v: unknown) => void; mockRejectedValue: (v: unknown) => void }).mockResolvedValue({ id: 'c1', name: 'Polutek' });
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null });
+    vi.mocked(getAdminChannelSettings).mockResolvedValue({ id: 'c1', name: 'Polutek' } as AdminChannelDto);
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);
@@ -39,8 +40,8 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
   });
 
   it('returns 403 when not an admin', async () => {
-    const errorResponse = new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
-    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: null, response: errorResponse });
+    const errorResponse = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: null, response: errorResponse });
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);
@@ -49,8 +50,8 @@ describe('Admin Channel API Route - GET /api/admin/channel', () => {
   });
 
   it('returns 500 and redacted response for unexpected errors', async () => {
-    (requireAdminForApi as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ adminUserId: 'admin-1', response: null });
-    (getAdminChannelSettings as unknown as { mockResolvedValue: (v: unknown) => void; mockRejectedValue: (v: unknown) => void }).mockRejectedValue(new Error('Internal DB failure'));
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null });
+    vi.mocked(getAdminChannelSettings).mockRejectedValue(new Error('Internal DB failure'));
 
     const req = new NextRequest('http://localhost/api/admin/channel');
     const res = await GET(req);

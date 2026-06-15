@@ -4,7 +4,7 @@ import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { requireAdmin } from "@/lib/auth-utils";
 import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
-import { getAdminChannelSettings, AdminChannelDto } from "@/lib/modules/channel";
+import { getAdminChannelSettings } from "@/lib/modules/channel";
 import { getSafeErrorInfo } from "@/lib/utils/error-utils";
 
 export const dynamic = "force-dynamic";
