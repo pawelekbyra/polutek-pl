@@ -13,3 +13,11 @@ export type AdminChannelDto = {
     imageUrl: string | null;
   } | null;
 };
+
+export type ResyncSubscribersResponseDto = {
+  success: boolean;
+  updated: {
+    creatorId: string;
+    subscribersCount: number;
+  }[];
+};

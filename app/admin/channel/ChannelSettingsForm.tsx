@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
-import { AdminChannelDto } from "@/lib/modules/channel";
+import { AdminChannelDto, ResyncSubscribersResponseDto } from "@/lib/modules/channel";
 
 type ChannelSettingsFormProps = {
   initialCreator: AdminChannelDto | null;
@@ -115,14 +115,14 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                         try {
                           const res = await fetch('/api/admin/subscribers/resync', { method: 'POST' });
                           if (res.ok) {
-                            const data = await res.json();
-                            const updated = data.updated.find((c: any) => c.creatorId === creator.id);
+                            const data = await res.json() as ResyncSubscribersResponseDto;
+                            const updated = data.updated.find((c) => c.creatorId === creator.id);
                             if (updated) {
                                 setCreator({ ...creator, subscribersCount: updated.subscribersCount });
                                 setStatus("saved");
                             }
                           }
-                        } catch (e) {
+                        } catch {
                           setStatus("error");
                         }
                       }}
