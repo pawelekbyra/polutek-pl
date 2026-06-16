@@ -15,15 +15,15 @@ export class MainChannelService {
     const slug = flags.mainCreatorSlug;
 
     if (!channel) {
-      throw new MainChannelNotFoundError(slug || 'unknown');
+      throw new MainChannelNotFoundError(slug || 'MISSING_SLUG');
     }
 
     if (!channel.isApproved) {
-      throw new MainChannelNotApprovedError(slug || 'unknown');
+      throw new MainChannelNotApprovedError(slug || 'MISSING_SLUG');
     }
 
     if (!channel.isPrimary) {
-      throw new MainChannelNotPrimaryError(slug || 'unknown');
+      throw new MainChannelNotPrimaryError(slug || 'MISSING_SLUG');
     }
 
     return channel;

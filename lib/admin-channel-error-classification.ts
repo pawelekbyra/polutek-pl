@@ -1,4 +1,5 @@
 import { AuthError } from "@/lib/auth-utils";
+import { isPrismaErrorCode } from "@/lib/utils/db";
 
 export function classifyAdminChannelError(err: unknown) {
   if (err instanceof AuthError) {
@@ -10,10 +11,13 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
 
-  const error = err as { name?: string; code?: string; message?: string };
+  // Safe extraction for non-Prisma business errors
+  const name = (err && typeof err === 'object' && 'name' in err) ? (err as { name: unknown }).name : undefined;
+  const code = (err && typeof err === 'object' && 'code' in err) ? (err as { code: unknown }).code : undefined;
+
   if (
-    error.name === "MainChannelNotFoundError" ||
-    error.code === "CHANNEL_NOT_FOUND"
+    name === "MainChannelNotFoundError" ||
+    code === "CHANNEL_NOT_FOUND"
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_FOUND",
@@ -23,8 +27,8 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
   if (
-    error.name === "MainChannelNotApprovedError" ||
-    error.code === "CHANNEL_NOT_APPROVED"
+    name === "MainChannelNotApprovedError" ||
+    code === "CHANNEL_NOT_APPROVED"
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_APPROVED",
@@ -34,8 +38,8 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
   if (
-    error.name === "MainChannelNotPrimaryError" ||
-    error.code === "CHANNEL_NOT_PRIMARY"
+    name === "MainChannelNotPrimaryError" ||
+    code === "CHANNEL_NOT_PRIMARY"
   ) {
     return {
       code: "MAIN_CHANNEL_NOT_PRIMARY",
@@ -45,7 +49,7 @@ export function classifyAdminChannelError(err: unknown) {
     };
   }
 
-  if (error.code === "P2021" || error.code === "P2022") {
+  if (isPrismaErrorCode(err, "P2021") || isPrismaErrorCode(err, "P2022")) {
     return {
       code: "DB_SCHEMA_MISMATCH",
       title: "Database Schema Mismatch",
@@ -56,10 +60,10 @@ export function classifyAdminChannelError(err: unknown) {
   }
 
   if (
-    error.code === "P1001" ||
-    error.code === "P1003" ||
-    error.code === "P1008" ||
-    error.name === "PrismaClientInitializationError"
+    isPrismaErrorCode(err, "P1001") ||
+    isPrismaErrorCode(err, "P1003") ||
+    isPrismaErrorCode(err, "P1008") ||
+    name === "PrismaClientInitializationError"
   ) {
     return {
       code: "DB_CONNECTION_ERROR",
