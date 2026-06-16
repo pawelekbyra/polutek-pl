@@ -7,7 +7,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError }
 export interface CreateVideoInput {
   title: string;
   slug: string;
-  videoUrl: string;
+  videoUrl?: string | null;
   thumbnailUrl: string;
   tier: AccessTier;
   status: VideoStatus;
@@ -189,17 +189,26 @@ export class VideoRepository {
   async createForMainChannel(input: CreateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
     if (!mainChannelId) throw new AppError("Main channel ID is required to create a video.", 400, "VIDEO_MISSING_CHANNEL");
 
+    // Secure defaults for new videos
     return await tx.video.create({
       data: {
         ...input,
         creatorId: mainChannelId,
-        publishedAt: input.status === 'PUBLISHED' ? new Date() : null
+        status: 'DRAFT',
+        showInSidebar: false,
+        isMainFeatured: false,
+        publishedAt: null
       }
     });
   }
 
   async updateForMainChannel(input: UpdateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
     const { id, ...data } = input;
+
+    // Generic update cannot set status to PUBLISHED
+    if ((data as any).status === 'PUBLISHED') {
+      delete (data as any).status;
+    }
 
     const result = await tx.video.updateMany({
         where: { id, creatorId: mainChannelId },

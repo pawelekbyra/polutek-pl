@@ -13,7 +13,7 @@ export async function createAdminVideo(
 ): Promise<UseCaseResult<AdminVideoDto, VideoUrlNotAllowedError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
 
-  if (!MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
+  if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
     return fail(new VideoUrlNotAllowedError(input.videoUrl));
   }
 

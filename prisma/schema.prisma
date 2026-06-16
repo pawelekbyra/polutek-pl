@@ -202,7 +202,7 @@ model Video {
   slug           String      @unique
   description    String?
   descriptionEn  String?
-  videoUrl       String // Legacy field
+  videoUrl       String? // Legacy field
   thumbnailUrl   String
   duration       String? // e.g. "12:45"
   tier           AccessTier  @default(PUBLIC)

@@ -58,6 +58,18 @@ export async function handleCloudflareStreamWebhook(
 
     if (newState === VIDEO_ASSET_PROCESSING_STATE.FAILED) {
       dataToUpdate.failureReason = payload.status.errorReasonText || payload.status.errorReasonCode || "Unknown Cloudflare error";
+      dataToUpdate.isPrimary = false;
+    }
+
+    if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+        dataToUpdate.isPrimary = true;
+        dataToUpdate.failureReason = null;
+
+        // Unset primary for all other assets of this video
+        await tx.videoAsset.updateMany({
+            where: { videoId: asset.videoId, id: { not: asset.id } },
+            data: { isPrimary: false }
+        });
     }
 
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);

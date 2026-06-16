@@ -253,7 +253,11 @@ export default function AdminVideosPage() {
       const data = await res.json();
       if (res.ok) {
         setIsEditing(false);
-        if (searchParams.get("edit")) router.replace("/admin/videos");
+        if (searchParams.get("edit")) {
+          router.replace("/admin/videos");
+        } else {
+          router.push(`/admin/videos/${data.id}`);
+        }
         fetchVideos(page);
       } else {
         setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
