@@ -15,6 +15,8 @@ import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
+import { createScopedLogger } from "@/lib/logger";
+import { getCorrelationId } from "@/lib/utils/correlation";
 
 export const revalidate = 60; // regeneruj co 60 sekund
 
@@ -91,13 +93,27 @@ export default async function ChannelPage({ params }: { params: { slug: string }
   ]);
 
   // Ensure we use the latest subscribersCount from DB if creator service might have cached it
-  const freshCreator = await prisma.creator.findUnique({
+  const freshCreator = await prisma.creator
+    .findUnique({
       where: { id: creator.id },
-      select: { subscribersCount: true, displaySubscribersCount: true }
-  });
+      select: { subscribersCount: true, displaySubscribersCount: true },
+    })
+    .catch((err) => {
+      const logger = createScopedLogger(getCorrelationId());
+      logger.error("[CHANNEL_PAGE_DB_ERROR]", {
+        event: "CHANNEL_PAGE_DB_ERROR",
+        creatorId: creator.id,
+        error:
+          err instanceof Error
+            ? { name: err.name, message: "Database error" }
+            : "Unknown",
+      });
+      return null;
+    });
 
   if (freshCreator) {
-      creator.subscribersCount = freshCreator.displaySubscribersCount ?? freshCreator.subscribersCount;
+    creator.subscribersCount =
+      freshCreator.displaySubscribersCount ?? freshCreator.subscribersCount;
   }
   const channelAvatar = creator.imageUrl || null;
 

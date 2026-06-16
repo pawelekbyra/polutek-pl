@@ -8,6 +8,7 @@ import {
   updateAdminChannelSettings,
 } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
 
 export const dynamic = "force-dynamic";
 
@@ -59,8 +60,24 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
-    return handleApiError(error);
+    const classification = classifyAdminChannelError(error);
+
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
+      event: "ADMIN_CHANNEL_GET_ERROR",
+      requestId,
+      name: error instanceof Error ? error.name : "Unknown",
+      code: (error as any)?.code,
+      classification: classification.code,
+    });
+
+    return NextResponse.json(
+      {
+        error: classification.code,
+        message: classification.message,
+        title: classification.title,
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -90,7 +107,23 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ creator });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", error);
-    return handleApiError(error);
+    const classification = classifyAdminChannelError(error);
+
+    scopedLogger.error("[ADMIN_CHANNEL_PATCH_ERROR]", {
+      event: "ADMIN_CHANNEL_PATCH_ERROR",
+      requestId,
+      name: error instanceof Error ? error.name : "Unknown",
+      code: (error as any)?.code,
+      classification: classification.code,
+    });
+
+    return NextResponse.json(
+      {
+        error: classification.code,
+        message: classification.message,
+        title: classification.title,
+      },
+      { status: 500 },
+    );
   }
 }

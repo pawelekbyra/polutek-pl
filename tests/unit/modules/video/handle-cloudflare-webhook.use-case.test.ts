@@ -8,6 +8,7 @@ describe('handleCloudflareStreamWebhook', () => {
     videoAsset: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -17,7 +18,11 @@ describe('handleCloudflareStreamWebhook', () => {
 
   const ctx = {
     prisma: mockPrisma,
-    actor: { type: 'system', reason: 'Cloudflare Stream Webhook' },
+    db: {
+      read: mockPrisma,
+      writeTransaction: vi.fn((cb) => cb(mockPrisma)),
+    },
+    actor: { type: "system", reason: "Cloudflare Stream Webhook" },
   } as unknown as AppContext;
 
   beforeEach(() => {

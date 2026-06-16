@@ -42,7 +42,7 @@ export async function handleCloudflareStreamWebhook(
     return ok({ assetId: asset.id, status: "no-change" });
   }
 
-  const updatedAsset = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updatedAsset = await ctx.db.writeTransaction(async (tx) => {
     const dataToUpdate: any = {
       processingState: newState,
       providerSyncedAt: new Date(),
@@ -62,14 +62,14 @@ export async function handleCloudflareStreamWebhook(
     }
 
     if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-        dataToUpdate.isPrimary = true;
-        dataToUpdate.failureReason = null;
+      dataToUpdate.isPrimary = true;
+      dataToUpdate.failureReason = null;
 
-        // Unset primary for all other assets of this video
-        await tx.videoAsset.updateMany({
-            where: { videoId: asset.videoId, id: { not: asset.id } },
-            data: { isPrimary: false }
-        });
+      // Unset primary for all other assets of this video
+      await tx.videoAsset.updateMany({
+        where: { videoId: asset.videoId, id: { not: asset.id } },
+        data: { isPrimary: false },
+      });
     }
 
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);

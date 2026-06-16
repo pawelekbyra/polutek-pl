@@ -3,6 +3,8 @@ import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { MIN_PAYMENT_BY_CURRENCY, MAX_PAYMENT_BY_CURRENCY } from "@/lib/constants";
+import { createScopedLogger } from "@/lib/logger";
+import { getCorrelationId } from "@/lib/utils/correlation";
 
 export type CurrencyLimitDto = {
   currency: SupportedCurrency;
@@ -13,10 +15,23 @@ export type CurrencyLimitDto = {
 };
 
 export async function getPaymentSettings(
-  ctx: AppContext
+  ctx: AppContext,
 ): Promise<UseCaseResult<Record<SupportedCurrency, CurrencyLimitDto>>> {
   const repo = new PaymentRepository();
-  const settings = await repo.getCurrencySettings(ctx.db.read);
+  let settings: any[] = [];
+  try {
+    settings = await repo.getCurrencySettings(ctx.db.read);
+  } catch (err) {
+    const logger = createScopedLogger(getCorrelationId());
+    logger.error("[GET_PAYMENT_SETTINGS_DB_ERROR]", {
+      event: "GET_PAYMENT_SETTINGS_DB_ERROR",
+      error:
+        err instanceof Error
+          ? { name: err.name, message: "Database error" }
+          : "Unknown",
+    });
+    // Fallback to defaults if table doesn't exist yet or other DB issue
+  }
 
   const defaults = Object.fromEntries(
     SUPPORTED_CURRENCIES.map((currency) => {
