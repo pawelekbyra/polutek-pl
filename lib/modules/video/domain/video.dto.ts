@@ -57,7 +57,7 @@ export type MigrationStatus =
   | "FAILED";
 
 export interface AdminVideoDto extends BaseVideoDto {
-  videoUrl: string;
+  videoUrl: string | null;
   status: VideoStatus;
   creatorId: string;
   createdAt: Date;

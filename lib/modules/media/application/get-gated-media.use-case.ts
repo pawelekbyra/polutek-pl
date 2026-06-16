@@ -61,6 +61,6 @@ export async function getGatedMedia(
 
   return ok({
     id: video.id,
-    videoUrl: video.videoUrl
+    videoUrl: video.videoUrl || ""
   });
 }

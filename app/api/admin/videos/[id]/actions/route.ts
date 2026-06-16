@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import {
   updateAdminVideo,
+  publishAdminVideo,
   archiveAdminVideo,
   getCloudflareUploadUrl,
   attachCloudflareAsset,
   importLegacyVideoToCloudflare,
+  syncCloudflareStatus,
 } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -52,10 +54,7 @@ export async function POST(
     switch (action) {
       case "publish":
         return fromUseCaseResult(
-          await updateAdminVideo(
-            { id: videoId, status: VideoStatus.PUBLISHED },
-            ctx,
-          ),
+          await publishAdminVideo(videoId, ctx),
         );
       case "unpublish":
         return fromUseCaseResult(
@@ -101,6 +100,10 @@ export async function POST(
       case "import-legacy-to-cloudflare":
         return fromUseCaseResult(
           await importLegacyVideoToCloudflare({ videoId }, ctx),
+        );
+      case "sync-cloudflare":
+        return fromUseCaseResult(
+          await syncCloudflareStatus(videoId, ctx),
         );
       default:
         return fromUseCaseResult({

@@ -25,6 +25,7 @@ import { AdminVideoDetailsSkeleton } from "@/components/skeletons/admin";
 import { formatDate } from "../components/utils";
 import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
+import { VideoUploadSection } from "../components/VideoUploadSection";
 
 export default function VideoDetailsPage({ params }: { params: { id: string } }) {
   const [video, setVideo] = useState<any>(null);
@@ -102,7 +103,23 @@ export default function VideoDetailsPage({ params }: { params: { id: string } })
 
               <TabsContent value="summary" className="space-y-6 animate-in fade-in duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <Card className="md:col-span-2 overflow-hidden border-0 shadow-sm"><div className="aspect-video bg-black relative group"><PremiumWrapper videoId={video.id} requiredTier={video.tier}><VideoPlayer video={video} /></PremiumWrapper></div></Card>
+                      <div className="md:col-span-2 space-y-6">
+                          <Card className="overflow-hidden border-0 shadow-sm">
+                              <div className="aspect-video bg-black relative group">
+                                  <PremiumWrapper videoId={video.id} requiredTier={video.tier}>
+                                      <VideoPlayer video={video} />
+                                  </PremiumWrapper>
+                              </div>
+                          </Card>
+
+                          {video.status === 'DRAFT' && (!video.asset || video.asset.processingState !== 'READY') && (
+                              <VideoUploadSection
+                                videoId={video.id}
+                                onUploadComplete={fetchVideo}
+                                initialAsset={video.asset}
+                              />
+                          )}
+                      </div>
                       <Card className="shadow-sm">
                           <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Szybki stan</CardTitle></CardHeader>
                           <CardContent className="space-y-4">
