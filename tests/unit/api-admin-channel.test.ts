@@ -74,11 +74,19 @@ describe("Admin Channel API", () => {
   });
 
   describe("PATCH", () => {
-    it("updates channel data for admin", async () => {
+    it("updates channel data for admin and returns full DTO shape", async () => {
       (requireAdminForApi as any).mockResolvedValue({ adminUserId: "admin-1" });
-      (updateAdminChannelSettings as any).mockResolvedValue({
+      const mockDto = {
+        id: "chan-1",
+        slug: "test-slug",
         name: "New Name",
-      });
+        bio: "New Bio",
+        bannerUrl: "http://new-banner.com",
+        subscribersCount: 100,
+        displaySubscribersCount: null,
+        user: { name: "Owner", imageUrl: "http://avatar.com" },
+      };
+      (updateAdminChannelSettings as any).mockResolvedValue(mockDto);
 
       const req = new NextRequest("http://localhost/api/admin/channel", {
         method: "PATCH",
@@ -88,7 +96,19 @@ describe("Admin Channel API", () => {
 
       expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data.creator.name).toBe("New Name");
+      expect(data.creator).toEqual(mockDto);
+      expect(Object.keys(data.creator)).toEqual(
+        expect.arrayContaining([
+          "id",
+          "slug",
+          "name",
+          "bio",
+          "bannerUrl",
+          "subscribersCount",
+          "displaySubscribersCount",
+          "user",
+        ]),
+      );
     });
   });
 });

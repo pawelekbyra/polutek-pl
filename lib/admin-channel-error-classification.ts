@@ -14,7 +14,11 @@ export function logAdminChannelError(
   requestId?: string | null,
 ) {
   const logger = createScopedLogger(requestId ?? null);
-  const error = err as { name?: string; code?: string; message?: string };
+  const error = (err || {}) as {
+    name?: string;
+    code?: string;
+    message?: string;
+  };
   const classified = classifyAdminChannelError(err);
 
   logger.error(`[${eventId}]`, {
@@ -27,6 +31,15 @@ export function logAdminChannelError(
 export function classifyAdminChannelError(
   err: unknown,
 ): ClassifiedAdminChannelError {
+  if (!err) {
+    return {
+      code: "INTERNAL_ERROR",
+      title: "Internal Error",
+      message: "Channel settings could not be loaded due to an internal error.",
+      showMaintenanceNote: false,
+    };
+  }
+
   if (err instanceof AuthError) {
     return {
       code: "FORBIDDEN",

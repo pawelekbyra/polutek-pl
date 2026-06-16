@@ -3,6 +3,7 @@ import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { AdminChannelSettingsDTO } from "../domain/channel.dto";
 
 export interface UpdateAdminChannelSettingsInput {
   name: string;
@@ -13,10 +14,14 @@ export interface UpdateAdminChannelSettingsInput {
 
 export async function updateAdminChannelSettings(
   ctx: AppContext,
-  input: UpdateAdminChannelSettingsInput
-) {
-  if (ctx.actor.type !== 'admin') {
-    throw new AppError("Only admins can update channel settings", 403, "FORBIDDEN");
+  input: UpdateAdminChannelSettingsInput,
+): Promise<AdminChannelSettingsDTO> {
+  if (ctx.actor.type !== "admin") {
+    throw new AppError(
+      "Only admins can update channel settings",
+      403,
+      "FORBIDDEN",
+    );
   }
 
   const db = ctx.prisma as PrismaClient;
@@ -25,8 +30,15 @@ export async function updateAdminChannelSettings(
   const updated = await db.creator.update({
     where: { id: mainChannel.id },
     data: input,
-    include: {
-      user: { select: { id: true, email: true, name: true, imageUrl: true } },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      bio: true,
+      bannerUrl: true,
+      subscribersCount: true,
+      displaySubscribersCount: true,
+      user: { select: { name: true, imageUrl: true } },
     },
   });
 

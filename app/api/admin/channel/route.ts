@@ -85,10 +85,7 @@ export async function PATCH(request: NextRequest) {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-    const creator = (await updateAdminChannelSettings(
-      ctx,
-      result.data,
-    )) as AdminChannelSettingsDTO;
+    const creator = await updateAdminChannelSettings(ctx, result.data);
 
     return NextResponse.json({ creator });
   } catch (error) {

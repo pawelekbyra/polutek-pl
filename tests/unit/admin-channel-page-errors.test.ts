@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AuthError } from "@/lib/auth-utils";
-import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
+import {
+  classifyAdminChannelError,
+  logAdminChannelError,
+} from "@/lib/admin-channel-error-classification";
 
 describe("admin channel page error classification", () => {
   it.each([
@@ -36,4 +39,18 @@ describe("admin channel page error classification", () => {
       expect(classified.message).toBeDefined();
     },
   );
+
+  describe("logAdminChannelError", () => {
+    it.each([
+      [null, "NULL_ERROR"],
+      ["string error", "STRING_ERROR"],
+      [123, "NUMBER_ERROR"],
+      [new Error("standard error"), "ERROR_OBJECT"],
+      [{ code: "P2021", message: "prisma error" }, "PRISMA_OBJECT"],
+    ])("does not throw when logging %o", (err, eventId) => {
+      expect(() =>
+        logAdminChannelError(err, eventId, "req-1"),
+      ).not.toThrow();
+    });
+  });
 });
