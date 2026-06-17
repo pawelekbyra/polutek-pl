@@ -1,0 +1,65 @@
+name: Security package generation (temporary)
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-package-files:
+    if: github.event.pull_request.head.ref == 'security-package-seed-001'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@v4
+        with:
+          ref: security/dependency-remediation-001
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Generate npm package files
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install 'next@^15.5.19' '@clerk/nextjs@^7.5.3' --save
+          npm install --save-dev --save-exact eslint-config-next@15.5.16
+
+          set +e
+          npm run build > /tmp/security-seed-build.log 2>&1
+          build_exit=$?
+          set -e
+          cat /tmp/security-seed-build.log
+          echo "Build exit used only for next-env generation: ${build_exit}"
+
+          changed="$(git diff --name-only)"
+          echo "Changed files:"
+          printf '%s\n' "$changed"
+
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(package.json|package-lock.json|next-env.d.ts)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected generated paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+      - name: Commit generated package files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json next-env.d.ts
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 1
+          fi
+          git commit -m "Update security remediation dependencies"
+          git push origin HEAD:security/dependency-remediation-001
