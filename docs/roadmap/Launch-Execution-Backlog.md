@@ -7,12 +7,12 @@ Launch status: NO_GO
 
 This document is not an executable queue. It may list many planned items. Only docs/tickets/ready/README.md may identify the single current executable ticket.
 
-## Emergency ordered repair queue after PR #929
+## Ordered repair queue after PR #931/#932 reconciliation
 
 | Order | Workstream | Planned ticket / state | Depends on | Completion evidence | Launch impact |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | CI signal restoration | CI-SIGNAL-RESTORATION-001 / READY_FOR_BUILDER | Emergency docs reconciliation | Independently visible strict-escapes, hotspots, architecture boundaries, typecheck, tests/coverage, lint, build, integration-postgres, control-plane docs and security checks | P0 blocker |
-| 2 | Security dependency remediation | SECURITY-DEPENDENCY-REMEDIATION-001 / PLANNED | CI signal baseline | Dependency audit remediation with exact baseline | P0 blocker |
+| 1 | CI signal restoration | CI-SIGNAL-RESTORATION-001 / MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE | Emergency docs reconciliation | Independently visible strict-escapes, hotspots, architecture boundaries, typecheck, tests/coverage, lint, build, integration-postgres, control-plane docs and security checks restored; not FULL_CI_PASS | P0 visibility gate complete / health unresolved |
+| 2 | Security dependency remediation | SECURITY-DEPENDENCY-REMEDIATION-001 / READY_FOR_BUILDER | CI signal baseline | Dependency audit remediation with exact baseline | P0 blocker |
 | 3 | Cloudflare containment | ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001 / PLANNED | CI signal restoration | Unsafe upload/attach paths disabled or safely contained | P0 blocker |
 | 4 | Cloudflare provider privacy | CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001 / BLOCKED_OPERATOR_ACCESS | Operator Cloudflare access | Redacted provider evidence for requireSignedURLs/existing asset privacy | X7 blocker |
 | 5 | TUS upload lifecycle | ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001 / PLANNED | Containment and CI signal | Real TUS contract, resume, duplicate-attempt lifecycle, late-webhook handling | P0 blocker |

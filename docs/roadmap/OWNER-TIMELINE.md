@@ -9,8 +9,8 @@ This timeline summarizes owner-facing state. It is not an executable queue and i
 
 | Area | Status |
 | --- | --- |
-| Control-plane reconciliation after PRs #922-#929 | `READY_FOR_INDEPENDENT_REVIEW` |
-| Current executable ticket | `CI-SIGNAL-RESTORATION-001` via `docs/tickets/ready/README.md` |
+| CI signal reconciliation after PRs #931/#932 | `READY_FOR_INDEPENDENT_REVIEW` |
+| Current executable ticket | `SECURITY-DEPENDENCY-REMEDIATION-001` via `docs/tickets/ready/README.md` |
 | Professional legal review | `PENDING` |
 | Runtime email corrections | `PENDING` |
 | Production/manual evidence | `PENDING` |
@@ -54,7 +54,7 @@ Do not use production Upload, Generate Upload URL, or Attach UID paths until a l
 
 - Current executable ticket: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
-- Current reconciliation: `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`
+- Current reconciliation: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`
 
 ## Closed decision status vocabulary
 

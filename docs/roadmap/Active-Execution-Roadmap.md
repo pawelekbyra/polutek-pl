@@ -9,14 +9,14 @@ This roadmap is a current-status dashboard. It is not an executable queue, not p
 
 - Current executable ticket: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
-- Current reconciliation: `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`
+- Current reconciliation: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`
 
 ## Current emergency gate
 
 | Gate | Status | Notes |
 | --- | --- | --- |
-| CI signal restoration | `READY_FOR_BUILDER / URGENT` | The only current executable ticket is `CI-SIGNAL-RESTORATION-001`. |
-| Runtime video work | `BLOCKED_BY_CI_SIGNAL` | Do not use Upload, Generate Upload URL, or Attach UID in production. |
+| CI signal restoration | `MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE` | PR #931/#932 restored independent visibility; not FULL_CI_PASS or SECURITY_PASS. |
+| Runtime video work | `BLOCKED_BY_SECURITY_REMEDIATION` | Do not use Upload, Generate Upload URL, or Attach UID in production. |
 | Auth certification | `REVERIFICATION_REQUIRED` | PR #923 PASS is incomplete after PR #929 legacy playback repair. |
 | Admin channel | `ROOT_CAUSE_NOT_VERIFIED` | PR #928 handled symptom classification only. |
 | Public launch | `NO_GO` | X7 evidence is incomplete. |
