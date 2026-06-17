@@ -1,5 +1,7 @@
 # Post-910 Control-Plane Reconciliation
 
+> **SUPERSEDED FOR CURRENT-STATE STATUS:** This report remains historical point-in-time evidence for PR #902/#905/#910 only. Current state after PRs #922-#929 is reconciled in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`. Do not rewrite this report as if it described later code.
+
 Status: CONTROL_PLANE_RECONCILED
 Launch status: NO_GO
 Task ID: DOCS-CONTROL-PLANE-RECONCILE-POST-910-001

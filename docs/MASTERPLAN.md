@@ -1,21 +1,16 @@
 # Polutek.pl Masterplan
 
-Status: APPROVED_CANONICAL — becomes effective on repository merge
+Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION
 Launch Status: **NO_GO**
 
-This is the proposed canonical entry point for the project's technical state, risk register, and ordered backlog.
+This is the canonical entry point for technical state, risk register, and ordered backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
 
 ## 1. Baseline State
 
-- **Accepted Implementation Baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980`
-  - This SHA identifies the implementation baseline accepted through PR #899.
-  - The live current main head must be read from GitHub.
-  - Reconciliation and documentation merges may advance main without changing the accepted implementation baseline.
-  - No documentation file should claim to contain an eternally current Git head SHA.
+- **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
+- **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
 - **Current executable ticket:** see `docs/tickets/ready/README.md`.
-- **Current gate:** see `docs/tickets/ready/README.md`.
-- **Current state:** resolved by the canonical ready-ticket queue.
-- **Next Builder Ticket:** not maintained here; see `docs/tickets/ready/README.md`.
+- **Current state:** resolved by the canonical ready-ticket queue and the latest reconciliation report.
 
 ## 2. Evidence Taxonomy
 
@@ -23,49 +18,48 @@ This is the proposed canonical entry point for the project's technical state, ri
 | --- | --- |
 | `REPOSITORY_EVIDENCE` | Source code, schema, and local file structure. |
 | `AUTOMATED_TEST_EVIDENCE` | Results from Vitest, Playwright, or custom scripts. |
-| `AGENT_DECLARATION` | A statement from an AI agent (unverified until checked). |
-| `LOCAL_BUILD_EVIDENCE` | Results of `npm run build` in the local environment. |
-| `VERCEL_PREVIEW_EVIDENCE` | Observations from a Vercel Preview deployment. |
-| `VERCEL_PRODUCTION_EVIDENCE`| Observations from the Vercel Production deployment. |
-| `PRODUCTION_RUNTIME_EVIDENCE`| Logs or behavior observed in the live production environment. |
-| `OPERATOR_EVIDENCE` | Redacted screenshots or confirmation from Paweł (Operator). |
-| `EXTERNAL_BEST_PRACTICE` | Deep Research results or industry standards. |
+| `MERGED_PR_EVIDENCE` | A merge commit present in current history. |
+| `AGENT_DECLARATION` | A statement from an AI agent; unverified until checked. |
+| `LOCAL_BUILD_EVIDENCE` | Results of local build commands. |
+| `VERCEL_PREVIEW_EVIDENCE` | Vercel Preview observations. |
+| `VERCEL_PRODUCTION_EVIDENCE` | Vercel Production deployment observations; not full CI evidence. |
+| `PRODUCTION_RUNTIME_EVIDENCE` | Logs or behavior observed in live production. |
+| `OPERATOR_EVIDENCE` | Redacted screenshots/confirmation from Paweł. |
 | `OWNER_DECISION` | Explicit product/business decisions from Paweł. |
-| `LEGAL_REVIEW` | Formal approval from a professional legal review. |
-| `UNPROVEN` | A claim without supporting evidence. |
-| `STALE` | Evidence that is no longer current. |
+| `LEGAL_REVIEW` | Formal professional legal review. |
+| `UNPROVEN` | Claim without supporting evidence. |
+| `STALE` | Evidence no longer current. |
 
-## 3. Vercel Evidence Record
+## 3. Vercel Evidence Boundary
 
-- **Production Commit:** `f7fc603183120895359e9e52464de2d01e100980` was `READY` (`VERCEL_PRODUCTION_EVIDENCE`).
-- **Build Incidents:** No failed production build incident was confirmed.
-- **Candidate Commit:** `0fce5a0b2fc4bb0ae965ff16b71e95d91fcf4f6a` had a `READY` preview (`VERCEL_PREVIEW_EVIDENCE`).
-- **Runtime Anomaly:** `HOME_CONTENT_LOAD_...` with HTTP 200 observed (`PRODUCTION_RUNTIME_EVIDENCE`). Root cause `UNPROVEN`.
-- **Vercel Project Topology:** `OPERATOR_RECONCILIATION_REQUIRED`. Discrepancies noted between project locations (`polutek-pl` vs `kraufanding`).
+Vercel `READY` can be deployment evidence only. It is not a substitute for full GitHub CI, provider runtime verification, legal approval, or X7 certification.
 
-## 4. Risk Register
+## 4. Current Risk Register
 
 | Risk ID | Title | Evidence Class | Classification | Launch Impact |
 | --- | --- | --- | --- | --- |
-| `EMAIL-P2002` | PRISMA P2002 in Consent Sync | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` (#899) | **HISTORICAL BLOCKER — RESOLVED** |
-| `PAYMENT-WEBHOOK-FAIL` | Webhook Result Silently Ignored | `REPOSITORY_EVIDENCE + MERGED_PR` | `MERGED / HISTORICAL` (PR #902) | **HISTORICAL — VERIFY VIA QUEUE IF NEEDED** |
-| `EMAIL-WEBHOOK-IDEMP` | Resend Idempotency Ordering | `MERGED_PR + POST_MERGE_VERIFICATION_PENDING` | `MERGED_UNVERIFIED` (PR #905) | **MEDIUM** |
-| `UNSUBSCRIBE-INSECURE`| Clear-text email in unsubscribe | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **BLOCKER** |
-| `DELETION-GAP` | Account Deletion Incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
-| `COPY-MISMATCH` | Terms/Privacy Mismatch | `OWNER_DECISION`| `CONFIRMED_GAP` | **BLOCKER** |
-| `BACKUP-UNPROVEN` | Backup and restore production evidence is missing | `OPERATOR_EVIDENCE` | `PRODUCTION_EVIDENCE_MISSING` | **BLOCKER** |
-| `EMAIL-TEMPLATE-ACTIVE-001` | Inactive Template Runtime | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
-| `PRIVACY-INVENTORY-SYNC` | Inventory vs Copy Sync | `OWNER_DECISION` | `CONFIRMED_GAP` | **BLOCKER** |
-| `PATRON-DNA-001` | Access Invariant Hardening | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **HIGH** |
-| `RELIABILITY-OUTBOX-001` | Missing Outbox for Side Effects | `REPOSITORY_EVIDENCE` | `HIGH_CONFIDENCE_CODE_FINDING` | **MEDIUM** |
-| `DEPLOY-DNA-001` | Deployment Validation Model | `UNPROVEN` | `REQUIRES_VERIFICATION` | **MEDIUM** |
-| `CONTROL-DNA-001` | Governance Traceability | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **MEDIUM** |
-| `HOME-CONTENT-RUNTIME-ANOMALY` | Content Load Runtime Anomaly | `PRODUCTION_RUNTIME_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
-| `LEGACY-FALLBACK` | Allow Legacy Private Fallback | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **HIGH** |
-| `ARCH-DEBT` | Architecture Allowlist Ledger | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **LOW** |
-| `PII-LOGGING` | Unredacted PII in Logs | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **HIGH** |
-| `DATA-RETENTION` | Payload Retention Gaps | `REPOSITORY_EVIDENCE` | `REQUIRES_VERIFICATION` | **MEDIUM** |
-| `PG-CONCURRENCY` | Postgres Transaction Races | `REPOSITORY_EVIDENCE` | `STILL_ACTIVE / UNPROVEN` | **MEDIUM** |
+| `CI-001` | Last reviewed PR CI failed | `AGENT_DECLARATION / PR_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
+| `CI-002` | strict-escapes failure skips major checks | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
+| `CI-003` | strict-escapes lacks historical baseline/no-new-debt mode | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
+| `CI-004` | architecture boundaries guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
+| `CI-005` | control-plane docs guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
+| `CI-006` | npm audit high unresolved | `AUTOMATED_TEST_EVIDENCE` | `UNRESOLVED` | **P0 BLOCKER** |
+| `CI-007` | branch protection enforcement unproven | `UNPROVEN` | `REQUIRES_VERIFICATION` | **P0 BLOCKER** |
+| `CI-008` | Vercel READY misused as CI substitute | `EVIDENCE_BOUNDARY` | `PROCESS_GAP` | **HIGH** |
+| `ADMIN-AUTH-REVERIFY` | Auth implementation merged but full current-main certification missing | `MERGED_PR_EVIDENCE` | `REVERIFICATION_REQUIRED` | **HIGH** |
+| `VIDEO-CF-001..012` | Cloudflare upload/asset lifecycle defects | `REPOSITORY_EVIDENCE` | `CORRECTIVE_WORK_REQUIRED` | **P0 BLOCKER** |
+| `VIDEO-PUBLISH-001` | Publication gate incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
+| `VIDEO-HERO-001` | Hero contract inconsistent | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
+| `VIDEO-STATE-001` | Archive/unpublish transition policy missing | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
+| `VIDEO-ADMIN-001..005` | Admin create/form/filter contract defects | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
+| `VIDEO-PLAYBACK-001..002` | Media-source and legacy media contracts unreconciled | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
+| `VIDEO-VERIFY-001` | Provider/E2E verification missing | `AUTOMATED_TEST_EVIDENCE / OPERATOR_EVIDENCE` | `EVIDENCE_GAP` | **P0 BLOCKER** |
+| `ADMIN-CHANNEL-001` | Admin channel root cause unknown | `REPOSITORY_EVIDENCE / OPERATOR_EVIDENCE` | `ROOT_CAUSE_NOT_VERIFIED` | **HIGH** |
+| `CONTROL-001..008` | Control-plane chronology, guard and evidence-boundary gaps | `REPOSITORY_EVIDENCE` | `EMERGENCY_RECONCILED / HARDENING_REQUIRED` | **HIGH** |
+| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** |
+| `BACKUP-UNPROVEN` | Backup/restore evidence missing | `OPERATOR_EVIDENCE` | `PRODUCTION_EVIDENCE_MISSING` | **BLOCKER** |
+
+Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
 
 ## 5. Ordered Masterplan
 
@@ -73,40 +67,34 @@ This is the proposed canonical entry point for the project's technical state, ri
 - See the canonical queue: `docs/tickets/ready/README.md`.
 
 ### NEXT_CONFIRMED_TASK
-- See the canonical queue: `docs/tickets/ready/README.md`.
+- `CI-SIGNAL-RESTORATION-001` via `docs/tickets/ready/README.md`.
 
-### RECENTLY_COMPLETED
-- **`LAUNCH-EMAIL-003`**: `MERGED / ACCEPTED` (PR #899)
-  - merge SHA `f7fc603183120895359e9e52464de2d01e100980`
-
-### QUEUED_HIGH_PRIORITY
-- **`SECURE-UNSUBSCRIBE`**: Implement signed tokens and a functional public route (`CONFIRMED_GAP`).
-- **`SUPPRESSION-HARDENING`**: Handle bounces and complaints to protect deliverability.
-- **`ACCOUNT-DELETION-HARDENING`**: Ensure all PII and consents are cleared/anonymized (`CONFIRMED_GAP`).
-- **`EMAIL-TEMPLATE-ACTIVE-001`**: Address inactive template runtime usage (`REQUIRES_VERIFICATION`).
-- **`PATRON-DNA-001`**: Access invariant hardening (`HIGH_CONFIDENCE_CODE_FINDING`).
-- **`RELIABILITY-OUTBOX-001`**: Design and implement outbox for durable side effects (`HIGH_CONFIDENCE_CODE_FINDING`).
-- **`LEGACY-FALLBACK`**: Review and potentially disable `ALLOW_LEGACY_PRIVATE_FALLBACK` (`REQUIRES_VERIFICATION`).
-- **PII logging review**: Audit and harden PII redaction in logs (`REQUIRES_VERIFICATION`).
-
-### LATER_FOUNDATION
-- **`DEPLOY-DNA-001`**: Deployment validation model (`REQUIRES_VERIFICATION`).
-- **`CONTROL-DNA-001`**: Governance and traceability improvements (`CONFIRMED_GAP`).
-- **`HOME-CONTENT-RUNTIME-ANOMALY`**: Diagnose and resolve content load anomaly (`REQUIRES_VERIFICATION`).
-- **Architecture allowlist debt ledger**: Categorize and set review dates for all check exceptions (`CONFIRMED_GAP`).
-- **Retention Policy Implementation**: Webhook/inbound-email/payload retention and cleanup gaps (`REQUIRES_VERIFICATION`).
-- **`PG-CONCURRENCY`**: Real-Postgres concurrency and transaction integration tests (`HIGH_CONFIDENCE_CODE_FINDING`).
+### ORDERED_REPAIR_PROGRAM
+1. `CI-SIGNAL-RESTORATION-001`
+2. `SECURITY-DEPENDENCY-REMEDIATION-001`
+3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`
+4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001`
+5. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`
+6. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`
+7. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`
+8. `ADMIN-VIDEO-POSTMERGE-VERIFY-001`
+9. `ADMIN-AUTH-POSTMERGE-REVERIFY-001`
+10. `LEGACY-ACCESS-POLICY-RETIREMENT-001`
+11. `ADMIN-CHANNEL-ROOT-CAUSE-001`
+12. `LEGACY-MEDIA-PROXY-RETIREMENT-001`
+13. `CONTROL-PLANE-GUARD-HARDENING-001`
+14. `BETA-SCOPE-GUARD-RECONCILIATION-001`
 
 ### OPERATOR_EVIDENCE
-- **`OPERATOR-EVIDENCE-PACK`**: Collect backup, restore, and provider configuration proof (`PRODUCTION_EVIDENCE_MISSING`).
+- Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts.
 
 ### LEGAL_REVIEW
-- **`PRIVACY-INVENTORY-SYNC`**: Align public text with owner decisions and technical inventory (`CONFIRMED_GAP`).
-- **`LEGAL-COPY-SYNC`**: Align public text with professional legal review.
+- Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`.
 
 ## 6. Discoverability Path
 
 - Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
 - Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
-- Latest Reconciliation: [reports/reconciliation/POST-910-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-910-CONTROL-PLANE-RECONCILIATION.md)
+- Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
+- Latest Reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)

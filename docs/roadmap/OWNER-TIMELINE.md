@@ -9,13 +9,31 @@ This timeline summarizes owner-facing state. It is not an executable queue and i
 
 | Area | Status |
 | --- | --- |
-| Owner product decisions | `RECORDED` |
+| Control-plane reconciliation after PRs #922-#929 | `READY_FOR_INDEPENDENT_REVIEW` |
+| Current executable ticket | `CI-SIGNAL-RESTORATION-001` via `docs/tickets/ready/README.md` |
 | Professional legal review | `PENDING` |
 | Runtime email corrections | `PENDING` |
 | Production/manual evidence | `PENDING` |
-| X6.2–X6.8 | `NOT_EXECUTED` |
+| X6.2-X6.8 | `NOT_EXECUTED` |
 | X7 | `INCOMPLETE` |
 | Public launch | `NO_GO` |
+
+## Immediate owner/operator warning
+
+Do not use production Upload, Generate Upload URL, or Attach UID paths until a later verified containment/lifecycle PR permits them.
+
+## Current repair sequence
+
+1. CI signal restoration.
+2. Security dependency remediation.
+3. Cloudflare containment.
+4. Cloudflare production asset privacy verification.
+5. Real TUS upload and upload-attempt lifecycle.
+6. Publication/Hero/form/filter repairs.
+7. Independent video flow verification.
+8. Auth reverification and legacy AccessPolicy retirement.
+9. Admin channel root cause.
+10. Legacy media proxy and control-plane guard hardening.
 
 ## Owner-decision handoff
 
@@ -28,7 +46,7 @@ This timeline summarizes owner-facing state. It is not an executable queue and i
 - Professional lawyer review remains pending.
 - Public legal copy remains pending.
 - Operator evidence for Vercel, Stripe, Cloudflare, backup/restore and alerts remains pending.
-- X6.2–X6.8 remain not executed.
+- X6.2-X6.8 remain not executed.
 - X7 Launch Evidence Pack remains incomplete.
 - Final owner launch decision remains pending and may only be `GO`, `CONDITIONAL_GO` or `NO_GO` after required evidence.
 
@@ -36,3 +54,8 @@ This timeline summarizes owner-facing state. It is not an executable queue and i
 
 - Current executable ticket: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
+- Current reconciliation: `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`
+
+## Closed decision status vocabulary
+
+Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`; partial refund runtime, email content notifications, RPO/RTO, alert channel, Cloudflare originals, and reactions/hearts use closed decision statuses and remain respectively `IMPLEMENTATION_MISSING`, `OPERATOR_PENDING`, `RECORDED`, `HISTORICAL`, `SUPERSEDED`, or `NOT_LAUNCH_CRITICAL` as applicable.
