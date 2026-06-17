@@ -1,17 +1,20 @@
 # ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 — Repair Cloudflare-first admin video creation and publishing
 
-Status: PLANNED / URGENT / NON_EXECUTABLE / NEXT_AFTER_AUTH_CANONICALIZATION
+Status: PARTIAL_IMPLEMENTATION_MERGED_IN_PR_926 / PROVIDER_RUNTIME_NOT_VERIFIED / CORRECTIVE_WORK_REQUIRED / POSTMERGE_VERIFICATION_MISSING / HISTORICAL_UMBRELLA_SPEC
 Ticket ID: ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001
-Role: Builder / Planned
+Role: Builder / Historical umbrella specification
 Priority: URGENT
 Launch status: NO_GO
 
-## Deferred executability statement
+## Current-state reconciliation
 
-This ticket remains urgent and fully specified for later execution, but it is not the current executable ticket.
-It becomes eligible only after `ADMIN-AUTH-ACTOR-CANONICALIZATION-001` is implemented, merged, independently verified post-merge with verdict `PASS`, and reconciled in the control-plane.
+This ticket is no longer described as planned future work. PR #926 merged a partial Cloudflare-first admin video flow, but provider runtime behavior was not verified and corrective work is required. The detailed requirements below are preserved as historical umbrella specification evidence and must not be weakened. Current bounded follow-up work is split into `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`, `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`, and `ADMIN-VIDEO-POSTMERGE-VERIFY-001` after `CI-SIGNAL-RESTORATION-001`.
 
-Next planned ticket after auth canonicalization: `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001`.
+## Tracked findings
+
+`VIDEO-CF-001` through `VIDEO-CF-012`, `VIDEO-PUBLISH-001`, `VIDEO-HERO-001`, `VIDEO-STATE-001`, `VIDEO-ADMIN-001` through `VIDEO-ADMIN-005`, `VIDEO-PLAYBACK-001`, `VIDEO-PLAYBACK-002`, and `VIDEO-VERIFY-001` are tracked in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
+
+## Historical umbrella specification
 
 ## Purpose
 
