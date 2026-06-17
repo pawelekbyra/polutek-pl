@@ -1,0 +1,39 @@
+name: Next 15 codemod audit
+
+on:
+  pull_request:
+    branches:
+      - docs/security-scope-correction-002
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/dependency-remediation-001
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Run official Next 15 request API codemod
+        run: npx --yes @next/codemod@15.5.19 next-async-request-api app --force
+      - name: Capture changed application files
+        shell: bash
+        run: |
+          git diff --name-only > changed-files.txt
+          git diff --binary > next15-codemod.patch
+          tar -czf next15-codemod-files.tar.gz $(cat changed-files.txt)
+          cat changed-files.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next15-codemod-audit
+          path: |
+            changed-files.txt
+            next15-codemod.patch
+            next15-codemod-files.tar.gz
+          retention-days: 1
