@@ -17,10 +17,8 @@ import { MediaPolicy } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { videoId: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ videoId: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const videoId = params.videoId;

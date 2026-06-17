@@ -5,10 +5,8 @@ import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const { adminUserId, response } = await requireAdminForApi(
     "PROVISION_VIDEO_UPLOAD",

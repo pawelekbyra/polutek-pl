@@ -13,10 +13,8 @@ const reportSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const actor = await getActorFromAuth();
 

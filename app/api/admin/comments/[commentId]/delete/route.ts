@@ -5,10 +5,8 @@ import { handleApiError } from "@/lib/errors";
 import { CommentDeletedReason } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 export const dynamic = "force-dynamic";
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "DELETE_COMMENT_ADMIN",
   );

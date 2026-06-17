@@ -8,10 +8,8 @@ import { toggleCommentLike } from "@/lib/modules/comments";
 
 export const dynamic = "force-dynamic";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { commentId } = params;
@@ -42,10 +40,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { commentId } = params;

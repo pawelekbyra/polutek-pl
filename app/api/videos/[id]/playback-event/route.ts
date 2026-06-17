@@ -10,10 +10,8 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const videoId = params.id;
   const requestId = req.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);

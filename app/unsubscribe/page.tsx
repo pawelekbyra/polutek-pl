@@ -9,7 +9,8 @@ async function getToken(searchParams: UnsubscribePageProps['searchParams']) {
   return typeof resolved?.token === 'string' ? resolved.token : '';
 }
 
-export default async function UnsubscribePage({ searchParams }: UnsubscribePageProps) {
+export default async function UnsubscribePage(props: UnsubscribePageProps) {
+  const searchParams = await props.searchParams;
   const token = await getToken(searchParams);
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-16 text-center">

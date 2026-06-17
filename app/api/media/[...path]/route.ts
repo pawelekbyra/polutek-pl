@@ -25,10 +25,8 @@ function rateLimitedResponse(videoId: string) {
   );
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { path: string[] } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ path: string[] }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const videoIdOrSlug = params.path[0];
