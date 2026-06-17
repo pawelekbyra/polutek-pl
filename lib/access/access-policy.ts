@@ -121,7 +121,7 @@ export class AccessPolicy {
             where: { id: userId },
             select: { role: true, isDeleted: true }
         });
-        if (actor?.role === 'ADMIN' && !actor?.isDeleted) {
+        if ((actor?.role === 'ADMIN' || isConfiguredAdminUserId(userId)) && !actor?.isDeleted) {
             isAdmin = true;
         }
         if (actor?.isDeleted) return { allowed: false, reason: "DELETED" };
