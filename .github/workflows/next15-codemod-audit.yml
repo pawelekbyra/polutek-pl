@@ -3,7 +3,7 @@ name: Next 15 codemod audit
 on:
   pull_request:
     branches:
-      - docs/security-scope-correction-002
+      - main
 
 permissions:
   contents: read
