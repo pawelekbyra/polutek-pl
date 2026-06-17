@@ -1,14 +1,15 @@
 name: Security package generation (temporary)
 
 on:
-  pull_request:
+  push:
+    branches:
+      - security-package-seed-001
 
 permissions:
   contents: write
 
 jobs:
   generate-package-files:
-    if: github.event.pull_request.head.ref == 'security-package-seed-001'
     runs-on: ubuntu-latest
     steps:
       - name: Check out implementation branch
