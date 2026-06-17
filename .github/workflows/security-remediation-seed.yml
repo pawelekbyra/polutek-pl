@@ -38,6 +38,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/security-remediation-seed.yml
           git add package.json package-lock.json next-env.d.ts
           git commit -m "Update security remediation dependencies"
           git push --force origin HEAD:generated-security-package-files-001
