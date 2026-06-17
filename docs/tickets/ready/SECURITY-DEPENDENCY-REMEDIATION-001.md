@@ -11,39 +11,39 @@ Parallel Safety: SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK
 
 ## Goal
 
-Remove all currently visible high/critical npm audit findings using the smallest verified dependency upgrade, apply only the exact compatibility changes proven necessary by an isolated GitHub Actions simulation, and preserve product/runtime behavior without suppressing vulnerabilities or claiming launch readiness.
+Remove all currently visible high/critical npm audit findings using the smallest verified dependency upgrade, apply only the exact compatibility changes proven necessary by GitHub Actions and vendor documentation, and preserve runtime/security behavior without vulnerability suppression or launch-readiness claims.
 
-## Activation and scope-expansion evidence
+## Activation and evidence
 
-This ticket was activated by the post-PR #931/#932 reconciliation after `CI-SIGNAL-RESTORATION-001` reached `MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE`.
+This ticket was activated after PR #931/#932 restored independent CI visibility and the post-merge reconciliation selected security remediation as the sole executable ticket.
 
-The first package-only execution correctly returned `BLOCKED_AUDIT_ENDPOINT_UNAVAILABLE` because its local npm audit endpoint returned `403 Forbidden` before package edits.
+The first Builder attempt correctly returned `BLOCKED_AUDIT_ENDPOINT_UNAVAILABLE` because the local npm audit endpoint returned `403 Forbidden` before any package edit.
 
-Bolek then obtained valid `npm audit --json` evidence in an isolated GitHub Actions diagnostic run and performed a non-merged compatibility simulation in temporary draft PR #934. PR #934 was closed without merge and its branch was reset to the `main` baseline after evidence collection. The simulation did not modify `main`.
+Bolek then obtained valid audit evidence and ran a non-merged compatibility simulation in isolated GitHub Actions. Temporary PR #934 was closed without merge and its branch was reset after evidence collection.
 
-Evidence classification:
+Evidence:
 
-- Audit baseline and candidate validation: `CI_LOG_EVIDENCE` / GitHub Actions run `27697718247` and simulation run `27698051613`.
-- Required compatibility files: `CI_LOG_EVIDENCE` from TypeScript, lint, and build output.
-- Candidate versions: `CI_LOG_EVIDENCE` from the generated package files and audit-after artifact.
-- Temporary diagnostic PR #934: `HISTORICAL_GIT_EVIDENCE / MUST_NOT_MERGE / CLOSED_UNMERGED`.
+- audit baseline run: `27697718247`;
+- candidate simulation run: `27698051613`;
+- temporary diagnostic PR: `#934 — CLOSED / UNMERGED / MUST_NOT_MERGE`;
+- Clerk Core 3 upgrade source: `UserButton` sign-out redirect props were removed; redirect must be configured globally, via `SignOutButton`, or programmatically;
+- Next 15 upgrade source: `headers()` is asynchronous, but Next 15 explicitly supports temporary synchronous access through `UnsafeUnwrappedHeaders`, with a development warning.
 
-## Verified audit baseline before remediation
+## Verified audit baseline
 
 | Field | Verified value |
 | --- | --- |
 | Severity counts | `info: 0`, `low: 1`, `moderate: 1`, `high: 12`, `critical: 0`, `total: 14` |
-| Direct high packages | `next@14.2.35`, `@clerk/nextjs@5.x`, `eslint-config-next@14.2.3` |
-| Clerk transitive high chain | `@clerk/nextjs` → `@clerk/backend`, `@clerk/clerk-react`, `@clerk/shared`, `js-cookie` |
-| ESLint transitive high chain | `eslint-config-next` → `@next/eslint-plugin-next` → `glob`; `@typescript-eslint/parser` → `@typescript-eslint/typescript-estree` → `minimatch` |
-| Next high threshold | The recorded Next advisories require at least `15.5.16`; the verified simulation resolved `next` to `15.5.19`. |
-| Clerk fix | Audit reported `@clerk/nextjs@7.5.3`, semver-major. |
-| ESLint config candidate | `eslint-config-next@15.5.16` removed the recorded high transitive findings in simulation. |
-| Compatibility risk | Verified major migration: Next async request APIs and lint behavior changed; Clerk component, redirect-prop, and middleware auth APIs changed. |
+| Direct high roots | `next@14.2.35`, `@clerk/nextjs@5.x`, `eslint-config-next@14.2.3` |
+| Clerk transitive chain | `@clerk/nextjs` → `@clerk/backend`, `@clerk/clerk-react`, `@clerk/shared`, `js-cookie` |
+| ESLint transitive chain | `eslint-config-next` → `@next/eslint-plugin-next` → `glob`; `@typescript-eslint/parser` → `@typescript-eslint/typescript-estree` → `minimatch` |
+| Minimum verified Next line | Next advisories require at least `15.5.16`; simulation resolved `15.5.19` |
+| Clerk fix | `@clerk/nextjs@7.5.3`, semver-major |
+| ESLint config candidate | `eslint-config-next@15.5.16` |
 
-## Verified candidate and audit-after result
+## Verified candidate
 
-The isolated package-only candidate used:
+Apply exactly:
 
 ```txt
 next: ^15.5.19
@@ -51,7 +51,7 @@ next: ^15.5.19
 eslint-config-next: 15.5.16
 ```
 
-Verified audit-after result:
+Verified simulated audit-after:
 
 ```txt
 info: 0
@@ -63,113 +63,145 @@ total: 4
 npm audit --audit-level=high: exit 0
 ```
 
-Remaining non-high findings in the simulation were:
+Remaining non-high findings must be reported honestly:
 
 - low `esbuild` development-server finding with a fix available;
-- moderate `postcss` under Next with no fix available in the simulated dependency graph;
+- moderate `postcss` under Next with no fix available in the simulated graph;
 - aggregate moderate entries for direct `next` and `@clerk/nextjs` caused by that transitive `postcss` finding.
 
-This ticket must clear high/critical findings. It must report remaining low/moderate findings honestly and must not claim blanket `SECURITY_PASS` while they remain.
+Do not claim blanket `SECURITY_PASS` while low/moderate findings remain.
 
-## Verified compatibility failures requiring scope expansion
+## Verified compatibility work
 
-The package-only simulation proved that the original two-file scope was insufficient:
+### Next 15 request APIs
 
 1. `app/api/webhooks/clerk/route.ts`
-   - Next 15 makes `headers()` asynchronous.
-   - The three header reads around current lines 91-93 must use an awaited headers object without changing webhook verification semantics.
-2. `lib/utils/correlation.ts`
-   - Next 15 makes `headers()` asynchronous.
-   - Correlation-ID lookup must await the headers object while preserving fallback behavior.
-3. `app/components/Navbar.tsx`
-   - Clerk 7 no longer exports `SignedIn` and `SignedOut` from the current import path.
-   - The component already uses `useUser`; signed-in/signed-out rendering must be expressed from the supported Clerk 7 user/auth state without changing visible behavior.
-   - `UserButton.afterSignOutUrl` is no longer accepted; use the supported Clerk 7 redirect contract verified from installed package types/documentation.
-4. `middleware.ts`
-   - Clerk 7 middleware callback auth no longer supports `(await auth()).protect()`.
-   - Migrate the three protection branches to the supported `auth.protect()` contract while preserving the existing public-route, admin-route, comments-GET exception, request-ID, and CSP behavior.
-5. `app/error.tsx`
-   - Next 15 lint rejects the internal `/` navigation implemented with raw `<a>`.
-   - Replace it with `next/link` while preserving styling and behavior.
-6. `next-env.d.ts`
-   - Next 15 regenerates this tracked file during build; the generated change is allowed only when produced by the verified Next upgrade.
+   - call `await headers()` exactly once;
+   - read the same `svix-id`, `svix-timestamp`, and `svix-signature` values;
+   - preserve payload and Svix verification behavior.
 
-The simulation also exposed an existing warning in `app/admin/videos/page.tsx` and existing failures in `tests/unit/config.test.ts` and `tests/unit/architecture/post-merge-state-reconciliation.test.ts`. They are outside this ticket and must not be changed here.
+2. `lib/utils/correlation.ts`
+   - `getCorrelationId()` has a broad synchronous call graph across route handlers, error helpers, and tests;
+   - converting it to `async` inside this security ticket would require a large unrelated API-wide migration;
+   - use the vendor-documented Next 15 temporary synchronous compatibility form:
+
+```ts
+import { headers, type UnsafeUnwrappedHeaders } from "next/headers";
+
+const requestHeaders = headers() as unknown as UnsafeUnwrappedHeaders;
+```
+
+   - preserve the existing synchronous `string | null` contract and fallback behavior;
+   - do not edit callers in this ticket;
+   - a development warning is expected and must be reported;
+   - full async migration is deferred to future `NEXT-ASYNC-REQUEST-API-MIGRATION-001 — PLANNED / NON_EXECUTABLE` and must not become the current queue pointer in this PR.
+
+### Clerk 7
+
+3. `app/components/ClerkLocalizationProvider.tsx`
+   - configure the supported global sign-out redirect contract on `ClerkProvider`:
+
+```tsx
+afterSignOutUrl="/"
+```
+
+   - preserve all existing localization and sign-in/sign-up redirect props.
+
+4. `app/components/Navbar.tsx`
+   - remove unsupported `SignedIn` and `SignedOut` imports/usages;
+   - use supported `useUser()` state (`isLoaded`, `isSignedIn`, `user`) for equivalent rendering;
+   - do not render signed-in or signed-out controls before Clerk state is loaded;
+   - remove unsupported `UserButton.afterSignOutUrl` because redirect is now configured globally;
+   - preserve admin, patron, sign-in, avatar, and menu behavior.
+
+5. `middleware.ts`
+   - replace `(await auth()).protect()` with the Clerk 7-supported `auth.protect()` contract in the same three branches;
+   - preserve public routes, admin protection, comments GET exception, mutation protection, request ID, CSP, request headers, and matcher.
+
+### Next 15 lint/generated changes
+
+6. `app/error.tsx`
+   - replace the internal `<a href="/">` with `next/link`;
+   - preserve destination, text, styling, and behavior.
+
+7. `next-env.d.ts`
+   - accept only the file content generated by Next 15 during typecheck/build;
+   - do not add custom declarations manually.
 
 ## Parallel safety
 
-This ticket is `SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK`. While it is being executed, no other branch or agent may change:
+This ticket is `SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK`.
+
+No other active branch or agent may change:
 
 - `package.json`;
 - `package-lock.json`;
 - dependency overrides;
 - dependency installation state.
 
-The Builder must confirm this condition before editing package files and in the final report.
+The Builder must confirm this before editing and in the PR report.
 
-## Required Builder preflight
+## Required preflight
 
-1. Verify the current queue still points to this ticket as the exactly one current executable ticket.
-2. Verify no other active branch/workstream is changing package files or dependency installation state.
+1. Verify the queue still points to this ticket as the exactly one executable ticket.
+2. Verify no parallel package/lockfile work exists.
 3. Use Node `22.x` from `.nvmrc`.
 4. Run `npm ci`.
-5. Obtain a fresh valid `npm audit --json` report and compare it with the verified baseline above.
-6. Stop with `BLOCKED_AUDIT_BASELINE_DRIFT` if the direct high packages or required fixed thresholds materially changed.
-7. Only after steps 1-6 may implementation begin.
-
-If the npm endpoint is unavailable locally but the verified baseline remains current, the Builder may implement on a branch and rely on the PR's GitHub Actions audit job for final audit-after evidence. It must classify local audit as `BLOCKED_ENVIRONMENT` and must not claim security completion until GitHub Actions confirms zero high/critical findings.
+5. Attempt a fresh `npm audit --json` and compare it with the baseline.
+6. Return `BLOCKED_AUDIT_BASELINE_DRIFT` if the direct high roots or required fix thresholds materially changed.
+7. If local npm registry/audit access returns `403`, classify it as `BLOCKED_ENVIRONMENT` and use the approved npm-generated artifact/lockfile evidence; final security confirmation must come from GitHub Actions.
 
 ## Allowed files
 
-Allowed files are exactly:
+Exactly:
 
 ```txt
 package.json
 package-lock.json
 next-env.d.ts
 app/api/webhooks/clerk/route.ts
+app/components/ClerkLocalizationProvider.tsx
 app/components/Navbar.tsx
 app/error.tsx
 lib/utils/correlation.ts
 middleware.ts
 ```
 
-No other file may be changed. If another runtime, configuration, test, workflow, documentation, or generated file is required, stop before editing it and return `BLOCKED_SCOPE_EXPANSION_REQUIRED` with the exact path and reason.
+No other path may change. Any additional required path means:
 
-## Forbidden files and actions
+```txt
+BLOCKED_SCOPE_EXPANSION_REQUIRED
+```
 
-The Builder must not:
+## Forbidden actions
 
-- run or accept `npm audit fix --force`;
+Do not:
+
+- use `npm audit fix --force`;
 - suppress, ignore, silence, or downgrade findings;
-- make unrelated refactors;
-- change Prisma schema or migrations;
-- change workflows;
-- change strict-escapes, architecture, control-plane, or other guard files;
+- hand-edit dependency trees in `package-lock.json`;
+- change workflows, Prisma, migrations, tests, guards, or control-plane docs;
 - change `app/admin/videos/page.tsx`;
-- change `tests/unit/config.test.ts`;
-- change `tests/unit/architecture/post-merge-state-reconciliation.test.ts`;
-- fix hotspots or stale reconciliation tests in this ticket;
-- migrate `next lint` to another lint command in this ticket;
-- upgrade to Next 16 or Clerk beyond the bounded verified candidate without a new Integrator decision;
-- claim `FULL_CI_PASS`, `PRODUCTION_CERTIFIED`, `LAUNCH_READY`, or blanket `SECURITY_PASS` while low/moderate findings remain;
-- weaken `AGENTS.md` invariants.
+- change known stale reconciliation tests;
+- fix hotspots or existing coverage debt;
+- migrate `next lint` to another command;
+- upgrade to Next 16 or beyond Clerk `7.5.x`;
+- broaden scope without an Integrator-approved ticket update;
+- claim `FULL_CI_PASS`, `PRODUCTION_CERTIFIED`, or `LAUNCH_READY`.
 
 ## Implementation requirements
 
-- Apply the bounded candidate versions proven by simulation:
-  - `next` to `^15.5.19`;
-  - `@clerk/nextjs` to `^7.5.3`;
-  - `eslint-config-next` to exact `15.5.16`.
-- Regenerate `package-lock.json` using npm under Node 22; do not hand-edit dependency trees.
-- Apply only the compatibility changes listed in this ticket.
-- Preserve all authentication, authorization, webhook verification, request-ID, CSP, navigation, and sign-out behavior.
-- Treat the existing coverage failures as pre-existing and report them, not fix them.
-- Preserve CI visibility restored by PR #931/#932.
+- use the npm-generated `package.json` and `package-lock.json` produced by the verified simulation or regenerate identical results under Node 22;
+- apply only the compatibility changes above;
+- preserve webhook verification, authentication, authorization, request IDs, CSP, public-route boundaries, navigation, and sign-out redirect behavior;
+- keep `getCorrelationId()` synchronous using only the documented Next 15 temporary compatibility type;
+- report the expected development warning from synchronous `headers()` access;
+- do not modify any caller of `getCorrelationId()`;
+- preserve CI visibility restored by PR #931/#932.
 
 ## Validation commands
 
-Run every command and classify it as `PASS`, `FAIL`, `BLOCKED_ENVIRONMENT`, or `NOT_APPLICABLE` with a concrete justification:
+Run and classify every command as `PASS`, `FAIL`, `BLOCKED_ENVIRONMENT`, or `NOT_APPLICABLE`:
 
 ```bash
 node --version
@@ -192,41 +224,42 @@ git status --short
 
 Additionally verify:
 
-- the three Clerk webhook header reads still feed the same verification code;
+- all three Clerk webhook headers still feed the same verification call;
 - all protected middleware branches remain protected;
-- public routes and the comments GET exception remain unchanged;
-- navbar signed-in and signed-out branches remain functionally equivalent;
-- sign-out returns to `/` using a supported Clerk 7 contract;
-- `git diff --name-only` contains only exact allowed paths.
+- public routes and comments GET exception remain unchanged;
+- Navbar signed-in/signed-out rendering is equivalent after Clerk state loads;
+- sign-out returns to `/` through `ClerkProvider.afterSignOutUrl`;
+- `getCorrelationId()` retains its synchronous return type;
+- no caller of `getCorrelationId()` changed;
+- `next-env.d.ts` was generated by Next;
+- changed files are exactly within the allowed list.
 
 ## Definition of Done
 
-- [ ] Fresh audit baseline was obtained or local endpoint failure was explicitly classified and GitHub Actions supplied final evidence.
-- [ ] All recorded high/critical findings are removed.
+- [ ] High and critical findings are zero in GitHub Actions.
 - [ ] `npm audit --audit-level=high` passes in GitHub Actions.
-- [ ] Remaining low/moderate findings are listed without suppression.
-- [ ] Typecheck passes after the bounded Next/Clerk compatibility migration.
-- [ ] Lint and build pass after the exact `app/error.tsx` and compatibility changes.
-- [ ] Strict escapes, architecture boundaries, control-plane docs, and integration-postgres pass.
-- [ ] Existing coverage failures are reported and are not expanded or hidden.
-- [ ] No workflow, Prisma, migration, hotspot, stale-test, or unrelated refactor work was performed.
+- [ ] Remaining low/moderate findings are recorded without suppression.
+- [ ] Typecheck, lint, build, strict escapes, architecture boundaries, control-plane docs, and integration-postgres pass.
+- [ ] Existing hotspots and coverage failures are reported as pre-existing and not modified.
+- [ ] Webhook verification, auth boundaries, request ID, CSP, UI state, and sign-out redirect are preserved.
 - [ ] No file outside the exact allowed list changed.
-- [ ] Parallel Safety was confirmed.
+- [ ] No `getCorrelationId()` caller changed.
+- [ ] Parallel Safety is confirmed.
 - [ ] Public launch remains `NO_GO`.
 
-## Final report requirements
+## Final report
 
-The Builder PR report must include:
+Include:
 
-- verdict `READY_FOR_INDEPENDENT_REVIEW` or an exact `BLOCKED_*` status;
-- base and head SHA;
-- Node/npm versions;
+- verdict `READY_FOR_INDEPENDENT_REVIEW` or exact `BLOCKED_*`;
+- base/head SHA and Node/npm versions;
 - Parallel Safety confirmation;
-- audit before/after severity counts and direct/transitive paths;
+- audit before/after with dependency paths;
 - exact package versions before/after;
 - compatibility changes per file;
-- every validation command result;
-- explicit classification of pre-existing coverage failures;
+- every validation result;
+- expected Next synchronous-header development warning;
 - exact changed-file list;
+- confirmation that no correlation callers changed;
 - non-claims;
 - `Public launch remains NO_GO`.
