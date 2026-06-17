@@ -57,10 +57,75 @@ function collectFiles(entry: string): string[] {
   return files;
 }
 
+function toRepoPath(filePath: string) {
+  return path.relative(repoRoot, filePath).split(path.sep).join('/');
+}
+
 function stripJsonComments(input: string) {
-  return input
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
+  let output = '';
+  let inString = false;
+  let isEscaped = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const current = input[index];
+    const next = input[index + 1];
+
+    if (inLineComment) {
+      if (current === '\n' || current === '\r') {
+        inLineComment = false;
+        output += current;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (current === '*' && next === '/') {
+        inBlockComment = false;
+        index += 1;
+      } else if (current === '\n' || current === '\r') {
+        output += current;
+      }
+      continue;
+    }
+
+    if (inString) {
+      output += current;
+
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (current === '\\') {
+        isEscaped = true;
+      } else if (current === '"') {
+        inString = false;
+      }
+
+      continue;
+    }
+
+    if (current === '"') {
+      inString = true;
+      output += current;
+      continue;
+    }
+
+    if (current === '/' && next === '/') {
+      inLineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (current === '/' && next === '*') {
+      inBlockComment = true;
+      index += 1;
+      continue;
+    }
+
+    output += current;
+  }
+
+  return output;
 }
 
 function readBaseline(): BaselineEntry[] {
@@ -100,7 +165,7 @@ const violations: Violation[] = [];
 
 for (const root of sourceRoots) {
   for (const file of collectFiles(root)) {
-    const relativeFile = path.relative(repoRoot, file);
+    const relativeFile = toRepoPath(file);
     const lines = readFileSync(file, 'utf8').split('\n');
 
     lines.forEach((line, index) => {
