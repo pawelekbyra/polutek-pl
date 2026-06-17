@@ -1,7 +1,31 @@
 import { AuthError } from "@/lib/auth-utils";
 
-export function classifyAdminChannelError(err: unknown) {
+export type AdminChannelErrorClassification = {
+  code:
+    | "UNAUTHORIZED"
+    | "FORBIDDEN"
+    | "MAIN_CHANNEL_NOT_FOUND"
+    | "MAIN_CHANNEL_NOT_APPROVED"
+    | "MAIN_CHANNEL_NOT_PRIMARY"
+    | "INTERNAL_ERROR";
+  title: string;
+  message: string;
+  showMaintenanceNote: boolean;
+};
+
+export function classifyAdminChannelError(
+  err: unknown,
+): AdminChannelErrorClassification {
   if (err instanceof AuthError) {
+    if (err.code === "UNAUTHORIZED") {
+      return {
+        code: "UNAUTHORIZED",
+        title: "Unauthorized",
+        message: "Sign in before opening channel settings.",
+        showMaintenanceNote: false,
+      };
+    }
+
     return {
       code: "FORBIDDEN",
       title: "Forbidden",

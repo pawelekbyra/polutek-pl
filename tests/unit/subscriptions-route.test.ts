@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from '@/lib/modules/subscriptions';
 import { GetOrCreateUserUseCase } from '@/lib/modules/users';
+import { getActorFromAuth } from '@/lib/api/auth';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -14,6 +15,10 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
+}));
+
+vi.mock('@/lib/api/auth', () => ({
+  getActorFromAuth: vi.fn(),
 }));
 
 vi.mock('@/lib/modules/subscriptions', () => ({
@@ -47,11 +52,17 @@ describe('/api/subscriptions', () => {
             image_url: 'http://example.com/image.png'
         }
     } as any);
+    vi.mocked(getActorFromAuth).mockResolvedValue({
+      type: 'user',
+      userId: 'user_1',
+      isPatron: false,
+    } as any);
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 119 });
   });
 
   it('returns 401 for guests so the client can open Clerk sign-in', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'guest' } as any);
 
     const res = await GET(new NextRequest('http://localhost/api/subscriptions'));
     const body = await res.json();

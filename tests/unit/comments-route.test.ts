@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { createVideoComment } from '@/lib/modules/comments';
 import { POST } from '@/app/api/videos/[id]/comments/route';
+import { getActorFromAuth } from '@/lib/api/auth';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -11,6 +12,10 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
+}));
+
+vi.mock('@/lib/api/auth', () => ({
+  getActorFromAuth: vi.fn(),
 }));
 
 vi.mock('@/lib/modules/comments', () => ({
@@ -22,6 +27,11 @@ describe('/api/videos/[id]/comments POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 4 });
+    vi.mocked(getActorFromAuth).mockResolvedValue({
+      type: 'user',
+      userId: 'local-user-id',
+      isPatron: false,
+    } as any);
   });
 
   it('persists the comment via modular createVideoComment', async () => {
@@ -56,6 +66,7 @@ describe('/api/videos/[id]/comments POST', () => {
     vi.mocked(auth).mockResolvedValue({
       userId: null,
     } as any);
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'guest' } as any);
 
     const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',

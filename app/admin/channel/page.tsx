@@ -28,21 +28,23 @@ export default async function AdminChannelPage() {
       </div>
     );
   } catch (err: any) {
+    const classifiedError = classifyAdminChannelError(err);
+
     return (
       <div className="min-h-screen bg-muted/40 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-md w-full bg-background border border-destructive/20 p-8 rounded-xl shadow-sm text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">
-              {classifyAdminChannelError(err).title}
+              {classifiedError.title}
             </h1>
             <p className="text-muted-foreground mb-6">
-              {classifyAdminChannelError(err).message}
+              {classifiedError.message}
             </p>
             <div className="bg-muted p-4 rounded text-xs text-left overflow-auto mb-6">
-              <code>Error: {classifyAdminChannelError(err).code}</code>
+              <code>Error: {classifiedError.code}</code>
             </div>
-            {classifyAdminChannelError(err).showMaintenanceNote ? (
+            {classifiedError.showMaintenanceNote ? (
               <p className="text-sm text-muted-foreground">
                 Review the main-channel configuration before running maintenance
                 manually.

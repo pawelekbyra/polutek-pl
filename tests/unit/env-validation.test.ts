@@ -20,6 +20,7 @@ const productionEnv = {
   PATRON_MIN_TIP_CURRENCY: 'EUR',
   REFERRAL_PATRON_THRESHOLD: '5',
   HEALTHCHECK_TOKEN: 'health-token',
+  EMAIL_UNSUBSCRIBE_SIGNING_SECRET: '0123456789abcdef0123456789abcdef',
   MEDIA_BUCKET_HOST: 'media.example.com',
   UPSTASH_REDIS_REST_URL: 'https://redis.example.com',
   UPSTASH_REDIS_REST_TOKEN: 'redis-token',

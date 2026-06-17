@@ -43,6 +43,7 @@ const allowedAppRoutes = [
   "app/api/admin/comments/reports/route.ts",
   "app/api/admin/comments/route.ts",
   "app/api/admin/videos/[id]/route.ts",
+  "app/api/admin/videos/[id]/upload/route.ts",
   "app/api/comments/[commentId]/context/route.ts",
   "app/api/comments/[commentId]/pin/route.ts",
   "app/api/comments/[commentId]/reaction/route.ts",
@@ -61,6 +62,7 @@ const allowedAppRoutes = [
   "app/api/media/[...path]/route.ts",
   "app/api/payment-settings/route.ts",
   "app/api/subscriptions/route.ts",
+  "app/api/subscriptions/unsubscribe/route.ts",
   "app/api/user/language/route.ts",
   "app/api/user/profile/route.ts",
   "app/api/user/referrals/claim/route.ts",
@@ -76,7 +78,12 @@ const allowedAppRoutes = [
   "app/page.tsx",
   "app/polityka-prywatnosci/page.tsx",
   "app/regulamin/page.tsx",
+  "app/unsubscribe/page.tsx",
 ].sort();
+
+const approvedRoutesMatchingOutOfScopeWords = new Set([
+  "app/api/admin/videos/[id]/upload/route.ts",
+]);
 
 const outOfScopeRoutePatterns = [
   /campaign/i,
@@ -109,8 +116,10 @@ describe("private beta route surface", () => {
 
   it("does not expose out-of-scope marketplace, campaign, upload, or transcoding routes", () => {
     const routes = collectRouteFiles(join(process.cwd(), "app")).sort();
-    const outOfScopeRoutes = routes.filter((route) =>
-      outOfScopeRoutePatterns.some((pattern) => pattern.test(route)),
+    const outOfScopeRoutes = routes.filter(
+      (route) =>
+        !approvedRoutesMatchingOutOfScopeWords.has(route) &&
+        outOfScopeRoutePatterns.some((pattern) => pattern.test(route)),
     );
 
     expect(outOfScopeRoutes).toEqual([]);

@@ -8,6 +8,7 @@ describe('handleCloudflareStreamWebhook', () => {
     videoAsset: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),

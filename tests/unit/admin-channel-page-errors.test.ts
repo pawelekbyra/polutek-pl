@@ -4,6 +4,7 @@ import { classifyAdminChannelError } from "@/lib/admin-channel-error-classificat
 
 describe("admin channel page error classification", () => {
   it.each([
+    [new AuthError("UNAUTHORIZED"), "UNAUTHORIZED", false],
     [new AuthError("FORBIDDEN"), "FORBIDDEN", false],
     [
       { name: "MainChannelNotFoundError", message: "missing" },
@@ -28,7 +29,11 @@ describe("admin channel page error classification", () => {
 
       expect(classified.code).toBe(code);
       expect(classified.showMaintenanceNote).toBe(showMaintenanceNote);
-      if (code === "FORBIDDEN" || code === "INTERNAL_ERROR") {
+      if (
+        code === "UNAUTHORIZED" ||
+        code === "FORBIDDEN" ||
+        code === "INTERNAL_ERROR"
+      ) {
         expect(classified.title).not.toBe("Maintenance Required");
         expect(classified.message).not.toMatch(/run maintenance/i);
       }
