@@ -1,0 +1,21 @@
+# Historical Ticket Ledger
+
+Status: ACTIVE — HISTORICAL TRACEABILITY LEDGER
+Launch status: NO_GO
+
+This ledger preserves detailed historical ticket/PR status that must remain discoverable even when the active ready queue is concise. It is historical evidence, not the current executable queue. The current executable pointer remains only in `docs/tickets/ready/README.md`.
+
+| Ticket / PR | Status | Verification / merge evidence | Notes |
+| --- | --- | --- | --- |
+| PAYMENT-WEBHOOK-RESULT-001 / PR #902 | `MERGED / HISTORICAL` | Merge SHA `2c2a0f01f71e177145336051e97680bcc489e2b9` | Payment webhook result handling historical implementation evidence. |
+| EMAIL-WEBHOOK-IDEMPOTENCY-001 / PR #905 | `MERGED_UNVERIFIED / VERIFIED_FIX_REQUIRED` | Merge SHA `36b57dec5c763ca29ff708c836dae0601125c49d`; verification PR #912 | Verification found follow-up required; do not rewrite as PASS. |
+| EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 / PR #912 | `FIX_REQUIRED / VERIFICATION_COMPLETE / HISTORICAL` | Merge SHA `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a` | Historical verification evidence for PR #905. |
+| EMAIL-WEBHOOK-SVIX-PRODUCTION-REPAIR-001 / PR #914 | `MERGED / IMPLEMENTATION_COMPLETE / VERIFIED_PASS / HISTORICAL` | PR #914 merge SHA `fe56413d6c97bf0b7bededb3d2e1bc173e3125c8`; verification PR #916 | Production Svix repair implementation. |
+| EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001 / PR #916 | `PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL` | Verification merge SHA `62548c01cf2df66b88d608ebc751e68871b0ff3d`; report `docs/reports/verification/EMAIL-WEBHOOK-SVIX-POSTMERGE-VERIFY-001.md` | Independent verification PASS for PR #914. |
+| EMAIL-SIGNED-UNSUBSCRIBE-001 / PR #918 | `MERGED / IMPLEMENTATION_COMPLETE / VERIFIED_PASS / HISTORICAL` | Implementation merge SHA `5710d14f82f5951c13d8d77f6a8eb4d899068c4b`; verification PR #920 merge SHA `77081b64073ec77bf1df13217622a0f88d118011` | Signed unsubscribe boundary verified. |
+| EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001 / PR #920 | `PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL` | Verification merge SHA `77081b64073ec77bf1df13217622a0f88d118011`; report `docs/reports/verification/EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001.md` | Independent verification PASS for PR #918. |
+| ADMIN-AUTH-ACTOR-CANONICALIZATION-001 / PR #922 | `IMPLEMENTATION_MERGED / PREVIOUS_POSTMERGE_PASS_INCOMPLETE / REVERIFICATION_REQUIRED / HISTORICAL_IMPLEMENTATION_EVIDENCE` | Implementation merge SHA `366390f310b22a0ee3bbf91231d2063505b88812`; verification PR #923 merge SHA `f60b4b7a4815c63af960228161e62e7210bd2f1d`; later PR #929 merge SHA `6162ed6b79d412856c02c4cb5c610f4f9f81b152` | #923 PASS did not cover the later repaired legacy AccessPolicy playback path. |
+| ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001 / PR #926 | `PARTIAL_IMPLEMENTATION_MERGED_IN_PR_926 / PROVIDER_RUNTIME_NOT_VERIFIED / CORRECTIVE_WORK_REQUIRED / POSTMERGE_VERIFICATION_MISSING / HISTORICAL_UMBRELLA_SPEC` | Merge SHA `2a3a055e6de9155d99accaff15be54e7807b26c5` | Partial Cloudflare-first admin video implementation; future corrective cards track remaining work. |
+| Admin channel PRs #924, #925, #927 | `CLOSED / UNMERGED / HISTORICAL ATTEMPTS` | No merge evidence | Do not resurrect or merge old PR branches. |
+| Admin channel PR #928 | `SYMPTOM_PARTIALLY_HANDLED / ROOT_CAUSE_NOT_VERIFIED` | Merge SHA `5e37e2de065e0d2b242a4cd415e54cb4f5301f95` | Added UNAUTHORIZED classification; production root cause remains unknown. |
+| Legacy AccessPolicy repair PR #929 | `MERGED / HISTORICAL IMPLEMENTATION EVIDENCE` | Merge SHA `6162ed6b79d412856c02c4cb5c610f4f9f81b152` | Repaired configured-admin bypass in omitted legacy playback path; triggers auth reverification need. |

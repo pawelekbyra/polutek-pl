@@ -41,6 +41,9 @@ Only the row above is the current-primary executable row. Priority: **URGENT**. 
 
 ## Historical executable tickets
 
+Detailed historical ticket/PR status, including PRs #902, #905, #912 and #916 with FIX_REQUIRED, MERGED_UNVERIFIED, verification PRs and merge SHAs, is preserved in `docs/tickets/HISTORICAL-LEDGER.md`.
+
+
 | Ticket | Status | Evidence |
 | --- | --- | --- |
 | ADMIN-AUTH-ACTOR-CANONICALIZATION-001 | `IMPLEMENTATION_MERGED / PREVIOUS_POSTMERGE_PASS_INCOMPLETE / REVERIFICATION_REQUIRED / HISTORICAL_IMPLEMENTATION_EVIDENCE` | PR #922, PR #923, and later PR #929 legacy AccessPolicy repair. |

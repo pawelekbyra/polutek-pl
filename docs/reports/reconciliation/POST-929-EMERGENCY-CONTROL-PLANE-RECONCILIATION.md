@@ -104,6 +104,22 @@ PRs #924, #925 and #927 were closed/unmerged attempts. PR #928 added UNAUTHORIZE
 | CONTROL-008 | P0 | PROCESS_GAP | PR descriptions and automated-agent declarations were accepted as stronger evidence than full CI/provider/runtime evidence. |
 
 
+
+## PR #930 CI evidence
+
+PR #930 evidence added during draft correction:
+
+```txt
+CI run: 613
+quality: FAIL at strict-escapes
+security: FAIL at npm audit high
+integration-postgres: PASS
+hotspots/typecheck/coverage/lint/build: SKIPPED
+Vercel previews: READY, deployment evidence only
+```
+
+This evidence reinforces `CI-001` through `CI-008`. It does not prove full CI, provider runtime behavior, production readiness or launch readiness.
+
 ## Known / inferred / unknown
 
 ### Known
