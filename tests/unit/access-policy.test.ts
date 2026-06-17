@@ -34,6 +34,7 @@ describe('AccessPolicy', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.ADMIN_CLERK_USER_IDS = '';
     vi.mocked(MainChannelService.getOptional).mockResolvedValue(mainChannel as any);
   });
 
@@ -102,6 +103,74 @@ describe('AccessPolicy', () => {
 
       const decision = await AccessPolicy.canViewVideo('u1', 'v1');
       expect(decision.allowed).toBe(true);
+    });
+
+    it('allows configured active admin IDs to use legacy admin playback bypass without mutating DB role', async () => {
+      process.env.ADMIN_CLERK_USER_IDS = 'configured_admin_1';
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        creatorId: 'c1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.DRAFT,
+        publishedAt: null,
+        creator: mainChannel,
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'configured_admin_1',
+        role: 'USER',
+        isDeleted: false,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('configured_admin_1', 'v1');
+
+      expect(decision.allowed).toBe(true);
+    });
+
+    it('does not grant legacy admin playback bypass to configured deleted users', async () => {
+      process.env.ADMIN_CLERK_USER_IDS = 'configured_admin_1';
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        creatorId: 'c1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.DRAFT,
+        publishedAt: null,
+        creator: mainChannel,
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'configured_admin_1',
+        role: 'USER',
+        isDeleted: true,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('configured_admin_1', 'v1');
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('DELETED');
+    });
+
+    it('does not grant legacy admin playback bypass to revoked DB users with stale configured env removed', async () => {
+      process.env.ADMIN_CLERK_USER_IDS = '';
+      vi.mocked(prisma.video.findUnique).mockResolvedValue({
+        id: 'v1',
+        creatorId: 'c1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.DRAFT,
+        publishedAt: null,
+        creator: mainChannel,
+      } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'former_admin_1',
+        role: 'USER',
+        isDeleted: false,
+      } as any);
+
+      const decision = await AccessPolicy.canViewVideo('former_admin_1', 'v1');
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe('NOT_FOUND');
     });
 
     it('allows access to anything if user is an ADMIN, even if not on main channel', async () => {
