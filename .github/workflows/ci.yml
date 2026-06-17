@@ -8,33 +8,34 @@ on:
       - master
       - work
 
+env:
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+  DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
+  NEXT_PUBLIC_APP_URL: https://example.com
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ
+  CLERK_SECRET_KEY: sk_test_example
+  CLERK_WEBHOOK_SECRET: whsec_clerk
+  STRIPE_SECRET_KEY: sk_test_stripe
+  STRIPE_WEBHOOK_SECRET: whsec_stripe
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
+  RESEND_API_KEY: re_example
+  EMAIL_FROM: notifications@example.com
+  ADMIN_EMAIL: admin@example.com
+  ADMIN_CLERK_USER_IDS: user_ci_admin
+  MAIN_CREATOR_SLUG: ci-creator
+  PATRON_MIN_TIP_AMOUNT: "500"
+  PATRON_MIN_TIP_CURRENCY: EUR
+  REFERRAL_PATRON_THRESHOLD: "5"
+  HEALTHCHECK_TOKEN: ci-health-token
+  EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001
+  MEDIA_BUCKET_HOST: media.example.com
+  UPSTASH_REDIS_REST_URL: https://redis.example.com
+  UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+
 jobs:
-  quality:
-    name: quality
+  environment-validation:
+    name: environment validation
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
-      NEXT_PUBLIC_APP_URL: https://example.com
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ
-      CLERK_SECRET_KEY: sk_test_example
-      CLERK_WEBHOOK_SECRET: whsec_clerk
-      STRIPE_SECRET_KEY: sk_test_stripe
-      STRIPE_WEBHOOK_SECRET: whsec_stripe
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
-      RESEND_API_KEY: re_example
-      EMAIL_FROM: notifications@example.com
-      ADMIN_EMAIL: admin@example.com
-      ADMIN_CLERK_USER_IDS: user_ci_admin
-      MAIN_CREATOR_SLUG: ci-creator
-      PATRON_MIN_TIP_AMOUNT: "500"
-      PATRON_MIN_TIP_CURRENCY: EUR
-      REFERRAL_PATRON_THRESHOLD: "5"
-      HEALTHCHECK_TOKEN: ci-health-token
-      EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001
-      MEDIA_BUCKET_HOST: media.example.com
-      UPSTASH_REDIS_REST_URL: https://redis.example.com
-      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,18 +44,120 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run env:validate:prod
+
+  prisma-validation-generation:
+    name: Prisma validation/generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npx prisma validate
       - run: npx prisma generate
+
+  strict-escapes:
+    name: strict escapes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run quality:strict-escapes
+
+  hotspots:
+    name: hotspots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run quality:hotspots
+
+  architecture-boundaries:
+    name: architecture boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run quality:architecture-boundaries
+
+  control-plane-docs:
+    name: control-plane docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: node scripts/check-control-plane-docs.mjs
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run typecheck
+
+  tests-coverage:
+    name: tests/coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run test:coverage
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vitest-coverage
           path: coverage/
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run lint
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run build
 
   integration-postgres:
@@ -74,11 +177,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
-      NEXT_PUBLIC_APP_URL: https://example.com
-      MAIN_CREATOR_SLUG: ci-creator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -86,12 +184,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx prisma migrate deploy
-      - run: npx prisma generate
-      - run: npm run db:smoke
+      - run: npm run test:integration:postgres
 
   security:
-    name: security
+    name: npm audit/security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
