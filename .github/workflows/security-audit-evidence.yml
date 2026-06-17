@@ -1,4 +1,4 @@
-name: Security audit evidence (temporary)
+name: Security remediation simulation (temporary)
 
 on:
   push:
@@ -11,48 +11,112 @@ on:
 permissions:
   contents: read
 
+env:
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+  DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
+  NEXT_PUBLIC_APP_URL: https://example.com
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ
+  CLERK_SECRET_KEY: sk_test_example
+  CLERK_WEBHOOK_SECRET: whsec_clerk
+  STRIPE_SECRET_KEY: sk_test_stripe
+  STRIPE_WEBHOOK_SECRET: whsec_stripe
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
+  RESEND_API_KEY: re_example
+  EMAIL_FROM: notifications@example.com
+  ADMIN_EMAIL: admin@example.com
+  ADMIN_CLERK_USER_IDS: user_ci_admin
+  MAIN_CREATOR_SLUG: ci-creator
+  PATRON_MIN_TIP_AMOUNT: 500
+  PATRON_MIN_TIP_CURRENCY: EUR
+  REFERRAL_PATRON_THRESHOLD: 5
+  HEALTHCHECK_TOKEN: ci-health-token
+  EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001
+  MEDIA_BUCKET_HOST: media.example.com
+  UPSTASH_REDIS_REST_URL: https://redis.example.com
+  UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+
 jobs:
-  audit-evidence:
+  simulate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
-      - name: Capture npm audit JSON
+      - name: Install baseline
+        run: npm ci
+      - name: Apply candidate package-only remediation
         shell: bash
         run: |
           set +e
-          npm audit --json > npm-audit-before.json
-          audit_exit=$?
-          echo "$audit_exit" > npm-audit-exit-code.txt
-          node - <<'NODE'
-          const fs = require('fs');
-          const raw = fs.readFileSync('npm-audit-before.json', 'utf8');
-          const data = JSON.parse(raw);
-          const summary = {
-            error: data.error ?? null,
-            statusCode: data.statusCode ?? null,
-            metadata: data.metadata ?? null,
-            vulnerabilities: data.vulnerabilities ?? null,
-          };
-          fs.writeFileSync('npm-audit-summary.json', JSON.stringify(summary, null, 2));
-          console.log(JSON.stringify({
-            error: summary.error,
-            statusCode: summary.statusCode,
-            severityCounts: summary.metadata?.vulnerabilities ?? null,
-            packages: summary.vulnerabilities ? Object.keys(summary.vulnerabilities) : [],
-          }, null, 2));
-          NODE
+          npm install 'next@^15.5.16' '@clerk/nextjs@^7.5.3' --save > install-runtime.log 2>&1
+          runtime_exit=$?
+          if [ "$runtime_exit" -eq 0 ]; then
+            npm install --save-dev --save-exact eslint-config-next@15.5.16 > install-eslint.log 2>&1
+            eslint_exit=$?
+          else
+            eslint_exit=99
+            echo 'Skipped because runtime dependency install failed.' > install-eslint.log
+          fi
+          printf '%s\n' "$runtime_exit" > install-runtime.exit
+          printf '%s\n' "$eslint_exit" > install-eslint.exit
+          cat install-runtime.log
+          cat install-eslint.log
+          exit 0
+      - name: Run candidate validation and capture evidence
+        shell: bash
+        run: |
+          set +e
+          run_cmd() {
+            name="$1"
+            shift
+            "$@" > "${name}.log" 2>&1
+            code=$?
+            printf '%s\n' "$code" > "${name}.exit"
+            echo "===== ${name} (exit ${code}) ====="
+            cat "${name}.log"
+          }
+          run_cmd audit-json npm audit --json
+          cp audit-json.log npm-audit-after.json
+          run_cmd audit-high npm audit --audit-level=high
+          run_cmd strict-escapes npm run quality:strict-escapes
+          run_cmd architecture npm run quality:architecture-boundaries
+          run_cmd control-plane node scripts/check-control-plane-docs.mjs
+          run_cmd typecheck npm run typecheck
+          run_cmd coverage npm test -- --coverage
+          run_cmd lint npm run lint
+          run_cmd build npm run build
+          run_cmd integration npm run test:integration:postgres
+          git diff --check > git-diff-check.log 2>&1
+          printf '%s\n' "$?" > git-diff-check.exit
+          git diff --name-only > changed-files.txt
+          git diff -- package.json package-lock.json > package-diff.patch
           exit 0
       - uses: actions/upload-artifact@v4
         with:
-          name: npm-audit-evidence
+          name: security-remediation-simulation
           path: |
-            npm-audit-before.json
-            npm-audit-summary.json
-            npm-audit-exit-code.txt
+            package.json
+            package-lock.json
+            package-diff.patch
+            changed-files.txt
+            npm-audit-after.json
+            *.log
+            *.exit
           if-no-files-found: error
           retention-days: 1
