@@ -100,7 +100,8 @@ export async function recordPlaybackEventUseCase(
         }
 
         // Session expiration check (24h)
-        const sessionAgeMs = Date.now() - session.createdAt.getTime();
+        const currentTime = ctx.now ? ctx.now() : new Date();
+        const sessionAgeMs = currentTime.getTime() - session.createdAt.getTime();
         if (sessionAgeMs > 24 * 60 * 60 * 1000) {
             return { ok: false, error: new PlaybackSessionExpiredError() };
         }
@@ -113,7 +114,7 @@ export async function recordPlaybackEventUseCase(
     let shouldSaveEvent = true;
 
     if (sessionId && (isProgressOrHeartbeat || ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type))) {
-        const now = new Date();
+        const now = ctx.now ? ctx.now() : new Date();
         const lastHeartbeat = session?.lastHeartbeatAt || session?.createdAt || now;
         const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
 
