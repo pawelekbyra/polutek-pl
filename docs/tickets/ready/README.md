@@ -5,39 +5,38 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: CI-SIGNAL-RESTORATION-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/CI-SIGNAL-RESTORATION-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: SECURITY-DEPENDENCY-REMEDIATION-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/SECURITY-DEPENDENCY-REMEDIATION-001.md -->
 
 ## Current Control-Plane Ticket
 
 ```txt
-CI-SIGNAL-RESTORATION-001
+SECURITY-DEPENDENCY-REMEDIATION-001
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | CI-SIGNAL-RESTORATION-001 | `docs/tickets/ready/CI-SIGNAL-RESTORATION-001.md` | `READY_FOR_BUILDER` |
+| Builder | SECURITY-DEPENDENCY-REMEDIATION-001 | `docs/tickets/ready/SECURITY-DEPENDENCY-REMEDIATION-001.md` | `READY_FOR_BUILDER` |
 
-**Current Status:** Emergency documentation reconciliation after PRs #922-#929 has identified stale queue state, incomplete CI signal, partial Cloudflare/video implementation, admin auth reverification needs, and unresolved admin-channel root cause. Public launch remains `NO_GO`. Runtime work must not start before CI signal restoration.
+**Current Status:** Post-PR #931/#932 reconciliation records CI visibility as restored with strict-escapes historical baseline active. Public launch remains `NO_GO`; security dependency remediation is now the single executable ticket. This is not `FULL_CI_PASS`, `SECURITY_PASS`, `PRODUCTION_CERTIFIED`, or `LAUNCH_READY`.
 
 Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**.
 
 ## Ordered repair queue
 
-1. `CI-SIGNAL-RESTORATION-001` — `READY_FOR_BUILDER`
-2. `SECURITY-DEPENDENCY-REMEDIATION-001` — `PLANNED`
-3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
-4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
-5. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
-6. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
-7. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `PLANNED`
-8. `ADMIN-VIDEO-POSTMERGE-VERIFY-001` — `PLANNED`
-9. `ADMIN-AUTH-POSTMERGE-REVERIFY-001` — `PLANNED`
-10. `LEGACY-ACCESS-POLICY-RETIREMENT-001` — `PLANNED`
-11. `ADMIN-CHANNEL-ROOT-CAUSE-001` — `PLANNED`
-12. `LEGACY-MEDIA-PROXY-RETIREMENT-001` — `PLANNED`
-13. `CONTROL-PLANE-GUARD-HARDENING-001` — `NON_EXECUTABLE / PLANNED`
-14. `BETA-SCOPE-GUARD-RECONCILIATION-001` — `NON_EXECUTABLE / PLANNED`
+1. `SECURITY-DEPENDENCY-REMEDIATION-001` — `READY_FOR_BUILDER`
+2. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
+3. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
+4. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
+5. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
+6. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `PLANNED`
+7. `ADMIN-VIDEO-POSTMERGE-VERIFY-001` — `PLANNED`
+8. `ADMIN-AUTH-POSTMERGE-REVERIFY-001` — `PLANNED`
+9. `LEGACY-ACCESS-POLICY-RETIREMENT-001` — `PLANNED`
+10. `ADMIN-CHANNEL-ROOT-CAUSE-001` — `PLANNED`
+11. `LEGACY-MEDIA-PROXY-RETIREMENT-001` — `PLANNED`
+12. `CONTROL-PLANE-GUARD-HARDENING-001` — `NON_EXECUTABLE / PLANNED`
+13. `BETA-SCOPE-GUARD-RECONCILIATION-001` — `NON_EXECUTABLE / PLANNED`
 
 ## Historical executable tickets
 

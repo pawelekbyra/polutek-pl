@@ -7,15 +7,15 @@ This README is the owner-facing dashboard for current documentation reconciliati
 
 ## Current reconciliation
 
-Current reconciliation report: `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
+Current reconciliation report: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`.
 
-Baseline recorded by that report: current workspace HEAD `6162ed6b79d412856c02c4cb5c610f4f9f81b152` after PR #929. This is dated evidence from 2026-06-17, not an eternally current Git head claim.
+Baseline recorded by that report: local HEAD `00bfb84e826110fccb17604f82176a7956ea5ee7` after PR #931 final merge and corrective PR #932 history. This is dated evidence from 2026-06-17, not an eternally current Git head claim.
 
 ## Current project stage
 
 ```txt
 Implementation foundation: substantial, but PRs #922-#929 exposed stale control-plane state and unverified runtime/provider claims.
-Automated/local evidence: incomplete because CI signal is not currently reliable.
+Automated/local evidence: CI visibility restored after PR #931/#932, but full CI health is not passing/certified because npm audit/security remains unresolved and other health work remains open.
 Production/manual evidence: incomplete and operator pending.
 X6: X6.1 complete; X6.2-X6.8 not executed/certified.
 X7: evidence pack incomplete.
@@ -26,11 +26,11 @@ Public launch: NO_GO / not certified.
 
 | Area | Current classification | Launch impact |
 | --- | --- | --- |
-| CI signal | `P0 / RESTORATION_REQUIRED` | Further runtime work blocked until CI checks are independently visible. |
+| CI signal | `MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE` | Independent visibility restored; this is not FULL_CI_PASS or SECURITY_PASS. |
 | Admin auth | `IMPLEMENTATION_MERGED / REVERIFICATION_REQUIRED` | PR #923 PASS is incomplete for current main because PR #929 repaired a legacy AccessPolicy path later. |
 | Admin video / Cloudflare | `PARTIAL_IMPLEMENTATION_MERGED_IN_PR_926 / CORRECTIVE_WORK_REQUIRED` | Upload/attach/provider privacy must not be used in production until containment and verification. |
 | Admin channel | `SYMPTOM_PARTIALLY_HANDLED / ROOT_CAUSE_NOT_VERIFIED` | Production DB/log evidence and strict typing remain required. |
-| Control plane | `EMERGENCY_RECONCILED_FOR_REVIEW` | Queue now points to CI-SIGNAL-RESTORATION-001. |
+| Control plane | `POST_931_RECONCILED_FOR_REVIEW` | Queue now points to SECURITY-DEPENDENCY-REMEDIATION-001. |
 
 ## Standing production prohibition
 
@@ -46,7 +46,7 @@ Podepnij UID
 
 The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.
 
-Exactly one current executable ticket after this reconciliation: `CI-SIGNAL-RESTORATION-001`.
+Exactly one current executable ticket after this reconciliation: `SECURITY-DEPENDENCY-REMEDIATION-001`.
 
 ## Launch backlog
 
@@ -70,7 +70,7 @@ Merged code and local tests are evidence of implementation, not evidence of publ
 - Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
 - Phase gates: `docs/roadmap/Phase-Gates.md`
 - Reconciliation report index: `docs/reports/reconciliation/README.md`
-- Current reconciliation report: `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`
+- Current reconciliation report: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`
 - Ticket queue: `docs/tickets/ready/README.md`
 - Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 

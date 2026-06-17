@@ -4,7 +4,7 @@
 - **Lane**: CI / Quality / Control Plane
 - **Phase**: Emergency post-#929 repair
 - **Type**: Fix / CI guard restoration
-- **Status**: READY_FOR_BUILDER
+- **Status**: MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE
 - **Parallel Safety**: Unsafe; single-writer CI/guard work
 - **Conflicts with**: Any ticket touching `.github/workflows/**`, `scripts/check-strict-escapes.ts`, quality guard scripts, package scripts, or CI topology
 - **Can run with**: Documentation-only review that does not touch CI/guard files
@@ -12,7 +12,7 @@
 - **Priority**: URGENT
 - **Launch status**: NO_GO
 
-Status: READY_FOR_BUILDER
+Status: MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE
 Ticket ID: CI-SIGNAL-RESTORATION-001
 
 ## Goal
@@ -184,3 +184,8 @@ The Builder PR report must include:
 - Scope confirmation that runtime/schema/packages/dependencies were unchanged, except `package.json` script aliases if explicitly used.
 - Risks and follow-ups, including `SECURITY-DEPENDENCY-REMEDIATION-001`.
 - Public launch: NO_GO.
+
+
+## Post-merge reconciliation status
+
+`CI-SIGNAL-RESTORATION-001` is recorded as `MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE` after PR #931 and corrective PR #932. This status restores visibility only and does not claim `FULL_CI_PASS`, `SECURITY_PASS`, `PRODUCTION_CERTIFIED`, or `LAUNCH_READY`. Current canonical follow-up: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`.
