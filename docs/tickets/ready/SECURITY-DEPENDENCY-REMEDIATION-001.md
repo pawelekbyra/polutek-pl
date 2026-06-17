@@ -5,114 +5,178 @@ Ticket ID: SECURITY-DEPENDENCY-REMEDIATION-001
 Role: Builder
 Priority: URGENT
 Lane: Security / Dependencies / CI
-Type: Fix / Dependency remediation
+Type: Fix / Dependency remediation with bounded compatibility migration
 Launch: NO_GO
 Parallel Safety: SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK
 
 ## Goal
-Remediate the currently visible high npm audit/security failure without suppressing vulnerabilities, without broad runtime refactor, and without claiming launch readiness.
 
-## Activation evidence
+Remove all currently visible high/critical npm audit findings using the smallest verified dependency upgrade, apply only the exact compatibility changes proven necessary by an isolated GitHub Actions simulation, and preserve product/runtime behavior without suppressing vulnerabilities or claiming launch readiness.
+
+## Activation and scope-expansion evidence
+
 This ticket was activated by the post-PR #931/#932 reconciliation after `CI-SIGNAL-RESTORATION-001` reached `MERGED / ACCEPTED / CI_VISIBILITY_RESTORED / HISTORICAL_BASELINE_ACTIVE`.
 
-Local pre-activation commands on 2026-06-17:
+The first package-only execution correctly returned `BLOCKED_AUDIT_ENDPOINT_UNAVAILABLE` because its local npm audit endpoint returned `403 Forbidden` before package edits.
 
-```bash
-npm ci
-npm audit --audit-level=high
-npm audit --json > /tmp/npm-audit.json
+Bolek then obtained valid `npm audit --json` evidence in an isolated GitHub Actions diagnostic run and performed a non-merged compatibility simulation in temporary draft PR #934. PR #934 was closed without merge and its branch was reset to the `main` baseline after evidence collection. The simulation did not modify `main`.
+
+Evidence classification:
+
+- Audit baseline and candidate validation: `CI_LOG_EVIDENCE` / GitHub Actions run `27697718247` and simulation run `27698051613`.
+- Required compatibility files: `CI_LOG_EVIDENCE` from TypeScript, lint, and build output.
+- Candidate versions: `CI_LOG_EVIDENCE` from the generated package files and audit-after artifact.
+- Temporary diagnostic PR #934: `HISTORICAL_GIT_EVIDENCE / MUST_NOT_MERGE / CLOSED_UNMERGED`.
+
+## Verified audit baseline before remediation
+
+| Field | Verified value |
+| --- | --- |
+| Severity counts | `info: 0`, `low: 1`, `moderate: 1`, `high: 12`, `critical: 0`, `total: 14` |
+| Direct high packages | `next@14.2.35`, `@clerk/nextjs@5.x`, `eslint-config-next@14.2.3` |
+| Clerk transitive high chain | `@clerk/nextjs` → `@clerk/backend`, `@clerk/clerk-react`, `@clerk/shared`, `js-cookie` |
+| ESLint transitive high chain | `eslint-config-next` → `@next/eslint-plugin-next` → `glob`; `@typescript-eslint/parser` → `@typescript-eslint/typescript-estree` → `minimatch` |
+| Next high threshold | The recorded Next advisories require at least `15.5.16`; the verified simulation resolved `next` to `15.5.19`. |
+| Clerk fix | Audit reported `@clerk/nextjs@7.5.3`, semver-major. |
+| ESLint config candidate | `eslint-config-next@15.5.16` removed the recorded high transitive findings in simulation. |
+| Compatibility risk | Verified major migration: Next async request APIs and lint behavior changed; Clerk component, redirect-prop, and middleware auth APIs changed. |
+
+## Verified candidate and audit-after result
+
+The isolated package-only candidate used:
+
+```txt
+next: ^15.5.19
+@clerk/nextjs: ^7.5.3
+eslint-config-next: 15.5.16
 ```
 
-Observed result:
+Verified audit-after result:
 
-- `npm ci`: completed, with environment warning that the repository requires Node `22.x` while the local runtime is Node `v24.15.0` / npm `11.4.2`.
-- `npm audit --audit-level=high`: failed because the npm registry audit endpoint returned `403 Forbidden` for `POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk`.
-- `npm audit --json > /tmp/npm-audit.json`: produced an npm audit endpoint error JSON, not a vulnerability report, with `statusCode: 403` and `body: "Forbidden"`.
+```txt
+info: 0
+low: 1
+moderate: 3
+high: 0
+critical: 0
+total: 4
+npm audit --audit-level=high: exit 0
+```
 
-Because the local audit endpoint was unavailable, this activation ticket must not invent advisory details. The Builder must rerun npm audit in a network-enabled environment and record exact findings before changing dependencies.
+Remaining non-high findings in the simulation were:
 
-## Current audit baseline
+- low `esbuild` development-server finding with a fix available;
+- moderate `postcss` under Next with no fix available in the simulated dependency graph;
+- aggregate moderate entries for direct `next` and `@clerk/nextjs` caused by that transitive `postcss` finding.
 
-| Field | Current value |
-| --- | --- |
-| Findings by severity | Unknown from local pre-activation audit because npm audit endpoint returned 403. CI/security remains unresolved because previous CI evidence showed npm audit high failing and PR #931 restored visibility rather than remediation. |
-| Direct packages implicated | Unknown until a successful `npm audit --json` report is obtained. |
-| Transitive packages implicated | Unknown until a successful `npm audit --json` report is obtained. |
-| Dependency paths | Unknown until a successful `npm audit --json` report is obtained. |
-| Available fixed versions | Unknown until a successful `npm audit --json` report is obtained. |
-| Major / non-major | Unknown until a successful `npm audit --json` report is obtained. |
-| `fixAvailable` | Unknown until a successful `npm audit --json` report is obtained. |
-| dependencies / devDependencies impact | Unknown until a successful `npm audit --json` report is obtained. |
-| Compatibility risk | Must be assessed per successful audit result and package changelog/release notes. Do not assume compatibility. |
+This ticket must clear high/critical findings. It must report remaining low/moderate findings honestly and must not claim blanket `SECURITY_PASS` while they remain.
+
+## Verified compatibility failures requiring scope expansion
+
+The package-only simulation proved that the original two-file scope was insufficient:
+
+1. `app/api/webhooks/clerk/route.ts`
+   - Next 15 makes `headers()` asynchronous.
+   - The three header reads around current lines 91-93 must use an awaited headers object without changing webhook verification semantics.
+2. `lib/utils/correlation.ts`
+   - Next 15 makes `headers()` asynchronous.
+   - Correlation-ID lookup must await the headers object while preserving fallback behavior.
+3. `app/components/Navbar.tsx`
+   - Clerk 7 no longer exports `SignedIn` and `SignedOut` from the current import path.
+   - The component already uses `useUser`; signed-in/signed-out rendering must be expressed from the supported Clerk 7 user/auth state without changing visible behavior.
+   - `UserButton.afterSignOutUrl` is no longer accepted; use the supported Clerk 7 redirect contract verified from installed package types/documentation.
+4. `middleware.ts`
+   - Clerk 7 middleware callback auth no longer supports `(await auth()).protect()`.
+   - Migrate the three protection branches to the supported `auth.protect()` contract while preserving the existing public-route, admin-route, comments-GET exception, request-ID, and CSP behavior.
+5. `app/error.tsx`
+   - Next 15 lint rejects the internal `/` navigation implemented with raw `<a>`.
+   - Replace it with `next/link` while preserving styling and behavior.
+6. `next-env.d.ts`
+   - Next 15 regenerates this tracked file during build; the generated change is allowed only when produced by the verified Next upgrade.
+
+The simulation also exposed an existing warning in `app/admin/videos/page.tsx` and existing failures in `tests/unit/config.test.ts` and `tests/unit/architecture/post-merge-state-reconciliation.test.ts`. They are outside this ticket and must not be changed here.
 
 ## Parallel safety
-This ticket is `SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK`. While this ticket is being executed, no other branch or agent may change:
+
+This ticket is `SERIAL_ONLY / UNSAFE_WITH_ANY_PACKAGE_JSON_OR_LOCKFILE_WORK`. While it is being executed, no other branch or agent may change:
 
 - `package.json`;
 - `package-lock.json`;
 - dependency overrides;
 - dependency installation state.
 
-The Builder must confirm this parallel-safety condition in the final report before editing package files.
+The Builder must confirm this condition before editing package files and in the final report.
 
 ## Required Builder preflight
-1. Verify the current queue still points to this ticket as the exactly one current executable ticket.
-2. Verify no other active branch/workstream is changing `package.json`, `package-lock.json`, dependency overrides, or dependency installation state.
-3. Run `npm ci`.
-4. Obtain valid advisory JSON with `npm audit --json > /tmp/npm-audit.json`.
-5. Parse and record the baseline and exact findings: severity counts, package names, direct/transitive classification, dependency paths, fixed versions, major/non-major status, `fixAvailable`, dependency section impact, and compatibility risk.
-6. Decide the minimal non-forced remediation strategy.
-7. Only after steps 1-6 are complete may the Builder edit `package.json` or `package-lock.json`.
-8. Run `npm audit --audit-level=high` as part of validation after remediation.
-9. If npm audit still returns an endpoint/network error rather than advisory JSON, stop before package edits and return `BLOCKED_AUDIT_ENDPOINT_UNAVAILABLE` with the raw error summary.
 
-The Builder must obtain valid advisory JSON before any change to `package.json` or `package-lock.json`. If the audit JSON does not contain vulnerability details, the Builder must not perform experimental dependency updates.
+1. Verify the current queue still points to this ticket as the exactly one current executable ticket.
+2. Verify no other active branch/workstream is changing package files or dependency installation state.
+3. Use Node `22.x` from `.nvmrc`.
+4. Run `npm ci`.
+5. Obtain a fresh valid `npm audit --json` report and compare it with the verified baseline above.
+6. Stop with `BLOCKED_AUDIT_BASELINE_DRIFT` if the direct high packages or required fixed thresholds materially changed.
+7. Only after steps 1-6 may implementation begin.
+
+If the npm endpoint is unavailable locally but the verified baseline remains current, the Builder may implement on a branch and rely on the PR's GitHub Actions audit job for final audit-after evidence. It must classify local audit as `BLOCKED_ENVIRONMENT` and must not claim security completion until GitHub Actions confirms zero high/critical findings.
 
 ## Allowed files
-Allowed files for the first execution of this ticket are exactly:
+
+Allowed files are exactly:
 
 ```txt
 package.json
 package-lock.json
+next-env.d.ts
+app/api/webhooks/clerk/route.ts
+app/components/Navbar.tsx
+app/error.tsx
+lib/utils/correlation.ts
+middleware.ts
 ```
 
-No other files may be changed during the first execution of this ticket. If successful npm audit analysis shows that a safe update requires runtime, configuration, or test-file changes, the Builder must not expand scope independently. The Builder must stop before editing those files and return:
-
-```txt
-BLOCKED_SCOPE_EXPANSION_REQUIRED
-```
-
-The `BLOCKED` report must list every required file, the concrete API change, and the justification. An Integrator must then expand this ticket with exact paths before work continues.
+No other file may be changed. If another runtime, configuration, test, workflow, documentation, or generated file is required, stop before editing it and return `BLOCKED_SCOPE_EXPANSION_REQUIRED` with the exact path and reason.
 
 ## Forbidden files and actions
+
 The Builder must not:
 
 - run or accept `npm audit fix --force`;
-- suppress, ignore, silence, or downgrade high/critical findings;
+- suppress, ignore, silence, or downgrade findings;
 - make unrelated refactors;
 - change Prisma schema or migrations;
 - change workflows;
 - change strict-escapes, architecture, control-plane, or other guard files;
-- fix hotspots in this ticket;
-- fix stale reconciliation tests in this ticket;
-- claim `FULL_CI_PASS`, `SECURITY_PASS`, `PRODUCTION_CERTIFIED`, `LAUNCH_READY`, or public-launch readiness unless a later certification process proves it;
-- weaken AGENTS.md invariants;
-- broaden package ranges beyond what the remediation requires.
+- change `app/admin/videos/page.tsx`;
+- change `tests/unit/config.test.ts`;
+- change `tests/unit/architecture/post-merge-state-reconciliation.test.ts`;
+- fix hotspots or stale reconciliation tests in this ticket;
+- migrate `next lint` to another lint command in this ticket;
+- upgrade to Next 16 or Clerk beyond the bounded verified candidate without a new Integrator decision;
+- claim `FULL_CI_PASS`, `PRODUCTION_CERTIFIED`, `LAUNCH_READY`, or blanket `SECURITY_PASS` while low/moderate findings remain;
+- weaken `AGENTS.md` invariants.
 
 ## Implementation requirements
-- Prefer the smallest non-forced dependency update that remediates high/critical advisories.
-- If the successful audit reports `fixAvailable` only through a semver-major update, assess compatibility and update exact tests/commands in the PR report.
-- If no safe fix is available, document the package, advisory, dependency path, `fixAvailable` status, and proposed owner/reviewer decision.
-- Keep runtime, configuration, and test changes out of this first execution. If they are required, return `BLOCKED_SCOPE_EXPANSION_REQUIRED` before editing them.
+
+- Apply the bounded candidate versions proven by simulation:
+  - `next` to `^15.5.19`;
+  - `@clerk/nextjs` to `^7.5.3`;
+  - `eslint-config-next` to exact `15.5.16`.
+- Regenerate `package-lock.json` using npm under Node 22; do not hand-edit dependency trees.
+- Apply only the compatibility changes listed in this ticket.
+- Preserve all authentication, authorization, webhook verification, request-ID, CSP, navigation, and sign-out behavior.
+- Treat the existing coverage failures as pre-existing and report them, not fix them.
 - Preserve CI visibility restored by PR #931/#932.
 
 ## Validation commands
-The Builder must run every command below and classify each result as `PASS`, `FAIL`, `BLOCKED_ENVIRONMENT`, or `NOT_APPLICABLE` with a concrete justification. No command may be omitted without a recorded result.
+
+Run every command and classify it as `PASS`, `FAIL`, `BLOCKED_ENVIRONMENT`, or `NOT_APPLICABLE` with a concrete justification:
 
 ```bash
+node --version
+npm --version
 npm ci
+npm audit --json > /tmp/npm-audit-after.json
 npm audit --audit-level=high
-npm audit --json > /tmp/npm-audit.json
 npm run quality:strict-escapes
 npm run quality:architecture-boundaries
 node scripts/check-control-plane-docs.mjs
@@ -126,19 +190,43 @@ git diff --name-only
 git status --short
 ```
 
+Additionally verify:
+
+- the three Clerk webhook header reads still feed the same verification code;
+- all protected middleware branches remain protected;
+- public routes and the comments GET exception remain unchanged;
+- navbar signed-in and signed-out branches remain functionally equivalent;
+- sign-out returns to `/` using a supported Clerk 7 contract;
+- `git diff --name-only` contains only exact allowed paths.
+
 ## Definition of Done
-- [ ] Successful audit JSON was obtained before any package-file edit and exact advisory details were recorded.
-- [ ] High/critical npm audit findings are remediated or explicitly escalated with exact `fixAvailable` evidence.
-- [ ] No vulnerability suppression was introduced.
-- [ ] All independent CI jobs were run and their results were recorded.
-- [ ] `quality:strict-escapes`, `quality:architecture-boundaries`, and control-plane docs were not weakened.
-- [ ] `typecheck`, `tests/coverage`, `lint`, `build`, and `integration-postgres` have explicit recorded results.
-- [ ] No workflow, Prisma, migration, hotspot, or stale reconciliation-test work was performed.
-- [ ] No file outside `package.json` and `package-lock.json` was changed.
-- [ ] If any other file was required, the result is `BLOCKED_SCOPE_EXPANSION_REQUIRED`, not partial implementation.
-- [ ] Parallel Safety was confirmed in the Builder report.
-- [ ] Required validation commands were run and reported honestly.
+
+- [ ] Fresh audit baseline was obtained or local endpoint failure was explicitly classified and GitHub Actions supplied final evidence.
+- [ ] All recorded high/critical findings are removed.
+- [ ] `npm audit --audit-level=high` passes in GitHub Actions.
+- [ ] Remaining low/moderate findings are listed without suppression.
+- [ ] Typecheck passes after the bounded Next/Clerk compatibility migration.
+- [ ] Lint and build pass after the exact `app/error.tsx` and compatibility changes.
+- [ ] Strict escapes, architecture boundaries, control-plane docs, and integration-postgres pass.
+- [ ] Existing coverage failures are reported and are not expanded or hidden.
+- [ ] No workflow, Prisma, migration, hotspot, stale-test, or unrelated refactor work was performed.
+- [ ] No file outside the exact allowed list changed.
+- [ ] Parallel Safety was confirmed.
 - [ ] Public launch remains `NO_GO`.
 
 ## Final report requirements
-The Builder PR report must include summary, intent, changed files, Parallel Safety confirmation, exact audit baseline before/after, compatibility risk, validation command results for every required command, scope confirmation, non-claims, follow-ups, ticket status, and `Public launch: NO_GO`.
+
+The Builder PR report must include:
+
+- verdict `READY_FOR_INDEPENDENT_REVIEW` or an exact `BLOCKED_*` status;
+- base and head SHA;
+- Node/npm versions;
+- Parallel Safety confirmation;
+- audit before/after severity counts and direct/transitive paths;
+- exact package versions before/after;
+- compatibility changes per file;
+- every validation command result;
+- explicit classification of pre-existing coverage failures;
+- exact changed-file list;
+- non-claims;
+- `Public launch remains NO_GO`.
