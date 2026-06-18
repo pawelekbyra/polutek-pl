@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const videoId = searchParams.get('videoId');
   if (!videoId) return NextResponse.json({ success: false, message: 'videoId is required' }, { status: 400 });
 
-  return getComments(request, { params: { id: videoId } });
+  return getComments(request, { params: Promise.resolve({ id: videoId }) });
 }
 
 export async function POST(request: NextRequest) {
@@ -17,19 +17,19 @@ export async function POST(request: NextRequest) {
   const videoId = body.videoId;
   if (!videoId) return NextResponse.json({ success: false, message: 'videoId is required' }, { status: 400 });
 
-  return postComment(request, { params: { id: videoId } });
+  return postComment(request, { params: Promise.resolve({ id: videoId }) });
 }
 
 export async function PATCH(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const commentId = searchParams.get('id');
     if (!commentId) return NextResponse.json({ success: false, message: 'commentId is required' }, { status: 400 });
-    return patchComment(request, { params: { commentId } });
+    return patchComment(request, { params: Promise.resolve({ commentId }) });
 }
 
 export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const commentId = searchParams.get('id');
     if (!commentId) return NextResponse.json({ success: false, message: 'commentId is required' }, { status: 400 });
-    return deleteComment(request, { params: { commentId } });
+    return deleteComment(request, { params: Promise.resolve({ commentId }) });
 }
