@@ -1,16 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 type UnsubscribePageProps = {
-  searchParams?: Promise<{ token?: string }> | { token?: string };
+  searchParams: Promise<{ token?: string }>;
 };
 
-async function getToken(searchParams: UnsubscribePageProps['searchParams']) {
-  const resolved = await searchParams;
-  return typeof resolved?.token === 'string' ? resolved.token : '';
-}
-
-export default async function UnsubscribePage({ searchParams }: UnsubscribePageProps) {
-  const token = await getToken(searchParams);
+export default async function UnsubscribePage(props: UnsubscribePageProps) {
+  const searchParams = await props.searchParams;
+  const token = typeof searchParams?.token === 'string' ? searchParams.token : '';
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
       <h1 className="text-3xl font-black tracking-tight">Manage content notifications</h1>

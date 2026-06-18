@@ -5,10 +5,8 @@ import { CommentReportStatus } from "@prisma/client";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 export const dynamic = "force-dynamic";
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { reportId: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ reportId: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "RESOLVE_COMMENT_REPORT",
   );

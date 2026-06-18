@@ -22,11 +22,11 @@ export default clerkMiddleware(async (auth, req) => {
   // Mutations are protected but still flow through the shared response setup
   // below so request IDs and security headers are attached consistently.
   if (req.nextUrl.pathname === '/api/comments' && req.method !== 'GET') {
-    (await auth()).protect();
+    await auth.protect();
   } else if (isAdminRoute(req)) {
-    (await auth()).protect();
+    await auth.protect();
   } else if (!isPublicRoute(req)) {
-    (await auth()).protect();
+    await auth.protect();
   }
 
   const requestId = crypto.randomUUID();

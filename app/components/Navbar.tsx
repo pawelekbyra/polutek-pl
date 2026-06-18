@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  SignedIn,
-  SignedOut,
   SignInButton,
   UserButton,
   useUser,
@@ -24,7 +22,7 @@ type NavbarMetadata = {
 
 const Navbar = () => {
   const { language, setLanguage, t } = useLanguage();
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
@@ -182,15 +180,15 @@ const Navbar = () => {
               </Link>
             )}
 
-            <SignedOut>
+            {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
                 <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all shadow-sm active:scale-95 border border-neutral-300">
                   <LogIn size={14} className="sm:w-4 sm:h-4 text-neutral-900" />
                   <span className="hidden sm:inline">{t.signIn}</span>
                 </button>
               </SignInButton>
-            </SignedOut>
-            <SignedIn>
+            )}
+            {isLoaded && isSignedIn && (
               <div
                 className={cn(
                   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
@@ -201,7 +199,6 @@ const Navbar = () => {
                 title={isPatron ? "Patron" : undefined}
               >
                 <UserButton
-                  afterSignOutUrl="/"
                   appearance={{
                     elements: {
                       userButtonBox: isPatron ? "overflow-visible" : undefined,
@@ -230,7 +227,7 @@ const Navbar = () => {
                   </span>
                 )}
               </div>
-            </SignedIn>
+            )}
           </div>
         </>
       )}

@@ -31,7 +31,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
     });
 
     const req = new NextRequest('http://localhost/api/comments/comment_1', { method: 'DELETE' });
-    const res = await DELETE(req, { params: { commentId: 'comment_1' } });
+    const res = await DELETE(req, { params: Promise.resolve({ commentId: 'comment_1' }) });
 
     expect(res.status).toBe(403);
     expect(deleteComment).toHaveBeenCalledWith({ commentId: 'comment_1' }, expect.any(Object));
@@ -49,7 +49,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
       method: 'PATCH',
       body: JSON.stringify({ pinned: true })
     });
-    const res = await PATCH(req, { params: { commentId: 'comment_1' } });
+    const res = await PATCH(req, { params: Promise.resolve({ commentId: 'comment_1' }) });
 
     // It should be 400 because 'text' is missing and 'pinned' is not allowed/ignored
     expect(res.status).toBe(400);

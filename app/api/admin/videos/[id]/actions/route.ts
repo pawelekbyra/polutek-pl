@@ -13,10 +13,8 @@ import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus, AccessTier } from "@prisma/client";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } =
     await requireAdminForApi("PATCH_ADMIN_VIDEO");
   if (response) return response;
@@ -35,10 +33,8 @@ export async function PATCH(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "POST_ADMIN_VIDEO_ACTION",
   );
@@ -106,6 +102,10 @@ export async function POST(
           await syncCloudflareStatus(videoId, ctx),
         );
       default:
+
+
+
+
         return fromUseCaseResult({
           ok: false,
           error: {

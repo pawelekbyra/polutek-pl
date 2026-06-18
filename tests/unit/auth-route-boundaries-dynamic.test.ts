@@ -58,7 +58,7 @@ describe("dynamic auth route boundaries", () => {
 
     const response = await mediaSourceGET(
       new NextRequest("http://localhost/api/media-source/video_1"),
-      { params: { videoId: "video_1" } },
+      { params: Promise.resolve({ videoId: "video_1" }) },
     );
 
     expect(response.status).toBe(403);
@@ -74,19 +74,19 @@ describe("dynamic auth route boundaries", () => {
         method: "PATCH",
         body: JSON.stringify({ text: "x" }),
       }),
-      { params: { commentId: "comment_1" } },
+      { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     const del = await commentDELETE(
       new NextRequest("http://localhost/api/comments/comment_1", {
         method: "DELETE",
       }),
-      { params: { commentId: "comment_1" } },
+      { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     const pin = await pinPOST(
       new NextRequest("http://localhost/api/comments/comment_1/pin", {
         method: "POST",
       }),
-      { params: { commentId: "comment_1" } },
+      { params: Promise.resolve({ commentId: "comment_1" }) },
     );
 
     expect(patch.status).toBe(403);
@@ -150,13 +150,13 @@ describe("dynamic auth route boundaries", () => {
         method: "PATCH",
         body: JSON.stringify({ text: "x" }),
       }),
-      { params: { commentId: "comment_1" } },
+      { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     const pin = await pinPOST(
       new NextRequest("http://localhost/api/comments/comment_1/pin", {
         method: "POST",
       }),
-      { params: { commentId: "comment_1" } },
+      { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     await hideAdminComment("comment_1", {
       actor: { type: "user", userId: "revoked_admin", isPatron: false },

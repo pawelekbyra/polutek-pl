@@ -6,16 +6,16 @@ import { requireAdminForApi } from "@/lib/auth-utils";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "GET_ADMIN_VIDEO_COMMENTS",
   );
   if (response) return response;
 
   try {
+
+
     const { searchParams } = new URL(request.url);
     const sortBy = (searchParams.get("sortBy") as any) || "newest";
     const cursor = searchParams.get("cursor") || undefined;

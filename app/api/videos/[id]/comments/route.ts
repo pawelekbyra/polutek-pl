@@ -30,10 +30,10 @@ const postCommentSchema = z
     path: ["text"],
   });
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+
+
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
@@ -85,10 +85,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const videoId = params.id;

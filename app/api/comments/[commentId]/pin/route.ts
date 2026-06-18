@@ -18,10 +18,8 @@ function statusForCommentError(type: string) {
         : 400;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
 
@@ -44,10 +42,8 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
 
