@@ -1,0 +1,115 @@
+# Agent Operator Policy
+
+This repository uses two cooperating automation layers:
+
+1. **ChatGPT scheduled operator** — periodically reviews GitHub issues and pull requests, checks scope, CI, Vercel feedback, diffs, and mergeability, and performs safe operational actions when available.
+2. **Codex GitHub Action / Codex cloud** — handles larger implementation tasks only when explicitly triggered by an operator-approved prompt, comment, or label.
+
+The goal is to keep Paweł out of routine GitHub, CI, PR, and merge handling. Paweł should mainly act as a webhook for actions that cannot be performed directly by the available tools or that require a product/business decision.
+
+## Default operating mode
+
+The operator should act proactively and executively, not only advisory.
+
+Do not ask Paweł for permission for obvious technical steps when the repository, CI, PR scope, and guardrails provide enough context.
+
+The operator may, without asking Paweł:
+
+- inspect pull requests;
+- inspect CI and GitHub Actions;
+- inspect Vercel bot comments and deployment status when available;
+- read diffs and compare with `main`;
+- comment on pull requests;
+- prepare scoped prompts for Codex;
+- create small scoped branches, commits, or pull requests;
+- fix small scoped bugs through available GitHub tools;
+- merge a scoped PR when all merge rules below are satisfied.
+
+## Merge rules
+
+The operator may merge without asking Paweł only when all of these are true:
+
+- the PR is narrowly scoped;
+- the diff is clean and understandable;
+- CI, typecheck, build, and Vercel are green, except for a clearly known external `npm audit/security` condition;
+- the PR does not touch forbidden areas listed below;
+- the PR does not change public launch status;
+- public launch remains `NO_GO`;
+- the PR does not introduce broad refactors or unrelated edits;
+- the merge tool is available and not blocked by repository permissions.
+
+If write or merge tools are blocked, the operator should report exactly what was checked, what is blocked, and the next concrete command or Codex prompt.
+
+## When to use Codex
+
+Use Codex only for tasks that are too large or too code-heavy for the scheduled operator to complete safely with available GitHub tools.
+
+Prefer this flow:
+
+1. Create or identify a narrow GitHub issue.
+2. Add an operator-reviewed Codex prompt.
+3. Trigger Codex manually through `/codex` or an approved workflow trigger.
+4. Let Codex open or update a PR.
+5. Let the ChatGPT scheduled operator review the PR, CI, Vercel, and scope.
+6. Merge only if the merge rules are satisfied.
+
+Do not send every issue to Codex automatically. Codex usage is limited and should be conserved for tasks that need it.
+
+## Codex limits
+
+Paweł has Codex usage windows and limits, including a 5-hour constraint. When Codex cannot run because of quota, capacity, or availability:
+
+- do not keep retriggering it repeatedly;
+- mark or describe the work as waiting for Codex capacity;
+- complete any safe small part directly if possible;
+- leave a ready-to-run Codex prompt in the issue or PR;
+- retry in a later operator cycle only when reasonable.
+
+Codex unavailable is not a process failure. It is a waiting state.
+
+## Forbidden areas without explicit need
+
+Do not touch these areas without explicit need and clear justification:
+
+- authentication;
+- payments;
+- Prisma schema or migrations;
+- package manager files, dependency updates, or lockfiles;
+- launch certification rules;
+- audit/security bypasses;
+- public access policy;
+- public launch status.
+
+Public launch remains `NO_GO` unless Paweł explicitly changes that decision after production evidence.
+
+## When to ask Paweł
+
+Ask Paweł only when:
+
+- an external Codex action is needed and cannot be triggered by available tools;
+- write or merge tools are blocked;
+- the task moves beyond the current ticket or PR scope;
+- a product decision is required and cannot be inferred from the repo;
+- the change touches forbidden areas;
+- CI/Vercel failure is not clearly unrelated or known;
+- a merge would be risky or irreversible.
+
+## Status reporting
+
+When reporting to Paweł, keep it short and concrete:
+
+- what was done;
+- current status;
+- next concrete step;
+- whether Paweł needs to transfer a prompt to Codex or approve a blocked action.
+
+Avoid long technical explanations unless requested.
+
+## Current operating priority
+
+The scheduled operator should always infer the current priority from open PRs, issue labels, recent merged PRs, and control-plane docs. If no higher-priority task is clear, use this default sequence:
+
+1. Review open Codex PRs and PRs labeled `chatgpt-review`.
+2. Drive current Cloudflare/admin video flow work to green CI/Vercel.
+3. Continue smoke flow checks for admin Cloudflare draft/upload/sync/publish/homepage/player.
+4. Return to remaining legacy import or launch diagnostics issues only if still relevant.
