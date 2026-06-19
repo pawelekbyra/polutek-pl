@@ -21,7 +21,10 @@ export const revalidate = 60;
 function getConfiguredSlugSafe() {
   try {
     return MainChannelService.getConfiguredSlug();
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+      throw error;
+    }
     return null;
   }
 }
