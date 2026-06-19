@@ -32,10 +32,10 @@ This document defines the durable Human–AI operating model for Polutek.pl. It 
 - Defining acceptable product behavior and business logic.
 - Financial, legal, and public-policy decisions.
 - Providing access to real provider dashboards (Stripe, Cloudflare, Resend, Clerk).
-- Launching agents and copying prompts provided by Bolek.
+- Launching agents and copying prompts provided by Bolek when direct tool execution is not available.
 - Providing redacted logs, screenshots, and operator evidence.
 - Performing manual production actions (DNS, provider settings).
-- The final `MERGE` action (after Bolek issues the technical `MERGE` verdict).
+- The final public-launch decision and irreversible production actions.
 
 ## 3. Mandatory Post-Merge Reconciliation
 
@@ -64,7 +64,7 @@ The Product Owner authorizes Bolek to automatically squash-merge a pull request 
 5. Required checks are successful.
 6. The PR is mergeable, is not a draft and has no unresolved blocking review threads.
 7. The changed-file scope matches the approved ticket.
-8. Merge uses squash and supplies `expected_head_sha`.
+8. Merge uses squash and supplies `expected_head_sha` when the tool supports it.
 
 **Automatic merge is strictly prohibited when:**
 - verdict is `FIX` or `BLOCKED`;
@@ -94,6 +94,29 @@ Use explicit status vocabulary:
 - `MERGED / ACCEPTED`
 - `SUPERSEDED / HISTORICAL`
 - `BLOCKED`
+
+## 3A. Scheduled Bolek Operator and Codex Cloud Configuration
+
+Paweł may configure a ChatGPT scheduled task to run Bolek as a periodic repository operator for `pawelekbyra/polutek-pl`.
+
+This scheduled Bolek mode is authorized to:
+
+- periodically inspect open PRs, issues, Codex-authored PRs, CI, Vercel comments, diffs, and mergeability;
+- review PRs labeled or otherwise identified for Bolek review;
+- perform small, scoped GitHub actions available through connected tools;
+- issue technical verdicts and merge scoped PRs when `AUTOMATIC_BOLEK_MERGE_AUTHORIZED` conditions are satisfied;
+- create or update small scoped branches/PRs when available tools allow it;
+- prepare or post bounded prompts for Codex when a task is too large for the scheduled operator.
+
+Paweł currently uses Codex through ChatGPT Plus / Codex Cloud, not through a paid OpenAI API setup. Therefore:
+
+- Bolek must not assume `OPENAI_API_KEY`, API billing, or API-based Codex GitHub Actions are available;
+- larger implementation tasks should be delegated through Codex Cloud using `@codex ...` GitHub comments when the integration is connected;
+- if `@codex` does not trigger, Codex is out of quota/capacity, or manual Codex UI use is required, Bolek should leave Paweł a ready-to-paste Codex prompt;
+- Codex limits, including 5-hour usage windows, are a waiting state, not a process failure;
+- Bolek should conserve Codex usage by using it only for tasks that exceed what the scheduled operator can safely do directly.
+
+In scheduled mode, Paweł should not be asked for routine technical decisions. Ask Paweł only when a tool is blocked, an external Codex/manual step is required, the task touches protected areas, or a product/business/legal/public-launch decision is required.
 
 ## 4. Human–AI Collaboration Principles
 
