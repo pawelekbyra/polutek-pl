@@ -10,7 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:coverage": "bash -o pipefail -c 'mkdir -p coverage && vitest run --coverage 2>&1 | tee coverage/coverage-output.txt'",
+    "test:coverage": "vitest run tests/unit --coverage",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:verify": "npx ts-node scripts/verify_db.ts",
