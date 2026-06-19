@@ -54,27 +54,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "app/admin/videos/components/VideoForm.tsx",
-      "line": 64,
-      "label": "explicit any annotation",
-      "text": "const [diagnostics, setDiagnostics] = useState<any[]>([]);",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/components/VideoForm.tsx",
-      "line": 173,
-      "label": "explicit any annotation",
-      "text": "<PremiumWrapper videoId={formData.id || \"preview\"} requiredTier={formData.tier as any}>",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/components/VideoForm.tsx",
-      "line": 174,
-      "label": "explicit any annotation",
-      "text": "<VideoPlayer video={formData as any} />",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "app/admin/videos/components/VideoTable.tsx",
       "line": 127,
       "label": "explicit any annotation",

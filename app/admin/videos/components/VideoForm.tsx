@@ -15,6 +15,8 @@ import { ArrowLeft, Globe, ShieldCheck, ImageIcon, Video, Youtube, BarChart3, Al
 import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
 import VideoPlayer from "@/app/components/VideoPlayer";
 import PremiumWrapper from "@/app/components/PremiumWrapper";
+import type { PublicVideoDTO } from "@/app/types/video";
+import type { AccessTierDto } from "@/lib/services/comments/comment.dto";
 
 interface VideoFormData {
   id: string;
@@ -49,6 +51,11 @@ interface VideoFormProps {
   className?: string;
 }
 
+type Diagnostic = {
+  severity: "ERROR" | "WARNING" | "INFO";
+  message: string;
+};
+
 export function VideoForm({
   formData,
   setFormData,
@@ -61,13 +68,13 @@ export function VideoForm({
   slugify,
   className
 }: VideoFormProps) {
-  const [diagnostics, setDiagnostics] = useState<any[]>([]);
+  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
 
   useEffect(() => {
     const runDiagnostics = () => {
-        const issues = [];
+        const issues: Diagnostic[] = [];
         if (!formData.title) issues.push({ severity: "ERROR", message: "Brak tytułu PL." });
-        if (!formData.videoUrl) issues.push({ severity: "ERROR", message: "Brak URL wideo." });
+        if (!formData.videoUrl && !formData.id) issues.push({ severity: "INFO", message: "Cloudflare Stream dodasz po utworzeniu szkicu." });
         if (!formData.thumbnailUrl) issues.push({ severity: "WARNING", message: "Brak miniatury." });
         if (formData.isMainFeatured && formData.tier !== 'PUBLIC') issues.push({ severity: "ERROR", message: "Hero musi być publiczne." });
         setDiagnostics(issues);
@@ -76,6 +83,24 @@ export function VideoForm({
   }, [formData]);
 
   const detectedSource = useMemo(() => formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null, [formData.videoUrl]);
+  const previewVideo = useMemo<PublicVideoDTO>(() => ({
+    id: formData.id || "preview",
+    creatorId: "admin-preview",
+    title: formData.title || "Podgląd szkicu",
+    titleEn: formData.titleEn || null,
+    slug: formData.slug || "preview",
+    description: formData.description || null,
+    descriptionEn: formData.descriptionEn || null,
+    thumbnailUrl: formData.thumbnailUrl || "/logo.png",
+    duration: formData.duration || null,
+    tier: formData.tier as PublicVideoDTO["tier"],
+    status: formData.status as PublicVideoDTO["status"],
+    views: formData.views,
+    likesCount: formData.likesCount,
+    dislikesCount: formData.dislikesCount,
+    isMainFeatured: formData.isMainFeatured,
+    sidebarOrder: formData.sidebarOrder
+  }), [formData]);
 
   return (
     <div className={cn("max-w-7xl mx-auto p-4 md:p-8 space-y-8", className)}>
@@ -84,13 +109,13 @@ export function VideoForm({
             <Button variant="ghost" onClick={onCancel} className="-ml-3 mb-2">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Wróć
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight">{formData.id ? "Edycja filmu" : "Nowy Film"}</h1>
-            <p className="text-sm text-muted-foreground">Zarządzaj treścią, mediami i dostępem do materiału.</p>
+            <h1 className="text-3xl font-bold tracking-tight">{formData.id ? "Edycja filmu" : "Nowy szkic Cloudflare"}</h1>
+            <p className="text-sm text-muted-foreground">Zarządzaj treścią, mediami i dostępem do materiału. Nowe filmy startują jako bezpieczne szkice Cloudflare-first.</p>
           </div>
           <div className="flex gap-3">
              <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>Anuluj</Button>
              <Button onClick={onSubmit} disabled={isSubmitting}>
-                <Save className="mr-2 h-4 w-4" /> {isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
+                <Save className="mr-2 h-4 w-4" /> {isSubmitting ? "Zapisywanie..." : (formData.id ? "Zapisz zmiany" : "Utwórz szkic Cloudflare")}
              </Button>
           </div>
         </header>
@@ -145,16 +170,29 @@ export function VideoForm({
                 <Card>
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Media</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
+                        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+                            <div className="mb-3 flex items-center gap-2 font-semibold">
+                                <Video className="h-5 w-5" />
+                                Ścieżka główna: Cloudflare Stream
+                            </div>
+                            <ol className="list-decimal space-y-1 pl-5">
+                                <li>Zapisz film jako szkic.</li>
+                                <li>Otwórz stronę szczegółów i mediów filmu.</li>
+                                <li>Wygeneruj Cloudflare upload URL albo podepnij istniejący Cloudflare UID.</li>
+                                <li>Synchronizuj status providera do momentu READY.</li>
+                            </ol>
+                            <p className="mt-3 text-xs text-sky-800">Ten formularz nie oznacza assetu jako READY i nie tworzy publicznego playbacku.</p>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="videoUrl" className="flex items-center gap-2">
-                                        URL Wideo
+                                        Legacy / Migracja only
                                         <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
                                     </Label>
-                                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} required />
+                                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
                                     {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
-                                    <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest ścieżką migracyjną. Docelowo używaj Cloudflare Stream w panelu szczegółów filmu.</p>
+                                    <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="thumbnailUrl">URL Miniatury</Label>
@@ -170,12 +208,14 @@ export function VideoForm({
                                 <div className="aspect-video bg-black rounded-lg overflow-hidden border relative">
                                     {formData.videoUrl ? (
                                         <div className="h-full w-full">
-                                            <PremiumWrapper videoId={formData.id || "preview"} requiredTier={formData.tier as any}>
-                                                <VideoPlayer video={formData as any} />
+                                            <PremiumWrapper videoId={formData.id || "preview"} requiredTier={formData.tier as AccessTierDto}>
+                                                <VideoPlayer video={previewVideo} />
                                             </PremiumWrapper>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Brak URL wideo</div>
+                                        <div className="flex h-full items-center justify-center p-6 text-center text-xs italic text-muted-foreground">
+                                            Główna ścieżka launch to Cloudflare Stream po utworzeniu szkicu. Zapisz szkic, a następnie dodaj upload URL lub Cloudflare UID na stronie szczegółów/mediów.
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -236,7 +276,7 @@ export function VideoForm({
                         <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800"><AlertTriangle className="h-4 w-4" /> Diagnostyka</CardTitle></CardHeader>
                         <CardContent className="space-y-2">
                             {diagnostics.map((d, i) => (
-                                <div key={i} className={`text-xs flex gap-2 ${d.severity === 'ERROR' ? 'text-red-700' : 'text-amber-700'}`}>
+                                <div key={i} className={`text-xs flex gap-2 ${d.severity === 'ERROR' ? 'text-red-700' : d.severity === 'INFO' ? 'text-sky-700' : 'text-amber-700'}`}>
                                     <span>•</span> {d.message}
                                 </div>
                             ))}
