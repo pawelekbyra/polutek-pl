@@ -12,6 +12,7 @@ export interface AttachCloudflareAssetInput {
   videoId: string;
   providerAssetId: string;
   providerPlaybackId?: string;
+  processingState?: unknown;
 }
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
