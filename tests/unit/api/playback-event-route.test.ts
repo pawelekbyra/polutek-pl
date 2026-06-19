@@ -37,7 +37,7 @@ describe('Playback-Event Route Access', () => {
       error: new AppError('ACCESS_DENIED', 403, 'ACCESS_DENIED')
     });
 
-    const res = await POST(createReq({ type: 'PLAY_STARTED' }), { params: { id: 'v1' } });
+    const res = await POST(createReq({ type: 'PLAY_STARTED' }), { params: Promise.resolve({ id: 'v1' }) });
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.error).toBe('ACCESS_DENIED');
@@ -50,7 +50,7 @@ describe('Playback-Event Route Access', () => {
       data: { success: true }
     });
 
-    const res = await POST(createReq({ type: 'PLAYER_READY' }), { params: { id: 'v1' } });
+    const res = await POST(createReq({ type: 'PLAYER_READY' }), { params: Promise.resolve({ id: 'v1' }) });
     expect(res.status).toBe(200);
     expect(recordPlaybackEventUseCase).toHaveBeenCalled();
   });

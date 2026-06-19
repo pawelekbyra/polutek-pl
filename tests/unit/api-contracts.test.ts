@@ -222,7 +222,7 @@ describe('API Contracts', () => {
       vi.mocked(PlaybackService.createPlaybackPlanWithContext).mockResolvedValue(mockPlaybackPlan as any);
 
       const req = new NextRequest('http://localhost/api/media-source/v1');
-      const res = await mediaSourceGET(req, { params: { videoId: 'v1' } });
+      const res = await mediaSourceGET(req, { params: Promise.resolve({ videoId: 'v1' }) });
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -245,7 +245,7 @@ describe('API Contracts', () => {
       vi.mocked(PlaybackService.createPlaybackPlanWithContext).mockResolvedValue(mockPlaybackPlan as any);
 
       const req = new NextRequest('http://localhost/api/media-source/v1');
-      const res = await mediaSourceGET(req, { params: { videoId: 'v1' } });
+      const res = await mediaSourceGET(req, { params: Promise.resolve({ videoId: 'v1' }) });
       const data = await res.json();
 
       expect(res.status).toBe(403);

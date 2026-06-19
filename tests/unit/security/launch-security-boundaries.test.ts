@@ -86,7 +86,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
       body: JSON.stringify({ action: 'grant', reason: 'manual verification' }),
     });
 
-    const response = await PATCH(request, { params: { userId: 'user-1' } });
+    const response = await PATCH(request, { params: Promise.resolve({ userId: 'user-1' }) });
 
     expect(response.status).toBe(401);
     expect(mockRequireAdminForApi).toHaveBeenCalledWith('PATCH_ADMIN_USER_PATRON');
@@ -107,7 +107,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
       body: JSON.stringify({ action: 'revoke', reason: 'manual verification' }),
     });
 
-    const response = await PATCH(request, { params: { userId: 'user-1' } });
+    const response = await PATCH(request, { params: Promise.resolve({ userId: 'user-1' }) });
 
     expect(response.status).toBe(403);
     expect(mockRevokePatron).not.toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     const missingReason = await PATCH(new NextRequest('http://localhost/api/admin/users/user-1/patron', {
       method: 'PATCH',
       body: JSON.stringify({ action: 'grant', reason: '   ' }),
-    }), { params: { userId: 'user-1' } });
+    }), { params: Promise.resolve({ userId: 'user-1' }) });
 
     expect(missingReason.status).toBe(400);
     expect(mockGrantPatron).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     const invalidAction = await PATCH(new NextRequest('http://localhost/api/admin/users/user-1/patron', {
       method: 'PATCH',
       body: JSON.stringify({ action: 'promote', reason: 'manual verification' }),
-    }), { params: { userId: 'user-1' } });
+    }), { params: Promise.resolve({ userId: 'user-1' }) });
 
     expect(invalidAction.status).toBe(400);
     expect(mockGrantPatron).not.toHaveBeenCalled();

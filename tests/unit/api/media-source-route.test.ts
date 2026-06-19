@@ -39,7 +39,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: 's1' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     const data = await res.json();
 
     expect(data.playbackUrl).toBe('/api/media/v1');
@@ -55,7 +55,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: '' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.hasAccess).toBe(false);
@@ -76,7 +76,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: '' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.hasAccess).toBe(false);
@@ -85,7 +85,7 @@ describe('Media-Source Route Access', () => {
   });
 
   it('requires videoId param', async () => {
-    const res = await GET(createReq(), { params: { videoId: '' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: '' }) });
     expect(res.status).toBe(400);
   });
 
@@ -111,7 +111,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: 's-cf-1' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.access.allowed).toBe(true);
@@ -134,7 +134,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: '' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.status).toBe('PROCESSING');
@@ -154,7 +154,7 @@ describe('Media-Source Route Access', () => {
       tracking: { playbackSessionId: '' }
     });
 
-    const res = await GET(createReq(), { params: { videoId: 'v1' } });
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.status).toBe('UNAVAILABLE');
