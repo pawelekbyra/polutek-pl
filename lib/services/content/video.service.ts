@@ -53,15 +53,7 @@ export class VideoContentService {
           isPrimary: true,
         },
       },
-      include: {
-        creator: {
-          include: {
-            user: {
-              select: { imageUrl: true, email: true }
-            }
-          }
-        }
-      },
+      include: { creator: true },
       orderBy: publicVideoOrderBy
     });
 
@@ -141,15 +133,7 @@ export class VideoContentService {
             in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
           }
         },
-        include: {
-          creator: {
-            include: {
-              user: {
-                select: { imageUrl: true, email: true }
-              }
-            }
-          }
-        },
+        include: { creator: true },
         orderBy: publicVideoOrderBy
       });
 
@@ -168,7 +152,7 @@ export class VideoContentService {
       const mainCreatorSlug = flags.mainCreatorSlug;
 
       return videos.map(v => {
-          let imageUrl = v.creator?.user?.imageUrl || null;
+          let imageUrl: string | null = null;
           if (v.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
               imageUrl = adminData.imageUrl;
           }
@@ -193,15 +177,7 @@ export class VideoContentService {
             tier: AccessTier.PUBLIC,
             isMainFeatured: true,
         },
-        include: {
-          creator: {
-            include: {
-              user: {
-                select: { imageUrl: true, email: true }
-              }
-            }
-          }
-        }
+        include: { creator: true }
       });
 
       const selectedVideo = video ?? await prisma.video.findFirst({
@@ -209,15 +185,7 @@ export class VideoContentService {
           ...publicWhere,
           tier: AccessTier.PUBLIC,
         },
-        include: {
-          creator: {
-            include: {
-              user: {
-                select: { imageUrl: true, email: true }
-              }
-            }
-          }
-        },
+        include: { creator: true },
         orderBy: publicVideoOrderBy,
       });
 
@@ -234,7 +202,7 @@ export class VideoContentService {
       }) : null;
 
       const mainCreatorSlug = flags.mainCreatorSlug;
-      let imageUrl = selectedVideo.creator?.user?.imageUrl || null;
+      let imageUrl: string | null = null;
       if (selectedVideo.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
           imageUrl = adminData.imageUrl;
       }
