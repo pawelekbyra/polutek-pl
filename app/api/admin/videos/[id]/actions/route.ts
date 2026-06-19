@@ -108,8 +108,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
           ok: false,
           error: {
             code: "INVALID_ACTION",
-            message: `Action ${action} not supported`,
-            statusCode: 400,
+            message:
+              `Action ${action} not supported`,
+            statusCode:
+              400,
           } as any,
         });
     }
