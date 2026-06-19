@@ -1,19 +1,37 @@
-# Agent Operator Policy
+# Optional Agent Operator Mode
 
-This repository uses two cooperating automation layers:
+This document describes an optional operating mode for `pawelekbyra/polutek-pl`.
+
+It is not a replacement for the normal Bolek workflow and it is not a new default rule. It is a convenience mode Paweł may use when he wants Bolek to keep watching the repository without manual prompting, for example when Paweł is away, asleep, or does not want to manually shepherd GitHub/Codex work.
+
+The normal rule remains simple: if something is wrong in code, it should be fixed. The scheduled operator mode is only a way to keep that process moving with less manual prompting.
+
+## Optional automation layers
+
+When Paweł explicitly enables this mode, two cooperating automation paths may be used:
 
 1. **ChatGPT scheduled operator** — periodically reviews GitHub issues and pull requests, checks scope, CI, Vercel feedback, diffs, and mergeability, and performs safe operational actions when available.
-2. **Codex Cloud through ChatGPT/GitHub integration** — handles larger implementation tasks when explicitly triggered with `@codex ...` comments or through Codex UI. This repository does not assume an OpenAI API billing setup or an `OPENAI_API_KEY` secret.
+2. **Codex Cloud through ChatGPT/GitHub integration** — may handle larger implementation tasks when explicitly triggered with `@codex ...` comments or through Codex UI. This repository does not assume an OpenAI API billing setup or an `OPENAI_API_KEY` secret.
 
-The goal is to keep Paweł out of routine GitHub, CI, PR, and merge handling. Paweł should mainly act as a webhook for actions that cannot be performed directly by the available tools or that require a product/business decision.
+This mode is meant to reduce Paweł's routine prompting burden, not to remove his product ownership or create a separate process.
 
-## Default operating mode
+## When this mode is useful
 
-The operator should act proactively and executively, not only advisory.
+Use this mode when:
 
-Do not ask Paweł for permission for obvious technical steps when the repository, CI, PR scope, and guardrails provide enough context.
+- Paweł wants Bolek to keep checking PRs/issues periodically;
+- Paweł wants to leave routine GitHub/CI/PR review work to Bolek for a while;
+- Codex may produce PRs while Paweł is not actively watching;
+- small scoped fixes can be done directly through connected GitHub tools;
+- bigger implementation tasks need a ready Codex prompt.
 
-The operator may, without asking Paweł:
+Do not treat this mode as mandatory. If Paweł is actively working with Bolek in chat, the normal interactive workflow is still valid.
+
+## Operator behavior when enabled
+
+The operator should act proactively and executively, not only advisory, but only within repository guardrails.
+
+The operator may, without asking Paweł for every routine technical step:
 
 - inspect pull requests;
 - inspect CI and GitHub Actions;
@@ -50,7 +68,7 @@ Prefer this flow:
 2. Add an operator-reviewed Codex prompt as a GitHub comment.
 3. Trigger Codex with `@codex ...` when Codex Cloud is connected for the repository, or give Paweł the exact prompt to paste into Codex UI if direct triggering is not available.
 4. Let Codex open or update a PR.
-5. Let the ChatGPT scheduled operator review the PR, CI, Vercel, and scope.
+5. Let Bolek review the PR, CI, Vercel, and scope.
 6. Merge only if the merge rules are satisfied.
 
 Do not send every issue to Codex automatically. Codex usage is limited and should be conserved for tasks that need it.
@@ -106,12 +124,3 @@ When reporting to Paweł, keep it short and concrete:
 - whether Paweł needs to transfer a prompt to Codex or approve a blocked action.
 
 Avoid long technical explanations unless requested.
-
-## Current operating priority
-
-The scheduled operator should always infer the current priority from open PRs, issue labels, recent merged PRs, and control-plane docs. If no higher-priority task is clear, use this default sequence:
-
-1. Review open Codex PRs and PRs labeled `chatgpt-review`.
-2. Drive current Cloudflare/admin video flow work to green CI/Vercel.
-3. Continue smoke flow checks for admin Cloudflare draft/upload/sync/publish/homepage/player.
-4. Return to remaining legacy import or launch diagnostics issues only if still relevant.
