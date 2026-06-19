@@ -109,4 +109,22 @@ describe('createAdminVideo use-case', () => {
     }
     expect(mockPrisma.video.create).not.toHaveBeenCalled();
   });
+
+  it('returns a readable validation error when slug is missing', async () => {
+    const result = await createAdminVideo({
+        title: 'Cloudflare Draft',
+        slug: '   ',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        videoUrl: null,
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_SLUG_REQUIRED');
+      expect(result.error.message).toContain('slug');
+    }
+    expect(mockPrisma.video.create).not.toHaveBeenCalled();
+  });
 });

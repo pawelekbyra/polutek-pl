@@ -15,12 +15,6 @@ import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
 import { VideoFilters } from "./components/VideoFilters";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
 
-function getAdminFormError(data: any): string {
-  if (typeof data?.message === "string" && data.message.trim()) return data.message;
-  if (typeof data?.error === "string" && data.error.trim()) return data.error;
-  return "Wystąpił błąd podczas zapisywania.";
-}
-
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
   const toast = useToast();
@@ -288,7 +282,7 @@ export default function AdminVideosPage() {
               toast("Pomyślnie zarchiwizowano film.", 'success');
           } else {
               const err = await res.json();
-              toast("Błąd archiwizacji: " + (err.message || err.error), 'error');
+              toast("Błąd archiwizacji: " + err.error, 'error');
           }
       } catch (err) {
           logger.error("Delete failed", err);
@@ -349,45 +343,42 @@ export default function AdminVideosPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatMiniCard label="Łącznie filmów" value={total} />
-          <StatMiniCard label="Opublikowane" value={stats?.published || 0} />
-          <StatMiniCard label="Wymagają uwagi" value={stats?.needsAttention || 0} className={stats?.needsAttention > 0 ? "border-amber-300" : ""} />
-        </div>
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+            <StatMiniCard label="Wszystkie" value={stats.total} />
+            <StatMiniCard label="Publikacje" value={stats.published} color="green" />
+            <StatMiniCard label="Szkice" value={stats.drafts} color="amber" />
+            <StatMiniCard label="Archiv" value={stats.archived} color="red" />
+            <StatMiniCard label="Public" value={stats.public} />
+            <StatMiniCard label="Login" value={stats.loggedIn} />
+            <StatMiniCard label="Patron" value={stats.patron} color="amber" />
+          </div>
+        )}
 
         <VideoFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          tierFilter={tierFilter}
-          setTierFilter={setTierFilter}
-          sourceKindFilter={sourceKindFilter}
-          setSourceKindFilter={setSourceKindFilter}
-          migrationStatusFilter={migrationStatusFilter}
-          setMigrationStatusFilter={setMigrationStatusFilter}
-          needsAttention={needsAttention}
-          setNeedsAttention={setNeedsAttention}
-          isMainFeatured={isMainFeatured}
-          setIsMainFeatured={setIsMainFeatured}
-          showInSidebar={showInSidebar}
-          setShowInSidebar={setShowInSidebar}
-          orderBy={orderBy}
-          setOrderBy={setOrderBy}
-          onApply={() => fetchVideos(1)}
+            searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1)}
+            statusFilter={statusFilter} onStatusFilterChange={setStatusFilter}
+            tierFilter={tierFilter} onTierFilterChange={setTierFilter}
+            sourceKindFilter={sourceKindFilter} onSourceKindFilterChange={setSourceKindFilter}
+            migrationStatusFilter={migrationStatusFilter} onMigrationStatusFilterChange={setMigrationStatusFilter}
+            isMainFeatured={isMainFeatured} onIsMainFeaturedChange={setIsMainFeatured}
+            showInSidebar={showInSidebar} onShowInSidebarChange={setShowInSidebar}
+            orderBy={orderBy} onOrderByChange={setOrderBy}
+            needsAttention={needsAttention} onNeedsAttentionChange={setNeedsAttention}
         />
 
         <VideoTableWrapper
-          videos={videos}
-          onEdit={handleEdit}
-          onDuplicate={handleDuplicate}
-          onDelete={handleDelete}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={(p) => fetchVideos(p)}
+            isLoading={isLoading} total={total} videos={videos} page={page} totalPages={totalPages}
+            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} onPageChange={fetchVideos}
         />
       </div>
       </div>
     </AdminLayoutShell>
   );
+}
+
+function getAdminFormError(data: { message?: unknown; error?: unknown } | null | undefined): string {
+  if (typeof data?.message === "string" && data.message.trim()) return data.message;
+  if (typeof data?.error === "string" && data.error.trim()) return data.error;
+  return "Wystąpił błąd podczas zapisywania.";
 }
