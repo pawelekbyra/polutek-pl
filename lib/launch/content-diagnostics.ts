@@ -2,13 +2,26 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 import { validateAppEnv } from '@/lib/env/validation';
 import { visiblePublishedAtFilter } from '@/lib/services/content/video.service';
 
+type DiagnosticCreator = {
+  id: string;
+  slug: string;
+  name: string;
+  isApproved: boolean;
+  isPrimary: boolean;
+};
+
+type DiagnosticVideo = {
+  slug: string;
+  title: string;
+};
+
 type DiagnosticDb = {
   creator: {
-    findUnique(args: unknown): Promise<any>;
+    findUnique(args: unknown): Promise<DiagnosticCreator | null>;
   };
   video: {
     count(args: unknown): Promise<number>;
-    findFirst(args: unknown): Promise<any>;
+    findFirst(args: unknown): Promise<DiagnosticVideo | null>;
   };
 };
 
