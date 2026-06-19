@@ -57,7 +57,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             const body = isFullUrl ? {} : { action };
             const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) { toast(`Akcja ${action} wykonana pomyślnie.`, 'success'); fetchVideo(); }
-            else { const err = await res.json(); toast(`Błąd: ${err.error}`, 'error'); }
+            else { const err = await res.json(); toast(`Błąd: ${err.error?.message || err.message || 'Nieznany błąd'}`, 'error'); }
         } catch (err) { toast("Błąd połączenia.", 'error'); }
     };
 
@@ -150,7 +150,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                             <CardTitle className="text-lg">Cloudflare Stream (Primary)</CardTitle>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={async () => {
-                                    const providerAssetId = prompt("Wpisz Cloudflare UID:");
+                                    const providerAssetId = prompt("Wpisz Cloudflare UID. Zasób zostanie zapisany jako PENDING do czasu synchronizacji statusu z Cloudflare:");
                                     if (providerAssetId) {
                                         try {
                                             const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
@@ -162,7 +162,8 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                             else { const err = await res.json(); toast(`Błąd: ${err.error?.message || 'Nieznany błąd'}`, 'error'); }
                                         } catch (e) { toast('Błąd połączenia.', 'error'); }
                                     }
-                                }}>Podepnij UID</Button>
+                                }}>Podepnij UID jako PENDING</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleAction('sync-cloudflare')} disabled={video.asset?.provider !== 'CLOUDFLARE_STREAM'}>Synchronizuj status</Button>
                                 <Button variant="default" size="sm" onClick={async () => {
                                     try {
                                         const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
@@ -212,8 +213,9 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Stan przetwarzania</Label><div><Badge variant={video.asset.processingState === 'READY' ? 'default' : 'outline'}>{video.asset.processingState}</Badge></div></div>
-                                            <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Primary Asset</Label><div>{video.asset.isPrimary ? <Badge className="bg-green-600">TAK</Badge> : <Badge variant="outline">NIE</Badge>}</div></div>
+                                            <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider</Label><div><Badge variant="secondary">{video.asset.provider}</Badge></div></div>
+                                            <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Stan przetwarzania</Label><div><Badge variant={video.asset.processingState === 'READY' ? 'default' : video.asset.processingState === 'FAILED' ? 'destructive' : 'outline'}>{video.asset.processingState}</Badge></div></div>
+                                            <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Primary Asset</Label><div>{video.asset.isPrimary ? <Badge className="bg-green-600">TAK</Badge> : <Badge variant="outline">NIE — nie używać jako launch playback</Badge>}</div></div>
                                         </div>
                                         <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider Asset ID (UID)</Label><div className="p-2 bg-muted rounded font-mono text-xs">{video.asset.providerAssetId}</div></div>
                                         <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Playback ID</Label><div className="p-2 bg-muted rounded font-mono text-xs">{video.asset.providerPlaybackId || '—'}</div></div>
@@ -249,7 +251,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                             <div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.videoUrl}</div>
                                             <Button variant="ghost" size="icon" asChild><a href={video.videoUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>
                                         </div>
-                                        <p className="text-[10px] text-amber-700 italic">Ten URL jest używany tylko jako fallback lub w celach migracyjnych. Playback dla patronów docelowo odbywa się przez Cloudflare Stream.</p>
+                                        <p className="text-[10px] text-amber-700 italic">Ten URL jest ścieżką legacy/migration only. Nie jest launchową prywatną ścieżką playbacku patronów; docelowy provider launch to Cloudflare Stream po backendowej zgodzie dostępu.</p>
                                     </div>
                                     <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Thumbnail URL</Label><div className="flex gap-2"><div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.thumbnailUrl}</div><Button variant="ghost" size="icon" asChild><a href={video.thumbnailUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button></div></div>
                                     <div className="grid grid-cols-2 gap-4 pt-4"><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Dostawca</Label><div className="text-sm font-medium uppercase">{video.asset?.provider || "External / Direct"}</div></div><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Typ</Label><div className="text-sm font-medium">{video.asset?.mimeType || "—"}</div></div></div>
@@ -337,7 +339,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             <div className="lg:w-1/4 space-y-6">
               <Card className="shadow-sm border-0 bg-primary text-primary-foreground overflow-hidden relative"><div className="absolute top-0 right-0 p-4 opacity-10"><Settings className="h-20 w-20" /></div><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Zarządzanie</CardTitle></CardHeader><CardContent className="space-y-4 relative"><Button variant="secondary" className="w-full justify-start h-10 font-bold" onClick={() => handleAction('set-hero')} disabled={video.isMainFeatured}><CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO</Button><Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild><Link href={`/admin/videos?edit=${video.id}`}><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link></Button></CardContent></Card>
               <Card className="shadow-sm"><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Kolejność w sidebarze</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Widoczny:</span><Badge variant={video.showInSidebar ? 'default' : 'outline'}>{video.showInSidebar ? 'TAK' : 'NIE'}</Badge></div><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Pozycja:</span><span className="text-lg font-black italic">#{video.sidebarOrder}</span></div><Button variant="outline" className="w-full h-8 text-[10px]" asChild><Link href="/admin/videos/layout">Zmień kolejność hurtowo</Link></Button></CardContent></Card>
-              <Card className="shadow-sm border-dashed"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Diagnostyka URL</CardTitle></CardHeader><CardContent className="space-y-4"><div className="p-3 bg-muted rounded text-[10px] font-mono break-all leading-relaxed">{video.videoUrl}</div><div className="flex items-center gap-2 text-[10px] text-green-600 font-bold uppercase"><CheckCircle2 className="h-3 w-3" /> URL jest dostępny</div></CardContent></Card>
+              <Card className="shadow-sm border-dashed"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Legacy URL diagnostics</CardTitle></CardHeader><CardContent className="space-y-4"><div className="p-3 bg-muted rounded text-[10px] font-mono break-all leading-relaxed">{video.videoUrl || 'Brak legacy URL'}</div><div className="flex items-center gap-2 text-[10px] text-amber-700 font-bold uppercase"><AlertTriangle className="h-3 w-3" /> Legacy / migration only — nie launch patron-private provider</div></CardContent></Card>
             </div>
           </div>
         </main>

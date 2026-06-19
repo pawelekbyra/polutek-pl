@@ -45,7 +45,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
     switch (action) {
       case "publish":
@@ -84,15 +85,15 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         return fromUseCaseResult(
           await getCloudflareUploadUrl({ videoId }, ctx),
         );
-      case "attach-asset":
-        const { providerAssetId, providerPlaybackId, processingState } =
-          await req.json();
+      case "attach-asset": {
+        const { providerAssetId, providerPlaybackId, processingState } = body;
         return fromUseCaseResult(
           await attachCloudflareAsset(
             { videoId, providerAssetId, providerPlaybackId, processingState },
             ctx,
           ),
         );
+      }
       case "import-legacy-to-cloudflare":
         return fromUseCaseResult(
           await importLegacyVideoToCloudflare({ videoId }, ctx),
@@ -102,7 +103,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
           await syncCloudflareStatus(videoId, ctx),
         );
       default:
-
 
         return fromUseCaseResult({
           ok: false,

@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.client";
 import { VideoRepository } from "../infrastructure/video.repository";
@@ -21,10 +22,12 @@ export interface CloudflareUploadProvisionDto {
   assetId: string;
 }
 
+type CloudflareUploadProvisionFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
+
 export async function provisionCloudflareUpload(
   input: ProvisionCloudflareUploadInput,
   ctx: AppContext
-): Promise<UseCaseResult<CloudflareUploadProvisionDto, any>> {
+): Promise<UseCaseResult<CloudflareUploadProvisionDto, CloudflareUploadProvisionFailure>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
@@ -33,26 +36,23 @@ export async function provisionCloudflareUpload(
 
   // Policy: Only DRAFT videos can have new uploads provisioned
   if (video.status !== VideoStatus.DRAFT) {
-      return fail({
-          code: 'VIDEO_NOT_DRAFT',
-          message: 'Only draft videos can be uploaded to Cloudflare',
-          statusCode: 400
-      });
+      return fail(new AppError('Only draft videos can be uploaded to Cloudflare', 400, 'VIDEO_NOT_DRAFT'));
   }
 
   // Policy: Do not replace READY primary asset
   if (video.asset && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-      return fail({
-          code: 'VIDEO_HAS_READY_ASSET',
-          message: 'Video already has a ready primary asset. Replacement is not allowed.',
-          statusCode: 400
-      });
+      return fail(new AppError('Video already has a ready primary asset. Replacement is not allowed.', 400, 'VIDEO_HAS_READY_ASSET'));
   }
 
   const client = new CloudflareStreamClient();
 
   try {
     const uploadResponse = await client.createDirectUploadUrl();
+
+
+
+
+
 
     const asset = await (ctx.prisma as any).$transaction(async (tx: any) => {
       const upserted = await repository.upsertAsset(video.id, {
@@ -61,6 +61,9 @@ export async function provisionCloudflareUpload(
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false, // Not primary until READY
         providerSyncedAt: new Date(),
+        processingStartedAt: new Date(),
+        processingEndedAt: null,
+        failureReason: null,
         mimeType: input.contentType,
         sizeBytes: input.fileSize,
       }, tx);
@@ -82,13 +85,10 @@ export async function provisionCloudflareUpload(
     return ok({
       uploadUrl: uploadResponse.result.uploadURL,
       providerAssetId: uploadResponse.result.uid,
-      assetId: asset.id
+      assetId: asset?.id || ""
     });
   } catch (error: any) {
-    return fail({
-      code: 'CLOUDFLARE_API_ERROR',
-      message: error.message || 'Failed to communicate with Cloudflare Stream API',
-      statusCode: 500
+    return fail({ code: 'CLOUDFLARE_API_ERROR', message: error.message || 'Failed to communicate with Cloudflare Stream API', statusCode: 500
     } as any);
   }
 }

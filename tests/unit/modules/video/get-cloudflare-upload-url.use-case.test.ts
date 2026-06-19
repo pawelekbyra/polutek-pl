@@ -28,6 +28,10 @@ describe('getCloudflareUploadUrl', () => {
   const ctx = {
     prisma: mockPrisma,
     actor: { type: 'ADMIN', userId: 'admin-1' },
+    db: {
+      read: mockPrisma,
+      writeTransaction: (cb: any) => cb(mockPrisma),
+    },
   } as unknown as AppContext;
 
   beforeEach(() => {
@@ -40,7 +44,7 @@ describe('getCloudflareUploadUrl', () => {
 
   it('successfully generates an upload URL', async () => {
     const videoId = 'video-1';
-    mockPrisma.video.findFirst.mockResolvedValue({ id: videoId, creatorId: 'channel-1' });
+    mockPrisma.video.findFirst.mockResolvedValue({ id: videoId, creatorId: 'channel-1', status: 'DRAFT', asset: null });
     mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
 
     (global.fetch as any).mockResolvedValue({
@@ -61,12 +65,20 @@ describe('getCloudflareUploadUrl', () => {
       expect(result.data.uploadUrl).toBe('https://upload.cloudflare.com/123');
       expect(result.data.providerAssetId).toBe('cf-uid-456');
     }
-    expect(mockPrisma.videoAsset.create).toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        processingState: 'PENDING',
+        isPrimary: false,
+        processingStartedAt: expect.any(Date),
+        processingEndedAt: null,
+        failureReason: null,
+      })
+    }));
   });
 
   it('returns error when Cloudflare credentials are missing', async () => {
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
-    mockPrisma.video.findFirst.mockResolvedValue({ id: 'video-1', creatorId: 'channel-1' });
+    mockPrisma.video.findFirst.mockResolvedValue({ id: 'video-1', creatorId: 'channel-1', status: 'DRAFT', asset: null });
 
     const result = await getCloudflareUploadUrl({ videoId: 'video-1' }, ctx);
 

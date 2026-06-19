@@ -37,7 +37,7 @@ export async function getCloudflareUploadUrl(
         providerAssetId: uploadResponse.result.uid,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false, // Not primary until actually uploaded/ready
-        providerSyncedAt: new Date()
+        providerSyncedAt: new Date(), processingStartedAt: new Date(), processingEndedAt: null, failureReason: null
       }, tx);
 
       await recordAuditEvent(ctx, {
