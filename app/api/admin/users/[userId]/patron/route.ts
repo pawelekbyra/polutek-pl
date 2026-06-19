@@ -6,9 +6,10 @@ import { UserAccessService } from "@/lib/services/user-access.service";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 
-type Context = { params: { userId: string } };
+type Context = { params: Promise<{ userId: string }> };
 
-export async function PATCH(request: NextRequest, { params }: Context) {
+export async function PATCH(request: NextRequest, props: Context) {
+  const params = await props.params;
   const requestId = request.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
 

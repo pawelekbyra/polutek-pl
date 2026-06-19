@@ -9,14 +9,12 @@ import {
   importLegacyVideoToCloudflare,
   syncCloudflareStatus,
 } from "@/lib/modules/video";
-import { fromUseCaseResult } from "@/lib/api/api-response";
+import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus, AccessTier } from "@prisma/client";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } =
     await requireAdminForApi("PATCH_ADMIN_VIDEO");
   if (response) return response;
@@ -30,15 +28,13 @@ export async function PATCH(
 
     const result = await updateAdminVideo({ ...body, id: videoId }, ctx);
     return fromUseCaseResult(result);
-  } catch (error: any) {
-    return fromUseCaseResult({ ok: false, error });
+  } catch (error: unknown) {
+    return handleApiError(error);
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "POST_ADMIN_VIDEO_ACTION",
   );
@@ -106,16 +102,20 @@ export async function POST(
           await syncCloudflareStatus(videoId, ctx),
         );
       default:
+
+
         return fromUseCaseResult({
           ok: false,
           error: {
             code: "INVALID_ACTION",
-            message: `Action ${action} not supported`,
-            statusCode: 400,
+            message:
+              `Action ${action} not supported`,
+            statusCode:
+              400,
           } as any,
         });
     }
-  } catch (error: any) {
-    return fromUseCaseResult({ ok: false, error });
+  } catch (error: unknown) {
+    return handleApiError(error);
   }
 }

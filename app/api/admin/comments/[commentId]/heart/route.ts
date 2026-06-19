@@ -4,10 +4,8 @@ import { toggleAdminCommentHeart } from "@/lib/modules/comments";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 export const dynamic = "force-dynamic";
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi(
     "HEART_COMMENT_ADMIN",
   );

@@ -32,13 +32,13 @@ const postCommentSchema = z
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
   const videoId = params.id;
-
   const sortBy = (searchParams.get("sortBy") as any) || "newest";
   const cursor = searchParams.get("cursor") || undefined;
   const parsedLimit = parseInt(searchParams.get("limit") || "20", 10);
@@ -85,10 +85,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const videoId = params.id;

@@ -51,7 +51,7 @@ describe('Media Proxy Route Safety', () => {
       videoUrl: 'https://blob.com/v1.mp4'
     }));
 
-    await GET(createReq(), { params: { path: ['v1'] } });
+    await GET(createReq(), { params: Promise.resolve({ path: ['v1'] }) });
     expect(getGatedBlobResponse).toHaveBeenCalledWith('u1', 'v1', 'https://blob.com/v1.mp4', expect.anything());
   });
 
@@ -66,7 +66,7 @@ describe('Media Proxy Route Safety', () => {
         asset: null,
       } as any);
 
-      const res = await GET(createReq(), { params: { path: ['v1'] } });
+      const res = await GET(createReq(), { params: Promise.resolve({ path: ['v1'] }) });
 
       expect(res.status).toBe(409);
       expect(getGatedBlobResponse).not.toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('Media Proxy Route Safety', () => {
       (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
       (getGatedMedia as any).mockResolvedValue(fail(new MediaSourceNotFoundError('missing')));
 
-      const res = await GET(createReq(), { params: { path: ['missing'] } });
+      const res = await GET(createReq(), { params: Promise.resolve({ path: ['missing'] }) });
       expect(res.status).toBe(404);
   });
 });

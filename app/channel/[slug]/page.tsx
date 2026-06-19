@@ -18,9 +18,8 @@ import { prisma } from '@/lib/prisma';
 
 export const revalidate = 60; // regeneruj co 60 sekund
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const mainSlug = MainChannelService.getConfiguredSlug();
   if (params.slug !== mainSlug) return { title: 'Kanał nie znaleziony' };
 
@@ -44,7 +43,8 @@ export async function generateMetadata(
   };
 }
 
-export default async function ChannelPage({ params }: { params: { slug: string } }) {
+export default async function ChannelPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const mainSlug = MainChannelService.getConfiguredSlug();
   if (params.slug !== mainSlug) {
     return (

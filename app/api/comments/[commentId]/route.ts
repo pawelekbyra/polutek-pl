@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id?: string; commentId?: string } },
+  props: { params: Promise<{ id?: string; commentId?: string }> }
 ) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const commentId =
@@ -73,8 +74,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id?: string; commentId?: string } },
+  props: { params: Promise<{ id?: string; commentId?: string }> }
 ) {
+  const params = await props.params;
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
   const commentId =

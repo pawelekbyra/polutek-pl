@@ -32,7 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function Home({ searchParams }: { searchParams: { v?: string, q?: string } }) {
+export default async function Home(props: { searchParams: Promise<{ v?: string, q?: string }> }) {
+  const searchParams = await props.searchParams;
   const getSafeAuth = async () => {
     try {
       return await auth();

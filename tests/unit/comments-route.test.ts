@@ -49,7 +49,7 @@ describe('/api/videos/[id]/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
     const body = await response.json();
 
     expect(response.status).toBe(201);
@@ -74,7 +74,7 @@ describe('/api/videos/[id]/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
     expect(response.status).toBe(401);
   });
 
@@ -91,7 +91,7 @@ describe('/api/videos/[id]/comments POST', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request, { params: { id: 'video-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
     expect(response.status).toBe(403);
   });
 });

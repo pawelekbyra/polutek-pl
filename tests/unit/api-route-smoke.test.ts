@@ -54,7 +54,7 @@ describe('API route smoke checks', () => {
     vi.mocked(getGatedMedia).mockResolvedValue(fail(new MediaSourceNotFoundError('missing-video')));
 
     const req = new NextRequest('http://localhost/api/media/missing-video');
-    const res = await getMedia(req, { params: { path: ['missing-video'] } });
+    const res = await getMedia(req, { params: Promise.resolve({ path: ['missing-video'] }) });
 
     expect(res.status).toBe(404);
     expect(res.status).not.toBe(500);

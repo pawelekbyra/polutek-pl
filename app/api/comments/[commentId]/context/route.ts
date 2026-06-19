@@ -6,10 +6,8 @@ import { getCommentContext } from "@/lib/modules/comments";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { commentId: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const actor = await getActorFromAuth();
     if (actor.type === "guest") {

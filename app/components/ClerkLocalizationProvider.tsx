@@ -59,6 +59,7 @@ export default function ClerkLocalizationProvider({ children }: { children: Reac
     <ClerkProvider
       publishableKey={publishableKey}
       localization={localization}
+      afterSignOutUrl="/"
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
       signInForceRedirectUrl="/"
