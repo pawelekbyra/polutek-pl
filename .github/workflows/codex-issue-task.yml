@@ -1,0 +1,125 @@
+name: Codex issue task
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: GitHub issue or PR number to use as task context
+        required: true
+        type: string
+      task:
+        description: Additional task instructions for Codex
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  codex:
+    name: Run Codex from approved issue task
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.comment.body, '/codex')
+    runs-on: ubuntu-latest
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Build Codex runtime prompt
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          ISSUE_TITLE: ${{ github.event.issue.title || '' }}
+          ISSUE_BODY: ${{ github.event.issue.body || '' }}
+          COMMENT_BODY: ${{ github.event.comment.body || inputs.task || '' }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.actor }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          mkdir -p .github/codex/prompts
+          cat .github/codex/prompts/issue-task.md > .github/codex/prompts/runtime-issue-task.md
+          cat >> .github/codex/prompts/runtime-issue-task.md <<'PROMPT'
+
+          ## Runtime GitHub context
+
+          Repository: ${REPOSITORY}
+          Event: ${EVENT_NAME}
+          Issue or PR number: ${ISSUE_NUMBER}
+          Triggered by: ${COMMENT_AUTHOR}
+
+          ### Issue or PR title
+
+          ${ISSUE_TITLE}
+
+          ### Issue or PR body
+
+          ${ISSUE_BODY}
+
+          ### Operator / trigger comment
+
+          ${COMMENT_BODY}
+
+          ## Task
+
+          Treat this as an operator-approved Codex task only if the trigger is explicit and scoped.
+          If the comment starts with `/codex`, ignore the literal command prefix and use the remaining text as the task instruction.
+          If the task is too broad, unsafe, or blocked by missing environment/secrets, stop and explain the blocker clearly.
+          PROMPT
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/runtime-issue-task.md
+          output-file: codex-output.md
+          sandbox: workspace-write
+          codex-args: '["--ephemeral"]'
+
+      - name: Save workspace diff if Codex changed files
+        run: |
+          git diff -- . ':!.github/codex/prompts/runtime-issue-task.md' > codex-workspace.diff || true
+          if [ ! -s codex-workspace.diff ]; then
+            echo 'No workspace diff produced by Codex.' > codex-workspace.diff
+          fi
+
+      - name: Upload Codex output
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-issue-task-output
+          path: |
+            codex-output.md
+            codex-workspace.diff
+
+  post_feedback:
+    name: Post Codex result
+    runs-on: ubuntu-latest
+    needs: codex
+    if: needs.codex.outputs.final_message != ''
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Post Codex feedback
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ needs.codex.outputs.final_message }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const issue_number = Number(process.env.ISSUE_NUMBER);
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body: `## Codex result\n\n${process.env.CODEX_FINAL_MESSAGE}`,
+            });
