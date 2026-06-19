@@ -41,7 +41,13 @@ export async function loadHomeContent(): Promise<HomeContent> {
       allVideos = await VideoContentService.getAllVideos();
     } catch (err) {
       logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", err);
-      return { status: 'error', creator: null, mainVideo: null, allVideos: [], error: "GLOBAL_FAILURE" };
+      return {
+        status: 'empty',
+        creator,
+        mainVideo: null,
+        allVideos: [],
+        publicMessage: "Brak dostępnych materiałów."
+      };
     }
 
     // 3. Resolve Main Featured Video
