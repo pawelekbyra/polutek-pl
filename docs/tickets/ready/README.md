@@ -49,6 +49,12 @@ Detailed historical ticket/PR status is preserved in `docs/tickets/HISTORICAL-LE
 | HOTSPOT-CI-DEBT | `IMPLEMENTATION_MERGED / HISTORICAL` | PR #950, merge `14aedd4818970611365ad941764d775b7727ec37`. |
 | EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001 | `PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL` | Verification PR #920. |
 
+## Closed owner-decision blockers
+
+| Area | Current classification |
+| --- | --- |
+| Legal/privacy/cookies/support copy | `LEGAL_REVIEW_REQUIRED` |
+
 ## Full backlog
 
 Full non-executable launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
