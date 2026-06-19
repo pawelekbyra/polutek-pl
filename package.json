@@ -10,7 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage tests/unit",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:verify": "npx ts-node scripts/verify_db.ts",
