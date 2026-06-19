@@ -42,12 +42,12 @@ export default function AdminVideosPage() {
     thumbnailUrl: "",
     duration: "",
     tier: "PUBLIC",
-    status: "PUBLISHED",
+    status: "DRAFT",
     likesCount: 0,
     dislikesCount: 0,
     views: 0,
     isMainFeatured: false,
-    showInSidebar: true,
+    showInSidebar: false,
     sidebarOrder: 0
   });
 
@@ -210,7 +210,7 @@ export default function AdminVideosPage() {
       slug: slugify(newTitle) + "-" + Math.floor(Math.random() * 1000),
       description: vid.description || "",
       descriptionEn: vid.descriptionEn || "",
-      videoUrl: vid.videoUrl || "",
+      videoUrl: "",
       thumbnailUrl: vid.thumbnailUrl || "",
       duration: "",
       tier: vid.tier as any,
@@ -219,8 +219,8 @@ export default function AdminVideosPage() {
       dislikesCount: 0,
       views: 0,
       isMainFeatured: false,
-      showInSidebar: vid.showInSidebar ?? true,
-      sidebarOrder: vid.sidebarOrder || 0
+      showInSidebar: false,
+      sidebarOrder: 0
     });
     setIsEditing(true);
   };
@@ -229,7 +229,7 @@ export default function AdminVideosPage() {
     setFormError(null);
     setIsSlugManual(false);
     setFormData({
-      id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", videoUrl: "", thumbnailUrl: "", duration: "", tier: "PUBLIC", status: "PUBLISHED", likesCount: 0, dislikesCount: 0, views: 0, isMainFeatured: false, showInSidebar: true, sidebarOrder: 0
+      id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", videoUrl: "", thumbnailUrl: "", duration: "", tier: "PUBLIC", status: "DRAFT", likesCount: 0, dislikesCount: 0, views: 0, isMainFeatured: false, showInSidebar: false, sidebarOrder: 0
     });
     setIsEditing(true);
   };
@@ -248,6 +248,7 @@ export default function AdminVideosPage() {
           description: formData.description?.trim() || null,
           titleEn: formData.titleEn?.trim() || null,
           descriptionEn: formData.descriptionEn?.trim() || null,
+          videoUrl: formData.videoUrl?.trim() || null,
         })
       });
       const data = await res.json();
@@ -336,7 +337,7 @@ export default function AdminVideosPage() {
           <div className="flex gap-3">
             <Button variant="outline" asChild><Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link></Button>
             <Button variant="outline" asChild><Link href="/admin/videos/layout">Układ kanału</Link></Button>
-            <Button onClick={handleCreateNew}><Plus className="mr-2 h-4 w-4" /> Nowy Film</Button>
+            <Button onClick={handleCreateNew}><Plus className="mr-2 h-4 w-4" /> Nowy szkic Cloudflare</Button>
           </div>
         </header>
 

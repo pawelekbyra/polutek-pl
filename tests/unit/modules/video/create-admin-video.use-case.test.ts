@@ -44,4 +44,32 @@ describe('createAdminVideo use-case', () => {
         data: expect.objectContaining({ creatorId: 'c1' })
     }));
   });
+
+  it('creates a safe draft without requiring a legacy videoUrl', async () => {
+    mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-cloudflare-draft' }));
+
+    const result = await createAdminVideo({
+        title: 'Cloudflare Draft',
+        slug: 'cloudflare-draft',
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.PUBLISHED,
+        videoUrl: null,
+        isMainFeatured: true,
+        showInSidebar: true
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+            creatorId: 'c1',
+            videoUrl: null,
+            status: VideoStatus.DRAFT,
+            showInSidebar: false,
+            isMainFeatured: false,
+            publishedAt: null
+        })
+    }));
+  });
 });
