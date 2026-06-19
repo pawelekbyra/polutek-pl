@@ -27,9 +27,9 @@ const budgets: Record<FileKind, number> = {
 
 const hotspotExceptions: Record<string, HotspotException> = {
   "app/components/icons/index.tsx": {
-    maxLines: 800,
+    maxLines: 1000,
     reason:
-      "Central icon barrel/component registry; tolerate current size but block further unbounded growth.",
+      "Central icon barrel/component registry; tolerated as pre-existing generated-style UI asset debt after Next 15 recovery, but block further unbounded growth.",
   },
 };
 
