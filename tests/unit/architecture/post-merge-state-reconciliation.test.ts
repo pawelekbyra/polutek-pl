@@ -15,8 +15,9 @@ describe('Post-Merge State Reconciliation Invariants', () => {
     expect(readme).toContain('# Polutek.pl — Current Main Control Panel');
     expect(readme).toContain('ACTIVE — POST-R AI DELIVERY CONTROL PLANE');
     expect(readme).toContain('Public launch: NO_GO');
-    expect(readme).toContain('Owner product direction is recorded.');
-    expect(readme).toContain('Professional legal review, public legal copy, email runtime corrections, production/operator evidence, X6.2–X6.8 and X7 certification remain incomplete.');
+    expect(readme).toContain('This README is the owner-facing dashboard for current documentation reconciliation state.');
+    expect(readme).toContain('Public launch: NO_GO / not certified.');
+    expect(readme).toContain('Production/manual proof remains required');
   });
 
   it('README points agents to canonical control-plane sources', () => {
@@ -31,7 +32,7 @@ describe('Post-Merge State Reconciliation Invariants', () => {
   it('README delegates the current ticket pointer to the canonical queue', () => {
     const readme = readText(readmePath);
 
-    expect(readme).toContain('The sole canonical current-ticket pointer is maintained in:');
+    expect(readme).toContain('The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.');
     expect(readme).toContain('docs/tickets/ready/README.md');
     expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
   });
