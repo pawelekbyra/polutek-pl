@@ -84,10 +84,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
           await getCloudflareUploadUrl({ videoId }, ctx),
         );
       case "attach-asset": {
-        const { providerAssetId, providerPlaybackId, processingState } = body;
+        const { providerAssetId, providerPlaybackId } = body;
         return fromUseCaseResult(
           await attachCloudflareAsset(
-            { videoId, providerAssetId, providerPlaybackId, processingState },
+            { videoId, providerAssetId, providerPlaybackId },
             ctx,
           ),
         );

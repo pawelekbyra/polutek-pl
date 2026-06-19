@@ -26,6 +26,7 @@ import { formatDate } from "../components/utils";
 import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
+import { readAdminApiError } from "../components/api-error";
 
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
@@ -57,7 +58,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             const body = isFullUrl ? {} : { action };
             const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) { toast(`Akcja ${action} wykonana pomyślnie.`, 'success'); fetchVideo(); }
-            else { const err = await res.json(); toast(`Błąd: ${err.error?.message || err.message || 'Nieznany błąd'}`, 'error'); }
+            else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error'); }
         } catch (err) { toast("Błąd połączenia.", 'error'); }
     };
 
@@ -159,7 +160,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                                 body: JSON.stringify({ action: 'attach-asset', providerAssetId })
                                             });
                                             if (res.ok) { toast('Zasób podpięty.', 'success'); fetchVideo(); }
-                                            else { const err = await res.json(); toast(`Błąd: ${err.error?.message || 'Nieznany błąd'}`, 'error'); }
+                                            else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error'); }
                                         } catch (e) { toast('Błąd połączenia.', 'error'); }
                                     }
                                 }}>Podepnij UID jako PENDING</Button>
@@ -178,7 +179,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                             fetchVideo();
                                         } else {
                                             const err = await res.json();
-                                            toast(`Błąd: ${err.error?.message || 'Nieznany błąd'}`, 'error');
+                                            toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error');
                                         }
                                     } catch (e) { toast('Błąd połączenia.', 'error'); }
                                 }}>Generuj Upload URL</Button>
@@ -197,7 +198,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                                 fetchVideo();
                                             } else {
                                                 const err = await res.json();
-                                                toast(`Błąd: ${err.error?.message || 'Nie udało się rozpocząć importu'}`, 'error');
+                                                toast(`Błąd: ${readAdminApiError(err, 'Nie udało się rozpocząć importu')}`, 'error');
                                             }
                                         } catch (e) {
                                             toast('Błąd połączenia.', 'error');
@@ -209,6 +210,14 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+                                <p className="font-semibold">Cloudflare-first media flow</p>
+                                <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs">
+                                    <li>Wygeneruj Cloudflare upload URL albo podepnij istniejący Cloudflare UID jako PENDING.</li>
+                                    <li>Nie oznaczaj ręcznie assetu jako READY ani primary z UI.</li>
+                                    <li>Synchronizuj status providera, aż backend potwierdzi READY.</li>
+                                </ol>
+                            </div>
                             {video.asset?.provider === 'CLOUDFLARE_STREAM' ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
@@ -240,6 +249,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                         </CardContent>
                     </Card>
 
+                    {video.videoUrl && (
                     <Card className="shadow-sm">
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2">Legacy / Migration <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">INTERNAL ONLY</Badge></CardTitle></CardHeader>
                         <CardContent className="space-y-6">
@@ -260,6 +270,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                             </div>
                         </CardContent>
                     </Card>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="access" className="space-y-6">
@@ -339,7 +350,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             <div className="lg:w-1/4 space-y-6">
               <Card className="shadow-sm border-0 bg-primary text-primary-foreground overflow-hidden relative"><div className="absolute top-0 right-0 p-4 opacity-10"><Settings className="h-20 w-20" /></div><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Zarządzanie</CardTitle></CardHeader><CardContent className="space-y-4 relative"><Button variant="secondary" className="w-full justify-start h-10 font-bold" onClick={() => handleAction('set-hero')} disabled={video.isMainFeatured}><CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO</Button><Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild><Link href={`/admin/videos?edit=${video.id}`}><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link></Button></CardContent></Card>
               <Card className="shadow-sm"><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Kolejność w sidebarze</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Widoczny:</span><Badge variant={video.showInSidebar ? 'default' : 'outline'}>{video.showInSidebar ? 'TAK' : 'NIE'}</Badge></div><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Pozycja:</span><span className="text-lg font-black italic">#{video.sidebarOrder}</span></div><Button variant="outline" className="w-full h-8 text-[10px]" asChild><Link href="/admin/videos/layout">Zmień kolejność hurtowo</Link></Button></CardContent></Card>
-              <Card className="shadow-sm border-dashed"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Legacy URL diagnostics</CardTitle></CardHeader><CardContent className="space-y-4"><div className="p-3 bg-muted rounded text-[10px] font-mono break-all leading-relaxed">{video.videoUrl || 'Brak legacy URL'}</div><div className="flex items-center gap-2 text-[10px] text-amber-700 font-bold uppercase"><AlertTriangle className="h-3 w-3" /> Legacy / migration only — nie launch patron-private provider</div></CardContent></Card>
+              {video.videoUrl && (<Card className="shadow-sm border-dashed"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Legacy URL diagnostics</CardTitle></CardHeader><CardContent className="space-y-4"><div className="p-3 bg-muted rounded text-[10px] font-mono break-all leading-relaxed">{video.videoUrl}</div><div className="flex items-center gap-2 text-[10px] text-amber-700 font-bold uppercase"><AlertTriangle className="h-3 w-3" /> Legacy / migration only — nie launch patron-private provider</div></CardContent></Card>)}
             </div>
           </div>
         </main>
