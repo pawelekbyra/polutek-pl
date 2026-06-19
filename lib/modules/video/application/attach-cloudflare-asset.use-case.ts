@@ -6,13 +6,14 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
+import type { VideoAssetProcessingState } from "@prisma/client";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 
 export interface AttachCloudflareAssetInput {
   videoId: string;
   providerAssetId: string;
   providerPlaybackId?: string;
-  processingState?: unknown;
+  processingState?: VideoAssetProcessingState;
 }
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
