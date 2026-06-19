@@ -66,7 +66,7 @@ describe('importLegacyVideoToCloudflare', () => {
     });
   });
 
-  it('imports legacy URL and creates a pending Cloudflare asset with provider UID', async () => {
+  it('imports legacy URL and creates a pending non-primary Cloudflare asset with provider UID', async () => {
     mockPrisma.video.findFirst
       .mockResolvedValueOnce(baseVideo)
       .mockResolvedValueOnce(baseVideo)
@@ -80,7 +80,7 @@ describe('importLegacyVideoToCloudflare', () => {
           providerAssetId: 'cloudflare-uid-1',
           providerPlaybackId: 'cloudflare-uid-1',
           processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-          isPrimary: true,
+          isPrimary: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -104,12 +104,13 @@ describe('importLegacyVideoToCloudflare', () => {
         providerAssetId: 'cloudflare-uid-1',
         providerPlaybackId: 'cloudflare-uid-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: true,
+        isPrimary: false,
       }),
     }));
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         action: 'VIDEO_CLOUDFLARE_LEGACY_IMPORT_STARTED',
+        metadata: expect.objectContaining({ importedAssetIsPrimary: false }),
       }),
     }));
   });
@@ -167,7 +168,7 @@ describe('importLegacyVideoToCloudflare', () => {
           providerAssetId: 'cloudflare-uid-1',
           providerPlaybackId: 'cloudflare-uid-1',
           processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-          isPrimary: true,
+          isPrimary: false,
           playbackToken: 'should-not-leak',
           signedUrl: 'https://signed.example/leak',
           uploadUrl: 'https://upload.cloudflare.com/leak',
@@ -181,6 +182,7 @@ describe('importLegacyVideoToCloudflare', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.videoUrl).toBe(baseVideo.videoUrl);
+      expect(result.data.asset?.isPrimary).toBe(false);
       expect((result.data.asset as any).playbackToken).toBeUndefined();
       expect((result.data.asset as any).signedUrl).toBeUndefined();
       expect((result.data.asset as any).uploadUrl).toBeUndefined();
