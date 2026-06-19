@@ -18,7 +18,16 @@ export interface AttachCloudflareAssetInput {
 export async function attachCloudflareAsset(
   input: AttachCloudflareAssetInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | any>> {
+  const providerAssetId = input.providerAssetId?.trim();
+  if (!providerAssetId) {
+    return fail({
+      code: "INVALID_PROVIDER_ASSET_ID",
+      message: "Cloudflare provider asset ID is required.",
+      statusCode: 400,
+    });
+  }
+
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
@@ -28,11 +37,14 @@ export async function attachCloudflareAsset(
   const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
     await repository.upsertAsset(video.id, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-      providerAssetId: input.providerAssetId,
-      providerPlaybackId: input.providerPlaybackId || input.providerAssetId, // For Cloudflare, assetId is often the playbackId
-      processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.READY,
-      isPrimary: true,
-      providerSyncedAt: new Date()
+      providerAssetId,
+      providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,
+      processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
+      isPrimary: input.processingState === VIDEO_ASSET_PROCESSING_STATE.READY,
+      providerSyncedAt: new Date(),
+      processingStartedAt: new Date(),
+      processingEndedAt: input.processingState === VIDEO_ASSET_PROCESSING_STATE.READY ? new Date() : null,
+      failureReason: null
     }, tx);
 
     await recordAuditEvent(ctx, {
@@ -41,7 +53,7 @@ export async function attachCloudflareAsset(
       targetId: video.id,
       metadata: {
           provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          providerAssetId: input.providerAssetId
+          providerAssetId
       }
     }, tx);
 

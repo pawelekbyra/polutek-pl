@@ -61,6 +61,9 @@ export async function provisionCloudflareUpload(
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false, // Not primary until READY
         providerSyncedAt: new Date(),
+        processingStartedAt: new Date(),
+        processingEndedAt: null,
+        failureReason: null,
         mimeType: input.contentType,
         sizeBytes: input.fileSize,
       }, tx);
@@ -82,7 +85,7 @@ export async function provisionCloudflareUpload(
     return ok({
       uploadUrl: uploadResponse.result.uploadURL,
       providerAssetId: uploadResponse.result.uid,
-      assetId: asset.id
+      assetId: asset?.id || ""
     });
   } catch (error: any) {
     return fail({
