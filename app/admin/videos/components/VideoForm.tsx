@@ -185,15 +185,21 @@ export function VideoForm({
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="videoUrl" className="flex items-center gap-2">
-                                        Legacy / Migracja only
-                                        <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
-                                    </Label>
-                                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
-                                    {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
-                                    <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
-                                </div>
+                                {formData.id && formData.videoUrl ? (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                                            Legacy / Migracja only
+                                            <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
+                                        </Label>
+                                        <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
+                                        {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
+                                        <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-dashed border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-900">
+                                        Utwórz szkic, potem na stronie szczegółów dodaj media przez Cloudflare upload URL albo istniejący Cloudflare UID.
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <Label htmlFor="thumbnailUrl">URL Miniatury (opcjonalnie)</Label>
                                     <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" />

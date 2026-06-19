@@ -14,6 +14,7 @@ import { AdminFormSkeleton, AdminVideosPageSkeleton } from "@/components/skeleto
 import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
 import { VideoFilters } from "./components/VideoFilters";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
+import { readAdminApiError } from "./components/api-error";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -263,7 +264,7 @@ export default function AdminVideosPage() {
         }
         fetchVideos(page);
       } else {
-        setFormError(getAdminFormError(data));
+        setFormError(readAdminApiError(data, "Wystąpił błąd podczas zapisywania."));
       }
     } catch (err) {
       logger.error("Submit failed", err);
@@ -282,7 +283,7 @@ export default function AdminVideosPage() {
               toast("Pomyślnie zarchiwizowano film.", 'success');
           } else {
               const err = await res.json();
-              toast("Błąd archiwizacji: " + err.error, 'error');
+              toast("Błąd archiwizacji: " + readAdminApiError(err, "Nie udało się zarchiwizować filmu."), 'error');
           }
       } catch (err) {
           logger.error("Delete failed", err);
@@ -375,10 +376,4 @@ export default function AdminVideosPage() {
       </div>
     </AdminLayoutShell>
   );
-}
-
-function getAdminFormError(data: { message?: unknown; error?: unknown } | null | undefined): string {
-  if (typeof data?.message === "string" && data.message.trim()) return data.message;
-  if (typeof data?.error === "string" && data.error.trim()) return data.error;
-  return "Wystąpił błąd podczas zapisywania.";
 }

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, RotateCcw, AlertCircle, CheckCircle2, Loader2, FileVideo } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
+import { readAdminApiError } from "./api-error";
 
 interface VideoUploadSectionProps {
   videoId: string;
@@ -95,7 +96,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
       });
       if (!provRes.ok) {
         const errData = await provRes.json();
-        throw new Error(errData.error?.message || "Failed to provision upload");
+        throw new Error(readAdminApiError(errData, "Failed to provision upload"));
       }
       const { uploadUrl } = await provRes.json();
       const tusUpload = new tus.Upload(file, {
