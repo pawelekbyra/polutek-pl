@@ -6,6 +6,7 @@ import { VideoRepository, CreateVideoInput } from "../infrastructure/video.repos
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaPolicy } from "@/lib/modules/media";
+import type { MediaHostEnv } from "@/lib/modules/media";
 import { VideoUrlNotAllowedError } from "../domain/video.errors";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
@@ -42,13 +43,13 @@ export async function createAdminVideo(
 
   const mainChannel = await MainChannelService.getRequired(ctx);
 
-  if (normalizedInput.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(normalizedInput.videoUrl, process.env as any)) {
+  if (normalizedInput.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(normalizedInput.videoUrl, process.env as MediaHostEnv)) {
     return fail(new VideoUrlNotAllowedError(normalizedInput.videoUrl));
   }
 
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const video = await ctx.db.writeTransaction(async (tx) => {
     const created = await repository.createForMainChannel(normalizedInput, mainChannel.id, tx);
 
     await recordAuditEvent(ctx, {

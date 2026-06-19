@@ -565,20 +565,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/application/create-admin-video.use-case.ts",
-      "line": 16,
-      "label": "explicit any annotation",
-      "text": "if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/application/create-admin-video.use-case.ts",
-      "line": 22,
-      "label": "explicit any annotation",
-      "text": "const video = await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/video/application/get-admin-video-details.use-case.ts",
       "line": 14,
       "label": "explicit any annotation",
