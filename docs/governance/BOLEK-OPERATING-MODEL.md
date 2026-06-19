@@ -112,6 +112,19 @@ When explicitly enabled, scheduled Bolek may:
 - create or update small scoped branches/PRs when available tools allow it;
 - prepare or post bounded prompts for Codex when a task is too large for the scheduled operator.
 
+### Fix-loop first
+
+If a task already has an existing PR or branch, Bolek should continue that context before creating anything new.
+
+Default order:
+
+1. Inspect the existing PR, branch, diff, comments, CI, Vercel state, and mergeability.
+2. If the issue is small and scoped, fix it directly through available GitHub tools.
+3. If the issue needs Codex, prompt Codex on the existing PR with a bounded `@codex ...` comment.
+4. Create a new issue only when there is no existing PR/branch/context or when a separate task genuinely needs to be split out.
+
+Do not create a new issue or new Codex task just to request a correction on an existing Codex PR. Keep the repair loop on the same PR whenever possible.
+
 Paweł currently uses Codex through ChatGPT Plus / Codex Cloud, not through a paid OpenAI API setup. Therefore:
 
 - Bolek must not assume `OPENAI_API_KEY`, API billing, or API-based Codex GitHub Actions are available;
