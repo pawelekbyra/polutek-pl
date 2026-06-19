@@ -1,28 +1,21 @@
 # X3-FIX-006 — Legacy storage migration plan
 
-## ID
-
-X3-FIX-006
-
-## Status
-
-READY
-
-## Lane
-
-video-provider
-
-## Type
-
-Docs/admin inventory
-
-## Priority
-
-Should-have before launch if legacy content exists
+Ticket ID: X3-FIX-006
+Status: READY_FOR_BUILDER
+Launch status: NO_GO
+Lane: video-provider
+Type: Docs/admin inventory
+Priority: Should-have before launch if legacy content exists
 
 ## Goal
 
 Produce a concrete migration plan for existing `Video.videoUrl`, R2, S3, and Vercel Blob media into the Cloudflare Stream-first asset model without treating legacy storage as active safe private patron playback.
+
+## Context
+
+X3-FIX-003 added the focused admin Cloudflare upload/attach/status workflow for existing videos. X3-FIX-004 made the admin add-video entry point Cloudflare-first for new draft videos. The remaining legacy-content question is how to identify and migrate old `videoUrl` / non-Cloudflare storage safely before enabling any launch-sensitive playback assumptions.
+
+This ticket is a plan/inventory ticket. It must not introduce public playback behavior or private legacy fallback behavior.
 
 ## Scope
 
@@ -53,16 +46,30 @@ Inventory and plan. This ticket should not change playback runtime unless explic
 - Define migration sequencing to Cloudflare Stream.
 - Define rollback and preservation policy for originals.
 - Identify owner decisions needed for any legacy fallback exception.
+- Propose follow-up runtime/import tickets if needed, without making them concurrently executable.
+
+## Non-goals
+
+- Do not implement Cloudflare import by URL in this ticket.
+- Do not disable legacy private playback runtime in this ticket.
+- Do not alter homepage/channel/sidebar/hero publication behavior.
+- Do not add launch content or seed data.
+- Do not resolve `npm audit/security` in this ticket.
 
 ## Validation
 
 - `git diff --check`
 - `npm run quality:architecture-boundaries` if feasible
+- `npm run quality:strict-escapes` if any code/script path is amended
+
+If `npm audit/security` remains red, report it as pre-existing/out of scope.
 
 ## Definition of done
 
-- Migration plan exists and clearly says R2/S3/Vercel Blob are legacy/migration, not active safe private patron playback providers.
+- Migration plan exists and clearly says R2/S3/Vercel Blob/direct `videoUrl` are legacy/migration sources, not active safe private patron playback providers.
+- Plan distinguishes public/logged-in/patron launch decisions.
 - Follow-up runtime migration/import tickets are proposed if needed.
+- Public launch remains `NO_GO`.
 
 ## Expected PR report
 

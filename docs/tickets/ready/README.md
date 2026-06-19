@@ -5,26 +5,26 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-004 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/X3-FIX-004-admin-video-create-cloudflare-first-form.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-006 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/X3-FIX-006-legacy-storage-migration-plan.md -->
 
 ## Current Control-Plane Ticket
 
 ```txt
-X3-FIX-004
+X3-FIX-006
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | X3-FIX-004 | `docs/tickets/ready/X3-FIX-004-admin-video-create-cloudflare-first-form.md` | `READY_FOR_BUILDER` |
+| Builder | X3-FIX-006 | `docs/tickets/ready/X3-FIX-006-legacy-storage-migration-plan.md` | `READY_FOR_BUILDER` |
 
-**Current Status:** Public launch remains `NO_GO`. X3-FIX-003 merged in PR #962 and repaired the focused admin Cloudflare upload/attach/status workflow for existing videos. The current single executable runtime ticket is now the narrow Cloudflare-first admin create-form shell because the add-video entry point still presents legacy YouTube/raw URL inputs as the primary workflow.
+**Current Status:** Public launch remains `NO_GO`. X3-FIX-004 merged in PR #964 and made the admin add-video path Cloudflare-first for new draft videos. The current single executable ticket is now the legacy storage migration plan, because import/attach work for existing `videoUrl` content must start from an explicit decision matrix and migration sequence.
 
 Only the row above is the current-primary executable row. Priority: **Launch-critical**. Executable ticket count: **1**.
 
 ## Ordered repair queue
 
-1. `X3-FIX-004` — `READY_FOR_BUILDER`
+1. `X3-FIX-006` — `READY_FOR_BUILDER`
 2. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW / OPERATOR_EVIDENCE_PENDING`
 3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
 4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
@@ -45,6 +45,7 @@ Detailed historical ticket/PR status is preserved in `docs/tickets/HISTORICAL-LE
 
 | Ticket | Status | Evidence |
 | --- | --- | --- |
+| X3-FIX-004 | `MERGED / HISTORICAL` | PR #964, merge `227d0e2a5152b6a7ae162b915590100cdbfb6be7`. |
 | X3-FIX-003 | `MERGED / HISTORICAL` | PR #962, merge `bf4e071b7cedf5c61b062dddf484e9bd79136acb`. |
 | SECURITY-DEPENDENCY-REMEDIATION-001 | `IMPLEMENTATION_MERGED / HIGH_AUDIT_FINDINGS_ZERO / HISTORICAL` | PR #946; later CI/security checks also passed during #953. |
 | COVERAGE-BASELINE-DEBT | `IMPLEMENTATION_MERGED / HISTORICAL` | PR #953, merge `50697d2bdc62f9eb1acc7e635fe3053c332726e8`. |
