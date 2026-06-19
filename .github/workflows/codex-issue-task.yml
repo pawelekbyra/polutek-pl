@@ -44,35 +44,47 @@ jobs:
           COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.actor }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          mkdir -p .github/codex/prompts
-          cat .github/codex/prompts/issue-task.md > .github/codex/prompts/runtime-issue-task.md
-          cat >> .github/codex/prompts/runtime-issue-task.md <<'PROMPT'
+          python - <<'PY'
+          from pathlib import Path
+          import os
 
-          ## Runtime GitHub context
+          base_path = Path('.github/codex/prompts/issue-task.md')
+          runtime_path = Path('.github/codex/prompts/runtime-issue-task.md')
+          base = base_path.read_text(encoding='utf-8')
 
-          Repository: ${REPOSITORY}
-          Event: ${EVENT_NAME}
-          Issue or PR number: ${ISSUE_NUMBER}
-          Triggered by: ${COMMENT_AUTHOR}
+          fields = {
+              'Repository': os.environ.get('REPOSITORY', ''),
+              'Event': os.environ.get('EVENT_NAME', ''),
+              'Issue or PR number': os.environ.get('ISSUE_NUMBER', ''),
+              'Triggered by': os.environ.get('COMMENT_AUTHOR', ''),
+          }
 
-          ### Issue or PR title
-
-          ${ISSUE_TITLE}
-
-          ### Issue or PR body
-
-          ${ISSUE_BODY}
-
-          ### Operator / trigger comment
-
-          ${COMMENT_BODY}
-
-          ## Task
-
-          Treat this as an operator-approved Codex task only if the trigger is explicit and scoped.
-          If the comment starts with `/codex`, ignore the literal command prefix and use the remaining text as the task instruction.
-          If the task is too broad, unsafe, or blocked by missing environment/secrets, stop and explain the blocker clearly.
-          PROMPT
+          runtime = [base, '', '## Runtime GitHub context', '']
+          for label, value in fields.items():
+              runtime.append(f'{label}: {value}')
+          runtime.extend([
+              '',
+              '### Issue or PR title',
+              '',
+              os.environ.get('ISSUE_TITLE', ''),
+              '',
+              '### Issue or PR body',
+              '',
+              os.environ.get('ISSUE_BODY', ''),
+              '',
+              '### Operator / trigger comment',
+              '',
+              os.environ.get('COMMENT_BODY', ''),
+              '',
+              '## Task',
+              '',
+              'Treat this as an operator-approved Codex task only if the trigger is explicit and scoped.',
+              'If the comment starts with `/codex`, ignore the literal command prefix and use the remaining text as the task instruction.',
+              'If the task is too broad, unsafe, or blocked by missing environment/secrets, stop and explain the blocker clearly.',
+              '',
+          ])
+          runtime_path.write_text('\n'.join(runtime), encoding='utf-8')
+          PY
 
       - name: Run Codex
         id: run_codex
