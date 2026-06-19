@@ -3,7 +3,7 @@
 This repository uses two cooperating automation layers:
 
 1. **ChatGPT scheduled operator** — periodically reviews GitHub issues and pull requests, checks scope, CI, Vercel feedback, diffs, and mergeability, and performs safe operational actions when available.
-2. **Codex GitHub Action / Codex cloud** — handles larger implementation tasks only when explicitly triggered by an operator-approved prompt, comment, or label.
+2. **Codex Cloud through ChatGPT/GitHub integration** — handles larger implementation tasks when explicitly triggered with `@codex ...` comments or through Codex UI. This repository does not assume an OpenAI API billing setup or an `OPENAI_API_KEY` secret.
 
 The goal is to keep Paweł out of routine GitHub, CI, PR, and merge handling. Paweł should mainly act as a webhook for actions that cannot be performed directly by the available tools or that require a product/business decision.
 
@@ -46,9 +46,9 @@ Use Codex only for tasks that are too large or too code-heavy for the scheduled 
 
 Prefer this flow:
 
-1. Create or identify a narrow GitHub issue.
-2. Add an operator-reviewed Codex prompt.
-3. Trigger Codex manually through `/codex` or an approved workflow trigger.
+1. Create or identify a narrow GitHub issue or pull request.
+2. Add an operator-reviewed Codex prompt as a GitHub comment.
+3. Trigger Codex with `@codex ...` when Codex Cloud is connected for the repository, or give Paweł the exact prompt to paste into Codex UI if direct triggering is not available.
 4. Let Codex open or update a PR.
 5. Let the ChatGPT scheduled operator review the PR, CI, Vercel, and scope.
 6. Merge only if the merge rules are satisfied.
@@ -57,7 +57,7 @@ Do not send every issue to Codex automatically. Codex usage is limited and shoul
 
 ## Codex limits
 
-Paweł has Codex usage windows and limits, including a 5-hour constraint. When Codex cannot run because of quota, capacity, or availability:
+Paweł uses Codex through ChatGPT Plus, not a paid API setup. Codex has usage windows and limits, including a 5-hour constraint. When Codex cannot run because of quota, capacity, or availability:
 
 - do not keep retriggering it repeatedly;
 - mark or describe the work as waiting for Codex capacity;
@@ -86,7 +86,7 @@ Public launch remains `NO_GO` unless Paweł explicitly changes that decision aft
 
 Ask Paweł only when:
 
-- an external Codex action is needed and cannot be triggered by available tools;
+- Codex must be used manually in ChatGPT/Codex UI because GitHub comments cannot trigger it;
 - write or merge tools are blocked;
 - the task moves beyond the current ticket or PR scope;
 - a product decision is required and cannot be inferred from the repo;
