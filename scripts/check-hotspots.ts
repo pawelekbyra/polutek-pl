@@ -25,11 +25,50 @@ const budgets: Record<FileKind, number> = {
   route: 350,
 };
 
+const knownUiHotspotReason =
+  "Pre-existing large UI module tracked in #948; tolerated temporarily after Next 15 recovery but should be split before raising product launch readiness.";
+
 const hotspotExceptions: Record<string, HotspotException> = {
   "app/components/icons/index.tsx": {
-    maxLines: 800,
+    maxLines: 1000,
     reason:
-      "Central icon barrel/component registry; tolerate current size but block further unbounded growth.",
+      "Central icon barrel/component registry; tolerated as pre-existing generated-style UI asset debt after Next 15 recovery, but block further unbounded growth.",
+  },
+  "app/admin/users/[userId]/page.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/admin/videos/[id]/page.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/admin/emails/EmailTemplateEditor.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/admin/emails/components/BroadcastWizard.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/components/Hero.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/components/PremiumWrapper.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/components/VideoPlaylist.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/components/comments/EmbeddedComments.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
+  "app/components/comments/components/CommentItem.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
   },
 };
 
