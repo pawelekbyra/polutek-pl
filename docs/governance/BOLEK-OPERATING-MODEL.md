@@ -95,11 +95,15 @@ Use explicit status vocabulary:
 - `SUPERSEDED / HISTORICAL`
 - `BLOCKED`
 
-## 3A. Scheduled Bolek Operator and Codex Cloud Configuration
+## 3A. Optional Scheduled Bolek Operator and Codex Cloud Convenience Mode
 
-Paweł may configure a ChatGPT scheduled task to run Bolek as a periodic repository operator for `pawelekbyra/polutek-pl`.
+Paweł may optionally configure a ChatGPT scheduled task to run Bolek as a periodic repository watcher/operator for `pawelekbyra/polutek-pl`.
 
-This scheduled Bolek mode is authorized to:
+This is not a new default operating model and does not replace the normal interactive Bolek workflow. It is a convenience option for moments when Paweł does not want to manually prompt Bolek/Codex, for example when he is away, asleep, or wants routine PR/CI monitoring to continue without active chat participation.
+
+The normal principle remains: if something is wrong in code, it should be fixed. Scheduled mode is only a way to keep finding, reviewing, fixing, or delegating that work with less manual prompting.
+
+When explicitly enabled, scheduled Bolek may:
 
 - periodically inspect open PRs, issues, Codex-authored PRs, CI, Vercel comments, diffs, and mergeability;
 - review PRs labeled or otherwise identified for Bolek review;
@@ -114,7 +118,7 @@ Paweł currently uses Codex through ChatGPT Plus / Codex Cloud, not through a pa
 - larger implementation tasks should be delegated through Codex Cloud using `@codex ...` GitHub comments when the integration is connected;
 - if `@codex` does not trigger, Codex is out of quota/capacity, or manual Codex UI use is required, Bolek should leave Paweł a ready-to-paste Codex prompt;
 - Codex limits, including 5-hour usage windows, are a waiting state, not a process failure;
-- Bolek should conserve Codex usage by using it only for tasks that exceed what the scheduled operator can safely do directly.
+- Bolek should conserve Codex usage by using it only for tasks that exceed what Bolek can safely do directly.
 
 In scheduled mode, Paweł should not be asked for routine technical decisions. Ask Paweł only when a tool is blocked, an external Codex/manual step is required, the task touches protected areas, or a product/business/legal/public-launch decision is required.
 
