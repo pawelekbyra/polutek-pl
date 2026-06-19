@@ -58,6 +58,19 @@ The operator may merge without asking Paweł only when all of these are true:
 
 If write or merge tools are blocked, the operator should report exactly what was checked, what is blocked, and the next concrete command or Codex prompt.
 
+## Fix-loop first
+
+When a task already has an existing PR or branch, the operator should continue that context before creating anything new.
+
+Default order:
+
+1. If there is an existing PR for the task, inspect that PR, its branch, diff, comments, CI, and Vercel state.
+2. If the issue is small and scoped, fix it directly through available GitHub tools.
+3. If the issue needs Codex, prompt Codex on the existing PR with a bounded `@codex ...` comment.
+4. Create a new issue only when there is no existing PR/branch/context or when a separate task genuinely needs to be split out.
+
+Do not create a new issue or new Codex task just to request a correction on an existing Codex PR. Keep the repair loop on the same PR whenever possible.
+
 ## When to use Codex
 
 Use Codex only for tasks that are too large or too code-heavy for the scheduled operator to complete safely with available GitHub tools.
@@ -65,11 +78,12 @@ Use Codex only for tasks that are too large or too code-heavy for the scheduled 
 Prefer this flow:
 
 1. Create or identify a narrow GitHub issue or pull request.
-2. Add an operator-reviewed Codex prompt as a GitHub comment.
-3. Trigger Codex with `@codex ...` when Codex Cloud is connected for the repository, or give Paweł the exact prompt to paste into Codex UI if direct triggering is not available.
-4. Let Codex open or update a PR.
-5. Let Bolek review the PR, CI, Vercel, and scope.
-6. Merge only if the merge rules are satisfied.
+2. If a PR already exists, use the existing PR as the Codex context.
+3. Add an operator-reviewed Codex prompt as a GitHub comment.
+4. Trigger Codex with `@codex ...` when Codex Cloud is connected for the repository, or give Paweł the exact prompt to paste into Codex UI if direct triggering is not available.
+5. Let Codex open, update, or repair a PR.
+6. Let Bolek review the PR, CI, Vercel, and scope.
+7. Merge only if the merge rules are satisfied.
 
 Do not send every issue to Codex automatically. Codex usage is limited and should be conserved for tasks that need it.
 
