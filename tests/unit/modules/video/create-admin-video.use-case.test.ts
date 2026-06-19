@@ -72,4 +72,59 @@ describe('createAdminVideo use-case', () => {
         })
     }));
   });
+
+  it('uses a default thumbnail for a new Cloudflare draft when thumbnail is blank', async () => {
+    mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-cloudflare-draft' }));
+
+    const result = await createAdminVideo({
+        title: 'Cloudflare Draft',
+        slug: 'cloudflare-draft',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        videoUrl: null,
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ thumbnailUrl: '/logo.png' })
+    }));
+  });
+
+  it('returns a readable validation error when title is missing', async () => {
+    const result = await createAdminVideo({
+        title: '   ',
+        slug: 'cloudflare-draft',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        videoUrl: null,
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_TITLE_REQUIRED');
+      expect(result.error.message).toContain('Podaj tytuł');
+    }
+    expect(mockPrisma.video.create).not.toHaveBeenCalled();
+  });
+
+  it('returns a readable validation error when slug is missing', async () => {
+    const result = await createAdminVideo({
+        title: 'Cloudflare Draft',
+        slug: '   ',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        videoUrl: null,
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_SLUG_REQUIRED');
+      expect(result.error.message).toContain('slug');
+    }
+    expect(mockPrisma.video.create).not.toHaveBeenCalled();
+  });
 });

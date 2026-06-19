@@ -245,10 +245,12 @@ export default function AdminVideosPage() {
         body: JSON.stringify({
           ...formData,
           title: formData.title?.trim(),
+          slug: formData.slug?.trim(),
           description: formData.description?.trim() || null,
           titleEn: formData.titleEn?.trim() || null,
           descriptionEn: formData.descriptionEn?.trim() || null,
           videoUrl: formData.videoUrl?.trim() || null,
+          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
         })
       });
       const data = await res.json();
@@ -261,7 +263,7 @@ export default function AdminVideosPage() {
         }
         fetchVideos(page);
       } else {
-        setFormError(data.error || data.message || "Wystąpił błąd podczas zapisywania.");
+        setFormError(getAdminFormError(data));
       }
     } catch (err) {
       logger.error("Submit failed", err);
@@ -373,4 +375,10 @@ export default function AdminVideosPage() {
       </div>
     </AdminLayoutShell>
   );
+}
+
+function getAdminFormError(data: { message?: unknown; error?: unknown } | null | undefined): string {
+  if (typeof data?.message === "string" && data.message.trim()) return data.message;
+  if (typeof data?.error === "string" && data.error.trim()) return data.error;
+  return "Wystąpił błąd podczas zapisywania.";
 }

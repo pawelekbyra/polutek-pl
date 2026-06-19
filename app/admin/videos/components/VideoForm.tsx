@@ -75,7 +75,7 @@ export function VideoForm({
         const issues: Diagnostic[] = [];
         if (!formData.title) issues.push({ severity: "ERROR", message: "Brak tytułu PL." });
         if (!formData.videoUrl && !formData.id) issues.push({ severity: "INFO", message: "Cloudflare Stream dodasz po utworzeniu szkicu." });
-        if (!formData.thumbnailUrl) issues.push({ severity: "WARNING", message: "Brak miniatury." });
+        if (!formData.thumbnailUrl) issues.push({ severity: "INFO", message: "Brak miniatury — szkic użyje domyślnego placeholdera." });
         if (formData.isMainFeatured && formData.tier !== 'PUBLIC') issues.push({ severity: "ERROR", message: "Hero musi być publiczne." });
         setDiagnostics(issues);
     };
@@ -195,8 +195,8 @@ export function VideoForm({
                                     <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="thumbnailUrl">URL Miniatury</Label>
-                                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
+                                    <Label htmlFor="thumbnailUrl">URL Miniatury (opcjonalnie)</Label>
+                                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="duration">Czas trwania (MM:SS)</Label>
