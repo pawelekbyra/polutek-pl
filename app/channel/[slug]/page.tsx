@@ -16,14 +16,14 @@ import { formatCount } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 
-export const revalidate = 60; // regeneruj co 60 sekund
+export const revalidate = 60;
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
   const mainSlug = MainChannelService.getConfiguredSlug();
   if (params.slug !== mainSlug) return { title: 'Kanał nie znaleziony' };
 
-  const creator = await ContentService.getCreatorBySlug(params.slug);
+  const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
   if (!creator) return { title: 'Kanał nie znaleziony' };
 
   return {
@@ -60,10 +60,11 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
     );
   }
 
-  const [{ userId }, creator] = await Promise.all([
-    auth(),
-    ContentService.getCreatorBySlug(params.slug),
+  const [authState, creator] = await Promise.all([
+    auth().catch(() => ({ userId: null })),
+    ContentService.getCreatorBySlug(params.slug).catch(() => null),
   ]);
+  const userId = authState.userId;
 
   if (!creator) {
     return (
@@ -90,11 +91,10 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
       : Promise.resolve(false),
   ]);
 
-  // Ensure we use the latest subscribersCount from DB if creator service might have cached it
   const freshCreator = await prisma.creator.findUnique({
       where: { id: creator.id },
       select: { subscribersCount: true, displaySubscribersCount: true }
-  });
+  }).catch(() => null);
 
   if (freshCreator) {
       creator.subscribersCount = freshCreator.displaySubscribersCount ?? freshCreator.subscribersCount;
@@ -119,7 +119,6 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
     <div className="min-h-screen bg-[#FDFBF7] text-[#0f0f0f] font-serif">
       <Navbar />
 
-      {/* CHANNEL COVER */}
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
         <div className="w-full aspect-[6/1] bg-neutral-200 relative overflow-hidden rounded-none md:rounded-xl border border-black/5">
            {creator.bannerUrl ? (
@@ -135,7 +134,6 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
         </div>
       </div>
 
-      {/* CHANNEL HEADER */}
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="relative w-24 h-24 md:w-40 md:h-40 rounded-full border border-neutral-200 overflow-hidden bg-[#1a1a1a]/5 shrink-0 shadow-sm">
@@ -171,7 +169,6 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
           </div>
         </div>
 
-        {/* CHANNEL TABS */}
         <div className="flex border-b border-neutral-200 mt-6 overflow-x-auto no-scrollbar gap-8">
            <button className="pb-3 border-b-2 border-[#0f0f0f] text-[14px] font-bold uppercase tracking-widest">Wideo</button>
            <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors">Playlisty</button>
@@ -182,7 +179,6 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
            </div>
         </div>
 
-        {/* VIDEOS GRID */}
         {allVideos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8 py-6">
             {allVideos.map((video) => (
