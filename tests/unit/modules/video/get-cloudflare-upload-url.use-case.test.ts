@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { VideoStatus } from '@prisma/client';
 import { getCloudflareUploadUrl } from '@/lib/modules/video/application/get-cloudflare-upload-url.use-case';
 import { AppContext } from '@/lib/modules/shared/app-context';
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from '@/lib/modules/video/domain/video-asset.constants';
 
 // Mock fetch for Cloudflare API
 global.fetch = vi.fn();
@@ -42,9 +44,53 @@ describe('getCloudflareUploadUrl', () => {
     mockPrisma.creator.findUnique.mockResolvedValue({ id: 'channel-1', slug: 'main-creator', isApproved: true, isPrimary: true });
   });
 
+  it('rejects creating an upload URL for a non-draft video', async () => {
+    mockPrisma.video.findFirst.mockResolvedValue({
+      id: 'video-1',
+      creatorId: 'channel-1',
+      status: VideoStatus.PUBLISHED,
+      asset: null,
+    });
+
+    const result = await getCloudflareUploadUrl({ videoId: 'video-1' }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_NOT_DRAFT');
+    }
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.update).not.toHaveBeenCalled();
+    expect(mockPrisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects replacing an existing ready primary Cloudflare asset', async () => {
+    mockPrisma.video.findFirst.mockResolvedValue({
+      id: 'video-1',
+      creatorId: 'channel-1',
+      status: VideoStatus.DRAFT,
+      asset: {
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+        isPrimary: true,
+      },
+    });
+
+    const result = await getCloudflareUploadUrl({ videoId: 'video-1' }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_HAS_READY_ASSET');
+    }
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.update).not.toHaveBeenCalled();
+    expect(mockPrisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it('successfully generates an upload URL', async () => {
     const videoId = 'video-1';
-    mockPrisma.video.findFirst.mockResolvedValue({ id: videoId, creatorId: 'channel-1', status: 'DRAFT', asset: null });
+    mockPrisma.video.findFirst.mockResolvedValue({ id: videoId, creatorId: 'channel-1', status: VideoStatus.DRAFT, asset: null });
     mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
 
     (global.fetch as any).mockResolvedValue({
@@ -67,7 +113,7 @@ describe('getCloudflareUploadUrl', () => {
     }
     expect(mockPrisma.videoAsset.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
-        processingState: 'PENDING',
+        processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false,
         processingStartedAt: expect.any(Date),
         processingEndedAt: null,
@@ -78,7 +124,7 @@ describe('getCloudflareUploadUrl', () => {
 
   it('returns error when Cloudflare credentials are missing', async () => {
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
-    mockPrisma.video.findFirst.mockResolvedValue({ id: 'video-1', creatorId: 'channel-1', status: 'DRAFT', asset: null });
+    mockPrisma.video.findFirst.mockResolvedValue({ id: 'video-1', creatorId: 'channel-1', status: VideoStatus.DRAFT, asset: null });
 
     const result = await getCloudflareUploadUrl({ videoId: 'video-1' }, ctx);
 
