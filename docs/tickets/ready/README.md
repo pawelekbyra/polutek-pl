@@ -16,15 +16,15 @@ LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Verifier | LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001 | `docs/tickets/ready/LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001.md` | `READY_FOR_VERIFICATION` |
+| Verifier | LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001 | `docs/tickets/ready/LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001.md` | `READY_FOR_INDEPENDENT_REVIEW` |
 
-**Current Status:** Security remediation has been implemented via PR #946, hotspot debt via PR #950, and coverage debt via PR #953. Public launch remains `NO_GO`; the current executable ticket is launch certification. This is not `PRODUCTION_CERTIFIED` or `LAUNCH_READY`.
+**Current Status:** Security remediation has been implemented via PR #946, hotspot debt via PR #950, and coverage debt via PR #953. Public launch remains `NO_GO`; the current executable ticket is launch certification.
 
 Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**.
 
 ## Ordered repair queue
 
-1. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_VERIFICATION`
+1. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW`
 2. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
 3. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
 4. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
@@ -48,6 +48,12 @@ Detailed historical ticket/PR status is preserved in `docs/tickets/HISTORICAL-LE
 | COVERAGE-BASELINE-DEBT | `IMPLEMENTATION_MERGED / HISTORICAL` | PR #953, merge `50697d2bdc62f9eb1acc7e635fe3053c332726e8`. |
 | HOTSPOT-CI-DEBT | `IMPLEMENTATION_MERGED / HISTORICAL` | PR #950, merge `14aedd4818970611365ad941764d775b7727ec37`. |
 | EMAIL-SIGNED-UNSUBSCRIBE-POSTMERGE-VERIFY-001 | `PASS / VERIFICATION_COMPLETE / MERGED / HISTORICAL` | Verification PR #920. |
+
+## Closed owner-decision blockers
+
+| Area | Current classification |
+| --- | --- |
+| Legal/privacy/cookies/support copy | `LEGAL_REVIEW_REQUIRED` |
 
 ## Full backlog
 

@@ -10,7 +10,8 @@ This README is the owner-facing dashboard for current documentation reconciliati
 ```txt
 Implementation foundation: substantial.
 Automated CI debt: security remediation merged via #946, hotspot debt via #950, and coverage baseline debt via #953.
-Production/manual evidence: incomplete and operator pending.
+Production/manual evidence: OPERATOR_PENDING.
+Legal/privacy/cookies/support copy: LEGAL_REVIEW_REQUIRED.
 Public launch: NO_GO / not certified.
 ```
 
