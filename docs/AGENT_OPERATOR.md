@@ -55,6 +55,8 @@ Prefer this flow:
 
 Do not send every issue to Codex automatically. Codex usage is limited and should be conserved for tasks that need it.
 
+Do not add or rely on API-key-based Codex GitHub Actions unless Paweł explicitly enables OpenAI API billing and stores an `OPENAI_API_KEY` secret.
+
 ## Codex limits
 
 Paweł uses Codex through ChatGPT Plus, not a paid API setup. Codex has usage windows and limits, including a 5-hour constraint. When Codex cannot run because of quota, capacity, or availability:
