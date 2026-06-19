@@ -18,10 +18,18 @@ import { prisma } from '@/lib/prisma';
 
 export const revalidate = 60;
 
+function getConfiguredSlugSafe() {
+  try {
+    return MainChannelService.getConfiguredSlug();
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
-  const mainSlug = MainChannelService.getConfiguredSlug();
-  if (params.slug !== mainSlug) return { title: 'Kanał nie znaleziony' };
+  const mainSlug = getConfiguredSlugSafe();
+  if (mainSlug && params.slug !== mainSlug) return { title: 'Kanał nie znaleziony' };
 
   const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
   if (!creator) return { title: 'Kanał nie znaleziony' };
@@ -45,8 +53,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 
 export default async function ChannelPage(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
-  const mainSlug = MainChannelService.getConfiguredSlug();
-  if (params.slug !== mainSlug) {
+  const mainSlug = getConfiguredSlugSafe();
+  if (mainSlug && params.slug !== mainSlug) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center font-serif">
         <Navbar />
@@ -60,10 +68,14 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
     );
   }
 
-  const [authState, creator] = await Promise.all([
-    auth().catch(() => ({ userId: null })),
-    ContentService.getCreatorBySlug(params.slug).catch(() => null),
-  ]);
+  let authState: { userId: string | null } = { userId: null };
+  try {
+    authState = await auth();
+  } catch {
+    authState = { userId: null };
+  }
+
+  const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
   const userId = authState.userId;
 
   if (!creator) {
@@ -97,7 +109,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
   }).catch(() => null);
 
   if (freshCreator) {
-      creator.subscribersCount = freshCreator.displaySubscribersCount ?? freshCreator.subscribersCount;
+      creator.subscribersCount = freshCreator.displaySubscribersCount ?? creator.subscribersCount;
   }
   const channelAvatar = creator.imageUrl || null;
 
