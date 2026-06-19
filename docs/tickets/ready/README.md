@@ -5,38 +5,39 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-003 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/X3-FIX-003-admin-cloudflare-upload-and-asset-status.md -->
 
 ## Current Control-Plane Ticket
 
 ```txt
-LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001
+X3-FIX-003
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Verifier | LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001 | `docs/tickets/ready/LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001.md` | `READY_FOR_INDEPENDENT_REVIEW` |
+| Builder | X3-FIX-003 | `docs/tickets/ready/X3-FIX-003-admin-cloudflare-upload-and-asset-status.md` | `READY` |
 
-**Current Status:** Security remediation has been implemented via PR #946, hotspot debt via PR #950, and coverage debt via PR #953. Public launch remains `NO_GO`; the current executable ticket is launch certification.
+**Current Status:** Public launch remains `NO_GO`. Launch diagnostics/operator evidence remains tracked separately by #951/#956/#960, but the current single executable runtime ticket is now the admin Cloudflare upload and asset-status repair. This owner-directed control-plane move unblocks product-critical video creation work needed to populate homepage/channel/sidebar inventory.
 
-Only the row above is the current-primary executable row. Priority: **URGENT**. Executable ticket count: **1**.
+Only the row above is the current-primary executable row. Priority: **Launch-critical**. Executable ticket count: **1**.
 
 ## Ordered repair queue
 
-1. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW`
-2. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
-3. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
-4. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
-5. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
-6. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `PLANNED`
-7. `ADMIN-VIDEO-POSTMERGE-VERIFY-001` — `PLANNED`
-8. `ADMIN-AUTH-POSTMERGE-REVERIFY-001` — `PLANNED`
-9. `LEGACY-ACCESS-POLICY-RETIREMENT-001` — `PLANNED`
-10. `ADMIN-CHANNEL-ROOT-CAUSE-001` — `PLANNED`
-11. `LEGACY-MEDIA-PROXY-RETIREMENT-001` — `PLANNED`
-12. `CONTROL-PLANE-GUARD-HARDENING-001` — `NON_EXECUTABLE / PLANNED`
-13. `BETA-SCOPE-GUARD-RECONCILIATION-001` — `NON_EXECUTABLE / PLANNED`
+1. `X3-FIX-003` — `READY`
+2. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW / OPERATOR_EVIDENCE_PENDING`
+3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
+4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
+5. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
+6. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
+7. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `PLANNED`
+8. `ADMIN-VIDEO-POSTMERGE-VERIFY-001` — `PLANNED`
+9. `ADMIN-AUTH-POSTMERGE-REVERIFY-001` — `PLANNED`
+10. `LEGACY-ACCESS-POLICY-RETIREMENT-001` — `PLANNED`
+11. `ADMIN-CHANNEL-ROOT-CAUSE-001` — `PLANNED`
+12. `LEGACY-MEDIA-PROXY-RETIREMENT-001` — `PLANNED`
+13. `CONTROL-PLANE-GUARD-HARDENING-001` — `NON_EXECUTABLE / PLANNED`
+14. `BETA-SCOPE-GUARD-RECONCILIATION-001` — `NON_EXECUTABLE / PLANNED`
 
 ## Historical executable tickets
 
@@ -64,3 +65,4 @@ Full non-executable launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
 - Public launch remains `NO_GO`.
 - Guard PASS means control-plane consistency only; it is not compliance or production/operator evidence.
 - Runtime work must not start from any ticket other than the single current executable ticket declared above.
+- `ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is a historical umbrella specification and may be used only as background evidence, not as a second concurrent executable ticket.
