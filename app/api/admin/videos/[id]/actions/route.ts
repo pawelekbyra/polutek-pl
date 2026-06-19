@@ -11,7 +11,7 @@ import {
 } from "@/lib/modules/video";
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { VideoStatus, AccessTier } from "@prisma/client";
+import { VideoStatus } from "@prisma/client";
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -75,8 +75,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
             {
               id: videoId,
               isMainFeatured: true,
-              status: VideoStatus.PUBLISHED,
-              tier: AccessTier.PUBLIC,
             },
             ctx,
           ),
