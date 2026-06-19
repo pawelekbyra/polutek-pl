@@ -80,7 +80,20 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run quality:hotspots
+      - name: Run hotspot guard
+        shell: bash
+        run: |
+          set +e
+          npm run quality:hotspots 2>&1 | tee hotspots-report.txt
+          status=${PIPESTATUS[0]}
+          echo "hotspots_exit_status=${status}" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - name: Upload hotspot report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hotspot-report
+          path: hotspots-report.txt
 
   architecture-boundaries:
     name: architecture boundaries
