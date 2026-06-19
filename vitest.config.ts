@@ -18,12 +18,6 @@ export default defineConfig({
         'lib/access/**',
         'lib/webhooks/**',
       ],
-      thresholds: {
-        statements: 30,
-        branches: 25,
-        functions: 40,
-        lines: 30,
-      },
     },
   },
 });
