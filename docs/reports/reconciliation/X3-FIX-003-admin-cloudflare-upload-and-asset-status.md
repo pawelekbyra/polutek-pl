@@ -8,6 +8,8 @@ Date: 2026-06-19
 
 Implemented the focused admin Cloudflare upload/attach/status repair for the current executable ticket. The admin video workflow can provision a Cloudflare direct upload, attach an existing Cloudflare UID without pretending it is ready, persist provider processing metadata on `VideoAsset`, and display provider/status/failure/timestamp details in the video management UI.
 
+Follow-up fixes in the same PR guard manual attach from demoting an existing ready primary Cloudflare asset and remove the newly introduced broad return-type `| any` escapes from the affected use-case signatures.
+
 ## Intent
 
 Repair the admin-side workflow needed to move real Cloudflare Stream assets toward publishable videos while preserving the control-plane invariant that legacy `videoUrl` is migration-only and not the launch patron-private provider path.
@@ -26,6 +28,7 @@ Repair the admin-side workflow needed to move real Cloudflare Stream assets towa
 ## Validation run
 
 - PASS — `git diff --check`
+- PASS — `npm run quality:strict-escapes`
 - PASS — `npm run quality:architecture-boundaries`
 - PASS — `npx vitest run tests/unit/modules/video tests/unit/api/webhooks/cloudflare-stream.test.ts`
 - PASS — `npm run typecheck`
@@ -41,6 +44,7 @@ All changes stayed inside the ticket's allowed paths. No forbidden global docs, 
 - No full video files are proxied through the Next.js server.
 - No Mux upload flow was implemented.
 - No Cloudflare success is faked; attached assets default to `PENDING` unless an explicit provider state is supplied.
+- Manual attach now fails with `VIDEO_HAS_READY_ASSET` before upsert when a ready primary Cloudflare asset already exists.
 - Legacy `videoUrl` remains a legacy/migration-only path and is not presented as the launch patron-private provider path.
 
 ## Risks and follow-ups

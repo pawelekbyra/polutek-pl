@@ -28,6 +28,10 @@ describe('getCloudflareUploadUrl', () => {
   const ctx = {
     prisma: mockPrisma,
     actor: { type: 'ADMIN', userId: 'admin-1' },
+    db: {
+      read: mockPrisma,
+      writeTransaction: (cb: any) => cb(mockPrisma),
+    },
   } as unknown as AppContext;
 
   beforeEach(() => {

@@ -27,6 +27,10 @@ describe('attachCloudflareAsset', () => {
   const ctx = {
     prisma: mockPrisma,
     actor: { type: 'ADMIN', userId: 'admin-1' },
+    db: {
+      read: mockPrisma,
+      writeTransaction: (cb: any) => cb(mockPrisma),
+    },
   } as unknown as AppContext;
 
   beforeEach(() => {
@@ -77,6 +81,35 @@ describe('attachCloudflareAsset', () => {
         processingStartedAt: expect.any(Date),
       })
     }));
+  });
+
+
+  it('does not demote an existing ready primary Cloudflare asset on manual attach', async () => {
+    const videoId = 'video-1';
+    mockPrisma.video.findFirst.mockResolvedValue({
+      id: videoId,
+      creatorId: 'channel-1',
+      title: 'Test Video',
+      slug: 'test-video',
+      asset: {
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+        isPrimary: true,
+      },
+    });
+
+    const result = await attachCloudflareAsset({
+      videoId,
+      providerAssetId: 'replacement-uid',
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_HAS_READY_ASSET');
+    }
+    expect(mockPrisma.videoAsset.update).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
+    expect(mockPrisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it('rejects an empty Cloudflare provider asset id', async () => {
