@@ -82,7 +82,10 @@ export function VideoForm({
     runDiagnostics();
   }, [formData]);
 
-  const detectedSource = useMemo(() => formData.videoUrl ? getVideoSourceInfo(formData.videoUrl) : null, [formData.videoUrl]);
+  const isExistingVideo = Boolean(formData.id);
+  const hasLegacyVideoUrl = Boolean(formData.videoUrl?.trim());
+  const shouldShowLegacyVideoUrlField = isExistingVideo && hasLegacyVideoUrl;
+  const detectedSource = useMemo(() => shouldShowLegacyVideoUrlField ? getVideoSourceInfo(formData.videoUrl) : null, [formData.videoUrl, shouldShowLegacyVideoUrlField]);
   const previewVideo = useMemo<PublicVideoDTO>(() => ({
     id: formData.id || "preview",
     creatorId: "admin-preview",
@@ -181,19 +184,26 @@ export function VideoForm({
                                 <li>Wygeneruj Cloudflare upload URL albo podepnij istniejący Cloudflare UID.</li>
                                 <li>Synchronizuj status providera do momentu READY.</li>
                             </ol>
-                            <p className="mt-3 text-xs text-sky-800">Ten formularz nie oznacza assetu jako READY i nie tworzy publicznego playbacku.</p>
+                            <p className="mt-3 text-xs text-sky-800">Ten formularz nie przyjmuje URL-a filmu dla nowych szkiców i nie oznacza assetu jako READY.</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="videoUrl" className="flex items-center gap-2">
-                                        Legacy / Migracja only
-                                        <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
-                                    </Label>
-                                    <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
-                                    {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
-                                    <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
-                                </div>
+                                {shouldShowLegacyVideoUrlField ? (
+                                  <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                                      <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                                          Legacy URL istniejącego filmu
+                                          <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Migracja</Badge>
+                                      </Label>
+                                      <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
+                                      {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
+                                      <p className="text-[10px] text-amber-700 italic mt-1">To pole służy tylko do utrzymania lub migracji starego filmu. Nowy materiał dodasz po utworzeniu szkicu przez Cloudflare upload URL albo Cloudflare UID.</p>
+                                  </div>
+                                ) : (
+                                  <div className="rounded-xl border border-dashed border-sky-200 bg-sky-50/60 p-4 text-sm text-sky-950">
+                                    <div className="font-semibold">Nie wklejaj tutaj URL-a filmu.</div>
+                                    <p className="mt-1 text-xs text-sky-800">Utwórz szkic, a potem na stronie szczegółów dodaj media przez Cloudflare upload URL albo istniejący Cloudflare UID.</p>
+                                  </div>
+                                )}
                                 <div className="space-y-2">
                                     <Label htmlFor="thumbnailUrl">URL Miniatury (opcjonalnie)</Label>
                                     <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" />
@@ -206,7 +216,7 @@ export function VideoForm({
                             <div className="space-y-4">
                                 <Label>Podgląd</Label>
                                 <div className="aspect-video bg-black rounded-lg overflow-hidden border relative">
-                                    {formData.videoUrl ? (
+                                    {shouldShowLegacyVideoUrlField ? (
                                         <div className="h-full w-full">
                                             <PremiumWrapper videoId={formData.id || "preview"} requiredTier={formData.tier as AccessTierDto}>
                                                 <VideoPlayer video={previewVideo} />
@@ -263,42 +273,12 @@ export function VideoForm({
                             <Checkbox id="showInSidebar" checked={formData.showInSidebar} onCheckedChange={v => setFormData({...formData, showInSidebar: !!v})} />
                             <Label htmlFor="showInSidebar" className="font-medium">Pokaż w sidebarze</Label>
                         </div>
-                        <div className="space-y-2 pt-2">
-                            <Label htmlFor="sidebarOrder">Kolejność w sidebarze</Label>
-                            <Input id="sidebarOrder" type="number" value={formData.sidebarOrder} onChange={e => setFormData({...formData, sidebarOrder: parseInt(e.target.value) || 0})} />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Diagnostics */}
-                {diagnostics.length > 0 && (
-                    <Card className="border-amber-200 bg-amber-50/30">
-                        <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800"><AlertTriangle className="h-4 w-4" /> Diagnostyka</CardTitle></CardHeader>
-                        <CardContent className="space-y-2">
-                            {diagnostics.map((d, i) => (
-                                <div key={i} className={`text-xs flex gap-2 ${d.severity === 'ERROR' ? 'text-red-700' : d.severity === 'INFO' ? 'text-sky-700' : 'text-amber-700'}`}>
-                                    <span>•</span> {d.message}
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Stats Override */}
-                <Card>
-                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Statystyki (Override)</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-[10px]">Polubienia</Label>
-                                <Input type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
+                        {formData.showInSidebar && (
+                            <div className="space-y-2 pt-2">
+                                <Label htmlFor="sidebarOrder">Pozycja w sidebarze</Label>
+                                <Input id="sidebarOrder" type="number" value={formData.sidebarOrder} onChange={e => setFormData({...formData, sidebarOrder: parseInt(e.target.value) || 0})} />
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px]">Wyświetlenia</Label>
-                                <Input type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
-                            </div>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground italic">Uwaga: Zmiana tych wartości wpływa na licznik widoczny dla użytkowników.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
