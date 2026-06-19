@@ -7,6 +7,7 @@ This ledger preserves detailed historical ticket/PR status that must remain disc
 
 | Ticket / PR | Status | Verification / merge evidence | Notes |
 | --- | --- | --- | --- |
+| X3-FIX-006 | `PLAN_COMPLETE / HISTORICAL / LEGACY_STORAGE_MIGRATION_PLAN_READY` | Report `docs/reports/reconciliation/X3-FIX-006-LEGACY-STORAGE-MIGRATION-PLAN.md` | Defines identification matrix, launch decision matrix, migration sequencing, rollback/preservation policy, and owner decisions for legacy `videoUrl`, R2, S3, and Vercel Blob migration into Cloudflare Stream. Public launch remains `NO_GO`. |
 | X3-FIX-004 / PR #964 | `MERGED / HISTORICAL / X3_CLOUDFLARE_FIRST_CREATE_FORM_IMPLEMENTED` | Merge SHA `227d0e2a5152b6a7ae162b915590100cdbfb6be7`; report `docs/reports/reconciliation/X3-FIX-004-admin-video-create-cloudflare-first-form.md` | Admin add-video entry point now starts as a Cloudflare-first safe draft shell. Public launch remains `NO_GO`; production/operator evidence remains separate. |
 | X3-FIX-003 / PR #962 | `MERGED / HISTORICAL / X3_ADMIN_UPLOAD_STATUS_IMPLEMENTED` | Merge SHA `bf4e071b7cedf5c61b062dddf484e9bd79136acb`; report `docs/reports/reconciliation/X3-FIX-003-admin-cloudflare-upload-and-asset-status.md` | Focused admin Cloudflare upload/attach/status workflow for existing videos. Public launch remains `NO_GO`; production/operator evidence remains separate. |
 | PAYMENT-WEBHOOK-RESULT-001 / PR #902 | `MERGED / HISTORICAL` | Merge SHA `2c2a0f01f71e177145336051e97680bcc489e2b9` | Payment webhook result handling historical implementation evidence. |
