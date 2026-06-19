@@ -79,7 +79,7 @@ export async function importLegacyVideoToCloudflare(
         providerAssetId,
         providerPlaybackId: providerAssetId,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: true,
+        isPrimary: false,
         failureReason: null,
         providerSyncedAt: new Date(),
         processingStartedAt: new Date(),
@@ -94,6 +94,7 @@ export async function importLegacyVideoToCloudflare(
           provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
           providerAssetId,
           legacyUrlPreserved: true,
+          importedAssetIsPrimary: false,
         }
       }, tx);
 
