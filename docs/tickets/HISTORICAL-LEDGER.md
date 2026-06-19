@@ -7,6 +7,7 @@ This ledger preserves detailed historical ticket/PR status that must remain disc
 
 | Ticket / PR | Status | Verification / merge evidence | Notes |
 | --- | --- | --- | --- |
+| X3-FIX-003 / PR #962 | `MERGED / HISTORICAL / X3_ADMIN_UPLOAD_STATUS_IMPLEMENTED` | Merge SHA `bf4e071b7cedf5c61b062dddf484e9bd79136acb`; report `docs/reports/reconciliation/X3-FIX-003-admin-cloudflare-upload-and-asset-status.md` | Focused admin Cloudflare upload/attach/status workflow for existing videos. Public launch remains `NO_GO`; production/operator evidence remains separate. |
 | PAYMENT-WEBHOOK-RESULT-001 / PR #902 | `MERGED / HISTORICAL` | Merge SHA `2c2a0f01f71e177145336051e97680bcc489e2b9` | Payment webhook result handling historical implementation evidence. |
 | EMAIL-WEBHOOK-IDEMPOTENCY-001 / PR #905 | `MERGED_UNVERIFIED / VERIFIED_FIX_REQUIRED` | Merge SHA `36b57dec5c763ca29ff708c836dae0601125c49d`; verification PR #912 | Verification found follow-up required; do not rewrite as PASS. |
 | EMAIL-WEBHOOK-POSTMERGE-VERIFY-001 / PR #912 | `FIX_REQUIRED / VERIFICATION_COMPLETE / HISTORICAL` | Merge SHA `844f0ffcf26f41aeacef4fde1c21edd0a544fb4a` | Historical verification evidence for PR #905. |
