@@ -15,7 +15,8 @@ describe('Post-Merge State Reconciliation Invariants', () => {
     expect(readme).toContain('# Polutek.pl — Current Main Control Panel');
     expect(readme).toContain('ACTIVE — POST-R AI DELIVERY CONTROL PLANE');
     expect(readme).toContain('Public launch: `NO_GO`');
-    expect(readme).toContain('Implementation foundation: substantial, but PRs #922-#929 exposed stale control-plane state and unverified runtime/provider claims.');
+    expect(readme).toContain('Implementation foundation: substantial.');
+    expect(readme).toContain('Automated CI debt: security remediation merged via #946, hotspot debt via #950, and coverage baseline debt via #953.');
     expect(readme).toContain('Public launch: NO_GO / not certified.');
   });
 
@@ -32,6 +33,7 @@ describe('Post-Merge State Reconciliation Invariants', () => {
     const readme = readText(readmePath);
 
     expect(readme).toContain('The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.');
+    expect(readme).toContain('Exactly one current executable ticket: `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001`.');
     expect(readme).toContain('docs/tickets/ready/README.md');
     expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
   });
