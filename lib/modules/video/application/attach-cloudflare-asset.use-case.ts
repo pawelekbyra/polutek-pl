@@ -6,14 +6,13 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
-import type { VideoAssetProcessingState } from "@prisma/client";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 
 export interface AttachCloudflareAssetInput {
   videoId: string;
   providerAssetId: string;
   providerPlaybackId?: string;
-  processingState?: VideoAssetProcessingState;
+  processingState?: unknown;
 }
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
@@ -33,18 +32,23 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId,
       providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,
-      processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
-      isPrimary: input.processingState === VIDEO_ASSET_PROCESSING_STATE.READY,
+      processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
+      isPrimary: false,
       providerSyncedAt: new Date(),
       processingStartedAt: new Date(),
-      processingEndedAt: input.processingState === VIDEO_ASSET_PROCESSING_STATE.READY ? new Date() : null,
+      processingEndedAt: null,
       failureReason: null,
     }, tx);
     await recordAuditEvent(ctx, {
       action: "VIDEO_ASSET_ATTACHED",
       targetType: "Video",
       targetId: video.id,
-      metadata: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId },
+      metadata: {
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        providerAssetId,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
+        isPrimary: false,
+      },
     }, tx);
     return repository.findByIdForMainChannel(video.id, mainChannel.id);
   }).catch((error: unknown) => {
