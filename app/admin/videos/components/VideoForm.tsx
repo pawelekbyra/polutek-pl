@@ -75,7 +75,7 @@ export function VideoForm({
         const issues: Diagnostic[] = [];
         if (!formData.title) issues.push({ severity: "ERROR", message: "Brak tytułu PL." });
         if (!formData.videoUrl && !formData.id) issues.push({ severity: "INFO", message: "Cloudflare Stream dodasz po utworzeniu szkicu." });
-        if (!formData.thumbnailUrl) issues.push({ severity: "WARNING", message: "Brak miniatury." });
+        if (!formData.thumbnailUrl) issues.push({ severity: "INFO", message: "Brak miniatury — szkic użyje domyślnego placeholdera." });
         if (formData.isMainFeatured && formData.tier !== 'PUBLIC') issues.push({ severity: "ERROR", message: "Hero musi być publiczne." });
         setDiagnostics(issues);
     };
@@ -195,8 +195,8 @@ export function VideoForm({
                                     <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="thumbnailUrl">URL Miniatury</Label>
-                                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} required />
+                                    <Label htmlFor="thumbnailUrl">URL Miniatury (opcjonalnie)</Label>
+                                    <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="duration">Czas trwania (MM:SS)</Label>
@@ -261,44 +261,29 @@ export function VideoForm({
                         </div>
                         <div className="flex items-center gap-2">
                             <Checkbox id="showInSidebar" checked={formData.showInSidebar} onCheckedChange={v => setFormData({...formData, showInSidebar: !!v})} />
-                            <Label htmlFor="showInSidebar" className="font-medium">Pokaż w sidebarze</Label>
+                            <Label htmlFor="showInSidebar" className="font-medium">Pokaż w sidebar</Label>
                         </div>
-                        <div className="space-y-2 pt-2">
-                            <Label htmlFor="sidebarOrder">Kolejność w sidebarze</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="sidebarOrder">Kolejność w sidebar</Label>
                             <Input id="sidebarOrder" type="number" value={formData.sidebarOrder} onChange={e => setFormData({...formData, sidebarOrder: parseInt(e.target.value) || 0})} />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Diagnostics */}
-                {diagnostics.length > 0 && (
-                    <Card className="border-amber-200 bg-amber-50/30">
-                        <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800"><AlertTriangle className="h-4 w-4" /> Diagnostyka</CardTitle></CardHeader>
-                        <CardContent className="space-y-2">
-                            {diagnostics.map((d, i) => (
-                                <div key={i} className={`text-xs flex gap-2 ${d.severity === 'ERROR' ? 'text-red-700' : d.severity === 'INFO' ? 'text-sky-700' : 'text-amber-700'}`}>
-                                    <span>•</span> {d.message}
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Stats Override */}
                 <Card>
-                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Statystyki (Override)</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-[10px]">Polubienia</Label>
-                                <Input type="number" value={formData.likesCount} onChange={e => setFormData({...formData, likesCount: parseInt(e.target.value) || 0})} />
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><AlertTriangle className="h-5 w-5" /> Diagnostyka</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                        {diagnostics.length === 0 ? (
+                            <div className="text-sm text-muted-foreground italic flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-green-600" /> Brak problemów.</div>
+                        ) : diagnostics.map((d, i) => (
+                            <div key={i} className={cn(
+                                "p-3 rounded-lg text-xs border flex gap-2",
+                                d.severity === 'ERROR' ? "bg-red-50 text-red-800 border-red-200" : d.severity === 'WARNING' ? "bg-yellow-50 text-yellow-800 border-yellow-200" : "bg-blue-50 text-blue-800 border-blue-200"
+                            )}>
+                                <AlertCircle className="h-4 w-4 shrink-0" /> {d.message}
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px]">Wyświetlenia</Label>
-                                <Input type="number" value={formData.views} onChange={e => setFormData({...formData, views: parseInt(e.target.value) || 0})} />
-                            </div>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground italic">Uwaga: Zmiana tych wartości wpływa na licznik widoczny dla użytkowników.</p>
+                        ))}
                     </CardContent>
                 </Card>
             </div>
