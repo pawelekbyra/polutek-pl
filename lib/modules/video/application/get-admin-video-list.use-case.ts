@@ -15,7 +15,15 @@ export async function getAdminVideoList(
   const limit = filters.limit || 20;
 
   return ok({
-    items: items.map(toAdminVideoDto),
+    items: items.map((video) => {
+      const dto = toAdminVideoDto(video);
+      return {
+        ...dto,
+        publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
+        publishAfterAssetReadyCompletedAt: video.publishAfterAssetReadyCompletedAt || null,
+        publishAfterAssetReadyError: video.publishAfterAssetReadyError || null,
+      };
+    }),
     total,
     page: filters.page || 1,
     totalPages: Math.ceil(total / limit)

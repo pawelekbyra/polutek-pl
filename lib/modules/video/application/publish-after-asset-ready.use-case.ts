@@ -49,6 +49,15 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
   }
 
   const message = result.error?.message || "Automatyczna publikacja po READY nie powiodła się.";
+  const currentStatus = await videoDelegate.findUnique({
+    where: { id: videoId },
+    select: { publishAfterAssetReadyError: true },
+  });
+
+  if (currentStatus?.publishAfterAssetReadyError === message) {
+    return;
+  }
+
   await (ctx.prisma as any).$transaction(async (tx: any) => {
     await tx.video.update({
       where: { id: videoId },

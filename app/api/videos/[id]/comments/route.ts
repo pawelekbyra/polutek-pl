@@ -89,7 +89,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
 
     if (actor.type === "guest" || !("userId" in actor)) {
       return NextResponse.json(
-        { success: false, message: "Musisz być zalogowany." },
+        { success: false, message: "Musisz być zalogowany.", code: "AUTH_REQUIRED" },
         { status: 401 },
       );
     }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
     });
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę." },
+        { success: false, message: "Zbyt dużo komentarzy. Spróbuj za chwilę.", code: "COMMENT_RATE_LIMITED" },
         { status: 429 },
       );
     }
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         {
           success: false,
           message: "Nieprawidłowe dane.",
+          code: "COMMENT_VALIDATION_ERROR",
           errors: resultJson.error.flatten(),
         },
         { status: 400 },
@@ -138,8 +139,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
           : result.error.type === "FORBIDDEN"
             ? 403
             : 400;
+      const code =
+        result.error.type === "UNAUTHORIZED"
+          ? "AUTH_REQUIRED"
+          : result.error.type === "FORBIDDEN"
+            ? "COMMENT_FORBIDDEN"
+            : "COMMENT_ERROR";
       return NextResponse.json(
-        { success: false, message: result.error.message },
+        { success: false, message: result.error.message, code },
         { status },
       );
     }

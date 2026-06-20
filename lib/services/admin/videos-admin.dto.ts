@@ -20,6 +20,9 @@ export type AdminVideoListItem = {
   commentsCount: number;
   migrationStatus: string;
   diagnosticsIssuesCount: number;
+  publishAfterAssetReady: boolean;
+  publishAfterAssetReadyCompletedAt: string | null;
+  publishAfterAssetReadyError: string | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;

@@ -19,30 +19,56 @@ type PostCommentResponse = {
 
 export class CommentPostError extends Error {
   status: number;
+  code?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = "CommentPostError";
     this.status = status;
+    this.code = code;
   }
 }
 
-async function parseCommentPostResponse(res: Response): Promise<PostCommentResponse> {
+async function parseCommentPostResponse(res: Response, language: string = "pl"): Promise<PostCommentResponse> {
   const data = await res.json().catch(() => null) as any;
 
   if (!res.ok || data?.success === false) {
-    const message =
-      data?.message ||
-      data?.errors?.fieldErrors?.text?.[0] ||
-      (res.status === 401
-        ? "Musisz być zalogowany, żeby komentować."
-        : res.status === 403
-          ? "Nie masz uprawnień do komentowania tego filmu."
-          : res.status === 429
-            ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę."
-            : "Nie udało się dodać komentarza. Sprawdź połączenie i spróbuj ponownie.");
+    const code = data?.code;
+    let message = data?.message || data?.errors?.fieldErrors?.text?.[0];
 
-    throw new CommentPostError(message, res.status);
+    if (!message || code) {
+      if (language === "pl") {
+        message =
+          code === "AUTH_REQUIRED" ? "Musisz być zalogowany, żeby komentować." :
+          code === "COMMENT_FORBIDDEN" ? "Nie masz uprawnień do komentowania tego filmu." :
+          code === "COMMENT_RATE_LIMITED" ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę." :
+          code === "COMMENT_VALIDATION_ERROR" ? "Nieprawidłowe dane komentarza." :
+          code === "COMMENT_TOO_LONG" ? "Komentarz jest za długi." :
+          message || (res.status === 401
+            ? "Musisz być zalogowany, żeby komentować."
+            : res.status === 403
+              ? "Nie masz uprawnień do komentowania tego filmu."
+              : res.status === 429
+                ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę."
+                : "Nie udało się dodać komentarza.");
+      } else {
+        message =
+          code === "AUTH_REQUIRED" ? "You must be signed in to comment." :
+          code === "COMMENT_FORBIDDEN" ? "You don't have permission to comment on this video." :
+          code === "COMMENT_RATE_LIMITED" ? "Too many comments. Try again in a moment." :
+          code === "COMMENT_VALIDATION_ERROR" ? "Invalid comment data." :
+          code === "COMMENT_TOO_LONG" ? "Comment is too long." :
+          message || (res.status === 401
+            ? "You must be signed in to comment."
+            : res.status === 403
+              ? "You don't have permission to comment."
+              : res.status === 429
+                ? "Too many comments. Try again later."
+                : "Failed to add comment.");
+      }
+    }
+
+    throw new CommentPostError(message, res.status, code);
   }
 
   return data as PostCommentResponse;
@@ -52,12 +78,18 @@ function createOptimisticComment({
   videoId,
   text,
   parentId,
+  userProfile,
 }: {
   videoId: string;
   text: string;
   parentId?: string;
+  userProfile?: any;
 }): CommentView {
   const now = new Date().toISOString();
+  const badges = [];
+  if (userProfile?.role === "ADMIN") badges.push({ type: "ADMIN", label: "Admin" });
+  if (userProfile?.isPatron) badges.push({ type: "PATRON", label: "Patron" });
+
   return {
     id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     videoId,
@@ -66,11 +98,11 @@ function createOptimisticComment({
     imageUrl: null,
     status: "VISIBLE",
     author: {
-      id: "viewer",
-      displayName: "Ty",
-      username: null,
-      imageUrl: null,
-      badges: [],
+      id: userProfile?.id || "viewer",
+      displayName: userProfile?.name || "Ty",
+      username: userProfile?.username || null,
+      imageUrl: userProfile?.imageUrl || null,
+      badges: badges as any[],
     },
     createdAt: now,
     updatedAt: now,
@@ -141,7 +173,7 @@ function updateCommentReactionInCache(
 }
 
 
-export function useComments(videoId: string, sortBy: "newest" | "top") {
+export function useComments(videoId: string, sortBy: "newest" | "top", language: string = "pl", userProfile?: any) {
   const queryClient = useQueryClient();
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch } =
@@ -176,12 +208,12 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         }),
         headers: { "Content-Type": "application/json" },
       });
-      return parseCommentPostResponse(res);
+      return parseCommentPostResponse(res, language);
     },
     onMutate: async ({ text, parentId }) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
       const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
-      const optimisticComment = createOptimisticComment({ videoId, text, parentId });
+      const optimisticComment = createOptimisticComment({ videoId, text, parentId, userProfile });
 
       for (const [queryKey] of queries) {
         queryClient.setQueryData<CommentsData>(queryKey, (old) => {
@@ -196,22 +228,36 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
           }
 
           if (parentId) {
-            return {
-              ...old,
-              pages: pages.map(page => ({
-                ...page,
-                comments: page.comments.map(c => {
-                  if (c.id === parentId) {
-                    return {
-                      ...c,
-                      repliesCount: (c.repliesCount ?? 0) + 1,
-                      repliesPreview: [...(c.repliesPreview ?? []), optimisticComment],
-                    };
-                  }
-                  return c;
-                })
-              }))
-            };
+            const updatedPages = pages.map(page => ({
+              ...page,
+              comments: page.comments.map(c => {
+                if (c.id === parentId) {
+                  return {
+                    ...c,
+                    repliesCount: (c.repliesCount ?? 0) + 1,
+                    repliesPreview: [...(c.repliesPreview ?? []), optimisticComment],
+                  };
+                }
+                // Check if the parent is in repliesPreview (though we only support 1 level deep in UI usually)
+                if (c.repliesPreview?.some(r => r.id === parentId)) {
+                  return {
+                    ...c,
+                    repliesPreview: c.repliesPreview.map(r => {
+                      if (r.id === parentId) {
+                        return {
+                          ...r,
+                          repliesCount: (r.repliesCount ?? 0) + 1,
+                          repliesPreview: [...(r.repliesPreview ?? []), optimisticComment],
+                        };
+                      }
+                      return r;
+                    })
+                  };
+                }
+                return c;
+              })
+            }));
+            return { ...old, pages: updatedPages };
           }
 
           if (String(queryKey[2]) === "newest" && pages[0]) {

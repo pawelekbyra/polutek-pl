@@ -142,7 +142,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     deleteMutation,
     editMutation,
     reportMutation,
-  } = useComments(videoId, sortBy);
+  } = useComments(videoId, sortBy, language, userProfile);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
