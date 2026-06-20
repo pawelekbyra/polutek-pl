@@ -6,6 +6,28 @@ Priority: Launch-critical
 Launch status: NO_GO
 Type: Runtime implementation + focused tests
 
+
+## Verification note — PR #986 cleanup attempt
+
+Status: `REPAIR_REQUIRED` (not DONE).
+
+PR #986 implementation was inspected after merge and one accidental build/deploy leftover was removed in the cleanup PR: unused `scripts/vercel-build.js`. `package.json` keeps `vercel-build` as `npm run db:generate && next build`; no documented requirement was found to run migrations inside the Vercel build command.
+
+Validation blockers found during cleanup verification:
+
+- Targeted lifecycle suite including `tests/unit/modules/video/cloudflare-lifecycle.test.ts` failed when run with attach/import lifecycle tests because older attach/import test mocks do not provide `videoAsset.findFirst`, and one missing-legacy-URL assertion now receives `CLOUDFLARE_ASSET_ALREADY_EXISTS` before `LEGACY_VIDEO_URL_REQUIRED`.
+- `npm run build` compiles successfully but cannot finish prerendering in this workspace because `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is not set.
+
+Passing evidence collected in the same cleanup pass:
+
+- `git diff --check` passed.
+- `npm run typecheck` passed.
+- `npm run lint` passed.
+- `npm test -- --run tests/unit/modules/video/cloudflare-lifecycle.test.ts` passed.
+- `npm test -- --run tests/unit/video-upload-flow.test.ts` passed.
+
+Do not mark this ticket DONE until the failing targeted attach/import lifecycle tests are repaired or explicitly superseded with equivalent passing coverage. Public launch remains `NO_GO`.
+
 ## Product decision
 
 This ticket replaces the old split between `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `X3-FIX-008`, and the stale parts of `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`.
