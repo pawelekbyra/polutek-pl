@@ -14,8 +14,19 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 1 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` | Grouped Cloudflare admin media lifecycle, legacy import UI, upload/attach lifecycle, sync/webhook reconciliation and truthful admin states. |
 | 2 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / DONE` | Completed publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions through the state-contract ticket. |
 | 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / DONE` | Completed playback/access cleanup and legacy fallback retirement in PR #994. |
-| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / CURRENT` | Current executable code hardening before payment-to-PatronGrant operator smoke evidence. |
-| 5 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
+| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE` | Completed Stripe fulfillment, idempotency and PatronGrant hardening in PR #996. |
+| 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / CURRENT` | Current executable architecture-audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
+| 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_CI_SIGNAL_RECONCILIATION` | Regression coverage, production-safe admin diagnostics, and admin wrapper consistency review. |
+
+## Architecture audit findings routed
+
+Important findings from `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md` are routed as follows:
+
+- CI/test signal scope, strict-escapes drift, hotspots and masterplan CI-risk accuracy -> `CI-SIGNAL-RECONCILIATION-002`.
+- Payments metadata-user/request-id findings -> completed by `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` / PR #996.
+- Dead legacy payments services -> final cleanup if still unused after payments hardening.
+- Admin auth wrapper consistency -> `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`.
+- Playback `getGatedMedia` footgun -> playback-domain evidence; revisit only if PR #994 did not resolve it.
 
 ## Historical or superseded runtime tickets
 
