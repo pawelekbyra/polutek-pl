@@ -47,7 +47,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const { t, language } = useLanguage();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
-  const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId) || mainVideo;
+  const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId || v.slug === currentVideoId) || mainVideo;
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatron === true;
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);

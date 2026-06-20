@@ -112,7 +112,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
   }).catch(() => null);
 
   if (freshCreator) {
-      creator.subscribersCount = freshCreator.displaySubscribersCount ?? creator.subscribersCount;
+      creator.subscribersCount = freshCreator.subscribersCount;
   }
   const channelAvatar = creator.imageUrl || null;
 

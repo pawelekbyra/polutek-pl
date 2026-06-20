@@ -14,7 +14,7 @@ export interface ToggleCommentLikeInput {
 export async function toggleCommentLike(
   input: ToggleCommentLikeInput,
   ctx: AppContext
-): Promise<UseCaseResult<{ liked: boolean }, CommentError>> {
+): Promise<UseCaseResult<{ liked: boolean; likesCount: number }, CommentError>> {
   const { commentId, action } = input;
   const { actor, prisma } = ctx;
 
@@ -50,14 +50,13 @@ export async function toggleCommentLike(
       const existing = await txRepo.findCommentReaction(userId, commentId);
 
       if (action === 'LIKE') {
-        if (existing) return { liked: true };
-        await txRepo.createCommentLike(userId, commentId);
-        return { liked: true };
+        if (!existing) await txRepo.createCommentLike(userId, commentId);
       } else {
-        if (!existing) return { liked: false };
-        await txRepo.deleteCommentReaction(existing.id, commentId);
-        return { liked: false };
+        if (existing) await txRepo.deleteCommentReaction(existing.id, commentId);
       }
+
+      const snapshot = await txRepo.getCommentReactionSnapshot(userId, commentId);
+      return { ...snapshot, liked: action === 'LIKE' };
     });
 
     return ok(result);

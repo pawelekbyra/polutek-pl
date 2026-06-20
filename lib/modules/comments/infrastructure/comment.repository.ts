@@ -61,6 +61,22 @@ export class CommentRepository {
     await (this.db as WriteTx).videoDislike.delete({ where: { id } });
     await (this.db as WriteTx).video.updateMany({ where: { id: videoId, dislikesCount: { gt: 0 } }, data: { dislikesCount: { decrement: 1 } } });
   }
+  async getVideoReactionSnapshot(userId: string, videoId: string) {
+    const [like, dislike, video] = await Promise.all([
+      this.findVideoLike(userId, videoId),
+      this.findVideoDislike(userId, videoId),
+      this.db.video.findUnique?.({
+        where: { id: videoId },
+        select: { likesCount: true, dislikesCount: true },
+      }) ?? Promise.resolve(null),
+    ]);
+    return {
+      liked: !!like,
+      disliked: !!dislike,
+      likesCount: Math.max(0, video?.likesCount ?? 0),
+      dislikesCount: Math.max(0, video?.dislikesCount ?? 0),
+    };
+  }
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({ where: { id }, include: { author: { select: publicCommentAuthorSelect } } });
   }
@@ -80,6 +96,19 @@ export class CommentRepository {
     await (this.db as WriteTx).commentReaction.delete({ where: { id } });
     await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { likesCount: { decrement: 1 }, score: { increment: -1 } } });
     await (this.db as WriteTx).comment.updateMany({ where: { id: commentId, likesCount: { lt: 0 } }, data: { likesCount: 0, score: 0 } });
+  }
+  async getCommentReactionSnapshot(userId: string, commentId: string) {
+    const [reaction, comment] = await Promise.all([
+      this.findCommentReaction(userId, commentId),
+      this.db.comment.findUnique({
+        where: { id: commentId },
+        select: { likesCount: true },
+      }),
+    ]);
+    return {
+      liked: reaction?.type === "LIKE",
+      likesCount: Math.max(0, comment?.likesCount ?? 0),
+    };
   }
   async findMany(options: ListCommentsOptions) {
     const { videoId, userId, sortBy, cursor, limit, includeHidden } = options;

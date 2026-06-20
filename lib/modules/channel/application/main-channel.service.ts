@@ -42,6 +42,11 @@ export class MainChannelService {
     const repository = new ChannelRepository(tx);
     return await repository.updateSubscribersCount(channelId, -1, tx);
   }
+
+  static async syncSubscribersCount(ctx: AppContext, channelId: string, tx: WriteTx) {
+    const repository = new ChannelRepository(tx);
+    return await repository.syncSubscribersCount(channelId, tx);
+  }
 }
 
 /** @deprecated Use MainChannelService.getOptional */
