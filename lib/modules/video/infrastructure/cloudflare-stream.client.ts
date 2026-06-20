@@ -20,6 +20,38 @@ export interface CloudflareImportByUrlResponse {
   messages: any[];
 }
 
+function formatCloudflareErrors(payload: any): string {
+  const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+  const messages = errors
+    .map((error) => {
+      const code = error?.code ? `code ${error.code}` : null;
+      const message = typeof error?.message === "string" ? error.message : null;
+      return [code, message].filter(Boolean).join(": ");
+    })
+    .filter(Boolean);
+
+  if (messages.length > 0) return messages.slice(0, 2).join("; ");
+
+  if (typeof payload?.message === "string") return payload.message;
+  return "No Cloudflare error body returned.";
+}
+
+async function readCloudflareError(response: Response): Promise<{ status: number; details: string; payload: any }> {
+  const text = await response.text();
+  let payload: any = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch {
+    payload = { raw: text.slice(0, 500) };
+  }
+
+  return {
+    status: response.status,
+    details: formatCloudflareErrors(payload),
+    payload,
+  };
+}
+
 export class CloudflareStreamClient {
   private logger = createScopedLogger("CloudflareStreamClient");
 
@@ -52,17 +84,29 @@ export class CloudflareStreamClient {
         },
         body: JSON.stringify({
           maxDurationSeconds,
-          // We can add more metadata here if needed
         }),
       }
     );
 
     if (!response.ok) {
-      this.logger.error("Cloudflare API error", { status: response.status });
-      throw new CloudflareApiError();
+      const cloudflareError = await readCloudflareError(response);
+      this.logger.error("Cloudflare API error", {
+        status: cloudflareError.status,
+        details: cloudflareError.details,
+        payload: cloudflareError.payload,
+      });
+      throw new CloudflareApiError(
+        `Cloudflare Stream odrzucił przygotowanie uploadu (HTTP ${cloudflareError.status}): ${cloudflareError.details}`
+      );
     }
 
-    return await response.json();
+    const data = await response.json();
+    if (!data?.success || !data?.result?.uploadURL || !data?.result?.uid) {
+      this.logger.error("Cloudflare API returned unexpected direct upload response", { data });
+      throw new CloudflareApiError("Cloudflare Stream zwrócił nieoczekiwaną odpowiedź podczas przygotowania uploadu.");
+    }
+
+    return data;
   }
 
   async importVideoByUrl(url: string): Promise<CloudflareImportByUrlResponse> {
@@ -81,8 +125,15 @@ export class CloudflareStreamClient {
     );
 
     if (!response.ok) {
-      this.logger.error("Cloudflare API error (importVideoByUrl)", { status: response.status });
-      throw new CloudflareApiError("Cloudflare Stream nie przyjął importu legacy URL. Spróbuj ponownie później.");
+      const cloudflareError = await readCloudflareError(response);
+      this.logger.error("Cloudflare API error (importVideoByUrl)", {
+        status: cloudflareError.status,
+        details: cloudflareError.details,
+        payload: cloudflareError.payload,
+      });
+      throw new CloudflareApiError(
+        `Cloudflare Stream nie przyjął importu legacy URL (HTTP ${cloudflareError.status}): ${cloudflareError.details}`
+      );
     }
 
     return await response.json();
@@ -103,8 +154,14 @@ export class CloudflareStreamClient {
       );
 
       if (!response.ok) {
-        this.logger.error("Cloudflare API error (getAssetDetails)", { status: response.status });
-        throw new CloudflareApiError();
+        const cloudflareError = await readCloudflareError(response);
+        this.logger.error("Cloudflare API error (getAssetDetails)", {
+          status: cloudflareError.status,
+          details: cloudflareError.details,
+        });
+        throw new CloudflareApiError(
+          `Cloudflare Stream nie zwrócił danych assetu (HTTP ${cloudflareError.status}): ${cloudflareError.details}`
+        );
       }
 
       return await response.json();
@@ -128,8 +185,14 @@ export class CloudflareStreamClient {
     );
 
     if (!response.ok) {
-      this.logger.error("Cloudflare API error (createSignedPlaybackToken)", { status: response.status });
-      throw new CloudflareApiError();
+      const cloudflareError = await readCloudflareError(response);
+      this.logger.error("Cloudflare API error (createSignedPlaybackToken)", {
+        status: cloudflareError.status,
+        details: cloudflareError.details,
+      });
+      throw new CloudflareApiError(
+        `Cloudflare Stream nie utworzył tokenu odtwarzania (HTTP ${cloudflareError.status}): ${cloudflareError.details}`
+      );
     }
 
     const data = await response.json();
