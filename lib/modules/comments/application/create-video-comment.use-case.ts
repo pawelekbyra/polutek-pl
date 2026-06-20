@@ -87,6 +87,8 @@ export async function createVideoComment(
 
     const newComment = await (prisma as PrismaClient).$transaction(async (tx) => {
       const txRepo = new CommentRepository(tx);
+      // Note: imageUrl is currently accepted for future compatibility,
+      // but not exposed in the public CommentComposer UI.
       const comment = await txRepo.create({
         authorId: userId,
         videoId: resolvedVideoId,

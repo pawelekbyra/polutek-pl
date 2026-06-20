@@ -75,7 +75,9 @@ describe('/api/videos/[id]/comments POST', () => {
     });
 
     const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
+    const body = await response.json();
     expect(response.status).toBe(401);
+    expect(body.code).toBe('AUTH_REQUIRED');
   });
 
   it('returns 403 when modular use case returns FORBIDDEN', async () => {
@@ -92,7 +94,9 @@ describe('/api/videos/[id]/comments POST', () => {
     });
 
     const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
+    const body = await response.json();
     expect(response.status).toBe(403);
+    expect(body.code).toBe('COMMENT_FORBIDDEN');
   });
 
   it('returns 429 when the posting rate limit is exceeded', async () => {
@@ -109,6 +113,7 @@ describe('/api/videos/[id]/comments POST', () => {
 
     expect(response.status).toBe(429);
     expect(body.message).toContain('Zbyt dużo komentarzy');
+    expect(body.code).toBe('COMMENT_RATE_LIMITED');
     expect(createVideoComment).not.toHaveBeenCalled();
   });
 });

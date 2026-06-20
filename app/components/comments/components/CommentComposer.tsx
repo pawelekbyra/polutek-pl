@@ -115,6 +115,7 @@ export function CommentComposer({
                 type="button"
                 onClick={() => setReplyTo(null)}
                 className="ml-2 hover:opacity-60"
+                aria-label={language === "pl" ? "Anuluj odpowiedź" : "Cancel reply"}
               >
                 ✕
               </button>
@@ -138,8 +139,12 @@ export function CommentComposer({
               )}
             </div>
           ) : (
-            <textarea
-              id={textareaId}
+            <>
+              <label htmlFor={textareaId} className="sr-only">
+                {replyTo ? t.addReply : t.addComment}
+              </label>
+              <textarea
+                id={textareaId}
               ref={textareaRef}
               value={newComment}
               onChange={(e) => {
@@ -160,8 +165,9 @@ export function CommentComposer({
               aria-invalid={Boolean(errorMessage || isTooLong)}
               aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
               disabled={isPending}
-              className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
-            />
+                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
+              />
+            </>
           )}
 
         {(isInputFocused || newComment.trim() || replyTo) && canComment && (

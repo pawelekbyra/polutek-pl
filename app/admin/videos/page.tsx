@@ -366,32 +366,6 @@ export default function AdminVideosPage() {
     }
   };
 
-  const publishCreatedVideo = useCallback(async () => {
-    if (!createUploadState?.videoId || !createUploadState.publishAfterReady || createUploadState.isPublishing) return;
-    setCreateUploadState((prev) => prev ? { ...prev, isPublishing: true } : prev);
-    try {
-      const res = await fetch(`/api/admin/videos/${createUploadState.videoId}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "publish" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setFormError(readAdminApiError(data, "Upload jest gotowy, ale publikacja nie powiodła się."));
-        toast("Upload gotowy, ale publikacja wymaga ręcznej korekty.", "error");
-        return;
-      }
-      toast("Film został przetworzony i opublikowany.", "success");
-      setIsEditing(false);
-      setCreateUploadState(null);
-      setSelectedVideoFile(null);
-      router.push(`/admin/videos/${encodeURIComponent(createUploadState.videoId)}?tab=summary`);
-    } catch (err) {
-      logger.error("Publish after upload failed", err);
-      setFormError("Upload jest gotowy, ale publikacja nie powiodła się przez błąd połączenia.");
-    }
-  }, [createUploadState, router, toast]);
-
   const attachExistingCloudflareAsset = useCallback(async (videoId: string, providerAssetId: string, publishAfterReady: boolean) => {
     try {
       const attachRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
@@ -511,7 +485,6 @@ export default function AdminVideosPage() {
               initialFile={selectedVideoFile}
               autoStart
               onUploadComplete={() => fetchVideos(page)}
-              onUploadReady={createUploadState.publishAfterReady ? publishCreatedVideo : undefined}
               publishAfterReady={createUploadState.publishAfterReady}
             />
             {createUploadState.publishAfterReady ? (

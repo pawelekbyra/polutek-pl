@@ -60,17 +60,34 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                 </div>
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={vid.status === 'PUBLISHED' ? 'default' : 'outline'}
-                  className={cn(
-                    vid.status === 'DRAFT' && "text-muted-foreground border-dashed",
-                    vid.status === 'ARCHIVED' && "bg-red-100 text-red-700",
-                    vid.status === 'PUBLISHED' && "bg-green-100 text-green-700 hover:bg-green-100",
-                    vid.status === 'UNLISTED' && "bg-amber-100 text-amber-700"
+                <div className="flex flex-col gap-1">
+                  <Badge
+                    variant={vid.status === 'PUBLISHED' ? 'default' : 'outline'}
+                    className={cn(
+                      vid.status === 'DRAFT' && "text-muted-foreground border-dashed",
+                      vid.status === 'ARCHIVED' && "bg-red-100 text-red-700",
+                      vid.status === 'PUBLISHED' && "bg-green-100 text-green-700 hover:bg-green-100",
+                      vid.status === 'UNLISTED' && "bg-amber-100 text-amber-700"
+                    )}
+                  >
+                    {vid.status}
+                  </Badge>
+                  {vid.publishAfterAssetReady && !vid.publishAfterAssetReadyCompletedAt && !vid.publishAfterAssetReadyError && (
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-blue-500 text-blue-600 bg-blue-50 animate-pulse">
+                      PENDING AUTO-PUB
+                    </Badge>
                   )}
-                >
-                  {vid.status}
-                </Badge>
+                  {vid.publishAfterAssetReadyError && (
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-red-500 text-red-600 bg-red-50" title={vid.publishAfterAssetReadyError}>
+                      AUTO-PUB FAILED
+                    </Badge>
+                  )}
+                  {vid.publishAfterAssetReadyCompletedAt && vid.status === 'PUBLISHED' && (
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-green-500 text-green-600 bg-green-50">
+                      AUTO-PUBLISHED
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 <div className="flex flex-col">
