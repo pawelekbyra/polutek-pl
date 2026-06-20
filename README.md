@@ -19,7 +19,7 @@ Public launch: NO_GO / not certified.
 
 The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.
 
-Exactly one current executable ticket: `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001`.
+This README intentionally does not duplicate the current ticket ID. Read `docs/tickets/ready/README.md` for the exactly one current executable ticket. If another document disagrees with that queue, reconcile the control plane before assigning runtime work.
 
 ## Launch backlog
 
@@ -50,7 +50,7 @@ Merged code and tests are evidence of implementation, not evidence of public-lau
 
 - Implementation truth: current code and tests on current main.
 - Product-policy truth: explicit owner decisions, `AGENTS.md`, and `docs/strategy/OWNER-DECISIONS.md`.
-- Current execution-status truth: this README and current ticket queue.
+- Current execution-status truth: this owner dashboard and the canonical ticket queue.
 - Target/specification truth: `docs/specs/**`, Product Standard, phase gates, and architecture blueprint.
 - Historical evidence: PR bodies, historical reconciliation reports, audits, and closed/superseded tickets.
 
