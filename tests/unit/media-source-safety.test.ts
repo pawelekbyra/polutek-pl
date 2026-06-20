@@ -297,6 +297,26 @@ describe('PlaybackService Safety', () => {
   });
 
 
+  it('ignores ALLOW_LEGACY_PRIVATE_FALLBACK and keeps patron legacy fallback blocked', async () => {
+    process.env.ALLOW_LEGACY_PRIVATE_FALLBACK = 'true';
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/private.mp4',
+      asset: null,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('NO_PRIMARY_ASSET');
+    expect(plan.canPlay).toBe(false);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+
   it('should redact raw videoUrl while preserving legacy URL playback behavior when access is allowed', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,

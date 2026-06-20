@@ -30,6 +30,8 @@ describe('Media-Source Route Access', () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
+      status: 'READY',
+      canPlay: true,
       access: { allowed: true },
       source: {
         playbackUrl: 'https://s3.amazonaws.com/private-bucket/v1.mp4?signature=123',
@@ -83,6 +85,34 @@ describe('Media-Source Route Access', () => {
     expect(data.source).toBeUndefined();
     expect(data.playbackUrl).toBeUndefined();
   });
+
+  it('derives compatibility URLs only from allowed READY playable plans', async () => {
+    (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'v1',
+      status: 'PATRON_REQUIRED',
+      canPlay: false,
+      access: { allowed: false, reason: 'PATRON_REQUIRED' },
+      source: {
+        kind: 'cloudflare_stream',
+        playbackUrl: 'https://iframe.videodelivery.net/should-not-leak',
+        embedUrl: 'https://iframe.videodelivery.net/should-not-leak',
+      },
+      diagnostics: { warnings: ['PATRON_REQUIRED'] },
+      tracking: { playbackSessionId: 'should-not-count', heartbeatIntervalSeconds: 15 },
+    });
+
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.hasAccess).toBe(false);
+    expect(data.kind).toBeUndefined();
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
+    expect(data.embedUrl).toBeUndefined();
+    expect(data.tracking.playbackSessionId).toBe('');
+  });
+
 
   it('requires videoId param', async () => {
     const res = await GET(createReq(), { params: Promise.resolve({ videoId: '' }) });
