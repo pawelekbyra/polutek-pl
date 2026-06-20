@@ -49,13 +49,8 @@ export async function provisionCloudflareUpload(
   try {
     const uploadResponse = await client.createDirectUploadUrl();
 
-
-
-
-
-
     const asset = await (ctx.prisma as any).$transaction(async (tx: any) => {
-      const upserted = await repository.upsertAsset(video.id, {
+      const upserted = await repository.updateVideoAsset(video.id, {
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: uploadResponse.result.uid,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
