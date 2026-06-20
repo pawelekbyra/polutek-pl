@@ -673,41 +673,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 132,
-      "label": "explicit any annotation",
-      "text": "if (filters.status && filters.status !== 'ALL') where.status = filters.status as any;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 133,
-      "label": "explicit any annotation",
-      "text": "if (filters.tier && filters.tier !== 'ALL') where.tier = filters.tier as any;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 231,
-      "label": "explicit any annotation",
-      "text": "if ((data as any).status === 'PUBLISHED') {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 232,
-      "label": "explicit any annotation",
-      "text": "delete (data as any).status;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 351,
-      "label": "explicit any annotation",
-      "text": "...data as any,",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/services/content/video.service.ts",
       "line": 128,
       "label": "explicit any annotation",
