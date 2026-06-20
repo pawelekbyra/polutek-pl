@@ -70,6 +70,7 @@ model Payment {
   creatorId           String?
   stripeIntentId      String?       @unique
   stripeSessionId     String?       @unique
+  requestId           String?       @unique
   amountMinor         Int
   refundedAmountMinor Int           @default(0)
   currency            String
@@ -81,6 +82,7 @@ model Payment {
   user    User     @relation(fields: [userId], references: [id])
   creator Creator? @relation(fields: [creatorId], references: [id])
 
+  @@index([userId, requestId])
   @@index([userId, status])
   @@index([userId])
   @@index([creatorId])

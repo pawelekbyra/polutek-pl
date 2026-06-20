@@ -73,6 +73,7 @@ describe('fulfillPayment use case', () => {
   it('grants patron status when payment is above threshold', async () => {
     const input = {
       paymentId: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 1000,
       currency: 'PLN',
@@ -81,10 +82,11 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 1000,
       currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
+      status: PaymentStatus.PENDING,
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'user_123',
@@ -107,6 +109,7 @@ describe('fulfillPayment use case', () => {
   it('does NOT grant patron status when payment is below threshold', async () => {
     const input = {
       paymentId: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 999, // 9.99 PLN < 10 PLN threshold
       currency: 'PLN',
@@ -115,10 +118,11 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 999,
       currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
+      status: PaymentStatus.PENDING,
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'user_123',
@@ -136,6 +140,7 @@ describe('fulfillPayment use case', () => {
   it('does NOT grant patron status when currency is not supported by limits', async () => {
     const input = {
       paymentId: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 1000,
       currency: 'JPY',
@@ -144,10 +149,11 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 1000,
       currency: 'JPY',
-      status: PaymentStatus.SUCCEEDED,
+      status: PaymentStatus.PENDING,
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'user_123',
@@ -168,6 +174,7 @@ describe('fulfillPayment use case', () => {
   it('handles replay correctly (already SUCCEEDED)', async () => {
     const input = {
       paymentId: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 2500,
       currency: 'PLN',
@@ -177,6 +184,7 @@ describe('fulfillPayment use case', () => {
     mockPrisma.payment.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.payment.findUnique.mockResolvedValue({
       id: 'pay_123',
+      stripeIntentId: 'pi_123',
       userId: 'user_123',
       amountMinor: 2500,
       currency: 'PLN',
@@ -200,4 +208,31 @@ describe('fulfillPayment use case', () => {
     }
     expect(grantPatron).not.toHaveBeenCalled(); // No new grant on replay
   });
+
+  it('fails safely when Stripe metadata user id does not match local payment user', async () => {
+    const input = {
+      paymentId: 'pay_123',
+      stripeIntentId: 'pi_123',
+      metadataUserId: 'attacker_user',
+      amountMinor: 1000,
+      currency: 'PLN',
+    };
+
+    mockPrisma.payment.findUnique.mockResolvedValue({
+      id: 'pay_123',
+      stripeIntentId: 'pi_123',
+      userId: 'user_123',
+      amountMinor: 1000,
+      currency: 'PLN',
+      status: PaymentStatus.PENDING,
+    });
+
+    const result = await fulfillPayment(input, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(mockPrisma.payment.updateMany).not.toHaveBeenCalled();
+    expect(mockPrisma.userPaymentTotal.upsert).not.toHaveBeenCalled();
+    expect(grantPatron).not.toHaveBeenCalled();
+  });
+
 });

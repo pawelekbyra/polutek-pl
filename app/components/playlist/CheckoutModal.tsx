@@ -19,6 +19,8 @@ interface CheckoutModalProps {
   stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
+  paymentId: string | null;
+  paymentUiStatus: string | null;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -32,6 +34,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   stripePromise,
   onClose,
   onBackToSite,
+  paymentId,
+  paymentUiStatus,
 }) => {
   return (
     <div className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-white flex flex-col md:flex-row overflow-hidden">
@@ -172,7 +176,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
                   </Button>
                   <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-neutral-300">
-                    {isSyncing ? (language === 'pl' ? 'Synchronizacja profilu...' : 'Syncing profile...') : (language === 'pl' ? 'Profil zaktualizowany' : 'Profile updated')}
+                    {isSyncing ? (language === 'pl' ? 'Oczekiwanie na webhook Stripe...' : 'Waiting for Stripe webhook...') : paymentUiStatus === 'SUCCEEDED' ? (language === 'pl' ? 'Dostęp zsynchronizowany' : 'Access synced') : paymentUiStatus === 'ACCESS_SYNC_PENDING' ? (language === 'pl' ? 'Płatność potwierdzona, synchronizacja dostępu w toku' : 'Payment confirmed, access sync pending') : paymentUiStatus === 'FAILED_CANCELED' ? (language === 'pl' ? 'Płatność nieudana lub anulowana' : 'Payment failed or canceled') : paymentUiStatus === 'REFUNDED_DISPUTED' ? (language === 'pl' ? 'Płatność zwrócona lub sporna' : 'Payment refunded or disputed') : (language === 'pl' ? 'Status płatności oczekuje' : 'Payment status pending')}
                   </p>
                 </div>
               </div>
@@ -201,7 +205,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         }
                       }
                     }}>
-                      <CheckoutForm />
+                      <CheckoutForm returnUrl={paymentId ? `${window.location.origin}/?success=true&payment_id=${encodeURIComponent(paymentId)}` : undefined} />
                     </Elements>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24 space-y-8">

@@ -37,17 +37,23 @@ export async function createCheckoutIntent(
 
   // 2. Idempotency check
   if (input.requestId) {
-    const existing = await repo.findPendingPaymentByRequestId(input.userId, input.requestId, ctx.db.read);
-    if (existing && existing.stripeIntentId) {
-      try {
-        const intent = await stripe.paymentIntents.retrieve(existing.stripeIntentId);
-        logger.info(`[createCheckoutIntent] Deduplicated request ${input.requestId} for user ${input.userId}.`);
-        return success({
-          paymentId: existing.id,
-          clientSecret: intent.client_secret,
-        });
-      } catch (e) {
-        logger.error(`[createCheckoutIntent] Error retrieving existing intent ${existing.stripeIntentId}`, e);
+    const existing = await repo.findPaymentByRequestId(input.userId, input.requestId, ctx.db.read);
+    if (existing) {
+      if (existing.status !== PaymentStatus.PENDING) {
+        logger.info(`[createCheckoutIntent] Reused terminal request ${input.requestId} for user ${input.userId}: ${existing.status}.`);
+        return success({ paymentId: existing.id, clientSecret: null, status: existing.status });
+      }
+      if (existing.stripeIntentId) {
+        try {
+          const intent = await stripe.paymentIntents.retrieve(existing.stripeIntentId);
+          logger.info(`[createCheckoutIntent] Deduplicated request ${input.requestId} for user ${input.userId}.`);
+          return success({
+            paymentId: existing.id,
+            clientSecret: intent.client_secret,
+          });
+        } catch (e) {
+          logger.error(`[createCheckoutIntent] Error retrieving existing intent ${existing.stripeIntentId}`, e);
+        }
       }
     }
   }
@@ -76,6 +82,7 @@ export async function createCheckoutIntent(
     currency: PaymentPolicy.getDbCurrency(input.currency),
     status: PaymentStatus.PENDING,
     metadata: input.requestId ? { requestId: input.requestId } : {},
+    requestId: input.requestId ?? null,
   }, ctx.prisma);
 
   // 5. Create Stripe Payment Intent
