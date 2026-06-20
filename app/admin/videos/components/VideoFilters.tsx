@@ -102,7 +102,7 @@ export function VideoFilters({
                             <SelectItem value="HLS">HLS</SelectItem>
                             <SelectItem value="DASH">DASH</SelectItem>
                             <SelectItem value="MP4">MP4</SelectItem>
-                            <SelectItem value="DIRECT">Direct (Legacy)</SelectItem>
+                            <SelectItem value="DIRECT">Direct URL (do wyjaśnienia)</SelectItem>
                         </SelectContent>
                     </Select>
 

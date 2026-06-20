@@ -10,13 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import {
     ArrowLeft, Video, Globe, Lock, ShieldCheck, BarChart3,
-    MessageSquare, History, AlertTriangle, ExternalLink,
+    MessageSquare, History, AlertTriangle,
     Play, Eye, Heart, Layout, FileVideo,
     CheckCircle2, XCircle, Archive, RotateCcw, Send,
     Edit, Settings
 } from "@/app/components/icons";
 import { logger } from "@/lib/logger";
-import Image from "next/image";
 import VideoPlayer from "@/app/components/VideoPlayer";
 import PremiumWrapper from "@/app/components/PremiumWrapper";
 import { useToast } from "@/app/hooks/useToast";
@@ -34,7 +33,6 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     const [video, setVideo] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isImportingLegacy, setIsImportingLegacy] = useState(false);
     const [activeTab, setActiveTab] = useState<VideoDetailsTab>(() =>
         typeof window === "undefined"
             ? "summary"
@@ -214,75 +212,6 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                         </CardContent>
                     </Card>
 
-
-                    <Card className="shadow-sm border-dashed">
-                        <CardHeader><CardTitle className="text-sm">Advanced / Repair</CardTitle></CardHeader>
-                        <CardContent className="space-y-3">
-                            <p className="text-xs text-muted-foreground">Podepnij istniejący Cloudflare Stream UID tylko do naprawy lub migracji. Standardowy flow nowych filmów to upload TUS powyżej.</p>
-                            <Button variant="outline" size="sm" onClick={async () => {
-                                const providerAssetId = prompt("Wpisz istniejący Cloudflare Stream UID. Zasób zostanie zapisany jako PENDING do czasu synchronizacji statusu z Cloudflare:");
-                                if (!providerAssetId) return;
-                                try {
-                                    const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ action: 'attach-asset', providerAssetId })
-                                    });
-                                    if (res.ok) { toast('Zasób Cloudflare podpięty.', 'success'); fetchVideo(); }
-                                    else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nie udało się podpiąć UID')}`, 'error'); }
-                                } catch (e) {
-                                    toast('Błąd połączenia.', 'error');
-                                }
-                            }}>Podepnij istniejący Cloudflare UID</Button>
-                        </CardContent>
-                    </Card>
-
-                    {video.videoUrl && (
-                    <Card className="shadow-sm">
-                        <CardHeader><CardTitle className="text-lg flex items-center gap-2">Legacy / Migration <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">INTERNAL ONLY</Badge></CardTitle></CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-2 space-y-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase text-muted-foreground">Video URL (Legacy)</Label>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.videoUrl}</div>
-                                            <Button variant="ghost" size="icon" asChild><a href={video.videoUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>
-                                        </div>
-                                        <p className="text-[10px] text-amber-700 italic">Ten URL jest ścieżką legacy/migration only. Nie jest launchową prywatną ścieżką playbacku patronów; docelowy provider launch to Cloudflare Stream po backendowej zgodzie dostępu.</p>
-                                        {video.asset?.provider !== 'CLOUDFLARE_STREAM' && (
-                                            <Button variant="outline" size="sm" disabled={isImportingLegacy} onClick={async () => {
-                                                setIsImportingLegacy(true);
-                                                try {
-                                                    const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ action: 'import-legacy-to-cloudflare' })
-                                                    });
-                                                    if (res.ok) {
-                                                        const data = await res.json();
-                                                        toast(`Import Cloudflare rozpoczęty. UID: ${data.asset?.providerAssetId || '—'}`, 'success');
-                                                        fetchVideo();
-                                                    } else {
-                                                        const err = await res.json();
-                                                        toast(`Błąd: ${readAdminApiError(err, 'Nie udało się rozpocząć importu')}`, 'error');
-                                                    }
-                                                } catch (e) {
-                                                    toast('Błąd połączenia.', 'error');
-                                                } finally {
-                                                    setIsImportingLegacy(false);
-                                                }
-                                            }}>{isImportingLegacy ? 'Importuję…' : 'Importuj do Cloudflare z legacy URL'}</Button>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Thumbnail URL</Label><div className="flex gap-2"><div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.thumbnailUrl}</div><Button variant="ghost" size="icon" asChild><a href={video.thumbnailUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button></div></div>
-                                    <div className="grid grid-cols-2 gap-4 pt-4"><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Dostawca</Label><div className="text-sm font-medium uppercase">{video.asset?.provider || "External / Direct"}</div></div><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Typ</Label><div className="text-sm font-medium">{video.asset?.mimeType || "—"}</div></div></div>
-                                </div>
-                                <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Podgląd miniatury</Label><div className="aspect-video bg-muted rounded-lg overflow-hidden border relative">{video.thumbnailUrl && <Image src={video.thumbnailUrl} alt="Thumbnail preview" fill className="object-cover" />}</div></div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    )}
                 </TabsContent>
 
                 <TabsContent value="access" className="space-y-6">
@@ -362,7 +291,6 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             <div className="lg:w-1/4 space-y-6">
               <Card className="shadow-sm border-0 bg-primary text-primary-foreground overflow-hidden relative"><div className="absolute top-0 right-0 p-4 opacity-10"><Settings className="h-20 w-20" /></div><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Zarządzanie</CardTitle></CardHeader><CardContent className="space-y-4 relative"><Button variant="secondary" className="w-full justify-start h-10 font-bold" onClick={() => handleAction('set-hero')} disabled={video.isMainFeatured}><CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO</Button><Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild><Link href={`/admin/videos?edit=${video.id}`}><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link></Button></CardContent></Card>
               <Card className="shadow-sm"><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Kolejność w sidebarze</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Widoczny:</span><Badge variant={video.showInSidebar ? 'default' : 'outline'}>{video.showInSidebar ? 'TAK' : 'NIE'}</Badge></div><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Pozycja:</span><span className="text-lg font-black italic">#{video.sidebarOrder}</span></div><Button variant="outline" className="w-full h-8 text-[10px]" asChild><Link href="/admin/videos/layout">Zmień kolejność hurtowo</Link></Button></CardContent></Card>
-              {video.videoUrl && (<Card className="shadow-sm border-dashed"><CardHeader><CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Legacy URL diagnostics</CardTitle></CardHeader><CardContent className="space-y-4"><div className="p-3 bg-muted rounded text-[10px] font-mono break-all leading-relaxed">{video.videoUrl}</div><div className="flex items-center gap-2 text-[10px] text-amber-700 font-bold uppercase"><AlertTriangle className="h-3 w-3" /> Legacy / migration only — nie launch patron-private provider</div></CardContent></Card>)}
             </div>
           </div>
         </main>

@@ -55,6 +55,7 @@ const mockPrisma: any = {
 
 const mockCtx: any = {
   prisma: mockPrisma,
+  db: { writeTransaction: vi.fn((cb) => cb(mockPrisma)) },
   actor: { type: 'admin', userId: 'admin-id' }
 };
 
