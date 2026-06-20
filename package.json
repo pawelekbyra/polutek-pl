@@ -111,7 +111,11 @@
   },
   "overrides": {
     "magicast": "0.5.3",
-    "tslib": "2.8.1"
+    "tslib": "2.8.1",
+    "fast-uri": "3.1.2",
+    "hono": "4.12.25",
+    "ip-address": "10.2.0",
+    "express-rate-limit": "8.5.2"
   },
   "engines": {
     "node": "22.x"
