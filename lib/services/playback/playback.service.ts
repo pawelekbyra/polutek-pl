@@ -4,7 +4,7 @@ import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
 import { StorageService } from '../storage/storage.service';
 import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from './playback.dto';
-import { AppContext, createAppContext } from '@/lib/modules/shared/app-context';
+import { AppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
 import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
 import { CloudflareStreamClient } from '@/lib/modules/video/infrastructure/cloudflare-stream.client';
@@ -102,16 +102,6 @@ function unavailablePlan(args: {
 }
 
 export class PlaybackService {
-  /**
-   * @deprecated Use the version with AppContext
-   */
-  static async createPlaybackPlan(videoId: string, userId: string | null, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
-      const ctx = createAppContext({
-          actor: userId ? { type: 'user', userId, isPatron: false } : { type: 'guest' }
-      });
-      return this.createPlaybackPlanWithContext(videoId, ctx, ipHash, userAgentHash);
-  }
-
   static async createPlaybackPlanWithContext(videoId: string, ctx: AppContext, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
     const { prisma, actor } = ctx;
 

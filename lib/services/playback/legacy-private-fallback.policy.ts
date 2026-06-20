@@ -8,8 +8,12 @@ export type PlaybackPolicyAsset = {
   isPrimary?: boolean | null;
 } | null | undefined;
 
-export function isLegacyPrivatePlaybackFallbackAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.ALLOW_LEGACY_PRIVATE_FALLBACK === 'true';
+export function isLegacyPrivatePlaybackFallbackAllowed(_env: NodeJS.ProcessEnv = process.env): boolean {
+  // Owner policy for launch: patron/private legacy fallback is retired.
+  // The historical ALLOW_LEGACY_PRIVATE_FALLBACK environment flag is ignored
+  // so private access cannot be re-enabled without an explicit owner decision
+  // and code change.
+  return false;
 }
 
 export function hasReadyProviderBackedPlaybackAsset(asset: PlaybackPolicyAsset): boolean {

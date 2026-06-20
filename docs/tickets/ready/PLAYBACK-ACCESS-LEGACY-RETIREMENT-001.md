@@ -1,7 +1,7 @@
 # PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 — Playback access truth and legacy path retirement
 
 Ticket ID: PLAYBACK-ACCESS-LEGACY-RETIREMENT-001
-Status: READY_FOR_BUILDER
+Status: COMPLETED_BY_BUILDER
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO
@@ -84,3 +84,12 @@ Ensure denied, non-ready, private, or legacy videos never return a playable sour
 ## Expected PR report
 
 Include the final legacy policy decision, changed files, tests, any intentionally retained compatibility fields, and confirmation that public launch remains `NO_GO`.
+
+
+## Builder completion report — 2026-06-20
+
+Status: `COMPLETED_BY_BUILDER`
+
+Reconciliation report: `docs/reports/reconciliation/2026-06-20-playback-access-legacy-retirement-001.md`
+
+Public launch remains `NO_GO`.

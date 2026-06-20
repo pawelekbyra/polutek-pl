@@ -80,16 +80,36 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
       );
     }
 
-    // Maintain legacy compatibility for now
+    const hasPlayableSource = Boolean(
+      playbackPlan.access.allowed
+        && playbackPlan.canPlay
+        && playbackPlan.status === "READY"
+        && (playbackPlan.source?.playbackUrl || playbackPlan.source?.embedUrl),
+    );
+
+    const safePlaybackPlan = hasPlayableSource
+      ? playbackPlan
+      : {
+          ...playbackPlan,
+          source: undefined,
+          tracking: {
+            ...playbackPlan.tracking,
+            playbackSessionId: "",
+            heartbeatIntervalSeconds: 0,
+          },
+        };
+
+    // Legacy compatibility fields are now derived from the canonical playback
+    // plan and are populated only for a READY, allowed, playable plan.
     const response = {
-      ...playbackPlan,
-      hasAccess: playbackPlan.access.allowed,
-      kind: playbackPlan.source?.kind,
-      playbackUrl: playbackPlan.source?.playbackUrl,
-      embedUrl: playbackPlan.source?.embedUrl,
+      ...safePlaybackPlan,
+      hasAccess: safePlaybackPlan.access.allowed,
+      kind: hasPlayableSource ? safePlaybackPlan.source?.kind : undefined,
+      playbackUrl: hasPlayableSource ? safePlaybackPlan.source?.playbackUrl : undefined,
+      embedUrl: hasPlayableSource ? safePlaybackPlan.source?.embedUrl : undefined,
     };
 
-    if (!playbackPlan.access.allowed) {
+    if (!safePlaybackPlan.access.allowed) {
       return NextResponse.json(response, { status: 403 });
     }
 
