@@ -25,10 +25,42 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
   const repository = new VideoRepository(ctx.prisma);
   const video = await repository.findByIdForMainChannel(input.videoId, mainChannel.id);
   if (!video) return fail(new VideoNotFoundError(input.videoId));
+
+  // Idempotency check: if already attached to this video, return success
+  if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.providerAssetId === providerAssetId) {
+    // Still update publish intent if requested and not already set
+    if (input.publishAfterAssetReady && !video.publishAfterAssetReady) {
+      await ctx.prisma.video.update({
+        where: { id: video.id },
+        data: {
+          publishAfterAssetReady: true,
+          publishAfterAssetReadyRequestedAt: new Date(),
+        }
+      });
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
+        targetType: "Video",
+        targetId: video.id,
+        metadata: { source: "attach-cloudflare-asset-idempotent" },
+      });
+
+      const reloaded = await repository.findByIdForMainChannel(video.id, mainChannel.id);
+      return ok(toAdminVideoDto(reloaded!));
+    }
+    return ok(toAdminVideoDto(video));
+  }
+
   const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
     if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       throw new AppError("Video already has a ready primary asset. Replacement is not allowed.", 400, "VIDEO_HAS_READY_ASSET");
     }
+
+    // Ensure UID is not already in use by another video
+    const existingAssetWithUid = await repository.findAssetByProviderId(VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId);
+    if (existingAssetWithUid && existingAssetWithUid.videoId !== video.id) {
+      throw new AppError(`Cloudflare Stream asset with UID ${providerAssetId} is already used by another video.`, 409, "CLOUDFLARE_ASSET_IN_USE");
+    }
+
     const pendingPublishRequested = input.publishAfterAssetReady || video.publishAfterAssetReady;
     if (pendingPublishRequested) {
       await tx.video.update({

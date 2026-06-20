@@ -77,11 +77,16 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
   useEffect(() => {
     if (initialAsset) {
       setAsset(initialAsset);
-      if (initialAsset.processingState === "READY") setStatus("READY");
-      else if (initialAsset.processingState === "FAILED") setStatus("FAILED");
-      else if (initialAsset.processingState === "PROCESSING" || initialAsset.processingState === "UPLOADING" || initialAsset.processingState === "PENDING") {
-          setStatus(initialAsset.processingState === "PENDING" ? "IDLE" : initialAsset.processingState);
-          startPolling();
+      if (initialAsset.processingState === "READY") {
+        setStatus("READY");
+      } else if (initialAsset.processingState === "FAILED") {
+        setStatus("FAILED");
+        setError(initialAsset.failureReason);
+      } else if (["PROCESSING", "UPLOADING", "PENDING"].includes(initialAsset.processingState)) {
+        // If we have an existing asset that is not ready/failed, it might have been started elsewhere (e.g. import)
+        // We should show it as processing in this component too.
+        setStatus(initialAsset.processingState === "PENDING" ? "PROCESSING" : initialAsset.processingState as any);
+        startPolling();
       }
     }
     return () => stopPolling();
@@ -162,7 +167,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
               <p className="font-bold text-sm">Wideo gotowe!</p>
               <p className="text-xs opacity-80">
                 {publishAfterReady
-                  ? "Zasób Cloudflare jest gotowy. Backend przetwarza teraz automatyczną publikację."
+                  ? "Zasób Cloudflare jest gotowy. Backend przetwarza teraz automatyczną publikację (sprawdź status poniżej)."
                   : "Zasób Cloudflare jest gotowy do publikacji."}
               </p>
             </div>
