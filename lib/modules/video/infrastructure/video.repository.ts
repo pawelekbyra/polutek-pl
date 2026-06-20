@@ -212,12 +212,16 @@ export class VideoRepository {
       descriptionEn: input.descriptionEn ?? null,
       thumbnailUrl: input.thumbnailUrl || "/logo.png",
       duration: input.duration ?? null,
-      tier: input.tier,
-      videoUrl: null,
+      tier: input.tier || 'PUBLIC',
+      videoUrl: input.videoUrl?.trim() || '',
       creator: { connect: { id: mainChannelId } },
       status: 'DRAFT',
       showInSidebar: false,
       isMainFeatured: false,
+      sidebarOrder: 0,
+      views: 0,
+      likesCount: 0,
+      dislikesCount: 0,
       publishedAt: null,
     };
 
@@ -260,113 +264,62 @@ export class VideoRepository {
     });
 
     if (result.count !== 1) {
-        throw new VideoNotOnMainChannelError(id);
+      throw new VideoNotFoundError(id);
     }
 
-    const updated = await tx.video.findFirst({
-        where: { id, creatorId: mainChannelId },
-        include: { _count: { select: { comments: true } } }
-    });
-
+    const updated = await tx.video.findUnique({ where: { id } });
     if (!updated) throw new VideoNotFoundError(id);
     return updated;
   }
 
-  async setHero(videoId: string, mainChannelId: string, tx: WriteTx): Promise<void> {
-    // 1. Scoped fetch to verify ownership and requirements
-    const video = await tx.video.findFirst({
-        where: { id: videoId, creatorId: mainChannelId }
-    });
-
-    if (!video) {
-        throw new VideoNotOnMainChannelError(videoId);
-    }
-
-    // Requirement: only public and published can be hero
-    if (video.tier !== 'PUBLIC' || video.status !== 'PUBLISHED') {
-        throw new VideoInvalidHeroError();
-    }
-
-    // 2. Transactional: clear other heroes and set this one
-    await tx.video.updateMany({
-      where: { creatorId: mainChannelId, isMainFeatured: true },
-      data: { isMainFeatured: false }
-    });
-
-    const updateResult = await tx.video.updateMany({
-      where: { id: videoId, creatorId: mainChannelId },
-      data: { isMainFeatured: true }
-    });
-
-    if (updateResult.count !== 1) {
-        throw new VideoNotOnMainChannelError(videoId);
-    }
-  }
-
-  async clearHero(mainChannelId: string, except: string, tx: WriteTx): Promise<void> {
-    await tx.video.updateMany({
-      where: { creatorId: mainChannelId, isMainFeatured: true, id: { not: except } },
-      data: { isMainFeatured: false }
-    });
-  }
-
-  async existsBySlugExcludingId(slug: string, id: string): Promise<boolean> {
-    const count = await this.db.video.count({
-        where: { slug, id: { not: id } }
-    });
-    return count > 0;
-  }
-
-  async reorder(updates: Array<{ id: string; sidebarOrder: number; showInSidebar: boolean }>, mainChannelId: string, tx: WriteTx): Promise<void> {
-    for (const v of updates) {
-        const video = await tx.video.findUnique({ where: { id: v.id }, select: { creatorId: true } });
-        if (!video || video.creatorId !== mainChannelId) {
-            throw new VideoNotOnMainChannelError(v.id);
-        }
-
-        await tx.video.update({
-            where: { id: v.id },
-            data: {
-                sidebarOrder: v.sidebarOrder,
-                showInSidebar: v.showInSidebar
-            }
-        });
-    }
-  }
-
-  async upsertAsset(videoId: string, data: Partial<VideoAsset>, tx: WriteTx): Promise<VideoAsset> {
-    const existing = await tx.videoAsset.findUnique({
-      where: { videoId }
-    });
-
-    if (existing) {
-      return await tx.videoAsset.update({
-        where: { videoId },
-        data
-      });
-    }
-
-    return await tx.videoAsset.create({
-      data: {
-        ...data as any,
+  async updateVideoAsset(videoId: string, input: {
+    provider?: StorageProvider;
+    objectKey?: string;
+    bucket?: string | null;
+    providerAssetId?: string | null;
+    providerPlaybackId?: string | null;
+    processingState?: string;
+    isPrimary?: boolean;
+    failureReason?: string | null;
+    providerSyncedAt?: Date | null;
+    processingStartedAt?: Date | null;
+    processingEndedAt?: Date | null;
+    mimeType?: string | null;
+    sizeBytes?: number | null;
+  }, tx: WriteTx): Promise<VideoAsset> {
+    return await (tx as any).videoAsset.upsert({
+      where: { videoId },
+      update: {
+        provider: input.provider,
+        objectKey: input.objectKey,
+        bucket: input.bucket,
+        providerAssetId: input.providerAssetId,
+        providerPlaybackId: input.providerPlaybackId,
+        processingState: input.processingState as any,
+        isPrimary: input.isPrimary,
+        failureReason: input.failureReason,
+        providerSyncedAt: input.providerSyncedAt,
+        processingStartedAt: input.processingStartedAt,
+        processingEndedAt: input.processingEndedAt,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+      },
+      create: {
         videoId,
-        provider: data.provider!,
-        objectKey: data.objectKey || `video-${videoId}`,
-        processingState: data.processingState || 'READY'
-      }
-    });
-  }
-
-  async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {
-    return await this.db.videoAsset.findFirst({
-      where: { provider, providerAssetId }
-    });
-  }
-
-  async updateAsset(assetId: string, data: Partial<VideoAsset>, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.update({
-      where: { id: assetId },
-      data
+        provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        objectKey: input.objectKey || input.providerAssetId || videoId,
+        bucket: input.bucket,
+        providerAssetId: input.providerAssetId,
+        providerPlaybackId: input.providerPlaybackId,
+        processingState: input.processingState as any || VIDEO_ASSET_PROCESSING_STATE.PENDING,
+        isPrimary: input.isPrimary ?? true,
+        failureReason: input.failureReason,
+        providerSyncedAt: input.providerSyncedAt,
+        processingStartedAt: input.processingStartedAt,
+        processingEndedAt: input.processingEndedAt,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+      },
     });
   }
 }
