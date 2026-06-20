@@ -1,6 +1,6 @@
 # Polutek.pl Masterplan
 
-Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION
+Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION — ROADMAP GROUPED 2026-06-20
 Launch Status: **NO_GO**
 
 This is the canonical entry point for technical state, risk register, and ordered backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
@@ -10,7 +10,7 @@ This is the canonical entry point for technical state, risk register, and ordere
 - **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
 - **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
 - **Current executable ticket:** see `docs/tickets/ready/README.md`.
-- **Current state:** resolved by the canonical ready-ticket queue and the latest reconciliation report.
+- **Current state:** resolved by the canonical ready-ticket queue, current Git history, and the latest reconciliation/closeout reports.
 
 ## 2. Evidence Taxonomy
 
@@ -34,61 +34,63 @@ This is the canonical entry point for technical state, risk register, and ordere
 
 Vercel `READY` can be deployment evidence only. It is not a substitute for full GitHub CI, provider runtime verification, legal approval, or X7 certification.
 
-## 4. Current Risk Register
+## 4. Risk Register Status
 
-| Risk ID | Title | Evidence Class | Classification | Launch Impact |
-| --- | --- | --- | --- | --- |
-| `CI-001` | Last reviewed PR CI failed | `AGENT_DECLARATION / PR_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-002` | strict-escapes failure skips major checks | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-003` | strict-escapes lacks historical baseline/no-new-debt mode | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-004` | architecture boundaries guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-005` | control-plane docs guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-006` | npm audit high unresolved | `AUTOMATED_TEST_EVIDENCE` | `UNRESOLVED` | **P0 BLOCKER** |
-| `CI-007` | branch protection enforcement unproven | `UNPROVEN` | `REQUIRES_VERIFICATION` | **P0 BLOCKER** |
-| `CI-008` | Vercel READY misused as CI substitute | `EVIDENCE_BOUNDARY` | `PROCESS_GAP` | **HIGH** |
-| `ADMIN-AUTH-REVERIFY` | Auth implementation merged but full current-main certification missing | `MERGED_PR_EVIDENCE` | `REVERIFICATION_REQUIRED` | **HIGH** |
-| `VIDEO-CF-001..012` | Cloudflare upload/asset lifecycle defects | `REPOSITORY_EVIDENCE` | `CORRECTIVE_WORK_REQUIRED` | **P0 BLOCKER** |
-| `VIDEO-PUBLISH-001` | Publication gate incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-HERO-001` | Hero contract inconsistent | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-STATE-001` | Archive/unpublish transition policy missing | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
-| `VIDEO-ADMIN-001..005` | Admin create/form/filter contract defects | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
-| `VIDEO-PLAYBACK-001..002` | Media-source and legacy media contracts unreconciled | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-VERIFY-001` | Provider/E2E verification missing | `AUTOMATED_TEST_EVIDENCE / OPERATOR_EVIDENCE` | `EVIDENCE_GAP` | **P0 BLOCKER** |
-| `ADMIN-CHANNEL-001` | Admin channel root cause unknown | `REPOSITORY_EVIDENCE / OPERATOR_EVIDENCE` | `ROOT_CAUSE_NOT_VERIFIED` | **HIGH** |
-| `CONTROL-001..008` | Control-plane chronology, guard and evidence-boundary gaps | `REPOSITORY_EVIDENCE` | `EMERGENCY_RECONCILED / HARDENING_REQUIRED` | **HIGH** |
-| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** |
-| `BACKUP-UNPROVEN` | Backup/restore evidence missing | `OPERATOR_EVIDENCE` | `PRODUCTION_EVIDENCE_MISSING` | **BLOCKER** |
+The POST-929 risk table remains valuable historical evidence, but it is no longer the executable repair queue. Several old video-provider entries were intentionally grouped and superseded by the later domain roadmap.
 
-Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
+Current grouped code queue:
+
+| Order | Workstream | Current state |
+| ---: | --- | --- |
+| 0 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` |
+| 1 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / CURRENT` |
+| 2 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / PLANNED_AFTER_VIDEO_STATE_CONTRACT` |
+| 3 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / PLANNED_AFTER_PLAYBACK_ACCESS_RETIREMENT` |
+| 4 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` |
+
+Risk classes still open outside the grouped code queue:
+
+| Risk area | Current handling |
+| --- | --- |
+| Legal/privacy/cookies/support copy | Still `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`. |
+| Production provider evidence | Vercel, Cloudflare and Stripe production evidence remain operator evidence work. |
+| Backup/restore evidence | Still requires operator evidence. |
+| X6/X7/final launch certification | Still open. |
+| CI/quality guard maturity | Treat as process/CI hardening unless a current executable ticket says otherwise. |
 
 ## 5. Ordered Masterplan
 
 ### CURRENT_GATE
+
 - See the canonical queue: `docs/tickets/ready/README.md`.
 
-### NEXT_CONFIRMED_TASK
-- `CI-SIGNAL-RESTORATION-001` via `docs/tickets/ready/README.md`.
+### CURRENT_EXECUTABLE_TASK
 
-### ORDERED_REPAIR_PROGRAM
-1. `CI-SIGNAL-RESTORATION-001`
-2. `SECURITY-DEPENDENCY-REMEDIATION-001`
-3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`
-4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001`
-5. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`
-6. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`
-7. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`
-8. `ADMIN-VIDEO-POSTMERGE-VERIFY-001`
-9. `ADMIN-AUTH-POSTMERGE-REVERIFY-001`
-10. `LEGACY-ACCESS-POLICY-RETIREMENT-001`
-11. `ADMIN-CHANNEL-ROOT-CAUSE-001`
-12. `LEGACY-MEDIA-PROXY-RETIREMENT-001`
-13. `CONTROL-PLANE-GUARD-HARDENING-001`
-14. `BETA-SCOPE-GUARD-RECONCILIATION-001`
+- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` via `docs/tickets/ready/README.md`.
+
+### GROUPED_REPAIR_PROGRAM
+
+1. `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
+2. `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001`
+3. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001`
+4. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`
+
+### RECENTLY_COMPLETED
+
+- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
+
+### HISTORICAL_OR_SUPERSEDED_PROGRAM
+
+The older split repair program is historical and should not be used as the current execution order: `CI-SIGNAL-RESTORATION-001`, `SECURITY-DEPENDENCY-REMEDIATION-001`, `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`, `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`, `ADMIN-VIDEO-POSTMERGE-VERIFY-001`, `ADMIN-AUTH-POSTMERGE-REVERIFY-001`, `LEGACY-ACCESS-POLICY-RETIREMENT-001`, `ADMIN-CHANNEL-ROOT-CAUSE-001`, `LEGACY-MEDIA-PROXY-RETIREMENT-001`, `CONTROL-PLANE-GUARD-HARDENING-001`, and `BETA-SCOPE-GUARD-RECONCILIATION-001`.
+
+Use the grouped queue above unless a later reconciliation explicitly reactivates one of those historical cards.
 
 ### OPERATOR_EVIDENCE
+
 - Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts.
 
 ### LEGAL_REVIEW
+
 - Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`.
 
 ## 6. Discoverability Path
@@ -97,4 +99,4 @@ Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CO
 - Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
 - Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
-- Latest Reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
+- Latest Reconciliation: use the latest file in [reports/reconciliation](reports/reconciliation/); POST-929 remains historical baseline evidence.
