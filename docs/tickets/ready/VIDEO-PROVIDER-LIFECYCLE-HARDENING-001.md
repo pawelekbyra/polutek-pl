@@ -1,6 +1,6 @@
 # VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 — Cloudflare admin media lifecycle hardening
 
-Status: READY_FOR_BUILDER
+Status: REPAIR_REQUIRED
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO
