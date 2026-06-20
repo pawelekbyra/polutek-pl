@@ -1,32 +1,24 @@
 # VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 — Cloudflare admin media lifecycle hardening
 
-Status: REPAIR_REQUIRED
+Status: DONE
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO
 Type: Runtime implementation + focused tests
 
+## Completion note — PR #986 + cleanup/follow-up
 
-## Verification note — PR #986 cleanup attempt
+Status: `DONE` for the scope of this ticket.
 
-Status: `REPAIR_REQUIRED` (not DONE).
+PR #986 implemented the Cloudflare admin media lifecycle hardening. The follow-up cleanup removed the unused `scripts/vercel-build.js` wrapper and kept `package.json` `vercel-build` as `npm run db:generate && next build`.
 
-PR #986 implementation was inspected after merge and one accidental build/deploy leftover was removed in the cleanup PR: unused `scripts/vercel-build.js`. `package.json` keeps `vercel-build` as `npm run db:generate && next build`; no documented requirement was found to run migrations inside the Vercel build command.
+The prior `REPAIR_REQUIRED` blocker was limited to stale attach/import lifecycle unit-test mocks and expected error ordering. The follow-up test repair updates the attach/import tests to match the current repository contract:
 
-Validation blockers found during cleanup verification:
+- `VideoRepository.findAssetByProviderId` is backed by `videoAsset.findFirst`, so attach/import mocks include `videoAsset.findFirst`.
+- attach coverage includes same-video idempotency and cross-video UID conflict rejection.
+- legacy import coverage includes missing legacy URL, existing Cloudflare asset, in-transaction duplicate asset, cross-video UID conflict, pending non-primary asset creation, and admin DTO secrecy.
 
-- Targeted lifecycle suite including `tests/unit/modules/video/cloudflare-lifecycle.test.ts` failed when run with attach/import lifecycle tests because older attach/import test mocks do not provide `videoAsset.findFirst`, and one missing-legacy-URL assertion now receives `CLOUDFLARE_ASSET_ALREADY_EXISTS` before `LEGACY_VIDEO_URL_REQUIRED`.
-- `npm run build` compiles successfully but cannot finish prerendering in this workspace because `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is not set.
-
-Passing evidence collected in the same cleanup pass:
-
-- `git diff --check` passed.
-- `npm run typecheck` passed.
-- `npm run lint` passed.
-- `npm test -- --run tests/unit/modules/video/cloudflare-lifecycle.test.ts` passed.
-- `npm test -- --run tests/unit/video-upload-flow.test.ts` passed.
-
-Do not mark this ticket DONE until the failing targeted attach/import lifecycle tests are repaired or explicitly superseded with equivalent passing coverage. Public launch remains `NO_GO`.
+Public launch remains `NO_GO`: this ticket closes the admin/provider lifecycle hardening scope, but production/manual evidence, X6/X7 gates and other launch-critical tickets remain outside this ticket.
 
 ## Product decision
 
