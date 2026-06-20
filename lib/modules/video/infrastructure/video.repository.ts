@@ -102,6 +102,17 @@ export class VideoRepository {
     });
   }
 
+  async existsBySlugExcludingId(slug: string, excludedId: string): Promise<boolean> {
+    const existing = await this.db.video.findFirst({
+      where: {
+        slug,
+        id: { not: excludedId },
+      },
+      select: { id: true },
+    });
+    return Boolean(existing);
+  }
+
   async findPublicList(mainChannelId: string, now: Date): Promise<Video[]> {
     return await this.db.video.findMany({
       where: {
