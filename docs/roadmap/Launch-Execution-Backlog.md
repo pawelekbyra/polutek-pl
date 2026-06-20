@@ -14,8 +14,25 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 1 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` | Grouped Cloudflare admin media lifecycle, legacy import UI, upload/attach lifecycle, sync/webhook reconciliation and truthful admin states. |
 | 2 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / DONE` | Completed publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions through the state-contract ticket. |
 | 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / DONE` | Completed playback/access cleanup and legacy fallback retirement in PR #994. |
-| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / CURRENT` | Current executable code hardening before payment-to-PatronGrant operator smoke evidence. |
-| 5 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
+| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / CURRENT` | Current executable code hardening before payment-to-PatronGrant operator smoke evidence. Do not interrupt while in progress. |
+| 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / PLANNED_AFTER_PAYMENTS_HARDENING` | Architecture audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
+| 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_CI_SIGNAL_RECONCILIATION` | Regression coverage, production-safe admin diagnostics, and admin wrapper consistency review. |
+
+## Architecture audit findings routed
+
+Important findings from `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md` are routed as follows:
+
+| Finding | Owner |
+| --- | --- |
+| CI/test signal scope gap | `CI-SIGNAL-RECONCILIATION-002` |
+| strict-escapes baseline drift | `CI-SIGNAL-RECONCILIATION-002` |
+| admin video page hotspot | `CI-SIGNAL-RECONCILIATION-002` |
+| masterplan CI-risk accuracy | `CI-SIGNAL-RECONCILIATION-002` |
+| payments metadata-user source-of-truth | active payments ticket |
+| payments request-id idempotency | active payments ticket |
+| dead legacy payments services | active payments ticket or later cleanup if still unused |
+| admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
+| playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
 
 ## Historical or superseded runtime tickets
 
