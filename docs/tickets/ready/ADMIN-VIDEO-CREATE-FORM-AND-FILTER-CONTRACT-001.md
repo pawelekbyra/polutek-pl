@@ -25,8 +25,13 @@ Replace the awkward user-facing create flow where admin first creates a metadata
 - `docs/tickets/ready/ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001.md`
 - `docs/tickets/ready/README.md`
 - `app/admin/videos/page.tsx`
+- `app/admin/videos/[id]/page.tsx`
 - `app/admin/videos/components/VideoForm.tsx`
 - `app/admin/videos/components/VideoUploadSection.tsx`
+- `app/admin/videos/components/VideoFilters.tsx`
+- `app/api/admin/videos/[id]/upload/route.ts`
+- `lib/modules/video/infrastructure/cloudflare-stream.client.ts`
+- focused tests for admin video/create/upload behavior
 
 ## Forbidden scope
 - No Prisma schema or migration edits.
@@ -39,9 +44,9 @@ Replace the awkward user-facing create flow where admin first creates a metadata
 ## Required behavior
 - New-video form presents metadata, translations, access, thumbnail, desired final state, and file selection in one coherent create screen.
 - Admin can save as draft with or without a selected file.
-- Admin can request publication from the same create screen only when a file is selected; the app must transparently create a draft, upload/process the file, then publish only after Cloudflare asset reaches READY.
+- Admin can request publication from the same create screen only when a Cloudflare source is selected: either direct upload file or existing Cloudflare Stream UID/address; the app must transparently create a draft, attach/upload/process the asset, then publish only after Cloudflare asset reaches READY.
 - If processing is asynchronous, the UI must honestly show that publication is pending and must not pretend completion before backend publish succeeds.
-- Existing edit behavior and legacy migration UI must remain available.
+- Existing edit behavior must remain available, but the admin video create/media mechanism must not expose legacy videoUrl as the recommended path.
 
 ## Validation commands
 - `node scripts/check-control-plane-docs.mjs`

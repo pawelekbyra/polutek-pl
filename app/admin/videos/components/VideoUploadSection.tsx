@@ -25,7 +25,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
   const [progress, setProgress] = useState(0);
   const [bytesUploaded, setBytesUploaded] = useState(0);
   const [bytesTotal, setBytesTotal] = useState(0);
-  const [status, setStatus] = useState<"IDLE" | "PROVISIONING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "CANCELLED">("IDLE");
+  const [status, setStatus] = useState<"IDLE" | "PROVISIONING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "CANCELLED" | "PROCESSING_TIMEOUT">("IDLE");
   const [error, setError] = useState<string | null>(null);
   const [asset, setAsset] = useState<any>(initialAsset);
   const toast = useToast();
@@ -64,7 +64,12 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
       }
     }, 5000);
 
-    setTimeout(() => stopPolling(), 5 * 60 * 1000);
+    const timeoutId = setTimeout(() => {
+      stopPolling();
+      setStatus((current) => current === "PROCESSING" ? "PROCESSING_TIMEOUT" : current);
+      setError("Cloudflare nadal przetwarza wideo. Szkic jest zapisany; wróć do szczegółów filmu i zsynchronizuj status później.");
+    }, 5 * 60 * 1000);
+    return () => clearTimeout(timeoutId);
   }, [videoId, onUploadComplete, onUploadReady, stopPolling]);
 
   useEffect(() => {
@@ -149,6 +154,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
           <div className="space-y-4"><div className="flex justify-between text-sm mb-1"><span className="flex items-center gap-2">{status === "PROCESSING" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}{status === "PROVISIONING" ? "Inicjowanie..." : status === "UPLOADING" ? "Przesyłanie..." : "Przetwarzanie..."}</span><span className="font-mono">{progress}%</span></div><Progress value={progress} className="h-2" /><div className="flex justify-between items-center text-[10px] text-muted-foreground uppercase font-bold tracking-wider"><span>{formatBytes(bytesUploaded)} / {formatBytes(bytesTotal)}</span>{status === "UPLOADING" && (<Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={cancelUpload}><X className="mr-1 h-3 w-3" /> Anuluj</Button>)}</div></div>
         )}
         {status === "READY" && (<div className="p-4 bg-green-50 border border-green-100 rounded-xl flex items-start gap-3 text-green-800"><CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" /><div><p className="font-bold text-sm">Wideo gotowe!</p><p className="text-xs opacity-80">Zasób Cloudflare jest gotowy do publikacji.</p></div></div>)}
+        {status === "PROCESSING_TIMEOUT" && error && (<div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3 text-amber-900"><AlertCircle className="h-5 w-5 shrink-0 text-amber-600" /><div className="flex-1"><p className="font-bold text-sm">Przetwarzanie trwa dłużej niż zwykle</p><p className="text-xs opacity-80">{error}</p></div></div>)}
         {status === "FAILED" && error && (<div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-800"><AlertCircle className="h-5 w-5 shrink-0 text-red-600" /><div className="flex-1"><p className="font-bold text-sm">Błąd przesyłania</p><p className="text-xs opacity-80 mb-3">{error}</p><Button variant="outline" size="sm" className="h-7 text-xs bg-white" onClick={retryUpload}><RotateCcw className="mr-1 h-3 w-3" /> Spróbuj ponownie</Button></div></div>)}
         {asset && asset.provider === "CLOUDFLARE_STREAM" && (<div className="pt-4 border-t space-y-2"><div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold"><span>UID: {asset.providerAssetId}</span><span>Stan: {asset.processingState}</span></div></div>)}
       </CardContent>

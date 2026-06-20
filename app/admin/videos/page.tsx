@@ -8,7 +8,7 @@ import { useToast } from "@/app/hooks/useToast";
 import Link from 'next/link';
 import { Plus, ArrowLeft } from "@/app/components/icons";
 import { Button } from "@/components/ui/button";
-import { VideoForm } from "./components/VideoForm";
+import { VideoForm, type CreateVideoSourceMode } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 import { AdminFormSkeleton, AdminVideosPageSkeleton } from "@/components/skeletons/admin";
 import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
@@ -34,10 +34,13 @@ export default function AdminVideosPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSlugManual, setIsSlugManual] = useState<boolean>(false);
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [createSourceMode, setCreateSourceMode] = useState<CreateVideoSourceMode>("UPLOAD");
+  const [existingCloudflareSource, setExistingCloudflareSource] = useState("");
   const [createUploadState, setCreateUploadState] = useState<{
     videoId: string;
     publishAfterReady: boolean;
     isPublishing: boolean;
+    isAttachingExisting?: boolean;
   } | null>(null);
 
   const [formData, setFormData] = useState({
@@ -184,6 +187,24 @@ export default function AdminVideosPage() {
     return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
   };
 
+  const normalizeCloudflareSource = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+
+    try {
+      const url = new URL(trimmed);
+      const pathParts = url.pathname.split("/").filter(Boolean);
+      if (url.hostname.includes("videodelivery.net") && pathParts[0]) return pathParts[0];
+      if (url.hostname.includes("cloudflarestream.com") && pathParts[0]) return pathParts[0];
+      const uidFromSearch = url.searchParams.get("video") || url.searchParams.get("uid");
+      if (uidFromSearch) return uidFromSearch.trim();
+    } catch {
+      // Not a URL; treat it as a raw Cloudflare Stream UID.
+    }
+
+    return trimmed.replace(/^stream:/i, "").replace(/^uid:/i, "").trim();
+  };
+
   const handleTitleChange = (val: string) => {
     setFormData(prev => ({
       ...prev,
@@ -215,6 +236,8 @@ export default function AdminVideosPage() {
       sidebarOrder: vid.sidebarOrder || 0
     });
     setSelectedVideoFile(null);
+    setExistingCloudflareSource("");
+    setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
   };
@@ -242,6 +265,10 @@ export default function AdminVideosPage() {
       showInSidebar: false,
       sidebarOrder: 0
     });
+    setSelectedVideoFile(null);
+    setExistingCloudflareSource("");
+    setCreateSourceMode("UPLOAD");
+    setCreateUploadState(null);
     setIsEditing(true);
   };
 
@@ -252,6 +279,8 @@ export default function AdminVideosPage() {
       id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", videoUrl: "", thumbnailUrl: "", duration: "", tier: "PUBLIC", status: "DRAFT", likesCount: 0, dislikesCount: 0, views: 0, isMainFeatured: false, showInSidebar: false, sidebarOrder: 0
     });
     setSelectedVideoFile(null);
+    setExistingCloudflareSource("");
+    setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
   };
@@ -259,9 +288,11 @@ export default function AdminVideosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
-    const intent = submitter?.dataset.intent === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
-    if (!formData.id && intent === "PUBLISHED" && !selectedVideoFile) {
-      setFormError("Wybierz plik wideo przed publikacją. Szkic możesz zapisać bez pliku.");
+    const intent = submitter?.dataset.intent === "PUBLISHED" || (!submitter && formData.status === "PUBLISHED") ? "PUBLISHED" : "DRAFT";
+    const existingProviderAssetId = normalizeCloudflareSource(existingCloudflareSource);
+    const hasCreateSource = createSourceMode === "UPLOAD" ? Boolean(selectedVideoFile) : Boolean(existingProviderAssetId);
+    if (!formData.id && intent === "PUBLISHED" && !hasCreateSource) {
+      setFormError("Wybierz plik albo podaj istniejący Cloudflare Stream UID/adres przed publikacją. Szkic możesz zapisać bez źródła.");
       return;
     }
     setIsSubmitting(true);
@@ -294,7 +325,7 @@ export default function AdminVideosPage() {
       if (res.ok) {
         if (formData.id) {
           setIsEditing(false);
-        } else if (selectedVideoFile) {
+        } else if (createSourceMode === "UPLOAD" && selectedVideoFile) {
           setCreateUploadState({
             videoId: data.id,
             publishAfterReady: intent === "PUBLISHED",
@@ -306,12 +337,20 @@ export default function AdminVideosPage() {
               : "Szkic utworzony. Rozpoczynam upload pliku.",
             "success",
           );
+        } else if (createSourceMode === "EXISTING_CLOUDFLARE" && existingProviderAssetId) {
+          setCreateUploadState({
+            videoId: data.id,
+            publishAfterReady: intent === "PUBLISHED",
+            isPublishing: false,
+            isAttachingExisting: true,
+          });
+          await attachExistingCloudflareAsset(data.id, existingProviderAssetId, intent === "PUBLISHED");
         } else {
           setIsEditing(false);
         }
         if (formData.id && searchParams.get("edit")) {
           router.replace("/admin/videos");
-        } else if (!formData.id && !selectedVideoFile) {
+        } else if (!formData.id && !hasCreateSource) {
           router.push(buildCreatedVideoUploadUrl(data.id));
         }
         fetchVideos(page);
@@ -352,6 +391,62 @@ export default function AdminVideosPage() {
     }
   }, [createUploadState, router, toast]);
 
+  const attachExistingCloudflareAsset = useCallback(async (videoId: string, providerAssetId: string, publishAfterReady: boolean) => {
+    try {
+      const attachRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "attach-asset", providerAssetId }),
+      });
+      const attachData = await attachRes.json();
+      if (!attachRes.ok) {
+        setFormError(readAdminApiError(attachData, "Nie udało się podpiąć istniejącego assetu Cloudflare."));
+        setCreateUploadState(null);
+        return;
+      }
+
+      const syncRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync-cloudflare" }),
+      });
+      if (!syncRes.ok) {
+        const syncData = await syncRes.json();
+        setFormError(readAdminApiError(syncData, "Asset został podpięty, ale nie udało się potwierdzić statusu Cloudflare."));
+        setCreateUploadState(null);
+        return;
+      }
+
+      if (publishAfterReady) {
+        const publishRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "publish" }),
+        });
+        const publishData = await publishRes.json();
+        if (!publishRes.ok) {
+          setFormError(readAdminApiError(publishData, "Asset został podpięty, ale nie jest jeszcze gotowy do publikacji."));
+          toast("Asset podpięty. Publikacja wymaga stanu READY.", "error");
+          setCreateUploadState(null);
+          return;
+        }
+        toast("Istniejący asset Cloudflare został podpięty i film opublikowano.", "success");
+      } else {
+        toast("Istniejący asset Cloudflare został podpięty do szkicu.", "success");
+      }
+
+      setIsEditing(false);
+      setCreateUploadState(null);
+      setExistingCloudflareSource("");
+      router.push(`/admin/videos/${encodeURIComponent(videoId)}?tab=media#media`);
+    } catch (err) {
+      logger.error("Attach existing Cloudflare asset failed", err);
+      setFormError("Nie udało się podpiąć istniejącego assetu Cloudflare przez błąd połączenia.");
+    } finally {
+      setCreateUploadState((prev) => prev ? { ...prev, isAttachingExisting: false } : prev);
+    }
+  }, [router, toast]);
+
   const handleDelete = async (id: string) => {
       if (!confirm("Zarchiwizuj film. Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
       try {
@@ -387,6 +482,7 @@ export default function AdminVideosPage() {
   if (!isAdmin) return <AdminLayoutShell><div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div></AdminLayoutShell>;
 
   if (isEditing) {
+    const isCreateFlowLocked = Boolean(createUploadState);
     return (
       <AdminLayoutShell>
         {isSubmitting && <AdminFormSkeleton />}
@@ -395,7 +491,7 @@ export default function AdminVideosPage() {
           formData={formData}
           setFormData={setFormData}
           formError={formError}
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || isCreateFlowLocked}
           onCancel={() => setIsEditing(false)}
           onSubmit={handleSubmit}
           onTitleChange={handleTitleChange}
@@ -403,7 +499,22 @@ export default function AdminVideosPage() {
           slugify={slugify}
           selectedVideoFile={selectedVideoFile}
           onVideoFileChange={setSelectedVideoFile}
+          createSourceMode={createSourceMode}
+          onCreateSourceModeChange={(mode) => {
+            setCreateSourceMode(mode);
+            setSelectedVideoFile(null);
+            setExistingCloudflareSource("");
+          }}
+          existingCloudflareSource={existingCloudflareSource}
+          onExistingCloudflareSourceChange={setExistingCloudflareSource}
         />
+        {createUploadState?.isAttachingExisting ? (
+          <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950">
+              Podpinam istniejący asset Cloudflare, synchronizuję status i sprawdzam, czy można wykonać publikację.
+            </div>
+          </div>
+        ) : null}
         {createUploadState && selectedVideoFile ? (
           <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
             <VideoUploadSection

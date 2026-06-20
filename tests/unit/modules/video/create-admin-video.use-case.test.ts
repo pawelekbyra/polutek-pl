@@ -64,7 +64,7 @@ describe('createAdminVideo use-case', () => {
     expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
             creator: { connect: { id: 'c1' } },
-            videoUrl: null,
+            videoUrl: '',
             status: VideoStatus.DRAFT,
             showInSidebar: false,
             isMainFeatured: false,

@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send } from "@/app/components/icons";
 
+export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE";
+
 interface VideoFormData {
   id: string;
   title: string;
@@ -42,6 +44,10 @@ interface VideoFormProps {
   className?: string;
   selectedVideoFile?: File | null;
   onVideoFileChange?: (file: File | null) => void;
+  createSourceMode?: CreateVideoSourceMode;
+  onCreateSourceModeChange?: (mode: CreateVideoSourceMode) => void;
+  existingCloudflareSource?: string;
+  onExistingCloudflareSourceChange?: (value: string) => void;
 }
 
 export function VideoForm({
@@ -55,10 +61,15 @@ export function VideoForm({
   onSlugChange,
   className,
   selectedVideoFile,
-  onVideoFileChange
+  onVideoFileChange,
+  createSourceMode = "UPLOAD",
+  onCreateSourceModeChange,
+  existingCloudflareSource = "",
+  onExistingCloudflareSourceChange
 }: VideoFormProps) {
   const isCreate = !formData.id;
   const wantsPublish = formData.status === "PUBLISHED";
+  const hasCreateSource = createSourceMode === "UPLOAD" ? Boolean(selectedVideoFile) : existingCloudflareSource.trim().length > 0;
 
   return (
     <form onSubmit={onSubmit} className={cn("max-w-4xl mx-auto p-4 md:p-8 space-y-8", className)}>
@@ -71,7 +82,7 @@ export function VideoForm({
           <p className="text-sm text-muted-foreground">
             {isCreate
               ? "Ustaw opis, tłumaczenia, dostęp i plik wideo w jednym miejscu. Zapisz jako szkic albo poproś o publikację po przetworzeniu Cloudflare."
-              : "Edytuj metadane filmu. Legacy URL pozostaje wyłącznie informacją migracyjną."}
+              : "Edytuj metadane filmu. Media Cloudflare są zarządzane w szczegółach filmu."}
           </p>
         </div>
         <div className="flex gap-3">
@@ -90,7 +101,7 @@ export function VideoForm({
           <Button
             type="submit"
             data-intent={isCreate ? "PUBLISHED" : "SAVE"}
-            disabled={isSubmitting || !formData.title.trim() || !formData.slug.trim() || (isCreate && !selectedVideoFile)}
+            disabled={isSubmitting || !formData.title.trim() || !formData.slug.trim() || (isCreate && !hasCreateSource)}
             onClick={() => isCreate ? setFormData({...formData, status: "PUBLISHED"}) : undefined}
           >
             {isCreate ? <Send className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
@@ -147,23 +158,51 @@ export function VideoForm({
                 <>
                   <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
                     <p className="font-semibold">Jednoetapowe dodawanie</p>
-                    <p className="mt-1 text-xs">Wybierz plik teraz. Po kliknięciu zapisu system utworzy techniczny szkic, rozpocznie upload Cloudflare Stream i — jeśli wybierzesz publikację — opublikuje dopiero po stanie READY.</p>
+                    <p className="mt-1 text-xs">Wybierz plik albo podaj istniejący Cloudflare Stream UID/adres. System utworzy techniczny szkic i — jeśli wybierzesz publikację — opublikuje dopiero po stanie READY.</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="videoFile">Plik wideo {wantsPublish ? "(wymagany do publikacji)" : "(opcjonalny dla szkicu)"}</Label>
-                    <Input
-                      id="videoFile"
-                      type="file"
-                      accept="video/*"
-                      disabled={isSubmitting}
-                      onChange={(event) => onVideoFileChange?.(event.target.files?.[0] || null)}
-                    />
-                    {selectedVideoFile ? (
-                      <p className="text-xs font-medium text-muted-foreground">Wybrano: {selectedVideoFile.name}</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Możesz zapisać pusty szkic, ale publikacja wymaga pliku i gotowego assetu Cloudflare.</p>
-                    )}
+                    <Label>Źródło Cloudflare</Label>
+                    <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UPLOAD">Upload pliku do Cloudflare</SelectItem>
+                        <SelectItem value="EXISTING_CLOUDFLARE">Istniejący Cloudflare Stream UID/adres</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {createSourceMode === "UPLOAD" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="videoFile">Plik wideo {wantsPublish ? "(wymagany do publikacji)" : "(opcjonalny dla szkicu)"}</Label>
+                      <Input
+                        id="videoFile"
+                        type="file"
+                        accept="video/*"
+                        disabled={isSubmitting}
+                        onChange={(event) => onVideoFileChange?.(event.target.files?.[0] || null)}
+                      />
+                      {selectedVideoFile ? (
+                        <p className="text-xs font-medium text-muted-foreground">Wybrano: {selectedVideoFile.name}</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Możesz zapisać pusty szkic, ale publikacja wymaga pliku albo istniejącego assetu Cloudflare.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="existingCloudflareSource">Cloudflare Stream UID albo adres</Label>
+                      <Input
+                        id="existingCloudflareSource"
+                        value={existingCloudflareSource}
+                        onChange={(event) => onExistingCloudflareSourceChange?.(event.target.value)}
+                        placeholder="np. 31c9291ab41fac05471db4e73aa11717 albo https://iframe.videodelivery.net/..."
+                        disabled={isSubmitting}
+                      />
+                      {existingCloudflareSource.trim() ? (
+                        <p className="text-xs font-medium text-muted-foreground">Po zapisie sprawdzę status assetu w Cloudflare i opublikuję tylko jeśli jest READY.</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Podaj identyfikator/adres istniejącego assetu Cloudflare Stream.</p>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">Upload i diagnostyka assetu są dostępne w zakładce Media szczegółów filmu.</p>
@@ -178,17 +217,6 @@ export function VideoForm({
               <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" disabled={isSubmitting} />
             </CardContent>
           </Card>
-
-          {!isCreate && formData.videoUrl ? (
-            <Card className="border-dashed border-amber-200 bg-amber-50/40">
-              <CardHeader><CardTitle className="text-sm text-amber-900">Advanced / Legacy migration</CardTitle></CardHeader>
-              <CardContent className="space-y-2">
-                <Label htmlFor="legacyVideoUrl">Legacy videoUrl (read-only)</Label>
-                <Input id="legacyVideoUrl" value={formData.videoUrl} readOnly />
-                <p className="text-xs text-amber-800">Ten URL służy tylko do migracji istniejących rekordów do Cloudflare Stream.</p>
-              </CardContent>
-            </Card>
-          ) : null}
         </div>
 
         <div className="space-y-8">
