@@ -27,18 +27,7 @@ import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
 import { readAdminApiError } from "../components/api-error";
-
-const VIDEO_DETAILS_TABS = new Set(["summary", "content", "media", "access", "diagnostics", "comments", "stats", "audit"]);
-
-function getInitialDetailsTab() {
-    if (typeof window === "undefined") return "summary";
-
-    const tabFromQuery = new URLSearchParams(window.location.search).get("tab");
-    const tabFromHash = window.location.hash.replace(/^#/, "");
-    const requestedTab = tabFromQuery || tabFromHash;
-
-    return requestedTab && VIDEO_DETAILS_TABS.has(requestedTab) ? requestedTab : "summary";
-}
+import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
@@ -46,7 +35,11 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isImportingLegacy, setIsImportingLegacy] = useState(false);
-    const [activeTab, setActiveTab] = useState(getInitialDetailsTab);
+    const [activeTab, setActiveTab] = useState<VideoDetailsTab>(() =>
+        typeof window === "undefined"
+            ? "summary"
+            : resolveInitialVideoDetailsTab(window.location.search, window.location.hash)
+    );
     const toast = useToast();
 
     const fetchVideo = useCallback(async () => {
@@ -65,7 +58,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     useEffect(() => { fetchVideo(); }, [fetchVideo]);
 
     const handleTabChange = (tab: string) => {
-        setActiveTab(tab);
+        setActiveTab(tab as VideoDetailsTab);
         if (typeof window === "undefined") return;
 
         const url = new URL(window.location.href);

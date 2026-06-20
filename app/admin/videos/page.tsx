@@ -15,6 +15,7 @@ import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
 import { VideoFilters } from "./components/VideoFilters";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
 import { readAdminApiError } from "./components/api-error";
+import { buildCreatedVideoUploadUrl } from "./[id]/details-tab-state";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -278,7 +279,7 @@ export default function AdminVideosPage() {
         if (searchParams.get("edit")) {
           router.replace("/admin/videos");
         } else {
-          router.push(`/admin/videos/${data.id}?tab=media#media`);
+          router.push(buildCreatedVideoUploadUrl(data.id));
         }
         fetchVideos(page);
       } else {
