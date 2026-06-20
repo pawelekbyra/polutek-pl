@@ -27,6 +27,7 @@ import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
 import { readAdminApiError } from "../components/api-error";
+import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
@@ -34,6 +35,11 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isImportingLegacy, setIsImportingLegacy] = useState(false);
+    const [activeTab, setActiveTab] = useState<VideoDetailsTab>(() =>
+        typeof window === "undefined"
+            ? "summary"
+            : resolveInitialVideoDetailsTab(window.location.search, window.location.hash)
+    );
     const toast = useToast();
 
     const fetchVideo = useCallback(async () => {
@@ -50,6 +56,16 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     }, [params.id]);
 
     useEffect(() => { fetchVideo(); }, [fetchVideo]);
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab as VideoDetailsTab);
+        if (typeof window === "undefined") return;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tab);
+        url.hash = tab === "media" ? "media" : "";
+        window.history.replaceState(null, "", url.toString());
+    };
 
     const handleAction = async (action: string) => {
         try {
@@ -91,7 +107,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
 
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="lg:w-3/4 space-y-6">
-              <Tabs defaultValue="summary" className="w-full">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="w-full justify-start bg-background border rounded-lg p-1 mb-6 h-auto flex-wrap">
                   <TabsTrigger value="summary" className="px-4 py-2 flex gap-2 items-center"><Layout className="h-4 w-4" /> Podsumowanie</TabsTrigger>
                   <TabsTrigger value="content" className="px-4 py-2 flex gap-2 items-center"><FileVideo className="h-4 w-4" /> Treść</TabsTrigger>
@@ -145,77 +161,26 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                 </TabsContent>
 
                 <TabsContent value="content"><VideoDetailsPanel video={video} /></TabsContent>
-                <TabsContent value="media" className="space-y-6">
+                <TabsContent value="media" id="media" className="space-y-6">
+                    {video.status === 'DRAFT' && (!video.asset || video.asset.processingState !== 'READY') && (
+                        <VideoUploadSection
+                          videoId={video.id}
+                          onUploadComplete={fetchVideo}
+                          initialAsset={video.asset}
+                        />
+                    )}
                     <Card className="shadow-sm">
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg">Cloudflare Stream (Primary)</CardTitle>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={async () => {
-                                    const providerAssetId = prompt("Wpisz Cloudflare UID. Zasób zostanie zapisany jako PENDING do czasu synchronizacji statusu z Cloudflare:");
-                                    if (providerAssetId) {
-                                        try {
-                                            const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ action: 'attach-asset', providerAssetId })
-                                            });
-                                            if (res.ok) { toast('Zasób podpięty.', 'success'); fetchVideo(); }
-                                            else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error'); }
-                                        } catch (e) { toast('Błąd połączenia.', 'error'); }
-                                    }
-                                }}>Podepnij UID jako PENDING</Button>
-                                <Button variant="outline" size="sm" onClick={() => handleAction('sync-cloudflare')} disabled={video.asset?.provider !== 'CLOUDFLARE_STREAM'}>Synchronizuj status</Button>
-                                <Button variant="default" size="sm" onClick={async () => {
-                                    try {
-                                        const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ action: 'create-upload-url' })
-                                        });
-                                        if (res.ok) {
-                                            const data = await res.json();
-                                            toast('URL do uploadu wygenerowany. UID: ' + data.providerAssetId, 'success');
-                                            window.open(data.uploadUrl, '_blank');
-                                            fetchVideo();
-                                        } else {
-                                            const err = await res.json();
-                                            toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error');
-                                        }
-                                    } catch (e) { toast('Błąd połączenia.', 'error'); }
-                                }}>Generuj Upload URL</Button>
-                                {video.videoUrl && video.asset?.provider !== 'CLOUDFLARE_STREAM' && (
-                                    <Button variant="outline" size="sm" disabled={isImportingLegacy} onClick={async () => {
-                                        setIsImportingLegacy(true);
-                                        try {
-                                            const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ action: 'import-legacy-to-cloudflare' })
-                                            });
-                                            if (res.ok) {
-                                                const data = await res.json();
-                                                toast(`Import Cloudflare rozpoczęty. UID: ${data.asset?.providerAssetId || '—'}`, 'success');
-                                                fetchVideo();
-                                            } else {
-                                                const err = await res.json();
-                                                toast(`Błąd: ${readAdminApiError(err, 'Nie udało się rozpocząć importu')}`, 'error');
-                                            }
-                                        } catch (e) {
-                                            toast('Błąd połączenia.', 'error');
-                                        } finally {
-                                            setIsImportingLegacy(false);
-                                        }
-                                    }}>{isImportingLegacy ? 'Importuję…' : 'Importuj do Cloudflare z legacy URL'}</Button>
-                                )}
-                            </div>
+                            <CardTitle className="text-lg">Cloudflare Stream asset</CardTitle>
+                            <Button variant="outline" size="sm" onClick={() => handleAction('sync-cloudflare')} disabled={video.asset?.provider !== 'CLOUDFLARE_STREAM'}>Synchronizuj status</Button>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
-                                <p className="font-semibold">Cloudflare-first media flow</p>
+                                <p className="font-semibold">Primary flow: upload pliku do Cloudflare Stream</p>
                                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs">
-                                    <li>Wygeneruj Cloudflare upload URL albo podepnij istniejący Cloudflare UID jako PENDING.</li>
-                                    <li>Nie oznaczaj ręcznie assetu jako READY ani primary z UI.</li>
-                                    <li>Synchronizuj status providera, aż backend potwierdzi READY.</li>
+                                    <li>Upload TUS tworzy asset Cloudflare dla szkicu.</li>
+                                    <li>Publikacja wymaga primary assetu Cloudflare Stream w stanie READY.</li>
+                                    <li>Upload nie publikuje filmu automatycznie — admin nadal klika „Publikuj”.</li>
                                 </ol>
                             </div>
                             {video.asset?.provider === 'CLOUDFLARE_STREAM' ? (
@@ -249,6 +214,29 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                         </CardContent>
                     </Card>
 
+
+                    <Card className="shadow-sm border-dashed">
+                        <CardHeader><CardTitle className="text-sm">Advanced / Repair</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="text-xs text-muted-foreground">Podepnij istniejący Cloudflare Stream UID tylko do naprawy lub migracji. Standardowy flow nowych filmów to upload TUS powyżej.</p>
+                            <Button variant="outline" size="sm" onClick={async () => {
+                                const providerAssetId = prompt("Wpisz istniejący Cloudflare Stream UID. Zasób zostanie zapisany jako PENDING do czasu synchronizacji statusu z Cloudflare:");
+                                if (!providerAssetId) return;
+                                try {
+                                    const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ action: 'attach-asset', providerAssetId })
+                                    });
+                                    if (res.ok) { toast('Zasób Cloudflare podpięty.', 'success'); fetchVideo(); }
+                                    else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nie udało się podpiąć UID')}`, 'error'); }
+                                } catch (e) {
+                                    toast('Błąd połączenia.', 'error');
+                                }
+                            }}>Podepnij istniejący Cloudflare UID</Button>
+                        </CardContent>
+                    </Card>
+
                     {video.videoUrl && (
                     <Card className="shadow-sm">
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2">Legacy / Migration <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">INTERNAL ONLY</Badge></CardTitle></CardHeader>
@@ -262,6 +250,30 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                             <Button variant="ghost" size="icon" asChild><a href={video.videoUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>
                                         </div>
                                         <p className="text-[10px] text-amber-700 italic">Ten URL jest ścieżką legacy/migration only. Nie jest launchową prywatną ścieżką playbacku patronów; docelowy provider launch to Cloudflare Stream po backendowej zgodzie dostępu.</p>
+                                        {video.asset?.provider !== 'CLOUDFLARE_STREAM' && (
+                                            <Button variant="outline" size="sm" disabled={isImportingLegacy} onClick={async () => {
+                                                setIsImportingLegacy(true);
+                                                try {
+                                                    const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ action: 'import-legacy-to-cloudflare' })
+                                                    });
+                                                    if (res.ok) {
+                                                        const data = await res.json();
+                                                        toast(`Import Cloudflare rozpoczęty. UID: ${data.asset?.providerAssetId || '—'}`, 'success');
+                                                        fetchVideo();
+                                                    } else {
+                                                        const err = await res.json();
+                                                        toast(`Błąd: ${readAdminApiError(err, 'Nie udało się rozpocząć importu')}`, 'error');
+                                                    }
+                                                } catch (e) {
+                                                    toast('Błąd połączenia.', 'error');
+                                                } finally {
+                                                    setIsImportingLegacy(false);
+                                                }
+                                            }}>{isImportingLegacy ? 'Importuję…' : 'Importuj do Cloudflare z legacy URL'}</Button>
+                                        )}
                                     </div>
                                     <div className="space-y-2"><Label className="text-xs font-bold uppercase text-muted-foreground">Thumbnail URL</Label><div className="flex gap-2"><div className="flex-1 p-2 bg-muted/50 rounded text-xs font-mono break-all">{video.thumbnailUrl}</div><Button variant="ghost" size="icon" asChild><a href={video.thumbnailUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button></div></div>
                                     <div className="grid grid-cols-2 gap-4 pt-4"><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Dostawca</Label><div className="text-sm font-medium uppercase">{video.asset?.provider || "External / Direct"}</div></div><div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Typ</Label><div className="text-sm font-medium">{video.asset?.mimeType || "—"}</div></div></div>

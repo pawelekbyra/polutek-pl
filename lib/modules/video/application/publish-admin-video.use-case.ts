@@ -6,6 +6,7 @@ import { VideoStatus } from "@prisma/client";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
+import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
 
 export async function publishAdminVideo(
   videoId: string,
@@ -16,32 +17,32 @@ export async function publishAdminVideo(
 
   const video = await repository.findByIdForMainChannel(videoId, mainChannel.id);
   if (!video) {
-      return fail({ code: 'VIDEO_NOT_FOUND', message: 'Video not found', statusCode: 404 });
+      return fail(new VideoNotFoundError(videoId));
   }
 
   // Publication requirements
   if (!video.title || video.title.trim() === '') {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Missing title', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Podaj tytuł przed publikacją filmu.'));
   }
   if (!video.slug || video.slug.trim() === '') {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Missing slug', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Podaj slug przed publikacją filmu.'));
   }
   if (!video.tier) {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Missing tier', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Wybierz tier dostępu przed publikacją filmu.'));
   }
 
   // Asset requirements
   if (!video.asset || !video.asset.isPrimary) {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'No primary asset found', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Publikacja wymaga primary assetu Cloudflare Stream w stanie READY.'));
   }
   if (video.asset.provider !== VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Primary asset must be Cloudflare Stream', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Primary asset musi pochodzić z Cloudflare Stream.'));
   }
   if (video.asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Primary asset is not READY', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Asset Cloudflare Stream nie jest jeszcze READY.'));
   }
   if (!video.asset.providerAssetId) {
-      return fail({ code: 'VIDEO_NOT_READY_FOR_PUBLICATION', message: 'Missing provider UID', statusCode: 400 });
+      return fail(new VideoNotReadyForPublicationError('Brakuje identyfikatora assetu Cloudflare Stream.'));
   }
 
   const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {

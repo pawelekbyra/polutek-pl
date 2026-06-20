@@ -5,9 +5,8 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, CreateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { MediaPolicy } from "@/lib/modules/media";
-import type { MediaHostEnv } from "@/lib/modules/media";
-import { VideoUrlNotAllowedError } from "../domain/video.errors";
+import { VideoSlugConflictError } from "../domain/video.errors";
+import { Prisma } from "@prisma/client";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
 
@@ -23,11 +22,11 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
   }
 
   return {
-    ...input,
     title,
     slug,
-    videoUrl: input.videoUrl?.trim() || null,
     thumbnailUrl: input.thumbnailUrl?.trim() || DEFAULT_DRAFT_THUMBNAIL_URL,
+    duration: input.duration?.trim() || null,
+    tier: input.tier,
     description: input.description?.trim() || null,
     titleEn: input.titleEn?.trim() || null,
     descriptionEn: input.descriptionEn?.trim() || null,
@@ -37,30 +36,33 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
 export async function createAdminVideo(
   input: CreateVideoInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoUrlNotAllowedError | AppError>> {
+): Promise<UseCaseResult<AdminVideoDto, AppError>> {
   const normalizedInput = normalizeCreateVideoInput(input);
   if (normalizedInput instanceof AppError) return fail(normalizedInput);
 
   const mainChannel = await MainChannelService.getRequired(ctx);
 
-  if (normalizedInput.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(normalizedInput.videoUrl, process.env as MediaHostEnv)) {
-    return fail(new VideoUrlNotAllowedError(normalizedInput.videoUrl));
-  }
-
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await ctx.db.writeTransaction(async (tx) => {
-    const created = await repository.createForMainChannel(normalizedInput, mainChannel.id, tx);
+  try {
+    const video = await ctx.db.writeTransaction(async (tx) => {
+      const created = await repository.createForMainChannel(normalizedInput, mainChannel.id, tx);
 
-    await recordAuditEvent(ctx, {
-      action: 'VIDEO_CREATED',
-      targetType: 'Video',
-      targetId: created.id,
-      metadata: { title: created.title }
-    }, tx);
+      await recordAuditEvent(ctx, {
+        action: 'VIDEO_CREATED',
+        targetType: 'Video',
+        targetId: created.id,
+        metadata: { title: created.title }
+      }, tx);
 
-    return created;
-  });
+      return created;
+    });
 
-  return ok(toAdminVideoDto(video));
+    return ok(toAdminVideoDto(video));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return fail(new VideoSlugConflictError(normalizedInput.slug));
+    }
+    throw error;
+  }
 }

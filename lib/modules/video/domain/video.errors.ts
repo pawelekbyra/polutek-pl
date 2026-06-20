@@ -83,3 +83,32 @@ export class PlaybackAccessDeniedError extends AppError {
     super(reason || 'Access denied', 403, 'ACCESS_DENIED');
   }
 }
+
+
+export class CloudflareConfigurationError extends AppError {
+  public readonly missing: string[];
+
+  constructor(missing: string[] = []) {
+    super(
+      'Cloudflare Stream nie jest skonfigurowany po stronie serwera. Skontaktuj się z administratorem technicznym przed uploadem nowych filmów.',
+      503,
+      'CLOUDFLARE_NOT_CONFIGURED'
+    );
+    this.name = 'CloudflareConfigurationError';
+    this.missing = missing;
+  }
+}
+
+export class CloudflareApiError extends AppError {
+  constructor(message = 'Cloudflare Stream zwrócił błąd podczas przygotowania uploadu. Spróbuj ponownie później.') {
+    super(message, 502, 'CLOUDFLARE_API_ERROR');
+    this.name = 'CloudflareApiError';
+  }
+}
+
+export class VideoNotReadyForPublicationError extends AppError {
+  constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest primary asset Cloudflare Stream w stanie READY.') {
+    super(message, 400, 'VIDEO_NOT_READY_FOR_PUBLICATION');
+    this.name = 'VideoNotReadyForPublicationError';
+  }
+}

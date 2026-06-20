@@ -63,10 +63,20 @@ export async function POST(req: NextRequest) {
     if (body.id) {
       const result = await updateAdminVideo(body, ctx);
       return fromUseCaseResult(result);
-    } else {
-      const result = await createAdminVideo(body, ctx);
-      return fromUseCaseResult(result);
     }
+
+    const createPayload = {
+      title: body.title,
+      slug: body.slug,
+      description: body.description,
+      titleEn: body.titleEn,
+      descriptionEn: body.descriptionEn,
+      thumbnailUrl: body.thumbnailUrl,
+      duration: body.duration,
+      tier: body.tier,
+    };
+    const result = await createAdminVideo(createPayload, ctx);
+    return fromUseCaseResult(result);
   } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_POST_ERROR]", error);
     return handleApiError(error);
