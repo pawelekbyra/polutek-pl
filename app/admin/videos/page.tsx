@@ -243,8 +243,8 @@ export default function AdminVideosPage() {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
+        body: JSON.stringify(formData.id ? {
+          id: formData.id,
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
           description: formData.description?.trim() || null,
@@ -252,6 +252,21 @@ export default function AdminVideosPage() {
           descriptionEn: formData.descriptionEn?.trim() || null,
           videoUrl: formData.videoUrl?.trim() || null,
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          duration: formData.duration?.trim() || null,
+          tier: formData.tier,
+          status: formData.status,
+          isMainFeatured: formData.isMainFeatured,
+          showInSidebar: formData.showInSidebar,
+          sidebarOrder: formData.sidebarOrder,
+        } : {
+          title: formData.title?.trim(),
+          slug: formData.slug?.trim(),
+          description: formData.description?.trim() || null,
+          titleEn: formData.titleEn?.trim() || null,
+          descriptionEn: formData.descriptionEn?.trim() || null,
+          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          tier: formData.tier,
+          status: "DRAFT",
         })
       });
       const data = await res.json();
@@ -260,7 +275,8 @@ export default function AdminVideosPage() {
         if (searchParams.get("edit")) {
           router.replace("/admin/videos");
         } else {
-          router.push(`/admin/videos/${data.id}`);
+          toast("Szkic Cloudflare utworzony. Kontynuuj w sekcji mediów: upload URL albo istniejący Cloudflare UID.", "success");
+          router.push(`/admin/videos/${data.id}#media`);
         }
         fetchVideos(page);
       } else {

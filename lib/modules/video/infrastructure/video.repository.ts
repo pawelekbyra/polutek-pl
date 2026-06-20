@@ -192,7 +192,14 @@ export class VideoRepository {
     // Secure defaults for new videos
     return await tx.video.create({
       data: {
-        ...input,
+        title: input.title,
+        slug: input.slug,
+        description: input.description ?? null,
+        titleEn: input.titleEn ?? null,
+        descriptionEn: input.descriptionEn ?? null,
+        videoUrl: input.videoUrl ?? null,
+        thumbnailUrl: input.thumbnailUrl,
+        tier: input.tier,
         creatorId: mainChannelId,
         status: 'DRAFT',
         showInSidebar: false,

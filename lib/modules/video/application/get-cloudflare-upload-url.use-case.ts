@@ -68,10 +68,6 @@ export async function getCloudflareUploadUrl(
       providerAssetId: uploadResponse.result.uid
     });
   } catch (error: any) {
-    return fail({
-      code: 'CLOUDFLARE_API_ERROR',
-      message: error.message || 'Failed to communicate with Cloudflare Stream API',
-      statusCode: 500
-    } as any);
+    return fail(new AppError(error.message || 'Failed to communicate with Cloudflare Stream API', 502, 'CLOUDFLARE_API_ERROR'));
   }
 }

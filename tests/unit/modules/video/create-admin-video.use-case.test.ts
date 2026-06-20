@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createAdminVideo } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, Prisma, VideoStatus } from '@prisma/client';
 
 describe('createAdminVideo use-case', () => {
   const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
@@ -71,6 +71,71 @@ describe('createAdminVideo use-case', () => {
             publishedAt: null
         })
     }));
+  });
+
+
+  it('strips UI-only fields before Prisma create', async () => {
+    mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-clean' }));
+
+    const result = await createAdminVideo({
+        id: '',
+        title: 'Clean Draft',
+        slug: 'clean-draft',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.PUBLISHED,
+        videoUrl: null,
+        likesCount: 99,
+        dislikesCount: 3,
+        views: 1234,
+        isMainFeatured: true,
+        showInSidebar: true,
+        sidebarOrder: 7
+    } as any, ctx);
+
+    expect(result.ok).toBe(true);
+    const data = mockPrisma.video.create.mock.calls[0][0].data;
+    expect(data).toEqual(expect.objectContaining({
+      title: 'Clean Draft',
+      slug: 'clean-draft',
+      videoUrl: null,
+      thumbnailUrl: '/logo.png',
+      creatorId: 'c1',
+      status: VideoStatus.DRAFT,
+      showInSidebar: false,
+      isMainFeatured: false,
+      publishedAt: null,
+    }));
+    expect(data).not.toHaveProperty('id');
+    expect(data).not.toHaveProperty('likesCount');
+    expect(data).not.toHaveProperty('dislikesCount');
+    expect(data).not.toHaveProperty('views');
+    expect(data).not.toHaveProperty('sidebarOrder');
+  });
+
+  it('maps duplicate slug P2002 to a readable conflict error', async () => {
+    mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
+    mockPrisma.video.create.mockRejectedValue(new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed on the fields: (`slug`)',
+      { code: 'P2002', clientVersion: 'test', meta: { target: ['slug'] } }
+    ));
+
+    const result = await createAdminVideo({
+        title: 'Duplicate Draft',
+        slug: 'duplicate-draft',
+        thumbnailUrl: '',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        videoUrl: null,
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('VIDEO_SLUG_CONFLICT');
+      expect(result.error.statusCode).toBe(409);
+      expect(result.error.message).toContain('Slug jest już używany');
+    }
   });
 
   it('uses a default thumbnail for a new Cloudflare draft when thumbnail is blank', async () => {

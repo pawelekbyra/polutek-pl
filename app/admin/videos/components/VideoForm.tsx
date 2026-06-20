@@ -11,8 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Globe, ShieldCheck, ImageIcon, Video, Youtube, BarChart3, AlertCircle, Save, RotateCcw, Play, Eye, AlertTriangle } from "@/app/components/icons";
-import { SUPPORTED_VIDEO_SOURCES, getVideoSourceInfo } from "@/lib/media/video-source";
+import { ArrowLeft, Globe, ShieldCheck, ImageIcon, Video, BarChart3, AlertCircle, Save, RotateCcw, Play, Eye, AlertTriangle } from "@/app/components/icons";
+import { getVideoSourceInfo } from "@/lib/media/video-source";
 import VideoPlayer from "@/app/components/VideoPlayer";
 import PremiumWrapper from "@/app/components/PremiumWrapper";
 import type { PublicVideoDTO } from "@/app/types/video";
@@ -110,7 +110,7 @@ export function VideoForm({
                 <ArrowLeft className="mr-2 h-4 w-4" /> Wróć
             </Button>
             <h1 className="text-3xl font-bold tracking-tight">{formData.id ? "Edycja filmu" : "Nowy szkic Cloudflare"}</h1>
-            <p className="text-sm text-muted-foreground">Zarządzaj treścią, mediami i dostępem do materiału. Nowe filmy startują jako bezpieczne szkice Cloudflare-first.</p>
+            <p className="text-sm text-muted-foreground">Nowy film wymaga tylko tytułu i sluga. Po utworzeniu przejdziesz do szczegółów, gdzie dodasz Cloudflare upload URL albo istniejący Cloudflare UID.</p>
           </div>
           <div className="flex gap-3">
              <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>Anuluj</Button>
@@ -176,8 +176,8 @@ export function VideoForm({
                                 Ścieżka główna: Cloudflare Stream
                             </div>
                             <ol className="list-decimal space-y-1 pl-5">
-                                <li>Zapisz film jako szkic.</li>
-                                <li>Otwórz stronę szczegółów i mediów filmu.</li>
+                                <li>Utwórz szkic tylko z tytułem i slugiem — legacy URL nie jest wymagany.</li>
+                                <li>Po zapisie przejdziesz bezpośrednio do strony szczegółów i mediów filmu.</li>
                                 <li>Wygeneruj Cloudflare upload URL albo podepnij istniejący Cloudflare UID.</li>
                                 <li>Synchronizuj status providera do momentu READY.</li>
                             </ol>
@@ -191,9 +191,9 @@ export function VideoForm({
                                             Legacy / Migracja only
                                             <Badge variant="outline" className="text-[10px] uppercase bg-amber-50 text-amber-700 border-amber-200">Legacy / Migracja</Badge>
                                         </Label>
-                                        <Input id="videoUrl" value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
+                                        <div id="videoUrl" className="rounded-md border bg-muted/50 p-2 text-xs font-mono break-all">{formData.videoUrl}</div>
                                         {detectedSource && <Badge variant="secondary" className="mt-1">Wykryto: {detectedSource.label}</Badge>}
-                                        <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest wyłącznie ścieżką legacy/migracji. Launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
+                                        <p className="text-[10px] text-muted-foreground italic mt-1">Uwaga: videoUrl jest tylko informacją legacy/migracyjną. Nowych źródeł nie dodaje się w tym formularzu; launch path to Cloudflare Stream w panelu szczegółów filmu.</p>
                                     </div>
                                 ) : (
                                     <div className="rounded-lg border border-dashed border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-900">
@@ -220,7 +220,7 @@ export function VideoForm({
                                         </div>
                                     ) : (
                                         <div className="flex h-full items-center justify-center p-6 text-center text-xs italic text-muted-foreground">
-                                            Główna ścieżka launch to Cloudflare Stream po utworzeniu szkicu. Zapisz szkic, a następnie dodaj upload URL lub Cloudflare UID na stronie szczegółów/mediów.
+                                            Podgląd playera pojawi się dopiero po dodaniu assetu Cloudflare w szczegółach filmu. Ten formularz tworzy wyłącznie szkic metadanych.
                                         </div>
                                     )}
                                 </div>

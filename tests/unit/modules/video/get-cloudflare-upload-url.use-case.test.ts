@@ -130,6 +130,8 @@ describe('getCloudflareUploadUrl', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
+      expect(result.error.code).toBe('CLOUDFLARE_API_ERROR');
+      expect(result.error.statusCode).toBe(502);
       expect(result.error.message).toContain('Missing Cloudflare Stream credentials');
     }
   });
