@@ -3,10 +3,10 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { VideoStatus } from "@prisma/client";
-import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
+import { VideoPolicy } from "../domain/video.policy";
 
 export async function publishAdminVideo(
   videoId: string,
@@ -20,29 +20,9 @@ export async function publishAdminVideo(
       return fail(new VideoNotFoundError(videoId));
   }
 
-  // Publication requirements
-  if (!video.title || video.title.trim() === '') {
-      return fail(new VideoNotReadyForPublicationError('Podaj tytuł przed publikacją filmu.'));
-  }
-  if (!video.slug || video.slug.trim() === '') {
-      return fail(new VideoNotReadyForPublicationError('Podaj slug przed publikacją filmu.'));
-  }
-  if (!video.tier) {
-      return fail(new VideoNotReadyForPublicationError('Wybierz tier dostępu przed publikacją filmu.'));
-  }
-
-  // Asset requirements
-  if (!video.asset || !video.asset.isPrimary) {
-      return fail(new VideoNotReadyForPublicationError('Publikacja wymaga primary assetu Cloudflare Stream w stanie READY.'));
-  }
-  if (video.asset.provider !== VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
-      return fail(new VideoNotReadyForPublicationError('Primary asset musi pochodzić z Cloudflare Stream.'));
-  }
-  if (video.asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) {
-      return fail(new VideoNotReadyForPublicationError('Asset Cloudflare Stream nie jest jeszcze READY.'));
-  }
-  if (!video.asset.providerAssetId) {
-      return fail(new VideoNotReadyForPublicationError('Brakuje identyfikatora assetu Cloudflare Stream.'));
+  const blockers = VideoPolicy.getPublicationBlockers(video);
+  if (blockers.length > 0) {
+      return fail(new VideoNotReadyForPublicationError(blockers[0].message, blockers[0].code));
   }
 
   if (video.status === VideoStatus.PUBLISHED) {
@@ -55,7 +35,7 @@ export async function publishAdminVideo(
         where: { id: videoId },
         data: {
             status: VideoStatus.PUBLISHED,
-            publishedAt: now,
+            publishedAt: video.publishedAt || now,
             publishAfterAssetReady: false,
             publishAfterAssetReadyCompletedAt: now,
             publishAfterAssetReadyError: null,

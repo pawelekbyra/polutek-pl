@@ -1,8 +1,56 @@
 import { Prisma, AccessTier, VideoStatus } from "@prisma/client";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "./video-asset.constants";
+
+export type VideoStateBlocker = { code: string; message: string; field?: string };
+
+type ContractVideo = {
+  title?: string | null;
+  slug?: string | null;
+  tier: AccessTier;
+  status: VideoStatus;
+  asset?: {
+    isPrimary?: boolean | null;
+    provider?: string | null;
+    processingState?: string | null;
+    providerAssetId?: string | null;
+  } | null;
+};
 
 export class VideoPolicy {
-  static canBeHero(video: { tier: AccessTier; status: VideoStatus }): boolean {
-    return video.tier === 'PUBLIC' && video.status === 'PUBLISHED';
+  static getPublicationBlockers(video: ContractVideo): VideoStateBlocker[] {
+    const blockers: VideoStateBlocker[] = [];
+    if (!video.title?.trim()) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_TITLE', message: 'Podaj tytuł przed publikacją filmu.', field: 'title' });
+    if (!video.slug?.trim()) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_SLUG', message: 'Podaj slug przed publikacją filmu.', field: 'slug' });
+    if (!video.tier) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_TIER', message: 'Wybierz tier dostępu przed publikacją filmu.', field: 'tier' });
+    if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_PUBLICATION_ARCHIVED', message: 'Zarchiwizowany film trzeba najpierw przywrócić do szkicu.', field: 'status' });
+
+    const asset = video.asset;
+    if (!asset) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_ASSET', message: 'Publikacja wymaga primary assetu Cloudflare Stream w stanie READY.', field: 'asset' });
+    else {
+      if (!asset.isPrimary) blockers.push({ code: 'VIDEO_PUBLICATION_NON_PRIMARY_ASSET', message: 'Publikacja wymaga primary assetu.', field: 'asset' });
+      if (asset.provider !== VIDEO_PROVIDER.CLOUDFLARE_STREAM) blockers.push({ code: 'VIDEO_PUBLICATION_NON_CLOUDFLARE_ASSET', message: 'Primary asset musi pochodzić z Cloudflare Stream.', field: 'asset' });
+      if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Cloudflare Stream nie jest jeszcze READY.', field: 'asset' });
+      if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Cloudflare Stream.', field: 'asset' });
+    }
+    return blockers;
+  }
+
+  static getHeroBlockers(video: ContractVideo): VideoStateBlocker[] {
+    const blockers = this.getPublicationBlockers(video);
+    if (video.status !== 'PUBLISHED') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Hero video must be PUBLISHED.', field: 'status' });
+    if (video.tier !== 'PUBLIC') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Hero video must be PUBLIC.', field: 'tier' });
+    if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_HERO_ARCHIVED', message: 'Archived video cannot be hero.', field: 'status' });
+    return blockers;
+  }
+
+  static canBeHero(video: ContractVideo): boolean {
+    return this.getHeroBlockers(video).length === 0;
+  }
+
+  static getSidebarBlockers(video: { status: VideoStatus }): VideoStateBlocker[] {
+    if (video.status === 'ARCHIVED') return [{ code: 'VIDEO_SIDEBAR_ARCHIVED', message: 'Archived video cannot be visible in the public sidebar.', field: 'status' }];
+    if (video.status !== 'PUBLISHED') return [{ code: 'VIDEO_SIDEBAR_NOT_PUBLISHED', message: 'Only published videos can be visible in the public sidebar.', field: 'status' }];
+    return [];
   }
 
   static isOnMainChannel(video: { creatorId: string }, mainChannelId: string): boolean {
