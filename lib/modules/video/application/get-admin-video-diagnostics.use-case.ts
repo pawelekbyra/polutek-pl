@@ -58,15 +58,20 @@ export async function getAdminVideoDiagnostics(
     if (asset.processingState === 'READY') {
       // No warning needed for READY state.
     } else if (asset.processingState === 'FAILED') {
-      issues.push({ severity: "ERROR", message: "Przetwarzanie Cloudflare Stream nie powiodło się.", field: "asset" });
+      issues.push({ severity: "ERROR", message: "Przetwarzanie Cloudflare Stream nie powiodło się. Sprawdź błąd w zakładce Media.", field: "asset" });
     } else {
-      issues.push({ severity: "WARNING", message: `Zasób Cloudflare jest w stanie: ${asset.processingState}`, field: "asset" });
+      const isStale = asset.updatedAt && (new Date().getTime() - new Date(asset.updatedAt).getTime() > 60 * 60 * 1000);
+      issues.push({
+        severity: isStale ? "ERROR" : "WARNING",
+        message: `Zasób Cloudflare jest w stanie: ${asset.processingState}.${isStale ? " Przetwarzanie trwa zbyt długo - użyj 'Synchronizuj status' w zakładce Media." : ""}`,
+        field: "asset"
+      });
     }
   } else if (asset) {
     // R2, S3, VERCEL_BLOB
-    issues.push({ severity: "WARNING", message: `Wykryto legacy asset provider: ${asset.provider}. Wymagana migracja do Cloudflare Stream.`, field: "asset" });
+    issues.push({ severity: "WARNING", message: `Wykryto legacy asset provider: ${asset.provider}. Wymagana migracja do Cloudflare Stream. Skorzystaj z opcji Importu w zakładce Media.`, field: "asset" });
   } else if (video.videoUrl) {
-    issues.push({ severity: "WARNING", message: "Wykryto legacy videoUrl bez dedykowanego zasobu providera. Wymagana migracja do Cloudflare Stream.", field: "videoUrl" });
+    issues.push({ severity: "WARNING", message: "Wykryto legacy videoUrl bez zasobu Cloudflare. Użyj 'Importuj legacy URL' w zakładce Media.", field: "videoUrl" });
   } else {
     issues.push({ severity: "ERROR", message: "Brak źródła wideo (brak assetu i brak legacy URL).", field: "videoUrl" });
   }

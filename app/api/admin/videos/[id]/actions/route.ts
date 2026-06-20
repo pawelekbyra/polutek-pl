@@ -94,7 +94,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       }
       case "import-legacy-to-cloudflare":
         return fromUseCaseResult(
-          await importLegacyVideoToCloudflare({ videoId }, ctx),
+          await importLegacyVideoToCloudflare(
+            {
+              videoId,
+              publishAfterAssetReady: body.publishAfterAssetReady === true,
+            },
+            ctx,
+          ),
         );
       case "sync-cloudflare":
         return fromUseCaseResult(

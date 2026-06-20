@@ -11,6 +11,7 @@ import { VideoNotFoundError } from "../domain/video.errors";
 
 export interface ImportLegacyVideoToCloudflareInput {
   videoId: string;
+  publishAfterAssetReady?: boolean;
 }
 
 export class LegacyVideoUrlRequiredError extends AppError {
@@ -25,6 +26,12 @@ export class CloudflareAssetAlreadyExistsError extends AppError {
   }
 }
 
+export class CloudflareAssetInUseError extends AppError {
+  constructor(uid: string) {
+    super(`Cloudflare Stream asset with UID ${uid} is already used by another video.`, 409, "CLOUDFLARE_ASSET_IN_USE");
+  }
+}
+
 export class CloudflareLegacyImportError extends AppError {
   constructor() {
     super("Cloudflare Stream could not start the legacy video import. Check provider configuration and legacy source availability.", 502, "CLOUDFLARE_LEGACY_IMPORT_FAILED");
@@ -34,7 +41,7 @@ export class CloudflareLegacyImportError extends AppError {
 export async function importLegacyVideoToCloudflare(
   input: ImportLegacyVideoToCloudflareInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | LegacyVideoUrlRequiredError | CloudflareAssetAlreadyExistsError | CloudflareLegacyImportError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | LegacyVideoUrlRequiredError | CloudflareAssetAlreadyExistsError | CloudflareLegacyImportError | CloudflareAssetInUseError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
@@ -54,7 +61,7 @@ export async function importLegacyVideoToCloudflare(
   try {
     const importResponse = await client.importVideoByUrl(legacyVideoUrl);
     providerAssetId = importResponse.result.uid;
-  } catch {
+  } catch (error) {
     return fail(new CloudflareLegacyImportError());
   }
 
@@ -70,6 +77,35 @@ export async function importLegacyVideoToCloudflare(
       if (!current) throw new VideoNotFoundError(input.videoId);
       if (current.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
         throw new CloudflareAssetAlreadyExistsError();
+      }
+
+      // Ensure UID is not already in use by another video
+      const existingAssetWithUid = await repository.findAssetByProviderId(VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId);
+      if (existingAssetWithUid && existingAssetWithUid.videoId !== current.id) {
+        throw new CloudflareAssetInUseError(providerAssetId);
+      }
+
+      // Handle publishAfterAssetReady intent
+      const pendingPublishRequested = input.publishAfterAssetReady === true;
+      if (pendingPublishRequested) {
+        await tx.video.update({
+          where: { id: current.id },
+          data: {
+            publishAfterAssetReady: true,
+            publishAfterAssetReadyRequestedAt: current.publishAfterAssetReadyRequestedAt || new Date(),
+            publishAfterAssetReadyCompletedAt: null,
+            publishAfterAssetReadyError: null,
+          },
+        });
+
+        if (!current.publishAfterAssetReady) {
+          await recordAuditEvent(ctx, {
+            action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
+            targetType: "Video",
+            targetId: current.id,
+            metadata: { source: "import-legacy-video-to-cloudflare" },
+          }, tx);
+        }
       }
 
       await repository.upsertAsset(current.id, {
@@ -95,6 +131,7 @@ export async function importLegacyVideoToCloudflare(
           providerAssetId,
           legacyUrlPreserved: true,
           importedAssetIsPrimary: false,
+          publishAfterAssetReady: pendingPublishRequested
         }
       }, tx);
 
@@ -104,7 +141,7 @@ export async function importLegacyVideoToCloudflare(
       });
     });
   } catch (error) {
-    if (error instanceof VideoNotFoundError || error instanceof CloudflareAssetAlreadyExistsError) {
+    if (error instanceof VideoNotFoundError || error instanceof CloudflareAssetAlreadyExistsError || error instanceof CloudflareAssetInUseError) {
       return fail(error);
     }
     throw error;
