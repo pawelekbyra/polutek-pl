@@ -17,9 +17,10 @@ interface VideoUploadSectionProps {
   initialFile?: File | null;
   autoStart?: boolean;
   onUploadReady?: () => void;
+  publishAfterReady?: boolean;
 }
 
-export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady }: VideoUploadSectionProps) {
+export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady, publishAfterReady = false }: VideoUploadSectionProps) {
   const [file, setFile] = useState<File | null>(initialFile);
   const [upload, setUpload] = useState<tus.Upload | null>(null);
   const [progress, setProgress] = useState(0);
@@ -67,10 +68,12 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
     const timeoutId = setTimeout(() => {
       stopPolling();
       setStatus((current) => current === "PROCESSING" ? "PROCESSING_TIMEOUT" : current);
-      setError("Cloudflare nadal przetwarza wideo. Szkic jest zapisany; wróć do szczegółów filmu i zsynchronizuj status później.");
+      setError(publishAfterReady
+        ? "Cloudflare nadal przetwarza wideo. Szkic i intencja publikacji są zapisane; backend opublikuje film automatycznie po READY albo zapisze błąd wymagający interwencji."
+        : "Cloudflare nadal przetwarza wideo. Szkic jest zapisany; wróć do szczegółów filmu i zsynchronizuj status później.");
     }, 5 * 60 * 1000);
     return () => clearTimeout(timeoutId);
-  }, [videoId, onUploadComplete, onUploadReady, stopPolling]);
+  }, [videoId, onUploadComplete, onUploadReady, publishAfterReady, stopPolling]);
 
   useEffect(() => {
     if (initialAsset) {

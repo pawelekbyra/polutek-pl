@@ -13,6 +13,7 @@ export interface AttachCloudflareAssetInput {
   providerAssetId: string;
   providerPlaybackId?: string;
   processingState?: unknown;
+  publishAfterAssetReady?: boolean;
 }
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
@@ -27,6 +28,26 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
   const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
     if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       throw new AppError("Video already has a ready primary asset. Replacement is not allowed.", 400, "VIDEO_HAS_READY_ASSET");
+    }
+    const pendingPublishRequested = input.publishAfterAssetReady || video.publishAfterAssetReady;
+    if (pendingPublishRequested) {
+      await tx.video.update({
+        where: { id: video.id },
+        data: {
+          publishAfterAssetReady: true,
+          publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || new Date(),
+          publishAfterAssetReadyCompletedAt: null,
+          publishAfterAssetReadyError: null,
+        },
+      });
+      if (!video.publishAfterAssetReady) {
+        await recordAuditEvent(ctx, {
+          action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
+          targetType: "Video",
+          targetId: video.id,
+          metadata: { source: "attach-cloudflare-asset" },
+        }, tx);
+      }
     }
     await repository.updateVideoAsset(video.id, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,

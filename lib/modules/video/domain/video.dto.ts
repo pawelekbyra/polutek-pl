@@ -65,6 +65,10 @@ export interface AdminVideoDto extends BaseVideoDto {
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
   migrationStatus: MigrationStatus;
+  publishAfterAssetReady: boolean;
+  publishAfterAssetReadyRequestedAt: Date | null;
+  publishAfterAssetReadyCompletedAt: Date | null;
+  publishAfterAssetReadyError: string | null;
 }
 
 export function toPublicVideoDto(video: any): PublicVideoDto {
@@ -147,6 +151,10 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     commentsCount: video._count?.comments || video.commentsCount || 0,
     asset: toAdminVideoAssetDto(asset),
     migrationStatus,
+    publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
+    publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
+    publishAfterAssetReadyCompletedAt: video.publishAfterAssetReadyCompletedAt || null,
+    publishAfterAssetReadyError: video.publishAfterAssetReadyError || null,
   };
 }
 

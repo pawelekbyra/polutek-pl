@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       thumbnailUrl: body.thumbnailUrl,
       duration: body.duration,
       tier: body.tier,
+      publishAfterAssetReady: body.publishAfterAssetReady === true,
     };
     const result = await createAdminVideo(createPayload, ctx);
     return fromUseCaseResult(result);
