@@ -8,6 +8,7 @@ export interface PaymentDto {
   currency: string;
   status: PaymentStatus;
   stripeIntentId: string | null;
+  requestId: string | null;
   refundedAmountMinor: number | null;
   metadata: any;
   createdAt: Date;
@@ -25,4 +26,6 @@ export interface CreateCheckoutIntentInput {
 export interface CheckoutResultDto {
   paymentId: string;
   clientSecret: string | null;
+  status?: PaymentStatus;
+  terminal?: boolean;
 }

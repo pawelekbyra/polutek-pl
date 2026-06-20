@@ -1,7 +1,7 @@
 # CI-SIGNAL-RECONCILIATION-002 — CI/test/control-plane signal reconciliation
 
 Ticket ID: CI-SIGNAL-RECONCILIATION-002
-Status: PLANNED_AFTER_PAYMENTS_HARDENING
+Status: READY_FOR_BUILDER
 Role: Builder / Reviewer
 Priority: P0
 Launch status: NO_GO
@@ -11,7 +11,7 @@ Type: CI/test/control-plane signal restoration + mechanical cleanup
 
 This ticket is created from the 2026-06-20 architecture launch-readiness audit.
 
-It must run after the active `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` work, because payments is already the current executable ticket and should not be interrupted.
+It runs after `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001`, which is now completed pending review.
 
 This is not a broad app refactor. It is a narrow confidence-restoration ticket so later work can trust CI/test/control-plane signals.
 

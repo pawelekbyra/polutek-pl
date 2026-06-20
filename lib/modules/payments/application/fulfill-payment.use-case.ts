@@ -17,7 +17,10 @@ import { writeAuditLog } from "@/lib/services/audit.service";
 
 export interface FulfillPaymentInput {
   paymentId: string;
-  userId: string;
+  stripeIntentId?: string;
+  /** @deprecated Stripe metadata user id, accepted only as a consistency check. */
+  userId?: string;
+  metadataUserId?: string | null;
   amountMinor: number;
   currency: string;
 }
@@ -30,17 +33,39 @@ export async function fulfillPayment(
 
   try {
     const result = await ctx.db.writeTransaction(async (tx): Promise<any> => {
-      // 1. Fetch user first to avoid TDZ in replay block
-      const user = await repo.findUserWithTotals(input.userId, tx);
-      if (!user) throw new Error('USER_NOT_FOUND');
-
-      // 2. CAS Update status PENDING -> SUCCEEDED
-      const count = await repo.updatePaymentStatusWithCAS(input.paymentId, PaymentStatus.PENDING, PaymentStatus.SUCCEEDED, tx);
-
+      if (!input.paymentId) throw new Error('PAYMENT_ID_MISSING');
       const payment = await repo.findById(input.paymentId, tx);
       if (!payment) {
-        throw new Error('PAYMENT_RECORD_LOST');
+        throw new Error('PAYMENT_NOT_FOUND');
       }
+
+      const metadataUserId = input.metadataUserId ?? input.userId ?? null;
+      if (payment.userId && metadataUserId && metadataUserId !== payment.userId) {
+        recordAlert('payment.metadata_user_mismatch', { paymentId: payment.id });
+        throw new Error('PAYMENT_METADATA_USER_MISMATCH');
+      }
+      const stripeIntentId = input.stripeIntentId ?? payment.stripeIntentId;
+      if (payment.stripeIntentId && payment.stripeIntentId !== stripeIntentId) {
+        throw new Error(`PAYMENT_STRIPE_INTENT_MISMATCH: Expected ${payment.stripeIntentId}, got ${input.stripeIntentId}`);
+      }
+      if (payment.amountMinor !== input.amountMinor) {
+        throw new Error(`PAYMENT_AMOUNT_MISMATCH: Expected ${payment.amountMinor}, got ${input.amountMinor}`);
+      }
+      if (payment.currency.toLowerCase() !== input.currency.toLowerCase()) {
+        throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${payment.currency}, got ${input.currency}`);
+      }
+
+      const user = await repo.findUserWithTotals(payment.userId, tx);
+      if (!user) throw new Error('USER_NOT_FOUND');
+
+      // Atomic validated transition PENDING -> SUCCEEDED. All mutable Stripe inputs were
+      // checked against the local Payment before any status, totals, or grant mutation.
+      const count = await repo.fulfillPendingPaymentWithCAS({
+        id: payment.id,
+        stripeIntentId: payment.stripeIntentId,
+        amountMinor: payment.amountMinor,
+        currency: payment.currency,
+      }, tx);
 
       if (count === 0) {
         if (payment.status !== PaymentStatus.SUCCEEDED) {
@@ -60,18 +85,10 @@ export async function fulfillPayment(
         };
       }
 
-      // 3. Verification
-      if (payment.amountMinor !== input.amountMinor) {
-        throw new Error(`PAYMENT_AMOUNT_MISMATCH: Expected ${payment.amountMinor}, got ${input.amountMinor}`);
-      }
-      if (payment.currency.toLowerCase() !== input.currency.toLowerCase()) {
-        throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${payment.currency}, got ${input.currency}`);
-      }
-
       // 4. Update User Totals
       let updatedTotal;
       if (count > 0) {
-        updatedTotal = await repo.incrementUserPaymentTotal(input.userId, payment.currency, payment.amountMinor, tx);
+        updatedTotal = await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
       } else {
         updatedTotal = user.paymentTotals.find(t => t.currency === payment.currency);
         if (!updatedTotal) throw new Error('USER_PAYMENT_TOTAL_LOST');
@@ -83,7 +100,7 @@ export async function fulfillPayment(
       const thresholdMinor = limits[currency]?.minAmountMinor;
 
       const eligibility = PaymentPolicy.evaluatePaymentPatronEligibility({
-        status: payment.status,
+        status: PaymentStatus.SUCCEEDED,
         amountMinor: payment.amountMinor,
         currency: payment.currency,
         thresholdMinor,
@@ -95,7 +112,7 @@ export async function fulfillPayment(
 
       if (eligibility.eligible) {
         const grantResult = await grantPatron({
-          userId: input.userId,
+          userId: payment.userId,
           source: 'stripe_tip',
           paymentId: payment.id,
           note: 'Granted after successful one-time Stripe tip',
@@ -113,7 +130,7 @@ export async function fulfillPayment(
         // If not eligible, we still might have updated user totals (which normalizePaymentTotals uses)
         // If count > 0, we updated them, so let's use the incremented values
         if (count > 0) {
-           const updatedUser = await repo.findUserWithTotals(input.userId, tx);
+           const updatedUser = await repo.findUserWithTotals(payment.userId, tx);
            if (updatedUser) {
              normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
            }

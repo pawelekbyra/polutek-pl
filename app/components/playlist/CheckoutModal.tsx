@@ -16,6 +16,8 @@ interface CheckoutModalProps {
   selectedCurrency: string;
   videoTitle?: string;
   clientSecret: string | null;
+  paymentId?: string | null;
+  paymentUiStatus?: string | null;
   stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
@@ -29,6 +31,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   selectedCurrency,
   videoTitle,
   clientSecret,
+  paymentId,
+  paymentUiStatus,
   stripePromise,
   onClose,
   onBackToSite,
@@ -158,9 +162,17 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {language === 'pl' ? 'Wielkie dzięki!' : 'Succeed!!!'}
                   </h1>
                   <p className="text-lg text-neutral-500 font-medium italic leading-relaxed max-w-sm mx-auto">
-                    {language === 'pl'
-                      ? 'Twoje wsparcie zostało pomyślnie zarejestrowane. Po potwierdzeniu webhooka Stripe otrzymasz status Patrona.'
-                      : 'Your support was registered. After Stripe webhook confirmation you will receive Patron status.'}
+                    {paymentUiStatus === 'SUCCEEDED'
+                      ? (language === 'pl' ? 'Wpłata potwierdzona, a dostęp Patrona jest aktywny.' : 'Payment confirmed and Patron access is active.')
+                      : paymentUiStatus === 'ACCESS_SYNC_PENDING'
+                        ? (language === 'pl' ? 'Wpłata potwierdzona. Kończymy synchronizację dostępu Patrona.' : 'Payment confirmed. Patron access sync is finishing.')
+                        : paymentUiStatus === 'FAILED_CANCELED'
+                          ? (language === 'pl' ? 'Płatność nie została ukończona albo została anulowana.' : 'The payment was not completed or was canceled.')
+                          : paymentUiStatus === 'REFUNDED_DISPUTED'
+                            ? (language === 'pl' ? 'Status płatności wymaga sprawdzenia po zwrocie lub sporze.' : 'The payment status needs review after a refund or dispute.')
+                            : (language === 'pl'
+                              ? 'Twoje wsparcie zostało zarejestrowane. Czekamy na potwierdzenie webhooka Stripe.'
+                              : 'Your support was registered. Waiting for Stripe webhook confirmation.')}
                   </p>
                 </div>
 
@@ -172,7 +184,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
                   </Button>
                   <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-neutral-300">
-                    {isSyncing ? (language === 'pl' ? 'Synchronizacja profilu...' : 'Syncing profile...') : (language === 'pl' ? 'Profil zaktualizowany' : 'Profile updated')}
+                    {isSyncing ? (language === 'pl' ? 'Oczekiwanie na webhook Stripe...' : 'Waiting for Stripe webhook...') : (paymentUiStatus || (language === 'pl' ? 'Status sprawdzony' : 'Status checked'))}
                   </p>
                 </div>
               </div>
@@ -201,7 +213,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         }
                       }
                     }}>
-                      <CheckoutForm />
+                      <CheckoutForm paymentId={paymentId} />
                     </Elements>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24 space-y-8">

@@ -52,6 +52,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
   const [isRegulaminOpen, setIsRegulaminOpen] = useState(false);
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
+  const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -88,10 +91,12 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
     setIsMounted(true);
     let interval: NodeJS.Timeout;
 
-    if (searchParams.get('success') === 'true') {
+    const returnedPaymentId = searchParams.get('payment_id');
+    if (searchParams.get('success') === 'true' && returnedPaymentId) {
       setIsCheckoutModalOpen(true);
       setIsSuccess(true);
       setIsSyncing(true);
+      setPaymentId(returnedPaymentId);
 
       // Invalidate queries to refresh patron status and other state
       queryClient.invalidateQueries();
@@ -102,13 +107,14 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
       interval = setInterval(async () => {
         attempts++;
         try {
-          const res = await fetch('/api/user/sync');
+          const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: 'no-store' });
           const data = await res.json();
+          setPaymentUiStatus(data.uiStatus || null);
 
-          if (data.totalPaid > 0 || attempts >= maxAttempts) {
+          if (data.uiStatus === 'SUCCEEDED' || data.uiStatus === 'FAILED_CANCELED' || data.uiStatus === 'REFUNDED_DISPUTED' || attempts >= maxAttempts) {
             clearInterval(interval);
             setIsSyncing(false);
-            if (data.totalPaid > 0) router.refresh();
+            if (data.uiStatus === 'SUCCEEDED') router.refresh();
           }
         } catch (e) {
           logger.error("Sync error", e);
@@ -183,6 +189,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
 
     try {
       setIsLoading(true);
+      const requestId = checkoutRequestId || crypto.randomUUID();
+      setCheckoutRequestId(requestId);
 
       const response = await fetch('/api/checkout/create-intent', {
           method: 'POST',
@@ -191,7 +199,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             amountMinor: Number(amount) * 100,
             currency: selectedCurrency.toUpperCase(),
             title: videoTitle || "Tip The Guy / Patron",
-            creatorId: creatorId
+            creatorId: creatorId,
+            requestId,
           }),
           cache: 'no-store'
       });
@@ -200,7 +209,13 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
 
       if (data?.clientSecret) {
         setClientSecret(data.clientSecret);
+        setPaymentId(data.paymentId || null);
         setIsCheckoutModalOpen(true);
+      } else if (data?.terminal) {
+        setPaymentId(data.paymentId || null);
+        setPaymentUiStatus(data.status || 'FAILED_CANCELED');
+        toast(language === 'pl' ? 'Ta próba płatności jest zakończona. Rozpocznij nową wpłatę.' : 'This payment attempt is finished. Start a new support attempt.', 'error');
+        setCheckoutRequestId(null);
       } else if (data?.error) {
         if (response.status === 401 || data.error.includes("AUTH_REQUIRED")) {
           toast(language === 'pl' ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", 'error');
@@ -266,6 +281,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             selectedCurrency={selectedCurrency}
             videoTitle={videoTitle}
             clientSecret={clientSecret}
+            paymentId={paymentId}
+            paymentUiStatus={paymentUiStatus}
             stripePromise={stripePromise}
             onClose={() => {
               setIsCheckoutModalOpen(false);
