@@ -28,7 +28,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
     if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       throw new AppError("Video already has a ready primary asset. Replacement is not allowed.", 400, "VIDEO_HAS_READY_ASSET");
     }
-    await repository.upsertAsset(video.id, {
+    await repository.updateVideoAsset(video.id, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId,
       providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,
