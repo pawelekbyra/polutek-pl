@@ -1,25 +1,33 @@
 # Launch Execution Backlog
 
-Status: ACTIVE
+Status: ACTIVE — GROUPED ROADMAP RECONCILED 2026-06-20
 Purpose: non-executable launch backlog summary
 Current executable source: docs/tickets/ready/README.md
 Launch status: NO_GO
 
 This document is not an executable queue. Only `docs/tickets/ready/README.md` may identify the current executable ticket.
 
-## Grouped code queue after current-main review
+## Grouped code queue after video lifecycle refactor
 
 | Order | Workstream | Ticket / state | Notes |
 | ---: | --- | --- | --- |
-| 1 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / READY_FOR_BUILDER` | Groups Cloudflare admin media lifecycle, legacy import UI, upload/attach lifecycle, sync/webhook reconciliation and truthful admin states. |
-| 2 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / PLANNED_AFTER_VIDEO_PROVIDER_LIFECYCLE` | Publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions. |
-| 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / PLANNED_AFTER_VIDEO_STATE_CONTRACT` | Reconcile legacy playback/access paths into one consistent playback contract. |
-| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / PLANNED_AFTER_PLAYBACK_ACCESS_RETIREMENT` | Code hardening before payment-to-PatronGrant operator smoke evidence. |
-| 5 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
+| 0 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` | Completed by the grouped Cloudflare admin media lifecycle work: direct upload, manual attach, legacy import, sync/webhook reconciliation, publish-after-ready details and truthful admin media states. |
+| 1 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / CURRENT` | Publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions. |
+| 2 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / PLANNED_AFTER_VIDEO_STATE_CONTRACT` | Reconcile legacy playback/access paths into one consistent playback contract. |
+| 3 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / PLANNED_AFTER_PLAYBACK_ACCESS_RETIREMENT` | Code hardening before payment-to-PatronGrant operator smoke evidence. |
+| 4 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
 
 ## Historical or superseded runtime tickets
 
-The following old cards are retained as background evidence but should not be used as direct prompts while the grouped queue exists: `COMMENTS-PRODUCTION-UX-API-CONTRACT-001`, `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`, `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `X3-FIX-008`, `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`, `LEGACY-ACCESS-POLICY-RETIREMENT-001`, `LEGACY-MEDIA-PROXY-RETIREMENT-001`, `ADMIN-AUTH-POSTMERGE-REVERIFY-001`, and `ADMIN-CHANNEL-ROOT-CAUSE-001`.
+The following old cards are retained as background evidence but should not be used as direct prompts while the grouped queue exists: `COMMENTS-PRODUCTION-UX-API-CONTRACT-001`, `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`, `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `X3-FIX-006`, `X3-FIX-008`, `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001`, `LEGACY-ACCESS-POLICY-RETIREMENT-001`, `LEGACY-MEDIA-PROXY-RETIREMENT-001`, `ADMIN-AUTH-POSTMERGE-REVERIFY-001`, and `ADMIN-CHANNEL-ROOT-CAUSE-001`.
+
+Use the grouped queue instead:
+
+- provider lifecycle work was completed through `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`;
+- publication/hero/sidebar work now belongs to `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`;
+- playback legacy retirement belongs to `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001`;
+- payments idempotency belongs to `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001`;
+- admin auth/channel diagnostics belongs to `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`.
 
 ## Non-code evidence remains separate
 
