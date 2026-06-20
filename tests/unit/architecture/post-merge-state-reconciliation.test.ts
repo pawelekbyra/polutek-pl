@@ -5,6 +5,7 @@ import { join } from 'path';
 describe('Post-Merge State Reconciliation Invariants', () => {
   const rootDir = process.cwd();
   const readmePath = join(rootDir, 'README.md');
+  const ticketQueuePath = join(rootDir, 'docs/tickets/ready/README.md');
   const guardPath = join(rootDir, 'scripts/check-architecture.ts');
 
   const readText = (path: string) => readFileSync(path, 'utf-8');
@@ -31,11 +32,17 @@ describe('Post-Merge State Reconciliation Invariants', () => {
 
   it('README delegates the current ticket pointer to the canonical queue', () => {
     const readme = readText(readmePath);
+    const ticketQueue = readText(ticketQueuePath);
 
     expect(readme).toContain('The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.');
-    expect(readme).toContain('Exactly one current executable ticket: `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001`.');
+    expect(readme).toContain('This README intentionally does not duplicate the current ticket ID.');
     expect(readme).toContain('docs/tickets/ready/README.md');
+    expect(readme).not.toContain('Exactly one current executable ticket:');
+    expect(readme).not.toContain('LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001');
     expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
+
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-008 -->');
+    expect(ticketQueue).toContain('Only the row above is the current-primary executable row.');
   });
 
   it('Architecture guard remains readable and enforces current boundary categories', () => {
