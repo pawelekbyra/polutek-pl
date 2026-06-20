@@ -1,6 +1,6 @@
 # Polutek.pl Masterplan
 
-Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION
+Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION — AUDIT FINDINGS ROUTED 2026-06-20
 Launch Status: **NO_GO**
 
 This is the canonical entry point for technical state, risk register, and ordered backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
@@ -9,8 +9,9 @@ This is the canonical entry point for technical state, risk register, and ordere
 
 - **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
 - **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
+- **Architecture launch-readiness audit:** `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md`.
 - **Current executable ticket:** see `docs/tickets/ready/README.md`.
-- **Current state:** resolved by the canonical ready-ticket queue and the latest reconciliation report.
+- **Current state:** resolved by the canonical ready-ticket queue and latest reconciliation reports.
 
 ## 2. Evidence Taxonomy
 
@@ -36,54 +37,49 @@ Vercel `READY` can be deployment evidence only. It is not a substitute for full 
 
 ## 4. Current Risk Register
 
-| Risk ID | Title | Evidence Class | Classification | Launch Impact |
-| --- | --- | --- | --- | --- |
-| `CI-001` | Last reviewed PR CI failed | `AGENT_DECLARATION / PR_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-002` | strict-escapes failure skips major checks | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-003` | strict-escapes lacks historical baseline/no-new-debt mode | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-004` | architecture boundaries guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-005` | control-plane docs guard not run in CI | `REPOSITORY_EVIDENCE` | `CONFIRMED` | **P0 BLOCKER** |
-| `CI-006` | npm audit high unresolved | `AUTOMATED_TEST_EVIDENCE` | `UNRESOLVED` | **P0 BLOCKER** |
-| `CI-007` | branch protection enforcement unproven | `UNPROVEN` | `REQUIRES_VERIFICATION` | **P0 BLOCKER** |
-| `CI-008` | Vercel READY misused as CI substitute | `EVIDENCE_BOUNDARY` | `PROCESS_GAP` | **HIGH** |
-| `ADMIN-AUTH-REVERIFY` | Auth implementation merged but full current-main certification missing | `MERGED_PR_EVIDENCE` | `REVERIFICATION_REQUIRED` | **HIGH** |
-| `VIDEO-CF-001..012` | Cloudflare upload/asset lifecycle defects | `REPOSITORY_EVIDENCE` | `CORRECTIVE_WORK_REQUIRED` | **P0 BLOCKER** |
-| `VIDEO-PUBLISH-001` | Publication gate incomplete | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-HERO-001` | Hero contract inconsistent | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-STATE-001` | Archive/unpublish transition policy missing | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
-| `VIDEO-ADMIN-001..005` | Admin create/form/filter contract defects | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **HIGH** |
-| `VIDEO-PLAYBACK-001..002` | Media-source and legacy media contracts unreconciled | `REPOSITORY_EVIDENCE` | `CONFIRMED_GAP` | **P0 BLOCKER** |
-| `VIDEO-VERIFY-001` | Provider/E2E verification missing | `AUTOMATED_TEST_EVIDENCE / OPERATOR_EVIDENCE` | `EVIDENCE_GAP` | **P0 BLOCKER** |
-| `ADMIN-CHANNEL-001` | Admin channel root cause unknown | `REPOSITORY_EVIDENCE / OPERATOR_EVIDENCE` | `ROOT_CAUSE_NOT_VERIFIED` | **HIGH** |
-| `CONTROL-001..008` | Control-plane chronology, guard and evidence-boundary gaps | `REPOSITORY_EVIDENCE` | `EMERGENCY_RECONCILED / HARDENING_REQUIRED` | **HIGH** |
-| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** |
-| `BACKUP-UNPROVEN` | Backup/restore evidence missing | `OPERATOR_EVIDENCE` | `PRODUCTION_EVIDENCE_MISSING` | **BLOCKER** |
+| Risk ID | Title | Evidence Class | Classification | Launch Impact | Owner |
+| --- | --- | --- | --- | --- | --- |
+| `CI-SIGNAL-002` | CI/test signal does not yet prove the full available test suite and guard state after the large refactor | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CURRENT_TICKET` | **P0 PROCESS BLOCKER** | `CI-SIGNAL-RECONCILIATION-002` |
+| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations require reconciliation without weakening the guard | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CURRENT_TICKET` | **P0 PROCESS BLOCKER** | `CI-SIGNAL-RECONCILIATION-002` |
+| `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot should be split mechanically without changing behavior | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CURRENT_TICKET` | **P1 MAINTAINABILITY** | `CI-SIGNAL-RECONCILIATION-002` |
+| `PAYMENTS-TRUTH-001` | Payment fulfillment must validate against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `COMPLETED_PENDING_REVIEW` | **P0/P1 FINANCIAL + ACCESS CORRECTNESS** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
+| `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency needs local, race-resistant backing | `REPOSITORY_EVIDENCE` | `COMPLETED_PENDING_REVIEW` | **P1 FINANCIAL CORRECTNESS** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
+| `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `FOLLOW_UP_IF_STILL_UNUSED` | **P2 FOOTGUN** | final cleanup |
+| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `PLANNED_AFTER_CI_SIGNAL_RECONCILIATION` | **P2 REVIEWABILITY** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
+| `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **BLOCKER** | operator launch evidence |
+| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** | legal/operator track |
 
-Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
+Historical risk IDs from POST-929 remain useful evidence but are not the current executable queue. Completed video/provider/playback/payments items are tracked in recent closeout reports and `docs/tickets/ready/README.md`.
 
 ## 5. Ordered Masterplan
 
 ### CURRENT_GATE
+
 - See the canonical queue: `docs/tickets/ready/README.md`.
 
 ### CURRENT_EXECUTABLE_TASK
-- `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` via `docs/tickets/ready/README.md`.
+
+- `CI-SIGNAL-RECONCILIATION-002` via `docs/tickets/ready/README.md`.
 
 ### RECENTLY_COMPLETED
+
+- `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #996.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE by PR #990.
 - `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE before the publication/hero state-contract ticket.
 
 ### ORDERED_REPAIR_PROGRAM
-1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — CURRENT payments code hardening after playback/access cleanup.
-2. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — admin auth and channel diagnostics after payments hardening.
-3. `CONTROL-PLANE-GUARD-HARDENING-001`
-4. `BETA-SCOPE-GUARD-RECONCILIATION-001`
+
+1. `CI-SIGNAL-RECONCILIATION-002` — CURRENT post-payments CI/test/control-plane signal reconciliation from the architecture audit.
+2. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — admin auth and channel diagnostics after payments and CI-signal reconciliation.
+3. remaining non-code/operator/legal launch evidence.
 
 ### OPERATOR_EVIDENCE
-- Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts.
+
+- Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts, X6/X7 evidence and final owner launch decision.
 
 ### LEGAL_REVIEW
+
 - Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`.
 
 ## 6. Discoverability Path
@@ -92,4 +88,5 @@ Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CO
 - Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
 - Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
-- Latest Reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
+- Architecture Launch-Readiness Audit: [reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md](reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md)
+- Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
