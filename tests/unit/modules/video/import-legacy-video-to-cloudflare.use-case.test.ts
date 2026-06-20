@@ -12,8 +12,10 @@ describe('importLegacyVideoToCloudflare', () => {
     },
     video: {
       findFirst: vi.fn(),
+      update: vi.fn(),
     },
     videoAsset: {
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
@@ -47,8 +49,25 @@ describe('importLegacyVideoToCloudflare', () => {
     sidebarOrder: 1,
     createdAt: new Date('2026-06-11T00:00:00Z'),
     updatedAt: new Date('2026-06-11T00:00:00Z'),
+    publishAfterAssetReady: false,
+    publishAfterAssetReadyRequestedAt: null,
+    publishAfterAssetReadyCompletedAt: null,
+    publishAfterAssetReadyError: null,
     _count: { comments: 0 },
     asset: null,
+  };
+
+  const pendingAsset = {
+    id: 'asset-1',
+    videoId: baseVideo.id,
+    provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+    objectKey: 'cloudflare-stream/cloudflare-uid-1',
+    providerAssetId: 'cloudflare-uid-1',
+    providerPlaybackId: 'cloudflare-uid-1',
+    processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
+    isPrimary: false,
+    createdAt: new Date('2026-06-11T00:00:00Z'),
+    updatedAt: new Date('2026-06-11T00:00:00Z'),
   };
 
   beforeEach(() => {
@@ -58,8 +77,10 @@ describe('importLegacyVideoToCloudflare', () => {
     process.env.CLOUDFLARE_API_TOKEN = 'secret-token';
     mockPrisma.creator.findUnique.mockResolvedValue({ id: 'channel-1', slug: 'main-creator', isApproved: true, isPrimary: true });
     mockPrisma.video.findFirst.mockResolvedValue(baseVideo);
+    mockPrisma.videoAsset.findFirst.mockResolvedValue(null);
     mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
     mockPrisma.videoAsset.create.mockResolvedValue({ id: 'asset-1' });
+    mockPrisma.auditLog.create.mockResolvedValue({ id: 'audit-1' });
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true, result: { uid: 'cloudflare-uid-1' }, errors: [], messages: [] }),
@@ -72,18 +93,7 @@ describe('importLegacyVideoToCloudflare', () => {
       .mockResolvedValueOnce(baseVideo)
       .mockResolvedValueOnce({
         ...baseVideo,
-        asset: {
-          id: 'asset-1',
-          videoId: baseVideo.id,
-          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          objectKey: 'cloudflare-stream/cloudflare-uid-1',
-          providerAssetId: 'cloudflare-uid-1',
-          providerPlaybackId: 'cloudflare-uid-1',
-          processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-          isPrimary: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        asset: pendingAsset,
       });
 
     const result = await importLegacyVideoToCloudflare({ videoId: baseVideo.id }, ctx);
@@ -96,6 +106,9 @@ describe('importLegacyVideoToCloudflare', () => {
         body: JSON.stringify({ url: baseVideo.videoUrl }),
       })
     );
+    expect(mockPrisma.videoAsset.findFirst).toHaveBeenCalledWith({
+      where: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId: 'cloudflare-uid-1' },
+    });
     expect(mockPrisma.videoAsset.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         videoId: baseVideo.id,
@@ -116,13 +129,14 @@ describe('importLegacyVideoToCloudflare', () => {
   });
 
   it('refuses import when legacy URL is missing', async () => {
-    mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, videoUrl: '   ' });
+    mockPrisma.video.findFirst.mockResolvedValueOnce({ ...baseVideo, videoUrl: '   ', asset: null });
 
     const result = await importLegacyVideoToCloudflare({ videoId: baseVideo.id }, ctx);
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('LEGACY_VIDEO_URL_REQUIRED');
     expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockPrisma.videoAsset.findFirst).not.toHaveBeenCalled();
     expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
   });
 
@@ -154,6 +168,24 @@ describe('importLegacyVideoToCloudflare', () => {
     expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
   });
 
+  it('rejects provider UID returned by Cloudflare if it is already used by another video', async () => {
+    mockPrisma.video.findFirst
+      .mockResolvedValueOnce(baseVideo)
+      .mockResolvedValueOnce(baseVideo);
+    mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      id: 'asset-other',
+      videoId: 'other-video',
+      provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+      providerAssetId: 'cloudflare-uid-1',
+    });
+
+    const result = await importLegacyVideoToCloudflare({ videoId: baseVideo.id }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('CLOUDFLARE_ASSET_IN_USE');
+    expect(mockPrisma.videoAsset.create).not.toHaveBeenCalled();
+  });
+
   it('does not expose raw private URL, provider secret, upload URL, or playback token in returned admin payload', async () => {
     mockPrisma.video.findFirst
       .mockResolvedValueOnce(baseVideo)
@@ -161,19 +193,10 @@ describe('importLegacyVideoToCloudflare', () => {
       .mockResolvedValueOnce({
         ...baseVideo,
         asset: {
-          id: 'asset-1',
-          videoId: baseVideo.id,
-          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          objectKey: 'cloudflare-stream/cloudflare-uid-1',
-          providerAssetId: 'cloudflare-uid-1',
-          providerPlaybackId: 'cloudflare-uid-1',
-          processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-          isPrimary: false,
+          ...pendingAsset,
           playbackToken: 'should-not-leak',
           signedUrl: 'https://signed.example/leak',
           uploadUrl: 'https://upload.cloudflare.com/leak',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       });
 
