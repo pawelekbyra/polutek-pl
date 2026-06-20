@@ -65,7 +65,8 @@ export async function handleStripeWebhook(
         const intent = event.data.object as Stripe.PaymentIntent;
         const result = await fulfillPayment({
           paymentId: intent.metadata.paymentId,
-          userId: intent.metadata.userId,
+          stripeIntentId: intent.id,
+          metadataUserId: intent.metadata.userId,
           amountMinor: intent.amount,
           currency: intent.currency
         }, ctx);

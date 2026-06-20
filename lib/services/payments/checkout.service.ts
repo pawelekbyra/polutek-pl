@@ -68,11 +68,7 @@ export class PaymentCheckoutService {
         const existingWithId = await prisma.payment.findFirst({
             where: {
                 userId,
-                status: PaymentStatus.PENDING,
-                metadata: {
-                    path: ['requestId'],
-                    equals: requestId
-                }
+                requestId,
             }
         });
 
@@ -94,6 +90,7 @@ export class PaymentCheckoutService {
         currency: currency.toUpperCase(),
         status: PaymentStatus.PENDING,
         metadata: requestId ? { requestId } : {},
+        requestId: requestId ?? null,
       }
     });
 

@@ -6,7 +6,7 @@ import { useLanguage } from './LanguageContext';
 import { Loader2 } from './icons';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
-export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
+export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: string; paymentId?: string | null }) {
   const stripe = useStripe();
   const elements = useElements();
   const { language } = useLanguage();
@@ -22,10 +22,14 @@ export default function CheckoutForm({ returnUrl }: { returnUrl?: string }) {
 
     // We use confirmPayment but we need to ensure Link is not interfering.
     // Actually, setting fields.billingDetails.email to 'never' in PaymentElement is the key.
+    const currentUrl = new URL(returnUrl || window.location.href);
+    currentUrl.searchParams.set('success', 'true');
+    if (paymentId) currentUrl.searchParams.set('payment_id', paymentId);
+
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: returnUrl || `${window.location.origin}/?success=true`,
+        return_url: currentUrl.toString(),
       },
     });
 

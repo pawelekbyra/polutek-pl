@@ -7,6 +7,7 @@ export * from "./application/get-payment-settings.use-case";
 export * from "./application/update-payment-settings.use-case";
 export * from "./application/list-admin-payments.use-case";
 export * from "./application/get-user-payments.use-case";
+export * from "./application/get-payment-status.use-case";
 export * from "./domain/payment.dto";
 export * from "./domain/payment.errors";
 export * from "./domain/payment.policy";
