@@ -14,10 +14,13 @@ interface VideoUploadSectionProps {
   videoId: string;
   onUploadComplete: () => void;
   initialAsset?: any;
+  initialFile?: File | null;
+  autoStart?: boolean;
+  onUploadReady?: () => void;
 }
 
-export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: VideoUploadSectionProps) {
-  const [file, setFile] = useState<File | null>(null);
+export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady }: VideoUploadSectionProps) {
+  const [file, setFile] = useState<File | null>(initialFile);
   const [upload, setUpload] = useState<tus.Upload | null>(null);
   const [progress, setProgress] = useState(0);
   const [bytesUploaded, setBytesUploaded] = useState(0);
@@ -27,6 +30,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
   const [asset, setAsset] = useState<any>(initialAsset);
   const toast = useToast();
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  const autoStartedRef = useRef(false);
 
   const stopPolling = useCallback(() => {
     if (pollingInterval.current) {
@@ -48,6 +52,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
             setStatus("READY");
             stopPolling();
             onUploadComplete();
+            onUploadReady?.();
           } else if (data.asset?.processingState === "FAILED") {
             setStatus("FAILED");
             setError(data.asset.failureReason || "Processing failed");
@@ -60,7 +65,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
     }, 5000);
 
     setTimeout(() => stopPolling(), 5 * 60 * 1000);
-  }, [videoId, onUploadComplete, stopPolling]);
+  }, [videoId, onUploadComplete, onUploadReady, stopPolling]);
 
   useEffect(() => {
     if (initialAsset) {
@@ -84,7 +89,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
     }
   };
 
-  const startUpload = async () => {
+  const startUpload = useCallback(async () => {
     if (!file) return;
     setStatus("PROVISIONING");
     setError(null);
@@ -115,7 +120,13 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset }: 
       setStatus("FAILED");
       toast(err.message, "error");
     }
-  };
+  }, [file, startPolling, toast, videoId]);
+
+  useEffect(() => {
+    if (!autoStart || autoStartedRef.current || !file || status !== "IDLE") return;
+    autoStartedRef.current = true;
+    startUpload();
+  }, [autoStart, file, startUpload, status]);
 
   const cancelUpload = () => { if (upload) { upload.abort(); setUpload(null); } setStatus("CANCELLED"); stopPolling(); };
   const retryUpload = () => { setStatus("IDLE"); setError(null); setProgress(0); startUpload(); };

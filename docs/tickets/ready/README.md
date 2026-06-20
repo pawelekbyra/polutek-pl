@@ -5,32 +5,32 @@ Launch status: NO_GO
 
 This index is the sole source for the next executable ticket. Dashboards, roadmaps, timelines, reports and historical ticket files may link here, but they must not maintain an independent current-ticket pointer.
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-008 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/X3-FIX-008-cloudflare-import-attach-existing-legacy-video.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001.md -->
 
 ## Current Control-Plane Ticket
 
 ```txt
-X3-FIX-008
+ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001
 ```
 
 | Role | Ticket | File | Status |
 | --- | --- | --- | --- |
-| Builder | X3-FIX-008 | `docs/tickets/ready/X3-FIX-008-cloudflare-import-attach-existing-legacy-video.md` | `READY_FOR_BUILDER` |
+| Builder | ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001 | `docs/tickets/ready/ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001.md` | `READY_FOR_BUILDER` |
 
-**Current Status:** Public launch remains `NO_GO`. X3-FIX-006 already has a migration plan report with the identification matrix, launch decision matrix, migration sequence, rollback/preservation policy, and owner decisions. The current single executable ticket is now the narrow admin runtime path to import one existing legacy `videoUrl` into Cloudflare Stream and attach the returned asset as `PENDING`.
+**Current Status:** Public launch remains `NO_GO`. X3-FIX-006 already has a migration plan report with the identification matrix, launch decision matrix, migration sequence, rollback/preservation policy, and owner decisions. Owner activated the current single executable ticket to replace the awkward multi-step admin video creation path with a one-step create flow for metadata, translations, access, file selection, draft save, and honest publish intent.
 
 Only the row above is the current-primary executable row. Priority: **Launch-critical**. Executable ticket count: **1**.
 
 ## Ordered repair queue
 
-1. `X3-FIX-008` — `READY_FOR_BUILDER`
-2. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW / OPERATOR_EVIDENCE_PENDING`
-3. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
-4. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
-5. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
-6. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
-7. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `PLANNED`
+1. `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001` — `READY_FOR_BUILDER`
+2. `X3-FIX-008` — `PLANNED / DEFERRED_BY_OWNER_2026-06-20`
+3. `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — `READY_FOR_INDEPENDENT_REVIEW / OPERATOR_EVIDENCE_PENDING`
+4. `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001` — `PLANNED`
+5. `CLOUDFLARE-PRODUCTION-ASSET-PRIVACY-VERIFY-001` — `BLOCKED_OPERATOR_ACCESS`
+6. `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001` — `PLANNED`
+7. `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` — `PLANNED`
 8. `ADMIN-VIDEO-POSTMERGE-VERIFY-001` — `PLANNED`
 9. `ADMIN-AUTH-POSTMERGE-REVERIFY-001` — `PLANNED`
 10. `LEGACY-ACCESS-POLICY-RETIREMENT-001` — `PLANNED`

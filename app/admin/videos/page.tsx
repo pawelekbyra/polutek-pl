@@ -16,6 +16,7 @@ import { VideoFilters } from "./components/VideoFilters";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
 import { readAdminApiError } from "./components/api-error";
 import { buildCreatedVideoUploadUrl } from "./[id]/details-tab-state";
+import { VideoUploadSection } from "./components/VideoUploadSection";
 
 export default function AdminVideosPage() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -32,6 +33,12 @@ export default function AdminVideosPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSlugManual, setIsSlugManual] = useState<boolean>(false);
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [createUploadState, setCreateUploadState] = useState<{
+    videoId: string;
+    publishAfterReady: boolean;
+    isPublishing: boolean;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -207,6 +214,8 @@ export default function AdminVideosPage() {
       showInSidebar: vid.showInSidebar ?? true,
       sidebarOrder: vid.sidebarOrder || 0
     });
+    setSelectedVideoFile(null);
+    setCreateUploadState(null);
     setIsEditing(true);
   };
 
@@ -242,11 +251,19 @@ export default function AdminVideosPage() {
     setFormData({
       id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", videoUrl: "", thumbnailUrl: "", duration: "", tier: "PUBLIC", status: "DRAFT", likesCount: 0, dislikesCount: 0, views: 0, isMainFeatured: false, showInSidebar: false, sidebarOrder: 0
     });
+    setSelectedVideoFile(null);
+    setCreateUploadState(null);
     setIsEditing(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
+    const intent = submitter?.dataset.intent === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
+    if (!formData.id && intent === "PUBLISHED" && !selectedVideoFile) {
+      setFormError("Wybierz plik wideo przed publikacją. Szkic możesz zapisać bez pliku.");
+      return;
+    }
     setIsSubmitting(true);
     setFormError(null);
     try {
@@ -275,10 +292,26 @@ export default function AdminVideosPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setIsEditing(false);
-        if (searchParams.get("edit")) {
-          router.replace("/admin/videos");
+        if (formData.id) {
+          setIsEditing(false);
+        } else if (selectedVideoFile) {
+          setCreateUploadState({
+            videoId: data.id,
+            publishAfterReady: intent === "PUBLISHED",
+            isPublishing: false,
+          });
+          toast(
+            intent === "PUBLISHED"
+              ? "Szkic utworzony. Rozpoczynam upload; publikacja nastąpi po przetworzeniu wideo."
+              : "Szkic utworzony. Rozpoczynam upload pliku.",
+            "success",
+          );
         } else {
+          setIsEditing(false);
+        }
+        if (formData.id && searchParams.get("edit")) {
+          router.replace("/admin/videos");
+        } else if (!formData.id && !selectedVideoFile) {
           router.push(buildCreatedVideoUploadUrl(data.id));
         }
         fetchVideos(page);
@@ -292,6 +325,32 @@ export default function AdminVideosPage() {
       setIsSubmitting(false);
     }
   };
+
+  const publishCreatedVideo = useCallback(async () => {
+    if (!createUploadState?.videoId || !createUploadState.publishAfterReady || createUploadState.isPublishing) return;
+    setCreateUploadState((prev) => prev ? { ...prev, isPublishing: true } : prev);
+    try {
+      const res = await fetch(`/api/admin/videos/${createUploadState.videoId}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(readAdminApiError(data, "Upload jest gotowy, ale publikacja nie powiodła się."));
+        toast("Upload gotowy, ale publikacja wymaga ręcznej korekty.", "error");
+        return;
+      }
+      toast("Film został przetworzony i opublikowany.", "success");
+      setIsEditing(false);
+      setCreateUploadState(null);
+      setSelectedVideoFile(null);
+      router.push(`/admin/videos/${encodeURIComponent(createUploadState.videoId)}?tab=summary`);
+    } catch (err) {
+      logger.error("Publish after upload failed", err);
+      setFormError("Upload jest gotowy, ale publikacja nie powiodła się przez błąd połączenia.");
+    }
+  }, [createUploadState, router, toast]);
 
   const handleDelete = async (id: string) => {
       if (!confirm("Zarchiwizuj film. Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
@@ -342,7 +401,25 @@ export default function AdminVideosPage() {
           onTitleChange={handleTitleChange}
           onSlugChange={(val) => { setIsSlugManual(true); setFormData({...formData, slug: slugify(val)}); }}
           slugify={slugify}
+          selectedVideoFile={selectedVideoFile}
+          onVideoFileChange={setSelectedVideoFile}
         />
+        {createUploadState && selectedVideoFile ? (
+          <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
+            <VideoUploadSection
+              videoId={createUploadState.videoId}
+              initialFile={selectedVideoFile}
+              autoStart
+              onUploadComplete={() => fetchVideos(page)}
+              onUploadReady={createUploadState.publishAfterReady ? publishCreatedVideo : undefined}
+            />
+            {createUploadState.publishAfterReady ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Publikacja jest zaplanowana automatycznie po stanie READY. Nie zamykaj tego widoku, jeśli chcesz zobaczyć finalny rezultat od razu.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </AdminLayoutShell>
     );
   }
