@@ -1,11 +1,15 @@
 # X3-FIX-006 — Legacy storage migration plan
 
 Ticket ID: X3-FIX-006
-Status: READY_FOR_BUILDER
+Status: HISTORICAL_SUPERSEDED
 Launch status: NO_GO
 Lane: video-provider
 Type: Docs/admin inventory
-Priority: Should-have before launch if legacy content exists
+Priority: Historical evidence only — not executable
+
+## Supersession note
+
+This ticket is historical/superseded and must not be used as an executable Builder prompt. Legacy migration planning and import concerns are superseded by the grouped provider lifecycle work, especially `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`, and by the current playback/access cleanup ticket `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001`. Any remaining legacy-media decisions must be handled through the canonical ready queue rather than this old X3 card. Public launch remains `NO_GO`.
 
 ## Goal
 
