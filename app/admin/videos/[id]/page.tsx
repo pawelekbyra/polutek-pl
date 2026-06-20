@@ -28,12 +28,25 @@ import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
 import { readAdminApiError } from "../components/api-error";
 
+const VIDEO_DETAILS_TABS = new Set(["summary", "content", "media", "access", "diagnostics", "comments", "stats", "audit"]);
+
+function getInitialDetailsTab() {
+    if (typeof window === "undefined") return "summary";
+
+    const tabFromQuery = new URLSearchParams(window.location.search).get("tab");
+    const tabFromHash = window.location.hash.replace(/^#/, "");
+    const requestedTab = tabFromQuery || tabFromHash;
+
+    return requestedTab && VIDEO_DETAILS_TABS.has(requestedTab) ? requestedTab : "summary";
+}
+
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
     const [video, setVideo] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isImportingLegacy, setIsImportingLegacy] = useState(false);
+    const [activeTab, setActiveTab] = useState(getInitialDetailsTab);
     const toast = useToast();
 
     const fetchVideo = useCallback(async () => {
@@ -50,6 +63,16 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     }, [params.id]);
 
     useEffect(() => { fetchVideo(); }, [fetchVideo]);
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        if (typeof window === "undefined") return;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tab);
+        url.hash = tab === "media" ? "media" : "";
+        window.history.replaceState(null, "", url.toString());
+    };
 
     const handleAction = async (action: string) => {
         try {
@@ -91,7 +114,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
 
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="lg:w-3/4 space-y-6">
-              <Tabs defaultValue="summary" className="w-full">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="w-full justify-start bg-background border rounded-lg p-1 mb-6 h-auto flex-wrap">
                   <TabsTrigger value="summary" className="px-4 py-2 flex gap-2 items-center"><Layout className="h-4 w-4" /> Podsumowanie</TabsTrigger>
                   <TabsTrigger value="content" className="px-4 py-2 flex gap-2 items-center"><FileVideo className="h-4 w-4" /> Treść</TabsTrigger>

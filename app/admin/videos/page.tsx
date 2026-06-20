@@ -278,7 +278,7 @@ export default function AdminVideosPage() {
         if (searchParams.get("edit")) {
           router.replace("/admin/videos");
         } else {
-          router.push(`/admin/videos/${data.id}#media`);
+          router.push(`/admin/videos/${data.id}?tab=media#media`);
         }
         fetchVideos(page);
       } else {
