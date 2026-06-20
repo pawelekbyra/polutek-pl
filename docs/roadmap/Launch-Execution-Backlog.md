@@ -13,8 +13,8 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | ---: | --- | --- | --- |
 | 1 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` | Grouped Cloudflare admin media lifecycle, legacy import UI, upload/attach lifecycle, sync/webhook reconciliation and truthful admin states. |
 | 2 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / DONE` | Completed publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions through the state-contract ticket. |
-| 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / CURRENT` | Next executable work: reconcile legacy playback/access paths into one consistent playback contract. |
-| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / PLANNED_AFTER_PLAYBACK_ACCESS_RETIREMENT` | Code hardening before payment-to-PatronGrant operator smoke evidence. |
+| 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / DONE` | Completed playback/access cleanup and legacy fallback retirement in PR #994. |
+| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / CURRENT` | Current executable code hardening before payment-to-PatronGrant operator smoke evidence. |
 | 5 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
 
 ## Historical or superseded runtime tickets

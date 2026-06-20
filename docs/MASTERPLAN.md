@@ -67,18 +67,18 @@ Full detailed risk IDs are in `docs/reports/reconciliation/POST-929-EMERGENCY-CO
 - See the canonical queue: `docs/tickets/ready/README.md`.
 
 ### CURRENT_EXECUTABLE_TASK
-- `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` via `docs/tickets/ready/README.md`.
+- `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` via `docs/tickets/ready/README.md`.
 
 ### RECENTLY_COMPLETED
+- `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE by PR #990.
 - `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE before the publication/hero state-contract ticket.
 
 ### ORDERED_REPAIR_PROGRAM
-1. `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — CURRENT playback/access cleanup; retire legacy playback/access paths into one consistent playback contract.
-2. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — payments code hardening after playback/access cleanup.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — admin auth and channel diagnostics after payments hardening.
-4. `CONTROL-PLANE-GUARD-HARDENING-001`
-5. `BETA-SCOPE-GUARD-RECONCILIATION-001`
+1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — CURRENT payments code hardening after playback/access cleanup.
+2. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — admin auth and channel diagnostics after payments hardening.
+3. `CONTROL-PLANE-GUARD-HARDENING-001`
+4. `BETA-SCOPE-GUARD-RECONCILIATION-001`
 
 ### OPERATOR_EVIDENCE
 - Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts.
