@@ -2,7 +2,8 @@ import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider, Vi
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
-import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError } from "../domain/video.errors";
+import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, VideoInvalidSidebarError } from "../domain/video.errors";
+import { VideoPolicy } from "../domain/video.policy";
 
 export interface CreateVideoInput {
   title: string;
@@ -273,6 +274,8 @@ export class VideoRepository {
 
     if (status && status !== VideoStatus.PUBLISHED) {
       updateData.status = status;
+      updateData.isMainFeatured = false;
+      updateData.showInSidebar = false;
     }
 
     const result = await tx.video.updateMany({
@@ -296,7 +299,7 @@ export class VideoRepository {
   async archiveVideo(id: string, mainChannelId: string, tx: WriteTx): Promise<Video> {
     const result = await tx.video.updateMany({
       where: { id, creatorId: mainChannelId },
-      data: { status: 'ARCHIVED' }
+      data: { status: 'ARCHIVED', isMainFeatured: false, showInSidebar: false }
     });
 
     if (result.count !== 1) {
@@ -323,12 +326,11 @@ export class VideoRepository {
   }
 
   async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
-    const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId } });
+    const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { asset: true } });
     if (!video) throw new VideoNotOnMainChannelError(id);
 
-    if (video.tier !== AccessTier.PUBLIC || video.status !== VideoStatus.PUBLISHED) {
-      throw new VideoInvalidHeroError();
-    }
+    const blockers = VideoPolicy.getHeroBlockers(video);
+    if (blockers.length > 0) throw new VideoInvalidHeroError(`${blockers[0].code}: ${blockers[0].message}`);
 
     await tx.video.updateMany({
       where: { creatorId: mainChannelId, isMainFeatured: true },
@@ -351,11 +353,15 @@ export class VideoRepository {
     for (const update of updates) {
       const video = await tx.video.findUnique({
         where: { id: update.id },
-        select: { creatorId: true },
+        select: { creatorId: true, status: true },
       });
 
       if (!video || video.creatorId !== mainChannelId) {
         throw new VideoNotOnMainChannelError(update.id);
+      }
+      if (update.showInSidebar) {
+        const blockers = VideoPolicy.getSidebarBlockers(video);
+        if (blockers.length > 0) throw new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`);
       }
     }
 

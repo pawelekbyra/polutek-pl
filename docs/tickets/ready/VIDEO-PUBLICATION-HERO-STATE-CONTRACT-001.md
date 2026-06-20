@@ -1,6 +1,6 @@
 # VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 — Publication, hero and admin video state contract
 
-Status: PLANNED_AFTER_VIDEO_PROVIDER_LIFECYCLE
+Status: DONE
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO

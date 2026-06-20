@@ -7,11 +7,13 @@ import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
 import { MediaPolicy } from "@/lib/modules/media";
 import { hasReadyProviderBackedPlaybackAsset, isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/services/playback/legacy-private-fallback.policy";
+import { VideoPolicy } from "../domain/video.policy";
 
 export type DiagnosticIssue = {
   severity: "ERROR" | "WARNING";
   message: string;
   field?: string;
+  code?: string;
 };
 
 export type GetAdminVideoDiagnosticsInput = {
@@ -88,17 +90,24 @@ export async function getAdminVideoDiagnostics(
   }
 
   // 5. Layout & Logic
-  if (video.isMainFeatured && video.status !== VideoStatus.PUBLISHED) {
-      issues.push({ severity: "ERROR", message: "Film Hero musi być opublikowany.", field: "status" });
+  for (const blocker of VideoPolicy.getPublicationBlockers(video)) {
+      issues.push({ severity: "ERROR", code: blocker.code, message: `Publikacja zablokowana: ${blocker.message}`, field: blocker.field });
   }
-  if (video.isMainFeatured && video.tier !== AccessTier.PUBLIC) {
-      issues.push({ severity: "ERROR", message: "Film Hero musi być publiczny.", field: "tier" });
+  if (video.publishAfterAssetReadyError) {
+      issues.push({ severity: "ERROR", code: "VIDEO_PUBLISH_AFTER_READY_ERROR", message: `Automatyczna publikacja po READY nie powiodła się: ${video.publishAfterAssetReadyError}`, field: "publishAfterAssetReady" });
   }
-  if (video.showInSidebar && video.status === VideoStatus.ARCHIVED) {
-      issues.push({ severity: "WARNING", message: "Film zarchiwizowany nie powinien być w sidebarze.", field: "showInSidebar" });
+  if (asset?.processingState === 'FAILED') {
+      issues.push({ severity: "ERROR", code: "VIDEO_PROVIDER_SYNC_FAILED", message: "Provider sync zgłasza FAILED dla assetu. Użyj synchronizacji Cloudflare albo sprawdź media diagnostics.", field: "asset" });
   }
-  if (video.showInSidebar && video.status !== VideoStatus.PUBLISHED) {
-      issues.push({ severity: "WARNING", message: "Tylko opublikowane filmy powinny być widoczne w sidebarze.", field: "showInSidebar" });
+  if (video.isMainFeatured) {
+      for (const blocker of VideoPolicy.getHeroBlockers(video)) {
+          issues.push({ severity: "ERROR", code: blocker.code, message: `Hero zablokowany: ${blocker.message}`, field: blocker.field });
+      }
+  }
+  if (video.showInSidebar) {
+      for (const blocker of VideoPolicy.getSidebarBlockers(video)) {
+          issues.push({ severity: "ERROR", code: blocker.code, message: `Sidebar zablokowany: ${blocker.message}`, field: "showInSidebar" });
+      }
   }
 
   // 6. Uniqueness
