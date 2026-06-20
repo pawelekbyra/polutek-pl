@@ -47,7 +47,10 @@ export const DISPLAY_USD_TO_PLN_RATE = (() => {
 })();
 
 export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Creator';
-export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || '';
+// Polutek.pl is a strict single-channel app. Keep the env override, but use the
+// seeded canonical slug as a safe production fallback so missing Vercel env does
+// not break the public home page or admin video list at runtime.
+export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'polutek.pl';
 export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL
   ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase().replace(/^(WWW\.)+/, '')
