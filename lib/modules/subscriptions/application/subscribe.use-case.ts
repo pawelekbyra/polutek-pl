@@ -30,7 +30,6 @@ export class SubscribeUseCase {
       const subscriptionRepo = new SubscriptionRepository(tx);
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
-      const existing = await subscriptionRepo.findByUserIdAndCreatorId(userId, mainChannel.id);
       const prefResult = await preferenceRepo.recordExplicitContentOptIn(userId, trustedEmail, tx);
 
       if (!prefResult.recorded) {
@@ -41,14 +40,20 @@ export class SubscribeUseCase {
         );
       }
 
-      if (existing) {
-        return { subscription: existing, newlyCreated: false };
-      }
+      const result = typeof subscriptionRepo.createIfMissing === "function"
+        ? await subscriptionRepo.createIfMissing(userId, mainChannel.id, tx)
+        : await (async () => {
+            const existing = await subscriptionRepo.findByUserIdAndCreatorId(userId, mainChannel.id);
+            if (existing) return { subscription: existing, created: false };
+            const subscription = await subscriptionRepo.create(userId, mainChannel.id, tx);
+            await MainChannelService.incrementSubscribersCount(ctx, mainChannel.id, tx);
+            return { subscription, created: true };
+          })();
+      const syncedChannel = typeof MainChannelService.syncSubscribersCount === "function"
+        ? await MainChannelService.syncSubscribersCount(ctx, mainChannel.id, tx)
+        : await MainChannelService.getRequired(ctx);
 
-      const created = await subscriptionRepo.create(userId, mainChannel.id, tx);
-      await MainChannelService.incrementSubscribersCount(ctx, mainChannel.id, tx);
-
-      return { subscription: created, newlyCreated: true };
+      return { ...result, subscribersCount: syncedChannel.subscribersCount ?? 0 };
     });
 
     const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitSubscribe(trustedEmail);
@@ -57,7 +62,7 @@ export class SubscribeUseCase {
     return {
       isSubscribed: true,
       subscribedAt: result.subscription.createdAt,
-      subscribersCount: finalChannel.subscribersCount ?? 0,
+      subscribersCount: result.subscribersCount ?? finalChannel.subscribersCount ?? 0,
       creatorId: mainChannel.id,
       creatorSlug: mainChannel.slug,
       purpose: "EMAIL_NOTIFICATIONS",

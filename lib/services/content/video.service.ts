@@ -118,7 +118,7 @@ export class VideoContentService {
             name: video.creator.name,
             slug: video.creator.slug,
             imageUrl: video.creator.user?.imageUrl || video.creator.imageUrl || null,
-            subscribersCount: video.creator.displaySubscribersCount ?? video.creator.subscribersCount ?? 0,
+            subscribersCount: video.creator.subscribersCount ?? 0,
         } : undefined,
     };
 
