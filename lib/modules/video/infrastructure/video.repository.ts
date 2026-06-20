@@ -8,18 +8,33 @@ export interface CreateVideoInput {
   title: string;
   slug: string;
   videoUrl?: string | null;
-  thumbnailUrl: string;
+  thumbnailUrl?: string | null;
   tier: AccessTier;
-  status: VideoStatus;
+  status?: VideoStatus;
   description?: string | null;
   titleEn?: string | null;
   descriptionEn?: string | null;
+  duration?: string | null;
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
+  likesCount?: number;
+  dislikesCount?: number;
+  views?: number;
 }
 
-export interface UpdateVideoInput extends Partial<CreateVideoInput> {
+export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
+  videoUrl?: string | null;
+  status?: VideoStatus;
+  isMainFeatured?: boolean;
+  showInSidebar?: boolean;
+  sidebarOrder?: number;
+  likesCount?: number;
+  dislikesCount?: number;
+  views?: number;
+}
+
+export interface UpdateVideoInput extends AdminUpdateVideoInput {
   id: string;
 }
 
@@ -189,17 +204,24 @@ export class VideoRepository {
   async createForMainChannel(input: CreateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
     if (!mainChannelId) throw new AppError("Main channel ID is required to create a video.", 400, "VIDEO_MISSING_CHANNEL");
 
-    // Secure defaults for new videos
-    return await tx.video.create({
-      data: {
-        ...input,
-        creatorId: mainChannelId,
-        status: 'DRAFT',
-        showInSidebar: false,
-        isMainFeatured: false,
-        publishedAt: null
-      }
-    });
+    const data: Prisma.VideoCreateInput = {
+      title: input.title,
+      slug: input.slug,
+      description: input.description ?? null,
+      titleEn: input.titleEn ?? null,
+      descriptionEn: input.descriptionEn ?? null,
+      thumbnailUrl: input.thumbnailUrl || "/logo.png",
+      duration: input.duration ?? null,
+      tier: input.tier,
+      videoUrl: null,
+      creator: { connect: { id: mainChannelId } },
+      status: 'DRAFT',
+      showInSidebar: false,
+      isMainFeatured: false,
+      publishedAt: null,
+    };
+
+    return await tx.video.create({ data });
   }
 
   async updateForMainChannel(input: UpdateVideoInput, mainChannelId: string, tx: WriteTx): Promise<Video> {
@@ -213,7 +235,7 @@ export class VideoRepository {
     const result = await tx.video.updateMany({
         where: { id, creatorId: mainChannelId },
         data: {
-            ...data,
+            ...(data as Prisma.VideoUpdateManyMutationInput),
             publishedAt: data.status === 'PUBLISHED' ? new Date() : undefined
         }
     });

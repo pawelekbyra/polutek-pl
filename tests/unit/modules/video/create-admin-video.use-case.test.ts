@@ -41,7 +41,7 @@ describe('createAdminVideo use-case', () => {
 
     expect(result.ok).toBe(true);
     expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ creatorId: 'c1' })
+        data: expect.objectContaining({ creator: { connect: { id: 'c1' } } })
     }));
   });
 
@@ -63,7 +63,7 @@ describe('createAdminVideo use-case', () => {
     expect(result.ok).toBe(true);
     expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
-            creatorId: 'c1',
+            creator: { connect: { id: 'c1' } },
             videoUrl: null,
             status: VideoStatus.DRAFT,
             showInSidebar: false,

@@ -64,6 +64,15 @@ export default function AdminVideosPage() {
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
   const [orderBy, setOrderBy] = useState<string>("createdAt");
+  const [cloudflareHealth, setCloudflareHealth] = useState<{ configured: boolean; missing?: string[] } | null>(null);
+
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/admin/health/cloudflare")
+      .then(async (res) => (res.ok ? setCloudflareHealth(await res.json()) : null))
+      .catch((err) => logger.error("Failed to fetch Cloudflare health", err));
+  }, [isAdmin]);
 
   const fetchVideos = useCallback(async (p = page) => {
     try {
@@ -88,7 +97,7 @@ export default function AdminVideosPage() {
     } catch (err) {
       logger.error("Failed to fetch videos", err);
     }
-  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
+  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
 
   const fetchVideoForEdit = useCallback(async (id: string) => {
     try {
@@ -243,7 +252,7 @@ export default function AdminVideosPage() {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(formData.id ? {
           ...formData,
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
@@ -252,6 +261,15 @@ export default function AdminVideosPage() {
           descriptionEn: formData.descriptionEn?.trim() || null,
           videoUrl: formData.videoUrl?.trim() || null,
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+        } : {
+          title: formData.title?.trim(),
+          slug: formData.slug?.trim(),
+          description: formData.description?.trim() || null,
+          titleEn: formData.titleEn?.trim() || null,
+          descriptionEn: formData.descriptionEn?.trim() || null,
+          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          duration: formData.duration?.trim() || null,
+          tier: formData.tier,
         })
       });
       const data = await res.json();
@@ -260,7 +278,7 @@ export default function AdminVideosPage() {
         if (searchParams.get("edit")) {
           router.replace("/admin/videos");
         } else {
-          router.push(`/admin/videos/${data.id}`);
+          router.push(`/admin/videos/${data.id}#media`);
         }
         fetchVideos(page);
       } else {
@@ -340,9 +358,15 @@ export default function AdminVideosPage() {
           <div className="flex gap-3">
             <Button variant="outline" asChild><Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link></Button>
             <Button variant="outline" asChild><Link href="/admin/videos/layout">Układ kanału</Link></Button>
-            <Button onClick={handleCreateNew}><Plus className="mr-2 h-4 w-4" /> Nowy szkic Cloudflare</Button>
+            <Button onClick={handleCreateNew}><Plus className="mr-2 h-4 w-4" /> Nowy film</Button>
           </div>
         </header>
+
+        {cloudflareHealth && !cloudflareHealth.configured && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            Cloudflare Stream nie jest skonfigurowany — upload nowych filmów nie będzie działał.
+          </div>
+        )}
 
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">

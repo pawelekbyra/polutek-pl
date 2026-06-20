@@ -130,7 +130,8 @@ describe('getCloudflareUploadUrl', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('Missing Cloudflare Stream credentials');
+      expect(result.error.code).toBe('CLOUDFLARE_NOT_CONFIGURED');
+      expect(result.error.message).toContain('Cloudflare Stream nie jest skonfigurowany');
     }
   });
 });

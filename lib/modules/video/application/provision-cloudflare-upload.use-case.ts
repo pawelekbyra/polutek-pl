@@ -5,7 +5,7 @@ import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.clie
 import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
+import { CloudflareApiError, CloudflareConfigurationError, VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoStatus } from "@prisma/client";
 
@@ -87,8 +87,10 @@ export async function provisionCloudflareUpload(
       providerAssetId: uploadResponse.result.uid,
       assetId: asset?.id || ""
     });
-  } catch (error: any) {
-    return fail({ code: 'CLOUDFLARE_API_ERROR', message: error.message || 'Failed to communicate with Cloudflare Stream API', statusCode: 500
-    } as any);
+  } catch (error: unknown) {
+    if (error instanceof CloudflareConfigurationError || error instanceof CloudflareApiError || error instanceof AppError) {
+      return fail(error);
+    }
+    return fail(new CloudflareApiError());
   }
 }
