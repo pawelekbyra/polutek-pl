@@ -10,15 +10,18 @@ Type: Runtime implementation + focused tests
 
 This ticket replaces the old split between `ADMIN-VIDEO-CLOUDFLARE-CONTAINMENT-001`, `ADMIN-VIDEO-TUS-UPLOAD-LIFECYCLE-001`, `X3-FIX-008`, and the stale parts of `ADMIN-VIDEO-CREATE-FORM-AND-FILTER-CONTRACT-001`.
 
-Do not revert to containment-by-disabling as the main strategy. Current main already has a Cloudflare-first create/upload/attach flow, backend `publishAfterAssetReady`, a Cloudflare import use case, and webhook/sync asset reconciliation. The right next step is to make that provider lifecycle coherent, observable, idempotent, and truthful in admin UI.
+Do not revert to containment-by-disabling as the main strategy. Current main already has a Cloudflare-first create/upload/attach flow, backend `publishAfterAssetReady`, a Cloudflare import use case, webhook/sync asset reconciliation, and PR #985 polish that made backend publish-after-ready the UI source of truth in the create flow.
+
+The right next step is to make the remaining provider lifecycle coherent, observable, idempotent, and truthful in admin details/media UI.
 
 ## Current-main evidence to respect
 
 - One-step admin create flow exists and can request publish-after-ready.
 - `Video.publishAfterAssetReady*` fields exist and backend webhook/sync can publish through `attemptPublishAfterAssetReady`.
+- PR #985 removed the redundant frontend publish-after-ready call and added admin list badges for pending/completed/failed auto-publish states.
 - `importLegacyVideoToCloudflare` exists and creates a non-primary `PENDING` Cloudflare asset from legacy `videoUrl`.
 - `app/api/admin/videos/[id]/actions/route.ts` already exposes `import-legacy-to-cloudflare`.
-- Admin video details/media UI still does not present the legacy import action clearly, and the media copy still says upload does not publish automatically even though backend-owned publish-after-ready now exists.
+- Admin video details/media UI still needs to expose the legacy import action clearly, and the media copy still needs to match the backend-owned publish-after-ready contract.
 
 ## Goal
 
@@ -32,15 +35,15 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
 
 ## Required implementation
 
-### A. Admin media UI
+### A. Admin media details UI
 
-- Add a clear `Import legacy URL to Cloudflare` action in `app/admin/videos/[id]/page.tsx` or extracted media panel component.
+- Add a clear `Import legacy URL to Cloudflare` action in `app/admin/videos/[id]/page.tsx` or an extracted media panel component.
 - Show it only when:
   - video has a valid legacy `videoUrl`,
   - no Cloudflare Stream asset already exists,
   - the video belongs to the main channel/admin scope.
 - Route it through existing `POST /api/admin/videos/[id]/actions` with `action: "import-legacy-to-cloudflare"`.
-- Show states for:
+- Show details-page states for:
   - no asset,
   - upload available,
   - legacy import available,
@@ -48,7 +51,8 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
   - asset ready primary/non-primary,
   - asset failed,
   - publish-after-ready pending/completed/error.
-- Fix stale copy in media details. It must not say “admin still clicks Publish” when `publishAfterAssetReady` is set and backend can publish after READY.
+- Keep the PR #985 list badges; do not reimplement them unless tests require a small adjustment.
+- Fix stale media copy. It must not say “admin still clicks Publish” when `publishAfterAssetReady` is set and backend can publish after READY.
 
 ### B. Lifecycle semantics
 
@@ -61,8 +65,9 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
 - Repeated attach/import/upload-url attempts must be idempotent or safely rejected with stable error codes.
 - Late webhook/sync events must be accepted if they match an existing asset and must not create duplicate assets.
 - Backend-owned `publishAfterAssetReady` must remain source of truth for automatic publication after provider READY.
+- Preserve PR #985 behavior that avoids redundant publish-after-ready audit noise on repeated identical failures.
 
-### C. Upload-attempt hardening
+### C. Upload/import attempt hardening
 
 - Decide whether current code needs a durable upload/import attempt record. If yes, add an explicit schema/migration in this ticket.
 - At minimum, record enough metadata/audit to diagnose duplicate attempts, stale uploads, provider UID mismatches, and failed imports.
@@ -70,7 +75,7 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
 
 ### D. Admin diagnostics
 
-- Expose in AdminVideo DTO/UI:
+- Expose in AdminVideo DTO/UI where not already present:
   - provider asset UID,
   - processing state,
   - primary flag,
@@ -78,7 +83,7 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
   - publish-after-ready status,
   - last publish-after-ready error,
   - recommended admin action.
-- Add warning/error badges to the media/diagnostics tabs when admin action is required.
+- Add warning/error badges to details/media/diagnostics tabs when admin action is required.
 
 ## Non-goals
 
@@ -87,6 +92,7 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
 - Do not claim production Cloudflare dashboard evidence.
 - Do not weaken access or publication guards.
 - Do not publish without a primary Cloudflare Stream asset in READY state.
+- Do not redo comments polish from PR #984 or video/comments polish from PR #985.
 
 ## Allowed paths
 
@@ -110,11 +116,11 @@ All three paths must converge on the same provider-backed lifecycle: asset `PEND
 
 ## Acceptance criteria
 
-- Admin can upload, attach existing UID/address, or import legacy URL into Cloudflare from coherent media UI.
+- Admin can upload, attach existing UID/address, or import legacy URL into Cloudflare from coherent media details UI.
 - All three paths create or reuse a Cloudflare asset without faking readiness.
 - Duplicate or repeated attempts are safe and have stable errors.
 - Provider sync/webhook reconciles asset state and can complete publish-after-ready.
-- Admin UI truthfully shows pending/completed/failed states.
+- Admin UI truthfully shows pending/completed/failed states in both list and details/media context.
 - Focused tests cover upload/attach/import/sync/webhook/publish-after-ready interactions.
 
 ## Validation
