@@ -1,7 +1,3 @@
-// Strict escapes historical baseline for CI-SIGNAL-RESTORATION-001.
-// This file records exact pre-existing @ts-ignore, @ts-nocheck, and explicit-any violations only.
-// Review/update rules: do not add entries for new code; do not use globs or broad exceptions;
-// remove an entry in the same PR that removes its matching violation; reassess entries when files move or are substantially edited.
 {
   "entries": [
     {
@@ -62,7 +58,7 @@
     },
     {
       "file": "app/admin/videos/components/VideoUploadSection.tsx",
-      "line": 15,
+      "line": 16,
       "label": "explicit any annotation",
       "text": "initialAsset?: any;",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -76,35 +72,35 @@
     },
     {
       "file": "app/admin/videos/page.tsx",
-      "line": 107,
+      "line": 118,
       "label": "explicit any annotation",
       "text": "tier: vid.tier as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "app/admin/videos/page.tsx",
-      "line": 108,
+      "line": 119,
       "label": "explicit any annotation",
       "text": "status: (vid.status || \"PUBLISHED\") as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "app/admin/videos/page.tsx",
-      "line": 190,
+      "line": 201,
       "label": "explicit any annotation",
       "text": "tier: vid.tier as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "app/admin/videos/page.tsx",
-      "line": 191,
+      "line": 202,
       "label": "explicit any annotation",
       "text": "status: (vid.status || \"PUBLISHED\") as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "app/admin/videos/page.tsx",
-      "line": 216,
+      "line": 227,
       "label": "explicit any annotation",
       "text": "tier: vid.tier as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -118,7 +114,7 @@
     },
     {
       "file": "app/api/admin/videos/[id]/actions/route.ts",
-      "line": 115,
+      "line": 113,
       "label": "explicit any annotation",
       "text": "} as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -559,7 +555,7 @@
     },
     {
       "file": "lib/modules/video/application/attach-cloudflare-asset.use-case.ts",
-      "line": 28,
+      "line": 27,
       "label": "explicit any annotation",
       "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -573,16 +569,9 @@
     },
     {
       "file": "lib/modules/video/application/get-cloudflare-upload-url.use-case.ts",
-      "line": 34,
+      "line": 46,
       "label": "explicit any annotation",
       "text": "await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/application/get-cloudflare-upload-url.use-case.ts",
-      "line": 60,
-      "label": "explicit any annotation",
-      "text": "} as any);",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
@@ -607,15 +596,8 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/application/provision-cloudflare-upload.use-case.ts",
-      "line": 92,
-      "label": "explicit any annotation",
-      "text": "} as any);",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/video/application/publish-admin-video.use-case.ts",
-      "line": 47,
+      "line": 48,
       "label": "explicit any annotation",
       "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -664,63 +646,63 @@
     },
     {
       "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 9,
-      "label": "explicit any annotation",
-      "text": "errors: any[];",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
       "line": 10,
       "label": "explicit any annotation",
-      "text": "messages: any[];",
+      "text": "errors: any[];",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 18,
+      "line": 11,
       "label": "explicit any annotation",
-      "text": "errors: any[];",
+      "text": "messages: any[];",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
       "line": 19,
       "label": "explicit any annotation",
+      "text": "errors: any[];",
+      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
+      "line": 20,
+      "label": "explicit any annotation",
       "text": "messages: any[];",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 117,
+      "line": 132,
       "label": "explicit any annotation",
       "text": "if (filters.status && filters.status !== 'ALL') where.status = filters.status as any;",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 118,
+      "line": 133,
       "label": "explicit any annotation",
       "text": "if (filters.tier && filters.tier !== 'ALL') where.tier = filters.tier as any;",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 209,
+      "line": 231,
       "label": "explicit any annotation",
       "text": "if ((data as any).status === 'PUBLISHED') {",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 210,
+      "line": 232,
       "label": "explicit any annotation",
       "text": "delete (data as any).status;",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/infrastructure/video.repository.ts",
-      "line": 329,
+      "line": 351,
       "label": "explicit any annotation",
       "text": "...data as any,",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."

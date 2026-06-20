@@ -214,6 +214,29 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                         </CardContent>
                     </Card>
 
+
+                    <Card className="shadow-sm border-dashed">
+                        <CardHeader><CardTitle className="text-sm">Advanced / Repair</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="text-xs text-muted-foreground">Podepnij istniejący Cloudflare Stream UID tylko do naprawy lub migracji. Standardowy flow nowych filmów to upload TUS powyżej.</p>
+                            <Button variant="outline" size="sm" onClick={async () => {
+                                const providerAssetId = prompt("Wpisz istniejący Cloudflare Stream UID. Zasób zostanie zapisany jako PENDING do czasu synchronizacji statusu z Cloudflare:");
+                                if (!providerAssetId) return;
+                                try {
+                                    const res = await fetch(`/api/admin/videos/${params.id}/actions`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ action: 'attach-asset', providerAssetId })
+                                    });
+                                    if (res.ok) { toast('Zasób Cloudflare podpięty.', 'success'); fetchVideo(); }
+                                    else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nie udało się podpiąć UID')}`, 'error'); }
+                                } catch (e) {
+                                    toast('Błąd połączenia.', 'error');
+                                }
+                            }}>Podepnij istniejący Cloudflare UID</Button>
+                        </CardContent>
+                    </Card>
+
                     {video.videoUrl && (
                     <Card className="shadow-sm">
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2">Legacy / Migration <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">INTERNAL ONLY</Badge></CardTitle></CardHeader>

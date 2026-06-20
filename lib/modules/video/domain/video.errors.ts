@@ -86,6 +86,8 @@ export class PlaybackAccessDeniedError extends AppError {
 
 
 export class CloudflareConfigurationError extends AppError {
+  public readonly missing: string[];
+
   constructor(missing: string[] = []) {
     super(
       'Cloudflare Stream nie jest skonfigurowany po stronie serwera. Skontaktuj się z administratorem technicznym przed uploadem nowych filmów.',
@@ -93,7 +95,7 @@ export class CloudflareConfigurationError extends AppError {
       'CLOUDFLARE_NOT_CONFIGURED'
     );
     this.name = 'CloudflareConfigurationError';
-    (this as any).missing = missing;
+    this.missing = missing;
   }
 }
 
