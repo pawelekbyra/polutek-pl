@@ -20,15 +20,10 @@ export interface CloudflareImportByUrlResponse {
   messages: any[];
 }
 
-type CloudflareErrorItem = {
-  code?: string | number | null;
-  message?: string | null;
-};
-
 function formatCloudflareErrors(payload: any): string {
   const errors = Array.isArray(payload?.errors) ? payload.errors : [];
   const messages = errors
-    .map((error: CloudflareErrorItem) => {
+    .map((error: any) => {
       const code = error?.code ? `code ${error.code}` : null;
       const message = typeof error?.message === "string" ? error.message : null;
       return [code, message].filter(Boolean).join(": ");
