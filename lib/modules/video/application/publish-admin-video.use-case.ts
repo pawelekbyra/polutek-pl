@@ -45,12 +45,20 @@ export async function publishAdminVideo(
       return fail(new VideoNotReadyForPublicationError('Brakuje identyfikatora assetu Cloudflare Stream.'));
   }
 
+  if (video.status === VideoStatus.PUBLISHED) {
+    return ok(toAdminVideoDto(video));
+  }
+
   const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+    const now = new Date();
     const result = await tx.video.update({
         where: { id: videoId },
         data: {
             status: VideoStatus.PUBLISHED,
-            publishedAt: new Date()
+            publishedAt: now,
+            publishAfterAssetReady: false,
+            publishAfterAssetReadyCompletedAt: now,
+            publishAfterAssetReadyError: null,
         }
     });
 

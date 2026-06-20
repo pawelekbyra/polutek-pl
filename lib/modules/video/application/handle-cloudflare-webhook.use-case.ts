@@ -5,6 +5,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import type { VideoAssetProcessingState } from "@prisma/client";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { createScopedLogger } from "@/lib/logger";
+import { attemptPublishAfterAssetReady } from "./publish-after-asset-ready.use-case";
 
 export interface CloudflareStreamWebhookPayload {
   uid: string;
@@ -39,6 +40,9 @@ export async function handleCloudflareStreamWebhook(
 
   // Idempotency and State Transition Rules
   if (isRedundantTransition(asset.processingState, newState)) {
+    if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+      await attemptPublishAfterAssetReady(asset.videoId, ctx);
+    }
     return ok({ assetId: asset.id, status: "no-change" });
   }
 
@@ -91,6 +95,10 @@ export async function handleCloudflareStreamWebhook(
     return updated;
   });
 
+  if (updatedAsset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+    await attemptPublishAfterAssetReady(updatedAsset.videoId, ctx);
+  }
+
   return ok({ assetId: updatedAsset.id, status: updatedAsset.processingState });
 }
 
@@ -113,7 +121,7 @@ function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcess
 
 function isRedundantTransition(currentState: VideoAssetProcessingState, newState: VideoAssetProcessingState): boolean {
   // If already READY, don't move back to any other state
-  if (currentState === VIDEO_ASSET_PROCESSING_STATE.READY) return true;
+  if (currentState === VIDEO_ASSET_PROCESSING_STATE.READY && newState !== VIDEO_ASSET_PROCESSING_STATE.READY) return true;
 
   // If already FAILED, don't move back to processing/uploading (but maybe READY if it was a transient error?
   // Usually provider webhooks are final for a state, but let's be strict: only READY can overwrite FAILED if we want,

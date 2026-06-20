@@ -8,6 +8,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { CloudflareApiError, CloudflareConfigurationError, VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoStatus } from "@prisma/client";
+import { requestPublishAfterAssetReady } from "./publish-after-asset-ready.use-case";
 
 export interface ProvisionCloudflareUploadInput {
   videoId: string;
@@ -42,6 +43,10 @@ export async function provisionCloudflareUpload(
   // Policy: Do not replace READY primary asset
   if (video.asset && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       return fail(new AppError('Video already has a ready primary asset. Replacement is not allowed.', 400, 'VIDEO_HAS_READY_ASSET'));
+  }
+
+  if (video.publishAfterAssetReady) {
+    await requestPublishAfterAssetReady(video.id, ctx);
   }
 
   const client = new CloudflareStreamClient();

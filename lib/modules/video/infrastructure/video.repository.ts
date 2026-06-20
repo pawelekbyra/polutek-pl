@@ -21,6 +21,10 @@ export interface CreateVideoInput {
   likesCount?: number;
   dislikesCount?: number;
   views?: number;
+  publishAfterAssetReady?: boolean;
+  publishAfterAssetReadyRequestedAt?: Date | null;
+  publishAfterAssetReadyCompletedAt?: Date | null;
+  publishAfterAssetReadyError?: string | null;
 }
 
 export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
@@ -234,6 +238,10 @@ export class VideoRepository {
       likesCount: 0,
       dislikesCount: 0,
       publishedAt: null,
+      publishAfterAssetReady: Boolean(input.publishAfterAssetReady),
+      publishAfterAssetReadyRequestedAt: input.publishAfterAssetReady ? (input.publishAfterAssetReadyRequestedAt || new Date()) : null,
+      publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyError: null,
     };
 
     return await tx.video.create({ data });
@@ -258,6 +266,10 @@ export class VideoRepository {
     if (data.likesCount !== undefined) updateData.likesCount = data.likesCount;
     if (data.dislikesCount !== undefined) updateData.dislikesCount = data.dislikesCount;
     if (data.views !== undefined) updateData.views = data.views;
+    if (data.publishAfterAssetReady !== undefined) updateData.publishAfterAssetReady = data.publishAfterAssetReady;
+    if (data.publishAfterAssetReadyRequestedAt !== undefined) updateData.publishAfterAssetReadyRequestedAt = data.publishAfterAssetReadyRequestedAt;
+    if (data.publishAfterAssetReadyCompletedAt !== undefined) updateData.publishAfterAssetReadyCompletedAt = data.publishAfterAssetReadyCompletedAt;
+    if (data.publishAfterAssetReadyError !== undefined) updateData.publishAfterAssetReadyError = data.publishAfterAssetReadyError;
 
     if (status && status !== VideoStatus.PUBLISHED) {
       updateData.status = status;

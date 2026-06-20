@@ -319,6 +319,7 @@ export default function AdminVideosPage() {
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
           duration: formData.duration?.trim() || null,
           tier: formData.tier,
+          publishAfterAssetReady: intent === "PUBLISHED",
         })
       });
       const data = await res.json();
@@ -396,7 +397,7 @@ export default function AdminVideosPage() {
       const attachRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "attach-asset", providerAssetId }),
+        body: JSON.stringify({ action: "attach-asset", providerAssetId, publishAfterAssetReady: publishAfterReady }),
       });
       const attachData = await attachRes.json();
       if (!attachRes.ok) {
@@ -418,19 +419,7 @@ export default function AdminVideosPage() {
       }
 
       if (publishAfterReady) {
-        const publishRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "publish" }),
-        });
-        const publishData = await publishRes.json();
-        if (!publishRes.ok) {
-          setFormError(readAdminApiError(publishData, "Asset został podpięty, ale nie jest jeszcze gotowy do publikacji."));
-          toast("Asset podpięty. Publikacja wymaga stanu READY.", "error");
-          setCreateUploadState(null);
-          return;
-        }
-        toast("Istniejący asset Cloudflare został podpięty i film opublikowano.", "success");
+        toast("Istniejący asset Cloudflare został podpięty. Jeśli nie jest jeszcze READY, backend opublikuje film automatycznie po synchronizacji/webhooku albo zapisze błąd do diagnostyki.", "success");
       } else {
         toast("Istniejący asset Cloudflare został podpięty do szkicu.", "success");
       }
@@ -523,10 +512,11 @@ export default function AdminVideosPage() {
               autoStart
               onUploadComplete={() => fetchVideos(page)}
               onUploadReady={createUploadState.publishAfterReady ? publishCreatedVideo : undefined}
+              publishAfterReady={createUploadState.publishAfterReady}
             />
             {createUploadState.publishAfterReady ? (
               <p className="mt-3 text-sm text-muted-foreground">
-                Publikacja jest zaplanowana automatycznie po stanie READY. Nie zamykaj tego widoku, jeśli chcesz zobaczyć finalny rezultat od razu.
+                Publikacja jest zaplanowana po stronie backendu. Możesz zamknąć przeglądarkę; szkic zostanie opublikowany automatycznie po stanie READY albo pokaże trwały błąd wymagający interwencji.
               </p>
             ) : null}
           </div>

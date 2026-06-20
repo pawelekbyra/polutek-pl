@@ -31,6 +31,7 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     description: input.description?.trim() || null,
     titleEn: input.titleEn?.trim() || null,
     descriptionEn: input.descriptionEn?.trim() || null,
+    publishAfterAssetReady: input.publishAfterAssetReady === true,
   };
 }
 
@@ -115,10 +116,23 @@ export async function createAdminVideo(
         action: 'VIDEO_CREATED',
         targetType: 'Video',
         targetId: video.id,
-        metadata: { title: video.title }
+        metadata: { title: video.title, publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady) }
       });
     } catch (auditError) {
       logger.error("[ADMIN_VIDEO_CREATE_AUDIT_ERROR] Draft was created but audit log failed", auditError);
+    }
+
+    if (normalizedInput.publishAfterAssetReady) {
+      try {
+        await recordAuditEvent(ctx, {
+          action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED',
+          targetType: 'Video',
+          targetId: video.id,
+          metadata: { source: 'create-admin-video' }
+        });
+      } catch (auditError) {
+        logger.error("[ADMIN_VIDEO_PENDING_PUBLISH_AUDIT_ERROR] Draft was created but pending publish audit log failed", auditError);
+      }
     }
 
     return ok(toAdminVideoDto(video));
