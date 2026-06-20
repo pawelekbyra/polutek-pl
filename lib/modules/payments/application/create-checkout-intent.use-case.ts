@@ -38,25 +38,27 @@ export async function createCheckoutIntent(
   // 2. Idempotency check
   if (input.requestId) {
     const existing = await repo.findPaymentByRequestId(input.userId, input.requestId, ctx.db.read);
-    if (existing?.status !== PaymentStatus.PENDING) {
-      logger.info(`[createCheckoutIntent] Terminal payment ${existing?.id} reused for request ${input.requestId}; requiring a new requestId for another attempt.`);
-      return success({
-        paymentId: existing!.id,
-        clientSecret: null,
-        status: existing!.status,
-        terminal: true,
-      });
-    }
-    if (existing?.stripeIntentId) {
-      try {
-        const intent = await stripe.paymentIntents.retrieve(existing.stripeIntentId);
-        logger.info(`[createCheckoutIntent] Deduplicated request ${input.requestId} for user ${input.userId}.`);
+    if (existing) {
+      if (existing.status !== PaymentStatus.PENDING) {
+        logger.info(`[createCheckoutIntent] Terminal payment ${existing.id} reused for request ${input.requestId}; requiring a new requestId for another attempt.`);
         return success({
           paymentId: existing.id,
-          clientSecret: intent.client_secret,
+          clientSecret: null,
+          status: existing.status,
+          terminal: true,
         });
-      } catch (e) {
-        logger.error(`[createCheckoutIntent] Error retrieving existing intent ${existing.stripeIntentId}`, e);
+      }
+      if (existing.stripeIntentId) {
+        try {
+          const intent = await stripe.paymentIntents.retrieve(existing.stripeIntentId);
+          logger.info(`[createCheckoutIntent] Deduplicated request ${input.requestId} for user ${input.userId}.`);
+          return success({
+            paymentId: existing.id,
+            clientSecret: intent.client_secret,
+          });
+        } catch (e) {
+          logger.error(`[createCheckoutIntent] Error retrieving existing intent ${existing.stripeIntentId}`, e);
+        }
       }
     }
   }
