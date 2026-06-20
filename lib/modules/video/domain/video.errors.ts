@@ -19,8 +19,14 @@ export class VideoSlugConflictError extends AppError {
 }
 
 export class VideoInvalidHeroError extends AppError {
-  constructor() {
-    super(`Only public and published videos can be set as hero`, 400, 'VIDEO_INVALID_HERO');
+  constructor(message = 'Hero video must be public, published, non-archived and backed by a READY primary Cloudflare Stream asset.') {
+    super(message, 400, 'VIDEO_INVALID_HERO');
+  }
+}
+
+export class VideoInvalidSidebarError extends AppError {
+  constructor(message = 'Only published, non-archived videos can be shown in the public sidebar.') {
+    super(message, 400, 'VIDEO_INVALID_SIDEBAR');
   }
 }
 
@@ -107,8 +113,8 @@ export class CloudflareApiError extends AppError {
 }
 
 export class VideoNotReadyForPublicationError extends AppError {
-  constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest primary asset Cloudflare Stream w stanie READY.') {
-    super(message, 400, 'VIDEO_NOT_READY_FOR_PUBLICATION');
+  constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest primary asset Cloudflare Stream w stanie READY.', code = 'VIDEO_NOT_READY_FOR_PUBLICATION') {
+    super(message, 400, code);
     this.name = 'VideoNotReadyForPublicationError';
   }
 }

@@ -8,6 +8,7 @@ describe('reorderAdminVideos use-case', () => {
     video: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     auditLog: { create: vi.fn() },
     creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
@@ -27,8 +28,8 @@ describe('reorderAdminVideos use-case', () => {
   it('rejects entire batch if any video is outside main channel', async () => {
     // Mocking findUnique to fail on the second video
     mockPrisma.video.findUnique
-        .mockResolvedValueOnce({ id: 'v1', creatorId: 'c1' })
-        .mockResolvedValueOnce({ id: 'v2', creatorId: 'other' });
+        .mockResolvedValueOnce({ id: 'v1', creatorId: 'c1', status: 'PUBLISHED' })
+        .mockResolvedValueOnce({ id: 'v2', creatorId: 'other', status: 'PUBLISHED' });
 
     const result = await reorderAdminVideos([
         { id: 'v1', sidebarOrder: 1, showInSidebar: true },
@@ -45,13 +46,13 @@ describe('reorderAdminVideos use-case', () => {
   });
 
   it('succeeds for all valid main-channel videos', async () => {
-    mockPrisma.video.findUnique.mockResolvedValue({ id: 'v1', creatorId: 'c1' });
+    mockPrisma.video.findUnique.mockResolvedValue({ id: 'v1', creatorId: 'c1', status: 'PUBLISHED' });
 
     const result = await reorderAdminVideos([
         { id: 'v1', sidebarOrder: 1, showInSidebar: true }
     ], ctx);
 
     expect(result.ok).toBe(true);
-    expect(mockPrisma.video.update).toHaveBeenCalled();
+    expect(mockPrisma.video.updateMany).toHaveBeenCalled();
   });
 });

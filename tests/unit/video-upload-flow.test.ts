@@ -276,6 +276,22 @@ describe('Video Upload Flow', () => {
       }));
     });
 
+    it('preserves first publishedAt across republish', async () => {
+      const firstPublishedAt = new Date('2026-06-01T10:00:00.000Z');
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'video-id', title: 'Republish', slug: 'republish', tier: AccessTier.PUBLIC, status: VideoStatus.DRAFT, publishedAt: firstPublishedAt,
+        asset: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' }
+      });
+      mockPrisma.video.update.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED', publishedAt: firstPublishedAt });
+
+      const result = await publishAdminVideo('video-id', mockCtx);
+
+      expect(result.ok).toBe(true);
+      expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ publishedAt: firstPublishedAt })
+      }));
+    });
+
     it('should fail if asset is not READY', async () => {
         mockPrisma.video.findFirst.mockResolvedValue({
           id: 'video-id',
@@ -294,7 +310,7 @@ describe('Video Upload Flow', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-            expect(result.error.code).toBe('VIDEO_NOT_READY_FOR_PUBLICATION');
+            expect(result.error.code).toBe('VIDEO_PUBLICATION_ASSET_NOT_READY');
         }
       });
 
@@ -307,7 +323,7 @@ describe('Video Upload Flow', () => {
       const result = await publishAdminVideo('video-id', mockCtx);
 
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error.code).toBe('VIDEO_NOT_READY_FOR_PUBLICATION');
+      if (!result.ok) expect(result.error.code).toBe('VIDEO_PUBLICATION_NON_CLOUDFLARE_ASSET');
     });
   });
 });

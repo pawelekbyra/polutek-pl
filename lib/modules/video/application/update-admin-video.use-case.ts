@@ -10,17 +10,18 @@ import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
     VideoUrlNotAllowedError,
-    VideoInvalidHeroError
+    VideoInvalidHeroError,
+    VideoInvalidSidebarError
 } from "../domain/video.errors";
 
 export async function updateAdminVideo(
   input: UpdateVideoInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoUrlNotAllowedError | VideoInvalidHeroError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoUrlNotAllowedError | VideoInvalidHeroError | VideoInvalidSidebarError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
-  const existing = await repository.findById(input.id);
+  const existing = await repository.findByIdWithAsset(input.id);
   if (!existing) return fail(new VideoNotFoundError(input.id));
 
   if (!VideoPolicy.isOnMainChannel(existing, mainChannel.id)) {
@@ -31,19 +32,29 @@ export async function updateAdminVideo(
     return fail(new VideoUrlNotAllowedError(input.videoUrl));
   }
 
+  const nextStatus = input.status || existing.status;
+  const nextTier = input.tier || existing.tier;
+
   if (input.isMainFeatured) {
-      if (!VideoPolicy.canBeHero({
-          tier: input.tier || existing.tier,
-          status: input.status || existing.status
-      })) {
-          return fail(new VideoInvalidHeroError());
-      }
+      const blockers = VideoPolicy.getHeroBlockers({ ...existing, status: nextStatus, tier: nextTier });
+      if (blockers.length > 0) return fail(new VideoInvalidHeroError(`${blockers[0].code}: ${blockers[0].message}`));
+  }
+
+  if (input.showInSidebar === true) {
+      const blockers = VideoPolicy.getSidebarBlockers({ status: nextStatus });
+      if (blockers.length > 0) return fail(new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`));
+  }
+
+  const safeInput = { ...input };
+  if (input.status && input.status !== 'PUBLISHED') {
+      safeInput.isMainFeatured = false;
+      safeInput.showInSidebar = false;
   }
 
   const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
-    const video = await repository.updateForMainChannel(input, mainChannel.id, tx);
+    const video = await repository.updateForMainChannel(safeInput, mainChannel.id, tx);
 
-    if (input.isMainFeatured) {
+    if (safeInput.isMainFeatured) {
         await repository.clearHero(mainChannel.id, video.id, tx);
     }
 
@@ -51,7 +62,7 @@ export async function updateAdminVideo(
       action: 'VIDEO_UPDATED',
       targetType: 'Video',
       targetId: video.id,
-      metadata: { changed: Object.keys(input).filter(k => k !== 'id') }
+      metadata: { changed: Object.keys(safeInput).filter(k => k !== 'id') }
     }, tx);
 
     return video;

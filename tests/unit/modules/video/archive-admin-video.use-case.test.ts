@@ -44,7 +44,7 @@ describe('archiveAdminVideo use-case', () => {
     expect(result.ok).toBe(true);
     expect(mockPrisma.video.updateMany).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: 'v1', creatorId: 'c1' },
-        data: { status: 'ARCHIVED' }
+        data: { status: 'ARCHIVED', isMainFeatured: false, showInSidebar: false }
     }));
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ action: 'VIDEO_ARCHIVED' })
