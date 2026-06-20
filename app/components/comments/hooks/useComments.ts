@@ -12,6 +12,86 @@ type CommentsPage = {
 
 type CommentsData = InfiniteData<CommentsPage>;
 
+type PostCommentResponse = {
+  success: true;
+  comment: CommentView;
+};
+
+export class CommentPostError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "CommentPostError";
+    this.status = status;
+  }
+}
+
+async function parseCommentPostResponse(res: Response): Promise<PostCommentResponse> {
+  const data = await res.json().catch(() => null) as any;
+
+  if (!res.ok || data?.success === false) {
+    const message =
+      data?.message ||
+      data?.errors?.fieldErrors?.text?.[0] ||
+      (res.status === 401
+        ? "Musisz być zalogowany, żeby komentować."
+        : res.status === 403
+          ? "Nie masz uprawnień do komentowania tego filmu."
+          : res.status === 429
+            ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę."
+            : "Nie udało się dodać komentarza. Sprawdź połączenie i spróbuj ponownie.");
+
+    throw new CommentPostError(message, res.status);
+  }
+
+  return data as PostCommentResponse;
+}
+
+function createOptimisticComment({
+  videoId,
+  text,
+  parentId,
+}: {
+  videoId: string;
+  text: string;
+  parentId?: string;
+}): CommentView {
+  const now = new Date().toISOString();
+  return {
+    id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    videoId,
+    parentId: parentId ?? null,
+    text,
+    imageUrl: null,
+    status: "VISIBLE",
+    author: {
+      id: "viewer",
+      displayName: "Ty",
+      username: null,
+      imageUrl: null,
+      badges: [],
+    },
+    createdAt: now,
+    updatedAt: now,
+    editedAt: null,
+    deletedAt: null,
+    deletedReason: null,
+    pinnedAt: null,
+    likesCount: 0,
+    repliesCount: 0,
+    reportsCount: 0,
+    viewerReaction: null,
+    viewerCanEdit: false,
+    viewerCanDelete: false,
+    viewerCanReport: false,
+    viewerCanModerate: false,
+    viewerCanPin: false,
+    isPinned: false,
+    repliesPreview: [],
+  };
+}
+
 function updateCommentReactionInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   videoId: string,
@@ -96,11 +176,12 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
         }),
         headers: { "Content-Type": "application/json" },
       });
-      return parseJsonResponse(res);
+      return parseCommentPostResponse(res);
     },
     onMutate: async ({ text, parentId }) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
       const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
+      const optimisticComment = createOptimisticComment({ videoId, text, parentId });
 
       for (const [queryKey] of queries) {
         queryClient.setQueryData<CommentsData>(queryKey, (old) => {
@@ -121,7 +202,11 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
                 ...page,
                 comments: page.comments.map(c => {
                   if (c.id === parentId) {
-                    return { ...c, repliesCount: (c.repliesCount ?? 0) + 1 };
+                    return {
+                      ...c,
+                      repliesCount: (c.repliesCount ?? 0) + 1,
+                      repliesPreview: [...(c.repliesPreview ?? []), optimisticComment],
+                    };
                   }
                   return c;
                 })
@@ -129,11 +214,39 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
             };
           }
 
+          if (String(queryKey[2]) === "newest" && pages[0]) {
+            pages[0] = {
+              ...pages[0],
+              comments: [optimisticComment, ...pages[0].comments],
+            };
+          }
+
           return { ...old, pages };
         });
       }
 
-      return { previousData: queries };
+      return { previousData: queries, optimisticId: optimisticComment.id };
+    },
+    onSuccess: (data, _variables, context) => {
+      if (!context?.optimisticId || !data?.comment) return;
+      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
+      const replace = (comment: CommentView): CommentView => {
+        if (comment.id === context.optimisticId) return data.comment;
+        return {
+          ...comment,
+          repliesPreview: comment.repliesPreview?.map(replace) ?? [],
+        };
+      };
+
+      for (const [queryKey] of queries) {
+        queryClient.setQueryData<CommentsData>(queryKey, (old) => old && {
+          ...old,
+          pages: old.pages.map(page => ({
+            ...page,
+            comments: page.comments.map(replace),
+          })),
+        });
+      }
     },
     onError: (err, variables, context) => {
       if (context?.previousData) {
@@ -143,7 +256,7 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["comments", videoId], refetchType: "inactive" });
     },
   });
 

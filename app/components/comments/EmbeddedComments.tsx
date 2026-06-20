@@ -119,6 +119,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [composerError, setComposerError] = useState<string | null>(null);
 
   const commentsTopRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -188,14 +189,24 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !userProfile) return;
+    if (!newComment.trim() || !userProfile || postMutation.isPending) return;
+    setComposerError(null);
     postComment({ text: newComment, parentId: replyTo || undefined }, {
         onSuccess: () => {
             setNewComment("");
             setReplyTo(null);
+            setIsInputFocused(false);
+        },
+        onError: (error) => {
+            const message = error instanceof Error
+              ? error.message
+              : (language === "pl"
+                ? "Nie udało się dodać komentarza. Spróbuj ponownie."
+                : "Could not add your comment. Try again.");
+            setComposerError(message);
         }
     });
-  }, [newComment, userProfile, replyTo, postComment]);
+  }, [newComment, userProfile, replyTo, postComment, postMutation.isPending, language]);
 
   const getCommentsLabel = (count: number) => {
     if (language === "pl") {
@@ -270,7 +281,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         replyTo={replyTo}
         replyingToAuthor={replyingToAuthor}
         newComment={newComment}
-        setNewComment={setNewComment}
+        setNewComment={(value) => {
+          setNewComment(value);
+          if (composerError) setComposerError(null);
+        }}
         setReplyTo={setReplyTo}
         isInputFocused={isInputFocused}
         setIsInputFocused={setIsInputFocused}
@@ -278,6 +292,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         isPatronGated={isPatronGated}
         isPatron={isPatron}
         isPending={postMutation.isPending}
+        errorMessage={composerError}
         handleSubmit={handleSubmit}
         t={t}
         language={language}

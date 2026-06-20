@@ -22,6 +22,7 @@ interface CommentComposerProps {
   isPatronGated: boolean;
   isPatron: boolean;
   isPending: boolean;
+  errorMessage?: string | null;
   handleSubmit: (e: React.FormEvent) => void;
   t: any;
   language: string;
@@ -43,6 +44,7 @@ export function CommentComposer({
   isPatronGated,
   isPatron,
   isPending,
+  errorMessage,
   handleSubmit,
   t,
   language
@@ -50,6 +52,9 @@ export function CommentComposer({
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const graphemeCount = countGraphemes(newComment);
   const isTooLong = graphemeCount > 2000;
+  const textareaId = replyTo ? "comment-reply-textarea" : "comment-textarea";
+  const limitId = `${textareaId}-limit`;
+  const errorId = `${textareaId}-error`;
 
   const insertEmoji = (emoji: string) => {
     if (!textareaRef.current) return;
@@ -91,7 +96,7 @@ export function CommentComposer({
         />
       )}
       <div className="flex-1 min-w-0">
-        <div className="relative">
+        <form className="relative" onSubmit={handleSubmit} noValidate>
           {replyTo && userProfile && (
             <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#e9eef6]">
               <CornerDownRight size={12} />
@@ -107,6 +112,7 @@ export function CommentComposer({
                 </>
               )}
               <button
+                type="button"
                 onClick={() => setReplyTo(null)}
                 className="ml-2 hover:opacity-60"
               >
@@ -116,13 +122,16 @@ export function CommentComposer({
           )}
           {!canComment ? (
             <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
-              {isPatronGated && !isPatron ? (
-                <span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
-                  {t.becomePatronToComment}
-                </span>
+              {isPatronGated && userProfile ? (
+                <a
+                  href="#donations"
+                  className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                >
+                  {language === "pl" ? "Zostań Patronem, żeby komentować" : "Become a Patron to comment"}
+                </a>
               ) : (
                 <SignInButton mode="modal">
-                  <button className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
+                  <button type="button" className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
                     {t.signInToComment}
                   </button>
                 </SignInButton>
@@ -130,6 +139,7 @@ export function CommentComposer({
             </div>
           ) : (
             <textarea
+              id={textareaId}
               ref={textareaRef}
               value={newComment}
               onChange={(e) => {
@@ -141,15 +151,18 @@ export function CommentComposer({
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   if (newComment.trim() && !isPending && !isTooLong) {
-                    handleSubmit(e as any);
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
                   }
                 }
               }}
               placeholder={replyTo ? t.addReply : t.addComment}
+              aria-invalid={Boolean(errorMessage || isTooLong)}
+              aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
+              disabled={isPending}
               className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
             />
           )}
-        </div>
 
         {(isInputFocused || newComment.trim() || replyTo) && canComment && (
           <div className="flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -158,7 +171,9 @@ export function CommentComposer({
                 {QUICK_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
+                    type="button"
                     onClick={() => insertEmoji(emoji)}
+                    disabled={isPending}
                     className="hover:bg-neutral-100 p-1 rounded-md transition-colors"
                   >
                     {emoji}
@@ -166,13 +181,22 @@ export function CommentComposer({
                 ))}
               </div>
 
-              <div className={cn("text-[10px] font-bold", isTooLong ? "text-red-500" : "text-neutral-400")}>
+              <div id={limitId} className={cn("text-[10px] font-bold", isTooLong ? "text-red-500" : "text-neutral-400")}>
                 {graphemeCount} / 2000
               </div>
             </div>
 
+            {(errorMessage || isTooLong) && (
+              <p id={errorId} role="alert" className="text-xs font-bold text-red-600">
+                {isTooLong
+                  ? (language === "pl" ? "Komentarz jest za długi. Limit to 2000 znaków." : "Comment is too long. The limit is 2000 characters.")
+                  : errorMessage}
+              </p>
+            )}
+
             <div className="flex justify-start gap-2">
               <Button
+                type="button"
                 variant="ghost"
                 onClick={() => {
                   setNewComment("");
@@ -184,7 +208,7 @@ export function CommentComposer({
               </Button>
 
               <Button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={!newComment.trim() || isPending || isTooLong}
               >
                 {isPending ? (
@@ -198,6 +222,7 @@ export function CommentComposer({
             </div>
           </div>
         )}
+        </form>
       </div>
     </div>
   );

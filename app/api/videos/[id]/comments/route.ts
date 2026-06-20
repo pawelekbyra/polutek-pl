@@ -49,13 +49,6 @@ export async function GET(
 
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "guest") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const ctx = createAppContext({ actor });
     const result = await listVideoComments(
       { videoId, sortBy, cursor, limit },
