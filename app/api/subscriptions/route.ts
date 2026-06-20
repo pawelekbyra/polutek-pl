@@ -75,12 +75,20 @@ async function requireAuthenticatedActor() {
 async function requireTrustedEmail(ctx: any) {
   const { sessionClaims } = await auth();
   const claims = sessionClaims as any;
-  const email = normalizeTrustedEmail(
+  let email = normalizeTrustedEmail(
     claims?.email ||
       claims?.primary_email_address ||
       claims?.email_address ||
       claims?.primaryEmailAddress,
   );
+
+  if (!email) {
+    const clerkUser = await import("@clerk/nextjs/server")
+      .then((mod) => mod.currentUser?.())
+      .then((user) => user ?? null)
+      .catch(() => null);
+    email = normalizeTrustedEmail(clerkUser?.primaryEmailAddress?.emailAddress);
+  }
 
   if (!email) {
     return {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useOptimistic, useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
 import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal, X } from './icons';
 import { useAuth, useClerk } from '@clerk/nextjs';
@@ -55,51 +55,21 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       });
   }, [video.id, initialIsSubscribed, video.creator?.subscribersCount]);
 
-  const [optimisticState, addOptimisticAction] = useOptimistic(
-    {
-        isLiked: (userId ? initialInteraction?.liked : false) || false,
-        isDisliked: (userId ? initialInteraction?.disliked : false) || false,
-        likesCount: video.likesCount || 0,
-        dislikesCount: video.dislikesCount || 0,
-        subscribersCount: localSubState.subscribersCount,
-        isSubscribed: localSubState.isSubscribed
-    },
-    (state, action: 'LIKE' | 'DISLIKE' | { type: 'SUBSCRIBE', isSubscribed: boolean }) => {
-      if (typeof action === 'string') {
-        const wasLiked = state.isLiked;
-        const wasDisliked = state.isDisliked;
+  const [interactionState, setInteractionState] = useState({
+    isLiked: (userId ? initialInteraction?.liked : false) || false,
+    isDisliked: (userId ? initialInteraction?.disliked : false) || false,
+    likesCount: video.likesCount || 0,
+    dislikesCount: video.dislikesCount || 0,
+  });
 
-        if (action === 'LIKE') {
-          return {
-            ...state,
-            isLiked: !wasLiked,
-            isDisliked: false,
-            likesCount: wasLiked ? state.likesCount - 1 : state.likesCount + 1,
-            dislikesCount: wasDisliked ? Math.max(0, state.dislikesCount - 1) : state.dislikesCount
-          };
-        } else {
-          return {
-            ...state,
-            isLiked: false,
-            isDisliked: !wasDisliked,
-            likesCount: wasLiked ? Math.max(0, state.likesCount - 1) : state.likesCount,
-            dislikesCount: wasDisliked ? state.dislikesCount - 1 : state.dislikesCount + 1
-          };
-        }
-      } else if (action.type === 'SUBSCRIBE') {
-        const wasSubscribed = state.isSubscribed;
-        const nextSubscribed = action.isSubscribed;
-        if (wasSubscribed === nextSubscribed) return state;
-
-        return {
-            ...state,
-            isSubscribed: nextSubscribed,
-            subscribersCount: nextSubscribed ? state.subscribersCount + 1 : Math.max(0, state.subscribersCount - 1)
-        };
-      }
-      return state;
-    }
-  );
+  useEffect(() => {
+    setInteractionState({
+      isLiked: (userId ? initialInteraction?.liked : false) || false,
+      isDisliked: (userId ? initialInteraction?.disliked : false) || false,
+      likesCount: video.likesCount || 0,
+      dislikesCount: video.dislikesCount || 0,
+    });
+  }, [video.id, userId, initialInteraction?.liked, initialInteraction?.disliked, video.likesCount, video.dislikesCount]);
 
   const handleLike = async () => {
     if (!userId) return openSignIn();
@@ -108,8 +78,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     startTransition(async () => {
         try {
             logger.debug("[Hero] Toggling LIKE for video:", video.id);
-            addOptimisticAction('LIKE');
-            const result = await toggleVideoLike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
+            const result = await toggleVideoLike(video.id) as { liked: boolean; disliked: boolean; likesCount: number; dislikesCount: number; error?: string; message?: string };
 
             if (result.error) {
                 logger.error("[Hero] LIKE Action failed:", result.error, result.message);
@@ -123,6 +92,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     toast(`BŁĄD: ${result.message || result.error}`, 'error');
                 }
             } else {
+                setInteractionState({
+                    isLiked: result.liked,
+                    isDisliked: result.disliked,
+                    likesCount: result.likesCount,
+                    dislikesCount: result.dislikesCount,
+                });
                 logger.debug("[Hero] LIKE Action success:", result);
             }
         } catch (error: unknown) {
@@ -158,8 +133,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     startTransition(async () => {
         try {
             logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
-            addOptimisticAction('DISLIKE');
-            const result = await toggleVideoDislike(video.id)  as { liked: boolean; disliked: boolean; error?: string; message?: string };
+            const result = await toggleVideoDislike(video.id) as { liked: boolean; disliked: boolean; likesCount: number; dislikesCount: number; error?: string; message?: string };
 
             if (result.error) {
                 logger.error("[Hero] DISLIKE Action failed:", result.error, result.message);
@@ -173,6 +147,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     toast(`BŁĄD: ${result.message || result.error}`, 'error');
                 }
             } else {
+                setInteractionState({
+                    isLiked: result.liked,
+                    isDisliked: result.disliked,
+                    likesCount: result.likesCount,
+                    dislikesCount: result.dislikesCount,
+                });
                 logger.debug("[Hero] DISLIKE Action success:", result);
             }
         } catch (error: unknown) {
@@ -231,7 +211,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
                   <span className="text-[12px] text-[#606060] whitespace-nowrap">
-                     {mounted ? formatCount(optimisticState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
+                     {mounted ? formatCount(localSubState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
                <div className="ml-auto lg:ml-2 shrink-0">
@@ -242,10 +222,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     variant="compact"
                     initialIsSubscribed={localSubState.isSubscribed}
                     onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
-                        startTransition(() => {
-                            addOptimisticAction({ type: 'SUBSCRIBE', isSubscribed });
-                        });
-                        // Also sync local state when the action actually completes
                         setLocalSubState(prev => ({
                             isSubscribed,
                             subscribersCount: subscribersCount ?? (isSubscribed ? prev.subscribersCount + 1 : Math.max(0, prev.subscribersCount - 1))
@@ -262,25 +238,25 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     disabled={isPending}
                     className={cn(
                         "flex items-center justify-center gap-2 pl-4 pr-3 h-full flex-1 hover:bg-neutral-100 transition-colors border-r border-neutral-400 relative active:bg-neutral-200",
-                        optimisticState.isLiked && "text-blue-600",
+                        interactionState.isLiked && "text-blue-600",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
                   >
-                     <ThumbsUp size={18} className={cn(optimisticState.isLiked && "fill-blue-600")} />
-                     <span className="text-[14px] font-bold">{optimisticState.likesCount.toLocaleString('pl-PL')}</span>
+                     <ThumbsUp size={18} className={cn(interactionState.isLiked && "fill-blue-600")} />
+                     <span className="text-[14px] font-bold">{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
                         "flex h-full w-12 flex-none items-center justify-center px-0 hover:bg-neutral-100 transition-colors active:bg-neutral-200",
-                        optimisticState.isDisliked && "text-blue-600",
+                        interactionState.isDisliked && "text-blue-600",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
-                     <ThumbsDown size={18} className={cn("block", optimisticState.isDisliked && "fill-blue-600")} />
+                     <ThumbsDown size={18} className={cn("block", interactionState.isDisliked && "fill-blue-600")} />
                   </button>
                </div>
                   <ShareButton

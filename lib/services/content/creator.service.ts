@@ -58,7 +58,7 @@ export class CreatorContentService {
             bannerUrl: creator.bannerUrl,
             bio: creator.bio,
             userId: creator.userId,
-            subscribersCount: creator.displaySubscribersCount ?? creator.subscribersCount ?? 0,
+            subscribersCount: creator.subscribersCount ?? 0,
             videos
         };
       }

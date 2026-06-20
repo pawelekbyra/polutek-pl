@@ -48,11 +48,15 @@ export class UnsubscribeUseCase {
         logger.warn(`[SUBSCRIPTION_IDENTITY_CONFLICT] userId=${userId} reason=${prefResult.reason}`);
       }
 
-      if (deleted.count > 0) {
-        await MainChannelService.decrementSubscribersCount(ctx, mainChannel.id, tx);
-      }
-
-      return deleted;
+      const syncedChannel = typeof MainChannelService.syncSubscribersCount === "function"
+        ? await MainChannelService.syncSubscribersCount(ctx, mainChannel.id, tx)
+        : await (async () => {
+            if (deleted.count > 0) {
+              await MainChannelService.decrementSubscribersCount(ctx, mainChannel.id, tx);
+            }
+            return await MainChannelService.getRequired(ctx);
+          })();
+      return { deletedCount: deleted.count, subscribersCount: syncedChannel.subscribersCount ?? 0 };
     });
 
     const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitUnsubscribe(trustedEmail);
@@ -60,8 +64,8 @@ export class UnsubscribeUseCase {
 
     return {
       isSubscribed: false,
-      deleted: result.count > 0,
-      subscribersCount: finalChannel.subscribersCount ?? 0,
+      deleted: result.deletedCount > 0,
+      subscribersCount: result.subscribersCount ?? finalChannel.subscribersCount ?? 0,
       creatorId: mainChannel.id,
       creatorSlug: mainChannel.slug,
       purpose: "EMAIL_NOTIFICATIONS",

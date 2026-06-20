@@ -35,6 +35,7 @@ export default function SubscribeButton({
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -80,8 +81,7 @@ export default function SubscribeButton({
 
   const executeSubscribe = async () => {
     const nextState = !isSubscribed;
-    setIsSubscribed(nextState);
-    onStatusChange?.(nextState);
+    setErrorMessage(null);
 
     startTransition(async () => {
       try {
@@ -90,17 +90,24 @@ export default function SubscribeButton({
           headers: { 'Content-Type': 'application/json' },
         });
 
+        const result = await response.json().catch(() => ({})) as { isSubscribed: boolean, subscribersCount: number, error?: string, message?: string };
         if (!response.ok) {
-          setIsSubscribed(!nextState);
+          const code = result.error;
+          const message =
+            response.status === 401 ? "Zaloguj się, aby zarządzać powiadomieniami." :
+            response.status === 400 && code === "TRUSTED_EMAIL_REQUIRED" ? "Konto musi mieć zweryfikowany adres e-mail." :
+            response.status === 409 && code === "EMAIL_PREFERENCE_IDENTITY_CONFLICT" ? "Ten adres e-mail jest już przypisany do innego konta." :
+            response.status === 429 ? "Zbyt wiele prób. Spróbuj ponownie później." :
+            result.message || "Nie udało się zapisać subskrypcji. Spróbuj ponownie.";
+          setErrorMessage(message);
           return;
         }
 
-        const result = await response.json() as { isSubscribed: boolean, subscribersCount: number };
         setIsSubscribed(result.isSubscribed);
         onStatusChange?.(result.isSubscribed, result.subscribersCount);
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
-        setIsSubscribed(!nextState);
+        setErrorMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
       }
     });
   };
@@ -122,6 +129,11 @@ export default function SubscribeButton({
         {!isSubscribed && <BellSimple size={16} className="mr-2" />}
         <span>{isSubscribed ? t.subscribed : t.subscribe}</span>
       </button>
+      {errorMessage && (
+        <p className="mt-2 max-w-[260px] text-xs font-medium text-red-600" role="alert">
+          {errorMessage}
+        </p>
+      )}
 
       {showConfirm && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">

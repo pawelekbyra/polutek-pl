@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
       );
     }
 
-    return NextResponse.json({ success: true, liked: result.data.liked });
+    return NextResponse.json({ success: true, liked: result.data.liked, likesCount: result.data.likesCount });
   } catch (error: unknown) {
     scopedLogger.error("[COMMENT_REACTION_PUT_ERROR]", error);
     return handleApiError(error);
@@ -61,7 +61,7 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ co
       );
     }
 
-    return NextResponse.json({ success: true, liked: result.data.liked });
+    return NextResponse.json({ success: true, liked: result.data.liked, likesCount: result.data.likesCount });
   } catch (error: unknown) {
     scopedLogger.error("[COMMENT_REACTION_DELETE_ERROR]", error);
     return handleApiError(error);

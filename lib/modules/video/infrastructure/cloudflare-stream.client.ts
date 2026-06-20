@@ -23,7 +23,7 @@ export interface CloudflareImportByUrlResponse {
 function formatCloudflareErrors(payload: any): string {
   const errors = Array.isArray(payload?.errors) ? payload.errors : [];
   const messages = errors
-    .map((error) => {
+    .map((error: any) => {
       const code = error?.code ? `code ${error.code}` : null;
       const message = typeof error?.message === "string" ? error.message : null;
       return [code, message].filter(Boolean).join(": ");

@@ -147,47 +147,36 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     },
   });
 
+  const getCommentLikeAction = (commentId: string): "LIKE" | "UNLIKE" => {
+    const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
+      .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
+    const comment = allComments.find(c => c?.id === commentId) ||
+      allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
+    return comment?.viewerReaction === "LIKE" ? "UNLIKE" : "LIKE";
+  };
+
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
-    mutationFn: async (commentId: string) => {
-      const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
-          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
-
-      const comment = allComments.find(c => c?.id === commentId) ||
-                    allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
-
-      const isLiked = comment?.viewerReaction === "LIKE";
-      const method = isLiked ? "DELETE" : "PUT";
-
+    mutationFn: async ({ commentId, action }: { commentId: string; action: "LIKE" | "UNLIKE" }) => {
       const res = await fetch(`/api/comments/${commentId}/reaction`, {
-        method,
+        method: action === "LIKE" ? "PUT" : "DELETE",
         headers: { "Content-Type": "application/json" },
       });
       return parseJsonResponse(res);
     },
-    onMutate: async (commentId) => {
+    onMutate: async ({ commentId, action }) => {
       await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-
-      const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
-          .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
-
-      const comment = allComments.find(c => c?.id === commentId) ||
-                    allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
-
-      const isLiked = comment?.viewerReaction === "LIKE";
-      const action = isLiked ? "UNLIKE" : "LIKE";
-
       const previousData = updateCommentReactionInCache(queryClient, videoId, commentId, action);
       return { previousData };
     },
-    onError: (err, commentId, context) => {
+    onError: (err, variables, context) => {
       if (context?.previousData) {
         for (const [queryKey, data] of context.previousData) {
           queryClient.setQueryData(queryKey, data);
         }
       }
     },
-    onSettled: (data, error, commentId) => {
+    onSettled: () => {
       if (queryClient.isMutating({ mutationKey: ["comment-reaction", videoId] }) === 1) {
         queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
       }
@@ -353,7 +342,11 @@ export function useComments(videoId: string, sortBy: "newest" | "top") {
     isError,
     error,
     postMutation,
-    likeMutation,
+    likeMutation: {
+      ...likeMutation,
+      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentLikeAction(commentId) }),
+      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentLikeAction(commentId) }),
+    },
     pinMutation,
     deleteMutation,
     editMutation,

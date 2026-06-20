@@ -54,10 +54,12 @@ export async function toggleVideoDislike(
 
       if (existingDislike) {
         await txRepo.deleteVideoDislike(existingDislike.id, videoId);
-        return { liked: false, disliked: false };
+        const snapshot = await txRepo.getVideoReactionSnapshot(userId, videoId);
+        return { ...snapshot, liked: false, disliked: false };
       } else {
         await txRepo.createVideoDislike(userId, videoId);
-        return { liked: false, disliked: true };
+        const snapshot = await txRepo.getVideoReactionSnapshot(userId, videoId);
+        return { ...snapshot, liked: false, disliked: true };
       }
     });
 

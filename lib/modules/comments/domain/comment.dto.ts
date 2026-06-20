@@ -47,6 +47,8 @@ export interface CommentDto {
 export interface CommentInteractionDto {
   liked: boolean;
   disliked: boolean;
+  likesCount: number;
+  dislikesCount: number;
 }
 
 export function mapCommentToDto(
