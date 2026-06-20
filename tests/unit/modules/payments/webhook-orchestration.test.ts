@@ -43,7 +43,7 @@ describe('handleStripeWebhook', () => {
         },
         payment: {
             updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-            findUnique: vi.fn().mockResolvedValue({ id: 'pay_123', amountMinor: 1000, currency: 'pln', status: 'PENDING' }),
+            findUnique: vi.fn().mockResolvedValue({ id: 'pay_123', userId: 'user_123', stripeIntentId: 'pi_123', amountMinor: 1000, currency: 'pln', status: 'PENDING' }),
             update: vi.fn().mockResolvedValue({})
         },
         user: {

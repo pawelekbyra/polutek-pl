@@ -16,16 +16,9 @@ export class PaymentRepository {
     });
   }
 
-  async findPendingPaymentByRequestId(userId: string, requestId: string, db: ReadDb): Promise<PaymentDto | null> {
+  async findPaymentByRequestId(userId: string, requestId: string, db: ReadDb): Promise<PaymentDto | null> {
     return await db.payment.findFirst({
-      where: {
-        userId,
-        status: PaymentStatus.PENDING,
-        metadata: {
-          path: ['requestId'],
-          equals: requestId
-        }
-      }
+      where: { userId, requestId }
     }) as PaymentDto | null;
   }
 
@@ -56,6 +49,7 @@ export class PaymentRepository {
     currency: string;
     status: PaymentStatus;
     metadata: any;
+    requestId?: string | null;
   }, tx: WriteTx): Promise<PaymentDto> {
     return await tx.payment.create({
       data
@@ -68,6 +62,25 @@ export class PaymentRepository {
       where: { id: paymentId },
       data: updateData as any
     }) as PaymentDto;
+  }
+
+  async markPaymentSucceededIfMatches(params: {
+    paymentId: string;
+    stripeIntentId: string;
+    amountMinor: number;
+    currency: string;
+  }, tx: WriteTx): Promise<number> {
+    const { count } = await tx.payment.updateMany({
+      where: {
+        id: params.paymentId,
+        status: PaymentStatus.PENDING,
+        stripeIntentId: params.stripeIntentId,
+        amountMinor: params.amountMinor,
+        currency: params.currency,
+      },
+      data: { status: PaymentStatus.SUCCEEDED }
+    });
+    return count;
   }
 
   async updatePaymentStatusWithCAS(paymentId: string, oldStatus: PaymentStatus, newStatus: PaymentStatus, tx: WriteTx): Promise<number> {

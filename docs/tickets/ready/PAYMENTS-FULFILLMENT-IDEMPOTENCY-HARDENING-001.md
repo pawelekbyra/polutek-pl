@@ -1,7 +1,7 @@
 # PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 — Stripe fulfillment, idempotency and PatronGrant hardening
 
 Ticket ID: PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001
-Status: READY_FOR_BUILDER
+Status: COMPLETED_PENDING_REVIEW
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO

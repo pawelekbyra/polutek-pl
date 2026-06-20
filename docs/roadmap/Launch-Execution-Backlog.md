@@ -14,8 +14,25 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 1 | Video provider lifecycle | `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001 / DONE` | Grouped Cloudflare admin media lifecycle, legacy import UI, upload/attach lifecycle, sync/webhook reconciliation and truthful admin states. |
 | 2 | Video state contract | `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001 / DONE` | Completed publication, auto-publish, `publishedAt`, hero, sidebar and archive/unpublish transitions through the state-contract ticket. |
 | 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / DONE` | Completed playback/access cleanup and legacy fallback retirement in PR #994. |
-| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / CURRENT` | Current executable code hardening before payment-to-PatronGrant operator smoke evidence. |
-| 5 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_PAYMENTS_HARDENING` | Regression coverage and production-safe admin diagnostics. |
+| 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE_BY_PR_996_PENDING_REVIEW` | Fulfillment source-of-truth, requestId idempotency, payment status endpoint, and legacy fulfillment footgun resolved by PR #996 if validation remains green. |
+| 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / CURRENT_AFTER_PAYMENTS_HARDENING` | Architecture audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
+| 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / PLANNED_AFTER_CI_SIGNAL_RECONCILIATION` | Regression coverage, production-safe admin diagnostics, and admin wrapper consistency review. |
+
+## Architecture audit findings routed
+
+Important findings from `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md` are routed as follows:
+
+| Finding | Owner |
+| --- | --- |
+| CI/test signal scope gap | `CI-SIGNAL-RECONCILIATION-002` |
+| strict-escapes baseline drift | `CI-SIGNAL-RECONCILIATION-002` |
+| admin video page hotspot | `CI-SIGNAL-RECONCILIATION-002` |
+| masterplan CI-risk accuracy | `CI-SIGNAL-RECONCILIATION-002` |
+| payments metadata-user source-of-truth | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE_BY_PR_996_PENDING_REVIEW` |
+| payments request-id idempotency | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE_BY_PR_996_PENDING_REVIEW` |
+| dead legacy payments services | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE_BY_PR_996_PENDING_REVIEW` |
+| admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
+| playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
 
 ## Historical or superseded runtime tickets
 
@@ -27,4 +44,6 @@ Vercel, Cloudflare and Stripe production smoke/evidence tickets remain operator 
 
 ## Continuing launch backlog
 
-Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`. Remaining non-code and evidence work includes Email consent boundary, Signed unsubscribe, Bounce/complaint suppression, System email events, Language persistence, Referral notifications, Runtime/provider privacy inventory, Legal copy PL/EN, Vercel production evidence, Stripe production evidence, Cloudflare production evidence, Backup, restore and alerts, X6.2, X6.3, X6.4, X6.5, X6.6, X6.7, X6.8, X6 certification, X7 Launch Evidence Pack, X7 certification, and Final owner launch decision. Public launch remains `NO_GO`.
+Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`. Remaining non-code and evidence work includes Email consent boundary, Signed unsubscribe, Bounce/complaint suppression, System email events, Language persistence, Referral notifications, Runtime/provider privacy inventory, Legal copy PL/EN, Vercel production evidence, Stripe production evidence, Cloudflare production evidence, Backup, restore and alerts, X6.2, X6.3, X6.4, X6.5, X6.6, X6.7, X6.8, X6 certification, X7 Launch Evidence Pack, X7 certification, and Final owner launch decision.
+
+Public launch remains `NO_GO`.

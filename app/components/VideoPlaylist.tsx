@@ -52,6 +52,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
   const [isRegulaminOpen, setIsRegulaminOpen] = useState(false);
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
+  const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -88,7 +91,9 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
     setIsMounted(true);
     let interval: NodeJS.Timeout;
 
-    if (searchParams.get('success') === 'true') {
+    const returnedPaymentId = searchParams.get('payment_id');
+    if (searchParams.get('success') === 'true' && returnedPaymentId) {
+      setPaymentId(returnedPaymentId);
       setIsCheckoutModalOpen(true);
       setIsSuccess(true);
       setIsSyncing(true);
@@ -102,13 +107,14 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
       interval = setInterval(async () => {
         attempts++;
         try {
-          const res = await fetch('/api/user/sync');
+          const res = await fetch(`/api/payments/${returnedPaymentId}`, { cache: 'no-store' });
           const data = await res.json();
+          if (data?.uiStatus) setPaymentUiStatus(data.uiStatus);
 
-          if (data.totalPaid > 0 || attempts >= maxAttempts) {
+          if (data.uiStatus === 'SUCCEEDED' || data.uiStatus === 'FAILED_CANCELED' || data.uiStatus === 'REFUNDED_DISPUTED' || attempts >= maxAttempts) {
             clearInterval(interval);
             setIsSyncing(false);
-            if (data.totalPaid > 0) router.refresh();
+            if (data.uiStatus === 'SUCCEEDED') router.refresh();
           }
         } catch (e) {
           logger.error("Sync error", e);
@@ -183,6 +189,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
 
     try {
       setIsLoading(true);
+      const nextRequestId = checkoutRequestId ?? crypto.randomUUID();
+      setCheckoutRequestId(nextRequestId);
 
       const response = await fetch('/api/checkout/create-intent', {
           method: 'POST',
@@ -191,13 +199,15 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             amountMinor: Number(amount) * 100,
             currency: selectedCurrency.toUpperCase(),
             title: videoTitle || "Tip The Guy / Patron",
-            creatorId: creatorId
+            creatorId: creatorId,
+            requestId: nextRequestId
           }),
           cache: 'no-store'
       });
 
       const data = await response.json();
 
+      if (data?.paymentId) setPaymentId(data.paymentId);
       if (data?.clientSecret) {
         setClientSecret(data.clientSecret);
         setIsCheckoutModalOpen(true);
@@ -267,6 +277,8 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
             videoTitle={videoTitle}
             clientSecret={clientSecret}
             stripePromise={stripePromise}
+            paymentId={paymentId}
+            paymentUiStatus={paymentUiStatus}
             onClose={() => {
               setIsCheckoutModalOpen(false);
               if (isSuccess) router.replace(window.location.pathname);
