@@ -1,11 +1,15 @@
 # X3-FIX-008 — Cloudflare import and attach existing legacy video
 
 Ticket ID: X3-FIX-008
-Status: READY_FOR_BUILDER
+Status: HISTORICAL_SUPERSEDED
 Launch status: NO_GO
 Lane: video-provider / admin
 Type: Runtime admin workflow
-Priority: Launch-critical for existing legacy content
+Priority: Historical evidence only — not executable
+
+## Supersession note
+
+This old import/attach card remains historical/superseded and must not be used as an executable Builder prompt. Legacy import concerns are superseded by the grouped provider lifecycle work and by the current playback/access legacy retirement ticket selected in `docs/tickets/ready/README.md`. Public launch remains `NO_GO`.
 
 ## Goal
 

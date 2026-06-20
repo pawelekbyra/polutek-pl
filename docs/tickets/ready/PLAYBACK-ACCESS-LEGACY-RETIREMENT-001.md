@@ -1,6 +1,7 @@
 # PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 — Playback access truth and legacy path retirement
 
-Status: PLANNED_AFTER_VIDEO_STATE_CONTRACT
+Ticket ID: PLAYBACK-ACCESS-LEGACY-RETIREMENT-001
+Status: READY_FOR_BUILDER
 Role: Builder
 Priority: Launch-critical
 Launch status: NO_GO

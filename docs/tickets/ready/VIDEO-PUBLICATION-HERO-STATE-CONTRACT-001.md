@@ -6,6 +6,10 @@ Priority: Launch-critical
 Launch status: NO_GO
 Type: Runtime implementation + focused tests
 
+## Completion note
+
+Implemented by PR #990. This ticket is complete and must now be treated as historical/recently completed evidence, not as the current executable builder prompt. Public launch remains `NO_GO`.
+
 ## Product decision
 
 This ticket replaces the old standalone `ADMIN-VIDEO-PUBLICATION-AND-HERO-CONTRACT-001` card. It must run after `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`, because publication correctness depends on a coherent provider asset lifecycle.
