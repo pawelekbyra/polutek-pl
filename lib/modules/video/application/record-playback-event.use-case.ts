@@ -21,30 +21,63 @@ export interface RecordPlaybackEventResult {
     throttled?: boolean;
 }
 
-function sanitizePlaybackMetadata(metadata: any) {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+type SanitizedPlaybackMetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | SanitizedPlaybackMetadataValue[]
+  | { [key: string]: SanitizedPlaybackMetadataValue };
 
-  const forbiddenFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
+const forbiddenMetadataFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
 
-  const keys = Object.keys(metadata);
-  const finalFilteredKeys = keys.filter(key => {
-      const lowerKey = key.toLowerCase();
-      return !forbiddenFragments.some(fragment => lowerKey.includes(fragment));
-  });
+function isForbiddenMetadataKey(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  return forbiddenMetadataFragments.some(fragment => lowerKey.includes(fragment));
+}
 
-  // Limit to 20 keys and values up to 500 chars
-  const result: Record<string, any> = {};
-  const finalKeys = finalFilteredKeys.slice(0, 20);
+function isMetadataRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
-  for (const key of finalKeys) {
-    let value = metadata[key];
-    if (typeof value === 'string' && value.length > 500) {
-      value = value.substring(0, 500);
-    }
-    result[key] = value;
+function sanitizePlaybackMetadataValue(value: unknown, depth = 0): SanitizedPlaybackMetadataValue | undefined {
+  if (value === null || value === undefined) return value;
+
+  if (typeof value === 'string') {
+    return value.length > 500 ? value.substring(0, 500) : value;
   }
 
-  return result;
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (typeof value !== 'object') return undefined;
+
+  if (depth >= 3) return undefined;
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 20)
+      .map(item => sanitizePlaybackMetadataValue(item, depth + 1))
+      .filter((item): item is SanitizedPlaybackMetadataValue => item !== undefined);
+  }
+
+  return sanitizePlaybackMetadata(value, depth + 1);
+}
+
+function sanitizePlaybackMetadata(metadata: unknown, depth = 0): Record<string, SanitizedPlaybackMetadataValue> | undefined {
+  if (!isMetadataRecord(metadata)) return undefined;
+
+  const result: Record<string, SanitizedPlaybackMetadataValue> = {};
+  const allowedKeys = Object.keys(metadata)
+    .filter(key => !isForbiddenMetadataKey(key))
+    .slice(0, 20);
+
+  for (const key of allowedKeys) {
+    const value = sanitizePlaybackMetadataValue(metadata[key], depth);
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 export async function recordPlaybackEventUseCase(
@@ -59,7 +92,6 @@ export async function recordPlaybackEventUseCase(
         return { ok: false, error: new InvalidPlaybackEventTypeError() };
     }
 
-    // Backend access check
     const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
     if (!accessResult.ok) {
         return { ok: false, error: accessResult.error };
@@ -70,8 +102,6 @@ export async function recordPlaybackEventUseCase(
         return { ok: false, error: new PlaybackAccessDeniedError(access.reason) };
     }
 
-    // For writes, we use rawPrisma or db.writeTransaction.
-    // db.read is for read replicas and should not be used for writes.
     const repo = new VideoPlaybackRepository(rawPrisma);
     let session = null;
 
@@ -81,7 +111,6 @@ export async function recordPlaybackEventUseCase(
             return { ok: false, error: new InvalidPlaybackSessionError() };
         }
 
-        // Ownership check
         if (userId) {
             if (session.userId && session.userId !== userId) {
                 return { ok: false, error: new PlaybackSessionOwnershipMismatchError() };
@@ -90,7 +119,6 @@ export async function recordPlaybackEventUseCase(
                 return { ok: false, error: new PlaybackSessionAnonymousForbiddenError() };
             }
         } else {
-            // Anonymous check via fingerprint (ipHash + userAgentHash)
             if (session.userId) {
                  return { ok: false, error: new PlaybackSessionRequiresAuthError() };
             }
@@ -99,7 +127,6 @@ export async function recordPlaybackEventUseCase(
             }
         }
 
-        // Session expiration check (24h)
         const currentTime = ctx.now ? ctx.now() : new Date();
         const sessionAgeMs = currentTime.getTime() - session.createdAt.getTime();
         if (sessionAgeMs > 24 * 60 * 60 * 1000) {
@@ -109,7 +136,6 @@ export async function recordPlaybackEventUseCase(
         return { ok: false, error: new PlaybackSessionRequiredError() };
     }
 
-    // Throttling logic
     const isProgressOrHeartbeat = ['PROGRESS', 'HEARTBEAT'].includes(type);
     let shouldSaveEvent = true;
 
@@ -138,7 +164,6 @@ export async function recordPlaybackEventUseCase(
         }
     }
 
-    // Record the event
     if (shouldSaveEvent) {
         await repo.createEvent({
             session: sessionId ? { connect: { id: sessionId } } : undefined,
@@ -159,7 +184,6 @@ export async function recordPlaybackEventUseCase(
         });
     }
 
-    // View counting
     if (type === 'WATCHED_10_SECONDS' && session && !session.isAdminPreview && !session.countedAsView) {
         const identifier = userId ? `u:${userId}` : `f:${fingerprint}`;
         const lockKey = `video:view:${videoId}:${identifier}`;
