@@ -1,27 +1,25 @@
-# Ready Ticket Queue
+# Kolejka gotowych ticketów
 
-Status: ACTIVE
-Launch status: NO_GO
+Status: **BRAK AKTYWNEGO DUŻEGO TICKETU KODOWEGO**
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/tickets/ready/ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001.md -->
+Po zakończeniu `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` główna kolejka refaktoryzacyjna jest zamknięta.
 
-## Current Control-Plane Ticket
+## Aktualny ticket kodowy
 
-`ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`
+Brak.
 
-## Queue
+Nowe prace powinny być otwierane jako małe, konkretne tickety albo issue: błąd, poprawka UX, drobna zmiana produktu, utrzymanie integracji albo konkretna poprawka operacyjna.
 
-| Order | Ticket | Status |
-| ---: | --- | --- |
-| 1 | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` | `READY_FOR_BUILDER` |
+## Ostatnio zakończone / historyczne
 
-## Recently completed / HISTORICAL
-
-- `CI-SIGNAL-RECONCILIATION-002` — DONE: restored CI signal, reconciled escapes and hotspots.
+- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE: DB-autorytatywne admin auth, diagnostyka kanału i bezpieczne błędy admin-channel.
+- `CI-SIGNAL-RECONCILIATION-002` — DONE: CI signal, strict-escapes i hotspoty.
+- `COMMENTS-COUNT-SYNC-AFTER-DELETE-001` — DONE by PR #999.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
-- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
-- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
+- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE.
+- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE.
 
-Public launch remains `NO_GO`.
+## Zasada
+
+Nie utrzymujemy sztucznie wielkiej kolejki refaktoryzacyjnej. Jeżeli pojawi się problem, tworzymy mały ticket i naprawiamy go normalnym PR-em.
