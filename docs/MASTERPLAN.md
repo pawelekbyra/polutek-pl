@@ -92,4 +92,4 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
 - Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
 - Architecture Launch-Readiness Audit: [reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md](reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md)
-- Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
+- Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
