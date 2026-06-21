@@ -43,8 +43,10 @@ Vercel `READY` can be deployment evidence only. It is not a substitute for full 
 | `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot is split mechanically and under budget | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
 | `PAYMENTS-TRUTH-001` | Payment fulfillment validates against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
 | `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency has local `(userId, requestId)` backing | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
+| `PAYMENTS-WEBHOOK-SEMANTICS` | Stripe webhook route distinguishes verification/client errors from post-verification processing failures | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1029` | **GREEN** | `PAYMENT-WEBHOOK-ROUTE-FAILURE-SEMANTICS-001` |
+| `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME` | Cloudflare iframe playback can still report watched progress through a fallback timer | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1033` | **GREEN** | `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME-001` |
 | `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `ROUTED_TO_LATER_CLEANUP` | **P2 FOOTGUN** | final cleanup |
-| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CURRENT` | **P2 REVIEWABILITY** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
+| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1008` | **GREEN** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **BLOCKER** | operator launch evidence |
 | `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** | legal/operator track |
 
@@ -62,6 +64,11 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 ### RECENTLY_COMPLETED
 
+- `ADMIN-EMAIL-HTML-PREVIEW-SANITIZE-001` — DONE by PR #1049 and PR #1050.
+- `ADMIN-EMAIL-BROADCAST-UX-CONSISTENCY-001` — DONE by PR #1042.
+- `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME-001` — DONE by PR #1033.
+- `PAYMENT-WEBHOOK-ROUTE-FAILURE-SEMANTICS-001` — DONE by PR #1029.
+- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000.
 - `COMMENTS-COUNT-SYNC-AFTER-DELETE-001` — DONE by PR #999.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
@@ -73,8 +80,10 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 2. `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000: CI signal restored, strict-escapes reconciled, hotspots split.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1004.
-4. remaining owner/operator/legal launch decisions and evidence.
+3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
+4. `PAYMENT-WEBHOOK-ROUTE-FAILURE-SEMANTICS-001` — DONE by PR #1029.
+5. `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME-001` — DONE by PR #1033.
+6. remaining owner/operator/legal launch decisions and evidence.
 
 ### OPERATOR_EVIDENCE
 
