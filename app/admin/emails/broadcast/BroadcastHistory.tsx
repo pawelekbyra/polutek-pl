@@ -22,7 +22,7 @@ type BroadcastHistoryProps = {
 };
 
 export function BroadcastHistory({ refreshToken = 0 }: BroadcastHistoryProps) {
-  const [history, setHistory] = useState<BroadcastLog[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
