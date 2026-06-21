@@ -1,9 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
-import { provisionCloudflareUpload } from "@/lib/modules/video";
+import { provisionCloudflareTusUpload, provisionCloudflareUpload } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
+import { AppError } from "@/lib/modules/shared/app-error";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -18,6 +19,35 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
+    const tusResumable = req.headers.get("tus-resumable");
+
+    if (tusResumable) {
+      const uploadLength = req.headers.get("upload-length");
+      if (!uploadLength) {
+        return fromUseCaseResult({
+          ok: false,
+          error: new AppError("TUS upload requires Upload-Length header", 400, "TUS_UPLOAD_LENGTH_REQUIRED"),
+        });
+      }
+
+      const result = await provisionCloudflareTusUpload({
+        videoId,
+        uploadLength,
+        uploadMetadata: req.headers.get("upload-metadata"),
+      }, ctx);
+
+      if (!result.ok) return fromUseCaseResult(result);
+
+      return new NextResponse(null, {
+        status: 201,
+        headers: {
+          Location: result.data.uploadUrl,
+          "Tus-Resumable": "1.0.0",
+          "Access-Control-Expose-Headers": "Location,Tus-Resumable",
+        },
+      });
+    }
+
     const body = await req.json();
 
     const result = await provisionCloudflareUpload({
