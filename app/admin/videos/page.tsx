@@ -45,23 +45,12 @@ export default function AdminVideosPage() {
     cloudflareHealth, fetchVideos, fetchVideoForEdit
   } = useAdminVideos(isAdmin);
 
-  const checkAdmin = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/stats", { cache: "no-store" });
-      if (!res.ok) {
-        setError("Brak uprawnień administratora.");
-        setIsLoading(false);
-        return;
-      }
-
-      setIsAdmin(true);
-      setIsLoading(false);
-      fetchVideos(1);
-    } catch (err) {
-      setError("Wystąpił błąd podczas weryfikacji uprawnień.");
-      setIsLoading(false);
-    }
-  }, [fetchVideos, setError, setIsLoading]);
+  const loadAdminVideos = useCallback(async () => {
+    setIsAdmin(true);
+    setIsLoading(true);
+    await fetchVideos(1);
+    setIsLoading(false);
+  }, [fetchVideos, setIsLoading]);
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
@@ -70,8 +59,8 @@ export default function AdminVideosPage() {
       setIsLoading(false);
       return;
     }
-    checkAdmin();
-  }, [user, userLoaded, authLoaded, checkAdmin, setError, setIsLoading]);
+    loadAdminVideos();
+  }, [user, userLoaded, authLoaded, loadAdminVideos, setError, setIsLoading]);
 
   useEffect(() => {
     const editId = searchParams.get("edit");
@@ -307,7 +296,7 @@ export default function AdminVideosPage() {
   if (isLoading) return <AdminLayoutShell><AdminVideosPageSkeleton /></AdminLayoutShell>;
 
   if (error) {
-    return <AdminVideoErrorView error={error} onRetry={() => { setError(null); setIsLoading(true); checkAdmin(); }} />;
+    return <AdminVideoErrorView error={error} onRetry={() => { setError(null); loadAdminVideos(); }} />;
   }
 
   if (!isAdmin) return <AdminLayoutShell><div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div></AdminLayoutShell>;
