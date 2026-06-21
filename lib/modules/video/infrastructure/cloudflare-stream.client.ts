@@ -7,8 +7,8 @@ export interface CloudflareDirectUploadResponse {
     uid: string;
   };
   success: boolean;
-  errors: any[];
-  messages: any[];
+  errors: unknown[];
+  messages: unknown[];
 }
 
 export interface CloudflareImportByUrlResponse {
@@ -16,29 +16,31 @@ export interface CloudflareImportByUrlResponse {
     uid: string;
   };
   success: boolean;
-  errors: any[];
-  messages: any[];
+  errors: unknown[];
+  messages: unknown[];
 }
 
-function formatCloudflareErrors(payload: any): string {
-  const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+function formatCloudflareErrors(payload: unknown): string {
+  const source = payload && typeof payload === "object" ? payload as { errors?: unknown[]; message?: unknown } : null;
+  const errors = Array.isArray(source?.errors) ? source.errors : [];
   const messages = errors
-    .map((error: any) => {
-      const code = error?.code ? `code ${error.code}` : null;
-      const message = typeof error?.message === "string" ? error.message : null;
+    .map((error) => {
+      const item = error && typeof error === "object" ? error as { code?: unknown; message?: unknown } : null;
+      const code = item?.code ? `code ${String(item.code)}` : null;
+      const message = typeof item?.message === "string" ? item.message : null;
       return [code, message].filter(Boolean).join(": ");
     })
     .filter(Boolean);
 
   if (messages.length > 0) return messages.slice(0, 2).join("; ");
 
-  if (typeof payload?.message === "string") return payload.message;
+  if (typeof source?.message === "string") return source.message;
   return "No Cloudflare error body returned.";
 }
 
-async function readCloudflareError(response: Response): Promise<{ status: number; details: string; payload: any }> {
+async function readCloudflareError(response: Response): Promise<{ status: number; details: string; payload: unknown }> {
   const text = await response.text();
-  let payload: any = null;
+  let payload: unknown = null;
   try {
     payload = text ? JSON.parse(text) : null;
   } catch {
@@ -50,6 +52,29 @@ async function readCloudflareError(response: Response): Promise<{ status: number
     details: formatCloudflareErrors(payload),
     payload,
   };
+}
+
+function encodeTusMetadataValue(value: string): string {
+  return Buffer.from(value, "utf8").toString("base64");
+}
+
+function appendTusMetadataValue(metadata: string | null | undefined, key: string, value: string): string {
+  const existing = metadata?.trim() ?? "";
+  const entries = existing ? existing.split(",").map((entry) => entry.trim()).filter(Boolean) : [];
+  const hasKey = entries.some((entry) => entry.split(/\s+/)[0] === key);
+  if (!hasKey) entries.push(`${key} ${encodeTusMetadataValue(value)}`);
+  return entries.join(",");
+}
+
+function extractStreamUidFromUploadLocation(location: string): string | null {
+  try {
+    const url = new URL(location);
+    const lastSegment = url.pathname.split("/").filter(Boolean).pop();
+    return lastSegment || null;
+  } catch {
+    const lastSegment = location.split("/").filter(Boolean).pop();
+    return lastSegment || null;
+  }
 }
 
 export class CloudflareStreamClient {
@@ -107,6 +132,56 @@ export class CloudflareStreamClient {
     }
 
     return data;
+  }
+
+  async createTusDirectUploadUrl(input: {
+    uploadLength: string;
+    uploadMetadata?: string | null;
+    maxDurationSeconds?: number;
+  }): Promise<CloudflareDirectUploadResponse> {
+    const { accountId, apiToken } = this.config;
+    const maxDurationSeconds = input.maxDurationSeconds ?? 3600;
+    const uploadMetadata = appendTusMetadataValue(
+      input.uploadMetadata,
+      "maxDurationSeconds",
+      String(maxDurationSeconds)
+    );
+
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream?direct_user=true`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Tus-Resumable": "1.0.0",
+          "Upload-Length": input.uploadLength,
+          "Upload-Metadata": uploadMetadata,
+        },
+      }
+    );
+
+    const uploadURL = response.headers.get("Location");
+    const uid = uploadURL ? extractStreamUidFromUploadLocation(uploadURL) : null;
+
+    if (!response.ok || !uploadURL || !uid) {
+      const cloudflareError = await readCloudflareError(response);
+      this.logger.error("Cloudflare TUS direct upload API error", {
+        status: cloudflareError.status,
+        details: cloudflareError.details,
+        payload: cloudflareError.payload,
+        hasLocation: Boolean(uploadURL),
+      });
+      throw new CloudflareApiError(
+        `Cloudflare Stream odrzucił przygotowanie uploadu TUS (HTTP ${cloudflareError.status}): ${cloudflareError.details}`
+      );
+    }
+
+    return {
+      result: { uploadURL, uid },
+      success: true,
+      errors: [],
+      messages: [],
+    };
   }
 
   async importVideoByUrl(url: string): Promise<CloudflareImportByUrlResponse> {
