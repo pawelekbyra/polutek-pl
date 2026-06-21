@@ -1,6 +1,5 @@
 import Providers from "@/app/components/Providers";
 import ClerkLocalizationProvider from "@/app/components/ClerkLocalizationProvider";
-import ReferralTracker from "@/app/components/ReferralTracker";
 import { Suspense } from 'react';
 import "./globals.css";
 
@@ -21,9 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
           <Providers>
             <ClerkLocalizationProvider>
-              <Suspense fallback={null}>
-                <ReferralTracker />
-              </Suspense>
               {children}
             </ClerkLocalizationProvider>
           </Providers>
