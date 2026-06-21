@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 import { GET } from "@/app/api/admin/emails/status/route";
 import { requireAdminForApi } from "@/lib/auth-utils";
@@ -10,13 +10,26 @@ vi.mock("@/lib/auth-utils", () => ({
 describe("admin email status API", () => {
   const originalAudienceId = process.env.RESEND_AUDIENCE_ID;
 
+  function restoreAudienceId() {
+    if (originalAudienceId === undefined) {
+      delete process.env.RESEND_AUDIENCE_ID;
+      return;
+    }
+
+    process.env.RESEND_AUDIENCE_ID = originalAudienceId;
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.RESEND_AUDIENCE_ID = originalAudienceId;
+    restoreAudienceId();
     vi.mocked(requireAdminForApi).mockResolvedValue({
       adminUserId: "admin-1",
       response: null,
     });
+  });
+
+  afterEach(() => {
+    restoreAudienceId();
   });
 
   it("returns safe email diagnostics for admins without leaking raw env values", async () => {
