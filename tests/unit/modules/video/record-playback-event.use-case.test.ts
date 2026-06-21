@@ -100,7 +100,7 @@ describe('recordPlaybackEventUseCase', () => {
       prisma: prisma as never,
       now: () => new Date('2026-01-01T00:00:11.000Z'),
     });
-    ctx.db.writeTransaction = vi.fn(async <T>(fn: (tx: WriteTx) => Promise<T>) => fn(tx as never));
+    ctx.db.writeTransaction = vi.fn(async (fn: (tx: WriteTx) => Promise<unknown>) => fn(tx as never)) as never;
 
     return {
       ctx,
