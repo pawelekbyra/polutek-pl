@@ -9,15 +9,16 @@ This is the canonical entry point for technical state, risk register, and ordere
 - **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
 - **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
 - **Architecture launch-readiness audit:** `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md`.
+- **Final stabilization closeout:** `docs/reports/reconciliation/POST-1026-FINAL-STABILIZATION-CLOSEOUT.md`.
 - **Current executable ticket:** none; see `docs/tickets/ready/README.md` for the canonical ready-ticket queue.
-- **Current state:** resolved by the canonical ready-ticket queue and latest reconciliation reports.
+- **Current state:** post-refactor active product mode.
 
 ## 2. Evidence Taxonomy
 
 | Class | Definition |
 | --- | --- |
 | `REPOSITORY_EVIDENCE` | Source code, schema, and local file structure. |
-| `AUTOMATED_TEST_EVIDENCE` | Results from Vitest, Playwright, or custom scripts. |
+| `AUTOMATED_TEST_EVIDENCE` | Results from Vitest, Playwright, GitHub Actions, or custom scripts. |
 | `MERGED_PR_EVIDENCE` | A merge commit present in current history. |
 | `AGENT_DECLARATION` | A statement from an AI agent; unverified until checked. |
 | `LOCAL_BUILD_EVIDENCE` | Results of local build commands. |
@@ -36,19 +37,18 @@ Vercel `READY` can be deployment evidence only. It is not a substitute for full 
 
 ## 4. Current Risk Register
 
-| Risk ID | Title | Evidence Class | Classification | Launch Impact | Owner |
+| Risk ID | Title | Evidence Class | Classification | Impact | Owner |
 | --- | --- | --- | --- | --- | --- |
-| `CI-SIGNAL-002` | CI/test signal correctly proves the full available test suite and guard state | `AUTOMATED_TEST_EVIDENCE / REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations are reconciled | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot is split mechanically and under budget | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `PAYMENTS-TRUTH-001` | Payment fulfillment validates against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency has local `(userId, requestId)` backing | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `ROUTED_TO_LATER_CLEANUP` | **P2 FOOTGUN** | final cleanup |
-| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CURRENT` | **P2 REVIEWABILITY** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
-| `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **BLOCKER** | operator launch evidence |
-| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER** | legal/operator track |
+| `LARGE-REFACTOR-QUEUE` | Large refactor queue should not be reopened from old docs | `REPOSITORY_EVIDENCE` | `CLOSED` | **GREEN** | final closeout |
+| `CI-SIGNAL-002` | CI/test signal correctly proves the available test suite and guard state | `AUTOMATED_TEST_EVIDENCE / REPOSITORY_EVIDENCE` | `RESOLVED` | **GREEN** | CI reconciliation |
+| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations are reconciled | `REPOSITORY_EVIDENCE` | `RESOLVED` | **GREEN** | CI reconciliation |
+| `PAYMENTS-IDEMPOTENCY-001` | Checkout/payment idempotency has local backing | `REPOSITORY_EVIDENCE` | `MERGED` | **GREEN** | payments hardening |
+| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | admin route wrapper/diagnostic consistency | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1008` | **GREEN** | admin diagnostics |
+| `VIDEO-VIEW-IDEMPOTENCY` | duplicate view events must not double-count views | `REPOSITORY_EVIDENCE / AUTOMATED_TEST_EVIDENCE` | `RESOLVED_BY_PR_1024` | **GREEN** | video view idempotency |
+| `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **BLOCKER FOR LAUNCH** | operator launch evidence |
+| `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER FOR LAUNCH** | legal/operator track |
 
-Historical risk IDs from POST-929 remain useful evidence but are not the current executable queue. Completed video/provider/playback items are tracked in recent closeout reports and `docs/tickets/ready/README.md`.
+Historical risk IDs from POST-929 and POST-931 remain useful evidence but are not the current executable queue.
 
 ## 5. Ordered Masterplan
 
@@ -62,6 +62,9 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 ### RECENTLY_COMPLETED
 
+- `PRODUCTION-DB-MIGRATIONS-WORKFLOW` — tooling DONE by PR #1026.
+- `VIDEO-VIEW-IDEMPOTENCY-001` — DONE by PR #1024.
+- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000.
 - `COMMENTS-COUNT-SYNC-AFTER-DELETE-001` — DONE by PR #999.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
@@ -72,9 +75,10 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 ### ORDERED_REPAIR_PROGRAM
 
 1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
-2. `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000: CI signal restored, strict-escapes reconciled, hotspots split.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1004.
-4. remaining owner/operator/legal launch decisions and evidence.
+2. `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000.
+3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
+4. `VIDEO-VIEW-IDEMPOTENCY-001` — DONE by PR #1024.
+5. remaining owner/operator/legal launch decisions and evidence.
 
 ### OPERATOR_EVIDENCE
 
@@ -86,9 +90,9 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 ## 6. Discoverability Path
 
-- Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
-- Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
+- Project State: [PROJECT-STATE.md](PROJECT-STATE.md)
 - Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
 - Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
-- Architecture Launch-Readiness Audit: [reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md](reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md)
-- Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
+- Final Stabilization Closeout: [reports/reconciliation/POST-1026-FINAL-STABILIZATION-CLOSEOUT.md](reports/reconciliation/POST-1026-FINAL-STABILIZATION-CLOSEOUT.md)
+- Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
+- Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
