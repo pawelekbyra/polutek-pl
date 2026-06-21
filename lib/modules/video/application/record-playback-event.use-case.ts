@@ -21,30 +21,50 @@ export interface RecordPlaybackEventResult {
     throttled?: boolean;
 }
 
-function sanitizePlaybackMetadata(metadata: any) {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+const forbiddenMetadataFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
 
-  const forbiddenFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
+function isForbiddenMetadataKey(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  return forbiddenMetadataFragments.some(fragment => lowerKey.includes(fragment));
+}
 
-  const keys = Object.keys(metadata);
-  const finalFilteredKeys = keys.filter(key => {
-      const lowerKey = key.toLowerCase();
-      return !forbiddenFragments.some(fragment => lowerKey.includes(fragment));
-  });
+function sanitizePlaybackMetadataValue(value: any, depth = 0): any {
+  if (value === null || value === undefined) return value;
 
-  // Limit to 20 keys and values up to 500 chars
-  const result: Record<string, any> = {};
-  const finalKeys = finalFilteredKeys.slice(0, 20);
-
-  for (const key of finalKeys) {
-    let value = metadata[key];
-    if (typeof value === 'string' && value.length > 500) {
-      value = value.substring(0, 500);
-    }
-    result[key] = value;
+  if (typeof value === 'string') {
+    return value.length > 500 ? value.substring(0, 500) : value;
   }
 
-  return result;
+  if (typeof value !== 'object') return value;
+
+  if (depth >= 3) return undefined;
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 20)
+      .map(item => sanitizePlaybackMetadataValue(item, depth + 1))
+      .filter(item => item !== undefined);
+  }
+
+  return sanitizePlaybackMetadata(value, depth + 1);
+}
+
+function sanitizePlaybackMetadata(metadata: any, depth = 0) {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+
+  const result: Record<string, any> = {};
+  const allowedKeys = Object.keys(metadata)
+    .filter(key => !isForbiddenMetadataKey(key))
+    .slice(0, 20);
+
+  for (const key of allowedKeys) {
+    const value = sanitizePlaybackMetadataValue(metadata[key], depth);
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 export async function recordPlaybackEventUseCase(
