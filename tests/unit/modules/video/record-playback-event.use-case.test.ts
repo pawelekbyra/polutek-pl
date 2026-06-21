@@ -7,6 +7,7 @@ import { checkVideoAccess } from '@/lib/modules/access';
 import { setNxEx } from '@/lib/rate-limit';
 import { PlaybackAccessDeniedError } from '@/lib/modules/video/domain/video.errors';
 
+// These tests intentionally exercise duplicate view claims through repository-shaped mocks.
 vi.mock('@/lib/modules/access', () => ({
   checkVideoAccess: vi.fn(),
 }));
