@@ -18,6 +18,14 @@ export function generateCSP() {
     'upload.cloudflarestream.com',
   ];
 
+  const embedFrameHosts = [
+    'iframe.videodelivery.net',
+    '*.videodelivery.net',
+    'www.youtube.com',
+    'www.youtube-nocookie.com',
+    'player.vimeo.com',
+  ];
+
   const mediaHosts = Array.from(new Set([
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
@@ -47,7 +55,11 @@ export function generateCSP() {
   ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
 
   const scriptHosts = clerkDomains.map(h => `https://${h}`).join(' ') + " https://js.stripe.com";
-  const frameHosts = clerkDomains.map(h => `https://${h}`).join(' ') + " https://js.stripe.com";
+  const frameHosts = Array.from(new Set([
+    ...clerkDomains,
+    ...embedFrameHosts,
+    'js.stripe.com',
+  ])).map(h => `https://${h}`).join(' ');
 
   return [
     "default-src 'self'",
