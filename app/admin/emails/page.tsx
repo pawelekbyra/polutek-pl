@@ -17,6 +17,7 @@ export default function AdminEmailsPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [isCreatingBroadcast, setIsCreatingBroadcast] = useState(false);
+  const [broadcastHistoryRefreshToken, setBroadcastHistoryRefreshToken] = useState(0);
 
   return (
     <div className="min-h-screen bg-neutral-50 text-foreground pb-20">
@@ -38,8 +39,11 @@ export default function AdminEmailsPage() {
             />
         ) : isCreatingBroadcast ? (
             <BroadcastWizard
-                onBack={() => {
+                onBack={({ broadcastSent } = {}) => {
                     setIsCreatingBroadcast(false);
+                    if (broadcastSent) {
+                        setBroadcastHistoryRefreshToken((token) => token + 1);
+                    }
                     setActiveTab("history");
                 }}
             />
@@ -93,7 +97,7 @@ export default function AdminEmailsPage() {
                 </TabsContent>
 
                 <TabsContent value="history" className="focus-visible:outline-none">
-                    <BroadcastHistory />
+                    <BroadcastHistory refreshToken={broadcastHistoryRefreshToken} />
                 </TabsContent>
 
                 <TabsContent value="responses" className="focus-visible:outline-none">
