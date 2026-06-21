@@ -16,7 +16,8 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 3 | Playback/access cleanup | `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001 / DONE` | Completed playback/access cleanup and legacy fallback retirement in PR #994. |
 | 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE` | Code hardening implemented via PR #998; payment-to-PatronGrant operator smoke evidence remains separate. |
 | 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / DONE` | Architecture audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
-| 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / CURRENT` | Regression coverage, production-safe admin diagnostics, and admin wrapper consistency review. |
+| 6 | Payment webhook actor context | `PAYMENTS-WEBHOOK-SYSTEM-ACTOR-001 / CURRENT` | P0 blocker: Stripe webhook fulfillment must use an explicit system actor before payment-to-PatronGrant flow can be treated as launch-green. |
+| 7 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / NEXT` | Regression coverage, production-safe admin diagnostics, and admin wrapper consistency review after the payment webhook actor fix. |
 
 ## Architecture audit findings routed
 
@@ -30,8 +31,9 @@ Important findings from `docs/reports/reconciliation/2026-06-20-architecture-lau
 | masterplan CI-risk accuracy | `CI-SIGNAL-RECONCILIATION-002` |
 | payments metadata-user source-of-truth | active payments ticket |
 | payments request-id idempotency | active payments ticket |
-| dead legacy payments services | active payments ticket or later cleanup if still unused |
-| admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
+| Stripe webhook AppContext missing explicit system actor for PatronGrant mutations | `PAYMENTS-WEBHOOK-SYSTEM-ACTOR-001` |
+| dead legacy payments services | payment webhook actor ticket or later cleanup if still unused |
+| admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` after `PAYMENTS-WEBHOOK-SYSTEM-ACTOR-001` |
 | playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
 
 ## Historical or superseded runtime tickets
@@ -40,7 +42,7 @@ The following old cards are retained as background evidence but should not be us
 
 ## Non-code evidence remains separate
 
-Vercel, Cloudflare and Stripe production smoke/evidence tickets remain operator work and must not be mixed into code prompts unless a new code defect is identified.
+Vercel, Cloudflare and Stripe production smoke/evidence tickets remain operator work and must not be mixed into code prompts unless a new code defect is identified. The current Stripe webhook system-actor blocker is a code defect and must be fixed before payment-to-PatronGrant can be treated as launch-green.
 
 ## Continuing launch backlog
 

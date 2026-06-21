@@ -1,7 +1,7 @@
 # CI-SIGNAL-RECONCILIATION-002 — CI/test/control-plane signal reconciliation
 
 Ticket ID: CI-SIGNAL-RECONCILIATION-002
-Status: READY_FOR_BUILDER
+Status: DONE
 Role: Builder / Reviewer
 Priority: P0
 Launch status: NO_GO
