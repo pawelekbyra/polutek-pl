@@ -8,7 +8,7 @@ export function VideoDetailsPanel({ video }: { video: any }) {
         <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Treść i opisy</CardTitle>
-                <Button variant="outline" size="sm" asChild><Link href={`/admin/videos`}>Edytuj w formularzu</Link></Button>
+                <Button variant="outline" size="sm" asChild><Link href={`/admin/videos/${video.id}/edit`}>Edytuj w formularzu</Link></Button>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
