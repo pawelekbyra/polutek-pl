@@ -21,6 +21,14 @@ export interface RecordPlaybackEventResult {
     throttled?: boolean;
 }
 
+type SanitizedPlaybackMetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | SanitizedPlaybackMetadataValue[]
+  | { [key: string]: SanitizedPlaybackMetadataValue };
+
 const forbiddenMetadataFragments = ['url', 'playbackurl', 'signedurl', 'token', 'secret', 'authorization', 'cookie', 'signature'];
 
 function isForbiddenMetadataKey(key: string): boolean {
@@ -28,14 +36,19 @@ function isForbiddenMetadataKey(key: string): boolean {
   return forbiddenMetadataFragments.some(fragment => lowerKey.includes(fragment));
 }
 
-function sanitizePlaybackMetadataValue(value: any, depth = 0): any {
+function isMetadataRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function sanitizePlaybackMetadataValue(value: unknown, depth = 0): SanitizedPlaybackMetadataValue | undefined {
   if (value === null || value === undefined) return value;
 
   if (typeof value === 'string') {
     return value.length > 500 ? value.substring(0, 500) : value;
   }
 
-  if (typeof value !== 'object') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (typeof value !== 'object') return undefined;
 
   if (depth >= 3) return undefined;
 
@@ -43,16 +56,16 @@ function sanitizePlaybackMetadataValue(value: any, depth = 0): any {
     return value
       .slice(0, 20)
       .map(item => sanitizePlaybackMetadataValue(item, depth + 1))
-      .filter(item => item !== undefined);
+      .filter((item): item is SanitizedPlaybackMetadataValue => item !== undefined);
   }
 
   return sanitizePlaybackMetadata(value, depth + 1);
 }
 
-function sanitizePlaybackMetadata(metadata: any, depth = 0) {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+function sanitizePlaybackMetadata(metadata: unknown, depth = 0): Record<string, SanitizedPlaybackMetadataValue> | undefined {
+  if (!isMetadataRecord(metadata)) return undefined;
 
-  const result: Record<string, any> = {};
+  const result: Record<string, SanitizedPlaybackMetadataValue> = {};
   const allowedKeys = Object.keys(metadata)
     .filter(key => !isForbiddenMetadataKey(key))
     .slice(0, 20);
