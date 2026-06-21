@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const ctx = createAppContext({ requestId });
+    const ctx = createAppContext({
+      actor: { type: 'system', reason: 'stripe-webhook' },
+      requestId,
+    });
     const result = await handleStripeWebhook({ body, signature }, ctx);
 
     if (!result.ok) {

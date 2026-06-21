@@ -101,7 +101,17 @@ describe('fulfillPayment use case', () => {
     const result = await fulfillPayment(input, ctx);
 
     expect(result.ok).toBe(true);
-    expect(grantPatron).toHaveBeenCalled();
+    expect(grantPatron).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user_123',
+        source: 'stripe_tip',
+        paymentId: 'pay_123',
+      }),
+      expect.objectContaining({
+        actor: { type: 'system' }
+      }),
+      expect.anything()
+    );
   });
 
   it('does NOT grant patron status when payment is below threshold', async () => {
