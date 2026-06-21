@@ -2,11 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/record-playback-event.use-case';
 import { VideoPlaybackRepository } from '@/lib/modules/video/infrastructure/video-playback.repository';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { DbClient, WriteTx } from '@/lib/modules/shared/db';
-
-type MinimalDbClient = Pick<DbClient, 'videoPlaybackSession' | 'videoPlaybackEvent' | 'videoView' | 'video'>;
-type MinimalWriteTx = Pick<WriteTx, 'videoPlaybackSession' | 'videoView' | 'video'>;
-
+import { WriteTx } from '@/lib/modules/shared/db';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { setNxEx } from '@/lib/rate-limit';
 import { PlaybackAccessDeniedError } from '@/lib/modules/video/domain/video.errors';
@@ -28,9 +24,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: updateSessionClaim },
       videoView: { create: createVideoView },
       video: { update: updateVideo },
-    } as MinimalDbClient;
+    };
 
-    const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as never).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: true });
     expect(updateSessionClaim).toHaveBeenCalledWith({
@@ -49,9 +45,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: updateSessionClaim },
       videoView: { create: createVideoView },
       video: { update: updateVideo },
-    } as MinimalDbClient;
+    };
 
-    const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as never).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: false, skippedReason: 'SESSION_ALREADY_COUNTED' });
     expect(createVideoView).not.toHaveBeenCalled();
@@ -89,7 +85,7 @@ describe('recordPlaybackEventUseCase', () => {
       },
       videoView: { create: createVideoView },
       video: { update: updateVideo },
-    } as MinimalWriteTx;
+    };
 
     const prisma = {
       videoPlaybackSession: {
@@ -97,18 +93,17 @@ describe('recordPlaybackEventUseCase', () => {
         update: updateSession,
       },
       videoPlaybackEvent: { create: createPlaybackEvent },
-    } as MinimalDbClient;
+    };
 
     const ctx = createAppContext({
       actor: { type: 'guest' },
-      prisma: prisma as DbClient,
+      prisma: prisma as never,
       now: () => new Date('2026-01-01T00:00:11.000Z'),
     });
-    ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx as WriteTx));
+    ctx.db.writeTransaction = vi.fn(async <T>(fn: (tx: WriteTx) => Promise<T>) => fn(tx as never));
 
     return {
       ctx,
-      tx,
       updateSessionClaim,
       createVideoView,
       updateVideo,
@@ -187,7 +182,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -216,7 +211,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -246,7 +241,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -296,13 +291,16 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
-    const createArg = createPlaybackEvent.mock.calls[0][0];
-    expect(createArg.data.metadata).toEqual({
-      eventName: 'timeupdate',
-      nested: { quality: 'auto' },
+    expect(createPlaybackEvent).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        metadata: {
+          eventName: 'timeupdate',
+          nested: { quality: 'auto' },
+        },
+      }),
     });
-    expect(JSON.stringify(createArg.data.metadata)).not.toContain('cloudflarestream.com');
-    expect(JSON.stringify(createArg.data.metadata)).not.toContain('token');
-    expect(JSON.stringify(createArg.data.metadata)).not.toContain('cookie');
+    expect(JSON.stringify(createPlaybackEvent.mock.calls)).not.toContain('cloudflarestream.com');
+    expect(JSON.stringify(createPlaybackEvent.mock.calls)).not.toContain('token');
+    expect(JSON.stringify(createPlaybackEvent.mock.calls)).not.toContain('cookie');
   });
 });
