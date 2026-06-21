@@ -4,7 +4,10 @@ import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { requireAdmin } from "@/lib/auth-utils";
 import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
-import { getAdminChannelSettings } from "@/lib/modules/channel";
+import {
+  AdminChannelCreatorDto,
+  getAdminChannelSettings,
+} from "@/lib/modules/channel";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,8 @@ export default async function AdminChannelPage() {
     const ctx = createAppContext({
       actor: { type: "admin", userId: adminUserId },
     });
-    const creator = (await getAdminChannelSettings(ctx)) as any;
+    const { creator }: { creator: AdminChannelCreatorDto | null } =
+      await getAdminChannelSettings(ctx);
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
@@ -27,7 +31,7 @@ export default async function AdminChannelPage() {
         />
       </div>
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     const classifiedError = classifyAdminChannelError(err);
 
     return (

@@ -39,7 +39,13 @@ describe('Channel Admin Use Cases', () => {
       mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', name: 'Test' }); // for actual return
 
       const result = await getAdminChannelSettings(ctx);
-      expect(result?.name).toBe('Test');
+      expect(result.creator?.name).toBe('Test');
+      expect(result.diagnostics).toEqual({
+        mainChannelConfigured: true,
+        mainChannelSlug: 'test-slug',
+        creatorLoaded: true,
+        userLoaded: false,
+      });
     });
   });
 
