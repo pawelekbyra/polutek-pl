@@ -34,6 +34,13 @@ describe('Security Headers', () => {
     expect(csp).toContain("default-src 'self'");
   });
 
+  it('allows Cloudflare Stream direct creator uploads in connect-src', () => {
+    const csp = generateCSP();
+
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain('https://upload.cloudflarestream.com');
+  });
+
   it('includes allowed image hosts in img-src', () => {
     process.env.ALLOWED_COMMENT_IMAGE_HOSTS = 'user-images.example.com';
 
