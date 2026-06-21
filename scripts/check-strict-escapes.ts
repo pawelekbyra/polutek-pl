@@ -161,6 +161,14 @@ function violationKey(violation: Violation) {
   return `${violation.file}:${violation.line}:${violation.label}:${violation.text}`;
 }
 
+function baselineIdentity(violation: Violation) {
+  return `${violation.file}:${violation.label}:${violation.text}`;
+}
+
+function incrementCount(counts: Map<string, number>, key: string) {
+  counts.set(key, (counts.get(key) ?? 0) + 1);
+}
+
 const violations: Violation[] = [];
 
 for (const root of sourceRoots) {
@@ -191,18 +199,41 @@ try {
   process.exit(1);
 }
 
-const violationKeys = new Set(violations.map(violationKey));
-const baselineKeys = new Set<string>();
+const baselineLocationKeys = new Set<string>();
 const duplicateBaselineEntries: BaselineEntry[] = [];
+const baselineCounts = new Map<string, number>();
+const violationCounts = new Map<string, number>();
+
 for (const entry of baseline) {
-  const key = violationKey(entry);
-  if (baselineKeys.has(key)) duplicateBaselineEntries.push(entry);
-  baselineKeys.add(key);
+  const locationKey = violationKey(entry);
+  if (baselineLocationKeys.has(locationKey)) duplicateBaselineEntries.push(entry);
+  baselineLocationKeys.add(locationKey);
+  incrementCount(baselineCounts, baselineIdentity(entry));
 }
 
-const matchedHistorical = violations.filter((violation) => baselineKeys.has(violationKey(violation)));
-const missingOrStale = baseline.filter((entry) => !violationKeys.has(violationKey(entry)));
-const newUnbaselined = violations.filter((violation) => !baselineKeys.has(violationKey(violation)));
+for (const violation of violations) {
+  incrementCount(violationCounts, baselineIdentity(violation));
+}
+
+const matchedHistorical = violations.filter((violation) => {
+  const key = baselineIdentity(violation);
+  return (baselineCounts.get(key) ?? 0) > 0;
+});
+const missingOrStale = baseline.filter((entry) => {
+  const key = baselineIdentity(entry);
+  return (violationCounts.get(key) ?? 0) < (baselineCounts.get(key) ?? 0);
+});
+const remainingBaselineCounts = new Map(baselineCounts);
+const newUnbaselined: Violation[] = [];
+for (const violation of violations) {
+  const key = baselineIdentity(violation);
+  const remainingApprovedCount = remainingBaselineCounts.get(key) ?? 0;
+  if (remainingApprovedCount > 0) {
+    remainingBaselineCounts.set(key, remainingApprovedCount - 1);
+  } else {
+    newUnbaselined.push(violation);
+  }
+}
 
 console.log(`Strict escapes baseline entries: ${baseline.length}`);
 console.log(`Matched historical violations: ${matchedHistorical.length}`);
