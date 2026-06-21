@@ -157,8 +157,8 @@ function readBaseline(): BaselineEntry[] {
   });
 }
 
-function violationKey(violation: Violation) {
-  return `${violation.file}:${violation.line}:${violation.label}:${violation.text}`;
+function violationIdentity(violation: Pick<Violation, 'file' | 'label' | 'text'>) {
+  return `${violation.file}:${violation.label}:${violation.text}`;
 }
 
 const violations: Violation[] = [];
@@ -191,23 +191,24 @@ try {
   process.exit(1);
 }
 
-const violationKeys = new Set(violations.map(violationKey));
-const baselineKeys = new Set<string>();
+const violationIdentities = new Set(violations.map(violationIdentity));
+const baselineIdentities = new Set<string>();
 const duplicateBaselineEntries: BaselineEntry[] = [];
 for (const entry of baseline) {
-  const key = violationKey(entry);
-  if (baselineKeys.has(key)) duplicateBaselineEntries.push(entry);
-  baselineKeys.add(key);
+  const key = violationIdentity(entry);
+  if (baselineIdentities.has(key)) duplicateBaselineEntries.push(entry);
+  baselineIdentities.add(key);
 }
 
-const matchedHistorical = violations.filter((violation) => baselineKeys.has(violationKey(violation)));
-const missingOrStale = baseline.filter((entry) => !violationKeys.has(violationKey(entry)));
-const newUnbaselined = violations.filter((violation) => !baselineKeys.has(violationKey(violation)));
+const matchedHistorical = violations.filter((violation) => baselineIdentities.has(violationIdentity(violation)));
+const missingOrStale = baseline.filter((entry) => !violationIdentities.has(violationIdentity(entry)));
+const newUnbaselined = violations.filter((violation) => !baselineIdentities.has(violationIdentity(violation)));
 
 console.log(`Strict escapes baseline entries: ${baseline.length}`);
 console.log(`Matched historical violations: ${matchedHistorical.length}`);
 console.log(`Missing/stale baseline entries: ${missingOrStale.length}`);
 console.log(`New unbaselined violations: ${newUnbaselined.length}`);
+console.log('Baseline matching uses file + label + exact text; line numbers remain review hints so ordinary edits do not create false stale debt.');
 
 if (missingOrStale.length > 0) {
   console.error('Missing or stale strict-escapes baseline entries:');
