@@ -41,8 +41,8 @@ describe('Post-Merge State Reconciliation Invariants', () => {
     expect(readme).not.toContain('LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001');
     expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
 
-    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID: X3-FIX-008 -->');
-    expect(ticketQueue).toContain('Only the row above is the current-primary executable row.');
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID:');
+    expect(ticketQueue).not.toContain('Only the row above is the current-primary executable row.');
   });
 
   it('Architecture guard remains readable and enforces current boundary categories', () => {

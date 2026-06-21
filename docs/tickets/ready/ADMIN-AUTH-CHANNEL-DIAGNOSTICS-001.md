@@ -1,6 +1,7 @@
 # ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 — Admin auth reverification and production-safe channel diagnostics
 
-Status: PLANNED_AFTER_CI_SIGNAL_RECONCILIATION
+Ticket ID: ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001
+Status: READY_FOR_BUILDER
 Role: Builder / Reviewer
 Priority: High
 Launch status: NO_GO

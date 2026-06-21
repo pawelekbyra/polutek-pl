@@ -3,17 +3,42 @@ import { VideoPolicy } from '@/lib/modules/video/domain/video.policy';
 import { AccessTier, VideoStatus } from '@prisma/client';
 
 describe('VideoPolicy', () => {
+  const validAsset = {
+    isPrimary: true,
+    processingState: 'READY',
+    provider: 'CLOUDFLARE_STREAM',
+    providerAssetId: 'v123'
+  };
+
   describe('canBeHero', () => {
-    it('returns true for PUBLIC and PUBLISHED', () => {
-      expect(VideoPolicy.canBeHero({ tier: AccessTier.PUBLIC, status: VideoStatus.PUBLISHED })).toBe(true);
+    it('returns true for PUBLIC and PUBLISHED with required fields', () => {
+      expect(VideoPolicy.canBeHero({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.PUBLISHED,
+        asset: validAsset
+      })).toBe(true);
     });
 
     it('returns false for PATRON tier', () => {
-      expect(VideoPolicy.canBeHero({ tier: AccessTier.PATRON, status: VideoStatus.PUBLISHED })).toBe(false);
+      expect(VideoPolicy.canBeHero({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        asset: validAsset
+      })).toBe(false);
     });
 
     it('returns false for non-PUBLISHED status', () => {
-      expect(VideoPolicy.canBeHero({ tier: AccessTier.PUBLIC, status: VideoStatus.DRAFT })).toBe(false);
+      expect(VideoPolicy.canBeHero({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        asset: validAsset
+      })).toBe(false);
     });
   });
 

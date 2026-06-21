@@ -211,6 +211,8 @@ describe('API Contracts', () => {
 
       const mockPlaybackPlan = {
           access: { allowed: true },
+          canPlay: true,
+          status: 'READY',
           source: {
               kind: 'direct',
               playbackUrl: '/api/media/v1',

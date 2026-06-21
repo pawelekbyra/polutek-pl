@@ -51,7 +51,7 @@ describe('VideoRepository Safety', () => {
 
       expect(mockPrisma.video.updateMany).toHaveBeenCalledWith({
         where: { id: 'v1', creatorId: mainChannelId },
-        data: { status: 'ARCHIVED' },
+        data: { status: 'ARCHIVED', isMainFeatured: false, showInSidebar: false },
       });
       expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({
           include: { _count: { select: { comments: true } } }
@@ -78,9 +78,12 @@ describe('VideoRepository Safety', () => {
     it('refuses non-public/non-published video', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'v1',
+        title: 'Title',
+        slug: 'slug',
         creatorId: mainChannelId,
         tier: AccessTier.PATRON,
-        status: VideoStatus.PUBLISHED
+        status: VideoStatus.PUBLISHED,
+        asset: { isPrimary: true, processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' }
       });
 
       await expect(repository.setHero('v1', mainChannelId, mockPrisma))
@@ -90,9 +93,12 @@ describe('VideoRepository Safety', () => {
     it('sets hero for valid video and enforces scoping on update', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'v1',
+        title: 'Title',
+        slug: 'slug',
         creatorId: mainChannelId,
         tier: AccessTier.PUBLIC,
-        status: VideoStatus.PUBLISHED
+        status: VideoStatus.PUBLISHED,
+        asset: { isPrimary: true, processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' }
       });
       mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
 
@@ -111,8 +117,8 @@ describe('VideoRepository Safety', () => {
 
   describe('reorder', () => {
     it('refuses mixed-channel batch', async () => {
-      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: mainChannelId });
-      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: 'other-channel' });
+      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: mainChannelId, status: VideoStatus.PUBLISHED });
+      mockPrisma.video.findUnique.mockResolvedValueOnce({ creatorId: 'other-channel', status: VideoStatus.PUBLISHED });
 
       const updates = [
         { id: 'v1', sidebarOrder: 1, showInSidebar: true },

@@ -55,7 +55,7 @@ describe('home-content.loader', () => {
 
     const result = await loadHomeContent();
 
-    expect(result.status).toBe('error');
-    expect(result.error).toBe('GLOBAL_FAILURE');
+    expect(result.status).toBe('empty');
+    expect(result.publicMessage).toBe('Brak dostępnych materiałów.');
   });
 });

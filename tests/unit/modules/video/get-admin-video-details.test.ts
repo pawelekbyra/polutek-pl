@@ -60,7 +60,7 @@ describe('Admin Video Details & Diagnostics', () => {
           tier: AccessTier.PUBLIC,
         };
         mockPrisma.video.findUnique.mockResolvedValue(video);
-        mockPrisma.video.count.mockResolvedValue(1); // Duplicate found
+        mockPrisma.video.findFirst.mockResolvedValue({ id: 'v2' }); // Duplicate found via existsBySlugExcludingId
 
         const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
         const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);

@@ -9,7 +9,7 @@ export const flags = {
     return canUseDemoFallbacks();
   },
   get mainCreatorSlug() {
-      const slug = process.env.MAIN_CREATOR_SLUG || MAIN_CREATOR_SLUG;
+      const slug = process.env.MAIN_CREATOR_SLUG !== undefined ? process.env.MAIN_CREATOR_SLUG : MAIN_CREATOR_SLUG;
 
       // Prerendering in Vercel runs with NODE_ENV=production but often without full ENV.
       // We must not crash during build time, only at runtime.
