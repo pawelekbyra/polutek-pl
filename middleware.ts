@@ -30,6 +30,14 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
+  if (req.method === 'GET' && req.nextUrl.pathname === '/admin/videos') {
+    const editId = req.nextUrl.searchParams.get('edit');
+    if (editId) {
+      const targetUrl = new URL(`/admin/videos/${encodeURIComponent(editId)}/edit`, req.url);
+      return NextResponse.redirect(targetUrl);
+    }
+  }
+
   const requestId = crypto.randomUUID();
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-request-id', requestId);
