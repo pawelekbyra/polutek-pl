@@ -1,7 +1,6 @@
 # Polutek.pl Masterplan
 
-Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION — AUDIT FINDINGS ROUTED 2026-06-20
-Launch Status: **NO_GO**
+Status: **STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT**
 
 This is the canonical entry point for technical state, risk register, and ordered backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
 
@@ -10,7 +9,7 @@ This is the canonical entry point for technical state, risk register, and ordere
 - **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
 - **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
 - **Architecture launch-readiness audit:** `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md`.
-- **Current executable ticket:** see `docs/tickets/ready/README.md`.
+- **Current executable ticket:** none; see `docs/tickets/ready/README.md` for the canonical ready-ticket queue.
 - **Current state:** resolved by the canonical ready-ticket queue and latest reconciliation reports.
 
 ## 2. Evidence Taxonomy
@@ -59,7 +58,7 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 ### CURRENT_EXECUTABLE_TASK
 
-- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` via `docs/tickets/ready/README.md`.
+- Brak aktywnego dużego ticketu kodowego; see `docs/tickets/ready/README.md`.
 
 ### RECENTLY_COMPLETED
 
@@ -74,8 +73,8 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 2. `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000: CI signal restored, strict-escapes reconciled, hotspots split.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — CURRENT: admin auth and channel diagnostics.
-4. remaining non-code/operator/legal launch evidence.
+3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1004.
+4. remaining owner/operator/legal launch decisions and evidence.
 
 ### OPERATOR_EVIDENCE
 
