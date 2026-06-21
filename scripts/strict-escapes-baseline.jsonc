@@ -64,46 +64,11 @@
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "app/admin/videos/components/useAdminVideos.ts",
-      "line": 91,
-      "label": "explicit any annotation",
-      "text": "tier: vid.tier as any,",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/components/useAdminVideos.ts",
-      "line": 92,
-      "label": "explicit any annotation",
-      "text": "status: (vid.status || \"PUBLISHED\") as any,",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "app/admin/videos/layout/page.tsx",
       "line": 16,
       "label": "explicit any annotation",
       "text": "const [videos, setVideos] = useState<any[]>([]);",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/page.tsx",
-      "line": 109,
-      "label": "explicit any annotation",
-      "text": "tier: vid.tier as any,",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/page.tsx",
-      "line": 110,
-      "label": "explicit any annotation",
-      "text": "status: (vid.status || \"PUBLISHED\") as any,",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "app/admin/videos/page.tsx",
-      "line": 139,
-      "label": "explicit any annotation",
-      "text": "tier: vid.tier as any,",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
       "file": "app/api/admin/stats/route.ts",

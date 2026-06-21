@@ -102,7 +102,6 @@
     "@types/react-dom": "^18",
     "@types/sanitize-html": "^2.16.1",
     "@vitest/coverage-v8": "^4.1.7",
-    "@vitest/ui": "^4.1.8",
     "eslint": "^8",
     "eslint-config-next": "15.5.16",
     "playwright": "^1.58.2",
