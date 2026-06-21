@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { sanitizeEmailPreviewHtml } from '../sanitizeEmailPreviewHtml';
 
 interface BroadcastLog {
   id: string;
@@ -86,14 +87,14 @@ export function BroadcastHistory({ refreshToken = 0 }: BroadcastHistoryProps) {
                     <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 border-b border-neutral-200 pb-1">Wersja Polska (PL)</h5>
                     <p className="text-xs font-bold text-neutral-700 leading-tight">Subject: {log.subjectPl}</p>
                     <div className="bg-white border border-neutral-200 rounded-lg p-4 max-h-[400px] overflow-y-auto shadow-inner prose prose-sm prose-neutral">
-                      <div dangerouslySetInnerHTML={{ __html: log.htmlPl }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeEmailPreviewHtml(log.htmlPl) }} />
                     </div>
                   </div>
                   <div className="space-y-3">
                     <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 border-b border-blue-100 pb-1">English Version (EN)</h5>
                     <p className="text-xs font-bold text-neutral-700 leading-tight">Subject: {log.subjectEn}</p>
                     <div className="bg-white border border-neutral-200 rounded-lg p-4 max-h-[400px] overflow-y-auto shadow-inner prose prose-sm prose-neutral">
-                      <div dangerouslySetInnerHTML={{ __html: log.htmlEn }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeEmailPreviewHtml(log.htmlEn) }} />
                     </div>
                   </div>
                 </div>
