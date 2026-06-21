@@ -5,6 +5,25 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { handleApiError } from '@/lib/errors';
 import { getCorrelationId } from '@/lib/utils/correlation';
 
+function isSignatureFailure(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  return error.message.toLowerCase().includes('signature');
+}
+
+function webhookFailureResponse(error: unknown) {
+  if (isSignatureFailure(error)) {
+    return handleApiError(error);
+  }
+
+  const message = error instanceof Error ? error.message : 'Webhook processing failed';
+
+  return NextResponse.json(
+    { error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR', message },
+    { status: 500 }
+  );
+}
+
 export async function POST(req: NextRequest) {
   const requestId = getCorrelationId() || req.headers.get('stripe-signature')?.slice(-8) || 'stripe-webhook';
   const scopedLogger = createScopedLogger(requestId);
@@ -23,12 +42,10 @@ export async function POST(req: NextRequest) {
     const result = await handleStripeWebhook({ body, signature }, ctx);
 
     if (!result.ok) {
-        // Log error but return 200 for known non-critical issues if needed,
-        // but here we follow handleApiError which might return 500
-        return handleApiError(result.error);
+      return webhookFailureResponse(result.error);
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json(result.data);
   } catch (err: unknown) {
     scopedLogger.error('Stripe Webhook Route Error:', err);
     return handleApiError(err);
