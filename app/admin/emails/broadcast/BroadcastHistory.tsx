@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -14,21 +14,32 @@ interface BroadcastLog {
   recipientCount: number;
   sentAt: string;
   status: string;
+  sentCount?: number;
 }
 
-export function BroadcastHistory() {
-  const [history, setHistory] = useState<any[]>([]);
+type BroadcastHistoryProps = {
+  refreshToken?: number;
+};
+
+export function BroadcastHistory({ refreshToken = 0 }: BroadcastHistoryProps) {
+  const [history, setHistory] = useState<BroadcastLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('/api/admin/emails/broadcast')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setHistory(data);
-      })
-      .finally(() => setIsLoading(false));
+  const fetchHistory = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/emails/broadcast');
+      const data = await res.json();
+      if (Array.isArray(data)) setHistory(data);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory, refreshToken]);
 
   if (isLoading) return <div className="animate-pulse h-20 bg-neutral-100 rounded-xl" />;
   if (history.length === 0) return null;
@@ -52,7 +63,7 @@ export function BroadcastHistory() {
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block mr-2">
                     <p className="text-[10px] font-black uppercase text-neutral-400 leading-none mb-1">Dostarczono</p>
-                    <p className="text-xs font-bold text-neutral-900 leading-none">{log.sentCount} / {log.recipientCount}</p>
+                    <p className="text-xs font-bold text-neutral-900 leading-none">{log.sentCount ?? 0} / {log.recipientCount}</p>
                 </div>
                 <span className={cn(
                     "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
