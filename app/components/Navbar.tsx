@@ -171,15 +171,6 @@ const Navbar = () => {
             {/* Pionowy separator */}
             <div className="h-6 w-px bg-neutral-300 mx-1" aria-hidden="true" />
 
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-neutral-900 transition-colors whitespace-nowrap px-2"
-              >
-                Admin
-              </Link>
-            )}
-
             {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
                 <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all shadow-sm active:scale-95 border border-neutral-300">
