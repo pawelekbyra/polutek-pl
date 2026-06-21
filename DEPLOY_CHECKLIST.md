@@ -112,8 +112,10 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 
 ## Vercel production migration checklist
 
-- [ ] Vercel Build Command is `npm run vercel-build` (this repo also enforces it in `vercel.json`). The command must run `prisma migrate deploy`, `prisma generate`, `db:smoke`, then `next build` in that order.
-- [ ] Vercel Production `DATABASE_URL` points to the same Postgres/Neon database used by production traffic.
+- [ ] Vercel Build Command is `npm run vercel-build` (this repo also enforces it in `vercel.json`). This build command generates Prisma Client and builds Next.js; it does **not** deploy production migrations.
+- [ ] Before or alongside each production deploy that includes Prisma migrations, manually run the GitHub Actions workflow `Production DB Migrations` from the `production` environment. The workflow runs `npm ci`, `npx prisma migrate deploy`, and `npx prisma generate` against the production database.
+- [ ] Confirm GitHub Actions production secrets `DATABASE_URL` and `DATABASE_URL_UNPOOLED` point to the same Postgres/Neon database used by production traffic.
+- [ ] Do not run production migrations from Vercel preview deployments; preview builds must not mutate the production database.
 - [ ] If Vercel reports `P3009` for `20260603140000_add_video_presentation_columns`, inspect the failed row and resolve it only after confirming the two columns exist or after rolling back the failed attempt:
   ```bash
   npx prisma migrate resolve --rolled-back 20260603140000_add_video_presentation_columns
