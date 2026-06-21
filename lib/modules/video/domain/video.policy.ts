@@ -37,9 +37,9 @@ export class VideoPolicy {
 
   static getHeroBlockers(video: ContractVideo): VideoStateBlocker[] {
     const blockers = this.getPublicationBlockers(video);
-    if (video.status !== 'PUBLISHED') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Hero video must be PUBLISHED.', field: 'status' });
-    if (video.tier !== 'PUBLIC') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Hero video must be PUBLIC.', field: 'tier' });
-    if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_HERO_ARCHIVED', message: 'Archived video cannot be hero.', field: 'status' });
+    if (video.status !== 'PUBLISHED') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Film w hero musi być opublikowany.', field: 'status' });
+    if (video.tier !== 'PUBLIC') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Film w hero musi mieć publiczny dostęp.', field: 'tier' });
+    if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_HERO_ARCHIVED', message: 'Zarchiwizowany film nie może być filmem hero.', field: 'status' });
     return blockers;
   }
 
@@ -48,8 +48,8 @@ export class VideoPolicy {
   }
 
   static getSidebarBlockers(video: { status: VideoStatus }): VideoStateBlocker[] {
-    if (video.status === 'ARCHIVED') return [{ code: 'VIDEO_SIDEBAR_ARCHIVED', message: 'Archived video cannot be visible in the public sidebar.', field: 'status' }];
-    if (video.status !== 'PUBLISHED') return [{ code: 'VIDEO_SIDEBAR_NOT_PUBLISHED', message: 'Only published videos can be visible in the public sidebar.', field: 'status' }];
+    if (video.status === 'ARCHIVED') return [{ code: 'VIDEO_SIDEBAR_ARCHIVED', message: 'Zarchiwizowany film nie może być widoczny w publicznym sidebarze.', field: 'status' }];
+    if (video.status !== 'PUBLISHED') return [{ code: 'VIDEO_SIDEBAR_NOT_PUBLISHED', message: 'Tylko opublikowane filmy mogą być widoczne w publicznym sidebarze.', field: 'status' }];
     return [];
   }
 
