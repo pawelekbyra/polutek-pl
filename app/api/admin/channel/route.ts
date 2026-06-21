@@ -44,6 +44,30 @@ const channelPatchSchema = z.object({
   displaySubscribersCount: z.number().int().min(0).nullable().optional(),
 });
 
+function getSafeChannelDiagnosticsError(error: unknown) {
+  const candidate = error as { name?: unknown; code?: unknown; statusCode?: unknown };
+  const code = typeof candidate.code === "string" ? candidate.code : "UNKNOWN";
+  const name = typeof candidate.name === "string" ? candidate.name : "Error";
+
+  if (
+    code === "CHANNEL_NOT_FOUND" ||
+    code === "CHANNEL_NOT_APPROVED" ||
+    code === "CHANNEL_NOT_PRIMARY"
+  ) {
+    return {
+      status: typeof candidate.statusCode === "number" ? candidate.statusCode : 400,
+      code,
+      name,
+    };
+  }
+
+  return {
+    status: 500,
+    code: "CHANNEL_DIAGNOSTICS_ERROR",
+    name,
+  };
+}
+
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
@@ -55,12 +79,28 @@ export async function GET(req: NextRequest) {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-    const creator = await getAdminChannelSettings(ctx);
+    const { creator, diagnostics } = await getAdminChannelSettings(ctx);
 
-    return NextResponse.json({ creator });
+    return NextResponse.json({ creator, diagnostics });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
-    return handleApiError(error);
+    const safeError = getSafeChannelDiagnosticsError(error);
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
+      code: safeError.code,
+      name: safeError.name,
+      adminUserId,
+    });
+    return NextResponse.json(
+      {
+        error: "CHANNEL_DIAGNOSTICS_ERROR",
+        message:
+          "Channel diagnostics could not be loaded. Review server logs before changing channel data.",
+        diagnostics: {
+          ok: false,
+          code: safeError.code,
+        },
+      },
+      { status: safeError.status },
+    );
   }
 }
 
