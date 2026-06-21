@@ -1,95 +1,58 @@
-# Polutek.pl Masterplan
+# Polutek.pl — Masterplan
 
-Status: APPROVED_CANONICAL — ACTIVE AFTER POST-929 EMERGENCY RECONCILIATION — AUDIT FINDINGS ROUTED 2026-06-20
-Launch Status: **NO_GO**
+Status: **STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT**
 
-This is the canonical entry point for technical state, risk register, and ordered backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
+Ten dokument zastępuje dawny, kryzysowy sposób patrzenia na repozytorium. Duży etap porządkowania architektury, runtime, CI, płatności, playbacku, komentarzy, panelu admina i diagnostyki został wykonany. Od tego momentu projekt powinien być prowadzony jak normalny, żywy produkt.
 
-## 1. Baseline State
+Historyczne raporty refaktoryzacyjne zostają w repozytorium jako ślad prac i materiał dowodowy. Nie są już aktywną listą zadań.
 
-* **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.
-* **Emergency reconciliation baseline:** `6162ed6b79d412856c02c4cb5c610f4f9f81b152` through PR #929, recorded on 2026-06-17 in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`.
-* **Architecture launch-readiness audit:** `docs/reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md`.
-* **Current executable ticket:** see `docs/tickets/ready/README.md`.
-* **Current state:** resolved by the canonical ready-ticket queue and latest reconciliation reports.
+## 1. Aktualny stan
 
-## 2. Evidence Taxonomy
+Polutek.pl jest aplikacją właścicielską dla twórcy: platformą wideo, kanałem, systemem dostępu dla wspierających, panelem administracyjnym, komentarzami i integracjami płatności/email/wideo.
 
-| Class                         | Definition                                                       |
-| ----------------------------- | ---------------------------------------------------------------- |
-| `REPOSITORY_EVIDENCE`         | Source code, schema, and local file structure.                   |
-| `AUTOMATED_TEST_EVIDENCE`     | Results from Vitest, Playwright, or custom scripts.              |
-| `MERGED_PR_EVIDENCE`          | A merge commit present in current history.                       |
-| `AGENT_DECLARATION`           | A statement from an AI agent; unverified until checked.          |
-| `LOCAL_BUILD_EVIDENCE`        | Results of local build commands.                                 |
-| `VERCEL_PREVIEW_EVIDENCE`     | Vercel Preview observations.                                     |
-| `VERCEL_PRODUCTION_EVIDENCE`  | Vercel Production deployment observations; not full CI evidence. |
-| `PRODUCTION_RUNTIME_EVIDENCE` | Logs or behavior observed in live production.                    |
-| `OPERATOR_EVIDENCE`           | Redacted screenshots/confirmation from Paweł.                    |
-| `OWNER_DECISION`              | Explicit product/business decisions from Paweł.                  |
-| `LEGAL_REVIEW`                | Formal professional legal review.                                |
-| `UNPROVEN`                    | Claim without supporting evidence.                               |
-| `STALE`                       | Evidence no longer current.                                      |
+Główny refaktor można uznać za zamknięty po wejściu ticketu `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`. Dalsze prace powinny być prowadzone przez małe, konkretne tickety lub issue.
 
-## 3. Vercel Evidence Boundary
+## 2. Co zostało ustabilizowane
 
-Vercel `READY` can be deployment evidence only. It is not a substitute for full GitHub CI, provider runtime verification, legal approval, or X7 certification.
+- runtime wideo i kanału;
+- dostęp do materiałów i playback;
+- płatności, lokalna prawda płatności i idempotencja;
+- komentarze i moderacja;
+- panel admina i zarządzanie treściami;
+- DB-autorytatywne uprawnienia admina;
+- diagnostyka kanału admina;
+- CI, testy, hotspoty i strict-escapes;
+- dokumentacja historyczna i raporty pojednawcze.
 
-## 4. Current Risk Register
+## 3. Obecny tryb pracy
 
-| Risk ID                            | Title                                                                                                        | Evidence Class                                  | Classification                                   | Launch Impact        | Owner                                            |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------------------------------ | -------------------- | ------------------------------------------------ |
-| `CI-SIGNAL-002`                    | CI/test signal correctly proves the full available test suite and guard state                                | `AUTOMATED_TEST_EVIDENCE / REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000`                            | **GREEN**            | `CI-SIGNAL-RECONCILIATION-002`                   |
-| `STRICT-ESCAPES-DRIFT`             | strict-escapes baseline/current violations are reconciled                                                    | `REPOSITORY_EVIDENCE`                           | `RESOLVED_BY_PR_1000`                            | **GREEN**            | `CI-SIGNAL-RECONCILIATION-002`                   |
-| `HOTSPOT-ADMIN-VIDEOS`             | admin video page hotspot is split mechanically and under budget                                              | `REPOSITORY_EVIDENCE`                           | `RESOLVED_BY_PR_1000`                            | **GREEN**            | `CI-SIGNAL-RECONCILIATION-002`                   |
-| `PAYMENTS-TRUTH-001`               | Payment fulfillment validates against local Payment truth, not mutable provider metadata                     | `REPOSITORY_EVIDENCE`                           | `MERGED_IN_PR_998`                               | **GREEN**            | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-IDEMPOTENCY-001`         | Checkout request idempotency has local `(userId, requestId)` backing                                         | `REPOSITORY_EVIDENCE`                           | `MERGED_IN_PR_998`                               | **GREEN**            | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE`       | `ROUTED_TO_LATER_CLEANUP`                        | **P2 FOOTGUN**       | final cleanup                                    |
-| `ADMIN-AUTH-WRAPPER-CONSISTENCY`   | multiple admin route wrapper idioms share one DB truth but make review harder                                | `AGENT_DECLARATION / REPOSITORY_EVIDENCE`       | `CURRENT`                                        | **P2 REVIEWABILITY** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001`             |
-| `OPERATOR-EVIDENCE`                | production provider evidence, backup/restore, X6/X7 and final owner decision remain open                     | `OPERATOR_EVIDENCE`                             | `REQUIRES_OPERATOR_EVIDENCE`                     | **BLOCKER**          | operator launch evidence                         |
-| `LEGAL-COPY`                       | Terms/privacy/cookies/support copy incomplete                                                                | `LEGAL_REVIEW`                                  | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **BLOCKER**          | legal/operator track                             |
+Nie ma jednej aktywnej, dużej kolejki refaktoryzacyjnej.
 
-Historical risk IDs from POST-929 remain useful evidence but are not the current executable queue. Completed video/provider/playback items are tracked in recent closeout reports and `docs/tickets/ready/README.md`.
+Nowe prace powinny działać tak:
 
-## 5. Ordered Masterplan
+1. błąd, usprawnienie albo potrzeba produktowa;
+2. mały ticket/issue;
+3. mały PR;
+4. właściwe testy/checki;
+5. merge po sprawdzeniu.
 
-### CURRENT_GATE
+Nie należy otwierać dużych, przekrojowych refaktorów bez konkretnego powodu produktowego albo stabilnościowego.
 
-* See the canonical queue: `docs/tickets/ready/README.md`.
+## 4. Operacje, prawo i publikacja
 
-### CURRENT_EXECUTABLE_TASK
+Rzeczy takie jak treści, konfiguracja providerów, checklisty smoke, backup/restore, copy prawne, regulaminy, polityka prywatności i decyzja o szerszej publikacji są pracami właścicielskimi/operacyjnymi.
 
-* `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` via `docs/tickets/ready/README.md`.
+Nie należy opisywać ich jako dowodu, że aplikacja jest nadal w stanie niedokończonego refaktoru. To normalne elementy prowadzenia produktu.
 
-### RECENTLY_COMPLETED
+## 5. Dokumenty wejściowe
 
-* `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000.
-* `COMMENTS-COUNT-SYNC-AFTER-DELETE-001` — DONE by PR #999.
-* `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
-* `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
-* `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE by PR #990.
-* `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE before the publication/hero state-contract ticket.
+- `README.md` — opis produktu, uruchomienie i podstawowa dokumentacja;
+- `docs/PROJECT-STATE.md` — bieżący stan produktu/repozytorium;
+- `docs/tickets/ready/README.md` — aktywna kolejka kodowa, jeśli istnieje;
+- `docs/operations/` — checklisty operacyjne i publikacyjne;
+- `docs/reports/reconciliation/` — historia dużej stabilizacji i raporty dowodowe;
+- `docs/architecture/CORE-INVARIANTS.md` — kluczowe zasady architektoniczne.
 
-### ORDERED_REPAIR_PROGRAM
+## 6. Zasada na przyszłość
 
-1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
-2. `CI-SIGNAL-RECONCILIATION-002` — DONE by PR #1000: CI signal restored, strict-escapes reconciled, hotspots split.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — CURRENT: admin auth and channel diagnostics.
-4. remaining non-code/operator/legal launch evidence.
-
-### OPERATOR_EVIDENCE
-
-* Vercel production evidence, Stripe production evidence, Cloudflare production privacy/runtime evidence, backup/restore drills, alerts, X6/X7 evidence and final owner launch decision.
-
-### LEGAL_REVIEW
-
-* Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`.
-
-## 6. Discoverability Path
-
-* Governance Model: [governance/BOLEK-OPERATING-MODEL.md](governance/BOLEK-OPERATING-MODEL.md)
-* Core Invariants: [architecture/CORE-INVARIANTS.md](architecture/CORE-INVARIANTS.md)
-* Current Ticket: [tickets/ready/README.md](tickets/ready/README.md)
-* Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
-* Architecture Launch-Readiness Audit: [reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md](reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md)
-* Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
+Polutek.pl ma być rozwijany iteracyjnie. Dokumentacja ma pomagać zrozumieć produkt i stan repozytorium, a nie sprawiać wrażenie, że aplikacja jest jednym wielkim, wiecznie otwartym refaktorem.
