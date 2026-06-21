@@ -4,7 +4,8 @@ import { z } from "zod";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import {
-  getAdminChannelSettings,
+  getAdminChannelSettingsWithDiagnostics,
+  getSafeAdminChannelDiagnostics,
   updateAdminChannelSettings,
 } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -55,12 +56,26 @@ export async function GET(req: NextRequest) {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-    const creator = await getAdminChannelSettings(ctx);
+    const { creator, diagnostics } = await getAdminChannelSettingsWithDiagnostics(ctx);
 
-    return NextResponse.json({ creator });
+    return NextResponse.json({ creator, diagnostics });
   } catch (error) {
-    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", error);
-    return handleApiError(error);
+    const diagnostic = getSafeAdminChannelDiagnostics(error);
+    scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
+      code: diagnostic.code,
+      method: req.method,
+      pathname: req.nextUrl.pathname,
+      adminUserId,
+      error,
+    });
+    return NextResponse.json(
+      {
+        error: "CHANNEL_DIAGNOSTICS_ERROR",
+        code: diagnostic.code,
+        message: diagnostic.message,
+      },
+      { status: diagnostic.code === "MAIN_CHANNEL_NOT_FOUND" ? 404 : 500 },
+    );
   }
 }
 

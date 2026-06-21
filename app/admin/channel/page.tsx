@@ -4,7 +4,7 @@ import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { requireAdmin } from "@/lib/auth-utils";
 import { classifyAdminChannelError } from "@/lib/admin-channel-error-classification";
-import { getAdminChannelSettings } from "@/lib/modules/channel";
+import { getAdminChannelSettings, type AdminChannelSettingsDto } from "@/lib/modules/channel";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export default async function AdminChannelPage() {
     const ctx = createAppContext({
       actor: { type: "admin", userId: adminUserId },
     });
-    const creator = (await getAdminChannelSettings(ctx)) as any;
+    const creator: AdminChannelSettingsDto = await getAdminChannelSettings(ctx);
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
