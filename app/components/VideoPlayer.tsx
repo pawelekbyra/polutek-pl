@@ -7,7 +7,6 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { Play, AlertCircle, RefreshCcw } from './icons';
 import { PlayerSkeleton } from '@/components/skeletons';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
@@ -18,7 +17,7 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
-    const { playbackPlan, refreshPlaybackPlan, isLoading, effectiveTier } = useVideoAccess();
+    const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
     const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
     const [playerKey, setPlayerKey] = useState(0);
@@ -148,6 +147,38 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     isAdmin={isAdmin}
                 />
             </PlayerStateFrame>
+        );
+    }
+
+    if (normalizedKind === 'cloudflare_stream') {
+        return (
+            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
+                {loadError ? (
+                    <PlayerErrorOverlay
+                        errorCode="MEDIA_LOAD_FAILED"
+                        onRetry={() => {
+                            setLoadError(null);
+                            refreshPlaybackPlan?.();
+                        }}
+                        isAdmin={isAdmin}
+                    />
+                ) : (
+                    <iframe
+                        key={playerKey}
+                        className="h-full w-full border-0"
+                        src={src}
+                        title={playerConfig?.title || video.title || 'Video'}
+                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        allowFullScreen
+                        onLoad={() => sendEvent('PLAYER_READY')}
+                        onError={() => {
+                            setLoadError('Nie udało się załadować materiału wideo. Sprawdź dostępność źródła.');
+                            setPlayerKey((k) => k + 1);
+                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+                        }}
+                    />
+                )}
+            </div>
         );
     }
 
