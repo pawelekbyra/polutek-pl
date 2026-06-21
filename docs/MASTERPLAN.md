@@ -39,11 +39,11 @@ Vercel `READY` can be deployment evidence only. It is not a substitute for full 
 
 | Risk ID | Title | Evidence Class | Classification | Launch Impact | Owner |
 | --- | --- | --- | --- | --- | --- |
-| `CI-SIGNAL-002` | CI/test signal does not yet prove the full available test suite and guard state after the large refactor | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `CLEANUP_REQUIRED_AFTER_PAYMENTS` | **P0 PROCESS BLOCKER** | `CI-SIGNAL-RECONCILIATION-002` |
-| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations require reconciliation without weakening the guard | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `REQUIRES_RECONCILIATION` | **P0 PROCESS BLOCKER** | `CI-SIGNAL-RECONCILIATION-002` |
-| `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot should be split mechanically without changing behavior | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `REQUIRES_RECONCILIATION` | **P1 MAINTAINABILITY** | `CI-SIGNAL-RECONCILIATION-002` |
-| `PAYMENTS-TRUTH-001` | Payment fulfillment validates against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `COMPLETED_PENDING_REVIEW` | **P0/P1 FINANCIAL + ACCESS CORRECTNESS** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency has local `(userId, requestId)` backing | `REPOSITORY_EVIDENCE` | `COMPLETED_PENDING_REVIEW` | **P1 FINANCIAL CORRECTNESS** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
+| `CI-SIGNAL-002` | CI/test signal correctly proves the full available test suite and guard state | `AUTOMATED_TEST_EVIDENCE / REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
+| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations are reconciled | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
+| `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot is split mechanically and under budget | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_MERGED_PR` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
+| `PAYMENTS-TRUTH-001` | Payment fulfillment validates against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
+| `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency has local `(userId, requestId)` backing | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
 | `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `ROUTED_TO_CURRENT_TICKET_OR_LATER_CLEANUP` | **P2 FOOTGUN** | payments ticket or final cleanup |
 | `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `PLANNED_AFTER_CI_SIGNAL_RECONCILIATION` | **P2 REVIEWABILITY** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **BLOCKER** | operator launch evidence |
@@ -69,9 +69,9 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 ### ORDERED_REPAIR_PROGRAM
 
-1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — COMPLETED_PENDING_REVIEW payments code hardening.
-2. `CI-SIGNAL-RECONCILIATION-002` — CURRENT post-payments CI/test/control-plane signal reconciliation from the architecture audit.
-3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — admin auth and channel diagnostics after payments and CI-signal reconciliation.
+1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
+2. `CI-SIGNAL-RECONCILIATION-002` — DONE: CI signal restored, strict-escapes reconciled, hotspots split.
+3. `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — PLANNED: admin auth and channel diagnostics after CI signal reconciliation.
 4. remaining non-code/operator/legal launch evidence.
 
 ### OPERATOR_EVIDENCE
