@@ -1,13 +1,6 @@
 {
   "entries": [
     {
-      "file": "app/admin/channel/page.tsx",
-      "line": 19,
-      "label": "explicit any annotation",
-      "text": "const creator = (await getAdminChannelSettings(ctx)) as any;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "app/admin/comments/reports/page.tsx",
       "line": 17,
       "label": "explicit any annotation",

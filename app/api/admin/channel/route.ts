@@ -61,12 +61,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ creator, diagnostics });
   } catch (error) {
     const diagnostic = getSafeAdminChannelDiagnostics(error);
+    const errorCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof (error as { code?: unknown }).code === "string"
+        ? (error as { code: string }).code
+        : undefined;
+
     scopedLogger.error("[ADMIN_CHANNEL_GET_ERROR]", {
-      code: diagnostic.code,
+      diagnosticCode: diagnostic.code,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorCode,
       method: req.method,
       pathname: req.nextUrl.pathname,
       adminUserId,
-      error,
     });
     return NextResponse.json(
       {

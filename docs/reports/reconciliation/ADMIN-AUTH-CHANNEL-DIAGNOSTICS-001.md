@@ -19,10 +19,11 @@ Prove that privileged admin access remains based on local database role/account 
 - `tests/unit/modules/channel/admin-channel.test.ts`
 - `tests/unit/admin-channel-diagnostics-api.test.ts`
 - `docs/reports/reconciliation/ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001.md`
+- `scripts/strict-escapes-baseline.jsonc`
 
 ## Scope confirmation
 
-All changed paths are within the ticket allow-list. No payment, playback, Cloudflare lifecycle, Prisma schema, migrations, package files, workflows, global roadmap docs, or global control-plane docs were changed.
+Runtime/docs changes remain within the ticket allow-list. `scripts/strict-escapes-baseline.jsonc` was updated by explicit PR #1004 follow-up instruction to remove the stale `app/admin/channel/page.tsx` strict-escapes baseline entry after the underlying `any` cast was fixed. No payment, playback, Cloudflare lifecycle, Prisma schema, migrations, package files, workflows, global roadmap docs, or global control-plane docs were changed.
 
 ## Auth model confirmed
 
@@ -62,12 +63,25 @@ Accepted map:
 - Added `getAdminChannelSettingsWithDiagnostics` for admin channel API consumers.
 - Added safe diagnostic mapping for missing main channel, non-approved/non-primary channel state, schema mismatch, database connection errors, and fallback internal errors.
 - Admin channel API now returns stable safe JSON error codes/messages and logs structured request context (`method`, `pathname`, request ID via scoped logger, admin user ID, diagnostic code) without returning raw database URLs or secrets in JSON.
+- PR #1004 follow-up sanitized admin channel error logging further: the route logs only `diagnosticCode`, `errorName`, optional machine `errorCode`, method, pathname, and admin user ID. It no longer logs raw error objects or raw error messages for admin channel GET failures.
 
 ## Tests added/updated
 
 - Added admin channel diagnostics API tests for success DTO shape, missing main channel, and database error redaction in JSON responses.
 - Updated channel module tests for diagnostics DTO shape, missing settings record/schema-mismatch code, and safe diagnostic mapping.
+- Removed the stale strict-escapes baseline entry for the fixed `app/admin/channel/page.tsx` explicit `any` cast.
 - Re-ran existing admin auth, route-family, and comment moderation regression tests.
+
+## Validation
+
+- PASS: `git diff --check`
+- PASS: `npm run lint`
+- PASS: `npm test -- --run tests/unit/admin-access.test.ts tests/unit/admin-auth-actor-canonicalization.test.ts tests/unit/admin-route-authorization-static.test.ts tests/unit/post-merge-verification.test.ts tests/unit/modules/comments/admin-comment-use-cases.test.ts tests/unit/modules/channel/admin-channel.test.ts tests/unit/admin-channel-diagnostics-api.test.ts`
+- PASS: `node scripts/check-control-plane-docs.mjs`
+- WARN: `npm run quality:strict-escapes` confirms the fixed `app/admin/channel/page.tsx` baseline entry is gone, but still reports pre-existing/out-of-scope stale line-number drift for admin videos `as any` entries.
+- WARN: `npm run typecheck` remains blocked by pre-existing, out-of-scope payment `requestId` Prisma type mismatches in `lib/modules/payments/infrastructure/payment.repository.ts` and `lib/services/payments/checkout.service.ts`.
+- WARN: `npm run build` compiled successfully, then failed during type validation on the same pre-existing, out-of-scope payment `requestId` Prisma mismatch.
+- WARN: PR base retarget and hosted CI rerun are GitHub-side operations; this local workspace has no configured Git remote output and no `gh` CLI available, so the code/docs follow-up is ready for retargeting PR #1004 to `main` and rerunning hosted CI outside this container.
 
 ## What did not change
 
@@ -78,6 +92,8 @@ Accepted map:
 ## Risks and follow-ups
 
 - `npm run typecheck` and `npm run build` are currently blocked by pre-existing payment `requestId` Prisma type mismatches outside this ticket scope.
+- `npm run quality:strict-escapes` still reports out-of-scope admin video strict-escape baseline drift unrelated to the removed channel page entry.
+- PR base retarget to `main` and hosted CI rerun still need to be completed in GitHub for PR #1004; this container cannot mutate PR base without remote/GitHub CLI access.
 - Broader wrapper consolidation can be considered later as a separate low-risk refactor ticket if the owner wants fewer route-facing idioms.
 - Public launch remains `NO_GO` until X7/operator evidence and remaining launch blockers are completed.
 
