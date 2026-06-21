@@ -6,8 +6,18 @@ import { Mail, Users, Send, AlertCircle, MessageSquare, Shield } from "@/app/com
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
+type EmailDiagnosticsStatus = {
+    provider: string;
+    webhooks: {
+        status: "UNVERIFIED";
+        label: string;
+        message: string;
+    };
+};
+
 export function EmailDashboard() {
     const [stats, setStats] = useState<any>(null);
+    const [diagnosticsStatus, setDiagnosticsStatus] = useState<EmailDiagnosticsStatus | null>(null);
 
     useEffect(() => {
         // Simplified stats for now
@@ -18,7 +28,17 @@ export function EmailDashboard() {
                 setStats({ totalRecipients: total, broadcastsCount: sent, lastBroadcast: data[0] });
             }
         });
+
+        fetch("/api/admin/emails/status")
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) setDiagnosticsStatus(data);
+            })
+            .catch(() => setDiagnosticsStatus(null));
     }, []);
+
+    const webhookLabel = diagnosticsStatus?.webhooks.label || "Niezweryfikowane";
+    const webhookMessage = diagnosticsStatus?.webhooks.message || "Brak automatycznego health checku webhooków w panelu.";
 
     return (
         <div className="space-y-8">
@@ -72,17 +92,18 @@ export function EmailDashboard() {
                             <Shield className="w-5 h-5 text-amber-500" /> Status silnika
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-3">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-neutral-400">Dostawca</span>
-                            <span className="font-bold">Resend</span>
+                            <span className="font-bold">{diagnosticsStatus?.provider || "Resend"}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-neutral-400">Webhooki</span>
-                            <span className="text-green-400 font-bold flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Aktywne
+                            <span className="text-amber-300 font-bold flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" /> {webhookLabel}
                             </span>
                         </div>
+                        <p className="text-xs text-neutral-400 italic leading-relaxed">{webhookMessage}</p>
                     </CardContent>
                 </Card>
             </div>
