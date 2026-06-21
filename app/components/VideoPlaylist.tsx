@@ -35,7 +35,7 @@ interface VideoPlaylistProps {
   isPatron?: boolean;
 }
 
-const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, isPatron = false }) => {
+const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
@@ -253,7 +253,6 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId, is
           onSupport={onSupport}
           onOpenRegulamin={() => setIsRegulaminOpen(true)}
           onOpenPolityka={() => setIsPolitykaOpen(true)}
-          isPatron={isPatron}
           isInitialLoading={isInitialLoading}
         />
 
