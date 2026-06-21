@@ -28,7 +28,6 @@ interface SupportBoxProps {
   onSupport: () => void;
   onOpenRegulamin: () => void;
   onOpenPolityka: () => void;
-  isPatron?: boolean;
   isInitialLoading?: boolean;
 }
 
@@ -48,26 +47,17 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   onSupport,
   onOpenRegulamin,
   onOpenPolityka,
-  isPatron = false,
   isInitialLoading = false,
 }) => {
   if (isInitialLoading) return <SupportBoxSkeleton />;
 
   return (
-    <div className={"bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center"}>
+    <div className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center">
       <div className="space-y-4 relative z-10">
-        <h3 className={"text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2"}>
-          {isPatron ? t.donate : (language === 'pl' ? 'Wesprzyj kanał i zostań Patronem' : 'Support the channel and become a Patron')}
-          <Trophy size={32} className={"text-neutral-900"} />
+        <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2">
+          {t.donate}
+          <Trophy size={32} className="text-neutral-900" />
         </h3>
-
-        {isPatron ? null : (
-          <div className="space-y-3 text-center">
-            <p className="font-sans text-[13px] leading-relaxed text-neutral-500 whitespace-pre-wrap">
-              {language === 'pl' ? 'Przekaż dobrowolny jednorazowy napiwek. Każda udana wpłata nadaje bezterminowy status Patrona i dostęp do materiałów premium.' : 'Send a voluntary one-time tip. Every successful tip grants permanent Patron status and access to premium materials.'}
-            </p>
-          </div>
-        )}
 
         <div className="space-y-3 text-center">
           {showTermsError && (
@@ -77,15 +67,15 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           )}
 
           <div className="space-y-2 pt-2">
-            <label className={"block text-xs font-semibold uppercase tracking-wider text-neutral-400"}>
-              {isPatron ? (language === 'pl' ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})` : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`) : (language === 'pl' ? `Kwota napiwku (Min ${minAmount}.00 ${selectedCurrency})` : `Tip amount (Min ${minAmount}.00 ${selectedCurrency})`)}
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              {language === 'pl' ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})` : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`}
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 right-0 flex items-center">
                 <select
                   value={selectedCurrency}
                   onChange={(e) => onCurrencyChange(e.target.value)}
-                  className={"h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-neutral-400 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"}
+                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-neutral-400 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
                   aria-label="Select Currency"
                 >
                   {availableCurrencies.map(curr => (
@@ -102,7 +92,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 step="1"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
-                className={"w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"}
+                className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
                 placeholder={String(minAmount)}
               />
             </div>
@@ -118,7 +108,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           type="button"
           onClick={onSupport}
           disabled={isLoading || amount === '' || amount < minAmount}
-          className={"w-full h-12 uppercase tracking-wider text-sm"}
+          className="w-full h-12 uppercase tracking-wider text-sm"
           size="lg"
         >
           {isLoading ? (
@@ -139,20 +129,20 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               className="border-neutral-300"
               onCheckedChange={onTermsChange}
             />
-            <span className={"text-neutral-500 font-sans font-medium text-[10px] tracking-tight transition-colors"}>
+            <span className="text-neutral-500 font-sans font-medium text-[10px] tracking-tight transition-colors">
               {language === 'pl' ? (
                 <>
                   Akceptuję{' '}
-                  <button type="button" onClick={onOpenRegulamin} className={"underline hover:text-neutral-900"}>Regulamin</button>
+                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-neutral-900">Regulamin</button>
                   {' '}i{' '}
-                  <button type="button" onClick={onOpenPolityka} className={"underline hover:text-neutral-900"}>Politykę Prywatności</button>
+                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-neutral-900">Politykę Prywatności</button>
                 </>
               ) : (
                 <>
                   I accept the{' '}
-                  <button type="button" onClick={onOpenRegulamin} className={"underline hover:text-neutral-900"}>Terms</button>
+                  <button type="button" onClick={onOpenRegulamin} className="underline hover:text-neutral-900">Terms</button>
                   {' '}and{' '}
-                  <button type="button" onClick={onOpenPolityka} className={"underline hover:text-neutral-900"}>Privacy Policy</button>
+                  <button type="button" onClick={onOpenPolityka} className="underline hover:text-neutral-900">Privacy Policy</button>
                 </>
               )}
             </span>
