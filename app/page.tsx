@@ -2,7 +2,6 @@ import { logger } from "@/lib/logger";
 import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
-import { CreatorContentService as ContentService } from '@/lib/services/content/creator.service';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/services/user-access.service';
 import { prisma } from '@/lib/prisma';
@@ -59,6 +58,7 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
     : { mainVideo: null, allVideos: [] as PublicVideoDTO[] };
 
   let userDb = null;
+  let hasActivePatronGrant = false;
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
 
@@ -72,10 +72,14 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
       logger.error("[HOME_USER_FETCH_ERROR]", e);
     });
 
-    const [dbResult, like, dislike, sub] = await Promise.all([
+    const [dbResult, activeGrant, like, dislike, sub] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         include: { paymentTotals: true }
+      }).catch(() => null),
+      prisma.patronGrant.findFirst({
+        where: { userId, revokedAt: null },
+        select: { id: true },
       }).catch(() => null),
       targetVideoId ? prisma.videoLike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
@@ -90,6 +94,7 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
     ]);
 
     userDb = dbResult;
+    hasActivePatronGrant = Boolean(activeGrant);
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
   }
@@ -101,7 +106,8 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
     imageUrl: user?.imageUrl || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
-    isPatron: userDb?.isPatron || false,
+    // PatronGrant is the access truth; User.isPatron is only a denormalized legacy cache.
+    isPatron: userDb?.role === 'ADMIN' || hasActivePatronGrant,
     role: userDb?.role || 'USER',
     referralPoints: userDb?.referralPoints || 0,
     initialInteraction,
