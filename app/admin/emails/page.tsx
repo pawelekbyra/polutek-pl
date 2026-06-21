@@ -4,7 +4,7 @@ import Navbar from "@/app/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EmailDashboard } from "./components/EmailDashboard";
 import { TemplatesList } from "./TemplatesList";
 import { EmailTemplateEditor } from "./EmailTemplateEditor";
@@ -13,11 +13,29 @@ import { BroadcastHistory } from "./broadcast/BroadcastHistory";
 import { InboundInbox } from "./components/InboundInbox";
 import { LayoutDashboard, FileText, Send, History, MessageSquare, Settings } from "@/app/components/icons";
 
+type EmailSettingsStatus = {
+  audience: {
+    configured: boolean;
+  };
+};
+
 export default function AdminEmailsPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [isCreatingBroadcast, setIsCreatingBroadcast] = useState(false);
   const [broadcastHistoryRefreshToken, setBroadcastHistoryRefreshToken] = useState(0);
+  const [settingsStatus, setSettingsStatus] = useState<EmailSettingsStatus | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== "settings") return;
+
+    fetch("/api/admin/emails/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setSettingsStatus(data);
+      })
+      .catch(() => setSettingsStatus(null));
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-neutral-50 text-foreground pb-20">
@@ -110,10 +128,17 @@ export default function AdminEmailsPage() {
                             <CardTitle>Konfiguracja Resend</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="p-4 bg-neutral-100 rounded-lg text-sm font-mono break-all">
-                                {process.env.RESEND_AUDIENCE_ID || 'RESEND_AUDIENCE_ID not set'}
+                            <div className="p-4 bg-neutral-100 rounded-lg text-sm">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Audience ID</p>
+                                <p className="font-bold text-neutral-900">
+                                    {settingsStatus
+                                        ? settingsStatus.audience.configured
+                                            ? "Skonfigurowane po stronie serwera"
+                                            : "Nie skonfigurowano po stronie serwera"
+                                        : "Sprawdzanie konfiguracji..."}
+                                </p>
                             </div>
-                            <p className="text-xs text-neutral-500 italic">Wszystkie kontakty są automatycznie synchronizowane do Resend Audience przy pierwszej interakcji.</p>
+                            <p className="text-xs text-neutral-500 italic">Panel pokazuje wyłącznie bezpieczny status konfiguracji. Nie ujawnia wartości zmiennych środowiskowych ani sekretów.</p>
                         </CardContent>
                     </Card>
                 </TabsContent>
