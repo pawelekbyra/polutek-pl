@@ -35,7 +35,7 @@ const actionCopy: Record<PatronAction, {
     buttonLabel: "Nadaj Patrona",
     title: "Potwierdź nadanie dostępu Patrona",
     description: "Ta akcja utworzy lub aktywuje uprawnienie PatronGrant dla użytkownika.",
-    effect: "Efekt dostępu: użytkownik otrzyma patron access i będzie mógł korzystać z premium playback oraz uprawnień komentowania dla patronów.",
+    effect: "Efekt dostępu: użytkownik otrzyma dostęp Patrona i będzie mógł korzystać z odtwarzania premium oraz uprawnień komentowania dla patronów.",
     confirmLabel: "Potwierdź nadanie",
     success: "Nadano status Patrona.",
     pending: "Nadaję dostęp…",
@@ -44,7 +44,7 @@ const actionCopy: Record<PatronAction, {
     buttonLabel: "Cofnij Patrona",
     title: "Potwierdź cofnięcie dostępu Patrona",
     description: "Ta akcja cofnie aktywne uprawnienie PatronGrant dla użytkownika.",
-    effect: "Efekt dostępu: użytkownik straci patron access, co może zablokować premium playback oraz uprawnienia komentowania/reagowania dla patronów.",
+    effect: "Efekt dostępu: użytkownik straci dostęp Patrona, co może zablokować odtwarzanie premium oraz uprawnienia komentowania/reagowania dla patronów.",
     confirmLabel: "Cofnij dostęp Patrona",
     success: "Cofnięto status Patrona.",
     pending: "Cofam dostęp…",
@@ -175,10 +175,10 @@ export function UserPatronActions({ userId, isPatron, onActionComplete }: UserPa
                     : "border-amber-200 bg-amber-50 text-amber-900"
                 }`}
               >
-                <p className="font-bold">Access effect before confirmation</p>
+                <p className="font-bold">Efekt dostępu przed potwierdzeniem</p>
                 <p>{currentCopy.effect}</p>
                 <p className="mt-2 text-xs">
-                  Access truth remains: exists ACTIVE PatronGrant. Payment, User.isPatron cache and newsletter/subscription are not access truth.
+                  Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant. Płatność, cache User.isPatron oraz newsletter/subskrypcja nie są źródłem prawdy dostępu.
                 </p>
               </div>
 
