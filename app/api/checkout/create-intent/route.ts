@@ -84,7 +84,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
         clientSecret: checkoutResult.data.clientSecret,
-        paymentId: checkoutResult.data.paymentId
+        paymentId: checkoutResult.data.paymentId,
+        status: checkoutResult.data.status,
+        terminal: checkoutResult.data.terminal,
     });
   } catch (error: unknown) {
     return handleApiError(error);
