@@ -631,13 +631,6 @@
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/application/record-playback-event.use-case.ts",
-      "line": 36,
-      "label": "explicit any annotation",
-      "text": "const result: Record<string, any> = {};",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/video/application/reorder-admin-videos.use-case.ts",
       "line": 16,
       "label": "explicit any annotation",

@@ -3,6 +3,10 @@ import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/reco
 import { VideoPlaybackRepository } from '@/lib/modules/video/infrastructure/video-playback.repository';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { DbClient, WriteTx } from '@/lib/modules/shared/db';
+
+type MinimalDbClient = Pick<DbClient, 'videoPlaybackSession' | 'videoPlaybackEvent' | 'videoView' | 'video'>;
+type MinimalWriteTx = Pick<WriteTx, 'videoPlaybackSession' | 'videoView' | 'video'>;
+
 import { checkVideoAccess } from '@/lib/modules/access';
 import { setNxEx } from '@/lib/rate-limit';
 import { PlaybackAccessDeniedError } from '@/lib/modules/video/domain/video.errors';
@@ -21,9 +25,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       videoView: { create: vi.fn().mockResolvedValue({}) },
       video: { update: vi.fn().mockResolvedValue({}) },
-    };
+    } as MinimalDbClient;
 
-    const result = await new VideoPlaybackRepository(db as unknown as DbClient).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: true });
     expect(db.videoPlaybackSession.updateMany).toHaveBeenCalledWith({
@@ -39,9 +43,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
       videoView: { create: vi.fn() },
       video: { update: vi.fn() },
-    };
+    } as MinimalDbClient;
 
-    const result = await new VideoPlaybackRepository(db as unknown as DbClient).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: false, skippedReason: 'SESSION_ALREADY_COUNTED' });
     expect(db.videoView.create).not.toHaveBeenCalled();
@@ -72,7 +76,7 @@ describe('recordPlaybackEventUseCase', () => {
       },
       videoView: { create: vi.fn().mockResolvedValue({}) },
       video: { update: vi.fn().mockResolvedValue({}) },
-    };
+    } as MinimalWriteTx;
 
     const prisma = {
       videoPlaybackSession: {
@@ -80,14 +84,14 @@ describe('recordPlaybackEventUseCase', () => {
         update: vi.fn().mockResolvedValue({}),
       },
       videoPlaybackEvent: { create: vi.fn().mockResolvedValue({}) },
-    };
+    } as MinimalDbClient;
 
     const ctx = createAppContext({
       actor: { type: 'guest' },
-      prisma: prisma as unknown as DbClient,
+      prisma: prisma as DbClient,
       now: () => new Date('2026-01-01T00:00:11.000Z'),
     });
-    ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx as unknown as WriteTx));
+    ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx as WriteTx));
 
     return { ctx, prisma, tx };
   };
@@ -169,6 +173,66 @@ describe('recordPlaybackEventUseCase', () => {
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
       type: 'WATCHED_10_SECONDS',
+      sessionId: 's1',
+      ipHash: 'ip1',
+      uaHash: 'ua1',
+      fingerprint: 'f1'
+    }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(PlaybackAccessDeniedError);
+      expect(result.error.statusCode).toBe(403);
+      expect(result.error.code).toBe('ACCESS_DENIED');
+      expect(result.error.message).toBe('PATRON_REQUIRED');
+    }
+    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+    expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
+    expect(tx.videoView.create).not.toHaveBeenCalled();
+    expect(tx.video.update).not.toHaveBeenCalled();
+  });
+
+
+  it('stores ACCESS_ERROR events even when playback access is denied', async () => {
+    const { ctx, prisma } = createDb();
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+    });
+
+    const result = await recordPlaybackEventUseCase({
+      videoId: 'v1',
+      type: 'ACCESS_ERROR',
+      sessionId: 's1',
+      ipHash: 'ip1',
+      uaHash: 'ua1',
+      fingerprint: 'f1',
+      errorCode: 'PATRON_REQUIRED',
+      errorMessage: 'locked'
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledTimes(1);
+    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'ACCESS_ERROR',
+        errorCode: 'PATRON_REQUIRED',
+        errorMessage: 'locked'
+      })
+    });
+    expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns PlaybackAccessDeniedError for PLAY_STARTED when access is denied', async () => {
+    const { ctx, tx, prisma } = createDb();
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
+    });
+
+    const result = await recordPlaybackEventUseCase({
+      videoId: 'v1',
+      type: 'PLAY_STARTED',
       sessionId: 's1',
       ipHash: 'ip1',
       uaHash: 'ua1',
