@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/app/hooks/useToast";
@@ -85,7 +85,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
     }));
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
