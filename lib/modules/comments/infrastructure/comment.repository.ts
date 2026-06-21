@@ -20,10 +20,13 @@ export interface CreateCommentInput {
   imageUrl?: string | null;
 }
 
+const visibleCommentStatusFilter = (includeHidden?: boolean) =>
+  includeHidden ? { not: CommentStatus.DELETED } : CommentStatus.VISIBLE;
+
 export const commentInclude = (userId?: string | null, includeHidden?: boolean) => ({
   author: { select: publicCommentAuthorSelect },
   replies: {
-    where: includeHidden ? undefined : { status: CommentStatus.VISIBLE },
+    where: { status: visibleCommentStatusFilter(includeHidden) },
     take: 3,
     orderBy: { createdAt: 'asc' as const },
     include: {
@@ -112,7 +115,7 @@ export class CommentRepository {
   }
   async findMany(options: ListCommentsOptions) {
     const { videoId, userId, sortBy, cursor, limit, includeHidden } = options;
-    const where: Prisma.CommentWhereInput = { videoId, parentId: null, status: includeHidden ? undefined : CommentStatus.VISIBLE };
+    const where: Prisma.CommentWhereInput = { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden) };
     const orderBy: Prisma.CommentOrderByWithRelationInput[] = [];
     if (sortBy === 'top') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ likesCount: 'desc' }); orderBy.push({ createdAt: 'desc' }); }
     else if (sortBy === 'oldest') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ createdAt: 'asc' }); }
@@ -120,11 +123,11 @@ export class CommentRepository {
     return await this.db.comment.findMany({ where, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy, include: commentInclude(userId, includeHidden) });
   }
   async findReplies(parentId: string, userId: string | null, includeHidden: boolean, cursor?: string, limit: number = 10) {
-    return await this.db.comment.findMany({ where: { parentId, status: includeHidden ? undefined : CommentStatus.VISIBLE }, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy: { createdAt: 'asc' }, include: { author: { select: publicCommentAuthorSelect }, reactions: userId ? { where: { userId } } : false } });
+    return await this.db.comment.findMany({ where: { parentId, status: visibleCommentStatusFilter(includeHidden) }, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy: { createdAt: 'asc' }, include: { author: { select: publicCommentAuthorSelect }, reactions: userId ? { where: { userId } } : false } });
   }
   async count(options: Partial<ListCommentsOptions>) {
     const { videoId, includeHidden } = options;
-    return await this.db.comment.count({ where: { videoId, parentId: null, status: includeHidden ? undefined : CommentStatus.VISIBLE } });
+    return await this.db.comment.count({ where: { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden) } });
   }
   async create(input: CreateCommentInput): Promise<Comment> {
     const { authorId, videoId, creatorId, text, parentId, imageUrl } = input;
