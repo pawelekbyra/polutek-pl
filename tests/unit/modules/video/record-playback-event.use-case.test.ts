@@ -21,35 +21,41 @@ vi.mock('@/lib/rate-limit', () => ({
 
 describe('VideoPlaybackRepository.recordView', () => {
   it('claims the playback session before creating VideoView and incrementing Video.views', async () => {
+    const updateSessionClaim = vi.fn().mockResolvedValue({ count: 1 });
+    const createVideoView = vi.fn().mockResolvedValue({});
+    const updateVideo = vi.fn().mockResolvedValue({});
     const db = {
-      videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-      videoView: { create: vi.fn().mockResolvedValue({}) },
-      video: { update: vi.fn().mockResolvedValue({}) },
+      videoPlaybackSession: { updateMany: updateSessionClaim },
+      videoView: { create: createVideoView },
+      video: { update: updateVideo },
     } as MinimalDbClient;
 
     const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: true });
-    expect(db.videoPlaybackSession.updateMany).toHaveBeenCalledWith({
+    expect(updateSessionClaim).toHaveBeenCalledWith({
       where: { id: 's1', countedAsView: false },
       data: { countedAsView: true },
     });
-    expect(db.videoView.create).toHaveBeenCalledTimes(1);
-    expect(db.video.update).toHaveBeenCalledTimes(1);
+    expect(createVideoView).toHaveBeenCalledTimes(1);
+    expect(updateVideo).toHaveBeenCalledTimes(1);
   });
 
   it('is idempotent when a duplicate playback session claim has already been counted', async () => {
+    const updateSessionClaim = vi.fn().mockResolvedValue({ count: 0 });
+    const createVideoView = vi.fn();
+    const updateVideo = vi.fn();
     const db = {
-      videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
-      videoView: { create: vi.fn() },
-      video: { update: vi.fn() },
+      videoPlaybackSession: { updateMany: updateSessionClaim },
+      videoView: { create: createVideoView },
+      video: { update: updateVideo },
     } as MinimalDbClient;
 
     const result = await new VideoPlaybackRepository(db as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: false, skippedReason: 'SESSION_ALREADY_COUNTED' });
-    expect(db.videoView.create).not.toHaveBeenCalled();
-    expect(db.video.update).not.toHaveBeenCalled();
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
   });
 });
 
@@ -70,20 +76,27 @@ describe('recordPlaybackEventUseCase', () => {
   });
 
   const createDb = (session = createSession(), claimCount = 1) => {
+    const updateSessionClaim = vi.fn().mockResolvedValue({ count: claimCount });
+    const createVideoView = vi.fn().mockResolvedValue({});
+    const updateVideo = vi.fn().mockResolvedValue({});
+    const findSession = vi.fn().mockResolvedValue(session);
+    const updateSession = vi.fn().mockResolvedValue({});
+    const createPlaybackEvent = vi.fn().mockResolvedValue({});
+
     const tx = {
       videoPlaybackSession: {
-        updateMany: vi.fn().mockResolvedValue({ count: claimCount }),
+        updateMany: updateSessionClaim,
       },
-      videoView: { create: vi.fn().mockResolvedValue({}) },
-      video: { update: vi.fn().mockResolvedValue({}) },
+      videoView: { create: createVideoView },
+      video: { update: updateVideo },
     } as MinimalWriteTx;
 
     const prisma = {
       videoPlaybackSession: {
-        findUnique: vi.fn().mockResolvedValue(session),
-        update: vi.fn().mockResolvedValue({}),
+        findUnique: findSession,
+        update: updateSession,
       },
-      videoPlaybackEvent: { create: vi.fn().mockResolvedValue({}) },
+      videoPlaybackEvent: { create: createPlaybackEvent },
     } as MinimalDbClient;
 
     const ctx = createAppContext({
@@ -93,7 +106,14 @@ describe('recordPlaybackEventUseCase', () => {
     });
     ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx as WriteTx));
 
-    return { ctx, prisma, tx };
+    return {
+      ctx,
+      tx,
+      updateSessionClaim,
+      createVideoView,
+      updateVideo,
+      createPlaybackEvent,
+    };
   };
 
   beforeEach(() => {
@@ -103,7 +123,7 @@ describe('recordPlaybackEventUseCase', () => {
   });
 
   it('counts one view for WATCHED_10_SECONDS with a valid session', async () => {
-    const { ctx, tx } = createDb();
+    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb();
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
@@ -116,19 +136,19 @@ describe('recordPlaybackEventUseCase', () => {
 
     expect(result.ok).toBe(true);
     expect(ctx.db.writeTransaction).toHaveBeenCalledTimes(1);
-    expect(tx.videoPlaybackSession.updateMany).toHaveBeenCalledWith({
+    expect(updateSessionClaim).toHaveBeenCalledWith({
       where: { id: 's1', countedAsView: false },
       data: { countedAsView: true },
     });
-    expect(tx.videoView.create).toHaveBeenCalledTimes(1);
-    expect(tx.video.update).toHaveBeenCalledWith({
+    expect(createVideoView).toHaveBeenCalledTimes(1);
+    expect(updateVideo).toHaveBeenCalledWith({
       where: { id: 'v1' },
       data: { views: { increment: 1 } },
     });
   });
 
   it('does not increment twice when a duplicate WATCHED_10_SECONDS cannot claim the same session', async () => {
-    const { ctx, tx } = createDb(createSession(), 0);
+    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb(createSession(), 0);
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
@@ -140,13 +160,13 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
-    expect(tx.videoPlaybackSession.updateMany).toHaveBeenCalledTimes(1);
-    expect(tx.videoView.create).not.toHaveBeenCalled();
-    expect(tx.video.update).not.toHaveBeenCalled();
+    expect(updateSessionClaim).toHaveBeenCalledTimes(1);
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
   });
 
   it('does not count admin preview sessions', async () => {
-    const { ctx, tx } = createDb(createSession({ isAdminPreview: true }));
+    const { ctx, createVideoView, updateVideo } = createDb(createSession({ isAdminPreview: true }));
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
@@ -159,12 +179,12 @@ describe('recordPlaybackEventUseCase', () => {
 
     expect(result.ok).toBe(true);
     expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
-    expect(tx.videoView.create).not.toHaveBeenCalled();
-    expect(tx.video.update).not.toHaveBeenCalled();
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
   });
 
   it('returns PlaybackAccessDeniedError and does not count when access is denied', async () => {
-    const { ctx, tx, prisma } = createDb();
+    const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
@@ -186,15 +206,14 @@ describe('recordPlaybackEventUseCase', () => {
       expect(result.error.code).toBe('ACCESS_DENIED');
       expect(result.error.message).toBe('PATRON_REQUIRED');
     }
-    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+    expect(createPlaybackEvent).not.toHaveBeenCalled();
     expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
-    expect(tx.videoView.create).not.toHaveBeenCalled();
-    expect(tx.video.update).not.toHaveBeenCalled();
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
   });
 
-
   it('stores ACCESS_ERROR events even when playback access is denied', async () => {
-    const { ctx, prisma } = createDb();
+    const { ctx, createPlaybackEvent } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
@@ -212,8 +231,8 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
-    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledTimes(1);
-    expect(prisma.videoPlaybackEvent.create).toHaveBeenCalledWith({
+    expect(createPlaybackEvent).toHaveBeenCalledTimes(1);
+    expect(createPlaybackEvent).toHaveBeenCalledWith({
       data: expect.objectContaining({
         type: 'ACCESS_ERROR',
         errorCode: 'PATRON_REQUIRED',
@@ -224,7 +243,7 @@ describe('recordPlaybackEventUseCase', () => {
   });
 
   it('returns PlaybackAccessDeniedError for PLAY_STARTED when access is denied', async () => {
-    const { ctx, tx, prisma } = createDb();
+    const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
@@ -246,14 +265,14 @@ describe('recordPlaybackEventUseCase', () => {
       expect(result.error.code).toBe('ACCESS_DENIED');
       expect(result.error.message).toBe('PATRON_REQUIRED');
     }
-    expect(prisma.videoPlaybackEvent.create).not.toHaveBeenCalled();
+    expect(createPlaybackEvent).not.toHaveBeenCalled();
     expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
-    expect(tx.videoView.create).not.toHaveBeenCalled();
-    expect(tx.video.update).not.toHaveBeenCalled();
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
   });
 
   it('does not leak sensitive Cloudflare playback metadata into stored events', async () => {
-    const { ctx, prisma } = createDb();
+    const { ctx, createPlaybackEvent } = createDb();
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
@@ -277,7 +296,7 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
-    const createArg = prisma.videoPlaybackEvent.create.mock.calls[0][0];
+    const createArg = createPlaybackEvent.mock.calls[0][0];
     expect(createArg.data.metadata).toEqual({
       eventName: 'timeupdate',
       nested: { quality: 'auto' },
