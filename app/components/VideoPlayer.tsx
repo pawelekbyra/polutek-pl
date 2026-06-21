@@ -16,6 +16,53 @@ interface VideoPlayerProps {
     variant?: 'hero' | 'thumbnail';
 }
 
+type CloudflareStreamEventName = 'play' | 'pause' | 'ended' | 'waiting' | 'playing' | 'error' | 'timeupdate';
+
+type CloudflareStreamPlayer = {
+    currentTime?: number;
+    duration?: number;
+    paused?: boolean;
+    addEventListener: (event: CloudflareStreamEventName, handler: () => void) => void;
+    removeEventListener: (event: CloudflareStreamEventName, handler: () => void) => void;
+};
+
+declare global {
+    interface Window {
+        Stream?: (iframe: HTMLIFrameElement) => CloudflareStreamPlayer;
+    }
+}
+
+function loadCloudflareStreamSdk(): Promise<(iframe: HTMLIFrameElement) => CloudflareStreamPlayer> {
+    if (typeof window === 'undefined') {
+        return Promise.reject(new Error('Cloudflare Stream SDK can only load in the browser'));
+    }
+
+    if (window.Stream) return Promise.resolve(window.Stream);
+
+    return new Promise((resolve, reject) => {
+        const src = 'https://embed.cloudflarestream.com/embed/sdk.latest.js';
+        const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+
+        const resolveWhenReady = () => {
+            if (window.Stream) resolve(window.Stream);
+            else reject(new Error('Cloudflare Stream SDK loaded without exposing window.Stream'));
+        };
+
+        if (existing) {
+            existing.addEventListener('load', resolveWhenReady, { once: true });
+            existing.addEventListener('error', () => reject(new Error('Failed to load Cloudflare Stream SDK')), { once: true });
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = resolveWhenReady;
+        script.onerror = () => reject(new Error('Failed to load Cloudflare Stream SDK'));
+        document.body.appendChild(script);
+    });
+}
+
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
@@ -25,15 +72,20 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
     const videoEmbedUrl = source?.embedUrl;
+    const normalizedKind = String(videoSourceKind || '').toLowerCase();
+    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || normalizedKind === 'cloudflare_stream';
+    const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
 
     const player = useRef<MediaPlayerInstance>(null);
+    const cloudflareIframe = useRef<HTMLIFrameElement>(null);
+    const cloudflareIsPlaying = useRef(false);
     const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const hasReached10s = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
-    const sendEvent = useCallback(async (type: string, extra = {}) => {
+    const sendEvent = useCallback(async (type: string, extra: Record<string, unknown> = {}) => {
         if (!tracking?.playbackSessionId) return;
         try {
             const res = await fetch(`/api/videos/${video.id}/playback-event`, {
@@ -66,12 +118,121 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
         const interval = setInterval(() => {
+            if (normalizedKind === 'cloudflare_stream') {
+                if (cloudflareIsPlaying.current) {
+                    sendEvent('HEARTBEAT', { provider: 'cloudflare_stream', sourceKind: 'cloudflare_stream' });
+                }
+                return;
+            }
+
             if (player.current?.paused === false) {
                 sendEvent('HEARTBEAT');
             }
         }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
         return () => clearInterval(interval);
-    }, [isMounted, tracking, sendEvent]);
+    }, [isMounted, normalizedKind, tracking, sendEvent]);
+
+    useEffect(() => {
+        if (!isMounted || normalizedKind !== 'cloudflare_stream' || !tracking?.playbackSessionId || !src) return;
+
+        let cancelled = false;
+        let cleanup: (() => void) | undefined;
+
+        const attachCloudflareTracking = async () => {
+            try {
+                const createPlayer = await loadCloudflareStreamSdk();
+                if (cancelled || !cloudflareIframe.current) return;
+
+                const cloudflarePlayer = createPlayer(cloudflareIframe.current);
+                const getTiming = () => {
+                    const currentTime = Number(cloudflarePlayer.currentTime || 0);
+                    const duration = Number(cloudflarePlayer.duration || 0);
+                    return {
+                        currentTime,
+                        duration,
+                        positionMs: Math.floor(currentTime * 1000),
+                        durationMs: Number.isFinite(duration) ? Math.floor(duration * 1000) : 0,
+                    };
+                };
+
+                const sendCloudflareEvent = (type: string, extra: Record<string, unknown> = {}) => {
+                    sendEvent(type, {
+                        provider: 'cloudflare_stream',
+                        sourceKind: 'cloudflare_stream',
+                        ...getTiming(),
+                        ...extra,
+                    });
+                };
+
+                const onPlay = () => {
+                    cloudflareIsPlaying.current = true;
+                    sendCloudflareEvent('PLAY_STARTED');
+                };
+                const onPause = () => {
+                    cloudflareIsPlaying.current = false;
+                    sendCloudflareEvent('PLAY_PAUSED');
+                };
+                const onEnded = () => {
+                    cloudflareIsPlaying.current = false;
+                    sendCloudflareEvent('ENDED');
+                };
+                const onWaiting = () => sendCloudflareEvent('BUFFERING_STARTED');
+                const onPlaying = () => {
+                    cloudflareIsPlaying.current = true;
+                    sendCloudflareEvent('BUFFERING_ENDED');
+                };
+                const onError = () => sendCloudflareEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+                const onTimeUpdate = () => {
+                    const timing = getTiming();
+
+                    if (!hasReached10s.current && timing.currentTime >= 10) {
+                        hasReached10s.current = true;
+                        sendCloudflareEvent('WATCHED_10_SECONDS', timing);
+                    }
+
+                    if (!timing.duration || timing.duration <= 0) return;
+
+                    const pct = (timing.currentTime / timing.duration) * 100;
+                    const thresholds = [
+                        { pct: 25, type: 'WATCHED_25_PERCENT' },
+                        { pct: 50, type: 'WATCHED_50_PERCENT' },
+                        { pct: 75, type: 'WATCHED_75_PERCENT' },
+                        { pct: 90, type: 'WATCHED_90_PERCENT' },
+                    ];
+
+                    for (const threshold of thresholds) {
+                        if (pct >= threshold.pct && !reachedThresholds.current[threshold.pct]) {
+                            reachedThresholds.current[threshold.pct] = true;
+                            sendCloudflareEvent(threshold.type, timing);
+                        }
+                    }
+                };
+
+                const listeners: Array<[CloudflareStreamEventName, () => void]> = [
+                    ['play', onPlay],
+                    ['pause', onPause],
+                    ['ended', onEnded],
+                    ['waiting', onWaiting],
+                    ['playing', onPlaying],
+                    ['error', onError],
+                    ['timeupdate', onTimeUpdate],
+                ];
+
+                listeners.forEach(([event, handler]) => cloudflarePlayer.addEventListener(event, handler));
+                cleanup = () => listeners.forEach(([event, handler]) => cloudflarePlayer.removeEventListener(event, handler));
+            } catch (error) {
+                console.warn('Failed to initialize Cloudflare Stream tracking', error);
+            }
+        };
+
+        attachCloudflareTracking();
+
+        return () => {
+            cancelled = true;
+            cloudflareIsPlaying.current = false;
+            cleanup?.();
+        };
+    }, [isMounted, normalizedKind, src, tracking?.playbackSessionId, sendEvent]);
 
     // Hydration guard
     if (!isMounted || isLoading) {
@@ -120,10 +281,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    const normalizedKind = String(videoSourceKind || '').toLowerCase();
-    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || normalizedKind === 'cloudflare_stream';
-    const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
-
     if (!src) {
         return (
             <PlayerStateFrame>
@@ -164,17 +321,18 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     />
                 ) : (
                     <iframe
+                        ref={cloudflareIframe}
                         key={playerKey}
                         className="h-full w-full border-0"
                         src={src}
                         title={playerConfig?.title || video.title || 'Video'}
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
                         allowFullScreen
-                        onLoad={() => sendEvent('PLAYER_READY')}
+                        onLoad={() => sendEvent('PLAYER_READY', { provider: 'cloudflare_stream', sourceKind: 'cloudflare_stream' })}
                         onError={() => {
                             setLoadError('Nie udało się załadować materiału wideo. Sprawdź dostępność źródła.');
                             setPlayerKey((k) => k + 1);
-                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED', provider: 'cloudflare_stream', sourceKind: 'cloudflare_stream' });
                         }}
                     />
                 )}
