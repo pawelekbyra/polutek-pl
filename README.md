@@ -1,59 +1,35 @@
-# Polutek.pl — Current Main Control Panel
+# Polutek.pl
 
-Status: `ACTIVE — POST-R AI DELIVERY CONTROL PLANE`
-Public launch: `NO_GO`
-
-This README is the owner-facing dashboard for current documentation reconciliation state. It is not a certification report and it does not declare public launch readiness.
-
-## Current project stage
+Polutek.pl to aktywny produkt VOD twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system patronów i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
 
 ```txt
-Implementation foundation: substantial.
-Automated CI debt: security remediation merged via #946, hotspot debt via #950, and coverage baseline debt via #953.
-Production/manual evidence: OPERATOR_PENDING.
-Legal/privacy/cookies/support copy: LEGAL_REVIEW_REQUIRED.
-Public launch: NO_GO / not certified.
+Polutek.pl is not a platform.
+Polutek.pl is a place.
 ```
 
-## Current executable ticket
+## Stan produktu po stabilizacji
 
-The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.
+- Główne fundamenty refaktoru i stabilizacji są zakończone.
+- Aplikacja jest utrzymywana jako aktywny produkt, a dalsze prace są prowadzone małymi, jawnie opisanymi zmianami.
+- Public launch i operacje produkcyjne pozostają decyzjami właściciela oraz wymagają właściwych dowodów operatora, prawnych i produkcyjnych — nie są aktywnymi blockerami dużej kolejki refaktoru.
 
-This README intentionally does not duplicate the current ticket ID. Read `docs/tickets/ready/README.md` for the exactly one current executable ticket. If another document disagrees with that queue, reconcile the control plane before assigning runtime work.
+## Aktualny stan projektu
 
-## Launch backlog
+Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), a techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md).
 
-The full non-executable map of remaining launch work is maintained in `docs/roadmap/Launch-Execution-Backlog.md`.
+## Kolejka zadań
 
-## Outstanding Production Evidence and Certification
+Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md). Po stabilizacji nie ma aktywnego dużego ticketu kodowego; nowe prace powinny być małe, jednoznaczne i zgodne z `AGENTS.md`.
 
-Merged code and tests are evidence of implementation, not evidence of public-launch readiness. Production/manual proof remains required for Vercel, Stripe, Cloudflare, backup/restore, launch smoke coverage, legal copy, compliance email runtime, and the final launch evidence pack.
+## Dokumenty kanoniczne
 
-## Governance & Masterplan
+- Zasady agentów i inwarianty produktu: [`AGENTS.md`](AGENTS.md)
+- Decyzje właściciela: [`docs/strategy/OWNER-DECISIONS.md`](docs/strategy/OWNER-DECISIONS.md)
+- Stan projektu: [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md)
+- Masterplan: [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md)
+- Backlog launch/operacji: [`docs/roadmap/Launch-Execution-Backlog.md`](docs/roadmap/Launch-Execution-Backlog.md)
+- Indeks raportów historycznych: [`docs/reports/reconciliation/README.md`](docs/reports/reconciliation/README.md)
 
-- **Bolek Operating Model:** [docs/governance/BOLEK-OPERATING-MODEL.md](docs/governance/BOLEK-OPERATING-MODEL.md)
-- **Technical Masterplan:** [docs/MASTERPLAN.md](docs/MASTERPLAN.md)
-- **Core Architecture Invariants:** [docs/architecture/CORE-INVARIANTS.md](docs/architecture/CORE-INVARIANTS.md)
+## Zachowane raporty historyczne
 
-## Canonical docs
-
-- Agent/product invariants: `AGENTS.md`
-- Owner decisions: `docs/strategy/OWNER-DECISIONS.md`
-- Current execution roadmap: `docs/roadmap/Active-Execution-Roadmap.md`
-- Owner timeline: `docs/roadmap/OWNER-TIMELINE.md`
-- Phase gates: `docs/roadmap/Phase-Gates.md`
-- Reconciliation report index: `docs/reports/reconciliation/README.md`
-- Ticket queue: `docs/tickets/ready/README.md`
-- Full launch backlog: `docs/roadmap/Launch-Execution-Backlog.md`
-
-## Source-of-truth categories
-
-- Implementation truth: current code and tests on current main.
-- Product-policy truth: explicit owner decisions, `AGENTS.md`, and `docs/strategy/OWNER-DECISIONS.md`.
-- Current execution-status truth: this owner dashboard and the canonical ticket queue.
-- Target/specification truth: `docs/specs/**`, Product Standard, phase gates, and architecture blueprint.
-- Historical evidence: PR bodies, historical reconciliation reports, audits, and closed/superseded tickets.
-
-```txt
-Target architecture != current implementation.
-```
+Historyczne raporty i tickety pozostają zachowane jako dowód wcześniejszych etapów. Nie należy przepisywać ich wyników jako obecnego runtime; należy czytać je jako historyczne evidence z daty powstania.

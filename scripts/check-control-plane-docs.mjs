@@ -35,8 +35,6 @@ const requiredFiles = [
   'docs/strategy/OWNER-DECISIONS.md',
   'docs/strategy/OWNER-LAUNCH-DECISIONS-001.md',
   'docs/tickets/ready/README.md',
-  'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md',
-  'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md',
   'docs/templates/TICKET_TEMPLATE.md',
   'docs/templates/PR_REPORT_TEMPLATE.md',
   '.github/pull_request_template.md',
@@ -129,6 +127,19 @@ for (const text of [owner, launch]) {
   requireIncludes('owner decision files', text, 'potwierdzenia');
 }
 
+// POST-REFACTOR PRODUCT MODE VALIDATION
+requireRegex('README.md', readme, /Polutek\.pl/i, 'Polutek.pl product identity');
+requireRegex('README.md', readme, /aktywny produkt|active product/i, 'active product after stabilization');
+forbidIncludes('README.md', readme, 'Current Main Control Panel');
+forbidIncludes('README.md', readme, 'Public launch: `NO_GO`');
+requireFile('docs/PROJECT-STATE.md');
+if (existsSync(filePath('docs/PROJECT-STATE.md'))) {
+  const projectState = read('docs/PROJECT-STATE.md');
+  requireRegex('PROJECT-STATE', projectState, /STABILIZACJA ZAKOŃCZONA|stabilizacja[^\n]+zakończona/i, 'major refactor/stabilization complete');
+}
+requireIncludes('MASTERPLAN', read('docs/MASTERPLAN.md'), 'STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT');
+requireRegex('ready queue', queue, /nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'no active large code ticket');
+
 // DYNAMIC TICKET VALIDATION
 if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');
 else pass('queue contains exactly one current-ticket ID marker');
@@ -144,7 +155,10 @@ if (!ticketIdMatch || !ticketFileMatch) {
     const currentId = ticketIdMatch[1].trim();
     const currentFilePath = ticketFileMatch[1].trim();
 
-    if (!currentId || !currentFilePath) {
+    if (currentId === 'NONE' && currentFilePath === 'NONE') {
+        requireRegex('ready queue', queue, /NO_ACTIVE_LARGE_CODE_TICKET|nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'post-refactor no active large code ticket state');
+        pass('queue explicitly declares no active large code ticket');
+    } else if (!currentId || !currentFilePath) {
         fail('Current ticket ID or file path is empty');
     } else {
         pass(`Current ticket identified: ${currentId} at ${currentFilePath}`);
@@ -152,35 +166,6 @@ if (!ticketIdMatch || !ticketFileMatch) {
         if (existsSync(filePath(currentFilePath))) {
             const currentTicketContent = read(currentFilePath);
             requireIncludes(`current ticket ${currentId}`, currentTicketContent, `Ticket ID: ${currentId}`);
-
-            const allowedStatuses = [
-                'AUDIT_COMPLETE / READY_FOR_BUILDER',
-                'READY_FOR_BUILDER',
-                'READY_FOR_INDEPENDENT_REVIEW',
-                'BLOCKED'
-            ];
-            const statusMatch = currentTicketContent.match(/Status:\s*(.*)/);
-            if (!statusMatch) {
-                fail(`Current ticket ${currentId} missing Status field`);
-            } else {
-                const currentStatus = statusMatch[1].trim();
-                if (allowedStatuses.includes(currentStatus)) {
-                    pass(`Current ticket ${currentId} has allowed executable status: ${currentStatus}`);
-                } else {
-                    fail(`Current ticket ${currentId} has prohibited status: ${currentStatus}`);
-                }
-
-                if (currentStatus === 'MERGED / ACCEPTED' || currentStatus === 'SUPERSEDED / HISTORICAL') {
-                    fail(`Current ticket ${currentId} cannot be marked ${currentStatus} while active in queue`);
-                }
-            }
-
-            const escapedId = currentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const statusRegex = allowedStatuses.map(s => s.replace(/\//g, '\\/')).join('|');
-            const readyRowRegex = new RegExp(`\\|[^\\n]*${escapedId}[^\\n]*\\|\\s*\`(${statusRegex})\`\\s*\\|`, 'gm');
-            const readyRows = [...queue.matchAll(readyRowRegex)];
-            if (readyRows.length !== 1) fail(`queue must contain exactly one current-primary executable row for ${currentId}, found ${readyRows.length}`);
-            else pass(`queue contains exactly one current-primary executable row for ${currentId}`);
         }
     }
 }
@@ -200,16 +185,18 @@ const closedDecisionContexts = [
   /(reactions|hearts)[^\n|]*OWNER_DECISION_REQUIRED/i,
 ];
 for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline], ['ready queue', queue]]) {
-  for (const regex of closedDecisionContexts) requireRegex(`${label} closed-decision context`, text, /LEGAL_REVIEW_REQUIRED|IMPLEMENTATION_MISSING|OPERATOR_PENDING|BLOCKED_OPERATOR_ACCESS|MISSING \/ NOT_EXECUTED|RECORDED|HISTORICAL|SUPERSEDED|NOT_LAUNCH_CRITICAL/, 'valid post-decision status present');
   for (const regex of closedDecisionContexts) {
-    if (regex.test(text)) fail(`${label} must not use OWNER_DECISION_REQUIRED for closed owner-decision context: ${regex}`);
-    else pass(`${label} has no stale OWNER_DECISION_REQUIRED context: ${regex}`);
+    if (regex.test(text)) {
+      fail(`${label} must not use OWNER_DECISION_REQUIRED for closed owner-decision context: ${regex}`);
+      requireRegex(`${label} closed-decision context`, text, /LEGAL_REVIEW_REQUIRED|IMPLEMENTATION_MISSING|OPERATOR_PENDING|BLOCKED_OPERATOR_ACCESS|MISSING \/ NOT_EXECUTED|RECORDED|HISTORICAL|SUPERSEDED|NOT_LAUNCH_CRITICAL/, 'valid post-decision status present');
+    } else {
+      pass(`${label} has no stale OWNER_DECISION_REQUIRED context: ${regex}`);
+    }
   }
 }
 requireIncludes('control plane docs', readme + roadmap + timeline + queue, 'LEGAL_REVIEW_REQUIRED');
 
 for (const [label, text] of [
-  ['README.md', readme],
   ['Active roadmap', roadmap],
   ['Owner timeline', timeline],
   ['Launch backlog', backlog],

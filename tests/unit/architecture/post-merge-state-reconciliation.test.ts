@@ -1,48 +1,64 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 describe('Post-Merge State Reconciliation Invariants', () => {
   const rootDir = process.cwd();
   const readmePath = join(rootDir, 'README.md');
+  const projectStatePath = join(rootDir, 'docs/PROJECT-STATE.md');
+  const masterplanPath = join(rootDir, 'docs/MASTERPLAN.md');
   const ticketQueuePath = join(rootDir, 'docs/tickets/ready/README.md');
+  const reportsIndexPath = join(rootDir, 'docs/reports/reconciliation/README.md');
   const guardPath = join(rootDir, 'scripts/check-architecture.ts');
 
   const readText = (path: string) => readFileSync(path, 'utf-8');
 
-  it('README identifies the current control-plane state', () => {
+  it('README presents Polutek.pl as an active product after stabilization', () => {
     const readme = readText(readmePath);
 
-    expect(readme).toContain('# Polutek.pl — Current Main Control Panel');
-    expect(readme).toContain('ACTIVE — POST-R AI DELIVERY CONTROL PLANE');
-    expect(readme).toContain('Public launch: `NO_GO`');
-    expect(readme).toContain('Implementation foundation: substantial.');
-    expect(readme).toContain('Automated CI debt: security remediation merged via #946, hotspot debt via #950, and coverage baseline debt via #953.');
-    expect(readme).toContain('Public launch: NO_GO / not certified.');
+    expect(readme).toContain('# Polutek.pl');
+    expect(readme).toContain('aktywny produkt');
+    expect(readme).toContain('zakończonej stabilizacji');
+    expect(readme).toContain('Polutek.pl is not a platform.');
+    expect(readme).toContain('Polutek.pl is a place.');
+    expect(readme).not.toContain('Current Main Control Panel');
+    expect(readme).not.toContain('Public launch: `NO_GO`');
   });
 
-  it('README points agents to canonical control-plane sources', () => {
-    const readme = readText(readmePath);
+  it('PROJECT-STATE records completed major refactor and stabilization', () => {
+    expect(existsSync(projectStatePath)).toBe(true);
+    const projectState = readText(projectStatePath);
 
-    expect(readme).toContain('AGENTS.md');
-    expect(readme).toContain('docs/strategy/OWNER-DECISIONS.md');
-    expect(readme).toContain('docs/tickets/ready/README.md');
-    expect(readme).toContain('docs/roadmap/Launch-Execution-Backlog.md');
+    expect(projectState).toContain('STABILIZACJA ZAKOŃCZONA');
+    expect(projectState).toContain('Duży refaktor i stabilizacja fundamentów produktu są zakończone.');
+    expect(projectState).toContain('aktywnego dużego ticketu kodowego');
   });
 
-  it('README delegates the current ticket pointer to the canonical queue', () => {
-    const readme = readText(readmePath);
+  it('MASTERPLAN identifies stabilized active product mode', () => {
+    const masterplan = readText(masterplanPath);
+
+    expect(masterplan).toContain('STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT');
+    expect(masterplan).toContain('Brak aktywnego dużego ticketu kodowego');
+  });
+
+  it('ready queue declares no active large code ticket', () => {
     const ticketQueue = readText(ticketQueuePath);
 
-    expect(readme).toContain('The sole canonical current-ticket pointer is maintained in `docs/tickets/ready/README.md`.');
-    expect(readme).toContain('This README intentionally does not duplicate the current ticket ID.');
-    expect(readme).toContain('docs/tickets/ready/README.md');
-    expect(readme).not.toContain('Exactly one current executable ticket:');
-    expect(readme).not.toContain('LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001');
-    expect(readme).not.toContain('OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
+    expect(ticketQueue).toContain('nie ma aktywnego dużego ticketu kodowego');
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID: NONE -->');
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: NONE -->');
+    expect(ticketQueue).toContain('NO_ACTIVE_LARGE_CODE_TICKET');
+  });
 
-    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID:');
-    expect(ticketQueue).not.toContain('Only the row above is the current-primary executable row.');
+  it('historical reports remain linked and preserved', () => {
+    const readme = readText(readmePath);
+    const projectState = readText(projectStatePath);
+    const reportsIndex = readText(reportsIndexPath);
+
+    expect(readme).toContain('docs/reports/reconciliation/README.md');
+    expect(projectState).toContain('docs/reports/reconciliation/');
+    expect(reportsIndex).toContain('POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md');
+    expect(reportsIndex).toContain('remain historical point-in-time evidence');
   });
 
   it('Architecture guard remains readable and enforces current boundary categories', () => {
