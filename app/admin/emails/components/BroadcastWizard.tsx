@@ -2,21 +2,35 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Send, Loader2, Globe, Check, Info, Users, UserAdd, Gem, Mail } from "@/app/components/icons";
+import { ArrowLeft, Send, Loader2, Check, Info, Users, UserAdd, Gem, Mail } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
 
 type BroadcastWizardProps = {
-    onBack: () => void;
+    onBack: (result?: { broadcastSent?: boolean }) => void;
 };
 
 type RecipientGroup = 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL';
+
+type RecipientGroupOption = {
+    id: RecipientGroup;
+    label: string;
+    icon: typeof Users;
+    desc: string;
+};
+
+const RECIPIENT_GROUP_OPTIONS: RecipientGroupOption[] = [
+    { id: 'ALL', label: 'Wszyscy użytkownicy', icon: Users, desc: 'Wszystkie konta, które nie są usunięte' },
+    { id: 'SUBSCRIBERS', label: 'Subskrybenci', icon: UserAdd, desc: 'Osoby obserwujące Twój kanał' },
+    { id: 'PATRONS', label: 'Patroni', icon: Gem, desc: 'Aktywni wspierający' },
+    { id: 'MANUAL', label: 'Ręczna lista', icon: Mail, desc: 'Wpisz adresy email oddzielone przecinkami' },
+];
 
 export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -37,6 +51,18 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     useEffect(() => {
         fetch("/api/admin/templates").then(res => res.json()).then(setTemplates);
     }, []);
+
+    const selectedRecipientGroup = useMemo(
+        () => RECIPIENT_GROUP_OPTIONS.find((group) => group.id === recipientGroup) ?? RECIPIENT_GROUP_OPTIONS[1],
+        [recipientGroup],
+    );
+
+    const manualRecipientCount = useMemo(() => {
+        return manualEmails
+            .split(',')
+            .map((email) => email.trim())
+            .filter(Boolean).length;
+    }, [manualEmails]);
 
     const handleTemplateSelect = (slug: string) => {
         const t = templates.find(temp => temp.slug === slug);
@@ -60,7 +86,14 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     isTest: true, testEmail
                 })
             });
-            if (res.ok) toast("Wysłano testowy e-mail", "success");
+            const data = await res.json().catch(() => null);
+            if (res.ok) {
+                toast("Wysłano testowy e-mail", "success");
+            } else {
+                toast(data?.error || "Nie udało się wysłać testowego e-maila", "error");
+            }
+        } catch {
+            toast("Nie udało się wysłać testowego e-maila", "error");
         } finally {
             setIsTesting(false);
         }
@@ -74,15 +107,17 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             const res = await fetch("/api/admin/emails/broadcast", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup })
+                body: JSON.stringify({ subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, manualEmails })
             });
             const data = await res.json();
             if (res.ok) {
                 toast(`Uruchomiono wysyłkę do ${data.recipientCount} osób`, "success");
-                onBack();
+                onBack({ broadcastSent: true });
             } else {
                 toast(data.error || "Błąd wysyłki", "error");
             }
+        } catch {
+            toast("Błąd wysyłki", "error");
         } finally {
             setIsSending(false);
         }
@@ -91,7 +126,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <Button variant="ghost" onClick={onBack} className="text-neutral-500 hover:text-neutral-900">
+                <Button variant="ghost" onClick={() => onBack()} className="text-neutral-500 hover:text-neutral-900">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Anuluj
                 </Button>
                 <div className="flex gap-2">
@@ -168,15 +203,10 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     </div>
 
                     <div className="grid gap-4">
-                        {[
-                            { id: 'ALL', label: 'Wszyscy użytkownicy', icon: Users, desc: 'Wszystkie konta, które nie są usunięte' },
-                            { id: 'SUBSCRIBERS', label: 'Subskrybenci', icon: UserAdd, desc: 'Osoby obserwujące Twój kanał' },
-                            { id: 'PATRONS', label: 'Patroni', icon: Gem, desc: 'Aktywni wspierający' },
-                            { id: 'MANUAL', label: 'Ręczna lista', icon: Mail, desc: 'Wpisz adresy email oddzielone przecinkami' },
-                        ].map((group) => (
+                        {RECIPIENT_GROUP_OPTIONS.map((group) => (
                             <button
                                 key={group.id}
-                                onClick={() => setRecipientGroup(group.id as RecipientGroup)}
+                                onClick={() => setRecipientGroup(group.id)}
                                 className={cn(
                                     "flex items-center gap-4 p-6 rounded-2xl border-2 text-left transition-all",
                                     recipientGroup === group.id ? "border-blue-600 bg-blue-50 shadow-md" : "border-neutral-100 bg-white hover:border-neutral-300"
@@ -249,18 +279,38 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     </Card>
 
                     <div className="bg-white border rounded-2xl p-6 space-y-4 shadow-sm">
-                        <div className="flex justify-between border-b pb-2">
+                        <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Odbiorcy</span>
-                            <span className="text-sm font-black">{recipientGroup}</span>
+                            <span className="text-sm font-black text-right">{selectedRecipientGroup.label}</span>
                         </div>
-                        <div className="flex justify-between border-b pb-2">
+                        {recipientGroup === 'MANUAL' && (
+                            <div className="flex justify-between border-b pb-2 gap-4">
+                                <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Liczba ręcznych adresów</span>
+                                <span className="text-sm font-black text-right">{manualRecipientCount}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Temat PL</span>
-                            <span className="text-sm font-medium">{subjectPl}</span>
+                            <span className="text-sm font-medium text-right">{subjectPl}</span>
                         </div>
-                        <div className="flex justify-between border-b pb-2">
+                        <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Temat EN</span>
-                            <span className="text-sm font-medium">{subjectEn || '(Brak)'}</span>
+                            <span className="text-sm font-medium text-right">{subjectEn || '(Brak)'}</span>
                         </div>
+                        <div className="space-y-2">
+                            <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML PL</span>
+                            <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
+                                <div dangerouslySetInnerHTML={{ __html: htmlPl }} />
+                            </div>
+                        </div>
+                        {htmlEn && (
+                            <div className="space-y-2">
+                                <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML EN</span>
+                                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
+                                    <div dangerouslySetInnerHTML={{ __html: htmlEn }} />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-between pt-6 border-t">
