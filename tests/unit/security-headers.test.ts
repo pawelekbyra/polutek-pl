@@ -41,6 +41,15 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://upload.cloudflarestream.com');
   });
 
+  it('allows playback provider frames in frame-src', () => {
+    const csp = generateCSP();
+
+    expect(csp).toContain('frame-src');
+    expect(csp).toContain('https://iframe.videodelivery.net');
+    expect(csp).toContain('https://www.youtube-nocookie.com');
+    expect(csp).toContain('https://player.vimeo.com');
+  });
+
   it('includes allowed image hosts in img-src', () => {
     process.env.ALLOWED_COMMENT_IMAGE_HOSTS = 'user-images.example.com';
 
