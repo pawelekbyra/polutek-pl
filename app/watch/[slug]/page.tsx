@@ -50,8 +50,12 @@ async function getPublishedVideoBySlug(slug: string): Promise<PublicVideoDTO | n
           id: true,
           name: true,
           slug: true,
-          imageUrl: true,
           subscribersCount: true,
+          user: {
+            select: {
+              imageUrl: true,
+            },
+          },
         },
       },
     },
@@ -77,7 +81,13 @@ async function getPublishedVideoBySlug(slug: string): Promise<PublicVideoDTO | n
     isMainFeatured: video.isMainFeatured,
     sidebarOrder: video.sidebarOrder,
     publishedAt: video.publishedAt,
-    creator: video.creator,
+    creator: {
+      id: video.creator.id,
+      name: video.creator.name,
+      slug: video.creator.slug,
+      imageUrl: video.creator.user.imageUrl,
+      subscribersCount: video.creator.subscribersCount,
+    },
   };
 }
 
