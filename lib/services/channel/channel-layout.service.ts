@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
+import { AccessTier, VideoStatus } from '@prisma/client';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
@@ -33,18 +33,21 @@ export type SidebarSection = {
 export class ChannelLayoutService {
     static async getSidebarLayout(userId: string | null, currentVideoId?: string) {
         let viewerState: SidebarViewerState = "ANONYMOUS";
-        let isPatron = false;
 
         if (userId) {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { role: true, isPatron: true }
+                select: {
+                    role: true,
+                    patronGrants: {
+                        where: { revokedAt: null },
+                        select: { id: true },
+                        take: 1,
+                    },
+                },
             });
             if (user?.role === 'ADMIN') viewerState = "ADMIN";
-            else if (user?.isPatron) {
-                viewerState = "PATRON";
-                isPatron = true;
-            }
+            else if ((user?.patronGrants?.length ?? 0) > 0) viewerState = "PATRON";
             else viewerState = "LOGGED_IN";
         }
 
