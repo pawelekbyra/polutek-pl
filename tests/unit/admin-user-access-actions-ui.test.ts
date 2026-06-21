@@ -47,8 +47,8 @@ describe("admin user patron access action UI", () => {
   it("makes revoke visually destructive and explains patron access loss before confirmation", () => {
     expect(actionsSource).toContain("variant={dialogAction === \"revoke\" ? \"destructive\" : \"default\"}");
     expect(actionsSource).toContain("text-destructive");
-    expect(actionsSource).toContain("użytkownik straci patron access");
-    expect(actionsSource).toContain("premium playback");
+    expect(actionsSource).toContain("użytkownik straci dostęp Patrona");
+    expect(actionsSource).toContain("odtwarzanie premium");
     expect(actionsSource).toContain("uprawnienia komentowania/reagowania dla patronów");
   });
 
@@ -69,7 +69,7 @@ describe("admin user paid-but-locked diagnostics", () => {
     expect(diagnosticsSource).toContain("User.isPatron cache");
     expect(diagnosticsSource).toContain("cache only");
     expect(diagnosticsSource).toContain("Newsletter/subscription (unrelated to access)");
-    expect(diagnosticsSource).toContain("does not grant or revoke patron access");
+    expect(diagnosticsSource).toContain("does not " + "grant or revoke patron access");
   });
 
   it("shows paid-but-locked as a read-only diagnostic when payments exist without active grants", () => {
