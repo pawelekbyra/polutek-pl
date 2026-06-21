@@ -97,6 +97,84 @@ function countHighCritical(report) {
   return { high, critical };
 }
 
+function formatFixAvailable(fixAvailable) {
+  if (fixAvailable === true) return 'true';
+  if (!fixAvailable) return String(fixAvailable ?? false);
+  if (typeof fixAvailable !== 'object') return String(fixAvailable);
+  const fields = [
+    fixAvailable.name ? `name=${fixAvailable.name}` : null,
+    fixAvailable.version ? `version=${fixAvailable.version}` : null,
+    typeof fixAvailable.isSemVerMajor === 'boolean' ? `isSemVerMajor=${fixAvailable.isSemVerMajor}` : null,
+  ].filter(Boolean);
+  return fields.length > 0 ? fields.join(', ') : JSON.stringify(fixAvailable);
+}
+
+function collectHighCriticalDetails(report) {
+  const details = [];
+  const vulnerabilities = report?.vulnerabilities;
+  if (vulnerabilities && typeof vulnerabilities === 'object') {
+    for (const [name, entry] of Object.entries(vulnerabilities)) {
+      const via = Array.isArray(entry?.via) ? entry.via : [];
+      const advisories = via.filter((item) => item && typeof item === 'object' && HIGH_LEVELS.has(String(item.severity ?? '').toLowerCase()));
+      const entrySeverity = String(entry?.severity ?? '').toLowerCase();
+      if (!HIGH_LEVELS.has(entrySeverity) && advisories.length === 0) continue;
+
+      const advisorySummary = advisories.length > 0
+        ? advisories.map((advisory) => {
+            const title = advisory.title ?? 'untitled advisory';
+            const severity = advisory.severity ?? 'unknown';
+            const url = advisory.url ?? 'no-url';
+            const range = advisory.range ? ` range=${advisory.range}` : '';
+            return `${title} (${severity})${range} ${url}`;
+          }).join('; ')
+        : 'no direct advisory object in via list';
+
+      details.push({
+        name,
+        severity: entry?.severity ?? 'unknown',
+        range: entry?.range ?? 'unknown',
+        nodes: Array.isArray(entry?.nodes) ? entry.nodes.join(', ') : 'unknown',
+        via: via.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean).join(', ') || 'unknown',
+        fixAvailable: formatFixAvailable(entry?.fixAvailable),
+        advisories: advisorySummary,
+      });
+    }
+  }
+
+  const advisories = report?.advisories;
+  if (advisories && typeof advisories === 'object') {
+    for (const advisory of Object.values(advisories)) {
+      const severity = String(advisory?.severity ?? '').toLowerCase();
+      if (!HIGH_LEVELS.has(severity)) continue;
+      details.push({
+        name: advisory?.module_name ?? advisory?.name ?? 'unknown',
+        severity: advisory?.severity ?? 'unknown',
+        range: advisory?.vulnerable_versions ?? advisory?.range ?? 'unknown',
+        nodes: advisory?.findings ? JSON.stringify(advisory.findings) : 'unknown',
+        via: advisory?.title ?? 'unknown',
+        fixAvailable: advisory?.patched_versions ?? 'unknown',
+        advisories: `${advisory?.title ?? 'untitled advisory'} ${advisory?.url ?? 'no-url'}`,
+      });
+    }
+  }
+
+  return details;
+}
+
+function logHighCriticalDetails(report) {
+  const details = collectHighCriticalDetails(report);
+  if (details.length === 0) {
+    console.error('[audit:high] No detailed high/critical vulnerability entries were found in the parseable report.');
+    console.error(`[audit:high] Full report metadata: ${JSON.stringify(report?.metadata?.vulnerabilities ?? {}, null, 2)}`);
+    return;
+  }
+
+  console.error('[audit:high] High/critical vulnerability details:');
+  for (const detail of details) {
+    console.error(`[audit:high] - package=${detail.name}; severity=${detail.severity}; range=${detail.range}; nodes=${detail.nodes}; via=${detail.via}; fixAvailable=${detail.fixAvailable}; advisories=${detail.advisories}`);
+  }
+}
+
 function isEnvironmentLimited(text) {
   return ENV_PATTERNS.some((pattern) => pattern.test(text));
 }
@@ -111,6 +189,7 @@ function evaluate(result, label) {
     const { high, critical } = countHighCritical(report);
     if (high > 0 || critical > 0) {
       console.error(`[audit:high] ${label} reported high/critical issues: high=${high}, critical=${critical}.`);
+      logHighCriticalDetails(report);
       return 1;
     }
     if (result.status === 0 || isEnvironmentLimited(combined)) {
