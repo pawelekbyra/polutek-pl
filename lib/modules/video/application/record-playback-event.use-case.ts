@@ -65,7 +65,7 @@ function sanitizePlaybackMetadataValue(value: unknown, depth = 0): SanitizedPlay
 function sanitizePlaybackMetadata(metadata: unknown, depth = 0): Record<string, SanitizedPlaybackMetadataValue> | undefined {
   if (!isMetadataRecord(metadata)) return undefined;
 
-  const result: Record<string, SanitizedPlaybackMetadataValue> = {};
+  const result: Record<string, any> = {};
   const allowedKeys = Object.keys(metadata)
     .filter(key => !isForbiddenMetadataKey(key))
     .slice(0, 20);
