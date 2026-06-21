@@ -328,6 +328,16 @@ function createHarness() {
         if (data.totalWatchMs?.increment) session.totalWatchMs += data.totalWatchMs.increment;
         Object.assign(session, Object.fromEntries(Object.entries(data).filter(([_, value]) => typeof value !== 'object')));
       }),
+      updateMany: vi.fn(async ({ where, data }) => {
+        let count = 0;
+        for (const session of state.sessions) {
+          if (where.id !== undefined && session.id !== where.id) continue;
+          if (where.countedAsView !== undefined && session.countedAsView !== where.countedAsView) continue;
+          Object.assign(session, data);
+          count += 1;
+        }
+        return { count };
+      }),
     },
     videoPlaybackEvent: {
       create: vi.fn(async ({ data }) => {
