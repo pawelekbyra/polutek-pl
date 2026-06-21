@@ -51,7 +51,10 @@ export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Cr
 // seeded canonical slug as a safe production fallback so missing Vercel env does
 // not break the public home page or admin video list at runtime.
 export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'polutek.pl';
+const configuredAppName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
+export const APP_NAME = !configuredAppName || configuredAppName.toLowerCase() === 'polutek.pl'
+  ? 'Polutek.pl'
+  : configuredAppName;
 export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL
   ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase().replace(/^(WWW\.)+/, '')
   : 'POLUTEK.PL';
