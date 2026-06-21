@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/record-playback-event.use-case';
 import { VideoPlaybackRepository } from '@/lib/modules/video/infrastructure/video-playback.repository';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { DbClient, WriteTx } from '@/lib/modules/shared/db';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { setNxEx } from '@/lib/rate-limit';
 import { PlaybackAccessDeniedError } from '@/lib/modules/video/domain/video.errors';
@@ -20,9 +21,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       videoView: { create: vi.fn().mockResolvedValue({}) },
       video: { update: vi.fn().mockResolvedValue({}) },
-    } as any;
+    };
 
-    const result = await new VideoPlaybackRepository(db).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as unknown as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: true });
     expect(db.videoPlaybackSession.updateMany).toHaveBeenCalledWith({
@@ -38,9 +39,9 @@ describe('VideoPlaybackRepository.recordView', () => {
       videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
       videoView: { create: vi.fn() },
       video: { update: vi.fn() },
-    } as any;
+    };
 
-    const result = await new VideoPlaybackRepository(db).recordView('v1', 's1', null, 'ip1');
+    const result = await new VideoPlaybackRepository(db as unknown as DbClient).recordView('v1', 's1', null, 'ip1');
 
     expect(result).toEqual({ counted: false, skippedReason: 'SESSION_ALREADY_COUNTED' });
     expect(db.videoView.create).not.toHaveBeenCalled();
@@ -71,7 +72,7 @@ describe('recordPlaybackEventUseCase', () => {
       },
       videoView: { create: vi.fn().mockResolvedValue({}) },
       video: { update: vi.fn().mockResolvedValue({}) },
-    } as any;
+    };
 
     const prisma = {
       videoPlaybackSession: {
@@ -79,22 +80,22 @@ describe('recordPlaybackEventUseCase', () => {
         update: vi.fn().mockResolvedValue({}),
       },
       videoPlaybackEvent: { create: vi.fn().mockResolvedValue({}) },
-    } as any;
+    };
 
     const ctx = createAppContext({
       actor: { type: 'guest' },
-      prisma,
+      prisma: prisma as unknown as DbClient,
       now: () => new Date('2026-01-01T00:00:11.000Z'),
     });
-    ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx));
+    ctx.db.writeTransaction = vi.fn(async (fn) => fn(tx as unknown as WriteTx));
 
     return { ctx, prisma, tx };
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
-    (setNxEx as any).mockResolvedValue(true);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } });
+    vi.mocked(setNxEx).mockResolvedValue(true);
   });
 
   it('counts one view for WATCHED_10_SECONDS with a valid session', async () => {
@@ -160,7 +161,7 @@ describe('recordPlaybackEventUseCase', () => {
 
   it('returns PlaybackAccessDeniedError and does not count when access is denied', async () => {
     const { ctx, tx, prisma } = createDb();
-    (checkVideoAccess as any).mockResolvedValue({
+    vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: false, reason: 'PATRON_REQUIRED' }
     });
