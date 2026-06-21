@@ -610,13 +610,6 @@
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/application/provision-cloudflare-upload.use-case.ts",
-      "line": 57,
-      "label": "explicit any annotation",
-      "text": "const asset = await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/video/application/publish-admin-video.use-case.ts",
       "line": 32,
       "label": "explicit any annotation",
@@ -685,34 +678,6 @@
       "label": "explicit any annotation",
       "text": "metadata?: any;",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 10,
-      "label": "explicit any annotation",
-      "text": "errors: any[];",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 11,
-      "label": "explicit any annotation",
-      "text": "messages: any[];",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 19,
-      "label": "explicit any annotation",
-      "text": "errors: any[];",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/infrastructure/cloudflare-stream.client.ts",
-      "line": 20,
-      "label": "explicit any annotation",
-      "text": "messages: any[];",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/services/content/video.service.ts",
