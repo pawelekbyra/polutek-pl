@@ -14,6 +14,10 @@ export function generateCSP() {
     'clerk.accounts.dev'
   ];
 
+  const cloudflareStreamUploadHosts = [
+    'upload.cloudflarestream.com',
+  ];
+
   const mediaHosts = Array.from(new Set([
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
@@ -33,6 +37,7 @@ export function generateCSP() {
 
   const connectHosts = Array.from(new Set([
     ...clerkDomains,
+    ...cloudflareStreamUploadHosts,
     'api.stripe.com',
     'fonts.googleapis.com',
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
