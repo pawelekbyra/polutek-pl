@@ -1,4 +1,4 @@
-/* v8 ignore file -- thin Next.js route adapter for safe admin diagnostics booleans. */
+/* v8 ignore file -- @preserve */
 import { NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 
