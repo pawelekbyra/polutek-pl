@@ -5,6 +5,18 @@ import { logger } from "@/lib/logger";
 import { CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA } from "./video-utils";
 
+function readVideoLoadError(data: unknown) {
+  if (data && typeof data === "object") {
+    const record = data as { error?: unknown; message?: unknown };
+    const message = typeof record.error === "string" ? record.error : record.message;
+    if (typeof message === "string" && message.trim()) {
+      return `Nie udało się pobrać listy filmów: ${message}`;
+    }
+  }
+
+  return "Nie udało się pobrać listy filmów z powodu błędu serwera.";
+}
+
 export function useAdminVideos(isAdmin: boolean) {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -59,17 +71,29 @@ export function useAdminVideos(isAdmin: boolean) {
       if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
       if (needsAttention) url += `&needsAttention=true`;
 
-      const res = await fetch(url);
-      const data = await res.json();
+      const res = await fetch(url, { cache: "no-store" });
+      const data = await res.json().catch(() => null);
       if (res.ok) {
         setVideos(data.items);
         setTotal(data.total);
         setPage(data.page);
         setTotalPages(data.totalPages);
         setStats(data.stats);
+        setError(null);
+        return { ok: true as const };
       }
+
+      if (res.status === 401 || res.status === 403) {
+        setError("Brak uprawnień administratora.");
+        return { ok: false as const, kind: "auth" as const };
+      }
+
+      setError(readVideoLoadError(data));
+      return { ok: false as const, kind: "load" as const };
     } catch (err) {
       logger.error("Failed to fetch videos", err);
+      setError("Nie udało się pobrać listy filmów z powodu błędu połączenia z serwerem.");
+      return { ok: false as const, kind: "network" as const };
     }
   }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
 
