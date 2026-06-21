@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
+import { WriteTx } from "@/lib/modules/shared/db";
 import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.client";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
@@ -95,7 +96,7 @@ async function persistProvisionedAsset(input: {
   contentType?: string;
   auditAction: string;
 }) {
-  return await (input.ctx.prisma as any).$transaction(async (tx: any) => {
+  return await input.ctx.db.writeTransaction(async (tx: WriteTx) => {
     const upserted = await input.repository.updateVideoAsset(input.videoId, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId: input.providerAssetId,
