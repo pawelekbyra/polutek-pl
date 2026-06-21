@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Globe, Info, Plus, Check, Shield } from "@/app/components/icons";
+import { sanitizeEmailPreviewHtml } from "./sanitizeEmailPreviewHtml";
 
 type EmailTemplateEditorProps = {
   templateSlug: string;
@@ -86,6 +87,16 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       .replaceAll("{{appUrl}}", "https://polutek.pl")
       .replaceAll("{{unsubscribeLink}}", "#");
   }, [htmlEn]);
+
+  const sanitizedPreviewHtml = useMemo(
+    () => sanitizeEmailPreviewHtml(previewHtml),
+    [previewHtml],
+  );
+
+  const sanitizedPreviewHtmlEn = useMemo(
+    () => sanitizeEmailPreviewHtml(previewHtmlEn),
+    [previewHtmlEn],
+  );
 
   async function handleSave() {
     setStatus("saving");
@@ -217,7 +228,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                                 </CardHeader>
                                 <CardContent>
                                     <div className="min-h-[400px] overflow-auto rounded-lg border bg-white p-4 shadow-inner text-black">
-                                        <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                                        <div dangerouslySetInnerHTML={{ __html: sanitizedPreviewHtml }} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -255,7 +266,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                                 </CardHeader>
                                 <CardContent>
                                     <div className="min-h-[400px] overflow-auto rounded-lg border bg-white p-4 shadow-inner text-black">
-                                        <div dangerouslySetInnerHTML={{ __html: previewHtmlEn }} />
+                                        <div dangerouslySetInnerHTML={{ __html: sanitizedPreviewHtmlEn }} />
                                     </div>
                                 </CardContent>
                             </Card>
