@@ -31,6 +31,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const hasReached10s = useRef(false);
+    const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
     const sendEvent = useCallback(async (type: string, extra = {}) => {
@@ -58,6 +59,28 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
             console.warn("Failed to send playback event", type, e);
         }
     }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
+
+    const clearCloudflareViewFallback = useCallback(() => {
+        if (cloudflareViewFallbackTimer.current) {
+            clearTimeout(cloudflareViewFallbackTimer.current);
+            cloudflareViewFallbackTimer.current = null;
+        }
+    }, []);
+
+    const sendWatched10Seconds = useCallback(() => {
+        if (hasReached10s.current) return;
+        hasReached10s.current = true;
+        sendEvent('WATCHED_10_SECONDS', { positionMs: 10000 });
+    }, [sendEvent]);
+
+    const scheduleCloudflareViewFallback = useCallback(() => {
+        clearCloudflareViewFallback();
+        cloudflareViewFallbackTimer.current = setTimeout(sendWatched10Seconds, 10000);
+    }, [clearCloudflareViewFallback, sendWatched10Seconds]);
+
+    useEffect(() => {
+        return clearCloudflareViewFallback;
+    }, [clearCloudflareViewFallback, playerKey, tracking?.playbackSessionId]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -157,6 +180,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     <PlayerErrorOverlay
                         errorCode="MEDIA_LOAD_FAILED"
                         onRetry={() => {
+                            clearCloudflareViewFallback();
                             setLoadError(null);
                             refreshPlaybackPlan?.();
                         }}
@@ -170,8 +194,12 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         title={playerConfig?.title || video.title || 'Video'}
                         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
                         allowFullScreen
-                        onLoad={() => sendEvent('PLAYER_READY')}
+                        onLoad={() => {
+                            sendEvent('PLAYER_READY');
+                            scheduleCloudflareViewFallback();
+                        }}
                         onError={() => {
+                            clearCloudflareViewFallback();
                             setLoadError('Nie udało się załadować materiału wideo. Sprawdź dostępność źródła.');
                             setPlayerKey((k) => k + 1);
                             sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
