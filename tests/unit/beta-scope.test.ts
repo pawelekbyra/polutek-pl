@@ -13,6 +13,7 @@ const allowedAppRoutes = [
   "app/admin/users/dashboard/page.tsx",
   "app/admin/users/page.tsx",
   "app/admin/users/payments/page.tsx",
+  "app/admin/videos/[id]/edit/page.tsx",
   "app/admin/videos/[id]/page.tsx",
   "app/admin/videos/layout/page.tsx",
   "app/admin/videos/page.tsx",
@@ -81,6 +82,7 @@ const allowedAppRoutes = [
   "app/polityka-prywatnosci/page.tsx",
   "app/regulamin/page.tsx",
   "app/unsubscribe/page.tsx",
+  "app/watch/[slug]/page.tsx",
 ].sort();
 
 const approvedRoutesMatchingOutOfScopeWords = new Set([
