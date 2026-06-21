@@ -17,15 +17,21 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 | ---: | --- | --- |
 | — | `NONE` | `NO_ACTIVE_LARGE_CODE_TICKET` |
 
+## Ważna zasada po stabilizacji
+
+Ten plik jest jedynym źródłem prawdy dla aktywnego ticketu. Pojedyncze stare pliki `.md` znajdujące się w tym katalogu są historyczne, jeśli nie są wskazane powyżej jako aktywne. Nie wolno używać ich jako promptów do pracy bez nowej decyzji właściciela i nowego wpisu w tej kolejce.
+
 ## Recently completed / HISTORICAL
 
-- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1004.
+- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
+- `VIDEO-VIEW-IDEMPOTENCY-001` — DONE by PR #1024.
+- `PRODUCTION-DB-MIGRATIONS-WORKFLOW` — tooling DONE by PR #1026; wykonanie migracji produkcyjnej pozostaje operator evidence.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE: restored CI signal, reconciled escapes and hotspots.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
-- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
-- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
+- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE.
+- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE.
 
 ## Historical reports preserved
 
-Historical reports remain linked from `docs/reports/reconciliation/README.md` and must stay preserved as historical evidence.
+Historyczne raporty pozostają linkowane z `docs/reports/reconciliation/README.md` i muszą być czytane jako point-in-time evidence, nie jako obecna kolejka pracy.
