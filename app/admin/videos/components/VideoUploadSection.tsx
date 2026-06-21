@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, RotateCcw, AlertCircle, CheckCircle2, Loader2, FileVideo } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
-import { readAdminApiError } from "./api-error";
 
 interface VideoUploadSectionProps {
   videoId: string;
@@ -106,33 +105,25 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
     setStatus("PROVISIONING");
     setError(null);
     try {
-      const provRes = await fetch(`/api/admin/videos/${videoId}/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, fileSize: file.size, contentType: file.type })
-      });
-      if (!provRes.ok) {
-        const errData = await provRes.json();
-        throw new Error(readAdminApiError(errData, "Failed to provision upload"));
-      }
-      const { uploadUrl } = await provRes.json();
       const tusUpload = new tus.Upload(file, {
-        endpoint: uploadUrl,
+        endpoint: `/api/admin/videos/${videoId}/upload`,
         retryDelays: [0, 3000, 5000, 10000, 20000],
-        metadata: { filename: file.name, filetype: file.type },
+        chunkSize: 150 * 1024 * 1024,
+        metadata: { filename: file.name, filetype: file.type || "application/octet-stream" },
         onError: (err) => { setError(err.message); setStatus("FAILED"); },
         onProgress: (bytesSent, total) => { setBytesUploaded(bytesSent); setBytesTotal(total); setProgress(Math.round((bytesSent / total) * 100)); },
         onSuccess: () => { setStatus("PROCESSING"); toast("Upload zakończony pomyślnie. Trwa przetwarzanie...", "success"); startPolling(); }
       });
       setUpload(tusUpload);
       setStatus("UPLOADING");
+      onUploadReady?.();
       tusUpload.start();
     } catch (err: any) {
       setError(err.message);
       setStatus("FAILED");
       toast(err.message, "error");
     }
-  }, [file, startPolling, toast, videoId]);
+  }, [file, onUploadReady, startPolling, toast, videoId]);
 
   useEffect(() => {
     if (!autoStart || autoStartedRef.current || !file || status !== "IDLE") return;
