@@ -37,7 +37,7 @@ describe("admin user patron access action UI", () => {
 
   it("blocks duplicate submission while a request is pending", () => {
     expect(actionsSource).toContain("const pendingRequestRef = useRef(false);");
-    expect(actionsSource).toContain("pendingRequestRef.current")
+    expect(actionsSource).toContain("pendingRequestRef.current");
     expect(actionsSource).toContain("pendingRequestRef.current = true;");
     expect(actionsSource).toContain("pendingRequestRef.current = false;");
     expect(actionsSource).toContain("disabled={isPending}");
@@ -64,18 +64,18 @@ describe("admin user paid-but-locked diagnostics", () => {
   it("uses active PatronGrant truth instead of cache, payment or subscription truth", () => {
     expect(pageSource).toContain("const isPatronByGrantTruth = patronTruth?.isPatron === true;");
     expect(pageSource).toContain("<AdminAccessDiagnostics user={user} formatDate={formatDate} />");
-    expect(diagnosticsSource).toContain("PatronGrant truth");
-    expect(diagnosticsSource).toContain("Payment facts (not access truth)");
-    expect(diagnosticsSource).toContain("User.isPatron cache");
-    expect(diagnosticsSource).toContain("cache only");
-    expect(diagnosticsSource).toContain("Newsletter/subscription (unrelated to access)");
-    expect(diagnosticsSource).toContain("does not " + "grant or revoke patron access");
+    expect(diagnosticsSource).toContain("Prawda dostępu PatronGrant");
+    expect(diagnosticsSource).toContain("Fakty płatności (nie prawda dostępu)");
+    expect(diagnosticsSource).toContain("Cache User.isPatron");
+    expect(diagnosticsSource).toContain("tylko cache");
+    expect(diagnosticsSource).toContain("Newsletter/subskrypcja (niezwiązane z dostępem)");
+    expect(diagnosticsSource).toContain("nie nadaje ani nie cofa dostępu Patrona");
   });
 
   it("shows paid-but-locked as a read-only diagnostic when payments exist without active grants", () => {
     expect(diagnosticsSource).toContain("const paidButLocked = hasPaymentFacts && activeGrantCount === 0;");
-    expect(diagnosticsSource).toContain("Paid-but-locked: payment facts exist, but there is no active PatronGrant");
-    expect(diagnosticsSource).toContain("support diagnostic, not automatic access");
+    expect(diagnosticsSource).toContain("Paid-but-locked: istnieją fakty płatności, ale nie ma aktywnego PatronGrant");
+    expect(diagnosticsSource).toContain("diagnostykę supportową, nie automatyczny dostęp");
     expect(diagnosticsSource).not.toContain("fetch(");
   });
 });
