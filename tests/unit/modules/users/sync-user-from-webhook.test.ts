@@ -70,18 +70,39 @@ describe('SyncUserFromWebhookUseCase', () => {
     // Note: repository.update only takes the partial data, and we don't pass isPatron to it in identity sync.
   });
 
-  it('performs soft delete correctly', async () => {
+  it('performs soft delete correctly with full anonymization', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ email: 'john@example.com' });
+
     await SyncUserFromWebhookUseCase.softDelete(ctx(), 'u1');
 
     expect(mockPrisma.patronGrant.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { userId: 'u1', revokedAt: null }
+        where: { userId: 'u1', revokedAt: null },
+        data: { revokedAt: expect.any(Date), reason: 'User deleted' }
     }));
+
     expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: 'u1' },
         data: expect.objectContaining({
             isDeleted: true,
-            isPatron: false
+            isPatron: false,
+            imageUrl: null,
+            stripeCustomerId: null,
+            patronSince: null,
+            patronSource: null,
+            name: "Usunięty Użytkownik"
         })
     }));
+
+    const updateCall = mockPrisma.user.update.mock.calls[0][0];
+    expect(updateCall.data.email).toMatch(/^deleted_.*@deleted\.com$/);
+    expect(updateCall.data.username).toMatch(/^deleted_/);
+
+    expect(EmailService.sendAccountDeletedEmail).toHaveBeenCalledWith('john@example.com');
+  });
+
+  it('guarantees that softDelete never calls hard delete on user', async () => {
+      mockPrisma.user.delete = vi.fn();
+      await SyncUserFromWebhookUseCase.softDelete(ctx(), 'u1');
+      expect(mockPrisma.user.delete).not.toHaveBeenCalled();
   });
 });
