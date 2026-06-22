@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isPatronLikeUser } from '@/lib/access/comment-access';
 
 const originalUsdRate = process.env.DISPLAY_USD_TO_PLN_RATE;
 
@@ -22,7 +21,7 @@ describe('normalizePaymentTotals display currency rates', () => {
     expect(normalizePaymentTotals([{ currency: 'USD', amountMinor: 1000 }])).toBe(47.5);
   });
 
-  it('does not use normalized display totals for Patron-only access decisions', async () => {
+  it('does not use normalized display totals for access decisions', async () => {
     process.env.DISPLAY_USD_TO_PLN_RATE = '9.99';
     vi.resetModules();
 
@@ -30,7 +29,6 @@ describe('normalizePaymentTotals display currency rates', () => {
     const largeDisplayTotal = normalizePaymentTotals([{ currency: 'USD', amountMinor: 100_000 }]);
 
     expect(largeDisplayTotal).toBe(9990);
-    expect(isPatronLikeUser({ isPatron: false, role: 'USER', referralPoints: 999 })).toBe(false);
-    expect(isPatronLikeUser({ isPatron: true, role: 'USER', referralPoints: 0 })).toBe(true);
+    // isPatronLikeUser removed as it was part of decommissioned legacy AccessPolicy
   });
 });

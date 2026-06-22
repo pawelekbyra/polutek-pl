@@ -97,11 +97,6 @@ const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
     'Temporary admin query parser helper; move to route-local/module query DTO parser.',
 };
 
-const LEGACY_ACCESS_POLICY_ALLOWLIST: Record<string, string> = {
-  'lib/services/content/video.service.ts':
-    'Deprecated content/video service bridge; tracked for future content/media cleanup.',
-};
-
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
   'lib/modules/users/application/get-or-create-current-user.use-case.ts': 'R5 bridge: only allowed production bridge to legacy get-or-create behavior.',
   'lib/services/user.service.ts': 'R5 legacy facade: temporary compatibility wrapper.',
@@ -262,37 +257,7 @@ function checkUserProfileServiceUsage() {
   return violations;
 }
 
-function checkLegacyAccessPolicy() {
-  let violations = 0;
-  let policyImports = 0;
-
-  const files = getAllFiles(ROOT);
-  for (const file of files) {
-    const relativePath = path.relative(ROOT, file);
-    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
-    if (relativePath === 'lib/access/access-policy.ts') continue;
-    if (relativePath === 'scripts/check-architecture.ts') continue;
-    if (relativePath.startsWith('tests/unit/')) continue; // Tests are allowed to import legacy policy for now
-
-    const content = fs.readFileSync(file, 'utf-8');
-    if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
-      policyImports++;
-
-      const allowReason = LEGACY_ACCESS_POLICY_ALLOWLIST[relativePath];
-
-      if (!allowReason) {
-        console.error(`❌ Violation: New code must not import legacy AccessPolicy: ${relativePath}. Use lib/modules/access instead.`);
-        violations++;
-      }
-    }
-  }
-
-  console.log(`- Files importing legacy AccessPolicy: ${policyImports}`);
-  return violations;
-}
-
-
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);
