@@ -44,11 +44,15 @@ export type AccessDecision = {
 };
 
 /**
- * @deprecated Legacy access policy.
+ * @deprecated !!! DEAD CODE / LEGACY !!!
  *
- * New video/media access decisions must go through lib/modules/access.
- * Remaining usage is limited to explicitly tracked legacy flows
- * until R3/R6 playback delivery and R8 comments/interactions are migrated.
+ * DO NOT USE FOR NEW CODE. THIS POLICY IS NO LONGER THE SOURCE OF TRUTH.
+ * It uses stale cache fields (User.isPatron) and does not respect active PatronGrants.
+ *
+ * New video/media access decisions MUST go through lib/modules/access/application/check-video-access.use-case.ts.
+ *
+ * Remaining usage is restricted to tests or strictly decorative non-access paths.
+ * All runtime access-control paths have been migrated to checkVideoAccess.
  */
 export class AccessPolicy {
   static async canViewVideo(

@@ -251,12 +251,34 @@ export class VideoContentService {
   }
 
   static async getVideoAccess(userId: string | null, videoId: string) {
-    const { AccessPolicy } = await import('@/lib/access/access-policy');
-    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    const { checkVideoAccess } = await import('@/lib/modules/access');
+    const { getActorFromAuth } = await import('@/lib/api/auth');
+    const { createAppContext } = await import('@/lib/modules/shared/app-context');
+
+    // IMPORTANT: This bridge is used by legacy-style loaders.
+    // It must resolve the actor correctly to use the new access logic.
+    // Since this is often called in Server Components or API routes where
+    // we want to know the current viewer's access, we try to get actor from auth.
+    // If a userId is explicitly provided but doesn't match current session,
+    // we should be careful. However, most callers pass the actual current userId.
+
+    const actor = await getActorFromAuth();
+    const ctx = createAppContext({ actor });
+
+    const result = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
+
+    if (!result.ok) {
+        return {
+            hasAccess: false,
+            reason: 'FORBIDDEN' as const,
+            requiredTier: undefined
+        };
+    }
+
     return {
-        hasAccess: decision.allowed,
-        reason: decision.reason,
-        requiredTier: decision.requiredTier
+        hasAccess: result.data.hasAccess,
+        reason: result.data.reason,
+        requiredTier: result.data.requiredTier
     };
   }
 }

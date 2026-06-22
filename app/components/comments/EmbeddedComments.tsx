@@ -103,8 +103,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, [propUserProfile, isSignedIn, userId, user, metadata.totalPaid, metadata.isPatron, metadata.role]);
 
   const isPatronGated = videoTier === "PATRON";
+  /**
+   * Decorative patron state for UI badges/borders.
+   * Non-authoritative for permissions (those come from viewer context).
+   */
   const isPatron = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
-  const canComment = !!userProfile && (!isPatronGated || isPatron);
   const userAvatarSeed = userProfile
     ? userProfile.username || userProfile.name || userProfile.id
     : null;
