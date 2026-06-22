@@ -97,11 +97,6 @@ const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
     'Temporary admin query parser helper; move to route-local/module query DTO parser.',
 };
 
-const LEGACY_ACCESS_POLICY_ALLOWLIST: Record<string, string> = {
-  'lib/services/content/video.service.ts':
-    'Deprecated content/video service bridge; tracked for future content/media cleanup.',
-};
-
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
   'lib/modules/users/application/get-or-create-current-user.use-case.ts': 'R5 bridge: only allowed production bridge to legacy get-or-create behavior.',
   'lib/services/user.service.ts': 'R5 legacy facade: temporary compatibility wrapper.',
@@ -262,37 +257,50 @@ function checkUserProfileServiceUsage() {
   return violations;
 }
 
-function checkLegacyAccessPolicy() {
+function checkDecommissionedAccessPolicySurface() {
   let violations = 0;
-  let policyImports = 0;
+  let foundViolations = 0;
+
+  const legacyKeywords = [
+    'lib/access/access-policy',
+    '@/lib/access/access-policy',
+    '../access/access-policy',
+    './access/access-policy',
+    'lib/access/comment-access',
+    '@/lib/access/comment-access',
+    '../access/comment-access',
+    './access/comment-access',
+    'AccessPolicy.canViewVideo',
+    'AccessPolicy.canComment',
+    'AccessPolicy.canReactToVideo',
+    'AccessPolicy.canReactToComment',
+    'isPatronLikeUser',
+    'getCommentAccessState'
+  ];
 
   const files = getAllFiles(ROOT);
   for (const file of files) {
     const relativePath = path.relative(ROOT, file);
-    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
-    if (relativePath === 'lib/access/access-policy.ts') continue;
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('.git')) continue;
+    if (relativePath.startsWith('tests/')) continue;
     if (relativePath === 'scripts/check-architecture.ts') continue;
-    if (relativePath.startsWith('tests/unit/')) continue; // Tests are allowed to import legacy policy for now
 
     const content = fs.readFileSync(file, 'utf-8');
-    if (content.includes("@/lib/access/access-policy") || content.includes("./access/access-policy")) {
-      policyImports++;
-
-      const allowReason = LEGACY_ACCESS_POLICY_ALLOWLIST[relativePath];
-
-      if (!allowReason) {
-        console.error(`❌ Violation: New code must not import legacy AccessPolicy: ${relativePath}. Use lib/modules/access instead.`);
+    for (const keyword of legacyKeywords) {
+      if (content.includes(keyword)) {
+        console.error(`❌ Violation: Reference to decommissioned legacy access surface '${keyword}' found in ${relativePath}.`);
         violations++;
+        foundViolations++;
+        break; // One violation per file is enough to log
       }
     }
   }
 
-  console.log(`- Files importing legacy AccessPolicy: ${policyImports}`);
+  console.log(`- Files with decommissioned legacy access surface references: ${foundViolations}`);
   return violations;
 }
 
-
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkLegacyAccessPolicy() + checkUserProfileServiceUsage();
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);

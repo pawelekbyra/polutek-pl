@@ -16,7 +16,7 @@ Polutek.pl is a private VOD platform built to host exclusive content and support
 
 ## Guardrails for AI Coders
 - **Strict Single-Channel**: No public multi-creator marketplace. No arbitrary creator slug pages. No client-selected creator payments. No automatic creator repair during runtime.
-- **Respect the Paywall**: Any changes to the video player, listing, or API must strictly adhere to the access control policies defined in `AccessPolicy`.
+- **Respect the Paywall**: Any changes to the video player, listing, or API must strictly adhere to the canonical access control policies in `lib/modules/access`.
 - **Media Security**: Never expose direct storage URLs (`videoUrl`) to the public frontend. Use the `PublicVideoDTO` for all public-facing data.
 - **Maintain Product Identity**: Keep the product video-first, private-channel oriented, and Patron-access oriented. It must remain a functional VOD platform.
 - **Defensive Rendering**: The UI should handle missing data (e.g., no featured video, empty database) gracefully without crashing.
