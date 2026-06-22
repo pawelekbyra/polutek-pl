@@ -257,7 +257,50 @@ function checkUserProfileServiceUsage() {
   return violations;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage();
+function checkDecommissionedAccessPolicySurface() {
+  let violations = 0;
+  let foundViolations = 0;
+
+  const legacyKeywords = [
+    'lib/access/access-policy',
+    '@/lib/access/access-policy',
+    '../access/access-policy',
+    './access/access-policy',
+    'lib/access/comment-access',
+    '@/lib/access/comment-access',
+    '../access/comment-access',
+    './access/comment-access',
+    'AccessPolicy.canViewVideo',
+    'AccessPolicy.canComment',
+    'AccessPolicy.canReactToVideo',
+    'AccessPolicy.canReactToComment',
+    'isPatronLikeUser',
+    'getCommentAccessState'
+  ];
+
+  const files = getAllFiles(ROOT);
+  for (const file of files) {
+    const relativePath = path.relative(ROOT, file);
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('.git')) continue;
+    if (relativePath.startsWith('tests/')) continue;
+    if (relativePath === 'scripts/check-architecture.ts') continue;
+
+    const content = fs.readFileSync(file, 'utf-8');
+    for (const keyword of legacyKeywords) {
+      if (content.includes(keyword)) {
+        console.error(`❌ Violation: Reference to decommissioned legacy access surface '${keyword}' found in ${relativePath}.`);
+        violations++;
+        foundViolations++;
+        break; // One violation per file is enough to log
+      }
+    }
+  }
+
+  console.log(`- Files with decommissioned legacy access surface references: ${foundViolations}`);
+  return violations;
+}
+
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);

@@ -28,6 +28,7 @@ describe('Access Policy Decommissioning Guardrails', () => {
     const violations = allSourceFiles.filter(file => {
       // Skip this test file itself and documentation if any .ts/.tsx files are there
       if (file.includes('access-policy-decommissioning.test.ts')) return false;
+      if (file.includes('scripts/check-architecture.ts')) return false;
 
       const content = fs.readFileSync(file, 'utf-8');
       return content.includes('@/lib/access/access-policy') ||
@@ -41,6 +42,7 @@ describe('Access Policy Decommissioning Guardrails', () => {
   it('no runtime file calls AccessPolicy.canViewVideo or AccessPolicy.canComment', () => {
     const violations = allSourceFiles.filter(file => {
       if (file.includes('access-policy-decommissioning.test.ts')) return false;
+      if (file.includes('scripts/check-architecture.ts')) return false;
       // Allow matches in tests/ if they are intentional (e.g. checking for absence)
       // But we want to ensure NO runtime code calls it.
       if (file.includes('tests/')) return false;
