@@ -35,4 +35,17 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain("{badge && hasAccess && (");
     expect(source).not.toContain("{badge && (");
   });
+
+  it("supports thumbnailCompact variant in overlays and wrappers", () => {
+    const overlaySource = component("app/components/AccessLockOverlay.tsx");
+    expect(overlaySource).toContain('"default" | "thumbnail" | "thumbnailCompact"');
+    expect(overlaySource).toContain('variant === "thumbnailCompact"');
+
+    const wrapperSource = component("app/components/PremiumWrapper.tsx");
+    expect(wrapperSource).toContain('"default" | "thumbnail" | "thumbnailCompact"');
+    expect(wrapperSource).toContain('variant === "thumbnail" || variant === "thumbnailCompact"');
+
+    const sidebarSource = component("app/components/channel/SidebarPlaylist.tsx");
+    expect(sidebarSource).toContain('variant="thumbnailCompact"');
+  });
 });
