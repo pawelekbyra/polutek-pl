@@ -29,6 +29,14 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain("blur-2xl");
   });
 
+  it("defines the thumbnailCompact variant", () => {
+    const source = component("app/components/AccessLockOverlay.tsx");
+
+    expect(source).toContain('| "thumbnailCompact"');
+    expect(source).toContain('variant === "thumbnailCompact"');
+    expect(source).toContain("isCompact");
+  });
+
   it("keeps ChannelVideoCard badges behind access state", () => {
     const source = component("app/components/ChannelVideoCard.tsx");
 
