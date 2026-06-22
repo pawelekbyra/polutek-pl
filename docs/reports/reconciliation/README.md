@@ -1,6 +1,6 @@
 # Reconciliation reports
 
-Status: `ACTIVE — POST-931 CI SIGNAL RESTORATION RECONCILED FOR REVIEW`
+Status: `ACTIVE — POST-1075 ACCESSPOLICY DECOMMISSIONING REPORT INDEXED`
 
 Reconciliation reports explain how current code, tests, docs, tickets and owner decisions align at a point in time. They are evidence, not certification by themselves.
 
@@ -14,6 +14,7 @@ Reconciliation reports explain how current code, tests, docs, tickets and owner 
 ## Current canonical report
 
 - Current global source-of-truth reconciliation: `docs/reports/reconciliation/POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md`.
+- Current AccessPolicy decommissioning domain reconciliation: `docs/reports/reconciliation/2026-06-23-access-policy-decommissioning.md`.
 
 ## Superseded for current-state status
 
@@ -25,6 +26,7 @@ Earlier current-main/control-plane reports, including `POST-910-CONTROL-PLANE-RE
 | --- | --- | --- |
 | Control plane / current queue | `POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md` | POST-910 and older reports are historical for current-state status. |
 | CI / quality | `POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md` | CI-SIGNAL-RESTORATION-001 is merged/accepted for visibility; SECURITY-DEPENDENCY-REMEDIATION-001 is current executable. |
+| AccessPolicy decommissioning | `2026-06-23-access-policy-decommissioning.md` | PR #1075 removed the legacy runtime surface; issue #1036 remains open for broader patron-cache/UI metadata cleanup. |
 | Admin auth | `POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md` | PR #923 PASS is incomplete after PR #929 legacy AccessPolicy repair. |
 | Admin video / Cloudflare | `POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md` | PR #926 is partial implementation, not provider/runtime verification. |
 | Admin channel | `POST-931-CI-SIGNAL-RESTORATION-RECONCILIATION.md` | Root cause remains unverified. |
