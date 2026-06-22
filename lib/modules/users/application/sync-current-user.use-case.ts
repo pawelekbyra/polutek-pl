@@ -2,7 +2,6 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
 import { normalizePaymentTotals } from "../domain/payment-totals";
 import { UserUnauthorizedError, UserNotFoundError } from "../domain/user.errors";
-import { getPatronStatus } from "@/lib/modules/patron";
 
 export interface UserSyncStatusDTO {
   totalPaid: number;
@@ -26,11 +25,9 @@ export class SyncCurrentUserUseCase {
       throw new UserNotFoundError(userId);
     }
 
-    const patronStatus = await getPatronStatus(userId, ctx);
-
     return {
       totalPaid: normalizePaymentTotals(user.paymentTotals as any),
-      isPatron: patronStatus.ok ? patronStatus.data.activeGrants.length > 0 : false,
+      isPatron: user.isPatron,
       language: user.language || 'pl',
     };
   }

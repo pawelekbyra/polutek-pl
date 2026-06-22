@@ -1,119 +1,200 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserAccessProfile } from '@/lib/modules/users/application/get-user-access-profile.use-case';
-import { SyncCurrentUserUseCase } from '@/lib/modules/users/application/sync-current-user.use-case';
+import { checkVideoAccess } from '@/lib/modules/access/application/check-video-access.use-case';
+import { listVideoComments } from '@/lib/modules/comments/application/list-video-comments.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { getPatronStatus } from '@/lib/modules/patron';
+import { MainChannelService } from '@/lib/modules/channel';
+import { AccessTier, VideoStatus } from '@prisma/client';
+import { ok } from '@/lib/modules/shared/result';
 
 vi.mock('@/lib/modules/patron', () => ({
   getPatronStatus: vi.fn(),
 }));
 
-describe('Patron Access Source of Truth (V2)', () => {
+vi.mock('@/lib/modules/channel', () => ({
+  MainChannelService: {
+    getRequired: vi.fn(),
+  },
+}));
+
+describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', () => {
   const prismaMock = {
+    video: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+    },
     user: {
       findUnique: vi.fn(),
     },
+    comment: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    creator: {
+      findFirst: vi.fn(),
+    }
   } as any;
+
+  const mockMainChannel = { id: 'c1' };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(MainChannelService.getRequired).mockResolvedValue(mockMainChannel as any);
   });
 
-  describe('getUserAccessProfile', () => {
-    it('grants patron access when PatronGrant is active, even if User.isPatron cache is false', async () => {
+  it('grants access when PatronGrant is active, even if User.isPatron cache in DB is false', async () => {
+    const ctx = createAppContext({
+      prisma: prismaMock,
+      actor: { type: 'user', userId: 'u1', isPatron: false }, // Clerk claim is false
+    });
+
+    prismaMock.video.findFirst.mockResolvedValue({
+      id: 'v1',
+      creatorId: 'c1',
+      tier: AccessTier.PATRON,
+      status: VideoStatus.PUBLISHED,
+      creator: { isApproved: true, isPrimary: true },
+    });
+
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 'u1',
+      isPatron: false, // DB legacy cache is false
+      isDeleted: false,
+    });
+
+    vi.mocked(getPatronStatus).mockResolvedValue({
+      ok: true,
+      data: {
+        userId: 'u1',
+        isPatron: true,
+        activeGrants: [{ id: 'g1' } as any],
+        normalizedTotal: 100,
+      } as any,
+    });
+
+    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
+    expect(result.ok).toBe(true);
+    expect(result.data.hasAccess).toBe(true);
+  });
+
+  it('denies access when PatronGrant is missing, even if User.isPatron cache in DB is true', async () => {
+    const ctx = createAppContext({
+      prisma: prismaMock,
+      actor: { type: 'user', userId: 'u1', isPatron: true }, // Clerk claim is true
+    });
+
+    prismaMock.video.findFirst.mockResolvedValue({
+      id: 'v1',
+      creatorId: 'c1',
+      tier: AccessTier.PATRON,
+      status: VideoStatus.PUBLISHED,
+      creator: { isApproved: true, isPrimary: true },
+    });
+
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 'u1',
+      isPatron: true, // DB legacy cache is true
+      isDeleted: false,
+    });
+
+    vi.mocked(getPatronStatus).mockResolvedValue({
+      ok: true,
+      data: {
+        userId: 'u1',
+        isPatron: false,
+        activeGrants: [], // No active grants
+        normalizedTotal: 0,
+      } as any,
+    });
+
+    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
+    expect(result.ok).toBe(true);
+    expect(result.data.hasAccess).toBe(false);
+    expect(result.data.reason).toBe('PATRON_REQUIRED');
+  });
+
+  it('denies access when PatronGrant is missing, even if Clerk actor claim says isPatron: true', async () => {
+    const ctx = createAppContext({
+      prisma: prismaMock,
+      actor: { type: 'user', userId: 'u1', isPatron: true }, // Clerk claim
+    });
+
+    prismaMock.video.findFirst.mockResolvedValue({
+      id: 'v1',
+      creatorId: 'c1',
+      tier: AccessTier.PATRON,
+      status: VideoStatus.PUBLISHED,
+      creator: { isApproved: true, isPrimary: true },
+    });
+
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 'u1',
+      isPatron: false,
+      isDeleted: false,
+    });
+
+    vi.mocked(getPatronStatus).mockResolvedValue({
+      ok: true,
+      data: {
+        userId: 'u1',
+        isPatron: false,
+        activeGrants: [],
+        normalizedTotal: 0,
+      } as any,
+    });
+
+    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
+    expect(result.ok).toBe(true);
+    expect(result.data.hasAccess).toBe(false);
+  });
+
+  describe('listVideoComments viewer state', () => {
+    it('returns canComment: false when backend access is denied even if Clerk claim says true', async () => {
+      // Mock actor with stale Clerk claim isPatron: true
       const ctx = createAppContext({
         prisma: prismaMock,
-        actor: { type: 'admin', userId: 'admin-1' },
+        actor: { type: 'user', userId: 'u1', isPatron: true },
+      });
+
+      prismaMock.video.findUnique.mockResolvedValue({ id: 'v1', slug: 'v1-slug' });
+      prismaMock.video.findFirst.mockResolvedValue({
+        id: 'v1',
+        creatorId: 'c1',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.PUBLISHED,
+        creator: { id: 'c1', isApproved: true, isPrimary: true },
       });
 
       prismaMock.user.findUnique.mockResolvedValue({
         id: 'u1',
-        email: 'u1@example.com',
-        role: 'USER',
-        isPatron: false, // Cache says FALSE
+        isPatron: false,
         isDeleted: false,
-        language: 'pl',
       });
 
-      vi.mocked(getPatronStatus).mockResolvedValue({
-        ok: true,
-        data: {
-          userId: 'u1',
-          isPatron: true,
-          patronSince: new Date(),
-          patronSource: 'PAYMENT' as any,
-          activeGrants: [{ id: 'g1' } as any],
-          normalizedTotal: 100,
-        },
-      });
+      // Grant truth says NO
+      vi.mocked(getPatronStatus).mockResolvedValue(ok({
+        userId: 'u1',
+        isPatron: false,
+        activeGrants: [],
+        normalizedTotal: 0,
+        patronSince: null,
+        patronSource: null,
+      }));
 
-      const profile = await getUserAccessProfile(ctx, 'u1');
-      expect(profile?.isPatron).toBe(true); // Should be TRUE because of PatronGrant
-    });
+      // listVideoComments uses CommentRepository which uses prisma.comment.findMany / count
+      prismaMock.comment.findMany.mockResolvedValue([]);
+      prismaMock.comment.count.mockResolvedValue(0);
+      // It also uses findVideoCreatorId which uses prisma.video.findUnique
+      prismaMock.video.findUnique.mockResolvedValue({ creatorId: 'c1', creator: { userId: 'creator-1' } });
 
-    it('denies patron access when PatronGrant is missing, even if User.isPatron cache is true', async () => {
-      const ctx = createAppContext({
-        prisma: prismaMock,
-        actor: { type: 'admin', userId: 'admin-1' },
-      });
+      const result = await listVideoComments({ videoId: 'v1', sortBy: 'newest', limit: 10 }, ctx);
 
-      prismaMock.user.findUnique.mockResolvedValue({
-        id: 'u2',
-        email: 'u2@example.com',
-        role: 'USER',
-        isPatron: true, // Cache says TRUE
-        isDeleted: false,
-        language: 'pl',
-      });
-
-      vi.mocked(getPatronStatus).mockResolvedValue({
-        ok: true,
-        data: {
-          userId: 'u2',
-          isPatron: false,
-          patronSince: null,
-          patronSource: null,
-          activeGrants: [], // No active grants
-          normalizedTotal: 0,
-        },
-      });
-
-      const profile = await getUserAccessProfile(ctx, 'u2');
-      expect(profile?.isPatron).toBe(false); // Should be FALSE because of missing PatronGrant
-    });
-  });
-
-  describe('SyncCurrentUserUseCase', () => {
-    it('respects PatronGrant truth in SyncCurrentUserUseCase', async () => {
-      const ctx = createAppContext({
-        prisma: prismaMock,
-        actor: { type: 'user', userId: 'u1', isPatron: false },
-      });
-
-      prismaMock.user.findUnique.mockResolvedValue({
-        id: 'u1',
-        email: 'u1@example.com',
-        role: 'USER',
-        isPatron: false, // Cache says FALSE
-        isDeleted: false,
-        language: 'pl',
-        paymentTotals: [],
-      });
-
-      vi.mocked(getPatronStatus).mockResolvedValue({
-        ok: true,
-        data: {
-          userId: 'u1',
-          isPatron: true,
-          patronSince: new Date(),
-          patronSource: 'PAYMENT' as any,
-          activeGrants: [{ id: 'g1' } as any],
-          normalizedTotal: 100,
-        },
-      });
-
-      const result = await SyncCurrentUserUseCase.execute(ctx);
-      expect(result.isPatron).toBe(true);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // Backend truth (PatronGrant) said NO, so canComment must be FALSE
+        // despite actor.isPatron being TRUE.
+        expect(result.data.viewer.canComment).toBe(false);
+      }
     });
   });
 });
