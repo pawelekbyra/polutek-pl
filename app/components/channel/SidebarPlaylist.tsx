@@ -104,7 +104,7 @@ export function SidebarPlaylist({
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
-            variant="thumbnail"
+            variant="thumbnailCompact"
           >
               <div className="relative w-full h-full">
                   {video.thumbnailUrl ? (
