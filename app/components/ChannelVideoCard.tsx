@@ -16,7 +16,6 @@ interface ChannelVideoCardProps {
     video: PublicVideoDTO;
     isLoggedIn: boolean;
     isPatron?: boolean;
-    referralPoints?: number;
     role?: string;
 }
 

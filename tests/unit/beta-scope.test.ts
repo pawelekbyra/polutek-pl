@@ -69,8 +69,6 @@ const allowedAppRoutes = [
   "app/api/subscriptions/unsubscribe/route.ts",
   "app/api/user/language/route.ts",
   "app/api/user/profile/route.ts",
-  "app/api/user/referrals/claim/route.ts",
-  "app/api/user/referrals/route.ts",
   "app/api/user/sync/route.ts",
   "app/api/videos/[id]/comments/route.ts",
   "app/api/videos/[id]/playback-event/route.ts",

@@ -10,12 +10,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
-import ReferralModal from './ReferralModal';
 import { loadStripe } from '@stripe/stripe-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import SupportBox from './playlist/SupportBox';
 import CheckoutModal from './playlist/CheckoutModal';
-import ReferralInfo from './playlist/ReferralInfo';
 
 
 // Modular Components
@@ -59,8 +57,6 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
   const [isMounted, setIsMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
-  const [referralData, setReferralData] = useState<{ count: number, points: number, code: string | null }>({ count: 0, points: 0, code: null });
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
   const minAmount = minimums[(selectedCurrency.toUpperCase() as SupportedCurrency)] ?? minimums.PLN;
@@ -139,26 +135,6 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
     setAmount(getSuggestedAmount(t.currency));
   }, [t.currency, getSuggestedAmount]);
 
-  useEffect(() => {
-    if (userId) {
-      const fetchReferralData = async () => {
-        try {
-          const response = await fetch(`/api/user/referrals`);
-          if (response.ok) {
-            const data = await response.json();
-            setReferralData({
-              count: data.referralCount || 0,
-              points: data.referralPoints || 0,
-              code: data.referralCode || userId
-            });
-          }
-        } catch (error) {
-          logger.error("[VideoPlaylist] Failed to fetch referral data:", error);
-        }
-      };
-      fetchReferralData();
-    }
-  }, [userId]);
 
   const handleCurrencyChange = (curr: string) => {
     setSelectedCurrency(curr);
@@ -256,20 +232,6 @@ const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) 
           isInitialLoading={isInitialLoading}
         />
 
-        <ReferralInfo
-          userId={userId}
-          onOpenReferral={() => setIsReferralModalOpen(true)}
-          openSignIn={openSignIn}
-        />
-
-        {userId && (
-          <ReferralModal
-            isOpen={isReferralModalOpen}
-            onClose={() => setIsReferralModalOpen(false)}
-            referralCode={referralData.code || userId}
-            referralPoints={referralData.points}
-          />
-        )}
 
         {isMounted && isCheckoutModalOpen && (clientSecret || isSuccess) && createPortal(
           <CheckoutModal

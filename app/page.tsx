@@ -109,7 +109,6 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
     // PatronGrant is the access truth; User.isPatron is only a denormalized legacy cache.
     isPatron: userDb?.role === 'ADMIN' || hasActivePatronGrant,
     role: userDb?.role || 'USER',
-    referralPoints: userDb?.referralPoints || 0,
     initialInteraction,
     initialIsSubscribed
   } : null;

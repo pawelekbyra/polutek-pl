@@ -202,7 +202,6 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
                 video={video}
                 isLoggedIn={!!userId}
                 isPatron={userDb?.isPatron}
-                referralPoints={userDb?.referralPoints}
                 role={userDb?.role}
               />
             ))}
