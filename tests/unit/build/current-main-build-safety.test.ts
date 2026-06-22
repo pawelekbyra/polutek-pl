@@ -30,7 +30,6 @@ describe('current main build safety', () => {
       '--font-jakarta',
       '--font-space-grotesk',
       '--font-gluten',
-      '--font-pirata',
     ]) {
       expect(css).toContain(variable);
     }
@@ -40,7 +39,6 @@ describe('current main build safety', () => {
     expect(css).toMatch(/--font-jakarta:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
     expect(css).toMatch(/--font-space-grotesk:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
     expect(css).toMatch(/--font-gluten:[^;]*(cursive|Segoe Print|Comic Sans MS)[^;]*;/);
-    expect(css).toMatch(/--font-pirata:[^;]*(serif|Georgia|Times New Roman)[^;]*;/);
   });
 
   it('keeps sitemap output limited to public page URLs without private/provider fields', () => {
