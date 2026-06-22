@@ -72,11 +72,14 @@ export default function PremiumWrapper({
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
+  const deniedState =
+    effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
+
   const checkAccess = useCallback(async () => {
     if (isLoaded && !userId && !isPublic) {
       setHasAccess(false);
       setPlaybackPlan(null);
-      setPlaybackState("LOGIN_REQUIRED");
+      setPlaybackState(deniedState);
       setFetchError(null);
       setIsLoading(false);
       return;
@@ -88,7 +91,7 @@ export default function PremiumWrapper({
       const response = await fetch(`/api/media-source/${videoId}`);
       const data = await response.json();
 
-      const nextState = getSafePlaybackState(data, !userId);
+      const nextState = getSafePlaybackState(data, !userId ? deniedState : false);
 
       if (!response.ok) {
         setHasAccess(false);
@@ -121,7 +124,7 @@ export default function PremiumWrapper({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, userId, isPublic, videoId, onAccessLoad]);
+  }, [isLoaded, userId, isPublic, videoId, onAccessLoad, deniedState]);
 
   useEffect(() => {
     checkAccess();
@@ -167,7 +170,7 @@ export default function PremiumWrapper({
     if (isLoaded && !userId && !isPublic) {
       return (
         <PlaybackPlanStateOverlay
-          state="LOGIN_REQUIRED"
+          state={deniedState}
           onRetry={checkAccess}
           variant={variant}
         />
@@ -329,9 +332,13 @@ export function getSafePlaybackState(
       })
     | null
     | undefined,
-  anonymousDenied = false,
+  anonymousDenied: PlaybackPlanStatus | boolean = false,
 ): PlaybackPlanStatus {
-  if (anonymousDenied) return "LOGIN_REQUIRED";
+  if (anonymousDenied) {
+    return typeof anonymousDenied === "string"
+      ? anonymousDenied
+      : "LOGIN_REQUIRED";
+  }
 
   const candidates = [data?.status, data?.access?.reason, data?.error];
   const state = candidates.find(
