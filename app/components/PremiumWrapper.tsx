@@ -1,7 +1,7 @@
 "use client";
 
 import { logger } from "@/lib/logger";
-import { useAuth, SignInButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import React, {
   createContext,
   useContext,
@@ -9,8 +9,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { cn } from "@/lib/utils";
-import { Gem, Lock, RefreshCcw, AlertCircle } from "./icons";
+import { RefreshCcw, AlertCircle } from "./icons";
 import type {
   PlaybackPlan,
   PlaybackPlanStatus,
@@ -18,6 +17,7 @@ import type {
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
 import { PlayerSkeleton } from "@/components/skeletons";
 import { PlayerStateFrame } from "./PlayerStateFrame";
+import AccessLockOverlay from "./AccessLockOverlay";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
@@ -370,65 +370,33 @@ function PlaybackPlanStateOverlay({
     PLAYBACK_PLAN_STATE_MESSAGES[
       safeState as Exclude<PlaybackPlanStatus, "READY">
     ];
-  const isPatronState = safeState === "PATRON_REQUIRED";
   const isThumbnail = variant === "thumbnail";
+
+  if (safeState === "LOGIN_REQUIRED" || safeState === "PATRON_REQUIRED") {
+    return <AccessLockOverlay state={safeState} variant={variant} />;
+  }
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
-      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] text-white p-6 text-center animate-in fade-in duration-500 [container-type:inline-size]">
-        <div
-          className={cn(
-            "absolute inset-0 z-0 opacity-60",
-            isPatronState
-              ? "bg-gradient-to-br from-amber-900 via-black to-amber-950"
-              : "bg-gradient-to-br from-blue-950 via-black to-neutral-950",
-          )}
-        />
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center text-white animate-in fade-in duration-500 [container-type:inline-size]">
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-950 opacity-60" />
 
         <div className="relative z-10 flex max-w-md flex-col items-center">
-          <div
-            className={cn(
-              "mb-4 flex h-16 w-16 items-center justify-center rounded-full border",
-              isPatronState
-                ? "border-amber-500/20 bg-amber-500/10"
-                : "border-white/10 bg-white/5",
-            )}
-          >
-            {isPatronState ? (
-              <Gem className="h-8 w-8 text-amber-500" />
-            ) : safeState === "LOGIN_REQUIRED" ? (
-              <Lock className="h-8 w-8 text-blue-400" />
-            ) : (
-              <AlertCircle className="h-8 w-8 text-neutral-200" />
-            )}
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <AlertCircle className="h-8 w-8 text-neutral-200" />
           </div>
 
-          <h3 className="text-[min(1.2rem,6cqi)] font-black uppercase tracking-tight mb-2">
+          <h3 className="mb-2 text-[min(1.2rem,6cqi)] font-black uppercase tracking-tight">
             {content.title}
           </h3>
 
-          <p className="text-[min(0.875rem,4cqi)] text-neutral-300 max-w-sm mb-6 leading-relaxed">
+          <p className="mb-6 max-w-sm text-[min(0.875rem,4cqi)] leading-relaxed text-neutral-300">
             {content.description}
           </p>
 
-          {content.action === "login" && (
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="rounded-full border border-white/10 bg-white/5 px-8 py-3 text-[min(11px,3cqi)] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
-              >
-                {content.actionLabel}
-              </button>
-            </SignInButton>
-          )}
-
           {content.action === "support" && (
             <a
-              href={
-                safeState === "PATRON_REQUIRED"
-                  ? "#donations"
-                  : "mailto:pawel.perfect@gmail.com?subject=Problem%20z%20dost%C4%99pem%20do%20wideo"
-              }
+              href="mailto:pawel.perfect@gmail.com?subject=Problem%20z%20dost%C4%99pem%20do%20wideo"
               className="rounded-full border border-white/10 bg-white/5 px-8 py-3 text-[min(11px,3cqi)] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
             >
               {content.actionLabel}

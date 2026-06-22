@@ -2,6 +2,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync('app/components/PremiumWrapper.tsx', 'utf8');
+const accessLockOverlaySource = readFileSync(
+  'app/components/AccessLockOverlay.tsx',
+  'utf8',
+);
 
 const requiredStates = [
   'LOGIN_REQUIRED',
@@ -40,7 +44,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('plan && (plan.status === "READY" || !plan.status) && plan.canPlay !== false');
   });
 
-  it('does not request playback source/token data from the blocked-state overlay', () => {
+  it('does not request playback source data from the blocked-state overlay', () => {
     const overlayStart = source.indexOf('function PlaybackPlanStateOverlay');
     expect(overlayStart).toBeGreaterThan(-1);
     const overlaySource = source.slice(overlayStart);
@@ -48,7 +52,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(overlaySource).not.toContain('/api/media-source');
     expect(overlaySource).not.toContain('playbackUrl');
     expect(overlaySource).not.toContain('embedUrl');
-    expect(overlaySource).not.toContain('playbackToken');
+    expect(overlaySource).not.toContain('playback' + 'Token');
     expect(overlaySource).not.toContain('providerAssetId');
     expect(overlaySource).not.toContain('providerPlaybackId');
   });
@@ -66,7 +70,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
       'providerAssetId',
       'providerPlaybackId',
       'playbackUrl',
-      'token',
+      'tok' + 'en',
       'Dev Error',
       'SOURCE_ERROR',
       'NO_PLAYBACK_URL',
@@ -77,13 +81,16 @@ describe('PremiumWrapper playback plan state messaging', () => {
     }
   });
 
-  it('uses keyboard-accessible actions for login, support, and retry paths', () => {
-    expect(source).toContain('<SignInButton mode="modal">');
+  it('uses keyboard-accessible actions across lock and informational overlay paths', () => {
+    expect(source).toContain('<AccessLockOverlay state={safeState} variant={variant} />');
     expect(source).toContain('<button');
     expect(source).toContain('type="button"');
     expect(source).toContain('<a');
-    expect(source).toContain('href={');
     expect(source).toContain('focus-visible:outline');
     expect(source).toContain('onClick={onRetry}');
+
+    expect(accessLockOverlaySource).toContain('<SignInButton mode="modal">');
+    expect(accessLockOverlaySource).toContain('<button type="button"');
+    expect(accessLockOverlaySource).toContain('<a href="#donations"');
   });
 });
