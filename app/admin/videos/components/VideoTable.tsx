@@ -74,17 +74,17 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                   </Badge>
                   {vid.publishAfterAssetReady && !vid.publishAfterAssetReadyCompletedAt && !vid.publishAfterAssetReadyError && (
                     <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-blue-500 text-blue-600 bg-blue-50 animate-pulse">
-                      PENDING AUTO-PUB
+                      AUTO-PUBLIKACJA W TOKU
                     </Badge>
                   )}
                   {vid.publishAfterAssetReadyError && (
                     <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-red-500 text-red-600 bg-red-50" title={vid.publishAfterAssetReadyError}>
-                      AUTO-PUB FAILED
+                      BŁĄD AUTO-PUBLIKACJI
                     </Badge>
                   )}
                   {vid.publishAfterAssetReadyCompletedAt && vid.status === 'PUBLISHED' && (
                     <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-green-500 text-green-600 bg-green-50">
-                      AUTO-PUBLISHED
+                      AUTO-OPUBLIKOWANO
                     </Badge>
                   )}
                 </div>
