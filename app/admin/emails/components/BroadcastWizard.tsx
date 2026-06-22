@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Send, Loader2, Check, Info, Users, UserAdd, Gem, Mail } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
-import { sanitizeEmailPreviewHtml } from "../sanitizeEmailPreviewHtml";
 
 type BroadcastWizardProps = {
     onBack: (result?: { broadcastSent?: boolean }) => void;
@@ -64,16 +63,6 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             .map((email) => email.trim())
             .filter(Boolean).length;
     }, [manualEmails]);
-
-    const sanitizedHtmlPl = useMemo(
-        () => sanitizeEmailPreviewHtml(htmlPl),
-        [htmlPl],
-    );
-
-    const sanitizedHtmlEn = useMemo(
-        () => sanitizeEmailPreviewHtml(htmlEn),
-        [htmlEn],
-    );
 
     const handleTemplateSelect = (slug: string) => {
         const t = templates.find(temp => temp.slug === slug);
@@ -311,14 +300,14 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         <div className="space-y-2">
                             <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML PL</span>
                             <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
-                                <div dangerouslySetInnerHTML={{ __html: sanitizedHtmlPl }} />
+                                <div dangerouslySetInnerHTML={{ __html: htmlPl }} />
                             </div>
                         </div>
                         {htmlEn && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML EN</span>
                                 <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
-                                    <div dangerouslySetInnerHTML={{ __html: sanitizedHtmlEn }} />
+                                    <div dangerouslySetInnerHTML={{ __html: htmlEn }} />
                                 </div>
                             </div>
                         )}

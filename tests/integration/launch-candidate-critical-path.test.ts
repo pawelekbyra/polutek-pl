@@ -643,8 +643,8 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(actionsSource).toContain('trimmedReason');
     expect(actionsSource).toContain('pendingRequestRef.current');
     expect(actionsSource).toContain('variant={dialogAction === "revoke" ? "destructive" : "default"}');
-    expect(actionsSource).toContain('użytkownik straci patron access');
-    expect(actionsSource).toContain('Access truth remains: exists ACTIVE PatronGrant');
+    expect(actionsSource).toContain('użytkownik straci dostęp Patrona');
+    expect(actionsSource).toContain('Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant');
     expect(diagnosticsSource).toContain('PatronGrant truth');
     expect(diagnosticsSource).toContain('Payment facts (not access truth)');
     expect(diagnosticsSource).toContain('User.isPatron cache');

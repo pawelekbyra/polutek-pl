@@ -232,29 +232,19 @@ export function VideoForm({
                   <SelectItem value="PATRON">Patroni</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="space-y-3 pt-3">
-                <Label>{isCreate ? "Docelowy stan po zapisie" : "Status"}</Label>
-                <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v || "DRAFT"})} disabled={isSubmitting}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Szkic</SelectItem>
-                    {isCreate ? (
+              {isCreate ? (
+                <div className="space-y-3 pt-3">
+                  <Label>Docelowy stan po zapisie</Label>
+                  <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v || "DRAFT"})} disabled={isSubmitting}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DRAFT">Szkic</SelectItem>
                       <SelectItem value="PUBLISHED">Publiczny po gotowym uploadzie</SelectItem>
-                    ) : null}
-                    {!isCreate && formData.status === "PUBLISHED" ? (
-                      <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
-                    ) : null}
-                    {!isCreate ? (
-                      <SelectItem value="ARCHIVED">Zarchiwizowany</SelectItem>
-                    ) : null}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {isCreate
-                    ? "Serwer nadal tworzy rekord jako DRAFT; publikacja następuje dopiero po udanym uploadzie, przetworzeniu i backendowej walidacji."
-                    : "W tym formularzu możesz cofnąć film do szkicu albo go zarchiwizować. Publikacja pozostaje osobną akcją w szczegółach filmu, aby zachować backendowe blokady publikacji i walidację assetu."}
-                </p>
-              </div>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Serwer nadal tworzy rekord jako DRAFT; publikacja następuje dopiero po udanym uploadzie, przetworzeniu i backendowej walidacji.</p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>
