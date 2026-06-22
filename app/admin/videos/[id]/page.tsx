@@ -96,7 +96,6 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
               </div>
               <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" asChild><Link href={`/watch/${video.slug}`} target="_blank"><Eye className="mr-2 h-4 w-4" /> Podgląd</Link></Button>
-                  <Button variant="default" size="sm" asChild><Link href={`/admin/videos/${video.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edytuj dane</Link></Button>
                   {video.status !== 'PUBLISHED' && (<Button variant="default" size="sm" onClick={() => handleAction('publish')} className="bg-green-600 hover:bg-green-700"><Send className="mr-2 h-4 w-4" /> Publikuj</Button>)}
                   {video.status === 'PUBLISHED' && (<Button variant="outline" size="sm" onClick={() => handleAction('unpublish')}><XCircle className="mr-2 h-4 w-4" /> Cofnij publikację</Button>)}
                   {video.status !== 'ARCHIVED' && (<Button variant="destructive" size="sm" onClick={() => handleAction('archive')}><Archive className="mr-2 h-4 w-4" /> Archiwizuj</Button>)}
@@ -284,8 +283,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                               <div className="space-y-4 border rounded-xl p-4">
                                   <h3 className="font-bold text-sm">Poziom dostępu</h3>
                                   <div className="space-y-2"><div className="flex justify-between items-center text-sm py-1 border-b"><span className="text-muted-foreground">Wymagany poziom:</span><Badge variant="secondary" className="gap-1">{video.tier === 'PUBLIC' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}{video.tier}</Badge></div></div>
-                                  <p className="text-[10px] text-muted-foreground leading-relaxed mt-4">Zmiana poziomu dostępu wpływa na to, kto może obejrzeć ten materiał. Poziom dostępu edytujesz w kanonicznym formularzu filmu.</p>
-                                  <Button variant="outline" size="sm" asChild><Link href={`/admin/videos/${video.id}/edit`}><Edit className="mr-2 h-3 w-3" /> Przejdź do edycji dostępu</Link></Button>
+                                  <p className="text-[10px] text-muted-foreground leading-relaxed mt-4">Zmiana poziomu dostępu wpływa na to, kto może obejrzeć ten materiał. Aby zmienić poziom, przejdź do <Link href="/admin/videos" className="text-primary hover:underline">edytora danych</Link>.</p>
                               </div>
                           </div>
                       </CardContent>
@@ -344,7 +342,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             </div>
 
             <div className="lg:w-1/4 space-y-6">
-              <Card className="shadow-sm border-0 bg-primary text-primary-foreground overflow-hidden relative"><div className="absolute top-0 right-0 p-4 opacity-10"><Settings className="h-20 w-20" /></div><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Zarządzanie</CardTitle></CardHeader><CardContent className="space-y-4 relative"><Button variant="secondary" className="w-full justify-start h-10 font-bold" onClick={() => handleAction('set-hero')} disabled={video.isMainFeatured}><CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO</Button><Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild><Link href={`/admin/videos/${video.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edytuj dane filmu</Link></Button></CardContent></Card>
+              <Card className="shadow-sm border-0 bg-primary text-primary-foreground overflow-hidden relative"><div className="absolute top-0 right-0 p-4 opacity-10"><Settings className="h-20 w-20" /></div><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Zarządzanie</CardTitle></CardHeader><CardContent className="space-y-4 relative"><Button variant="secondary" className="w-full justify-start h-10 font-bold" onClick={() => handleAction('set-hero')} disabled={video.isMainFeatured}><CheckCircle2 className="mr-2 h-4 w-4" /> Ustaw jako HERO</Button><Button variant="secondary" className="w-full justify-start h-10 font-bold" asChild><Link href={`/admin/videos?edit=${video.id}`}><Edit className="mr-2 h-4 w-4" /> Pełna edycja</Link></Button></CardContent></Card>
               <Card className="shadow-sm"><CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Kolejność w sidebarze</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Widoczny:</span><Badge variant={video.showInSidebar ? 'default' : 'outline'}>{video.showInSidebar ? 'TAK' : 'NIE'}</Badge></div><div className="flex justify-between items-center"><span className="text-xs text-muted-foreground">Pozycja:</span><span className="text-lg font-black italic">#{video.sidebarOrder}</span></div><Button variant="outline" className="w-full h-8 text-[10px]" asChild><Link href="/admin/videos/layout">Zmień kolejność hurtowo</Link></Button></CardContent></Card>
             </div>
           </div>

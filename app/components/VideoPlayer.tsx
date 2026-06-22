@@ -2,21 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import {
-    CaptionButton,
-    Controls,
-    FullscreenButton,
-    MediaPlayer,
-    MediaProvider,
-    MuteButton,
-    PlayButton,
-    Poster,
-    Time,
-    TimeSlider,
-    VolumeSlider,
-    useMediaState,
-    type MediaPlayerInstance,
-} from '@vidstack/react';
+import { MediaPlayer, MediaProvider, Poster, type MediaPlayerInstance } from '@vidstack/react';
 import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
@@ -28,108 +14,6 @@ import { PlayerStateFrame } from './PlayerStateFrame';
 interface VideoPlayerProps {
     video: VideoType;
     variant?: 'hero' | 'thumbnail';
-}
-
-
-const doodleIconClass = "h-5 w-5 drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]";
-
-function PolutekWatermark() {
-    return (
-        <div className="pointer-events-none absolute right-3 top-3 z-20 flex h-11 w-11 rotate-3 items-center justify-center rounded-[1.15rem] border-2 border-sky-300/80 bg-white/88 text-2xl font-black italic text-sky-600 shadow-[3px_4px_0_rgba(14,165,233,0.28)] ring-1 ring-white/60 backdrop-blur-sm sm:right-5 sm:top-5">
-            <span className="-translate-y-0.5 font-serif drop-shadow-[1px_1px_0_rgba(255,255,255,0.95)]">P</span>
-            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-amber-300 shadow-sm" />
-        </div>
-    );
-}
-
-function DoodlePlayIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M8.2 5.4c-.9.5-1.1 11.8-.1 12.7.8.8 10.1-4.7 10.3-6 .2-1.3-9.2-7.3-10.2-6.7Z" fill="currentColor" stroke="white" strokeWidth="1.7" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function DoodlePauseIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M8 5.2c-1.2.1-1.4.8-1.4 6.9 0 5.8.3 6.7 1.5 6.8l2.2.1c1.1-.1 1.4-.9 1.4-6.9 0-6.2-.4-6.9-1.5-7L8 5.2Zm7.1-.1c-1.1.1-1.4.9-1.4 7 0 5.9.3 6.7 1.5 6.8l2 .1c1.2-.1 1.5-.9 1.5-6.9 0-6.1-.3-6.8-1.4-7l-2.2 0Z" fill="currentColor" stroke="white" strokeWidth="1.35" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function DoodleVolumeIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M4.2 9.1h3.2l4.1-3.2c.8-.6 1.9-.1 1.9.9v10.4c0 1-1.1 1.5-1.9.9l-4.1-3.2H4.2c-.8 0-1.4-.6-1.4-1.4v-3c0-.8.6-1.4 1.4-1.4Z" fill="currentColor" stroke="white" strokeWidth="1.35" strokeLinejoin="round" />
-            <path d="M16.1 8.3c1.7 1.8 1.8 5.3 0 7.3M18.7 6.1c3.1 3.1 3.2 8.4.1 11.7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodleCaptionsIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M4.2 6.2c1.4-1 14.3-.9 15.5.1 1.2.9 1.1 10.4-.1 11.3-1.5 1-13.9 1.2-15.3.1-1.2-1-1.4-10.5-.1-11.5Z" fill="currentColor" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
-            <path d="M7.1 11.1h3.4M13.5 11.1h3.4M7.1 14.6h5.2M15 14.6h2" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodleFullscreenIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M5.4 9V5.4H9M15 5.4h3.6V9M18.6 15v3.6H15M9 18.6H5.4V15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M6 6l4 4M18 6l-4 4M18 18l-4-4M6 18l4-4" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodlePlayButton({ className }: { className: string }) {
-    const paused = useMediaState('paused');
-
-    return (
-        <PlayButton className={className} aria-label="Odtwórz / pauza">
-            {paused ? <DoodlePlayIcon /> : <DoodlePauseIcon />}
-        </PlayButton>
-    );
-}
-
-function DoodlePlayerControls() {
-    const buttonClass = "grid h-10 w-10 place-items-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-[2px_3px_0_rgba(255,255,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200";
-
-    return (
-        <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/82 via-black/24 to-black/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
-            <div className="px-2 pb-1 sm:px-4 sm:pb-2">
-                <TimeSlider.Root className="group/slider relative mb-1 flex h-7 w-full cursor-pointer touch-none select-none items-center" aria-label="Postęp filmu">
-                    <TimeSlider.Track className="relative h-2 w-full overflow-hidden rounded-full border border-white/20 bg-white/25 shadow-[0_2px_0_rgba(255,255,255,0.14)] transition-all group-hover/slider:h-3">
-                        <TimeSlider.Progress className="absolute h-full bg-white/35" />
-                        <TimeSlider.TrackFill className="absolute h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300" />
-                    </TimeSlider.Track>
-                    <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-400 opacity-0 shadow-[2px_2px_0_rgba(255,255,255,0.35)] transition group-hover/slider:opacity-100" />
-                </TimeSlider.Root>
-                <Controls.Group className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <DoodlePlayButton className={buttonClass} />
-                        <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><DoodleVolumeIcon /></MuteButton>
-                        <VolumeSlider.Root className="group/volume hidden h-10 w-24 items-center md:flex" aria-label="Głośność">
-                            <VolumeSlider.Track className="relative h-2 w-full rounded-full bg-white/25">
-                                <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-sky-300" />
-                            </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-white bg-amber-300" />
-                        </VolumeSlider.Root>
-                        <CaptionButton className={buttonClass} aria-label="Napisy"><DoodleCaptionsIcon /></CaptionButton>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 text-right">
-                        <div className="rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] font-bold tabular-nums tracking-wide text-white shadow-[2px_2px_0_rgba(14,165,233,0.26)] sm:text-xs">
-                            <Time type="current" /> <span className="text-white/55">/</span> <Time type="duration" />
-                        </div>
-                        <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><DoodleFullscreenIcon /></FullscreenButton>
-                    </div>
-                </Controls.Group>
-            </div>
-        </Controls.Root>
-    );
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
@@ -292,7 +176,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     if (normalizedKind === 'cloudflare_stream') {
         return (
             <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
-                <PolutekWatermark />
                 {loadError ? (
                     <PlayerErrorOverlay
                         errorCode="MEDIA_LOAD_FAILED"
@@ -329,7 +212,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
-            <PolutekWatermark />
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"
@@ -351,7 +233,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
                     autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
                     playsInline
-                    controls={false}
+                    controls={playerConfig ? playerConfig.controls : true}
                     aspectRatio="16/9"
                     onCanPlay={() => sendEvent('PLAYER_READY')}
                     onPlay={() => sendEvent('PLAY_STARTED')}
@@ -394,7 +276,6 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                             alt={video.title || 'Video poster'}
                         />
                     </MediaProvider>
-                    {(playerConfig ? playerConfig.controls : true) && <DoodlePlayerControls />}
                 </MediaPlayer>
             )}
         </div>

@@ -16,6 +16,12 @@ import { useCallback } from "react";
 import { AdminTableSkeleton } from "@/components/skeletons/admin";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const commentActionLabels = {
+  hide: "ukrycia komentarza",
+  restore: "przywrócenia komentarza",
+  delete: "usunięcia komentarza",
+} as const;
+
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,13 +51,13 @@ export default function AdminCommentsPage() {
     try {
       const res = await fetch(`/api/admin/comments/${commentId}/${action}`, { method: 'POST' });
       if (res.ok) {
-        toast(`Action ${action} successful`, 'success');
+        toast(`Zakończono akcję: ${commentActionLabels[action]}.`, 'success');
         fetchComments();
       } else {
-        toast('Action failed', 'error');
+        toast('Nie udało się wykonać akcji na komentarzu.', 'error');
       }
     } catch (err) {
-      toast('Network error', 'error');
+      toast('Błąd sieci podczas wykonywania akcji na komentarzu.', 'error');
     }
   };
 

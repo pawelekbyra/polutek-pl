@@ -19,7 +19,7 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 
 ## Recently completed / HISTORICAL
 
-- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
+- `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1004.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE: restored CI signal, reconciled escapes and hotspots.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
