@@ -4,7 +4,6 @@ import { generateCSP } from "@/lib/utils/security";
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/verify-overlays',
   '/watch/(.*)',
   '/channel/(.*)',
   '/regulamin',
