@@ -95,10 +95,9 @@ export class UserProfileService {
       const publicMeta = clerkUser.publicMetadata as ClerkPublicMetadata;
       const unsafeMeta = clerkUser.unsafeMetadata as ClerkUnsafeMetadata;
       const language = publicMeta.language || publicMeta.preferredLanguage || unsafeMeta.language || unsafeMeta.preferredLanguage || 'en';
-      const referrerId = unsafeMeta.referrerId || null;
       const clerkRole = publicMeta.role;
 
-      return await this.syncUser(clerkUserId, email, name, imageUrl, referrerId, language, username, clerkRole);
+      return await this.syncUser(clerkUserId, email, name, imageUrl, language, username, clerkRole);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       logger.error("[UserProfileService.getOrCreateUser]", message);
@@ -114,7 +113,6 @@ export class UserProfileService {
     email: string,
     name?: string | null,
     imageUrl?: string | null,
-    referrerId?: string | null,
     language?: string,
     username?: string | null,
     _clerkRole?: string | null
@@ -157,16 +155,6 @@ export class UserProfileService {
           role: targetRole,
         };
 
-        if (referrerId && !existingUserById) {
-            const referrer = await tx.user.findUnique({
-                where: { id: referrerId },
-                select: { id: true }
-            });
-            if (referrer && referrer.id !== id) {
-                updateData.referredBy = { connect: { id: referrer.id } };
-            }
-        }
-
         if (name) updateData.name = name;
         if (username) updateData.username = username;
         if (imageUrl) updateData.imageUrl = imageUrl;
@@ -183,7 +171,6 @@ export class UserProfileService {
             role: targetRole,
             language: language || 'en',
             referralCode: crypto.randomBytes(6).toString('hex'),
-            referredBy: updateData.referredBy ? (updateData.referredBy as Prisma.UserCreateNestedOneWithoutReferralsInput) : undefined,
           }
         });
 
@@ -383,10 +370,9 @@ export class UserProfileService {
       || metadataClaim(sessionClaims, 'unsafeMetadata', 'language')
       || stringClaim(sessionClaims, 'locale')
       || 'en';
-    const referrerId = metadataClaim(sessionClaims, 'unsafeMetadata', 'referrerId');
     const clerkRole = metadataClaim(sessionClaims, 'publicMetadata', 'role');
 
-    return this.syncUser(userId, email, name, imageUrl, referrerId, language, username, clerkRole);
+    return this.syncUser(userId, email, name, imageUrl, language, username, clerkRole);
   }
 
   static async softDeleteUser(id: string) {

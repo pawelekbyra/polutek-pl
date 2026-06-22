@@ -163,12 +163,6 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                               <p className="text-2xl font-bold mt-1">{user._count.videoLikes + user._count.videoDislikes}</p>
                           </CardContent>
                       </Card>
-                      <Card>
-                          <CardContent className="pt-6">
-                              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Polecenia</p>
-                              <p className="text-2xl font-bold mt-1">{user._count.referrals}</p>
-                          </CardContent>
-                      </Card>
                   </div>
 
                   <Card>
@@ -195,22 +189,6 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                       </CardContent>
                   </Card>
 
-                  {user.referredBy && (
-                      <Card>
-                          <CardHeader><CardTitle className="text-base">Polecony przez</CardTitle></CardHeader>
-                          <CardContent>
-                              <div className="flex items-center gap-3 p-3 rounded-lg border bg-blue-50/50">
-                                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted relative">
-                                      {user.referredBy.imageUrl && <Image src={user.referredBy.imageUrl} alt="" fill className="object-cover" />}
-                                  </div>
-                                  <div>
-                                      <Link href={`/admin/users/${user.referredBy.id}`} className="font-medium text-sm hover:underline">{user.referredBy.email}</Link>
-                                      <div className="text-[10px] text-muted-foreground">{user.referredBy.name || user.referredBy.username}</div>
-                                  </div>
-                              </div>
-                          </CardContent>
-                      </Card>
-                  )}
                 </TabsContent>
 
                 <TabsContent value="payments">

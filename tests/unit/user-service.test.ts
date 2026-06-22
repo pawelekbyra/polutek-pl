@@ -48,7 +48,6 @@ describe('UserProfileService.getOrCreateUserFromAuth', () => {
       'user@example.com',
       'Test User',
       'https://example.com/avatar.png',
-      null,
       'pl',
       'tester',
       null
@@ -79,7 +78,6 @@ describe('UserProfileService.getOrCreateUserFromAuth', () => {
       'real@example.com',
       'Real Person',
       'https://img.clerk.com/avatar.png',
-      null,
       'pl',
       'realperson',
       null
@@ -113,7 +111,6 @@ describe('UserProfileService.getOrCreateUserFromAuth', () => {
       'clerk@example.com',
       'Clerk Person',
       'https://img.clerk.com/clerk-person.png',
-      null,
       'pl',
       'clerkname',
       undefined
@@ -137,7 +134,6 @@ describe('UserProfileService.getOrCreateUserFromAuth', () => {
       'claim@example.com',
       'Claim Person',
       'https://img.clerk.com/claim-person.png',
-      null,
       'en',
       'user_3Ea99aSDKtt0UQKIG72VtRSWEtb',
       null
@@ -154,7 +150,6 @@ describe('UserProfileService.getOrCreateUserFromAuth', () => {
     expect(syncSpy).toHaveBeenCalledWith(
       'user_2',
       'user_2@clerk.local',
-      null,
       null,
       null,
       'en',

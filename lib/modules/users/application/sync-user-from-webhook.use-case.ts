@@ -13,7 +13,6 @@ export interface WebhookUserSyncData {
   username?: string | null;
   imageUrl?: string | null;
   language?: string;
-  referrerId?: string | null;
 }
 
 /**
@@ -50,19 +49,6 @@ export class SyncUserFromWebhookUseCase {
           isPatron: false, // Default is false, regardless of Clerk metadata
           role: 'USER',
         });
-
-        // Handle referral if present
-        if (data.referrerId) {
-            const referrer = await repository.findById(data.referrerId);
-            if (referrer && referrer.id !== data.id) {
-                await (ctx.prisma as any).user.update({
-                    where: { id: data.id },
-                    data: {
-                        referredBy: { connect: { id: referrer.id } }
-                    }
-                });
-            }
-        }
     }
 
     // Handle side effects (R5/R9 boundary)

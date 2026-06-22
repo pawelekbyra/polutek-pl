@@ -19,7 +19,6 @@ type ClerkPublicMetadata = {
   totalPaid?: unknown;
 };
 type ClerkUnsafeMetadata = {
-  referrerId?: unknown;
   language?: unknown;
   preferredLanguage?: unknown;
 };
@@ -138,7 +137,6 @@ export async function POST(req: Request) {
       const firstLast = `${first_name || ''} ${last_name || ''}`.trim();
       const displayUsername = isGeneratedClerkUsername(username) ? null : username;
       const name = (firstLast && !isGeneratedClerkUsername(firstLast) ? firstLast : null) || displayUsername;
-      const referrerId = getString(unsafeMetadata.referrerId);
       const userLanguage = resolveLanguage(publicMetadata, unsafeMetadata);
 
       if (id && email) {
@@ -148,8 +146,7 @@ export async function POST(req: Request) {
             name,
             username: username || undefined,
             imageUrl: image_url,
-            language: userLanguage,
-            referrerId
+            language: userLanguage
         }, eventType);
         scopedLogger.info(`User ${id} synced via webhook. Type: ${eventType}`);
       }
