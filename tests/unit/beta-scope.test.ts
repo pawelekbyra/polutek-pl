@@ -22,6 +22,7 @@ const allowedAppRoutes = [
   "app/api/admin/creator/route.ts",
   "app/api/admin/emails/broadcast/route.ts",
   "app/api/admin/emails/responses/route.ts",
+  "app/api/admin/emails/status/route.ts",
   "app/api/admin/health/cloudflare/route.ts",
   "app/api/admin/maintenance/main-channel/apply/route.ts",
   "app/api/admin/maintenance/main-channel/preview/route.ts",
