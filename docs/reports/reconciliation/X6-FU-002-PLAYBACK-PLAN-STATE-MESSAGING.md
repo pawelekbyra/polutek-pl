@@ -1,14 +1,17 @@
 # X6-FU-002 Playback Plan State Messaging
 
-Status: `READY FOR REVIEW`
+Status: `DONE`
 Ticket: `docs/tickets/ready/X6-FU-002-playback-plan-state-messaging.md`
 Date: 2026-06-12
+Last updated: 2026-06-22
 Type: runtime UI messaging + focused test
 Source finding: `docs/reports/reconciliation/X6-EX-001-UI-CONSISTENCY-INVENTORY.md`
 
 ## Summary
 
-Implemented safe, state-specific playback placeholder messaging in `PremiumWrapper` for denied and unavailable playback-plan states. The change does not modify access policy, provider resolution, media/API routes, playback service code, Prisma schema, package files, analytics endpoints, or global docs.
+Implemented safe, state-specific playback placeholder messaging in `PremiumWrapper` for denied and unavailable playback-plan states, then split the branded login/patron lock UI into `AccessLockOverlay` in PR #1063. The final shape keeps `PremiumWrapper` focused on playback access-state logic while the visual lock overlay owns the branded `LOGIN_REQUIRED` and `PATRON_REQUIRED` presentation.
+
+The work does not modify access policy, provider resolution, media/API routes, playback service code, Prisma schema, package files, analytics endpoints, admin flows, or launch status.
 
 ## Intent
 
@@ -18,8 +21,8 @@ Make denied and unavailable playback states clearly distinguishable for users wh
 
 | Playback state | User-facing UI | Safe next action | Player mounted? | Sensitive details shown? |
 | --- | --- | --- | --- | --- |
-| `LOGIN_REQUIRED` | Polish login-required message explaining the film requires login and that login is not patron access or mailing consent. | Keyboard-accessible Clerk login modal button. | No | No |
-| `PATRON_REQUIRED` | Polish patron-only message explaining access is a reward for qualifying one-time support and not a recurring subscription. | Keyboard-accessible `#donations` support link. | No | No |
+| `LOGIN_REQUIRED` | Branded `AccessLockOverlay` with `Strefa Zalogowanych` copy. | Keyboard-accessible Clerk login modal button. | No | No |
+| `PATRON_REQUIRED` | Branded `AccessLockOverlay` with `Strefa Patronów` copy. | Keyboard-accessible `#donations` support link. | No | No |
 | `VIDEO_NOT_READY` | Polish message that the material is being prepared and is not ready for safe playback yet. | Keyboard-accessible retry button. | No | No |
 | `PROCESSING` | Polish message that the video file is being processed and the player appears only after readiness. | Keyboard-accessible retry button. | No | No |
 | `NO_PRIMARY_ASSET` | Polish non-technical message that no active video file is available yet. | Keyboard-accessible support email link. | No | No |
@@ -29,14 +32,24 @@ Make denied and unavailable playback states clearly distinguishable for users wh
 
 ## Changed files
 
+Initial state-messaging delivery:
+
 - `docs/tickets/ready/X6-FU-002-playback-plan-state-messaging.md`
 - `app/components/PremiumWrapper.tsx`
 - `tests/unit/playback-plan-state-messaging.test.ts`
 - `docs/reports/reconciliation/X6-FU-002-PLAYBACK-PLAN-STATE-MESSAGING.md`
 
+Follow-up branded overlay split in PR #1063:
+
+- `app/components/AccessLockOverlay.tsx`
+- `app/components/PremiumWrapper.tsx`
+- `app/components/ChannelVideoCard.tsx`
+- `tests/unit/access-lock-overlay-source.test.ts`
+- `tests/unit/playback-plan-state-messaging.test.ts`
+
 ## Scope confirmation
 
-Confirmed in-scope only. No changes were made to forbidden paths:
+Confirmed in-scope only. No changes were made to forbidden areas:
 
 - `lib/services/playback/**`
 - `lib/modules/video/**`
@@ -45,10 +58,12 @@ Confirmed in-scope only. No changes were made to forbidden paths:
 - access policy
 - Prisma/schema/migrations
 - package files
-- global docs
-- admin user files used by X6-FU-001
+- admin user/action files
+- public launch status
 
 ## Validation commands and results
+
+Initial focused validation:
 
 ```bash
 git diff --check
@@ -67,13 +82,22 @@ npm test -- --run tests/unit/playback-plan-state-messaging.test.ts
 # PASS — 1 test file, 5 tests
 ```
 
+PR #1063 validation:
+
+```bash
+CI #989
+# PASS
+```
+
 ## Security invariant confirmation
 
-- Denied/not-ready states render `PlaybackPlanStateOverlay`, not `children`, so `VideoPlayer` and the real media player are not mounted for those states.
-- The blocked-state overlay does not fetch `/api/media-source`, request provider playback data, or reference playback URLs/tokens.
+- Denied/not-ready states render safe overlays, not `children`, so `VideoPlayer` and the real media player are not mounted for those states.
+- `LOGIN_REQUIRED` and `PATRON_REQUIRED` render through `AccessLockOverlay`; informational blocked states remain in `PremiumWrapper`'s generic state overlay.
+- The blocked-state overlay path does not fetch `/api/media-source`, request provider playback data, or reference playback URLs/tokens.
 - The UI messages avoid provider names, provider IDs, asset IDs, private URLs, tokens, and internal error details.
 - Existing analytics/session/view ordering remains behind the existing `VideoPlayer` mount path and was not changed.
 - `READY`/playable behavior remains the path that renders `children` unchanged.
+- Channel-card badges are hidden when playback access is denied.
 
 ## What did not change
 
@@ -83,6 +107,7 @@ npm test -- --run tests/unit/playback-plan-state-messaging.test.ts
 - Playback-event route and analytics events.
 - Database schema, migrations, packages, or architecture guard.
 - Admin user/action files.
+- Public launch status.
 
 ## Risks
 
@@ -96,8 +121,8 @@ npm test -- --run tests/unit/playback-plan-state-messaging.test.ts
 
 ## Ticket status
 
-`READY FOR REVIEW`
+`DONE`
 
 ## Verdict
 
-`MERGE`
+`MERGED`
