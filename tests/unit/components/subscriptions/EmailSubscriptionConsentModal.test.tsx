@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
+
+/** @vitest-environment jsdom */
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -16,6 +18,10 @@ vi.mock('@/app/components/LanguageContext', () => ({
 }));
 
 describe('EmailSubscriptionConsentModal', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders correctly when open', () => {
     render(
       <EmailSubscriptionConsentModal
@@ -25,10 +31,10 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeInTheDocument();
-    expect(screen.getByText('Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.')).toBeInTheDocument();
-    expect(screen.getByText('TAK')).toBeInTheDocument();
-    expect(screen.getByText('NIE')).toBeInTheDocument();
+    expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).not.toBeNull();
+    expect(screen.getByText('Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.')).not.toBeNull();
+    expect(screen.getByText('TAK')).not.toBeNull();
+    expect(screen.getByText('NIE')).not.toBeNull();
   });
 
   it('renders nothing when closed', () => {
@@ -81,7 +87,7 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong')).not.toBeNull();
   });
 
   it('disables buttons when pending', () => {
@@ -94,7 +100,7 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'TAK' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'NIE' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'TAK' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'NIE' })).toHaveProperty('disabled', true);
   });
 });

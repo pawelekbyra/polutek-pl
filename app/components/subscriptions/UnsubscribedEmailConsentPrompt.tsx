@@ -5,16 +5,14 @@ import { useAuth } from '@clerk/nextjs';
 import { logger } from '@/lib/logger';
 import EmailSubscriptionConsentModal from './EmailSubscriptionConsentModal';
 
-export default function FirstLoginEmailConsentPrompt() {
+export default function UnsubscribedEmailConsentPrompt() {
   const { userId, isLoaded } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
 
-  const DISMISSED_KEY = userId ? `polutek:first-login-email-consent-dismissed:${userId}` : null;
-  const SEEN_KEY = userId ? `polutek:first-login-email-consent-seen:${userId}` : null;
+  const DISMISSED_KEY = userId ? `polutek:email-consent-prompt-dismissed:${userId}` : null;
 
   useEffect(() => {
     if (isLoaded && userId && !hasCheckedStatus) {
@@ -33,20 +31,18 @@ export default function FirstLoginEmailConsentPrompt() {
         })
         .then((data) => {
           if (data) {
-            setIsSubscribed(data.isSubscribed);
             if (!data.isSubscribed) {
               setIsOpen(true);
-              if (SEEN_KEY) localStorage.setItem(SEEN_KEY, 'true');
             }
           }
           setHasCheckedStatus(true);
         })
         .catch((err) => {
-          logger.warn('[FIRST_LOGIN_CONSENT_FETCH_ERROR]', err);
+          logger.warn('[EMAIL_CONSENT_PROMPT_FETCH_ERROR]', err);
           setHasCheckedStatus(true);
         });
     }
-  }, [isLoaded, userId, hasCheckedStatus, DISMISSED_KEY, SEEN_KEY]);
+  }, [isLoaded, userId, hasCheckedStatus, DISMISSED_KEY]);
 
   const handleConfirm = () => {
     setErrorMessage(null);
@@ -72,8 +68,11 @@ export default function FirstLoginEmailConsentPrompt() {
         }
 
         setIsOpen(false);
+        if (DISMISSED_KEY) {
+          localStorage.setItem(DISMISSED_KEY, 'true');
+        }
       } catch (err) {
-        logger.warn("[FIRST_LOGIN_CONSENT_POST_ERROR]", err);
+        logger.warn("[EMAIL_CONSENT_PROMPT_POST_ERROR]", err);
         setErrorMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
       }
     });

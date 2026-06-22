@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import FirstLoginEmailConsentPrompt from '@/app/components/subscriptions/FirstLoginEmailConsentPrompt';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import UnsubscribedEmailConsentPrompt from '@/app/components/subscriptions/UnsubscribedEmailConsentPrompt';
 import React from 'react';
+
+/** @vitest-environment jsdom */
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -45,7 +47,7 @@ vi.mock('@/lib/logger', () => ({
   }
 }));
 
-describe('FirstLoginEmailConsentPrompt', () => {
+describe('UnsubscribedEmailConsentPrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -53,12 +55,13 @@ describe('FirstLoginEmailConsentPrompt', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
   it('renders nothing for guests', () => {
     mockUseAuth.mockReturnValue({ isLoaded: true, userId: null });
-    const { container } = render(<FirstLoginEmailConsentPrompt />);
+    const { container } = render(<UnsubscribedEmailConsentPrompt />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -69,7 +72,7 @@ describe('FirstLoginEmailConsentPrompt', () => {
       json: async () => ({ isSubscribed: true }),
     });
 
-    const { container } = render(<FirstLoginEmailConsentPrompt />);
+    const { container } = render(<UnsubscribedEmailConsentPrompt />);
 
     await waitFor(() => {
       expect(container.firstChild).toBeNull();
@@ -78,9 +81,9 @@ describe('FirstLoginEmailConsentPrompt', () => {
 
   it('renders nothing if already dismissed in localStorage', async () => {
     mockUseAuth.mockReturnValue({ isLoaded: true, userId: 'user_123' });
-    localStorage.setItem('polutek:first-login-email-consent-dismissed:user_123', 'true');
+    localStorage.setItem('polutek:email-consent-prompt-dismissed:user_123', 'true');
 
-    const { container } = render(<FirstLoginEmailConsentPrompt />);
+    const { container } = render(<UnsubscribedEmailConsentPrompt />);
 
     expect(container.firstChild).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
@@ -93,13 +96,11 @@ describe('FirstLoginEmailConsentPrompt', () => {
       json: async () => ({ isSubscribed: false }),
     });
 
-    render(<FirstLoginEmailConsentPrompt />);
+    render(<UnsubscribedEmailConsentPrompt />);
 
     await waitFor(() => {
-      expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeInTheDocument();
+      expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).not.toBeNull();
     });
-
-    expect(localStorage.getItem('polutek:first-login-email-consent-seen:user_123')).toBe('true');
   });
 
   it('calls POST /api/subscriptions on confirm', async () => {
@@ -114,7 +115,7 @@ describe('FirstLoginEmailConsentPrompt', () => {
         json: async () => ({ isSubscribed: true }),
       });
 
-    render(<FirstLoginEmailConsentPrompt />);
+    render(<UnsubscribedEmailConsentPrompt />);
 
     const confirmBtn = await screen.findByText('TAK');
     fireEvent.click(confirmBtn);
@@ -137,12 +138,12 @@ describe('FirstLoginEmailConsentPrompt', () => {
       json: async () => ({ isSubscribed: false }),
     });
 
-    render(<FirstLoginEmailConsentPrompt />);
+    render(<UnsubscribedEmailConsentPrompt />);
 
     const dismissBtn = await screen.findByText('NIE');
     fireEvent.click(dismissBtn);
 
-    expect(localStorage.getItem('polutek:first-login-email-consent-dismissed:user_123')).toBe('true');
+    expect(localStorage.getItem('polutek:email-consent-prompt-dismissed:user_123')).toBe('true');
     expect(screen.queryByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeNull();
   });
 
@@ -159,15 +160,15 @@ describe('FirstLoginEmailConsentPrompt', () => {
         json: async () => ({ error: 'TRUSTED_EMAIL_REQUIRED' }),
       });
 
-    render(<FirstLoginEmailConsentPrompt />);
+    render(<UnsubscribedEmailConsentPrompt />);
 
     const confirmBtn = await screen.findByText('TAK');
     fireEvent.click(confirmBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Konto musi mieć zweryfikowany adres e-mail.')).toBeInTheDocument();
+      expect(screen.getByText('Konto musi mieć zweryfikowany adres e-mail.')).not.toBeNull();
     });
 
-    expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeInTheDocument();
+    expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).not.toBeNull();
   });
 });

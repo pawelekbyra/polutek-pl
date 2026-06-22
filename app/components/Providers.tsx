@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { LanguageProvider } from './LanguageContext';
 import { ToastProvider } from '@/app/hooks/useToast';
-import FirstLoginEmailConsentPrompt from './subscriptions/FirstLoginEmailConsentPrompt';
+import UnsubscribedEmailConsentPrompt from './subscriptions/UnsubscribedEmailConsentPrompt';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -22,7 +22,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <LanguageProvider>
         <ToastProvider>
           {children}
-          <FirstLoginEmailConsentPrompt />
+          <UnsubscribedEmailConsentPrompt />
         </ToastProvider>
       </LanguageProvider>
     </QueryClientProvider>
