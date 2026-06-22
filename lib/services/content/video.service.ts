@@ -252,18 +252,17 @@ export class VideoContentService {
 
   static async getVideoAccess(userId: string | null, videoId: string) {
     const { checkVideoAccess } = await import('@/lib/modules/access');
-    const { getActorFromAuth, resolveDbBackedActor } = await import('@/lib/api/auth');
+    const { resolveDbBackedActor } = await import('@/lib/api/auth');
     const { createAppContext } = await import('@/lib/modules/shared/app-context');
 
     // IMPORTANT: This bridge is used by legacy-style loaders.
-    // It resolves the actor based on the provided userId if present,
-    // otherwise it falls back to the ambient auth session (Server Components/API).
-    let actor;
-    if (userId) {
-        actor = await resolveDbBackedActor(userId).catch(() => ({ type: 'guest' } as const));
-    } else {
-        actor = await getActorFromAuth();
-    }
+    // It resolves the actor based on the provided userId if present.
+    // If no userId is provided, it behaves as a guest.
+    // This method MUST NOT use ambient auth (getActorFromAuth) to avoid silently
+    // replacing the explicit userId with the current session.
+    const actor = userId
+        ? await resolveDbBackedActor(userId).catch(() => ({ type: 'guest' } as const))
+        : { type: 'guest' } as const;
 
     const ctx = createAppContext({ actor });
 

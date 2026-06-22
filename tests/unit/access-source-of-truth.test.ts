@@ -163,4 +163,15 @@ describe('VideoContentService Bridge access truth', () => {
     expect(result2.hasAccess).toBe(false);
     expect(result2.reason).toBe('PATRON_REQUIRED');
   });
+
+  it('behaves as guest when userId is null and does not call getActorFromAuth', async () => {
+    const { VideoContentService } = await import('@/lib/services/content/video.service');
+    const auth = await import('@/lib/api/auth');
+    const spy = vi.spyOn(auth, 'getActorFromAuth');
+
+    const result = await VideoContentService.getVideoAccess(null, 'patron-v1');
+    expect(result.hasAccess).toBe(false);
+    expect(result.reason).toBe('PATRON_REQUIRED');
+    expect(spy).not.toHaveBeenCalled();
+  });
 });
