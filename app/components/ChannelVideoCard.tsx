@@ -84,7 +84,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                     </PremiumWrapper>
 
                     {/* Access Indicator Badge on Thumbnail */}
-                    {badge && (
+                    {badge && hasAccess && (
                         <div className={cn(
                             "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
                             badge.variant === 'unlocked' && "bg-primary/80 border-primary/20"
@@ -105,7 +105,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                                 <span>{mounted ? video.views.toLocaleString(t.currency === 'PLN' ? 'pl-PL' : 'en-US') : video.views} {t.views}</span>
                                 {video.publishedAt && (
                                     <>
-                                        <span>•</span>
+                                        <span>-</span>
                                         <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: t.currency === 'PLN' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
                                     </>
                                 )}
