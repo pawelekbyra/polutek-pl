@@ -40,6 +40,43 @@ describe('VideoPolicy', () => {
         asset: validAsset
       })).toBe(false);
     });
+
+    it('returns correct Polish blocker messages for hero', () => {
+      const video = {
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PATRON,
+        status: VideoStatus.DRAFT,
+        asset: validAsset
+      };
+      const blockers = VideoPolicy.getHeroBlockers(video);
+      expect(blockers).toContainEqual({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Film Hero musi być OPUBLIKOWANY.', field: 'status' });
+      expect(blockers).toContainEqual({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Film Hero musi być PUBLICZNY.', field: 'tier' });
+    });
+
+    it('returns correct Polish blocker message for archived hero', () => {
+        const video = {
+          title: 'Title',
+          slug: 'slug',
+          tier: AccessTier.PUBLIC,
+          status: VideoStatus.ARCHIVED,
+          asset: validAsset
+        };
+        const blockers = VideoPolicy.getHeroBlockers(video);
+        expect(blockers).toContainEqual({ code: 'VIDEO_HERO_ARCHIVED', message: 'Zarchiwizowany film nie może być filmem Hero.', field: 'status' });
+    });
+  });
+
+  describe('getSidebarBlockers', () => {
+    it('returns correct Polish message for ARCHIVED status', () => {
+        const blockers = VideoPolicy.getSidebarBlockers({ status: VideoStatus.ARCHIVED });
+        expect(blockers).toEqual([{ code: 'VIDEO_SIDEBAR_ARCHIVED', message: 'Zarchiwizowany film nie może być widoczny w panelu bocznym.', field: 'status' }]);
+    });
+
+    it('returns correct Polish message for non-PUBLISHED status', () => {
+        const blockers = VideoPolicy.getSidebarBlockers({ status: VideoStatus.DRAFT });
+        expect(blockers).toEqual([{ code: 'VIDEO_SIDEBAR_NOT_PUBLISHED', message: 'Tylko opublikowane filmy mogą być widoczne w panelu bocznym.', field: 'status' }]);
+    });
   });
 
   describe('isOnMainChannel', () => {

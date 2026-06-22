@@ -89,7 +89,7 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('Wykryto legacy videoUrl'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('Wykryto stary link videoUrl (legacy)'))).toBe(true);
       }
     });
 
@@ -111,8 +111,8 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('legacy playback fallback jest wyłączony'))).toBe(true);
-        expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego linku legacy'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('obsługa starych linków (legacy playback fallback) jest wyłączona'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego starego linku (legacy)'))).toBe(true);
       }
     });
 
@@ -139,7 +139,7 @@ describe('Admin Video Details & Diagnostics', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.some(i => i.message.includes('Zasób Cloudflare jest w stanie: PROCESSING'))).toBe(true);
-        expect(result.data.some(i => i.message.includes('legacy playback fallback jest wyłączony'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('obsługa starych linków (legacy playback fallback) jest wyłączona'))).toBe(true);
       }
     });
 

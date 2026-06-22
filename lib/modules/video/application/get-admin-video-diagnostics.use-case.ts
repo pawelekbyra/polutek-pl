@@ -71,21 +71,21 @@ export async function getAdminVideoDiagnostics(
     }
   } else if (asset) {
     // R2, S3, VERCEL_BLOB
-    issues.push({ severity: "WARNING", message: `Wykryto legacy asset provider: ${asset.provider}. Wymagana migracja do Cloudflare Stream. Skorzystaj z opcji Importu w zakładce Media.`, field: "asset" });
+    issues.push({ severity: "WARNING", message: `Wykryto starego dostawcę zasobów (legacy): ${asset.provider}. Wymagana migracja do Cloudflare Stream. Skorzystaj z opcji Importu w zakładce Media.`, field: "asset" });
   } else if (video.videoUrl) {
-    issues.push({ severity: "WARNING", message: "Wykryto legacy videoUrl bez zasobu Cloudflare. Użyj 'Importuj legacy URL' w zakładce Media.", field: "videoUrl" });
+    issues.push({ severity: "WARNING", message: "Wykryto stary link videoUrl (legacy) bez zasobu Cloudflare. Użyj 'Importuj legacy URL' w zakładce Media.", field: "videoUrl" });
   } else {
-    issues.push({ severity: "ERROR", message: "Brak źródła wideo (brak assetu i brak legacy URL).", field: "videoUrl" });
+    issues.push({ severity: "ERROR", message: "Brak źródła wideo (brak assetu i brak starego linku legacy).", field: "videoUrl" });
   }
 
   // Security Check for Private Legacy URLs
   if (video.tier === AccessTier.PATRON && !hasReadyProviderBackedPlaybackAsset(asset)) {
     if (!isLegacyPrivatePlaybackFallbackAllowed()) {
-      issues.push({ severity: "ERROR", message: "Film dla patronów nie ma gotowego assetu Cloudflare Stream/Mux; legacy playback fallback jest wyłączony i film będzie nieodtwarzalny do czasu migracji.", field: asset ? "asset" : "videoUrl" });
+      issues.push({ severity: "ERROR", message: "Film dla patronów nie ma gotowego zasobu Cloudflare Stream/Mux; obsługa starych linków (legacy playback fallback) jest wyłączona i film będzie nieodtwarzalny do czasu migracji.", field: asset ? "asset" : "videoUrl" });
     }
 
     if (!isCloudflare && video.videoUrl && MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
-      issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego linku legacy.", field: "videoUrl" });
+      issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego starego linku (legacy).", field: "videoUrl" });
     }
   }
 
@@ -97,7 +97,7 @@ export async function getAdminVideoDiagnostics(
       issues.push({ severity: "ERROR", code: "VIDEO_PUBLISH_AFTER_READY_ERROR", message: `Automatyczna publikacja po READY nie powiodła się: ${video.publishAfterAssetReadyError}`, field: "publishAfterAssetReady" });
   }
   if (asset?.processingState === 'FAILED') {
-      issues.push({ severity: "ERROR", code: "VIDEO_PROVIDER_SYNC_FAILED", message: "Provider sync zgłasza FAILED dla assetu. Użyj synchronizacji Cloudflare albo sprawdź media diagnostics.", field: "asset" });
+      issues.push({ severity: "ERROR", code: "VIDEO_PROVIDER_SYNC_FAILED", message: "Synchronizacja dostawcy zgłasza błąd (FAILED) dla zasobu. Użyj synchronizacji Cloudflare albo sprawdź diagnostykę mediów.", field: "asset" });
   }
   if (video.isMainFeatured) {
       for (const blocker of VideoPolicy.getHeroBlockers(video)) {
