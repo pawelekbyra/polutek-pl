@@ -1,50 +1,59 @@
 # LEGACY-ACCESS-POLICY-RETIREMENT-001 — Legacy AccessPolicy retirement
 
-Status: NON_EXECUTABLE / PLANNED
+Status: DONE / HISTORICAL — IMPLEMENTED BY PR #1075
 Ticket ID: LEGACY-ACCESS-POLICY-RETIREMENT-001
-Role: Planned future Builder / Reviewer / Operator as applicable
-Priority: URGENT
+Role: Historical evidence / Reviewer reference
+Priority: RESOLVED FOR LEGACY ACCESSPOLICY SURFACE
 Launch status: NO_GO
 
-## Explicit NON_EXECUTABLE statement
-This is a non-executable backlog card. It must be expanded and reconciled into a full Builder/Reviewer/Operator ticket before activation. It is not the current executable ticket and must not be implemented from this file as-is.
+## Current status after PR #1075
 
-## Purpose
-Legacy AccessPolicy retirement.
+PR #1075 decommissioned the legacy runtime `AccessPolicy` surface:
 
-## Associated risk IDs
-ADMIN-AUTH-REVERIFY, VIDEO-PLAYBACK-001, VIDEO-PLAYBACK-002
+- deleted `lib/access/access-policy.ts`;
+- deleted `lib/access/comment-access.ts`;
+- removed the obsolete `lib/services/content/video.service.ts` allowlist from `scripts/check-architecture.ts`;
+- added `checkDecommissionedAccessPolicySurface()` to the permanent `npm run quality:architecture-boundaries` path;
+- added `tests/unit/access-policy-decommissioning.test.ts` as source-contract coverage;
+- preserved the canonical access source of truth in `lib/modules/access/checkVideoAccess`, where active `PatronGrant` / `getPatronStatus` drives patron access decisions.
 
-## Current evidence classification
-LEGACY_PATH_RECONCILIATION_REQUIRED. Evidence is documented in `docs/reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md`; production/provider state is not certified by this card.
+The original non-executable backlog card is therefore resolved for its intended scope: retiring the deprecated `AccessPolicy` runtime surface so access truth is not split.
 
-## Dependencies and ordering
-Depends on: ADMIN-AUTH-POSTMERGE-REVERIFY-001. The canonical order remains in `docs/tickets/ready/README.md` and `docs/roadmap/Launch-Execution-Backlog.md`.
+## Issue relationship
 
-## Expected outcome
-Retire or fully reconcile legacy AccessPolicy playback path so access truth is not split.
+Issue #1036 remains open because it is broader than this ticket. It still tracks follow-up work around:
 
-## Allowed scope
-Playback/access files only after exact path inventory and activation. A future activated ticket must list exact allowed paths before work starts.
+- documenting or eventually renaming Prisma legacy patron-cache fields;
+- auditing Clerk `publicMetadata.isPatron` as display/cache-only metadata;
+- hardening standalone comments UI fallback so access-impacting decisions come only from backend viewer state.
 
-## Forbidden scope
-- No unrelated runtime changes.
-- No schema, migration, package, dependency, workflow or guard edits unless the activated ticket explicitly allows them.
+## Scope completed
+
+Completed by PR #1075:
+
+- runtime `AccessPolicy` imports/calls removed;
+- `isPatronLikeUser` / `getCommentAccessState` legacy helper surface removed;
+- runtime reintroduction blocked by architecture boundaries;
+- tests assert the legacy files do not exist and `checkVideoAccess` does not use `User.isPatron` as the grant decision source.
+
+## Historical non-goals that still apply
+
 - No public-launch readiness claim.
-- No production/provider PASS claim without required evidence.
-- No weakening of AGENTS.md invariants.
+- No production/provider PASS claim.
+- No Prisma migration or schema rename was included in this ticket.
+- Public launch remains `NO_GO` until the later launch evidence/certification process says otherwise.
 
-## Minimum acceptance criteria
-- Exact current-main evidence is rechecked before implementation or verification.
-- All associated risk IDs are addressed or explicitly carried forward.
-- Tests/evidence match the activated ticket scope.
-- Public launch remains NO_GO unless a later X7 certification process says otherwise.
+## Validation reference
 
-## Required future validation
-The expanded ticket must define exact commands. At minimum it must include `node scripts/check-control-plane-docs.mjs`, `git diff --check`, scope verification with `git diff --name-only`, and focused tests/evidence appropriate to the risk IDs above.
+PR #1075 reported and CI confirmed the relevant validation paths, including:
 
-## Stop conditions
-Stop if the work requires owner/operator evidence not available, touches forbidden files, requires a schema/package/workflow change not authorized by the activated ticket, conflicts with another active ticket, or would weaken product-policy invariants.
+- `npm run lint`;
+- `npm run typecheck`;
+- `npm run quality:strict-escapes`;
+- `npm run quality:architecture-boundaries`;
+- `tests/unit/access-policy-decommissioning.test.ts`;
+- broader CI including build, coverage, integration-postgres, Prisma validation/generation, audit/security, and Vercel preview checks.
 
-## Expansion requirement before activation
-Before this card becomes executable, an Integrator must expand it with exact allowed files, forbidden files, implementation/verification steps, validation commands, Definition of Done, and final report requirements.
+## Final note
+
+Do not reactivate this file as a Builder prompt. New access/patron-cache cleanup should be tracked through issue #1036 or a new small ticket with exact allowed files and validation commands.
