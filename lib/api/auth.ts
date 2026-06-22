@@ -29,7 +29,7 @@ type ActorResolverOptions = {
   allowGuest?: boolean;
 };
 
-async function resolveDbBackedActor(userId: string): Promise<Actor> {
+export async function resolveDbBackedActor(userId: string): Promise<Actor> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, role: true, isDeleted: true },
