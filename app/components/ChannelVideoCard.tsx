@@ -105,7 +105,7 @@ export default function ChannelVideoCard({ video, isLoggedIn, isPatron: propIsPa
                                 <span>{mounted ? video.views.toLocaleString(t.currency === 'PLN' ? 'pl-PL' : 'en-US') : video.views} {t.views}</span>
                                 {video.publishedAt && (
                                     <>
-                                        <span>-</span>
+                                        <span>{"\u2022"}</span>
                                         <span>{mounted ? formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true, locale: t.currency === 'PLN' ? pl : undefined }).replace('około', 'ok.') : ''}</span>
                                     </>
                                 )}
