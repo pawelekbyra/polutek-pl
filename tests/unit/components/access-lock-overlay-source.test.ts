@@ -17,6 +17,22 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain("text-blue-400");
   });
 
+  it("defines the thumbnailCompact variant in AccessLockOverlay", () => {
+    const source = component("app/components/AccessLockOverlay.tsx");
+    expect(source).toContain('"thumbnailCompact"');
+    expect(source).toContain("isCompact = variant === \"thumbnailCompact\"");
+  });
+
+  it("defines the thumbnailCompact variant in PremiumWrapper", () => {
+    const source = component("app/components/PremiumWrapper.tsx");
+    expect(source).toContain('"thumbnailCompact"');
+  });
+
+  it("uses thumbnailCompact variant in SidebarPlaylist", () => {
+    const source = component("app/components/channel/SidebarPlaylist.tsx");
+    expect(source).toContain('variant="thumbnailCompact"');
+  });
+
   it("keeps PATRON_REQUIRED on the patron branded copy", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 

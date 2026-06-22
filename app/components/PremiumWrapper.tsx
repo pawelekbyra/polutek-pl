@@ -42,7 +42,7 @@ interface PremiumWrapperProps {
   videoId: string;
   requiredTier?: AccessTierDto;
   isMainFeatured?: boolean;
-  variant?: "default" | "thumbnail";
+  variant?: "default" | "thumbnail" | "thumbnailCompact";
   onAccessLoad?: (hasAccess: boolean) => void;
 }
 
@@ -370,7 +370,7 @@ function PlaybackPlanStateOverlay({
 }: {
   state: PlaybackPlanStatus;
   onRetry?: () => void;
-  variant: "default" | "thumbnail";
+  variant: "default" | "thumbnail" | "thumbnailCompact";
 }) {
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
   const content =
