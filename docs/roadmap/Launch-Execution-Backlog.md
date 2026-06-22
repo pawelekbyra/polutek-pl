@@ -17,6 +17,7 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 4 | Payments code hardening | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 / DONE` | Code hardening implemented via PR #998; payment-to-PatronGrant operator smoke evidence remains separate. |
 | 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / DONE` | Architecture audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
 | 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / DONE` | Completed by PR #1008. No active large code ticket remains in the canonical ready queue. |
+| 7 | AccessPolicy decommissioning | `LEGACY-ACCESS-POLICY-RETIREMENT-001 / DONE` | Completed by PR #1075: removed legacy `AccessPolicy` / `comment-access` runtime surface and added dual-layer guardrails. Broader patron-cache cleanup remains in issue #1036. |
 
 ## Architecture audit findings routed
 
@@ -33,6 +34,7 @@ Important findings from `docs/reports/reconciliation/2026-06-20-architecture-lau
 | dead legacy payments services | active payments ticket or later cleanup if still unused |
 | admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
+| deprecated AccessPolicy runtime surface | `LEGACY-ACCESS-POLICY-RETIREMENT-001` — resolved by PR #1075; remaining patron-cache/UI metadata work stays in issue #1036 |
 
 ## Historical or superseded runtime tickets
 
