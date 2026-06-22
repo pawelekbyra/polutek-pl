@@ -20,7 +20,7 @@ interface CommentComposerProps {
   setIsInputFocused: (val: boolean) => void;
   canComment: boolean;
   isPatronGated: boolean;
-  isPatron: boolean;
+  isPatronDecorative: boolean;
   isPending: boolean;
   errorMessage?: string | null;
   handleSubmit: (e: React.FormEvent) => void;
@@ -42,7 +42,7 @@ export function CommentComposer({
   setIsInputFocused,
   canComment,
   isPatronGated,
-  isPatron,
+  isPatronDecorative,
   isPending,
   errorMessage,
   handleSubmit,
@@ -89,7 +89,7 @@ export function CommentComposer({
           fallbackSeed={userProfile.id}
           className={cn(
             "mt-1",
-            isPatron
+            isPatronDecorative
               ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
               : "border border-[#e9eef6]",
           )}

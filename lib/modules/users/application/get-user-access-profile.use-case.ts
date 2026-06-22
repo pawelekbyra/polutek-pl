@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
 import { UserPolicy } from "../domain/user.policy";
 import { SystemRole } from "@prisma/client";
+import { getPatronStatus } from "@/lib/modules/patron";
 
 export interface UserAccessProfileDto {
   id: string;
@@ -27,12 +28,14 @@ export async function getUserAccessProfile(
 
   if (!user) return null;
 
+  const patronStatus = await getPatronStatus(userId, ctx);
+
   return {
     id: user.id,
     clerkId: user.id, // In this system, userId IS clerkId
     email: user.email,
     role: user.role,
-    isPatron: UserPolicy.isPatron(user.isPatron),
+    isPatron: patronStatus.ok ? patronStatus.data.activeGrants.length > 0 : false,
     isAdmin: UserPolicy.isAdmin(user.role),
     isDeleted: user.isDeleted,
     language: user.language,

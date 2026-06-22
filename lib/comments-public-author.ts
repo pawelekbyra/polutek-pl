@@ -18,8 +18,8 @@ import { isGeneratedClerkUsername } from '@/lib/utils/auth';
  *
  * NOTE ON BADGE TRUTH:
  * The "PATRON" badge is derived from the denormalized `User.isPatron` field.
- * This is for DISPLAY ONLY and may be stale (e.g. if a PatronGrant was recently revoked
- * but the user record hasn't been re-synced). It must NEVER be used for access control.
+ * This is for DECORATIVE DISPLAY ONLY and may be stale. It must NEVER be used
+ * for access control. The backend ignores this field for authorization.
  */
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
