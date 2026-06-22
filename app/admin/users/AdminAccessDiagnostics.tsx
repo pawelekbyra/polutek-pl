@@ -25,51 +25,51 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
   const subscriptionCount = user.subscriptions?.length ?? 0;
 
   return (
-    <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-3" aria-label="Paid-but-locked access diagnostics">
+    <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-3" aria-label="Diagnostyka dostępu paid-but-locked">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-bold text-foreground">Access diagnostics</p>
+        <p className="font-bold text-foreground">Diagnostyka dostępu</p>
         <Badge variant={activeGrantCount > 0 ? "default" : "outline"} className="text-[9px]">
-          PatronGrant truth: {activeGrantCount > 0 ? "ACTIVE" : "LOCKED"}
+          Prawda PatronGrant: {activeGrantCount > 0 ? "AKTYWNY" : "ZABLOKOWANY"}
         </Badge>
       </div>
 
       {paidButLocked && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-destructive">
-          Paid-but-locked: payment facts exist, but there is no active PatronGrant. Treat as support diagnostic, not automatic access.
+          Paid-but-locked: istnieją fakty płatności, ale nie ma aktywnego PatronGrant. Traktuj to jako diagnostykę supportową, nie automatyczny dostęp.
         </div>
       )}
 
       <dl className="grid grid-cols-1 gap-2">
         <div>
-          <dt className="font-bold text-foreground">PatronGrant truth</dt>
-          <dd>Active grants: {activeGrantCount}</dd>
-          <dd>First active grant: {formatDate(patronTruth?.firstActiveGrantAt || null)}</dd>
-          <dd>Revoked grants: {revokedGrantCount}</dd>
+          <dt className="font-bold text-foreground">Prawda dostępu PatronGrant</dt>
+          <dd>Aktywne uprawnienia: {activeGrantCount}</dd>
+          <dd>Pierwsze aktywne uprawnienie: {formatDate(patronTruth?.firstActiveGrantAt || null)}</dd>
+          <dd>Cofnięte uprawnienia: {revokedGrantCount}</dd>
         </div>
 
         <div>
-          <dt className="font-bold text-foreground">Payment facts (not access truth)</dt>
-          <dd>Total support facts: ~{(user.normalizedTotal ?? 0).toFixed(2)} PLN</dd>
-          <dd>Payment rows loaded: {paymentCount}</dd>
-          <dd>Latest payment: {latestPayment ? `${formatMoney(latestPayment.amountMinor, latestPayment.currency)} / ${latestPayment.status}` : "—"}</dd>
+          <dt className="font-bold text-foreground">Fakty płatności (nie prawda dostępu)</dt>
+          <dd>Suma wsparcia: ~{(user.normalizedTotal ?? 0).toFixed(2)} PLN</dd>
+          <dd>Wczytane płatności: {paymentCount}</dd>
+          <dd>Ostatnia płatność: {latestPayment ? `${formatMoney(latestPayment.amountMinor, latestPayment.currency)} / ${latestPayment.status}` : "—"}</dd>
         </div>
 
         <div>
-          <dt className="font-bold text-foreground">Cache mismatch diagnostic</dt>
-          <dd>User.isPatron cache: {String(patronCache?.isPatron ?? user.isPatron)} (cache only)</dd>
+          <dt className="font-bold text-foreground">Diagnostyka niezgodności cache</dt>
+          <dd>Cache User.isPatron: {String(patronCache?.isPatron ?? user.isPatron)} (tylko cache)</dd>
           <dd>Cache patronSince: {formatDate(patronCache?.patronSince || user.patronSince)}</dd>
           <dd>Cache patronSource: {patronCache?.patronSource || user.patronSource || "—"}</dd>
           <dd>
-            Mismatch: {patronMismatch?.hasMismatch
+            Niezgodność: {patronMismatch?.hasMismatch
               ? `cache=${String(patronMismatch.cacheSaysPatron)} truth=${String(patronMismatch.truthSaysPatron)}`
-              : "none"}
+              : "brak"}
           </dd>
         </div>
 
         <div>
-          <dt className="font-bold text-foreground">Newsletter/subscription (unrelated to access)</dt>
-          <dd>Subscriptions/newsletter rows: {subscriptionCount}</dd>
-          <dd>Subscription is mailing/follow consent only and does not grant or revoke patron access.</dd>
+          <dt className="font-bold text-foreground">Newsletter/subskrypcja (niezwiązane z dostępem)</dt>
+          <dd>Wiersze subskrypcji/newslettera: {subscriptionCount}</dd>
+          <dd>Subskrypcja oznacza tylko zgodę mailingową/obserwowanie i nie nadaje ani nie cofa dostępu Patrona.</dd>
         </div>
       </dl>
     </div>
