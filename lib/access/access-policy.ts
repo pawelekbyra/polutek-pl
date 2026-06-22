@@ -46,9 +46,14 @@ export type AccessDecision = {
 /**
  * @deprecated Legacy access policy.
  *
- * New video/media access decisions must go through lib/modules/access.
- * Remaining usage is limited to explicitly tracked legacy flows
- * until R3/R6 playback delivery and R8 comments/interactions are migrated.
+ * IMPORTANT: This policy is NO LONGER AUTHORITATIVE for runtime access decisions.
+ * It uses legacy cached fields like `User.isPatron` which may be stale.
+ *
+ * ALL runtime video/media access decisions must go through `lib/modules/access`
+ * (specifically `checkVideoAccess`).
+ *
+ * Remaining usage is limited to explicitly tracked legacy flows and unit tests
+ * until full decommissioning.
  */
 export class AccessPolicy {
   static async canViewVideo(

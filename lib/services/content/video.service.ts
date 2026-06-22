@@ -251,12 +251,28 @@ export class VideoContentService {
   }
 
   static async getVideoAccess(userId: string | null, videoId: string) {
-    const { AccessPolicy } = await import('@/lib/access/access-policy');
-    const decision = await AccessPolicy.canViewVideo(userId, videoId);
+    const { checkVideoAccess } = await import('@/lib/modules/access');
+    const { resolveDbBackedActor } = await import('@/lib/api/auth');
+    const { createAppContext } = await import('@/lib/modules/shared/app-context');
+
+    const actor = userId
+      ? await resolveDbBackedActor(userId)
+      : { type: 'guest' } as const;
+
+    const ctx = createAppContext({ actor });
+    const result = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
+
+    if (!result.ok) {
+        return {
+            hasAccess: false,
+            reason: 'FORBIDDEN' as const,
+        };
+    }
+
     return {
-        hasAccess: decision.allowed,
-        reason: decision.reason,
-        requiredTier: decision.requiredTier
+        hasAccess: result.data.hasAccess,
+        reason: result.data.reason,
+        requiredTier: result.data.requiredTier
     };
   }
 }
