@@ -334,12 +334,6 @@ export function getSafePlaybackState(
     | undefined,
   anonymousDenied: PlaybackPlanStatus | boolean = false,
 ): PlaybackPlanStatus {
-  if (anonymousDenied) {
-    return typeof anonymousDenied === "string"
-      ? anonymousDenied
-      : "LOGIN_REQUIRED";
-  }
-
   const candidates = [data?.status, data?.access?.reason, data?.error];
   const state = candidates.find(
     (candidate): candidate is PlaybackPlanStatus =>
@@ -351,6 +345,12 @@ export function getSafePlaybackState(
 
   if (data?.hasAccess === true || data?.access?.allowed === true)
     return "READY";
+
+  if (anonymousDenied) {
+    return typeof anonymousDenied === "string"
+      ? anonymousDenied
+      : "LOGIN_REQUIRED";
+  }
 
   return "ERROR";
 }
