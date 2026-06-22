@@ -120,7 +120,6 @@ describe('/api/webhooks/clerk route', () => {
           email: 'new@example.com',
           name: 'Anna Nowak',
           imageUrl: 'https://example.com/avatar.png',
-          referrerId: 'ref_1',
           language: 'en',
           username: 'anna-nowak',
       }),

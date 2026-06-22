@@ -25,7 +25,6 @@ interface ChannelHomeProps {
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
     isPatron?: boolean;
-    referralPoints?: number;
     role?: string;
   } | null;
 }

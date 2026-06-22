@@ -492,21 +492,14 @@
     },
     {
       "file": "lib/modules/users/application/sync-user-from-webhook.use-case.ts",
-      "line": 58,
-      "label": "explicit any annotation",
-      "text": "await (ctx.prisma as any).user.update({",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/users/application/sync-user-from-webhook.use-case.ts",
-      "line": 70,
+      "line": 56,
       "label": "explicit any annotation",
       "text": "await EmailService.sendWelcomeEmail(data.email, data.name || undefined, data.language as any).catch(e => {",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/users/application/sync-user-from-webhook.use-case.ts",
-      "line": 89,
+      "line": 75,
       "label": "explicit any annotation",
       "text": "await (ctx.prisma as any).$transaction(async (tx: any) => {",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
@@ -516,20 +509,6 @@
       "line": 15,
       "label": "explicit any annotation",
       "text": "updateUserMetadata(userId: string, metadata: Record<string, any>): Promise<void>;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/users/infrastructure/referral.repository.ts",
-      "line": 8,
-      "label": "explicit any annotation",
-      "text": "const db = tx || (this.db as any);",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/users/infrastructure/referral.repository.ts",
-      "line": 21,
-      "label": "explicit any annotation",
-      "text": "const db = tx || (this.db as any);",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {

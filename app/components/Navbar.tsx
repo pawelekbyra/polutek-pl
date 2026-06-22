@@ -16,7 +16,6 @@ import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 
 type NavbarMetadata = {
   isPatron?: unknown;
-  referralPoints?: unknown;
   role?: unknown;
 };
 

@@ -213,7 +213,6 @@ export default function AdminUsersPage() {
                             <SelectItem value="createdAt">Data dołączenia</SelectItem>
                             <SelectItem value="patronSince">Od kiedy patron (aktywny grant)</SelectItem>
                             <SelectItem value="email">E-mail (alfabetycznie)</SelectItem>
-                            <SelectItem value="referralPoints">Punkty poleceń</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -249,7 +248,7 @@ export default function AdminUsersPage() {
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="text-[10px] uppercase font-bold">Użytkownik</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold">Status Patronatu</TableHead>
-                    <TableHead className="text-[10px] uppercase font-bold">Wpłaty & Polecenia</TableHead>
+                    <TableHead className="text-[10px] uppercase font-bold">Wpłaty</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold">Rola & Język</TableHead>
                     <TableHead className="text-[10px] uppercase font-bold">Akcje</TableHead>
                     <TableHead className="text-right text-[10px] uppercase font-bold">Rejestracja</TableHead>
@@ -310,7 +309,6 @@ export default function AdminUsersPage() {
                                 <span className="text-[9px] text-muted-foreground font-medium uppercase">Ostatnia: {formatDate(user.lastPaymentAt)}</span>
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className="h-4 text-[8px]">Ref: {user.referralPoints} pts / {user.referralCount} os.</Badge>
                                 {user.hasSubscriptions && <Badge variant="outline" className="h-4 text-[8px] bg-blue-50 text-blue-700 border-blue-100">FOLLOW</Badge>}
                             </div>
                         </div>
