@@ -3,7 +3,6 @@
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
-import { Gem, Lock } from "./icons";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 
 type AccessLockState = Extract<
@@ -19,33 +18,33 @@ interface AccessLockOverlayProps {
 const overlaySize = {
   default: {
     content: "px-6 py-6",
-    iconWrap: "mb-4 md:mb-8",
-    icon: "h-16 w-16 md:h-24 md:w-24",
+    iconWrap: "mb-8",
+    icon: "h-24 w-24",
     headline: "text-[clamp(2rem,10cqi,6rem)]",
-    separator: "my-1 w-24 md:my-2 md:w-48",
-    cta: "mt-3 gap-1.5 text-[8px] tracking-[0.3em] md:mt-10 md:gap-2 md:text-[10px] md:tracking-[0.5em]",
-    ctaLine: "w-16 group-hover/cta:w-32 md:w-24 md:group-hover/cta:w-48",
+    separator: "my-2 w-48",
+    cta: "mt-10 gap-2 text-[10px] tracking-[0.5em]",
+    ctaLine: "w-24 group-hover/cta:w-48",
     ctaText: "max-w-[92cqi]",
   },
   thumbnail: {
     content: "px-3 py-2",
-    iconWrap: "mb-2",
-    icon: "h-[clamp(1.55rem,13cqi,3.25rem)] w-[clamp(1.55rem,13cqi,3.25rem)]",
-    headline: "text-[clamp(1.05rem,10cqi,2.65rem)]",
-    separator: "my-0.5 w-14 md:w-20",
-    cta: "mt-2 gap-1 text-[clamp(0.34rem,2.35cqi,0.52rem)] tracking-[0.16em]",
-    ctaLine: "w-10 group-hover/cta:w-16 md:w-12 md:group-hover/cta:w-20",
+    iconWrap: "mb-[clamp(0.45rem,2.3cqi,1rem)]",
+    icon: "h-[clamp(1.4rem,12cqi,3.5rem)] w-[clamp(1.4rem,12cqi,3.5rem)]",
+    headline: "text-[clamp(1rem,10cqi,3rem)]",
+    separator: "my-[clamp(0.125rem,1cqi,0.5rem)] w-[clamp(3.5rem,38cqi,8rem)]",
+    cta: "mt-[clamp(0.45rem,3cqi,1.25rem)] gap-1 text-[clamp(0.34rem,2.25cqi,0.55rem)] tracking-[0.16em]",
+    ctaLine: "w-[clamp(2.5rem,24cqi,4rem)] group-hover/cta:w-[clamp(3.5rem,34cqi,6rem)]",
     ctaText: "max-w-[86cqi]",
   },
   thumbnailCompact: {
     content: "px-2 py-1",
-    iconWrap: "mb-1",
-    icon: "h-[clamp(1rem,13cqi,1.45rem)] w-[clamp(1rem,13cqi,1.45rem)]",
-    headline: "text-[clamp(0.62rem,6.4cqi,0.86rem)]",
-    separator: "my-[2px] w-8",
-    cta: "mt-1 gap-0.5 text-[5px] tracking-[0.08em]",
-    ctaLine: "w-5 group-hover/cta:w-8",
-    ctaText: "max-w-[74cqi]",
+    iconWrap: "mb-[clamp(0.22rem,1.8cqi,0.42rem)]",
+    icon: "h-[clamp(0.95rem,12cqi,1.55rem)] w-[clamp(0.95rem,12cqi,1.55rem)]",
+    headline: "text-[clamp(0.62rem,8.5cqi,1rem)]",
+    separator: "my-[2px] w-[clamp(2rem,30cqi,3.5rem)]",
+    cta: "mt-[clamp(0.2rem,2cqi,0.45rem)] gap-0.5 text-[clamp(4.5px,3cqi,5.5px)] tracking-[0.08em]",
+    ctaLine: "w-[clamp(1.25rem,18cqi,2rem)] group-hover/cta:w-[clamp(1.75rem,25cqi,2.5rem)]",
+    ctaText: "max-w-[82cqi]",
   },
 } as const;
 
@@ -70,8 +69,6 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         gradient: "from-blue-900 via-black to-blue-950",
         accent: "text-blue-400",
       };
-
-  const Icon = isPatronState ? Gem : Lock;
 
   const ctaClassName = cn(
     "group/cta flex max-w-full flex-col items-center bg-transparent p-0 text-center font-brand font-black uppercase text-white/30 no-underline transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70",
@@ -115,13 +112,23 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
           )}
         >
           <div className={cn("flex items-center justify-center", size.iconWrap)}>
-            <Icon
-              className={cn(
-                "shrink-0 transition-transform duration-700 group-hover/paywall:scale-110",
-                overlayCopy.accent,
-                size.icon,
-              )}
-            />
+            {isPatronState ? (
+              <GemOverlayIcon
+                className={cn(
+                  "shrink-0 fill-none transition-transform duration-700 group-hover/paywall:scale-110",
+                  overlayCopy.accent,
+                  size.icon,
+                )}
+              />
+            ) : (
+              <LockOverlayIcon
+                className={cn(
+                  "shrink-0 fill-none transition-transform duration-700 group-hover/paywall:scale-110",
+                  overlayCopy.accent,
+                  size.icon,
+                )}
+              />
+            )}
           </div>
 
           <div className="flex max-w-full flex-col items-center overflow-hidden">
@@ -165,3 +172,22 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 }
 
 export default AccessLockOverlay;
+
+function GemOverlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 3h12l4 6-10 13L2 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 3 8 9l4 13 4-13-3-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 9h20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LockOverlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <rect width="18" height="11" x="3" y="11" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
