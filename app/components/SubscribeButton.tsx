@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { useLanguage } from './LanguageContext';
 import { BellSimple } from './icons';
+import EmailSubscriptionConsentModal from './subscriptions/EmailSubscriptionConsentModal';
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -135,28 +136,15 @@ export default function SubscribeButton({
         </p>
       )}
 
-      {showConfirm && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white border border-neutral-300 p-8 max-w-sm w-full rounded-xl shadow-lg animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-bold text-neutral-900 tracking-tight mb-2">{t.confirmSubscribeTitle}</h3>
-            <p className="text-sm text-neutral-500 mb-8">{t.confirmSubscribeText}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => { setShowConfirm(false); executeSubscribe(); }}
-                className="bg-charcoal text-white py-2 rounded-md font-semibold text-sm hover:bg-neutral-800 transition-all"
-              >
-                {t.yes}
-              </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="bg-white border border-neutral-300 text-neutral-900 py-2 rounded-md font-semibold text-sm hover:bg-neutral-50 transition-all"
-              >
-                {t.no}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmailSubscriptionConsentModal
+        open={showConfirm}
+        pending={isPending}
+        onConfirm={() => {
+          setShowConfirm(false);
+          executeSubscribe();
+        }}
+        onDismiss={() => setShowConfirm(false)}
+      />
     </>
   );
 }
