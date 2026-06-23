@@ -26,7 +26,18 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain('href="#donations"');
     expect(source).toContain("from-amber-900 via-black to-amber-950");
     expect(source).toContain("text-amber-500");
-    expect(source).toContain("blur-2xl");
+    expect(source).toContain("blur-md");
+    expect(source).not.toContain("blur-2xl");
+  });
+
+  it("keeps PR1063 icon treatment without badge wrappers", () => {
+    const source = component("app/components/AccessLockOverlay.tsx");
+
+    expect(source).not.toContain("rounded-full");
+    expect(source).not.toContain("bg-white/5");
+    expect(source).not.toContain("bg-amber-500/10");
+    expect(source).not.toContain("border-white/10");
+    expect(source).not.toContain("border-amber-500/20");
   });
 
   it("keeps ChannelVideoCard badges behind access state", () => {
