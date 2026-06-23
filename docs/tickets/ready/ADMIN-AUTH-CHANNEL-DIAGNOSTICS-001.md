@@ -1,17 +1,23 @@
 # ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 — Admin auth reverification and production-safe channel diagnostics
 
 Ticket ID: ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001
-Status: READY_FOR_BUILDER
+Status: DONE_BY_PR_1008 / HISTORICAL
 Role: Builder / Reviewer
-Priority: High
+Priority: Historical evidence only — not executable
 Launch status: NO_GO
 Type: Focused runtime hardening + tests
 
+## Current-state reconciliation
+
+This ticket is no longer executable. PR #1008 merged the admin channel diagnostics hardening work, including typed DTOs, safe diagnostics responses, focused tests, and control-plane checks.
+
+The current executable queue remains only in `docs/tickets/ready/README.md`. Public launch remains `NO_GO`.
+
 ## Product decision
 
-This ticket merges `ADMIN-AUTH-POSTMERGE-REVERIFY-001` and `ADMIN-CHANNEL-ROOT-CAUSE-001` into one practical hardening task. Current main already uses DB-backed admin actor resolution through `requireAdminActor` / `requireAdminForApi` and `createAppContextFromRequest`. The remaining value is regression coverage, deleted-user/admin-revocation tests, route-family consistency, and production-safe diagnostics for admin channel failures.
+This ticket merges `ADMIN-AUTH-POSTMERGE-REVERIFY-001` and `ADMIN-CHANNEL-ROOT-CAUSE-001` into one practical hardening task. Current main already uses DB-backed admin actor resolution through `requireAdminActor` / `requireAdminForApi` and `createAppContextFromRequest`. The remaining value was regression coverage, deleted-user/admin-revocation tests, route-family consistency, and production-safe diagnostics for admin channel failures.
 
-This ticket should run after:
+This ticket was scheduled after:
 
 1. `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001`
 2. `CI-SIGNAL-RECONCILIATION-002`
