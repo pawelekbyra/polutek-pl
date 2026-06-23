@@ -8,12 +8,19 @@ import { listVideoComments, createVideoComment } from "@/lib/modules/comments";
 import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { isAllowedCommentImageUrl } from "@/lib/blob";
+import {
+  MalformedJsonBodyError,
+  RequestBodyTooLargeError,
+  readRequestJsonWithLimit,
+} from "@/lib/utils/request-body";
 
 export const dynamic = "force-dynamic";
 
+const MAX_COMMENT_REQUEST_BODY_BYTES = 10_000;
+
 const postCommentSchema = z
   .object({
-    text: z.string().trim().min(1).optional(),
+    text: z.string().trim().min(1).max(5000, "Komentarz jest za długi.").optional(),
     parentId: z.string().optional().nullable(),
     imageUrl: z
       .string()
@@ -106,7 +113,29 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         { status: 429 },
       );
     }
-    const resultJson = postCommentSchema.safeParse(await request.json());
+
+    let body: unknown;
+    try {
+      body = await readRequestJsonWithLimit(request, MAX_COMMENT_REQUEST_BODY_BYTES);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return NextResponse.json(
+          { success: false, message: "Komentarz jest za duży.", code: "COMMENT_PAYLOAD_TOO_LARGE" },
+          { status: 413 },
+        );
+      }
+
+      if (error instanceof MalformedJsonBodyError) {
+        return NextResponse.json(
+          { success: false, message: "Nieprawidłowe dane.", code: "COMMENT_VALIDATION_ERROR" },
+          { status: 400 },
+        );
+      }
+
+      throw error;
+    }
+
+    const resultJson = postCommentSchema.safeParse(body);
     if (!resultJson.success) {
       return NextResponse.json(
         {

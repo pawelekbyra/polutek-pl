@@ -3,8 +3,10 @@ import { logger } from '@/lib/logger';
 import { Webhook } from 'svix';
 import { handleResendWebhook, ResendWebhookInput } from '@/lib/modules/email';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { RequestBodyTooLargeError, readRequestTextWithLimit } from '@/lib/utils/request-body';
 
 const SVIX_HEADER_NAMES = ['svix-id', 'svix-timestamp', 'svix-signature'] as const;
+const MAX_RESEND_WEBHOOK_BODY_BYTES = 100_000;
 
 function hasAnySvixHeader(req: NextRequest) {
   return SVIX_HEADER_NAMES.some((header) => req.headers.has(header));
@@ -29,13 +31,25 @@ function getCompleteSvixHeaders(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   const isProduction = process.env.NODE_ENV === 'production';
+  const allowDevSecretAuth = process.env.RESEND_WEBHOOK_DEV_SECRET_AUTH === 'true';
 
   if (isProduction && !secret) {
     logger.error('[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.');
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
 
-  const rawBody = await req.text();
+  let rawBody: string;
+  try {
+    rawBody = await readRequestTextWithLimit(req, MAX_RESEND_WEBHOOK_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      logger.warn('[ResendWebhook] Request body is too large.');
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
+    throw error;
+  }
+
   const svixHeaders = getCompleteSvixHeaders(req);
   const containsSvixHeader = hasAnySvixHeader(req);
 
@@ -59,7 +73,7 @@ export async function POST(req: NextRequest) {
   } else if (containsSvixHeader) {
     logger.warn('[ResendWebhook] Incomplete Svix header set.');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-  } else if (!isProduction && secret && req.headers.get('x-resend-webhook-secret') === secret) {
+  } else if (!isProduction && allowDevSecretAuth && secret && req.headers.get('x-resend-webhook-secret') === secret) {
     try {
       payload = JSON.parse(rawBody) as ResendWebhookInput;
     } catch {

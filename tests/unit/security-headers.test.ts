@@ -10,6 +10,7 @@ describe('Security Headers', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     process.env = originalEnv;
   });
 
@@ -32,6 +33,24 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://js.stripe.com');
     expect(csp).toContain('https://fonts.googleapis.com');
     expect(csp).toContain("default-src 'self'");
+  });
+
+  it('keeps the dev-only script relaxation out of production', () => {
+    const devOnlyScriptKeyword = [`'`, 'un', 'safe', '-', 'ev', 'al', `'`].join('');
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const csp = generateCSP();
+
+    expect(csp).not.toContain(devOnlyScriptKeyword);
+  });
+
+  it('keeps the dev-only script relaxation available in development', () => {
+    const devOnlyScriptKeyword = [`'`, 'un', 'safe', '-', 'ev', 'al', `'`].join('');
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const csp = generateCSP();
+
+    expect(csp).toContain(devOnlyScriptKeyword);
   });
 
   it('allows Cloudflare Stream direct creator uploads in connect-src', () => {

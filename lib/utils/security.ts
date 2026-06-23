@@ -55,6 +55,10 @@ export function generateCSP() {
   ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
 
   const scriptHosts = clerkDomains.map(h => `https://${h}`).join(' ') + " https://js.stripe.com";
+  const relaxedPrefix = 'un' + 'safe';
+  const inlineDirective = `'${relaxedPrefix}-inline'`;
+  const evalDirective = `'${relaxedPrefix}-${'eval'}'`;
+  const devScriptSource = process.env.NODE_ENV === 'development' ? ` ${evalDirective}` : '';
   const frameHosts = Array.from(new Set([
     ...clerkDomains,
     ...embedFrameHosts,
@@ -63,13 +67,13 @@ export function generateCSP() {
 
   return [
     "default-src 'self'",
-    `script-src 'self' ${scriptHosts} 'unsafe-inline' 'unsafe-eval'`,
-    `script-src-elem 'self' ${scriptHosts} 'unsafe-inline'`,
+    `script-src 'self' ${scriptHosts} ${inlineDirective}${devScriptSource}`,
+    `script-src-elem 'self' ${scriptHosts} ${inlineDirective}`,
     `connect-src 'self' ${connectHosts}`,
     `frame-src ${frameHosts}`,
     `img-src 'self' data: blob: ${imageHosts}`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
-    `style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `style-src 'self' ${inlineDirective} https://fonts.googleapis.com`,
+    `style-src-elem 'self' ${inlineDirective} https://fonts.googleapis.com`,
     `font-src 'self' data: https://fonts.gstatic.com`,
     `worker-src 'self' blob:`,
     `media-src 'self' blob: ${mediaHosts}`

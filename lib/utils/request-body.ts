@@ -1,0 +1,63 @@
+export class RequestBodyTooLargeError extends Error {
+  maxBytes: number;
+
+  constructor(maxBytes: number) {
+    super(`Payload exceeds ${maxBytes} bytes.`);
+    this.name = 'RequestBodyTooLargeError';
+    this.maxBytes = maxBytes;
+  }
+}
+
+export class MalformedJsonBodyError extends Error {
+  constructor() {
+    super('Malformed JSON.');
+    this.name = 'MalformedJsonBodyError';
+  }
+}
+
+function getContentLengthBytes(req: Request): number | null {
+  const contentLength = req.headers.get('content-length');
+  if (!contentLength) return null;
+
+  const parsed = Number(contentLength);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+export async function readRequestTextWithLimit(req: Request, maxBytes: number): Promise<string> {
+  const declaredBytes = getContentLengthBytes(req);
+  if (declaredBytes !== null && declaredBytes > maxBytes) {
+    throw new RequestBodyTooLargeError(maxBytes);
+  }
+
+  if (!req.body) return '';
+
+  const reader = req.body.getReader();
+  const decoder = new TextDecoder();
+  let receivedBytes = 0;
+  let text = '';
+
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+
+    const value = chunk.value;
+    receivedBytes += value.byteLength;
+    if (receivedBytes > maxBytes) {
+      throw new RequestBodyTooLargeError(maxBytes);
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  return text + decoder.decode();
+}
+
+export async function readRequestJsonWithLimit<T>(req: Request, maxBytes: number): Promise<T> {
+  const text = await readRequestTextWithLimit(req, maxBytes);
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new MalformedJsonBodyError();
+  }
+}
