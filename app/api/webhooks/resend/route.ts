@@ -31,8 +31,7 @@ function getCompleteSvixHeaders(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   const isProduction = process.env.NODE_ENV === 'production';
-  const isTestRuntime = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test';
-  const allowDevSecretAuth = process.env.RESEND_WEBHOOK_DEV_SECRET_AUTH === 'true' || isTestRuntime;
+  const allowDevSecretAuth = process.env.RESEND_WEBHOOK_DEV_SECRET_AUTH === 'true';
 
   if (isProduction && !secret) {
     logger.error('[ResendWebhook] RESEND_WEBHOOK_SECRET is required in production.');
