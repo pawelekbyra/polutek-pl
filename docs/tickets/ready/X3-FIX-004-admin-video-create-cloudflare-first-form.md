@@ -1,11 +1,17 @@
 # X3-FIX-004 — Admin video create form Cloudflare-first shell
 
 Ticket ID: X3-FIX-004
-Status: READY_FOR_BUILDER
+Status: MERGED_BY_PR_964 / HISTORICAL
 Launch status: NO_GO
 Lane: video-provider / admin
 Type: Runtime admin workflow
-Priority: Launch-critical
+Priority: Historical evidence only — not executable
+
+## Current-state reconciliation
+
+This ticket is no longer executable. PR #964 merged the Cloudflare-first admin create form implementation, and current historical evidence is tracked in `docs/tickets/HISTORICAL-LEDGER.md` plus `docs/reports/reconciliation/X3-FIX-004-admin-video-create-cloudflare-first-form.md`.
+
+The current executable queue remains only in `docs/tickets/ready/README.md`. Public launch remains `NO_GO`.
 
 ## Goal
 
@@ -15,7 +21,7 @@ Replace the admin video creation entry point that still behaves like a legacy Yo
 
 PR #962 merged X3-FIX-003 and added the focused admin Cloudflare upload/attach/status flow for existing videos. The remaining operator problem is earlier in the workflow: the admin add-video panel still presents legacy URL/YouTube-style inputs as the primary path. That blocks normal product work because an admin should be able to start a Cloudflare-first draft without pretending a legacy `videoUrl` is the launch source.
 
-`ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is historical umbrella context only. This ticket is the single executable runtime task.
+`ADMIN-VIDEO-CLOUDFLARE-CREATE-FLOW-REPAIR-001` is historical umbrella context only. This ticket was the focused executable runtime task for PR #964.
 
 ## Scope
 
