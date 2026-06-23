@@ -28,8 +28,12 @@ model User {
   referrals                     User[]     @relation("UserReferrals")
   stripeCustomerId              String?    @unique
   imageUrl                      String?
+  /// LEGACY: cache/display-only field. Do not use for backend access control.
+  /// Active PatronGrant is the authoritative source of truth for patron access.
   isPatron                      Boolean    @default(false)
+  /// LEGACY: cache/display-only field. Do not use for eligibility or access decisions.
   patronSince                   DateTime?
+  /// LEGACY: cache/display-only field. Do not use for eligibility or access decisions.
   patronSource                  PatronGrantSource?
   canCreateChannel              Boolean    @default(false)
   createdAt                     DateTime   @default(now())

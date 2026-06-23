@@ -104,7 +104,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const isPatronGated = videoTier === "PATRON";
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
-  const isPatron = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
+  const isPatronDecorative = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
   const userAvatarSeed = userProfile
     ? userProfile.username || userProfile.name || userProfile.id
     : null;
@@ -291,7 +291,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         /** ground truth for the UI permission: */
         canComment={viewer?.canComment ?? false}
         isPatronGated={isPatronGated}
-        isPatron={isPatron}
+        isPatronDecorative={isPatronDecorative}
         isPending={postMutation.isPending}
         errorMessage={composerError}
         handleSubmit={handleSubmit}
