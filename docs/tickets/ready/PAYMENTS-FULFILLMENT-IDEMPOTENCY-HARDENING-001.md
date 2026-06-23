@@ -1,15 +1,21 @@
 # PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001 — Stripe fulfillment, idempotency and PatronGrant hardening
 
 Ticket ID: PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001
-Status: COMPLETED_PENDING_REVIEW
+Status: DONE_BY_PR_998 / HISTORICAL
 Role: Builder
-Priority: Launch-critical
+Priority: Historical evidence only — not executable
 Launch status: NO_GO
 Type: Runtime implementation + focused tests
 
+## Current-state reconciliation
+
+This ticket is no longer executable. PR #998 merged the payments fulfillment/idempotency hardening work, including local `Payment` source-of-truth validation, checkout `requestId` idempotency, owner-only payment status polling, and replay-safe fulfillment behavior.
+
+The current executable queue remains only in `docs/tickets/ready/README.md`. Public launch remains `NO_GO`; Stripe production smoke/operator evidence remains separate.
+
 ## Product decision
 
-This is a new code ticket created from current-main code review. The existing `LAUNCH-FIX-003-payment-to-patrongrant-smoke-test.md` is docs-only/operator evidence and must remain separate. Before production smoke testing payments, the code path must be hardened so fulfillment cannot mark a payment succeeded before validating the Stripe event and cannot grant access to the wrong user from mutable webhook metadata.
+This code ticket was created from current-main code review. The existing `LAUNCH-FIX-003-payment-to-patrongrant-smoke-test.md` is docs-only/operator evidence and must remain separate. Before production smoke testing payments, the code path needed hardening so fulfillment could not mark a payment succeeded before validating the Stripe event and could not grant access to the wrong user from mutable webhook metadata.
 
 Patronage remains a qualifying one-time support/payment. `Payment` is the financial fact; `PatronGrant` is access truth. There is no recurring subscription product in this ticket.
 
