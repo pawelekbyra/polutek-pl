@@ -1,18 +1,21 @@
 export class RequestBodyTooLargeError extends Error {
-  constructor(readonly maxBytes: number) {
-    super(`Request body exceeds ${maxBytes} bytes.`);
+  maxBytes: number;
+
+  constructor(maxBytes: number) {
+    super(`Payload exceeds ${maxBytes} bytes.`);
     this.name = 'RequestBodyTooLargeError';
+    this.maxBytes = maxBytes;
   }
 }
 
 export class MalformedJsonBodyError extends Error {
   constructor() {
-    super('Malformed JSON request body.');
+    super('Malformed JSON.');
     this.name = 'MalformedJsonBodyError';
   }
 }
 
-function getContentLengthBytes(req: Request) {
+function getContentLengthBytes(req: Request): number | null {
   const contentLength = req.headers.get('content-length');
   if (!contentLength) return null;
 
@@ -20,7 +23,7 @@ function getContentLengthBytes(req: Request) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-export async function readRequestTextWithLimit(req: Request, maxBytes: number) {
+export async function readRequestTextWithLimit(req: Request, maxBytes: number): Promise<string> {
   const declaredBytes = getContentLengthBytes(req);
   if (declaredBytes !== null && declaredBytes > maxBytes) {
     throw new RequestBodyTooLargeError(maxBytes);
@@ -34,9 +37,10 @@ export async function readRequestTextWithLimit(req: Request, maxBytes: number) {
   let text = '';
 
   while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    const chunk = await reader.read();
+    if (chunk.done) break;
 
+    const value = chunk.value;
     receivedBytes += value.byteLength;
     if (receivedBytes > maxBytes) {
       throw new RequestBodyTooLargeError(maxBytes);
