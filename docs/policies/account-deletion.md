@@ -19,6 +19,8 @@ The normal account deletion path, triggered by the Clerk `user.deleted` webhook,
 - `User.imageUrl` is cleared.
 - `User.stripeCustomerId` is cleared.
 - `User.isPatron` is set to `false`, and all active `PatronGrant` records are revoked.
+- **Subscriptions:** All `Subscription` records for the user are deleted, and the corresponding creators' `subscribersCount` are decremented.
+- **Email Preferences:** The user's `EmailPreference` record is deleted to prevent future content notifications.
 
 ## Rendering of Anonymized Authors
 

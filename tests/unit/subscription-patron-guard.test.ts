@@ -43,7 +43,7 @@ describe("Subscription to Patron guard", () => {
     const violations = checkedFiles.flatMap((file) => {
       const source = readFileSync(join(repoRoot, file), "utf8");
       if (!source.toLowerCase().includes("subscription")) return [];
-      if (file.includes("admin") || file.includes("profile.service.ts") || file.includes("email.repository.ts")) return []; // Allow admin, profile and email repository (read-only) to use these fields
+      if (file.includes("admin") || file.includes("profile.service.ts") || file.includes("email.repository.ts") || file.includes("sync-user-from-webhook.use-case.ts")) return []; // Allow admin, profile, email repository and sync-webhook (soft-delete) to use these fields
 
       return unsafeGrantPatterns
         .filter((pattern) => pattern.test(source))

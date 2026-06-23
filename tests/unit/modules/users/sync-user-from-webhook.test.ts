@@ -29,6 +29,9 @@ describe('SyncUserFromWebhookUseCase', () => {
     mockPrisma = {
         user: { update: vi.fn(), findUnique: vi.fn() },
         patronGrant: { updateMany: vi.fn() },
+        subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn(), deleteMany: vi.fn() },
+        emailPreference: { deleteMany: vi.fn() },
+        creator: { update: vi.fn() },
         auditLog: { create: vi.fn() },
         $transaction: vi.fn((cb) => cb(mockPrisma)),
     };
