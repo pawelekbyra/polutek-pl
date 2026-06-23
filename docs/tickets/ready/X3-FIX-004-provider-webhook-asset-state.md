@@ -6,7 +6,13 @@ X3-FIX-004
 
 ## Status
 
-READY
+MERGED_BY_PR_847 / HISTORICAL
+
+## Current-state reconciliation
+
+This ticket is no longer executable. PR #847 merged the Cloudflare Stream provider webhook implementation, and current historical evidence is tracked in `docs/tickets/HISTORICAL-LEDGER.md` plus `docs/reports/reconciliation/X3-FIX-004-PROVIDER-WEBHOOK-ASSET-STATE.md`.
+
+The current executable queue remains only in `docs/tickets/ready/README.md`. Public launch remains `NO_GO`.
 
 ## Lane
 
@@ -18,7 +24,7 @@ Runtime webhook
 
 ## Priority
 
-Launch-critical
+Historical evidence only — not executable
 
 ## Goal
 
