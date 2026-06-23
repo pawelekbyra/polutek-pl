@@ -90,7 +90,18 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('onClick={onRetry}');
 
     expect(accessLockOverlaySource).toContain('<SignInButton mode="modal">');
-    expect(accessLockOverlaySource).toContain('<button type="button"');
-    expect(accessLockOverlaySource).toContain('<a href="#donations"');
+    expect(accessLockOverlaySource).toContain('<button');
+    expect(accessLockOverlaySource).toContain('type="button"');
+    expect(accessLockOverlaySource).toContain('aria-label="Zaloguj się"');
+    expect(accessLockOverlaySource).not.toContain('<a href="#donations"');
+    expect(accessLockOverlaySource).not.toContain('Wesprzyj, aby obczaić');
+    expect(accessLockOverlaySource).not.toContain('Zaloguj się, aby obczaić');
+  });
+
+  it('keeps compact playlist locks distinct from the full hero overlay', () => {
+    expect(accessLockOverlaySource).toContain('const compactSize = {');
+    expect(accessLockOverlaySource).toContain('<PlayerStateFrame fill>');
+    expect(accessLockOverlaySource).toContain('compactLabel: "PATRONÓW"');
+    expect(accessLockOverlaySource).toContain('compactLabel: "LOGIN"');
   });
 });

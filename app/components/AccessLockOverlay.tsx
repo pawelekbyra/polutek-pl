@@ -16,94 +16,101 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const overlaySize = {
+const heroSize = {
   default: {
-    content: "px-6 py-6",
-    iconWrap: "mb-4 md:mb-8",
+    content: "px-6 py-8",
     icon: "h-16 w-16 md:h-24 md:w-24",
-    headline: "text-[clamp(2rem,10cqi,6rem)]",
-    separator: "my-1 w-24 md:my-2 md:w-48",
-    cta: "mt-3 gap-1.5 text-[8px] tracking-[0.3em] md:mt-10 md:gap-2 md:text-[10px] md:tracking-[0.5em]",
-    ctaLine: "w-16 group-hover/cta:w-32 md:w-24 md:group-hover/cta:w-48",
-    ctaText: "max-w-[92cqi]",
+    line: "text-[clamp(2rem,10cqi,6rem)]",
   },
   thumbnail: {
-    content: "px-3 py-2",
-    iconWrap: "mb-2",
-    icon: "h-[clamp(1.55rem,13cqi,3.25rem)] w-[clamp(1.55rem,13cqi,3.25rem)]",
-    headline: "text-[clamp(1.05rem,10cqi,2.65rem)]",
-    separator: "my-0.5 w-14 md:w-20",
-    cta: "mt-2 gap-1 text-[clamp(0.34rem,2.35cqi,0.52rem)] tracking-[0.16em]",
-    ctaLine: "w-10 group-hover/cta:w-16 md:w-12 md:group-hover/cta:w-20",
-    ctaText: "max-w-[86cqi]",
+    content: "px-3 py-3",
+    icon: "h-[clamp(1.75rem,13cqi,3.25rem)] w-[clamp(1.75rem,13cqi,3.25rem)]",
+    line: "text-[clamp(1.05rem,10cqi,2.65rem)]",
   },
-  thumbnailCompact: {
-    content: "px-2 py-1",
-    iconWrap: "mb-1",
-    icon: "h-[clamp(1rem,13cqi,1.45rem)] w-[clamp(1rem,13cqi,1.45rem)]",
-    headline: "text-[clamp(0.62rem,6.4cqi,0.86rem)]",
-    separator: "my-[2px] w-8",
-    cta: "mt-1 gap-0.5 text-[5px] tracking-[0.08em]",
-    ctaLine: "w-5 group-hover/cta:w-8",
-    ctaText: "max-w-[74cqi]",
-  },
+} as const;
+
+const compactSize = {
+  icon: "h-[clamp(1.1rem,18cqi,1.75rem)] w-[clamp(1.1rem,18cqi,1.75rem)]",
+  label: "text-[clamp(0.56rem,8.5cqi,0.78rem)]",
 } as const;
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const isPatronState = state === "PATRON_REQUIRED";
   const isLoginState = state === "LOGIN_REQUIRED";
-  const isAnyThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";
-  const size = overlaySize[variant];
+  const isCompact = variant === "thumbnailCompact";
 
   const overlayCopy = isPatronState
     ? {
-        lineOne: "Strefa",
-        lineTwo: "Patronów",
-        actionLabel: "Wesprzyj, aby obczaić",
-        gradient: "from-amber-900 via-black to-amber-950",
+        lineOne: "STREFA",
+        lineTwo: "PATRONÓW",
+        compactLabel: "PATRONÓW",
+        gradient: "from-amber-950 via-black to-black",
         accent: "text-amber-500",
       }
     : {
-        lineOne: "Strefa",
-        lineTwo: "Zalogowanych",
-        actionLabel: "Zaloguj się, aby obczaić",
-        gradient: "from-blue-900 via-black to-blue-950",
+        lineOne: "STREFA",
+        lineTwo: "ZALOGOWANYCH",
+        compactLabel: "LOGIN",
+        gradient: "from-blue-950 via-black to-black",
         accent: "text-blue-400",
       };
 
   const Icon = isPatronState ? Gem : Lock;
 
-  const ctaClassName = cn(
-    "group/cta flex max-w-full flex-col items-center bg-transparent p-0 text-center font-brand font-black uppercase text-white/30 no-underline transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70",
-    isLoginState && "border-0 cursor-pointer",
-    size.cta,
-  );
-
-  const action = (
-    <>
-      <span
-        className={cn(
-          "h-px bg-white/10 transition-all duration-500",
-          size.ctaLine,
-        )}
+  const loginButton = isLoginState ? (
+    <SignInButton mode="modal">
+      <button
+        type="button"
+        aria-label="Zaloguj się"
+        className="absolute inset-0 z-20 cursor-pointer bg-transparent text-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white/70"
       />
-      <span
-        className={cn(
-          "block max-w-full overflow-hidden text-ellipsis whitespace-nowrap",
-          size.ctaText,
-        )}
-      >
-        {overlayCopy.actionLabel}
-      </span>
-    </>
-  );
+    </SignInButton>
+  ) : null;
+
+  if (isCompact) {
+    return (
+      <PlayerStateFrame fill>
+        <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white [container-type:inline-size]">
+          <div
+            className={cn(
+              "absolute inset-0 z-0 bg-gradient-to-br opacity-65 transition-transform duration-700 group-hover/paywall:scale-110",
+              overlayCopy.gradient,
+            )}
+          />
+
+          <div className="relative z-10 flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-1 text-center">
+            <Icon
+              className={cn(
+                "shrink-0 transition-transform duration-700 group-hover/paywall:scale-110",
+                overlayCopy.accent,
+                compactSize.icon,
+              )}
+            />
+            <span
+              className={cn(
+                "max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-brand font-black uppercase leading-none tracking-tight",
+                overlayCopy.accent,
+                compactSize.label,
+              )}
+            >
+              {overlayCopy.compactLabel}
+            </span>
+          </div>
+
+          {loginButton}
+        </div>
+      </PlayerStateFrame>
+    );
+  }
+
+  const size = heroSize[variant];
 
   return (
-    <PlayerStateFrame className={isAnyThumbnail ? "rounded-lg" : undefined}>
-      <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a] text-white shadow-2xl animate-in fade-in zoom-in-95 duration-700 [container-type:inline-size]">
+    <PlayerStateFrame className={variant === "thumbnail" ? "rounded-lg" : undefined}>
+      <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white animate-in fade-in zoom-in-95 duration-700 [container-type:inline-size]">
         <div
           className={cn(
-            "absolute inset-0 z-0 bg-gradient-to-br opacity-60 blur-md transition-transform duration-700 group-hover/paywall:scale-110",
+            "absolute inset-0 z-0 bg-gradient-to-br opacity-65 transition-transform duration-700 group-hover/paywall:scale-110",
             overlayCopy.gradient,
           )}
         />
@@ -114,51 +121,36 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             size.content,
           )}
         >
-          <div className={cn("flex items-center justify-center", size.iconWrap)}>
-            <Icon
-              className={cn(
-                "shrink-0 transition-transform duration-700 group-hover/paywall:scale-110",
-                overlayCopy.accent,
-                size.icon,
-              )}
-            />
-          </div>
+          <Icon
+            className={cn(
+              "mb-4 shrink-0 transition-transform duration-700 group-hover/paywall:scale-110 md:mb-8",
+              overlayCopy.accent,
+              size.icon,
+            )}
+          />
 
           <div className="flex max-w-full flex-col items-center overflow-hidden">
             <span
               className={cn(
                 "font-brand font-black uppercase leading-[0.8] tracking-tighter whitespace-nowrap text-white",
-                size.headline,
+                size.line,
               )}
             >
               {overlayCopy.lineOne}
             </span>
-            <div className={cn("h-px bg-white/10", size.separator)} />
             <span
               className={cn(
                 "font-brand font-black uppercase leading-[0.8] tracking-tighter whitespace-nowrap",
                 overlayCopy.accent,
-                size.headline,
+                size.line,
               )}
             >
               {overlayCopy.lineTwo}
             </span>
-
-            {isLoginState && (
-              <SignInButton mode="modal">
-                <button type="button" className={ctaClassName}>
-                  {action}
-                </button>
-              </SignInButton>
-            )}
-
-            {isPatronState && (
-              <a href="#donations" className={ctaClassName}>
-                {action}
-              </a>
-            )}
           </div>
         </div>
+
+        {loginButton}
       </div>
     </PlayerStateFrame>
   );
