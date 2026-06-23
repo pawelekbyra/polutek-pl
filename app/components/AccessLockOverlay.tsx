@@ -54,7 +54,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         accent: "text-blue-400",
       };
 
-  const Icon = isPatronState ? Gem : Lock;
+  const Icon = isPatronState ? GemOverlayIcon : LockOverlayIcon;
 
   const loginButton = isLoginState ? (
     <SignInButton mode="modal">
