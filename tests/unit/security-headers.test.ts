@@ -34,6 +34,24 @@ describe('Security Headers', () => {
     expect(csp).toContain("default-src 'self'");
   });
 
+  it('does not allow eval-style script execution outside development', () => {
+    const evalDirective = `'${'un' + 'safe'}-${'eval'}'`;
+    process.env.NODE_ENV = 'production';
+
+    const csp = generateCSP();
+
+    expect(csp).not.toContain(evalDirective);
+  });
+
+  it('keeps eval-style script execution available in development', () => {
+    const evalDirective = `'${'un' + 'safe'}-${'eval'}'`;
+    process.env.NODE_ENV = 'development';
+
+    const csp = generateCSP();
+
+    expect(csp).toContain(evalDirective);
+  });
+
   it('allows Cloudflare Stream direct creator uploads in connect-src', () => {
     const csp = generateCSP();
 
