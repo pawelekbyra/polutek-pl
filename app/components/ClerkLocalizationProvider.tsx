@@ -6,6 +6,7 @@ import { plPL } from '@clerk/localizations';
 import { useLanguage } from './LanguageContext';
 import { updateUserLanguage } from '@/lib/actions/user';
 import React, { useEffect, useState } from 'react';
+import UnsubscribedEmailConsentPrompt from './subscriptions/UnsubscribedEmailConsentPrompt';
 
 function LocalizationLogic({ children }: { children: React.ReactNode }) {
   const { language, setLanguage, isInitialized } = useLanguage();
@@ -38,7 +39,12 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
     }
   }, [language, user, isLoaded, isInitialized, syncedOnce]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <UnsubscribedEmailConsentPrompt />
+    </>
+  );
 }
 
 export default function ClerkLocalizationProvider({ children }: { children: React.ReactNode }) {
