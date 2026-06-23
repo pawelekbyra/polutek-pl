@@ -3,7 +3,6 @@
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
-import { Gem, Lock } from "./icons";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 
 type AccessLockState = Extract<
@@ -157,3 +156,22 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 }
 
 export default AccessLockOverlay;
+
+function GemOverlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 3h12l4 6-10 13L2 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 3 8 9l4 13 4-13-3-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 9h20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LockOverlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <rect width="18" height="11" x="3" y="11" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
