@@ -29,9 +29,9 @@ Important findings from `docs/reports/reconciliation/2026-06-20-architecture-lau
 | strict-escapes baseline drift | `CI-SIGNAL-RECONCILIATION-002` |
 | admin video page hotspot | `CI-SIGNAL-RECONCILIATION-002` |
 | masterplan CI-risk accuracy | `CI-SIGNAL-RECONCILIATION-002` |
-| payments metadata-user source-of-truth | active payments ticket |
-| payments request-id idempotency | active payments ticket |
-| dead legacy payments services | active payments ticket or later cleanup if still unused |
+| payments metadata-user source-of-truth | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998 |
+| payments request-id idempotency | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998 |
+| dead legacy payments services | later cleanup if still unused; not an active ticket in the canonical ready queue |
 | admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
 | deprecated AccessPolicy runtime surface | `LEGACY-ACCESS-POLICY-RETIREMENT-001` — resolved by PR #1075; remaining patron-cache/UI metadata work stays in issue #1036 |
