@@ -24,7 +24,7 @@ interface ChannelHomeProps {
     totalPaid: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
-    isPatron?: boolean;
+    isPatronDecorative?: boolean;
     role?: string;
   } | null;
 }
@@ -47,7 +47,7 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const selectedVideo = (allVideos || []).find(v => v.id === currentVideoId || v.slug === currentVideoId) || mainVideo;
-  const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatron === true;
+  const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const [activeTab, setActiveTab] = useState<'comments' | 'videos'>('comments');
   const [mounted, setMounted] = useState(false);
   const [premiereCountdown, setPremiereCountdown] = useState('');

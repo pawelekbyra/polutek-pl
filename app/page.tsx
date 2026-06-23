@@ -106,8 +106,8 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
     imageUrl: user?.imageUrl || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
-    // PatronGrant is the access truth; User.isPatron is only a denormalized legacy cache.
-    isPatron: userDb?.role === 'ADMIN' || hasActivePatronGrant,
+    /** Decorative/display only. Authority for access-control is PatronGrant. */
+    isPatronDecorative: userDb?.role === 'ADMIN' || hasActivePatronGrant,
     role: userDb?.role || 'USER',
     initialInteraction,
     initialIsSubscribed
