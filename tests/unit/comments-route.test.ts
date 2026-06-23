@@ -62,6 +62,21 @@ describe('/api/videos/[id]/comments POST', () => {
     }, expect.anything());
   });
 
+  it('rejects oversized comment payloads before persisting', async () => {
+    const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'a'.repeat(5001) }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe('COMMENT_VALIDATION_ERROR');
+    expect(createVideoComment).not.toHaveBeenCalled();
+  });
+
   it('returns 401 for guests', async () => {
     vi.mocked(auth).mockResolvedValue({
       userId: null,
