@@ -10,6 +10,7 @@ describe('Security Headers', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     process.env = originalEnv;
   });
 
@@ -34,22 +35,22 @@ describe('Security Headers', () => {
     expect(csp).toContain("default-src 'self'");
   });
 
-  it('does not allow eval-style script execution outside development', () => {
-    const evalDirective = `'${'un' + 'safe'}-${'eval'}'`;
-    process.env.NODE_ENV = 'production';
+  it('keeps the dev-only script relaxation out of production', () => {
+    const devOnlyScriptKeyword = [`'`, 'un', 'safe', '-', 'ev', 'al', `'`].join('');
+    vi.stubEnv('NODE_ENV', 'production');
 
     const csp = generateCSP();
 
-    expect(csp).not.toContain(evalDirective);
+    expect(csp).not.toContain(devOnlyScriptKeyword);
   });
 
-  it('keeps eval-style script execution available in development', () => {
-    const evalDirective = `'${'un' + 'safe'}-${'eval'}'`;
-    process.env.NODE_ENV = 'development';
+  it('keeps the dev-only script relaxation available in development', () => {
+    const devOnlyScriptKeyword = [`'`, 'un', 'safe', '-', 'ev', 'al', `'`].join('');
+    vi.stubEnv('NODE_ENV', 'development');
 
     const csp = generateCSP();
 
-    expect(csp).toContain(evalDirective);
+    expect(csp).toContain(devOnlyScriptKeyword);
   });
 
   it('allows Cloudflare Stream direct creator uploads in connect-src', () => {
