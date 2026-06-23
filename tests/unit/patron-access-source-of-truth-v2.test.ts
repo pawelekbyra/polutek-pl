@@ -74,6 +74,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
 
     const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
     expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected checkVideoAccess to return ok result');
     expect(result.data.hasAccess).toBe(true);
   });
 
@@ -109,6 +110,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
 
     const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
     expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected checkVideoAccess to return ok result');
     expect(result.data.hasAccess).toBe(false);
     expect(result.data.reason).toBe('PATRON_REQUIRED');
   });
@@ -145,6 +147,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
 
     const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, ctx);
     expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected checkVideoAccess to return ok result');
     expect(result.data.hasAccess).toBe(false);
   });
 
