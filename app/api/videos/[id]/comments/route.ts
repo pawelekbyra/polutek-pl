@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 const postCommentSchema = z
   .object({
-    text: z.string().trim().min(1).optional(),
+    text: z.string().trim().min(1).max(5000, "Komentarz jest za długi.").optional(),
     parentId: z.string().optional().nullable(),
     imageUrl: z
       .string()
