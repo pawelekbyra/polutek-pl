@@ -6,11 +6,12 @@ describe('Comment Anonymization Rendering', () => {
     // Simulated soft-deleted user data as it would come from the database
     const softDeletedUser = {
       id: 'user_deleted_123',
-      name: 'Usunięty Użytkownik',
-      username: 'deleted_abc123',
-      email: 'deleted_uuid@deleted.com',
-      imageUrl: null,
-      isPatron: false,
+      name: 'Old Name',
+      username: 'old_username',
+      email: 'old@example.com',
+      imageUrl: 'https://example.com/avatar.png',
+      isPatron: true,
+      isDeleted: true,
       role: 'USER' as const,
     };
 
@@ -18,8 +19,8 @@ describe('Comment Anonymization Rendering', () => {
 
     expect(authorDto).not.toBeNull();
     expect(authorDto?.displayName).toBe('Usunięty Użytkownik');
-    // username is kept for internal identification but should be neutral/anonymized
-    expect(authorDto?.username).toBe('deleted_abc123');
+    // username must be null for deleted users
+    expect(authorDto?.username).toBeNull();
     expect(authorDto?.imageUrl).toBeNull();
     expect(authorDto?.badges).toHaveLength(0);
   });
@@ -32,6 +33,7 @@ describe('Comment Anonymization Rendering', () => {
       email: 'john@example.com',
       imageUrl: null,
       isPatron: false,
+      isDeleted: false,
       role: 'USER' as const,
     };
 
@@ -47,6 +49,7 @@ describe('Comment Anonymization Rendering', () => {
       email: 'john@example.com',
       imageUrl: null,
       isPatron: false,
+      isDeleted: false,
       role: 'USER' as const,
     };
 

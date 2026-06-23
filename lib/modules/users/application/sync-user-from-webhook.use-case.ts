@@ -94,6 +94,22 @@ export class SyncUserFromWebhookUseCase {
             }
         });
 
+        // Cleanup subscriptions and email preferences to prevent stale data and unwanted emails
+        const subscriptionCount = await tx.subscription.count({ where: { userId } });
+        if (subscriptionCount > 0) {
+            const subscriptions = await tx.subscription.findMany({ where: { userId }, select: { creatorId: true } });
+            await tx.subscription.deleteMany({ where: { userId } });
+
+            for (const sub of subscriptions) {
+                await tx.creator.updateMany({
+                    where: { id: sub.creatorId, subscribersCount: { gt: 0 } },
+                    data: { subscribersCount: { decrement: 1 } }
+                });
+            }
+        }
+
+        await tx.emailPreference.deleteMany({ where: { userId } });
+
         await recordAuditEvent(ctx, {
             action: 'USER_SOFT_DELETED',
             targetType: 'User',

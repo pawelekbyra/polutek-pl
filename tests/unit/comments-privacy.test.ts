@@ -10,10 +10,11 @@ describe('comments privacy helpers', () => {
       username: 'komentator',
       imageUrl: 'https://img.example/avatar.png',
       isPatron: true,
+      isDeleted: false,
       role: 'USER',
       email: 'private@example.com',
       referralPoints: 999,
-    } as Parameters<typeof toPublicCommentAuthor>[0]);
+    } as any);
 
     expect(publicAuthor).toEqual({
       id: 'user-1',

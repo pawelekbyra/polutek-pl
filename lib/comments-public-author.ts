@@ -6,6 +6,7 @@ export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   username: true,
   imageUrl: true,
   isPatron: true,
+  isDeleted: true,
   role: true,
 });
 
@@ -23,6 +24,16 @@ import { isGeneratedClerkUsername } from '@/lib/utils/auth';
  */
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
+
+  if (author.isDeleted) {
+    return {
+      id: author.id,
+      displayName: "Usunięty Użytkownik",
+      username: null,
+      imageUrl: null,
+      badges: [],
+    };
+  }
 
   const badges: Array<"ADMIN" | "PATRON" | "AUTHOR"> = [];
   if (author.role === 'ADMIN') badges.push("ADMIN");
