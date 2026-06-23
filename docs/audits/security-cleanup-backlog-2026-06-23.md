@@ -1,175 +1,331 @@
-# Security and quality cleanup backlog — 2026-06-23
+# Security and quality cleanup roadmap — 2026-06-23
 
-This document records the follow-up work discovered during the deeper audit pass. It is intentionally written as an actionable backlog, not as a final vulnerability report.
+This document turns the deeper audit notes into an execution roadmap. It is not meant to be a final vulnerability report. Its purpose is to keep the cleanup ordered, measurable, and safe to execute in small pull requests.
 
 Related work:
 - Issue: #1086
 - PR: #1087
 - Branch: `fix/security-audit-priority`
 
-## Current PR already covers
+## North star
 
-- [x] Add route-level comment text limit.
-- [x] Add request body limit before JSON parsing for comments.
-- [x] Add request body limit for the Resend webhook route.
-- [x] Require an explicit non-production env flag for Resend legacy secret auth: `RESEND_WEBHOOK_DEV_SECRET_AUTH=true`.
-- [x] Remove production eval-style script execution from CSP.
-- [x] Remove `tmp-test-remove-me.txt`.
-- [x] Add coverage for the new comment payload limits and CSP environment split.
+The target state is a small, boring, auditable VOD product where:
 
-## P0 — finish before considering the audit closed
+- backend access decisions are based on durable domain state, not UI/cache hints,
+- payment and webhook flows are idempotent and covered by regression tests,
+- video playback access is explicitly tested for every access tier,
+- request payloads are bounded before expensive parsing or validation,
+- CSP is intentionally strict and documented,
+- legacy compatibility code is either removed or fenced off,
+- launch checklists match the actual implementation.
 
-### 1. Finish the CSP hardening plan
+## Current status
 
-Status: partially done in #1087.
+### Already covered by #1087
 
-Remaining work:
-- [ ] Replace remaining inline allowances with a proper nonce or hash based strategy.
-- [ ] Wire nonce generation through middleware and request headers.
-- [ ] Confirm Clerk and Stripe script/frame/connect requirements still work.
-- [ ] Add tests that fail when production CSP allows inline or eval-style script execution.
-- [ ] Document any intentionally retained exception with a reason and owner.
+- [x] Comment text has a route-level maximum length.
+- [x] Comment request body is size-limited before JSON parsing.
+- [x] Resend webhook request body is size-limited before processing.
+- [x] Resend legacy non-production secret auth requires explicit opt-in: `RESEND_WEBHOOK_DEV_SECRET_AUTH=true`.
+- [x] Production CSP no longer allows eval-style script execution.
+- [x] Temporary test file was removed.
+- [x] Unit coverage was added for comment payload limits and CSP environment behavior.
 
-Why it matters: the current PR removes the most dangerous production eval-style allowance, but does not fully complete a strict CSP posture.
+### Not yet closed by #1087
 
-### 2. Add playback access-control tests
+- [ ] Full CSP nonce/hash strategy.
+- [ ] Playback access-control regression tests.
+- [ ] Tooling that prevents backend authorization from using patron cache fields.
+- [ ] Stripe webhook concurrency/idempotency tests.
+- [ ] Deprecated patron bridge removal.
+- [ ] Type and error-handling cleanup.
+- [ ] Integration/E2E test expansion.
+- [ ] API and launch documentation refresh.
 
-Status: not done.
+## Execution model
 
-Required cases:
-- [ ] Guest can access PUBLIC video playback plan.
-- [ ] Guest cannot access LOGGED_IN video playback plan.
-- [ ] Logged-in non-patron cannot access PATRON video playback plan.
-- [ ] Active patron can access PATRON video playback plan.
-- [ ] Revoked patron grant no longer unlocks patron video.
-- [ ] Deleted/unpublished video does not leak playable information.
+Do not turn this into one giant cleanup PR. Split it into focused PRs that can be reviewed and reverted independently.
 
-Why it matters: video access is the core product boundary. The project has good architecture intent, but this path needs explicit regression tests.
+Recommended PR order:
 
-### 3. Enforce PatronGrant as the backend source of truth
+1. **Finish #1087** — current hardening and body-limit PR.
+2. **Access tests PR** — add playback and PatronGrant source-of-truth tests without large refactors.
+3. **CSP strictness PR** — complete nonce/hash strategy and document required exceptions.
+4. **Patron legacy cleanup PR** — remove or fence deprecated compatibility bridges.
+5. **Payment idempotency PR** — add duplicate/concurrent webhook tests and patch gaps.
+6. **Type/error cleanup PR** — remove weak casts and normalize API error serialization.
+7. **Operational polish PR** — API docs, launch checklist, E2E smoke paths.
 
-Status: partially documented in schema comments, not enforced by tooling.
+## Definition of done for the audit cleanup
+
+The audit cleanup is considered complete only when all of these are true:
+
+- [ ] Every backend patron access decision is proven to use `PatronGrant` or a domain use case backed by `PatronGrant`.
+- [ ] Cache/display fields such as `User.isPatron`, `patronSince`, and `patronSource` cannot be accidentally used for backend authorization without a guard failing.
+- [ ] Playback access has regression tests for guest, logged-in, active patron, revoked patron, unpublished video, and missing video cases.
+- [ ] Stripe webhook processing has duplicate event and close-arrival tests.
+- [ ] Resend webhook non-production secret auth is opt-in and tested.
+- [ ] Critical request bodies are bounded before JSON parsing.
+- [ ] Production CSP is intentionally strict, tested, and documented.
+- [ ] Deprecated patron compatibility bridges are removed or blocked from new usage.
+- [ ] Critical API routes have documented auth, payload, success, and error contracts.
+- [ ] CI includes the relevant unit/integration checks.
+
+## Workstream A — access and authorization
+
+Goal: prove that users cannot reach content or capabilities they should not reach.
+
+### A1. Playback access-control tests
+
+Priority: P0
+
+Add tests for:
+
+- [ ] Guest + PUBLIC video returns playable/access-ready state.
+- [ ] Guest + LOGGED_IN video returns login-required state.
+- [ ] Guest + PATRON video returns login-required or patron-required state, according to product policy.
+- [ ] Logged-in non-patron + PATRON video returns patron-required state.
+- [ ] Active patron + PATRON video returns playable/access-ready state.
+- [ ] Revoked patron grant + PATRON video does not unlock access.
+- [ ] Unpublished/deleted/missing video does not leak playback data.
+
+Acceptance criteria:
+
+- Tests exercise the same use case or route used by production playback.
+- Tests assert both status and absence/presence of sensitive playback data.
+- Tests fail if someone later swaps back to cache-only patron checks.
+
+### A2. PatronGrant source-of-truth enforcement
+
+Priority: P0
 
 Work items:
+
 - [ ] Search all reads of `User.isPatron`, `patronSince`, and `patronSource`.
-- [ ] Confirm those fields are only used as cache/display hints, never for backend authorization.
-- [ ] Add an architecture check or lint guard for backend reads of these cache fields.
-- [ ] Consider renaming these fields in a future migration to make cache intent impossible to miss.
+- [ ] Classify each read as display/cache sync/admin statistics/backend access.
+- [ ] Move any backend authorization read to `PatronGrant` or a domain use case backed by it.
+- [ ] Add an architecture check or lint rule that blocks backend access decisions from reading patron cache fields.
+- [ ] Document allowed exceptions.
 
-Why it matters: `PatronGrant` should remain the only authoritative backend access source.
+Acceptance criteria:
 
-### 4. Verify Stripe webhook idempotency under concurrency
+- Backend authorization cannot silently rely on patron cache fields.
+- Allowed cache-field reads are listed and intentional.
+- A new accidental backend read fails CI or architecture validation.
 
-Status: code appears intentionally designed, but needs stress-style tests.
+## Workstream B — webhooks and payments
+
+Goal: make money-related flows deterministic, idempotent, and recoverable.
+
+### B1. Stripe webhook concurrency/idempotency tests
+
+Priority: P0
+
+Add tests for:
+
+- [ ] Duplicate successful payment event creates exactly one successful payment transition.
+- [ ] Duplicate successful payment event creates exactly one active patron grant.
+- [ ] Close-arrival duplicate event returns safely without double fulfillment.
+- [ ] Lock conflict behavior is documented and tested.
+- [ ] Refund or dispute-loss event revokes the expected grant and does not revoke unrelated grants.
+
+Acceptance criteria:
+
+- Tests cover event replay and close-arrival behavior.
+- Tests assert final database state, not only response status.
+- Any unresolved crash-window behavior is documented with a remediation task.
+
+### B2. Resend webhook hardening follow-up
+
+Priority: P1
 
 Work items:
-- [ ] Add test for duplicate `payment_intent.succeeded` events arriving close together.
-- [ ] Add test for webhook lock conflict behavior.
-- [ ] Add test that a successful payment creates exactly one active `PatronGrant`.
-- [ ] Add test that refund or dispute loss revokes the expected grant.
 
-Why it matters: payments are high-impact. Idempotency bugs are expensive and hard to detect after launch.
+- [ ] Add a focused test showing non-production secret auth is rejected unless `RESEND_WEBHOOK_DEV_SECRET_AUTH=true`.
+- [ ] Add a focused test for oversized body rejection.
+- [ ] Add a focused test for malformed JSON in the legacy non-production path.
+- [ ] Confirm preview deployments do not enable the opt-in flag by default.
 
-## P1 — cleanup and maintainability
+Acceptance criteria:
 
-### 5. Retire deprecated patron compatibility bridges
+- Preview deployments are safe by default.
+- Non-production convenience auth is explicit, documented, and tested.
 
-Status: not done.
+## Workstream C — CSP and browser security posture
+
+Goal: move from partial hardening to an intentional strict policy.
+
+### C1. Strict CSP implementation
+
+Priority: P0/P1 depending on launch timing
 
 Work items:
+
+- [ ] Decide nonce vs hash strategy for Next.js runtime scripts and styles.
+- [ ] Generate nonce in middleware or equivalent request boundary.
+- [ ] Pass nonce through request headers where needed.
+- [ ] Confirm Next.js framework scripts, Clerk, Stripe, fonts, media, and embeds still work.
+- [ ] Remove remaining broad inline script allowances where practical.
+- [ ] Keep only documented style/script exceptions that are truly required.
+- [ ] Add production CSP tests that fail when disallowed script execution returns.
+
+Acceptance criteria:
+
+- Production CSP is intentionally strict.
+- Required third-party sources are documented.
+- Tests prove development-only relaxations do not leak into production.
+
+## Workstream D — legacy and code-quality cleanup
+
+Goal: remove confusing old paths and reduce type/error blind spots.
+
+### D1. Retire deprecated patron compatibility bridges
+
+Priority: P1
+
+Work items:
+
 - [ ] Locate all callers of `grantPatronStatus` and `revokePatronStatus`.
-- [ ] Migrate callers to the modular patron use cases.
-- [ ] Delete the deprecated bridge after callers are gone.
-- [ ] Add an architecture check preventing new imports from the legacy service.
+- [ ] Migrate callers to modular patron use cases.
+- [ ] Delete the deprecated bridge once unused.
+- [ ] Add an architecture guard preventing new imports from the legacy service.
 
-Why it matters: keeping old and new patron APIs side-by-side increases the chance of accidental misuse.
+Acceptance criteria:
 
-### 6. Reduce unsafe casts and weak error serialization
+- There is one obvious patron mutation path.
+- New code cannot import deprecated patron bridge APIs.
 
-Status: not done.
+### D2. Type safety and error serialization
+
+Priority: P1
 
 Work items:
-- [ ] Remove `as any` from payment repository update paths where practical.
+
+- [ ] Remove practical `as any` casts from payment repository update paths.
 - [ ] Review comment repository casts around write transactions.
 - [ ] Add a shared safe error serializer for API routes.
-- [ ] Avoid returning unknown thrown values through response helpers without normalization.
+- [ ] Ensure unknown thrown values are normalized before reaching response helpers.
 
-Why it matters: type escapes and inconsistent error handling hide bugs until runtime.
+Acceptance criteria:
 
-### 7. Add integration tests for the critical business flows
+- Error responses are predictable.
+- Type escapes are reduced or locally justified.
+- No route returns a raw unknown thrown value.
 
-Status: partially covered by unit tests, not enough integration coverage.
+### D3. Comment reaction write path
+
+Priority: P2
+
+Work items:
+
+- [ ] Review reaction create/delete query sequence.
+- [ ] Reduce unnecessary follow-up writes if feasible.
+- [ ] Add tests for counter consistency across repeated like/unlike operations.
+
+Acceptance criteria:
+
+- Counter updates remain correct under repeated operations.
+- Any extra write is intentional and documented.
+
+## Workstream E — tests and launch confidence
+
+Goal: make the project clean enough to evolve without fear.
+
+### E1. Integration tests for critical flows
+
+Priority: P1
 
 Recommended files:
+
 - [ ] `tests/integration/video-access-control.test.ts`
 - [ ] `tests/integration/payment-to-patron-flow.test.ts`
 - [ ] `tests/integration/comment-visibility.test.ts`
 - [ ] `tests/integration/resend-webhook-auth.test.ts`
 
-Why it matters: unit tests are useful, but the most important product risks sit across module boundaries.
+Acceptance criteria:
 
-### 8. Improve comment reaction write path
+- Tests cover module boundaries, not only isolated helpers.
+- Tests verify final domain state.
+- Tests run in CI or are clearly separated if they require extra services.
 
-Status: not done.
+### E2. Minimal E2E smoke paths
 
-Work items:
-- [ ] Review reaction create/delete update sequence.
-- [ ] Reduce unnecessary follow-up writes where possible.
-- [ ] Add tests for counter consistency under repeated like/unlike operations.
-
-Why it matters: reaction counters are small now, but can become a write hot path.
-
-## P2 — performance, docs, and polish
-
-### 9. Review indexes for public video listing queries
-
-Status: not done.
-
-Work items:
-- [ ] Inspect high-traffic video listing queries.
-- [ ] Confirm indexes support status, publish window, creator, and ordering filters.
-- [ ] Add migration only if query plans justify it.
-
-Why it matters: launch traffic usually hits list pages before anything else.
-
-### 10. Document API route contracts
-
-Status: not done.
-
-Work items:
-- [ ] Add a lightweight API route inventory.
-- [ ] Document auth requirement, request body, response shape, and failure codes for critical routes.
-- [ ] Keep this close to the implementation or generate it later from schemas.
-
-Why it matters: it makes future audits and agent work safer.
-
-### 11. Refresh launch and deployment checklists
-
-Status: not verified.
-
-Work items:
-- [ ] Confirm deployment checklist matches the current architecture.
-- [ ] Add explicit pre-launch checks for CSP, webhook secrets, Stripe, Clerk, Resend, and video access.
-- [ ] Add rollback checklist.
-
-Why it matters: operational docs drift quickly during fast refactors.
-
-### 12. Add E2E coverage for the happy paths
-
-Status: not done.
+Priority: P2
 
 Recommended flows:
-- [ ] Visitor lands on homepage and opens a public video.
-- [ ] User signs in and opens logged-in video.
-- [ ] Patron-only video shows lock state for non-patron.
+
+- [ ] Visitor opens homepage and public video.
+- [ ] Signed-in user opens logged-in video.
+- [ ] Non-patron sees patron lock state.
 - [ ] Admin creates or edits a video.
-- [ ] Comment create/delete/report path.
+- [ ] User creates, deletes, or reports a comment.
 
-Why it matters: E2E tests are slower, but they catch broken glue between UI, auth, and API.
+Acceptance criteria:
 
-## Notes for future work
+- E2E stays small and stable.
+- It catches broken glue between UI, auth, and API without duplicating every unit test.
 
-- Keep this backlog separate from #1087 implementation details. #1087 is a first cleanup PR, not the full audit closure.
-- Do not remove legacy patron fields blindly; first prove every backend access check uses `PatronGrant`.
-- Do not fully tighten CSP without testing Clerk, Stripe, Next.js framework scripts, and preview deployments.
-- Prefer small PRs after #1087: one for CSP, one for access tests, one for patron legacy cleanup, one for type/error cleanup.
+## Workstream F — performance and operational documentation
+
+Goal: prevent launch-time surprises.
+
+### F1. Query/index review
+
+Priority: P2
+
+Work items:
+
+- [ ] Inspect high-traffic video listing queries.
+- [ ] Confirm indexes support status, publish window, creator, and ordering filters.
+- [ ] Add migrations only when query plans justify them.
+
+Acceptance criteria:
+
+- Index changes are evidence-based.
+- List pages have known query shape and expected performance.
+
+### F2. API route contract inventory
+
+Priority: P2
+
+Work items:
+
+- [ ] Inventory critical API routes.
+- [ ] Document auth requirement, payload schema, success response, and failure codes.
+- [ ] Keep route docs close to Zod schemas or generate them later.
+
+Acceptance criteria:
+
+- Future audits can quickly tell what each route accepts and returns.
+- Route contracts do not drift silently from implementation.
+
+### F3. Launch and rollback checklist refresh
+
+Priority: P2
+
+Work items:
+
+- [ ] Verify deployment checklist against current architecture.
+- [ ] Add pre-launch checks for CSP, webhook secrets, Stripe, Clerk, Resend, video access, and database smoke tests.
+- [ ] Add rollback steps.
+
+Acceptance criteria:
+
+- Operator can deploy or roll back without reverse-engineering the app.
+- Launch checklist reflects current code, not old architecture.
+
+## Suggested immediate next actions after #1087
+
+1. Create the **Access tests PR** first. It gives the highest confidence with the least product risk.
+2. Create the **PatronGrant guard PR** second. It prevents future regressions around the most sensitive domain invariant.
+3. Create the **CSP strictness PR** third. It is important but should be isolated because it can break third-party scripts and Next.js runtime behavior.
+4. Create the **Stripe idempotency PR** fourth. Keep it focused on tests first, then patch only proven gaps.
+5. Use later PRs for cleanup, docs, E2E, and performance.
+
+## What not to do
+
+- Do not delete patron cache fields until every backend access path is proven clean.
+- Do not complete CSP hardening without checking Clerk, Stripe, Next.js scripts, embeds, and preview deployments.
+- Do not mix payment refactors with CSP or UI cleanup.
+- Do not add broad E2E coverage before the critical unit/integration tests exist.
+- Do not merge #1087 as the final audit closure; it is only the first hardening pass.
