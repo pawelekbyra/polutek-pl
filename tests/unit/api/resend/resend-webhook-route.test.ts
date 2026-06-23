@@ -31,6 +31,7 @@ describe('Resend Webhook Route Contract', () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     vi.stubEnv('RESEND_WEBHOOK_SECRET', 'test-secret');
+    vi.stubEnv('RESEND_WEBHOOK_DEV_SECRET_AUTH', 'true');
     verifyMock.mockReturnValue({ type: 'email.sent', data: { email_id: 're_123' } });
     vi.mocked(handleResendWebhook).mockResolvedValue({ ok: true, data: { received: true } } as any);
   });
