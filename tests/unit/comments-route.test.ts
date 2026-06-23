@@ -62,7 +62,7 @@ describe('/api/videos/[id]/comments POST', () => {
     }, expect.anything());
   });
 
-  it('rejects oversized comment payloads before persisting', async () => {
+  it('rejects oversized comment text before persisting', async () => {
     const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',
       body: JSON.stringify({ text: 'a'.repeat(5001) }),
@@ -74,6 +74,21 @@ describe('/api/videos/[id]/comments POST', () => {
 
     expect(response.status).toBe(400);
     expect(body.code).toBe('COMMENT_VALIDATION_ERROR');
+    expect(createVideoComment).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized request bodies before parsing JSON', async () => {
+    const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'a'.repeat(10001) }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'video-id' }) });
+    const body = await response.json();
+
+    expect(response.status).toBe(413);
+    expect(body.code).toBe('COMMENT_PAYLOAD_TOO_LARGE');
     expect(createVideoComment).not.toHaveBeenCalled();
   });
 
