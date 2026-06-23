@@ -37,7 +37,7 @@ interface EmbeddedCommentsProps {
     name?: string | null;
     username?: string | null;
     totalPaid?: number;
-    isPatron?: boolean;
+    isPatronDecorative?: boolean;
     role?: string;
   } | null;
   videoId: string;
@@ -84,7 +84,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             null,
           username: user?.username || null,
           totalPaid: numberMetadata(metadata.totalPaid),
-          isPatron: booleanMetadata(metadata.isPatron),
+          isPatronDecorative: booleanMetadata(metadata.isPatron),
           role: stringMetadata(metadata.role, "USER"),
         }
       : null;
@@ -104,7 +104,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const isPatronGated = videoTier === "PATRON";
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
-  const isPatronDecorative = userProfile?.role === "ADMIN" || userProfile?.isPatron === true;
+  const isPatronDecorative = userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
   const userAvatarSeed = userProfile
     ? userProfile.username || userProfile.name || userProfile.id
     : null;

@@ -88,8 +88,8 @@ function createOptimisticComment({
   const now = new Date().toISOString();
   const badges = [];
   if (userProfile?.role === "ADMIN") badges.push({ type: "ADMIN", label: "Admin" });
-  /** Decorative only - optimistic UI follows cached isPatron for immediate feedback. */
-  if (userProfile?.isPatron) badges.push({ type: "PATRON", label: "Patron" });
+  /** Decorative only - optimistic UI follows cached isPatronDecorative for immediate feedback. */
+  if (userProfile?.isPatronDecorative) badges.push({ type: "PATRON", label: "Patron" });
 
   return {
     id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
