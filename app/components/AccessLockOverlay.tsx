@@ -1,7 +1,9 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "./LanguageContext";
 import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 
@@ -15,52 +17,86 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
+const overlayMotion = {
+  hidden: { opacity: 0, scale: 0.985 },
+  visible: { opacity: 1, scale: 1 },
+} as const;
+
+const contentMotion = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 },
+} as const;
+
 const heroSize = {
   default: {
-    content: "px-6 py-8",
-    icon: "h-16 w-16 md:h-24 md:w-24",
-    line: "text-[clamp(2rem,10cqi,6rem)]",
+    content: "px-5 py-6 md:px-10 md:py-10",
+    orb: "h-20 w-20 md:h-28 md:w-28",
+    icon: "h-8 w-8 md:h-11 md:w-11",
+    kicker: "text-[clamp(0.58rem,1.65cqi,0.82rem)]",
+    line: "text-[clamp(1.9rem,8.2cqi,5.2rem)]",
+    note: "text-[clamp(0.68rem,2.1cqi,0.92rem)]",
   },
   thumbnail: {
     content: "px-3 py-3",
-    icon: "h-[clamp(1.75rem,13cqi,3.25rem)] w-[clamp(1.75rem,13cqi,3.25rem)]",
-    line: "text-[clamp(1.05rem,10cqi,2.65rem)]",
+    orb: "h-[clamp(3.1rem,28cqi,5.5rem)] w-[clamp(3.1rem,28cqi,5.5rem)]",
+    icon: "h-[clamp(1rem,7.5cqi,1.75rem)] w-[clamp(1rem,7.5cqi,1.75rem)]",
+    kicker: "text-[clamp(0.46rem,4.1cqi,0.64rem)]",
+    line: "text-[clamp(1rem,8.6cqi,2.18rem)]",
+    note: "text-[clamp(0.49rem,4cqi,0.7rem)]",
   },
 } as const;
 
 const compactSize = {
-  icon: "h-[clamp(1.1rem,18cqi,1.75rem)] w-[clamp(1.1rem,18cqi,1.75rem)]",
-  label: "text-[clamp(0.56rem,8.5cqi,0.78rem)]",
+  icon: "h-[clamp(0.85rem,13cqi,1.25rem)] w-[clamp(0.85rem,13cqi,1.25rem)]",
+  label: "text-[clamp(0.5rem,7cqi,0.7rem)]",
 } as const;
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
+  const { language } = useLanguage();
   const isPatronState = state === "PATRON_REQUIRED";
   const isLoginState = state === "LOGIN_REQUIRED";
   const isCompact = variant === "thumbnailCompact";
+  const isPl = language === "pl";
 
   const overlayCopy = isPatronState
     ? {
-        lineOne: "STREFA",
-        lineTwo: "PATRONÓW",
-        compactLabel: "PATRONÓW",
-        gradient: "from-amber-950 via-black to-black",
-        accent: "text-amber-500",
+        kicker: isPl ? "strefa patrona" : "patron room",
+        lineOne: isPl ? "ZA KULISAMI" : "BEHIND",
+        lineTwo: isPl ? "" : "THE SCENES",
+        compactLabel: isPl ? "PATRON" : "PATRON",
+        note: isPl
+          ? "Odcinek otwiera jednorazowe wsparcie — bez subskrypcji."
+          : "Unlocked by a one-time support gift — no subscription.",
+        gradient: "from-[#251000] via-[#130d07] to-[#040404]",
+        mesh: "bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.48),transparent_24%),radial-gradient(circle_at_76%_28%,rgba(249,115,22,0.24),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.11)_0_1px,transparent_1px_18px)]",
+        glow: "bg-amber-300/28",
+        accent: "text-amber-200",
+        border: "border-amber-200/25",
+        ring: "ring-amber-200/30",
       }
     : {
-        lineOne: "STREFA",
-        lineTwo: "ZALOGOWANYCH",
-        compactLabel: "LOGIN",
-        gradient: "from-blue-950 via-black to-black",
-        accent: "text-blue-400",
+        kicker: isPl ? "konto widza" : "viewer account",
+        lineOne: isPl ? "WEJDŹ" : "STEP",
+        lineTwo: isPl ? "DO ŚRODKA" : "INSIDE",
+        compactLabel: isPl ? "LOGIN" : "SIGN IN",
+        note: isPl
+          ? "Zaloguj się, żeby bezpiecznie uruchomić odtwarzanie."
+          : "Sign in to securely start playback.",
+        gradient: "from-[#03182d] via-[#08111f] to-[#030406]",
+        mesh: "bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.45),transparent_24%),radial-gradient(circle_at_76%_28%,rgba(99,102,241,0.28),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.1)_0_1px,transparent_1px_18px)]",
+        glow: "bg-cyan-300/24",
+        accent: "text-cyan-200",
+        border: "border-cyan-200/25",
+        ring: "ring-cyan-200/30",
       };
 
-  const Icon = isPatronState ? GemOverlayIcon : LockOverlayIcon;
+  const Icon = isPatronState ? PatronGemIcon : DoorLockIcon;
 
   const loginButton = isLoginState ? (
     <SignInButton mode="modal">
       <button
         type="button"
-        aria-label="Zaloguj się"
+        aria-label={isPl ? "Zaloguj się" : "Sign in"}
         className="absolute inset-0 z-20 cursor-pointer bg-transparent text-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white/70"
       />
     </SignInButton>
@@ -69,35 +105,28 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   if (isCompact) {
     return (
       <PlayerStateFrame fill>
-        <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white [container-type:inline-size]">
-          <div
-            className={cn(
-              "absolute inset-0 z-0 bg-gradient-to-br opacity-65 transition-transform duration-700 group-hover/paywall:scale-110",
-              overlayCopy.gradient,
-            )}
-          />
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={overlayMotion}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070707] text-white [container-type:inline-size]"
+        >
+          <AccessLockBackdrop gradient={overlayCopy.gradient} mesh={overlayCopy.mesh} glow={overlayCopy.glow} />
 
-          <div className="relative z-10 flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-1 text-center">
-            <Icon
-              className={cn(
-                "shrink-0 transition-transform duration-700 group-hover/paywall:scale-110",
-                overlayCopy.accent,
-                compactSize.icon,
-              )}
-            />
-            <span
-              className={cn(
-                "max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-brand font-black uppercase leading-none tracking-tight",
-                overlayCopy.accent,
-                compactSize.label,
-              )}
-            >
+          <motion.div
+            variants={contentMotion}
+            transition={{ delay: 0.08, duration: 0.42, ease: "easeOut" }}
+            className={cn("relative z-10 flex min-w-0 items-center justify-center gap-1.5 rounded-full border bg-black/38 px-2 py-1 text-center shadow-[0_12px_34px_rgba(0,0,0,0.45)] ring-1 backdrop-blur-md", overlayCopy.border, overlayCopy.ring)}
+          >
+            <Icon className={cn("shrink-0", overlayCopy.accent, compactSize.icon)} />
+            <span className={cn("max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-brand font-black uppercase leading-none tracking-[0.14em]", overlayCopy.accent, compactSize.label)}>
               {overlayCopy.compactLabel}
             </span>
-          </div>
+          </motion.div>
 
           {loginButton}
-        </div>
+        </motion.div>
       </PlayerStateFrame>
     );
   }
@@ -106,72 +135,90 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
   return (
     <PlayerStateFrame className={variant === "thumbnail" ? "rounded-lg" : undefined}>
-      <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white animate-in fade-in zoom-in-95 duration-700 [container-type:inline-size]">
-        <div
-          className={cn(
-            "absolute inset-0 z-0 bg-gradient-to-br opacity-65 transition-transform duration-700 group-hover/paywall:scale-110",
-            overlayCopy.gradient,
-          )}
-        />
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={overlayMotion}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070707] text-white [container-type:inline-size]"
+      >
+        <AccessLockBackdrop gradient={overlayCopy.gradient} mesh={overlayCopy.mesh} glow={overlayCopy.glow} />
 
-        <div
-          className={cn(
-            "relative z-10 flex h-full w-full flex-col items-center justify-center overflow-hidden text-center transition-transform duration-500",
-            size.content,
-          )}
+        <motion.div
+          variants={contentMotion}
+          transition={{ delay: 0.09, duration: 0.5, ease: "easeOut" }}
+          className={cn("relative z-10 flex h-full w-full flex-col items-center justify-center overflow-hidden text-center", size.content)}
         >
-          <Icon
-            className={cn(
-              "mb-4 shrink-0 transition-transform duration-700 group-hover/paywall:scale-110 md:mb-8",
-              overlayCopy.accent,
-              size.icon,
-            )}
-          />
+          <div className={cn("relative mb-2 flex items-center justify-center rounded-full border bg-white/[0.055] shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 backdrop-blur-md md:mb-4", overlayCopy.border, overlayCopy.ring, size.orb)}>
+            <div className={cn("absolute inset-2 rounded-full blur-xl", overlayCopy.glow)} />
+            <Icon className={cn("relative z-10 drop-shadow-[0_0_18px_rgba(255,255,255,0.16)]", overlayCopy.accent, size.icon)} />
+          </div>
 
-          <div className="flex max-w-full flex-col items-center overflow-hidden">
-            <span
-              className={cn(
-                "font-brand font-black uppercase leading-[0.8] tracking-tighter whitespace-nowrap text-white",
-                size.line,
-              )}
-            >
-              {overlayCopy.lineOne}
-            </span>
-            <span
-              className={cn(
-                "font-brand font-black uppercase leading-[0.8] tracking-tighter whitespace-nowrap",
-                overlayCopy.accent,
-                size.line,
-              )}
-            >
-              {overlayCopy.lineTwo}
+          <div className={cn("mb-2 inline-flex items-center rounded-full border bg-black/28 px-3 py-1 shadow-[0_12px_35px_rgba(0,0,0,0.3)] backdrop-blur-md", overlayCopy.border)}>
+            <span className={cn("font-black uppercase leading-none tracking-[0.22em] text-white/78", size.kicker)}>
+              {overlayCopy.kicker}
             </span>
           </div>
-        </div>
+
+          <div className="flex max-w-full flex-col items-center overflow-hidden">
+            <span className={cn("font-brand font-black uppercase leading-[0.84] tracking-tighter whitespace-nowrap text-white", size.line)}>
+              {overlayCopy.lineOne}
+            </span>
+            {overlayCopy.lineTwo && (
+              <span className={cn("font-brand font-black uppercase leading-[0.84] tracking-tighter whitespace-nowrap", overlayCopy.accent, size.line)}>
+                {overlayCopy.lineTwo}
+              </span>
+            )}
+          </div>
+
+          <p className={cn("mt-2 max-w-[31rem] text-balance font-medium leading-snug text-white/72 md:mt-4", size.note)}>
+            {overlayCopy.note}
+          </p>
+        </motion.div>
 
         {loginButton}
-      </div>
+      </motion.div>
     </PlayerStateFrame>
   );
 }
 
 export default AccessLockOverlay;
 
-function GemOverlayIcon({ className }: { className?: string }) {
+function AccessLockBackdrop({ gradient, mesh, glow }: { gradient: string; mesh: string; glow: string }) {
+  return (
+    <>
+      <div className={cn("absolute inset-0 z-0 bg-gradient-to-br opacity-98 transition-transform duration-700 group-hover/paywall:scale-[1.035]", gradient)} />
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className={cn("absolute -left-[15%] -top-[30%] z-0 h-[78%] w-[68%] rounded-full blur-3xl", glow)}
+      />
+      <div className={cn("absolute inset-0 z-0 opacity-55", mesh)} />
+      <div className="absolute inset-x-0 bottom-0 z-0 h-2/3 bg-gradient-to-t from-black/88 via-black/35 to-transparent" />
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.08),transparent_18%,transparent_82%,rgba(255,255,255,0.06))] opacity-70" />
+    </>
+  );
+}
+
+function PatronGemIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 3h12l4 6-10 13L2 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11 3 8 9l4 13 4-13-3-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 9h20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.4 4.5h11.2L21 9l-9 11L3 9l3.4-4.5Z" fill="currentColor" opacity="0.2" />
+      <path d="M6.4 4.5h11.2L21 9l-9 11L3 9l3.4-4.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M3.4 9h17.2M8.2 4.8 12 20M15.8 4.8 12 20" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+      <path d="M18.7 2.8v2.6M17.4 4.1H20" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
     </svg>
   );
 }
 
-function LockOverlayIcon({ className }: { className?: string }) {
+function DoorLockIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <rect width="18" height="11" x="3" y="11" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 21V4.8A1.8 1.8 0 0 1 8.8 3h6.4A1.8 1.8 0 0 1 17 4.8V21" fill="currentColor" opacity="0.16" />
+      <path d="M7 21V4.8A1.8 1.8 0 0 1 8.8 3h6.4A1.8 1.8 0 0 1 17 4.8V21M5 21h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 12.2h2M12 12.2v2.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9.2 8.4a2.8 2.8 0 0 1 5.6 0v1.2H9.2V8.4Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
     </svg>
   );
 }
