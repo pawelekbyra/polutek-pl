@@ -31,7 +31,7 @@ describe('Account Deletion Integrity', () => {
         commentDislike: { delete: vi.fn(), deleteMany: vi.fn() },
         subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn(), deleteMany: vi.fn() },
         emailPreference: { deleteMany: vi.fn() },
-        creator: { update: vi.fn().mockResolvedValue({}) },
+        creator: { updateMany: vi.fn().mockResolvedValue({}) },
         auditLog: { create: vi.fn() },
         $transaction: vi.fn((cb) => cb(mockPrisma)),
     };
@@ -73,7 +73,7 @@ describe('Account Deletion Integrity', () => {
     }));
 
     // Creator subscriber count is decremented
-    expect(mockPrisma.creator.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockPrisma.creator.updateMany).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: 'c1', subscribersCount: { gt: 0 } },
         data: { subscribersCount: { decrement: 1 } }
     }));
@@ -90,17 +90,20 @@ describe('Account Deletion Integrity', () => {
       id: 'u1',
       name: "Usunięty Użytkownik",
       username: "deleted_abc123",
-      imageUrl: null,
-      isPatron: false,
+      imageUrl: "https://example.com/image.png",
+      isPatron: true,
+      isDeleted: true,
       role: 'USER' as const,
     };
 
     const authorDto = toPublicCommentAuthor(softDeletedUser);
 
-    expect(authorDto).toEqual(expect.objectContaining({
+    expect(authorDto).toEqual({
+        id: 'u1',
         displayName: "Usunięty Użytkownik",
+        username: null,
         imageUrl: null,
         badges: []
-    }));
+    });
   });
 });

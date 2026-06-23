@@ -88,8 +88,8 @@ export class SyncUserFromWebhookUseCase {
               imageUrl: null,
               stripeCustomerId: null,
               isPatron: false,
-              patronSince: null, // @TODO: ARCH-789
-              patronSource: null, // @TODO: ARCH-789
+              patronSince: null,
+              patronSource: null,
               isDeleted: true
             }
         });
@@ -101,10 +101,10 @@ export class SyncUserFromWebhookUseCase {
             await tx.subscription.deleteMany({ where: { userId } });
 
             for (const sub of subscriptions) {
-                await tx.creator.update({
+                await tx.creator.updateMany({
                     where: { id: sub.creatorId, subscribersCount: { gt: 0 } },
                     data: { subscribersCount: { decrement: 1 } }
-                }).catch(() => {}); // Ignore if creator not found or count already 0
+                });
             }
         }
 
