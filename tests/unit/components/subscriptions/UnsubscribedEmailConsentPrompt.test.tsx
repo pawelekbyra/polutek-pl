@@ -1,9 +1,8 @@
+/** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import UnsubscribedEmailConsentPrompt from '@/app/components/subscriptions/UnsubscribedEmailConsentPrompt';
 import React from 'react';
-
-/** @vitest-environment jsdom */
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
