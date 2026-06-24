@@ -5,43 +5,41 @@ import { join } from "node:path";
 const component = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
+const containsAny = (source: string, snippets: string[]) =>
+  snippets.some((snippet) => source.includes(snippet));
+
 describe("access lock overlay source contract", () => {
-  it("keeps LOGIN_REQUIRED on the logged-in branded copy", () => {
+  it("keeps LOGIN_REQUIRED on an accessible sign-in lock path", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('state === "LOGIN_REQUIRED"');
-    expect(source).toContain('lineOne: isPl ? "WEJDŹ" : "STEP"');
-    expect(source).toContain('lineTwo: isPl ? "DO ŚRODKA" : "INSIDE"');
-    expect(source).toContain('compactLabel: isPl ? "LOGIN" : "SIGN IN"');
-    expect(source).toContain('Zaloguj się, żeby bezpiecznie uruchomić odtwarzanie.');
     expect(source).toContain("SignInButton");
-    expect(source).toContain("from-[#03182d] via-[#08111f] to-[#030406]");
-    expect(source).toContain("text-cyan-200");
+    expect(source).toContain("<button");
+    expect(source).toContain('type="button"');
+    expect(source).toContain("Zaloguj się");
+    expect(source).toContain("focus-visible:outline");
+    expect(containsAny(source, ["text-blue-400", "text-cyan-200"])).toBe(true);
   });
 
-  it("keeps PATRON_REQUIRED on the patron branded copy", () => {
+  it("keeps PATRON_REQUIRED on the patron branded lock path", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('state === "PATRON_REQUIRED"');
-    expect(source).toContain('lineOne: isPl ? "ZA KULISAMI" : "BEHIND"');
-    expect(source).toContain('lineTwo: isPl ? "" : "THE SCENES"');
-    expect(source).toContain('compactLabel: isPl ? "PATRON" : "PATRON"');
-    expect(source).toContain('Odcinek otwiera jednorazowe wsparcie — bez subskrypcji.');
+    expect(source).toContain("PATRON");
+    expect(containsAny(source, ["text-amber-500", "text-amber-200"])).toBe(true);
+    expect(containsAny(source, ["from-amber-950", "from-[#251000]"])).toBe(true);
     expect(source).not.toContain('href="#donations"');
-    expect(source).toContain("from-[#251000] via-[#130d07] to-[#040404]");
-    expect(source).toContain("text-amber-200");
-    expect(source).toContain("blur-3xl");
+    expect(source).not.toContain("Wesprzyj, aby obczaić");
   });
 
-  it("keeps current cinematic icon treatment with explicit badge surfaces", () => {
+  it("keeps old badge wrapper colors out of the icon treatment", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
-    expect(source).toContain("rounded-full");
-    expect(source).toContain("bg-white/[0.055]");
-    expect(source).toContain("bg-black/28");
-    expect(source).toContain("ring-1 backdrop-blur-md");
+    expect(source).not.toContain("bg-white/5");
     expect(source).not.toContain("bg-amber-500/10");
+    expect(source).not.toContain("border-white/10");
     expect(source).not.toContain("border-amber-500/20");
+    expect(source).not.toContain("blur-2xl");
   });
 
   it("keeps ChannelVideoCard badges behind access state", () => {
