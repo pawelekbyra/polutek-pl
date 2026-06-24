@@ -19,7 +19,8 @@ Current control-plane state:
 
 ```txt
 Current executable source: docs/tickets/ready/README.md
-Current executable ticket: X3-FIX-008
+Current executable ticket: NONE
+Queue status: NO_ACTIVE_LARGE_CODE_TICKET
 Security remediation: HISTORICAL
 Public launch: NO_GO
 ```
