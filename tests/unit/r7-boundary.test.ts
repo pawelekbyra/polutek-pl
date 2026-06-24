@@ -46,10 +46,9 @@ describe('R7 Module Boundaries', () => {
     });
   });
 
-  it('Admin patron route should not import legacy patron service', () => {
-      const routePath = path.resolve(process.cwd(), 'app/api/admin/users/[userId]/patron/route.ts');
-      const content = fs.readFileSync(routePath, 'utf-8');
-      expect(content).not.toContain("@/lib/services/patron.service");
+  it('Legacy patron service bridge should stay removed', () => {
+      const bridgePath = path.resolve(process.cwd(), 'lib/services/patron.service.ts');
+      expect(fs.existsSync(bridgePath)).toBe(false);
   });
 
   it('Checkout route should not import legacy checkout service', () => {
