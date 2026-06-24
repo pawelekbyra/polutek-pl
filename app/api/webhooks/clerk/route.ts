@@ -9,6 +9,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SyncUserFromWebhookUseCase } from '@/lib/modules/users';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
+import { safeErrorMessage } from '@/lib/errors';
 
 type SupportedLanguage = 'pl' | 'en';
 type ClerkPublicMetadata = {
@@ -58,11 +59,6 @@ function resolveLanguage(publicMetadata: ClerkPublicMetadata, unsafeMetadata: Cl
     unsafeMetadata.preferredLanguage,
   ];
   return candidates.find(isSupportedLanguage) || 'pl';
-}
-
-function safeErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.replace(/(sk_(live|test)_[A-Za-z0-9_\-]+|whsec_[A-Za-z0-9_\-]+|Bearer\s+[A-Za-z0-9._\-]+)/g, '[redacted]').slice(0, 1000);
 }
 
 function getSafePayload(evt: WebhookEvent): any {
