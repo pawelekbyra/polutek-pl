@@ -4,7 +4,25 @@ Status: `READY_FOR_OWNER_REVIEW`
 Runtime implementation status: `BLOCKED`  
 Production evidence status: `PRODUCTION_EVIDENCE_REQUIRED`  
 Type: docs-only, owner-authorized audit/readiness ticket  
-Branch: `LAUNCH-EMAIL-001-email-consent-unsubscribe-suppression-readiness`
+Branch: `LAUNCH-EMAIL-001-email-consent-unsubscribe-suppression-readiness`  
+Parallel Safety: `NON_EXECUTABLE_OWNER_REVIEW_ONLY / NOT_CURRENT_CODE_TICKET`
+
+## Current-state reconciliation
+
+This ticket is not the current executable code ticket and must not be used as one.
+
+Current executable-ticket state is controlled only by `docs/tickets/ready/README.md`:
+
+```txt
+Current executable source: docs/tickets/ready/README.md
+Current executable ticket: NONE
+Queue status: NO_ACTIVE_LARGE_CODE_TICKET
+Runtime implementation: BLOCKED
+Production evidence: PRODUCTION_EVIDENCE_REQUIRED
+Public launch: NO_GO
+```
+
+`READY_FOR_OWNER_REVIEW` means the docs-only readiness pack is ready for owner review. It does not mean runtime implementation is ready, production evidence is complete, or public launch is certified.
 
 ## Intent
 
