@@ -21,6 +21,7 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 
 - `LEGACY-ACCESS-POLICY-RETIREMENT-001` — DONE by PR #1075; legacy `AccessPolicy` and `comment-access` runtime surface removed, with architecture-boundary and Vitest guardrails added.
 - `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
+- `ADMIN-AUTH-ACTOR-CANONICALIZATION-001` — HISTORICAL implementation evidence; PR #922/#923/#929 path is no longer the current executable ticket and future reverification is tracked separately.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE: restored CI signal, reconciled escapes and hotspots.
 - `SECURITY-DEPENDENCY-REMEDIATION-001` — HISTORICAL; implementation merged by PR #946, high audit findings reached zero, and this is not the current executable ticket.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
@@ -33,6 +34,7 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 ## Non-executable owner/evidence review packs
 
 - `LAUNCH-EMAIL-001` — `READY_FOR_OWNER_REVIEW` docs-only readiness pack; runtime implementation is `BLOCKED` and production evidence remains `PRODUCTION_EVIDENCE_REQUIRED`. It is not the current executable code ticket.
+- `LAUNCH-LEGAL-001` — `READY_FOR_OWNER_REVIEW` docs-only legal/privacy/terms readiness pack; final legal publication remains `BLOCKED`, professional review is required, and it is not the current executable code ticket.
 
 ## Historical reports preserved
 
