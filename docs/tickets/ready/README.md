@@ -22,12 +22,17 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 - `LEGACY-ACCESS-POLICY-RETIREMENT-001` — DONE by PR #1075; legacy `AccessPolicy` and `comment-access` runtime surface removed, with architecture-boundary and Vitest guardrails added.
 - `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
 - `CI-SIGNAL-RECONCILIATION-002` — DONE: restored CI signal, reconciled escapes and hotspots.
+- `SECURITY-DEPENDENCY-REMEDIATION-001` — HISTORICAL; implementation merged by PR #946, high audit findings reached zero, and this is not the current executable ticket.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
 - `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
 - `OWNER-LAUNCH-DECISIONS-001` — HISTORICAL; owner decisions are recorded, but runtime implementation, legal review, operator evidence, and X7 remain incomplete.
 - `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — HISTORICAL verifier task for #951; public launch remains `NO_GO` pending #956/#1031 production evidence, legal review, remaining implementation requirements, and final owner certification.
+
+## Non-executable owner/evidence review packs
+
+- `LAUNCH-EMAIL-001` — `READY_FOR_OWNER_REVIEW` docs-only readiness pack; runtime implementation is `BLOCKED` and production evidence remains `PRODUCTION_EVIDENCE_REQUIRED`. It is not the current executable code ticket.
 
 ## Historical reports preserved
 
