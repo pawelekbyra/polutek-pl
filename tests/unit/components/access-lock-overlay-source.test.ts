@@ -10,33 +10,37 @@ describe("access lock overlay source contract", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('state === "LOGIN_REQUIRED"');
-    expect(source).toContain('lineTwo: "Zalogowanych"');
-    expect(source).toContain('actionLabel: "Zaloguj się, aby obczaić"');
+    expect(source).toContain('lineOne: isPl ? "WEJDŹ" : "STEP"');
+    expect(source).toContain('lineTwo: isPl ? "DO ŚRODKA" : "INSIDE"');
+    expect(source).toContain('compactLabel: isPl ? "LOGIN" : "SIGN IN"');
+    expect(source).toContain('Zaloguj się, żeby bezpiecznie uruchomić odtwarzanie.');
     expect(source).toContain("SignInButton");
-    expect(source).toContain("from-blue-900 via-black to-blue-950");
-    expect(source).toContain("text-blue-400");
+    expect(source).toContain("from-[#03182d] via-[#08111f] to-[#030406]");
+    expect(source).toContain("text-cyan-200");
   });
 
   it("keeps PATRON_REQUIRED on the patron branded copy", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('state === "PATRON_REQUIRED"');
-    expect(source).toContain('lineTwo: "Patronów"');
-    expect(source).toContain('actionLabel: "Wesprzyj, aby obczaić"');
-    expect(source).toContain('href="#donations"');
-    expect(source).toContain("from-amber-900 via-black to-amber-950");
-    expect(source).toContain("text-amber-500");
-    expect(source).toContain("blur-md");
-    expect(source).not.toContain("blur-2xl");
+    expect(source).toContain('lineOne: isPl ? "ZA KULISAMI" : "BEHIND"');
+    expect(source).toContain('lineTwo: isPl ? "" : "THE SCENES"');
+    expect(source).toContain('compactLabel: isPl ? "PATRON" : "PATRON"');
+    expect(source).toContain('Odcinek otwiera jednorazowe wsparcie — bez subskrypcji.');
+    expect(source).not.toContain('href="#donations"');
+    expect(source).toContain("from-[#251000] via-[#130d07] to-[#040404]");
+    expect(source).toContain("text-amber-200");
+    expect(source).toContain("blur-3xl");
   });
 
-  it("keeps PR1063 icon treatment without badge wrappers", () => {
+  it("keeps current cinematic icon treatment with explicit badge surfaces", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
-    expect(source).not.toContain("rounded-full");
-    expect(source).not.toContain("bg-white/5");
+    expect(source).toContain("rounded-full");
+    expect(source).toContain("bg-white/[0.055]");
+    expect(source).toContain("bg-black/28");
+    expect(source).toContain("ring-1 backdrop-blur-md");
     expect(source).not.toContain("bg-amber-500/10");
-    expect(source).not.toContain("border-white/10");
     expect(source).not.toContain("border-amber-500/20");
   });
 
