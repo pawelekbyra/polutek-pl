@@ -165,6 +165,10 @@ function violationIdentity(violation: Violation) {
   return `${violation.file}:${violation.label}:${violation.text}`;
 }
 
+function baselineFileExists(entry: BaselineEntry) {
+  return existsSync(path.join(repoRoot, entry.file));
+}
+
 const violations: Violation[] = [];
 
 for (const root of sourceRoots) {
@@ -195,20 +199,25 @@ try {
   process.exit(1);
 }
 
+const deletedFileBaselineEntries = baseline.filter((entry) => !baselineFileExists(entry));
+const activeBaseline = baseline.filter(baselineFileExists);
+
 const violationIdentities = new Set(violations.map(violationIdentity));
 const baselineIdentities = new Set<string>();
 const duplicateBaselineEntries: BaselineEntry[] = [];
-for (const entry of baseline) {
+for (const entry of activeBaseline) {
   const identity = violationIdentity(entry);
   if (baselineIdentities.has(identity)) duplicateBaselineEntries.push(entry);
   baselineIdentities.add(identity);
 }
 
 const matchedHistorical = violations.filter((violation) => baselineIdentities.has(violationIdentity(violation)));
-const missingOrStale = baseline.filter((entry) => !violationIdentities.has(violationIdentity(entry)));
+const missingOrStale = activeBaseline.filter((entry) => !violationIdentities.has(violationIdentity(entry)));
 const newUnbaselined = violations.filter((violation) => !baselineIdentities.has(violationIdentity(violation)));
 
 console.log(`Strict escapes baseline entries: ${baseline.length}`);
+console.log(`Active baseline entries: ${activeBaseline.length}`);
+console.log(`Deleted-file baseline entries: ${deletedFileBaselineEntries.length}`);
 console.log(`Matched historical violations: ${matchedHistorical.length}`);
 console.log(`Missing/stale baseline entries: ${missingOrStale.length}`);
 console.log(`New unbaselined violations: ${newUnbaselined.length}`);
