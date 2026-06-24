@@ -52,7 +52,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   if (isInitialLoading) return <SupportBoxSkeleton />;
 
   return (
-    <div className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center">
+    <div id="support-box" className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center">
       <div className="space-y-4 relative z-10">
         <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2">
           {t.donate}
@@ -61,7 +61,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
 
         <div className="space-y-3 text-center">
           {showTermsError && (
-            <p className="text-destructive font-sans font-bold text-[10px] uppercase tracking-widest animate-bounce">
+            <p className="text-destructive font-sans font-bold text-[10px] uppercase tracking-widest">
               {t.pleaseAcceptTerms}
             </p>
           )}
@@ -97,7 +97,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               />
             </div>
             {typeof amount === 'number' && amount < minAmount && (
-              <p className="font-mono text-[10px] text-destructive font-bold uppercase animate-pulse">
+              <p className="font-mono text-[10px] text-destructive font-bold uppercase">
                 {language === 'pl' ? `Błąd: Nie osiągnięto minimum (${minAmount} ${selectedCurrency})` : `Error: Minimum amount not met (${minAmount} ${selectedCurrency})`}
               </p>
             )}

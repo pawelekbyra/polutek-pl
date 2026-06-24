@@ -19,7 +19,7 @@ export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="p-6 border rounded-xl space-y-3 bg-card">
+        <div key={i} className="p-6 border border-neutral-200 rounded-xl space-y-3 bg-white">
           <div className="flex items-center justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-5 w-5 rounded-md" />
@@ -34,8 +34,8 @@ export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
 
 export function AdminTableSkeleton({ rows = 8, cols = 6 }: { rows?: number, cols?: number }) {
   return (
-    <div className="border rounded-lg bg-card overflow-hidden">
-      <div className="border-b bg-muted/30 p-4">
+    <div className="border border-neutral-200 rounded-xl bg-white overflow-hidden shadow-sm">
+      <div className="border-b border-neutral-100 bg-neutral-50/50 p-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 flex-1 max-w-sm" />
           <Skeleton className="h-10 w-32" />
@@ -84,7 +84,7 @@ export function AdminTableSkeleton({ rows = 8, cols = 6 }: { rows?: number, cols
 export function AdminFormSkeleton() {
   return (
     <div className="space-y-8 max-w-4xl">
-      <div className="space-y-6 p-6 border rounded-xl bg-card">
+      <div className="space-y-6 p-6 border border-neutral-200 rounded-xl bg-white shadow-sm">
         <Skeleton className="h-6 w-48 mb-4" />
         <div className="space-y-4">
           <div className="space-y-2">
@@ -196,8 +196,8 @@ export function AdminVideoLayoutSkeleton() {
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-4">
           <Skeleton className="h-6 w-48" />
-          <div className="border rounded-xl p-4 bg-muted/10">
-             <Skeleton className="aspect-video w-full rounded-lg mb-4" />
+          <div className="border border-neutral-200 rounded-xl p-4 bg-white shadow-sm">
+             <Skeleton className="aspect-video w-full rounded-xl mb-4 border border-neutral-300" />
              <Skeleton className="h-6 w-3/4" />
           </div>
         </div>
@@ -205,7 +205,7 @@ export function AdminVideoLayoutSkeleton() {
           <Skeleton className="h-6 w-48" />
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+              <div key={i} className="flex items-center gap-3 p-3 border border-neutral-100 rounded-xl bg-white">
                 <Skeleton className="h-8 w-8 rounded bg-muted" />
                 <Skeleton className="h-10 w-16 rounded-md" />
                 <Skeleton className="h-4 flex-1" />

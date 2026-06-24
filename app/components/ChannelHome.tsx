@@ -12,6 +12,7 @@ import { useLanguage } from './LanguageContext';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { useSearchParams } from 'next/navigation';
 import { SidebarPlaylist } from './channel/SidebarPlaylist';
+import { AlertCircle } from './icons';
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -66,10 +67,27 @@ export default function ChannelHome({ mainVideo, allVideos = [], currentVideoId,
   }, [language]);
 
   if (!selectedVideo) return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 py-20 text-center">
-      <h1 className="text-2xl font-bold mb-4">{language === 'pl' ? 'Brak filmu' : 'No video found'}</h1>
-      <p className="text-neutral-600">{language === 'pl' ? 'Nie znaleziono wybranego filmu lub filmu głównego.' : 'The selected video or the main featured video could not be found.'}</p>
-    </div>
+    <main className="bg-neutral-50 min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-white rounded-3xl border border-neutral-200 p-10 text-center shadow-sm animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+           <AlertCircle size={40} className="text-neutral-400" />
+        </div>
+        <h1 className="text-2xl font-black uppercase tracking-tighter mb-4 text-neutral-900">
+          {language === 'pl' ? 'Brak zeznań' : 'No evidence found'}
+        </h1>
+        <p className="text-neutral-500 leading-relaxed mb-8">
+          {language === 'pl'
+            ? 'Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony.'
+            : 'The selected video could not be found. It might have been archived or moved.'}
+        </p>
+        <Link
+          href="/"
+          className="inline-block bg-[#0f0f0f] text-white font-black uppercase tracking-widest text-xs px-10 py-4 rounded-full hover:bg-neutral-800 transition-all active:scale-95 shadow-lg shadow-black/10"
+        >
+           {language === 'pl' ? 'Wróć do bazy' : 'Back to database'}
+        </Link>
+      </div>
+    </main>
   );
 
   const sortedVideos = [...(allVideos || [])].sort((a, b) => {

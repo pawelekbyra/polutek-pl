@@ -27,7 +27,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('Zaloguj się');
     expect(source).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
     expect(source).toContain('Materiał jest przygotowywany.');
-    expect(source).toContain('Trwa przygotowanie materiału.');
+    expect(source).toContain('Trwa przetwarzanie wideo.');
     expect(source).toContain('Materiał nie ma jeszcze aktywnego pliku wideo.');
     expect(source).toContain('Materiał jest chwilowo niedostępny.');
     expect(source).toContain('Nie udało się przygotować odtwarzania.');

@@ -12,7 +12,6 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { SidebarPlaylistSkeleton } from '@/components/skeletons';
-import PremiumWrapper from '../PremiumWrapper';
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -101,31 +100,35 @@ export function SidebarPlaylist({
         <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-0" />
         <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
           <Link href={`/?v=${video.id}`} scroll={false} className="absolute inset-0 z-40" />
-          <PremiumWrapper
-            videoId={video.id}
-            requiredTier={video.tier}
-            variant="thumbnailCompact"
-          >
-              <div className="relative w-full h-full">
-                  {video.thumbnailUrl ? (
-                      <Image
-                        src={video.thumbnailUrl}
-                        alt={displayTitle}
-                        fill
-                        className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
-                      />
-                  ) : (
-                      <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                          <Video className="text-white/20 w-8 h-8" />
-                      </div>
-                  )}
-                  {video.duration && (
-                    <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
-                       {video.duration}
-                    </div>
-                  )}
-              </div>
-          </PremiumWrapper>
+          <div className="relative w-full h-full">
+              {video.thumbnailUrl ? (
+                  <Image
+                    src={video.thumbnailUrl}
+                    alt={displayTitle}
+                    fill
+                    className={cn(
+                      "object-cover transition duration-700 group-hover/thumb:scale-105",
+                      !hasAccess ? "opacity-40 grayscale-[0.5]" : "opacity-90"
+                    )}
+                  />
+              ) : (
+                  <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                      <Video className="text-white/20 w-8 h-8" />
+                  </div>
+              )}
+
+              {!hasAccess && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                  <Lock className="text-white/80 w-5 h-5 drop-shadow-md" />
+                </div>
+              )}
+
+              {video.duration && (
+                <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded z-30 pointer-events-none">
+                   {video.duration}
+                </div>
+              )}
+          </div>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10 relative">
           <Link href={`/?v=${video.id}`} scroll={false} className="hover:opacity-80 transition-opacity">
