@@ -67,6 +67,9 @@ export function generateCSP() {
 
   return [
     "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
     `script-src 'self' ${scriptHosts} ${inlineDirective}${devScriptSource}`,
     `script-src-elem 'self' ${scriptHosts} ${inlineDirective}`,
     `connect-src 'self' ${connectHosts}`,

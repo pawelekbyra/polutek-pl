@@ -35,6 +35,14 @@ describe('Security Headers', () => {
     expect(csp).toContain("default-src 'self'");
   });
 
+  it('sets defensive browser boundary directives', () => {
+    const csp = generateCSP();
+
+    expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+
   it('keeps the dev-only script relaxation out of production', () => {
     const devOnlyScriptKeyword = [`'`, 'un', 'safe', '-', 'ev', 'al', `'`].join('');
     vi.stubEnv('NODE_ENV', 'production');
