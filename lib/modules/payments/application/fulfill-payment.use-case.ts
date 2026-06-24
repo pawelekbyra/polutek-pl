@@ -60,9 +60,12 @@ export async function fulfillPayment(
 
       // Atomic validated transition PENDING -> SUCCEEDED. All mutable Stripe inputs were
       // checked against the local Payment before any status, totals, or grant mutation.
+      // If checkout created the Stripe intent but the local stripeIntentId write failed,
+      // recover the webhook-provided intent id in the same CAS update that fulfills payment.
       const count = await repo.fulfillPendingPaymentWithCAS({
         id: payment.id,
-        stripeIntentId: payment.stripeIntentId,
+        currentStripeIntentId: payment.stripeIntentId,
+        stripeIntentId,
         amountMinor: payment.amountMinor,
         currency: payment.currency,
       }, tx);
