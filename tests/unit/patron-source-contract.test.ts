@@ -15,7 +15,7 @@ describe('patron source contract', () => {
   it('keeps patron video gating tied to grant lookup instead of cached user fields', () => {
     const accessSource = stripComments(source('lib/modules/access/application/check-video-access.use-case.ts'));
     const blockStart = accessSource.indexOf('if (video.tier === AccessTier.PATRON)');
-    const blockEnd = accessSource.indexOf('return ok({ hasAccess: false, reason: "FORBIDDEN" });');
+    const blockEnd = accessSource.indexOf('return ok({ hasAccess: false, reason: "FORBIDDEN" });', blockStart);
     const patronBlock = accessSource.slice(blockStart, blockEnd);
     const cacheFlag = ['is', 'Patron'].join('');
     const cacheSince = ['patron', 'Since'].join('');
