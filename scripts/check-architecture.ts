@@ -112,6 +112,12 @@ const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
   'tests/unit/admin-videos-crud.test.ts': 'Test usage.',
 };
 
+const PATRON_CACHE_AUTH_SURFACE_ALLOWLIST: Record<string, string> = {
+  'lib/api/auth.ts': 'Auth helper may expose non-authoritative UI hints and derives server actor patron state from PatronGrant.',
+  'app/api/admin/users/[userId]/patron/route.ts': 'Admin mutation route returns grant mutation read-model fields; it does not authorize with User cache fields.',
+  'app/api/admin/users/export/route.ts': 'Admin export may include historical cache fields as diagnostics/statistics.',
+};
+
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {};
 
 function checkRoutes() {
@@ -257,6 +263,51 @@ function checkUserProfileServiceUsage() {
   return violations;
 }
 
+function stripComments(content: string): string {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
+function isPatronCacheAuthSurface(relativePath: string): boolean {
+  return (
+    relativePath === 'lib/api/auth.ts' ||
+    relativePath.startsWith('app/api/') ||
+    relativePath.startsWith('lib/modules/access/') ||
+    relativePath.startsWith('lib/modules/comments/application/')
+  );
+}
+
+function checkPatronCacheAuthorizationUsage() {
+  let violations = 0;
+  let usageCount = 0;
+
+  const files = getAllFiles(ROOT);
+  for (const file of files) {
+    const relativePath = path.relative(ROOT, file);
+    if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('.git')) continue;
+    if (relativePath.startsWith('tests/')) continue;
+    if (relativePath === 'scripts/check-architecture.ts') continue;
+    if (!isPatronCacheAuthSurface(relativePath)) continue;
+
+    const code = stripComments(fs.readFileSync(file, 'utf-8'));
+    const fields = Array.from(new Set(code.match(/\b(?:isPatron|patronSince|patronSource)\b/g) ?? []));
+    if (fields.length === 0) continue;
+
+    usageCount++;
+    const allowReason = PATRON_CACHE_AUTH_SURFACE_ALLOWLIST[relativePath];
+    if (!allowReason) {
+      console.error(`❌ Violation: Patron cache fields in authorization surface ${relativePath}: ${fields.join(', ')}. Backend access must use PatronGrant/getPatronStatus/checkVideoAccess, not User cache fields.`);
+      violations++;
+    } else {
+      console.log(`⚠️ Allowed patron cache field usage: ${relativePath} — ${allowReason}`);
+    }
+  }
+
+  console.log(`- Authorization-surface files with patron cache field usage: ${usageCount} (${Object.keys(PATRON_CACHE_AUTH_SURFACE_ALLOWLIST).length} allowlisted)`);
+  return violations;
+}
+
 function checkDecommissionedAccessPolicySurface() {
   let violations = 0;
   let foundViolations = 0;
@@ -300,7 +351,7 @@ function checkDecommissionedAccessPolicySurface() {
   return violations;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface();
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkPatronCacheAuthorizationUsage() + checkDecommissionedAccessPolicySurface();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);
