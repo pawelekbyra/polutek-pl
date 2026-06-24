@@ -77,19 +77,28 @@ export class PaymentRepository {
 
   async fulfillPendingPaymentWithCAS(payment: {
     id: string;
+    currentStripeIntentId: string | null;
     stripeIntentId: string | null;
     amountMinor: number;
     currency: string;
   }, tx: WriteTx): Promise<number> {
+    const data: Prisma.PaymentUpdateManyMutationInput = {
+      status: PaymentStatus.SUCCEEDED,
+    };
+
+    if (!payment.currentStripeIntentId && payment.stripeIntentId) {
+      data.stripeIntentId = payment.stripeIntentId;
+    }
+
     const { count } = await tx.payment.updateMany({
       where: {
         id: payment.id,
-        stripeIntentId: payment.stripeIntentId,
+        stripeIntentId: payment.currentStripeIntentId,
         amountMinor: payment.amountMinor,
         currency: payment.currency,
         status: PaymentStatus.PENDING,
       },
-      data: { status: PaymentStatus.SUCCEEDED }
+      data
     });
     return count;
   }
