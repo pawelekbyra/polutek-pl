@@ -6,6 +6,9 @@ Related work:
 - Issue: #1086
 - PR: #1087
 - PR: #1091
+- PR: #1093
+- PR: #1096
+- PR: #1098
 - Branch: `fix/security-audit-priority`
 
 ## North star
@@ -40,11 +43,18 @@ The target state is a small, boring, auditable VOD product where:
 - [x] Patron cache-field usage was audited and documented in `docs/patron/patron-fields-audit.md`.
 - [x] Production evidence collection guidance was added in `docs/launch/production-evidence-runbook.md`.
 
-### Still open after #1087 and #1091
+### Covered after #1091 by #1093, #1096, and #1098
 
-- [ ] Full CSP nonce/hash strategy.
-- [ ] Architecture/lint tooling that prevents backend authorization from using patron cache fields, beyond the current regression tests.
-- [ ] Deprecated patron bridge removal.
+- [x] #1093 added defensive browser-boundary CSP directives and unit coverage for those directives.
+- [x] #1096 added a focused patron source-contract regression test for the patron-tier video gating path.
+- [x] #1098 removed the deprecated legacy patron service bridge and its legacy-only unit test.
+- [x] #1098 added a boundary test asserting the removed patron bridge stays removed.
+- [x] #1098 updated strict-escapes checking so baseline entries for deleted files count as removed debt rather than stale failures.
+
+### Still open after #1087, #1091, #1093, #1096, and #1098
+
+- [ ] Full CSP nonce/hash strategy. #1093 did not complete nonce/hash rollout.
+- [ ] Architecture/lint tooling that prevents backend authorization from using patron cache fields across all guarded surfaces, beyond the current focused regression tests.
 - [ ] Type and error-handling cleanup.
 - [ ] Integration/E2E test expansion.
 - [ ] API route contract inventory and documentation.
@@ -55,11 +65,10 @@ Do not turn this into one giant cleanup PR. Split it into focused PRs that can b
 
 Recommended remaining PR order:
 
-1. **CSP strictness PR** — complete nonce/hash strategy and document required exceptions.
-2. **Patron authorization guard PR** — add architecture/lint guardrails beyond the `PatronGrant` regression tests.
-3. **Patron legacy cleanup PR** — remove or fence deprecated compatibility bridges.
-4. **Type/error cleanup PR** — remove weak casts and normalize API error serialization.
-5. **Operational polish PR** — API route contracts, focused integration/E2E smoke paths, and any follow-up launch checklist refinements.
+1. **CSP nonce/hash PR** — complete nonce/hash strategy and document required exceptions.
+2. **Patron authorization guard PR** — add broad architecture/lint guardrails beyond the focused `PatronGrant` and source-contract regression tests.
+3. **Type/error cleanup PR** — remove weak casts and normalize API error serialization.
+4. **Operational polish PR** — API route contracts, focused integration/E2E smoke paths, and any follow-up launch checklist refinements.
 
 ## Definition of done for the audit cleanup
 
@@ -72,7 +81,7 @@ The audit cleanup is considered complete only when all of these are true:
 - [x] Resend webhook non-production secret auth is opt-in and tested.
 - [x] Critical request bodies covered by #1087 are bounded before JSON parsing.
 - [ ] Production CSP is intentionally strict, tested, and documented with a nonce/hash strategy.
-- [ ] Deprecated patron compatibility bridges are removed or blocked from new usage.
+- [x] Deprecated patron compatibility bridges are removed or blocked from new usage.
 - [ ] Critical API routes have documented auth, payload, success, and error contracts.
 - [ ] CI includes any remaining integration/E2E checks selected for launch confidence.
 
@@ -106,14 +115,15 @@ Acceptance criteria:
 
 Priority: P0
 
-Status: PARTIAL. #1091 added the source-of-truth regression tests and cache-field audit documentation. A stronger architecture/lint guard is still open.
+Status: PARTIAL. #1091 added the source-of-truth regression tests and cache-field audit documentation. #1096 added a focused source-contract test for patron-tier video gating. A stronger architecture/lint guard is still open.
 
 Work items:
 
 - [x] Search all reads of `User.isPatron`, `patronSince`, and `patronSource`.
 - [x] Classify each read as display/cache sync/admin statistics/backend access.
 - [x] Confirm backend authorization uses `PatronGrant` or a domain use case backed by it.
-- [ ] Add an architecture check or lint rule that blocks backend access decisions from reading patron cache fields.
+- [x] Add focused source-contract coverage for the patron-tier video gating path.
+- [ ] Add an architecture check or lint rule that blocks backend access decisions from reading patron cache fields across guarded surfaces.
 - [x] Document allowed exceptions.
 
 Acceptance criteria:
@@ -170,8 +180,11 @@ Goal: move from partial hardening to an intentional strict policy.
 
 Priority: P0/P1 depending on launch timing
 
+Status: PARTIAL. #1093 added defensive browser-boundary directives and unit coverage, but did not complete nonce/hash rollout.
+
 Work items:
 
+- [x] Add defensive `base-uri`, `object-src`, and `frame-ancestors` coverage.
 - [ ] Decide nonce vs hash strategy for Next.js runtime scripts and styles.
 - [ ] Generate nonce in middleware or equivalent request boundary.
 - [ ] Pass nonce through request headers where needed.
@@ -194,17 +207,19 @@ Goal: remove confusing old paths and reduce type/error blind spots.
 
 Priority: P1
 
+Status: DONE by #1098.
+
 Work items:
 
-- [ ] Locate all callers of `grantPatronStatus` and `revokePatronStatus`.
-- [ ] Migrate callers to modular patron use cases.
-- [ ] Delete the deprecated bridge once unused.
-- [ ] Add an architecture guard preventing new imports from the legacy service.
+- [x] Locate all callers of `grantPatronStatus` and `revokePatronStatus`.
+- [x] Confirm production callers had moved to modular patron use cases.
+- [x] Delete the deprecated bridge once unused.
+- [x] Add a boundary guard preventing the removed legacy bridge file from returning unnoticed.
 
 Acceptance criteria:
 
-- There is one obvious patron mutation path.
-- New code cannot import deprecated patron bridge APIs.
+- [x] There is one obvious patron mutation path.
+- [x] New code cannot restore the deprecated patron bridge file without failing boundary coverage.
 
 ### D2. Type safety and error serialization
 
@@ -328,13 +343,12 @@ Acceptance criteria:
 - [x] Operator has a runbook for collecting launch/rollback evidence without exposing secrets.
 - [ ] Launch checklist reflects current code and real production evidence, not old architecture.
 
-## Suggested immediate next actions after #1091
+## Suggested immediate next actions after #1098
 
-1. Create the **CSP strictness PR** first if browser security hardening is the next priority.
-2. Create the **Patron authorization guard PR** second to convert `PatronGrant` truth tests into architecture/lint enforcement.
-3. Create the **Patron legacy cleanup PR** third to retire deprecated mutation bridges.
-4. Create the **Type/error cleanup PR** fourth to normalize unsafe casts and error serialization.
-5. Use later PRs for API route docs, focused integration/E2E, and performance/query review.
+1. Create the **CSP nonce/hash PR** if browser security hardening is the next priority.
+2. Create the **Patron authorization guard PR** to convert focused `PatronGrant` truth tests into broader architecture/lint enforcement.
+3. Create the **Type/error cleanup PR** to normalize unsafe casts and error serialization.
+4. Use later PRs for API route docs, focused integration/E2E, and performance/query review.
 
 ## What not to do
 
@@ -342,4 +356,4 @@ Acceptance criteria:
 - Do not complete CSP hardening without checking Clerk, Stripe, Next.js scripts, embeds, and preview deployments.
 - Do not mix payment refactors with CSP or UI cleanup.
 - Do not add broad E2E coverage before the critical unit/integration tests exist.
-- Do not treat #1091 as final audit closure; it completed the access/payment/evidence-test slice only.
+- Do not treat #1091, #1093, #1096, or #1098 as final audit closure; they completed focused slices only.
