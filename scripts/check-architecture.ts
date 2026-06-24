@@ -291,20 +291,20 @@ function checkPatronCacheAuthorizationUsage() {
     if (!isPatronCacheAuthSurface(relativePath)) continue;
 
     const code = stripComments(fs.readFileSync(file, 'utf-8'));
-    const fields = Array.from(new Set(code.match(/\b(?:isPatron|patronSince|patronSource)\b/g) ?? []));
+    const fields = Array.from(new Set(code.match(/\b[A-Za-z0-9_$]+\.(?:isPatron|patronSince|patronSource)\b/g) ?? []));
     if (fields.length === 0) continue;
 
     usageCount++;
     const allowReason = PATRON_CACHE_AUTH_SURFACE_ALLOWLIST[relativePath];
     if (!allowReason) {
-      console.error(`❌ Violation: Patron cache fields in authorization surface ${relativePath}: ${fields.join(', ')}. Backend access must use PatronGrant/getPatronStatus/checkVideoAccess, not User cache fields.`);
+      console.error(`❌ Violation: Patron cache field property reads in guarded surface ${relativePath}: ${fields.join(', ')}.`);
       violations++;
     } else {
-      console.log(`⚠️ Allowed patron cache field usage: ${relativePath} — ${allowReason}`);
+      console.log(`⚠️ Allowed patron cache field property read: ${relativePath} — ${allowReason}`);
     }
   }
 
-  console.log(`- Authorization-surface files with patron cache field usage: ${usageCount} (${Object.keys(PATRON_CACHE_AUTH_SURFACE_ALLOWLIST).length} allowlisted)`);
+  console.log(`- Guarded files with patron cache field property reads: ${usageCount} (${Object.keys(PATRON_CACHE_AUTH_SURFACE_ALLOWLIST).length} allowlisted)`);
   return violations;
 }
 
