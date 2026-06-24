@@ -15,7 +15,7 @@ import type {
   PlaybackPlanStatus,
 } from "@/lib/services/playback/playback.dto";
 import { AccessTierDto } from "@/lib/services/comments/comment.dto";
-import { PlayerSkeleton } from "@/components/skeletons";
+import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";
 
@@ -151,11 +151,7 @@ export default function PremiumWrapper({
   }, [playbackPlan, checkAccess]);
 
   if (!mounted) {
-    return (
-      <PlayerStateFrame>
-        <PlayerSkeleton />
-      </PlayerStateFrame>
-    );
+    return <PlayerLoadingState variant={variant} />;
   }
 
   const contextValue = {
@@ -176,11 +172,7 @@ export default function PremiumWrapper({
         />
       );
     }
-    return (
-      <PlayerStateFrame>
-        <PlayerSkeleton />
-      </PlayerStateFrame>
-    );
+    return <PlayerLoadingState variant={variant} />;
   }
 
   if (contextValue.hasAccess) {
@@ -288,16 +280,16 @@ export const PLAYBACK_PLAN_STATE_MESSAGES: Record<
   VIDEO_NOT_READY: {
     title: "Materiał jest przygotowywany.",
     description:
-      "Film został zapisany, ale nie jest jeszcze gotowy do bezpiecznego odtworzenia. Wróć za chwilę.",
+      "Film został zapisany, ale nie jest jeszcze gotowy do bezpiecznego odtworzenia. Spróbuj odświeżyć za chwilę.",
     action: "retry",
     actionLabel: "Sprawdź ponownie",
   },
   PROCESSING: {
-    title: "Trwa przygotowanie materiału.",
+    title: "Trwa przetwarzanie wideo.",
     description:
-      "Plik wideo jest przetwarzany. Odtwarzacz pojawi się dopiero, gdy materiał będzie gotowy.",
+      "Plik wideo jest przetwarzany przez system. Odtwarzacz pojawi się automatycznie, gdy materiał będzie gotowy.",
     action: "retry",
-    actionLabel: "Sprawdź ponownie",
+    actionLabel: "Odśwież stan",
   },
   NO_PRIMARY_ASSET: {
     title: "Materiał nie ma jeszcze aktywnego pliku wideo.",
@@ -363,15 +355,17 @@ export function isPlayablePlaybackPlan(
   );
 }
 
+interface PlaybackPlanStateOverlayProps {
+  state: PlaybackPlanStatus;
+  onRetry?: () => void;
+  variant: "default" | "thumbnail" | "thumbnailCompact";
+}
+
 function PlaybackPlanStateOverlay({
   state,
   onRetry,
   variant,
-}: {
-  state: PlaybackPlanStatus;
-  onRetry?: () => void;
-  variant: "default" | "thumbnail" | "thumbnailCompact";
-}) {
+}: PlaybackPlanStateOverlayProps) {
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
   const content =
     PLAYBACK_PLAN_STATE_MESSAGES[

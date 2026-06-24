@@ -27,8 +27,8 @@ export function PageShellSkeleton() {
 
 export function HomePageSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#FDFBF7]">
-      <div className="h-14 bg-white/80 border-b px-4 flex items-center justify-between sticky top-0 z-50">
+    <div className="flex flex-col min-h-screen bg-neutral-50">
+      <div className="h-14 bg-white/80 border-b px-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-32" />
         </div>
@@ -36,32 +36,36 @@ export function HomePageSkeleton() {
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>
-      <div className="flex-1 flex flex-col lg:flex-row">
-        <div className="flex-1 p-4 lg:p-6 space-y-6">
-          <Skeleton className="aspect-video w-full rounded-2xl shadow-sm" />
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-3/4" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-24" />
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 lg:px-6 py-6">
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-12 lg:col-span-8 space-y-6">
+            <Skeleton className="aspect-video w-full rounded-xl shadow-sm border border-neutral-400" />
+            <div className="space-y-4 pt-3">
+              <Skeleton className="h-8 w-3/4" />
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
               </div>
+              <Skeleton className="h-24 w-full rounded-xl bg-[#ebebeb]" />
             </div>
-            <Skeleton className="h-24 w-full rounded-xl" />
           </div>
-        </div>
-        <div className="w-full lg:w-[400px] p-4 lg:p-6 lg:border-l space-y-4">
-          <Skeleton className="h-8 w-48" />
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex gap-3">
-              <Skeleton className="w-40 aspect-video rounded-lg shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-2/3" />
-              </div>
+          <div className="hidden lg:block lg:col-span-4 space-y-4">
+            <div className="pb-1 border-b border-neutral-100 mb-4">
+              <Skeleton className="h-4 w-32" />
             </div>
-          ))}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex gap-2 p-1">
+                <Skeleton className="w-[168px] h-[94px] rounded-md shrink-0 border border-neutral-300" />
+                <div className="flex-1 space-y-2 py-1">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -71,12 +75,12 @@ export function HomePageSkeleton() {
 export function ChannelPageSkeleton() {
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
-      <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
+      <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6 pt-6">
         <Skeleton className="w-full aspect-[6/1] md:rounded-xl" />
       </div>
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <Skeleton className="w-24 h-24 md:w-40 md:h-40 rounded-full shrink-0" />
+          <Skeleton className="w-24 h-24 md:w-40 md:h-40 rounded-full shrink-0 border border-neutral-200 bg-white" />
           <div className="flex-1 text-center md:text-left space-y-3">
             <Skeleton className="h-10 w-64 mx-auto md:mx-0" />
             <div className="flex justify-center md:justify-start gap-2">
@@ -85,7 +89,7 @@ export function ChannelPageSkeleton() {
             </div>
             <Skeleton className="h-4 w-full max-w-2xl" />
             <div className="pt-2">
-              <Skeleton className="h-10 w-32 mx-auto md:mx-0" />
+              <Skeleton className="h-10 w-32 mx-auto md:mx-0 rounded-full" />
             </div>
           </div>
         </div>

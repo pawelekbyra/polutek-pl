@@ -244,9 +244,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3 order-2 sm:order-1">
           <MessageSquare size={20} className="text-blue-600" />
-          <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
-            {totalCount} {getCommentsLabel(totalCount)}
-          </h3>
+          {isLoading ? (
+            <Skeleton className="h-7 w-48" />
+          ) : (
+            <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
+              {totalCount} {getCommentsLabel(totalCount)}
+            </h3>
+          )}
         </div>
 
         <div className="flex gap-4 order-1 sm:order-2 self-end sm:self-auto">
@@ -400,11 +404,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               variant="outline"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
+              className="min-w-[140px]"
             >
               {isFetchingNextPage ? (
-                <Loader2 className="animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {language === "pl" ? "Ładowanie..." : "Loading..."}
+                </>
               ) : (
-                "Pokaż więcej"
+                language === "pl" ? "Pokaż więcej" : "Show more"
               )}
             </Button>
           </div>

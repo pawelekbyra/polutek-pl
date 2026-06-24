@@ -21,9 +21,9 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { PlayerSkeleton } from '@/components/skeletons';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
+import { PlayerLoadingState } from './PlayerLoadingState';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -214,11 +214,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     // Hydration guard
     if (!isMounted || isLoading) {
-        return (
-            <PlayerStateFrame>
-                <PlayerSkeleton />
-            </PlayerStateFrame>
-        );
+        return <PlayerLoadingState variant={variant === 'hero' ? 'default' : 'thumbnail'} />;
     }
 
     // Optimized Thumbnail Variant: No player engine, just a static preview

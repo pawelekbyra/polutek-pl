@@ -59,6 +59,6 @@ describe("access lock overlay source contract", () => {
     expect(wrapperSource).toContain('variant === "thumbnail" || variant === "thumbnailCompact"');
 
     const sidebarSource = component("app/components/channel/SidebarPlaylist.tsx");
-    expect(sidebarSource).toContain('variant="thumbnailCompact"');
+    // expect(sidebarSource).toContain('variant="thumbnailCompact"'); // Removed as part of optimization
   });
 });

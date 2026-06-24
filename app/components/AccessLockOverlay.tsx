@@ -92,16 +92,6 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
   const Icon = isPatronState ? PatronGemIcon : DoorLockIcon;
 
-  const loginButton = isLoginState ? (
-    <SignInButton mode="modal">
-      <button
-        type="button"
-        aria-label={isPl ? "Zaloguj się" : "Sign in"}
-        className="absolute inset-0 z-20 cursor-pointer bg-transparent text-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white/70"
-      />
-    </SignInButton>
-  ) : null;
-
   if (isCompact) {
     return (
       <PlayerStateFrame fill>
@@ -125,7 +115,15 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             </span>
           </motion.div>
 
-          {loginButton}
+          {isLoginState && (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="absolute inset-0 z-20 cursor-pointer bg-transparent text-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white/70"
+                aria-label={isPl ? "Zaloguj się" : "Sign in"}
+              />
+            </SignInButton>
+          )}
         </motion.div>
       </PlayerStateFrame>
     );
@@ -174,9 +172,33 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
           <p className={cn("mt-2 max-w-[31rem] text-balance font-medium leading-snug text-white/72 md:mt-4", size.note)}>
             {overlayCopy.note}
           </p>
-        </motion.div>
 
-        {loginButton}
+          <div className="mt-6 flex gap-4 md:mt-8">
+            {isLoginState && (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="rounded-full bg-white px-8 py-3 text-[min(12px,3.5cqi)] font-black uppercase tracking-widest text-[#070707] transition-all hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
+                >
+                  {isPl ? "Zaloguj się" : "Sign in"}
+                </button>
+              </SignInButton>
+            )}
+
+            {isPatronState && (
+              <a
+                href="#support"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('support-box')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="rounded-full bg-amber-400 px-8 py-3 text-[min(12px,3.5cqi)] font-black uppercase tracking-widest text-[#251000] transition-all hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 active:scale-95"
+              >
+                {isPl ? "Wesprzyj jednorazowo" : "One-time support"}
+              </a>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
     </PlayerStateFrame>
   );
@@ -187,12 +209,12 @@ export default AccessLockOverlay;
 function AccessLockBackdrop({ gradient, mesh, glow }: { gradient: string; mesh: string; glow: string }) {
   return (
     <>
-      <div className={cn("absolute inset-0 z-0 bg-gradient-to-br opacity-98 transition-transform duration-700 group-hover/paywall:scale-[1.035]", gradient)} />
+      <div className={cn("absolute inset-0 z-0 bg-gradient-to-br opacity-98 transition-transform duration-700 group-hover/paywall:scale-[1.035] motion-reduce:transition-none", gradient)} />
       <motion.div
         aria-hidden="true"
         animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className={cn("absolute -left-[15%] -top-[30%] z-0 h-[78%] w-[68%] rounded-full blur-3xl", glow)}
+        className={cn("absolute -left-[15%] -top-[30%] z-0 h-[78%] w-[68%] rounded-full blur-3xl motion-reduce:hidden", glow)}
       />
       <div className={cn("absolute inset-0 z-0 opacity-55", mesh)} />
       <div className="absolute inset-x-0 bottom-0 z-0 h-2/3 bg-gradient-to-t from-black/88 via-black/35 to-transparent" />
