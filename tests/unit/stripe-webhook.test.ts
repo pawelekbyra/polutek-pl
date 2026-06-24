@@ -67,7 +67,12 @@ vi.mock('@/lib/services/user-access.service', () => ({
   normalizePaymentTotals: vi.fn().mockReturnValue(100),
 }));
 
-describe('Stripe Webhook Idempotency and Status', () => {
+// LEGACY COVERAGE ONLY:
+// PaymentService is a deprecated compatibility facade. The current runtime Stripe
+// webhook route uses app/api/webhooks/stripe/route.ts -> handleStripeWebhook.
+// Keep these tests only as legacy idempotency/status coverage; do not treat them
+// as proof that the active modular webhook route is fully covered.
+describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => {
   const body = '{}';
   const sig = 'sig';
   const endpointSecret = 'whsec_test';
