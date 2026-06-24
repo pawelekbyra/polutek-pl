@@ -26,6 +26,8 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
 - `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
+- `OWNER-LAUNCH-DECISIONS-001` — HISTORICAL; owner decisions are recorded, but runtime implementation, legal review, operator evidence, and X7 remain incomplete.
+- `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — HISTORICAL verifier task for #951; public launch remains `NO_GO` pending #956/#1031 production evidence, legal review, remaining implementation requirements, and final owner certification.
 
 ## Historical reports preserved
 
