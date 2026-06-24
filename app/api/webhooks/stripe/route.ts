@@ -16,10 +16,11 @@ function webhookFailureResponse(error: unknown) {
     return handleApiError(error);
   }
 
-  const message = error instanceof Error ? error.message : 'Webhook processing failed';
-
   return NextResponse.json(
-    { error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR', message },
+    {
+      error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR',
+      message: 'Webhook processing failed',
+    },
     { status: 500 }
   );
 }
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
     const result = await handleStripeWebhook({ body, signature }, ctx);
 
     if (!result.ok) {
+      scopedLogger.error('Stripe Webhook Processing Error:', result.error);
       return webhookFailureResponse(result.error);
     }
 
