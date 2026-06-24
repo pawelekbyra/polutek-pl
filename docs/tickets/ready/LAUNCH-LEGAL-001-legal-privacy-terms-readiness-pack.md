@@ -8,6 +8,24 @@ LAUNCH-LEGAL-001
 
 READY_FOR_OWNER_REVIEW
 
+## Current-state reconciliation
+
+This ticket is not the current executable code ticket and must not be used as one.
+
+Current executable-ticket state is controlled only by `docs/tickets/ready/README.md`:
+
+```txt
+Current executable source: docs/tickets/ready/README.md
+Current executable ticket: NONE
+Queue status: NO_ACTIVE_LARGE_CODE_TICKET
+Type: docs-only readiness / decision pack
+Final legal publication: BLOCKED
+Professional legal review: REQUIRED
+Public launch: NO_GO
+```
+
+`READY_FOR_OWNER_REVIEW` means the docs-only readiness pack is ready for owner review. It does not mean legal documents are approved, counsel-reviewed, published in the application, or public-launch ready.
+
 ## Lane
 
 launch-ops
@@ -78,17 +96,3 @@ Do not run build, lint, typecheck, or tests for this docs-only task.
 - Surfaces inspected.
 - Highest-risk contradictions.
 - Owner decisions required.
-- Legal review questions.
-- Created documents.
-- Confirmation docs-only.
-- Blocked publication ticket.
-- Validation.
-- Risks.
-- Next action.
-- Verdict.
-
-## Ticket status
-
-`READY_FOR_OWNER_REVIEW` for the readiness pack.
-
-Final publication remains `BLOCKED`.
