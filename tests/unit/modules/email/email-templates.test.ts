@@ -130,3 +130,43 @@ describe('Email Templates Use Cases', () => {
     });
   });
 });
+
+describe('ensureRequiredEmailTemplates', () => {
+  it('creates all required slugs when none exist', async () => {
+    const { ensureRequiredEmailTemplates } = await import('@/scripts/ensure-required-emails');
+    const emailTemplate = {
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({}),
+    };
+
+    const result = await ensureRequiredEmailTemplates(emailTemplate as any);
+
+    expect(result.created).toEqual([...SYSTEM_TEMPLATE_SLUGS]);
+    expect(emailTemplate.create).toHaveBeenCalledTimes(SYSTEM_TEMPLATE_SLUGS.length);
+    for (const slug of SYSTEM_TEMPLATE_SLUGS) {
+      expect(emailTemplate.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          slug,
+          isSystem: true,
+          isActive: true,
+          subject: EMAIL_DEFAULTS[slug].subject,
+          html: EMAIL_DEFAULTS[slug].html,
+        }),
+      });
+    }
+  });
+
+  it('is idempotent and does not overwrite existing templates', async () => {
+    const { ensureRequiredEmailTemplates } = await import('@/scripts/ensure-required-emails');
+    const emailTemplate = {
+      findUnique: vi.fn().mockResolvedValue({ id: 'existing-template' }),
+      create: vi.fn(),
+    };
+
+    const result = await ensureRequiredEmailTemplates(emailTemplate as any);
+
+    expect(result.existing).toEqual([...SYSTEM_TEMPLATE_SLUGS]);
+    expect(result.created).toEqual([]);
+    expect(emailTemplate.create).not.toHaveBeenCalled();
+  });
+});

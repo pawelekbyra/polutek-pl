@@ -1,56 +1,83 @@
 import { PrismaClient } from '@prisma/client';
-import { APP_NAME } from '../lib/constants';
+import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS, SystemTemplateSlug } from '../lib/email-defaults';
 
 const prisma = new PrismaClient();
 
-const REQUIRED_TEMPLATES = [
-  {
-    slug: 'welcome-email',
-    subject: `Witaj w ${APP_NAME}, {{firstName}}!`,
-    html: `<h1>Witaj w ${APP_NAME}</h1><p>Cześć {{firstName}}! Dziękujemy za dołączenie.</p>`,
+type EmailTemplateClient = Pick<PrismaClient['emailTemplate'], 'findUnique' | 'create'>;
+
+const TEMPLATE_METADATA: Record<SystemTemplateSlug, { name: string; description: string; category: 'SYSTEM' | 'WELCOME' | 'PAYMENT' | 'PATRON' }> = {
+  'welcome-email': {
+    name: 'System: Welcome email',
+    description: 'Systemowy email powitalny wysyłany po utworzeniu konta.',
+    category: 'WELCOME',
   },
-  {
-    slug: 'account-deleted',
-    subject: `Twoje konto zostało usunięte - ${APP_NAME}`,
-    html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte.</p>',
+  'account-deleted': {
+    name: 'System: Account deleted',
+    description: 'Systemowe potwierdzenie usunięcia konta.',
+    category: 'SYSTEM',
   },
-  {
-    slug: 'password-changed',
-    subject: `Hasło zostało zmienione - ${APP_NAME}`,
-    html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane.</p>',
+  'password-changed': {
+    name: 'System: Password changed',
+    description: 'Systemowe powiadomienie o zmianie hasła.',
+    category: 'SYSTEM',
   },
-  {
-    slug: 'thank-you-donation',
-    subject: `Dziękujemy za wsparcie! - ${APP_NAME}`,
-    html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}.</p>',
+  'thank-you-donation': {
+    name: 'System: Thank you donation',
+    description: 'Systemowe podziękowanie za wsparcie poniżej progu patrona.',
+    category: 'PAYMENT',
   },
-  {
-    slug: 'become-patron',
-    subject: `Zostałeś Patronem! - ${APP_NAME}`,
-    html: '<h1>Witaj w gronie Patronów!</h1><p>Masz teraz dostęp do ekskluzywnych materiałów.</p>',
+  'become-patron': {
+    name: 'System: Become patron',
+    description: 'Systemowe potwierdzenie przyznania dostępu patrona.',
+    category: 'PATRON',
   },
-];
+};
+
+export async function ensureRequiredEmailTemplates(emailTemplate: EmailTemplateClient) {
+  const created: string[] = [];
+  const existing: string[] = [];
+
+  for (const slug of SYSTEM_TEMPLATE_SLUGS) {
+    const currentTemplate = await emailTemplate.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+
+    if (currentTemplate) {
+      existing.push(slug);
+      continue;
+    }
+
+    await emailTemplate.create({
+      data: {
+        slug,
+        ...TEMPLATE_METADATA[slug],
+        ...EMAIL_DEFAULTS[slug],
+        isSystem: true,
+        isActive: true,
+      },
+    });
+    created.push(slug);
+  }
+
+  return { created, existing };
+}
 
 async function main() {
-  console.log("--- ENSURING REQUIRED EMAIL TEMPLATES ---");
+  console.log('--- ENSURING REQUIRED EMAIL TEMPLATES ---');
   try {
-    for (const template of REQUIRED_TEMPLATES) {
-      const existing = await prisma.emailTemplate.findUnique({
-        where: { slug: template.slug },
-      });
+    const result = await ensureRequiredEmailTemplates(prisma.emailTemplate);
 
-      if (!existing) {
-        console.log(`Creating missing template: ${template.slug}`);
-        await prisma.emailTemplate.create({
-          data: template,
-        });
-      } else {
-        console.log(`✓ Template already exists: ${template.slug}`);
-      }
+    for (const slug of result.created) {
+      console.log(`Created missing template: ${slug}`);
     }
-    console.log("\n🚀 All required email templates are present in the database.");
+    for (const slug of result.existing) {
+      console.log(`✓ Template already exists: ${slug}`);
+    }
+
+    console.log('\n🚀 All required email templates are present in the database.');
   } catch (error) {
-    console.error("\n❌ ERROR: Failed to ensure email templates:");
+    console.error('\n❌ ERROR: Failed to ensure email templates:');
     console.error(error);
     process.exit(1);
   } finally {
@@ -58,4 +85,6 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
