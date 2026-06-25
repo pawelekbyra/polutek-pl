@@ -1,3 +1,13 @@
+import {
+  DEFAULT_VIDEO_THUMBNAIL_URL,
+  buildCloudflareFirstFrameThumbnailUrl,
+  isCloudflareFirstFrameThumbnailUrl,
+  normalizeThumbnailSourceMode,
+  type ThumbnailSourceMode,
+} from "@/lib/media/cloudflare-thumbnail";
+
+export type { ThumbnailSourceMode };
+
 export const slugify = (text: string) => {
   return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 };
@@ -20,6 +30,26 @@ export const normalizeCloudflareSource = (value: string) => {
   return trimmed.replace(/^stream:/i, "").replace(/^uid:/i, "").trim();
 };
 
+export function inferThumbnailSourceMode(thumbnailUrl: string | null | undefined): ThumbnailSourceMode {
+  if (!thumbnailUrl || thumbnailUrl === DEFAULT_VIDEO_THUMBNAIL_URL) return "DEFAULT";
+  return isCloudflareFirstFrameThumbnailUrl(thumbnailUrl) ? "CLOUDFLARE_FIRST_FRAME" : "CUSTOM";
+}
+
+export function resolveThumbnailUrlForMode(args: {
+  mode: ThumbnailSourceMode;
+  currentUrl?: string | null;
+  cloudflareProviderAssetId?: string | null;
+}): string {
+  const mode = normalizeThumbnailSourceMode(args.mode);
+  if (mode === "DEFAULT") return "";
+  if (mode === "CLOUDFLARE_FIRST_FRAME") {
+    return args.cloudflareProviderAssetId
+      ? buildCloudflareFirstFrameThumbnailUrl(args.cloudflareProviderAssetId)
+      : "";
+  }
+  return args.currentUrl || "";
+}
+
 export const INITIAL_FORM_DATA = {
   id: "",
   title: "",
@@ -29,6 +59,8 @@ export const INITIAL_FORM_DATA = {
   descriptionEn: "",
   videoUrl: "",
   thumbnailUrl: "",
+  thumbnailSource: "DEFAULT" as ThumbnailSourceMode,
+  cloudflareProviderAssetId: "",
   duration: "",
   tier: "PUBLIC",
   status: "DRAFT",
