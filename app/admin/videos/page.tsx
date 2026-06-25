@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { VideoForm, type CreateVideoSourceMode } from "./components/VideoForm";
+import { type CreateVideoSourceMode } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 import { AdminLayoutShell } from "./components/AdminLayoutShell";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
@@ -18,7 +18,7 @@ import { AdminVideoEditView } from "./components/AdminVideoEditView";
 import { AdminVideoHeader } from "./components/AdminVideoHeader";
 import { AdminVideoStats } from "./components/AdminVideoStats";
 import { AdminVideoFiltersView } from "./components/AdminVideoFiltersView";
-import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA } from "./components/video-utils";
+import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA, inferThumbnailSourceMode } from "./components/video-utils";
 import { useAdminVideos } from "./components/useAdminVideos";
 
 export default function AdminVideosPage() {
@@ -72,7 +72,6 @@ export default function AdminVideosPage() {
       if (isAdmin && !isInitialLoading) fetchVideos(1, { pending: true });
   }, [statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, isInitialLoading, fetchVideos]);
 
-
   const handleTitleChange = (val: string) => {
     setFormData(prev => ({
       ...prev,
@@ -82,6 +81,7 @@ export default function AdminVideosPage() {
   };
 
   const handleEdit = (vid: AdminVideoListItem) => {
+    const asset = (vid as any).asset;
     setFormError(null);
     setIsSlugManual(true);
     setFormData({
@@ -93,6 +93,8 @@ export default function AdminVideosPage() {
       descriptionEn: vid.descriptionEn || "",
       videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
+      thumbnailSource: inferThumbnailSourceMode(vid.thumbnailUrl),
+      cloudflareProviderAssetId: asset?.providerAssetId || "",
       duration: "",
       tier: vid.tier,
       status: vid.status || "PUBLISHED",
@@ -123,6 +125,8 @@ export default function AdminVideosPage() {
       descriptionEn: vid.descriptionEn || "",
       videoUrl: "",
       thumbnailUrl: vid.thumbnailUrl || "",
+      thumbnailSource: inferThumbnailSourceMode(vid.thumbnailUrl),
+      cloudflareProviderAssetId: "",
       duration: "",
       tier: vid.tier,
       status: "DRAFT",
@@ -175,14 +179,16 @@ export default function AdminVideosPage() {
           titleEn: formData.titleEn?.trim() || null,
           descriptionEn: formData.descriptionEn?.trim() || null,
           videoUrl: formData.videoUrl?.trim() || null,
-          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          thumbnailUrl: formData.thumbnailSource === "CUSTOM" ? formData.thumbnailUrl?.trim() || "" : formData.thumbnailUrl?.trim() || "",
+          thumbnailSource: formData.thumbnailSource,
         } : {
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
           description: formData.description?.trim() || null,
           titleEn: formData.titleEn?.trim() || null,
           descriptionEn: formData.descriptionEn?.trim() || null,
-          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          thumbnailUrl: formData.thumbnailSource === "CUSTOM" ? formData.thumbnailUrl?.trim() || "" : "",
+          thumbnailSource: formData.thumbnailSource,
           duration: formData.duration?.trim() || null,
           tier: formData.tier,
           publishAfterAssetReady: intent === "PUBLISHED",
@@ -197,6 +203,7 @@ export default function AdminVideosPage() {
             videoId: data.id,
             publishAfterReady: intent === "PUBLISHED",
             isPublishing: false,
+            thumbnailSource: formData.thumbnailSource,
           });
           toast(
             intent === "PUBLISHED"
@@ -210,8 +217,9 @@ export default function AdminVideosPage() {
             publishAfterReady: intent === "PUBLISHED",
             isPublishing: false,
             isAttachingExisting: true,
+            thumbnailSource: formData.thumbnailSource,
           });
-          await attachExistingCloudflareAsset(data.id, existingProviderAssetId, intent === "PUBLISHED");
+          await attachExistingCloudflareAsset(data.id, existingProviderAssetId, intent === "PUBLISHED", formData.thumbnailSource);
         } else {
           setIsEditing(false);
         }
@@ -232,12 +240,12 @@ export default function AdminVideosPage() {
     }
   };
 
-  const attachExistingCloudflareAsset = useCallback(async (videoId: string, providerAssetId: string, publishAfterReady: boolean) => {
+  const attachExistingCloudflareAsset = useCallback(async (videoId: string, providerAssetId: string, publishAfterReady: boolean, thumbnailSource: string) => {
     try {
       const attachRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "attach-asset", providerAssetId, publishAfterAssetReady: publishAfterReady }),
+        body: JSON.stringify({ action: "attach-asset", providerAssetId, publishAfterAssetReady: publishAfterReady, thumbnailSource }),
       });
       const attachData = await attachRes.json();
       if (!attachRes.ok) {
@@ -294,7 +302,7 @@ export default function AdminVideosPage() {
       } finally {
           setDeletingVideoId(null);
       }
-  }
+  };
 
   if (error) {
     return <AdminVideoErrorView error={error} onRetry={() => { setError(null); loadAdminVideos(); }} />;
