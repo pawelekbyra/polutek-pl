@@ -15,9 +15,7 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain(
       "PremiumWrapper owns the single player loading placeholder",
     );
-    expect(player).toContain(
-      "if (!isMounted || isLoading) {\n    return null;\n  }",
-    );
+    expect(player).toMatch(/if \(!isMounted \|\| isLoading\) \{\s*return null;\s*\}/);
     expect(player).not.toContain("<PlayerLoadingState");
   });
 
