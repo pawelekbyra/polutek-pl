@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import { AdminVideoListItem, type AdminVideosListResponse } from "@/lib/services/admin/videos-admin.dto";
 import { logger } from "@/lib/logger";
 import { CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA, inferThumbnailSourceMode } from "./video-utils";
@@ -21,7 +21,7 @@ export function useAdminVideos(isAdmin: boolean) {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [videos, setVideos] = useState<AdminVideoListItem[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminVideosListResponse["stats"] | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -76,13 +76,13 @@ export function useAdminVideos(isAdmin: boolean) {
       if (needsAttention) url += `&needsAttention=true`;
 
       const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      if (res.ok) {
+      const data = await res.json().catch(() => null) as AdminVideosListResponse | null;
+      if (res.ok && data) {
         setVideos(data.items);
         setTotal(data.total);
         setPage(data.page);
         setTotalPages(data.totalPages);
-        setStats(data.stats);
+        setStats(data.stats ?? null);
         setError(null);
         return { ok: true as const };
       }
@@ -107,7 +107,7 @@ export function useAdminVideos(isAdmin: boolean) {
     try {
       const res = await fetch(`/api/admin/videos/${id}`);
       if (res.ok) {
-        const vid = await res.json();
+        const vid = await res.json() as AdminVideoListItem;
         setFormData({
           id: vid.id,
           title: vid.title,
@@ -119,7 +119,7 @@ export function useAdminVideos(isAdmin: boolean) {
           thumbnailUrl: vid.thumbnailUrl || "",
           thumbnailSource: inferThumbnailSourceMode(vid.thumbnailUrl),
           cloudflareProviderAssetId: vid.asset?.providerAssetId || "",
-          duration: vid.duration || "",
+          duration: "duration" in vid && typeof vid.duration === "string" ? vid.duration : "",
           tier: vid.tier,
           status: vid.status || "PUBLISHED",
           likesCount: vid.likesCount,
