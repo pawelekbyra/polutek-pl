@@ -56,7 +56,32 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
         </div>
       );
     }
-    if (error || !user) return <div className="p-8 text-center text-destructive">{error || "Użytkownik nie znaleziony."}</div>;
+    if (error || !user) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
+          <Navbar />
+          <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <Button variant="ghost" asChild className="mb-6 -ml-3">
+              <Link href="/admin/users"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do listy</Link>
+            </Button>
+            <Card className="max-w-2xl">
+              <CardHeader>
+                <CardTitle>Nie można wyświetlić użytkownika</CardTitle>
+                <CardDescription>{error || "Użytkownik nie został znaleziony."}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link href="/admin/users">Wróć do użytkowników</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/admin">Wróć do admina</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      );
+    }
 
     const patronTruth = user.patronDiagnostics?.truth;
     const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;

@@ -42,7 +42,7 @@ export function EmailDashboard() {
 
     return (
         <div className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-black uppercase tracking-widest text-neutral-500">Wysłane Broadcasty</CardTitle>
