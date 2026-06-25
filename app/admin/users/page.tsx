@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Trash2, Mail } from "@/app/components/icons";
+import { ArrowLeft, ArrowRight, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Mail } from "@/app/components/icons";
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
@@ -148,6 +148,21 @@ export default function AdminUsersPage() {
             <StatCard label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
           </div>
         )}
+
+        <div className="grid gap-4 md:grid-cols-2 mb-8">
+          <AdminActionCard
+            title="Dashboard użytkowników"
+            description="Zobacz zbiorcze statystyki użytkowników, patronów i wpłat."
+            href="/admin/users/dashboard"
+            icon={<Users className="h-5 w-5" />}
+          />
+          <AdminActionCard
+            title="Wpłaty użytkowników"
+            description="Przejdź do listy transakcji, filtrów płatności i podsumowań finansowych."
+            href="/admin/users/payments"
+            icon={<CreditCard className="h-5 w-5" />}
+          />
+        </div>
 
         <div className="space-y-4 mb-8">
             <div className="flex flex-col lg:flex-row gap-4 items-start">
@@ -393,6 +408,25 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
                         <p className="text-2xl font-black">{value.toLocaleString()}</p>
                     </div>
                 </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function AdminActionCard({ title, description, href, icon }: { title: string, description: string, href: string, icon: React.ReactNode }) {
+    return (
+        <Card className="shadow-sm border-0">
+            <CardContent className="flex h-full items-start justify-between gap-4 p-5">
+                <div className="flex gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-blue-100 text-blue-600">{icon}</div>
+                    <div>
+                        <h2 className="font-bold tracking-tight">{title}</h2>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+                    </div>
+                </div>
+                <Button variant="outline" size="sm" asChild className="shrink-0">
+                    <Link href={href}>Otwórz <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
             </CardContent>
         </Card>
     );
