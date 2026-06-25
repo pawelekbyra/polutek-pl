@@ -48,18 +48,18 @@ export async function updateAdminVideo(
   }
 
   const safeInput = { ...input };
-  const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
 
-  if (thumbnailSource === "DEFAULT") {
-    safeInput.thumbnailUrl = DEFAULT_VIDEO_THUMBNAIL_URL;
-  } else if (thumbnailSource === "CLOUDFLARE_FIRST_FRAME") {
-    const providerAssetId = existing.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM
-      ? existing.asset.providerAssetId
-      : null;
-    if (providerAssetId) {
-      safeInput.thumbnailUrl = buildCloudflareFirstFrameThumbnailUrl(providerAssetId);
-    } else if (!safeInput.thumbnailUrl) {
+  if (input.thumbnailSource !== undefined) {
+    const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
+    if (thumbnailSource === "DEFAULT") {
       safeInput.thumbnailUrl = DEFAULT_VIDEO_THUMBNAIL_URL;
+    } else if (thumbnailSource === "CLOUDFLARE_FIRST_FRAME") {
+      const providerAssetId = existing.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM ? existing.asset.providerAssetId : null;
+      if (providerAssetId) {
+        safeInput.thumbnailUrl = buildCloudflareFirstFrameThumbnailUrl(providerAssetId);
+      } else if (!safeInput.thumbnailUrl) {
+        safeInput.thumbnailUrl = DEFAULT_VIDEO_THUMBNAIL_URL;
+      }
     }
   }
 
