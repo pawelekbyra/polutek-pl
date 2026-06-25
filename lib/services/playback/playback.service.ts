@@ -57,7 +57,9 @@ function isSafeCloudflareHlsManifestUrl(value: unknown): value is string {
     if (!url.pathname.toLowerCase().endsWith('.m3u8')) return false;
 
     const hostname = url.hostname.toLowerCase();
-    return hostname === 'videodelivery.net' || hostname.endsWith('.videodelivery.net');
+    return hostname === 'videodelivery.net'
+      || hostname.endsWith('.videodelivery.net')
+      || hostname.endsWith('.cloudflarestream.com');
   } catch {
     return false;
   }

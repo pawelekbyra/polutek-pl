@@ -408,7 +408,10 @@ describe('PlaybackService Safety', () => {
   });
 
 
-  it('uses explicit safe Cloudflare HLS manifest as playbackUrl while preserving iframe embed fallback', async () => {
+  it.each([
+    'https://videodelivery.net/cf-playback-id/manifest/video.m3u8',
+    'https://customer-xxx.cloudflarestream.com/cf-playback-id/manifest/video.m3u8',
+  ])('uses explicit safe Cloudflare HLS manifest as playbackUrl while preserving iframe embed fallback: %s', async (hlsManifestUrl) => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: true } as any,
@@ -420,7 +423,7 @@ describe('PlaybackService Safety', () => {
     } as any);
 
     mockGetAssetDetails.mockResolvedValue({
-      result: { playback: { hls: 'https://videodelivery.net/cf-playback-id/manifest/video.m3u8' } },
+      result: { playback: { hls: hlsManifestUrl } },
     });
     mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-signed-token' });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-hls' } as any);
@@ -430,7 +433,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
     expect(plan.source?.kind).toBe('cloudflare_stream');
-    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-playback-id/manifest/video.m3u8');
+    expect(plan.source?.playbackUrl).toBe(hlsManifestUrl);
     expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
     expect(mockGetAssetDetails).toHaveBeenCalledWith('cf-playback-id');
   });
@@ -457,7 +460,12 @@ describe('PlaybackService Safety', () => {
     expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-fallback-token');
   });
 
-  it('ignores unsafe Cloudflare playback data and keeps signed iframe playback working', async () => {
+  it.each([
+    'https://evil.example/cf-playback-id/manifest/video.m3u8',
+    'http://videodelivery.net/cf-playback-id/manifest/video.m3u8',
+    'https://videodelivery.net/cf-playback-id/manifest/video.mp4',
+    'not-a-url',
+  ])('ignores unsafe or invalid Cloudflare HLS data and keeps signed iframe playback working: %s', async (hlsManifestUrl) => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: true } as any,
@@ -469,7 +477,7 @@ describe('PlaybackService Safety', () => {
     } as any);
 
     mockGetAssetDetails.mockResolvedValue({
-      result: { playback: { hls: 'https://evil.example/manifest/video.m3u8' } },
+      result: { playback: { hls: hlsManifestUrl } },
     });
     mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-safe-token' });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-safe' } as any);
