@@ -56,3 +56,29 @@ describe("admin client pages avoid unrelated auth gates", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("admin videos loading skeleton regression", () => {
+  const pageSource = () => read("app/admin/videos/page.tsx");
+  const loadingSource = () => read("app/admin/videos/loading.tsx");
+  const wrapperSource = () => read("app/admin/videos/components/VideoTableWrapper.tsx");
+  const hookSource = () => read("app/admin/videos/components/useAdminVideos.ts");
+
+  it("keeps the route-level admin videos skeleton in loading.tsx only", () => {
+    expect(loadingSource()).toContain("AdminVideosPageSkeleton");
+    expect(pageSource()).not.toContain("AdminVideosPageSkeleton");
+  });
+
+  it("never renders the full-page videos skeleton from the table wrapper", () => {
+    expect(wrapperSource()).not.toContain("AdminVideosPageSkeleton");
+    expect(wrapperSource()).toContain("AdminTableSkeleton");
+    expect(wrapperSource()).toContain("Odświeżanie listy…");
+  });
+
+  it("separates initial load from refetch pending state", () => {
+    const source = hookSource();
+
+    expect(source).toContain("isInitialLoading");
+    expect(source).toContain("isRefetching");
+    expect(source).toContain("options?: { pending?: boolean }");
+  });
+});

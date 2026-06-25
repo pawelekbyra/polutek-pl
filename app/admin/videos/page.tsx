@@ -5,14 +5,9 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
-import Link from 'next/link';
-import { Plus, ArrowLeft } from "@/app/components/icons";
-import { Button } from "@/components/ui/button";
 import { VideoForm, type CreateVideoSourceMode } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
-import { AdminFormSkeleton, AdminVideosPageSkeleton } from "@/components/skeletons/admin";
-import { AdminLayoutShell, StatMiniCard } from "./components/AdminLayoutShell";
-import { VideoFilters } from "./components/VideoFilters";
+import { AdminLayoutShell } from "./components/AdminLayoutShell";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
 import { readAdminApiError } from "./components/api-error";
 import { buildCreatedVideoUploadUrl } from "./[id]/details-tab-state";
@@ -31,9 +26,10 @@ export default function AdminVideosPage() {
   const router = useRouter();
   const { isLoaded: authLoaded } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
 
   const {
-    error, setError, videos, stats, isLoading, setIsLoading,
+    error, setError, videos, stats, isInitialLoading, setIsInitialLoading, isRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
     createSourceMode, setCreateSourceMode, existingCloudflareSource, setExistingCloudflareSource,
@@ -47,20 +43,20 @@ export default function AdminVideosPage() {
 
   const loadAdminVideos = useCallback(async () => {
     setIsAdmin(true);
-    setIsLoading(true);
+    setIsInitialLoading(true);
     await fetchVideos(1);
-    setIsLoading(false);
-  }, [fetchVideos, setIsLoading]);
+    setIsInitialLoading(false);
+  }, [fetchVideos, setIsInitialLoading]);
 
   useEffect(() => {
     if (!userLoaded || !authLoaded) return;
     if (!user) {
       setError("Zaloguj się, aby uzyskać dostęp do panelu.");
-      setIsLoading(false);
+      setIsInitialLoading(false);
       return;
     }
     loadAdminVideos();
-  }, [user, userLoaded, authLoaded, loadAdminVideos, setError, setIsLoading]);
+  }, [user, userLoaded, authLoaded, loadAdminVideos, setError, setIsInitialLoading]);
 
   useEffect(() => {
     const editId = searchParams.get("edit");
@@ -70,8 +66,8 @@ export default function AdminVideosPage() {
   }, [searchParams, isAdmin, fetchVideoForEdit]);
 
   useEffect(() => {
-      if (isAdmin) fetchVideos(1);
-  }, [statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, fetchVideos]);
+      if (isAdmin && !isInitialLoading) fetchVideos(1, { pending: true });
+  }, [statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, isInitialLoading, fetchVideos]);
 
 
   const handleTitleChange = (val: string) => {
@@ -221,7 +217,7 @@ export default function AdminVideosPage() {
         } else if (!formData.id && !hasCreateSource) {
           router.push(buildCreatedVideoUploadUrl(data.id));
         }
-        fetchVideos(page);
+        await fetchVideos(page, { pending: true });
       } else {
         setFormError(readAdminApiError(data, "Wystąpił błąd podczas zapisywania."));
       }
@@ -279,10 +275,11 @@ export default function AdminVideosPage() {
 
   const handleDelete = async (id: string) => {
       if (!confirm("Zarchiwizuj film. Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
+      setDeletingVideoId(id);
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
-              fetchVideos(page);
+              await fetchVideos(page, { pending: true });
               toast("Pomyślnie zarchiwizowano film.", 'success');
           } else {
               const err = await res.json();
@@ -290,16 +287,16 @@ export default function AdminVideosPage() {
           }
       } catch (err) {
           logger.error("Delete failed", err);
+      } finally {
+          setDeletingVideoId(null);
       }
   }
-
-  if (isLoading) return <AdminLayoutShell><AdminVideosPageSkeleton /></AdminLayoutShell>;
 
   if (error) {
     return <AdminVideoErrorView error={error} onRetry={() => { setError(null); loadAdminVideos(); }} />;
   }
 
-  if (!isAdmin) return <AdminLayoutShell><div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div></AdminLayoutShell>;
+  if (!isAdmin && !isInitialLoading) return <AdminLayoutShell><div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">Brak uprawnień.</div></AdminLayoutShell>;
 
   if (isEditing) {
     return (
@@ -357,8 +354,8 @@ export default function AdminVideosPage() {
         />
 
         <VideoTableWrapper
-            isLoading={isLoading} total={total} videos={videos} page={page} totalPages={totalPages}
-            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} onPageChange={fetchVideos}
+            isInitialLoading={isInitialLoading} isRefetching={isRefetching} total={total} videos={videos} page={page} totalPages={totalPages}
+            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} deletingVideoId={deletingVideoId} onPageChange={(nextPage) => fetchVideos(nextPage, { pending: true })}
         />
       </div>
       </div>

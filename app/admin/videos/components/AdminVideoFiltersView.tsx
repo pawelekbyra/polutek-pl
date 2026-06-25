@@ -3,7 +3,7 @@ import { VideoFilters } from "./VideoFilters";
 interface AdminVideoFiltersViewProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  fetchVideos: (page: number) => void;
+  fetchVideos: (page: number, options?: { pending?: boolean }) => void;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
   tierFilter: string;
@@ -35,7 +35,7 @@ export function AdminVideoFiltersView({
 }: AdminVideoFiltersViewProps) {
   return (
     <VideoFilters
-      searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1)}
+      searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1, { pending: true })}
       statusFilter={statusFilter} onStatusFilterChange={setStatusFilter}
       tierFilter={tierFilter} onTierFilterChange={setTierFilter}
       sourceKindFilter={sourceKindFilter} onSourceKindFilterChange={setSourceKindFilter}
