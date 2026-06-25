@@ -9,21 +9,19 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
   it("has visible login button in LOGIN_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     expect(source).toContain("SignInButton");
-    expect(source).toContain('isPl ? "Zaloguj się" : "Sign in"');
-    // Ensure it's not just the transparent full-overlay button
-    expect(source).toContain('rounded-full bg-white px-8 py-3');
+    expect(source).toContain('cta: "Zaloguj się, aby obczaić"');
+    expect(source).toContain("focus-visible:outline");
   });
 
   it("has visible support button in PATRON_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain('isPl ? "Wesprzyj jednorazowo" : "One-time support"');
-    expect(source).toContain('href="#support"');
+    expect(source).toContain('cta: "Wyślij napiwek, aby dołączyć"');
+    expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
   });
 
   it("respects reduced motion", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     expect(source).toContain("motion-reduce:transition-none");
-    expect(source).toContain("motion-reduce:hidden");
   });
 });

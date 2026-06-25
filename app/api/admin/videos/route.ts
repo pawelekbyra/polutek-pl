@@ -12,7 +12,7 @@ import {
 import type {
   CreateVideoInput,
   UpdateVideoInput,
-} from "@/lib/modules/video/infrastructure/video.repository";
+} from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseVideoQueryParams } from "@/lib/services/admin/admin-query-parser";

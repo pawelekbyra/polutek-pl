@@ -398,7 +398,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.canPlay).toBe(true);
     expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
     expect(plan.source?.kind).toBe('cloudflare_stream');
-    expect(plan.source?.playbackUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
+    expect(plan.source?.playbackUrl).toBe(`https://videodelivery.net/${mockToken}/manifest/video.m3u8`);
     expect(plan.source?.embedUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
     expect(plan.source?.isSignedUrl).toBe(true);
     expect(plan.tracking.playbackSessionId).toBe('s-cf-1');
@@ -411,7 +411,7 @@ describe('PlaybackService Safety', () => {
   it.each([
     'https://videodelivery.net/cf-playback-id/manifest/video.m3u8',
     'https://customer-xxx.cloudflarestream.com/cf-playback-id/manifest/video.m3u8',
-  ])('uses explicit safe Cloudflare HLS manifest as playbackUrl while preserving iframe embed fallback: %s', async (hlsManifestUrl) => {
+  ])('uses signed Cloudflare HLS manifest as playbackUrl while preserving iframe embed fallback and ignoring asset HLS data: %s', async (hlsManifestUrl) => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
       data: { hasAccess: true } as any,
@@ -433,9 +433,9 @@ describe('PlaybackService Safety', () => {
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
     expect(plan.source?.kind).toBe('cloudflare_stream');
-    expect(plan.source?.playbackUrl).toBe(hlsManifestUrl);
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-signed-token/manifest/video.m3u8');
     expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
-    expect(mockGetAssetDetails).toHaveBeenCalledWith('cf-playback-id');
+    expect(mockGetAssetDetails).not.toHaveBeenCalled();
   });
 
   it('keeps Cloudflare iframe fallback when explicit HLS manifest is absent', async () => {
@@ -456,7 +456,7 @@ describe('PlaybackService Safety', () => {
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
 
     expect(plan.status).toBe('READY');
-    expect(plan.source?.playbackUrl).toBe('https://iframe.videodelivery.net/cf-fallback-token');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-fallback-token/manifest/video.m3u8');
     expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-fallback-token');
   });
 
@@ -486,7 +486,7 @@ describe('PlaybackService Safety', () => {
 
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
-    expect(plan.source?.playbackUrl).toBe('https://iframe.videodelivery.net/cf-safe-token');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-safe-token/manifest/video.m3u8');
     expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-safe-token');
   });
 
