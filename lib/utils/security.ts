@@ -18,6 +18,12 @@ export function generateCSP() {
     'upload.cloudflarestream.com',
   ];
 
+  const cloudflareStreamPlaybackHosts = [
+    'videodelivery.net',
+    '*.videodelivery.net',
+    '*.cloudflarestream.com',
+  ];
+
   const embedFrameHosts = [
     'iframe.videodelivery.net',
     '*.videodelivery.net',
@@ -26,11 +32,16 @@ export function generateCSP() {
     'player.vimeo.com',
   ];
 
-  const mediaHosts = Array.from(new Set([
+  const configuredMediaHosts = [
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     ...parseMediaHosts(process.env.ALLOWED_MEDIA_HOSTS),
+  ];
+
+  const mediaHosts = Array.from(new Set([
+    ...configuredMediaHosts,
+    ...cloudflareStreamPlaybackHosts,
   ])).map(h => `https://${h}`).join(' ');
 
   const imageHosts = Array.from(new Set([
@@ -46,15 +57,17 @@ export function generateCSP() {
   const connectHosts = Array.from(new Set([
     ...clerkDomains,
     ...cloudflareStreamUploadHosts,
+    ...cloudflareStreamPlaybackHosts,
     'api.stripe.com',
     'fonts.googleapis.com',
-    ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
-    ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
-    ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
-    ...parseMediaHosts(process.env.ALLOWED_MEDIA_HOSTS),
+    ...configuredMediaHosts,
   ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
 
-  const scriptHosts = clerkDomains.map(h => `https://${h}`).join(' ') + " https://js.stripe.com";
+  const scriptHosts = [
+    ...clerkDomains.map(h => `https://${h}`),
+    'https://cdn.jsdelivr.net',
+    'https://js.stripe.com',
+  ].join(' ');
   const relaxedPrefix = 'un' + 'safe';
   const inlineDirective = `'${relaxedPrefix}-inline'`;
   const evalDirective = `'${relaxedPrefix}-${'eval'}'`;
