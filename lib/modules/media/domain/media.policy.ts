@@ -192,7 +192,7 @@ export class MediaPolicy {
   /**
    * Asserts that a video DTO is safe for public exposure.
    */
-  static assertPublicVideoDtoSafe(dto: any): void {
+  static assertPublicVideoDtoSafe(dto: Record<string, unknown>): void {
     const forbiddenFields = [
         'videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl',
         's3Url', 'blobUrl', 'r2Url', 'storageKey', 'objectKey', 'bucket',
@@ -205,7 +205,7 @@ export class MediaPolicy {
         }
     }
 
-    if (dto.thumbnailUrl && this.isProbablyRawMediaUrl(dto.thumbnailUrl)) {
+    if (typeof dto.thumbnailUrl === "string" && this.isProbablyRawMediaUrl(dto.thumbnailUrl)) {
         // Redacting raw thumbnails is optional but recommended.
         // For now we just log it or we could throw if we want to be strict.
     }

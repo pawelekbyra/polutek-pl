@@ -312,19 +312,27 @@ export class VideoRepository {
       where: {
         creatorId: mainChannelId,
         isMainFeatured: true,
-        id: { not: exceptVideoId },
       },
+      data: { isMainFeatured: false },
+    });
+    await tx.video.updateMany({
+      where: { creatorId: mainChannelId, isMainFeatured: true, id: { not: exceptVideoId } },
       data: { isMainFeatured: false },
     });
   }
 
   async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
     const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { asset: true } });
-    if (!video) throw new VideoNotFoundError(id);
+    if (!video) throw new VideoNotOnMainChannelError(id);
     const blockers = VideoPolicy.getHeroBlockers(video);
     if (blockers.length > 0) throw new VideoInvalidHeroError(`${blockers[0].code}: ${blockers[0].message}`);
     await this.clearHero(mainChannelId, id, tx);
-    await tx.video.update({ where: { id }, data: { isMainFeatured: true } });
+    await tx.video.updateMany({
+      where: { creatorId: mainChannelId, isMainFeatured: true, id: { not: id } },
+      data: { isMainFeatured: false },
+    });
+    const result = await tx.video.updateMany({ where: { id, creatorId: mainChannelId }, data: { isMainFeatured: true } });
+    if (result.count !== 1) throw new VideoNotOnMainChannelError(id);
   }
 
   async setSidebar(id: string, mainChannelId: string, showInSidebar: boolean, tx: WriteTx): Promise<void> {
@@ -337,6 +345,8 @@ export class VideoRepository {
 
   async updateVideoAsset(videoId: string, data: {
     provider: StorageProvider;
+    objectKey?: string | null;
+    bucket?: string | null;
     providerAssetId?: string | null;
     providerPlaybackId?: string | null;
     storageKey?: string | null;
@@ -349,11 +359,50 @@ export class VideoRepository {
     processingEndedAt?: Date | null;
     failureReason?: string | null;
   }, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.upsert({
-      where: { videoId },
-      update: data,
-      create: { videoId, ...data }
+    const { storageKey, ...assetData } = data;
+    const objectKey = assetData.objectKey ?? storageKey ?? `${assetData.provider}/${assetData.providerAssetId ?? videoId}`;
+
+    const existing = await tx.videoAsset.findUnique({ where: { videoId } });
+    if (existing) {
+      return await tx.videoAsset.update({
+        where: { id: existing.id },
+        data: { ...assetData, objectKey },
+      });
+    }
+
+    return await tx.videoAsset.create({
+      data: { videoId, ...assetData, objectKey },
     });
+  }
+
+  async upsertAsset(videoId: string, data: Parameters<VideoRepository["updateVideoAsset"]>[1], tx: WriteTx): Promise<VideoAsset> {
+    return await this.updateVideoAsset(videoId, data, tx);
+  }
+
+  async updateAsset(id: string, data: Prisma.VideoAssetUpdateInput, tx: WriteTx): Promise<VideoAsset> {
+    return await tx.videoAsset.update({ where: { id }, data });
+  }
+
+  async reorder(updates: Array<{ id: string; sidebarOrder: number; showInSidebar: boolean }>, mainChannelId: string, tx: WriteTx): Promise<void> {
+    for (const update of updates) {
+      const video = await tx.video.findUnique({
+        where: { id: update.id },
+        select: { creatorId: true },
+      });
+      if (!video || video.creatorId !== mainChannelId) {
+        throw new VideoNotOnMainChannelError(update.id);
+      }
+    }
+
+    for (const update of updates) {
+      await tx.video.updateMany({
+        where: { id: update.id, creatorId: mainChannelId },
+        data: {
+          sidebarOrder: update.sidebarOrder,
+          showInSidebar: update.showInSidebar,
+        },
+      });
+    }
   }
 
   async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {

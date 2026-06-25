@@ -21,7 +21,7 @@ import {
 } from '@vidstack/react';
 import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
-import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
+import { PublicVideoDTO as VideoType, normalizeTextTracks, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
@@ -77,7 +77,7 @@ function DoodleCaptionsIcon() {
     );
 }
 
-function DoodleSettingsIcon() {
+function DoodleSettingsPlaceholder() {
     return (
         <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
             <path d="M10.8 3.8c.7-.4 1.7-.4 2.4 0l.8 1.6 1.8.5 1.5-.9c.8.4 1.4 1 1.8 1.8l-.9 1.5.5 1.8 1.6.8c.4.7.4 1.7 0 2.4l-1.6.8-.5 1.8.9 1.5c-.4.8-1 1.4-1.8 1.8l-1.5-.9-1.8.5-.8 1.6c-.7.4-1.7.4-2.4 0l-.8-1.6-1.8-.5-1.5.9c-.8-.4-1.4-1-1.8-1.8l.9-1.5-.5-1.8-1.6-.8c-.4-.7-.4-1.7 0-2.4l1.6-.8.5-1.8-.9-1.5c.4-.8 1-1.4 1.8-1.8l1.5.9 1.8-.5.8-1.6Z" fill="currentColor" stroke="white" strokeWidth="1.25" strokeLinejoin="round" />
@@ -152,7 +152,7 @@ function DoodlePlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                         {hasTextTracks && <DoodleCaptionButton className={buttonClass} />}
                         <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
-                            <DoodleSettingsIcon />
+                            <DoodleSettingsPlaceholder />
                         </button>
                         <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><DoodleFullscreenIcon /></FullscreenButton>
                     </div>
@@ -160,17 +160,6 @@ function DoodlePlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
             </div>
         </Controls.Root>
     );
-}
-
-function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoTextTrackDTO[] {
-    if (!Array.isArray(tracks)) return [];
-
-    return tracks.filter((track) => {
-        const src = track.src?.trim();
-        const label = track.label?.trim();
-        const language = track.language?.trim();
-        return Boolean(src && label && language && (track.kind === 'subtitles' || track.kind === 'captions'));
-    });
 }
 
 export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
@@ -182,7 +171,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
     const videoEmbedUrl = source?.embedUrl;
-    const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
+    const textTracks = normalizeTextTracks((playerConfig as { textTracks?: unknown })?.textTracks || (video as VideoType & { textTracks?: unknown }).textTracks);
     const hasTextTracks = textTracks.length > 0;
 
     const player = useRef<MediaPlayerInstance>(null);

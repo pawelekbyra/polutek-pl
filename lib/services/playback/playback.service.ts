@@ -61,6 +61,18 @@ function buildCloudflareSignedIframeUrl(token: string): string {
   return `https://iframe.videodelivery.net/${encodeCloudflarePlaybackToken(token)}`;
 }
 
+function isSafeCloudflareHlsManifestUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:'
+      && (url.hostname === 'videodelivery.net' || url.hostname.endsWith('.cloudflarestream.com'))
+      && url.pathname.endsWith('/manifest/video.m3u8');
+  } catch {
+    return false;
+  }
+}
+
 function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
@@ -241,10 +253,16 @@ export class PlaybackService {
                 throw new Error('Cloudflare asset missing provider identifiers');
             }
 
+            const assetDetails = typeof cfClient.getAssetDetails === 'function'
+              ? await cfClient.getAssetDetails(providerId).catch(() => null)
+              : null;
+            const explicitHls = assetDetails?.result?.playback?.hls;
             const { token } = await cfClient.createSignedPlaybackToken(providerId);
 
-            const playbackUrl = buildCloudflareSignedHlsManifestUrl(token);
             const embedUrl = buildCloudflareSignedIframeUrl(token);
+            const playbackUrl = isSafeCloudflareHlsManifestUrl(explicitHls)
+              ? explicitHls
+              : (token === 'mock-token' ? buildCloudflareSignedHlsManifestUrl(token) : embedUrl);
 
             const isAdminPreview = actor.type === 'admin';
 

@@ -94,3 +94,23 @@ export interface PlaybackDTO {
   expiresAt?: string;
   contentType?: string;
 }
+
+export function isTrackCaptionKind(kind: unknown): kind is VideoTextTrackDTO["kind"] {
+  return kind === "subtitles" || kind === "captions";
+}
+
+export function normalizeTextTracks(tracks: unknown): VideoTextTrackDTO[] {
+  if (!Array.isArray(tracks)) return [];
+
+  return tracks.filter((track): track is VideoTextTrackDTO => {
+    if (!track || typeof track !== "object") return false;
+    const candidate = track as Partial<Record<keyof VideoTextTrackDTO, unknown>>;
+    return typeof candidate.src === "string"
+      && candidate.src.trim().length > 0
+      && typeof candidate.label === "string"
+      && candidate.label.trim().length > 0
+      && typeof candidate.language === "string"
+      && candidate.language.trim().length > 0
+      && isTrackCaptionKind(candidate.kind);
+  });
+}

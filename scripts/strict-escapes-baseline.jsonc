@@ -505,13 +505,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/video/application/attach-cloudflare-asset.use-case.ts",
-      "line": 53,
-      "label": "explicit any annotation",
-      "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/video/application/get-admin-video-details.use-case.ts",
       "line": 14,
       "label": "explicit any annotation",
