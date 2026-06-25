@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
       titleEn: body.titleEn,
       descriptionEn: body.descriptionEn,
       thumbnailUrl: body.thumbnailUrl,
+      thumbnailSource: body.thumbnailSource,
       duration: body.duration,
       tier: body.tier,
       publishAfterAssetReady: body.publishAfterAssetReady === true,
