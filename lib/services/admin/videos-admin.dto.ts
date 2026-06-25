@@ -1,3 +1,11 @@
+export type AdminVideoAssetSummary = {
+  provider?: string | null;
+  providerAssetId?: string | null;
+  providerPlaybackId?: string | null;
+  processingState?: string | null;
+  isPrimary?: boolean | null;
+};
+
 export type AdminVideoListItem = {
   id: string;
   slug: string;
@@ -14,6 +22,7 @@ export type AdminVideoListItem = {
   sidebarOrder: number | null;
   sourceKind: string | null;
   provider?: string | null;
+  asset?: AdminVideoAssetSummary | null;
   views: number;
   likesCount: number;
   dislikesCount: number;
