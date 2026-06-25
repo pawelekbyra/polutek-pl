@@ -89,59 +89,6 @@ export interface PublicVideoDTO {
   rawUrl?: never;
 }
 
-export type VideoTextTrackDTO = {
-  src?: string | null;
-  kind?: string | null;
-  label?: string | null;
-  language?: string | null;
-  srcLang?: string | null;
-  default?: boolean | null;
-};
-
-const CAPTION_TRACK_KINDS = new Set(["subtitles", "captions"]);
-
-export function isTrackCaptionKind(
-  kind: string | null | undefined,
-): kind is "subtitles" | "captions" {
-  return CAPTION_TRACK_KINDS.has(String(kind || "").toLowerCase());
-}
-
-export function normalizeTextTracks(tracks: unknown): VideoTextTrackDTO[] {
-  if (!Array.isArray(tracks)) return [];
-
-  return tracks
-    .map((track): VideoTextTrackDTO | null => {
-      if (!track || typeof track !== "object") return null;
-      const candidate = track as Record<string, unknown>;
-      const src = typeof candidate.src === "string" ? candidate.src.trim() : "";
-      if (!src) return null;
-
-      const kind =
-        typeof candidate.kind === "string"
-          ? candidate.kind.toLowerCase()
-          : "subtitles";
-      if (!isTrackCaptionKind(kind)) return null;
-
-      const srcLangValue = candidate.srcLang ?? candidate.language;
-      const srcLang =
-        typeof srcLangValue === "string" && srcLangValue.trim()
-          ? srcLangValue.trim()
-          : "pl";
-
-      return {
-        src,
-        kind,
-        label:
-          typeof candidate.label === "string" && candidate.label.trim()
-            ? candidate.label.trim()
-            : srcLang.toUpperCase(),
-        srcLang,
-        default: Boolean(candidate.default),
-      };
-    })
-    .filter((track): track is VideoTextTrackDTO => Boolean(track));
-}
-
 export interface PlaybackDTO {
   playbackUrl: string;
   expiresAt?: string;
