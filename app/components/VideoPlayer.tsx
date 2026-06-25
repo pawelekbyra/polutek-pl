@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerLoadingState } from './PlayerLoadingState';
+import { resolveCloudflarePlaybackSource } from './cloudflarePlaybackSource';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -256,8 +257,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     }
 
     const normalizedKind = String(videoSourceKind || '').toLowerCase();
-    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || normalizedKind === 'cloudflare_stream';
-    const src = isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl;
+    const cloudflarePlaybackSource = normalizedKind === 'cloudflare_stream'
+        ? resolveCloudflarePlaybackSource({ playbackUrl: videoUrl, embedUrl: videoEmbedUrl })
+        : null;
+    const isCloudflareIframeFallback = cloudflarePlaybackSource?.mode === 'iframe';
+    const isCloudflareHlsSource = cloudflarePlaybackSource?.mode === 'hls';
+    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || isCloudflareIframeFallback;
+    const src = cloudflarePlaybackSource?.src || (isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl);
 
     if (!src) {
         return (
@@ -271,7 +277,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    const isSupported = isEmbedProvider || ['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob'].includes(normalizedKind);
+    const isSupported = isEmbedProvider || isCloudflareHlsSource || ['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob'].includes(normalizedKind);
 
     if (!isSupported) {
         return (
@@ -285,7 +291,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    if (normalizedKind === 'cloudflare_stream') {
+    if (isCloudflareIframeFallback) {
         return (
             <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
                 <PolutekWatermark />
