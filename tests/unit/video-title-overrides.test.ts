@@ -9,6 +9,22 @@ describe('video title overrides', () => {
     expect(getVideoDisplayTitle(video, 'en')).toBe("Wuthering Heights");
   });
 
+  it('returns the base title as canonical when an English translation exists', () => {
+    const video = {
+      slug: 'film-z-polskim-i-angielskim-tytulem',
+      title: 'Polski tytuł',
+      titleEn: 'English title',
+    };
+
+    expect(getCanonicalVideoTitle(video)).toBe('Polski tytuł');
+    expect(getVideoDisplayTitle(video, 'pl')).toBe('Polski tytuł');
+    expect(getVideoDisplayTitle(video, 'en')).toBe('English title');
+  });
+
+  it('falls back to English title only when base title is missing', () => {
+    expect(getCanonicalVideoTitle({ title: null, titleEn: 'English fallback' })).toBe('English fallback');
+  });
+
   it('returns the title as is for all tiers', () => {
     expect(getCanonicalVideoTitle({ slug: 'historia-powstania-osady', title: 'Historia powstania osady' })).toBe('Historia powstania osady');
     expect(getCanonicalVideoTitle({ slug: 'intencja-swiadomosc-sprawczosci', title: 'Intencja' })).toBe('Intencja');
