@@ -47,6 +47,27 @@ function toStatus(reason?: string): PlaybackPlanStatus {
   return 'ERROR';
 }
 
+
+function isSafeCloudflareHlsManifestUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:') return false;
+    if (!url.pathname.toLowerCase().endsWith('.m3u8')) return false;
+
+    const hostname = url.hostname.toLowerCase();
+    return hostname === 'videodelivery.net' || hostname.endsWith('.videodelivery.net');
+  } catch {
+    return false;
+  }
+}
+
+function extractCloudflareHlsManifest(details: unknown): string | null {
+  const hls = (details as { result?: { playback?: { hls?: unknown } } })?.result?.playback?.hls;
+  return isSafeCloudflareHlsManifestUrl(hls) ? hls.trim() : null;
+}
+
 function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
@@ -227,10 +248,18 @@ export class PlaybackService {
                 throw new Error('Cloudflare asset missing provider identifiers');
             }
 
+            const details = typeof cfClient.getAssetDetails === 'function'
+                ? await cfClient.getAssetDetails(providerId).catch((error) => {
+                    console.warn('[PLAYBACK_SERVICE] Cloudflare HLS manifest lookup failed; keeping iframe fallback', error);
+                    return null;
+                })
+                : null;
+            const hlsManifestUrl = extractCloudflareHlsManifest(details);
             const { token } = await cfClient.createSignedPlaybackToken(providerId);
 
             // Using the generic videodelivery.net domain which is official for Cloudflare Stream
-            const playbackUrl = `https://iframe.videodelivery.net/${token}`;
+            const embedUrl = `https://iframe.videodelivery.net/${token}`;
+            const playbackUrl = hlsManifestUrl ?? embedUrl;
 
             const isAdminPreview = actor.type === 'admin';
 
@@ -256,7 +285,7 @@ export class PlaybackService {
                     provider: 'CLOUDFLARE_STREAM',
                     kind: 'cloudflare_stream',
                     playbackUrl: playbackUrl,
-                    embedUrl: playbackUrl,
+                    embedUrl,
                     posterUrl: thumbnailUrl,
                     mimeType: asset.mimeType ?? undefined,
                     needsProxy: false,

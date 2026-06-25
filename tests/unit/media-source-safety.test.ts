@@ -31,11 +31,13 @@ vi.mock('@/lib/services/storage/storage.service', () => ({
 }));
 
 const mockCreateSignedPlaybackToken = vi.fn();
+const mockGetAssetDetails = vi.fn();
 vi.mock('@/lib/modules/video/infrastructure/cloudflare-stream.client', () => {
     return {
       CloudflareStreamClient: vi.fn().mockImplementation(function() {
         return {
           createSignedPlaybackToken: mockCreateSignedPlaybackToken,
+          getAssetDetails: mockGetAssetDetails,
         };
       }),
     };
@@ -72,6 +74,7 @@ describe('PlaybackService Safety', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
+    mockGetAssetDetails.mockResolvedValue({ result: { playback: {} } });
   });
 
   it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
@@ -396,11 +399,87 @@ describe('PlaybackService Safety', () => {
     expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
     expect(plan.source?.kind).toBe('cloudflare_stream');
     expect(plan.source?.playbackUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
+    expect(plan.source?.embedUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
     expect(plan.source?.isSignedUrl).toBe(true);
     expect(plan.tracking.playbackSessionId).toBe('s-cf-1');
 
     expect(mockCreateSignedPlaybackToken).toHaveBeenCalledWith('cf-playback-id');
     expect(prisma.videoPlaybackSession.create).toHaveBeenCalled();
+  });
+
+
+  it('uses explicit safe Cloudflare HLS manifest as playbackUrl while preserving iframe embed fallback', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    mockGetAssetDetails.mockResolvedValue({
+      result: { playback: { hls: 'https://videodelivery.net/cf-playback-id/manifest/video.m3u8' } },
+    });
+    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-signed-token' });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-hls' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.canPlay).toBe(true);
+    expect(plan.source?.kind).toBe('cloudflare_stream');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-playback-id/manifest/video.m3u8');
+    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
+    expect(mockGetAssetDetails).toHaveBeenCalledWith('cf-playback-id');
+  });
+
+  it('keeps Cloudflare iframe fallback when explicit HLS manifest is absent', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    mockGetAssetDetails.mockResolvedValue({ result: { playback: {} } });
+    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-fallback-token' });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-fallback' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.source?.playbackUrl).toBe('https://iframe.videodelivery.net/cf-fallback-token');
+    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-fallback-token');
+  });
+
+  it('ignores unsafe Cloudflare playback data and keeps signed iframe playback working', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      asset: cloudflareAsset,
+    } as any);
+
+    mockGetAssetDetails.mockResolvedValue({
+      result: { playback: { hls: 'https://evil.example/manifest/video.m3u8' } },
+    });
+    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-safe-token' });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-safe' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.canPlay).toBe(true);
+    expect(plan.source?.playbackUrl).toBe('https://iframe.videodelivery.net/cf-safe-token');
+    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-safe-token');
   });
 
   it('fails closed when Cloudflare resolution fails for allowed patron', async () => {
