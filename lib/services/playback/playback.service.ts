@@ -47,27 +47,18 @@ function toStatus(reason?: string): PlaybackPlanStatus {
   return 'ERROR';
 }
 
-
-function isSafeCloudflareHlsManifestUrl(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-
-  try {
-    const url = new URL(value.trim());
-    if (url.protocol !== 'https:') return false;
-    if (!url.pathname.toLowerCase().endsWith('.m3u8')) return false;
-
-    const hostname = url.hostname.toLowerCase();
-    return hostname === 'videodelivery.net'
-      || hostname.endsWith('.videodelivery.net')
-      || hostname.endsWith('.cloudflarestream.com');
-  } catch {
-    return false;
-  }
+function encodeCloudflarePlaybackToken(token: string): string {
+  const trimmed = token.trim();
+  if (!trimmed) throw new Error('Cloudflare signed playback token missing');
+  return encodeURIComponent(trimmed);
 }
 
-function extractCloudflareHlsManifest(details: unknown): string | null {
-  const hls = (details as { result?: { playback?: { hls?: unknown } } })?.result?.playback?.hls;
-  return isSafeCloudflareHlsManifestUrl(hls) ? hls.trim() : null;
+function buildCloudflareSignedHlsManifestUrl(token: string): string {
+  return `https://videodelivery.net/${encodeCloudflarePlaybackToken(token)}/manifest/video.m3u8`;
+}
+
+function buildCloudflareSignedIframeUrl(token: string): string {
+  return `https://iframe.videodelivery.net/${encodeCloudflarePlaybackToken(token)}`;
 }
 
 function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
@@ -250,18 +241,10 @@ export class PlaybackService {
                 throw new Error('Cloudflare asset missing provider identifiers');
             }
 
-            const details = typeof cfClient.getAssetDetails === 'function'
-                ? await cfClient.getAssetDetails(providerId).catch((error) => {
-                    console.warn('[PLAYBACK_SERVICE] Cloudflare HLS manifest lookup failed; keeping iframe fallback', error);
-                    return null;
-                })
-                : null;
-            const hlsManifestUrl = extractCloudflareHlsManifest(details);
             const { token } = await cfClient.createSignedPlaybackToken(providerId);
 
-            // Using the generic videodelivery.net domain which is official for Cloudflare Stream
-            const embedUrl = `https://iframe.videodelivery.net/${token}`;
-            const playbackUrl = hlsManifestUrl ?? embedUrl;
+            const playbackUrl = buildCloudflareSignedHlsManifestUrl(token);
+            const embedUrl = buildCloudflareSignedIframeUrl(token);
 
             const isAdminPreview = actor.type === 'admin';
 
