@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Mail, Settings, Video, ShieldCheck, Trophy } from "@/app/components/icons";
+import { ArrowRight, Mail, Settings, Video, ShieldCheck, Trophy, MessageSquare } from "@/app/components/icons";
 
 const adminSections = [
   {
@@ -19,7 +19,7 @@ const adminSections = [
   },
   {
     title: "Kanał",
-    description: "Nazwa kanału, opis, cover photo, social links, ustawienia profilu.",
+    description: "Nazwa kanału, opis, cover photo i ustawienia profilu.",
     href: "/admin/channel",
     icon: Settings,
   },
@@ -32,9 +32,15 @@ const adminSections = [
   },
   {
     title: "Użytkownicy",
-    description: "Lista użytkowników, role, dostęp do treści, status subskrypcji, podstawowe akcje administracyjne.",
+    description: "Lista użytkowników, role, dostęp do treści, status follow i podstawowe akcje administracyjne.",
     href: "/admin/users",
     icon: ShieldCheck,
+  },
+  {
+    title: "Komentarze",
+    description: "Moderacja komentarzy i zarządzanie dyskusjami pod filmami.",
+    href: "/admin/comments",
+    icon: MessageSquare,
   },
 ];
 
