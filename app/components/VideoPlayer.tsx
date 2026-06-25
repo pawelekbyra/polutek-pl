@@ -23,6 +23,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
+import { CaptionsIcon, Maximize, Pause, Play, Settings, Volume2, VolumeX } from 'lucide-react';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -32,7 +33,7 @@ interface VideoPlayerProps {
     variant?: 'hero' | 'thumbnail';
 }
 
-const doodleIconClass = "h-5 w-5 drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]";
+const playerIconClass = "h-5 w-5 stroke-[2]";
 
 function PolutekWatermark() {
     return (
@@ -43,118 +44,76 @@ function PolutekWatermark() {
     );
 }
 
-function DoodlePlayIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M8.2 5.4c-.9.5-1.1 11.8-.1 12.7.8.8 10.1-4.7 10.3-6 .2-1.3-9.2-7.3-10.2-6.7Z" fill="currentColor" stroke="white" strokeWidth="1.7" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function DoodlePauseIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M8 5.2c-1.2.1-1.4.8-1.4 6.9 0 5.8.3 6.7 1.5 6.8l2.2.1c1.1-.1 1.4-.9 1.4-6.9 0-6.2-.4-6.9-1.5-7L8 5.2Zm7.1-.1c-1.1.1-1.4.9-1.4 7 0 5.9.3 6.7 1.5 6.8l2 .1c1.2-.1 1.5-.9 1.5-6.9 0-6.1-.3-6.8-1.4-7l-2.2 0Z" fill="currentColor" stroke="white" strokeWidth="1.35" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function DoodleVolumeIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M4.2 9.1h3.2l4.1-3.2c.8-.6 1.9-.1 1.9.9v10.4c0 1-1.1 1.5-1.9.9l-4.1-3.2H4.2c-.8 0-1.4-.6-1.4-1.4v-3c0-.8.6-1.4 1.4-1.4Z" fill="currentColor" stroke="white" strokeWidth="1.35" strokeLinejoin="round" />
-            <path d="M16.1 8.3c1.7 1.8 1.8 5.3 0 7.3M18.7 6.1c3.1 3.1 3.2 8.4.1 11.7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodleCaptionsIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M4.2 6.2c1.4-1 14.3-.9 15.5.1 1.2.9 1.1 10.4-.1 11.3-1.5 1-13.9 1.2-15.3.1-1.2-1-1.4-10.5-.1-11.5Z" fill="currentColor" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
-            <path d="M7.1 11.1h3.4M13.5 11.1h3.4M7.1 14.6h5.2M15 14.6h2" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodleSettingsIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M10.8 3.8c.7-.4 1.7-.4 2.4 0l.8 1.6 1.8.5 1.5-.9c.8.4 1.4 1 1.8 1.8l-.9 1.5.5 1.8 1.6.8c.4.7.4 1.7 0 2.4l-1.6.8-.5 1.8.9 1.5c-.4.8-1 1.4-1.8 1.8l-1.5-.9-1.8.5-.8 1.6c-.7.4-1.7.4-2.4 0l-.8-1.6-1.8-.5-1.5.9c-.8-.4-1.4-1-1.8-1.8l.9-1.5-.5-1.8-1.6-.8c-.4-.7-.4-1.7 0-2.4l1.6-.8.5-1.8-.9-1.5c.4-.8 1-1.4 1.8-1.8l1.5.9 1.8-.5.8-1.6Z" fill="currentColor" stroke="white" strokeWidth="1.25" strokeLinejoin="round" />
-            <circle cx="12" cy="12" r="2.8" fill="white" />
-        </svg>
-    );
-}
-
-function DoodleFullscreenIcon() {
-    return (
-        <svg viewBox="0 0 24 24" className={doodleIconClass} aria-hidden="true">
-            <path d="M5.4 9V5.4H9M15 5.4h3.6V9M18.6 15v3.6H15M9 18.6H5.4V15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M6 6l4 4M18 6l-4 4M18 18l-4-4M6 18l4-4" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function DoodlePlayButton({ className }: { className: string }) {
+function PlayerPlayButton({ className }: { className: string }) {
     const paused = useMediaState('paused');
 
     return (
         <PlayButton className={className} aria-label={paused ? "Odtwórz" : "Pauza"}>
-            {paused ? <DoodlePlayIcon /> : <DoodlePauseIcon />}
+            {paused ? <Play className={playerIconClass} aria-hidden="true" fill="currentColor" /> : <Pause className={playerIconClass} aria-hidden="true" fill="currentColor" />}
         </PlayButton>
     );
 }
 
-function DoodleCaptionButton({ className }: { className: string }) {
+function PlayerMuteIcon() {
+    const muted = useMediaState('muted');
+    const volume = useMediaState('volume');
+    const Icon = muted || volume === 0 ? VolumeX : Volume2;
+
+    return <Icon className={playerIconClass} aria-hidden="true" />;
+}
+
+function PlayerCaptionButton({ className }: { className: string }) {
     const textTrack = useMediaState('textTrack');
     const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
 
     return (
         <CaptionButton
-            className={cn(className, captionsOn && "border-sky-200 bg-sky-500 text-white shadow-[2px_3px_0_rgba(255,255,255,0.18)]")}
+            className={cn(className, captionsOn && "bg-[#ff2d2d] text-white hover:bg-[#ff2d2d]/90 active:bg-[#ff2d2d]/85")}
             aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
             aria-pressed={captionsOn}
         >
-            <DoodleCaptionsIcon />
+            <CaptionsIcon className={playerIconClass} aria-hidden="true" />
         </CaptionButton>
     );
 }
 
-function DoodlePlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-10 w-10 place-items-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-[2px_3px_0_rgba(255,255,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200";
+function PremiumPlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
+    const buttonClass = "grid h-10 w-10 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d2d]/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
 
     return (
-        <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/86 via-black/22 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
-            <div className="space-y-1.5 px-2 pb-2 sm:px-4 sm:pb-3">
+        <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
+            <div className="space-y-1 px-3 pb-2 sm:px-4 sm:pb-3">
                 <div className="min-w-0">
-                    <TimeSlider.Root className="group/slider relative flex h-9 w-full cursor-pointer touch-none select-none items-center py-3" aria-label="Postęp filmu">
-                        <TimeSlider.Track className="relative h-2 w-full min-w-0 overflow-hidden rounded-full border border-white/20 bg-white/25 shadow-[0_2px_0_rgba(255,255,255,0.14)] transition-all group-hover/slider:h-3 group-focus-within/slider:h-3">
-                            <TimeSlider.Progress className="absolute h-full bg-white/35" />
-                            <TimeSlider.TrackFill className="absolute h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300" />
+                    <TimeSlider.Root className="group/slider relative flex h-8 w-full cursor-pointer touch-none select-none items-center py-3" aria-label="Postęp filmu">
+                        <TimeSlider.Track className="relative h-[3px] w-full min-w-0 overflow-hidden rounded-full bg-white/30 transition-all group-hover/slider:h-[5px] group-focus-within/slider:h-[5px]">
+                            <TimeSlider.Progress className="absolute h-full rounded-full bg-white/45" />
+                            <TimeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
                         </TimeSlider.Track>
-                        <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-400 opacity-0 shadow-[2px_2px_0_rgba(255,255,255,0.35)] transition group-hover/slider:opacity-100 group-focus-within/slider:opacity-100" />
+                        <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-[#ff2d2d] opacity-0 transition duration-150 group-hover/slider:scale-100 group-hover/slider:opacity-100 group-focus-within/slider:scale-100 group-focus-within/slider:opacity-100 data-[dragging]:scale-100 data-[dragging]:opacity-100" />
                     </TimeSlider.Root>
                 </div>
                 <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-                        <DoodlePlayButton className={buttonClass} />
-                        <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><DoodleVolumeIcon /></MuteButton>
-                        <VolumeSlider.Root className="group/volume hidden h-10 w-24 shrink-0 items-center md:flex" aria-label="Głośność">
-                            <VolumeSlider.Track className="relative h-2 w-full rounded-full bg-white/25">
-                                <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-sky-300" />
-                            </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-white bg-amber-300" />
-                        </VolumeSlider.Root>
-                        <div className="min-w-fit rounded-full border border-white/15 bg-black/35 px-2.5 py-1 text-[11px] font-bold tabular-nums tracking-wide text-white shadow-[2px_2px_0_rgba(14,165,233,0.26)] sm:px-3 sm:text-xs">
-                            <Time type="current" /> <span className="text-white/55">/</span> <Time type="duration" />
+                    <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
+                        <PlayerPlayButton className={buttonClass} />
+                        <div className="group/volume flex shrink-0 items-center">
+                            <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
+                            <VolumeSlider.Root className="ml-1 hidden h-10 w-0 items-center overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/volume:w-20 group-hover/volume:opacity-100 group-focus-within/volume:w-20 group-focus-within/volume:opacity-100 md:flex lg:group-hover/volume:w-[88px] lg:group-focus-within/volume:w-[88px]" aria-label="Głośność">
+                                <VolumeSlider.Track className="relative h-[3px] w-full rounded-full bg-white/30">
+                                    <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
+                                </VolumeSlider.Track>
+                                <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3 w-3 -translate-x-1/2 rounded-full bg-[#ff2d2d]" />
+                            </VolumeSlider.Root>
+                        </div>
+                        <div className="min-w-0 truncate text-[12px] font-medium tabular-nums text-white/90">
+                            <Time type="current" /> <span className="text-white/60">/</span> <span className="text-white/60"><Time type="duration" /></span>
                         </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                        {hasTextTracks && <DoodleCaptionButton className={buttonClass} />}
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                        {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
                         <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
-                            <DoodleSettingsIcon />
+                            <Settings className={playerIconClass} aria-hidden="true" />
                         </button>
-                        <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><DoodleFullscreenIcon /></FullscreenButton>
+                        <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
                     </div>
                 </Controls.Group>
             </div>
@@ -454,7 +413,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         )}
                     </MediaProvider>
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
-                    {(playerConfig ? playerConfig.controls : true) && <DoodlePlayerControls hasTextTracks={hasTextTracks} />}
+                    {(playerConfig ? playerConfig.controls : true) && <PremiumPlayerControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
             )}
         </div>

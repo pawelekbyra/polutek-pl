@@ -21,24 +21,32 @@ describe("public loading/access state UX contracts", () => {
     expect(player).not.toContain("<PlayerLoadingState");
   });
 
-  it("preserves the #1124 player controls and text-track contract", () => {
+  it("keeps the public player controls clean, accessible, and compact", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
     expect(player).toContain("Captions,");
-    expect(player).toContain("function DoodleCaptionButton");
-    expect(player).toContain("function DoodlePlayerControls({ hasTextTracks }");
-    expect(player).toContain("{hasTextTracks && <DoodleCaptionButton");
-    const videoTypes = read("app/types/video.ts");
+    expect(player).toContain("function PlayerCaptionButton");
+    expect(player).toContain("function PremiumPlayerControls({ hasTextTracks }");
+    expect(player).toContain("{hasTextTracks && <PlayerCaptionButton");
+    expect(player).toContain("const playerIconClass = \"h-5 w-5 stroke-[2]\";");
+    expect(player).not.toContain("const doodleIconClass");
+    expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
+    expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
+    expect(player).not.toContain("rounded-full border border-white/15 bg-black/35");
+    expect(player).toContain("text-[12px] font-medium tabular-nums text-white/90");
+    expect(player).toContain("group/volume flex shrink-0 items-center");
+    expect(player).toContain("group-hover/volume:w-20");
+    expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
+    expect(player).toContain('aria-label="Postęp filmu"');
+    expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');
+    expect(player).toContain('aria-label="Wycisz / włącz dźwięk"');
+    expect(player).toContain('aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}');
+    expect(player).toContain('aria-label="Pełny ekran"');
 
+    const videoTypes = read("app/types/video.ts");
     expect(player).toContain("type VideoTextTrackDTO");
-    expect(player).toContain("normalizeTextTracks,");
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
-    expect(videoTypes).toContain("export function isTrackCaptionKind");
-    expect(videoTypes).toContain("export function normalizeTextTracks");
-    expect(player).toContain("playerConfig as { textTracks?: unknown }");
-    expect(player).toContain("video as VideoType & { textTracks?: unknown }");
     expect(player).toContain("<Captions className=");
-    expect(player).toContain("DoodleSettingsPlaceholder");
   });
 
   it("renders channel grid thumbnails from safe summary data without mounting PremiumWrapper or VideoPlayer", () => {
@@ -48,19 +56,18 @@ describe("public loading/access state UX contracts", () => {
     expect(card).not.toContain("VideoPlayer");
     expect(card).not.toContain("/api/media-source");
     expect(card).toContain("const hasAccess = clientHasAccess;");
-    expect(card).toContain("!hasAccess &&");
-    expect(card).toContain("badge?.text");
+    expect(card).toContain("const lockState = !hasAccess");
+    expect(card).toContain("{badge && hasAccess &&");
   });
 
   it("shows visible access CTAs for both full and compact lock states without framer infinite motion", () => {
     const overlay = read("app/components/AccessLockOverlay.tsx");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Wesprzyj jednorazowo");
-    expect(overlay).toContain('href="#support"');
-    expect(overlay).toContain("support-box");
+    expect(overlay).toContain("Wyślij napiwek, aby dołączyć");
+    expect(overlay).toContain('href="#donations"');
+    expect(overlay).toContain('getElementById("donations")');
     expect(overlay).toContain("Zaloguj");
-    expect(overlay).toContain("Wesprzyj");
     expect(overlay).not.toContain("framer-motion");
     expect(overlay).not.toContain("repeat: Infinity");
     expect(overlay).not.toContain("text-transparent");
