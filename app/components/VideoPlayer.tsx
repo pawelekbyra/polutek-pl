@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import {
     CaptionButton,
+    Captions,
     Controls,
     FullscreenButton,
     MediaPlayer,
@@ -24,6 +25,48 @@ import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
+
+export type VideoTextTrackDTO = {
+    src?: string | null;
+    kind?: string | null;
+    label?: string | null;
+    language?: string | null;
+    srcLang?: string | null;
+    default?: boolean | null;
+};
+
+const CAPTION_TRACK_KINDS = new Set(['subtitles', 'captions']);
+
+export function isTrackCaptionKind(kind: string | null | undefined): kind is 'subtitles' | 'captions' {
+    return CAPTION_TRACK_KINDS.has(String(kind || '').toLowerCase());
+}
+
+export function normalizeTextTracks(tracks: unknown): VideoTextTrackDTO[] {
+    if (!Array.isArray(tracks)) return [];
+
+    return tracks
+        .map((track): VideoTextTrackDTO | null => {
+            if (!track || typeof track !== 'object') return null;
+            const candidate = track as Record<string, unknown>;
+            const src = typeof candidate.src === 'string' ? candidate.src.trim() : '';
+            if (!src) return null;
+
+            const kind = typeof candidate.kind === 'string' ? candidate.kind.toLowerCase() : 'subtitles';
+            if (!isTrackCaptionKind(kind)) return null;
+
+            const srcLangValue = candidate.srcLang ?? candidate.language;
+            const srcLang = typeof srcLangValue === 'string' && srcLangValue.trim() ? srcLangValue.trim() : 'pl';
+
+            return {
+                src,
+                kind,
+                label: typeof candidate.label === 'string' && candidate.label.trim() ? candidate.label.trim() : srcLang.toUpperCase(),
+                srcLang,
+                default: Boolean(candidate.default),
+            };
+        })
+        .filter((track): track is VideoTextTrackDTO => Boolean(track));
+}
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -95,19 +138,43 @@ function DoodlePlayButton({ className }: { className: string }) {
     );
 }
 
-function DoodlePlayerControls() {
+function DoodleCaptionButton({ className }: { className: string }) {
+    return (
+        <CaptionButton className={className} aria-label="Napisy">
+            <DoodleCaptionsIcon />
+        </CaptionButton>
+    );
+}
+
+function DoodleSettingsPlaceholder({ className }: { className: string }) {
+    return (
+        <button
+            type="button"
+            className={cn(className, "cursor-not-allowed opacity-55")}
+            disabled
+            aria-label="Ustawienia odtwarzacza — wkrótce"
+            title="Ustawienia odtwarzacza — wkrótce"
+        >
+            <span aria-hidden="true" className="text-lg leading-none">⚙</span>
+        </button>
+    );
+}
+
+function DoodlePlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 place-items-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-[2px_3px_0_rgba(255,255,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200";
 
     return (
         <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/82 via-black/24 to-black/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
             <div className="px-2 pb-1 sm:px-4 sm:pb-2">
-                <TimeSlider.Root className="group/slider relative mb-1 flex h-7 w-full cursor-pointer touch-none select-none items-center" aria-label="Postęp filmu">
-                    <TimeSlider.Track className="relative h-2 w-full overflow-hidden rounded-full border border-white/20 bg-white/25 shadow-[0_2px_0_rgba(255,255,255,0.14)] transition-all group-hover/slider:h-3">
-                        <TimeSlider.Progress className="absolute h-full bg-white/35" />
-                        <TimeSlider.TrackFill className="absolute h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300" />
-                    </TimeSlider.Track>
-                    <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-400 opacity-0 shadow-[2px_2px_0_rgba(255,255,255,0.35)] transition group-hover/slider:opacity-100" />
-                </TimeSlider.Root>
+                <Controls.Group className="w-full">
+                    <TimeSlider.Root className="group/slider relative mb-1 flex h-7 w-full cursor-pointer touch-none select-none items-center" aria-label="Postęp filmu">
+                        <TimeSlider.Track className="relative h-2 w-full overflow-hidden rounded-full border border-white/20 bg-white/25 shadow-[0_2px_0_rgba(255,255,255,0.14)] transition-all group-hover/slider:h-3">
+                            <TimeSlider.Progress className="absolute h-full bg-white/35" />
+                            <TimeSlider.TrackFill className="absolute h-full rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300" />
+                        </TimeSlider.Track>
+                        <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-400 opacity-0 shadow-[2px_2px_0_rgba(255,255,255,0.35)] transition group-hover/slider:opacity-100" />
+                    </TimeSlider.Root>
+                </Controls.Group>
                 <Controls.Group className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <DoodlePlayButton className={buttonClass} />
@@ -118,7 +185,8 @@ function DoodlePlayerControls() {
                             </VolumeSlider.Track>
                             <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-white bg-amber-300" />
                         </VolumeSlider.Root>
-                        <CaptionButton className={buttonClass} aria-label="Napisy"><DoodleCaptionsIcon /></CaptionButton>
+                        {hasTextTracks && <DoodleCaptionButton className={buttonClass} />}
+                        <DoodleSettingsPlaceholder className={buttonClass} />
                     </div>
                     <div className="flex flex-col items-end gap-1 text-right">
                         <div className="rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] font-bold tabular-nums tracking-wide text-white shadow-[2px_2px_0_rgba(14,165,233,0.26)] sm:text-xs">
@@ -144,6 +212,11 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     const player = useRef<MediaPlayerInstance>(null);
     const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
+    const textTracks = normalizeTextTracks(
+        (playerConfig as { textTracks?: unknown } | undefined)?.textTracks
+        || (video as VideoType & { textTracks?: unknown }).textTracks,
+    );
+    const hasTextTracks = textTracks.length > 0;
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const hasReached10s = useRef(false);
@@ -381,8 +454,21 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                             src={posterUrl}
                             alt={video.title || 'Video poster'}
                         />
+                        {textTracks.map((track) => (
+                            <track
+                                key={`${track.src}-${track.srcLang}`}
+                                src={track.src || ''}
+                                kind={track.kind || 'subtitles'}
+                                label={track.label || track.srcLang || 'Napisy'}
+                                srcLang={track.srcLang || 'pl'}
+                                default={Boolean(track.default)}
+                            />
+                        ))}
                     </MediaProvider>
-                    {(playerConfig ? playerConfig.controls : true) && <DoodlePlayerControls />}
+                    {hasTextTracks && (
+                        <Captions className="absolute inset-x-4 bottom-24 z-20 text-center text-sm font-bold text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.9)] sm:text-base" />
+                    )}
+                    {(playerConfig ? playerConfig.controls : true) && <DoodlePlayerControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
             )}
         </div>

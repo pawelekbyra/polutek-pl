@@ -15,8 +15,26 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain(
       "PremiumWrapper owns the single player loading placeholder",
     );
-    expect(player).toMatch(/if \(!isMounted \|\| isLoading\) \{\s*return null;\s*\}/);
+    expect(player).toMatch(
+      /if \(!isMounted \|\| isLoading\) \{\s*return null;\s*\}/,
+    );
     expect(player).not.toContain("<PlayerLoadingState");
+  });
+
+  it("preserves the #1124 player controls and text-track contract", () => {
+    const player = read("app/components/VideoPlayer.tsx");
+
+    expect(player).toContain("Captions,");
+    expect(player).toContain("function DoodleCaptionButton");
+    expect(player).toContain("function DoodlePlayerControls({ hasTextTracks }");
+    expect(player).toContain("{hasTextTracks && <DoodleCaptionButton");
+    expect(player).toContain("export type VideoTextTrackDTO");
+    expect(player).toContain("export function isTrackCaptionKind");
+    expect(player).toContain("export function normalizeTextTracks");
+    expect(player).toContain("playerConfig as { textTracks?: unknown }");
+    expect(player).toContain("video as VideoType & { textTracks?: unknown }");
+    expect(player).toContain("<Captions className=");
+    expect(player).toContain("DoodleSettingsPlaceholder");
   });
 
   it("renders channel grid thumbnails from safe summary data without mounting PremiumWrapper or VideoPlayer", () => {
