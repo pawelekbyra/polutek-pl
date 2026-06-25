@@ -54,7 +54,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         videoId,
         fileName: body.fileName,
         fileSize: body.fileSize,
-        contentType: body.contentType
+        contentType: body.contentType,
+        thumbnailSource: body.thumbnailSource,
     }, ctx);
 
     return fromUseCaseResult(result);
