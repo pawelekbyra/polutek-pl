@@ -20,53 +20,15 @@ import {
 } from '@vidstack/react';
 import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
-import { PublicVideoDTO as VideoType } from '@/app/types/video';
+import {
+    PublicVideoDTO as VideoType,
+    normalizeTextTracks,
+    type VideoTextTrackDTO,
+} from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
-
-export type VideoTextTrackDTO = {
-    src?: string | null;
-    kind?: string | null;
-    label?: string | null;
-    language?: string | null;
-    srcLang?: string | null;
-    default?: boolean | null;
-};
-
-const CAPTION_TRACK_KINDS = new Set(['subtitles', 'captions']);
-
-export function isTrackCaptionKind(kind: string | null | undefined): kind is 'subtitles' | 'captions' {
-    return CAPTION_TRACK_KINDS.has(String(kind || '').toLowerCase());
-}
-
-export function normalizeTextTracks(tracks: unknown): VideoTextTrackDTO[] {
-    if (!Array.isArray(tracks)) return [];
-
-    return tracks
-        .map((track): VideoTextTrackDTO | null => {
-            if (!track || typeof track !== 'object') return null;
-            const candidate = track as Record<string, unknown>;
-            const src = typeof candidate.src === 'string' ? candidate.src.trim() : '';
-            if (!src) return null;
-
-            const kind = typeof candidate.kind === 'string' ? candidate.kind.toLowerCase() : 'subtitles';
-            if (!isTrackCaptionKind(kind)) return null;
-
-            const srcLangValue = candidate.srcLang ?? candidate.language;
-            const srcLang = typeof srcLangValue === 'string' && srcLangValue.trim() ? srcLangValue.trim() : 'pl';
-
-            return {
-                src,
-                kind,
-                label: typeof candidate.label === 'string' && candidate.label.trim() ? candidate.label.trim() : srcLang.toUpperCase(),
-                srcLang,
-                default: Boolean(candidate.default),
-            };
-        })
-        .filter((track): track is VideoTextTrackDTO => Boolean(track));
-}
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -212,7 +174,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     const player = useRef<MediaPlayerInstance>(null);
     const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
-    const textTracks = normalizeTextTracks(
+    const textTracks: VideoTextTrackDTO[] = normalizeTextTracks(
         (playerConfig as { textTracks?: unknown } | undefined)?.textTracks
         || (video as VideoType & { textTracks?: unknown }).textTracks,
     );

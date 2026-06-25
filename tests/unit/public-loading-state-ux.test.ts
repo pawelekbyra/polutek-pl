@@ -28,9 +28,13 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("function DoodleCaptionButton");
     expect(player).toContain("function DoodlePlayerControls({ hasTextTracks }");
     expect(player).toContain("{hasTextTracks && <DoodleCaptionButton");
-    expect(player).toContain("export type VideoTextTrackDTO");
-    expect(player).toContain("export function isTrackCaptionKind");
-    expect(player).toContain("export function normalizeTextTracks");
+    const videoTypes = read("app/types/video.ts");
+
+    expect(player).toContain("type VideoTextTrackDTO");
+    expect(player).toContain("normalizeTextTracks,");
+    expect(videoTypes).toContain("export type VideoTextTrackDTO");
+    expect(videoTypes).toContain("export function isTrackCaptionKind");
+    expect(videoTypes).toContain("export function normalizeTextTracks");
     expect(player).toContain("playerConfig as { textTracks?: unknown }");
     expect(player).toContain("video as VideoType & { textTracks?: unknown }");
     expect(player).toContain("<Captions className=");
