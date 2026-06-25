@@ -24,6 +24,18 @@ describe('Media Safety Hardening', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('https://untrusted-cdn.com/playlist.m3u8')).toBe(true);
     });
 
+    it('allows Cloudflare Stream manifests for custom HLS/DASH playback', () => {
+      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://videodelivery.net/signed-token/manifest/video.m3u8')).toBe(true);
+      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://customer.cloudflarestream.com/signed-token/manifest/video.mpd')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://videodelivery.net/signed-token/manifest/video.m3u8')).toBe(false);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://customer.cloudflarestream.com/signed-token/manifest/video.mpd')).toBe(false);
+    });
+
+    it('does not treat non-manifest Cloudflare media URLs as safe manifests', () => {
+      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://videodelivery.net/signed-token/downloads/default.mp4')).toBe(false);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://videodelivery.net/signed-token/downloads/default.mp4')).toBe(true);
+    });
+
     it('allows gated API routes', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('/api/media/video-123')).toBe(false);
       expect(MediaPolicy.isProbablyRawMediaUrl('/api/media-source/video-123')).toBe(false);
@@ -59,6 +71,13 @@ describe('Media Safety Hardening', () => {
       expect(() => MediaPolicy.assertPublicMediaDescriptorSafe({
         videoId: 'v1',
         playbackUrl: '/api/media/v1'
+      })).not.toThrow();
+    });
+
+    it('allows Cloudflare Stream manifests as provider playback descriptors', () => {
+      expect(() => MediaPolicy.assertPublicMediaDescriptorSafe({
+        videoId: 'v1',
+        playbackUrl: 'https://videodelivery.net/signed-token/manifest/video.m3u8'
       })).not.toThrow();
     });
 
