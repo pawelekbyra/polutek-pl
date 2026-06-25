@@ -25,14 +25,12 @@ import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types
 import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
-import { PlayerLoadingState } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 
 interface VideoPlayerProps {
     video: VideoType;
     variant?: 'hero' | 'thumbnail';
 }
-
 
 const doodleIconClass = "h-5 w-5 drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]";
 
@@ -164,7 +162,6 @@ function DoodlePlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     );
 }
 
-
 function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoTextTrackDTO[] {
     if (!Array.isArray(tracks)) return [];
 
@@ -258,9 +255,9 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
-    // Hydration guard
+    // PremiumWrapper owns the single player loading placeholder. Avoid adding a nested skeleton here.
     if (!isMounted || isLoading) {
-        return <PlayerLoadingState variant={variant === 'hero' ? 'default' : 'thumbnail'} />;
+        return null;
     }
 
     // Optimized Thumbnail Variant: No player engine, just a static preview
