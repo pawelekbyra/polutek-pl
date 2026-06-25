@@ -8,8 +8,7 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoSlugConflictError } from "../domain/video.errors";
 import { Prisma } from "@prisma/client";
-
-const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
+import { DEFAULT_VIDEO_THUMBNAIL_URL, normalizeThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 
 function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | AppError {
   const title = input.title?.trim();
@@ -22,10 +21,15 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     return new AppError("Podaj lub wygeneruj slug filmu przed utworzeniem szkicu.", 400, "VIDEO_SLUG_REQUIRED");
   }
 
+  const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
+
   return {
     title,
     slug,
-    thumbnailUrl: input.thumbnailUrl?.trim() || DEFAULT_DRAFT_THUMBNAIL_URL,
+    thumbnailSource,
+    thumbnailUrl: thumbnailSource === "CUSTOM"
+      ? input.thumbnailUrl?.trim() || DEFAULT_VIDEO_THUMBNAIL_URL
+      : DEFAULT_VIDEO_THUMBNAIL_URL,
     duration: input.duration?.trim() || null,
     tier: input.tier,
     description: input.description?.trim() || null,
@@ -116,7 +120,11 @@ export async function createAdminVideo(
         action: 'VIDEO_CREATED',
         targetType: 'Video',
         targetId: video.id,
-        metadata: { title: video.title, publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady) }
+        metadata: {
+          title: video.title,
+          publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady),
+          thumbnailSource: normalizedInput.thumbnailSource,
+        }
       });
     } catch (auditError) {
       logger.error("[ADMIN_VIDEO_CREATE_AUDIT_ERROR] Draft was created but audit log failed", auditError);
