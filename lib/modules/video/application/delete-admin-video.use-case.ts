@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { WriteTx } from "@/lib/modules/shared/db";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
@@ -48,7 +49,7 @@ export async function deleteAdminVideo(
     }
   }
 
-  const deleted = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const deleted = await ctx.db.writeTransaction(async (tx: WriteTx) => {
     const video = await tx.video.delete({
       where: { id: videoId },
       include: {

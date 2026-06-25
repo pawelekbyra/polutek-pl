@@ -62,6 +62,10 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
+  "app/components/VideoPlayer.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
   "app/components/comments/EmbeddedComments.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,

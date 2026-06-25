@@ -71,7 +71,8 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
     return ok(toAdminVideoDto(video));
   }
 
-  const updatedVideo = await ctx.db.writeTransaction(async (tx: WriteTx) => {
+  const writeTransaction = ctx.db?.writeTransaction ?? (<T>(fn: (tx: WriteTx) => Promise<T>) => fn(ctx.prisma as WriteTx));
+  const updatedVideo = await writeTransaction(async (tx: WriteTx) => {
     if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       throw new AppError("Video already has a ready primary asset. Replacement is not allowed.", 400, "VIDEO_HAS_READY_ASSET");
     }

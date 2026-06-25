@@ -6,6 +6,7 @@ import {
   type ThumbnailSourceMode,
 } from "@/lib/media/cloudflare-thumbnail";
 
+export { normalizeThumbnailSourceMode };
 export type { ThumbnailSourceMode };
 
 export const slugify = (text: string) => {

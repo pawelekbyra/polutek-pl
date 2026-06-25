@@ -8,7 +8,7 @@ import { AdminLayoutShell } from "../../components/AdminLayoutShell";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm } from "../../components/VideoForm";
 import { readAdminApiError } from "../../components/api-error";
-import { INITIAL_FORM_DATA, slugify } from "../../components/video-utils";
+import { INITIAL_FORM_DATA, normalizeThumbnailSourceMode, slugify } from "../../components/video-utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -28,6 +28,8 @@ function toEditableFormData(video: Record<string, unknown>): VideoFormData {
     descriptionEn: String(video.descriptionEn || ""),
     videoUrl: String(video.videoUrl || ""),
     thumbnailUrl: String(video.thumbnailUrl || ""),
+    thumbnailSource: normalizeThumbnailSourceMode(video.thumbnailSource),
+    cloudflareProviderAssetId: String(video.cloudflareProviderAssetId || ""),
     duration: String(video.duration || ""),
     tier: String(video.tier || "PUBLIC"),
     status: String(video.status || "DRAFT"),
