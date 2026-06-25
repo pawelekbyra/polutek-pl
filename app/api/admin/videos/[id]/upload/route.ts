@@ -59,7 +59,12 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     }, ctx);
 
     return fromUseCaseResult(result);
-  } catch (error: any) {
-    return fromUseCaseResult({ ok: false, error });
+  } catch (error: unknown) {
+    return fromUseCaseResult({
+      ok: false,
+      error: error instanceof AppError
+        ? error
+        : new AppError("Failed to provision video upload", 500, "VIDEO_UPLOAD_PROVISION_FAILED"),
+    });
   }
 }
