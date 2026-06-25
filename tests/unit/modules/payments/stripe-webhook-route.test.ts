@@ -69,7 +69,7 @@ describe('Stripe Webhook Route Actor Verification', () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR',
-      message: 'Database write failed',
+      message: 'Webhook processing failed',
     });
   });
 
