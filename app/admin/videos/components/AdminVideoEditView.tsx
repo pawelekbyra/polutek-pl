@@ -14,7 +14,7 @@ type AdminVideoFormData = {
   videoUrl: string;
   thumbnailUrl: string;
   thumbnailSource: ThumbnailSourceMode;
-  cloudflareProviderAssetId?: string;
+  cloudflareProviderAssetId: string;
   duration: string;
   tier: string;
   status: string;
