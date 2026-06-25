@@ -2,12 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PaymentStatus } from '@prisma/client';
 import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 
-const mockRepo = {
-  findById: vi.fn(),
-  findUserWithTotals: vi.fn(),
-  fulfillPendingPaymentWithCAS: vi.fn(),
-  incrementUserPaymentTotal: vi.fn(),
-};
+const { mockRepo, mockGrantPatron, mockSyncClerkAccess, mockSendBecomePatronEmail, mockSendDonationThankYouEmail } = vi.hoisted(() => ({
+  mockRepo: {
+    findById: vi.fn(),
+    findUserWithTotals: vi.fn(),
+    fulfillPendingPaymentWithCAS: vi.fn(),
+    incrementUserPaymentTotal: vi.fn(),
+  },
+  mockGrantPatron: vi.fn(),
+  mockSyncClerkAccess: vi.fn(),
+  mockSendBecomePatronEmail: vi.fn(),
+  mockSendDonationThankYouEmail: vi.fn(),
+}));
 
 vi.mock('@/lib/modules/payments/infrastructure/payment.repository', () => ({
   PaymentRepository: function () {
@@ -15,7 +21,6 @@ vi.mock('@/lib/modules/payments/infrastructure/payment.repository', () => ({
   },
 }));
 
-const mockGrantPatron = vi.fn();
 vi.mock('@/lib/modules/patron', () => ({
   grantPatron: mockGrantPatron,
 }));
@@ -32,15 +37,12 @@ vi.mock('@/lib/payments/currency-settings', () => ({
   }),
 }));
 
-const mockSyncClerkAccess = vi.fn();
 vi.mock('@/lib/services/user-access.service', () => ({
   UserAccessService: {
     syncClerkAccess: mockSyncClerkAccess,
   },
 }));
 
-const mockSendBecomePatronEmail = vi.fn();
-const mockSendDonationThankYouEmail = vi.fn();
 vi.mock('@/lib/services/email.service', () => ({
   EmailService: {
     sendBecomePatronEmail: mockSendBecomePatronEmail,
