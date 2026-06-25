@@ -134,14 +134,6 @@ export function CommentItem({
               : "border border-[#e9eef6]",
           )}
         />
-        {authorIsPatron && (
-          <span className={cn(
-            "rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 font-black uppercase leading-none tracking-[0.12em] text-amber-950 shadow-sm ring-1 ring-amber-200",
-            isReply ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
-          )}>
-            Patron
-          </span>
-        )}
       </div>
       <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
         <div className="flex items-start justify-between">
