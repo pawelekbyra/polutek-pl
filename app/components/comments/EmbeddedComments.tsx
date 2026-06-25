@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { MessageSquare, Loader2, ChevronUp, AlertCircle, RefreshCcw } from "../icons";
+import {
+  MessageSquare,
+  Loader2,
+  ChevronUp,
+  AlertCircle,
+  RefreshCcw,
+} from "../icons";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
@@ -45,7 +51,7 @@ interface EmbeddedCommentsProps {
 }
 
 const CommentsLoadingState = () => (
-  <div className="space-y-8 animate-in fade-in duration-500">
+  <div className="space-y-8" role="status" aria-live="polite">
     {[1, 2, 3].map((i) => (
       <div key={i} className="flex gap-4">
         <Skeleton className="h-10 w-10 rounded-full shrink-0" />
@@ -100,11 +106,20 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             clerkUserProfile?.username || propUserProfile?.username || null,
         }
       : null;
-  }, [propUserProfile, isSignedIn, userId, user, metadata.totalPaid, metadata.isPatron, metadata.role]);
+  }, [
+    propUserProfile,
+    isSignedIn,
+    userId,
+    user,
+    metadata.totalPaid,
+    metadata.isPatron,
+    metadata.role,
+  ]);
 
   const isPatronGated = videoTier === "PATRON";
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
-  const isPatronDecorative = userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
+  const isPatronDecorative =
+    userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
   const userAvatarSeed = userProfile
     ? userProfile.username || userProfile.name || userProfile.id
     : null;
@@ -151,7 +166,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (loadMoreRef.current) observer.observe(loadMoreRef.current);
@@ -171,9 +186,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const scrollToTop = () => {
     if (commentsTopRef.current) {
-        const yOffset = -160; // Scroll even higher above the box
-        const y = commentsTopRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: "smooth" });
+      const yOffset = -160; // Scroll even higher above the box
+      const y =
+        commentsTopRef.current.getBoundingClientRect().top +
+        window.pageYOffset +
+        yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
 
@@ -187,26 +205,40 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !userProfile || postMutation.isPending) return;
-    setComposerError(null);
-    postComment({ text: newComment, parentId: replyTo || undefined }, {
-        onSuccess: () => {
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newComment.trim() || !userProfile || postMutation.isPending) return;
+      setComposerError(null);
+      postComment(
+        { text: newComment, parentId: replyTo || undefined },
+        {
+          onSuccess: () => {
             setNewComment("");
             setReplyTo(null);
             setIsInputFocused(false);
-        },
-        onError: (error) => {
-            const message = error instanceof Error
-              ? error.message
-              : (language === "pl"
-                ? "Nie udało się dodać komentarza. Spróbuj ponownie."
-                : "Could not add your comment. Try again.");
+          },
+          onError: (error) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : language === "pl"
+                  ? "Nie udało się dodać komentarza. Spróbuj ponownie."
+                  : "Could not add your comment. Try again.";
             setComposerError(message);
-        }
-    });
-  }, [newComment, userProfile, replyTo, postComment, postMutation.isPending, language]);
+          },
+        },
+      );
+    },
+    [
+      newComment,
+      userProfile,
+      replyTo,
+      postComment,
+      postMutation.isPending,
+      language,
+    ],
+  );
 
   const getCommentsLabel = (count: number) => {
     if (language === "pl") {
@@ -226,18 +258,26 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   return (
-    <div ref={commentsTopRef} className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative">
+    <div
+      ref={commentsTopRef}
+      className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative"
+    >
       {/* Sticky Header */}
       {showStickyHeader && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 animate-in slide-in-from-top-4 duration-300">
-           <div className="flex items-center gap-2">
-             <MessageSquare size={16} className="text-blue-600" />
-             <span className="text-xs font-black uppercase">{totalCount} {getCommentsLabel(totalCount)}</span>
-           </div>
-           <button onClick={scrollToTop} className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors">
-             <ChevronUp size={14} />
-             {language === "pl" ? "Do początku" : "To top"}
-           </button>
+          <div className="flex items-center gap-2">
+            <MessageSquare size={16} className="text-blue-600" />
+            <span className="text-xs font-black uppercase">
+              {totalCount} {getCommentsLabel(totalCount)}
+            </span>
+          </div>
+          <button
+            onClick={scrollToTop}
+            className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors"
+          >
+            <ChevronUp size={14} />
+            {language === "pl" ? "Do początku" : "To top"}
+          </button>
         </div>
       )}
 
@@ -297,6 +337,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         isPatronGated={isPatronGated}
         isPatronDecorative={isPatronDecorative}
         isPending={postMutation.isPending}
+        isViewerLoading={isLoading}
         errorMessage={composerError}
         handleSubmit={handleSubmit}
         t={t}
@@ -313,10 +354,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </div>
             <div className="space-y-1">
               <p className="font-bold text-red-900">
-                {language === "pl" ? "Nie udało się załadować komentarzy." : "Could not load comments."}
+                {language === "pl"
+                  ? "Nie udało się załadować komentarzy."
+                  : "Could not load comments."}
               </p>
               <p className="text-xs text-red-700/70">
-                {language === "pl" ? "Spróbuj odświeżyć stronę lub wróć później." : "Try refreshing the page or come back later."}
+                {language === "pl"
+                  ? "Spróbuj odświeżyć stronę lub wróć później."
+                  : "Try refreshing the page or come back later."}
               </p>
             </div>
             <Button
@@ -338,9 +383,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               </p>
               <p className="text-xs italic">
                 {viewer?.canComment
-                  ? (language === "pl" ? "Bądź pierwszy i napisz coś sensownego." : "Be the first to say something meaningful.")
-                  : (language === "pl" ? "Ten film nie ma jeszcze komentarzy." : "This video has no comments yet.")
-                }
+                  ? language === "pl"
+                    ? "Bądź pierwszy i napisz coś sensownego."
+                    : "Be the first to say something meaningful."
+                  : language === "pl"
+                    ? "Ten film nie ma jeszcze komentarzy."
+                    : "This video has no comments yet."}
               </p>
             </div>
           </div>
@@ -357,14 +405,20 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 onLike={(id) => likeMutation.mutate(id)}
                 onDislike={() => {}}
                 onReply={(id) => {
-                    setReplyTo(id);
-                    scrollToTop();
+                  setReplyTo(id);
+                  scrollToTop();
                 }}
                 onDelete={(id) => deleteMutation.mutate(id)}
-                onPin={(id, pinned) => pinMutation.mutate({ commentId: id, pinned })}
+                onPin={(id, pinned) =>
+                  pinMutation.mutate({ commentId: id, pinned })
+                }
                 isPinPending={pinMutation.isPending}
-                onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
-                onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
+                onEdit={(id, text) =>
+                  editMutation.mutate({ commentId: id, text })
+                }
+                onReport={(id, reason, note) =>
+                  reportMutation.mutate({ commentId: id, reason, note })
+                }
               />
 
               {/* NESTED REPLIES */}
@@ -385,8 +439,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onPin={() => {}}
                       isPinPending={false}
-                      onEdit={(id, text) => editMutation.mutate({ commentId: id, text })}
-                      onReport={(id, reason, note) => reportMutation.mutate({ commentId: id, reason, note })}
+                      onEdit={(id, text) =>
+                        editMutation.mutate({ commentId: id, text })
+                      }
+                      onReport={(id, reason, note) =>
+                        reportMutation.mutate({ commentId: id, reason, note })
+                      }
                       isReply={true}
                     />
                   ))}
@@ -408,11 +466,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             >
               {isFetchingNextPage ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2
+                    className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
                   {language === "pl" ? "Ładowanie..." : "Loading..."}
                 </>
+              ) : language === "pl" ? (
+                "Pokaż więcej"
               ) : (
-                language === "pl" ? "Pokaż więcej" : "Show more"
+                "Show more"
               )}
             </Button>
           </div>

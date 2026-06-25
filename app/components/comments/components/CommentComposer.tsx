@@ -22,6 +22,7 @@ interface CommentComposerProps {
   isPatronGated: boolean;
   isPatronDecorative: boolean;
   isPending: boolean;
+  isViewerLoading?: boolean;
   errorMessage?: string | null;
   handleSubmit: (e: React.FormEvent) => void;
   t: any;
@@ -44,10 +45,11 @@ export function CommentComposer({
   isPatronGated,
   isPatronDecorative,
   isPending,
+  isViewerLoading = false,
   errorMessage,
   handleSubmit,
   t,
-  language
+  language,
 }: CommentComposerProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const graphemeCount = countGraphemes(newComment);
@@ -76,10 +78,7 @@ export function CommentComposer({
   };
   return (
     <div
-      className={cn(
-        "flex items-start mb-10",
-        userProfile ? "gap-5" : "gap-0",
-      )}
+      className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}
     >
       {userProfile && (
         <SafeAvatar
@@ -115,24 +114,41 @@ export function CommentComposer({
                 type="button"
                 onClick={() => setReplyTo(null)}
                 className="ml-2 hover:opacity-60"
-                aria-label={language === "pl" ? "Anuluj odpowiedź" : "Cancel reply"}
+                aria-label={
+                  language === "pl" ? "Anuluj odpowiedź" : "Cancel reply"
+                }
               >
                 ✕
               </button>
             </div>
           )}
-          {!canComment ? (
+          {isViewerLoading ? (
+            <div
+              className="w-full border-b border-[#e9eef6] py-2 min-h-[2.5rem] flex items-center justify-center text-[13px] font-bold text-neutral-500"
+              role="status"
+              aria-live="polite"
+            >
+              {language === "pl"
+                ? "Sprawdzamy możliwość komentowania..."
+                : "Checking comment access..."}
+            </div>
+          ) : !canComment ? (
             <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
               {isPatronGated && userProfile ? (
                 <a
                   href="#donations"
                   className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
                 >
-                  {language === "pl" ? "Zostań Patronem, żeby komentować" : "Become a Patron to comment"}
+                  {language === "pl"
+                    ? "Zostań Patronem, żeby komentować"
+                    : "Become a Patron to comment"}
                 </a>
               ) : (
                 <SignInButton mode="modal">
-                  <button type="button" className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">
+                  <button
+                    type="button"
+                    className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                  >
                     {t.signInToComment}
                   </button>
                 </SignInButton>
@@ -145,89 +161,112 @@ export function CommentComposer({
               </label>
               <textarea
                 id={textareaId}
-              ref={textareaRef}
-              value={newComment}
-              onChange={(e) => {
-                setNewComment(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = e.target.scrollHeight + "px";
-              }}
-              onFocus={() => setIsInputFocused(true)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  if (newComment.trim() && !isPending && !isTooLong) {
-                    e.preventDefault();
-                    e.currentTarget.form?.requestSubmit();
+                ref={textareaRef}
+                value={newComment}
+                onChange={(e) => {
+                  setNewComment(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onFocus={() => setIsInputFocused(true)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    if (newComment.trim() && !isPending && !isTooLong) {
+                      e.preventDefault();
+                      e.currentTarget.form?.requestSubmit();
+                    }
                   }
-                }
-              }}
-              placeholder={replyTo ? t.addReply : t.addComment}
-              aria-invalid={Boolean(errorMessage || isTooLong)}
-              aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
-              disabled={isPending}
+                }}
+                placeholder={replyTo ? t.addReply : t.addComment}
+                aria-invalid={Boolean(errorMessage || isTooLong)}
+                aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
+                disabled={isPending}
                 className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
               />
             </>
           )}
 
-        {(isInputFocused || newComment.trim() || replyTo) && canComment && (
-          <div className="flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-1.5">
-                {QUICK_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => insertEmoji(emoji)}
-                    disabled={isPending}
-                    className="hover:bg-neutral-100 p-1 rounded-md transition-colors"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+          {(isInputFocused || newComment.trim() || replyTo) && canComment && (
+            <div className="flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-1.5">
+                  {QUICK_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => insertEmoji(emoji)}
+                      disabled={isPending}
+                      className="hover:bg-neutral-100 p-1 rounded-md transition-colors"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
+                <div
+                  id={limitId}
+                  className={cn(
+                    "text-[10px] font-bold",
+                    isTooLong ? "text-red-500" : "text-neutral-400",
+                  )}
+                >
+                  {graphemeCount} / 2000
+                </div>
               </div>
 
-              <div id={limitId} className={cn("text-[10px] font-bold", isTooLong ? "text-red-500" : "text-neutral-400")}>
-                {graphemeCount} / 2000
+              {(errorMessage || isTooLong) && (
+                <p
+                  id={errorId}
+                  role="alert"
+                  className="text-xs font-bold text-red-600"
+                >
+                  {isTooLong
+                    ? language === "pl"
+                      ? "Komentarz jest za długi. Limit to 2000 znaków."
+                      : "Comment is too long. The limit is 2000 characters."
+                    : errorMessage}
+                </p>
+              )}
+
+              <div className="flex justify-start gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setNewComment("");
+                    setReplyTo(null);
+                    setIsInputFocused(false);
+                  }}
+                >
+                  {t.cancel}
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={!newComment.trim() || isPending || isTooLong}
+                >
+                  {isPending ? (
+                    <span
+                      className="inline-flex items-center"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <Loader2
+                        className="mr-2 animate-spin motion-reduce:animate-none"
+                        size={14}
+                        aria-hidden="true"
+                      />
+                      {language === "pl" ? "Wysyłanie..." : "Sending..."}
+                    </span>
+                  ) : replyTo ? (
+                    t.reply
+                  ) : (
+                    t.comment
+                  )}
+                </Button>
               </div>
             </div>
-
-            {(errorMessage || isTooLong) && (
-              <p id={errorId} role="alert" className="text-xs font-bold text-red-600">
-                {isTooLong
-                  ? (language === "pl" ? "Komentarz jest za długi. Limit to 2000 znaków." : "Comment is too long. The limit is 2000 characters.")
-                  : errorMessage}
-              </p>
-            )}
-
-            <div className="flex justify-start gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setNewComment("");
-                  setReplyTo(null);
-                  setIsInputFocused(false);
-                }}
-              >
-                {t.cancel}
-              </Button>
-
-              <Button
-                type="submit"
-                disabled={!newComment.trim() || isPending || isTooLong}
-              >
-                {isPending ? (
-                  <Loader2 className="animate-spin" size={14} />
-                ) : replyTo ? (
-                  t.reply
-                ) : (
-                  t.comment
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
         </form>
       </div>
     </div>

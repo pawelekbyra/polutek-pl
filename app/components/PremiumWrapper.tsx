@@ -62,12 +62,6 @@ export default function PremiumWrapper({
   const [playbackState, setPlaybackState] = useState<PlaybackPlanStatus | null>(
     null,
   );
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
@@ -91,7 +85,10 @@ export default function PremiumWrapper({
       const response = await fetch(`/api/media-source/${videoId}`);
       const data = await response.json();
 
-      const nextState = getSafePlaybackState(data, !userId ? deniedState : false);
+      const nextState = getSafePlaybackState(
+        data,
+        !userId ? deniedState : false,
+      );
 
       if (!response.ok) {
         setHasAccess(false);
@@ -150,10 +147,6 @@ export default function PremiumWrapper({
     return () => clearTimeout(timer);
   }, [playbackPlan, checkAccess]);
 
-  if (!mounted) {
-    return <PlayerLoadingState variant={variant} />;
-  }
-
   const contextValue = {
     hasAccess: isPublic || isUnlockedByAuth || hasAccess,
     playbackPlan,
@@ -208,9 +201,7 @@ export default function PremiumWrapper({
 
     return (
       <VideoAccessContext.Provider value={contextValue}>
-        <div className="animate-in fade-in duration-500 h-full w-full">
-          {children}
-        </div>
+        <div className="h-full w-full">{children}</div>
       </VideoAccessContext.Provider>
     );
   }
@@ -379,7 +370,7 @@ function PlaybackPlanStateOverlay({
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
-      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center text-white animate-in fade-in duration-500 [container-type:inline-size]">
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center text-white [container-type:inline-size]">
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-950 opacity-60" />
 
         <div className="relative z-10 flex max-w-md flex-col items-center">
