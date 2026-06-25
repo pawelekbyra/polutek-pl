@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Send, Loader2, Check, Info, Users, UserAdd, Gem, Mail } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     const [manualEmails, setManualEmails] = useState("");
     const [testEmail, setTestEmail] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const toast = useToast();
 
@@ -111,8 +113,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     };
 
     const handleFinalSend = async () => {
-        if (!confirm("Czy na pewno chcesz wysłać broadcast do wybranej grupy odbiorców?")) return;
-
+        setIsSendDialogOpen(false);
         setIsSending(true);
         try {
             const res = await fetch("/api/admin/emails/broadcast", {
@@ -135,6 +136,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     };
 
     return (
+        <>
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <Button variant="ghost" onClick={() => onBack()} className="text-neutral-500 hover:text-neutral-900">
@@ -327,7 +329,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     <div className="flex justify-between pt-6 border-t">
                         <Button variant="outline" onClick={() => setStep(2)}>Wróć</Button>
                         <Button
-                            onClick={handleFinalSend}
+                            onClick={() => setIsSendDialogOpen(true)}
                             disabled={isSending}
                             className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-14 h-14 font-black uppercase tracking-widest shadow-xl transition-all active:scale-95"
                         >
@@ -338,5 +340,25 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                 </div>
             )}
         </div>
+
+        <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Wysłać broadcast?</DialogTitle>
+                    <DialogDescription>
+                        Ta akcja uruchomi wysyłkę do wybranej grupy odbiorców. Przed wysyłką upewnij się, że test i podgląd są poprawne.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose render={<Button variant="outline" />}>
+                        Anuluj
+                    </DialogClose>
+                    <Button variant="destructive" onClick={handleFinalSend} disabled={isSending}>
+                        {isSending ? "Wysyłanie…" : "Wyślij broadcast"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }

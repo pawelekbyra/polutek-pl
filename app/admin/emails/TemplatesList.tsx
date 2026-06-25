@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Copy, Trash2, Edit, AlertCircle, Mail, Shield } from "@/app/components/icons";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -28,6 +29,7 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -57,7 +59,7 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
   }
 
   async function handleDelete(slug: string) {
-    if (!confirm("Czy na pewno chcesz usunąć ten szablon?")) return;
+    setTemplateToDelete(null);
     try {
       const res = await fetch(`/api/admin/templates?slug=${slug}`, { method: "DELETE" });
       if (res.ok) fetchTemplates();
@@ -148,7 +150,7 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
                 <Copy className="w-4 h-4" />
               </Button>
               {!t.isSystem && (
-                <Button size="icon" variant="ghost" onClick={() => handleDelete(t.slug)} title="Usuń" className="text-destructive">
+                <Button size="icon" variant="ghost" onClick={() => setTemplateToDelete(t)} title="Usuń" className="text-destructive">
                   <Trash2 className="w-4 h-4" />
                 </Button>
               )}
@@ -157,6 +159,25 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
         ))}
       </div>
       )}
+
+      <Dialog open={templateToDelete !== null} onOpenChange={(open) => { if (!open) setTemplateToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Usunąć szablon?</DialogTitle>
+            <DialogDescription>
+              Szablon „{templateToDelete?.name || templateToDelete?.slug}” zostanie usunięty z panelu email. Tej akcji nie można cofnąć.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
+              Anuluj
+            </DialogClose>
+            <Button variant="destructive" onClick={() => { if (templateToDelete) void handleDelete(templateToDelete.slug); }}>
+              Usuń szablon
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

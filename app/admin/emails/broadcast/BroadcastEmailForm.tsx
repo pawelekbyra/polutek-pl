@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { logger } from '@/lib/logger';
@@ -14,6 +15,7 @@ export function BroadcastEmailForm() {
   const [subjectEn, setSubjectEn] = useState('');
   const [htmlEn, setHtmlEn] = useState('');
   const [isSending, setIsPending] = useState(false);
+  const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const toast = useToast();
 
   const handleSend = async () => {
@@ -22,10 +24,7 @@ export function BroadcastEmailForm() {
       return;
     }
 
-    if (!confirm("Czy na pewno chcesz wysłać ten email do WSZYSTKICH subskrybentów?")) {
-      return;
-    }
-
+    setIsSendDialogOpen(false);
     setIsPending(true);
     try {
       const res = await fetch('/api/admin/emails/broadcast', {
@@ -102,7 +101,13 @@ export function BroadcastEmailForm() {
 
       <div className="pt-4 border-t flex justify-end">
         <Button
-          onClick={handleSend}
+          onClick={() => {
+            if (!subjectPl || !htmlPl || !subjectEn || !htmlEn) {
+              toast("Proszę wypełnić wszystkie pola (PL i EN)", "error");
+              return;
+            }
+            setIsSendDialogOpen(true);
+          }}
           disabled={isSending}
           size="lg"
           className="bg-charcoal hover:bg-black text-white px-10 h-14 rounded-full font-black uppercase tracking-widest shadow-xl transition-all active:scale-95"
@@ -115,6 +120,24 @@ export function BroadcastEmailForm() {
           {isSending ? 'Wysyłanie...' : 'Wyślij Broadcast'}
         </Button>
       </div>
+      <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wysłać broadcast?</DialogTitle>
+            <DialogDescription>
+              Ta akcja wyśle email do wszystkich subskrybentów. Upewnij się, że oba języki i treść HTML są poprawne.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
+              Anuluj
+            </DialogClose>
+            <Button variant="destructive" onClick={handleSend} disabled={isSending}>
+              {isSending ? 'Wysyłanie…' : 'Wyślij broadcast'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
