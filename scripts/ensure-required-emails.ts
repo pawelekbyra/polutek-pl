@@ -1,8 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS, SystemTemplateSlug } from '../lib/email-defaults';
 
-const prisma = new PrismaClient();
-
 type EmailTemplateClient = Pick<PrismaClient['emailTemplate'], 'findUnique' | 'create'>;
 
 const TEMPLATE_METADATA: Record<SystemTemplateSlug, { name: string; description: string; category: 'SYSTEM' | 'WELCOME' | 'PAYMENT' | 'PATRON' }> = {
@@ -65,6 +63,8 @@ export async function ensureRequiredEmailTemplates(emailTemplate: EmailTemplateC
 
 async function main() {
   console.log('--- ENSURING REQUIRED EMAIL TEMPLATES ---');
+  const prisma = new PrismaClient();
+
   try {
     const result = await ensureRequiredEmailTemplates(prisma.emailTemplate);
 
