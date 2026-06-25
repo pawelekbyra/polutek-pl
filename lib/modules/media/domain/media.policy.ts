@@ -47,7 +47,7 @@ export class MediaPolicy {
 
   private static isAllowedYouTubeUrl(url: URL) {
     const hostname = url.hostname.toLowerCase();
-    const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
+    const pathname = url.pathname.replace(/\/+\$|^$/g, '') || '/';
 
     if (hostname === 'youtu.be') {
       return /^\/[A-Za-z0-9_-]+$/.test(pathname);
@@ -66,7 +66,7 @@ export class MediaPolicy {
 
   private static isAllowedVimeoUrl(url: URL) {
     const hostname = url.hostname.toLowerCase();
-    const pathname = url.pathname.replace(/\/+$|^$/g, '') || '/';
+    const pathname = url.pathname.replace(/\/+\$|^$/g, '') || '/';
 
     if (hostname === 'vimeo.com') {
       return /^\/\d+$/.test(pathname) || /\/\d+$/.test(pathname) || /\/\d+$/.test(pathname.split('/').pop() || '');
@@ -77,6 +77,25 @@ export class MediaPolicy {
     }
 
     return false;
+  }
+
+  private static isCloudflareStreamManifestUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') return false;
+
+      const hostname = parsed.hostname.toLowerCase();
+      const isCloudflareStreamHost = hostname === 'videodelivery.net'
+        || hostname.endsWith('.videodelivery.net')
+        || hostname.endsWith('.cloudflarestream.com');
+
+      if (!isCloudflareStreamHost) return false;
+
+      const pathname = parsed.pathname.toLowerCase();
+      return pathname.endsWith('/manifest/video.m3u8') || pathname.endsWith('/manifest/video.mpd');
+    } catch {
+      return false;
+    }
   }
 
   static isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv) {
@@ -213,6 +232,8 @@ export class MediaPolicy {
    */
   static isProbablyRawMediaUrl(url: string): boolean {
     if (!url) return false;
+
+    if (this.isCloudflareStreamManifestUrl(url)) return false;
 
     const lowerUrl = url.toLowerCase();
 
