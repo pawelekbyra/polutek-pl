@@ -336,7 +336,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
 
                 <TabsContent value="stats" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><StatBlock label="Wyświetlenia" value={video.views} icon={<Eye className="h-4 w-4" />} /><StatBlock label="Sesje wideo" value={video._count?.playbackSessions || 0} icon={<Play className="h-4 w-4" />} /><StatBlock label="Polubienia" value={video.likesCount} icon={<Heart className="h-4 w-4" />} /><StatBlock label="Komentarze" value={video._count?.comments || 0} icon={<MessageSquare className="h-4 w-4" />} /></div>
-                    <Card className="shadow-sm"><CardHeader><CardTitle className="text-sm font-bold uppercase">Głęboka analiza sesji</CardTitle></CardHeader><CardContent className="h-40 flex items-center justify-center text-muted-foreground text-xs italic">Wykresy i analityka czasowa w przygotowaniu.</CardContent></Card>
+                    <p className="text-xs text-muted-foreground italic">Rozszerzona analityka sesji będzie dodana w osobnym zakresie.</p>
                 </TabsContent>
 
                 <TabsContent value="audit"><VideoAuditLog logs={video.auditLogs} /></TabsContent>
