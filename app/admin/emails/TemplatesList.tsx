@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Copy, Trash2, Edit, Check, X, Shield, Mail } from "@/app/components/icons";
+import { Plus, Copy, Trash2, Edit, AlertCircle, Mail, Shield } from "@/app/components/icons";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -27,6 +27,7 @@ type TemplatesListProps = {
 export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -34,10 +35,22 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
 
   async function fetchTemplates() {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/templates");
+      if (!res.ok) {
+        throw new Error("Nie udało się pobrać szablonów email.");
+      }
+
       const data = await res.json();
-      if (Array.isArray(data)) setTemplates(data);
+      if (!Array.isArray(data)) {
+        throw new Error("API zwróciło nieprawidłową listę szablonów.");
+      }
+
+      setTemplates(data);
+    } catch (fetchError) {
+      setTemplates([]);
+      setError(fetchError instanceof Error ? fetchError.message : "Nie udało się pobrać szablonów email.");
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +92,33 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
         </Button>
       </div>
 
+      {error ? (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <div className="space-y-3">
+              <div>
+                <h3 className="font-black uppercase tracking-tight">Nie można załadować szablonów</h3>
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+              <Button type="button" variant="outline" onClick={fetchTemplates} className="border-red-300 bg-white text-red-900 hover:bg-red-100">
+                Spróbuj ponownie
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center">
+          <Mail className="mx-auto h-10 w-10 text-neutral-400" />
+          <h3 className="mt-4 text-lg font-black uppercase tracking-tight text-neutral-900">Brak szablonów email</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
+            Nie znaleziono żadnych szablonów. Dodaj pierwszy szablon ręcznie albo uruchom seed wymaganych emaili w procesie administracyjnym.
+          </p>
+          <Button onClick={onNew} className="mt-6 rounded-full bg-blue-600 px-6 text-white hover:bg-blue-700">
+            <Plus className="mr-2 h-4 w-4" /> Dodaj szablon
+          </Button>
+        </div>
+      ) : (
       <div className="grid gap-4">
         {templates.map((t) => (
           <div key={t.id} className="bg-white border border-neutral-200 p-4 rounded-xl shadow-sm flex items-center justify-between group hover:border-neutral-900 transition-all">
@@ -116,6 +156,7 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
