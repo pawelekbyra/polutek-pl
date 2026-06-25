@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send } from "@/app/components/icons";
+import { resolveThumbnailUrlForMode, type ThumbnailSourceMode } from "./video-utils";
 
 export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE";
 
@@ -20,6 +21,8 @@ interface VideoFormData {
   descriptionEn: string;
   videoUrl: string;
   thumbnailUrl: string;
+  thumbnailSource: ThumbnailSourceMode;
+  cloudflareProviderAssetId?: string;
   duration: string;
   tier: string;
   status: string;
@@ -70,6 +73,18 @@ export function VideoForm({
   const isCreate = !formData.id;
   const wantsPublish = formData.status === "PUBLISHED";
   const hasCreateSource = createSourceMode === "UPLOAD" ? Boolean(selectedVideoFile) : existingCloudflareSource.trim().length > 0;
+
+  const handleThumbnailSourceChange = (mode: ThumbnailSourceMode) => {
+    setFormData((prev) => ({
+      ...prev,
+      thumbnailSource: mode,
+      thumbnailUrl: resolveThumbnailUrlForMode({
+        mode,
+        currentUrl: prev.thumbnailSource === "CUSTOM" ? prev.thumbnailUrl : "",
+        cloudflareProviderAssetId: prev.cloudflareProviderAssetId,
+      }),
+    }));
+  };
 
   return (
     <form onSubmit={onSubmit} className={cn("max-w-4xl mx-auto p-4 md:p-8 space-y-8", className)}>
@@ -212,9 +227,45 @@ export function VideoForm({
 
           <Card>
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Miniatura</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Label htmlFor="thumbnailUrl">URL miniatury (opcjonalnie)</Label>
-              <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" disabled={isSubmitting} />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Źródło miniatury</Label>
+                <Select value={formData.thumbnailSource} onValueChange={(value) => handleThumbnailSourceChange(value as ThumbnailSourceMode)} disabled={isSubmitting}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DEFAULT">Domyślna miniatura Polutek</SelectItem>
+                    <SelectItem value="CUSTOM">Własny URL miniatury</SelectItem>
+                    <SelectItem value="CLOUDFLARE_FIRST_FRAME">Pierwsza klatka z wideo Cloudflare</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.thumbnailSource === "CUSTOM" ? (
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnailUrl">URL miniatury</Label>
+                  <Input
+                    id="thumbnailUrl"
+                    value={formData.thumbnailUrl}
+                    onChange={e => setFormData({...formData, thumbnailSource: "CUSTOM", thumbnailUrl: e.target.value})}
+                    placeholder="https://..."
+                    disabled={isSubmitting}
+                  />
+                </div>
+              ) : null}
+
+              {formData.thumbnailSource === "CLOUDFLARE_FIRST_FRAME" ? (
+                <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs text-sky-950">
+                  {formData.cloudflareProviderAssetId
+                    ? "Miniatura zostanie ustawiona z pierwszej klatki aktualnego assetu Cloudflare."
+                    : isCreate
+                      ? "Miniatura zostanie ustawiona automatycznie po utworzeniu assetu Cloudflare dla uploadu albo istniejącego UID."
+                      : "Ten film nie ma jeszcze dostępnego UID Cloudflare w formularzu. Backend spróbuje ustawić pierwszą klatkę z aktualnego assetu przy zapisie."}
+                </div>
+              ) : null}
+
+              {formData.thumbnailSource === "DEFAULT" ? (
+                <p className="text-xs text-muted-foreground">Zostawimy domyślne logo/cover Polutka.</p>
+              ) : null}
             </CardContent>
           </Card>
         </div>
