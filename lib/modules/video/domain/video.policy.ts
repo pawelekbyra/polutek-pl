@@ -16,6 +16,14 @@ type ContractVideo = {
   } | null;
 };
 
+type AdminWhereFilters = {
+  status?: string | null;
+  tier?: string | null;
+  query?: string | null;
+  isMainFeatured?: string | null;
+  showInSidebar?: string | null;
+};
+
 export class VideoPolicy {
   static getPublicationBlockers(video: ContractVideo): VideoStateBlocker[] {
     const blockers: VideoStateBlocker[] = [];
@@ -71,7 +79,7 @@ export class VideoPolicy {
     };
   }
 
-  static buildAdminWhere(mainChannelId: string, filters: any): Prisma.VideoWhereInput {
+  static buildAdminWhere(mainChannelId: string, filters: AdminWhereFilters): Prisma.VideoWhereInput {
     const where: Prisma.VideoWhereInput = { creatorId: mainChannelId };
 
     if (filters.status && filters.status !== 'ALL') {
