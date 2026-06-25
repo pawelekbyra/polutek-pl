@@ -54,8 +54,7 @@ export default function ChannelHome({
     (allVideos || []).find(
       (v) => v.id === currentVideoId || v.slug === currentVideoId,
     ) || mainVideo;
-  const viewerIsPatron =
-    userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
+  const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
   const [mounted, setMounted] = useState(false);
   const [premiereCountdown, setPremiereCountdown] = useState("");
