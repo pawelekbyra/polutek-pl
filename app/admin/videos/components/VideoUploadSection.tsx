@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, RotateCcw, AlertCircle, CheckCircle2, Loader2, FileVideo } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
+import { normalizeThumbnailSourceMode, type ThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 
 interface VideoUploadSectionProps {
   videoId: string;
@@ -17,9 +18,10 @@ interface VideoUploadSectionProps {
   autoStart?: boolean;
   onUploadReady?: () => void;
   publishAfterReady?: boolean;
+  thumbnailSource?: string;
 }
 
-export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady, publishAfterReady = false }: VideoUploadSectionProps) {
+export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady, publishAfterReady = false, thumbnailSource = "DEFAULT" }: VideoUploadSectionProps) {
   const [file, setFile] = useState<File | null>(initialFile);
   const [upload, setUpload] = useState<tus.Upload | null>(null);
   const [progress, setProgress] = useState(0);
@@ -31,6 +33,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
   const toast = useToast();
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
   const autoStartedRef = useRef(false);
+  const normalizedThumbnailSource: ThumbnailSourceMode = normalizeThumbnailSourceMode(thumbnailSource);
 
   const stopPolling = useCallback(() => {
     if (pollingInterval.current) {
@@ -82,8 +85,6 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
         setStatus("FAILED");
         setError(initialAsset.failureReason);
       } else if (["PROCESSING", "UPLOADING", "PENDING"].includes(initialAsset.processingState)) {
-        // If we have an existing asset that is not ready/failed, it might have been started elsewhere (e.g. import)
-        // We should show it as processing in this component too.
         setStatus(initialAsset.processingState === "PENDING" ? "PROCESSING" : initialAsset.processingState as any);
         startPolling();
       }
@@ -109,7 +110,11 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
         endpoint: `/api/admin/videos/${videoId}/upload`,
         retryDelays: [0, 3000, 5000, 10000, 20000],
         chunkSize: 150 * 1024 * 1024,
-        metadata: { filename: file.name, filetype: file.type || "application/octet-stream" },
+        metadata: {
+          filename: file.name,
+          filetype: file.type || "application/octet-stream",
+          thumbnailSource: normalizedThumbnailSource,
+        },
         onError: (err) => { setError(err.message); setStatus("FAILED"); },
         onProgress: (bytesSent, total) => { setBytesUploaded(bytesSent); setBytesTotal(total); setProgress(Math.round((bytesSent / total) * 100)); },
         onSuccess: () => { setStatus("PROCESSING"); toast("Upload zakończony pomyślnie. Trwa przetwarzanie...", "success"); startPolling(); }
@@ -123,7 +128,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
       setStatus("FAILED");
       toast(err.message, "error");
     }
-  }, [file, onUploadReady, startPolling, toast, videoId]);
+  }, [file, normalizedThumbnailSource, onUploadReady, startPolling, toast, videoId]);
 
   useEffect(() => {
     if (!autoStart || autoStartedRef.current || !file || status !== "IDLE") return;
@@ -145,6 +150,11 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
     <Card className="shadow-sm">
       <CardHeader><div className="flex justify-between items-center"><div><CardTitle className="text-lg flex items-center gap-2"><Upload className="h-5 w-5" /> Cloudflare Stream Upload</CardTitle><CardDescription>Prześlij plik wideo bezpośrednio do Cloudflare.</CardDescription></div><Badge variant={status === "READY" ? "default" : (status === "FAILED" ? "destructive" : "outline")}>{status}</Badge></div></CardHeader>
       <CardContent className="space-y-6">
+        {normalizedThumbnailSource === "CLOUDFLARE_FIRST_FRAME" ? (
+          <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950">
+            Po utworzeniu assetu Cloudflare miniatura filmu zostanie ustawiona na pierwszą klatkę wideo.
+          </div>
+        ) : null}
         {status === "IDLE" || status === "CANCELLED" || status === "FAILED" ? (
           <div className="space-y-4"><div className="border-2 border-dashed rounded-xl p-8 text-center space-y-4 bg-muted/20"><input type="file" accept="video/*" onChange={handleFileChange} className="hidden" id="video-file-input" /><label htmlFor="video-file-input" className="cursor-pointer flex flex-col items-center gap-3"><div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary"><FileVideo className="h-6 w-6" /></div><div><p className="font-bold text-sm">{file ? file.name : "Kliknij, aby wybrać plik"}</p><p className="text-xs text-muted-foreground">{file ? formatBytes(file.size) : "MP4, MOV, WebM (max 10GB)"}</p></div></label></div>{file && (status === "IDLE" || status === "CANCELLED" || status === "FAILED") && (<Button className="w-full" onClick={startUpload}>Rozpocznij Upload</Button>)}</div>
         ) : null}
