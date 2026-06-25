@@ -45,12 +45,17 @@ export class MediaPolicy {
     return this.getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
   }
 
+  private static normalizeProviderPathname(pathname: string) {
+    const withoutTrailingSlash = pathname.replace(/[/]+$/g, '');
+    return withoutTrailingSlash || '/';
+  }
+
   private static isAllowedYouTubeUrl(url: URL) {
     const hostname = url.hostname.toLowerCase();
-    const pathname = url.pathname.replace(/\/+\$|^$/g, '') || '/';
+    const pathname = this.normalizeProviderPathname(url.pathname);
 
     if (hostname === 'youtu.be') {
-      return /^\/[A-Za-z0-9_-]+$/.test(pathname);
+      return /^[/][A-Za-z0-9_-]+$/.test(pathname);
     }
 
     if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(hostname)) {
@@ -61,25 +66,25 @@ export class MediaPolicy {
       return !!url.searchParams.get('v');
     }
 
-    return /^\/(shorts|live|embed)\/[A-Za-z0-9_-]+$/.test(pathname);
+    return /^[/](shorts|live|embed)[/][A-Za-z0-9_-]+$/.test(pathname);
   }
 
   private static isAllowedVimeoUrl(url: URL) {
     const hostname = url.hostname.toLowerCase();
-    const pathname = url.pathname.replace(/\/+\$|^$/g, '') || '/';
+    const pathname = this.normalizeProviderPathname(url.pathname);
 
     if (hostname === 'vimeo.com') {
-      return /^\/\d+$/.test(pathname) || /\/\d+$/.test(pathname) || /\/\d+$/.test(pathname.split('/').pop() || '');
+      return /^[/]\d+$/.test(pathname) || /[/]\d+$/.test(pathname) || /[/]\d+$/.test(pathname.split('/').pop() || '');
     }
 
     if (hostname === 'player.vimeo.com') {
-      return /^\/video\/\d+$/.test(pathname);
+      return /^[/]video[/]\d+$/.test(pathname);
     }
 
     return false;
   }
 
-  private static isCloudflareStreamManifestUrl(url: string): boolean {
+  static isCloudflareStreamManifestUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
       if (parsed.protocol !== 'https:') return false;
