@@ -6,6 +6,8 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaPolicy } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
+import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { buildCloudflareFirstFrameThumbnailUrl, DEFAULT_VIDEO_THUMBNAIL_URL, normalizeThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
@@ -46,6 +48,21 @@ export async function updateAdminVideo(
   }
 
   const safeInput = { ...input };
+  const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
+
+  if (thumbnailSource === "DEFAULT") {
+    safeInput.thumbnailUrl = DEFAULT_VIDEO_THUMBNAIL_URL;
+  } else if (thumbnailSource === "CLOUDFLARE_FIRST_FRAME") {
+    const providerAssetId = existing.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM
+      ? existing.asset.providerAssetId
+      : null;
+    if (providerAssetId) {
+      safeInput.thumbnailUrl = buildCloudflareFirstFrameThumbnailUrl(providerAssetId);
+    } else if (!safeInput.thumbnailUrl) {
+      safeInput.thumbnailUrl = DEFAULT_VIDEO_THUMBNAIL_URL;
+    }
+  }
+
   if (input.status && input.status !== 'PUBLISHED') {
       safeInput.isMainFeatured = false;
       safeInput.showInSidebar = false;
