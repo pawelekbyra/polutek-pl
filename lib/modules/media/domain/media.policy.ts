@@ -119,7 +119,7 @@ export class MediaPolicy {
 
     const allowedHosts = new Set([
       ...this.getAllowedMediaHosts(env),
-      ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com,img.clerk.com'),
+      ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com,img.clerk.com,videodelivery.net,*.videodelivery.net,*.cloudflarestream.com'),
     ]);
 
     return allowedHosts.has(url.hostname.toLowerCase());
