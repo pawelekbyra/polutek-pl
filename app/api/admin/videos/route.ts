@@ -14,6 +14,27 @@ import { parseVideoQueryParams } from "@/lib/services/admin/admin-query-parser";
 
 export const dynamic = "force-dynamic";
 
+type AdminVideoRequestBody = Record<string, unknown>;
+
+function buildUpdatePayload(body: AdminVideoRequestBody) {
+  return {
+    id: body.id,
+    title: body.title,
+    slug: body.slug,
+    description: body.description,
+    titleEn: body.titleEn,
+    descriptionEn: body.descriptionEn,
+    videoUrl: body.videoUrl,
+    thumbnailUrl: body.thumbnailUrl,
+    duration: body.duration,
+    tier: body.tier,
+    status: body.status,
+    isMainFeatured: body.isMainFeatured,
+    showInSidebar: body.showInSidebar,
+    sidebarOrder: body.sidebarOrder,
+  };
+}
+
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
   const scopedLogger = createScopedLogger(requestId);
@@ -61,7 +82,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     if (body.id) {
-      const result = await updateAdminVideo(body, ctx);
+      const result = await updateAdminVideo(buildUpdatePayload(body), ctx);
       return fromUseCaseResult(result);
     }
 
