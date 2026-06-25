@@ -11,9 +11,10 @@ import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useToast } from "@/app/hooks/useToast";
 import { AdminVideoLayoutSkeleton } from "@/components/skeletons/admin";
+import type { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 
 export default function ChannelLayoutPage() {
-  const [videos, setVideos] = useState<any[]>([]);
+  const [videos, setVideos] = useState<AdminVideoListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSubmitting] = useState(false);
   const toast = useToast();
@@ -53,11 +54,11 @@ export default function ChannelLayoutPage() {
       setVideos(updated);
   };
 
-  const toggleSidebar = (video: any) => {
+  const toggleSidebar = (video: AdminVideoListItem) => {
       setVideos(prev => prev.map(v => v.id === video.id ? { ...v, showInSidebar: !v.showInSidebar } : v));
   };
 
-  const setAsHero = (video: any) => {
+  const setAsHero = (video: AdminVideoListItem) => {
       setVideos(prev => prev.map(v => ({
           ...v,
           isMainFeatured: v.id === video.id
