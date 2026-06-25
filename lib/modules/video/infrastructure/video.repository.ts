@@ -19,9 +19,6 @@ export interface CreateVideoInput {
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
-  likesCount?: number;
-  dislikesCount?: number;
-  views?: number;
   publishAfterAssetReady?: boolean;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
@@ -34,9 +31,6 @@ export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
-  likesCount?: number;
-  dislikesCount?: number;
-  views?: number;
 }
 
 export interface UpdateVideoInput extends AdminUpdateVideoInput {
@@ -264,9 +258,6 @@ export class VideoRepository {
     if (data.isMainFeatured !== undefined) updateData.isMainFeatured = data.isMainFeatured;
     if (data.showInSidebar !== undefined) updateData.showInSidebar = data.showInSidebar;
     if (data.sidebarOrder !== undefined) updateData.sidebarOrder = data.sidebarOrder;
-    if (data.likesCount !== undefined) updateData.likesCount = data.likesCount;
-    if (data.dislikesCount !== undefined) updateData.dislikesCount = data.dislikesCount;
-    if (data.views !== undefined) updateData.views = data.views;
     if (data.publishAfterAssetReady !== undefined) updateData.publishAfterAssetReady = data.publishAfterAssetReady;
     if (data.publishAfterAssetReadyRequestedAt !== undefined) updateData.publishAfterAssetReadyRequestedAt = data.publishAfterAssetReadyRequestedAt;
     if (data.publishAfterAssetReadyCompletedAt !== undefined) updateData.publishAfterAssetReadyCompletedAt = data.publishAfterAssetReadyCompletedAt;
