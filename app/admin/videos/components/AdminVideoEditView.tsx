@@ -2,12 +2,43 @@ import { AdminLayoutShell } from "./AdminLayoutShell";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm, type CreateVideoSourceMode } from "./VideoForm";
 import { VideoUploadSection } from "./VideoUploadSection";
+import type { ThumbnailSourceMode } from "./video-utils";
+
+type AdminVideoFormData = {
+  id: string;
+  title: string;
+  titleEn: string;
+  slug: string;
+  description: string;
+  descriptionEn: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  thumbnailSource: ThumbnailSourceMode;
+  cloudflareProviderAssetId?: string;
+  duration: string;
+  tier: string;
+  status: string;
+  likesCount: number;
+  dislikesCount: number;
+  views: number;
+  isMainFeatured: boolean;
+  showInSidebar: boolean;
+  sidebarOrder: number;
+};
+
+type CreateUploadState = {
+  videoId: string;
+  publishAfterReady: boolean;
+  isPublishing: boolean;
+  isAttachingExisting?: boolean;
+  thumbnailSource?: string;
+};
 
 interface AdminVideoEditViewProps {
   isSubmitting: boolean;
-  createUploadState: any;
-  formData: any;
-  setFormData: (data: any) => void;
+  createUploadState: CreateUploadState | null;
+  formData: AdminVideoFormData;
+  setFormData: (data: AdminVideoFormData | ((prev: AdminVideoFormData) => AdminVideoFormData)) => void;
   formError: string | null;
   onCancel: () => void;
   onSubmit: (e: React.FormEvent) => void;
