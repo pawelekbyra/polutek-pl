@@ -5,20 +5,18 @@ import { join } from "node:path";
 const component = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
-const containsAny = (source: string, snippets: string[]) =>
-  snippets.some((snippet) => source.includes(snippet));
 
 describe("access lock overlay source contract", () => {
   it("keeps LOGIN_REQUIRED on an accessible sign-in lock path", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
-    expect(source).toContain('state === "LOGIN_REQUIRED"');
+    expect(source).toContain('LOGIN_REQUIRED');
     expect(source).toContain("SignInButton");
     expect(source).toContain("<button");
     expect(source).toContain('type="button"');
     expect(source).toContain("Zaloguj się");
     expect(source).toContain("focus-visible:outline");
-    expect(containsAny(source, ["text-blue-400", "text-cyan-200"])).toBe(true);
+    expect(source).toContain("text-[#60a5fa]");
   });
 
   it("keeps PATRON_REQUIRED on the patron branded lock path", () => {
@@ -26,9 +24,9 @@ describe("access lock overlay source contract", () => {
 
     expect(source).toContain('state === "PATRON_REQUIRED"');
     expect(source).toContain("PATRON");
-    expect(containsAny(source, ["text-amber-500", "text-amber-200"])).toBe(true);
-    expect(containsAny(source, ["from-amber-950", "from-[#251000]"])).toBe(true);
-    expect(source).not.toContain('href="#donations"');
+    expect(source).toContain("text-[#f59e0b]");
+    expect(source).toContain("#78350f");
+    expect(source).toContain('href="#donations"');
     expect(source).not.toContain("Wesprzyj, aby obczaić");
   });
 

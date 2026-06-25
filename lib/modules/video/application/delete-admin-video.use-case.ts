@@ -48,7 +48,7 @@ export async function deleteAdminVideo(
     }
   }
 
-  const deleted = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const deleted = await ctx.db.writeTransaction(async (tx) => {
     const video = await tx.video.delete({
       where: { id: videoId },
       include: {

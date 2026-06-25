@@ -497,7 +497,8 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
     expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
-    expect(plan.source?.playbackUrl).toBe('https://iframe.videodelivery.net/signed-token-for-cf-playback-video_ready');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/signed-token-for-cf-playback-video_ready/manifest/video.m3u8');
+    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/signed-token-for-cf-playback-video_ready');
     expect(plan.tracking.playbackSessionId).toBe('session_1');
     expect(cloudflareTokenCalls).toEqual(['cf-playback-video_ready']);
     expect(harness.events).toEqual(['session:create']);

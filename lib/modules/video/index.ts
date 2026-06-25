@@ -24,3 +24,4 @@ export * from './application/publish-after-asset-ready.use-case';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
+export type { CreateVideoInput, UpdateVideoInput } from './infrastructure/video.repository';
