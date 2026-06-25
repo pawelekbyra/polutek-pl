@@ -136,7 +136,8 @@ describe('PlaybackService Access Control Coverage', () => {
       expect(plan.status).toBe('READY');
       expect(plan.canPlay).toBe(true);
       expect(plan.access.allowed).toBe(true);
-      expect(plan.source?.playbackUrl).toBeDefined();
+      expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/mock-token/manifest/video.m3u8');
+      expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/mock-token');
     });
 
     it('Revoked/Expired patron grant + PATRON video returns PATRON_REQUIRED', async () => {
