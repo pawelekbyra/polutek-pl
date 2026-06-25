@@ -10,6 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
+import AccessLockOverlay from "./AccessLockOverlay";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -63,6 +64,11 @@ export default function ChannelVideoCard({
   };
 
   const badge = getAccessBadge();
+  const lockState = !hasAccess
+    ? video.tier === "PATRON"
+      ? "PATRON_REQUIRED"
+      : "LOGIN_REQUIRED"
+    : null;
 
   return (
     <div className="group cursor-pointer flex flex-col">
@@ -70,32 +76,19 @@ export default function ChannelVideoCard({
         <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
         <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
           <div className="relative h-full w-full">
-            {video.thumbnailUrl ? (
+            {lockState ? (
+              <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+            ) : video.thumbnailUrl ? (
               <Image
                 src={video.thumbnailUrl}
                 alt={displayTitle}
                 fill
                 sizes="(min-width: 1280px) 20vw, (min-width: 640px) 50vw, 100vw"
-                className={cn(
-                  "object-cover transition duration-500 motion-reduce:transition-none",
-                  !hasAccess
-                    ? "opacity-55 grayscale-[0.35]"
-                    : "opacity-90 group-hover:scale-105",
-                )}
+                className="object-cover opacity-90 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-xs font-bold uppercase tracking-widest text-white/45">
                 Video
-              </div>
-            )}
-            {!hasAccess && (
-              <div
-                className="absolute inset-0 flex items-center justify-center bg-black/30"
-                aria-hidden="true"
-              >
-                <span className="rounded-full border border-white/20 bg-black/65 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
-                  {badge?.text}
-                </span>
               </div>
             )}
             {video.duration && (

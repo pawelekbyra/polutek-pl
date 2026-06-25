@@ -2,7 +2,6 @@
 
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "./LanguageContext";
 import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 
@@ -16,242 +15,213 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const heroSize = {
+const shellRadius = {
+  default: "rounded-xl",
+  thumbnail: "rounded-lg",
+  thumbnailCompact: "rounded-md",
+} as const;
+
+const scaleClasses = {
   default: {
-    content: "px-5 py-6 md:px-10 md:py-10",
-    orb: "h-20 w-20 md:h-28 md:w-28",
-    icon: "h-8 w-8 md:h-11 md:w-11",
-    kicker: "text-[clamp(0.58rem,1.65cqi,0.82rem)]",
-    line: "text-[clamp(1.9rem,8.2cqi,5.2rem)]",
-    note: "text-[clamp(0.68rem,2.1cqi,0.92rem)]",
+    content: "p-6 sm:p-8 md:p-10",
+    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)]",
+    iconSpace: "mb-[clamp(1rem,3cqi,2rem)]",
+    headline: "text-[clamp(2rem,10cqi,6rem)]",
+    divider: "my-[clamp(0.625rem,1.5cqi,0.75rem)] w-[clamp(6rem,18cqi,12rem)]",
+    cta: "mt-[clamp(1.5rem,4cqi,2.5rem)]",
+    ctaLine: "w-24 group-hover/cta:w-48",
+    ctaText: "text-[10px] tracking-[0.5em]",
   },
   thumbnail: {
-    content: "px-3 py-3",
-    orb: "h-[clamp(3.1rem,28cqi,5.5rem)] w-[clamp(3.1rem,28cqi,5.5rem)]",
-    icon: "h-[clamp(1rem,7.5cqi,1.75rem)] w-[clamp(1rem,7.5cqi,1.75rem)]",
-    kicker: "text-[clamp(0.46rem,4.1cqi,0.64rem)]",
-    line: "text-[clamp(1rem,8.6cqi,2.18rem)]",
-    note: "text-[clamp(0.49rem,4cqi,0.7rem)]",
+    content: "p-3",
+    icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)]",
+    iconSpace: "mb-[clamp(0.45rem,3cqi,0.85rem)]",
+    headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
+    divider: "my-[clamp(0.25rem,1.8cqi,0.45rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
+    cta: "hidden",
+    ctaLine: "w-12",
+    ctaText: "text-[7px] tracking-[0.3em]",
+  },
+  thumbnailCompact: {
+    content: "p-2",
+    icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)]",
+    iconSpace: "mb-[clamp(0.35rem,2.8cqi,0.65rem)]",
+    headline: "text-[clamp(0.9rem,13cqi,2rem)]",
+    divider: "my-[clamp(0.2rem,1.6cqi,0.35rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
+    cta: "hidden",
+    ctaLine: "w-10",
+    ctaText: "text-[6px] tracking-[0.25em]",
   },
 } as const;
 
-const compactSize = {
-  icon: "h-[clamp(0.85rem,13cqi,1.25rem)] w-[clamp(0.85rem,13cqi,1.25rem)]",
-  label: "text-[clamp(0.5rem,7cqi,0.7rem)]",
+const overlayConfig = {
+  LOGIN_REQUIRED: {
+    firstLine: "Strefa",
+    secondLine: "Zalogowanych",
+    cta: "Zaloguj się, aby obczaić",
+    accent: "text-[#60a5fa]",
+    firstLineColor: "text-white",
+    secondLineColor: "text-[#60a5fa]",
+    ctaHover: "group-hover/cta:text-[#3b82f6]",
+    aurora:
+      "bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.70),transparent_28%),radial-gradient(circle_at_70%_60%,rgba(30,64,175,0.62),transparent_35%),linear-gradient(135deg,#1e3a8a_0%,#000_48%,#172554_100%)]",
+    shadow: "drop-shadow-[0_12px_26px_rgba(96,165,250,0.25)]",
+  },
+  PATRON_REQUIRED: {
+    firstLine: "Strefa",
+    secondLine: "Patronów",
+    cta: "Wyślij napiwek, aby dołączyć",
+    accent: "text-[#f59e0b]",
+    firstLineColor: "text-[#f59e0b]",
+    secondLineColor: "text-white",
+    ctaHover: "group-hover/cta:text-[#f59e0b]",
+    aurora:
+      "bg-[radial-gradient(circle_at_30%_20%,rgba(245,158,11,0.74),transparent_28%),radial-gradient(circle_at_72%_62%,rgba(120,53,15,0.72),transparent_36%),linear-gradient(135deg,#78350f_0%,#000_48%,#451a03_100%)]",
+    shadow: "drop-shadow-[0_12px_28px_rgba(245,158,11,0.30)]",
+  },
 } as const;
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
-  const { language } = useLanguage();
   const isPatronState = state === "PATRON_REQUIRED";
-  const isLoginState = state === "LOGIN_REQUIRED";
-  const isCompact = variant === "thumbnailCompact";
-  const isPl = language === "pl";
-
-  const overlayCopy = isPatronState
-    ? {
-        kicker: isPl ? "strefa patrona" : "patron room",
-        lineOne: isPl ? "ZA KULISAMI" : "BEHIND",
-        lineTwo: isPl ? "" : "THE SCENES",
-        compactLabel: isPl ? "PATRON" : "PATRON",
-        note: isPl
-          ? "Odcinek otwiera jednorazowe wsparcie — bez subskrypcji."
-          : "Unlocked by a one-time support gift — no subscription.",
-        gradient: "from-[#251000] via-[#130d07] to-[#040404]",
-        mesh: "bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.48),transparent_24%),radial-gradient(circle_at_76%_28%,rgba(249,115,22,0.24),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.11)_0_1px,transparent_1px_18px)]",
-        glow: "bg-amber-300/28",
-        accent: "text-amber-200",
-        border: "border-amber-200/25",
-        ring: "ring-amber-200/30",
-      }
-    : {
-        kicker: isPl ? "konto widza" : "viewer account",
-        lineOne: isPl ? "WEJDŹ" : "STEP",
-        lineTwo: isPl ? "DO ŚRODKA" : "INSIDE",
-        compactLabel: isPl ? "LOGIN" : "SIGN IN",
-        note: isPl
-          ? "Zaloguj się, żeby bezpiecznie uruchomić odtwarzanie."
-          : "Sign in to securely start playback.",
-        gradient: "from-[#03182d] via-[#08111f] to-[#030406]",
-        mesh: "bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.45),transparent_24%),radial-gradient(circle_at_76%_28%,rgba(99,102,241,0.28),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.1)_0_1px,transparent_1px_18px)]",
-        glow: "bg-cyan-300/24",
-        accent: "text-cyan-200",
-        border: "border-cyan-200/25",
-        ring: "ring-cyan-200/30",
-      };
-
-  const Icon = isPatronState ? PatronGemIcon : DoorLockIcon;
-
-  if (isCompact) {
-    return (
-      <PlayerStateFrame fill>
-        <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070707] text-white [container-type:inline-size]">
-          <AccessLockBackdrop
-            gradient={overlayCopy.gradient}
-            mesh={overlayCopy.mesh}
-            glow={overlayCopy.glow}
-          />
-
-          <div
-            className={cn(
-              "relative z-10 flex min-w-0 items-center justify-center gap-1.5 rounded-full border bg-black/38 px-2 py-1 text-center shadow-[0_12px_34px_rgba(0,0,0,0.45)] ring-1 backdrop-blur-md",
-              overlayCopy.border,
-              overlayCopy.ring,
-            )}
-          >
-            <Icon
-              className={cn("shrink-0", overlayCopy.accent, compactSize.icon)}
-            />
-            <span
-              className={cn(
-                "max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-brand font-black uppercase leading-none tracking-[0.14em]",
-                overlayCopy.accent,
-                compactSize.label,
-              )}
-            >
-              {overlayCopy.compactLabel}
-            </span>
-          </div>
-
-          <div className="absolute inset-x-2 bottom-2 z-20 flex justify-center">
-            {isLoginState ? (
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[#070707] shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  {isPl ? "Zaloguj" : "Sign in"}
-                </button>
-              </SignInButton>
-            ) : (
-              <a
-                href="#support"
-                className="rounded-full bg-amber-400 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[#251000] shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
-              >
-                {isPl ? "Wesprzyj" : "Support"}
-              </a>
-            )}
-          </div>
-        </div>
-      </PlayerStateFrame>
-    );
-  }
-
-  const size = heroSize[variant];
+  const config = overlayConfig[state];
+  const size = scaleClasses[variant];
 
   return (
     <PlayerStateFrame
-      className={variant === "thumbnail" ? "rounded-lg" : undefined}
+      fill={variant === "thumbnailCompact"}
+      className={shellRadius[variant]}
     >
-      <div className="group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070707] text-white [container-type:inline-size]">
-        <AccessLockBackdrop
-          gradient={overlayCopy.gradient}
-          mesh={overlayCopy.mesh}
-          glow={overlayCopy.glow}
-        />
+      <div
+        className={cn(
+          "group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white [container-type:inline-size]",
+          shellRadius[variant],
+        )}
+      >
+        <div className="absolute inset-0 z-0 opacity-60">
+          <div
+            className={cn(
+              "h-full w-full blur-[16px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
+              config.aurora,
+            )}
+          />
+        </div>
 
         <div
           className={cn(
-            "relative z-10 flex h-full w-full flex-col items-center justify-center overflow-hidden text-center",
+            "relative z-10 flex h-full w-full origin-center flex-col items-center justify-center text-center",
             size.content,
           )}
         >
-          <div
-            className={cn(
-              "relative mb-2 flex items-center justify-center rounded-full border bg-white/[0.055] shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 backdrop-blur-md md:mb-4",
-              overlayCopy.border,
-              overlayCopy.ring,
-              size.orb,
-            )}
-          >
+          {isPatronState ? (
             <div
               className={cn(
-                "absolute inset-2 rounded-full blur-xl",
-                overlayCopy.glow,
+                "inline-flex items-center justify-center transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
+                size.iconSpace,
               )}
-            />
-            <Icon
-              className={cn(
-                "relative z-10 drop-shadow-[0_0_18px_rgba(255,255,255,0.16)]",
-                overlayCopy.accent,
-                size.icon,
-              )}
-            />
-          </div>
+              aria-label="Strefa Patronów"
+            >
+              <PatronGemIcon
+                className={cn(size.icon, config.accent, config.shadow)}
+              />
+            </div>
+          ) : (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition duration-200 hover:scale-105 hover:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                  size.iconSpace,
+                )}
+                aria-label="Zaloguj się"
+              >
+                <DoorLockIcon
+                  className={cn(size.icon, config.accent, config.shadow)}
+                />
+              </button>
+            </SignInButton>
+          )}
 
           <div
             className={cn(
-              "mb-2 inline-flex items-center rounded-full border bg-black/28 px-3 py-1 shadow-[0_12px_35px_rgba(0,0,0,0.3)] backdrop-blur-md",
-              overlayCopy.border,
+              "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+              config.firstLineColor,
+              size.headline,
             )}
           >
-            <span
-              className={cn(
-                "font-black uppercase leading-none tracking-[0.22em] text-white/78",
-                size.kicker,
-              )}
-            >
-              {overlayCopy.kicker}
-            </span>
+            {config.firstLine}
+          </div>
+          <div
+            className={cn(
+              "h-px bg-white/10",
+              size.divider,
+            )}
+          />
+          <div
+            className={cn(
+              "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+              config.secondLineColor,
+              size.headline,
+            )}
+          >
+            {config.secondLine}
           </div>
 
-          <div className="flex max-w-full flex-col items-center overflow-hidden">
-            <span
+          {isPatronState ? (
+            <a
+              href="#donations"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("donations")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
               className={cn(
-                "font-brand font-black uppercase leading-[0.84] tracking-tighter whitespace-nowrap text-white",
-                size.line,
+                "group/cta flex flex-col items-center gap-2 text-white/30 no-underline transition-colors duration-200 motion-reduce:transition-none",
+                config.ctaHover,
+                size.cta,
               )}
             >
-              {overlayCopy.lineOne}
-            </span>
-            {overlayCopy.lineTwo && (
               <span
                 className={cn(
-                  "font-brand font-black uppercase leading-[0.84] tracking-tighter whitespace-nowrap",
-                  overlayCopy.accent,
-                  size.line,
+                  "h-px bg-white/10 transition-[width] duration-500 motion-reduce:transition-none",
+                  size.ctaLine,
+                )}
+              />
+              <span
+                className={cn(
+                  "font-brand font-black uppercase leading-none",
+                  size.ctaText,
                 )}
               >
-                {overlayCopy.lineTwo}
+                {config.cta}
               </span>
-            )}
-          </div>
-
-          <p
-            className={cn(
-              "mt-2 max-w-[31rem] text-balance font-medium leading-snug text-white/72 md:mt-4",
-              size.note,
-            )}
-          >
-            {overlayCopy.note}
-          </p>
-
-          <div className="mt-6 flex gap-4 md:mt-8">
-            {isLoginState && (
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="rounded-full bg-white px-8 py-3 text-[min(12px,3.5cqi)] font-black uppercase tracking-widest text-[#070707] transition-all hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
-                >
-                  {isPl ? "Zaloguj się" : "Sign in"}
-                </button>
-              </SignInButton>
-            )}
-
-            {isPatronState && (
-              <a
-                href="#support"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document
-                    .getElementById("support-box")
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
-                className="rounded-full bg-amber-400 px-8 py-3 text-[min(12px,3.5cqi)] font-black uppercase tracking-widest text-[#251000] transition-all hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 active:scale-95"
+            </a>
+          ) : (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className={cn(
+                  "group/cta flex cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0 text-white/30 transition-colors duration-200 hover:text-[#3b82f6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                  size.cta,
+                )}
               >
-                {isPl ? "Wesprzyj jednorazowo" : "One-time support"}
-              </a>
-            )}
-          </div>
+                <span
+                  className={cn(
+                    "h-px bg-white/10 transition-[width] duration-500 motion-reduce:transition-none",
+                    size.ctaLine,
+                  )}
+                />
+                <span
+                  className={cn(
+                    "font-brand font-black uppercase leading-none",
+                    size.ctaText,
+                  )}
+                >
+                  {config.cta}
+                </span>
+              </button>
+            </SignInButton>
+          )}
         </div>
       </div>
     </PlayerStateFrame>
@@ -260,70 +230,24 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
 export default AccessLockOverlay;
 
-function AccessLockBackdrop({
-  gradient,
-  mesh,
-  glow,
-}: {
-  gradient: string;
-  mesh: string;
-  glow: string;
-}) {
-  return (
-    <>
-      <div
-        className={cn(
-          "absolute inset-0 z-0 bg-gradient-to-br opacity-98 transition-transform duration-700 group-hover/paywall:scale-[1.035] motion-reduce:transition-none",
-          gradient,
-        )}
-      />
-      <div
-        aria-hidden="true"
-        className={cn(
-          "absolute -left-[15%] -top-[30%] z-0 h-[78%] w-[68%] rounded-full blur-3xl motion-reduce:hidden",
-          glow,
-        )}
-      />
-      <div className={cn("absolute inset-0 z-0 opacity-55", mesh)} />
-      <div className="absolute inset-x-0 bottom-0 z-0 h-2/3 bg-gradient-to-t from-black/88 via-black/35 to-transparent" />
-      <div className="absolute inset-0 z-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.08),transparent_18%,transparent_82%,rgba(255,255,255,0.06))] opacity-70" />
-    </>
-  );
-}
-
 function PatronGemIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.65"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M6.4 4.5h11.2L21 9l-9 11L3 9l3.4-4.5Z"
-        fill="currentColor"
-        opacity="0.2"
-      />
-      <path
-        d="M6.4 4.5h11.2L21 9l-9 11L3 9l3.4-4.5Z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3.4 9h17.2M8.2 4.8 12 20M15.8 4.8 12 20"
-        stroke="currentColor"
-        strokeWidth="1.35"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.9"
-      />
-      <path
-        d="M18.7 2.8v2.6M17.4 4.1H20"
-        stroke="currentColor"
-        strokeWidth="1.45"
-        strokeLinecap="round"
-      />
+      <path d="M6 3h12l4 6-10 12L2 9l4-6Z" />
+      <path d="M2 9h20" />
+      <path d="M6 3l6 18 6-18" />
+      <path d="M6 3l-4 6" />
+      <path d="M18 3l4 6" />
     </svg>
   );
 }
@@ -333,33 +257,17 @@ function DoorLockIcon({ className }: { className?: string }) {
     <svg
       className={className}
       viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M7 21V4.8A1.8 1.8 0 0 1 8.8 3h6.4A1.8 1.8 0 0 1 17 4.8V21"
-        fill="currentColor"
-        opacity="0.16"
-      />
-      <path
-        d="M7 21V4.8A1.8 1.8 0 0 1 8.8 3h6.4A1.8 1.8 0 0 1 17 4.8V21M5 21h14"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11 12.2h2M12 12.2v2.2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M9.2 8.4a2.8 2.8 0 0 1 5.6 0v1.2H9.2V8.4Z"
-        stroke="currentColor"
-        strokeWidth="1.45"
-        strokeLinejoin="round"
-      />
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.2" />
+      <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
+      <path d="M12 15v2" />
     </svg>
   );
 }

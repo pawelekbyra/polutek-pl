@@ -7,11 +7,12 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import VideoPlaylist from "../VideoPlaylist";
 import Image from "next/image";
-import { Video, Lock, AlertCircle } from "../icons";
+import { Video, AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
+import AccessLockOverlay from "../AccessLockOverlay";
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -97,6 +98,11 @@ export function SidebarPlaylist({
       language === "en" && video.titleEn ? video.titleEn : video.title;
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
+    const lockState = !hasAccess
+      ? video.tier === "PATRON"
+        ? "PATRON_REQUIRED"
+        : "LOGIN_REQUIRED"
+      : null;
 
     return (
       <div
@@ -119,25 +125,18 @@ export function SidebarPlaylist({
             className="absolute inset-0 z-40"
           />
           <div className="relative w-full h-full">
-            {video.thumbnailUrl ? (
+            {lockState ? (
+              <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+            ) : video.thumbnailUrl ? (
               <Image
                 src={video.thumbnailUrl}
                 alt={displayTitle}
                 fill
-                className={cn(
-                  "object-cover transition duration-700 group-hover/thumb:scale-105",
-                  !hasAccess ? "opacity-40 grayscale-[0.5]" : "opacity-90",
-                )}
+                className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
               />
             ) : (
               <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
                 <Video className="text-white/20 w-8 h-8" />
-              </div>
-            )}
-
-            {!hasAccess && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                <Lock className="text-white/80 w-5 h-5 drop-shadow-md" />
               </div>
             )}
 
