@@ -325,7 +325,7 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                             <div className="flex gap-2">{comment.status === 'VISIBLE' ? (<Button onClick={() => handleAction(`comments/${comment.id}/hide`)} variant="ghost" size="sm" className="h-7 text-[10px]">Ukryj</Button>) : (<Button onClick={() => handleAction(`comments/${comment.id}/restore`)} variant="ghost" size="sm" className="h-7 text-[10px]">Przywróć</Button>)}<Button onClick={() => handleAction(`comments/${comment.id}/delete`)} variant="ghost" size="sm" className="h-7 text-[10px] text-red-600">Usuń</Button><Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild><Link href={`/watch/${video.slug}#comment-${comment.id}`} target="_blank">Pokaż w serwisie</Link></Button></div>
                                         </div>
                                     ))}
-                                    <Button variant="ghost" className="w-full text-xs text-muted-foreground italic">Pokaż wszystkie (Pełna moderacja wkrótce)</Button>
+                                    <Button variant="ghost" className="w-full text-xs" asChild><Link href={`/admin/comments?videoId=${encodeURIComponent(video.id)}`}>Pokaż wszystkie w moderacji</Link></Button>
                                 </div>
                             ) : (
                                 <div className="py-12 text-center space-y-2 opacity-50"><MessageSquare className="h-10 w-10 mx-auto opacity-20" /><p className="text-sm italic">Brak komentarzy pod tym filmem.</p></div>

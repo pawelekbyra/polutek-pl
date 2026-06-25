@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { listAdminComments } from '@/lib/modules/comments/application/list-admin-comments.use-case';
 import { listCommentReports } from '@/lib/modules/comments/application/list-comment-reports.use-case';
 import { toggleAdminCommentHeart } from '@/lib/modules/comments/application/toggle-admin-comment-heart.use-case';
 import { hideAdminComment } from '@/lib/modules/comments/application/hide-admin-comment.use-case';
@@ -18,10 +19,11 @@ describe('Admin Comment Use Cases', () => {
   let mockRepo: any;
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRepo = { findReports: vi.fn(), findCommentById: vi.fn(), toggleHeart: vi.fn(), updateCommentStatus: vi.fn(), softDelete: vi.fn(), findReportById: vi.fn(), resolveReport: vi.fn() };
+    mockRepo = { findAdminComments: vi.fn(), findReports: vi.fn(), findCommentById: vi.fn(), toggleHeart: vi.fn(), updateCommentStatus: vi.fn(), softDelete: vi.fn(), findReportById: vi.fn(), resolveReport: vi.fn() };
     (CommentRepository as any).mockImplementation(function() { return mockRepo; });
     ctx = { actor: { type: 'admin', userId: 'admin-1' }, prisma: {} as any } as any;
   });
+  it('listAdminComments should pass video filter to repository', async () => { mockRepo.findAdminComments.mockResolvedValue([]); const result = await listAdminComments({ q: 'tekst', status: CommentStatus.VISIBLE, videoId: 'video-1', limit: 25 }, ctx); expect(result.ok).toBe(true); expect(mockRepo.findAdminComments).toHaveBeenCalledWith({ q: 'tekst', status: CommentStatus.VISIBLE, videoId: 'video-1', limit: 25 }); });
   it('listCommentReports should fail if not admin', async () => { ctx.actor.type = 'user'; const result = await listCommentReports(undefined, ctx); expect(result.ok).toBe(false); expect((result as any).error?.message).toBe('Brak uprawnień administratora.'); });
   it('listCommentReports should return reports', async () => { mockRepo.findReports.mockResolvedValue([{ id: 'r1' }]); const result = await listCommentReports(CommentReportStatus.PENDING, ctx); expect(result.ok).toBe(true); expect((result as any).data).toEqual([{ id: 'r1' }]); });
   it('toggleAdminCommentHeart should work', async () => { mockRepo.findCommentById.mockResolvedValue({ id: 'c1' }); mockRepo.toggleHeart.mockResolvedValue({ isHearted: true }); const result = await toggleAdminCommentHeart('c1', ctx); expect(result.ok).toBe(true); expect(recordAuditEvent).toHaveBeenCalled(); });
