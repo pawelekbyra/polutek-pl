@@ -27,6 +27,14 @@ export type PlaybackAssetContract = {
   sizeBytes?: number | null;
 };
 
+export type VideoTextTrackContract = {
+  src: string;
+  label: string;
+  language: string;
+  kind: 'subtitles' | 'captions';
+  default?: boolean;
+};
+
 export type PlaybackSourceContract = {
   provider: string;
   kind: string;
@@ -61,6 +69,7 @@ export type PlaybackPlan = {
     controls: boolean;
     poster: string;
     title: string;
+    textTracks?: VideoTextTrackContract[];
   };
   diagnostics: {
     warnings: string[];
