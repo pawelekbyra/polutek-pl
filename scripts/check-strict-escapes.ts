@@ -2,7 +2,10 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 const repoRoot = process.cwd();
-const baselinePath = path.join(repoRoot, 'scripts', 'strict-escapes-baseline.jsonc');
+const baselinePaths = [
+  path.join(repoRoot, 'scripts', 'strict-escapes-baseline.jsonc'),
+  path.join(repoRoot, 'scripts', 'strict-escapes-baseline-overrides.jsonc'),
+];
 const sourceRoots = ['app', 'components', 'lib', 'middleware.ts', 'next.config.mjs', 'vitest.config.ts'];
 const sourceExtensions = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']);
 const ignoredDirectories = new Set(['node_modules', '.next', '.git', 'coverage', 'public']);
@@ -128,16 +131,16 @@ function stripJsonComments(input: string) {
   return output;
 }
 
-function readBaseline(): BaselineEntry[] {
-  if (!existsSync(baselinePath)) return [];
+function readBaselineFile(filePath: string): BaselineEntry[] {
+  if (!existsSync(filePath)) return [];
 
-  const parsed = JSON.parse(stripJsonComments(readFileSync(baselinePath, 'utf8'))) as StrictEscapesBaseline;
+  const parsed = JSON.parse(stripJsonComments(readFileSync(filePath, 'utf8'))) as StrictEscapesBaseline;
   if (!Array.isArray(parsed.entries)) {
-    throw new Error('strict-escapes baseline must contain an entries array.');
+    throw new Error(`${path.relative(repoRoot, filePath)} must contain an entries array.`);
   }
 
   return parsed.entries.map((entry, index) => {
-    const location = `baseline entry #${index + 1}`;
+    const location = `${path.relative(repoRoot, filePath)} entry #${index + 1}`;
     if (!entry.file || entry.file.includes('*') || path.isAbsolute(entry.file)) {
       throw new Error(`${location} must use a precise repository-relative file path without globs.`);
     }
@@ -155,6 +158,10 @@ function readBaseline(): BaselineEntry[] {
     }
     return entry;
   });
+}
+
+function readBaseline(): BaselineEntry[] {
+  return baselinePaths.flatMap(readBaselineFile);
 }
 
 function violationKey(violation: Violation) {
