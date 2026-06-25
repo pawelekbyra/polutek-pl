@@ -12,6 +12,7 @@ import { BroadcastWizard } from "./components/BroadcastWizard";
 import { BroadcastHistory } from "./broadcast/BroadcastHistory";
 import { InboundInbox } from "./components/InboundInbox";
 import { LayoutDashboard, FileText, Send, History, MessageSquare, Settings } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 
 type EmailSettingsStatus = {
   audience: {
@@ -42,6 +43,11 @@ export default function AdminEmailsPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 py-12">
+        <AdminBreadcrumbs
+          items={[{ label: "Admin", href: "/admin" }, { label: "Maile" }]}
+          backHref="/admin"
+          backLabel="Wróć do panelu"
+        />
         <header className="mb-12">
           <h1 className="text-4xl font-black uppercase tracking-tighter text-neutral-900 mb-2">Poczta Admina</h1>
           <p className="text-neutral-500 font-medium italic">Zarządzanie komunikacją, szablonami i odpowiedziami od użytkowników.</p>

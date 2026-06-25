@@ -5,7 +5,8 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Users, Heart, CreditCard, MessageSquare, TrendingUp, TrendingDown, DollarSign } from "@/app/components/icons";
+import { Users, Heart, CreditCard, MessageSquare, TrendingUp, TrendingDown, DollarSign } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { logger } from "@/lib/logger";
 import { AdminUsersDashboardSkeleton } from "@/components/skeletons/admin";
 
@@ -45,9 +46,11 @@ export default function UserDashboardPage() {
     <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-6 -ml-3">
-          <Link href="/admin/users"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do listy</Link>
-        </Button>
+        <AdminBreadcrumbs
+          items={[{ label: "Admin", href: "/admin" }, { label: "Użytkownicy", href: "/admin/users" }, { label: "Dashboard" }]}
+          backHref="/admin/users"
+          backLabel="Wróć do użytkowników"
+        />
 
         <div className="mb-8 rounded-3xl border bg-card p-6 shadow-sm md:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Administracja</p>

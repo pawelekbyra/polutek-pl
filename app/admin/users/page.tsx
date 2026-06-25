@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Mail } from "@/app/components/icons";
+import { ArrowRight, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Mail } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
@@ -125,9 +126,12 @@ export default function AdminUsersPage() {
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-            <Button variant="ghost" asChild className="-ml-3 h-8 px-2">
-              <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
-            </Button>
+            <AdminBreadcrumbs
+              items={[{ label: "Admin", href: "/admin" }, { label: "Użytkownicy" }]}
+              backHref="/admin"
+              backLabel="Wróć do panelu"
+              className="mb-0"
+            />
             <Button variant="outline" onClick={exportCsv} size="sm">
                 <Download className="mr-2 h-4 w-4" /> Eksportuj CSV
             </Button>

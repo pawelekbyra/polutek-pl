@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import {
-    ArrowLeft, Video, Globe, Lock, ShieldCheck, BarChart3,
+    Video, Globe, Lock, ShieldCheck, BarChart3,
     MessageSquare, History, AlertTriangle,
     Play, Eye, Heart, Layout, FileVideo,
     CheckCircle2, XCircle, Archive, RotateCcw, Send,
@@ -26,6 +26,7 @@ import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
 import { readAdminApiError } from "../components/api-error";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
@@ -85,9 +86,12 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
         <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div className="flex flex-col gap-1">
-                  <Button variant="ghost" asChild className="-ml-3 w-fit h-8 px-2 text-muted-foreground hover:text-foreground">
-                    <Link href="/admin/videos"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do listy</Link>
-                  </Button>
+                  <AdminBreadcrumbs
+                    items={[{ label: "Admin", href: "/admin" }, { label: "Filmy", href: "/admin/videos" }, { label: video.title }]}
+                    backHref="/admin/videos"
+                    backLabel="Wróć do filmów"
+                    className="mb-2"
+                  />
                   <div className="flex items-center gap-3">
                       <h1 className="text-2xl font-bold tracking-tight">{video.title}</h1>
                       <Badge variant={video.status === 'PUBLISHED' ? 'default' : 'outline'}>{video.status}</Badge>

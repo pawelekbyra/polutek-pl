@@ -6,7 +6,8 @@ import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowUp, ArrowDown, Star, Layout, Eye, EyeOff, Save, RefreshCcw } from "@/app/components/icons";
+import { ArrowUp, ArrowDown, Star, Layout, Eye, EyeOff, Save, RefreshCcw } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useToast } from "@/app/hooks/useToast";
@@ -109,9 +110,12 @@ export default function ChannelLayoutPage() {
       <Navbar />
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-            <Button variant="ghost" asChild className="-ml-3">
-              <Link href="/admin/videos"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do filmów</Link>
-            </Button>
+            <AdminBreadcrumbs
+              items={[{ label: "Admin", href: "/admin" }, { label: "Filmy", href: "/admin/videos" }, { label: "Układ" }]}
+              backHref="/admin/videos"
+              backLabel="Wróć do filmów"
+              className="mb-0"
+            />
             <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={fetchVideos} disabled={isSaving}>
                     <RefreshCcw className="mr-2 h-4 w-4" /> Odśwież

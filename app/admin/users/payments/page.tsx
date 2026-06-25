@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CreditCard, Search, Download, Filter, Calendar } from "@/app/components/icons";
+import { CreditCard, Search, Download, Filter, Calendar } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { AdminPaymentListItem, AdminPaymentsListResponse } from "@/lib/services/admin/payments-admin.dto";
@@ -95,9 +96,11 @@ export default function AdminPaymentsListPage() {
     <div className="min-h-screen bg-muted/20 text-foreground">
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-6 -ml-3 h-8 px-2">
-          <Link href="/admin/users"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do użytkowników</Link>
-        </Button>
+        <AdminBreadcrumbs
+          items={[{ label: "Admin", href: "/admin" }, { label: "Użytkownicy", href: "/admin/users" }, { label: "Wpłaty" }]}
+          backHref="/admin/users"
+          backLabel="Wróć do użytkowników"
+        />
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Wpłaty i Finanse</h1>

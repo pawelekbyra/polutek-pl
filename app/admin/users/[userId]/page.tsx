@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, User, Heart, CreditCard, MessageSquare, History, Share2, ShieldCheck, Mail, ExternalLink, Trash2 } from "@/app/components/icons";
+import { User, Heart, CreditCard, MessageSquare, History, Share2, ShieldCheck, Mail, ExternalLink, Trash2 } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { UserPatronActions } from "../UserPatronActions";
@@ -61,9 +62,11 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
         <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
           <Navbar />
           <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <Button variant="ghost" asChild className="mb-6 -ml-3">
-              <Link href="/admin/users"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do listy</Link>
-            </Button>
+            <AdminBreadcrumbs
+              items={[{ label: "Admin", href: "/admin" }, { label: "Użytkownicy", href: "/admin/users" }, { label: "Szczegóły" }]}
+              backHref="/admin/users"
+              backLabel="Wróć do użytkowników"
+            />
             <Card className="max-w-2xl">
               <CardHeader>
                 <CardTitle>Nie można wyświetlić użytkownika</CardTitle>
@@ -91,9 +94,11 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background text-foreground">
         <Navbar />
         <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <Button variant="ghost" asChild className="mb-6 -ml-3">
-            <Link href="/admin/users"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do listy</Link>
-          </Button>
+          <AdminBreadcrumbs
+            items={[{ label: "Admin", href: "/admin" }, { label: "Użytkownicy", href: "/admin/users" }, { label: user.name || user.username || "Szczegóły" }]}
+            backHref="/admin/users"
+            backLabel="Wróć do użytkowników"
+          />
 
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="lg:w-1/3 space-y-6">

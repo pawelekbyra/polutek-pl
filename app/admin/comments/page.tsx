@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, MessageSquare, EyeOff, Trash2, RotateCcw, Search } from "@/app/components/icons";
+import { MessageSquare, EyeOff, Trash2, RotateCcw, Search } from "@/app/components/icons";
+import { AdminBreadcrumbs } from "@/app/admin/components/AdminBreadcrumbs";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
 import { CommentDto } from "@/lib/services/comments/comment.dto";
@@ -89,11 +90,11 @@ export default function AdminCommentsPage() {
     <div className="min-h-screen bg-muted/20">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="ghost" asChild className="-ml-3 h-8 px-2">
-            <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
-          </Button>
-        </div>
+        <AdminBreadcrumbs
+          items={[{ label: "Admin", href: "/admin" }, { label: "Komentarze" }]}
+          backHref="/admin"
+          backLabel="Wróć do panelu"
+        />
 
         <div className="flex flex-col justify-between gap-4 mb-8 md:flex-row md:items-center">
           <div>
