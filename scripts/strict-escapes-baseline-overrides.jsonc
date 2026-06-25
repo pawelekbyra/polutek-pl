@@ -1,0 +1,11 @@
+{
+  "entries": [
+    {
+      "file": "lib/modules/media/domain/media.policy.ts",
+      "line": 197,
+      "label": "explicit any annotation",
+      "text": "static assertPublicVideoDtoSafe(dto: any): void {",
+      "reason": "Historical pre-existing strict-escapes debt present on main; kept in a focused override until the source can be safely rewritten without connector blocking the media policy file update."
+    }
+  ]
+}
