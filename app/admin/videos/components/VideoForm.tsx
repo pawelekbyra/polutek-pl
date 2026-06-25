@@ -22,7 +22,7 @@ interface VideoFormData {
   videoUrl: string;
   thumbnailUrl: string;
   thumbnailSource: ThumbnailSourceMode;
-  cloudflareProviderAssetId?: string;
+  cloudflareProviderAssetId: string;
   duration: string;
   tier: string;
   status: string;
@@ -258,13 +258,9 @@ export function VideoForm({
                   {formData.cloudflareProviderAssetId
                     ? "Miniatura zostanie ustawiona z pierwszej klatki aktualnego assetu Cloudflare."
                     : isCreate
-                      ? "Miniatura zostanie ustawiona automatycznie po utworzeniu assetu Cloudflare dla uploadu albo istniejącego UID."
-                      : "Ten film nie ma jeszcze dostępnego UID Cloudflare w formularzu. Backend spróbuje ustawić pierwszą klatkę z aktualnego assetu przy zapisie."}
+                      ? "Po utworzeniu i podpięciu assetu Cloudflare backend ustawi URL pierwszej klatki automatycznie."
+                      : "Ten film nie ma jeszcze podpiętego assetu Cloudflare, więc po zapisie pozostanie miniatura domyślna do czasu podpięcia assetu."}
                 </div>
-              ) : null}
-
-              {formData.thumbnailSource === "DEFAULT" ? (
-                <p className="text-xs text-muted-foreground">Zostawimy domyślne logo/cover Polutka.</p>
               ) : null}
             </CardContent>
           </Card>
@@ -272,40 +268,12 @@ export function VideoForm({
 
         <div className="space-y-8">
           <Card>
-            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Dostęp</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Label>Tier</Label>
-              <Select value={formData.tier} onValueChange={v => setFormData({...formData, tier: v || "PUBLIC"})} disabled={isSubmitting}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PUBLIC">Publiczny</SelectItem>
-                  <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                  <SelectItem value="PATRON">Patroni</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="space-y-3 pt-3">
-                <Label>{isCreate ? "Docelowy stan po zapisie" : "Status"}</Label>
-                <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v || "DRAFT"})} disabled={isSubmitting}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Szkic</SelectItem>
-                    {isCreate ? (
-                      <SelectItem value="PUBLISHED">Publiczny po gotowym uploadzie</SelectItem>
-                    ) : null}
-                    {!isCreate && formData.status === "PUBLISHED" ? (
-                      <SelectItem value="PUBLISHED">Opublikowany</SelectItem>
-                    ) : null}
-                    {!isCreate ? (
-                      <SelectItem value="ARCHIVED">Zarchiwizowany</SelectItem>
-                    ) : null}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {isCreate
-                    ? "Serwer nadal tworzy rekord jako DRAFT; publikacja następuje dopiero po udanym uploadzie, przetworzeniu i backendowej walidacji."
-                    : "W tym formularzu możesz cofnąć film do szkicu albo go zarchiwizować. Publikacja pozostaje osobną akcją w szczegółach filmu, aby zachować backendowe blokady publikacji i walidację assetu."}
-                </p>
-              </div>
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Dostęp i status</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2"><Label>Tier</Label><Select value={formData.tier} onValueChange={v => setFormData({...formData, tier: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PUBLIC">Publiczny</SelectItem><SelectItem value="LOGGED_IN">Zalogowani</SelectItem><SelectItem value="PATRON">Patroni</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>Status</Label><Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="DRAFT">Szkic</SelectItem><SelectItem value="PUBLISHED">Opublikowany</SelectItem><SelectItem value="ARCHIVED">Zarchiwizowany</SelectItem></SelectContent></Select></div>
+              <div className="space-y-3 pt-2"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={formData.isMainFeatured} onChange={e => setFormData({...formData, isMainFeatured: e.target.checked})} /> Główny film na stronie</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={formData.showInSidebar} onChange={e => setFormData({...formData, showInSidebar: e.target.checked})} /> Pokaż w sidebarze</label></div>
+              <div className="space-y-2"><Label>Kolejność w sidebarze</Label><Input type="number" value={formData.sidebarOrder} onChange={e => setFormData({...formData, sidebarOrder: Number(e.target.value)})} /></div>
             </CardContent>
           </Card>
         </div>
