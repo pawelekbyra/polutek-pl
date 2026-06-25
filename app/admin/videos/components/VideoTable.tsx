@@ -14,9 +14,10 @@ interface VideoTableProps {
   onEdit: (video: AdminVideoListItem) => void;
   onDuplicate: (video: AdminVideoListItem) => void;
   onDelete: (id: string) => void;
+  deletingVideoId?: string | null;
 }
 
-export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTableProps) {
+export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVideoId }: VideoTableProps) {
   const copyLink = (slug: string) => {
       const url = `${window.location.origin}/watch/${slug}`;
       navigator.clipboard.writeText(url);
@@ -143,7 +144,7 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete }: VideoTable
                   <Button variant="ghost" size="icon" onClick={() => copyLink(vid.slug)} title="Kopiuj link"><LinkIcon className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => onDuplicate(vid)} title="Duplikuj"><Plus className="h-4 w-4" /></Button>
                   {vid.status !== 'ARCHIVED' && (
-                      <Button variant="ghost" size="icon" onClick={() => onDelete(vid.id)} className="text-destructive" title="Zarchiwizuj"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => onDelete(vid.id)} className="text-destructive" title="Zarchiwizuj" disabled={deletingVideoId === vid.id}>{deletingVideoId === vid.id ? "…" : <Trash2 className="h-4 w-4" />}</Button>
                   )}
                 </div>
               </TableCell>

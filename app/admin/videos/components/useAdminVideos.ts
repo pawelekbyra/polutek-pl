@@ -22,7 +22,8 @@ export function useAdminVideos(isAdmin: boolean) {
   const [error, setError] = useState<string | null>(null);
   const [videos, setVideos] = useState<AdminVideoListItem[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -60,7 +61,9 @@ export function useAdminVideos(isAdmin: boolean) {
       .catch((err) => logger.error("Failed to fetch Cloudflare health", err));
   }, [isAdmin]);
 
-  const fetchVideos = useCallback(async (p = page) => {
+  const fetchVideos = useCallback(async (p = page, options?: { pending?: boolean }) => {
+    const showPending = options?.pending ?? false;
+    if (showPending) setIsRefetching(true);
     try {
       let url = `/api/admin/videos?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
@@ -94,6 +97,8 @@ export function useAdminVideos(isAdmin: boolean) {
       logger.error("Failed to fetch videos", err);
       setError("Nie udało się pobrać listy filmów z powodu błędu połączenia z serwerem.");
       return { ok: false as const, kind: "network" as const };
+    } finally {
+      if (showPending) setIsRefetching(false);
     }
   }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
 
@@ -130,7 +135,7 @@ export function useAdminVideos(isAdmin: boolean) {
   }, []);
 
   return {
-    error, setError, videos, setVideos, stats, setStats, isLoading, setIsLoading,
+    error, setError, videos, setVideos, stats, setStats, isInitialLoading, setIsInitialLoading, isRefetching, setIsRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
     createSourceMode, setCreateSourceMode, existingCloudflareSource, setExistingCloudflareSource,
