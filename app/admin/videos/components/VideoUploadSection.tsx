@@ -29,7 +29,7 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
   const [bytesTotal, setBytesTotal] = useState(0);
   const [status, setStatus] = useState<"IDLE" | "PROVISIONING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "CANCELLED" | "PROCESSING_TIMEOUT">("IDLE");
   const [error, setError] = useState<string | null>(null);
-  const [asset, setAsset] = useState<any>(initialAsset);
+  const [asset, setAsset] = useState(initialAsset);
   const toast = useToast();
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
   const autoStartedRef = useRef(false);
@@ -123,10 +123,11 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
       setStatus("UPLOADING");
       onUploadReady?.();
       tusUpload.start();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Nie udało się rozpocząć uploadu.";
+      setError(message);
       setStatus("FAILED");
-      toast(err.message, "error");
+      toast(message, "error");
     }
   }, [file, normalizedThumbnailSource, onUploadReady, startPolling, toast, videoId]);
 
