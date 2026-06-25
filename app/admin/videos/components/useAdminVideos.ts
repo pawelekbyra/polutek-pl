@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { AdminVideoListItem, type AdminVideosListResponse } from "@/lib/services/admin/videos-admin.dto";
+import type { AdminVideoListItem, AdminVideosListResponse } from "@/lib/services/admin/videos-admin.dto";
 import { logger } from "@/lib/logger";
-import { CreateVideoSourceMode } from "./VideoForm";
+import { type CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA, inferThumbnailSourceMode } from "./video-utils";
 
 function readVideoLoadError(data: unknown) {
