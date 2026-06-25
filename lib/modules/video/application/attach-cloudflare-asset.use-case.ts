@@ -7,6 +7,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { buildCloudflareFirstFrameThumbnailUrl, normalizeThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 
 export interface AttachCloudflareAssetInput {
   videoId: string;
@@ -14,6 +15,7 @@ export interface AttachCloudflareAssetInput {
   providerPlaybackId?: string;
   processingState?: unknown;
   publishAfterAssetReady?: boolean;
+  thumbnailSource?: unknown;
 }
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
@@ -26,23 +28,35 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
   const video = await repository.findByIdForMainChannel(input.videoId, mainChannel.id);
   if (!video) return fail(new VideoNotFoundError(input.videoId));
 
+  const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
+  const firstFrameThumbnailUrl = thumbnailSource === "CLOUDFLARE_FIRST_FRAME"
+    ? buildCloudflareFirstFrameThumbnailUrl(providerAssetId)
+    : null;
+
   // Idempotency check: if already attached to this video, return success
   if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.providerAssetId === providerAssetId) {
-    // Still update publish intent if requested and not already set
+    const videoUpdate: Record<string, unknown> = {};
     if (input.publishAfterAssetReady && !video.publishAfterAssetReady) {
+      videoUpdate.publishAfterAssetReady = true;
+      videoUpdate.publishAfterAssetReadyRequestedAt = new Date();
+    }
+    if (firstFrameThumbnailUrl && video.thumbnailUrl !== firstFrameThumbnailUrl) {
+      videoUpdate.thumbnailUrl = firstFrameThumbnailUrl;
+    }
+
+    if (Object.keys(videoUpdate).length > 0) {
       await ctx.prisma.video.update({
         where: { id: video.id },
-        data: {
-          publishAfterAssetReady: true,
-          publishAfterAssetReadyRequestedAt: new Date(),
-        }
+        data: videoUpdate,
       });
-      await recordAuditEvent(ctx, {
-        action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
-        targetType: "Video",
-        targetId: video.id,
-        metadata: { source: "attach-cloudflare-asset-idempotent" },
-      });
+      if (input.publishAfterAssetReady && !video.publishAfterAssetReady) {
+        await recordAuditEvent(ctx, {
+          action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
+          targetType: "Video",
+          targetId: video.id,
+          metadata: { source: "attach-cloudflare-asset-idempotent" },
+        });
+      }
 
       const reloaded = await repository.findByIdForMainChannel(video.id, mainChannel.id);
       return ok(toAdminVideoDto(reloaded!));
@@ -62,17 +76,20 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
     }
 
     const pendingPublishRequested = input.publishAfterAssetReady || video.publishAfterAssetReady;
-    if (pendingPublishRequested) {
+    if (pendingPublishRequested || firstFrameThumbnailUrl) {
       await tx.video.update({
         where: { id: video.id },
         data: {
-          publishAfterAssetReady: true,
-          publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || new Date(),
-          publishAfterAssetReadyCompletedAt: null,
-          publishAfterAssetReadyError: null,
+          ...(pendingPublishRequested ? {
+            publishAfterAssetReady: true,
+            publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || new Date(),
+            publishAfterAssetReadyCompletedAt: null,
+            publishAfterAssetReadyError: null,
+          } : {}),
+          ...(firstFrameThumbnailUrl ? { thumbnailUrl: firstFrameThumbnailUrl } : {}),
         },
       });
-      if (!video.publishAfterAssetReady) {
+      if (pendingPublishRequested && !video.publishAfterAssetReady) {
         await recordAuditEvent(ctx, {
           action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
           targetType: "Video",
@@ -101,6 +118,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
         providerAssetId,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
         isPrimary: false,
+        thumbnailSource,
       },
     }, tx);
     return repository.findByIdForMainChannel(video.id, mainChannel.id);
