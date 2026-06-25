@@ -6,7 +6,7 @@ import {
   getAdminVideoList,
   createAdminVideo,
   updateAdminVideo,
-  archiveAdminVideo,
+  deleteAdminVideo,
 } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -102,7 +102,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const result = await archiveAdminVideo(id, ctx);
+    const result = await deleteAdminVideo(id, ctx);
     return fromUseCaseResult(result);
   } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);

@@ -40,6 +40,14 @@ export interface InternalVideoDTO {
   creator?: Creator;
 }
 
+export type VideoTextTrackDTO = {
+  src: string;
+  label: string;
+  language: string;
+  kind: 'subtitles' | 'captions';
+  default?: boolean;
+};
+
 export interface PublicCreatorDTO {
   id: string;
   name: string;
@@ -74,6 +82,7 @@ export interface PublicVideoDTO {
   sidebarOrder?: number;
   publishedAt?: Date | string | null;
   creator?: PublicCreatorDTO;
+  textTracks?: VideoTextTrackDTO[];
   // Ensure no raw fields are present
   videoUrl?: never;
   sourceUrl?: never;

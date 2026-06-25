@@ -5,6 +5,8 @@ import { useUser, useAuth } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoForm, type CreateVideoSourceMode } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 import { AdminLayoutShell } from "./components/AdminLayoutShell";
@@ -27,6 +29,7 @@ export default function AdminVideosPage() {
   const { isLoaded: authLoaded } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
+  const [deleteDialogVideoId, setDeleteDialogVideoId] = useState<string | null>(null);
 
   const {
     error, setError, videos, stats, isInitialLoading, setIsInitialLoading, isRefetching,
@@ -274,19 +277,20 @@ export default function AdminVideosPage() {
   }, [router, toast, setCreateUploadState, setExistingCloudflareSource, setFormError, setIsEditing]);
 
   const handleDelete = async (id: string) => {
-      if (!confirm("Zarchiwizuj film. Nie będzie widoczny publicznie, ale dane pozostaną w bazie.")) return;
+      setDeleteDialogVideoId(null);
       setDeletingVideoId(id);
       try {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
               await fetchVideos(page, { pending: true });
-              toast("Pomyślnie zarchiwizowano film.", 'success');
+              toast("Pomyślnie usunięto film oraz powiązany asset Cloudflare Stream, jeśli był podpięty.", 'success');
           } else {
               const err = await res.json();
-              toast("Błąd archiwizacji: " + readAdminApiError(err, "Nie udało się zarchiwizować filmu."), 'error');
+              toast("Błąd usuwania filmu/Cloudflare Stream: " + readAdminApiError(err, "Nie udało się usunąć filmu albo assetu Cloudflare Stream."), 'error');
           }
       } catch (err) {
           logger.error("Delete failed", err);
+          toast("Błąd połączenia podczas usuwania filmu i assetu Cloudflare Stream.", 'error');
       } finally {
           setDeletingVideoId(null);
       }
@@ -355,8 +359,31 @@ export default function AdminVideosPage() {
 
         <VideoTableWrapper
             isInitialLoading={isInitialLoading} isRefetching={isRefetching} total={total} videos={videos} page={page} totalPages={totalPages}
-            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} deletingVideoId={deletingVideoId} onPageChange={(nextPage) => fetchVideos(nextPage, { pending: true })}
+            onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={setDeleteDialogVideoId} deletingVideoId={deletingVideoId} onPageChange={(nextPage) => fetchVideos(nextPage, { pending: true })}
         />
+
+        <Dialog open={deleteDialogVideoId !== null} onOpenChange={(open) => { if (!open) setDeleteDialogVideoId(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Usunąć film?</DialogTitle>
+              <DialogDescription>
+                Usunięcie obejmuje film w bazie oraz powiązany asset Cloudflare Stream, jeśli istnieje. Jeśli Cloudflare zwróci błąd, operacja zostanie przerwana i film nie zostanie usunięty.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose render={<Button variant="outline" />}>
+                Anuluj
+              </DialogClose>
+              <Button
+                variant="destructive"
+                onClick={() => { if (deleteDialogVideoId) void handleDelete(deleteDialogVideoId); }}
+                disabled={deletingVideoId !== null}
+              >
+                {deletingVideoId ? "Usuwanie…" : "Usuń film"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       </div>
     </AdminLayoutShell>

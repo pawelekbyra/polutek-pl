@@ -11,6 +11,7 @@ export * from './application/create-admin-video.use-case';
 export * from './application/provision-cloudflare-upload.use-case';
 export * from './application/sync-cloudflare-status.use-case';
 export * from './application/archive-admin-video.use-case';
+export * from './application/delete-admin-video.use-case';
 export * from './application/reorder-admin-videos.use-case';
 export * from './application/get-hero-video.use-case';
 export * from './application/get-admin-video-diagnostics.use-case';
