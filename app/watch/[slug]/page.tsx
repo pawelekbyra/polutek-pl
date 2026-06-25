@@ -1,11 +1,9 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer";
-import PremiumWrapper from "@/app/components/PremiumWrapper";
-import VideoPlayer from "@/app/components/VideoPlayer";
 import type { PublicVideoDTO } from "@/app/types/video";
+import WatchContent from "./WatchContent";
+import { getCanonicalVideoDescription, getCanonicalVideoTitle } from "@/lib/video-title-overrides";
 
 export const dynamic = "force-dynamic";
 
@@ -99,12 +97,15 @@ export async function generateMetadata(props: WatchPageProps): Promise<Metadata>
     return { title: "Nie znaleziono filmu — Polutek.pl" };
   }
 
+  const canonicalTitle = getCanonicalVideoTitle(video);
+  const canonicalDescription = getCanonicalVideoDescription(video);
+
   return {
-    title: `${video.title} — Polutek.pl`,
-    description: video.description || "Film na Polutek.pl",
+    title: `${canonicalTitle} — Polutek.pl`,
+    description: canonicalDescription || "Film na Polutek.pl",
     openGraph: {
-      title: video.title,
-      description: video.description || undefined,
+      title: canonicalTitle,
+      description: canonicalDescription || undefined,
       images: video.thumbnailUrl ? [{ url: video.thumbnailUrl }] : [],
       type: "video.other",
     },
@@ -117,24 +118,5 @@ export default async function WatchPage(props: WatchPageProps) {
 
   if (!video) notFound();
 
-  return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
-      <Navbar />
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-neutral-950">{video.title}</h1>
-          {video.description ? (
-            <p className="max-w-3xl text-sm text-neutral-600">{video.description}</p>
-          ) : null}
-        </div>
-
-        <div className="overflow-hidden rounded-2xl bg-black shadow-2xl aspect-video">
-          <PremiumWrapper videoId={video.id} requiredTier={video.tier}>
-            <VideoPlayer video={video} />
-          </PremiumWrapper>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
+  return <WatchContent video={video} />;
 }

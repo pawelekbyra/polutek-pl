@@ -3,7 +3,7 @@
 import React from 'react';
 import { PublicVideoDTO } from '../types/video';
 import { useLanguage } from './LanguageContext';
-import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
+import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 
 interface VideoStoryProps {
   video: PublicVideoDTO;
@@ -12,6 +12,7 @@ interface VideoStoryProps {
 const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
   const { language } = useLanguage();
   const displayTitle = getVideoDisplayTitle(video, language);
+  const displayDescription = getVideoDisplayDescription(video, language);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -20,9 +21,9 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
           {displayTitle}
         </h2>
         
-        {(language === 'en' ? (video.descriptionEn || video.description) : video.description) ? (
+        {displayDescription ? (
           <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
-            {language === 'en' ? (video.descriptionEn || video.description) : video.description}
+            {displayDescription}
           </div>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 italic">

@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
+import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -94,8 +95,7 @@ export function SidebarPlaylist({
   }, [selectedVideoId]);
 
   const renderVideoItem = (video: any) => {
-    const displayTitle =
-      language === "en" && video.titleEn ? video.titleEn : video.title;
+    const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
     const lockState = !hasAccess
@@ -295,7 +295,7 @@ export function SidebarPlaylist({
       {(publicSection || loggedInSection) && (
         <div className="pt-2 pb-6">
           <VideoPlaylist
-            videoTitle={layout.sections[0]?.items[0]?.title || "Materiały"}
+            videoTitle={getVideoDisplayTitle(layout.sections[0]?.items[0] || {}, language) || "Materiały"}
             creatorId={layout.sections[0]?.items[0]?.creatorId || ""}
             isPatron={viewerIsPatron}
           />

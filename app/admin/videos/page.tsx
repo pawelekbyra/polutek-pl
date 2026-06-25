@@ -18,7 +18,7 @@ import { AdminVideoEditView } from "./components/AdminVideoEditView";
 import { AdminVideoHeader } from "./components/AdminVideoHeader";
 import { AdminVideoStats } from "./components/AdminVideoStats";
 import { AdminVideoFiltersView } from "./components/AdminVideoFiltersView";
-import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA } from "./components/video-utils";
+import { buildAdminVideoUpdatePayload, slugify, normalizeCloudflareSource, INITIAL_FORM_DATA } from "./components/video-utils";
 import { useAdminVideos } from "./components/useAdminVideos";
 
 export default function AdminVideosPage() {
@@ -167,16 +167,7 @@ export default function AdminVideosPage() {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData.id ? {
-          ...formData,
-          title: formData.title?.trim(),
-          slug: formData.slug?.trim(),
-          description: formData.description?.trim() || null,
-          titleEn: formData.titleEn?.trim() || null,
-          descriptionEn: formData.descriptionEn?.trim() || null,
-          videoUrl: formData.videoUrl?.trim() || null,
-          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
-        } : {
+        body: JSON.stringify(formData.id ? buildAdminVideoUpdatePayload(formData) : {
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
           description: formData.description?.trim() || null,

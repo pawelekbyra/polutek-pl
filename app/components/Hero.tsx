@@ -13,7 +13,7 @@ import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions'
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
-import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
+import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
@@ -36,7 +36,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isCupGameOpen, setIsCupGameOpen] = useState(false);
   const [selectedCup, setSelectedCup] = useState<number | null>(null);
   const displayTitle = getVideoDisplayTitle(video, language);
-  const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
+  const displayDescription = getVideoDisplayDescription(video, language) || t.noDescription;
 
   useEffect(() => {
     setMounted(true);

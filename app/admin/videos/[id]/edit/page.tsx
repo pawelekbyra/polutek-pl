@@ -8,7 +8,7 @@ import { AdminLayoutShell } from "../../components/AdminLayoutShell";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm } from "../../components/VideoForm";
 import { readAdminApiError } from "../../components/api-error";
-import { INITIAL_FORM_DATA, slugify } from "../../components/video-utils";
+import { INITIAL_FORM_DATA, buildAdminVideoUpdatePayload, slugify } from "../../components/video-utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -94,17 +94,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          title: formData.title.trim(),
-          slug: formData.slug.trim(),
-          description: formData.description.trim() || null,
-          titleEn: formData.titleEn.trim() || null,
-          descriptionEn: formData.descriptionEn.trim() || null,
-          videoUrl: formData.videoUrl.trim() || null,
-          thumbnailUrl: formData.thumbnailUrl.trim() || "",
-          duration: formData.duration.trim() || null,
-        }),
+        body: JSON.stringify(buildAdminVideoUpdatePayload(formData, { includeDuration: true })),
       });
       const data = await res.json().catch(() => null);
 

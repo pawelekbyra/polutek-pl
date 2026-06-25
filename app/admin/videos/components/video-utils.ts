@@ -39,3 +39,46 @@ export const INITIAL_FORM_DATA = {
   showInSidebar: false,
   sidebarOrder: 0
 };
+
+
+type AdminVideoFormData = typeof INITIAL_FORM_DATA;
+
+type AdminVideoUpdatePayload = Omit<AdminVideoFormData, 'likesCount' | 'dislikesCount' | 'views' | 'duration' | 'titleEn' | 'description' | 'descriptionEn' | 'videoUrl' | 'thumbnailUrl'> & {
+  titleEn: string | null;
+  description: string | null;
+  descriptionEn: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string;
+  duration?: string | null;
+};
+
+type AdminVideoUpdateOptions = {
+  includeDuration?: boolean;
+};
+
+export function buildAdminVideoUpdatePayload(
+  formData: AdminVideoFormData,
+  options: AdminVideoUpdateOptions = {},
+): AdminVideoUpdatePayload {
+  const payload: AdminVideoUpdatePayload = {
+    id: formData.id,
+    title: formData.title?.trim(),
+    titleEn: formData.titleEn?.trim() || null,
+    slug: formData.slug?.trim(),
+    description: formData.description?.trim() || null,
+    descriptionEn: formData.descriptionEn?.trim() || null,
+    videoUrl: formData.videoUrl?.trim() || null,
+    thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+    tier: formData.tier,
+    status: formData.status,
+    isMainFeatured: formData.isMainFeatured,
+    showInSidebar: formData.showInSidebar,
+    sidebarOrder: formData.sidebarOrder,
+  };
+
+  if (options.includeDuration) {
+    payload.duration = formData.duration.trim() || null;
+  }
+
+  return payload;
+}

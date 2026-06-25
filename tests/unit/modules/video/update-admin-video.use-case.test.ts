@@ -54,7 +54,7 @@ describe('updateAdminVideo use-case', () => {
     }
   });
 
-  it('succeeds and records audit on valid update', async () => {
+  it('succeeds, records audit, and only writes explicitly allowed metadata fields', async () => {
     const existing = { id: 'v1', creatorId: 'c1', title: 'Old', tier: 'PUBLIC', status: 'PUBLISHED' };
     mockPrisma.video.findUnique.mockResolvedValue(existing);
     mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
@@ -63,7 +63,14 @@ describe('updateAdminVideo use-case', () => {
     const result = await updateAdminVideo({ id: 'v1', title: 'New' }, ctx);
 
     expect(result.ok).toBe(true);
-    expect(mockPrisma.video.updateMany).toHaveBeenCalled();
+    expect(mockPrisma.video.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.not.objectContaining({
+        views: expect.anything(),
+        likesCount: expect.anything(),
+        dislikesCount: expect.anything(),
+        duration: expect.anything(),
+      }),
+    }));
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ action: 'VIDEO_UPDATED' })
     }));
