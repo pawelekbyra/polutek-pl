@@ -68,6 +68,21 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://upload.cloudflarestream.com');
   });
 
+  it('allows custom HLS playback dependencies in CSP', () => {
+    const csp = generateCSP();
+
+    expect(csp).toContain('script-src');
+    expect(csp).toContain('script-src-elem');
+    expect(csp).toContain('https://cdn.jsdelivr.net');
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain('https://videodelivery.net');
+    expect(csp).toContain('https://*.videodelivery.net');
+    expect(csp).toContain('https://*.cloudflarestream.com');
+    expect(csp).toContain('media-src');
+    expect(csp).toContain("media-src 'self' blob:");
+    expect(csp).toContain('https://videodelivery.net');
+  });
+
   it('allows playback provider frames in frame-src', () => {
     const csp = generateCSP();
 
