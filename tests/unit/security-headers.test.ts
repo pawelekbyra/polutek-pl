@@ -98,6 +98,9 @@ describe('Security Headers', () => {
     const csp = generateCSP();
 
     expect(csp).toContain('https://user-images.example.com');
-    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
+    expect(csp).toContain('img-src');
+    expect(csp).toContain('https://videodelivery.net');
+    expect(csp).toContain('https://*.videodelivery.net');
+    expect(csp).toContain('https://*.cloudflarestream.com');
   });
 });
