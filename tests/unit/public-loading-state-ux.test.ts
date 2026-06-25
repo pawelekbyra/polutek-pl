@@ -19,6 +19,13 @@ describe("public loading/access state UX contracts", () => {
       /if \(!isMounted \|\| isLoading\) \{\s*return null;\s*\}/,
     );
     expect(player).not.toContain("<PlayerLoadingState");
+
+    const skeletons = read("components/skeletons/index.tsx");
+    expect(skeletons).toContain("export function HomePageSkeleton()");
+    expect(skeletons).toContain("<PlayerSkeleton />");
+    expect(skeletons).not.toContain(
+      'Skeleton className="aspect-video w-full rounded-xl shadow-sm border border-neutral-400"',
+    );
   });
 
   it("preserves the #1124 player controls and text-track contract", () => {
@@ -31,14 +38,14 @@ describe("public loading/access state UX contracts", () => {
     const videoTypes = read("app/types/video.ts");
 
     expect(player).toContain("type VideoTextTrackDTO");
-    expect(player).toContain("normalizeTextTracks,");
+    expect(player).toContain("function normalizeTextTracks");
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
-    expect(videoTypes).toContain("export function isTrackCaptionKind");
-    expect(videoTypes).toContain("export function normalizeTextTracks");
-    expect(player).toContain("playerConfig as { textTracks?: unknown }");
-    expect(player).toContain("video as VideoType & { textTracks?: unknown }");
+    expect(player).toContain("isTrackCaptionKind,");
+    expect(player).toContain("function normalizeTextTracks");
+    expect(player).toContain("playerConfig?.textTracks || video.textTracks");
+    expect(player).toContain("const hasTextTracks = textTracks.length > 0;");
     expect(player).toContain("<Captions className=");
-    expect(player).toContain("DoodleSettingsPlaceholder");
+    expect(player).toContain("DoodleSettingsIcon");
   });
 
   it("renders channel grid thumbnails from safe summary data without mounting PremiumWrapper or VideoPlayer", () => {

@@ -39,7 +39,7 @@ export function HomePageSkeleton() {
       <div className="max-w-6xl mx-auto w-full px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8 space-y-6">
-            <Skeleton className="aspect-video w-full rounded-xl shadow-sm border border-neutral-400" />
+            <PlayerSkeleton />
             <div className="space-y-4 pt-3">
               <Skeleton className="h-8 w-3/4" />
               <div className="flex items-center gap-4">
