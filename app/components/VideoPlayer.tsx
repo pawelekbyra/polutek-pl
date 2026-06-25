@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerLoadingState } from './PlayerLoadingState';
-import { resolveCloudflarePlaybackSource } from './cloudflarePlaybackSource';
+import { resolvePlaybackSource } from './playback-source';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -256,20 +256,19 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    const normalizedKind = String(videoSourceKind || '').toLowerCase();
-    const cloudflarePlaybackSource = normalizedKind === 'cloudflare_stream'
-        ? resolveCloudflarePlaybackSource({ playbackUrl: videoUrl, embedUrl: videoEmbedUrl })
-        : null;
-    const isCloudflareIframeFallback = cloudflarePlaybackSource?.mode === 'iframe';
-    const isCloudflareHlsSource = cloudflarePlaybackSource?.mode === 'hls';
-    const isEmbedProvider = normalizedKind === 'youtube' || normalizedKind === 'vimeo' || isCloudflareIframeFallback;
-    const src = cloudflarePlaybackSource?.src || (isEmbedProvider ? (videoEmbedUrl || videoUrl) : videoUrl);
+    const resolvedSource = resolvePlaybackSource({
+        kind: videoSourceKind,
+        playbackUrl: videoUrl,
+        embedUrl: videoEmbedUrl,
+    });
 
-    if (!src) {
+    if (resolvedSource.mode === 'unavailable') {
+        const errorCode = resolvedSource.reason.startsWith('missing') ? 'NO_PLAYBACK_URL' : 'UNSUPPORTED_SOURCE';
+
         return (
             <PlayerStateFrame>
                 <PlayerErrorOverlay
-                    errorCode="NO_PLAYBACK_URL"
+                    errorCode={errorCode}
                     onRetry={() => refreshPlaybackPlan()}
                     isAdmin={isAdmin}
                 />
@@ -277,21 +276,9 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         );
     }
 
-    const isSupported = isEmbedProvider || isCloudflareHlsSource || ['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob'].includes(normalizedKind);
+    const src = resolvedSource.src;
 
-    if (!isSupported) {
-        return (
-            <PlayerStateFrame>
-                <PlayerErrorOverlay
-                    errorCode="UNSUPPORTED_SOURCE"
-                    onRetry={() => refreshPlaybackPlan()}
-                    isAdmin={isAdmin}
-                />
-            </PlayerStateFrame>
-        );
-    }
-
-    if (isCloudflareIframeFallback) {
+    if (resolvedSource.mode === 'cloudflare-iframe-fallback') {
         return (
             <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
                 <PolutekWatermark />
