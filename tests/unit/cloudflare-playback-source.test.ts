@@ -11,11 +11,11 @@ describe('resolveCloudflarePlaybackSource', () => {
         expect(result).toEqual({
             mode: 'iframe',
             src: 'https://iframe.videodelivery.net/signed-token',
-            reason: expect.stringContaining('Cloudflare HLS manifest is not present'),
+            reason: expect.stringContaining('Cloudflare playback URL is not a supported manifest'),
         });
     });
 
-    it('selects HLS/custom-player mode only for a valid HLS manifest source', () => {
+    it('selects manifest/custom-player mode only for a valid Cloudflare manifest source', () => {
         const result = resolveCloudflarePlaybackSource({
             playbackUrl: 'https://videodelivery.net/playback-id/manifest/video.m3u8',
             embedUrl: 'https://iframe.videodelivery.net/signed-token',

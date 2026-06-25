@@ -1,4 +1,6 @@
-export type CloudflarePlaybackMode = 'iframe' | 'hls';
+import { resolvePlaybackSource } from './playback-source';
+
+export type CloudflarePlaybackMode = 'iframe' | 'hls' | 'dash';
 
 export type CloudflarePlaybackSource = {
     mode: CloudflarePlaybackMode;
@@ -11,55 +13,27 @@ type CloudflarePlaybackInput = {
     embedUrl?: string | null;
 };
 
-function isHttpUrl(value: string): boolean {
-    try {
-        const url = new URL(value);
-        return url.protocol === 'https:' || url.protocol === 'http:';
-    } catch {
-        return false;
+export function resolveCloudflarePlaybackSource(input: CloudflarePlaybackInput): CloudflarePlaybackSource | null {
+    const resolved = resolvePlaybackSource({
+        kind: 'cloudflare_stream',
+        playbackUrl: input.playbackUrl,
+        embedUrl: input.embedUrl,
+    });
+
+    if (resolved.mode === 'custom-player') {
+        const mode = resolved.src.toLowerCase().includes('.mpd') ? 'dash' : 'hls';
+        return { mode, src: resolved.src };
     }
-}
 
-function isHlsManifestUrl(value: string | null | undefined): value is string {
-    if (!value || !isHttpUrl(value)) return false;
-
-    try {
-        const url = new URL(value);
-        return url.pathname.toLowerCase().endsWith('.m3u8');
-    } catch {
-        return false;
-    }
-}
-
-function firstPresentUrl(...values: Array<string | null | undefined>): string | null {
-    for (const value of values) {
-        const trimmed = value?.trim();
-        if (trimmed) return trimmed;
+    if (resolved.mode === 'cloudflare-iframe-fallback') {
+        return {
+            mode: 'iframe',
+            src: resolved.src,
+            reason: resolved.reason === 'missing-playback-url'
+                ? 'Cloudflare playback URL is not present; keep iframe fallback.'
+                : 'Cloudflare playback URL is not a supported manifest; keep iframe fallback.',
+        };
     }
 
     return null;
-}
-
-export function resolveCloudflarePlaybackSource(input: CloudflarePlaybackInput): CloudflarePlaybackSource | null {
-    const playbackUrl = input.playbackUrl?.trim() || null;
-    const embedUrl = input.embedUrl?.trim() || null;
-
-    if (isHlsManifestUrl(playbackUrl)) {
-        return { mode: 'hls', src: playbackUrl };
-    }
-
-    if (isHlsManifestUrl(embedUrl)) {
-        return { mode: 'hls', src: embedUrl };
-    }
-
-    // TODO(#1103): when backend playback plans expose a Cloudflare HLS manifest or another
-    // owner-approved safe derivation input, resolve that here instead of using iframe fallback.
-    const fallbackSrc = firstPresentUrl(embedUrl, playbackUrl);
-    if (!fallbackSrc) return null;
-
-    return {
-        mode: 'iframe',
-        src: fallbackSrc,
-        reason: 'Cloudflare HLS manifest is not present; keep existing iframe fallback until backend exposes a safe manifest source.',
-    };
 }
