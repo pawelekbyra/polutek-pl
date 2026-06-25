@@ -21,9 +21,6 @@ export interface CreateVideoInput {
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
-  likesCount?: number;
-  dislikesCount?: number;
-  views?: number;
   publishAfterAssetReady?: boolean;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
@@ -36,9 +33,6 @@ export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
-  likesCount?: number;
-  dislikesCount?: number;
-  views?: number;
 }
 
 export interface UpdateVideoInput extends AdminUpdateVideoInput {
@@ -266,9 +260,6 @@ export class VideoRepository {
     if (data.isMainFeatured !== undefined) updateData.isMainFeatured = data.isMainFeatured;
     if (data.showInSidebar !== undefined) updateData.showInSidebar = data.showInSidebar;
     if (data.sidebarOrder !== undefined) updateData.sidebarOrder = data.sidebarOrder;
-    if (data.likesCount !== undefined) updateData.likesCount = data.likesCount;
-    if (data.dislikesCount !== undefined) updateData.dislikesCount = data.dislikesCount;
-    if (data.views !== undefined) updateData.views = data.views;
     if (data.publishAfterAssetReady !== undefined) updateData.publishAfterAssetReady = data.publishAfterAssetReady;
     if (data.publishAfterAssetReadyRequestedAt !== undefined) updateData.publishAfterAssetReadyRequestedAt = data.publishAfterAssetReadyRequestedAt;
     if (data.publishAfterAssetReadyCompletedAt !== undefined) updateData.publishAfterAssetReadyCompletedAt = data.publishAfterAssetReadyCompletedAt;
@@ -329,141 +320,51 @@ export class VideoRepository {
 
   async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
     const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { asset: true } });
-    if (!video) throw new VideoNotOnMainChannelError(id);
-
+    if (!video) throw new VideoNotFoundError(id);
     const blockers = VideoPolicy.getHeroBlockers(video);
     if (blockers.length > 0) throw new VideoInvalidHeroError(`${blockers[0].code}: ${blockers[0].message}`);
-
-    await tx.video.updateMany({
-      where: { creatorId: mainChannelId, isMainFeatured: true },
-      data: { isMainFeatured: false },
-    });
-
-    const result = await tx.video.updateMany({
-      where: { id, creatorId: mainChannelId },
-      data: { isMainFeatured: true },
-    });
-
-    if (result.count !== 1) throw new VideoNotOnMainChannelError(id);
+    await this.clearHero(mainChannelId, id, tx);
+    await tx.video.update({ where: { id }, data: { isMainFeatured: true } });
   }
 
-  async reorder(
-    updates: Array<{ id: string; sidebarOrder: number; showInSidebar: boolean }>,
-    mainChannelId: string,
-    tx: WriteTx
-  ): Promise<void> {
-    for (const update of updates) {
-      const video = await tx.video.findUnique({
-        where: { id: update.id },
-        select: { creatorId: true, status: true },
-      });
+  async setSidebar(id: string, mainChannelId: string, showInSidebar: boolean, tx: WriteTx): Promise<void> {
+    const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId } });
+    if (!video) throw new VideoNotFoundError(id);
+    const blockers = VideoPolicy.getSidebarBlockers(video);
+    if (showInSidebar && blockers.length > 0) throw new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`);
+    await tx.video.update({ where: { id }, data: { showInSidebar } });
+  }
 
-      if (!video || video.creatorId !== mainChannelId) {
-        throw new VideoNotOnMainChannelError(update.id);
-      }
-      if (update.showInSidebar) {
-        const blockers = VideoPolicy.getSidebarBlockers(video);
-        if (blockers.length > 0) throw new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`);
-      }
-    }
-
-    for (const update of updates) {
-      await tx.video.updateMany({
-        where: { id: update.id, creatorId: mainChannelId },
-        data: {
-          sidebarOrder: update.sidebarOrder,
-          showInSidebar: update.showInSidebar,
-        },
-      });
-    }
+  async updateVideoAsset(videoId: string, data: {
+    provider: StorageProvider;
+    providerAssetId?: string | null;
+    providerPlaybackId?: string | null;
+    storageKey?: string | null;
+    mimeType?: string | null;
+    sizeBytes?: number | null;
+    processingState: VideoAssetProcessingState;
+    isPrimary?: boolean;
+    providerSyncedAt?: Date | null;
+    processingStartedAt?: Date | null;
+    processingEndedAt?: Date | null;
+    failureReason?: string | null;
+  }, tx: WriteTx): Promise<VideoAsset> {
+    return await tx.videoAsset.upsert({
+      where: { videoId },
+      update: data,
+      create: { videoId, ...data }
+    });
   }
 
   async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {
-    return await this.db.videoAsset.findFirst({
-      where: { provider, providerAssetId },
-    });
+    return await this.db.videoAsset.findFirst({ where: { provider, providerAssetId } });
   }
-
-  async updateAsset(assetId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.update({
-      where: { id: assetId },
-      data: buildVideoAssetUpdateData(input),
-    });
-  }
-
-  async updateVideoAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    const existing = await tx.videoAsset.findUnique({ where: { videoId } });
-
-    if (existing) {
-      return await tx.videoAsset.update({
-        where: { videoId },
-        data: buildVideoAssetUpdateData(input),
-      });
-    }
-
-    return await tx.videoAsset.create({
-      data: {
-        videoId,
-        provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        objectKey: input.objectKey || input.providerAssetId || videoId,
-        bucket: input.bucket,
-        providerAssetId: input.providerAssetId,
-        providerPlaybackId: input.providerPlaybackId,
-        processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: input.isPrimary ?? true,
-        failureReason: input.failureReason,
-        providerSyncedAt: input.providerSyncedAt,
-        processingStartedAt: input.processingStartedAt,
-        processingEndedAt: input.processingEndedAt,
-        mimeType: input.mimeType,
-        sizeBytes: input.sizeBytes,
-      },
-    });
-  }
-
-  async upsertAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    return await this.updateVideoAsset(videoId, input, tx);
-  }
-}
-
-export type VideoAssetUpsertInput = {
-  provider?: StorageProvider;
-  objectKey?: string;
-  bucket?: string | null;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
-  processingState?: VideoAssetProcessingState;
-  isPrimary?: boolean;
-  failureReason?: string | null;
-  providerSyncedAt?: Date | null;
-  processingStartedAt?: Date | null;
-  processingEndedAt?: Date | null;
-  mimeType?: string | null;
-  sizeBytes?: number | null;
-};
-
-function buildVideoAssetUpdateData(input: VideoAssetUpsertInput): Prisma.VideoAssetUpdateInput {
-  return {
-    provider: input.provider,
-    objectKey: input.objectKey,
-    bucket: input.bucket,
-    providerAssetId: input.providerAssetId,
-    providerPlaybackId: input.providerPlaybackId,
-    processingState: input.processingState,
-    isPrimary: input.isPrimary,
-    failureReason: input.failureReason,
-    providerSyncedAt: input.providerSyncedAt,
-    processingStartedAt: input.processingStartedAt,
-    processingEndedAt: input.processingEndedAt,
-    mimeType: input.mimeType,
-    sizeBytes: input.sizeBytes,
-  };
 }
 
 function isVideoStatus(value: string): value is VideoStatus {
-  return Object.values(VideoStatus).includes(value as VideoStatus);
+  return (Object.values(VideoStatus) as string[]).includes(value);
 }
 
 function isAccessTier(value: string): value is AccessTier {
-  return Object.values(AccessTier).includes(value as AccessTier);
+  return (Object.values(AccessTier) as string[]).includes(value);
 }
