@@ -8,7 +8,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type CreateVideoSourceMode } from "./components/VideoForm";
-import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import type { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 import { AdminLayoutShell } from "./components/AdminLayoutShell";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
 import { readAdminApiError } from "./components/api-error";
