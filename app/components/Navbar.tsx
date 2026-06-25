@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  SignInButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, LogIn, ShieldCheck, X } from "./icons";
@@ -30,7 +26,7 @@ const Navbar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchValue.trim()) {
-      router.push(`/?q=${encodeURIComponent(searchValue.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
       setIsMobileSearchOpen(false);
     } else {
       router.push("/");

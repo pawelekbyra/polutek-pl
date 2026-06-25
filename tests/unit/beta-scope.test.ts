@@ -80,6 +80,7 @@ const allowedAppRoutes = [
   "app/page.tsx",
   "app/polityka-prywatnosci/page.tsx",
   "app/regulamin/page.tsx",
+  "app/search/page.tsx",
   "app/unsubscribe/page.tsx",
   "app/watch/[slug]/page.tsx",
 ].sort();
