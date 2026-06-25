@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
+import { WriteTx } from "@/lib/modules/shared/db";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
@@ -20,6 +21,12 @@ export interface AttachCloudflareAssetInput {
 
 type AttachCloudflareAssetFailure = VideoNotFoundError | VideoNotOnMainChannelError | AppError;
 
+type VideoUpdatePatch = {
+  publishAfterAssetReady?: boolean;
+  publishAfterAssetReadyRequestedAt?: Date;
+  thumbnailUrl?: string;
+};
+
 export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, ctx: AppContext): Promise<UseCaseResult<AdminVideoDto, AttachCloudflareAssetFailure>> {
   const providerAssetId = input.providerAssetId?.trim();
   if (!providerAssetId) return fail(new AppError("Cloudflare provider asset ID is required.", 400, "INVALID_PROVIDER_ASSET_ID"));
@@ -35,7 +42,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
 
   // Idempotency check: if already attached to this video, return success
   if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.providerAssetId === providerAssetId) {
-    const videoUpdate: Record<string, unknown> = {};
+    const videoUpdate: VideoUpdatePatch = {};
     if (input.publishAfterAssetReady && !video.publishAfterAssetReady) {
       videoUpdate.publishAfterAssetReady = true;
       videoUpdate.publishAfterAssetReadyRequestedAt = new Date();
@@ -64,7 +71,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
     return ok(toAdminVideoDto(video));
   }
 
-  const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updatedVideo = await ctx.db.writeTransaction(async (tx: WriteTx) => {
     if (video.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && video.asset.isPrimary && video.asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
       throw new AppError("Video already has a ready primary asset. Replacement is not allowed.", 400, "VIDEO_HAS_READY_ASSET");
     }
