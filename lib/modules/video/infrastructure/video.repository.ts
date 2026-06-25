@@ -321,27 +321,143 @@ export class VideoRepository {
       where: {
         creatorId: mainChannelId,
         isMainFeatured: true,
-        id: { not: exceptVideoId }
+        id: { not: exceptVideoId },
       },
-      data: { isMainFeatured: false }
+      data: { isMainFeatured: false },
     });
+  }
+
+  async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
+    const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { asset: true } });
+    if (!video) throw new VideoNotOnMainChannelError(id);
+
+    const blockers = VideoPolicy.getHeroBlockers(video);
+    if (blockers.length > 0) throw new VideoInvalidHeroError(`${blockers[0].code}: ${blockers[0].message}`);
+
+    await tx.video.updateMany({
+      where: { creatorId: mainChannelId, isMainFeatured: true },
+      data: { isMainFeatured: false },
+    });
+
+    const result = await tx.video.updateMany({
+      where: { id, creatorId: mainChannelId },
+      data: { isMainFeatured: true },
+    });
+
+    if (result.count !== 1) throw new VideoNotOnMainChannelError(id);
+  }
+
+  async reorder(
+    updates: Array<{ id: string; sidebarOrder: number; showInSidebar: boolean }>,
+    mainChannelId: string,
+    tx: WriteTx
+  ): Promise<void> {
+    for (const update of updates) {
+      const video = await tx.video.findUnique({
+        where: { id: update.id },
+        select: { creatorId: true, status: true },
+      });
+
+      if (!video || video.creatorId !== mainChannelId) {
+        throw new VideoNotOnMainChannelError(update.id);
+      }
+      if (update.showInSidebar) {
+        const blockers = VideoPolicy.getSidebarBlockers(video);
+        if (blockers.length > 0) throw new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`);
+      }
+    }
+
+    for (const update of updates) {
+      await tx.video.updateMany({
+        where: { id: update.id, creatorId: mainChannelId },
+        data: {
+          sidebarOrder: update.sidebarOrder,
+          showInSidebar: update.showInSidebar,
+        },
+      });
+    }
   }
 
   async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {
-    return await this.db.videoAsset.findFirst({ where: { provider, providerAssetId } });
-  }
-
-  async updateVideoAsset(videoId: string, data: Prisma.VideoAssetUncheckedCreateInput | Prisma.VideoAssetUncheckedUpdateInput, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.upsert({
-      where: { videoId },
-      create: { ...data, videoId } as Prisma.VideoAssetUncheckedCreateInput,
-      update: data as Prisma.VideoAssetUncheckedUpdateInput,
+    return await this.db.videoAsset.findFirst({
+      where: { provider, providerAssetId },
     });
   }
 
-  async updateAsset(assetId: string, data: Prisma.VideoAssetUncheckedUpdateInput, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.update({ where: { id: assetId }, data });
+  async updateAsset(assetId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
+    return await tx.videoAsset.update({
+      where: { id: assetId },
+      data: buildVideoAssetUpdateData(input),
+    });
   }
+
+  async updateVideoAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
+    const existing = await tx.videoAsset.findUnique({ where: { videoId } });
+
+    if (existing) {
+      return await tx.videoAsset.update({
+        where: { videoId },
+        data: buildVideoAssetUpdateData(input),
+      });
+    }
+
+    return await tx.videoAsset.create({
+      data: {
+        videoId,
+        provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        objectKey: input.objectKey || input.providerAssetId || videoId,
+        bucket: input.bucket,
+        providerAssetId: input.providerAssetId,
+        providerPlaybackId: input.providerPlaybackId,
+        processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
+        isPrimary: input.isPrimary ?? true,
+        failureReason: input.failureReason,
+        providerSyncedAt: input.providerSyncedAt,
+        processingStartedAt: input.processingStartedAt,
+        processingEndedAt: input.processingEndedAt,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+      },
+    });
+  }
+
+  async upsertAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
+    return await this.updateVideoAsset(videoId, input, tx);
+  }
+}
+
+export type VideoAssetUpsertInput = {
+  provider?: StorageProvider;
+  objectKey?: string;
+  bucket?: string | null;
+  providerAssetId?: string | null;
+  providerPlaybackId?: string | null;
+  processingState?: VideoAssetProcessingState;
+  isPrimary?: boolean;
+  failureReason?: string | null;
+  providerSyncedAt?: Date | null;
+  processingStartedAt?: Date | null;
+  processingEndedAt?: Date | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+};
+
+function buildVideoAssetUpdateData(input: VideoAssetUpsertInput): Prisma.VideoAssetUpdateInput {
+  return {
+    provider: input.provider,
+    objectKey: input.objectKey,
+    bucket: input.bucket,
+    providerAssetId: input.providerAssetId,
+    providerPlaybackId: input.providerPlaybackId,
+    processingState: input.processingState,
+    isPrimary: input.isPrimary,
+    failureReason: input.failureReason,
+    providerSyncedAt: input.providerSyncedAt,
+    processingStartedAt: input.processingStartedAt,
+    processingEndedAt: input.processingEndedAt,
+    mimeType: input.mimeType,
+    sizeBytes: input.sizeBytes,
+  };
 }
 
 function isVideoStatus(value: string): value is VideoStatus {
