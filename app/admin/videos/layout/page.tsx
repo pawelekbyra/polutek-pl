@@ -6,7 +6,7 @@ import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, GripVertical, Star, Layout, Eye, EyeOff, Save, RefreshCcw } from "@/app/components/icons";
+import { ArrowLeft, ArrowUp, ArrowDown, Star, Layout, Eye, EyeOff, Save, RefreshCcw } from "@/app/components/icons";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useToast } from "@/app/hooks/useToast";
@@ -136,8 +136,28 @@ export default function ChannelLayoutPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItem(index, 'up')} disabled={index === 0}><GripVertical className="h-4 w-4 rotate-180" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItem(index, 'down')} disabled={index === videos.length - 1}><GripVertical className="h-4 w-4" /></Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => moveItem(index, 'up')}
+                                    disabled={index === 0}
+                                    title="Przesuń film wyżej"
+                                    aria-label={`Przesuń ${video.title} wyżej`}
+                                >
+                                    <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => moveItem(index, 'down')}
+                                    disabled={index === videos.length - 1}
+                                    title="Przesuń film niżej"
+                                    aria-label={`Przesuń ${video.title} niżej`}
+                                >
+                                    <ArrowDown className="h-4 w-4" />
+                                </Button>
                             </div>
 
                             <div className="relative w-20 h-11 rounded overflow-hidden bg-muted border shrink-0">
