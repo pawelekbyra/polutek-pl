@@ -49,6 +49,7 @@ export function generateCSP() {
     '*.clerk.com',
     'images.unsplash.com',
     'www.dicebear.com',
+    ...cloudflareStreamPlaybackHosts,
     ...parseMediaHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
     ...parseMediaHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
