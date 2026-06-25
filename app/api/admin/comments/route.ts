@@ -16,12 +16,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q") || undefined;
     const status = searchParams.get("status") as CommentStatus | undefined;
+    const videoId = searchParams.get("videoId") || undefined;
     const limit = parseInt(searchParams.get("limit") || "50", 10);
 
     const ctx = createAppContext({
       actor: { type: "admin", userId: adminUserId! },
     });
-    const result = await listAdminComments({ q, status, limit }, ctx);
+    const result = await listAdminComments({ q, status, videoId, limit }, ctx);
 
     if (!result.ok) {
       return NextResponse.json(

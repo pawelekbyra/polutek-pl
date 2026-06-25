@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,6 @@ import { ArrowLeft, MessageSquare, EyeOff, Trash2, RotateCcw, Search } from "@/a
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
 import { CommentDto } from "@/lib/services/comments/comment.dto";
-import { useCallback } from "react";
-import { AdminTableSkeleton } from "@/components/skeletons/admin";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const commentActionLabels = {
@@ -25,13 +23,37 @@ const commentActionLabels = {
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const initialParams = useMemo(() => {
+    if (typeof window === "undefined") return { q: "", videoId: "" };
+
+    const params = new URLSearchParams(window.location.search);
+    return {
+      q: params.get("q") || "",
+      videoId: params.get("videoId") || "",
+    };
+  }, []);
+  const [search, setSearch] = useState(initialParams.q);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialParams.q);
+  const videoId = initialParams.videoId;
   const toast = useToast();
 
-  const fetchComments = useCallback(async () => {
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  const fetchComments = useCallback(async (searchOverride?: string) => {
     setIsLoading(true);
+    const query = searchOverride ?? debouncedSearch;
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (videoId) params.set("videoId", videoId);
+
     try {
-      const res = await fetch(`/api/admin/comments?q=${encodeURIComponent(search)}`);
+      const res = await fetch(`/api/admin/comments?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments);
@@ -41,11 +63,13 @@ export default function AdminCommentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search]);
+  }, [debouncedSearch, videoId]);
 
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  const refreshComments = () => fetchComments(search);
 
   const handleAction = async (commentId: string, action: 'hide' | 'restore' | 'delete') => {
     try {
@@ -84,16 +108,21 @@ export default function AdminCommentsPage() {
                 className="w-64 bg-white"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchComments()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(search);
+                    refreshComments();
+                  }
+                }}
              />
-             <Button onClick={fetchComments} variant="secondary"><Search size={16} /></Button>
+             <Button onClick={refreshComments} variant="secondary"><Search size={16} /></Button>
           </div>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Wszystkie Komentarze</CardTitle>
-            <CardDescription>Zarządzaj dyskusjami w całej aplikacji.</CardDescription>
+            <CardDescription>{videoId ? "Zarządzaj komentarzami pod wybranym filmem." : "Zarządzaj dyskusjami w całej aplikacji."}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>

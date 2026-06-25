@@ -8,6 +8,7 @@ import { CommentStatus } from "@prisma/client";
 export interface ListAdminCommentsInput {
   q?: string;
   status?: CommentStatus;
+  videoId?: string;
   limit: number;
 }
 
@@ -15,7 +16,7 @@ export async function listAdminComments(
   input: ListAdminCommentsInput,
   ctx: AppContext
 ): Promise<UseCaseResult<CommentDto[], CommentError>> {
-  const { q, status, limit } = input;
+  const { q, status, videoId, limit } = input;
   const { actor, prisma } = ctx;
 
   if (actor.type !== 'admin') {
@@ -25,7 +26,7 @@ export async function listAdminComments(
   const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
-  const comments = await repo.findAdminComments({ q, status, limit });
+  const comments = await repo.findAdminComments({ q, status, videoId, limit });
 
   const context = { userId, canModerate: true, videoCreatorId: null, hasVideoAccess: true };
   const mappedComments = comments.map(c => mapCommentToDto(c, context));

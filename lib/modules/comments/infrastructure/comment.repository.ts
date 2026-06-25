@@ -83,9 +83,9 @@ export class CommentRepository {
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({ where: { id }, include: { author: { select: publicCommentAuthorSelect } } });
   }
-  async findAdminComments(options: { q?: string; status?: CommentStatus; limit: number }) {
-    const { q, status, limit } = options;
-    return await this.db.comment.findMany({ where: { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {} ] }, take: limit, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } });
+  async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; limit: number }) {
+    const { q, status, videoId, limit } = options;
+    return await this.db.comment.findMany({ where: { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] }, take: limit, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } });
   }
   async findCommentReaction(userId: string, commentId: string): Promise<CommentReaction | null> {
     return await this.db.commentReaction.findUnique({ where: { userId_commentId: { userId, commentId } } });
