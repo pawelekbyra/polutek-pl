@@ -3,7 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
 import { logger } from "@/lib/logger";
 import { CreateVideoSourceMode } from "./VideoForm";
-import { INITIAL_FORM_DATA } from "./video-utils";
+import { INITIAL_FORM_DATA, inferThumbnailSourceMode } from "./video-utils";
 
 function readVideoLoadError(data: unknown) {
   if (data && typeof data === "object") {
@@ -36,6 +36,7 @@ export function useAdminVideos(isAdmin: boolean) {
     publishAfterReady: boolean;
     isPublishing: boolean;
     isAttachingExisting?: boolean;
+    thumbnailSource?: string;
   } | null>(null);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
@@ -116,6 +117,8 @@ export function useAdminVideos(isAdmin: boolean) {
           descriptionEn: vid.descriptionEn || "",
           videoUrl: vid.videoUrl || "",
           thumbnailUrl: vid.thumbnailUrl || "",
+          thumbnailSource: inferThumbnailSourceMode(vid.thumbnailUrl),
+          cloudflareProviderAssetId: vid.asset?.providerAssetId || "",
           duration: vid.duration || "",
           tier: vid.tier,
           status: vid.status || "PUBLISHED",
