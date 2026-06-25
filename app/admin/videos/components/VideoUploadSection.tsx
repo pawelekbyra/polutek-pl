@@ -10,27 +10,10 @@ import { Upload, X, RotateCcw, AlertCircle, CheckCircle2, Loader2, FileVideo } f
 import { useToast } from "@/app/hooks/useToast";
 import { normalizeThumbnailSourceMode, type ThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 
-type UploadStatus =
-  | "IDLE"
-  | "PROVISIONING"
-  | "UPLOADING"
-  | "PROCESSING"
-  | "READY"
-  | "FAILED"
-  | "CANCELLED"
-  | "PROCESSING_TIMEOUT";
-
-type VideoUploadAssetSummary = {
-  provider?: string | null;
-  providerAssetId?: string | null;
-  processingState?: "PENDING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | null;
-  failureReason?: string | null;
-};
-
 interface VideoUploadSectionProps {
   videoId: string;
   onUploadComplete: () => void;
-  initialAsset?: VideoUploadAssetSummary | null;
+  initialAsset?: any;
   initialFile?: File | null;
   autoStart?: boolean;
   onUploadReady?: () => void;
@@ -38,31 +21,15 @@ interface VideoUploadSectionProps {
   thumbnailSource?: string;
 }
 
-const mapProcessingStateToUploadStatus = (
-  processingState: VideoUploadAssetSummary["processingState"],
-): UploadStatus | null => {
-  switch (processingState) {
-    case "PENDING":
-      return "PROCESSING";
-    case "UPLOADING":
-    case "PROCESSING":
-    case "READY":
-    case "FAILED":
-      return processingState;
-    default:
-      return null;
-  }
-};
-
 export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, initialFile = null, autoStart = false, onUploadReady, publishAfterReady = false, thumbnailSource = "DEFAULT" }: VideoUploadSectionProps) {
   const [file, setFile] = useState<File | null>(initialFile);
   const [upload, setUpload] = useState<tus.Upload | null>(null);
   const [progress, setProgress] = useState(0);
   const [bytesUploaded, setBytesUploaded] = useState(0);
   const [bytesTotal, setBytesTotal] = useState(0);
-  const [status, setStatus] = useState<UploadStatus>("IDLE");
+  const [status, setStatus] = useState<"IDLE" | "PROVISIONING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "CANCELLED" | "PROCESSING_TIMEOUT">("IDLE");
   const [error, setError] = useState<string | null>(null);
-  const [asset, setAsset] = useState<VideoUploadAssetSummary | null>(initialAsset ?? null);
+  const [asset, setAsset] = useState(initialAsset);
   const toast = useToast();
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
   const autoStartedRef = useRef(false);
@@ -112,15 +79,13 @@ export function VideoUploadSection({ videoId, onUploadComplete, initialAsset, in
   useEffect(() => {
     if (initialAsset) {
       setAsset(initialAsset);
-      const initialStatus = mapProcessingStateToUploadStatus(initialAsset.processingState);
-
-      if (initialStatus === "READY") {
+      if (initialAsset.processingState === "READY") {
         setStatus("READY");
-      } else if (initialStatus === "FAILED") {
+      } else if (initialAsset.processingState === "FAILED") {
         setStatus("FAILED");
-        setError(initialAsset.failureReason ?? "Processing failed");
-      } else if (initialStatus === "PROCESSING" || initialStatus === "UPLOADING") {
-        setStatus(initialStatus);
+        setError(initialAsset.failureReason);
+      } else if (["PROCESSING", "UPLOADING", "PENDING"].includes(initialAsset.processingState)) {
+        setStatus(initialAsset.processingState === "PENDING" ? "PROCESSING" : initialAsset.processingState as any);
         startPolling();
       }
     }
