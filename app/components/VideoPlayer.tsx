@@ -189,6 +189,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
     const hasReached10s = useRef(false);
     const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reachedThresholds = useRef<Record<number, boolean>>({});
@@ -244,6 +245,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    useEffect(() => {
+        setHasStartedPlayback(false);
+    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -366,6 +371,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     errorCode="MEDIA_LOAD_FAILED"
                     onRetry={() => {
                         setLoadError(null);
+                        setHasStartedPlayback(false);
                         setPlayerKey((k) => k + 1);
                         refreshPlaybackPlan?.();
                     }}
@@ -385,14 +391,24 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                     controls={false}
                     aspectRatio="16/9"
                     onCanPlay={() => sendEvent('PLAYER_READY')}
-                    onPlay={() => sendEvent('PLAY_STARTED')}
+                    onPlay={() => {
+                        setHasStartedPlayback(true);
+                        sendEvent('PLAY_STARTED');
+                    }}
                     onPause={() => sendEvent('PLAY_PAUSED')}
                     onEnded={() => sendEvent('ENDED')}
                     onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
                     onWaiting={() => sendEvent('BUFFERING_STARTED')}
-                    onPlaying={() => sendEvent('BUFFERING_ENDED')}
+                    onPlaying={() => {
+                        setHasStartedPlayback(true);
+                        sendEvent('BUFFERING_ENDED');
+                    }}
                     onTimeUpdate={(e: any) => {
                         const { currentTime, duration } = e.detail;
+                        if (currentTime > 0 && !hasStartedPlayback) {
+                            setHasStartedPlayback(true);
+                        }
+
                         if (!hasReached10s.current && currentTime >= 10) {
                             hasReached10s.current = true;
                             sendEvent('WATCHED_10_SECONDS');
@@ -429,11 +445,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                                 default={track.default}
                             />
                         ))}
-                        <Poster
-                            className="absolute inset-0 block h-full w-full object-cover opacity-90"
-                            src={posterUrl}
-                            alt={video.title || 'Video poster'}
-                        />
+                        {!hasStartedPlayback && (
+                            <Poster
+                                className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover opacity-90 transition-opacity data-[hidden]:hidden"
+                                src={posterUrl}
+                                alt={video.title || 'Video poster'}
+                            />
+                        )}
                     </MediaProvider>
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
                     {(playerConfig ? playerConfig.controls : true) && <DoodlePlayerControls hasTextTracks={hasTextTracks} />}
