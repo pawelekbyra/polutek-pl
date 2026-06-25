@@ -10,12 +10,14 @@ import { CloudflareApiError, CloudflareConfigurationError, VideoNotFoundError, V
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoStatus } from "@prisma/client";
 import { requestPublishAfterAssetReady } from "./publish-after-asset-ready.use-case";
+import { buildCloudflareFirstFrameThumbnailUrl, normalizeThumbnailSourceMode } from "@/lib/media/cloudflare-thumbnail";
 
 export interface ProvisionCloudflareUploadInput {
   videoId: string;
   fileName?: string;
   fileSize?: number;
   contentType?: string;
+  thumbnailSource?: unknown;
 }
 
 export interface ProvisionCloudflareTusUploadInput {
@@ -94,9 +96,22 @@ async function persistProvisionedAsset(input: {
   fileName?: string;
   fileSize?: number;
   contentType?: string;
+  thumbnailSource?: unknown;
   auditAction: string;
 }) {
+  const thumbnailSource = normalizeThumbnailSourceMode(input.thumbnailSource);
+  const firstFrameThumbnailUrl = thumbnailSource === "CLOUDFLARE_FIRST_FRAME"
+    ? buildCloudflareFirstFrameThumbnailUrl(input.providerAssetId)
+    : null;
+
   return await input.ctx.db.writeTransaction(async (tx: WriteTx) => {
+    if (firstFrameThumbnailUrl) {
+      await tx.video.update({
+        where: { id: input.videoId },
+        data: { thumbnailUrl: firstFrameThumbnailUrl },
+      });
+    }
+
     const upserted = await input.repository.updateVideoAsset(input.videoId, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId: input.providerAssetId,
@@ -117,7 +132,8 @@ async function persistProvisionedAsset(input: {
       metadata: {
           providerAssetId: input.providerAssetId,
           fileName: input.fileName,
-          fileSize: input.fileSize
+          fileSize: input.fileSize,
+          thumbnailSource,
       }
     }, tx);
 
@@ -145,6 +161,7 @@ export async function provisionCloudflareUpload(
       fileName: input.fileName,
       fileSize: input.fileSize,
       contentType: input.contentType,
+      thumbnailSource: input.thumbnailSource,
       auditAction: 'VIDEO_CLOUDFLARE_UPLOAD_PROVISIONED',
     });
 
@@ -179,6 +196,7 @@ export async function provisionCloudflareTusUpload(
 
     const fileName = decodeTusMetadataValue(input.uploadMetadata, "filename");
     const contentType = decodeTusMetadataValue(input.uploadMetadata, "filetype");
+    const thumbnailSource = decodeTusMetadataValue(input.uploadMetadata, "thumbnailSource");
     const fileSize = numberFromUploadLength(input.uploadLength);
 
     const asset = await persistProvisionedAsset({
@@ -189,6 +207,7 @@ export async function provisionCloudflareTusUpload(
       fileName,
       fileSize,
       contentType,
+      thumbnailSource,
       auditAction: 'VIDEO_CLOUDFLARE_TUS_UPLOAD_PROVISIONED',
     });
 
