@@ -8,7 +8,7 @@ type VideoTitleSource = {
 };
 
 /**
- * Legancy overrides removed to ensure database titles are always respected.
+ * Legacy overrides removed to ensure database titles are always respected.
  * If you need to translate titles, consider adding a translation table to the DB.
  */
 export function getVideoDisplayTitle(video: VideoTitleSource, language: VideoTitleLanguage = 'en') {
@@ -19,5 +19,5 @@ export function getVideoDisplayTitle(video: VideoTitleSource, language: VideoTit
 }
 
 export function getCanonicalVideoTitle(video: VideoTitleSource) {
-  return video.titleEn || video.title || '';
+  return video.title || video.titleEn || '';
 }
