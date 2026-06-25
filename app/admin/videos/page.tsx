@@ -81,7 +81,6 @@ export default function AdminVideosPage() {
   };
 
   const handleEdit = (vid: AdminVideoListItem) => {
-    const asset = (vid as any).asset;
     setFormError(null);
     setIsSlugManual(true);
     setFormData({
@@ -94,7 +93,7 @@ export default function AdminVideosPage() {
       videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
       thumbnailSource: inferThumbnailSourceMode(vid.thumbnailUrl),
-      cloudflareProviderAssetId: asset?.providerAssetId || "",
+      cloudflareProviderAssetId: vid.asset?.providerAssetId || "",
       duration: "",
       tier: vid.tier,
       status: vid.status || "PUBLISHED",
