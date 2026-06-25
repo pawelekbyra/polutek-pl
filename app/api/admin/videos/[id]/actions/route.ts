@@ -87,7 +87,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         const { providerAssetId, providerPlaybackId } = body;
         return fromUseCaseResult(
           await attachCloudflareAsset(
-            { videoId, providerAssetId, providerPlaybackId, publishAfterAssetReady: body.publishAfterAssetReady === true },
+            {
+              videoId,
+              providerAssetId,
+              providerPlaybackId,
+              publishAfterAssetReady: body.publishAfterAssetReady === true,
+              thumbnailSource: body.thumbnailSource,
+            },
             ctx,
           ),
         );
