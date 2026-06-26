@@ -7,7 +7,7 @@ export interface PaymentTotal {
 
 /**
  * Estimated lifetime total in PLN for display purposes.
- * Note: Access decisions should rely on User.isPatron, not this normalized sum.
+ * Note: Access decisions must rely on active PatronGrant truth, not this normalized sum or legacy User.isPatron cache.
  */
 export function normalizePaymentTotals(paymentTotals: PaymentTotal[]): number {
   const totalPLN = paymentTotals.find((t) => t.currency === 'PLN')?.amountMinor || 0;

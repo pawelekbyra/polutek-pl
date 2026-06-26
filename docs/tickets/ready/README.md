@@ -17,9 +17,11 @@ Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie op
 | ---: | --- | --- |
 | — | `NONE` | `NO_ACTIVE_LARGE_CODE_TICKET` |
 | 1 | `CLEANUP-001-SCHEMA-TRUTH-LANGUAGE.md` | `DONE_IN_THIS_PR` |
+| 2 | `CLEANUP-002-USER-ACCESS-PROFILE-GRANT-TRUTH.md` | `DONE_IN_THIS_PR` |
 
 ## Recently completed / HISTORICAL
 
+- `CLEANUP-002-USER-ACCESS-PROFILE-GRANT-TRUTH` — DONE in this cleanup PR; moved `getUserAccessProfile().isPatron` from legacy `User.isPatron` cache to active `PatronGrant` truth and corrected stale payment-total guidance.
 - `CLEANUP-001-SCHEMA-TRUTH-LANGUAGE` — DONE in this cleanup PR; corrected misleading schema comments so `Subscription` and `PATRON` tier language point to active `PatronGrant` truth, not legacy `User.isPatron` cache.
 - `LEGACY-ACCESS-POLICY-RETIREMENT-001` — DONE by PR #1075; legacy `AccessPolicy` and `comment-access` runtime surface removed, with architecture-boundary and Vitest guardrails added.
 - `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.

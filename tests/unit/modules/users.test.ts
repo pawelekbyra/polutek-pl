@@ -19,6 +19,9 @@ describe('Users Module', () => {
       user: {
         findUnique: vi.fn().mockResolvedValue(mockUser),
       },
+      patronGrant: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'grant_123' }),
+      },
     } as any;
 
     const ctx = createAppContext({ prisma: mockPrisma });
@@ -40,6 +43,9 @@ describe('Users Module', () => {
     const mockPrisma = {
       user: {
         findUnique: vi.fn().mockResolvedValue(null),
+      },
+      patronGrant: {
+        findFirst: vi.fn(),
       },
     } as any;
 
@@ -74,6 +80,9 @@ describe('Users Module', () => {
         user: {
           findUnique: vi.fn().mockResolvedValue(mockUser),
         },
+        patronGrant: {
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
       } as any;
 
       const ctx = createAppContext({
@@ -95,6 +104,9 @@ describe('Users Module', () => {
       const mockPrisma = {
         user: {
           findUnique: vi.fn().mockResolvedValue(mockUser),
+        },
+        patronGrant: {
+          findFirst: vi.fn().mockResolvedValue(null),
         },
       } as any;
 

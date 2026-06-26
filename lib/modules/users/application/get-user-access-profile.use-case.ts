@@ -8,6 +8,7 @@ export interface UserAccessProfileDto {
   clerkId: string;
   email: string | null;
   role: SystemRole;
+  /** Active PatronGrant truth. Never derived from legacy User.isPatron cache. */
   isPatron: boolean;
   isAdmin: boolean;
   isDeleted: boolean;
@@ -15,8 +16,10 @@ export interface UserAccessProfileDto {
 }
 
 /**
- * getUserAccessProfile provides a standardized read model for access decisions.
- * It strictly reads from the local database (source of truth).
+ * getUserAccessProfile provides a standardized local read model for user access
+ * surfaces. Admin status is derived from the local User role, while patron
+ * status is derived from active PatronGrant truth instead of the legacy
+ * User.isPatron cache/read model.
  */
 export async function getUserAccessProfile(
   ctx: AppContext,
@@ -27,12 +30,17 @@ export async function getUserAccessProfile(
 
   if (!user) return null;
 
+  const activePatronGrant = await ctx.prisma.patronGrant.findFirst({
+    where: { userId: user.id, revokedAt: null },
+    select: { id: true },
+  });
+
   return {
     id: user.id,
     clerkId: user.id, // In this system, userId IS clerkId
     email: user.email,
     role: user.role,
-    isPatron: UserPolicy.isPatron(user.isPatron),
+    isPatron: activePatronGrant !== null,
     isAdmin: UserPolicy.isAdmin(user.role),
     isDeleted: user.isDeleted,
     language: user.language,
