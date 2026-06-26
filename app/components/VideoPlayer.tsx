@@ -10,7 +10,6 @@ import {
     MediaPlayer,
     MediaProvider,
     MuteButton,
-    PlayButton,
     VolumeSlider,
     useMediaRemote,
     isTrackCaptionKind,
@@ -255,17 +254,22 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         return ratio * safeDuration;
     }, [safeDuration]);
 
-    const seekToPointerTime = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent, keepDragging: boolean) => {
+    const seekToPointerTime = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent, keepDragging: boolean, playAfterSeek = false) => {
         if (!safeDuration || !Number.isFinite(nextTime)) {
             setDraggingState(false);
             return;
         }
 
+        const playerEvent = getPlayerEvent(event);
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
         setDragTime(clampedTime);
         setPendingSeekTime(clampedTime);
         setDraggingState(keepDragging);
-        remote.seek(clampedTime, getPlayerEvent(event));
+        remote.seek(clampedTime, playerEvent);
+
+        if (playAfterSeek) {
+            requestAnimationFrame(() => remote.play(playerEvent));
+        }
     }, [remote, safeDuration, setDraggingState]);
 
     return (
@@ -283,6 +287,8 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
             aria-valuenow={safeTime}
             aria-disabled={!safeDuration}
             onPointerDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 const nextTime = getTimeFromPointer(event.clientX);
                 if (nextTime === null) return;
 
@@ -292,20 +298,30 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
             onPointerMove={(event) => {
                 if (!isDraggingRef.current) return;
 
+                event.preventDefault();
+                event.stopPropagation();
                 const nextTime = getTimeFromPointer(event.clientX);
                 if (nextTime === null) return;
                 seekToPointerTime(nextTime, event, true);
             }}
             onPointerUp={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 if (!isDraggingRef.current) return;
 
                 event.currentTarget.releasePointerCapture?.(event.pointerId);
                 const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
-                seekToPointerTime(nextTime, event, false);
+                seekToPointerTime(nextTime, event, false, true);
             }}
             onPointerCancel={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 if (!isDraggingRef.current) return;
                 seekToPointerTime(dragTime, event, false);
+            }}
+            onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
             }}
             onKeyDown={(event) => {
                 if (!safeDuration) return;
