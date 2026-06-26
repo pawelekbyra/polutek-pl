@@ -34,6 +34,7 @@ interface VideoPlayerProps {
 }
 
 const playerIconClass = "h-[1.625rem] w-[1.625rem] stroke-[2.25]";
+const centerPauseIconClass = "h-16 w-16 stroke-[2.35] drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
 const sliderAccentClass = "bg-[#1F7A88]";
 
 function PolutekWatermark() {
@@ -45,13 +46,79 @@ function PolutekWatermark() {
     );
 }
 
+function getPlayerEvent(event: React.SyntheticEvent | PointerEvent | KeyboardEvent) {
+    return 'nativeEvent' in event ? event.nativeEvent : event;
+}
+
+function useTogglePlayback() {
+    const remote = useMediaRemote();
+    const paused = useMediaState('paused');
+    const ended = useMediaState('ended');
+    const currentTime = useMediaState('currentTime');
+    const duration = useMediaState('duration');
+
+    return useCallback((event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
+        const playerEvent = getPlayerEvent(event);
+
+        if (paused) {
+            const shouldResumeFromSeekedEndedState = ended
+                && Number.isFinite(currentTime)
+                && Number.isFinite(duration)
+                && duration > 0
+                && currentTime < duration - 0.25;
+
+            if (shouldResumeFromSeekedEndedState) {
+                remote.seek(currentTime, playerEvent);
+                requestAnimationFrame(() => remote.play(playerEvent));
+                return;
+            }
+
+            remote.play(playerEvent);
+            return;
+        }
+
+        remote.pause(playerEvent);
+    }, [currentTime, duration, ended, paused, remote]);
+}
+
 function PlayerPlayButton({ className }: { className: string }) {
     const paused = useMediaState('paused');
+    const togglePlayback = useTogglePlayback();
 
     return (
-        <PlayButton className={className} aria-label={paused ? "Odtwórz" : "Pauza"}>
+        <button
+            type="button"
+            className={className}
+            aria-label={paused ? "Odtwórz" : "Pauza"}
+            onClick={(event) => {
+                event.stopPropagation();
+                togglePlayback(event);
+            }}
+        >
             {paused ? <Play className={playerIconClass} aria-hidden="true" fill="currentColor" /> : <Pause className={playerIconClass} aria-hidden="true" fill="currentColor" />}
-        </PlayButton>
+        </button>
+    );
+}
+
+function PlayerTapTarget() {
+    const paused = useMediaState('paused');
+    const togglePlayback = useTogglePlayback();
+
+    return (
+        <button
+            type="button"
+            className={cn(
+                "absolute inset-0 z-10 grid place-items-center text-white transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85",
+                paused ? "opacity-100" : "opacity-0"
+            )}
+            aria-label={paused ? "Odtwórz film" : "Pauza"}
+            onClick={(event) => {
+                event.stopPropagation();
+                togglePlayback(event);
+            }}
+        >
+            {paused ? <Pause className={centerPauseIconClass} aria-hidden="true" fill="currentColor" /> : null}
+        </button>
     );
 }
 
@@ -188,16 +255,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         return ratio * safeDuration;
     }, [safeDuration]);
 
-    const previewSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
-        if (!safeDuration || !Number.isFinite(nextTime)) return;
-
-        const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
-        setPendingSeekTime(null);
-        setDragTime(clampedTime);
-        remote.seeking(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
-    }, [remote, safeDuration]);
-
-    const commitSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
+    const seekToPointerTime = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent, keepDragging: boolean) => {
         if (!safeDuration || !Number.isFinite(nextTime)) {
             setDraggingState(false);
             return;
@@ -206,8 +264,8 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
         setDragTime(clampedTime);
         setPendingSeekTime(clampedTime);
-        setDraggingState(false);
-        remote.seek(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
+        setDraggingState(keepDragging);
+        remote.seek(clampedTime, getPlayerEvent(event));
     }, [remote, safeDuration, setDraggingState]);
 
     return (
@@ -229,26 +287,25 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
                 if (nextTime === null) return;
 
                 event.currentTarget.setPointerCapture?.(event.pointerId);
-                setDraggingState(true);
-                previewSeek(nextTime, event);
+                seekToPointerTime(nextTime, event, true);
             }}
             onPointerMove={(event) => {
                 if (!isDraggingRef.current) return;
 
                 const nextTime = getTimeFromPointer(event.clientX);
                 if (nextTime === null) return;
-                previewSeek(nextTime, event);
+                seekToPointerTime(nextTime, event, true);
             }}
             onPointerUp={(event) => {
                 if (!isDraggingRef.current) return;
 
                 event.currentTarget.releasePointerCapture?.(event.pointerId);
                 const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
-                commitSeek(nextTime, event);
+                seekToPointerTime(nextTime, event, false);
             }}
             onPointerCancel={(event) => {
                 if (!isDraggingRef.current) return;
-                commitSeek(dragTime, event);
+                seekToPointerTime(dragTime, event, false);
             }}
             onKeyDown={(event) => {
                 if (!safeDuration) return;
@@ -256,19 +313,19 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
                 const step = event.shiftKey ? 10 : 5;
                 if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
                     event.preventDefault();
-                    commitSeek(safeTime - step, event);
+                    seekToPointerTime(safeTime - step, event, false);
                 }
                 if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
                     event.preventDefault();
-                    commitSeek(safeTime + step, event);
+                    seekToPointerTime(safeTime + step, event, false);
                 }
                 if (event.key === 'Home') {
                     event.preventDefault();
-                    commitSeek(0, event);
+                    seekToPointerTime(0, event, false);
                 }
                 if (event.key === 'End') {
                     event.preventDefault();
-                    commitSeek(safeDuration, event);
+                    seekToPointerTime(safeDuration, event, false);
                 }
             }}
         >
@@ -499,7 +556,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
                         void maybeSendView(currentTime, duration);
 
-                        const pct = (currentTime / duration) * 100;
+                        const pct = duration ? (currentTime / duration) * 100 : 0;
                         const thresholds = [
                             { pct: 25, type: 'WATCHED_25_PERCENT' },
                             { pct: 50, type: 'WATCHED_50_PERCENT' },
@@ -531,6 +588,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                             />
                         ))}
                     </MediaProvider>
+                    <PlayerTapTarget />
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
                     {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
