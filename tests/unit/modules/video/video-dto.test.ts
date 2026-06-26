@@ -78,7 +78,11 @@ describe('Video DTOs', () => {
     expect(dto.providerAssetId).toBe('cf-video-uid');
     expect(dto.providerPlaybackId).toBe('cf-playback-uid');
     expect(dto.processingState).toBe('PROCESSING');
+    expect(dto.status).toBe('PROCESSING');
     expect(dto.isPrimary).toBe(true);
+    expect(dto.requiresSignedUrl).toBe(true);
+    expect(dto.sourceMode).toBe('CLOUDFLARE_STREAM');
+    expect(dto.lastSyncAt).toBe(syncedAt);
     expect(dto.providerSyncedAt).toBe(syncedAt);
     expect((dto as any).playbackUrl).toBeUndefined();
     expect((dto as any).playbackToken).toBeUndefined();
@@ -114,6 +118,8 @@ describe('Video DTOs', () => {
       expect(dto.processingState).toBe('READY');
       expect(dto.providerAssetId).toBeNull();
       expect(dto.providerPlaybackId).toBeNull();
+      expect(dto.requiresSignedUrl).toBe(false);
+      expect(dto.sourceMode).toBe('LEGACY_PROVIDER_ASSET');
     }
   });
 
@@ -167,6 +173,40 @@ describe('Video DTOs', () => {
     expect(dto.asset?.failureReason).toBe('provider fixture failure');
     expect((dto.asset as any).uploadUrl).toBeUndefined();
     expect((dto.asset as any).playbackUrl).toBeUndefined();
+    expect((dto.asset as any).playbackToken).toBeUndefined();
+  });
+
+  it('toAdminVideoDto exposes safe provider diagnostics for failed Cloudflare assets', () => {
+    const updatedAt = new Date('2026-06-26T00:00:00Z');
+    const dto = toAdminVideoDto({
+      ...mockVideo,
+      asset: {
+        id: 'asset-failed',
+        videoId: 'v1',
+        provider: 'CLOUDFLARE_STREAM',
+        objectKey: 'cloudflare-stream/cf-failed',
+        bucket: null,
+        providerAssetId: 'cf-failed',
+        providerPlaybackId: 'cf-playback',
+        processingState: 'FAILED',
+        isPrimary: true,
+        failureReason: 'transcode failed',
+        providerSyncedAt: updatedAt,
+        processingStartedAt: updatedAt,
+        processingEndedAt: updatedAt,
+        mimeType: 'video/mp4',
+        sizeBytes: 100,
+        createdAt: updatedAt,
+        updatedAt,
+        playbackToken: 'secret-token',
+      },
+    });
+
+    expect(dto.asset?.provider).toBe('CLOUDFLARE_STREAM');
+    expect(dto.asset?.status).toBe('FAILED');
+    expect(dto.asset?.failureReason).toBe('transcode failed');
+    expect(dto.asset?.requiresSignedUrl).toBe(true);
+    expect(dto.asset?.sourceMode).toBe('CLOUDFLARE_STREAM');
     expect((dto.asset as any).playbackToken).toBeUndefined();
   });
 
