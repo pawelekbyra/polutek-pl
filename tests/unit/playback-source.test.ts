@@ -40,6 +40,16 @@ describe('resolvePlaybackSource', () => {
             playbackUrl: 'https://videodelivery.net/playback-id/manifest/video.mpd',
             embedUrl: 'https://iframe.videodelivery.net/signed-token',
         })?.mode).toBe('custom-player');
+
+        expect(resolvePlaybackSource({
+            kind: 'cloudflare_stream',
+            playbackUrl: 'https://iframe.videodelivery.net/signed-token',
+            embedUrl: 'https://videodelivery.net/backend-safe-manifest/manifest/video.m3u8',
+        })).toEqual({
+            mode: 'custom-player',
+            kind: 'cloudflare_stream',
+            src: 'https://videodelivery.net/backend-safe-manifest/manifest/video.m3u8',
+        });
     });
 
     it('treats Cloudflare iframe URLs as unavailable when no safe manifest exists', () => {

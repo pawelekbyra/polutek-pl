@@ -399,8 +399,12 @@ describe('PlaybackService Safety', () => {
     expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
     expect(plan.source?.kind).toBe('cloudflare_stream');
     expect(plan.source?.playbackUrl).toBe(`https://videodelivery.net/${mockToken}/manifest/video.m3u8`);
+    expect(plan.source?.playbackUrl).not.toBe(`/api/media/v1`);
+    expect(plan.source?.playbackUrl).not.toContain('s3.amazonaws.com');
+    expect(plan.source?.needsProxy).toBe(false);
     expect(plan.source?.embedUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
     expect(plan.source?.isSignedUrl).toBe(true);
+    expect(plan.diagnostics.sourceMode).toBe('PROVIDER_ASSET');
     expect(plan.tracking.playbackSessionId).toBe('s-cf-1');
 
     expect(mockCreateSignedPlaybackToken).toHaveBeenCalledWith('cf-playback-id');
