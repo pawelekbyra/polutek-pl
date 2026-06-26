@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink } from "@/app/components/icons";
+import { MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink } from "@/app/components/icons";
+import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -66,9 +67,7 @@ export default function AdminCommentReportsPage() {
     <div className="min-h-screen bg-muted/20 text-foreground">
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-6 -ml-3 h-8 px-2">
-          <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
-        </Button>
+        <AdminNavigation backHref="/admin/comments" backLabel="Wróć do moderacji komentarzy" currentLabel="Zgłoszenia komentarzy" breadcrumbs={[{ href: "/admin/comments", label: "Komentarze" }]} />
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Zgłoszenia Komentarzy</h1>

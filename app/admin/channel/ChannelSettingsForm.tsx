@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
+import { ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
+import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 
 type ChannelCreator = {
   id: string;
@@ -68,9 +68,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
   if (!creator) {
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Button variant="ghost" asChild className="mb-6 -ml-3">
-          <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
-        </Button>
+        <AdminNavigation backHref="/admin" backLabel="Wróć do panelu admina" currentLabel="Kanał" />
         <Card>
           <CardHeader>
             <CardTitle>Kanał nie został znaleziony</CardTitle>
@@ -85,9 +83,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <Button variant="ghost" asChild className="mb-6 -ml-3">
-        <Link href="/admin"><ArrowLeft className="mr-2 h-4 w-4" /> Wróć do panelu</Link>
-      </Button>
+      <AdminNavigation backHref="/admin" backLabel="Wróć do panelu admina" currentLabel="Kanał" />
 
       <div className="mb-6 rounded-3xl border bg-card p-6 shadow-sm md:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Ustawienia profilu</p>
