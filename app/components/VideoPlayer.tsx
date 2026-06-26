@@ -167,14 +167,14 @@ function PlayerTimeReadout() {
     const duration = useMediaState('duration');
 
     return (
-        <span className="inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-[15px] font-semibold leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
+        <span className="inline-flex min-w-[5.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-[12px] font-semibold leading-none tabular-nums text-white/90 sm:min-w-[8.5rem] sm:text-[15px]">
             <span>{formatPlayerTime(currentTime)}</span><span className="text-white/60">/</span><span className="text-white/75">{formatPlayerTime(duration)}</span>
         </span>
     );
 }
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
     const trackClass = "relative h-[5px] w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-2";
     const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
 
@@ -225,22 +225,22 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     const duration = useMediaState('duration');
     const [isDragging, setIsDragging] = useState(false);
     const [dragTime, setDragTime] = useState(0);
-    const [pendingSeekTime, setPendingSeekTime] = useState<number | null>(null);
+    const [optimisticSeekTime, setOptimisticSeekTime] = useState<number | null>(null);
     const scrubberRef = useRef<HTMLDivElement>(null);
     const isDraggingRef = useRef(false);
     const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
-    const displayTime = isDragging ? dragTime : pendingSeekTime ?? currentTime;
+    const displayTime = isDragging ? dragTime : optimisticSeekTime ?? currentTime;
     const safeTime = safeDuration ? Math.min(Math.max(displayTime || 0, 0), safeDuration) : 0;
     const fillPercent = safeDuration ? (safeTime / safeDuration) * 100 : 0;
 
     useEffect(() => {
-        if (pendingSeekTime === null) return;
+        if (optimisticSeekTime === null || isDragging) return;
 
         const resolvedTime = Number.isFinite(currentTime) ? currentTime : 0;
-        if (Math.abs(resolvedTime - pendingSeekTime) < 0.25) {
-            setPendingSeekTime(null);
+        if (Math.abs(resolvedTime - optimisticSeekTime) < 0.35) {
+            setOptimisticSeekTime(null);
         }
-    }, [currentTime, pendingSeekTime]);
+    }, [currentTime, optimisticSeekTime, isDragging]);
 
     const setDraggingState = useCallback((nextValue: boolean) => {
         isDraggingRef.current = nextValue;
@@ -263,7 +263,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
 
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
         setDragTime(clampedTime);
-        setPendingSeekTime(clampedTime);
+        setOptimisticSeekTime(clampedTime);
         setDraggingState(keepDragging);
         remote.seek(clampedTime, getPlayerEvent(event));
     }, [remote, safeDuration, setDraggingState]);
@@ -286,6 +286,8 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
                 const nextTime = getTimeFromPointer(event.clientX);
                 if (nextTime === null) return;
 
+                event.preventDefault();
+                event.stopPropagation();
                 event.currentTarget.setPointerCapture?.(event.pointerId);
                 seekToPointerTime(nextTime, event, true);
             }}
@@ -299,6 +301,8 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
             onPointerUp={(event) => {
                 if (!isDraggingRef.current) return;
 
+                event.preventDefault();
+                event.stopPropagation();
                 event.currentTarget.releasePointerCapture?.(event.pointerId);
                 const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
                 seekToPointerTime(nextTime, event, false);
