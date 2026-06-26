@@ -30,12 +30,13 @@ export async function recalculatePatronStatus(
     );
 
     const activeGrants = await repo.listActiveGrants(userId, currentTx);
+    const firstActiveGrant = activeGrants[0] ?? null;
 
     return {
         userId: updatedUser.id,
-        isPatron: updatedUser.isPatron,
-        patronSince: updatedUser.patronSince,
-        patronSource: updatedUser.patronSource,
+        isPatron: activeGrants.length > 0,
+        patronSince: firstActiveGrant?.createdAt ?? null,
+        patronSource: firstActiveGrant?.source ?? null,
         activeGrants,
         normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
     };

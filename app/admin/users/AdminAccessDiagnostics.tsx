@@ -23,7 +23,8 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
   const subscriptionCount = user.subscriptions?.length ?? 0;
 
   const legacyCache = user.patronDiagnostics?.legacyPatronCache;
-  const hasMismatch = user.patronDiagnostics?.cacheTruthMismatch;
+  const hasAccessMismatch = user.patronDiagnostics?.accessTruthMismatch;
+  const hasMetadataMismatch = user.patronDiagnostics?.legacyMetadataMismatch;
 
   return (
     <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-3" aria-label="Diagnostyka dostępu paid-but-locked">
@@ -62,16 +63,26 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
                   <dd>User.isPatron: {legacyCache.isPatron ? "TRUE" : "FALSE"}</dd>
                   <dd>User.patronSince: {formatDate(legacyCache.patronSince)}</dd>
                   <dd>User.patronSource: {legacyCache.patronSource || "—"}</dd>
-                  {hasMismatch && (
+
+                  {hasAccessMismatch && (
+                      <dd className="text-destructive font-bold mt-1">
+                          ⚠️ BŁĄD DOSTĘPU: Cache isPatron różni się od źródła prawdy PatronGrant!
+                      </dd>
+                  )}
+
+                  {hasMetadataMismatch && !hasAccessMismatch && (
                       <dd className="text-amber-500 font-medium mt-1">
-                          ⚠️ Uwaga: Legacy cache różni się od źródła prawdy PatronGrant.
+                          ℹ️ Mismatch metadanych: Legacy data/source różnią się od aktywnego grantu (brak wpływu na dostęp).
                       </dd>
                   )}
               </>
           ) : (
               <dd>Brak danych legacy cache.</dd>
           )}
-          <dd className="mt-1 italic text-[9px]">Te pola są zachowane dla kompatybilności i nie wpływają na dostęp.</dd>
+          <dd className="mt-1 italic text-[9px]">
+            Ważne: Faktyczny dostęp zawsze wynika z aktywnego uprawnienia w tabeli PatronGrant.
+            Pola User są tylko pomocniczym cache.
+          </dd>
         </div>
 
         <div>
