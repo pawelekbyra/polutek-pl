@@ -131,6 +131,8 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
+    if (!result.ok) throw result.error;
+    expect(result.data.viewCounted).toBe(true);
     expect(ctx.db.writeTransaction).toHaveBeenCalledTimes(1);
     expect(updateSessionClaim).toHaveBeenCalledWith({
       where: { id: 's1', countedAsView: false },
@@ -156,6 +158,8 @@ describe('recordPlaybackEventUseCase', () => {
     }, ctx);
 
     expect(result.ok).toBe(true);
+    if (!result.ok) throw result.error;
+    expect(result.data.viewCounted).toBe(false);
     expect(updateSessionClaim).toHaveBeenCalledTimes(1);
     expect(createVideoView).not.toHaveBeenCalled();
     expect(updateVideo).not.toHaveBeenCalled();

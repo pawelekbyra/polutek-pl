@@ -24,18 +24,30 @@ describe("public loading/access state UX contracts", () => {
   it("keeps the public player controls clean, accessible, and compact", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(player).toContain("Captions,");
+    expect(player).toContain("Subtitles,");
     expect(player).toContain("function PlayerCaptionButton");
-    expect(player).toContain("function PremiumPlayerControls({ hasTextTracks }");
-    expect(player).toContain("{hasTextTracks && <PlayerCaptionButton");
-    expect(player).toContain("const playerIconClass = \"h-5 w-5 stroke-[2]\";");
+    expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
+    expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
+    expect(player).not.toContain("Settings");
+    expect(player).toContain("const playerIconClass = \"h-[1.625rem] w-[1.625rem] stroke-[2.25]\";");
     expect(player).not.toContain("const doodleIconClass");
     expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
     expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
     expect(player).not.toContain("rounded-full border border-white/15 bg-black/35");
-    expect(player).toContain("text-[12px] font-medium tabular-nums text-white/90");
-    expect(player).toContain("group/volume flex shrink-0 items-center");
-    expect(player).toContain("group-hover/volume:w-20");
+    expect(player).toContain("inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
+    expect(player).toContain("text-[15px] font-semibold");
+    expect(player).toContain("function PlayerTimeScrubber");
+    expect(player).toContain("role=\"slider\"");
+    expect(player).toContain("onPointerMove={(event) =>");
+    expect(player).toContain("getTimeFromPointer(event.clientX)");
+    expect(player).toContain("remote.seeking(clampedTime");
+    expect(player).toContain("remote.seek(clampedTime");
+    expect(player).toContain("bg-[#1F7A88]");
+    expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
+    expect(player).toContain("relative z-40 mt-2 flex h-12");
+    expect(player).toContain("group-data-[dragging]/slider:h-2.5");
+    expect(player).not.toContain("group-data-[active]/slider:h-2.5");
+    expect(player).not.toContain("before:-inset-3");
     expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
     expect(player).toContain('aria-label="Postęp filmu"');
     expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');
