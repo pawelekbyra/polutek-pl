@@ -1,5 +1,4 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { UserRepository } from "../infrastructure/user.repository";
 import { EmailService } from "@/lib/services/email.service"; // R5/R9 boundary: legacy email service
 import { AccountDeletionCleanupUseCase } from "./account-deletion-cleanup.use-case";
 import crypto from 'crypto';
@@ -24,32 +23,64 @@ export interface WebhookUserSyncData {
  */
 export class SyncUserFromWebhookUseCase {
   static async execute(ctx: AppContext, data: WebhookUserSyncData, eventType: string): Promise<void> {
-    const repository = new UserRepository(ctx.prisma);
-    const existingUser = await repository.findById(data.id);
-
-    if (existingUser) {
-      // Identity sync: preserves DB isPatron
-      await repository.update(data.id, {
-        email: data.email,
-        name: data.name ?? existingUser.name,
-        username: data.username ?? existingUser.username,
-        imageUrl: data.imageUrl ?? existingUser.imageUrl,
-        language: data.language ?? existingUser.language,
+    await ctx.db.writeTransaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({ where: { id: data.id } });
+      const conflictingEmailUser = await tx.user.findUnique({
+        where: { email: data.email },
+        select: { id: true, email: true, isDeleted: true },
       });
-    } else {
-        // New user creation
-        await repository.create({
-          id: data.id,
-          email: data.email,
-          name: data.name,
-          username: data.username,
-          imageUrl: data.imageUrl,
-          language: data.language || 'pl',
-          referralCode: crypto.randomBytes(6).toString('hex'),
-          isPatron: false, // Default is false, regardless of Clerk metadata
-          role: 'USER',
+      const isEmailConflict = Boolean(conflictingEmailUser && conflictingEmailUser.id !== data.id);
+
+      if (isEmailConflict && conflictingEmailUser) {
+        await tx.user.update({
+          where: { id: conflictingEmailUser.id },
+          data: { email: `${conflictingEmailUser.email}_stale_${Date.now()}` },
         });
-    }
+      }
+
+      if (existingUser) {
+        // Identity sync: preserves DB isPatron and reactivates the same Clerk id after a previous tombstone.
+        await tx.user.update({
+          where: { id: data.id },
+          data: {
+            email: data.email,
+            name: data.name ?? existingUser.name,
+            username: data.username ?? existingUser.username,
+            imageUrl: data.imageUrl ?? existingUser.imageUrl,
+            language: data.language ?? existingUser.language,
+            isDeleted: false,
+          },
+        });
+      } else {
+        // New user creation
+        await tx.user.create({
+          data: {
+            id: data.id,
+            email: data.email,
+            name: data.name,
+            username: data.username,
+            imageUrl: data.imageUrl,
+            language: data.language || 'pl',
+            referralCode: crypto.randomBytes(6).toString('hex'),
+            isPatron: false, // Default is false, regardless of Clerk metadata
+            role: 'USER',
+          },
+        });
+      }
+
+      if (isEmailConflict && conflictingEmailUser && !conflictingEmailUser.isDeleted) {
+        const oldSubs = await tx.subscription.findMany({
+          where: { userId: conflictingEmailUser.id },
+          select: { creatorId: true },
+        });
+        await tx.subscription.deleteMany({ where: { userId: conflictingEmailUser.id } });
+        await tx.emailPreference.deleteMany({ where: { userId: conflictingEmailUser.id } });
+        for (const sub of oldSubs) {
+          const activeCount = await tx.subscription.count({ where: { creatorId: sub.creatorId } });
+          await tx.creator.updateMany({ where: { id: sub.creatorId }, data: { subscribersCount: activeCount } });
+        }
+      }
+    });
 
     // Handle side effects (R5/R9 boundary)
     if (eventType === 'user.created') {
