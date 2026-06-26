@@ -11,7 +11,6 @@ import {
     MediaProvider,
     MuteButton,
     PlayButton,
-    Poster,
     VolumeSlider,
     useMediaRemote,
     isTrackCaptionKind,
