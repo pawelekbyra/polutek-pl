@@ -1,17 +1,8 @@
-export interface PatronCacheReadModel {
-  isPatron: boolean;
-  patronSince: Date | null;
-  patronSource: string | null;
-  readModelSource: 'USER_PATRON_CACHE';
-}
-
 export interface PatronTruthReadModel {
   isPatron: boolean;
   activeGrantCount: number;
   activeGrantIds: string[];
-  /** First active PatronGrant date; canonical grant-backed replacement for legacy User.patronSince sorting. */
   activeGrantSince: Date | null;
-  /** Source of the first active PatronGrant; canonical grant-backed replacement for legacy User.patronSource filtering display. */
   activeGrantSource: string | null;
   firstActiveGrantAt: Date | null;
   latestActiveGrantAt: Date | null;
@@ -19,35 +10,22 @@ export interface PatronTruthReadModel {
   truthSource: 'ACTIVE_PATRON_GRANT';
 }
 
-export interface PatronCacheTruthMismatchReadModel {
-  hasMismatch: boolean;
-  cacheSaysPatron: boolean;
-  truthSaysPatron: boolean;
-  cachePatronSince: Date | null;
-  truthFirstActiveGrantAt: Date | null;
-  cachePatronSource: string | null;
-  truthActiveSource: string | null;
-}
-
 export interface PatronDiagnosticsReadModel {
   finalPatronStatus: 'ACTIVE_GRANT' | 'NO_ACTIVE_GRANT';
   finalPatronStatusSource: 'ACTIVE_PATRON_GRANT';
-  cache: PatronCacheReadModel;
   truth: PatronTruthReadModel;
-  cacheTruthMismatch: PatronCacheTruthMismatchReadModel;
-}
-
-export function buildPatronCacheReadModel(user: {
-  isPatron: boolean;
-  patronSince: Date | null;
-  patronSource: string | null;
-}): PatronCacheReadModel {
-  return {
-    isPatron: user.isPatron,
-    patronSince: user.patronSince,
-    patronSource: user.patronSource,
-    readModelSource: 'USER_PATRON_CACHE',
+  /** Legacy cache data from User table for diagnostic purposes. */
+  legacyPatronCache: {
+    isPatron: boolean;
+    patronSince: Date | null;
+    patronSource: string | null;
   };
+  /** Indicates if the legacy cache differs from the current source of truth in terms of access. */
+  accessTruthMismatch: boolean;
+  /** Alias for accessTruthMismatch for backward compatibility. */
+  cacheTruthMismatch: boolean;
+  /** Indicates if the legacy cache metadata (since, source) differs from the current source of truth. */
+  legacyMetadataMismatch: boolean;
 }
 
 export function buildPatronTruthReadModel(
@@ -79,34 +57,32 @@ export function buildPatronTruthReadModel(
 }
 
 export function buildPatronDiagnosticsReadModel(
-  user: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: string | null;
-  },
   patronGrants: Array<{
     id: string;
     source: string;
     createdAt: Date;
     revokedAt: Date | null;
-  }>
+  }>,
+  legacyCache: {
+    isPatron: boolean;
+    patronSince: Date | null;
+    patronSource: string | null;
+  }
 ): PatronDiagnosticsReadModel {
-  const cache = buildPatronCacheReadModel(user);
   const truth = buildPatronTruthReadModel(patronGrants);
+
+  const accessMismatch = truth.isPatron !== legacyCache.isPatron;
+  const metadataMismatch =
+    truth.activeGrantSince?.getTime() !== legacyCache.patronSince?.getTime() ||
+    truth.activeGrantSource !== legacyCache.patronSource;
 
   return {
     finalPatronStatus: truth.isPatron ? 'ACTIVE_GRANT' : 'NO_ACTIVE_GRANT',
     finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
-    cache,
     truth,
-    cacheTruthMismatch: {
-      hasMismatch: cache.isPatron !== truth.isPatron,
-      cacheSaysPatron: cache.isPatron,
-      truthSaysPatron: truth.isPatron,
-      cachePatronSince: cache.patronSince,
-      truthFirstActiveGrantAt: truth.firstActiveGrantAt,
-      cachePatronSource: cache.patronSource,
-      truthActiveSource: truth.source,
-    },
+    legacyPatronCache: legacyCache,
+    accessTruthMismatch: accessMismatch,
+    cacheTruthMismatch: accessMismatch, // Alias for accessTruthMismatch
+    legacyMetadataMismatch: metadataMismatch,
   };
 }

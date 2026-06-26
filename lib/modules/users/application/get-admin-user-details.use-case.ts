@@ -33,9 +33,7 @@ export interface AdminUserDetailsDto {
     videoDislikes: number;
   };
   paymentTotals: any[];
-  /** All patron grants for audit/history; active (revokedAt === null) grants are access truth. */
   patronGrants: any[];
-  /** Patron truth and cache diagnostics. Access truth is active PatronGrant, not User cache fields. */
   patronDiagnostics: PatronDiagnosticsReadModel;
   payments: any[];
   subscriptions: any[];
@@ -79,7 +77,11 @@ export async function getAdminUserDetails(
   const subscriptions = subscriptionsResult.ok ? subscriptionsResult.data : [];
 
   const auditLogs = auditLogsResult.ok ? auditLogsResult.data : [];
-  const patronDiagnostics = buildPatronDiagnosticsReadModel(user, patronGrants);
+  const patronDiagnostics = buildPatronDiagnosticsReadModel(patronGrants, {
+      isPatron: user.isPatron,
+      patronSince: user.patronSince,
+      patronSource: user.patronSource
+  });
 
   return ok({
       id: user.id,
@@ -87,10 +89,10 @@ export async function getAdminUserDetails(
       name: user.name,
       username: user.username,
       role: user.role,
-      isPatron: user.isPatron,
+      isPatron: patronDiagnostics.truth.isPatron,
       isDeleted: user.isDeleted,
-      patronSince: user.patronSince,
-      patronSource: user.patronSource,
+      patronSince: patronDiagnostics.truth.activeGrantSince,
+      patronSource: patronDiagnostics.truth.activeGrantSource,
       language: user.language,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

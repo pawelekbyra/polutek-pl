@@ -2,7 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { Prisma, SystemRole, PatronGrantSource } from "@prisma/client";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { normalizePaymentTotals } from "../domain/payment-totals";
-import { PatronCacheReadModel, PatronTruthReadModel, buildPatronCacheReadModel, buildPatronTruthReadModel } from "./patron-read-model";
+import { PatronTruthReadModel, buildPatronTruthReadModel } from "./patron-read-model";
 import { ADMIN_PATRON_QUERY_SORT_CONTRACT, AdminPatronQuerySortContractDto } from "./list-admin-users.use-case";
 import { writeAuditLog } from "@/lib/services/audit.service";
 
@@ -23,21 +23,13 @@ export interface ExportAdminUserDto {
   name: string | null;
   username: string | null;
   role: string;
-  /** Deprecated admin export cache field. Use patronTruth.isPatron for access truth. */
   isPatron: boolean;
-  /** Deprecated admin export cache field retained for existing CSV/header compatibility. */
   patronSince: Date | null;
-  /** Deprecated admin export cache field retained for existing CSV/header compatibility. */
   patronSource: string | null;
-  /** Grant-backed first active PatronGrant date for new admin exports/readers. */
   activeGrantSince: Date | null;
-  /** Grant-backed first active PatronGrant source for new admin exports/readers. */
   activeGrantSource: string | null;
-  /** Grant-backed active PatronGrant count for new admin exports/readers. */
   activeGrantCount: number;
-  patronCache: PatronCacheReadModel;
   patronTruth: PatronTruthReadModel;
-  patronCacheTruthMismatch: boolean;
   normalizedTotal: number;
   language: string | null;
   isDeleted: boolean;
@@ -91,7 +83,6 @@ export async function exportAdminUsers(
   });
 
   const items: ExportAdminUserDto[] = users.map(user => {
-    const patronCache = buildPatronCacheReadModel(user);
     const patronTruth = buildPatronTruthReadModel(user.patronGrants);
 
     return {
@@ -100,15 +91,13 @@ export async function exportAdminUsers(
       name: user.name,
       username: user.username,
       role: user.role,
-      isPatron: user.isPatron,
-      patronSince: user.patronSince,
-      patronSource: user.patronSource,
+      isPatron: patronTruth.isPatron,
+      patronSince: patronTruth.activeGrantSince,
+      patronSource: patronTruth.activeGrantSource,
       activeGrantSince: patronTruth.activeGrantSince,
       activeGrantSource: patronTruth.activeGrantSource,
       activeGrantCount: patronTruth.activeGrantCount,
-      patronCache,
       patronTruth,
-      patronCacheTruthMismatch: patronCache.isPatron !== patronTruth.isPatron,
       normalizedTotal: normalizePaymentTotals(user.paymentTotals.map(pt => ({
         currency: pt.currency,
         amountMinor: pt.amountMinor

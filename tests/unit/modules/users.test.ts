@@ -19,6 +19,9 @@ describe('Users Module', () => {
       user: {
         findUnique: vi.fn().mockResolvedValue(mockUser),
       },
+      patronGrant: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'grant_1' }),
+      },
     } as any;
 
     const ctx = createAppContext({ prisma: mockPrisma });
@@ -74,6 +77,9 @@ describe('Users Module', () => {
         user: {
           findUnique: vi.fn().mockResolvedValue(mockUser),
         },
+        patronGrant: {
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
       } as any;
 
       const ctx = createAppContext({
@@ -95,6 +101,9 @@ describe('Users Module', () => {
       const mockPrisma = {
         user: {
           findUnique: vi.fn().mockResolvedValue(mockUser),
+        },
+        patronGrant: {
+          findFirst: vi.fn().mockResolvedValue(null),
         },
       } as any;
 
@@ -191,12 +200,13 @@ describe('Users Module', () => {
   });
 
   describe('SyncCurrentUserUseCase', () => {
-    it('returns isPatron from DB and ignores other sources', async () => {
+    it('returns isPatron from active PatronGrant and ignores user cache or actor claims', async () => {
       const mockUser = {
         id: 'user_1',
-        isPatron: true,
+        isPatron: false,
         language: 'en',
-        paymentTotals: [{ amountMinor: 5000, currency: 'PLN' }]
+        paymentTotals: [{ amountMinor: 5000, currency: 'PLN' }],
+        patronGrants: [{ id: 'grant_1' }]
       };
 
       const mockPrisma = {
@@ -205,7 +215,6 @@ describe('Users Module', () => {
         },
       } as any;
 
-      // isPatron: false in actor (e.g. from clerk metadata) should be overridden by DB true
       const ctx = createAppContext({
         prisma: mockPrisma,
         actor: { type: 'user', userId: 'user_1', isPatron: false }

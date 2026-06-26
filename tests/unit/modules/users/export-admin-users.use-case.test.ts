@@ -71,7 +71,6 @@ describe('exportAdminUsers use-case', () => {
         activeGrantCount: 1,
         patronQuerySortContract: expect.objectContaining({
           patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT',
-          cacheFieldSource: 'USER_PATRON_CACHE',
         }),
       });
       expect(result.data[0].patronTruth).toMatchObject({
@@ -80,7 +79,6 @@ describe('exportAdminUsers use-case', () => {
         activeGrantSince: new Date('2023-01-01'),
         activeGrantSource: 'STRIPE_TIP',
       });
-      expect(result.data[0].patronCacheTruthMismatch).toBe(false);
     }
 
     expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
@@ -166,12 +164,11 @@ describe('exportAdminUsers use-case', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data[0]).toMatchObject({
-        isPatron: true,
+        isPatron: false,
         activeGrantSince: null,
         activeGrantSource: null,
         activeGrantCount: 0,
         patronTruth: expect.objectContaining({ isPatron: false, activeGrantCount: 0 }),
-        patronCacheTruthMismatch: true,
       });
     }
   });

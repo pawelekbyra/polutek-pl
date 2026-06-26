@@ -18,8 +18,7 @@ export class SyncCurrentUserUseCase {
 
     const repository = new UserRepository(ctx.prisma);
 
-    // Using repository for database access
-    const user = await repository.findWithPaymentTotals(userId);
+    const user = await repository.findWithPaymentTotalsAndActivePatronGrants(userId);
 
     if (!user) {
       throw new UserNotFoundError(userId);
@@ -27,7 +26,7 @@ export class SyncCurrentUserUseCase {
 
     return {
       totalPaid: normalizePaymentTotals(user.paymentTotals as any),
-      isPatron: user.isPatron,
+      isPatron: user.patronGrants.length > 0,
       language: user.language || 'pl',
     };
   }

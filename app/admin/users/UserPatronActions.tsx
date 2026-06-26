@@ -178,7 +178,7 @@ export function UserPatronActions({ userId, isPatron, onActionComplete }: UserPa
                 <p className="font-bold">Efekt dostępu przed potwierdzeniem</p>
                 <p>{currentCopy.effect}</p>
                 <p className="mt-2 text-xs">
-                  Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant. Płatność, cache User.isPatron oraz newsletter/subskrypcja nie są źródłem prawdy dostępu.
+                  Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant. Płatność oraz newsletter/subskrypcja nie są źródłem prawdy dostępu.
                 </p>
               </div>
 

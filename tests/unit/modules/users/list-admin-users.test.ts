@@ -106,8 +106,6 @@ describe('listAdminUsers API contract', () => {
         activeGrantSince: new Date('2023-01-01'),
         activeGrantSource: 'STRIPE_TIP',
       }),
-      patronCache: expect.objectContaining({ isPatron: true, readModelSource: 'USER_PATRON_CACHE' }),
-      patronCacheTruthMismatch: false,
     });
 
     expect(result.items[0].normalizedTotal).toBeGreaterThanOrEqual(100);
@@ -177,21 +175,18 @@ describe('listAdminUsers API contract', () => {
       'u-cache-only',
     ]);
     expect(result.items[1]).toMatchObject({
-      patronSince: staleCacheDate,
+      patronSince: lateGrant,
       activeGrantSince: lateGrant,
       activeGrantSource: 'ADMIN',
-      patronCacheTruthMismatch: false,
     });
     expect(result.items[2]).toMatchObject({
       activeGrantSince: null,
       activeGrantCount: 0,
       patronTruth: expect.objectContaining({ isPatron: false }),
-      patronCacheTruthMismatch: true,
     });
     expect(result.patronQuerySortContract).toMatchObject({
       patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT',
       compatibilityAliases: { orderByPatronSince: 'activeGrantSince' },
-      cacheFieldSource: 'USER_PATRON_CACHE',
     });
   });
 
@@ -250,9 +245,8 @@ describe('listAdminUsers API contract', () => {
     const result = await listAdminUsers({}, ctx);
 
     expect(result.items[0]).toMatchObject({
-      isPatron: false,
+      isPatron: true,
       patronTruth: expect.objectContaining({ isPatron: true, activeGrantCount: 1 }),
-      patronCacheTruthMismatch: true,
     });
   });
 

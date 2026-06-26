@@ -83,18 +83,6 @@ export class UserRepository {
     });
   }
 
-  async findSyncStatusById(id: string) {
-    return await this.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        isPatron: true,
-        language: true,
-        isDeleted: true,
-      }
-    });
-  }
-
   async updateLanguage(id: string, language: string) {
     return await this.user.update({
       where: { id },
@@ -132,11 +120,27 @@ export class UserRepository {
     });
   }
 
-  async findWithPaymentTotals(id: string) {
+  async findWithPaymentTotalsAndActivePatronGrants(id: string) {
     return await this.user.findUnique({
       where: { id },
-      include: { paymentTotals: true } as any
+      include: {
+        paymentTotals: true,
+        patronGrants: {
+          where: { revokedAt: null },
+          select: { id: true },
+          take: 1,
+        },
+      } as any
     });
+  }
+
+  async hasActivePatronGrant(userId: string): Promise<boolean> {
+    const grant = await (this.db as PrismaClient).patronGrant.findFirst({
+      where: { userId, revokedAt: null },
+      select: { id: true },
+    });
+
+    return grant !== null;
   }
 
   async create(data: any) {

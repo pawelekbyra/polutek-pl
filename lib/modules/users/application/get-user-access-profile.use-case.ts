@@ -1,6 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
-import { UserPolicy } from "../domain/user.policy";
 import { SystemRole } from "@prisma/client";
 
 export interface UserAccessProfileDto {
@@ -27,13 +26,15 @@ export async function getUserAccessProfile(
 
   if (!user) return null;
 
+  const hasActivePatronGrant = await repository.hasActivePatronGrant(user.id);
+
   return {
     id: user.id,
     clerkId: user.id, // In this system, userId IS clerkId
     email: user.email,
     role: user.role,
-    isPatron: UserPolicy.isPatron(user.isPatron),
-    isAdmin: UserPolicy.isAdmin(user.role),
+    isPatron: hasActivePatronGrant,
+    isAdmin: user.role === SystemRole.ADMIN,
     isDeleted: user.isDeleted,
     language: user.language,
   };

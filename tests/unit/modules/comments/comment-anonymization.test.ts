@@ -10,7 +10,7 @@ describe('Comment Anonymization Rendering', () => {
       username: 'old_username',
       email: 'old@example.com',
       imageUrl: 'https://example.com/avatar.png',
-      isPatron: true,
+      patronGrants: [{ id: 'grant-1' }],
       isDeleted: true,
       role: 'USER' as const,
     };
@@ -32,7 +32,7 @@ describe('Comment Anonymization Rendering', () => {
       username: null,
       email: 'john@example.com',
       imageUrl: null,
-      isPatron: false,
+      patronGrants: [],
       isDeleted: false,
       role: 'USER' as const,
     };
@@ -48,7 +48,7 @@ describe('Comment Anonymization Rendering', () => {
       username: 'user_2n9VpX9z9z9z9z9z9z9z9z9z9z9',
       email: 'john@example.com',
       imageUrl: null,
-      isPatron: false,
+      patronGrants: [],
       isDeleted: false,
       role: 'USER' as const,
     };

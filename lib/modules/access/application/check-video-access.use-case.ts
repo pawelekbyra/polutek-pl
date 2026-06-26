@@ -115,8 +115,6 @@ export async function checkVideoAccess(
   if (video.tier === AccessTier.LOGGED_IN) return ok({ hasAccess: true });
 
   if (video.tier === AccessTier.PATRON) {
-    // X2 Standard: Active PatronGrant is the ground truth for access.
-    // User.isPatron may be stale; we rely on real-time grant lookup.
     const patronStatusResult = await getPatronStatus(user.id, ctx);
 
     if (patronStatusResult.ok && patronStatusResult.data.activeGrants.length > 0) {

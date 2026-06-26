@@ -106,15 +106,10 @@ describe('getAdminUserDetails Use Case', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.isPatron).toBe(false);
+      expect(result.data.isPatron).toBe(true);
       expect(result.data.patronDiagnostics.truth.isPatron).toBe(true);
       expect(result.data.patronDiagnostics.truth.activeGrantIds).toEqual(['pg-active']);
       expect(result.data.patronDiagnostics.finalPatronStatus).toBe('ACTIVE_GRANT');
-      expect(result.data.patronDiagnostics.cacheTruthMismatch).toMatchObject({
-        hasMismatch: true,
-        cacheSaysPatron: false,
-        truthSaysPatron: true,
-      });
     }
   });
 
@@ -149,15 +144,10 @@ describe('getAdminUserDetails Use Case', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.isPatron).toBe(true);
+      expect(result.data.isPatron).toBe(false);
       expect(result.data.patronDiagnostics.truth.isPatron).toBe(false);
       expect(result.data.patronDiagnostics.truth.activeGrantCount).toBe(0);
       expect(result.data.patronDiagnostics.finalPatronStatus).toBe('NO_ACTIVE_GRANT');
-      expect(result.data.patronDiagnostics.cacheTruthMismatch).toMatchObject({
-        hasMismatch: true,
-        cacheSaysPatron: true,
-        truthSaysPatron: false,
-      });
     }
   });
 

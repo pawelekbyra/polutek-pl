@@ -58,14 +58,46 @@ export class PatronRepository {
     });
   }
 
-  async updateUserPatronFields(userId: string, data: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: PatronGrantSource | null;
-  }, tx: WriteTx) {
+  async updateUserPatronFields(
+    userId: string,
+    data: {
+      isPatron: boolean;
+      patronSince: Date | null;
+      patronSource: PatronGrantSource | null;
+    },
+    tx: WriteTx,
+    options?: { preserveExistingPatronSince?: boolean }
+  ) {
+    type PatronUserUpdateData = {
+      isPatron: boolean;
+      patronSource: PatronGrantSource | null;
+      patronSince?: Date | null;
+    };
+
+    const updateData: PatronUserUpdateData = {
+      isPatron: data.isPatron,
+      patronSource: data.patronSource,
+    };
+
+    let shouldUpdatePatronSince = true;
+
+    if (options?.preserveExistingPatronSince) {
+      const existing = await tx.user.findUnique({
+        where: { id: userId },
+        select: { patronSince: true },
+      });
+      if (existing?.patronSince) {
+        shouldUpdatePatronSince = false;
+      }
+    }
+
+    if (shouldUpdatePatronSince) {
+      updateData.patronSince = data.patronSince;
+    }
+
     return await tx.user.update({
       where: { id: userId },
-      data,
+      data: updateData,
       include: { paymentTotals: true },
     });
   }

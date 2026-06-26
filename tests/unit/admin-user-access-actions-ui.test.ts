@@ -66,8 +66,8 @@ describe("admin user paid-but-locked diagnostics", () => {
     expect(pageSource).toContain("<AdminAccessDiagnostics user={user} formatDate={formatDate} />");
     expect(diagnosticsSource).toContain("Prawda dostępu PatronGrant");
     expect(diagnosticsSource).toContain("Fakty płatności (nie prawda dostępu)");
-    expect(diagnosticsSource).toContain("Cache User.isPatron");
-    expect(diagnosticsSource).toContain("tylko cache");
+    expect(diagnosticsSource).not.toContain("Cache User.isPatron");
+    expect(diagnosticsSource).not.toContain("tylko cache");
     expect(diagnosticsSource).toContain("Newsletter/subskrypcja (niezwiązane z dostępem)");
     expect(diagnosticsSource).toContain("nie nadaje ani nie cofa dostępu Patrona");
   });

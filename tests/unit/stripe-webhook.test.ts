@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { PaymentFulfillmentService } from '@/lib/services/payments/fulfillment.service';
+import { UserAccessService } from '@/lib/services/user-access.service';
 
 const mockConstructEvent = vi.fn();
 
@@ -38,6 +39,10 @@ vi.mock('@/lib/prisma', () => ({
     user: {
         findUnique: vi.fn(),
     },
+    userPaymentTotal: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+    },
     $transaction: vi.fn(async (callback) => callback(prisma)),
   },
   Prisma: {
@@ -64,7 +69,6 @@ vi.mock('@/lib/services/user-access.service', () => ({
     syncClerkAccess: vi.fn().mockResolvedValue(undefined),
     recalculateUserPatronStatus: vi.fn().mockResolvedValue({ isPatron: true, normalizedTotal: 100 }),
   },
-  normalizePaymentTotals: vi.fn().mockReturnValue(100),
 }));
 
 // LEGACY COVERAGE ONLY:
@@ -111,4 +115,39 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
           data: expect.objectContaining({ status: WebhookEventStatus.FAILED, error: 'fulfillment failed' })
       }));
   });
+
+  it('handles partial refunds with PatronGrant-backed recalculation instead of User.isPatron cache', async () => {
+      const event = {
+        id: 'evt_refund_partial',
+        type: 'charge.refunded',
+        data: {
+          object: {
+            amount_refunded: 500,
+            metadata: { paymentId: 'pay_1' },
+            payment_intent: 'pi_1',
+          },
+        },
+      } as any;
+      mockConstructEvent.mockReturnValue(event);
+      vi.mocked(prisma.stripeEvent.create).mockResolvedValue({} as any);
+      vi.mocked(prisma.payment.findUnique).mockResolvedValue({
+        id: 'pay_1',
+        userId: 'user_1',
+        amountMinor: 1000,
+        refundedAmountMinor: 0,
+        currency: 'PLN',
+        status: 'SUCCEEDED',
+      } as any);
+      vi.mocked(prisma.payment.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked((prisma as any).userPaymentTotal.findUnique).mockResolvedValue({ amountMinor: 1000 });
+      vi.mocked((prisma as any).userPaymentTotal.update).mockResolvedValue({} as any);
+      vi.mocked(UserAccessService.recalculateUserPatronStatus).mockResolvedValue({ isPatron: false, normalizedTotal: 5 });
+
+      await PaymentService.handleWebhook(body, sig);
+
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(UserAccessService.recalculateUserPatronStatus).toHaveBeenCalledWith('user_1', prisma);
+      expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith('user_1', false, 5);
+  });
+
 });

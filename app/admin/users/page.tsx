@@ -299,12 +299,10 @@ export default function AdminUsersPage() {
                                     <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200 text-[10px] w-fit">PATRON (GRANT)</Badge>
                                     <div className="text-[9px] text-muted-foreground">Aktywny grant od: {formatDate(user.activeGrantSince || user.patronTruth.firstActiveGrantAt)}</div>
                                     <div className="text-[8px] uppercase font-bold opacity-60">Źródło grantu: {user.activeGrantSource || user.patronTruth.source || "ACTIVE_GRANT"} · aktywne: {user.activeGrantCount ?? user.patronTruth.activeGrantCount}</div>
-                                    {user.patronCacheTruthMismatch && <Badge variant="destructive" className="text-[8px] w-fit">CACHE MISMATCH</Badge>}
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-0.5">
                                     <Badge variant="outline" className="text-[10px] w-fit opacity-50">BRAK AKTYWNEGO GRANTU</Badge>
-                                    {user.patronCacheTruthMismatch && <Badge variant="destructive" className="text-[8px] w-fit">CACHE MISMATCH</Badge>}
                                 </div>
                             )}
                         </div>

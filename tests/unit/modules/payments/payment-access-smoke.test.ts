@@ -57,7 +57,8 @@ describe('Payment to PatronGrant Smoke Test', () => {
             if (!u) return null;
             return {
                 ...u,
-                paymentTotals: Array.from(dbState.totals.values()).filter(t => t.userId === u.id)
+                paymentTotals: Array.from(dbState.totals.values()).filter(t => t.userId === u.id),
+                patronGrants: dbState.grants.filter(g => g.userId === u.id && g.revokedAt === null).slice(0, 1)
             };
         }),
         update: vi.fn(async ({ where, data }) => {
@@ -66,7 +67,8 @@ describe('Payment to PatronGrant Smoke Test', () => {
                 Object.assign(u, data);
                 return {
                     ...u,
-                    paymentTotals: Array.from(dbState.totals.values()).filter(t => t.userId === u.id)
+                    paymentTotals: Array.from(dbState.totals.values()).filter(t => t.userId === u.id),
+                    patronGrants: dbState.grants.filter(g => g.userId === u.id && g.revokedAt === null).slice(0, 1)
                 };
             }
         }),

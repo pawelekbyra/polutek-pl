@@ -55,7 +55,7 @@ export async function fulfillPayment(
         throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${payment.currency}, got ${input.currency}`);
       }
 
-      const user = await repo.findUserWithTotals(payment.userId, tx);
+      const user = await repo.findUserWithPaymentTotalsAndActivePatronGrants(payment.userId, tx);
       if (!user) throw new Error('USER_NOT_FOUND');
 
       // Atomic validated transition PENDING -> SUCCEEDED. All mutable Stripe inputs were
@@ -80,24 +80,16 @@ export async function fulfillPayment(
           userId: user.id,
           email: user.email,
           language: (user.language as 'pl' | 'en') || 'pl',
-          isPatron: user.isPatron,
+          isPatron: user.patronGrants.length > 0,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
           becamePatronNow: false,
           isFirstFulfillment: false,
-          wasEligible: false // Eligibility was checked in first fulfillment
+          wasEligible: false
         };
       }
 
-      // 4. Update User Totals
-      let updatedTotal;
-      if (count > 0) {
-        updatedTotal = await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
-      } else {
-        updatedTotal = user.paymentTotals.find(t => t.currency === payment.currency);
-        if (!updatedTotal) throw new Error('USER_PAYMENT_TOTAL_LOST');
-      }
+      await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
 
-      // 4. Grant Patron Status
       const limits = await getPaymentCurrencyLimits();
       const currency = payment.currency.toUpperCase() as SupportedCurrency;
       const thresholdMinor = limits[currency]?.minAmountMinor;
@@ -109,7 +101,7 @@ export async function fulfillPayment(
         thresholdMinor,
       });
 
-      let isPatron = user.isPatron;
+      let isPatron = user.patronGrants.length > 0;
       let normalizedTotal = normalizePaymentTotals(user.paymentTotals);
       let becamePatronNow = false;
 
@@ -127,16 +119,13 @@ export async function fulfillPayment(
 
         isPatron = grantResult.data.isPatron;
         normalizedTotal = grantResult.data.normalizedTotal;
-        becamePatronNow = true; // simplified for bridge compatibility
+        becamePatronNow = true;
       } else {
         logger.info(`[FulfillPayment] Payment ${payment.id} not eligible for PatronGrant: ${eligibility.code}`);
-        // If not eligible, we still might have updated user totals (which normalizePaymentTotals uses)
-        // If count > 0, we updated them, so let's use the incremented values
-        if (count > 0) {
-           const updatedUser = await repo.findUserWithTotals(payment.userId, tx);
-           if (updatedUser) {
-             normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
-           }
+        const updatedUser = await repo.findUserWithPaymentTotalsAndActivePatronGrants(payment.userId, tx);
+        if (updatedUser) {
+          normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
+          isPatron = updatedUser.patronGrants.length > 0;
         }
       }
 
@@ -156,7 +145,6 @@ export async function fulfillPayment(
       return ok({ isFirstFulfillment: false });
     }
 
-    // 5. Side Effects (Post-Commit style, though here still in the use case flow)
     await UserAccessService.syncClerkAccess(result.userId, result.isPatron, result.normalizedTotal);
 
     if (result.isFirstFulfillment) {

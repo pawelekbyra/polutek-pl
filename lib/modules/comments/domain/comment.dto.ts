@@ -1,13 +1,6 @@
 import { CommentStatus } from "@prisma/client";
 import { toPublicCommentAuthor, publicCommentAuthorSelect } from "@/lib/comments-public-author";
 
-/**
- * Public comment author data.
- *
- * NOTE ON BADGE TRUTH:
- * The `badges` array may contain "PATRON", which is derived from denormalized user metadata.
- * This is for DISPLAY ONLY and may be stale. It must NEVER be used for authorization decisions.
- */
 export interface CommentAuthorDto {
   id: string;
   displayName: string;
@@ -64,7 +57,6 @@ export function mapCommentToDto(
     const isDeleted = comment.status === CommentStatus.DELETED;
     const isHidden = comment.status === CommentStatus.HIDDEN;
 
-    // Non-moderators don't see hidden comments or text of deleted ones
     const shouldHideContent = (isHidden && !canModerate) || (isDeleted && !canModerate);
     const author = (isDeleted && !canModerate) ? null : toPublicCommentAuthor(comment.author, videoCreatorId);
 

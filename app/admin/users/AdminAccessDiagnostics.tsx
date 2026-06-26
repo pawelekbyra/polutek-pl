@@ -14,8 +14,6 @@ function formatMoney(amountMinor: number | null | undefined, currency: string | 
 
 export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnosticsProps) {
   const patronTruth = user.patronDiagnostics?.truth;
-  const patronCache = user.patronDiagnostics?.cache;
-  const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;
   const activeGrantCount = patronTruth?.activeGrantCount ?? 0;
   const revokedGrantCount = user.patronGrants?.filter((grant: any) => Boolean(grant.revokedAt)).length ?? 0;
   const paymentCount = user.payments?.length ?? 0;
@@ -23,6 +21,10 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
   const hasPaymentFacts = paymentCount > 0 || (user.normalizedTotal ?? 0) > 0;
   const paidButLocked = hasPaymentFacts && activeGrantCount === 0;
   const subscriptionCount = user.subscriptions?.length ?? 0;
+
+  const legacyCache = user.patronDiagnostics?.legacyPatronCache;
+  const hasAccessMismatch = user.patronDiagnostics?.accessTruthMismatch;
+  const hasMetadataMismatch = user.patronDiagnostics?.legacyMetadataMismatch;
 
   return (
     <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-3" aria-label="Diagnostyka dostępu paid-but-locked">
@@ -55,14 +57,31 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
         </div>
 
         <div>
-          <dt className="font-bold text-foreground">Diagnostyka niezgodności cache</dt>
-          <dd>Cache User.isPatron: {String(patronCache?.isPatron ?? user.isPatron)} (tylko cache)</dd>
-          <dd>Cache patronSince: {formatDate(patronCache?.patronSince || user.patronSince)}</dd>
-          <dd>Cache patronSource: {patronCache?.patronSource || user.patronSource || "—"}</dd>
-          <dd>
-            Niezgodność: {patronMismatch?.hasMismatch
-              ? `cache=${String(patronMismatch.cacheSaysPatron)} truth=${String(patronMismatch.truthSaysPatron)}`
-              : "brak"}
+          <dt className="font-bold text-foreground text-amber-600">Legacy cache diagnostics (deprecated)</dt>
+          {legacyCache ? (
+              <>
+                  <dd>User.isPatron: {legacyCache.isPatron ? "TRUE" : "FALSE"}</dd>
+                  <dd>User.patronSince: {formatDate(legacyCache.patronSince)}</dd>
+                  <dd>User.patronSource: {legacyCache.patronSource || "—"}</dd>
+
+                  {hasAccessMismatch && (
+                      <dd className="text-destructive font-bold mt-1">
+                          ⚠️ BŁĄD DOSTĘPU: Cache isPatron różni się od źródła prawdy PatronGrant!
+                      </dd>
+                  )}
+
+                  {hasMetadataMismatch && !hasAccessMismatch && (
+                      <dd className="text-amber-500 font-medium mt-1">
+                          ℹ️ Mismatch metadanych: Legacy data/source różnią się od aktywnego grantu (brak wpływu na dostęp).
+                      </dd>
+                  )}
+              </>
+          ) : (
+              <dd>Brak danych legacy cache.</dd>
+          )}
+          <dd className="mt-1 italic text-[9px]">
+            Ważne: Faktyczny dostęp zawsze wynika z aktywnego uprawnienia w tabeli PatronGrant.
+            Pola User są tylko pomocniczym cache.
           </dd>
         </div>
 

@@ -9,7 +9,7 @@ describe('comments privacy helpers', () => {
       name: 'Komentator',
       username: 'komentator',
       imageUrl: 'https://img.example/avatar.png',
-      isPatron: true,
+      patronGrants: [{ id: 'grant-1' }],
       isDeleted: false,
       role: 'USER',
       email: 'private@example.com',

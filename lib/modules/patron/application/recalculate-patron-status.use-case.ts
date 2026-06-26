@@ -18,19 +18,25 @@ export async function recalculatePatronStatus(
   const isPatron = !!activeGrant;
 
   const updateFn = async (currentTx: WriteTx) => {
-    const updatedUser = await repo.updateUserPatronFields(userId, {
+    const updatedUser = await repo.updateUserPatronFields(
+      userId,
+      {
         isPatron,
         patronSince: isPatron ? activeGrant.createdAt : null,
-        patronSource: isPatron ? activeGrant.source : null
-    }, currentTx);
+        patronSource: isPatron ? activeGrant.source : null,
+      },
+      currentTx,
+      { preserveExistingPatronSince: true }
+    );
 
     const activeGrants = await repo.listActiveGrants(userId, currentTx);
+    const firstActiveGrant = activeGrants[0] ?? null;
 
     return {
         userId: updatedUser.id,
-        isPatron: updatedUser.isPatron,
-        patronSince: updatedUser.patronSince,
-        patronSource: updatedUser.patronSource,
+        isPatron: activeGrants.length > 0,
+        patronSince: firstActiveGrant?.createdAt ?? null,
+        patronSource: firstActiveGrant?.source ?? null,
         activeGrants,
         normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
     };
