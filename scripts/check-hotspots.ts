@@ -58,6 +58,11 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
+  "app/components/VideoPlayer.tsx": {
+    maxLines: 650,
+    reason:
+      "Pre-existing large client player module after player-control repairs; tolerated temporarily so hotspot CI remains visible, but must be split in the dedicated player refactor before launch certification.",
+  },
   "app/components/VideoPlaylist.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,

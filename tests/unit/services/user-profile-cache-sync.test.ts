@@ -50,6 +50,7 @@ describe('user profile sync patron cache reconciliation', () => {
         findFirst: vi.fn().mockResolvedValue(activeGrant),
       },
       subscription: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      emailPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       referral: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     };
 

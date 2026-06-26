@@ -67,6 +67,7 @@ const allowedAppRoutes = [
   "app/api/payments/[paymentId]/route.ts",
   "app/api/subscriptions/route.ts",
   "app/api/subscriptions/unsubscribe/route.ts",
+  "app/api/user/account/route.ts",
   "app/api/user/language/route.ts",
   "app/api/user/profile/route.ts",
   "app/api/user/sync/route.ts",

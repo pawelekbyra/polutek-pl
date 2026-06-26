@@ -29,7 +29,7 @@ describe('Account Deletion Integrity', () => {
         commentReaction: { delete: vi.fn(), deleteMany: vi.fn() },
         commentLike: { delete: vi.fn(), deleteMany: vi.fn() },
         commentDislike: { delete: vi.fn(), deleteMany: vi.fn() },
-        subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn(), deleteMany: vi.fn() },
+        subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
         emailPreference: { deleteMany: vi.fn() },
         creator: { updateMany: vi.fn().mockResolvedValue({}) },
         auditLog: { create: vi.fn() },
@@ -38,7 +38,7 @@ describe('Account Deletion Integrity', () => {
   });
 
   it('preserves discussion integrity by soft-deleting rather than hard-deleting', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ email: 'john@example.com' });
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'john@example.com', isDeleted: false });
 
     await SyncUserFromWebhookUseCase.softDelete(ctx(), 'u1');
 
@@ -61,7 +61,7 @@ describe('Account Deletion Integrity', () => {
   });
 
   it('cleans up private data like subscriptions and email preferences during soft-delete', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ email: 'john@example.com' });
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'john@example.com', isDeleted: false });
     mockPrisma.subscription.count.mockResolvedValue(1);
     mockPrisma.subscription.findMany.mockResolvedValue([{ creatorId: 'c1' }]);
 
@@ -74,13 +74,13 @@ describe('Account Deletion Integrity', () => {
 
     // Creator subscriber count is decremented
     expect(mockPrisma.creator.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'c1', subscribersCount: { gt: 0 } },
-        data: { subscribersCount: { decrement: 1 } }
+        where: { id: 'c1' },
+        data: { subscribersCount: 1 }
     }));
 
     // Email preferences are deleted
     expect(mockPrisma.emailPreference.deleteMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { userId: 'u1' }
+        where: { OR: [{ userId: 'u1' }, { email: 'john@example.com' }] }
     }));
   });
 
