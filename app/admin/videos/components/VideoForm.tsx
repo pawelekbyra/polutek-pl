@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send } from "@/app/components/icons";
+import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw } from "@/app/components/icons";
+import { CoverImageUpload } from "./CoverImageUpload";
 
 export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE";
 
@@ -212,9 +213,38 @@ export function VideoForm({
 
           <Card>
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Miniatura</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Label htmlFor="thumbnailUrl">URL miniatury (opcjonalnie)</Label>
-              <Input id="thumbnailUrl" value={formData.thumbnailUrl} onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})} placeholder="Puste pole użyje domyślnego /logo.png" disabled={isSubmitting} />
+            <CardContent className="space-y-6">
+              <CoverImageUpload
+                videoId={formData.id}
+                initialUrl={formData.thumbnailUrl}
+                onUploadSuccess={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
+              />
+
+              <div className="space-y-2 border-t pt-4">
+                <Label htmlFor="thumbnailUrl" className="text-xs text-muted-foreground">Ręczny URL miniatury (opcjonalnie/legacy)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="thumbnailUrl"
+                    value={formData.thumbnailUrl}
+                    onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
+                    placeholder="Puste pole użyje domyślnego /logo.png"
+                    disabled={isSubmitting}
+                    className="text-xs h-8"
+                  />
+                  {formData.thumbnailUrl && formData.thumbnailUrl !== "/logo.png" && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setFormData({...formData, thumbnailUrl: "/logo.png"})}
+                      title="Resetuj do domyślnej"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

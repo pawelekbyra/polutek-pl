@@ -4,7 +4,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, UpdateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { MediaPolicy } from "@/lib/modules/media";
+import { MediaPolicy, MediaStorageService } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import {
     VideoNotFoundError,
@@ -67,6 +67,11 @@ export async function updateAdminVideo(
 
     return video;
   });
+
+  // Cleanup old cover if it was replaced and it was our owned blob
+  if (input.thumbnailUrl && existing.thumbnailUrl && input.thumbnailUrl !== existing.thumbnailUrl) {
+    await MediaStorageService.deleteOwnedBlob(existing.thumbnailUrl);
+  }
 
   return ok(toAdminVideoDto(updated));
 }
