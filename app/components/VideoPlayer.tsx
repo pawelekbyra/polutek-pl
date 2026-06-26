@@ -31,9 +31,23 @@ import { resolvePlaybackSource } from './playback-source';
 interface VideoPlayerProps {
     video: VideoType;
     variant?: 'hero' | 'thumbnail';
+    onViewCounted?: () => void;
 }
 
 const playerIconClass = "h-5 w-5 stroke-[2]";
+
+export function getViewThresholdMs(durationSeconds?: number): number {
+    const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
+        ? durationSeconds * 1000
+        : null;
+
+    return durationMs ? Math.min(10000, durationMs * 0.9) : 10000;
+}
+
+export function shouldSendViewForPlaybackPosition(currentTimeSeconds: number, durationSeconds?: number): boolean {
+    if (!Number.isFinite(currentTimeSeconds) || currentTimeSeconds < 0) return false;
+    return currentTimeSeconds * 1000 >= getViewThresholdMs(durationSeconds);
+}
 
 function PolutekWatermark() {
     return (
@@ -132,7 +146,7 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
+export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
     const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
@@ -153,8 +167,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
-    const sendEvent = useCallback(async (type: string, extra = {}) => {
-        if (!tracking?.playbackSessionId) return;
+    const sendEvent = useCallback(async (type: string, extra = {}): Promise<boolean> => {
+        if (!tracking?.playbackSessionId) return false;
         try {
             const res = await fetch(`/api/videos/${video.id}/playback-event`, {
                 method: 'POST',
@@ -173,9 +187,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 if (error === 'SESSION_EXPIRED') {
                     refreshPlaybackPlan();
                 }
+                return false;
             }
+
+            return res.ok;
         } catch (e) {
             console.warn("Failed to send playback event", type, e);
+            return false;
         }
     }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
@@ -186,11 +204,26 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         }
     }, []);
 
-    const sendWatched10Seconds = useCallback(() => {
-        if (hasReached10s.current) return;
+    const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
+        if (hasReached10s.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
+
         hasReached10s.current = true;
-        sendEvent('WATCHED_10_SECONDS', { positionMs: 10000 });
-    }, [sendEvent]);
+        const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
+            ? Math.floor(durationSeconds * 1000)
+            : 0;
+        const counted = await sendEvent('WATCHED_10_SECONDS', {
+            positionMs: Math.floor(Math.max(0, currentTimeSeconds) * 1000),
+            durationMs,
+        });
+
+        if (counted) {
+            onViewCounted?.();
+        }
+    }, [onViewCounted, sendEvent]);
+
+    const sendWatched10Seconds = useCallback(() => {
+        void maybeSendView(10);
+    }, [maybeSendView]);
 
     const scheduleCloudflareViewFallback = useCallback(() => {
         clearCloudflareViewFallback();
@@ -207,7 +240,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     useEffect(() => {
         setHasStartedPlayback(false);
-    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind]);
+        hasReached10s.current = false;
+        reachedThresholds.current = {};
+        clearCloudflareViewFallback();
+    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId, clearCloudflareViewFallback]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -355,7 +391,12 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         sendEvent('PLAY_STARTED');
                     }}
                     onPause={() => sendEvent('PLAY_PAUSED')}
-                    onEnded={() => sendEvent('ENDED')}
+                    onEnded={() => {
+                        void sendEvent('ENDED');
+                        if (player.current) {
+                            void maybeSendView(player.current.currentTime, player.current.duration);
+                        }
+                    }}
                     onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
                     onWaiting={() => sendEvent('BUFFERING_STARTED')}
                     onPlaying={() => {
@@ -368,10 +409,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                             setHasStartedPlayback(true);
                         }
 
-                        if (!hasReached10s.current && currentTime >= 10) {
-                            hasReached10s.current = true;
-                            sendEvent('WATCHED_10_SECONDS');
-                        }
+                        void maybeSendView(currentTime, duration);
 
                         const pct = (currentTime / duration) * 100;
                         const thresholds = [
