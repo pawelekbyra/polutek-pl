@@ -2,11 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
-import { VideoContentService } from "@/lib/services/content/video.service";
-import {
-  normalizePublicVideoSearchQuery,
-  searchPublicVideos,
-} from "@/lib/services/public-video-search";
+import { VideoSearchService } from "@/lib/services/content/video-search.service";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +13,10 @@ type SearchPageProps = {
 export default async function SearchPage(props: SearchPageProps) {
   const searchParams = await props.searchParams;
   const rawQuery = searchParams.q ?? "";
-  const normalizedQuery = normalizePublicVideoSearchQuery(rawQuery);
-  const videos = normalizedQuery
-    ? await VideoContentService.getSitemapVideos()
+  const normalizedQuery = VideoSearchService.normalizeQuery(rawQuery);
+  const results = normalizedQuery
+    ? await VideoSearchService.searchPublicVideos(rawQuery)
     : [];
-  const results = searchPublicVideos(videos, rawQuery);
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
@@ -56,14 +51,14 @@ export default async function SearchPage(props: SearchPageProps) {
             {results.map((video) => (
               <Link
                 key={video.id}
-                href={`/?v=${video.id}`}
+                href={`/?v=${video.slug || video.id}`}
                 className="group flex gap-4 rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:border-neutral-300 hover:shadow-md"
               >
                 <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl bg-neutral-900 sm:h-32 sm:w-56">
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}
-                      alt={video.title}
+                      alt={`Miniatura filmu: ${video.title}`}
                       fill
                       className="object-cover opacity-90 transition duration-500 group-hover:scale-105"
                     />

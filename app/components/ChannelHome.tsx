@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
+import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -100,15 +101,7 @@ export default function ChannelHome({
       </main>
     );
 
-  const sortedVideos = [...(allVideos || [])].sort((a, b) => {
-    const orderA = a.sidebarOrder === 0 ? 999999 : (a.sidebarOrder ?? 999999);
-    const orderB = b.sidebarOrder === 0 ? 999999 : (b.sidebarOrder ?? 999999);
-    if (orderA !== orderB) return orderA - orderB;
-    return (
-      (b.publishedAt ? new Date(b.publishedAt).getTime() : 0) -
-      (a.publishedAt ? new Date(a.publishedAt).getTime() : 0)
-    );
-  });
+  const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
   const prefetchComments = (vidId: string) => {
     queryClient.prefetchInfiniteQuery({

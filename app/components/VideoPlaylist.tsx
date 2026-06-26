@@ -30,7 +30,6 @@ interface VideoPlaylistProps {
   videos?: PublicVideoDTO[];
   onVideoSelect?: (id: string) => void;
   currentVideoId?: string;
-  isPatron?: boolean;
 }
 
 const VideoPlaylist: React.FC<VideoPlaylistProps> = ({ videoTitle, creatorId }) => {
