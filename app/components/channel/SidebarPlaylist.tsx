@@ -15,6 +15,23 @@ import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 
+type SidebarLayoutItem = PublicVideoDTO & {
+  isLocked?: boolean;
+};
+
+type SidebarLayoutSection = {
+  id: string;
+  type: "FREE" | "LOGGED_IN" | "PATRON" | "ANNOUNCEMENT";
+  title: string;
+  items: SidebarLayoutItem[];
+};
+
+type SidebarLayout = {
+  viewerState: "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
+  sections: SidebarLayoutSection[];
+  currentVideoId?: string;
+};
+
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
   selectedVideoId?: string;
@@ -66,7 +83,7 @@ export function SidebarPlaylist({
     return null;
   };
 
-  const [layout, setLayout] = useState<any>(null);
+  const [layout, setLayout] = useState<SidebarLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
 
@@ -94,7 +111,7 @@ export function SidebarPlaylist({
     fetchLayout();
   }, [selectedVideoId]);
 
-  const renderVideoItem = (video: any) => {
+  const renderVideoItem = (video: SidebarLayoutItem) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
@@ -108,25 +125,23 @@ export function SidebarPlaylist({
       <div
         key={video.id || video.slug}
         onMouseEnter={() => onVideoMouseEnter(video.id)}
-        className={cn(
-          "group flex gap-2 p-1 rounded-lg transition-colors relative cursor-pointer",
-          isCurrent ? "bg-[#ebebeb]" : "hover:bg-[#ebebeb]",
-        )}
+        className="relative"
       >
         <Link
-          href={`/?v=${video.id}`}
+          href={`/?v=${video.slug || video.id}`}
           scroll={false}
-          className="absolute inset-0 z-0"
-        />
-        <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative z-10 group/thumb border border-neutral-300">
-          <Link
-            href={`/?v=${video.id}`}
-            scroll={false}
-            className="absolute inset-0 z-40"
-          />
+          aria-current={isCurrent ? "page" : undefined}
+          className={cn(
+            "group flex gap-2 p-1 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            isCurrent ? "bg-[#ebebeb]" : "hover:bg-[#ebebeb]",
+          )}
+        >
+        <div className="w-[168px] h-[94px] shrink-0 overflow-hidden rounded-md bg-black relative group/thumb border border-neutral-300">
           <div className="relative w-full h-full">
             {lockState ? (
-              <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+              <div className="pointer-events-none">
+                <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+              </div>
             ) : video.thumbnailUrl ? (
               <Image
                 src={video.thumbnailUrl}
@@ -148,15 +163,9 @@ export function SidebarPlaylist({
           </div>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10 relative">
-          <Link
-            href={`/?v=${video.id}`}
-            scroll={false}
-            className="hover:opacity-80 transition-opacity"
-          >
-            <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight">
-              {displayTitle}
-            </h4>
-          </Link>
+          <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.2] tracking-tight group-hover:opacity-80 transition-opacity">
+            {displayTitle}
+          </h4>
           <div className="text-[12px] text-[#606060] flex flex-col mt-0.5">
             <div className="hover:text-[#0f0f0f] transition-colors w-fit relative z-20">
               {video.creator?.name || "Anonimowy Twórca"}
@@ -203,6 +212,7 @@ export function SidebarPlaylist({
               );
             })()}
         </div>
+        </Link>
       </div>
     );
   };
@@ -260,22 +270,16 @@ export function SidebarPlaylist({
     );
   }
 
-  // We need to find where to put the tip gate.
-  // Requirement: "nad bramke napiwkowa pod darmowymi materiałami"
-  // After implementing renaming, "Darmowe materiały" is "Publiczne".
-  // The layout has sections: Publiczne (FREE), Dla zalogowanych (LOGGED_IN), Strefa Patrona (PATRON).
-  // We want: Publiczne, Dla zalogowanych, TIP GATE, Strefa Patrona.
+  // Support box is rendered between public/logged-in materials and patron materials.
 
-  const publicSection = layout.sections.find((s: any) => s.type === "FREE");
-  const loggedInSection = layout.sections.find(
-    (s: any) => s.type === "LOGGED_IN",
-  );
-  const patronSection = layout.sections.find((s: any) => s.type === "PATRON");
+  const publicSection = layout.sections.find((s) => s.type === "FREE");
+  const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
+  const patronSection = layout.sections.find((s) => s.type === "PATRON");
   const otherSections = layout.sections.filter(
-    (s: any) => !["FREE", "LOGGED_IN", "PATRON"].includes(s.type),
+    (s) => !["FREE", "LOGGED_IN", "PATRON"].includes(s.type),
   );
 
-  const renderSection = (section: any) => (
+  const renderSection = (section: SidebarLayoutSection) => (
     <div key={section.id} className="space-y-2 mb-6">
       <div className="pb-1 border-b border-neutral-100">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
@@ -291,16 +295,19 @@ export function SidebarPlaylist({
       {publicSection && renderSection(publicSection)}
       {loggedInSection && renderSection(loggedInSection)}
 
-      {/* TIP GATE - Always show after Public/Logged-in if there's content */}
-      {(publicSection || loggedInSection) && (
-        <div className="pt-2 pb-6">
-          <VideoPlaylist
-            videoTitle={layout.sections[0]?.items[0]?.title || "Materiały"}
-            creatorId={layout.sections[0]?.items[0]?.creatorId || ""}
-            isPatron={viewerIsPatron}
-          />
-        </div>
-      )}
+      {/* SupportBox - show after Public/Logged-in if a support creator is known */}
+      {(publicSection || loggedInSection) && (() => {
+        const supportItem = layout.sections.flatMap((section) => section.items).find((item) => item.creatorId);
+        if (!supportItem?.creatorId) return null;
+        return (
+          <div className="pt-2 pb-6">
+            <VideoPlaylist
+              videoTitle={supportItem.title || "Materiały"}
+              creatorId={supportItem.creatorId}
+            />
+          </div>
+        );
+      })()}
 
       {patronSection && renderSection(patronSection)}
       {otherSections.map(renderSection)}

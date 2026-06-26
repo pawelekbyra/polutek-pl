@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { compareSidebarItems } from '@/lib/services/content/sidebar-order';
 
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
 
@@ -15,6 +16,9 @@ export type SidebarItem = {
     duration?: string | null;
     views: number;
     publishedAt: Date | null;
+    createdAt?: Date | null;
+    sidebarOrder?: number | null;
+    creatorId: string;
     isLocked: boolean;
     creator?: {
         id: string;
@@ -67,18 +71,16 @@ export class ChannelLayoutService {
                     { publishedAt: { lte: now } },
                 ],
             },
-            orderBy: [
-                { sidebarOrder: 'asc' },
-                { publishedAt: 'desc' }
-            ],
             include: { creator: true }
         });
 
+        const sortedVideos = [...videos].sort(compareSidebarItems);
+
         const sections: SidebarSection[] = [];
 
-        const freeVideos = videos.filter(v => v.tier === AccessTier.PUBLIC);
-        const loggedInVideos = videos.filter(v => v.tier === AccessTier.LOGGED_IN);
-        const patronVideos = videos.filter(v => v.tier === AccessTier.PATRON);
+        const freeVideos = sortedVideos.filter(v => v.tier === AccessTier.PUBLIC);
+        const loggedInVideos = sortedVideos.filter(v => v.tier === AccessTier.LOGGED_IN);
+        const patronVideos = sortedVideos.filter(v => v.tier === AccessTier.PATRON);
 
         const mapItem = (v: any): SidebarItem => ({
             id: v.id,
@@ -91,6 +93,9 @@ export class ChannelLayoutService {
             duration: v.duration,
             views: v.views,
             publishedAt: v.publishedAt,
+            createdAt: v.createdAt,
+            sidebarOrder: v.sidebarOrder,
+            creatorId: v.creatorId,
             isLocked: this.isLocked(v.tier, viewerState),
             creator: v.creator ? {
                 id: v.creator.id,
