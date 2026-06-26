@@ -42,6 +42,20 @@
   }
 }
 
+@layer utilities {
+  .bg-\[\#1F7A88\] {
+    background-color: hsl(var(--primary)) !important;
+  }
+
+  .hover\:bg-\[\#1F7A88\]\/90:hover {
+    background-color: hsl(var(--primary) / 0.9) !important;
+  }
+
+  .active\:bg-\[\#1F7A88\]\/85:active {
+    background-color: hsl(var(--primary) / 0.85) !important;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
