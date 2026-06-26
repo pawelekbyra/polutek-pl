@@ -29,12 +29,15 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
     expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
     expect(player).not.toContain("Settings");
-    expect(player).toContain("const playerIconClass = \"h-5 w-5 stroke-[2]\";");
+    expect(player).toContain("const playerIconClass = \"h-6 w-6 stroke-[2]\";");
     expect(player).not.toContain("const doodleIconClass");
     expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
     expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
     expect(player).not.toContain("rounded-full border border-white/15 bg-black/35");
     expect(player).toContain("inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
+    expect(player).toContain("text-[15px] font-semibold");
+    expect(player).toContain("<TimeSlider.Progress className=\"pointer-events-none");
+    expect(player).toContain("<TimeSlider.TrackFill className={`pointer-events-none");
     expect(player).toContain("bg-[#1F7A88]");
     expect(player).toContain("pointer-events-none absolute left-[var(--slider-fill)]");
     expect(player).toContain("group-data-[active]/slider:h-2.5");

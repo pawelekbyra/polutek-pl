@@ -34,7 +34,7 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-const playerIconClass = "h-5 w-5 stroke-[2]";
+const playerIconClass = "h-6 w-6 stroke-[2]";
 const sliderAccentClass = "bg-[#1F7A88]";
 
 function PolutekWatermark() {
@@ -101,7 +101,7 @@ function PlayerTimeReadout() {
     const duration = useMediaState('duration');
 
     return (
-        <span className="inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-sm font-medium leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
+        <span className="inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-[15px] font-semibold leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
             <span>{formatPlayerTime(currentTime)}</span><span className="text-white/60">/</span><span className="text-white/75">{formatPlayerTime(duration)}</span>
         </span>
     );
@@ -116,8 +116,8 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
             <TimeSlider.Root className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
                 <TimeSlider.Track className={trackClass}>
-                    <TimeSlider.Progress className="absolute h-full rounded-full bg-white/35" />
-                    <TimeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
+                    <TimeSlider.Progress className="pointer-events-none absolute h-full rounded-full bg-white/35" />
+                    <TimeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
                 </TimeSlider.Track>
                 <TimeSlider.Thumb className={thumbClass} />
             </TimeSlider.Root>
@@ -130,7 +130,7 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
                         <VolumeSlider.Root className="group/slider relative hidden h-11 w-28 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
                             <VolumeSlider.Track className={trackClass}>
-                                <VolumeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
+                                <VolumeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
                             </VolumeSlider.Track>
                             <VolumeSlider.Thumb className={thumbClass} />
                         </VolumeSlider.Root>
