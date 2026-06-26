@@ -68,14 +68,16 @@ export async function POST(req: NextRequest) {
       : blob.url;
 
     return NextResponse.json({ url: displayUrl, storageUrl: blob.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_COVER_UPLOAD_ERROR]", error);
 
-    if (error?.message?.includes("public access") || error?.message?.includes("private store")) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes("public access") || message.includes("private store")) {
       return NextResponse.json(
         {
           error: "Vercel Blob storage is configured for private access. The 'public' access mode is forbidden. Upload failed.",
-          details: error.message
+          details: message
         },
         { status: 400 }
       );

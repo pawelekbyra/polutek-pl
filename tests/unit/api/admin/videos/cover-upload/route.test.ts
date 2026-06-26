@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/admin/videos/cover-upload/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
@@ -30,6 +30,66 @@ describe('POST /api/admin/videos/cover-upload', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(401);
+  });
+
+  it('rejects missing file', async () => {
+    vi.mocked(requireAdminForApi).mockResolvedValue({
+      adminUserId: 'admin-1',
+      response: null as any,
+    });
+
+    const formData = new FormData();
+    const req = new NextRequest('http://localhost/api/admin/videos/cover-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe('No file uploaded');
+  });
+
+  it('rejects invalid MIME type', async () => {
+    vi.mocked(requireAdminForApi).mockResolvedValue({
+      adminUserId: 'admin-1',
+      response: null as any,
+    });
+
+    const formData = new FormData();
+    const file = new File(['dummy'], 'test.txt', { type: 'text/plain' });
+    formData.append('file', file);
+
+    const req = new NextRequest('http://localhost/api/admin/videos/cover-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/Invalid file type/);
+  });
+
+  it('rejects oversize file', async () => {
+    vi.mocked(requireAdminForApi).mockResolvedValue({
+      adminUserId: 'admin-1',
+      response: null as any,
+    });
+
+    const formData = new FormData();
+    const file = new File([new ArrayBuffer(6 * 1024 * 1024)], 'large.jpg', { type: 'image/jpeg' });
+    formData.append('file', file);
+
+    const req = new NextRequest('http://localhost/api/admin/videos/cover-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/File too large/);
   });
 
   it('handles public access upload', async () => {
@@ -110,5 +170,29 @@ describe('POST /api/admin/videos/cover-upload', () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toMatch(/Video must be saved/);
+  });
+
+  it('handles Vercel Blob access conflict errors', async () => {
+    vi.mocked(requireAdminForApi).mockResolvedValue({
+      adminUserId: 'admin-1',
+      response: null as any,
+    });
+    vi.mocked(put).mockRejectedValue(new Error('Vercel Blob: Cannot use public access on a private store.'));
+
+    const formData = new FormData();
+    const file = new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' });
+    formData.append('file', file);
+    formData.append('videoId', 'v1');
+
+    const req = new NextRequest('http://localhost/api/admin/videos/cover-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/configured for private access/);
   });
 });

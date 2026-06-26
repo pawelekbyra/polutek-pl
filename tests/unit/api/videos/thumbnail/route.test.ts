@@ -2,19 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/videos/[videoId]/thumbnail/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActorFromAuth } from '@/lib/api/auth';
-import { getGatedBlobResponse } from '@/lib/blob';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { ThumbnailResponseService } from '@/lib/services/storage/thumbnail-response.service';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/blob', () => ({
-  getGatedBlobResponse: vi.fn(),
-}));
-
 vi.mock('@/lib/modules/shared/app-context', () => ({
   createAppContext: vi.fn(),
+}));
+
+vi.mock('@/lib/services/storage/thumbnail-response.service', () => ({
+  ThumbnailResponseService: {
+    getThumbnailResponse: vi.fn(),
+  },
 }));
 
 describe('GET /api/videos/[videoId]/thumbnail', () => {
@@ -42,7 +44,11 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
     await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
 
-    expect(getGatedBlobResponse).toHaveBeenCalled();
+    expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith(
+      'v1',
+      'https://images.unsplash.com/photo-123',
+      expect.any(Headers)
+    );
   });
 
   it('restricts access to draft video thumbnail for guests', async () => {
@@ -72,7 +78,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
     await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
 
-    expect(getGatedBlobResponse).toHaveBeenCalled();
+    expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalled();
   });
 
   it('returns 404 if video or thumbnail missing', async () => {
@@ -83,21 +89,5 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     const res = await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
 
     expect(res.status).toBe(404);
-  });
-
-  it('blocks unauthorized hosts', async () => {
-    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'guest' } as any);
-    mockPrisma.video.findUnique.mockResolvedValue({
-      id: 'v1',
-      thumbnailUrl: 'https://malicious.com/thumb.jpg',
-      status: 'PUBLISHED',
-    });
-
-    const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
-    const res = await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
-
-    expect(res.status).toBe(403);
-    const data = await res.json();
-    expect(data.error).toMatch(/Unauthorized Thumbnail Host/);
   });
 });

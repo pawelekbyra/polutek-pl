@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGatedBlobResponse } from "@/lib/blob";
 import { createScopedLogger } from "@/lib/logger";
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { MediaPolicy } from "@/lib/modules/media";
+import { ThumbnailResponseService } from "@/lib/services/storage/thumbnail-response.service";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +39,7 @@ export async function GET(
     }
 
     // 2. Thumbnail Access Policy
-    // - Public/Published videos: thumbnails are public.
+    // - Published videos: thumbnails are public (regardless of patron-only playback).
     // - Drafts/Archived/Unpublished: admin-only.
     const isPublic = video.status === "PUBLISHED";
     const isAdmin = actor.type === "admin";
@@ -49,23 +48,9 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden: Video is not public" }, { status: 403 });
     }
 
-    // 3. Handle different URL types
-    const thumbnailUrl = video.thumbnailUrl;
+    // 3. Delegate to ThumbnailResponseService to handle storage streaming/redirect
+    return ThumbnailResponseService.getThumbnailResponse(video.id, video.thumbnailUrl, req.headers);
 
-    // Validate the host
-    if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
-      scopedLogger.warn("[THUMBNAIL_PROXY_BLOCKED_HOST]", { thumbnailUrl });
-      return NextResponse.json({ error: "Unauthorized Thumbnail Host" }, { status: 403 });
-    }
-
-    const userId = actor.type === "user" ? actor.userId : (actor.type === "admin" ? actor.userId : null);
-
-    // If it's a Vercel Blob or other supported storage, use getGatedBlobResponse
-    // Otherwise, we might want to redirect if it's already a public allowed URL
-    // but streaming ensures we don't leak upstream hosts that Next Image config might block.
-    // However, if it's already public and allowed, redirect is more efficient.
-
-    return getGatedBlobResponse(userId, video.id, thumbnailUrl, req.headers);
   } catch (error) {
     scopedLogger.error("[THUMBNAIL_PROXY_ERROR]", error);
     return handleApiError(error);

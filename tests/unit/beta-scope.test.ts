@@ -47,6 +47,7 @@ const allowedAppRoutes = [
   "app/api/admin/comments/route.ts",
   "app/api/admin/videos/[id]/route.ts",
   "app/api/admin/videos/[id]/upload/route.ts",
+  "app/api/admin/videos/cover-upload/route.ts",
   "app/api/comments/[commentId]/context/route.ts",
   "app/api/comments/[commentId]/pin/route.ts",
   "app/api/comments/[commentId]/reaction/route.ts",
@@ -73,6 +74,7 @@ const allowedAppRoutes = [
   "app/api/user/sync/route.ts",
   "app/api/videos/[id]/comments/route.ts",
   "app/api/videos/[id]/playback-event/route.ts",
+  "app/api/videos/[videoId]/thumbnail/route.ts",
   "app/api/webhooks/clerk/route.ts",
   "app/api/webhooks/cloudflare-stream/route.ts",
   "app/api/webhooks/resend/route.ts",
@@ -88,6 +90,7 @@ const allowedAppRoutes = [
 
 const approvedRoutesMatchingOutOfScopeWords = new Set([
   "app/api/admin/videos/[id]/upload/route.ts",
+  "app/api/admin/videos/cover-upload/route.ts",
 ]);
 
 const outOfScopeRoutePatterns = [

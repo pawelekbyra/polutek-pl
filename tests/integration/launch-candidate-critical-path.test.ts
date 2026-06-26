@@ -58,6 +58,7 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
   CloudflareSignedPlaybackTokenService: {
+    isConfigured: vi.fn(() => true),
     createSignedPlaybackToken: vi.fn(({ videoUid }) => {
       cloudflareTokenCalls.push(videoUid);
       return {
