@@ -20,8 +20,12 @@ export interface PatronDiagnosticsReadModel {
     patronSince: Date | null;
     patronSource: string | null;
   };
-  /** Indicates if the legacy cache differs from the current source of truth. */
+  /** Indicates if the legacy cache differs from the current source of truth in terms of access. */
+  accessTruthMismatch: boolean;
+  /** Alias for accessTruthMismatch for backward compatibility. */
   cacheTruthMismatch: boolean;
+  /** Indicates if the legacy cache metadata (since, source) differs from the current source of truth. */
+  legacyMetadataMismatch: boolean;
 }
 
 export function buildPatronTruthReadModel(
@@ -67,8 +71,8 @@ export function buildPatronDiagnosticsReadModel(
 ): PatronDiagnosticsReadModel {
   const truth = buildPatronTruthReadModel(patronGrants);
 
-  const mismatch =
-    truth.isPatron !== legacyCache.isPatron ||
+  const accessMismatch = truth.isPatron !== legacyCache.isPatron;
+  const metadataMismatch =
     truth.activeGrantSince?.getTime() !== legacyCache.patronSince?.getTime() ||
     truth.activeGrantSource !== legacyCache.patronSource;
 
@@ -77,6 +81,8 @@ export function buildPatronDiagnosticsReadModel(
     finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
     truth,
     legacyPatronCache: legacyCache,
-    cacheTruthMismatch: mismatch,
+    accessTruthMismatch: accessMismatch,
+    cacheTruthMismatch: accessMismatch, // Alias for accessTruthMismatch
+    legacyMetadataMismatch: metadataMismatch,
   };
 }

@@ -68,7 +68,18 @@ export class PatronRepository {
     tx: WriteTx,
     options?: { preserveExistingPatronSince?: boolean }
   ) {
-    let finalPatronSince = data.patronSince;
+    type PatronUserUpdateData = {
+      isPatron: boolean;
+      patronSource: PatronGrantSource | null;
+      patronSince?: Date | null;
+    };
+
+    const updateData: PatronUserUpdateData = {
+      isPatron: data.isPatron,
+      patronSource: data.patronSource,
+    };
+
+    let shouldUpdatePatronSince = true;
 
     if (options?.preserveExistingPatronSince) {
       const existing = await tx.user.findUnique({
@@ -76,17 +87,17 @@ export class PatronRepository {
         select: { patronSince: true },
       });
       if (existing?.patronSince) {
-        finalPatronSince = undefined as any;
+        shouldUpdatePatronSince = false;
       }
+    }
+
+    if (shouldUpdatePatronSince) {
+      updateData.patronSince = data.patronSince;
     }
 
     return await tx.user.update({
       where: { id: userId },
-      data: {
-        isPatron: data.isPatron,
-        patronSince: finalPatronSince,
-        patronSource: data.patronSource,
-      },
+      data: updateData,
       include: { paymentTotals: true },
     });
   }
