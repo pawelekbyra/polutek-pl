@@ -24,30 +24,33 @@ const shellRadius = {
 const scaleClasses = {
   default: {
     content: "p-6 sm:p-8 md:p-10",
-    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)]",
-    iconSpace: "mb-[clamp(1rem,3cqi,2rem)]",
+    centerCluster: "-translate-y-[clamp(0.2rem,1.2cqi,0.8rem)]",
+    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)] shrink-0 aspect-square",
+    iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
     headline: "text-[clamp(2rem,10cqi,6rem)]",
-    divider: "my-[clamp(0.625rem,1.5cqi,0.75rem)] w-[clamp(6rem,18cqi,12rem)]",
-    cta: "mt-[clamp(1.5rem,4cqi,2.5rem)]",
+    divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,18cqi,12rem)]",
+    cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
     ctaLine: "w-24 group-hover/cta:w-48",
     ctaText: "text-[10px] tracking-[0.5em]",
   },
   thumbnail: {
     content: "p-3",
-    icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)]",
-    iconSpace: "mb-[clamp(0.45rem,3cqi,0.85rem)]",
+    centerCluster: "-translate-y-[clamp(0.1rem,1cqi,0.35rem)]",
+    icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)] shrink-0 aspect-square",
+    iconSpace: "mb-[clamp(0.35rem,2.1cqi,0.65rem)]",
     headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
-    divider: "my-[clamp(0.25rem,1.8cqi,0.45rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
+    divider: "my-[clamp(0.18rem,1.25cqi,0.32rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
     cta: "hidden",
     ctaLine: "w-12",
     ctaText: "text-[7px] tracking-[0.3em]",
   },
   thumbnailCompact: {
     content: "p-2",
-    icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)]",
-    iconSpace: "mb-[clamp(0.35rem,2.8cqi,0.65rem)]",
+    centerCluster: "-translate-y-[clamp(0.05rem,0.8cqi,0.22rem)]",
+    icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)] shrink-0 aspect-square",
+    iconSpace: "mb-[clamp(0.25rem,1.9cqi,0.48rem)]",
     headline: "text-[clamp(0.9rem,13cqi,2rem)]",
-    divider: "my-[clamp(0.2rem,1.6cqi,0.35rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
+    divider: "my-[clamp(0.14rem,1.1cqi,0.24rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
     cta: "hidden",
     ctaLine: "w-10",
     ctaText: "text-[6px] tracking-[0.25em]",
@@ -108,62 +111,69 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
         <div
           className={cn(
-            "relative z-10 flex h-full w-full origin-center flex-col items-center justify-center text-center",
+            "relative z-10 h-full w-full text-center",
             size.content,
           )}
         >
-          {isPatronState ? (
-            <div
-              className={cn(
-                "inline-flex items-center justify-center transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
-                size.iconSpace,
-              )}
-              aria-label="Strefa Patronów"
-            >
-              <PatronGemIcon
-                className={cn(size.icon, config.accent, config.shadow)}
-              />
-            </div>
-          ) : (
-            <SignInButton mode="modal">
-              <button
-                type="button"
+          <div
+            className={cn(
+              "absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3",
+              size.centerCluster,
+            )}
+          >
+            {isPatronState ? (
+              <div
                 className={cn(
-                  "inline-flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition duration-200 hover:scale-105 hover:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                  "inline-flex shrink-0 items-center justify-center transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
                   size.iconSpace,
                 )}
-                aria-label="Zaloguj się"
+                aria-label="Strefa Patronów"
               >
-                <DoorLockIcon
+                <PatronGemIcon
                   className={cn(size.icon, config.accent, config.shadow)}
                 />
-              </button>
-            </SignInButton>
-          )}
+              </div>
+            ) : (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className={cn(
+                    "inline-flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition duration-200 hover:scale-105 hover:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                    size.iconSpace,
+                  )}
+                  aria-label="Zaloguj się"
+                >
+                  <DoorLockIcon
+                    className={cn(size.icon, config.accent, config.shadow)}
+                  />
+                </button>
+              </SignInButton>
+            )}
 
-          <div
-            className={cn(
-              "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
-              config.firstLineColor,
-              size.headline,
-            )}
-          >
-            {config.firstLine}
-          </div>
-          <div
-            className={cn(
-              "h-px bg-white/10",
-              size.divider,
-            )}
-          />
-          <div
-            className={cn(
-              "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
-              config.secondLineColor,
-              size.headline,
-            )}
-          >
-            {config.secondLine}
+            <div
+              className={cn(
+                "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+                config.firstLineColor,
+                size.headline,
+              )}
+            >
+              {config.firstLine}
+            </div>
+            <div
+              className={cn(
+                "h-px bg-white/10",
+                size.divider,
+              )}
+            />
+            <div
+              className={cn(
+                "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+                config.secondLineColor,
+                size.headline,
+              )}
+            >
+              {config.secondLine}
+            </div>
           </div>
 
           {isPatronState ? (
@@ -176,7 +186,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
               className={cn(
-                "group/cta flex flex-col items-center gap-2 text-white/30 no-underline transition-colors duration-200 motion-reduce:transition-none",
+                "group/cta absolute left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-white/30 no-underline transition-colors duration-200 motion-reduce:transition-none",
                 config.ctaHover,
                 size.cta,
               )}
@@ -201,7 +211,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
               <button
                 type="button"
                 className={cn(
-                  "group/cta flex cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0 text-white/30 transition-colors duration-200 hover:text-[#3b82f6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                  "group/cta absolute left-1/2 flex -translate-x-1/2 cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0 text-white/30 transition-colors duration-200 hover:text-[#3b82f6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
                   size.cta,
                 )}
               >
