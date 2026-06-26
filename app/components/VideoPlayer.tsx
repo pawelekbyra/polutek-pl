@@ -11,7 +11,6 @@ import {
     MediaProvider,
     MuteButton,
     PlayButton,
-    Poster,
     VolumeSlider,
     useMediaRemote,
     isTrackCaptionKind,
@@ -463,7 +462,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
                     title={playerConfig?.title || video.title || 'Video'}
                     src={src}
-                    poster={posterUrl}
                     muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
                     autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
                     playsInline
@@ -532,13 +530,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                                 default={track.default}
                             />
                         ))}
-                        {!hasStartedPlayback && (
-                            <Poster
-                                className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover opacity-90 transition-opacity data-[hidden]:hidden"
-                                src={posterUrl}
-                                alt={video.title || 'Video poster'}
-                            />
-                        )}
                     </MediaProvider>
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
                     {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
