@@ -278,7 +278,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
     const hasReached10s = useRef(false);
-    const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
     const sendEvent = useCallback(async (type: string, extra = {}): Promise<{ ok: boolean; viewCounted?: boolean }> => {
@@ -312,17 +312,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         }
     }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
-    const clearCloudflareViewFallback = useCallback(() => {
-        if (cloudflareViewFallbackTimer.current) {
-            clearTimeout(cloudflareViewFallbackTimer.current);
-            cloudflareViewFallbackTimer.current = null;
-        }
-    }, []);
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
-        if (hasReached10s.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
+        if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
 
-        hasReached10s.current = true;
+        viewCountRequestInFlight.current = true;
         const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
             ? Math.floor(durationSeconds * 1000)
             : 0;
@@ -331,25 +325,15 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
             durationMs,
         });
 
-        if (result.ok && result.viewCounted) {
-            onViewCounted?.();
+        if (result.ok) {
+            hasReached10s.current = true;
+            if (result.viewCounted) {
+                onViewCounted?.();
+            }
         }
+
+        viewCountRequestInFlight.current = false;
     }, [onViewCounted, sendEvent]);
-
-    const sendWatched10Seconds = useCallback(() => {
-        const currentTime = player.current?.currentTime;
-        const duration = player.current?.duration;
-        void maybeSendView(Number.isFinite(currentTime) && currentTime ? currentTime : 10, duration);
-    }, [maybeSendView]);
-
-    const scheduleCloudflareViewFallback = useCallback(() => {
-        clearCloudflareViewFallback();
-        cloudflareViewFallbackTimer.current = setTimeout(sendWatched10Seconds, 10000);
-    }, [clearCloudflareViewFallback, sendWatched10Seconds]);
-
-    useEffect(() => {
-        return clearCloudflareViewFallback;
-    }, [clearCloudflareViewFallback, playerKey, tracking?.playbackSessionId]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -358,9 +342,9 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     useEffect(() => {
         setHasStartedPlayback(false);
         hasReached10s.current = false;
+        viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
-        clearCloudflareViewFallback();
-    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId, clearCloudflareViewFallback]);
+    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -436,44 +420,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     }
 
     const src = resolvedSource.src;
-
-    if (resolvedSource.mode === 'cloudflare-iframe-fallback') {
-        return (
-            <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
-                <PolutekWatermark />
-                {loadError ? (
-                    <PlayerErrorOverlay
-                        errorCode="MEDIA_LOAD_FAILED"
-                        onRetry={() => {
-                            clearCloudflareViewFallback();
-                            setLoadError(null);
-                            refreshPlaybackPlan?.();
-                        }}
-                        isAdmin={isAdmin}
-                    />
-                ) : (
-                    <iframe
-                        key={playerKey}
-                        className="h-full w-full border-0"
-                        src={src}
-                        title={playerConfig?.title || video.title || 'Video'}
-                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-                        allowFullScreen
-                        onLoad={() => {
-                            sendEvent('PLAYER_READY');
-                            scheduleCloudflareViewFallback();
-                        }}
-                        onError={() => {
-                            clearCloudflareViewFallback();
-                            setLoadError('Nie udało się załadować materiału wideo. Sprawdź dostępność źródła.');
-                            setPlayerKey((k) => k + 1);
-                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
-                        }}
-                    />
-                )}
-            </div>
-        );
-    }
 
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">

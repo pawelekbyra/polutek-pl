@@ -118,13 +118,41 @@ describe('recordPlaybackEventUseCase', () => {
     vi.mocked(setNxEx).mockResolvedValue(true);
   });
 
-  it('counts one view for WATCHED_10_SECONDS with a valid session', async () => {
-    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb();
+  it('does not count WATCHED_10_SECONDS without credible playback progress', async () => {
+    const { ctx, createVideoView, updateVideo } = createDb();
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
       type: 'WATCHED_10_SECONDS',
       sessionId: 's1',
+      positionMs: 10000,
+      durationMs: 60000,
+      ipHash: 'ip1',
+      uaHash: 'ua1',
+      fingerprint: 'f1',
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw result.error;
+    expect(result.data.viewCounted).toBe(false);
+    expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
+    expect(createVideoView).not.toHaveBeenCalled();
+    expect(updateVideo).not.toHaveBeenCalled();
+  });
+
+  it('counts one view for WATCHED_10_SECONDS with valid controlled-player progress', async () => {
+    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb(createSession({
+      firstPlayAt: new Date('2026-01-01T00:00:01.000Z'),
+      maxProgressMs: 9000,
+      durationMs: 60000,
+    }));
+
+    const result = await recordPlaybackEventUseCase({
+      videoId: 'v1',
+      type: 'WATCHED_10_SECONDS',
+      sessionId: 's1',
+      positionMs: 10000,
+      durationMs: 60000,
       ipHash: 'ip1',
       uaHash: 'ua1',
       fingerprint: 'f1',
@@ -146,12 +174,18 @@ describe('recordPlaybackEventUseCase', () => {
   });
 
   it('does not increment twice when a duplicate WATCHED_10_SECONDS cannot claim the same session', async () => {
-    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb(createSession(), 0);
+    const { ctx, updateSessionClaim, createVideoView, updateVideo } = createDb(createSession({
+      firstPlayAt: new Date('2026-01-01T00:00:01.000Z'),
+      maxProgressMs: 10000,
+      durationMs: 60000,
+    }), 0);
 
     const result = await recordPlaybackEventUseCase({
       videoId: 'v1',
       type: 'WATCHED_10_SECONDS',
       sessionId: 's1',
+      positionMs: 10000,
+      durationMs: 60000,
       ipHash: 'ip1',
       uaHash: 'ua1',
       fingerprint: 'f1',
