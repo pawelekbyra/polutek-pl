@@ -20,13 +20,29 @@ export async function syncCloudflareStatus(
   try {
     const details = await client.getAssetDetails(video.asset.providerAssetId);
 
+    if (!details?.success || !details?.result) {
+      return fail({ code: 'CLOUDFLARE_API_ERROR', message: 'Invalid response from Cloudflare API', statusCode: 500 });
+    }
+
     // Use the webhook handler logic to process the status
     return await handleCloudflareStreamWebhook({
       uid: details.result.uid,
       status: details.result.status,
-      playback: details.result.playback
+      playback: details.result.playback,
+      duration: details.result.duration,
+      size: details.result.size,
     }, ctx);
   } catch (error: any) {
+    if (error.message?.includes('404')) {
+        // Asset not found on Cloudflare - mark as FAILED
+        return await handleCloudflareStreamWebhook({
+            uid: video.asset.providerAssetId,
+            status: {
+                state: 'error',
+                errorReasonText: 'Asset not found on Cloudflare (404 during sync)'
+            }
+        }, ctx);
+    }
     return fail({ code: 'CLOUDFLARE_API_ERROR', message: error.message, statusCode: 500 });
   }
 }

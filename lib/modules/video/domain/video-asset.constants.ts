@@ -15,3 +15,21 @@ export const VIDEO_PROVIDER: Record<string, StorageProvider> = {
   CLOUDFLARE_STREAM: 'CLOUDFLARE_STREAM',
   MUX: 'MUX'
 };
+
+export function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcessingState {
+  switch (cfState) {
+    case "pendingupload":
+    case "downloading":
+      return VIDEO_ASSET_PROCESSING_STATE.UPLOADING;
+    case "queued":
+    case "processing":
+      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
+    case "ready":
+      return VIDEO_ASSET_PROCESSING_STATE.READY;
+    case "error":
+    case "failed":
+      return VIDEO_ASSET_PROCESSING_STATE.FAILED;
+    default:
+      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
+  }
+}
