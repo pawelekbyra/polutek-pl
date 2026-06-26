@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { LanguageProvider } from './LanguageContext';
 import { ToastProvider } from '@/app/hooks/useToast';
+import { MotionConfig } from 'motion/react';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -19,9 +20,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <MotionConfig reducedMotion="user">
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </MotionConfig>
       </LanguageProvider>
     </QueryClientProvider>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, createContext, useContext, ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 
 type ToastType = 'success' | 'error';
 
@@ -33,15 +34,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      {state.visible && (
-        <div
-          className={`fixed bottom-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-in slide-in-from-bottom-2 duration-300 ${
-            state.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-          }`}
-        >
-          {state.message}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {state.visible && (
+          <motion.div
+            key={state.message}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className={`fixed bottom-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+              state.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`}
+          >
+            {state.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </ToastContext.Provider>
   );
 }

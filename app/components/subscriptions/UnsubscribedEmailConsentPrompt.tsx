@@ -85,7 +85,7 @@ export default function UnsubscribedEmailConsentPrompt() {
     }
   };
 
-  if (!isLoaded || !userId || !isOpen) return null;
+  if (!isLoaded || !userId) return null;
 
   return (
     <EmailSubscriptionConsentModal

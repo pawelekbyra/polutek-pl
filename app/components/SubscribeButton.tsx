@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from './LanguageContext';
 import { BellSimple } from './icons';
 import EmailSubscriptionConsentModal from './subscriptions/EmailSubscriptionConsentModal';
+import { motion } from 'motion/react';
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -115,7 +116,9 @@ export default function SubscribeButton({
 
   return (
     <>
-      <button
+      <motion.button
+        whileHover={{ y: -1 }}
+        whileTap={{ scale: 0.97 }}
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
@@ -129,7 +132,7 @@ export default function SubscribeButton({
       >
         {!isSubscribed && <BellSimple size={16} className="mr-2" />}
         <span>{isSubscribed ? t.subscribed : t.subscribe}</span>
-      </button>
+      </motion.button>
       {errorMessage && (
         <p className="mt-2 max-w-[260px] text-xs font-medium text-red-600" role="alert">
           {errorMessage}

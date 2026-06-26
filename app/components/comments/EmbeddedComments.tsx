@@ -17,6 +17,7 @@ import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatePresence, motion } from "motion/react";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -393,8 +394,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </div>
           </div>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="space-y-3">
+          <AnimatePresence initial={false}>
+            {comments.map((comment) => (
+              <motion.div
+                key={comment.id}
+                className="space-y-3"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+              >
               <CommentItem
                 comment={comment}
                 userProfile={userProfile}
@@ -423,10 +432,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
               {/* NESTED REPLIES */}
               {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                  {comment.repliesPreview.map((reply) => (
-                    <CommentItem
-                      key={reply.id}
+                <motion.div
+                  className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4"
+                  initial="hidden"
+                  animate="show"
+                  variants={{ show: { transition: { staggerChildren: 0.025 } }, hidden: {} }}
+                >
+                  <AnimatePresence initial={false}>
+                    {comment.repliesPreview.map((reply) => (
+                      <motion.div
+                        key={reply.id}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.16, ease: 'easeOut' }}
+                      >
+                        <CommentItem
                       comment={reply}
                       userProfile={userProfile}
                       isClient={isClient}
@@ -446,12 +467,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                         reportMutation.mutate({ commentId: id, reason, note })
                       }
                       isReply={true}
-                    />
-                  ))}
-                </div>
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
               )}
-            </div>
-          ))
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
 
         <div ref={loadMoreRef} className="h-4" />
