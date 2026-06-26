@@ -38,28 +38,24 @@ describe('ThumbnailResponseService', () => {
   it('streams allowed Vercel Blob URLs using private access', async () => {
     vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
     const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
-    const signedUrl = 'https://blob-signed-url.com/img.webp';
 
-    vi.mocked(get).mockResolvedValue({ blob: { url: signedUrl } } as any);
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
+    vi.mocked(get).mockResolvedValue({
+      statusCode: 200,
+      stream: new ReadableStream(),
       headers: new Headers({ 'Content-Type': 'image/webp', 'Content-Length': '100' }),
-      body: new ReadableStream(),
     } as any);
 
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/webp');
     expect(get).toHaveBeenCalledWith(blobUrl, { access: 'private' });
-    expect(fetch).toHaveBeenCalledWith(signedUrl);
   });
 
   it('returns 502 if Vercel Blob fetch fails', async () => {
     vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
     const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
 
-    vi.mocked(get).mockResolvedValue({ blob: { url: blobUrl } } as any);
-    vi.mocked(fetch).mockResolvedValue({ ok: false } as any);
+    vi.mocked(get).mockRejectedValue(new Error('Vercel Blob Error'));
 
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
     expect(res.status).toBe(502);

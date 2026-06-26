@@ -17,39 +17,26 @@ export class ThumbnailResponseService {
 
     try {
       // 2. Identify Vercel Blob URLs
-      const isVercelBlob = this.isVercelBlobUrl(thumbnailUrl);
-
-      if (isVercelBlob) {
-        // For Vercel Blob (even if private), use backend access to get a temporary URL or stream
+      if (this.isVercelBlobUrl(thumbnailUrl)) {
+        // For Vercel Blob (even if private), use backend access to get the stream
         try {
-          // Use get() with private access to resolve the actual storage URL
+          // Use get() with private access to retrieve the authenticated stream directly
           const result = await get(thumbnailUrl, { access: "private" });
 
-          if (!result?.blob?.url) {
+          if (!result) {
             return new NextResponse("Thumbnail not found in storage", { status: 404 });
           }
 
-          // Fetch from the resolved URL (which may be a signed URL from @vercel/blob)
-          const response = await fetch(result.blob.url);
-
-          if (!response.ok) {
-            logger.error("[ThumbnailResponseService] Upstream storage fetch failed", {
-              videoId,
-              status: response.status,
-              host: new URL(result.blob.url).hostname
-            });
-            return new NextResponse("Error fetching thumbnail from storage", { status: 502 });
-          }
-
           const resHeaders = new Headers();
-          ["Content-Type", "Content-Length"].forEach((h) => {
-            const val = response.headers.get(h);
-            if (val) resHeaders.set(h, val);
+          result.headers.forEach((value, key) => {
+            resHeaders.set(key, value);
           });
           resHeaders.set("Cache-Control", "public, max-age=3600");
 
-          return new NextResponse(response.body, {
-            status: 200,
+          // For 200 responses, result.stream contains the blob content.
+          // For 304, result.stream is null, which is correct for NextResponse.
+          return new NextResponse(result.stream, {
+            status: result.statusCode,
             headers: resHeaders,
           });
         } catch (error) {
