@@ -10,6 +10,8 @@ import {
     MediaPlayer,
     MediaProvider,
     MuteButton,
+    PlayButton,
+    Poster,
     VolumeSlider,
     useMediaRemote,
     isTrackCaptionKind,
@@ -33,7 +35,6 @@ interface VideoPlayerProps {
 }
 
 const playerIconClass = "h-[1.625rem] w-[1.625rem] stroke-[2.25]";
-const centerPlayerIconClass = "h-12 w-12 stroke-[2.1]";
 const sliderAccentClass = "bg-[#1F7A88]";
 
 function PolutekWatermark() {
@@ -45,88 +46,13 @@ function PolutekWatermark() {
     );
 }
 
-function getPlayerEvent(event: React.SyntheticEvent | PointerEvent | KeyboardEvent) {
-    return 'nativeEvent' in event ? event.nativeEvent : event;
-}
-
-function useTogglePlayback() {
-    const remote = useMediaRemote();
-    const paused = useMediaState('paused');
-    const ended = useMediaState('ended');
-    const currentTime = useMediaState('currentTime');
-    const duration = useMediaState('duration');
-
-    return useCallback((event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
-        const playerEvent = getPlayerEvent(event);
-
-        if (paused) {
-            const hasSeekedAwayFromEnd = ended
-                && Number.isFinite(currentTime)
-                && Number.isFinite(duration)
-                && duration > 0
-                && currentTime < duration - 0.25;
-
-            if (hasSeekedAwayFromEnd) {
-                remote.seek(currentTime, playerEvent);
-                requestAnimationFrame(() => remote.play(playerEvent));
-                return;
-            }
-
-            remote.play(playerEvent);
-            return;
-        }
-
-        remote.pause(playerEvent);
-    }, [currentTime, duration, ended, paused, remote]);
-}
-
 function PlayerPlayButton({ className }: { className: string }) {
     const paused = useMediaState('paused');
-    const togglePlayback = useTogglePlayback();
 
     return (
-        <button
-            type="button"
-            className={className}
-            aria-label={paused ? "Odtwórz" : "Pauza"}
-            onClick={(event) => {
-                event.stopPropagation();
-                togglePlayback(event);
-            }}
-        >
+        <PlayButton className={className} aria-label={paused ? "Odtwórz" : "Pauza"}>
             {paused ? <Play className={playerIconClass} aria-hidden="true" fill="currentColor" /> : <Pause className={playerIconClass} aria-hidden="true" fill="currentColor" />}
-        </button>
-    );
-}
-
-function PlayerTapTarget() {
-    const paused = useMediaState('paused');
-    const togglePlayback = useTogglePlayback();
-
-    return (
-        <button
-            type="button"
-            className={cn(
-                "absolute inset-0 z-10 grid place-items-center text-white transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85",
-                paused ? "opacity-100" : "opacity-0"
-            )}
-            aria-label={paused ? "Odtwórz film" : "Pauza"}
-            onClick={(event) => {
-                event.stopPropagation();
-                togglePlayback(event);
-            }}
-        >
-            <span className={cn(
-                "grid h-20 w-20 place-items-center rounded-full bg-black/48 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm transition-transform duration-150",
-                paused ? "scale-100" : "scale-95"
-            )}>
-                {paused ? (
-                    <Play className={centerPlayerIconClass} aria-hidden="true" fill="currentColor" />
-                ) : (
-                    <Pause className={centerPlayerIconClass} aria-hidden="true" fill="currentColor" />
-                )}
-            </span>
-        </button>
+        </PlayButton>
     );
 }
 
@@ -183,8 +109,8 @@ function PlayerTimeReadout() {
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-1 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-1.5";
-    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_2px_rgba(255,255,255,0.22),0_3px_9px_rgba(31,122,136,0.38)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-2.5";
+    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
@@ -269,7 +195,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
         setPendingSeekTime(null);
         setDragTime(clampedTime);
-        remote.seeking(clampedTime, getPlayerEvent(event));
+        remote.seeking(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
     }, [remote, safeDuration]);
 
     const commitSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
@@ -282,7 +208,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         setDragTime(clampedTime);
         setPendingSeekTime(clampedTime);
         setDraggingState(false);
-        remote.seek(clampedTime, getPlayerEvent(event));
+        remote.seek(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
     }, [remote, safeDuration, setDraggingState]);
 
     return (
@@ -574,7 +500,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
                         void maybeSendView(currentTime, duration);
 
-                        const pct = duration ? (currentTime / duration) * 100 : 0;
+                        const pct = (currentTime / duration) * 100;
                         const thresholds = [
                             { pct: 25, type: 'WATCHED_25_PERCENT' },
                             { pct: 50, type: 'WATCHED_50_PERCENT' },
@@ -606,7 +532,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                             />
                         ))}
                     </MediaProvider>
-                    <PlayerTapTarget />
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
                     {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
