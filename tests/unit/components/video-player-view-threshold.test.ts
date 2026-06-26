@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getViewThresholdMs, shouldSendViewForPlaybackPosition } from '@/app/components/VideoPlayer';
+import { getViewThresholdMs, shouldSendViewForPlaybackPosition } from '@/app/components/video-view-threshold';
 
 describe('VideoPlayer view threshold', () => {
   it('counts an around-10-second video before an exact 10s timeupdate is emitted', () => {

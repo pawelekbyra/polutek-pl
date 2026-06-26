@@ -27,6 +27,7 @@ import { CaptionsIcon, Maximize, Pause, Play, Settings, Volume2, VolumeX } from 
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
+import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -35,19 +36,6 @@ interface VideoPlayerProps {
 }
 
 const playerIconClass = "h-5 w-5 stroke-[2]";
-
-export function getViewThresholdMs(durationSeconds?: number): number {
-    const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
-        ? durationSeconds * 1000
-        : null;
-
-    return durationMs ? Math.min(10000, durationMs * 0.9) : 10000;
-}
-
-export function shouldSendViewForPlaybackPosition(currentTimeSeconds: number, durationSeconds?: number): boolean {
-    if (!Number.isFinite(currentTimeSeconds) || currentTimeSeconds < 0) return false;
-    return currentTimeSeconds * 1000 >= getViewThresholdMs(durationSeconds);
-}
 
 function PolutekWatermark() {
     return (
