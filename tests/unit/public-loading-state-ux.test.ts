@@ -37,9 +37,11 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
     expect(player).toContain("text-[15px] font-semibold");
     expect(player).toContain("function PlayerTimeScrubber");
-    expect(player).toContain("type=\"range\"");
-    expect(player).toContain("remote.seeking(nextTime");
-    expect(player).toContain("remote.seek(dragTime");
+    expect(player).toContain("role=\"slider\"");
+    expect(player).toContain("onPointerMove={(event) =>");
+    expect(player).toContain("getTimeFromPointer(event.clientX)");
+    expect(player).toContain("remote.seeking(clampedTime");
+    expect(player).toContain("remote.seek(clampedTime");
     expect(player).toContain("bg-[#1F7A88]");
     expect(player).toContain("pointer-events-none absolute left-[var(--slider-fill)]");
     expect(player).toContain("group-data-[dragging]/slider:h-2.5");

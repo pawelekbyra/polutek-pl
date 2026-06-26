@@ -159,60 +159,103 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     const duration = useMediaState('duration');
     const [isDragging, setIsDragging] = useState(false);
     const [dragTime, setDragTime] = useState(0);
+    const scrubberRef = useRef<HTMLDivElement>(null);
     const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
     const displayTime = isDragging ? dragTime : currentTime;
     const safeTime = safeDuration ? Math.min(Math.max(displayTime || 0, 0), safeDuration) : 0;
     const fillPercent = safeDuration ? (safeTime / safeDuration) * 100 : 0;
 
-    const updateDragTime = useCallback((value: string, event: React.SyntheticEvent<HTMLInputElement>) => {
-        if (!safeDuration) return;
-        const nextTime = Number(value);
-        if (!Number.isFinite(nextTime)) return;
+    const getTimeFromPointer = useCallback((clientX: number) => {
+        const rect = scrubberRef.current?.getBoundingClientRect();
+        if (!rect || !safeDuration) return null;
 
-        setDragTime(nextTime);
-        remote.seeking(nextTime, event.nativeEvent);
+        const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+        return ratio * safeDuration;
+    }, [safeDuration]);
+
+    const previewSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
+        if (!safeDuration || !Number.isFinite(nextTime)) return;
+
+        const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
+        setDragTime(clampedTime);
+        remote.seeking(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
     }, [remote, safeDuration]);
 
-    const finishDrag = useCallback((event: React.SyntheticEvent<HTMLInputElement>) => {
-        if (!isDragging || !safeDuration) return;
+    const commitSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
+        if (!safeDuration || !Number.isFinite(nextTime)) return;
 
+        const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
+        setDragTime(clampedTime);
         setIsDragging(false);
-        remote.seek(dragTime, event.nativeEvent);
-    }, [dragTime, isDragging, remote, safeDuration]);
+        remote.seek(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
+    }, [remote, safeDuration]);
 
     return (
         <div
-            className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-300/85"
+            ref={scrubberRef}
+            className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
             style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
             data-dragging={isDragging ? "" : undefined}
+            data-disabled={!safeDuration}
+            role="slider"
+            tabIndex={safeDuration ? 0 : -1}
+            aria-label="Postęp filmu"
+            aria-valuemin={0}
+            aria-valuemax={safeDuration || 0}
+            aria-valuenow={safeTime}
+            aria-disabled={!safeDuration}
+            onPointerDown={(event) => {
+                const nextTime = getTimeFromPointer(event.clientX);
+                if (nextTime === null) return;
+
+                event.currentTarget.setPointerCapture?.(event.pointerId);
+                setIsDragging(true);
+                previewSeek(nextTime, event);
+            }}
+            onPointerMove={(event) => {
+                if (!isDragging) return;
+
+                const nextTime = getTimeFromPointer(event.clientX);
+                if (nextTime === null) return;
+                previewSeek(nextTime, event);
+            }}
+            onPointerUp={(event) => {
+                if (!isDragging) return;
+
+                event.currentTarget.releasePointerCapture?.(event.pointerId);
+                const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
+                commitSeek(nextTime, event);
+            }}
+            onPointerCancel={(event) => {
+                if (!isDragging) return;
+                commitSeek(dragTime, event);
+            }}
+            onKeyDown={(event) => {
+                if (!safeDuration) return;
+
+                const step = event.shiftKey ? 10 : 5;
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    commitSeek(safeTime - step, event);
+                }
+                if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    commitSeek(safeTime + step, event);
+                }
+                if (event.key === 'Home') {
+                    event.preventDefault();
+                    commitSeek(0, event);
+                }
+                if (event.key === 'End') {
+                    event.preventDefault();
+                    commitSeek(safeDuration, event);
+                }
+            }}
         >
             <div className={trackClass}>
                 <div className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} style={{ width: `${fillPercent}%` }} />
             </div>
             <div className={thumbClass} />
-            <input
-                type="range"
-                className="absolute inset-0 h-full w-full cursor-pointer touch-none appearance-none bg-transparent opacity-0 disabled:cursor-not-allowed"
-                min={0}
-                max={safeDuration || 0}
-                step="0.01"
-                value={safeTime}
-                disabled={!safeDuration}
-                aria-label="Postęp filmu"
-                onPointerDown={(event) => {
-                    if (!safeDuration) return;
-                    event.currentTarget.setPointerCapture?.(event.pointerId);
-                    setIsDragging(true);
-                    setDragTime(safeTime);
-                }}
-                onChange={(event) => updateDragTime(event.currentTarget.value, event)}
-                onPointerUp={(event) => {
-                    event.currentTarget.releasePointerCapture?.(event.pointerId);
-                    finishDrag(event);
-                }}
-                onPointerCancel={finishDrag}
-                onKeyUp={finishDrag}
-            />
         </div>
     );
 }
