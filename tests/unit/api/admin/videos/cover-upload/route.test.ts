@@ -3,7 +3,7 @@ import { POST } from '@/app/api/admin/videos/cover-upload/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { requireAdminForApi } from '@/lib/auth-utils';
-import * as blobConfig from '@/lib/blob-config';
+import { getBlobAccess } from '@/lib/blob-config';
 
 vi.mock('@vercel/blob', () => ({
   put: vi.fn(),
@@ -13,9 +13,14 @@ vi.mock('@/lib/auth-utils', () => ({
   requireAdminForApi: vi.fn(),
 }));
 
+vi.mock('@/lib/blob-config', () => ({
+  getBlobAccess: vi.fn(),
+}));
+
 describe('POST /api/admin/videos/cover-upload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getBlobAccess).mockReturnValue('public');
   });
 
   it('rejects non-admin requests', async () => {
@@ -97,7 +102,7 @@ describe('POST /api/admin/videos/cover-upload', () => {
       adminUserId: 'admin-1',
       response: null as any,
     });
-    vi.spyOn(blobConfig, 'getBlobAccess').mockReturnValue('public');
+    vi.mocked(getBlobAccess).mockReturnValue('public');
 
     const mockBlobUrl = 'https://blob.vercel.com/public-cover.webp';
     vi.mocked(put).mockResolvedValue({ url: mockBlobUrl } as any);
@@ -125,7 +130,7 @@ describe('POST /api/admin/videos/cover-upload', () => {
       adminUserId: 'admin-1',
       response: null as any,
     });
-    vi.spyOn(blobConfig, 'getBlobAccess').mockReturnValue('private');
+    vi.mocked(getBlobAccess).mockReturnValue('private');
 
     const mockBlobUrl = 'https://blob.vercel.com/private-cover.webp';
     vi.mocked(put).mockResolvedValue({ url: mockBlobUrl } as any);
@@ -154,7 +159,7 @@ describe('POST /api/admin/videos/cover-upload', () => {
       adminUserId: 'admin-1',
       response: null as any,
     });
-    vi.spyOn(blobConfig, 'getBlobAccess').mockReturnValue('private');
+    vi.mocked(getBlobAccess).mockReturnValue('private');
 
     const formData = new FormData();
     const file = new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' });
@@ -177,6 +182,7 @@ describe('POST /api/admin/videos/cover-upload', () => {
       adminUserId: 'admin-1',
       response: null as any,
     });
+    vi.mocked(getBlobAccess).mockReturnValue('public');
     vi.mocked(put).mockRejectedValue(new Error('Vercel Blob: Cannot use public access on a private store.'));
 
     const formData = new FormData();
