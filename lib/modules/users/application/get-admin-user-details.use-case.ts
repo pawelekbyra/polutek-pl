@@ -77,7 +77,11 @@ export async function getAdminUserDetails(
   const subscriptions = subscriptionsResult.ok ? subscriptionsResult.data : [];
 
   const auditLogs = auditLogsResult.ok ? auditLogsResult.data : [];
-  const patronDiagnostics = buildPatronDiagnosticsReadModel(patronGrants);
+  const patronDiagnostics = buildPatronDiagnosticsReadModel(patronGrants, {
+      isPatron: user.isPatron,
+      patronSince: user.patronSince,
+      patronSource: user.patronSource
+  });
 
   return ok({
       id: user.id,

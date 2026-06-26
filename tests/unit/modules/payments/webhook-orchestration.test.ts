@@ -47,8 +47,8 @@ describe('handleStripeWebhook', () => {
             update: vi.fn().mockResolvedValue({})
         },
         user: {
-            findUnique: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [] }),
-            update: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [] })
+            findUnique: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [], patronGrants: [] }),
+            update: vi.fn().mockResolvedValue({ id: 'user_123', email: 'test@example.com', paymentTotals: [], patronGrants: [] })
         },
         userPaymentTotal: {
             upsert: vi.fn().mockResolvedValue({ amountMinor: 1000 }),

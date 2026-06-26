@@ -87,11 +87,16 @@ export async function grantPatron(
     if (!user) return failure(new UserNotFoundError(input.userId));
 
     const now = new Date();
-    const updatedUser = await repo.updateUserPatronFields(input.userId, {
-      isPatron: true,
-      patronSince: now,
-      patronSource: source,
-    }, currentTx);
+    const updatedUser = await repo.updateUserPatronFields(
+      input.userId,
+      {
+        isPatron: true,
+        patronSince: now,
+        patronSource: source,
+      },
+      currentTx,
+      { preserveExistingPatronSince: true }
+    );
     await repo.createGrant({
       userId: input.userId,
       source,

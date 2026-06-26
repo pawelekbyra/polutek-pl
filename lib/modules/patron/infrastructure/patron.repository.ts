@@ -58,14 +58,35 @@ export class PatronRepository {
     });
   }
 
-  async updateUserPatronFields(userId: string, data: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: PatronGrantSource | null;
-  }, tx: WriteTx) {
+  async updateUserPatronFields(
+    userId: string,
+    data: {
+      isPatron: boolean;
+      patronSince: Date | null;
+      patronSource: PatronGrantSource | null;
+    },
+    tx: WriteTx,
+    options?: { preserveExistingPatronSince?: boolean }
+  ) {
+    let finalPatronSince = data.patronSince;
+
+    if (options?.preserveExistingPatronSince) {
+      const existing = await tx.user.findUnique({
+        where: { id: userId },
+        select: { patronSince: true },
+      });
+      if (existing?.patronSince) {
+        finalPatronSince = undefined as any;
+      }
+    }
+
     return await tx.user.update({
       where: { id: userId },
-      data,
+      data: {
+        isPatron: data.isPatron,
+        patronSince: finalPatronSince,
+        patronSource: data.patronSource,
+      },
       include: { paymentTotals: true },
     });
   }

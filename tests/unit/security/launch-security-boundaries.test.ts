@@ -188,18 +188,31 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
   });
 
   it('preserves Active PatronGrant as access truth over stale user cache signals', () => {
-    const staleCache = buildPatronDiagnosticsReadModel([]);
+    const staleCache = buildPatronDiagnosticsReadModel([], {
+      isPatron: false,
+      patronSince: null,
+      patronSource: null,
+    });
 
     expect(staleCache.finalPatronStatus).toBe('NO_ACTIVE_GRANT');
     expect(staleCache.finalPatronStatusSource).toBe('ACTIVE_PATRON_GRANT');
     expect(staleCache.truth.isPatron).toBe(false);
 
-    const activeGrant = buildPatronDiagnosticsReadModel([{
-      id: 'grant-1',
-      source: 'stripe',
-      createdAt: new Date('2025-02-01T00:00:00Z'),
-      revokedAt: null,
-    }]);
+    const activeGrant = buildPatronDiagnosticsReadModel(
+      [
+        {
+          id: 'grant-1',
+          source: 'stripe',
+          createdAt: new Date('2025-02-01T00:00:00Z'),
+          revokedAt: null,
+        },
+      ],
+      {
+        isPatron: true,
+        patronSince: new Date('2025-01-01'),
+        patronSource: 'admin',
+      }
+    );
 
     expect(activeGrant.finalPatronStatus).toBe('ACTIVE_GRANT');
     expect(activeGrant.truth.activeGrantIds).toEqual(['grant-1']);

@@ -162,9 +162,10 @@ function createHarness() {
   const creator = { id: 'creator_main', slug: 'polutek', name: 'Polutek', isApproved: true, isPrimary: true };
   state.creators.set(creator.id, creator);
 
-  const withTotals = (user: UserRecord) => ({
+  const withTotalsAndGrants = (user: UserRecord) => ({
     ...user,
     paymentTotals: Array.from(state.totals.values()).filter((total) => total.userId === user.id),
+    patronGrants: state.grants.filter((grant) => grant.userId === user.id && grant.revokedAt === null),
   });
 
   const withCreatorAndAsset = (video: VideoRecord | null) => {
@@ -201,13 +202,13 @@ function createHarness() {
     user: {
       findUnique: vi.fn(async ({ where }) => {
         const user = state.users.get(where.id);
-        return user ? withTotals(user) : null;
+        return user ? withTotalsAndGrants(user) : null;
       }),
       update: vi.fn(async ({ where, data }) => {
         const user = state.users.get(where.id);
         if (!user) throw new Error(`User not found: ${where.id}`);
         Object.assign(user, data);
-        return withTotals(user);
+        return withTotalsAndGrants(user);
       }),
     },
     payment: {
@@ -652,7 +653,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(actionsSource).toContain('Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant');
     expect(diagnosticsSource).toContain('Prawda dostępu PatronGrant');
     expect(diagnosticsSource).toContain('Fakty płatności (nie prawda dostępu)');
-    expect(diagnosticsSource).toContain('Cache User.isPatron');
+    expect(diagnosticsSource).toContain('User.isPatron:');
     expect(diagnosticsSource).toContain('Newsletter/subskrypcja (niezwiązane z dostępem)');
 
     for (const state of ['LOGIN_REQUIRED', 'PATRON_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
