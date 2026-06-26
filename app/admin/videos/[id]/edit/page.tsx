@@ -95,7 +95,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          id: formData.id,
           title: formData.title.trim(),
           slug: formData.slug.trim(),
           description: formData.description.trim() || null,
@@ -104,6 +104,11 @@ export default function AdminVideoEditPage(props: EditPageProps) {
           videoUrl: formData.videoUrl.trim() || null,
           thumbnailUrl: formData.thumbnailUrl.trim() || "",
           duration: formData.duration.trim() || null,
+          tier: formData.tier,
+          status: formData.status,
+          isMainFeatured: formData.isMainFeatured,
+          showInSidebar: formData.showInSidebar,
+          sidebarOrder: formData.sidebarOrder,
         }),
       });
       const data = await res.json().catch(() => null);

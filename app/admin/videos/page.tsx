@@ -168,7 +168,7 @@ export default function AdminVideosPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData.id ? {
-          ...formData,
+          id: formData.id,
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
           description: formData.description?.trim() || null,
@@ -176,6 +176,11 @@ export default function AdminVideosPage() {
           descriptionEn: formData.descriptionEn?.trim() || null,
           videoUrl: formData.videoUrl?.trim() || null,
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          tier: formData.tier,
+          status: formData.status,
+          isMainFeatured: formData.isMainFeatured,
+          showInSidebar: formData.showInSidebar,
+          sidebarOrder: formData.sidebarOrder,
         } : {
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
