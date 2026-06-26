@@ -37,7 +37,7 @@ export class AccountDeletionCleanupUseCase {
     if (!user) return { cleaned: false, alreadyDeleted: true, originalEmail: null };
 
     const originalEmail = user.email && !user.email.startsWith('deleted_') ? user.email : null;
-    const result = await (ctx.prisma as any).$transaction(async (tx: any) => {
+    const result = await ctx.db.writeTransaction(async (tx) => {
       const subscriptions = await tx.subscription.findMany({
         where: { userId: input.userId },
         select: { creatorId: true },

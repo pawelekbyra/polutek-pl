@@ -456,13 +456,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/users/application/sync-user-from-webhook.use-case.ts",
-      "line": 75,
-      "label": "explicit any annotation",
-      "text": "await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/users/application/update-user-language.use-case.ts",
       "line": 15,
       "label": "explicit any annotation",
