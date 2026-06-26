@@ -21,33 +21,33 @@ const shellRadius = {
 const scaleClasses = {
   default: {
     content: "p-6 sm:p-8 md:p-10",
-    centerCluster: "-translate-y-[clamp(0.2rem,1.2cqi,0.8rem)]",
-    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
-    headline: "text-[clamp(2rem,10cqi,6rem)]",
-    divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,18cqi,12rem)]",
-    cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
+    centerCluster: "-translate-y-1/2",
+    icon: "h-12 w-12 shrink-0 sm:h-14 sm:w-14 md:h-16 md:w-16",
+    iconSpace: "mb-3 sm:mb-4",
+    headline: "text-4xl sm:text-5xl md:text-6xl",
+    divider: "my-2 w-32 sm:w-40",
+    cta: "bottom-5 sm:bottom-8",
     ctaLine: "w-24 group-hover/cta:w-48",
     ctaText: "text-[10px] tracking-[0.5em]",
   },
   thumbnail: {
     content: "p-3",
-    centerCluster: "-translate-y-[clamp(0.1rem,1cqi,0.35rem)]",
-    icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.35rem,2.1cqi,0.65rem)]",
-    headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
-    divider: "my-[clamp(0.18rem,1.25cqi,0.32rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
+    centerCluster: "-translate-y-1/2",
+    icon: "h-8 w-8 shrink-0 sm:h-10 sm:w-10",
+    iconSpace: "mb-2",
+    headline: "text-2xl sm:text-3xl",
+    divider: "my-1 w-20 sm:w-24",
     cta: "hidden",
     ctaLine: "w-12",
     ctaText: "text-[7px] tracking-[0.3em]",
   },
   thumbnailCompact: {
     content: "p-2",
-    centerCluster: "-translate-y-[clamp(0.05rem,0.8cqi,0.22rem)]",
-    icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.25rem,1.9cqi,0.48rem)]",
-    headline: "text-[clamp(0.9rem,13cqi,2rem)]",
-    divider: "my-[clamp(0.14rem,1.1cqi,0.24rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
+    centerCluster: "-translate-y-1/2",
+    icon: "h-6 w-6 shrink-0 sm:h-7 sm:w-7",
+    iconSpace: "mb-1.5",
+    headline: "text-lg sm:text-xl",
+    divider: "my-1 w-16",
     cta: "hidden",
     ctaLine: "w-10",
     ctaText: "text-[6px] tracking-[0.25em]",
@@ -107,13 +107,13 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
   return (
     <PlayerStateFrame fill={variant === "thumbnailCompact"} className={shellRadius[variant]}>
-      <div className={cn("group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white [container-type:inline-size]", shellRadius[variant])}>
+      <div className={cn("group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white", shellRadius[variant])}>
         <div className="absolute inset-0 z-0 opacity-60">
           <div className={cn("h-full w-full blur-[16px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none", config.aurora)} />
         </div>
 
         <div className={cn("relative z-10 h-full w-full text-center", size.content)}>
-          <div className={cn("absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3", size.centerCluster)}>
+          <div className={cn("absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 flex-col items-center justify-center px-3", size.centerCluster)}>
             {icon}
             <div className={cn("font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap", config.firstLineColor, size.headline)}>{config.firstLine}</div>
             <div className={cn("h-px bg-white/10", size.divider)} />
