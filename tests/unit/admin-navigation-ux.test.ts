@@ -79,8 +79,10 @@ describe("admin navigation UX", () => {
     const source = read("app/admin/videos/layout/page.tsx");
 
     expect(source).toContain("Zmieniaj kolejność filmów strzałkami");
-    expect(source).toContain('moveItem(index, "up")');
-    expect(source).toContain('moveItem(index, "down")');
+    expect(source).toContain("ArrowUp");
+    expect(source).toContain("ArrowDown");
+    expect(source).toContain("Przesuń film wyżej");
+    expect(source).toContain("Przesuń film niżej");
     expect(source).not.toMatch(/drag|drop|przeciąg/i);
   });
 });
