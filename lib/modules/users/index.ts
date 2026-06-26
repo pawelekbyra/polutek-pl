@@ -13,3 +13,4 @@ export * from "./application/sync-user-from-webhook.use-case";
 export * from "./domain/user.policy";
 export * from "./domain/payment-totals";
 export * from "./domain/user.errors";
+export * from "./application/account-deletion-cleanup.use-case";

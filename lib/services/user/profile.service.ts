@@ -7,6 +7,8 @@ import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { UserAdminService } from './admin.service';
 import { isPrismaErrorCode } from '@/lib/utils/db';
+import { AccountDeletionCleanupUseCase } from '@/lib/modules/users/application/account-deletion-cleanup.use-case';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 
 type AuthSessionClaims = Record<string, unknown> | null | undefined;
 
@@ -126,10 +128,11 @@ export class UserProfileService {
 
         const existingUserByEmail = await tx.user.findUnique({
           where: { email },
-          select: { id: true, role: true, email: true }
+          select: { id: true, role: true, email: true, isDeleted: true }
         });
 
         const isEmailConflict = existingUserByEmail && existingUserByEmail.id !== id;
+        const isDeletedEmailTombstone = Boolean(isEmailConflict && existingUserByEmail?.isDeleted);
 
         // 1. If email is taken by a DIFFERENT user ID, we have a conflict.
         // Free the email from the old record.
@@ -174,8 +177,8 @@ export class UserProfileService {
           }
         });
 
-        // 3. If there was a conflict, repoint ALL related records from old ID to new ID
-        if (isEmailConflict) {
+        // 3. If there was a non-deleted conflict, repoint historical records but never transfer mailing consent
+        if (isEmailConflict && !isDeletedEmailTombstone) {
           const oldId = existingUserByEmail.id;
 
           // Comments
@@ -267,16 +270,15 @@ export class UserProfileService {
             },
           });
 
-          // Subscriptions (Handle potential duplicates)
-          const oldSubs = await tx.subscription.findMany({ where: { userId: oldId } });
-          for (const sub of oldSubs) {
-              await tx.subscription.upsert({
-                  where: { userId_creatorId: { userId: id, creatorId: sub.creatorId } },
-                  update: {},
-                  create: { userId: id, creatorId: sub.creatorId, createdAt: sub.createdAt }
-              });
-          }
+          // Subscription is explicit mailing consent only. Identity sync must never
+          // transfer newsletter consent from an old/stale identity to a new Clerk id.
+          const oldSubs = await tx.subscription.findMany({ where: { userId: oldId }, select: { creatorId: true } });
           await tx.subscription.deleteMany({ where: { userId: oldId } });
+          for (const sub of oldSubs) {
+            const activeCount = await tx.subscription.count({ where: { creatorId: sub.creatorId } });
+            await tx.creator.updateMany({ where: { id: sub.creatorId }, data: { subscribersCount: activeCount } });
+          }
+          await tx.emailPreference.deleteMany({ where: { userId: oldId } });
 
           // Referrals
           await tx.referral.updateMany({ where: { referrerId: oldId }, data: { referrerId: id } });
@@ -376,28 +378,14 @@ export class UserProfileService {
   }
 
   static async softDeleteUser(id: string) {
-    const anonymousId = crypto.randomUUID();
-    return await prisma.$transaction(async (tx) => {
-        // Revoke any active patron grants
-        await tx.patronGrant.updateMany({
-            where: { userId: id, revokedAt: null },
-            data: { revokedAt: new Date(), reason: 'User deleted' }
-        });
-
-        return await tx.user.update({
-            where: { id },
-            data: {
-              email: `deleted_${anonymousId}@deleted.com`,
-              name: "Usunięty Użytkownik",
-              username: `deleted_${anonymousId.split('-')[0]}`,
-              imageUrl: null,
-              stripeCustomerId: null,
-              isPatron: false,
-              patronSince: null,
-              patronSource: null,
-              isDeleted: true
-            }
-        });
+    const ctx = createAppContext({
+      actor: { type: 'system', reason: 'App-initiated account deletion cleanup' },
+      prisma,
+    });
+    return AccountDeletionCleanupUseCase.execute(ctx, {
+      userId: id,
+      source: 'APP_ACCOUNT_DELETION',
+      reason: 'App-initiated account deletion',
     });
   }
 
