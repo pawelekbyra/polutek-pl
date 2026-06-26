@@ -7,7 +7,7 @@ import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from './
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
 import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
-import { CloudflareStreamClient } from '@/lib/modules/video/infrastructure/cloudflare-stream.client';
+import { CloudflareSignedPlaybackTokenService } from './cloudflare-signed-playback-token.service';
 import { getPrimaryPlayableAsset } from './primary-playable-asset';
 
 export type PlaybackErrorCode =
@@ -201,17 +201,16 @@ export class PlaybackService {
 
       if (asset.provider === 'CLOUDFLARE_STREAM') {
         try {
-            const cfClient = new CloudflareStreamClient();
             const providerId = asset.providerPlaybackId || asset.providerAssetId;
 
             if (!providerId) {
                 throw new Error('Cloudflare asset missing provider identifiers');
             }
 
-            const { token } = await cfClient.createSignedPlaybackToken(providerId);
+            const signedPlayback = CloudflareSignedPlaybackTokenService.createSignedPlaybackToken({ videoUid: providerId });
 
-            const playbackUrl = buildCloudflareSignedHlsManifestUrl(token);
-            const embedUrl = buildCloudflareSignedIframeUrl(token);
+            const playbackUrl = buildCloudflareSignedHlsManifestUrl(signedPlayback.token);
+            const embedUrl = buildCloudflareSignedIframeUrl(signedPlayback.token);
 
             const isAdminPreview = actor.type === 'admin';
 
@@ -243,6 +242,7 @@ export class PlaybackService {
                     needsProxy: false,
                     isExternalEmbed: true,
                     isSignedUrl: true,
+                    expiresAt: signedPlayback.expiresAt.toISOString(),
                     asset: safeAsset,
                 },
                 player: playerFor({ thumbnailUrl, title }, true),
@@ -250,7 +250,7 @@ export class PlaybackService {
                     warnings: [],
                     sourceConfidence: 'HIGH',
                     providerResolutionAllowed: true,
-                    providerResolutionAttempted: true,
+                    providerResolutionAttempted: false,
                     sourceMode: 'PROVIDER_ASSET',
                     asset: safeAsset,
                 },

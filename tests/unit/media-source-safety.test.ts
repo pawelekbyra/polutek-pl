@@ -30,18 +30,15 @@ vi.mock('@/lib/services/storage/storage.service', () => ({
   },
 }));
 
-const mockCreateSignedPlaybackToken = vi.fn();
-const mockGetAssetDetails = vi.fn();
-vi.mock('@/lib/modules/video/infrastructure/cloudflare-stream.client', () => {
-    return {
-      CloudflareStreamClient: vi.fn().mockImplementation(function() {
-        return {
-          createSignedPlaybackToken: mockCreateSignedPlaybackToken,
-          getAssetDetails: mockGetAssetDetails,
-        };
-      }),
-    };
-  });
+const { mockCreateSignedPlaybackToken, mockGetAssetDetails } = vi.hoisted(() => ({
+  mockCreateSignedPlaybackToken: vi.fn(),
+  mockGetAssetDetails: vi.fn(),
+}));
+vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
+  CloudflareSignedPlaybackTokenService: {
+    createSignedPlaybackToken: mockCreateSignedPlaybackToken,
+  },
+}));
 
 const baseVideo = {
   id: 'v1',
@@ -74,7 +71,6 @@ describe('PlaybackService Safety', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
-    mockGetAssetDetails.mockResolvedValue({ result: { playback: {} } });
   });
 
   it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
@@ -387,7 +383,7 @@ describe('PlaybackService Safety', () => {
     const mockToken = 'cf-signed-token';
     const mockSession = { id: 's-cf-1' };
 
-    mockCreateSignedPlaybackToken.mockResolvedValue({ token: mockToken });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: mockToken, expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
 
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue(mockSession as any);
 
@@ -404,10 +400,11 @@ describe('PlaybackService Safety', () => {
     expect(plan.source?.needsProxy).toBe(false);
     expect(plan.source?.embedUrl).toBe(`https://iframe.videodelivery.net/${mockToken}`);
     expect(plan.source?.isSignedUrl).toBe(true);
+    expect(plan.source?.expiresAt).toBe('2026-06-26T01:00:00.000Z');
     expect(plan.diagnostics.sourceMode).toBe('PROVIDER_ASSET');
     expect(plan.tracking.playbackSessionId).toBe('s-cf-1');
 
-    expect(mockCreateSignedPlaybackToken).toHaveBeenCalledWith('cf-playback-id');
+    expect(mockCreateSignedPlaybackToken).toHaveBeenCalledWith({ videoUid: 'cf-playback-id' });
     expect(prisma.videoPlaybackSession.create).toHaveBeenCalled();
   });
 
@@ -424,7 +421,7 @@ describe('PlaybackService Safety', () => {
       asset: cloudflareAsset,
     } as any);
 
-    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-provider-wins' });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: 'cf-provider-wins', expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-wins' } as any);
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
@@ -455,7 +452,7 @@ describe('PlaybackService Safety', () => {
     mockGetAssetDetails.mockResolvedValue({
       result: { playback: { hls: hlsManifestUrl } },
     });
-    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-signed-token' });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: 'cf-signed-token', expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-hls' } as any);
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
@@ -479,8 +476,7 @@ describe('PlaybackService Safety', () => {
       asset: cloudflareAsset,
     } as any);
 
-    mockGetAssetDetails.mockResolvedValue({ result: { playback: {} } });
-    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-fallback-token' });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: 'cf-fallback-token', expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-fallback' } as any);
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
@@ -509,7 +505,7 @@ describe('PlaybackService Safety', () => {
     mockGetAssetDetails.mockResolvedValue({
       result: { playback: { hls: hlsManifestUrl } },
     });
-    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-safe-token' });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: 'cf-safe-token', expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
     vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-safe' } as any);
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
@@ -531,7 +527,7 @@ describe('PlaybackService Safety', () => {
       asset: cloudflareAsset,
     } as any);
 
-    mockCreateSignedPlaybackToken.mockRejectedValue(new Error('CF API Down'));
+    mockCreateSignedPlaybackToken.mockImplementation(() => { throw new Error('signing unavailable'); });
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
 

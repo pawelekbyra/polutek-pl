@@ -56,13 +56,17 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/modules/video/infrastructure/cloudflare-stream.client', () => ({
-  CloudflareStreamClient: vi.fn().mockImplementation(function CloudflareStreamClientMock(this: any) {
-    this.createSignedPlaybackToken = vi.fn(async (uid: string) => {
-      cloudflareTokenCalls.push(uid);
-      return { token: `signed-token-for-${uid}` };
-    });
-  }),
+vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
+  CloudflareSignedPlaybackTokenService: {
+    createSignedPlaybackToken: vi.fn(({ videoUid }) => {
+      cloudflareTokenCalls.push(videoUid);
+      return {
+        token: `signed-token-for-${videoUid}`,
+        expiresAt: new Date('2026-01-01T13:00:00.000Z'),
+        expiresInSeconds: 3600,
+      };
+    }),
+  },
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
