@@ -12,7 +12,6 @@ import {
     MuteButton,
     PlayButton,
     Poster,
-    Time,
     TimeSlider,
     VolumeSlider,
     isTrackCaptionKind,
@@ -36,6 +35,7 @@ interface VideoPlayerProps {
 }
 
 const playerIconClass = "h-5 w-5 stroke-[2]";
+const sliderAccentClass = "bg-sky-400";
 
 function PolutekWatermark() {
     return (
@@ -70,7 +70,7 @@ function PlayerCaptionButton({ className }: { className: string }) {
 
     return (
         <CaptionButton
-            className={cn(className, captionsOn && "bg-[#ff2d2d] text-white hover:bg-[#ff2d2d]/90 active:bg-[#ff2d2d]/85")}
+            className={cn(className, captionsOn && "bg-sky-500 text-white hover:bg-sky-500/90 active:bg-sky-500/85")}
             aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
             aria-pressed={captionsOn}
         >
@@ -79,36 +79,62 @@ function PlayerCaptionButton({ className }: { className: string }) {
     );
 }
 
+function formatPlayerTime(value: number | null | undefined) {
+    if (!Number.isFinite(value) || !value || value < 0) return '0:00';
+
+    const totalSeconds = Math.floor(value);
+    const seconds = totalSeconds % 60;
+    const minutes = Math.floor(totalSeconds / 60) % 60;
+    const hours = Math.floor(totalSeconds / 3600);
+
+    if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function PlayerTimeReadout() {
+    const currentTime = useMediaState('currentTime');
+    const duration = useMediaState('duration');
+
+    return (
+        <span className="block min-w-[7.75rem] shrink-0 whitespace-nowrap text-left text-sm font-medium leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
+            {formatPlayerTime(currentTime)} <span className="text-white/60">/</span> <span className="text-white/75">{formatPlayerTime(duration)}</span>
+        </span>
+    );
+}
+
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d2d]/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+    const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/slider:h-2 group-focus-within/slider:h-2 group-data-[dragging]/slider:h-2";
+    const thumbClass = "absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(14,165,233,0.45)] ring-2 ring-sky-100 transition-transform group-hover/slider:scale-110 group-focus-within/slider:scale-110 group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
-            <TimeSlider.Root className="group/time relative flex h-8 w-full cursor-pointer touch-none select-none items-center" aria-label="Postęp filmu">
-                <TimeSlider.Track className="relative h-1 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/time:h-1.5 group-focus-within/time:h-1.5 data-[dragging]:h-1.5">
+            <TimeSlider.Root className="group/slider relative flex h-11 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
+                <TimeSlider.Track className={trackClass}>
                     <TimeSlider.Progress className="absolute h-full rounded-full bg-white/35" />
-                    <TimeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
+                    <TimeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
                 </TimeSlider.Track>
-                <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff2d2d] shadow-md ring-2 ring-white/80 transition-transform group-hover/time:scale-110 group-focus-within/time:scale-110 data-[dragging]:scale-125" />
+                <TimeSlider.Thumb className={thumbClass} />
             </TimeSlider.Root>
 
-            <Controls.Group className="mt-1 flex h-11 min-w-0 items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
+            <Controls.Group className="mt-0 flex min-h-11 min-w-0 items-center justify-between gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
                     <PlayerPlayButton className={buttonClass} />
 
                     <div className="flex shrink-0 items-center gap-1">
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                        <VolumeSlider.Root className="relative hidden h-9 w-20 items-center md:flex lg:w-24" aria-label="Głośność">
-                            <VolumeSlider.Track className="relative h-1 w-full rounded-full bg-white/30 transition-[height] focus-within:h-1.5">
-                                <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
+                        <VolumeSlider.Root className="group/slider relative hidden h-10 w-24 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
+                            <VolumeSlider.Track className={trackClass}>
+                                <VolumeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
                             </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff2d2d] ring-2 ring-white/80 transition-transform data-[dragging]:scale-110" />
+                            <VolumeSlider.Thumb className={thumbClass} />
                         </VolumeSlider.Root>
                     </div>
 
-                    <div className="whitespace-nowrap text-sm font-medium tabular-nums text-white/90">
-                        <Time type="current" /> <span className="text-white/60">/</span> <span className="text-white/75"><Time type="duration" /></span>
-                    </div>
+                    <PlayerTimeReadout />
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
