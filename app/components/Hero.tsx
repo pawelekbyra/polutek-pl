@@ -36,11 +36,16 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isCupGameOpen, setIsCupGameOpen] = useState(false);
   const [selectedCup, setSelectedCup] = useState<number | null>(null);
   const displayTitle = getVideoDisplayTitle(video, language);
+  const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
   const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setLocalViewsCount(video.views || 0);
+  }, [video.id, video.views]);
 
   const [localSubState, setLocalSubState] = useState({
       isSubscribed: initialIsSubscribed || false,
@@ -176,7 +181,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         {/* FEATURED MEDIA */}
         <div className="relative aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-neutral-400 mb-3 group bg-black">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
-            <VideoPlayer video={video} />
+            <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
         </div>
 
@@ -277,7 +282,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         <div className="mt-2 bg-[#ebebeb] rounded-xl p-3 pt-1 transition-colors cursor-pointer border border-transparent hover:bg-[#e2e2e2]" onClick={() => setIsExpanded(!isExpanded)}>
            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1 items-baseline">
               <span className="text-[14px] font-semibold text-[#0f0f0f]">
-                 {mounted ? video.views.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : video.views} {t.views}
+                 {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
               </span>
               <span className="text-[14px] font-semibold text-[#0f0f0f]">
                  {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
