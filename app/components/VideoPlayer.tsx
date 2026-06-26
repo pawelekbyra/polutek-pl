@@ -22,7 +22,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { CaptionsIcon, Maximize, Pause, Play, Settings, Volume2, VolumeX } from 'lucide-react';
+import { CaptionsIcon, Maximize, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -64,7 +64,7 @@ function PlayerMuteIcon() {
     return <Icon className={playerIconClass} aria-hidden="true" />;
 }
 
-function PlayerCaptionButton({ className }: { className: string }) {
+function PlayerCaptionButton({ className, disabled = false }: { className: string; disabled?: boolean }) {
     const textTrack = useMediaState('textTrack');
     const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
 
@@ -73,6 +73,8 @@ function PlayerCaptionButton({ className }: { className: string }) {
             className={cn(className, captionsOn && "bg-sky-500 text-white hover:bg-sky-500/90 active:bg-sky-500/85")}
             aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
             aria-pressed={captionsOn}
+            disabled={disabled}
+            title={disabled ? "Brak napisów dla tego filmu" : undefined}
         >
             <CaptionsIcon className={playerIconClass} aria-hidden="true" />
         </CaptionButton>
@@ -99,20 +101,20 @@ function PlayerTimeReadout() {
     const duration = useMediaState('duration');
 
     return (
-        <span className="block min-w-[7.75rem] shrink-0 whitespace-nowrap text-left text-sm font-medium leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
-            {formatPlayerTime(currentTime)} <span className="text-white/60">/</span> <span className="text-white/75">{formatPlayerTime(duration)}</span>
+        <span className="inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-sm font-medium leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
+            <span>{formatPlayerTime(currentTime)}</span><span className="text-white/60">/</span><span className="text-white/75">{formatPlayerTime(duration)}</span>
         </span>
     );
 }
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/slider:h-2 group-focus-within/slider:h-2 group-data-[dragging]/slider:h-2";
-    const thumbClass = "absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(14,165,233,0.45)] ring-2 ring-sky-100 transition-transform group-hover/slider:scale-110 group-focus-within/slider:scale-110 group-data-[dragging]/slider:scale-125";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/slider:h-2.5 group-focus-within/slider:h-2.5 group-data-[dragging]/slider:h-3";
+    const thumbClass = "absolute left-[var(--slider-fill)] top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_0_4px_rgba(255,255,255,0.22),0_4px_14px_rgba(14,165,233,0.52)] ring-2 ring-sky-100 transition-transform before:absolute before:-inset-3 before:content-[''] group-hover/slider:scale-110 group-focus-within/slider:scale-110 group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
-            <TimeSlider.Root className="group/slider relative flex h-11 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
+            <TimeSlider.Root className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
                 <TimeSlider.Track className={trackClass}>
                     <TimeSlider.Progress className="absolute h-full rounded-full bg-white/35" />
                     <TimeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
@@ -126,7 +128,7 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
 
                     <div className="flex shrink-0 items-center gap-1">
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                        <VolumeSlider.Root className="group/slider relative hidden h-10 w-24 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
+                        <VolumeSlider.Root className="group/slider relative hidden h-11 w-28 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
                             <VolumeSlider.Track className={trackClass}>
                                 <VolumeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
                             </VolumeSlider.Track>
@@ -138,10 +140,7 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                    {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
-                    <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
-                        <Settings className={playerIconClass} aria-hidden="true" />
-                    </button>
+                    <PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />
                     <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
                 </div>
             </Controls.Group>
@@ -236,7 +235,9 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     }, [onViewCounted, sendEvent]);
 
     const sendWatched10Seconds = useCallback(() => {
-        void maybeSendView(10);
+        const currentTime = player.current?.currentTime;
+        const duration = player.current?.duration;
+        void maybeSendView(Number.isFinite(currentTime) && currentTime ? currentTime : 10, duration);
     }, [maybeSendView]);
 
     const scheduleCloudflareViewFallback = useCallback(() => {
@@ -411,14 +412,20 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                             void maybeSendView(player.current.currentTime, player.current.duration);
                         }
                     }}
-                    onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
+                    onSeeked={(e: any) => {
+                        const detailTime = typeof e.detail === 'number' ? e.detail : e.detail?.currentTime;
+                        const currentTime = Number.isFinite(detailTime) ? detailTime : player.current?.currentTime || 0;
+                        sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
+                    }}
                     onWaiting={() => sendEvent('BUFFERING_STARTED')}
                     onPlaying={() => {
                         setHasStartedPlayback(true);
                         sendEvent('BUFFERING_ENDED');
                     }}
                     onTimeUpdate={(e: any) => {
-                        const { currentTime, duration } = e.detail;
+                        const detail = typeof e.detail === 'number' ? { currentTime: e.detail, duration: player.current?.duration } : e.detail || {};
+                        const currentTime = Number.isFinite(detail.currentTime) ? detail.currentTime : player.current?.currentTime || 0;
+                        const duration = Number.isFinite(detail.duration) ? detail.duration : player.current?.duration;
                         if (currentTime > 0 && !hasStartedPlayback) {
                             setHasStartedPlayback(true);
                         }
