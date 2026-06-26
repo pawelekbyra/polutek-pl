@@ -53,6 +53,7 @@ const allowedAppRoutes = [
   "app/api/comments/[commentId]/replies/route.ts",
   "app/api/comments/[commentId]/report/route.ts",
   "app/api/comments/[commentId]/route.ts",
+  "app/api/admin/videos/cover-upload/route.ts",
   "app/api/admin/videos/reorder/route.ts",
   "app/api/admin/videos/resync/route.ts",
   "app/api/admin/videos/route.ts",
