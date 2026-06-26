@@ -112,6 +112,13 @@ export class CloudflareApiError extends AppError {
   }
 }
 
+export class CloudflareNotFoundError extends AppError {
+  constructor(uid: string) {
+    super(`Cloudflare Stream asset ${uid} not found`, 404, 'CLOUDFLARE_NOT_FOUND');
+    this.name = 'CloudflareNotFoundError';
+  }
+}
+
 export class VideoNotReadyForPublicationError extends AppError {
   constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest primary asset Cloudflare Stream w stanie READY.', code = 'VIDEO_NOT_READY_FOR_PUBLICATION') {
     super(message, 400, code);

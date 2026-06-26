@@ -1,3 +1,11 @@
+import { VideoAssetProcessingState, StorageProvider } from '@prisma/client';
+
+export type PrimaryPlayableAssetInput = {
+  isPrimary: boolean;
+  processingState: VideoAssetProcessingState;
+  provider: StorageProvider;
+};
+
 export type PrimaryPlayableAssetState =
   | 'READY'
   | 'NO_PRIMARY_ASSET'
@@ -7,7 +15,7 @@ export type PrimaryPlayableAssetState =
 
 export type PrimaryPlayableAssetResult = {
   state: PrimaryPlayableAssetState;
-  asset?: any;
+  asset?: PrimaryPlayableAssetInput;
   warnings: string[];
   canResolveProviderSource: boolean;
 };
@@ -22,7 +30,7 @@ const PROCESSING_STATES = new Set(['PENDING', 'UPLOADING', 'PROCESSING']);
  * playback. Legacy Video.videoUrl fallback is intentionally outside this helper
  * and must remain an explicit migration branch in PlaybackService.
  */
-export function getPrimaryPlayableAsset(asset: any | null | undefined): PrimaryPlayableAssetResult {
+export function getPrimaryPlayableAsset(asset: PrimaryPlayableAssetInput | null | undefined): PrimaryPlayableAssetResult {
   if (!asset || !asset.isPrimary) {
     return {
       state: 'NO_PRIMARY_ASSET',

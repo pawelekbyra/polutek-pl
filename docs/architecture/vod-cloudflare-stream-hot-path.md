@@ -116,6 +116,34 @@ Public playback DTOs remain separate. Denied or not-ready public playback plans 
 
 `Video.videoUrl`, `/api/media`, and R2/S3/Vercel Blob/direct URLs remain legacy, migration, development, or explicit fallback surfaces. A READY primary Cloudflare Stream asset must win over legacy `Video.videoUrl`, even if the legacy field is still populated during migration. Legacy fallback is allowed only after provider-asset handling has failed to find an eligible stored provider asset and the existing access/security rules allow that fallback.
 
+## #1106 slice 3: Cloudflare asset sync lifecycle
+
+This slice focuses on keeping the persisted `VideoAsset` state in sync with Cloudflare Stream via both administrative manual sync and automated webhooks.
+
+### Centralized Status Mapping
+
+Status mapping from Cloudflare Stream to Polutek's internal `VideoAssetProcessingState` is centralized in `lib/modules/video/domain/video-asset.constants.ts`. This ensures consistent behavior across webhooks and manual syncs:
+
+- `pendingupload`, `downloading` -> `UPLOADING`
+- `queued`, `processing` -> `PROCESSING`
+- `ready` -> `READY`
+- `error`, `failed` -> `FAILED`
+
+### Idempotent Sync Lifecycle
+
+The `handleCloudflareStreamWebhook` use case enforces strict state transition rules to ensure idempotency and prevent illegal regressions:
+
+- Once an asset is `READY`, it cannot be moved back to any other state (e.g., by a delayed `processing` webhook).
+- Webhooks update asset metadata including `sizeBytes`, `providerPlaybackId`, and `durationSeconds` (stored as formatted `duration` string on the `Video` model).
+- When an asset becomes `READY`, it is automatically promoted to `isPrimary`, and other assets for the same video are demoted.
+
+### Administrative Sync
+
+The `syncCloudflareStatus` use case allows administrators to manually trigger a refresh of asset state. It:
+- Calls the Cloudflare Stream API to fetch the latest metadata.
+- Gracefully handles 404 errors by marking the local asset as `FAILED` (e.g., if deleted on Cloudflare).
+- Reuses the same `handleCloudflareStreamWebhook` logic to ensure consistent metadata and status updates.
+
 ## Still remaining for later #1106 slices
 
-This follow-up does not complete #1106. Remaining slices include Cloudflare direct-upload lifecycle hardening, Cloudflare webhook lifecycle hardening, local signed playback token service without a Cloudflare API call per viewer, public/private playback-plan cache split, event batching/queue/worker pipeline, and load-testing or production-readiness evidence.
+This follow-up does not complete #1106. Remaining slices include Cloudflare direct-upload lifecycle hardening, local signed playback token service without a Cloudflare API call per viewer, public/private playback-plan cache split, event batching/queue/worker pipeline, and load-testing or production-readiness evidence.

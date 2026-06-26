@@ -10,6 +10,9 @@ describe('handleCloudflareStreamWebhook', () => {
       update: vi.fn(),
       updateMany: vi.fn(),
     },
+    video: {
+      update: vi.fn(),
+    },
     auditLog: {
       create: vi.fn(),
     },
@@ -53,6 +56,41 @@ describe('handleCloudflareStreamWebhook', () => {
       })
     }));
     expect(mockPrisma.auditLog.create).toHaveBeenCalled();
+  });
+
+  it('updates metadata and video duration when asset becomes READY', async () => {
+    const asset = {
+      id: 'asset-1',
+      videoId: 'video-1',
+      processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
+    };
+    mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
+    mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, isPrimary: true });
+    mockPrisma.video.update.mockResolvedValue({});
+
+    const payload = {
+      uid: 'cf-uid-123',
+      status: { state: 'ready' as const },
+      duration: 125, // 2:05
+      size: 1024 * 1024,
+      playback: { hls: 'https://...' }
+    };
+
+    const result = await handleCloudflareStreamWebhook(payload, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockPrisma.videoAsset.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+        sizeBytes: 1048576,
+        providerPlaybackId: 'cf-uid-123'
+      })
+    }));
+
+    expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'video-1' },
+      data: { duration: '2:05' }
+    }));
   });
 
   it('updates asset state to FAILED when cloudflare status is error', async () => {

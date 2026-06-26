@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getPrimaryPlayableAsset } from '@/lib/services/playback/primary-playable-asset';
+import { getPrimaryPlayableAsset, PrimaryPlayableAssetInput } from '@/lib/services/playback/primary-playable-asset';
 
 describe('getPrimaryPlayableAsset', () => {
   it('selects a READY primary Cloudflare Stream asset for provider-backed playback', () => {
-    const asset = { provider: 'CLOUDFLARE_STREAM', isPrimary: true, processingState: 'READY' };
+    const asset: PrimaryPlayableAssetInput = { provider: 'CLOUDFLARE_STREAM', isPrimary: true, processingState: 'READY' };
 
     const result = getPrimaryPlayableAsset(asset);
 
@@ -12,7 +12,7 @@ describe('getPrimaryPlayableAsset', () => {
     expect(result.canResolveProviderSource).toBe(true);
   });
 
-  it.each(['PENDING', 'UPLOADING', 'PROCESSING'])('returns not-playable processing state for %s assets', (processingState) => {
+  it.each(['PENDING', 'UPLOADING', 'PROCESSING'] as const)('returns not-playable processing state for %s assets', (processingState) => {
     const result = getPrimaryPlayableAsset({ provider: 'CLOUDFLARE_STREAM', isPrimary: true, processingState });
 
     expect(result.state).toBe('PROCESSING');

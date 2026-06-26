@@ -3,7 +3,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import type { VideoAssetProcessingState } from "@prisma/client";
-import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER, mapCloudflareStateToProcessingState } from "../domain/video-asset.constants";
 import { createScopedLogger } from "@/lib/logger";
 import { attemptPublishAfterAssetReady } from "./publish-after-asset-ready.use-case";
 
@@ -15,6 +15,8 @@ export interface CloudflareStreamWebhookPayload {
     errorReasonCode?: string;
     errorReasonText?: string;
   };
+  duration?: number;
+  size?: number;
   // Other fields like playback, meta, etc. might be present but we focus on status
   playback?: {
     hls?: string;
@@ -39,10 +41,13 @@ export async function handleCloudflareStreamWebhook(
   const newState = mapCloudflareStateToProcessingState(payload.status.state);
 
   // Idempotency and State Transition Rules
-  if (isRedundantTransition(asset.processingState, newState)) {
-    if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-      await attemptPublishAfterAssetReady(asset.videoId, ctx);
-    }
+  // Allow processing if the state is changing, or if the new state is READY (to allow refreshing metadata)
+  // We only treat it as a metadata refresh if there's actual metadata to refresh (size or duration)
+  const isMetadataRefresh = asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY &&
+                            newState === VIDEO_ASSET_PROCESSING_STATE.READY &&
+                            (payload.size != null || payload.duration != null);
+
+  if (isRedundantTransition(asset.processingState, newState) && !isMetadataRefresh) {
     return ok({ assetId: asset.id, status: "no-change" });
   }
 
@@ -69,6 +74,16 @@ export async function handleCloudflareStreamWebhook(
         dataToUpdate.isPrimary = true;
         dataToUpdate.failureReason = null;
 
+        if (payload.size != null) {
+          dataToUpdate.sizeBytes = Math.floor(payload.size);
+        }
+        // Only set providerPlaybackId if explicitly provided or if it's currently missing
+        if (payload.playback?.hls || payload.playback?.dash) {
+          if (!asset.providerPlaybackId) {
+            dataToUpdate.providerPlaybackId = payload.uid;
+          }
+        }
+
         // Unset primary for all other assets of this video
         await tx.videoAsset.updateMany({
             where: { videoId: asset.videoId, id: { not: asset.id } },
@@ -77,6 +92,18 @@ export async function handleCloudflareStreamWebhook(
     }
 
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);
+
+    // If duration was provided and asset is READY/Primary, update the main Video duration string
+    if (payload.duration != null && updated.isPrimary && updated.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+        const minutes = Math.floor(payload.duration / 60);
+        const seconds = Math.floor(payload.duration % 60);
+        const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        await tx.video.update({
+            where: { id: asset.videoId },
+            data: { duration: durationString }
+        });
+    }
 
     await recordAuditEvent(ctx, {
       action: 'VIDEO_ASSET_STATUS_UPDATED',
@@ -102,30 +129,11 @@ export async function handleCloudflareStreamWebhook(
   return ok({ assetId: updatedAsset.id, status: updatedAsset.processingState });
 }
 
-function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcessingState {
-  switch (cfState) {
-    case "pendingupload":
-    case "downloading":
-      return VIDEO_ASSET_PROCESSING_STATE.UPLOADING;
-    case "queued":
-    case "processing":
-      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
-    case "ready":
-      return VIDEO_ASSET_PROCESSING_STATE.READY;
-    case "error":
-      return VIDEO_ASSET_PROCESSING_STATE.FAILED;
-    default:
-      return VIDEO_ASSET_PROCESSING_STATE.PROCESSING;
-  }
-}
-
 function isRedundantTransition(currentState: VideoAssetProcessingState, newState: VideoAssetProcessingState): boolean {
   // If already READY, don't move back to any other state
   if (currentState === VIDEO_ASSET_PROCESSING_STATE.READY && newState !== VIDEO_ASSET_PROCESSING_STATE.READY) return true;
 
-  // If already FAILED, don't move back to processing/uploading (but maybe READY if it was a transient error?
-  // Usually provider webhooks are final for a state, but let's be strict: only READY can overwrite FAILED if we want,
-  // but let's stick to: once it is READY, it stays READY.)
+  // If the state is the same, it's generally redundant unless it's a READY state (which we handle above with isMetadataRefresh)
   if (currentState === newState) return true;
 
   return false;
