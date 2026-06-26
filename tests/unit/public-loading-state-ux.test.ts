@@ -43,7 +43,8 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("remote.seeking(clampedTime");
     expect(player).toContain("remote.seek(clampedTime");
     expect(player).toContain("bg-[#1F7A88]");
-    expect(player).toContain("pointer-events-none absolute left-[var(--slider-fill)]");
+    expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
+    expect(player).toContain("relative z-40 mt-2 flex h-12");
     expect(player).toContain("group-data-[dragging]/slider:h-2.5");
     expect(player).not.toContain("group-data-[active]/slider:h-2.5");
     expect(player).not.toContain("before:-inset-3");

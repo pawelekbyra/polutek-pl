@@ -110,7 +110,7 @@ function PlayerTimeReadout() {
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
     const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-2.5";
-    const thumbClass = "pointer-events-none absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
+    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
@@ -193,7 +193,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     return (
         <div
             ref={scrubberRef}
-            className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
+            className="group/slider relative z-40 mt-2 flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
             style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
             data-dragging={isDragging ? "" : undefined}
             data-disabled={!safeDuration}
