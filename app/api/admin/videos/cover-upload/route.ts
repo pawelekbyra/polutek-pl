@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const pathname = `videos/${videoPath}/covers/${uuid}.${extension}`;
 
     const blob = await put(pathname, file, {
-      access: "public",
+      access: (process.env.VERCEL_BLOB_ACCESS as any) || "public",
     });
 
     scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", {
@@ -54,8 +54,19 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: blob.url });
-  } catch (error) {
+  } catch (error: any) {
     scopedLogger.error("[ADMIN_VIDEO_COVER_UPLOAD_ERROR]", error);
+
+    if (error?.message?.includes("public access") || error?.message?.includes("private store")) {
+      return NextResponse.json(
+        {
+          error: "Vercel Blob storage is configured for private access. The 'public' access mode is forbidden. Upload failed.",
+          details: error.message
+        },
+        { status: 400 }
+      );
+    }
+
     return handleApiError(error);
   }
 }

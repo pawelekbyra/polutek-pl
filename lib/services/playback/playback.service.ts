@@ -207,6 +207,20 @@ export class PlaybackService {
                 throw new Error('Cloudflare asset missing provider identifiers');
             }
 
+            if (!CloudflareSignedPlaybackTokenService.isConfigured()) {
+                return unavailablePlan({
+                    videoId,
+                    status: 'ERROR',
+                    video: { thumbnailUrl, title },
+                    accessAllowed: true,
+                    warnings: ['Cloudflare Stream signing is not configured'],
+                    providerResolutionAllowed: true,
+                    providerResolutionAttempted: true,
+                    sourceMode: 'PROVIDER_ASSET',
+                    asset: safeAsset,
+                });
+            }
+
             const signedPlayback = CloudflareSignedPlaybackTokenService.createSignedPlaybackToken({ videoUid: providerId });
 
             const playbackUrl = buildCloudflareSignedHlsManifestUrl(signedPlayback.token);
