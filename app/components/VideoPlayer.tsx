@@ -12,8 +12,8 @@ import {
     MuteButton,
     PlayButton,
     Poster,
-    TimeSlider,
     VolumeSlider,
+    useMediaRemote,
     isTrackCaptionKind,
     useMediaState,
     type MediaPlayerInstance,
@@ -34,7 +34,7 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-const playerIconClass = "h-6 w-6 stroke-[2]";
+const playerIconClass = "h-[1.625rem] w-[1.625rem] stroke-[2.25]";
 const sliderAccentClass = "bg-[#1F7A88]";
 
 function PolutekWatermark() {
@@ -109,18 +109,12 @@ function PlayerTimeReadout() {
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[active]/slider:h-2.5 group-data-[dragging]/slider:h-2.5";
-    const thumbClass = "pointer-events-none absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[active]/slider:scale-125 group-data-[dragging]/slider:scale-125";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-2.5";
+    const thumbClass = "pointer-events-none absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
-            <TimeSlider.Root className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
-                <TimeSlider.Track className={trackClass}>
-                    <TimeSlider.Progress className="pointer-events-none absolute h-full rounded-full bg-white/35" />
-                    <TimeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
-                </TimeSlider.Track>
-                <TimeSlider.Thumb className={thumbClass} />
-            </TimeSlider.Root>
+            <PlayerTimeScrubber trackClass={trackClass} thumbClass={thumbClass} />
 
             <Controls.Group className="mt-0 flex min-h-11 min-w-0 items-center justify-between gap-2 sm:gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
@@ -159,6 +153,70 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
+function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; thumbClass: string }) {
+    const remote = useMediaRemote();
+    const currentTime = useMediaState('currentTime');
+    const duration = useMediaState('duration');
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragTime, setDragTime] = useState(0);
+    const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+    const displayTime = isDragging ? dragTime : currentTime;
+    const safeTime = safeDuration ? Math.min(Math.max(displayTime || 0, 0), safeDuration) : 0;
+    const fillPercent = safeDuration ? (safeTime / safeDuration) * 100 : 0;
+
+    const updateDragTime = useCallback((value: string, event: React.SyntheticEvent<HTMLInputElement>) => {
+        if (!safeDuration) return;
+        const nextTime = Number(value);
+        if (!Number.isFinite(nextTime)) return;
+
+        setDragTime(nextTime);
+        remote.seeking(nextTime, event.nativeEvent);
+    }, [remote, safeDuration]);
+
+    const finishDrag = useCallback((event: React.SyntheticEvent<HTMLInputElement>) => {
+        if (!isDragging || !safeDuration) return;
+
+        setIsDragging(false);
+        remote.seek(dragTime, event.nativeEvent);
+    }, [dragTime, isDragging, remote, safeDuration]);
+
+    return (
+        <div
+            className="group/slider relative flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-300/85"
+            style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
+            data-dragging={isDragging ? "" : undefined}
+        >
+            <div className={trackClass}>
+                <div className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} style={{ width: `${fillPercent}%` }} />
+            </div>
+            <div className={thumbClass} />
+            <input
+                type="range"
+                className="absolute inset-0 h-full w-full cursor-pointer touch-none appearance-none bg-transparent opacity-0 disabled:cursor-not-allowed"
+                min={0}
+                max={safeDuration || 0}
+                step="0.01"
+                value={safeTime}
+                disabled={!safeDuration}
+                aria-label="Postęp filmu"
+                onPointerDown={(event) => {
+                    if (!safeDuration) return;
+                    event.currentTarget.setPointerCapture?.(event.pointerId);
+                    setIsDragging(true);
+                    setDragTime(safeTime);
+                }}
+                onChange={(event) => updateDragTime(event.currentTarget.value, event)}
+                onPointerUp={(event) => {
+                    event.currentTarget.releasePointerCapture?.(event.pointerId);
+                    finishDrag(event);
+                }}
+                onPointerCancel={finishDrag}
+                onKeyUp={finishDrag}
+            />
+        </div>
+    );
+}
+
 export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
@@ -180,8 +238,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
-    const sendEvent = useCallback(async (type: string, extra = {}): Promise<boolean> => {
-        if (!tracking?.playbackSessionId) return false;
+    const sendEvent = useCallback(async (type: string, extra = {}): Promise<{ ok: boolean; viewCounted?: boolean }> => {
+        if (!tracking?.playbackSessionId) return { ok: false };
         try {
             const res = await fetch(`/api/videos/${video.id}/playback-event`, {
                 method: 'POST',
@@ -200,13 +258,14 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                 if (error === 'SESSION_EXPIRED') {
                     refreshPlaybackPlan();
                 }
-                return false;
+                return { ok: false };
             }
 
-            return res.ok;
+            const data = await res.json().catch(() => ({}));
+            return { ok: res.ok, viewCounted: data?.viewCounted === true };
         } catch (e) {
             console.warn("Failed to send playback event", type, e);
-            return false;
+            return { ok: false };
         }
     }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
@@ -224,12 +283,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
             ? Math.floor(durationSeconds * 1000)
             : 0;
-        const counted = await sendEvent('WATCHED_10_SECONDS', {
+        const result = await sendEvent('WATCHED_10_SECONDS', {
             positionMs: Math.floor(Math.max(0, currentTimeSeconds) * 1000),
             durationMs,
         });
 
-        if (counted) {
+        if (result.ok && result.viewCounted) {
             onViewCounted?.();
         }
     }, [onViewCounted, sendEvent]);

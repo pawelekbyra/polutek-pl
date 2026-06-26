@@ -19,6 +19,7 @@ import { VideoPlaybackRepository } from "../infrastructure/video-playback.reposi
 export interface RecordPlaybackEventResult {
     success: true;
     throttled?: boolean;
+    viewCounted?: boolean;
 }
 
 type SanitizedPlaybackMetadataValue =
@@ -184,16 +185,19 @@ export async function recordPlaybackEventUseCase(
         });
     }
 
+    let viewCounted = false;
+
     if (type === 'WATCHED_10_SECONDS' && session && !session.isAdminPreview && !session.countedAsView) {
         const identifier = userId ? `u:${userId}` : `f:${fingerprint}`;
         const lockKey = `video:view:${videoId}:${identifier}`;
         const isNewView = await setNxEx(lockKey, '1', 86400);
 
         if (isNewView) {
-            await db.writeTransaction(async (tx) => {
+            const recordViewResult = await db.writeTransaction(async (tx) => {
                 const txRepo = new VideoPlaybackRepository(tx);
-                await txRepo.recordView(videoId, sessionId!, userId, ipHash);
+                return txRepo.recordView(videoId, sessionId!, userId, ipHash);
             });
+            viewCounted = recordViewResult.counted;
         } else {
             await repo.markSessionAsViewed(sessionId!);
         }
@@ -203,7 +207,8 @@ export async function recordPlaybackEventUseCase(
         ok: true,
         data: {
             success: true,
-            throttled: isProgressOrHeartbeat && !shouldSaveEvent ? true : undefined
+            throttled: isProgressOrHeartbeat && !shouldSaveEvent ? true : undefined,
+            viewCounted: type === 'WATCHED_10_SECONDS' ? viewCounted : undefined
         }
     };
 }
