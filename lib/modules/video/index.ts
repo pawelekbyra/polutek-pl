@@ -21,6 +21,7 @@ export * from './application/get-cloudflare-upload-url.use-case';
 export * from './application/import-legacy-video-to-cloudflare.use-case';
 export * from './application/handle-cloudflare-webhook.use-case';
 export * from './application/publish-after-asset-ready.use-case';
+export * from './application/admin-video-payload';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
