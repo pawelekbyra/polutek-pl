@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ThumbnailResponseService } from '@/lib/services/storage/thumbnail-response.service';
 import { MediaPolicy } from '@/lib/modules/media';
-import { head } from '@vercel/blob';
+import { get } from '@vercel/blob';
 
 vi.mock('@vercel/blob', () => ({
-  head: vi.fn(),
+  get: vi.fn(),
 }));
 
 vi.mock('@/lib/modules/media', () => ({
@@ -35,11 +35,12 @@ describe('ThumbnailResponseService', () => {
     expect(res.headers.get('location')).toBe(url);
   });
 
-  it('streams allowed Vercel Blob URLs', async () => {
+  it('streams allowed Vercel Blob URLs using private access', async () => {
     vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
     const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
+    const signedUrl = 'https://blob-signed-url.com/img.webp';
 
-    vi.mocked(head).mockResolvedValue({ contentType: 'image/webp', size: 100 } as any);
+    vi.mocked(get).mockResolvedValue({ blob: { url: signedUrl } } as any);
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       headers: new Headers({ 'Content-Type': 'image/webp', 'Content-Length': '100' }),
@@ -49,13 +50,15 @@ describe('ThumbnailResponseService', () => {
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/webp');
+    expect(get).toHaveBeenCalledWith(blobUrl, { access: 'private' });
+    expect(fetch).toHaveBeenCalledWith(signedUrl);
   });
 
   it('returns 502 if Vercel Blob fetch fails', async () => {
     vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
     const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
 
-    vi.mocked(head).mockResolvedValue({ contentType: 'image/webp' } as any);
+    vi.mocked(get).mockResolvedValue({ blob: { url: blobUrl } } as any);
     vi.mocked(fetch).mockResolvedValue({ ok: false } as any);
 
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);

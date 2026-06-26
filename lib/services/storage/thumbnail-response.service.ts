@@ -1,4 +1,4 @@
-import { get, head } from "@vercel/blob";
+import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { MediaPolicy } from "@/lib/modules/media";
 import { logger } from "@/lib/logger";
@@ -20,16 +20,24 @@ export class ThumbnailResponseService {
       const isVercelBlob = this.isVercelBlobUrl(thumbnailUrl);
 
       if (isVercelBlob) {
-        // For Vercel Blob (even if private), try to get it using backend credentials
+        // For Vercel Blob (even if private), use backend access to get a temporary URL or stream
         try {
-          const blobMetadata = await head(thumbnailUrl);
-          if (!blobMetadata) {
+          // Use get() with private access to resolve the actual storage URL
+          const result = await get(thumbnailUrl, { access: "private" });
+
+          if (!result?.blob?.url) {
             return new NextResponse("Thumbnail not found in storage", { status: 404 });
           }
 
-          const response = await fetch(thumbnailUrl);
+          // Fetch from the resolved URL (which may be a signed URL from @vercel/blob)
+          const response = await fetch(result.blob.url);
 
           if (!response.ok) {
+            logger.error("[ThumbnailResponseService] Upstream storage fetch failed", {
+              videoId,
+              status: response.status,
+              host: new URL(result.blob.url).hostname
+            });
             return new NextResponse("Error fetching thumbnail from storage", { status: 502 });
           }
 
