@@ -27,6 +27,8 @@ import { CaptionsIcon, Maximize, Pause, Play, Settings, Volume2, VolumeX } from 
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
+export { getViewThresholdMs, shouldSendViewForPlaybackPosition } from './video-view-threshold';
+import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -368,7 +370,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                             setHasStartedPlayback(true);
                         }
 
-                        if (!hasReached10s.current && currentTime >= 10) {
+                        if (!hasReached10s.current && shouldSendViewForPlaybackPosition(Math.floor(currentTime * 1000))) {
                             hasReached10s.current = true;
                             sendEvent('WATCHED_10_SECONDS');
                         }

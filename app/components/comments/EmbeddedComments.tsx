@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   MessageSquare,
   Loader2,
@@ -264,31 +263,23 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative"
     >
       {/* Sticky Header */}
-      <AnimatePresence>
-        {showStickyHeader && (
-          <motion.div
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 "
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
+      {showStickyHeader && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={16} className="text-blue-600" />
+            <span className="text-xs font-black uppercase">
+              {totalCount} {getCommentsLabel(totalCount)}
+            </span>
+          </div>
+          <button
+            onClick={scrollToTop}
+            className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors"
           >
-            <div className="flex items-center gap-2">
-              <MessageSquare size={16} className="text-blue-600" />
-              <span className="text-xs font-black uppercase">
-                {totalCount} {getCommentsLabel(totalCount)}
-              </span>
-            </div>
-            <button
-              onClick={scrollToTop}
-              className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors"
-            >
-              <ChevronUp size={14} />
-              {language === "pl" ? "Do początku" : "To top"}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <ChevronUp size={14} />
+            {language === "pl" ? "Do początku" : "To top"}
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3 order-2 sm:order-1">
@@ -402,79 +393,65 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </div>
           </div>
         ) : (
-          <AnimatePresence initial={false}>
-            {comments.map((comment) => (
-              <motion.div
-                key={comment.id}
-                className="space-y-3"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-              >
-                <CommentItem
-                  comment={comment}
-                  userProfile={userProfile}
-                  isClient={isClient}
-                  language={language}
-                  t={t}
-                  canComment={viewer?.canComment ?? false}
-                  onLike={(id) => likeMutation.mutate(id)}
-                  onDislike={() => {}}
-                  onReply={(id) => {
-                    setReplyTo(id);
-                    scrollToTop();
-                  }}
-                  onDelete={(id) => deleteMutation.mutate(id)}
-                  onPin={(id, pinned) =>
-                    pinMutation.mutate({ commentId: id, pinned })
-                  }
-                  isPinPending={pinMutation.isPending}
-                  onEdit={(id, text) =>
-                    editMutation.mutate({ commentId: id, text })
-                  }
-                  onReport={(id, reason, note) =>
-                    reportMutation.mutate({ commentId: id, reason, note })
-                  }
-                />
+          comments.map((comment) => (
+            <div key={comment.id} className="space-y-3">
+              <CommentItem
+                comment={comment}
+                userProfile={userProfile}
+                isClient={isClient}
+                language={language}
+                t={t}
+                canComment={viewer?.canComment ?? false}
+                onLike={(id) => likeMutation.mutate(id)}
+                onDislike={() => {}}
+                onReply={(id) => {
+                  setReplyTo(id);
+                  scrollToTop();
+                }}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onPin={(id, pinned) =>
+                  pinMutation.mutate({ commentId: id, pinned })
+                }
+                isPinPending={pinMutation.isPending}
+                onEdit={(id, text) =>
+                  editMutation.mutate({ commentId: id, text })
+                }
+                onReport={(id, reason, note) =>
+                  reportMutation.mutate({ commentId: id, reason, note })
+                }
+              />
 
-                {/* NESTED REPLIES */}
-                {comment.repliesPreview &&
-                  comment.repliesPreview.length > 0 && (
-                    <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
-                      {comment.repliesPreview.map((reply) => (
-                        <CommentItem
-                          key={reply.id}
-                          comment={reply}
-                          userProfile={userProfile}
-                          isClient={isClient}
-                          language={language}
-                          t={t}
-                          canComment={viewer?.canComment ?? false}
-                          onLike={(id) => likeMutation.mutate(id)}
-                          onDislike={() => {}}
-                          onReply={() => {}}
-                          onDelete={(id) => deleteMutation.mutate(id)}
-                          onPin={() => {}}
-                          isPinPending={false}
-                          onEdit={(id, text) =>
-                            editMutation.mutate({ commentId: id, text })
-                          }
-                          onReport={(id, reason, note) =>
-                            reportMutation.mutate({
-                              commentId: id,
-                              reason,
-                              note,
-                            })
-                          }
-                          isReply={true}
-                        />
-                      ))}
-                    </div>
-                  )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              {/* NESTED REPLIES */}
+              {comment.repliesPreview && comment.repliesPreview.length > 0 && (
+                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
+                  {comment.repliesPreview.map((reply) => (
+                    <CommentItem
+                      key={reply.id}
+                      comment={reply}
+                      userProfile={userProfile}
+                      isClient={isClient}
+                      language={language}
+                      t={t}
+                      canComment={viewer?.canComment ?? false}
+                      onLike={(id) => likeMutation.mutate(id)}
+                      onDislike={() => {}}
+                      onReply={() => {}}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      onPin={() => {}}
+                      isPinPending={false}
+                      onEdit={(id, text) =>
+                        editMutation.mutate({ commentId: id, text })
+                      }
+                      onReport={(id, reason, note) =>
+                        reportMutation.mutate({ commentId: id, reason, note })
+                      }
+                      isReply={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
         )}
 
         <div ref={loadMoreRef} className="h-4" />
@@ -504,22 +481,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </div>
         )}
 
-        <AnimatePresence>
-          {showStickyHeader && (
-            <motion.button
-              onClick={scrollToTop}
-              className="fixed bottom-10 right-10 z-40 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:bg-blue-700 transition-all"
-              title="Wróć na górę komentarzy"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.16, ease: "easeOut" }}
-              whileTap={{ scale: 0.94 }}
-            >
-              <ChevronUp size={24} />
-            </motion.button>
-          )}
-        </AnimatePresence>
+        {showStickyHeader && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-10 right-10 z-40 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:bg-blue-700 transition-all animate-in fade-in zoom-in"
+            title="Wróć na górę komentarzy"
+          >
+            <ChevronUp size={24} />
+          </button>
+        )}
       </div>
     </div>
   );
