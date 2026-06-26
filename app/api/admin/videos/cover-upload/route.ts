@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
+import { getBlobAccess } from "@/lib/blob-config";
 
 export const dynamic = "force-dynamic";
 
@@ -39,21 +40,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const access = getBlobAccess();
+    if (access === "private" && !videoId) {
+      return NextResponse.json(
+        { error: "Video must be saved as a draft before uploading a cover when using private storage." },
+        { status: 400 }
+      );
+    }
+
     const uuid = crypto.randomUUID();
     const extension = file.type.split("/")[1] || "webp";
     const videoPath = videoId ? videoId : "new";
     const pathname = `videos/${videoPath}/covers/${uuid}.${extension}`;
 
     const blob = await put(pathname, file, {
-      access: (process.env.VERCEL_BLOB_ACCESS as any) || "public",
+      access,
     });
 
     scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", {
       pathname,
       url: blob.url,
+      access,
     });
 
-    return NextResponse.json({ url: blob.url });
+    const displayUrl = access === "private" && videoId
+      ? `/api/videos/${videoId}/thumbnail`
+      : blob.url;
+
+    return NextResponse.json({ url: displayUrl, storageUrl: blob.url });
   } catch (error: any) {
     scopedLogger.error("[ADMIN_VIDEO_COVER_UPLOAD_ERROR]", error);
 

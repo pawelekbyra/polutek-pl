@@ -277,7 +277,7 @@ export class PlaybackService {
             console.error('[PLAYBACK_SERVICE] Cloudflare resolution failed', e);
             return unavailablePlan({
                 videoId,
-                status: 'READY',
+                status: 'ERROR',
                 video: { thumbnailUrl, title },
                 accessAllowed: true,
                 warnings: ['Failed to resolve secure playback source'],
