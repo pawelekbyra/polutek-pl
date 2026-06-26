@@ -6,10 +6,6 @@ export class UserPolicy {
     return role === 'ADMIN';
   }
 
-  static isPatron(isPatron: boolean): boolean {
-    return isPatron;
-  }
-
   /**
    * Defines if an actor can see another user's profile data.
    * Admins can see everything. Non-admins cannot see deleted profiles.
@@ -18,7 +14,6 @@ export class UserPolicy {
     if (actor.type === 'admin') return true;
     if (user.isDeleted) return false;
 
-    // In future, may check if it's the owner of the profile
     return true;
   }
 }
