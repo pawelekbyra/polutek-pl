@@ -52,8 +52,10 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isPaused, setIsPaused] = useState(true);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(0);
+
+    // We use refs for tracking time and duration to avoid stale values in callbacks
+    const currentTimeRef = useRef(0);
+    const durationRef = useRef(0);
 
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
@@ -68,8 +70,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                 body: JSON.stringify({
                     sessionId: tracking.playbackSessionId,
                     type,
-                    positionMs: Math.floor(currentTime * 1000),
-                    durationMs: Math.floor(duration * 1000),
+                    positionMs: Math.floor(currentTimeRef.current * 1000),
+                    durationMs: Math.floor(durationRef.current * 1000),
                     ...extra
                 })
             });
@@ -88,7 +90,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
             console.warn("Failed to send playback event", type, e);
             return { ok: false };
         }
-    }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan, currentTime, duration]);
+    }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
@@ -121,6 +123,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
+        currentTimeRef.current = 0;
+        durationRef.current = 0;
     }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
 
     useEffect(() => {
@@ -244,17 +248,17 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     onEnded={() => {
                         setIsPaused(true);
                         void sendEvent('ENDED');
-                        void maybeSendView(currentTime, duration);
+                        void maybeSendView(currentTimeRef.current, durationRef.current);
                     }}
                     onSeeked={(time) => {
-                        setCurrentTime(time);
+                        currentTimeRef.current = time;
                         sendEvent('SEEKED', { positionMs: Math.floor(time * 1000) });
                     }}
                     onBufferingStarted={() => sendEvent('BUFFERING_STARTED')}
                     onBufferingEnded={() => sendEvent('BUFFERING_ENDED')}
                     onTimeUpdate={(time, dur) => {
-                        setCurrentTime(time);
-                        setDuration(dur);
+                        currentTimeRef.current = time;
+                        durationRef.current = dur;
 
                         void maybeSendView(time, dur);
 

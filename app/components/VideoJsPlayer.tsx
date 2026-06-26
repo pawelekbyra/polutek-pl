@@ -59,12 +59,17 @@ export default function VideoJsPlayer(props: VideoJsPlayerProps) {
     propsRef.current = props;
   }, [props]);
 
-  const isHlsUrl = (url: string) => {
+  const getMimeType = (url: string) => {
     try {
         const pathname = new URL(url).pathname.toLowerCase();
-        return pathname.endsWith('.m3u8');
+        if (pathname.endsWith('.m3u8')) return 'application/x-mpegURL';
+        if (pathname.endsWith('.mpd')) return 'application/dash+xml';
+        return undefined;
     } catch {
-        return url.toLowerCase().split('?')[0].endsWith('.m3u8');
+        const base = url.toLowerCase().split('?')[0];
+        if (base.endsWith('.m3u8')) return 'application/x-mpegURL';
+        if (base.endsWith('.mpd')) return 'application/dash+xml';
+        return undefined;
     }
   };
 
@@ -75,7 +80,7 @@ export default function VideoJsPlayer(props: VideoJsPlayerProps) {
       videoElement.classList.add('vjs-big-play-centered');
       videoRef.current.appendChild(videoElement);
 
-      const isHls = isHlsUrl(src);
+      const mimeType = getMimeType(src);
 
       const player = playerRef.current = videojs(videoElement, {
         autoplay: autoPlay,
@@ -88,7 +93,7 @@ export default function VideoJsPlayer(props: VideoJsPlayerProps) {
         playsinline: true,
         sources: [{
           src,
-          type: isHls ? 'application/x-mpegURL' : undefined
+          type: mimeType
         }],
         userActions: {
           hotkeys: true
@@ -142,13 +147,13 @@ export default function VideoJsPlayer(props: VideoJsPlayerProps) {
   useEffect(() => {
     const player = playerRef.current;
     if (player && src) {
-      const isHls = isHlsUrl(src);
+      const mimeType = getMimeType(src);
       const currentSrc = player.currentSrc();
 
       if (currentSrc !== src) {
         player.src({
           src,
-          type: isHls ? 'application/x-mpegURL' : undefined
+          type: mimeType
         });
       }
     }

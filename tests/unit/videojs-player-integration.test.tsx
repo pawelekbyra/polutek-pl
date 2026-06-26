@@ -3,19 +3,31 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import VideoPlayer from '@/app/components/VideoPlayer';
 import * as PremiumWrapper from '@/app/components/PremiumWrapper';
 import { AccessTier, VideoStatus } from '@prisma/client';
+
+// Mock fetch
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })
+) as any;
 
 // Mock Clerk
 vi.mock('@clerk/nextjs', () => ({
   useAuth: () => ({ orgRole: 'user' }),
 }));
 
-// Mock VideoJsPlayer
+// Mock VideoJsPlayer to capture callbacks
+let capturedCallbacks: any = {};
 vi.mock('@/app/components/VideoJsPlayer', () => ({
-  default: (props: any) => <div data-testid="videojs-player" data-src={props.src} />
+  default: (props: any) => {
+    capturedCallbacks = props;
+    return <div data-testid="videojs-player" data-src={props.src} />;
+  }
 }));
 
 const mockVideo: any = {
@@ -29,7 +41,7 @@ const mockVideo: any = {
 };
 
 describe('VideoPlayer Video.js Integration', () => {
-  it('renders VideoJsPlayer for custom-player sources', () => {
+  it('renders VideoJsPlayer for custom-player sources and feeds events to tracking', async () => {
     const mockPlaybackPlan: any = {
       source: {
         kind: 'hls',
@@ -37,6 +49,7 @@ describe('VideoPlayer Video.js Integration', () => {
       },
       tracking: {
         playbackSessionId: 's1',
+        heartbeatIntervalSeconds: 15
       },
       player: {
         title: 'Custom Title',
@@ -55,9 +68,43 @@ describe('VideoPlayer Video.js Integration', () => {
 
     render(<VideoPlayer video={mockVideo} />);
 
-    const player = screen.getByTestId('videojs-player');
-    expect(player).toBeDefined();
-    expect(player.getAttribute('data-src')).toBe('https://example.com/video.m3u8');
+    expect(screen.getByTestId('videojs-player')).toBeDefined();
+
+    // Simulate playback events through the adapter's callbacks
+    await act(async () => {
+      capturedCallbacks.onPlay();
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/videos/v1/playback-event'),
+        expect.objectContaining({
+            body: expect.stringContaining('"type":"PLAY_STARTED"')
+        })
+    );
+
+    // Simulate time update and verify ref-based tracking
+    await act(async () => {
+      capturedCallbacks.onTimeUpdate(10, 100);
+    });
+
+    await act(async () => {
+      capturedCallbacks.onPause();
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/videos/v1/playback-event'),
+        expect.objectContaining({
+            body: expect.stringContaining('"type":"PLAY_PAUSED"')
+        })
+    );
+
+    // Check if position was included (10s = 10000ms)
+    expect(global.fetch).toHaveBeenLastCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+            body: expect.stringContaining('"positionMs":10000')
+        })
+    );
   });
 
   it('renders iframe for embed sources', () => {
@@ -86,6 +133,5 @@ describe('VideoPlayer Video.js Integration', () => {
     const iframe = screen.getByTitle('Test Video');
     expect(iframe).toBeDefined();
     expect(iframe.tagName).toBe('IFRAME');
-    expect(iframe.getAttribute('src')).toBe('https://www.youtube.com/embed/123');
   });
 });

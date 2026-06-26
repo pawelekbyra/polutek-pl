@@ -107,6 +107,6 @@ export const SUPPORTED_VIDEO_SOURCES = [
   'YouTube: youtube.com/watch, youtu.be, /shorts, /live oraz /embed',
   'Vimeo: vimeo.com oraz player.vimeo.com',
   'HLS: playlisty .m3u8 (najlepiej publiczne URL-e z CORS)',
-  'MPEG-DASH: manifesty .mpd obsługiwane przez Vidstack',
+  'MPEG-DASH: manifesty .mpd (wymagają Video.js)',
   'Pliki bezpośrednie: .mp4, .webm, .ogg/.ogv, .mov, .m4v z R2/S3/Vercel Blob lub hostów z ALLOWED_MEDIA_HOSTS',
 ];
