@@ -77,46 +77,46 @@ function PlayerCaptionButton({ className }: { className: string }) {
     );
 }
 
-function PremiumPlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-10 w-10 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d2d]/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
+    const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d2d]/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
 
     return (
-        <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
-            <div className="space-y-1 px-3 pb-2 sm:px-4 sm:pb-3">
-                <div className="min-w-0">
-                    <TimeSlider.Root className="group/slider relative flex h-8 w-full cursor-pointer touch-none select-none items-center py-3" aria-label="Postęp filmu">
-                        <TimeSlider.Track className="relative h-[3px] w-full min-w-0 overflow-hidden rounded-full bg-white/30 transition-all group-hover/slider:h-[5px] group-focus-within/slider:h-[5px]">
-                            <TimeSlider.Progress className="absolute h-full rounded-full bg-white/45" />
-                            <TimeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
-                        </TimeSlider.Track>
-                        <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-[#ff2d2d] opacity-0 transition duration-150 group-hover/slider:scale-100 group-hover/slider:opacity-100 group-focus-within/slider:scale-100 group-focus-within/slider:opacity-100 data-[dragging]:scale-100 data-[dragging]:opacity-100" />
-                    </TimeSlider.Root>
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
+            <TimeSlider.Root className="group/time relative flex h-8 w-full cursor-pointer touch-none select-none items-center" aria-label="Postęp filmu">
+                <TimeSlider.Track className="relative h-1 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/time:h-1.5 group-focus-within/time:h-1.5 data-[dragging]:h-1.5">
+                    <TimeSlider.Progress className="absolute h-full rounded-full bg-white/35" />
+                    <TimeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
+                </TimeSlider.Track>
+                <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff2d2d] shadow-md ring-2 ring-white/80 transition-transform group-hover/time:scale-110 group-focus-within/time:scale-110 data-[dragging]:scale-125" />
+            </TimeSlider.Root>
+
+            <Controls.Group className="mt-1 flex h-11 min-w-0 items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                    <PlayerPlayButton className={buttonClass} />
+
+                    <div className="flex shrink-0 items-center gap-1">
+                        <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
+                        <VolumeSlider.Root className="relative hidden h-9 w-20 items-center md:flex lg:w-24" aria-label="Głośność">
+                            <VolumeSlider.Track className="relative h-1 w-full rounded-full bg-white/30 transition-[height] focus-within:h-1.5">
+                                <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
+                            </VolumeSlider.Track>
+                            <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff2d2d] ring-2 ring-white/80 transition-transform data-[dragging]:scale-110" />
+                        </VolumeSlider.Root>
+                    </div>
+
+                    <div className="whitespace-nowrap text-sm font-medium tabular-nums text-white/90">
+                        <Time type="current" /> <span className="text-white/60">/</span> <span className="text-white/75"><Time type="duration" /></span>
+                    </div>
                 </div>
-                <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
-                        <PlayerPlayButton className={buttonClass} />
-                        <div className="group/volume flex shrink-0 items-center">
-                            <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                            <VolumeSlider.Root className="ml-1 hidden h-10 w-0 items-center overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/volume:w-20 group-hover/volume:opacity-100 group-focus-within/volume:w-20 group-focus-within/volume:opacity-100 md:flex lg:group-hover/volume:w-[88px] lg:group-focus-within/volume:w-[88px]" aria-label="Głośność">
-                                <VolumeSlider.Track className="relative h-[3px] w-full rounded-full bg-white/30">
-                                    <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
-                                </VolumeSlider.Track>
-                                <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3 w-3 -translate-x-1/2 rounded-full bg-[#ff2d2d]" />
-                            </VolumeSlider.Root>
-                        </div>
-                        <div className="min-w-0 truncate text-[12px] font-medium tabular-nums text-white/90">
-                            <Time type="current" /> <span className="text-white/60">/</span> <span className="text-white/60"><Time type="duration" /></span>
-                        </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                        {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
-                        <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
-                            <Settings className={playerIconClass} aria-hidden="true" />
-                        </button>
-                        <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
-                    </div>
-                </Controls.Group>
-            </div>
+
+                <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                    {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
+                    <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
+                        <Settings className={playerIconClass} aria-hidden="true" />
+                    </button>
+                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
+                </div>
+            </Controls.Group>
         </Controls.Root>
     );
 }
@@ -413,7 +413,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         )}
                     </MediaProvider>
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
-                    {(playerConfig ? playerConfig.controls : true) && <PremiumPlayerControls hasTextTracks={hasTextTracks} />}
+                    {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
             )}
         </div>
