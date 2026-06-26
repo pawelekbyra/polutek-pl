@@ -24,7 +24,7 @@ describe("public loading/access state UX contracts", () => {
   it("keeps the public player controls clean, accessible, and compact", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(player).toContain("Captions,");
+    expect(player).toContain("Subtitles,");
     expect(player).toContain("function PlayerCaptionButton");
     expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
     expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
@@ -35,8 +35,10 @@ describe("public loading/access state UX contracts", () => {
     expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
     expect(player).not.toContain("rounded-full border border-white/15 bg-black/35");
     expect(player).toContain("inline-flex min-w-[7.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
-    expect(player).toContain("bg-sky-400");
-    expect(player).toContain("before:-inset-3");
+    expect(player).toContain("bg-[#1F7A88]");
+    expect(player).toContain("pointer-events-none absolute left-[var(--slider-fill)]");
+    expect(player).toContain("group-data-[active]/slider:h-2.5");
+    expect(player).not.toContain("before:-inset-3");
     expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
     expect(player).toContain('aria-label="Postęp filmu"');
     expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');

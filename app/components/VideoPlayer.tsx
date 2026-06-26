@@ -22,7 +22,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { CaptionsIcon, Maximize, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { Maximize, Pause, Play, Subtitles, Volume2, VolumeX } from 'lucide-react';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -35,7 +35,7 @@ interface VideoPlayerProps {
 }
 
 const playerIconClass = "h-5 w-5 stroke-[2]";
-const sliderAccentClass = "bg-sky-400";
+const sliderAccentClass = "bg-[#1F7A88]";
 
 function PolutekWatermark() {
     return (
@@ -70,13 +70,13 @@ function PlayerCaptionButton({ className, disabled = false }: { className: strin
 
     return (
         <CaptionButton
-            className={cn(className, captionsOn && "bg-sky-500 text-white hover:bg-sky-500/90 active:bg-sky-500/85")}
+            className={cn(className, captionsOn && "bg-[#1F7A88] text-white hover:bg-[#1F7A88]/90 active:bg-[#1F7A88]/85")}
             aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
             aria-pressed={captionsOn}
             disabled={disabled}
             title={disabled ? "Brak napisów dla tego filmu" : undefined}
         >
-            <CaptionsIcon className={playerIconClass} aria-hidden="true" />
+            <Subtitles className={playerIconClass} aria-hidden="true" />
         </CaptionButton>
     );
 }
@@ -109,8 +109,8 @@ function PlayerTimeReadout() {
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/slider:h-2.5 group-focus-within/slider:h-2.5 group-data-[dragging]/slider:h-3";
-    const thumbClass = "absolute left-[var(--slider-fill)] top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_0_4px_rgba(255,255,255,0.22),0_4px_14px_rgba(14,165,233,0.52)] ring-2 ring-sky-100 transition-transform before:absolute before:-inset-3 before:content-[''] group-hover/slider:scale-110 group-focus-within/slider:scale-110 group-data-[dragging]/slider:scale-125";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[active]/slider:h-2.5 group-data-[dragging]/slider:h-2.5";
+    const thumbClass = "pointer-events-none absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[active]/slider:scale-125 group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
