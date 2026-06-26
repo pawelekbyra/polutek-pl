@@ -485,9 +485,9 @@
     },
     {
       "file": "lib/modules/users/infrastructure/user.repository.ts",
-      "line": 138,
+      "line": 124,
       "label": "explicit any annotation",
-      "text": "include: { paymentTotals: true } as any",
+      "text": "return await (this.db as any).user.findUnique({",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {

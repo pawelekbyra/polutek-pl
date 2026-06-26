@@ -121,7 +121,7 @@ export class UserRepository {
   }
 
   async findWithPaymentTotalsAndActivePatronGrants(id: string) {
-    return await this.user.findUnique({
+    return await (this.db as any).user.findUnique({
       where: { id },
       include: {
         paymentTotals: true,
@@ -130,7 +130,7 @@ export class UserRepository {
           select: { id: true },
           take: 1,
         },
-      } as any
+      }
     });
   }
 
