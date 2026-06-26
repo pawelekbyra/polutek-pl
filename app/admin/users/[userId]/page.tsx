@@ -83,7 +83,6 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
     }
 
     const patronTruth = user.patronDiagnostics?.truth;
-    const patronMismatch = user.patronDiagnostics?.cacheTruthMismatch;
     const isPatronByGrantTruth = patronTruth?.isPatron === true;
 
     return (
@@ -109,7 +108,6 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                       ) : (
                         <Badge variant="outline">Podstawowy (brak aktywnego grantu)</Badge>
                       )}
-                      {patronMismatch?.hasMismatch && <Badge variant="destructive">Cache mismatch</Badge>}
                       {user.isDeleted && <Badge variant="destructive">Usunięty</Badge>}
                     </div>
                   </div>

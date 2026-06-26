@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { PaymentStatus, Prisma } from "@prisma/client";
 import { normalizePaymentTotals } from "../domain/payment-totals";
-import { PatronCacheReadModel, PatronTruthReadModel, buildPatronCacheReadModel, buildPatronTruthReadModel } from "./patron-read-model";
+import { PatronTruthReadModel, buildPatronTruthReadModel } from "./patron-read-model";
 
 type AdminUserOrderBy = NonNullable<ListAdminUsersInput['orderBy']>;
 
@@ -11,8 +11,6 @@ export interface AdminPatronQuerySortContractDto {
   patronStatusFilterSource: 'ACTIVE_PATRON_GRANT';
   patronSourceFilterSource: 'ACTIVE_PATRON_GRANT';
   patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT';
-  legacyPatronCacheFields: Array<'isPatron' | 'patronSince' | 'patronSource'>;
-  cacheFieldSource: 'USER_PATRON_CACHE';
   compatibilityAliases: {
     orderByPatronSince: 'activeGrantSince';
   };
@@ -22,8 +20,6 @@ export const ADMIN_PATRON_QUERY_SORT_CONTRACT: AdminPatronQuerySortContractDto =
   patronStatusFilterSource: 'ACTIVE_PATRON_GRANT',
   patronSourceFilterSource: 'ACTIVE_PATRON_GRANT',
   patronSinceSortSource: 'ACTIVE_PATRON_GRANT_FIRST_CREATED_AT',
-  legacyPatronCacheFields: ['isPatron', 'patronSince', 'patronSource'],
-  cacheFieldSource: 'USER_PATRON_CACHE',
   compatibilityAliases: {
     orderByPatronSince: 'activeGrantSince',
   },
@@ -74,22 +70,16 @@ export interface AdminUserListItemDto {
   username: string | null;
   imageUrl: string | null;
   role: string;
-  /** Deprecated admin cache field. Use patronTruth.isPatron for access truth. */
   isPatron: boolean;
   isDeleted: boolean;
-  /** Deprecated admin cache field. Use activeGrantSince or patronTruth.activeGrantSince for grant truth. */
   patronSince: Date | null;
-  /** Deprecated admin cache field. Use activeGrantSource or patronTruth.activeGrantSource for grant truth. */
   patronSource: string | null;
-  /** Grant-backed first active PatronGrant date; canonical patron sort/read field. */
   activeGrantSince: Date | null;
   /** Grant-backed first active PatronGrant source; canonical patron source read field. */
   activeGrantSource: string | null;
   /** Count of active PatronGrant rows; canonical patron truth count. */
   activeGrantCount: number;
-  patronCache: PatronCacheReadModel;
   patronTruth: PatronTruthReadModel;
-  patronCacheTruthMismatch: boolean;
   language: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -194,7 +184,6 @@ export async function listAdminUsers(
             totalPaidMinor: t.amountMinor
         }));
 
-        const patronCache = buildPatronCacheReadModel(u);
         const patronTruth = buildPatronTruthReadModel(u.patronGrants);
 
         return {
@@ -204,16 +193,14 @@ export async function listAdminUsers(
             username: u.username,
             imageUrl: u.imageUrl,
             role: u.role,
-            isPatron: u.isPatron,
+            isPatron: patronTruth.isPatron,
             isDeleted: u.isDeleted,
-            patronSince: u.patronSince,
-            patronSource: u.patronSource,
+            patronSince: patronTruth.activeGrantSince,
+            patronSource: patronTruth.activeGrantSource,
             activeGrantSince: patronTruth.activeGrantSince,
             activeGrantSource: patronTruth.activeGrantSource,
             activeGrantCount: patronTruth.activeGrantCount,
-            patronCache,
             patronTruth,
-            patronCacheTruthMismatch: patronCache.isPatron !== patronTruth.isPatron,
             language: u.language,
             createdAt: u.createdAt,
             updatedAt: u.updatedAt,

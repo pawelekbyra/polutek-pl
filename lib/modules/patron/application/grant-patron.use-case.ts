@@ -29,7 +29,6 @@ export async function grantPatron(
   const source = SOURCE_MAP[input.source];
 
   const work = async (currentTx: WriteTx) => {
-    // 0. Idempotency check for admin (manual) grants
     if (source === PatronGrantSource.ADMIN) {
       const existingActiveAdminGrant = await repo.findActiveGrantByAdmin(input.userId, currentTx);
       if (existingActiveAdminGrant) {
@@ -40,16 +39,14 @@ export async function grantPatron(
 
         return success({
           userId: user.id,
-          isPatron: user.isPatron,
-          patronSince: user.patronSince,
-          patronSource: user.patronSource,
+          isPatron: activeGrants.length > 0,
+          patronSince: activeGrants[0]?.createdAt ?? null,
+          patronSource: activeGrants[0]?.source ?? null,
           activeGrants,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
         });
       }
     }
-
-    // 1. Idempotency check for paymentId
     if (input.paymentId) {
       const existingGrant = await repo.findGrantByPaymentId(input.paymentId, currentTx);
       if (existingGrant) {
@@ -60,16 +57,14 @@ export async function grantPatron(
 
         return success({
           userId: user.id,
-          isPatron: user.isPatron,
-          patronSince: user.patronSince,
-          patronSource: user.patronSource,
+          isPatron: activeGrants.length > 0,
+          patronSince: activeGrants[0]?.createdAt ?? null,
+          patronSource: activeGrants[0]?.source ?? null,
           activeGrants,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
         });
       }
     }
-
-    // 2. Idempotency check for referralId
     if (input.referralId) {
       const existingGrant = await repo.findGrantByReferralId(input.referralId, currentTx);
       if (existingGrant) {
@@ -80,27 +75,23 @@ export async function grantPatron(
 
         return success({
           userId: user.id,
-          isPatron: user.isPatron,
-          patronSince: user.patronSince,
-          patronSource: user.patronSource,
+          isPatron: activeGrants.length > 0,
+          patronSince: activeGrants[0]?.createdAt ?? null,
+          patronSource: activeGrants[0]?.source ?? null,
           activeGrants,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
         });
       }
     }
-
-    // 3. Fetch user and update status
     const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
     const now = new Date();
     const updatedUser = await repo.updateUserPatronFields(input.userId, {
       isPatron: true,
-      patronSince: PatronPolicy.shouldPreservePatronSince(user.isPatron, user.patronSince) ? user.patronSince : now,
+      patronSince: now,
       patronSource: source,
     }, currentTx);
-
-    // 4. Create grant record
     await repo.createGrant({
       userId: input.userId,
       source,
@@ -114,9 +105,9 @@ export async function grantPatron(
 
     return success({
       userId: updatedUser.id,
-      isPatron: updatedUser.isPatron,
-      patronSince: updatedUser.patronSince,
-      patronSource: updatedUser.patronSource,
+      isPatron: activeGrants.length > 0,
+      patronSince: activeGrants[0]?.createdAt ?? null,
+      patronSource: activeGrants[0]?.source ?? null,
       activeGrants,
       normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
     });
@@ -125,7 +116,6 @@ export async function grantPatron(
   try {
     return tx ? await work(tx) : await ctx.db.writeTransaction(work);
   } catch (error) {
-      // Handle Race Condition (P2002: Unique constraint failed)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           const target = (error.meta?.target as string[]) || [];
           const paymentIdMatch = input.paymentId && target.includes('paymentId');
@@ -140,9 +130,9 @@ export async function grantPatron(
                   const activeGrants = await repo.listActiveGrants(input.userId, db);
                   return success({
                       userId: user.id,
-                      isPatron: user.isPatron,
-                      patronSince: user.patronSince,
-                      patronSource: user.patronSource,
+                      isPatron: activeGrants.length > 0,
+                      patronSince: activeGrants[0]?.createdAt ?? null,
+                      patronSource: activeGrants[0]?.source ?? null,
                       activeGrants,
                       normalizedTotal: normalizePaymentTotals(user.paymentTotals),
                   });

@@ -1,17 +1,8 @@
-export interface PatronCacheReadModel {
-  isPatron: boolean;
-  patronSince: Date | null;
-  patronSource: string | null;
-  readModelSource: 'USER_PATRON_CACHE';
-}
-
 export interface PatronTruthReadModel {
   isPatron: boolean;
   activeGrantCount: number;
   activeGrantIds: string[];
-  /** First active PatronGrant date; canonical grant-backed replacement for legacy User.patronSince sorting. */
   activeGrantSince: Date | null;
-  /** Source of the first active PatronGrant; canonical grant-backed replacement for legacy User.patronSource filtering display. */
   activeGrantSource: string | null;
   firstActiveGrantAt: Date | null;
   latestActiveGrantAt: Date | null;
@@ -19,35 +10,10 @@ export interface PatronTruthReadModel {
   truthSource: 'ACTIVE_PATRON_GRANT';
 }
 
-export interface PatronCacheTruthMismatchReadModel {
-  hasMismatch: boolean;
-  cacheSaysPatron: boolean;
-  truthSaysPatron: boolean;
-  cachePatronSince: Date | null;
-  truthFirstActiveGrantAt: Date | null;
-  cachePatronSource: string | null;
-  truthActiveSource: string | null;
-}
-
 export interface PatronDiagnosticsReadModel {
   finalPatronStatus: 'ACTIVE_GRANT' | 'NO_ACTIVE_GRANT';
   finalPatronStatusSource: 'ACTIVE_PATRON_GRANT';
-  cache: PatronCacheReadModel;
   truth: PatronTruthReadModel;
-  cacheTruthMismatch: PatronCacheTruthMismatchReadModel;
-}
-
-export function buildPatronCacheReadModel(user: {
-  isPatron: boolean;
-  patronSince: Date | null;
-  patronSource: string | null;
-}): PatronCacheReadModel {
-  return {
-    isPatron: user.isPatron,
-    patronSince: user.patronSince,
-    patronSource: user.patronSource,
-    readModelSource: 'USER_PATRON_CACHE',
-  };
 }
 
 export function buildPatronTruthReadModel(
@@ -79,11 +45,6 @@ export function buildPatronTruthReadModel(
 }
 
 export function buildPatronDiagnosticsReadModel(
-  user: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: string | null;
-  },
   patronGrants: Array<{
     id: string;
     source: string;
@@ -91,22 +52,11 @@ export function buildPatronDiagnosticsReadModel(
     revokedAt: Date | null;
   }>
 ): PatronDiagnosticsReadModel {
-  const cache = buildPatronCacheReadModel(user);
   const truth = buildPatronTruthReadModel(patronGrants);
 
   return {
     finalPatronStatus: truth.isPatron ? 'ACTIVE_GRANT' : 'NO_ACTIVE_GRANT',
     finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
-    cache,
     truth,
-    cacheTruthMismatch: {
-      hasMismatch: cache.isPatron !== truth.isPatron,
-      cacheSaysPatron: cache.isPatron,
-      truthSaysPatron: truth.isPatron,
-      cachePatronSince: cache.patronSince,
-      truthFirstActiveGrantAt: truth.firstActiveGrantAt,
-      cachePatronSource: cache.patronSource,
-      truthActiveSource: truth.source,
-    },
   };
 }
