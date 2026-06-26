@@ -8,6 +8,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
 import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
 import { CloudflareStreamClient } from '@/lib/modules/video/infrastructure/cloudflare-stream.client';
+import { getPrimaryPlayableAsset } from './primary-playable-asset';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -184,49 +185,15 @@ export class PlaybackService {
     const safeAsset = toSafeAssetContract(asset);
 
     if (asset) {
-      if (!asset.isPrimary) {
-        return unavailablePlan({
-          videoId,
-          status: 'NO_PRIMARY_ASSET',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: ['No primary video asset is available'],
-          sourceMode: 'PROVIDER_ASSET',
-          asset: safeAsset,
-        });
-      }
+      const primaryAsset = getPrimaryPlayableAsset(asset);
 
-      if (asset.processingState === 'PENDING' || asset.processingState === 'UPLOADING' || asset.processingState === 'PROCESSING') {
+      if (!primaryAsset.canResolveProviderSource) {
         return unavailablePlan({
           videoId,
-          status: 'PROCESSING',
+          status: primaryAsset.state === 'FAILED' ? 'UNAVAILABLE' : primaryAsset.state,
           video: { thumbnailUrl, title },
           accessAllowed: true,
-          warnings: [`Video asset is ${asset.processingState}`],
-          sourceMode: 'PROVIDER_ASSET',
-          asset: safeAsset,
-        });
-      }
-
-      if (asset.processingState === 'FAILED') {
-        return unavailablePlan({
-          videoId,
-          status: 'UNAVAILABLE',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: ['Video asset processing failed'],
-          sourceMode: 'PROVIDER_ASSET',
-          asset: safeAsset,
-        });
-      }
-
-      if (asset.processingState !== 'READY') {
-        return unavailablePlan({
-          videoId,
-          status: 'VIDEO_NOT_READY',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: ['Video asset is not ready'],
+          warnings: primaryAsset.warnings,
           sourceMode: 'PROVIDER_ASSET',
           asset: safeAsset,
         });
@@ -350,6 +317,9 @@ export class PlaybackService {
         });
     }
 
+    // Legacy Video.videoUrl fallback starts here. Provider assets above are
+    // intentionally handled first so READY Cloudflare Stream playback never
+    // silently regresses to /api/media or raw object-storage/direct URLs.
     if (!videoUrl) {
         return unavailablePlan({
           videoId,

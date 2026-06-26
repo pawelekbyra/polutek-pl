@@ -412,6 +412,32 @@ describe('PlaybackService Safety', () => {
   });
 
 
+  it('keeps READY Cloudflare provider asset preferred over legacy videoUrl and raw object storage', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true } as any,
+    });
+
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/legacy-should-not-win.mp4',
+      asset: cloudflareAsset,
+    } as any);
+
+    mockCreateSignedPlaybackToken.mockResolvedValue({ token: 'cf-provider-wins' });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 's-cf-wins' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
+    expect(plan.source?.kind).toBe('cloudflare_stream');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-provider-wins/manifest/video.m3u8');
+    expect(plan.source?.playbackUrl).not.toBe('/api/media/v1');
+    expect(JSON.stringify(plan.source)).not.toContain('legacy-should-not-win.mp4');
+  });
+
+
   it.each([
     'https://videodelivery.net/cf-playback-id/manifest/video.m3u8',
     'https://customer-xxx.cloudflarestream.com/cf-playback-id/manifest/video.m3u8',

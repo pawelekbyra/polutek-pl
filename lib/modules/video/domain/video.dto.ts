@@ -34,6 +34,7 @@ export interface AdminVideoAssetDto {
   bucket?: string | null;
   providerAssetId?: string | null;
   providerPlaybackId?: string | null;
+  status: VideoAssetProcessingState;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   failureReason?: string | null;
@@ -42,6 +43,14 @@ export interface AdminVideoAssetDto {
   processingEndedAt?: Date | null;
   mimeType?: string | null;
   sizeBytes?: number | null;
+  requiresSignedUrl: boolean;
+  sourceMode: "CLOUDFLARE_STREAM" | "LEGACY_PROVIDER_ASSET";
+  durationSeconds?: number | null;
+  thumbnailUrl?: string | null;
+  previewUrl?: string | null;
+  hlsManifestUrl?: string | null;
+  dashManifestUrl?: string | null;
+  lastSyncAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   playbackUrl?: never;
@@ -111,6 +120,7 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
     bucket: asset.bucket,
     providerAssetId: asset.providerAssetId,
     providerPlaybackId: asset.providerPlaybackId,
+    status: asset.processingState,
     processingState: asset.processingState,
     isPrimary: asset.isPrimary,
     failureReason: asset.failureReason,
@@ -119,6 +129,14 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
     processingEndedAt: asset.processingEndedAt,
     mimeType: asset.mimeType,
     sizeBytes: asset.sizeBytes,
+    requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
+    sourceMode: asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM" : "LEGACY_PROVIDER_ASSET",
+    durationSeconds: asset.durationSeconds ?? null,
+    thumbnailUrl: asset.thumbnailUrl ?? null,
+    previewUrl: asset.previewUrl ?? null,
+    hlsManifestUrl: asset.hlsManifestUrl ?? null,
+    dashManifestUrl: asset.dashManifestUrl ?? null,
+    lastSyncAt: asset.providerSyncedAt ?? null,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,
   };

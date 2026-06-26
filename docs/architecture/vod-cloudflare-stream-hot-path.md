@@ -94,3 +94,28 @@ This #1106 slice does not implement or change:
 - admin/upload video lifecycle rewrites;
 - payment, PatronGrant, auth semantics, or unrelated CI baselines;
 - load testing, CDN benchmarking, or production certification evidence.
+
+## #1106 slice 2 follow-up: provider asset status contract
+
+A stored `VideoAsset` is the backend/domain representation of provider media state. Playback selection must first inspect the persisted primary asset and only then decide whether a provider source can be resolved. The selector is intentionally storage-state-only: it does not call Cloudflare, sign URLs, create playback sessions, or inspect legacy `Video.videoUrl` fallback.
+
+For a primary Cloudflare Stream asset:
+
+- `READY` is the only state eligible for provider-backed playback resolution.
+- `PENDING`, `UPLOADING`, and `PROCESSING` produce a non-playable processing plan.
+- `FAILED` produces a non-playable unavailable plan with safe diagnostics only.
+- Missing or non-primary assets produce `NO_PRIMARY_ASSET` rather than silently using raw legacy URLs.
+
+## Admin diagnostics
+
+Admin video DTOs may expose safe provider diagnostics: provider identity, provider asset/playback identifiers, processing status, primary flag, signed-playback requirement, failure reason, sync timestamps, and optional non-secret media metadata. Admin DTOs must not expose provider secrets, signed playback tokens, upload secrets, private signing keys, or viewer/session-specific playback source data.
+
+Public playback DTOs remain separate. Denied or not-ready public playback plans must not leak provider identifiers, raw storage URLs, signed tokens, or playback sessions.
+
+## Legacy URL fallback boundary
+
+`Video.videoUrl`, `/api/media`, and R2/S3/Vercel Blob/direct URLs remain legacy, migration, development, or explicit fallback surfaces. A READY primary Cloudflare Stream asset must win over legacy `Video.videoUrl`, even if the legacy field is still populated during migration. Legacy fallback is allowed only after provider-asset handling has failed to find an eligible stored provider asset and the existing access/security rules allow that fallback.
+
+## Still remaining for later #1106 slices
+
+This follow-up does not complete #1106. Remaining slices include Cloudflare direct-upload lifecycle hardening, Cloudflare webhook lifecycle hardening, local signed playback token service without a Cloudflare API call per viewer, public/private playback-plan cache split, event batching/queue/worker pipeline, and load-testing or production-readiness evidence.
