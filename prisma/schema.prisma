@@ -185,8 +185,10 @@ model Creator {
 }
 
 model Subscription {
-  /// LEGACY: historical channel-follow/subscription records only.
-  /// Do not use this model for premium/patron content access; User.isPatron is the only access source of truth.
+  /// LEGACY: historical channel-follow/newsletter consent records only.
+  /// Do not use this model for premium/patron content access.
+  /// Active PatronGrant is the authoritative source of truth for patron access;
+  /// User.isPatron is a legacy/cache read model only.
   id        String   @id @default(uuid())
   userId    String
   creatorId String
@@ -459,7 +461,7 @@ model CommentDislike {
 enum AccessTier {
   PUBLIC // Everyone
   LOGGED_IN // Minimum: Logged in (Clerk mail)
-  PATRON // Minimum: isPatron status granted
+  PATRON // Minimum: active PatronGrant access truth
 }
 
 enum VideoStatus {
