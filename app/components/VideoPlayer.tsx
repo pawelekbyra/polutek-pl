@@ -12,7 +12,6 @@ import {
     MuteButton,
     PlayButton,
     Poster,
-    Time,
     TimeSlider,
     VolumeSlider,
     isTrackCaptionKind,
@@ -27,15 +26,16 @@ import { CaptionsIcon, Maximize, Pause, Play, Settings, Volume2, VolumeX } from 
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
-export { getViewThresholdMs, shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 
 interface VideoPlayerProps {
     video: VideoType;
     variant?: 'hero' | 'thumbnail';
+    onViewCounted?: () => void;
 }
 
 const playerIconClass = "h-5 w-5 stroke-[2]";
+const sliderAccentClass = "bg-sky-400";
 
 function PolutekWatermark() {
     return (
@@ -70,7 +70,7 @@ function PlayerCaptionButton({ className }: { className: string }) {
 
     return (
         <CaptionButton
-            className={cn(className, captionsOn && "bg-[#ff2d2d] text-white hover:bg-[#ff2d2d]/90 active:bg-[#ff2d2d]/85")}
+            className={cn(className, captionsOn && "bg-sky-500 text-white hover:bg-sky-500/90 active:bg-sky-500/85")}
             aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
             aria-pressed={captionsOn}
         >
@@ -79,46 +79,72 @@ function PlayerCaptionButton({ className }: { className: string }) {
     );
 }
 
-function PremiumPlayerControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-10 w-10 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d2d]/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+function formatPlayerTime(value: number | null | undefined) {
+    if (!Number.isFinite(value) || !value || value < 0) return '0:00';
+
+    const totalSeconds = Math.floor(value);
+    const seconds = totalSeconds % 60;
+    const minutes = Math.floor(totalSeconds / 60) % 60;
+    const hours = Math.floor(totalSeconds / 3600);
+
+    if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function PlayerTimeReadout() {
+    const currentTime = useMediaState('currentTime');
+    const duration = useMediaState('duration');
 
     return (
-        <Controls.Root className="absolute inset-0 z-30 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100">
-            <div className="space-y-1 px-3 pb-2 sm:px-4 sm:pb-3">
-                <div className="min-w-0">
-                    <TimeSlider.Root className="group/slider relative flex h-8 w-full cursor-pointer touch-none select-none items-center py-3" aria-label="Postęp filmu">
-                        <TimeSlider.Track className="relative h-[3px] w-full min-w-0 overflow-hidden rounded-full bg-white/30 transition-all group-hover/slider:h-[5px] group-focus-within/slider:h-[5px]">
-                            <TimeSlider.Progress className="absolute h-full rounded-full bg-white/45" />
-                            <TimeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
-                        </TimeSlider.Track>
-                        <TimeSlider.Thumb className="absolute left-[var(--slider-fill)] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-[#ff2d2d] opacity-0 transition duration-150 group-hover/slider:scale-100 group-hover/slider:opacity-100 group-focus-within/slider:scale-100 group-focus-within/slider:opacity-100 data-[dragging]:scale-100 data-[dragging]:opacity-100" />
-                    </TimeSlider.Root>
+        <span className="block min-w-[7.75rem] shrink-0 whitespace-nowrap text-left text-sm font-medium leading-none tabular-nums text-white/90 sm:min-w-[8.5rem]">
+            {formatPlayerTime(currentTime)} <span className="text-white/60">/</span> <span className="text-white/75">{formatPlayerTime(duration)}</span>
+        </span>
+    );
+}
+
+function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
+    const buttonClass = "grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+    const trackClass = "relative h-1.5 w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-hover/slider:h-2 group-focus-within/slider:h-2 group-data-[dragging]/slider:h-2";
+    const thumbClass = "absolute left-[var(--slider-fill)] top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(14,165,233,0.45)] ring-2 ring-sky-100 transition-transform group-hover/slider:scale-110 group-focus-within/slider:scale-110 group-data-[dragging]/slider:scale-125";
+
+    return (
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
+            <TimeSlider.Root className="group/slider relative flex h-11 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85" aria-label="Postęp filmu">
+                <TimeSlider.Track className={trackClass}>
+                    <TimeSlider.Progress className="absolute h-full rounded-full bg-white/35" />
+                    <TimeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
+                </TimeSlider.Track>
+                <TimeSlider.Thumb className={thumbClass} />
+            </TimeSlider.Root>
+
+            <Controls.Group className="mt-0 flex min-h-11 min-w-0 items-center justify-between gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+                    <PlayerPlayButton className={buttonClass} />
+
+                    <div className="flex shrink-0 items-center gap-1">
+                        <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
+                        <VolumeSlider.Root className="group/slider relative hidden h-10 w-24 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
+                            <VolumeSlider.Track className={trackClass}>
+                                <VolumeSlider.TrackFill className={`absolute h-full rounded-full ${sliderAccentClass}`} />
+                            </VolumeSlider.Track>
+                            <VolumeSlider.Thumb className={thumbClass} />
+                        </VolumeSlider.Root>
+                    </div>
+
+                    <PlayerTimeReadout />
                 </div>
-                <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
-                        <PlayerPlayButton className={buttonClass} />
-                        <div className="group/volume flex shrink-0 items-center">
-                            <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                            <VolumeSlider.Root className="ml-1 hidden h-10 w-0 items-center overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/volume:w-20 group-hover/volume:opacity-100 group-focus-within/volume:w-20 group-focus-within/volume:opacity-100 md:flex lg:group-hover/volume:w-[88px] lg:group-focus-within/volume:w-[88px]" aria-label="Głośność">
-                                <VolumeSlider.Track className="relative h-[3px] w-full rounded-full bg-white/30">
-                                    <VolumeSlider.TrackFill className="absolute h-full rounded-full bg-[#ff2d2d]" />
-                                </VolumeSlider.Track>
-                                <VolumeSlider.Thumb className="absolute left-[var(--slider-fill)] h-3 w-3 -translate-x-1/2 rounded-full bg-[#ff2d2d]" />
-                            </VolumeSlider.Root>
-                        </div>
-                        <div className="min-w-0 truncate text-[12px] font-medium tabular-nums text-white/90">
-                            <Time type="current" /> <span className="text-white/60">/</span> <span className="text-white/60"><Time type="duration" /></span>
-                        </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                        {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
-                        <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
-                            <Settings className={playerIconClass} aria-hidden="true" />
-                        </button>
-                        <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
-                    </div>
-                </Controls.Group>
-            </div>
+
+                <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                    {hasTextTracks && <PlayerCaptionButton className={buttonClass} />}
+                    <button className={buttonClass} type="button" aria-label="Ustawienia odtwarzacza" disabled title="Ustawienia będą dostępne w kolejnym kroku">
+                        <Settings className={playerIconClass} aria-hidden="true" />
+                    </button>
+                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
+                </div>
+            </Controls.Group>
         </Controls.Root>
     );
 }
@@ -134,7 +160,7 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProps) {
+export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
     const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
@@ -155,8 +181,8 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
     const cloudflareViewFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
-    const sendEvent = useCallback(async (type: string, extra = {}) => {
-        if (!tracking?.playbackSessionId) return;
+    const sendEvent = useCallback(async (type: string, extra = {}): Promise<boolean> => {
+        if (!tracking?.playbackSessionId) return false;
         try {
             const res = await fetch(`/api/videos/${video.id}/playback-event`, {
                 method: 'POST',
@@ -175,9 +201,13 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                 if (error === 'SESSION_EXPIRED') {
                     refreshPlaybackPlan();
                 }
+                return false;
             }
+
+            return res.ok;
         } catch (e) {
             console.warn("Failed to send playback event", type, e);
+            return false;
         }
     }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
 
@@ -188,11 +218,26 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
         }
     }, []);
 
-    const sendWatched10Seconds = useCallback(() => {
-        if (hasReached10s.current) return;
+    const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
+        if (hasReached10s.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
+
         hasReached10s.current = true;
-        sendEvent('WATCHED_10_SECONDS', { positionMs: 10000 });
-    }, [sendEvent]);
+        const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
+            ? Math.floor(durationSeconds * 1000)
+            : 0;
+        const counted = await sendEvent('WATCHED_10_SECONDS', {
+            positionMs: Math.floor(Math.max(0, currentTimeSeconds) * 1000),
+            durationMs,
+        });
+
+        if (counted) {
+            onViewCounted?.();
+        }
+    }, [onViewCounted, sendEvent]);
+
+    const sendWatched10Seconds = useCallback(() => {
+        void maybeSendView(10);
+    }, [maybeSendView]);
 
     const scheduleCloudflareViewFallback = useCallback(() => {
         clearCloudflareViewFallback();
@@ -209,7 +254,10 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
 
     useEffect(() => {
         setHasStartedPlayback(false);
-    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind]);
+        hasReached10s.current = false;
+        reachedThresholds.current = {};
+        clearCloudflareViewFallback();
+    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId, clearCloudflareViewFallback]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -357,7 +405,12 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         sendEvent('PLAY_STARTED');
                     }}
                     onPause={() => sendEvent('PLAY_PAUSED')}
-                    onEnded={() => sendEvent('ENDED')}
+                    onEnded={() => {
+                        void sendEvent('ENDED');
+                        if (player.current) {
+                            void maybeSendView(player.current.currentTime, player.current.duration);
+                        }
+                    }}
                     onSeeked={(e: any) => sendEvent('SEEKED', { positionMs: Math.floor(e.detail * 1000) })}
                     onWaiting={() => sendEvent('BUFFERING_STARTED')}
                     onPlaying={() => {
@@ -370,10 +423,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                             setHasStartedPlayback(true);
                         }
 
-                        if (!hasReached10s.current && shouldSendViewForPlaybackPosition(Math.floor(currentTime * 1000))) {
-                            hasReached10s.current = true;
-                            sendEvent('WATCHED_10_SECONDS');
-                        }
+                        void maybeSendView(currentTime, duration);
 
                         const pct = (currentTime / duration) * 100;
                         const thresholds = [
@@ -415,7 +465,7 @@ export default function VideoPlayer({ video, variant = 'hero' }: VideoPlayerProp
                         )}
                     </MediaProvider>
                     <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
-                    {(playerConfig ? playerConfig.controls : true) && <PremiumPlayerControls hasTextTracks={hasTextTracks} />}
+                    {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
                 </MediaPlayer>
             )}
         </div>
