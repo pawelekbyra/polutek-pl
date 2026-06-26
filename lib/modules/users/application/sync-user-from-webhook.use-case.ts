@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
-import { recordAuditEvent } from "@/lib/modules/audit";
 import { EmailService } from "@/lib/services/email.service"; // R5/R9 boundary: legacy email service
+import { AccountDeletionCleanupUseCase } from "./account-deletion-cleanup.use-case";
 import crypto from 'crypto';
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
 import { WebhookEventStatus } from "@prisma/client";
@@ -60,68 +60,15 @@ export class SyncUserFromWebhookUseCase {
   }
 
   /**
-   * softDelete handles user anonymization.
-   * In a strict single-channel system, we preserve the user record but strip PII.
+   * softDelete handles user anonymization via the shared account deletion cleanup use-case.
+   * Missing/already-deleted local users are treated as successful idempotent cleanup.
    */
   static async softDelete(ctx: AppContext, userId: string): Promise<void> {
-    const anonymousId = crypto.randomUUID();
-
-    // Try to find user before soft-deleting to get their email for the final goodbye
-    const user = await ctx.prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true }
+    await AccountDeletionCleanupUseCase.execute(ctx, {
+      userId,
+      source: 'CLERK_WEBHOOK',
+      reason: 'Clerk user.deleted webhook',
     });
-
-    await (ctx.prisma as any).$transaction(async (tx: any) => {
-        // Revoke any active patron grants (pre-R7 grant logic)
-        await tx.patronGrant.updateMany({
-            where: { userId, revokedAt: null },
-            data: { revokedAt: new Date(), reason: 'User deleted' }
-        });
-
-        await tx.user.update({
-            where: { id: userId },
-            data: {
-              email: `deleted_${anonymousId}@deleted.com`,
-              name: "Usunięty Użytkownik",
-              username: `deleted_${anonymousId.split('-')[0]}`,
-              imageUrl: null,
-              stripeCustomerId: null,
-              isPatron: false,
-              patronSince: null,
-              patronSource: null,
-              isDeleted: true
-            }
-        });
-
-        // Cleanup subscriptions and email preferences to prevent stale data and unwanted emails
-        const subscriptionCount = await tx.subscription.count({ where: { userId } });
-        if (subscriptionCount > 0) {
-            const subscriptions = await tx.subscription.findMany({ where: { userId }, select: { creatorId: true } });
-            await tx.subscription.deleteMany({ where: { userId } });
-
-            for (const sub of subscriptions) {
-                await tx.creator.updateMany({
-                    where: { id: sub.creatorId, subscribersCount: { gt: 0 } },
-                    data: { subscribersCount: { decrement: 1 } }
-                });
-            }
-        }
-
-        await tx.emailPreference.deleteMany({ where: { userId } });
-
-        await recordAuditEvent(ctx, {
-            action: 'USER_SOFT_DELETED',
-            targetType: 'User',
-            targetId: userId
-        }, tx);
-    });
-
-    if (user && user.email && !user.email.startsWith('deleted_')) {
-        await EmailService.sendAccountDeletedEmail(user.email).catch(e => {
-            console.error('[ClerkWebhook] Failed to send account deleted email:', e);
-        });
-    }
   }
 
   static async updatePassword(ctx: AppContext, userId: string): Promise<void> {

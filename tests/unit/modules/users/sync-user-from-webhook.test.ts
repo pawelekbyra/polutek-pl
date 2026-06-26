@@ -29,7 +29,7 @@ describe('SyncUserFromWebhookUseCase', () => {
     mockPrisma = {
         user: { update: vi.fn(), findUnique: vi.fn() },
         patronGrant: { updateMany: vi.fn() },
-        subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn(), deleteMany: vi.fn() },
+        subscription: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
         emailPreference: { deleteMany: vi.fn() },
         creator: { updateMany: vi.fn() },
         auditLog: { create: vi.fn() },
@@ -80,7 +80,7 @@ describe('SyncUserFromWebhookUseCase', () => {
 
     expect(mockPrisma.patronGrant.updateMany).toHaveBeenCalledWith(expect.objectContaining({
         where: { userId: 'u1', revokedAt: null },
-        data: { revokedAt: expect.any(Date), reason: 'User deleted' }
+        data: { revokedAt: expect.any(Date), reason: 'Clerk user.deleted webhook' }
     }));
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
