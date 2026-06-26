@@ -27,12 +27,19 @@ describe('ThumbnailResponseService', () => {
     expect(res.status).toBe(403);
   });
 
-  it('redirects for non-blob allowed external URLs', async () => {
+  it('streams for allowed external URLs', async () => {
     vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
     const url = 'https://images.unsplash.com/photo-123';
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'Content-Type': 'image/jpeg', 'Content-Length': '1000' }),
+      body: new ReadableStream(),
+    } as any);
+
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', url);
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe(url);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/jpeg');
   });
 
   it('streams allowed Vercel Blob URLs using private access', async () => {
@@ -49,6 +56,21 @@ describe('ThumbnailResponseService', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/webp');
     expect(get).toHaveBeenCalledWith(blobUrl, { access: 'private' });
+  });
+
+  it('handles Vercel Blob 304 Not Modified', async () => {
+    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
+    const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
+
+    vi.mocked(get).mockResolvedValue({
+      statusCode: 304,
+      stream: null,
+      headers: new Headers({ 'ETag': '"abc"' }),
+    } as any);
+
+    const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
+    expect(res.status).toBe(304);
+    expect(res.headers.get('ETag')).toBe('"abc"');
   });
 
   it('returns 502 if Vercel Blob fetch fails', async () => {

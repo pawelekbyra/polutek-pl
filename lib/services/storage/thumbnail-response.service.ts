@@ -28,15 +28,26 @@ export class ThumbnailResponseService {
           }
 
           const resHeaders = new Headers();
+          // Type-safe header transfer from undici Headers to standard Headers
           result.headers.forEach((value, key) => {
             resHeaders.set(key, value);
           });
           resHeaders.set("Cache-Control", "public, max-age=3600");
 
-          // For 200 responses, result.stream contains the blob content.
-          // For 304, result.stream is null, which is correct for NextResponse.
+          if (result.statusCode === 304) {
+            return new NextResponse(null, {
+              status: 304,
+              headers: resHeaders,
+            });
+          }
+
+          if (!result.stream) {
+            logger.error("[ThumbnailResponseService] Unexpected null stream for 200 response", { videoId });
+            return new NextResponse("Thumbnail content unavailable", { status: 502 });
+          }
+
           return new NextResponse(result.stream, {
-            status: result.statusCode,
+            status: 200,
             headers: resHeaders,
           });
         } catch (error) {
@@ -45,9 +56,32 @@ export class ThumbnailResponseService {
         }
       }
 
-      // 3. For other allowed external URLs, we can either redirect or proxy.
-      // Redirecting is more efficient and safe since we already validated the host.
-      return NextResponse.redirect(thumbnailUrl);
+      // 3. For other allowed external URLs, stream them to avoid 400 errors from Next Image config
+      // This ensures we can serve allowed hosts like i.ytimg.com even if not fully proxied by CDN.
+      try {
+        const response = await fetch(thumbnailUrl);
+
+        if (!response.ok) {
+          return new NextResponse("Error fetching external thumbnail", { status: 502 });
+        }
+
+        const resHeaders = new Headers();
+        ["Content-Type", "Content-Length", "Cache-Control"].forEach((h) => {
+          const val = response.headers.get(h);
+          if (val) resHeaders.set(h, val);
+        });
+        if (!resHeaders.has("Cache-Control")) {
+           resHeaders.set("Cache-Control", "public, max-age=3600");
+        }
+
+        return new NextResponse(response.body, {
+          status: 200,
+          headers: resHeaders,
+        });
+      } catch (error) {
+        logger.error("[ThumbnailResponseService] External fetch failed", { videoId, error });
+        return new NextResponse("Gateway Error", { status: 502 });
+      }
 
     } catch (error) {
       logger.error("[ThumbnailResponseService] Unexpected error", { videoId, error });
