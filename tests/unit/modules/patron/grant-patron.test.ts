@@ -68,4 +68,31 @@ describe('grantPatron use case', () => {
       expect(result.data.userId).toBe('user-1');
     }
   });
+
+  it('preserves existing patronSince when granting new status', async () => {
+    const historicalDate = new Date('2020-01-01');
+    mockRepo.findUserWithPaymentTotals.mockResolvedValueOnce({
+        id: 'user-1',
+        isPatron: false,
+        patronSince: historicalDate,
+        patronSource: null,
+        paymentTotals: []
+    });
+
+    const actor: Actor = { type: 'admin', userId: 'admin-1' };
+    const ctx = createAppContext({
+        actor,
+        prisma: {
+            $transaction: async (fn: any) => await fn({}),
+        } as any,
+    });
+    await grantPatron({ userId: 'user-1', source: 'admin' }, ctx);
+
+    expect(mockRepo.updateUserPatronFields).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ isPatron: true }),
+        expect.anything(),
+        expect.objectContaining({ preserveExistingPatronSince: true })
+    );
+  });
 });

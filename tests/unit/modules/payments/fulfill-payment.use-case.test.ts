@@ -91,6 +91,7 @@ describe('fulfillPayment use case', () => {
       email: 'test@example.com',
       isPatron: false,
       paymentTotals: [],
+      patronGrants: [],
     });
     mockPrisma.user.update.mockResolvedValue({
       id: 'user_123',
@@ -135,6 +136,7 @@ describe('fulfillPayment use case', () => {
       email: 'test@example.com',
       isPatron: false,
       paymentTotals: [],
+      patronGrants: [],
     });
 
     const result = await fulfillPayment(input, ctx);
@@ -164,6 +166,7 @@ describe('fulfillPayment use case', () => {
       email: 'test@example.com',
       isPatron: false,
       paymentTotals: [],
+      patronGrants: [],
     });
 
     const result = await fulfillPayment(input, ctx);
@@ -197,6 +200,7 @@ describe('fulfillPayment use case', () => {
       email: 'test@example.com',
       isPatron: true,
       paymentTotals: [{ currency: 'PLN', amountMinor: 2500 }],
+      patronGrants: [{ id: 'grant_1' }],
     });
 
     const result = await fulfillPayment(input, ctx);
@@ -209,5 +213,39 @@ describe('fulfillPayment use case', () => {
         expect(result.data.isFirstFulfillment).toBe(false);
     }
     expect(grantPatron).not.toHaveBeenCalled(); // No new grant on replay
+  });
+
+  it('syncs Clerk with truth even on replay if legacy isPatron is false but active grant exists', async () => {
+    const { UserAccessService } = await import('@/lib/services/user-access.service');
+    const input = {
+      paymentId: 'pay_replay',
+      userId: 'user_mismatch',
+      amountMinor: 2500,
+      currency: 'PLN',
+    };
+
+    // CAS returns 0 because status is already SUCCEEDED
+    mockPrisma.payment.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.payment.findUnique.mockResolvedValue({
+      id: 'pay_replay',
+      userId: 'user_mismatch',
+      amountMinor: 2500,
+      currency: 'PLN',
+      status: PaymentStatus.SUCCEEDED,
+    });
+    // Legacy cache says NOT patron
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: 'user_mismatch',
+      email: 'test@example.com',
+      isPatron: false,
+      paymentTotals: [{ currency: 'PLN', amountMinor: 2500 }],
+      patronGrants: [{ id: 'grant_existing' }], // Source of truth says IS patron
+    });
+
+    const result = await fulfillPayment(input, ctx);
+
+    expect(result.ok).toBe(true);
+    // Should sync Clerk with isPatron: true based on patronGrants.length > 0
+    expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith('user_mismatch', true, 25);
   });
 });

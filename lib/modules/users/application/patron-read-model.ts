@@ -14,6 +14,14 @@ export interface PatronDiagnosticsReadModel {
   finalPatronStatus: 'ACTIVE_GRANT' | 'NO_ACTIVE_GRANT';
   finalPatronStatusSource: 'ACTIVE_PATRON_GRANT';
   truth: PatronTruthReadModel;
+  /** Legacy cache data from User table for diagnostic purposes. */
+  legacyPatronCache: {
+    isPatron: boolean;
+    patronSince: Date | null;
+    patronSource: string | null;
+  };
+  /** Indicates if the legacy cache differs from the current source of truth. */
+  cacheTruthMismatch: boolean;
 }
 
 export function buildPatronTruthReadModel(
@@ -50,13 +58,25 @@ export function buildPatronDiagnosticsReadModel(
     source: string;
     createdAt: Date;
     revokedAt: Date | null;
-  }>
+  }>,
+  legacyCache: {
+    isPatron: boolean;
+    patronSince: Date | null;
+    patronSource: string | null;
+  }
 ): PatronDiagnosticsReadModel {
   const truth = buildPatronTruthReadModel(patronGrants);
+
+  const mismatch =
+    truth.isPatron !== legacyCache.isPatron ||
+    truth.activeGrantSince?.getTime() !== legacyCache.patronSince?.getTime() ||
+    truth.activeGrantSource !== legacyCache.patronSource;
 
   return {
     finalPatronStatus: truth.isPatron ? 'ACTIVE_GRANT' : 'NO_ACTIVE_GRANT',
     finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
     truth,
+    legacyPatronCache: legacyCache,
+    cacheTruthMismatch: mismatch,
   };
 }

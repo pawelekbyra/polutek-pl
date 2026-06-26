@@ -80,4 +80,44 @@ describe('Comment Badge and Permission Safety', () => {
     expect(dto.viewerCanEdit).toBe(true);
     expect(dto.viewerCanDelete).toBe(true);
   });
+
+  it('hides PATRON badge when no active grants exist, even if User.isPatron legacy field would be true', () => {
+    const commentWithLegacyMismatch = {
+      ...mockComment,
+      author: {
+        ...mockComment.author,
+        isPatron: true, // legacy field
+        patronGrants: [], // source of truth is empty
+      },
+    };
+
+    const dto = mapCommentToDto(commentWithLegacyMismatch, {
+      userId: 'u2',
+      canModerate: false,
+      videoCreatorId: 'v-creator',
+      hasVideoAccess: true,
+    });
+
+    expect(dto.author?.badges).not.toContain('PATRON');
+  });
+
+  it('shows PATRON badge when active grants exist, even if User.isPatron legacy field is false', () => {
+    const commentWithLegacyMismatch = {
+      ...mockComment,
+      author: {
+        ...mockComment.author,
+        isPatron: false, // legacy field
+        patronGrants: [{ id: 'active-grant-1' }], // source of truth is NOT empty
+      },
+    };
+
+    const dto = mapCommentToDto(commentWithLegacyMismatch, {
+      userId: 'u2',
+      canModerate: false,
+      videoCreatorId: 'v-creator',
+      hasVideoAccess: true,
+    });
+
+    expect(dto.author?.badges).toContain('PATRON');
+  });
 });
