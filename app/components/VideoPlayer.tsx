@@ -159,11 +159,27 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     const duration = useMediaState('duration');
     const [isDragging, setIsDragging] = useState(false);
     const [dragTime, setDragTime] = useState(0);
+    const [pendingSeekTime, setPendingSeekTime] = useState<number | null>(null);
     const scrubberRef = useRef<HTMLDivElement>(null);
+    const isDraggingRef = useRef(false);
     const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
-    const displayTime = isDragging ? dragTime : currentTime;
+    const displayTime = isDragging ? dragTime : pendingSeekTime ?? currentTime;
     const safeTime = safeDuration ? Math.min(Math.max(displayTime || 0, 0), safeDuration) : 0;
     const fillPercent = safeDuration ? (safeTime / safeDuration) * 100 : 0;
+
+    useEffect(() => {
+        if (pendingSeekTime === null) return;
+
+        const resolvedTime = Number.isFinite(currentTime) ? currentTime : 0;
+        if (Math.abs(resolvedTime - pendingSeekTime) < 0.25) {
+            setPendingSeekTime(null);
+        }
+    }, [currentTime, pendingSeekTime]);
+
+    const setDraggingState = useCallback((nextValue: boolean) => {
+        isDraggingRef.current = nextValue;
+        setIsDragging(nextValue);
+    }, []);
 
     const getTimeFromPointer = useCallback((clientX: number) => {
         const rect = scrubberRef.current?.getBoundingClientRect();
@@ -177,18 +193,23 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
         if (!safeDuration || !Number.isFinite(nextTime)) return;
 
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
+        setPendingSeekTime(null);
         setDragTime(clampedTime);
         remote.seeking(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
     }, [remote, safeDuration]);
 
     const commitSeek = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
-        if (!safeDuration || !Number.isFinite(nextTime)) return;
+        if (!safeDuration || !Number.isFinite(nextTime)) {
+            setDraggingState(false);
+            return;
+        }
 
         const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
         setDragTime(clampedTime);
-        setIsDragging(false);
+        setPendingSeekTime(clampedTime);
+        setDraggingState(false);
         remote.seek(clampedTime, 'nativeEvent' in event ? event.nativeEvent : event);
-    }, [remote, safeDuration]);
+    }, [remote, safeDuration, setDraggingState]);
 
     return (
         <div
@@ -209,25 +230,25 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
                 if (nextTime === null) return;
 
                 event.currentTarget.setPointerCapture?.(event.pointerId);
-                setIsDragging(true);
+                setDraggingState(true);
                 previewSeek(nextTime, event);
             }}
             onPointerMove={(event) => {
-                if (!isDragging) return;
+                if (!isDraggingRef.current) return;
 
                 const nextTime = getTimeFromPointer(event.clientX);
                 if (nextTime === null) return;
                 previewSeek(nextTime, event);
             }}
             onPointerUp={(event) => {
-                if (!isDragging) return;
+                if (!isDraggingRef.current) return;
 
                 event.currentTarget.releasePointerCapture?.(event.pointerId);
                 const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
                 commitSeek(nextTime, event);
             }}
             onPointerCancel={(event) => {
-                if (!isDragging) return;
+                if (!isDraggingRef.current) return;
                 commitSeek(dragTime, event);
             }}
             onKeyDown={(event) => {
