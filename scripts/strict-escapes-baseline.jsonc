@@ -650,6 +650,13 @@
       "label": "explicit any annotation",
       "text": "accessTier: tier as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/services/playback/primary-playable-asset.ts",
+      "line": 10,
+      "label": "explicit any annotation",
+      "text": "asset?: any;",
+      "reason": "Debt baselined/reconciled by feat/admin-video-cover-upload; must be removed when the underlying debt is fixed."
     }
   ]
 }
