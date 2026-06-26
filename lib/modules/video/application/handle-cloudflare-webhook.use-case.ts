@@ -45,7 +45,7 @@ export async function handleCloudflareStreamWebhook(
   // We only treat it as a metadata refresh if there's actual metadata to refresh (size or duration)
   const isMetadataRefresh = asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY &&
                             newState === VIDEO_ASSET_PROCESSING_STATE.READY &&
-                            (Boolean(payload.size) || Boolean(payload.duration));
+                            (payload.size != null || payload.duration != null);
 
   if (isRedundantTransition(asset.processingState, newState) && !isMetadataRefresh) {
     return ok({ assetId: asset.id, status: "no-change" });
@@ -74,7 +74,7 @@ export async function handleCloudflareStreamWebhook(
         dataToUpdate.isPrimary = true;
         dataToUpdate.failureReason = null;
 
-        if (payload.size) {
+        if (payload.size != null) {
           dataToUpdate.sizeBytes = Math.floor(payload.size);
         }
         // Only set providerPlaybackId if explicitly provided or if it's currently missing
@@ -94,7 +94,7 @@ export async function handleCloudflareStreamWebhook(
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);
 
     // If duration was provided and asset is READY/Primary, update the main Video duration string
-    if (payload.duration && updated.isPrimary && updated.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+    if (payload.duration != null && updated.isPrimary && updated.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
         const minutes = Math.floor(payload.duration / 60);
         const seconds = Math.floor(payload.duration % 60);
         const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
