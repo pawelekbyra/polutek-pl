@@ -49,7 +49,7 @@ export async function GET(
     }
 
     // 3. Delegate to ThumbnailResponseService to handle storage streaming/redirect
-    return ThumbnailResponseService.getThumbnailResponse(video.id, video.thumbnailUrl, req.headers);
+    return ThumbnailResponseService.getThumbnailResponse(video.id, video.thumbnailUrl);
 
   } catch (error) {
     scopedLogger.error("[THUMBNAIL_PROXY_ERROR]", error);

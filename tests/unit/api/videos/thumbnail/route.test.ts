@@ -46,8 +46,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
 
     expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith(
       'v1',
-      'https://images.unsplash.com/photo-123',
-      expect.any(Headers)
+      'https://images.unsplash.com/photo-123'
     );
   });
 

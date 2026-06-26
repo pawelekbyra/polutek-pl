@@ -6,8 +6,7 @@ import { logger } from "@/lib/logger";
 export class ThumbnailResponseService {
   static async getThumbnailResponse(
     videoId: string,
-    thumbnailUrl: string,
-    headers?: Headers
+    thumbnailUrl: string
   ): Promise<NextResponse> {
     // 1. Validate the host using existing MediaPolicy
     if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
@@ -57,12 +56,16 @@ export class ThumbnailResponseService {
       }
 
       // 3. For other allowed external URLs, stream them to avoid 400 errors from Next Image config
-      // This ensures we can serve allowed hosts like i.ytimg.com even if not fully proxied by CDN.
       try {
         const response = await fetch(thumbnailUrl);
 
         if (!response.ok) {
           return new NextResponse("Error fetching external thumbnail", { status: 502 });
+        }
+
+        if (!response.body) {
+           logger.error("[ThumbnailResponseService] External response missing body", { videoId, thumbnailUrl });
+           return new NextResponse("Thumbnail content unavailable", { status: 502 });
         }
 
         const resHeaders = new Headers();
