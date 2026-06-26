@@ -16,15 +16,18 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window === 'undefined') return 'pl';
-    const saved = localStorage.getItem('app-language');
-    if (saved === 'pl' || saved === 'en') return saved as Language;
-    return navigator.language.startsWith('pl') ? 'pl' : 'en';
-  });
-  const [isInitialized, setIsInitialized] = useState(true);
+  const [language, setLanguageState] = useState<Language>("pl");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem('app-language');
+    if (saved === 'pl' || saved === 'en') {
+      setLanguageState(saved as Language);
+    } else if (navigator.language.startsWith('pl')) {
+      setLanguageState('pl');
+    } else {
+      setLanguageState('en');
+    }
     setIsInitialized(true);
   }, []);
 

@@ -89,6 +89,7 @@ const allowedAppRoutes = [
 
 const approvedRoutesMatchingOutOfScopeWords = new Set([
   "app/api/admin/videos/[id]/upload/route.ts",
+  "app/api/admin/videos/cover-upload/route.ts",
 ]);
 
 const outOfScopeRoutePatterns = [

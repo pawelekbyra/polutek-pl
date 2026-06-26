@@ -119,4 +119,13 @@ describe("public loading/access state UX contracts", () => {
     expect(support).toContain("motion-reduce:animate-none");
     expect(support).not.toContain("animate-bounce");
   });
+
+  it("ensures LanguageContext does not use lazy initializer in useState to avoid hydration mismatch", () => {
+    const content = read("app/components/LanguageContext.tsx");
+    // Should use a static value "pl" instead of a function () => { ... }
+    expect(content).toContain('useState<Language>("pl")');
+    expect(content).not.toMatch(/useState<Language>\(\(\) =>/);
+    expect(content).toContain("useEffect(() => {");
+    expect(content).toContain("localStorage.getItem('app-language')");
+  });
 });
