@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { PaymentStatus, WebhookEventStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
-import { UserAccessService, normalizePaymentTotals } from './user-access.service';
+import { UserAccessService } from './user-access.service';
 import { PaymentCheckoutService } from './payments/checkout.service';
 import { PaymentFulfillmentService } from './payments/fulfillment.service';
 import { PaymentRefundService, calculateRefundAdjustment } from './payments/refund.service';
@@ -183,16 +183,12 @@ export class PaymentService {
 
         await PaymentRefundService.decrementUserTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
 
-        let resultData;
-        if (!refund.isFullRefund) {
-            const user = await tx.user.findUnique({ where: { id: payment.userId }, include: { paymentTotals: true } });
-            resultData = user ? { userId: payment.userId, isPatron: user.isPatron, normalizedTotal: normalizePaymentTotals(user.paymentTotals) } : null;
-        } else {
+        if (refund.isFullRefund) {
             await tx.patronGrant.updateMany({ where: { paymentId: payment.id, revokedAt: null }, data: { revokedAt: new Date(), reason: 'Payment fully refunded' } });
-            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
-            resultData = { userId: payment.userId, isPatron, normalizedTotal };
         }
-        return resultData;
+
+        const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        return { userId: payment.userId, isPatron, normalizedTotal };
     });
 
     if (syncData) {
