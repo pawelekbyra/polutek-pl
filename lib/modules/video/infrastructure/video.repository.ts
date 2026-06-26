@@ -4,6 +4,7 @@ import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, VideoInvalidSidebarError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
+import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset-selection";
 
 export interface CreateVideoInput {
   title: string;
@@ -59,34 +60,49 @@ export class VideoRepository {
     });
   }
 
-  async findByIdWithAsset(id: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
-    return await this.db.video.findUnique({
+  async findByIdWithAsset(id: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    const video = await this.db.video.findUnique({
         where: { id },
-        include: { asset: true }
-    }) as (Video & { asset: VideoAsset | null }) | null;
+        include: { assets: true }
+    });
+    return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
 
-  async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
-    return await this.db.video.findFirst({
+  async findByIdWithAssets(id: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    return await this.findByIdWithAsset(id);
+  }
+
+  async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    const video = await this.db.video.findFirst({
         where: { id, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            asset: true
+            assets: true
         }
-    }) as (Video & { asset: VideoAsset | null }) | null;
+    });
+    return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
 
-  async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
-    return await this.db.video.findFirst({
+  async findByIdForMainChannelWithAssets(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    return await this.findByIdForMainChannel(id, mainChannelId);
+  }
+
+  async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    const video = await this.db.video.findFirst({
         where: { slug, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            asset: true
+            assets: true
         }
-    }) as (Video & { asset: VideoAsset | null }) | null;
+    });
+    return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
 
-  async findAdminByIdOrSlugForMainChannel(idOrSlug: string, mainChannelId: string): Promise<(Video & { asset: VideoAsset | null }) | null> {
+  async findBySlugForMainChannelWithAssets(slug: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    return await this.findBySlugForMainChannel(slug, mainChannelId);
+  }
+
+  async findAdminByIdOrSlugForMainChannel(idOrSlug: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
     const { isUuid } = await import("@/lib/utils/uuid");
     if (isUuid(idOrSlug)) {
         return await this.findByIdForMainChannel(idOrSlug, mainChannelId);
@@ -148,18 +164,18 @@ export class VideoRepository {
 
     if (filters.migrationStatus && filters.migrationStatus !== 'ALL') {
       if (filters.migrationStatus === 'READY') {
-        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } };
       } else if (filters.migrationStatus === 'PROCESSING') {
-        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: { in: [VIDEO_ASSET_PROCESSING_STATE.PENDING, VIDEO_ASSET_PROCESSING_STATE.UPLOADING, VIDEO_ASSET_PROCESSING_STATE.PROCESSING] } } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: { in: [VIDEO_ASSET_PROCESSING_STATE.PENDING, VIDEO_ASSET_PROCESSING_STATE.UPLOADING, VIDEO_ASSET_PROCESSING_STATE.PROCESSING] } } };
       } else if (filters.migrationStatus === 'FAILED') {
-        where.asset = { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED } };
       } else if (filters.migrationStatus === 'MISSING_SOURCE') {
-        where.asset = null;
+        where.assets = { none: {} };
         where.videoUrl = '';
       } else if (filters.migrationStatus === 'MIGRATION_REQUIRED') {
         where.OR = [
-          { asset: { is: { provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
-          { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
+          { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
+          { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
         ];
       }
     }
@@ -183,7 +199,7 @@ export class VideoRepository {
         take: limit,
         include: {
             _count: { select: { comments: true } },
-            asset: true
+            assets: true
         }
       }),
       this.db.video.count({ where })
@@ -317,7 +333,8 @@ export class VideoRepository {
   }
 
   async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
-    const video = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { asset: true } });
+    const loaded = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { assets: true } });
+    const video = withPrimaryAsset(loaded as (Video & { assets: VideoAsset[] }) | null);
     if (!video) throw new VideoNotOnMainChannelError(id);
 
     const blockers = VideoPolicy.getHeroBlockers(video);
@@ -373,6 +390,17 @@ export class VideoRepository {
     });
   }
 
+  async listAssetsForVideo(videoId: string): Promise<VideoAsset[]> {
+    return await this.db.videoAsset.findMany({
+      where: { videoId },
+      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
+    });
+  }
+
+  async findPrimaryAssetForVideo(videoId: string): Promise<VideoAsset | null> {
+    return selectPrimaryVideoAsset(await this.listAssetsForVideo(videoId));
+  }
+
   async updateAsset(assetId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
     return await tx.videoAsset.update({
       where: { id: assetId },
@@ -381,12 +409,20 @@ export class VideoRepository {
   }
 
   async updateVideoAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    const existing = await tx.videoAsset.findUnique({ where: { videoId } });
+    return await this.upsertPrimaryAsset(videoId, input, tx);
+  }
+
+  async upsertPrimaryAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
+    const assets = await tx.videoAsset.findMany({
+      where: { videoId },
+      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
+    });
+    const existing = selectPrimaryVideoAsset(assets);
 
     if (existing) {
       return await tx.videoAsset.update({
-        where: { videoId },
-        data: buildVideoAssetUpdateData(input),
+        where: { id: existing.id },
+        data: { ...buildVideoAssetUpdateData(input), isPrimary: true },
       });
     }
 
@@ -399,7 +435,7 @@ export class VideoRepository {
         providerAssetId: input.providerAssetId,
         providerPlaybackId: input.providerPlaybackId,
         processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: input.isPrimary ?? true,
+        isPrimary: true,
         failureReason: input.failureReason,
         providerSyncedAt: input.providerSyncedAt,
         processingStartedAt: input.processingStartedAt,
@@ -412,6 +448,31 @@ export class VideoRepository {
 
   async upsertAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
     return await this.updateVideoAsset(videoId, input, tx);
+  }
+
+  async ensureSinglePrimaryAsset(videoId: string, tx: WriteTx): Promise<VideoAsset | null> {
+    const assets = await tx.videoAsset.findMany({
+      where: { videoId },
+      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
+    });
+    if (assets.length === 0) return null;
+
+    const selected = selectPrimaryVideoAsset(assets);
+    if (!selected) return null;
+
+    await tx.videoAsset.updateMany({
+      where: { videoId, id: { not: selected.id }, isPrimary: true },
+      data: { isPrimary: false },
+    });
+
+    if (!selected.isPrimary) {
+      return await tx.videoAsset.update({
+        where: { id: selected.id },
+        data: { isPrimary: true },
+      });
+    }
+
+    return selected;
   }
 }
 

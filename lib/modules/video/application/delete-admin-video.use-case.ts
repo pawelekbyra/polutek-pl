@@ -53,7 +53,7 @@ export async function deleteAdminVideo(
       where: { id: videoId },
       include: {
         _count: { select: { comments: true } },
-        asset: true,
+        assets: true,
       },
     });
 

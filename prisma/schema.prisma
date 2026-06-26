@@ -231,7 +231,7 @@ model Video {
   comments      Comment[]
   videoLikes    VideoLike[]
   videoDislikes VideoDislike[]
-  asset         VideoAsset?
+  assets        VideoAsset[]
   videoViews    VideoView[]
   playbackSessions VideoPlaybackSession[]
   playbackEvents   VideoPlaybackEvent[]
@@ -267,7 +267,7 @@ enum VideoAssetProcessingState {
 
 model VideoAsset {
   id                  String                    @id @default(uuid())
-  videoId             String                    @unique
+  videoId             String
   provider            StorageProvider
   objectKey           String
   bucket              String?
@@ -286,6 +286,8 @@ model VideoAsset {
 
   video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
+  @@index([videoId])
+  @@index([videoId, isPrimary])
   @@index([provider])
   @@index([processingState])
   @@index([provider, providerAssetId])

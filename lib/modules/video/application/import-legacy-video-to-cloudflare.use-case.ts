@@ -8,6 +8,7 @@ import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.clie
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoNotFoundError } from "../domain/video.errors";
+import { withPrimaryAsset } from "../domain/video-asset-selection";
 
 export interface ImportLegacyVideoToCloudflareInput {
   videoId: string;
@@ -69,10 +70,11 @@ export async function importLegacyVideoToCloudflare(
 
   try {
     updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
-      const current = await tx.video.findFirst({
+      const loadedCurrent = await tx.video.findFirst({
         where: { id: input.videoId, creatorId: mainChannel.id },
-        include: { asset: true, _count: { select: { comments: true } } }
+        include: { assets: true, _count: { select: { comments: true } } }
       });
+      const current = withPrimaryAsset(loadedCurrent);
 
       if (!current) throw new VideoNotFoundError(input.videoId);
       if (current.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
@@ -137,7 +139,7 @@ export async function importLegacyVideoToCloudflare(
 
       return await tx.video.findFirst({
         where: { id: current.id, creatorId: mainChannel.id },
-        include: { asset: true, _count: { select: { comments: true } } }
+        include: { assets: true, _count: { select: { comments: true } } }
       });
     });
   } catch (error) {

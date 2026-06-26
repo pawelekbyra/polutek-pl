@@ -1,4 +1,5 @@
 import { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
+import { selectPrimaryVideoAsset } from "./video-asset-selection";
 
 export interface BaseVideoDto {
   id: string;
@@ -73,6 +74,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   updatedAt: Date;
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
+  assets?: AdminVideoAssetDto[];
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
   publishAfterAssetReadyRequestedAt: Date | null;
@@ -143,7 +145,8 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
 }
 
 export function toAdminVideoDto(video: any): AdminVideoDto {
-  const asset = video.asset;
+  const rawAssets = Array.isArray(video.assets) ? video.assets : [];
+  const asset = video.asset ?? selectPrimaryVideoAsset(rawAssets);
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
   if (asset) {
@@ -168,6 +171,9 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     updatedAt: video.updatedAt,
     commentsCount: video._count?.comments || video.commentsCount || 0,
     asset: toAdminVideoAssetDto(asset),
+    assets: rawAssets
+      .map((rawAsset: unknown) => toAdminVideoAssetDto(rawAsset))
+      .filter((assetDto: AdminVideoAssetDto | null): assetDto is AdminVideoAssetDto => Boolean(assetDto)),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
