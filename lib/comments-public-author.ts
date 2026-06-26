@@ -1,27 +1,22 @@
 import { Prisma } from '@prisma/client';
+import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 
 export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
   name: true,
   username: true,
   imageUrl: true,
-  isPatron: true,
+  patronGrants: {
+    where: { revokedAt: null },
+    select: { id: true },
+    take: 1,
+  },
   isDeleted: true,
   role: true,
 });
 
 type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentAuthorSelect }>;
 
-import { isGeneratedClerkUsername } from '@/lib/utils/auth';
-
-/**
- * Maps a user record to a public comment author DTO.
- *
- * NOTE ON BADGE TRUTH:
- * The "PATRON" badge is derived from the denormalized `User.isPatron` field.
- * This is for DECORATIVE DISPLAY ONLY and may be stale. It must NEVER be used
- * for access control. The backend ignores this field for authorization.
- */
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
 
@@ -37,7 +32,7 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
 
   const badges: Array<"ADMIN" | "PATRON" | "AUTHOR"> = [];
   if (author.role === 'ADMIN') badges.push("ADMIN");
-  if (author.isPatron) badges.push("PATRON");
+  if (author.patronGrants?.length > 0) badges.push("PATRON");
   if (videoCreatorId && author.id === videoCreatorId) badges.push("AUTHOR");
 
   const rawName = author.name?.trim();

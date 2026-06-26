@@ -91,7 +91,7 @@ describe('Account Deletion Integrity', () => {
       name: "Usunięty Użytkownik",
       username: "deleted_abc123",
       imageUrl: "https://example.com/image.png",
-      isPatron: true,
+      patronGrants: [{ id: 'grant-1' }],
       isDeleted: true,
       role: 'USER' as const,
     };

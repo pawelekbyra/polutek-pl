@@ -18,14 +18,14 @@ describe('Comment Badge and Permission Safety', () => {
       name: 'Test User',
       username: 'testuser',
       imageUrl: 'https://example.com/avatar.png',
-      isPatron: true, // Stale metadata in author profile
+      patronGrants: [{ id: 'grant-1' }],
       role: 'USER',
     },
     reactions: [],
     replies: [],
   };
 
-  it('shows PATRON badge based on author metadata (display only)', () => {
+  it('shows PATRON badge based on active author PatronGrant', () => {
     const dto = mapCommentToDto(mockComment, {
       userId: 'other-user',
       canModerate: false,
@@ -36,20 +36,18 @@ describe('Comment Badge and Permission Safety', () => {
     expect(dto.author?.badges).toContain('PATRON');
   });
 
-  it('does NOT grant edit permission based on stale author metadata if access is false', () => {
-    // Scenario: User 'u1' (comment author) is viewing their own comment.
-    // They have isPatron: true in profile, but hasVideoAccess is false (e.g. grant expired/revoked)
+  it('does NOT grant edit permission based on author badge data if access is false', () => {
     const dto = mapCommentToDto(mockComment, {
       userId: 'u1',
       canModerate: false,
       videoCreatorId: 'creator-1',
-      hasVideoAccess: false // Access truth
+      hasVideoAccess: false
     });
 
     expect(dto.viewerCanEdit).toBe(false);
   });
 
-  it('does NOT grant delete permission based on stale author metadata if access is false', () => {
+  it('does NOT grant delete permission based on author badge data if access is false', () => {
     const dto = mapCommentToDto(mockComment, {
       userId: 'u1',
       canModerate: false,
@@ -60,7 +58,7 @@ describe('Comment Badge and Permission Safety', () => {
     expect(dto.viewerCanDelete).toBe(false);
   });
 
-  it('does NOT grant report permission based on stale profile if access is false', () => {
+  it('does NOT grant report permission based on author badge data if access is false', () => {
     const dto = mapCommentToDto(mockComment, {
       userId: 'u2',
       canModerate: false,
@@ -71,7 +69,7 @@ describe('Comment Badge and Permission Safety', () => {
     expect(dto.viewerCanReport).toBe(false);
   });
 
-  it('grants permissions correctly when access truth is true regardless of author metadata', () => {
+  it('grants permissions when access truth is true regardless of author badges', () => {
      const dto = mapCommentToDto(mockComment, {
       userId: 'u1',
       canModerate: false,

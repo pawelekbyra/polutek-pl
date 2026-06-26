@@ -75,7 +75,7 @@ describe('Comments PatronGrant-backed write access', () => {
       username: 'user',
       imageUrl: null,
       role: 'USER',
-      isPatron: false,
+      patronGrants: [],
     },
   };
 
@@ -386,13 +386,14 @@ describe('Comments PatronGrant-backed write access', () => {
     expect(mockPrisma.commentReport.create).not.toHaveBeenCalled();
   });
 
-  it('does not let stale User.isPatron or displayed author badges grant write or react access', async () => {
+  it('does not let stale User.isPatron grant badges, write, or react access', async () => {
     const staleBadgeComment = {
       ...commentWithAuthor,
       authorId: userId,
       author: {
         ...commentWithAuthor.author,
         isPatron: true,
+        patronGrants: [],
       },
     };
 
@@ -411,7 +412,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     expect(readResult.ok).toBe(true);
     if (readResult.ok) {
-      expect(readResult.data.comments[0].author?.badges).toContain('PATRON');
+      expect(readResult.data.comments[0].author?.badges).not.toContain('PATRON');
       expect(readResult.data.comments[0].viewerCanEdit).toBe(false);
       expect(readResult.data.comments[0].viewerCanDelete).toBe(false);
       expect(readResult.data.comments[0].viewerCanReport).toBe(false);
