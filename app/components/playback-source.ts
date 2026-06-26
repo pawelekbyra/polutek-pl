@@ -17,11 +17,6 @@ export type ResolvedPlaybackSource =
         src: string;
     }
     | {
-        mode: 'cloudflare-iframe-fallback';
-        src: string;
-        reason: 'missing-playback-url' | 'unsupported-manifest';
-    }
-    | {
         mode: 'unavailable';
         reason: string;
     };
@@ -93,7 +88,6 @@ export function resolvePlaybackSource(input: PlaybackSourceInput): ResolvedPlayb
                 mode: 'custom-player',
                 kind,
                 src: playbackUrl,
-                embedFallbackUrl: embedUrl || undefined,
             };
         }
 
@@ -102,17 +96,16 @@ export function resolvePlaybackSource(input: PlaybackSourceInput): ResolvedPlayb
                 mode: 'custom-player',
                 kind,
                 src: embedUrl,
-                embedFallbackUrl: playbackUrl,
             };
         }
 
-        const fallbackSrc = firstPresentUrl(embedUrl, playbackUrl);
-        if (!fallbackSrc) return { mode: 'unavailable', reason: 'missing-cloudflare-source' };
+        if (!firstPresentUrl(embedUrl, playbackUrl)) {
+            return { mode: 'unavailable', reason: 'missing-cloudflare-source' };
+        }
 
         return {
-            mode: 'cloudflare-iframe-fallback',
-            src: fallbackSrc,
-            reason: playbackUrl ? 'unsupported-manifest' : 'missing-playback-url',
+            mode: 'unavailable',
+            reason: playbackUrl ? 'unsupported-cloudflare-manifest' : 'missing-cloudflare-manifest',
         };
     }
 

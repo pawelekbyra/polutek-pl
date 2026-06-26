@@ -24,7 +24,7 @@ describe('resolvePlaybackSource', () => {
         });
     });
 
-    it('routes Cloudflare Stream HLS and DASH manifests through the custom player with iframe fallback retained', () => {
+    it('routes Cloudflare Stream HLS and DASH manifests through the custom player', () => {
         expect(resolvePlaybackSource({
             kind: 'cloudflare_stream',
             playbackUrl: 'https://videodelivery.net/playback-id/manifest/video.m3u8',
@@ -33,7 +33,6 @@ describe('resolvePlaybackSource', () => {
             mode: 'custom-player',
             kind: 'cloudflare_stream',
             src: 'https://videodelivery.net/playback-id/manifest/video.m3u8',
-            embedFallbackUrl: 'https://iframe.videodelivery.net/signed-token',
         });
 
         expect(resolvePlaybackSource({
@@ -43,15 +42,14 @@ describe('resolvePlaybackSource', () => {
         })?.mode).toBe('custom-player');
     });
 
-    it('does not rewrite Cloudflare iframe URLs and keeps the iframe fallback when no safe manifest exists', () => {
+    it('treats Cloudflare iframe URLs as unavailable when no safe manifest exists', () => {
         expect(resolvePlaybackSource({
             kind: 'cloudflare_stream',
             playbackUrl: 'https://iframe.videodelivery.net/signed-token',
             embedUrl: 'https://iframe.videodelivery.net/signed-token',
         })).toEqual({
-            mode: 'cloudflare-iframe-fallback',
-            src: 'https://iframe.videodelivery.net/signed-token',
-            reason: 'unsupported-manifest',
+            mode: 'unavailable',
+            reason: 'unsupported-cloudflare-manifest',
         });
 
         expect(resolvePlaybackSource({
@@ -59,9 +57,8 @@ describe('resolvePlaybackSource', () => {
             playbackUrl: '',
             embedUrl: 'https://iframe.videodelivery.net/signed-token',
         })).toEqual({
-            mode: 'cloudflare-iframe-fallback',
-            src: 'https://iframe.videodelivery.net/signed-token',
-            reason: 'missing-playback-url',
+            mode: 'unavailable',
+            reason: 'missing-cloudflare-manifest',
         });
     });
 

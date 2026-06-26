@@ -2,17 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { resolveCloudflarePlaybackSource } from '@/app/components/cloudflarePlaybackSource';
 
 describe('resolveCloudflarePlaybackSource', () => {
-    it('keeps existing Cloudflare iframe playback supported as fallback', () => {
+    it('rejects Cloudflare iframe playback instead of returning a playable fallback', () => {
         const result = resolveCloudflarePlaybackSource({
             playbackUrl: 'https://iframe.videodelivery.net/signed-token',
             embedUrl: 'https://iframe.videodelivery.net/signed-token',
         });
 
-        expect(result).toEqual({
-            mode: 'iframe',
-            src: 'https://iframe.videodelivery.net/signed-token',
-            reason: expect.stringContaining('Cloudflare playback URL is not a supported manifest'),
-        });
+        expect(result).toBeNull();
     });
 
     it('selects manifest/custom-player mode only for a valid Cloudflare manifest source', () => {
@@ -27,7 +23,7 @@ describe('resolveCloudflarePlaybackSource', () => {
         });
     });
 
-    it('falls back safely to iframe when Cloudflare playback data is missing or unknown', () => {
+    it('returns null when Cloudflare playback data is missing or unknown', () => {
         expect(resolveCloudflarePlaybackSource({ playbackUrl: '', embedUrl: '' })).toBeNull();
 
         const unknown = resolveCloudflarePlaybackSource({
@@ -35,7 +31,6 @@ describe('resolveCloudflarePlaybackSource', () => {
             embedUrl: 'https://iframe.videodelivery.net/signed-token',
         });
 
-        expect(unknown?.mode).toBe('iframe');
-        expect(unknown?.src).toBe('https://iframe.videodelivery.net/signed-token');
+        expect(unknown).toBeNull();
     });
 });

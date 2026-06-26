@@ -41,6 +41,30 @@ function isMetadataRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+
+function getWatchedViewThresholdMs(durationMs: number | null | undefined): number {
+  if (Number.isFinite(durationMs) && durationMs && durationMs > 0) {
+    return Math.min(10000, Math.floor(durationMs * 0.9));
+  }
+
+  return 10000;
+}
+
+function hasCredibleWatchedViewEvidence(params: {
+  positionMs?: number | null;
+  durationMs?: number | null;
+  firstPlayAt?: Date | null;
+  maxProgressMs?: number | null;
+}): boolean {
+  const thresholdMs = getWatchedViewThresholdMs(params.durationMs);
+  const positionMs = Number.isFinite(params.positionMs) && params.positionMs ? Math.max(0, params.positionMs) : 0;
+  const maxProgressMs = Number.isFinite(params.maxProgressMs) && params.maxProgressMs ? Math.max(0, params.maxProgressMs) : 0;
+
+  if (maxProgressMs >= thresholdMs) return true;
+
+  return Boolean(params.firstPlayAt && positionMs >= thresholdMs);
+}
+
 function sanitizePlaybackMetadataValue(value: unknown, depth = 0): SanitizedPlaybackMetadataValue | undefined {
   if (value === null || value === undefined) return value;
 
@@ -187,7 +211,16 @@ export async function recordPlaybackEventUseCase(
 
     let viewCounted = false;
 
-    if (type === 'WATCHED_10_SECONDS' && session && !session.isAdminPreview && !session.countedAsView) {
+    const hasCredibleWatchedEvidence = type === 'WATCHED_10_SECONDS' && session
+        ? hasCredibleWatchedViewEvidence({
+            positionMs,
+            durationMs: durationMs || session.durationMs,
+            firstPlayAt: session.firstPlayAt,
+            maxProgressMs: session.maxProgressMs,
+        })
+        : false;
+
+    if (type === 'WATCHED_10_SECONDS' && session && hasCredibleWatchedEvidence && !session.isAdminPreview && !session.countedAsView) {
         const identifier = userId ? `u:${userId}` : `f:${fingerprint}`;
         const lockKey = `video:view:${videoId}:${identifier}`;
         const isNewView = await setNxEx(lockKey, '1', 86400);
