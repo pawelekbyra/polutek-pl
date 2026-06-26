@@ -5,7 +5,7 @@ import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payme
 const { mockRepo, mockGrantPatron, mockSyncClerkAccess, mockSendBecomePatronEmail, mockSendDonationThankYouEmail } = vi.hoisted(() => ({
   mockRepo: {
     findById: vi.fn(),
-    findUserWithTotals: vi.fn(),
+    findUserWithPaymentTotalsAndActivePatronGrants: vi.fn(),
     fulfillPendingPaymentWithCAS: vi.fn(),
     incrementUserPaymentTotal: vi.fn(),
   },
@@ -81,13 +81,14 @@ const baseUser = {
   language: 'pl',
   isPatron: false,
   paymentTotals: [],
+  patronGrants: [],
 };
 
 describe('fulfillPayment Stripe intent recovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRepo.findById.mockResolvedValue(basePayment);
-    mockRepo.findUserWithTotals.mockResolvedValue(baseUser);
+    mockRepo.findUserWithPaymentTotalsAndActivePatronGrants.mockResolvedValue(baseUser);
     mockRepo.fulfillPendingPaymentWithCAS.mockResolvedValue(1);
     mockRepo.incrementUserPaymentTotal.mockResolvedValue({ amountMinor: 1000 });
     mockGrantPatron.mockResolvedValue({
@@ -121,6 +122,56 @@ describe('fulfillPayment Stripe intent recovery', () => {
     }), expect.anything());
     expect(mockGrantPatron).toHaveBeenCalled();
     expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', true, [{ currency: 'PLN', amountMinor: 1000 }]);
+  });
+
+  it('replays fulfilled payments using active PatronGrant truth instead of User.isPatron cache', async () => {
+    mockRepo.findById.mockResolvedValue({
+      ...basePayment,
+      status: PaymentStatus.SUCCEEDED,
+    });
+    mockRepo.fulfillPendingPaymentWithCAS.mockResolvedValue(0);
+    mockRepo.findUserWithPaymentTotalsAndActivePatronGrants.mockResolvedValue({
+      ...baseUser,
+      isPatron: true,
+      patronGrants: [],
+      paymentTotals: [{ amountMinor: 1000, currency: 'PLN' }],
+    });
+
+    const result = await fulfillPayment({
+      paymentId: 'pay_1',
+      metadataUserId: 'user_1',
+      amountMinor: 1000,
+      currency: 'PLN',
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockGrantPatron).not.toHaveBeenCalled();
+    expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', false, 10);
+  });
+
+  it('keeps replayed fulfilled payments patron-active when an active PatronGrant exists', async () => {
+    mockRepo.findById.mockResolvedValue({
+      ...basePayment,
+      status: PaymentStatus.SUCCEEDED,
+    });
+    mockRepo.fulfillPendingPaymentWithCAS.mockResolvedValue(0);
+    mockRepo.findUserWithPaymentTotalsAndActivePatronGrants.mockResolvedValue({
+      ...baseUser,
+      isPatron: false,
+      patronGrants: [{ id: 'grant_1' }],
+      paymentTotals: [{ amountMinor: 1000, currency: 'PLN' }],
+    });
+
+    const result = await fulfillPayment({
+      paymentId: 'pay_1',
+      metadataUserId: 'user_1',
+      amountMinor: 1000,
+      currency: 'PLN',
+    }, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(mockGrantPatron).not.toHaveBeenCalled();
+    expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', true, 10);
   });
 
   it('rejects fulfillment when an existing local stripeIntentId differs from the webhook intent id', async () => {

@@ -9,10 +9,17 @@ export class PaymentRepository {
     });
   }
 
-  async findUserWithTotals(userId: string, db: ReadDb) {
+  async findUserWithPaymentTotalsAndActivePatronGrants(userId: string, db: ReadDb) {
     return await db.user.findUnique({
       where: { id: userId },
-      include: { paymentTotals: true }
+      include: {
+        paymentTotals: true,
+        patronGrants: {
+          where: { revokedAt: null },
+          select: { id: true },
+          take: 1,
+        },
+      },
     });
   }
 
