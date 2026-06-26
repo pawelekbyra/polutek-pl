@@ -131,7 +131,7 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
     sizeBytes: asset.sizeBytes,
     requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
     sourceMode: asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM" : "LEGACY_PROVIDER_ASSET",
-    durationSeconds: asset.durationSeconds || null,
+    durationSeconds: asset.durationSeconds ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
     previewUrl: asset.previewUrl ?? null,
     hlsManifestUrl: asset.hlsManifestUrl ?? null,

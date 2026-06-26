@@ -42,7 +42,10 @@ export async function handleCloudflareStreamWebhook(
 
   // Idempotency and State Transition Rules
   // Allow processing if the state is changing, or if the new state is READY (to allow refreshing metadata)
-  const isMetadataRefresh = asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY && newState === VIDEO_ASSET_PROCESSING_STATE.READY;
+  // We only treat it as a metadata refresh if there's actual metadata to refresh (size or duration)
+  const isMetadataRefresh = asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY &&
+                            newState === VIDEO_ASSET_PROCESSING_STATE.READY &&
+                            (Boolean(payload.size) || Boolean(payload.duration));
 
   if (isRedundantTransition(asset.processingState, newState) && !isMetadataRefresh) {
     return ok({ assetId: asset.id, status: "no-change" });
@@ -74,8 +77,11 @@ export async function handleCloudflareStreamWebhook(
         if (payload.size) {
           dataToUpdate.sizeBytes = Math.floor(payload.size);
         }
+        // Only set providerPlaybackId if explicitly provided or if it's currently missing
         if (payload.playback?.hls || payload.playback?.dash) {
-          dataToUpdate.providerPlaybackId = payload.uid;
+          if (!asset.providerPlaybackId) {
+            dataToUpdate.providerPlaybackId = payload.uid;
+          }
         }
 
         // Unset primary for all other assets of this video

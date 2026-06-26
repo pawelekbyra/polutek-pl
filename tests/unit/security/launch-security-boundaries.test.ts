@@ -230,8 +230,8 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
       playbackSource.indexOf('// At this point decision.hasAccess is true')
     );
     const processingBlock = playbackSource.slice(
-      playbackSource.indexOf("if (asset.processingState === 'PENDING'"),
-      playbackSource.indexOf("if (asset.processingState !== 'READY')")
+      playbackSource.indexOf('if (!primaryAsset.canResolveProviderSource)'),
+      playbackSource.indexOf("if (asset.provider === 'CLOUDFLARE_STREAM')")
     );
 
     expect(denialBlock).toContain('return unavailablePlan');

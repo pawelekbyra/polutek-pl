@@ -1,5 +1,5 @@
 import { createScopedLogger } from "@/lib/logger";
-import { CloudflareApiError, CloudflareConfigurationError } from "../domain/video.errors";
+import { CloudflareApiError, CloudflareConfigurationError, CloudflareNotFoundError } from "../domain/video.errors";
 
 export interface CloudflareDirectUploadResponse {
   result: {
@@ -229,6 +229,9 @@ export class CloudflareStreamClient {
       );
 
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new CloudflareNotFoundError(uid);
+        }
         const cloudflareError = await readCloudflareError(response);
         this.logger.error("Cloudflare API error (getAssetDetails)", {
           status: cloudflareError.status,

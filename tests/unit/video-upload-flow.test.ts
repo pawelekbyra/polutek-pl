@@ -27,6 +27,7 @@ vi.mock('../../lib/modules/video/infrastructure/cloudflare-stream.client', () =>
           result: { uid: 'cf-uid-123', uploadURL: 'https://upload.cloudflare.com/123' }
         }),
         getAssetDetails: vi.fn().mockResolvedValue({
+            success: true,
             result: {
                 uid: 'cf-uid-123',
                 status: { state: 'ready' }

@@ -4,6 +4,7 @@ import { VideoRepository } from "../infrastructure/video.repository";
 import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.client";
 import { handleCloudflareStreamWebhook } from "./handle-cloudflare-webhook.use-case";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { CloudflareNotFoundError } from "../domain/video.errors";
 
 export async function syncCloudflareStatus(
   videoId: string,
@@ -33,7 +34,7 @@ export async function syncCloudflareStatus(
       size: details.result.size,
     }, ctx);
   } catch (error: any) {
-    if (error.message?.includes('404')) {
+    if (error instanceof CloudflareNotFoundError) {
         // Asset not found on Cloudflare - mark as FAILED
         return await handleCloudflareStreamWebhook({
             uid: video.asset.providerAssetId,
