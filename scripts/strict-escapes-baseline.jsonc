@@ -604,16 +604,16 @@
     },
     {
       "file": "lib/services/playback/playback.service.ts",
-      "line": 185,
+      "line": 145,
       "label": "explicit any annotation",
-      "text": "tier = fallback.tier as any;",
+      "text": "accessReason: decision.reason as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/services/playback/playback.service.ts",
-      "line": 145,
+      "line": 185,
       "label": "explicit any annotation",
-      "text": "accessReason: decision.reason as any,",
+      "text": "tier = fallback.tier as any;",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
@@ -629,8 +629,7 @@
       "label": "explicit any annotation",
       "text": "accessTier: tier as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    }
-    ,
+    },
     {
       "file": "lib/modules/video/application/add-video-source.use-case.ts",
       "line": 51,

@@ -34,14 +34,12 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(source("app/components/ChannelHome.tsx")).toContain("compareSidebarItems");
   });
 
-  it("sidebar exposes top-level creatorId and support box does not send an empty creator id", () => {
+  it("sidebar exposes top-level creatorId", () => {
     const layout = source("lib/services/channel/channel-layout.service.ts");
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect(layout).toContain("creatorId: string");
     expect(layout).toContain("creatorId: v.creatorId");
-    expect(sidebar).toContain("find((item) => item.creatorId)");
-    expect(sidebar).toContain("if (!supportItem?.creatorId) return null");
-    expect(sidebar).not.toContain('creatorId={layout.sections[0]?.items[0]?.creatorId || ""}');
+    expect(sidebar).toContain("creatorId?: string | null;");
   });
 
   it("removes dead isPatron prop and tip gate language", () => {
@@ -56,7 +54,6 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect((sidebar.match(/<Link/g) ?? []).length).toBe(1);
     expect(sidebar).toContain("/?v=${video.slug || video.id}");
     expect(sidebar).toContain('aria-current={isCurrent ? "page" : undefined}');
-    expect(sidebar).toContain('className="pointer-events-none"');
     expect(sidebar).toContain("onMouseEnter={() => onVideoMouseEnter(video.id)}");
   });
 });

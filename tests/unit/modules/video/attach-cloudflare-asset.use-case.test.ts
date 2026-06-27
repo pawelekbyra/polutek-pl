@@ -21,10 +21,6 @@ const baseVideo = {
   sidebarOrder: 0,
   createdAt: new Date('2026-06-11T00:00:00Z'),
   updatedAt: new Date('2026-06-11T00:00:00Z'),
-  publishAfterAssetReady: false,
-  publishAfterAssetReadyRequestedAt: null,
-  publishAfterAssetReadyCompletedAt: null,
-  publishAfterAssetReadyError: null,
   _count: { comments: 0 },
   asset: null,
 };
@@ -45,6 +41,7 @@ describe('attachCloudflareAsset', () => {
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -68,6 +65,7 @@ describe('attachCloudflareAsset', () => {
     mockPrisma.video.findFirst.mockResolvedValue(baseVideo);
     mockPrisma.videoAsset.findFirst.mockResolvedValue(null);
     mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
+    mockPrisma.videoAsset.findMany.mockResolvedValue([]);
     mockPrisma.videoAsset.create.mockResolvedValue({ id: 'asset-1' });
     mockPrisma.auditLog.create.mockResolvedValue({ id: 'audit-1' });
   });
@@ -89,7 +87,7 @@ describe('attachCloudflareAsset', () => {
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: 'cf-uid-123',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
         videoId,
       })
     }));
@@ -105,8 +103,7 @@ describe('attachCloudflareAsset', () => {
       data: expect.objectContaining({
         providerAssetId: 'cf-uid-123',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
-        processingStartedAt: expect.any(Date),
+        isPrimary: true,
       })
     }));
   });

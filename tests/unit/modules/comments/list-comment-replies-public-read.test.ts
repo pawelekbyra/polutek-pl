@@ -9,13 +9,15 @@ vi.mock('@/lib/modules/access', () => ({
   checkVideoAccess: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/comments/infrastructure/comment.repository', () => ({
-  CommentRepository: vi.fn(),
-}));
+vi.mock('@/lib/modules/comments/infrastructure/comment.repository', () => {
+  return {
+    CommentRepository: vi.fn()
+  };
+});
 
 describe('listCommentReplies public read access', () => {
   const parentComment = { id: 'comment-1', videoId: 'video-1' };
-  const repo = {
+  const mockRepo = {
     findCommentById: vi.fn(),
     findVideoCreatorId: vi.fn(),
     findReplies: vi.fn(),
@@ -23,10 +25,12 @@ describe('listCommentReplies public read access', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(CommentRepository).mockImplementation(() => repo as any);
-    repo.findCommentById.mockResolvedValue(parentComment);
-    repo.findVideoCreatorId.mockResolvedValue('creator-1');
-    repo.findReplies.mockResolvedValue([]);
+    (CommentRepository as any).mockImplementation(function(this: any) {
+        return mockRepo;
+    });
+    mockRepo.findCommentById.mockResolvedValue(parentComment);
+    mockRepo.findVideoCreatorId.mockResolvedValue('creator-1');
+    mockRepo.findReplies.mockResolvedValue([]);
   });
 
   it('allows guests to read replies when video access is gated by patron status', async () => {
@@ -38,7 +42,7 @@ describe('listCommentReplies public read access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(repo.findReplies).toHaveBeenCalled();
+    expect(mockRepo.findReplies).toHaveBeenCalled();
   });
 
   it('allows logged-in non-patrons to read replies when video access is login or patron gated', async () => {
@@ -50,7 +54,7 @@ describe('listCommentReplies public read access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(repo.findReplies).toHaveBeenCalled();
+    expect(mockRepo.findReplies).toHaveBeenCalled();
   });
 
   it('still fails when the gated video is missing or deleted', async () => {
@@ -63,6 +67,6 @@ describe('listCommentReplies public read access', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
-    expect(repo.findReplies).not.toHaveBeenCalled();
+    expect(mockRepo.findReplies).not.toHaveBeenCalled();
   });
 });

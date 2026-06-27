@@ -1,11 +1,15 @@
 -- Add YOUTUBE to StorageProvider enum (idempotent)
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumtypid = 'StorageProvider'::regtype
-      AND enumlabel = 'YOUTUBE'
+  IF EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'StorageProvider'
   ) THEN
-    ALTER TYPE "StorageProvider" ADD VALUE 'YOUTUBE';
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_enum
+      WHERE enumtypid = '"StorageProvider"'::regtype
+        AND enumlabel = 'YOUTUBE'
+    ) THEN
+      ALTER TYPE "StorageProvider" ADD VALUE 'YOUTUBE';
+    END IF;
   END IF;
 END $$;
 

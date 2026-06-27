@@ -51,6 +51,7 @@ export function VideoSourcesPanel({ video, onRefresh, onSyncCloudflare, onToast 
   const [cfUid, setCfUid] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const assets: VideoAsset[] = video.assets ?? [];
   const isPatron = video.tier === "PATRON";
@@ -100,10 +101,10 @@ export function VideoSourcesPanel({ video, onRefresh, onSyncCloudflare, onToast 
   }
 
   async function handleDelete(assetId: string) {
-    if (!window.confirm("Czy na pewno chcesz usunąć to źródło?")) return;
     const res = await fetch(`/api/admin/videos/${video.id}/sources/${assetId}`, { method: "DELETE" });
     if (res.ok) {
       onToast("Źródło zostało usunięte.", "success");
+      setConfirmDeleteId(null);
       onRefresh();
     } else {
       const data = await res.json();
@@ -112,136 +113,101 @@ export function VideoSourcesPanel({ video, onRefresh, onSyncCloudflare, onToast 
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+    <Card className="shadow-sm border-neutral-200">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-lg">Źródła wideo</CardTitle>
-          <CardDescription className="text-xs mt-1">Zarządzaj źródłami odtwarzania. Tylko READY i produkcyjne źródła mogą być ustawione jako główne.</CardDescription>
+          <CardDescription>Zarządzaj wieloma źródłami dla tego filmu.</CardDescription>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={onSyncCloudflare} disabled={!assets.some(a => a.provider === "CLOUDFLARE_STREAM")}>
-            <RotateCcw className="mr-2 h-3 w-3" /> Synchronizuj CF
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowAddForm("CLOUDFLARE_STREAM")}>
-            <Plus className="mr-2 h-3 w-3" /> Dodaj Cloudflare UID
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAddForm("YOUTUBE")}
-            disabled={isPatron}
-            title={isPatron ? "YouTube nie jest dostępny dla filmów patron-only" : undefined}
-          >
-            <Youtube className="mr-2 h-3 w-3" /> Dodaj YouTube
-          </Button>
+        <div className="flex gap-2">
+           <Button variant="outline" size="sm" onClick={() => setShowAddForm("CLOUDFLARE_STREAM")}>
+             <Plus className="w-3 h-3 mr-1" /> Cloudflare
+           </Button>
+           {!isPatron && (
+             <Button variant="outline" size="sm" onClick={() => setShowAddForm("YOUTUBE")}>
+               <Youtube className="w-3 h-3 mr-1" /> YouTube
+             </Button>
+           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isPatron && (
-          <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
-            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-            <p>Ten film jest <strong>PATRON-only</strong>. YouTube nie może być używany jako źródło ani ustawiony jako główne źródło odtwarzania.</p>
-          </div>
-        )}
-
         {showAddForm && (
-          <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-            <p className="font-semibold text-sm">
-              {showAddForm === "CLOUDFLARE_STREAM" ? "Dodaj Cloudflare Stream UID" : "Dodaj źródło YouTube"}
-            </p>
-            {showAddForm === "CLOUDFLARE_STREAM" && (
-              <div className="space-y-1">
-                <Label className="text-xs">Cloudflare Stream UID</Label>
-                <Input value={cfUid} onChange={(e) => setCfUid(e.target.value)} placeholder="np. abc123xyz" className="h-8 text-sm font-mono" />
+          <div className="p-4 border rounded-xl bg-muted/30 space-y-4 animate-in fade-in slide-in-from-top-2">
+            <h4 className="font-bold text-sm">Dodaj nowe źródło: {PROVIDER_LABELS[showAddForm]}</h4>
+            {showAddForm === "CLOUDFLARE_STREAM" ? (
+              <div className="space-y-2">
+                <Label htmlFor="cf-uid">Cloudflare UID</Label>
+                <Input id="cf-uid" value={cfUid} onChange={(e) => setCfUid(e.target.value)} placeholder="np. fc7a20a..." />
               </div>
-            )}
-            {showAddForm === "YOUTUBE" && (
-              <div className="space-y-1">
-                <Label className="text-xs">URL YouTube</Label>
-                <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="h-8 text-sm" />
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="yt-url">Link YouTube</Label>
+                <Input id="yt-url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
               </div>
             )}
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAddSource} disabled={submitting}>Dodaj</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowAddForm(null); setCfUid(""); setYoutubeUrl(""); }}>Anuluj</Button>
+              <Button size="sm" onClick={handleAddSource} disabled={submitting}>
+                {submitting ? "Dodawanie..." : "Dodaj"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowAddForm(null)}>Anuluj</Button>
             </div>
           </div>
         )}
 
-        {assets.length === 0 ? (
-          <div className="py-10 text-center border-dashed border-2 rounded-xl bg-muted/20">
-            <Video className="h-8 w-8 mx-auto opacity-20 mb-2" />
-            <p className="text-sm text-muted-foreground italic">Brak źródeł wideo.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {assets.map((asset) => (
-              <SourceRow
-                key={asset.id}
-                asset={asset}
-                isPatron={isPatron}
-                onMakePrimary={() => handleMakePrimary(asset.id)}
-                onDelete={() => handleDelete(asset.id)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="space-y-2">
+          {assets.map((asset) => (
+            <div key={asset.id} className="flex items-center justify-between p-3 rounded-lg border bg-white shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-neutral-50 border">
+                  {asset.provider === "YOUTUBE" ? <Youtube className="w-4 h-4 text-red-600" /> : <Video className="w-4 h-4 text-blue-600" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold">{PROVIDER_LABELS[asset.provider] || asset.provider}</span>
+                    <Badge variant={STATE_VARIANT[asset.processingState] || "outline"} className="text-[10px] h-4">
+                      {asset.processingState}
+                    </Badge>
+                    {asset.isPrimary && <Badge variant="default" className="text-[10px] h-4 bg-amber-500 hover:bg-amber-600 border-0"><Star className="w-2.5 h-2.5 mr-0.5 fill-current" /> Główne</Badge>}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                    {asset.providerAssetId || asset.externalVideoId || asset.id}
+                  </div>
+                </div>
+              </div>
 
-        <div className="pt-2 text-[10px] text-muted-foreground space-y-0.5 border-t">
-          <p><strong>Produkcyjne:</strong> Cloudflare Stream (signed playback), YouTube (embed, tylko PUBLIC).</p>
-          <p><strong>Legacy/eksperymentalne:</strong> R2, S3, Vercel Blob, Mux — nie mogą być ustawione jako główne źródło odtwarzania.</p>
+              <div className="flex items-center gap-2">
+                {asset.provider === "CLOUDFLARE_STREAM" && (
+                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onSyncCloudflare} title="Synchronizuj status">
+                     <RotateCcw className="w-4 h-4" />
+                   </Button>
+                )}
+                {!asset.isPrimary && asset.processingState === "READY" && asset.isPlayable && (
+                   <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleMakePrimary(asset.id)}>
+                     Ustaw jako główne
+                   </Button>
+                )}
+                {!asset.isPrimary && (
+                   confirmDeleteId === asset.id ? (
+                     <div className="flex items-center gap-1 animate-in fade-in zoom-in-95">
+                        <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handleDelete(asset.id)}>Tak, usuń</Button>
+                        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setConfirmDeleteId(null)}>Nie</Button>
+                     </div>
+                   ) : (
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setConfirmDeleteId(asset.id)}>
+                       <Trash2 className="w-4 h-4" />
+                     </Button>
+                   )
+                )}
+              </div>
+            </div>
+          ))}
+          {assets.length === 0 && (
+            <div className="py-8 text-center border-2 border-dashed rounded-xl opacity-40">
+              <p className="text-sm italic">Brak dodatkowych źródeł wideo.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function SourceRow({ asset, isPatron, onMakePrimary, onDelete }: {
-  asset: VideoAsset;
-  isPatron: boolean;
-  onMakePrimary: () => void;
-  onDelete: () => void;
-}) {
-  const canBePrimary = asset.isPlayable && asset.processingState === "READY" && !(asset.provider === "YOUTUBE" && isPatron);
-
-  return (
-    <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border ${asset.isPrimary ? "border-green-400 bg-green-50/50" : "border-border bg-muted/20"}`}>
-      <div className="space-y-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-sm">{PROVIDER_LABELS[asset.provider] ?? asset.provider}</span>
-          {asset.isPrimary && <Badge className="bg-green-600 text-[10px] h-4 px-1.5"><Star className="h-2.5 w-2.5 mr-0.5" /> Główne</Badge>}
-          <Badge variant={STATE_VARIANT[asset.processingState] ?? "outline"} className="text-[10px] h-4 px-1.5">{asset.processingState}</Badge>
-          {!asset.isPlayable && (
-            <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-400 text-amber-700">eksperymentalne</Badge>
-          )}
-        </div>
-        {asset.providerAssetId && (
-          <div className="text-[10px] text-muted-foreground font-mono truncate">CF UID: {asset.providerAssetId}</div>
-        )}
-        {asset.externalVideoId && (
-          <div className="text-[10px] text-muted-foreground font-mono truncate">YT ID: {asset.externalVideoId}</div>
-        )}
-        {asset.externalUrl && (
-          <a href={asset.externalUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 truncate block hover:underline">{asset.externalUrl}</a>
-        )}
-        {asset.failureReason && (
-          <div className="text-[10px] text-red-600 mt-1 flex items-center gap-1">
-            <AlertTriangle className="h-3 w-3 shrink-0" />{asset.failureReason}
-          </div>
-        )}
-      </div>
-      <div className="flex gap-1 shrink-0">
-        {!asset.isPrimary && canBePrimary && (
-          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={onMakePrimary} title="Ustaw jako główne">
-            <Star className="h-3 w-3" />
-          </Button>
-        )}
-        {!asset.isPrimary && (
-          <Button size="sm" variant="ghost" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={onDelete} title="Usuń źródło">
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    </div>
   );
 }

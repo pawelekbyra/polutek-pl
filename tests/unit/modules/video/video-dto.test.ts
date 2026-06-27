@@ -92,8 +92,7 @@ describe('Video DTOs', () => {
   it('toAdminVideoAssetDto preserves legacy object-storage assets as representable migration states', () => {
     const createdAt = new Date('2026-06-11T00:00:00Z');
 
-    const legacyProviders: StorageProvider[] = [StorageProvider.R2, StorageProvider.S3, StorageProvider.VERCEL_BLOB];
-    for (const provider of legacyProviders) {
+    for (const provider of [StorageProvider.R2, StorageProvider.S3, StorageProvider.VERCEL_BLOB]) {
       const dto = toAdminVideoAssetDto({
         id: `asset-${provider}`,
         videoId: 'v1',
