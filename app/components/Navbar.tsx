@@ -135,7 +135,7 @@ const Navbar = () => {
               </button>
             </div>
 
-            <div className="flex gap-[2px] items-center bg-white rounded-full px-[3px] border border-input h-9">
+            <div className="flex gap-[2px] items-center bg-white rounded-full p-[3px] border border-input h-9">
               <button
                 onClick={() => {
                   if (setLanguage) setLanguage("pl");
@@ -143,7 +143,7 @@ const Navbar = () => {
                 className={cn(
                   "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
                   language === "pl"
-                    ? "bg-white shadow-sm text-foreground border border-transparent"
+                    ? "bg-zinc-900 text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -156,7 +156,7 @@ const Navbar = () => {
                 className={cn(
                   "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
                   language === "en"
-                    ? "bg-white shadow-sm text-foreground border border-transparent"
+                    ? "bg-zinc-900 text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
