@@ -275,7 +275,7 @@ export class PlaybackService {
                 },
                 tracking: {
                     playbackSessionId: session.id,
-                    heartbeatIntervalSeconds: 15
+                    heartbeatIntervalSeconds: 60
                 }
             };
         } catch (e) {
@@ -435,7 +435,7 @@ export class PlaybackService {
         },
         tracking: {
             playbackSessionId: session.id,
-            heartbeatIntervalSeconds: 15
+            heartbeatIntervalSeconds: 60
         }
     };
   }

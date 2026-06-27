@@ -113,7 +113,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
       return NextResponse.json(response, { status: 403 });
     }
 
-    return NextResponse.json(response);
+    const headers: Record<string, string> = {};
+    if (actor.type === "anonymous") {
+      headers["Cache-Control"] = "public, s-maxage=60, stale-while-revalidate=300";
+    }
+
+    return NextResponse.json(response, { headers });
   } catch (error) {
     scopedLogger.error("[MEDIA_SOURCE_GET_ERROR]", error);
     return handleApiError(error);
