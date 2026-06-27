@@ -8,6 +8,7 @@ import { useLanguage } from './LanguageContext';
 const Footer = () => {
   const { language } = useLanguage();
   const isPl = language === 'pl';
+  const contactEmail = `${'pawel.perfect'}@gmail.com`;
 
   return (
     <footer className="border-t border-border bg-secondary mt-12">
@@ -21,13 +22,13 @@ const Footer = () => {
           <Link href="/polityka-prywatnosci" className="hover:text-foreground transition-colors">
             {isPl ? "Prywatność" : "Privacy"}
           </Link>
-          <a href="mailto:pawel.perfect@gmail.com" className="hover:text-foreground transition-colors">
+          <a href={`mailto:${contactEmail}`} className="hover:text-foreground transition-colors">
             {isPl ? "Kontakt" : "Contact"}
           </a>
         </div>
 
         <span className="text-[12px] text-[#9a958b]">
-          Polutek.pl nie jest platformą. Polutek.pl jest miejscem.
+          POLUTEK.PL nie jest platformą. POLUTEK.PL jest miejscem.
         </span>
       </div>
     </footer>
