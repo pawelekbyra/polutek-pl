@@ -13,7 +13,6 @@ import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
-import { translations } from "@/app/components/LanguageContext";
 
 type UserProfile = {
   id: string;
@@ -26,7 +25,9 @@ type UserProfile = {
   role?: string;
 } | null | undefined;
 
-type Translations = typeof translations.pl;
+type Translations = {
+  views: string;
+};
 
 type SidebarLayoutItem = PublicVideoDTO & {
   isLocked?: boolean;
