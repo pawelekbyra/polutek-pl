@@ -47,6 +47,7 @@ function StateBadge({ state, isPlayable }: { state: string; isPlayable: boolean 
 export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSourcesPanelProps) {
   const toast = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
 
   const [showAddCf, setShowAddCf] = useState(false);
   const [showAddYt, setShowAddYt] = useState(false);
@@ -74,7 +75,11 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
   }
 
   async function handleRemove(assetId: string) {
-    if (!confirm("Usunąć to źródło? Tej operacji nie można cofnąć.")) return;
+    if (pendingRemove !== assetId) {
+      setPendingRemove(assetId);
+      return;
+    }
+    setPendingRemove(null);
     setLoading(`remove-${assetId}`);
     try {
       const res = await fetch(`/api/admin/videos/${videoId}/sources/${assetId}`, { method: "DELETE" });
@@ -178,15 +183,35 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
                 </Button>
               )}
               {!asset.isPrimary && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleRemove(asset.id)}
-                  disabled={loading !== null}
-                >
-                  {loading === `remove-${asset.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </Button>
+                pendingRemove === asset.id ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleRemove(asset.id)}
+                      disabled={loading !== null}
+                    >
+                      Usuń
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPendingRemove(null)}
+                    >
+                      Anuluj
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleRemove(asset.id)}
+                    disabled={loading !== null}
+                  >
+                    {loading === `remove-${asset.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                )
               )}
             </div>
           </div>
