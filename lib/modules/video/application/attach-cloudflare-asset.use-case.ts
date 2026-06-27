@@ -81,7 +81,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
         }, tx);
       }
     }
-    await repository.updateVideoAsset(video.id, {
+    await repository.upsertAsset(video.id, {
       provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
       providerAssetId,
       providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,

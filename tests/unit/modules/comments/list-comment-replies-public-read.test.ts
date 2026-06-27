@@ -10,7 +10,7 @@ vi.mock('@/lib/modules/access', () => ({
 }));
 
 vi.mock('@/lib/modules/comments/infrastructure/comment.repository', () => ({
-  CommentRepository: vi.fn(),
+  CommentRepository: vi.fn(function CommentRepositoryMock() {}),
 }));
 
 describe('listCommentReplies public read access', () => {
@@ -23,7 +23,7 @@ describe('listCommentReplies public read access', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(CommentRepository).mockImplementation(() => repo as any);
+    vi.mocked(CommentRepository).mockImplementation(function CommentRepositoryMock() { return repo as any; });
     repo.findCommentById.mockResolvedValue(parentComment);
     repo.findVideoCreatorId.mockResolvedValue('creator-1');
     repo.findReplies.mockResolvedValue([]);

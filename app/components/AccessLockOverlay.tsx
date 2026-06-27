@@ -30,8 +30,8 @@ const scaleClasses = {
     headline: "text-[clamp(2rem,10cqi,6rem)]",
     divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,18cqi,12rem)]",
     cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
-    ctaLine: "w-24 group-hover/cta:w-48",
-    ctaText: "text-[10px] tracking-[0.5em]",
+    ctaLine: "w-[1px] h-[clamp(12px,2.2cqi,20px)]",
+    ctaText: "text-[clamp(9px,1.4cqi,14px)] tracking-[0.42em]",
   },
   thumbnail: {
     content: "p-3",
@@ -41,8 +41,8 @@ const scaleClasses = {
     headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
     divider: "my-[clamp(0.18rem,1.25cqi,0.32rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
     cta: "hidden",
-    ctaLine: "w-12",
-    ctaText: "text-[7px] tracking-[0.3em]",
+    ctaLine: "",
+    ctaText: "",
   },
   thumbnailCompact: {
     content: "p-2",
@@ -52,8 +52,8 @@ const scaleClasses = {
     headline: "text-[clamp(0.9rem,13cqi,2rem)]",
     divider: "my-[clamp(0.14rem,1.1cqi,0.24rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
     cta: "hidden",
-    ctaLine: "w-10",
-    ctaText: "text-[6px] tracking-[0.25em]",
+    ctaLine: "",
+    ctaText: "",
   },
 } as const;
 
@@ -65,22 +65,24 @@ const overlayConfig = {
     accent: "text-[#60a5fa]",
     firstLineColor: "text-white",
     secondLineColor: "text-[#60a5fa]",
-    ctaHover: "group-hover/cta:text-[#3b82f6]",
+    ctaHover: "group-hover/cta:text-[#60a5fa]",
     aurora:
-      "bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.70),transparent_28%),radial-gradient(circle_at_70%_60%,rgba(30,64,175,0.62),transparent_35%),linear-gradient(135deg,#1e3a8a_0%,#000_48%,#172554_100%)]",
-    shadow: "drop-shadow-[0_12px_26px_rgba(96,165,250,0.25)]",
+      "bg-[linear-gradient(135deg,#1e3a8a_0%,#000_52%,#172554_100%)]",
+    shadow: "drop-shadow-[0_14px_30px_rgba(96,165,250,0.30)]",
+    noise: false,
   },
   PATRON_REQUIRED: {
     firstLine: "Strefa",
     secondLine: "Patronów",
-    cta: "Wyślij napiwek, aby dołączyć",
+    cta: "Odblokuj dostęp",
     accent: "text-[#f59e0b]",
     firstLineColor: "text-[#f59e0b]",
     secondLineColor: "text-white",
     ctaHover: "group-hover/cta:text-[#f59e0b]",
     aurora:
-      "bg-[radial-gradient(circle_at_30%_20%,rgba(245,158,11,0.74),transparent_28%),radial-gradient(circle_at_72%_62%,rgba(120,53,15,0.72),transparent_36%),linear-gradient(135deg,#78350f_0%,#000_48%,#451a03_100%)]",
-    shadow: "drop-shadow-[0_12px_28px_rgba(245,158,11,0.30)]",
+      "bg-[radial-gradient(circle_at_35%_28%,rgba(245,158,11,0.55),transparent_30%),linear-gradient(135deg,#78350f_0%,#000_48%,#451a03_100%)]",
+    shadow: "drop-shadow-[0_0_28px_rgba(245,158,11,0.35)]",
+    noise: true,
   },
 } as const;
 
@@ -88,6 +90,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const isPatronState = state === "PATRON_REQUIRED";
   const config = overlayConfig[state];
   const size = scaleClasses[variant];
+  const isCompact = variant !== "default";
 
   return (
     <PlayerStateFrame
@@ -100,14 +103,30 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
           shellRadius[variant],
         )}
       >
+        {/* Aurora background */}
         <div className="absolute inset-0 z-0 opacity-60">
           <div
             className={cn(
-              "h-full w-full blur-[16px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
+              "h-full w-full blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
               config.aurora,
             )}
           />
         </div>
+
+        {/* Noise grid — patron overlay, full player only */}
+        {config.noise && !isCompact && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[1] opacity-65"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px)",
+              backgroundSize: "28px 28px",
+              maskImage: "radial-gradient(circle,black,transparent 78%)",
+              WebkitMaskImage: "radial-gradient(circle,black,transparent 78%)",
+            }}
+          />
+        )}
 
         <div
           className={cn(
@@ -115,6 +134,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             size.content,
           )}
         >
+          {/* Icon + headline cluster */}
           <div
             className={cn(
               "absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3",
@@ -129,7 +149,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                 )}
                 aria-label="Strefa Patronów"
               >
-                <PatronGemIcon
+                <GiftBoxIcon
                   className={cn(size.icon, config.accent, config.shadow)}
                 />
               </div>
@@ -143,7 +163,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   )}
                   aria-label="Zaloguj się"
                 >
-                  <DoorLockIcon
+                  <LoginArrowIcon
                     className={cn(size.icon, config.accent, config.shadow)}
                   />
                 </button>
@@ -152,22 +172,17 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
             <div
               className={cn(
-                "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+                "font-brand font-black uppercase leading-[0.86] tracking-[-0.01em] whitespace-nowrap",
                 config.firstLineColor,
                 size.headline,
               )}
             >
               {config.firstLine}
             </div>
+            <div className={cn("h-px bg-white/12", size.divider)} />
             <div
               className={cn(
-                "h-px bg-white/10",
-                size.divider,
-              )}
-            />
-            <div
-              className={cn(
-                "font-brand font-black uppercase leading-[0.8] tracking-[-0.06em] whitespace-nowrap",
+                "font-brand font-black uppercase leading-[0.86] tracking-[-0.01em] whitespace-nowrap",
                 config.secondLineColor,
                 size.headline,
               )}
@@ -176,6 +191,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             </div>
           </div>
 
+          {/* CTA — hidden in all thumbnail variants via size.cta = "hidden" */}
           {isPatronState ? (
             <a
               href="#donations"
@@ -186,14 +202,14 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
               className={cn(
-                "group/cta absolute left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-white/30 no-underline transition-colors duration-200 motion-reduce:transition-none",
+                "group/cta absolute left-1/2 flex -translate-x-1/2 flex-col items-center gap-[10px] text-white/40 no-underline transition-colors duration-300 motion-reduce:transition-none",
                 config.ctaHover,
                 size.cta,
               )}
             >
               <span
                 className={cn(
-                  "h-px bg-white/10 transition-[width] duration-500 motion-reduce:transition-none",
+                  "bg-gradient-to-b from-transparent to-white/20",
                   size.ctaLine,
                 )}
               />
@@ -211,13 +227,14 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
               <button
                 type="button"
                 className={cn(
-                  "group/cta absolute left-1/2 flex -translate-x-1/2 cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0 text-white/30 transition-colors duration-200 hover:text-[#3b82f6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
+                  "group/cta absolute left-1/2 flex -translate-x-1/2 cursor-pointer flex-col items-center gap-[10px] border-0 bg-transparent p-0 text-white/40 transition-colors duration-300 motion-reduce:transition-none",
+                  config.ctaHover,
                   size.cta,
                 )}
               >
                 <span
                   className={cn(
-                    "h-px bg-white/10 transition-[width] duration-500 motion-reduce:transition-none",
+                    "bg-gradient-to-b from-transparent to-white/20",
                     size.ctaLine,
                   )}
                 />
@@ -240,44 +257,44 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
 export default AccessLockOverlay;
 
-function PatronGemIcon({ className }: { className?: string }) {
+function LoginArrowIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 24 24"
+      viewBox="0 0 48 48"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.65"
+      strokeWidth="2.4"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M6 3h12l4 6-10 12L2 9l4-6Z" />
-      <path d="M2 9h20" />
-      <path d="M6 3l6 18 6-18" />
-      <path d="M6 3l-4 6" />
-      <path d="M18 3l4 6" />
+      <path d="M28 8H38a2 2 0 0 1 2 2V38a2 2 0 0 1-2 2H28" />
+      <path d="M6 24H30" />
+      <path d="M22 16l8 8-8 8" />
     </svg>
   );
 }
 
-function DoorLockIcon({ className }: { className?: string }) {
+function GiftBoxIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect x="4.5" y="10.5" width="15" height="10" rx="2.2" />
-      <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
-      <path d="M12 15v2" />
+      <rect x="3" y="8" width="18" height="4" rx="1" />
+      <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+      <path d="M12 8v13" />
+      <path d="M12 8C12 8 11 3 8 3a2.5 2.5 0 0 0 0 5h4Z" />
+      <path d="M12 8C12 8 13 3 16 3a2.5 2.5 0 0 1 0 5h-4Z" />
     </svg>
   );
 }

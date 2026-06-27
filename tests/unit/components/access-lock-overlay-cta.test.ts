@@ -15,7 +15,7 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
 
   it("has visible support button in PATRON_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain('cta: "Wyślij napiwek, aby dołączyć"');
+    expect(source).toContain('cta: "Odblokuj dostęp"');
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
   });
