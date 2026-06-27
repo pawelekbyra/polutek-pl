@@ -13,8 +13,14 @@ export const VIDEO_PROVIDER: Record<string, StorageProvider> = {
   S3: 'S3',
   VERCEL_BLOB: 'VERCEL_BLOB',
   CLOUDFLARE_STREAM: 'CLOUDFLARE_STREAM',
-  MUX: 'MUX'
+  MUX: 'MUX',
+  YOUTUBE: 'YOUTUBE' as StorageProvider,
 };
+
+export const PLAYABLE_ADMIN_PRIMARY_PROVIDERS = new Set<string>([
+  'CLOUDFLARE_STREAM',
+  'YOUTUBE',
+]);
 
 export function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcessingState {
   switch (cfState) {
