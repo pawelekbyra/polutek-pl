@@ -16,6 +16,7 @@ import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 
 type SidebarLayoutItem = PublicVideoDTO & {
   isLocked?: boolean;
+  creatorId?: string | null;
 };
 
 type SidebarLayoutSection = {
@@ -317,6 +318,9 @@ export function SidebarPlaylist({
   const publicSection = layout.sections.find((s) => s.type === "FREE");
   const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
+  const supportItem = layout.sections
+    .flatMap((section) => section.items)
+    .find((item) => item.creatorId);
 
   return (
     <>
@@ -333,7 +337,11 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {!viewerIsPatron && <PatronBox />}
+      {!viewerIsPatron &&
+        (() => {
+          if (!supportItem?.creatorId) return null;
+          return <PatronBox />;
+        })()}
 
       {patronSection && (
         <div className="mb-6">
