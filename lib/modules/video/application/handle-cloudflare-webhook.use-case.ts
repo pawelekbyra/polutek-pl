@@ -71,24 +71,29 @@ export async function handleCloudflareStreamWebhook(
     }
 
     if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-        dataToUpdate.isPrimary = true;
         dataToUpdate.failureReason = null;
 
         if (payload.size != null) {
           dataToUpdate.sizeBytes = Math.floor(payload.size);
         }
-        // Only set providerPlaybackId if explicitly provided or if it's currently missing
         if (payload.playback?.hls || payload.playback?.dash) {
           if (!asset.providerPlaybackId) {
             dataToUpdate.providerPlaybackId = payload.uid;
           }
         }
 
-        // Unset primary for all other assets of this video
-        await tx.videoAsset.updateMany({
-            where: { videoId: asset.videoId, id: { not: asset.id } },
-            data: { isPrimary: false }
+        // Auto-promuj do primary tylko jeśli nie istnieje żaden inny READY primary asset.
+        // Jeśli admin ma już aktywne źródło, nie przełączamy automatycznie — decyzja należy do admina.
+        const existingReadyPrimary = await tx.videoAsset.findFirst({
+          where: { videoId: asset.videoId, id: { not: asset.id }, isPrimary: true, processingState: VIDEO_ASSET_PROCESSING_STATE.READY },
         });
+        if (!existingReadyPrimary) {
+          dataToUpdate.isPrimary = true;
+          await tx.videoAsset.updateMany({
+            where: { videoId: asset.videoId, id: { not: asset.id } },
+            data: { isPrimary: false },
+          });
+        }
     }
 
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);
