@@ -15,15 +15,15 @@ const Footer = () => {
         <BrandName className="text-[15px] tracking-[-0.02em]" />
 
         <div className="flex gap-[22px] text-[12.5px] text-muted-foreground font-medium">
-          <Link href="/terms" className="hover:text-foreground transition-colors">
+          <Link href="/regulamin" className="hover:text-foreground transition-colors">
             {isPl ? "Regulamin" : "Terms"}
           </Link>
-          <Link href="/privacy" className="hover:text-foreground transition-colors">
+          <Link href="/polityka-prywatnosci" className="hover:text-foreground transition-colors">
             {isPl ? "Prywatność" : "Privacy"}
           </Link>
-          <Link href="/contact" className="hover:text-foreground transition-colors">
+          <a href="mailto:pawel.perfect@gmail.com" className="hover:text-foreground transition-colors">
             {isPl ? "Kontakt" : "Contact"}
-          </Link>
+          </a>
         </div>
 
         <span className="text-[12px] text-[#9a958b]">
