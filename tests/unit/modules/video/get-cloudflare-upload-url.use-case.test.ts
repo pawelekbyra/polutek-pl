@@ -17,6 +17,7 @@ describe('getCloudflareUploadUrl', () => {
       findFirst: vi.fn(),
     },
     videoAsset: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
@@ -38,6 +39,7 @@ describe('getCloudflareUploadUrl', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.videoAsset.findMany?.mockResolvedValue([]);
     process.env.MAIN_CREATOR_SLUG = 'main-creator';
     process.env.CLOUDFLARE_ACCOUNT_ID = 'acc-123';
     process.env.CLOUDFLARE_API_TOKEN = 'tok-123';

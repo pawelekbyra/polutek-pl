@@ -581,20 +581,8 @@
       "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
-    {
-      "file": "lib/modules/video/domain/video.dto.ts",
-      "line": 97,
-      "label": "explicit any annotation",
-      "text": "if (field in dto) delete (dto as any)[field];",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/domain/video.dto.ts",
-      "line": 218,
-      "label": "explicit any annotation",
-      "text": "metadata?: any;",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
+
+
     {
       "file": "lib/services/content/video.service.ts",
       "line": 128,
@@ -616,13 +604,7 @@
       "text": "const tx = db && '$transaction' in db ? undefined : (db as any);",
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
-    {
-      "file": "lib/services/playback/playback.service.ts",
-      "line": 115,
-      "label": "explicit any annotation",
-      "text": "}) as VideoWithAsset & { asset?: any };",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
+
     {
       "file": "lib/services/playback/playback.service.ts",
       "line": 145,

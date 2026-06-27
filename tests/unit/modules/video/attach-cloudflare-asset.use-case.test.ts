@@ -41,6 +41,7 @@ describe('attachCloudflareAsset', () => {
       updateMany: vi.fn(),
     },
     videoAsset: {
+      findMany: vi.fn(),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -63,6 +64,7 @@ describe('attachCloudflareAsset', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.videoAsset.findMany?.mockResolvedValue([]);
     process.env.MAIN_CREATOR_SLUG = 'main-creator';
     mockPrisma.creator.findUnique.mockResolvedValue({ id: 'channel-1', slug: 'main-creator', isApproved: true, isPrimary: true });
     mockPrisma.video.findFirst.mockResolvedValue(baseVideo);
