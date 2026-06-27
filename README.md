@@ -1,4 +1,4 @@
-# Polutek.pl
+# Polutek.pl )
 
 Polutek.pl to aktywny produkt VOD twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system patronów i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
 
