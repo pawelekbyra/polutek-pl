@@ -4,7 +4,7 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { handleApiError, fromUseCaseResult } from "@/lib/api/api-response";
 import { makeSourcePrimary } from "@/lib/modules/video/application/make-source-primary.use-case";
 import { deleteVideoSource } from "@/lib/modules/video/application/delete-video-source.use-case";
-import { syncCloudflareStatus } from "@/lib/modules/video";
+import { syncVideoAssetStatus } from "@/lib/modules/video/application/sync-video-asset-status.use-case";
 
 type RouteParams = { params: Promise<{ id: string; assetId: string }> };
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, props: RouteParams) {
       return fromUseCaseResult(await makeSourcePrimary({ videoId, assetId }, ctx));
     }
     if (action === "sync") {
-      return fromUseCaseResult(await syncCloudflareStatus(videoId, ctx));
+      return fromUseCaseResult(await syncVideoAssetStatus({ videoId, assetId }, ctx));
     }
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
