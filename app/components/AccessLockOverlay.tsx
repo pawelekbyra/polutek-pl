@@ -134,10 +134,12 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             size.content,
           )}
         >
-          {/* Icon + headline cluster */}
+          {/* Headline cluster; full-player icon is anchored outside headline flow. */}
           <div
             className={cn(
-              "absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3",
+              isCompact
+                ? "absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3"
+                : "absolute left-0 right-0 top-1/2 flex -translate-y-1/2 flex-col items-center text-center px-3",
               size.centerCluster,
             )}
           >
@@ -145,7 +147,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
               <div
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
-                  size.iconSpace,
+                  isCompact
+                    ? size.iconSpace
+                    : "absolute left-1/2 bottom-full mb-[clamp(0.75rem,2.2cqi,1.45rem)] -translate-x-1/2",
                 )}
                 aria-label="Strefa Patronów"
               >
@@ -159,7 +163,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   type="button"
                   className={cn(
                     "inline-flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition duration-200 hover:scale-105 hover:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
-                    size.iconSpace,
+                    isCompact
+                      ? size.iconSpace
+                      : "absolute left-1/2 bottom-full mb-[clamp(0.75rem,2.2cqi,1.45rem)] -translate-x-1/2",
                   )}
                   aria-label="Zaloguj się"
                 >
