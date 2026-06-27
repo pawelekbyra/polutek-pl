@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ThumbnailResponseService } from '@/lib/services/storage/thumbnail-response.service';
 import { MediaPolicy } from '@/lib/modules/media';
 import { get } from '@vercel/blob';
@@ -13,12 +13,16 @@ vi.mock('@/lib/modules/media', () => ({
   },
 }));
 
-// Mock fetch globally
-global.fetch = vi.fn();
+const originalFetch = global.fetch;
 
 describe('ThumbnailResponseService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn() as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it('blocks unauthorized hosts', async () => {
