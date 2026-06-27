@@ -92,12 +92,12 @@ const Navbar = () => {
               href="/"
               className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
             >
-              <div className="flex items-start gap-1">
+              <div className="flex items-start gap-[2px]">
                 <BrandName
                   className="text-[22px] leading-none"
                   variant="classic"
                 />
-                <span className="bg-[#171717] text-[8px] font-extrabold uppercase tracking-widest text-white px-1 py-0.5 rounded-[3px] shadow-sm select-none mt-[1px]">
+                <span className="bg-[#171717] text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-white px-[2px] py-px rounded-[2px] select-none mt-[1px]">
                   Beta
                 </span>
               </div>
