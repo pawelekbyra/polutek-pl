@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trophy, Loader2, ChevronDown } from "../icons";
+import { Loader2, ChevronDown } from "../icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SupportBoxSkeleton } from "@/components/skeletons";
@@ -29,6 +29,63 @@ interface SupportBoxProps {
   onOpenRegulamin: () => void;
   onOpenPolityka: () => void;
   isInitialLoading?: boolean;
+}
+
+function TrophyIcon({ className, size = 18 }: { className?: string; size?: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      height={size}
+      viewBox="0 0 24 24"
+      width={size}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M8 4h8v3.5a4 4 0 0 1-8 0V4Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M8 6H5.5A1.5 1.5 0 0 0 4 7.5v.25A3.25 3.25 0 0 0 7.25 11H8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M16 6h2.5A1.5 1.5 0 0 1 20 7.5v.25A3.25 3.25 0 0 1 16.75 11H16"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M12 11.5V17"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M8.5 20h7"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M10 17h4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
 }
 
 const SupportBox: React.FC<SupportBoxProps> = ({
@@ -67,7 +124,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
         <h3 className="font-heading text-[20px] font-bold text-[#0f0f0f] tracking-[-0.01em] flex flex-wrap items-center justify-center gap-2">
           {t.donate}
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-white">
-            <Trophy size={18} />
+            <TrophyIcon size={18} />
           </span>
         </h3>
 
