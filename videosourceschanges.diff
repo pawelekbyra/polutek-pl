@@ -1,0 +1,1300 @@
+diff --git a/app/admin/videos/[id]/page.tsx b/app/admin/videos/[id]/page.tsx
+index f87b28f..423e1fb 100644
+--- a/app/admin/videos/[id]/page.tsx
++++ b/app/admin/videos/[id]/page.tsx
+@@ -25,6 +25,7 @@ import { formatDate } from "../components/utils";
+ import { VideoAuditLog } from "../components/VideoAuditLog";
+ import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
+ import { VideoUploadSection } from "../components/VideoUploadSection";
++import { VideoSourcesPanel } from "../components/VideoSourcesPanel";
+ import { readAdminApiError } from "../components/api-error";
+ import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
+ import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+@@ -169,6 +170,13 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
+                         />
+                     )}
+ 
++                    <VideoSourcesPanel
++                      video={video}
++                      onRefresh={fetchVideo}
++                      onSyncCloudflare={() => handleAction('sync-cloudflare')}
++                      onToast={toast}
++                    />
++
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                         <div className="md:col-span-2 space-y-6">
+                             <Card className="shadow-sm">
+diff --git a/app/admin/videos/components/VideoSourcesPanel.tsx b/app/admin/videos/components/VideoSourcesPanel.tsx
+new file mode 100644
+index 0000000..4329c24
+--- /dev/null
++++ b/app/admin/videos/components/VideoSourcesPanel.tsx
+@@ -0,0 +1,247 @@
++"use client";
++
++import { useState } from "react";
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
++import { Badge } from "@/components/ui/badge";
++import { Button } from "@/components/ui/button";
++import { Label } from "@/components/ui/label";
++import { Input } from "@/components/ui/input";
++import { AlertTriangle, RotateCcw, Trash2, Star, Plus, Youtube, Video } from "@/app/components/icons";
++
++interface VideoAsset {
++  id: string;
++  provider: string;
++  processingState: string;
++  isPrimary: boolean;
++  isPlayable: boolean;
++  sourceMode: string;
++  providerAssetId?: string | null;
++  externalVideoId?: string | null;
++  externalUrl?: string | null;
++  failureReason?: string | null;
++  createdAt: string;
++}
++
++interface VideoSourcesPanelProps {
++  video: any;
++  onRefresh: () => void;
++  onSyncCloudflare: () => void;
++  onToast: (message: string, type: "success" | "error") => void;
++}
++
++const PROVIDER_LABELS: Record<string, string> = {
++  CLOUDFLARE_STREAM: "Cloudflare Stream",
++  YOUTUBE: "YouTube",
++  R2: "R2 (legacy)",
++  S3: "S3 (legacy)",
++  VERCEL_BLOB: "Vercel Blob (legacy)",
++  MUX: "Mux (nie aktywny)",
++};
++
++const STATE_VARIANT: Record<string, "default" | "outline" | "destructive" | "secondary"> = {
++  READY: "default",
++  PROCESSING: "secondary",
++  UPLOADING: "secondary",
++  PENDING: "outline",
++  FAILED: "destructive",
++};
++
++export function VideoSourcesPanel({ video, onRefresh, onSyncCloudflare, onToast }: VideoSourcesPanelProps) {
++  const [showAddForm, setShowAddForm] = useState<"CLOUDFLARE_STREAM" | "YOUTUBE" | null>(null);
++  const [cfUid, setCfUid] = useState("");
++  const [youtubeUrl, setYoutubeUrl] = useState("");
++  const [submitting, setSubmitting] = useState(false);
++
++  const assets: VideoAsset[] = video.assets ?? [];
++  const isPatron = video.tier === "PATRON";
++
++  async function handleAddSource() {
++    if (!showAddForm) return;
++    setSubmitting(true);
++
++    const body: any = { provider: showAddForm };
++    if (showAddForm === "CLOUDFLARE_STREAM") body.providerAssetId = cfUid.trim();
++    if (showAddForm === "YOUTUBE") body.youtubeUrl = youtubeUrl.trim();
++
++    try {
++      const res = await fetch(`/api/admin/videos/${video.id}/sources`, {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify(body),
++      });
++      if (res.ok) {
++        onToast("Źródło zostało dodane.", "success");
++        setShowAddForm(null);
++        setCfUid("");
++        setYoutubeUrl("");
++        onRefresh();
++      } else {
++        const data = await res.json();
++        onToast(`Błąd: ${data?.error?.message || data?.message || "Nieznany błąd"}`, "error");
++      }
++    } finally {
++      setSubmitting(false);
++    }
++  }
++
++  async function handleMakePrimary(assetId: string) {
++    const res = await fetch(`/api/admin/videos/${video.id}/sources/${assetId}`, {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ action: "make-primary" }),
++    });
++    if (res.ok) {
++      onToast("Źródło zostało ustawione jako główne.", "success");
++      onRefresh();
++    } else {
++      const data = await res.json();
++      onToast(`Błąd: ${data?.error?.message || data?.message || "Nieznany błąd"}`, "error");
++    }
++  }
++
++  async function handleDelete(assetId: string) {
++    if (!window.confirm("Czy na pewno chcesz usunąć to źródło?")) return;
++    const res = await fetch(`/api/admin/videos/${video.id}/sources/${assetId}`, { method: "DELETE" });
++    if (res.ok) {
++      onToast("Źródło zostało usunięte.", "success");
++      onRefresh();
++    } else {
++      const data = await res.json();
++      onToast(`Błąd: ${data?.error?.message || data?.message || "Nieznany błąd"}`, "error");
++    }
++  }
++
++  return (
++    <Card className="shadow-sm">
++      <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
++        <div>
++          <CardTitle className="text-lg">Źródła wideo</CardTitle>
++          <CardDescription className="text-xs mt-1">Zarządzaj źródłami odtwarzania. Tylko READY i produkcyjne źródła mogą być ustawione jako główne.</CardDescription>
++        </div>
++        <div className="flex gap-2 flex-wrap">
++          <Button variant="outline" size="sm" onClick={onSyncCloudflare} disabled={!assets.some(a => a.provider === "CLOUDFLARE_STREAM")}>
++            <RotateCcw className="mr-2 h-3 w-3" /> Synchronizuj CF
++          </Button>
++          <Button variant="outline" size="sm" onClick={() => setShowAddForm("CLOUDFLARE_STREAM")}>
++            <Plus className="mr-2 h-3 w-3" /> Dodaj Cloudflare UID
++          </Button>
++          <Button
++            variant="outline"
++            size="sm"
++            onClick={() => setShowAddForm("YOUTUBE")}
++            disabled={isPatron}
++            title={isPatron ? "YouTube nie jest dostępny dla filmów patron-only" : undefined}
++          >
++            <Youtube className="mr-2 h-3 w-3" /> Dodaj YouTube
++          </Button>
++        </div>
++      </CardHeader>
++      <CardContent className="space-y-4">
++        {isPatron && (
++          <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
++            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
++            <p>Ten film jest <strong>PATRON-only</strong>. YouTube nie może być używany jako źródło ani ustawiony jako główne źródło odtwarzania.</p>
++          </div>
++        )}
++
++        {showAddForm && (
++          <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
++            <p className="font-semibold text-sm">
++              {showAddForm === "CLOUDFLARE_STREAM" ? "Dodaj Cloudflare Stream UID" : "Dodaj źródło YouTube"}
++            </p>
++            {showAddForm === "CLOUDFLARE_STREAM" && (
++              <div className="space-y-1">
++                <Label className="text-xs">Cloudflare Stream UID</Label>
++                <Input value={cfUid} onChange={(e) => setCfUid(e.target.value)} placeholder="np. abc123xyz" className="h-8 text-sm font-mono" />
++              </div>
++            )}
++            {showAddForm === "YOUTUBE" && (
++              <div className="space-y-1">
++                <Label className="text-xs">URL YouTube</Label>
++                <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="h-8 text-sm" />
++              </div>
++            )}
++            <div className="flex gap-2">
++              <Button size="sm" onClick={handleAddSource} disabled={submitting}>Dodaj</Button>
++              <Button size="sm" variant="ghost" onClick={() => { setShowAddForm(null); setCfUid(""); setYoutubeUrl(""); }}>Anuluj</Button>
++            </div>
++          </div>
++        )}
++
++        {assets.length === 0 ? (
++          <div className="py-10 text-center border-dashed border-2 rounded-xl bg-muted/20">
++            <Video className="h-8 w-8 mx-auto opacity-20 mb-2" />
++            <p className="text-sm text-muted-foreground italic">Brak źródeł wideo.</p>
++          </div>
++        ) : (
++          <div className="space-y-3">
++            {assets.map((asset) => (
++              <SourceRow
++                key={asset.id}
++                asset={asset}
++                isPatron={isPatron}
++                onMakePrimary={() => handleMakePrimary(asset.id)}
++                onDelete={() => handleDelete(asset.id)}
++              />
++            ))}
++          </div>
++        )}
++
++        <div className="pt-2 text-[10px] text-muted-foreground space-y-0.5 border-t">
++          <p><strong>Produkcyjne:</strong> Cloudflare Stream (signed playback), YouTube (embed, tylko PUBLIC).</p>
++          <p><strong>Legacy/eksperymentalne:</strong> R2, S3, Vercel Blob, Mux — nie mogą być ustawione jako główne źródło odtwarzania.</p>
++        </div>
++      </CardContent>
++    </Card>
++  );
++}
++
++function SourceRow({ asset, isPatron, onMakePrimary, onDelete }: {
++  asset: VideoAsset;
++  isPatron: boolean;
++  onMakePrimary: () => void;
++  onDelete: () => void;
++}) {
++  const canBePrimary = asset.isPlayable && asset.processingState === "READY" && !(asset.provider === "YOUTUBE" && isPatron);
++
++  return (
++    <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border ${asset.isPrimary ? "border-green-400 bg-green-50/50" : "border-border bg-muted/20"}`}>
++      <div className="space-y-1 min-w-0">
++        <div className="flex items-center gap-2 flex-wrap">
++          <span className="font-semibold text-sm">{PROVIDER_LABELS[asset.provider] ?? asset.provider}</span>
++          {asset.isPrimary && <Badge className="bg-green-600 text-[10px] h-4 px-1.5"><Star className="h-2.5 w-2.5 mr-0.5" /> Główne</Badge>}
++          <Badge variant={STATE_VARIANT[asset.processingState] ?? "outline"} className="text-[10px] h-4 px-1.5">{asset.processingState}</Badge>
++          {!asset.isPlayable && (
++            <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-400 text-amber-700">eksperymentalne</Badge>
++          )}
++        </div>
++        {asset.providerAssetId && (
++          <div className="text-[10px] text-muted-foreground font-mono truncate">CF UID: {asset.providerAssetId}</div>
++        )}
++        {asset.externalVideoId && (
++          <div className="text-[10px] text-muted-foreground font-mono truncate">YT ID: {asset.externalVideoId}</div>
++        )}
++        {asset.externalUrl && (
++          <a href={asset.externalUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 truncate block hover:underline">{asset.externalUrl}</a>
++        )}
++        {asset.failureReason && (
++          <div className="text-[10px] text-red-600 mt-1 flex items-center gap-1">
++            <AlertTriangle className="h-3 w-3 shrink-0" />{asset.failureReason}
++          </div>
++        )}
++      </div>
++      <div className="flex gap-1 shrink-0">
++        {!asset.isPrimary && canBePrimary && (
++          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={onMakePrimary} title="Ustaw jako główne">
++            <Star className="h-3 w-3" />
++          </Button>
++        )}
++        {!asset.isPrimary && (
++          <Button size="sm" variant="ghost" className="h-7 text-[10px] text-destructive hover:text-destructive" onClick={onDelete} title="Usuń źródło">
++            <Trash2 className="h-3 w-3" />
++          </Button>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/app/api/admin/videos/[id]/sources/[sourceId]/route.ts b/app/api/admin/videos/[id]/sources/[sourceId]/route.ts
+new file mode 100644
+index 0000000..78838d5
+--- /dev/null
++++ b/app/api/admin/videos/[id]/sources/[sourceId]/route.ts
+@@ -0,0 +1,44 @@
++import { NextRequest } from "next/server";
++import { requireAdminForApi } from "@/lib/auth-utils";
++import { makeSourcePrimary, removeVideoSource } from "@/lib/modules/video";
++import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
++import { createAppContext } from "@/lib/modules/shared/app-context";
++
++type Params = { params: Promise<{ id: string; sourceId: string }> };
++
++export async function PATCH(req: NextRequest, props: Params) {
++  const params = await props.params;
++  const { adminUserId, response } = await requireAdminForApi("PATCH_ADMIN_VIDEO_SOURCE");
++  if (response) return response;
++
++  try {
++    const actor = { type: "admin" as const, userId: adminUserId! };
++    const ctx = createAppContext({ actor });
++    const body = await req.json();
++
++    if (body.action === "make-primary") {
++      const result = await makeSourcePrimary(params.id, params.sourceId, ctx);
++      return fromUseCaseResult(result);
++    }
++
++    return handleApiError(new Error("Unknown action"));
++  } catch (error) {
++    return handleApiError(error);
++  }
++}
++
++export async function DELETE(_req: NextRequest, props: Params) {
++  const params = await props.params;
++  const { adminUserId, response } = await requireAdminForApi("DELETE_ADMIN_VIDEO_SOURCE");
++  if (response) return response;
++
++  try {
++    const actor = { type: "admin" as const, userId: adminUserId! };
++    const ctx = createAppContext({ actor });
++
++    const result = await removeVideoSource(params.id, params.sourceId, ctx);
++    return fromUseCaseResult(result);
++  } catch (error) {
++    return handleApiError(error);
++  }
++}
+diff --git a/app/api/admin/videos/[id]/sources/route.ts b/app/api/admin/videos/[id]/sources/route.ts
+new file mode 100644
+index 0000000..ab6b713
+--- /dev/null
++++ b/app/api/admin/videos/[id]/sources/route.ts
+@@ -0,0 +1,31 @@
++import { NextRequest } from "next/server";
++import { requireAdminForApi } from "@/lib/auth-utils";
++import { addVideoSource } from "@/lib/modules/video";
++import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
++import { createAppContext } from "@/lib/modules/shared/app-context";
++
++export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
++  const params = await props.params;
++  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEO_SOURCE");
++  if (response) return response;
++
++  try {
++    const actor = { type: "admin" as const, userId: adminUserId! };
++    const ctx = createAppContext({ actor });
++    const body = await req.json();
++
++    const result = await addVideoSource(
++      {
++        videoId: params.id,
++        provider: body.provider,
++        providerAssetId: body.providerAssetId,
++        youtubeUrl: body.youtubeUrl,
++      },
++      ctx
++    );
++
++    return fromUseCaseResult(result);
++  } catch (error) {
++    return handleApiError(error);
++  }
++}
+diff --git a/app/api/diagnostics/cloudflare-stream/route.ts b/app/api/diagnostics/cloudflare-stream/route.ts
+index fc6564a..347e9f8 100644
+--- a/app/api/diagnostics/cloudflare-stream/route.ts
++++ b/app/api/diagnostics/cloudflare-stream/route.ts
+@@ -1,4 +1,4 @@
+-import { createSign } from "node:crypto";
++import { createPrivateKey, createSign } from "node:crypto";
+ import { NextRequest, NextResponse } from "next/server";
+ 
+ export const dynamic = "force-dynamic";
+@@ -31,7 +31,13 @@ function readPrivateKeyEnv() {
+ }
+ 
+ function normalizePrivateKey(raw: string): string {
+-  return raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
++  const trimmed = raw.trim();
++  const unquoted = (
++    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
++    (trimmed.startsWith("'") && trimmed.endsWith("'"))
++  ) ? trimmed.slice(1, -1) : trimmed;
++
++  return unquoted.includes("\\n") ? unquoted.replace(/\\n/g, "\n") : unquoted;
+ }
+ 
+ function getToken(req: NextRequest): string | null {
+@@ -42,25 +48,71 @@ function getToken(req: NextRequest): string | null {
+   );
+ }
+ 
++function getPemSummary(raw: string, normalized: string) {
++  const lines = normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
++  const headerLine = lines[0] ?? null;
++  const footerLine = lines[lines.length - 1] ?? null;
++  const body = lines.slice(1, -1).join("");
++
++  return {
++    containsEscapedNewlines: raw.includes("\\n"),
++    startsWithQuote: raw.trim().startsWith('"') || raw.trim().startsWith("'"),
++    endsWithQuote: raw.trim().endsWith('"') || raw.trim().endsWith("'"),
++    lineCount: lines.length,
++    headerLine,
++    footerLine,
++    bodyLooksBase64: body.length > 0 && /^[A-Za-z0-9+/=]+$/.test(body),
++    bodyLength: body.length,
++  };
++}
++
+ function validatePrivateKey(raw: string) {
+   const normalized = normalizePrivateKey(raw);
++  const pemSummary = getPemSummary(raw, normalized);
+   const hasPemHeader = /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(normalized);
+   const hasPemFooter = /-----END [A-Z ]*PRIVATE KEY-----/.test(normalized);
+ 
+   try {
+-    createSign("RSA-SHA256").update("polutek-cloudflare-stream-diagnostic").end().sign(normalized);
+-    return {
+-      valid: true,
+-      hasPemHeader,
+-      hasPemFooter,
+-      error: null,
+-    };
+-  } catch (error) {
++    const keyObject = createPrivateKey(normalized);
++
++    try {
++      createSign("RSA-SHA256")
++        .update("polutek-cloudflare-stream-diagnostic")
++        .end()
++        .sign(keyObject);
++
++      return {
++        valid: true,
++        hasPemHeader,
++        hasPemFooter,
++        keyType: keyObject.asymmetricKeyType ?? null,
++        canCreatePrivateKey: true,
++        canSignDiagnosticPayload: true,
++        error: null,
++        pemSummary,
++      };
++    } catch (signError) {
++      return {
++        valid: false,
++        hasPemHeader,
++        hasPemFooter,
++        keyType: keyObject.asymmetricKeyType ?? null,
++        canCreatePrivateKey: true,
++        canSignDiagnosticPayload: false,
++        error: signError instanceof Error ? signError.message : "Unknown signing error",
++        pemSummary,
++      };
++    }
++  } catch (parseError) {
+     return {
+       valid: false,
+       hasPemHeader,
+       hasPemFooter,
+-      error: error instanceof Error ? error.message : "Unknown private key parse/signing error",
++      keyType: null,
++      canCreatePrivateKey: false,
++      canSignDiagnosticPayload: false,
++      error: parseError instanceof Error ? parseError.message : "Unknown private key parse error",
++      pemSummary,
+     };
+   }
+ }
+@@ -115,10 +167,19 @@ export async function GET(req: NextRequest) {
+       missing,
+       invalid,
+       privateKeyFormat: privateKeyEnv && privateKeyValidation ? {
+-        containsEscapedNewlines: privateKeyEnv.raw.includes("\\n"),
++        containsEscapedNewlines: privateKeyValidation.pemSummary.containsEscapedNewlines,
++        startsWithQuote: privateKeyValidation.pemSummary.startsWithQuote,
++        endsWithQuote: privateKeyValidation.pemSummary.endsWithQuote,
++        lineCount: privateKeyValidation.pemSummary.lineCount,
++        headerLine: privateKeyValidation.pemSummary.headerLine,
++        footerLine: privateKeyValidation.pemSummary.footerLine,
++        bodyLooksBase64: privateKeyValidation.pemSummary.bodyLooksBase64,
++        bodyLength: privateKeyValidation.pemSummary.bodyLength,
+         hasPemHeader: privateKeyValidation.hasPemHeader,
+         hasPemFooter: privateKeyValidation.hasPemFooter,
+-        canSignDiagnosticPayload: privateKeyValidation.valid,
++        keyType: privateKeyValidation.keyType,
++        canCreatePrivateKey: privateKeyValidation.canCreatePrivateKey,
++        canSignDiagnosticPayload: privateKeyValidation.canSignDiagnosticPayload,
+         error: privateKeyValidation.error,
+       } : null,
+     },
+diff --git a/lib/modules/video/application/add-video-source.use-case.ts b/lib/modules/video/application/add-video-source.use-case.ts
+new file mode 100644
+index 0000000..d62624e
+--- /dev/null
++++ b/lib/modules/video/application/add-video-source.use-case.ts
+@@ -0,0 +1,115 @@
++import { AppContext } from "@/lib/modules/shared/app-context";
++import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
++import { AppError } from "@/lib/modules/shared/app-error";
++import { VideoRepository } from "../infrastructure/video.repository";
++import { recordAuditEvent } from "@/lib/modules/audit";
++import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER, extractYouTubeVideoId } from "../domain/video-asset.constants";
++import type { VideoAsset } from "@prisma/client";
++
++export interface AddVideoSourceInput {
++  videoId: string;
++  provider: "CLOUDFLARE_STREAM" | "YOUTUBE";
++  /** Cloudflare Stream UID when provider=CLOUDFLARE_STREAM */
++  providerAssetId?: string;
++  /** Full YouTube URL when provider=YOUTUBE */
++  youtubeUrl?: string;
++}
++
++export async function addVideoSource(
++  input: AddVideoSourceInput,
++  ctx: AppContext
++): Promise<UseCaseResult<{ asset: VideoAsset }, AppError>> {
++  const repository = new VideoRepository(ctx.prisma);
++  const video = await repository.findByIdWithAsset(input.videoId);
++
++  if (!video) {
++    return fail(new AppError("Film nie został znaleziony.", 404, "VIDEO_NOT_FOUND"));
++  }
++
++  if (input.provider === "YOUTUBE") {
++    if (!input.youtubeUrl) {
++      return fail(new AppError("Adres URL YouTube jest wymagany.", 400, "YOUTUBE_URL_REQUIRED"));
++    }
++
++    const videoId = extractYouTubeVideoId(input.youtubeUrl);
++    if (!videoId) {
++      return fail(new AppError("Podany adres URL nie jest prawidłowym linkiem YouTube.", 400, "INVALID_YOUTUBE_URL"));
++    }
++
++    // YouTube is only allowed for PUBLIC / non-patron videos.
++    if (video.tier === "PATRON") {
++      return fail(new AppError("YouTube nie może być używany jako źródło dla filmów patron-only.", 422, "YOUTUBE_NOT_ALLOWED_FOR_PATRON"));
++    }
++
++    // Prevent duplicate YouTube source for the same video ID.
++    const assets = await repository.listAssetsForVideo(input.videoId);
++    const duplicate = assets.find((a) => a.provider === "YOUTUBE" && a.externalVideoId === videoId);
++    if (duplicate) {
++      return fail(new AppError("To źródło YouTube już istnieje dla tego filmu.", 409, "DUPLICATE_YOUTUBE_SOURCE"));
++    }
++
++    const asset = await (ctx.prisma as any).$transaction(async (tx: any) => {
++      const created = await tx.videoAsset.create({
++        data: {
++          videoId: input.videoId,
++          provider: VIDEO_PROVIDER.YOUTUBE,
++          objectKey: `youtube:${videoId}`,
++          externalVideoId: videoId,
++          externalUrl: input.youtubeUrl,
++          processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
++          isPrimary: false,
++        },
++      });
++
++      await recordAuditEvent(ctx, {
++        action: "VIDEO_SOURCE_ADDED",
++        targetType: "Video",
++        targetId: input.videoId,
++        metadata: { provider: "YOUTUBE", externalVideoId: videoId, assetId: created.id },
++      }, tx);
++
++      return created;
++    });
++
++    return ok({ asset });
++  }
++
++  if (input.provider === "CLOUDFLARE_STREAM") {
++    if (!input.providerAssetId) {
++      return fail(new AppError("Cloudflare Stream UID jest wymagany.", 400, "CLOUDFLARE_UID_REQUIRED"));
++    }
++
++    // Prevent duplicate Cloudflare UID.
++    const assets = await repository.listAssetsForVideo(input.videoId);
++    const duplicate = assets.find((a) => a.provider === "CLOUDFLARE_STREAM" && a.providerAssetId === input.providerAssetId);
++    if (duplicate) {
++      return fail(new AppError("Ten Cloudflare Stream UID już istnieje dla tego filmu.", 409, "DUPLICATE_CLOUDFLARE_SOURCE"));
++    }
++
++    const asset = await (ctx.prisma as any).$transaction(async (tx: any) => {
++      const created = await tx.videoAsset.create({
++        data: {
++          videoId: input.videoId,
++          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
++          objectKey: input.providerAssetId,
++          providerAssetId: input.providerAssetId,
++          processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
++          isPrimary: false,
++        },
++      });
++
++      await recordAuditEvent(ctx, {
++        action: "VIDEO_SOURCE_ADDED",
++        targetType: "Video",
++        targetId: input.videoId,
++        metadata: { provider: "CLOUDFLARE_STREAM", providerAssetId: input.providerAssetId, assetId: created.id },
++      }, tx);
++
++      return created;
++    });
++
++    return ok({ asset });
++  }
++
++  return fail(new AppError("Nieobsługiwany dostawca źródła.", 400, "UNSUPPORTED_PROVIDER"));
++}
+diff --git a/lib/modules/video/application/handle-cloudflare-webhook.use-case.ts b/lib/modules/video/application/handle-cloudflare-webhook.use-case.ts
+index e2c7a2c..b14af68 100644
+--- a/lib/modules/video/application/handle-cloudflare-webhook.use-case.ts
++++ b/lib/modules/video/application/handle-cloudflare-webhook.use-case.ts
+@@ -71,24 +71,36 @@ export async function handleCloudflareStreamWebhook(
+     }
+ 
+     if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
+-        dataToUpdate.isPrimary = true;
+         dataToUpdate.failureReason = null;
+ 
+         if (payload.size != null) {
+           dataToUpdate.sizeBytes = Math.floor(payload.size);
+         }
+-        // Only set providerPlaybackId if explicitly provided or if it's currently missing
+         if (payload.playback?.hls || payload.playback?.dash) {
+           if (!asset.providerPlaybackId) {
+             dataToUpdate.providerPlaybackId = payload.uid;
+           }
+         }
+ 
+-        // Unset primary for all other assets of this video
+-        await tx.videoAsset.updateMany({
+-            where: { videoId: asset.videoId, id: { not: asset.id } },
+-            data: { isPrimary: false }
++        // Only promote to primary if no other asset is already READY and primary.
++        // This prevents a background Cloudflare completion from overriding a
++        // primary that an admin intentionally set to a different source.
++        const existingReadyPrimary = await tx.videoAsset.findFirst({
++          where: {
++            videoId: asset.videoId,
++            id: { not: asset.id },
++            isPrimary: true,
++            processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
++          },
+         });
++
++        if (!existingReadyPrimary) {
++          dataToUpdate.isPrimary = true;
++          await tx.videoAsset.updateMany({
++              where: { videoId: asset.videoId, id: { not: asset.id } },
++              data: { isPrimary: false }
++          });
++        }
+     }
+ 
+     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);
+diff --git a/lib/modules/video/application/make-source-primary.use-case.ts b/lib/modules/video/application/make-source-primary.use-case.ts
+new file mode 100644
+index 0000000..3206bd9
+--- /dev/null
++++ b/lib/modules/video/application/make-source-primary.use-case.ts
+@@ -0,0 +1,68 @@
++import { AppContext } from "@/lib/modules/shared/app-context";
++import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
++import { AppError } from "@/lib/modules/shared/app-error";
++import { VideoRepository } from "../infrastructure/video.repository";
++import { recordAuditEvent } from "@/lib/modules/audit";
++import { VIDEO_ASSET_PROCESSING_STATE, PLAYABLE_PROVIDERS } from "../domain/video-asset.constants";
++import type { VideoAsset } from "@prisma/client";
++
++export async function makeSourcePrimary(
++  videoId: string,
++  assetId: string,
++  ctx: AppContext
++): Promise<UseCaseResult<{ asset: VideoAsset }, AppError>> {
++  const repository = new VideoRepository(ctx.prisma);
++  const video = await repository.findByIdWithAssets(videoId);
++
++  if (!video) {
++    return fail(new AppError("Film nie został znaleziony.", 404, "VIDEO_NOT_FOUND"));
++  }
++
++  const asset = video.assets.find((a: { id: string }) => a.id === assetId) as (typeof video.assets)[number] | undefined;
++  if (!asset) {
++    return fail(new AppError("Źródło nie zostało znalezione.", 404, "ASSET_NOT_FOUND"));
++  }
++
++  // Only READY assets can become primary.
++  if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) {
++    return fail(new AppError("Tylko gotowe (READY) źródło może być ustawione jako główne.", 422, "ASSET_NOT_READY"));
++  }
++
++  // Only playable providers can be set as primary.
++  if (!PLAYABLE_PROVIDERS.includes(asset.provider)) {
++    return fail(new AppError(
++      `Dostawca ${asset.provider} nie jest obsługiwany jako aktywne źródło odtwarzania. Dozwolone: ${PLAYABLE_PROVIDERS.join(", ")}.`,
++      422,
++      "PROVIDER_NOT_PLAYABLE"
++    ));
++  }
++
++  // YouTube cannot be primary for PATRON videos.
++  if (asset.provider === "YOUTUBE" && video.tier === "PATRON") {
++    return fail(new AppError("YouTube nie może być głównym źródłem dla filmów patron-only.", 422, "YOUTUBE_NOT_ALLOWED_FOR_PATRON"));
++  }
++
++  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
++    // Unset all others.
++    await tx.videoAsset.updateMany({
++      where: { videoId, id: { not: assetId } },
++      data: { isPrimary: false },
++    });
++
++    const promoted = await tx.videoAsset.update({
++      where: { id: assetId },
++      data: { isPrimary: true },
++    });
++
++    await recordAuditEvent(ctx, {
++      action: "VIDEO_SOURCE_PRIMARY_SET",
++      targetType: "Video",
++      targetId: videoId,
++      metadata: { assetId, provider: asset.provider },
++    }, tx);
++
++    return promoted;
++  });
++
++  return ok({ asset: updated });
++}
+diff --git a/lib/modules/video/application/remove-video-source.use-case.ts b/lib/modules/video/application/remove-video-source.use-case.ts
+new file mode 100644
+index 0000000..a331d6d
+--- /dev/null
++++ b/lib/modules/video/application/remove-video-source.use-case.ts
+@@ -0,0 +1,36 @@
++import { AppContext } from "@/lib/modules/shared/app-context";
++import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
++import { AppError } from "@/lib/modules/shared/app-error";
++import { VideoRepository } from "../infrastructure/video.repository";
++import { recordAuditEvent } from "@/lib/modules/audit";
++
++export async function removeVideoSource(
++  videoId: string,
++  assetId: string,
++  ctx: AppContext
++): Promise<UseCaseResult<{ deleted: boolean }, AppError>> {
++  const repository = new VideoRepository(ctx.prisma);
++  const assets = await repository.listAssetsForVideo(videoId);
++
++  const asset = assets.find((a) => a.id === assetId);
++  if (!asset || asset.videoId !== videoId) {
++    return fail(new AppError("Źródło nie zostało znalezione.", 404, "ASSET_NOT_FOUND"));
++  }
++
++  if (asset.isPrimary) {
++    return fail(new AppError("Nie można usunąć głównego źródła. Najpierw ustaw inne źródło jako główne.", 422, "CANNOT_DELETE_PRIMARY"));
++  }
++
++  await (ctx.prisma as any).$transaction(async (tx: any) => {
++    await tx.videoAsset.delete({ where: { id: assetId } });
++
++    await recordAuditEvent(ctx, {
++      action: "VIDEO_SOURCE_REMOVED",
++      targetType: "Video",
++      targetId: videoId,
++      metadata: { assetId, provider: asset.provider },
++    }, tx);
++  });
++
++  return ok({ deleted: true });
++}
+diff --git a/lib/modules/video/domain/video-asset.constants.ts b/lib/modules/video/domain/video-asset.constants.ts
+index e3575a8..2018796 100644
+--- a/lib/modules/video/domain/video-asset.constants.ts
++++ b/lib/modules/video/domain/video-asset.constants.ts
+@@ -13,9 +13,29 @@ export const VIDEO_PROVIDER: Record<string, StorageProvider> = {
+   S3: 'S3',
+   VERCEL_BLOB: 'VERCEL_BLOB',
+   CLOUDFLARE_STREAM: 'CLOUDFLARE_STREAM',
+-  MUX: 'MUX'
++  MUX: 'MUX',
++  YOUTUBE: 'YOUTUBE',
+ };
+ 
++/** Providers that are production-ready and can be set as primary. */
++export const PLAYABLE_PROVIDERS: StorageProvider[] = ['CLOUDFLARE_STREAM', 'YOUTUBE'];
++
++/** Extract a YouTube video ID from common URL formats. Returns null if not a valid YouTube URL. */
++export function extractYouTubeVideoId(url: string): string | null {
++  try {
++    const u = new URL(url);
++    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0] || null;
++    if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
++      if (u.pathname === '/watch') return u.searchParams.get('v');
++      const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
++      if (embedMatch) return embedMatch[1];
++    }
++    return null;
++  } catch {
++    return null;
++  }
++}
++
+ export function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcessingState {
+   switch (cfState) {
+     case "pendingupload":
+diff --git a/lib/modules/video/domain/video.dto.ts b/lib/modules/video/domain/video.dto.ts
+index fc291eb..5be0efb 100644
+--- a/lib/modules/video/domain/video.dto.ts
++++ b/lib/modules/video/domain/video.dto.ts
+@@ -35,6 +35,8 @@ export interface AdminVideoAssetDto {
+   bucket?: string | null;
+   providerAssetId?: string | null;
+   providerPlaybackId?: string | null;
++  externalVideoId?: string | null;
++  externalUrl?: string | null;
+   status: VideoAssetProcessingState;
+   processingState: VideoAssetProcessingState;
+   isPrimary: boolean;
+@@ -45,7 +47,8 @@ export interface AdminVideoAssetDto {
+   mimeType?: string | null;
+   sizeBytes?: number | null;
+   requiresSignedUrl: boolean;
+-  sourceMode: "CLOUDFLARE_STREAM" | "LEGACY_PROVIDER_ASSET";
++  isPlayable: boolean;
++  sourceMode: "CLOUDFLARE_STREAM" | "YOUTUBE" | "LEGACY_PROVIDER_ASSET";
+   durationSeconds?: number | null;
+   thumbnailUrl?: string | null;
+   previewUrl?: string | null;
+@@ -92,6 +95,8 @@ export type AdminVideoAssetInput = {
+   bucket?: string | null;
+   providerAssetId?: string | null;
+   providerPlaybackId?: string | null;
++  externalVideoId?: string | null;
++  externalUrl?: string | null;
+   processingState: VideoAssetProcessingState;
+   isPrimary: boolean;
+   failureReason?: string | null;
+@@ -149,6 +154,13 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
+ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
+   if (!asset) return null;
+ 
++  const sourceMode: AdminVideoAssetDto["sourceMode"] =
++    asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM"
++    : asset.provider === "YOUTUBE" ? "YOUTUBE"
++    : "LEGACY_PROVIDER_ASSET";
++
++  const isPlayable = asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "YOUTUBE";
++
+   return {
+     id: asset.id,
+     videoId: asset.videoId,
+@@ -157,6 +169,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
+     bucket: asset.bucket,
+     providerAssetId: asset.providerAssetId,
+     providerPlaybackId: asset.providerPlaybackId,
++    externalVideoId: asset.externalVideoId ?? null,
++    externalUrl: asset.externalUrl ?? null,
+     status: asset.processingState,
+     processingState: asset.processingState,
+     isPrimary: asset.isPrimary,
+@@ -167,7 +181,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
+     mimeType: asset.mimeType,
+     sizeBytes: asset.sizeBytes,
+     requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
+-    sourceMode: asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM" : "LEGACY_PROVIDER_ASSET",
++    isPlayable,
++    sourceMode,
+     durationSeconds: asset.durationSeconds ?? null,
+     thumbnailUrl: asset.thumbnailUrl ?? null,
+     previewUrl: asset.previewUrl ?? null,
+diff --git a/lib/modules/video/index.ts b/lib/modules/video/index.ts
+index 144a14d..bbcc427 100644
+--- a/lib/modules/video/index.ts
++++ b/lib/modules/video/index.ts
+@@ -21,6 +21,9 @@ export * from './application/get-cloudflare-upload-url.use-case';
+ export * from './application/import-legacy-video-to-cloudflare.use-case';
+ export * from './application/handle-cloudflare-webhook.use-case';
+ export * from './application/publish-after-asset-ready.use-case';
++export * from './application/add-video-source.use-case';
++export * from './application/make-source-primary.use-case';
++export * from './application/remove-video-source.use-case';
+ export * from './application/admin-video-payload';
+ export * from './domain/video.dto';
+ export * from './domain/video.policy';
+diff --git a/prisma/migrations/20260627000000_video_sources_youtube/migration.sql b/prisma/migrations/20260627000000_video_sources_youtube/migration.sql
+new file mode 100644
+index 0000000..63532c4
+--- /dev/null
++++ b/prisma/migrations/20260627000000_video_sources_youtube/migration.sql
+@@ -0,0 +1,15 @@
++-- Add YOUTUBE to StorageProvider enum (idempotent)
++DO $$ BEGIN
++  IF NOT EXISTS (
++    SELECT 1 FROM pg_enum
++    WHERE enumtypid = 'StorageProvider'::regtype
++      AND enumlabel = 'YOUTUBE'
++  ) THEN
++    ALTER TYPE "StorageProvider" ADD VALUE 'YOUTUBE';
++  END IF;
++END $$;
++
++-- Add externalVideoId and externalUrl columns to VideoAsset (idempotent)
++ALTER TABLE "VideoAsset"
++  ADD COLUMN IF NOT EXISTS "externalVideoId" TEXT,
++  ADD COLUMN IF NOT EXISTS "externalUrl"     TEXT;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index a394019..c746daf 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -255,6 +255,8 @@ enum StorageProvider {
+   CLOUDFLARE_STREAM
+   /// Design-compatible optional provider identity; runtime integration is intentionally not implemented here.
+   MUX
++  /// Public YouTube embed source. Only valid for PUBLIC/non-patron videos.
++  YOUTUBE
+ }
+ 
+ enum VideoAssetProcessingState {
+@@ -273,6 +275,10 @@ model VideoAsset {
+   bucket              String?
+   providerAssetId     String?
+   providerPlaybackId  String?
++  /// For YOUTUBE: the video ID (e.g. "dQw4w9WgXcQ") extracted from the URL.
++  externalVideoId     String?
++  /// For YOUTUBE: canonical watch URL provided by the admin (e.g. https://www.youtube.com/watch?v=...).
++  externalUrl         String?
+   processingState     VideoAssetProcessingState @default(READY)
+   isPrimary           Boolean                   @default(true)
+   failureReason       String?
+diff --git a/tests/unit/modules/video/video-sources.test.ts b/tests/unit/modules/video/video-sources.test.ts
+new file mode 100644
+index 0000000..1788d9f
+--- /dev/null
++++ b/tests/unit/modules/video/video-sources.test.ts
+@@ -0,0 +1,357 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { extractYouTubeVideoId, PLAYABLE_PROVIDERS } from '@/lib/modules/video/domain/video-asset.constants';
++import { addVideoSource } from '@/lib/modules/video/application/add-video-source.use-case';
++import { makeSourcePrimary } from '@/lib/modules/video/application/make-source-primary.use-case';
++import { removeVideoSource } from '@/lib/modules/video/application/remove-video-source.use-case';
++import { AppContext } from '@/lib/modules/shared/app-context';
++import { VIDEO_ASSET_PROCESSING_STATE } from '@/lib/modules/video/domain/video-asset.constants';
++
++// ─── extractYouTubeVideoId ────────────────────────────────────────────────────
++
++describe('extractYouTubeVideoId', () => {
++  it('extracts from standard watch URL', () => {
++    expect(extractYouTubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
++  });
++
++  it('extracts from youtu.be shortlink', () => {
++    expect(extractYouTubeVideoId('https://youtu.be/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
++  });
++
++  it('extracts from embed URL', () => {
++    expect(extractYouTubeVideoId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
++  });
++
++  it('returns null for non-YouTube URL', () => {
++    expect(extractYouTubeVideoId('https://vimeo.com/123456')).toBeNull();
++  });
++
++  it('returns null for invalid URL', () => {
++    expect(extractYouTubeVideoId('not-a-url')).toBeNull();
++  });
++
++  it('returns null for youtube.com without v param', () => {
++    expect(extractYouTubeVideoId('https://www.youtube.com/channel/UCxxx')).toBeNull();
++  });
++});
++
++// ─── PLAYABLE_PROVIDERS ───────────────────────────────────────────────────────
++
++describe('PLAYABLE_PROVIDERS', () => {
++  it('includes CLOUDFLARE_STREAM and YOUTUBE', () => {
++    expect(PLAYABLE_PROVIDERS).toContain('CLOUDFLARE_STREAM');
++    expect(PLAYABLE_PROVIDERS).toContain('YOUTUBE');
++  });
++
++  it('does not include legacy providers', () => {
++    expect(PLAYABLE_PROVIDERS).not.toContain('R2');
++    expect(PLAYABLE_PROVIDERS).not.toContain('MUX');
++    expect(PLAYABLE_PROVIDERS).not.toContain('S3');
++  });
++});
++
++// ─── Shared mock factory ──────────────────────────────────────────────────────
++
++function makeMockPrisma(overrides: any = {}) {
++  const mock = {
++    video: { findUnique: vi.fn(), findFirst: vi.fn() },
++    videoAsset: {
++      findFirst: vi.fn(),
++      findMany: vi.fn(),
++      create: vi.fn(),
++      update: vi.fn(),
++      updateMany: vi.fn(),
++      delete: vi.fn(),
++    },
++    auditLog: { create: vi.fn() },
++    $transaction: vi.fn((cb: any) => cb(mock)),
++    ...overrides,
++  };
++  return mock;
++}
++
++function makeCtx(prisma: any): AppContext {
++  return { prisma, actor: { type: 'admin', userId: 'admin-1' } } as unknown as AppContext;
++}
++
++// ─── addVideoSource ───────────────────────────────────────────────────────────
++
++describe('addVideoSource', () => {
++  let prisma: any;
++  let ctx: AppContext;
++
++  beforeEach(() => {
++    prisma = makeMockPrisma();
++    ctx = makeCtx(prisma);
++    vi.clearAllMocks();
++  });
++
++  const publicVideo = {
++    id: 'video-1',
++    tier: 'PUBLIC',
++    assets: [],
++    asset: null,
++  };
++
++  const patronVideo = {
++    id: 'video-1',
++    tier: 'PATRON',
++    assets: [],
++    asset: null,
++  };
++
++  it('adds a valid YouTube source to a PUBLIC video', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo);
++    prisma.videoAsset.findMany.mockResolvedValue([]);
++    const newAsset = { id: 'asset-yt', provider: 'YOUTUBE', externalVideoId: 'dQw4w9WgXcQ' };
++    prisma.videoAsset.create.mockResolvedValue(newAsset);
++
++    const result = await addVideoSource(
++      { videoId: 'video-1', provider: 'YOUTUBE', youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
++      ctx
++    );
++
++    expect(result.ok).toBe(true);
++    if (result.ok) expect(result.data.asset.provider).toBe('YOUTUBE');
++  });
++
++  it('rejects invalid YouTube URL', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo);
++
++    const result = await addVideoSource(
++      { videoId: 'video-1', provider: 'YOUTUBE', youtubeUrl: 'https://vimeo.com/12345' },
++      ctx
++    );
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('INVALID_YOUTUBE_URL');
++  });
++
++  it('rejects YouTube for PATRON video', async () => {
++    prisma.video.findUnique.mockResolvedValue(patronVideo);
++
++    const result = await addVideoSource(
++      { videoId: 'video-1', provider: 'YOUTUBE', youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
++      ctx
++    );
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('YOUTUBE_NOT_ALLOWED_FOR_PATRON');
++  });
++
++  it('rejects duplicate YouTube video ID', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo);
++    prisma.videoAsset.findMany.mockResolvedValue([
++      { id: 'existing', provider: 'YOUTUBE', externalVideoId: 'dQw4w9WgXcQ' },
++    ]);
++
++    const result = await addVideoSource(
++      { videoId: 'video-1', provider: 'YOUTUBE', youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
++      ctx
++    );
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('DUPLICATE_YOUTUBE_SOURCE');
++  });
++
++  it('adds Cloudflare Stream source', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo);
++    prisma.videoAsset.findMany.mockResolvedValue([]);
++    const newAsset = { id: 'asset-cf', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'cf-uid' };
++    prisma.videoAsset.create.mockResolvedValue(newAsset);
++
++    const result = await addVideoSource(
++      { videoId: 'video-1', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'cf-uid' },
++      ctx
++    );
++
++    expect(result.ok).toBe(true);
++    if (result.ok) expect(result.data.asset.provider).toBe('CLOUDFLARE_STREAM');
++  });
++
++  it('rejects video not found', async () => {
++    prisma.video.findUnique.mockResolvedValue(null);
++
++    const result = await addVideoSource(
++      { videoId: 'missing', provider: 'YOUTUBE', youtubeUrl: 'https://youtube.com/watch?v=abc' },
++      ctx
++    );
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('VIDEO_NOT_FOUND');
++  });
++});
++
++// ─── makeSourcePrimary ────────────────────────────────────────────────────────
++
++describe('makeSourcePrimary', () => {
++  let prisma: any;
++  let ctx: AppContext;
++
++  beforeEach(() => {
++    prisma = makeMockPrisma();
++    ctx = makeCtx(prisma);
++    vi.clearAllMocks();
++  });
++
++  const readyCfAsset = {
++    id: 'asset-cf',
++    videoId: 'video-1',
++    provider: 'CLOUDFLARE_STREAM',
++    processingState: 'READY',
++    isPrimary: false,
++  };
++
++  const readyYtAsset = {
++    id: 'asset-yt',
++    videoId: 'video-1',
++    provider: 'YOUTUBE',
++    processingState: 'READY',
++    isPrimary: false,
++    externalVideoId: 'abc',
++  };
++
++  const patronVideo = (assets: any[]) => ({
++    id: 'video-1',
++    tier: 'PATRON',
++    assets,
++    asset: null,
++  });
++
++  const publicVideo = (assets: any[]) => ({
++    id: 'video-1',
++    tier: 'PUBLIC',
++    assets,
++    asset: null,
++  });
++
++  it('sets READY Cloudflare asset as primary', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo([readyCfAsset]));
++    prisma.videoAsset.updateMany.mockResolvedValue({ count: 0 });
++    prisma.videoAsset.update.mockResolvedValue({ ...readyCfAsset, isPrimary: true });
++
++    const result = await makeSourcePrimary('video-1', 'asset-cf', ctx);
++
++    expect(result.ok).toBe(true);
++    if (result.ok) expect(result.data.asset.isPrimary).toBe(true);
++  });
++
++  it('rejects non-READY asset', async () => {
++    const processingAsset = { ...readyCfAsset, processingState: 'PROCESSING' };
++    prisma.video.findUnique.mockResolvedValue(publicVideo([processingAsset]));
++
++    const result = await makeSourcePrimary('video-1', 'asset-cf', ctx);
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('ASSET_NOT_READY');
++  });
++
++  it('rejects R2/MUX as primary (not playable)', async () => {
++    const r2Asset = { id: 'asset-r2', videoId: 'video-1', provider: 'R2', processingState: 'READY', isPrimary: false };
++    prisma.video.findUnique.mockResolvedValue(publicVideo([r2Asset]));
++
++    const result = await makeSourcePrimary('video-1', 'asset-r2', ctx);
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('PROVIDER_NOT_PLAYABLE');
++  });
++
++  it('rejects YouTube as primary for PATRON video', async () => {
++    prisma.video.findUnique.mockResolvedValue(patronVideo([readyYtAsset]));
++
++    const result = await makeSourcePrimary('video-1', 'asset-yt', ctx);
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('YOUTUBE_NOT_ALLOWED_FOR_PATRON');
++  });
++
++  it('allows YouTube as primary for PUBLIC video', async () => {
++    prisma.video.findUnique.mockResolvedValue(publicVideo([readyYtAsset]));
++    prisma.videoAsset.updateMany.mockResolvedValue({ count: 0 });
++    prisma.videoAsset.update.mockResolvedValue({ ...readyYtAsset, isPrimary: true });
++
++    const result = await makeSourcePrimary('video-1', 'asset-yt', ctx);
++
++    expect(result.ok).toBe(true);
++  });
++});
++
++// ─── removeVideoSource ────────────────────────────────────────────────────────
++
++describe('removeVideoSource', () => {
++  let prisma: any;
++  let ctx: AppContext;
++
++  beforeEach(() => {
++    prisma = makeMockPrisma();
++    ctx = makeCtx(prisma);
++    vi.clearAllMocks();
++  });
++
++  it('deletes a non-primary asset', async () => {
++    prisma.videoAsset.findMany.mockResolvedValue([
++      { id: 'asset-yt', videoId: 'video-1', provider: 'YOUTUBE', isPrimary: false },
++    ]);
++    prisma.videoAsset.delete.mockResolvedValue({});
++
++    const result = await removeVideoSource('video-1', 'asset-yt', ctx);
++
++    expect(result.ok).toBe(true);
++    if (result.ok) expect(result.data.deleted).toBe(true);
++  });
++
++  it('rejects deleting the primary asset', async () => {
++    prisma.videoAsset.findMany.mockResolvedValue([
++      { id: 'asset-cf', videoId: 'video-1', provider: 'CLOUDFLARE_STREAM', isPrimary: true },
++    ]);
++
++    const result = await removeVideoSource('video-1', 'asset-cf', ctx);
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('CANNOT_DELETE_PRIMARY');
++  });
++
++  it('rejects asset not found', async () => {
++    prisma.videoAsset.findMany.mockResolvedValue([]);
++
++    const result = await removeVideoSource('video-1', 'missing', ctx);
++
++    expect(result.ok).toBe(false);
++    if (!result.ok) expect((result.error as any).code).toBe('ASSET_NOT_FOUND');
++  });
++});
++
++// ─── Webhook: no override of existing READY primary ──────────────────────────
++
++describe('handleCloudflareStreamWebhook - no override of READY primary', () => {
++  it('does not promote asset if another READY primary exists', async () => {
++    const { handleCloudflareStreamWebhook } = await import(
++      '@/lib/modules/video/application/handle-cloudflare-webhook.use-case'
++    );
++
++    const processingAsset = {
++      id: 'asset-processing',
++      videoId: 'video-1',
++      processingState: 'PROCESSING',
++      providerPlaybackId: null,
++      isPrimary: false,
++    };
++
++    const prisma = makeMockPrisma();
++    prisma.videoAsset.findFirst
++      .mockResolvedValueOnce(processingAsset)  // findAssetByProviderId
++      .mockResolvedValueOnce({ id: 'asset-primary', isPrimary: true, processingState: 'READY' }); // existingReadyPrimary check
++
++    prisma.videoAsset.update.mockResolvedValue({ ...processingAsset, processingState: 'READY', isPrimary: false });
++
++    const ctx = makeCtx(prisma);
++
++    const result = await handleCloudflareStreamWebhook(
++      { uid: 'cf-uid', status: { state: 'ready' } },
++      ctx
++    );
++
++    expect(result.ok).toBe(true);
++    // updateMany (unset others) should NOT have been called since existing primary exists
++    expect(prisma.videoAsset.updateMany).not.toHaveBeenCalled();
++  });
++});
