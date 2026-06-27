@@ -55,6 +55,7 @@ export async function getAdminVideoDiagnostics(
   // 4. Migration & Storage
   const asset = video.asset;
   const isCloudflare = asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
+  const isYouTube = asset?.provider === VIDEO_PROVIDER.YOUTUBE;
 
   if (isCloudflare) {
     if (asset.processingState === 'READY') {
@@ -68,6 +69,14 @@ export async function getAdminVideoDiagnostics(
         message: `Zasób Cloudflare jest w stanie: ${asset.processingState}.${isStale ? " Przetwarzanie trwa zbyt długo - użyj 'Synchronizuj status' w zakładce Media." : ""}`,
         field: "asset"
       });
+    }
+  } else if (isYouTube) {
+    if (video.tier === AccessTier.PATRON) {
+      issues.push({ severity: "ERROR", message: "YouTube nie może być źródłem primary dla filmów PATRON. Ustaw Cloudflare Stream jako primary.", field: "asset" });
+    }
+    // YouTube READY is the only valid processing state for this provider.
+    if (asset.processingState !== 'READY') {
+      issues.push({ severity: "WARNING", message: `Zasób YouTube jest w stanie: ${asset.processingState}. Oczekiwano READY.`, field: "asset" });
     }
   } else if (asset) {
     // R2, S3, VERCEL_BLOB

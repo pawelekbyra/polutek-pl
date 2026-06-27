@@ -101,14 +101,25 @@ export async function generateMetadata(props: WatchPageProps): Promise<Metadata>
     return { title: "Nie znaleziono filmu — POLUTEK.PL" };
   }
 
+  const primaryYouTubeAsset = await prisma.videoAsset.findFirst({
+    where: { videoId: video.id, provider: "YOUTUBE", isPrimary: true },
+    select: { externalVideoId: true },
+  });
+
+  const ytVideoId = primaryYouTubeAsset?.externalVideoId;
+  const thumbnailUrl = video.thumbnailUrl || (ytVideoId ? `https://i.ytimg.com/vi/${ytVideoId}/hqdefault.jpg` : undefined);
+
   return {
     title: `${getCanonicalVideoTitle(video)} — POLUTEK.PL`,
     description: getCanonicalVideoDescription(video) || "Film na POLUTEK.PL",
     openGraph: {
       title: getCanonicalVideoTitle(video),
       description: getCanonicalVideoDescription(video) || undefined,
-      images: video.thumbnailUrl ? [{ url: video.thumbnailUrl }] : [],
+      images: thumbnailUrl ? [{ url: thumbnailUrl }] : [],
       type: "video.other",
+      ...(ytVideoId && {
+        videos: [{ url: `https://www.youtube-nocookie.com/embed/${ytVideoId}`, type: "text/html" }],
+      }),
     },
   };
 }

@@ -93,6 +93,19 @@ export async function addVideoSource(
 
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
+    // Validate video exists via keyless oEmbed (no API key / quota needed).
+    try {
+      const oembedRes = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      if (!oembedRes.ok) {
+        return fail(new AppError("YouTube video not found or not embeddable.", 422, "YOUTUBE_VIDEO_NOT_FOUND"));
+      }
+    } catch {
+      return fail(new AppError("Could not verify YouTube video (network error). Try again.", 502, "YOUTUBE_OEMBED_UNAVAILABLE"));
+    }
+
     const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
       const existingYt = await (tx as any).videoAsset.findFirst({
         where: { videoId: video.id, provider: "YOUTUBE" },

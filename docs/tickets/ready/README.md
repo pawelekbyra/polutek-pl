@@ -44,6 +44,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` | — |
 | 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` | — |
 | 1.7 | `BUG-007` — malformed JSON handling in admin routes | `TODO` | — |
+| 1.8 | `#1204` — complete multi-source video system (diagnostics, YouTube thumbnail, SEO, oEmbed, security tests) | `DONE` | PR claude/pr-1200-review-7ru1bo |
 | 2 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | — |
 | 3 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | — |
 

@@ -154,6 +154,18 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
 
         {assets.map((asset) => (
           <div key={asset.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            {asset.provider === "YOUTUBE" && asset.externalVideoId && (
+              <div className="h-12 w-20 rounded overflow-hidden shrink-0 bg-black">
+                {/* Inline img acceptable here: i.ytimg.com is a CDN thumb, no Next Image needed */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://i.ytimg.com/vi/${asset.externalVideoId}/mqdefault.jpg`}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            )}
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <ProviderBadge provider={asset.provider} />
