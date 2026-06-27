@@ -25,6 +25,7 @@ import { formatDate } from "../components/utils";
 import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
 import { VideoUploadSection } from "../components/VideoUploadSection";
+import { VideoSourcesPanel } from "../components/VideoSourcesPanel";
 import { readAdminApiError } from "../components/api-error";
 import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
@@ -168,6 +169,13 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                           publishAfterReady={video.publishAfterAssetReady}
                         />
                     )}
+
+                    <VideoSourcesPanel
+                      videoId={video.id}
+                      assets={video.assets ?? (video.asset ? [video.asset] : [])}
+                      tier={video.tier}
+                      onChanged={fetchVideo}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="md:col-span-2 space-y-6">

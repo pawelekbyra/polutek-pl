@@ -581,6 +581,97 @@
       "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
+    {
+      "file": "lib/modules/video/application/add-video-source.use-case.ts",
+      "line": 52,
+      "label": "explicit any annotation",
+      "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/add-video-source.use-case.ts",
+      "line": 97,
+      "label": "explicit any annotation",
+      "text": "const existingYt = await (tx as any).videoAsset.findFirst({",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/add-video-source.use-case.ts",
+      "line": 102,
+      "label": "explicit any annotation",
+      "text": "await (tx as any).videoAsset.update({",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/add-video-source.use-case.ts",
+      "line": 112,
+      "label": "explicit any annotation",
+      "text": "await (tx as any).videoAsset.create({",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
+      "line": 27,
+      "label": "explicit any annotation",
+      "text": "const assets = (video as any).assets ?? [];",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
+      "line": 28,
+      "label": "explicit any annotation",
+      "text": "const target = assets.find((a: any) => a.id === input.assetId);",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
+      "line": 55,
+      "label": "explicit any annotation",
+      "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
+      "line": 57,
+      "label": "explicit any annotation",
+      "text": "await (tx as any).videoAsset.updateMany({",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
+      "line": 63,
+      "label": "explicit any annotation",
+      "text": "await (tx as any).videoAsset.update({",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/remove-video-source.use-case.ts",
+      "line": 26,
+      "label": "explicit any annotation",
+      "text": "const assets = (video as any).assets ?? [];",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/remove-video-source.use-case.ts",
+      "line": 27,
+      "label": "explicit any annotation",
+      "text": "const target = assets.find((a: any) => a.id === input.assetId);",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/remove-video-source.use-case.ts",
+      "line": 34,
+      "label": "explicit any annotation",
+      "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/remove-video-source.use-case.ts",
+      "line": 35,
+      "label": "explicit any annotation",
+      "text": "await (tx as any).videoAsset.delete({ where: { id: input.assetId } });",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
 
 
     {

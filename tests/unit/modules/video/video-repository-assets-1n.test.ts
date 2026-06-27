@@ -12,6 +12,8 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
     bucket: overrides.bucket ?? null,
     providerAssetId: overrides.providerAssetId ?? 'provider-1',
     providerPlaybackId: overrides.providerPlaybackId ?? null,
+    externalVideoId: overrides.externalVideoId ?? null,
+    externalUrl: overrides.externalUrl ?? null,
     processingState: overrides.processingState ?? VideoAssetProcessingState.READY,
     isPrimary: overrides.isPrimary ?? false,
     failureReason: overrides.failureReason ?? null,

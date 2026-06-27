@@ -13,6 +13,7 @@ type ContractVideo = {
     provider?: string | null;
     processingState?: string | null;
     providerAssetId?: string | null;
+    externalVideoId?: string | null;
   } | null;
 };
 
@@ -33,12 +34,27 @@ export class VideoPolicy {
     if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_PUBLICATION_ARCHIVED', message: 'Zarchiwizowany film trzeba najpierw przywrócić do szkicu.', field: 'status' });
 
     const asset = video.asset;
-    if (!asset) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_ASSET', message: 'Publikacja wymaga primary assetu Cloudflare Stream w stanie READY.', field: 'asset' });
-    else {
+    if (!asset) {
+      blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_ASSET', message: 'Publikacja wymaga primary assetu w stanie READY.', field: 'asset' });
+    } else {
       if (!asset.isPrimary) blockers.push({ code: 'VIDEO_PUBLICATION_NON_PRIMARY_ASSET', message: 'Publikacja wymaga primary assetu.', field: 'asset' });
-      if (asset.provider !== VIDEO_PROVIDER.CLOUDFLARE_STREAM) blockers.push({ code: 'VIDEO_PUBLICATION_NON_CLOUDFLARE_ASSET', message: 'Primary asset musi pochodzić z Cloudflare Stream.', field: 'asset' });
-      if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Cloudflare Stream nie jest jeszcze READY.', field: 'asset' });
-      if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Cloudflare Stream.', field: 'asset' });
+
+      const isYoutube = asset.provider === VIDEO_PROVIDER.YOUTUBE;
+      const isCfStream = asset.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
+
+      if (!isCfStream && !isYoutube) {
+        blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Primary asset musi pochodzić z Cloudflare Stream lub YouTube.', field: 'asset' });
+      }
+
+      if (isCfStream) {
+        if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Cloudflare Stream nie jest jeszcze READY.', field: 'asset' });
+        if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Cloudflare Stream.', field: 'asset' });
+      }
+
+      if (isYoutube) {
+        if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_YOUTUBE_PATRON_FORBIDDEN', message: 'YouTube nie może być źródłem dla filmów PATRON.', field: 'asset' });
+        if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_YOUTUBE_VIDEO_ID', message: 'Brakuje identyfikatora YouTube.', field: 'asset' });
+      }
     }
     return blockers;
   }
