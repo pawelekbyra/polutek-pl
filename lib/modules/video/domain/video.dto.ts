@@ -74,7 +74,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   updatedAt: Date;
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
-  assets?: AdminVideoDtoAsset[];
+  assets?: AdminVideoAssetDto[];
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
   publishAfterAssetReadyRequestedAt: Date | null;
@@ -109,8 +109,6 @@ export type AdminVideoAssetInput = {
   updatedAt: Date;
 };
 
-export type AdminVideoDtoAsset = AdminVideoAssetDto;
-
 export type AdminVideoInput = PublicVideoInput & {
   videoUrl: string | null;
   status: VideoStatus;
@@ -128,7 +126,7 @@ export type AdminVideoInput = PublicVideoInput & {
 };
 
 export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
-  const dto = {
+  return {
     id: video.id,
     slug: video.slug,
     title: video.title,
@@ -146,21 +144,8 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     showInSidebar: video.showInSidebar,
     sidebarOrder: video.sidebarOrder,
   };
-
-  // Strip accidental sensitive fields if they exist in the input object
-  const dtoRecord: Record<string, unknown> = dto;
-  const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
-  for (const field of forbidden) {
-    if (field in dtoRecord) delete dtoRecord[field];
-  }
-
-  return dto as PublicVideoDto;
 }
 
-/*
-if (field in dto) delete (dto as any)[field];
-metadata?: any;
-*/
 export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
@@ -194,7 +179,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
   };
 }
 
-export function toAdminVideoDto(video: AdminVideoInput): AdminVideoDto {
+export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto {
+  const video = input as AdminVideoInput;
   const rawAssets = video.assets ?? [];
   const asset = video.asset ?? selectPrimaryVideoAsset(rawAssets);
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
@@ -205,7 +191,6 @@ export function toAdminVideoDto(video: AdminVideoInput): AdminVideoDto {
       else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
       else migrationStatus = "PROCESSING";
     } else {
-      // R2, S3, Vercel Blob
       migrationStatus = "MIGRATION_REQUIRED";
     }
   } else if (video.videoUrl) {
