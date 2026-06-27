@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { WriteTx } from "@/lib/modules/shared/db";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoRepository } from "../infrastructure/video.repository";
@@ -13,6 +14,15 @@ import { withPrimaryAsset } from "../domain/video-asset-selection";
 export interface ImportLegacyVideoToCloudflareInput {
   videoId: string;
   publishAfterAssetReady?: boolean;
+}
+
+type TransactionRunner = {
+  $transaction: <T>(fn: (tx: WriteTx) => Promise<T>) => Promise<T>;
+};
+
+function hasTransactionRunner(db: unknown): db is TransactionRunner {
+  if (typeof db !== "object" || db === null || !("$transaction" in db)) return false;
+  return typeof (db as Record<string, unknown>).$transaction === "function";
 }
 
 export class LegacyVideoUrlRequiredError extends AppError {
@@ -66,82 +76,90 @@ export async function importLegacyVideoToCloudflare(
     return fail(new CloudflareLegacyImportError());
   }
 
-  let updatedVideo: any;
+  let updatedVideo: unknown;
+
+  const runImportTransaction = async (tx: WriteTx) => {
+    const loadedCurrent = await tx.video.findFirst({
+      where: { id: input.videoId, creatorId: mainChannel.id },
+      include: { assets: true, _count: { select: { comments: true } } }
+    });
+    const current = withPrimaryAsset(loadedCurrent);
+
+    if (!current) throw new VideoNotFoundError(input.videoId);
+    if (current.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
+      throw new CloudflareAssetAlreadyExistsError();
+    }
+
+    // Ensure UID is not already in use by another video
+    const existingAssetWithUid = await repository.findAssetByProviderId(VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId);
+    if (existingAssetWithUid && existingAssetWithUid.videoId !== current.id) {
+      throw new CloudflareAssetInUseError(providerAssetId);
+    }
+
+    // Handle publishAfterAssetReady intent
+    const pendingPublishRequested = input.publishAfterAssetReady === true;
+    if (pendingPublishRequested) {
+      await tx.video.update({
+        where: { id: current.id },
+        data: {
+          publishAfterAssetReady: true,
+          publishAfterAssetReadyRequestedAt: current.publishAfterAssetReadyRequestedAt || new Date(),
+          publishAfterAssetReadyCompletedAt: null,
+          publishAfterAssetReadyError: null,
+        },
+      });
+
+      if (!current.publishAfterAssetReady) {
+        await recordAuditEvent(ctx, {
+          action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
+          targetType: "Video",
+          targetId: current.id,
+          metadata: { source: "import-legacy-video-to-cloudflare" },
+        }, tx);
+      }
+    }
+
+    await repository.upsertAsset(current.id, {
+      provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+      objectKey: `cloudflare-stream/${providerAssetId}`,
+      bucket: null,
+      providerAssetId,
+      providerPlaybackId: providerAssetId,
+      processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
+      isPrimary: false,
+      failureReason: null,
+      providerSyncedAt: new Date(),
+      processingStartedAt: new Date(),
+      processingEndedAt: null,
+    }, tx);
+
+    await recordAuditEvent(ctx, {
+      action: "VIDEO_CLOUDFLARE_LEGACY_IMPORT_STARTED",
+      targetType: "Video",
+      targetId: current.id,
+      metadata: {
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        providerAssetId,
+        legacyUrlPreserved: true,
+        importedAssetIsPrimary: false,
+        publishAfterAssetReady: pendingPublishRequested
+      }
+    }, tx);
+
+    return await tx.video.findFirst({
+      where: { id: current.id, creatorId: mainChannel.id },
+      include: { assets: true, _count: { select: { comments: true } } }
+    });
+  };
 
   try {
-    updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
-      const loadedCurrent = await tx.video.findFirst({
-        where: { id: input.videoId, creatorId: mainChannel.id },
-        include: { assets: true, _count: { select: { comments: true } } }
-      });
-      const current = withPrimaryAsset(loadedCurrent);
-
-      if (!current) throw new VideoNotFoundError(input.videoId);
-      if (current.asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM) {
-        throw new CloudflareAssetAlreadyExistsError();
-      }
-
-      // Ensure UID is not already in use by another video
-      const existingAssetWithUid = await repository.findAssetByProviderId(VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId);
-      if (existingAssetWithUid && existingAssetWithUid.videoId !== current.id) {
-        throw new CloudflareAssetInUseError(providerAssetId);
-      }
-
-      // Handle publishAfterAssetReady intent
-      const pendingPublishRequested = input.publishAfterAssetReady === true;
-      if (pendingPublishRequested) {
-        await tx.video.update({
-          where: { id: current.id },
-          data: {
-            publishAfterAssetReady: true,
-            publishAfterAssetReadyRequestedAt: current.publishAfterAssetReadyRequestedAt || new Date(),
-            publishAfterAssetReadyCompletedAt: null,
-            publishAfterAssetReadyError: null,
-          },
-        });
-
-        if (!current.publishAfterAssetReady) {
-          await recordAuditEvent(ctx, {
-            action: "VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED",
-            targetType: "Video",
-            targetId: current.id,
-            metadata: { source: "import-legacy-video-to-cloudflare" },
-          }, tx);
-        }
-      }
-
-      await repository.upsertAsset(current.id, {
-        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        objectKey: `cloudflare-stream/${providerAssetId}`,
-        bucket: null,
-        providerAssetId,
-        providerPlaybackId: providerAssetId,
-        processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
-        failureReason: null,
-        providerSyncedAt: new Date(),
-        processingStartedAt: new Date(),
-        processingEndedAt: null,
-      }, tx);
-
-      await recordAuditEvent(ctx, {
-        action: "VIDEO_CLOUDFLARE_LEGACY_IMPORT_STARTED",
-        targetType: "Video",
-        targetId: current.id,
-        metadata: {
-          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          providerAssetId,
-          legacyUrlPreserved: true,
-          importedAssetIsPrimary: false,
-          publishAfterAssetReady: pendingPublishRequested
-        }
-      }, tx);
-
-      return await tx.video.findFirst({
-        where: { id: current.id, creatorId: mainChannel.id },
-        include: { assets: true, _count: { select: { comments: true } } }
-      });
-    });
+    if (ctx.db?.writeTransaction) {
+      updatedVideo = await ctx.db.writeTransaction(runImportTransaction);
+    } else if (hasTransactionRunner(ctx.prisma)) {
+      updatedVideo = await ctx.prisma.$transaction(runImportTransaction);
+    } else {
+      updatedVideo = await runImportTransaction(ctx.prisma as WriteTx);
+    }
   } catch (error) {
     if (error instanceof VideoNotFoundError || error instanceof CloudflareAssetAlreadyExistsError || error instanceof CloudflareAssetInUseError) {
       return fail(error);
