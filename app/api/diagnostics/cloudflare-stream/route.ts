@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// Keep this endpoint token-protected: it reports only secret presence/format, never secret values.
 type DiagnosticStatus = "ok" | "missing" | "invalid" | "unauthorized";
 
 function hasValue(value: string | undefined): boolean {
