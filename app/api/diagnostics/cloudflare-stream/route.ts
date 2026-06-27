@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 // Keep this endpoint token-protected: it reports only secret presence/format, never secret values.
+// Redeploy marker: 2026-06-27 cloudflare-stream-diagnostics
+
 type DiagnosticStatus = "ok" | "missing" | "invalid" | "unauthorized";
 
 function hasValue(value: string | undefined): boolean {
