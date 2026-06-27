@@ -9,8 +9,8 @@ describe("navbar brand typography", () => {
     const brand = read("app/components/BrandName.tsx");
 
     expect(brand).toContain("variant?: 'handwriting' | 'classic'");
-    // Updated to match the new design tokens
-    expect(brand).toContain("font-brand font-bold tracking-[-0.03em] lowercase text-[#171717]");
+    expect(brand).toContain("font-brand font-bold tracking-[-0.03em] uppercase text-[#171717]");
+    expect(brand).toContain("baseName.toUpperCase()");
     expect(navbar).toContain('variant="classic"');
     expect(navbar).not.toContain('variant="handwriting"');
   });
