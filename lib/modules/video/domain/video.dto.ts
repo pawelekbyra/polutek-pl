@@ -82,7 +82,50 @@ export interface AdminVideoDto extends BaseVideoDto {
   publishAfterAssetReadyError: string | null;
 }
 
-export function toPublicVideoDto(video: any): PublicVideoDto {
+type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
+
+type AdminVideoAssetInput = {
+  id: string;
+  videoId: string;
+  provider: StorageProvider;
+  objectKey: string;
+  bucket?: string | null;
+  providerAssetId?: string | null;
+  providerPlaybackId?: string | null;
+  processingState: VideoAssetProcessingState;
+  isPrimary: boolean;
+  failureReason?: string | null;
+  providerSyncedAt?: Date | null;
+  processingStartedAt?: Date | null;
+  processingEndedAt?: Date | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  durationSeconds?: number | null;
+  thumbnailUrl?: string | null;
+  previewUrl?: string | null;
+  hlsManifestUrl?: string | null;
+  dashManifestUrl?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type AdminVideoInput = PublicVideoInput & {
+  videoUrl: string | null;
+  status: VideoStatus;
+  creatorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  commentsCount?: number | null;
+  _count?: { comments?: number | null } | null;
+  asset?: AdminVideoAssetInput | null;
+  assets?: AdminVideoAssetInput[] | null;
+  publishAfterAssetReady?: boolean | null;
+  publishAfterAssetReadyRequestedAt?: Date | null;
+  publishAfterAssetReadyCompletedAt?: Date | null;
+  publishAfterAssetReadyError?: string | null;
+};
+
+export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
   const dto = {
     id: video.id,
     slug: video.slug,
@@ -102,16 +145,21 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
     sidebarOrder: video.sidebarOrder,
   };
 
-  // Strip any accidental sensitive fields if they exist in the input object
+  // Strip accidental sensitive fields if they exist in the input object
+  const dtoRecord: Record<string, unknown> = dto;
   const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
   for (const field of forbidden) {
-      if (field in dto) delete (dto as any)[field];
+    if (field in dtoRecord) delete dtoRecord[field];
   }
 
   return dto as PublicVideoDto;
 }
 
-export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
+/*
+if (field in dto) delete (dto as any)[field];
+metadata?: any;
+*/
+export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
   return {
@@ -144,8 +192,8 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
   };
 }
 
-export function toAdminVideoDto(video: any): AdminVideoDto {
-  const rawAssets = Array.isArray(video.assets) ? video.assets : [];
+export function toAdminVideoDto(video: AdminVideoInput): AdminVideoDto {
+  const rawAssets = video.assets ?? [];
   const asset = video.asset ?? selectPrimaryVideoAsset(rawAssets);
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
@@ -172,7 +220,7 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     commentsCount: video._count?.comments || video.commentsCount || 0,
     asset: toAdminVideoAssetDto(asset),
     assets: rawAssets
-      .map((rawAsset: unknown) => toAdminVideoAssetDto(rawAsset))
+      .map((rawAsset: AdminVideoAssetInput) => toAdminVideoAssetDto(rawAsset))
       .filter((assetDto: AdminVideoAssetDto | null): assetDto is AdminVideoAssetDto => Boolean(assetDto)),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
@@ -239,7 +287,7 @@ export interface RecordPlaybackEventInput {
   errorMessage?: string;
   provider?: string;
   sourceKind?: string;
-  metadata?: any;
+  metadata?: unknown;
   ipHash: string;
   uaHash: string;
   fingerprint: string;
