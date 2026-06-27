@@ -1,0 +1,49 @@
+/* Polutek.pl — ciepła kremowo-grafitowa baza + niebieski akcent
+ * Punkt startowy dla app/globals.css (@layer base :root).
+ * Format HSL pasuje do obecnej konwencji repo (hsl(var(--token))).
+ * --primary zostaje obecnym niebieskim (#2563EB) — to JEST akcent.
+ */
+@layer base {
+  :root {
+    /* ===== Akcent (niebieski — jedyny kolor akcentowy) ===== */
+    --primary: 221.2 83.2% 53.3%;          /* #2563EB — bez zmian */
+    --primary-foreground: 0 0% 100%;
+    --ring: 221.2 83.2% 53.3%;
+    --accent-soft: 222 90% 96%;            /* #EFF3FE — tło badge/box patrona */
+    --accent-ring: 221 83% 53% / 0.18;     /* rgba(37,99,235,.18) — focus/obwódki */
+
+    /* ===== Ciepła kremowo-grafitowa baza ===== */
+    --background: 45 27% 94%;              /* #F4F2EC canvas */
+    --foreground: 0 0% 6%;                 /* #0F0F0F grafit */
+    --card: 0 0% 100%;                     /* #FFFFFF */
+    --card-foreground: 0 0% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
+    --secondary: 42 22% 90%;               /* #EBE8E0 tła wtórne / hover */
+    --secondary-foreground: 0 0% 9%;
+    --muted: 42 22% 90%;
+    --muted-foreground: 0 0% 42%;          /* #6B6B6B meta */
+    --accent: 42 22% 90%;                  /* neutralny accent UI (NIE niebieski) */
+    --accent-foreground: 0 0% 9%;
+    --border: 42 18% 85%;                  /* #E2DED4 ciepły hairline */
+    --input: 40 14% 81%;                   /* #D8D3C8 border inputów */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --radius: 0.75rem;
+  }
+}
+
+/* Dodatkowe surowe wartości (referencja, gdy potrzebny konkretny hex w klasie):
+ * canvas        #F4F2EC
+ * surface       #FFFFFF
+ * secondary-bg  #EBE8E0
+ * footer-bg     #F0EDE6
+ * hairline      #E2DED4
+ * input-border  #D8D3C8
+ * text          #0F0F0F / #171717
+ * text-2        #6B6B6B
+ * text-muted    #9A958B
+ * accent        #2563EB
+ * accent-soft   #EFF3FE
+ * accent-ring   rgba(37,99,235,.18)
+ */

@@ -62,14 +62,15 @@ const Navbar = () => {
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
+  const searchLabel = language === "pl" ? "Szukaj" : "Search";
 
   return (
-    <div className="flex items-center bg-neutral-50/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-neutral-300 px-4 lg:px-6 h-14 min-h-14 font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-visible">
+    <div className="flex items-center bg-background/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-border px-4 lg:px-6 h-[58px] min-h-[58px] font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-visible">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
           <button
             onClick={() => setIsMobileSearchOpen(false)}
-            className="p-2 hover:bg-neutral-200 rounded-full transition-colors shrink-0"
+            className="p-2 hover:bg-secondary rounded-full transition-colors shrink-0"
           >
             <X size={20} />
           </button>
@@ -77,10 +78,10 @@ const Navbar = () => {
             <input
               type="text"
               autoFocus
-              placeholder="Szukaj"
+              placeholder={searchLabel}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="w-full h-9 bg-white border border-neutral-300 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+              className="w-full h-[38px] bg-white border border-input rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring focus:border-primary transition-all"
             />
           </form>
         </div>
@@ -91,59 +92,59 @@ const Navbar = () => {
               href="/"
               className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
             >
-              <div className="flex items-center">
+              <div className="flex items-start gap-1">
                 <BrandName
-                  className="text-[1.1rem] md:text-[1.3rem]"
+                  className="text-[22px] leading-none"
                   variant="classic"
                 />
-                <span className="ml-0.5 bg-neutral-900 text-[7px] font-black uppercase tracking-wider text-white px-1 py-0 rounded-[2px] self-start mt-0.5 shadow-sm select-none">
+                <span className="bg-[#171717] text-[8px] font-extrabold uppercase tracking-widest text-white px-1 py-0.5 rounded-[3px] shadow-sm select-none mt-[1px]">
                   Beta
                 </span>
               </div>
             </Link>
           </div>
 
-          <div className="flex-1 max-w-[540px] hidden md:flex mx-4 min-w-0">
+          <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
             <form onSubmit={handleSearch} className="flex w-full">
               <div className="relative flex-1 flex items-center min-w-0">
                 <input
                   type="text"
-                  placeholder="Szukaj"
+                  placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-9 bg-white border border-neutral-300 rounded-l-full pl-6 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all placeholder:text-neutral-400"
+                  className="w-full h-[38px] bg-white border border-input rounded-l-full pl-5 pr-4 text-[14px] focus:outline-none focus:ring-2 focus:ring-accent-ring focus:border-primary transition-all placeholder:text-muted-foreground"
                 />
               </div>
               <button
                 type="submit"
-                className="h-9 bg-neutral-100 border border-neutral-300 border-l-0 rounded-r-full px-5 hover:bg-neutral-200 transition-colors shrink-0 flex items-center justify-center text-neutral-600"
-                title="Szukaj"
+                className="h-[38px] w-[54px] bg-secondary border border-input border-l-0 rounded-r-full hover:bg-secondary/80 transition-colors shrink-0 flex items-center justify-center text-[#5b5b5b]"
+                title={searchLabel}
               >
                 <Search size={18} />
               </button>
             </form>
           </div>
 
-          <div className="flex items-center justify-end gap-1 md:gap-3">
+          <div className="flex items-center justify-end gap-1 md:gap-[14px]">
             <div className="flex items-center gap-1 sm:hidden">
               <button
                 onClick={() => setIsMobileSearchOpen(true)}
-                className="p-2 hover:bg-neutral-200 rounded-full transition-colors"
+                className="p-2 hover:bg-secondary rounded-full transition-colors"
               >
-                <Search size={20} className="text-neutral-600" />
+                <Search size={20} className="text-[#5b5b5b]" />
               </button>
             </div>
 
-            <div className="flex gap-1 items-center bg-white/50 rounded-full px-1 sm:px-2 py-1 border border-neutral-300 h-9">
+            <div className="flex gap-[2px] items-center bg-white rounded-full px-[3px] border border-input h-9">
               <button
                 onClick={() => {
                   if (setLanguage) setLanguage("pl");
                 }}
                 className={cn(
-                  "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
+                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
                   language === "pl"
-                    ? "bg-white shadow-sm text-neutral-900 border border-neutral-300"
-                    : "text-neutral-400 hover:text-neutral-600",
+                    ? "bg-white shadow-sm text-foreground border border-transparent"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 PL
@@ -153,10 +154,10 @@ const Navbar = () => {
                   if (setLanguage) setLanguage("en");
                 }}
                 className={cn(
-                  "text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full transition-all",
+                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
                   language === "en"
-                    ? "bg-white shadow-sm text-neutral-900 border border-neutral-300"
-                    : "text-neutral-400 hover:text-neutral-600",
+                    ? "bg-white shadow-sm text-foreground border border-transparent"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 EN
@@ -164,13 +165,13 @@ const Navbar = () => {
             </div>
 
             {/* Pionowy separator */}
-            <div className="h-6 w-px bg-neutral-300 mx-1" aria-hidden="true" />
+            <div className="h-6 w-px bg-[#DAD6CC] mx-0" aria-hidden="true" />
 
             {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
-                <button className="bg-white text-neutral-900 hover:bg-neutral-50 font-bold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 h-9 rounded-full transition-all shadow-sm active:scale-95 border border-neutral-300">
-                  <LogIn size={14} className="sm:w-4 sm:h-4 text-neutral-900" />
-                  <span className="hidden sm:inline">{t.signIn}</span>
+                <button className="bg-white text-[#171717] hover:bg-[#fbfaf7] hover:border-[#171717] font-bold text-[13px] flex items-center gap-2 px-4 h-9 rounded-full transition-all active:scale-95 border border-input">
+                  <LogIn size={16} className="text-[#171717]" />
+                  <span>{t.signIn}</span>
                 </button>
               </SignInButton>
             )}
@@ -180,7 +181,7 @@ const Navbar = () => {
                   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
                   isPatron
                     ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-                    : "border border-neutral-300",
+                    : "border border-input",
                 )}
                 title={isPatron ? "Patron" : undefined}
               >

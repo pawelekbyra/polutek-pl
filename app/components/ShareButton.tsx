@@ -53,11 +53,6 @@ export default function ShareButton({
     }
   };
 
-  const handleAction = (action: () => void) => {
-    action();
-    if (!copied) setIsOpen(false);
-  };
-
   const openWindow = (link: string) => {
     window.open(link, '_blank', 'noopener,noreferrer');
     setIsOpen(false);
@@ -68,12 +63,12 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "flex items-center justify-center w-9 h-9 rounded-full bg-white hover:bg-neutral-100 transition-colors border border-neutral-400 active:scale-95",
+          "flex items-center justify-center gap-2 h-[38px] px-5 rounded-full bg-white hover:bg-secondary transition-colors border border-input active:scale-95 text-[#171717] font-bold text-[13.5px]",
           className
         )}
-        aria-label="Udostępnij"
       >
-        <Share2 size={16} />
+        <Share2 size={18} />
+        <span className="hidden sm:inline">Udostępnij</span>
       </button>
 
       {isOpen && !isMobile && (
@@ -100,7 +95,7 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <XIcon className="text-foreground" />
             <span>Udostępnij na X</span>
@@ -108,7 +103,7 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <Facebook size={16} className="text-[#1877F2]" />
             <span>Udostępnij na Facebook</span>
@@ -116,7 +111,7 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <MessageCircle size={16} className="text-[#25D366]" />
             <span>Wyślij przez WhatsApp</span>
@@ -124,7 +119,7 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <Mail size={16} className="text-muted-foreground" />
             <span>Wyślij emailem</span>

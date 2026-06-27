@@ -260,20 +260,20 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   return (
     <div
       ref={commentsTopRef}
-      className="space-y-7 max-w-3xl bg-white px-6 pb-6 pt-3 md:px-8 md:pb-8 md:pt-4 rounded-2xl border border-neutral-200 shadow-sm my-6 relative"
+      className="space-y-[30px] max-w-full bg-transparent pt-3 rounded-none border-none shadow-none my-[30px] relative"
     >
       {/* Sticky Header */}
       {showStickyHeader && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-blue-600" />
+            <MessageSquare size={16} className="text-primary" />
             <span className="text-xs font-black uppercase">
               {totalCount} {getCommentsLabel(totalCount)}
             </span>
           </div>
           <button
             onClick={scrollToTop}
-            className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-blue-600 transition-colors"
+            className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-primary transition-colors"
           >
             <ChevronUp size={14} />
             {language === "pl" ? "Do początku" : "To top"}
@@ -281,41 +281,22 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-[20px]">
         <div className="flex items-center gap-3 order-2 sm:order-1">
-          <MessageSquare size={20} className="text-blue-600" />
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
-            <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tighter">
+            <h3 className="font-heading text-[17px] font-bold text-[#0f0f0f]">
               {totalCount} {getCommentsLabel(totalCount)}
             </h3>
           )}
         </div>
 
-        <div className="flex gap-4 order-1 sm:order-2 self-end sm:self-auto">
-          <button
-            onClick={() => setSortBy("top")}
-            className={cn(
-              "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
-              sortBy === "top"
-                ? "text-blue-600 border-blue-600"
-                : "text-neutral-400 border-transparent hover:text-neutral-600",
-            )}
-          >
-            {language === "pl" ? "Najlepsze" : "Top"}
-          </button>
-          <button
-            onClick={() => setSortBy("newest")}
-            className={cn(
-              "text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2",
-              sortBy === "newest"
-                ? "text-blue-600 border-blue-600"
-                : "text-neutral-400 border-transparent hover:text-neutral-600",
-            )}
-          >
-            {language === "pl" ? "Najnowsze" : "Newest"}
-          </button>
+        <div className="flex gap-[16px] order-1 sm:order-2 self-end sm:self-auto items-center">
+          <div className="flex items-center gap-2 text-[#5B5B5B] cursor-pointer hover:text-[#0f0f0f] transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line></svg>
+            <span className="text-[13px] font-semibold">{language === "pl" ? "Sortuj według" : "Sort by"}</span>
+          </div>
         </div>
       </div>
 
@@ -344,7 +325,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         language={language}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-[22px]">
         {isLoading ? (
           <CommentsLoadingState />
         ) : isError ? (
@@ -394,7 +375,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="space-y-3">
+            <div key={comment.id} className="space-y-[22px]">
               <CommentItem
                 comment={comment}
                 userProfile={userProfile}
@@ -423,7 +404,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
               {/* NESTED REPLIES */}
               {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-                <div className="pl-6 md:pl-14 space-y-5 border-l-2 border-neutral-100 ml-4 md:ml-6 mt-4">
+                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-border ml-4 md:ml-[19px] mt-4">
                   {comment.repliesPreview.map((reply) => (
                     <CommentItem
                       key={reply.id}
@@ -462,7 +443,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               variant="outline"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="min-w-[140px]"
+              className="min-w-[140px] rounded-full"
             >
               {isFetchingNextPage ? (
                 <>
@@ -484,7 +465,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         {showStickyHeader && (
           <button
             onClick={scrollToTop}
-            className="fixed bottom-10 right-10 z-40 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:bg-blue-700 transition-all animate-in fade-in zoom-in"
+            className="fixed bottom-10 right-10 z-40 bg-primary text-white p-3 rounded-full shadow-xl hover:brightness-110 transition-all animate-in fade-in zoom-in"
             title="Wróć na górę komentarzy"
           >
             <ChevronUp size={24} />

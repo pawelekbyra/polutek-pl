@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trophy, Loader2, ChevronDown } from "../icons";
+import { Loader2, ChevronDown, Heart } from "../icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SupportBoxSkeleton } from "@/components/skeletons";
@@ -56,54 +56,63 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   const termsErrorId = "support-terms-error";
   const amountTooLow = typeof amount === "number" && amount < minAmount;
   const pendingLabel = language === "pl" ? "Przetwarzanie..." : "Processing...";
+  const isPl = language === "pl";
 
   return (
     <div
       id="support-box"
-      className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center"
+      className="border border-accent-ring bg-gradient-to-b from-accent-soft to-white rounded-[16px] p-[18px] shadow-[0_6px_22px_rgba(37,99,235,0.07)] text-center max-w-sm mx-auto"
     >
       <div className="space-y-4 relative z-10">
-        <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2">
-          {t.donate}
-          <Trophy size={32} className="text-neutral-900" />
-        </h3>
+        <div className="flex items-center justify-center gap-2 mb-[4px]">
+          <Heart size={20} className="text-primary fill-primary" />
+          <h3 className="font-heading text-[20px] font-bold text-[#0f0f0f] m-0">
+            {isPl ? "Wesprzyj twórcę" : "Support the creator"}
+          </h3>
+        </div>
+
+        <p className="m-[0_0_14px] text-[13px] leading-[1.55] text-[#4a4a4a]">
+          {isPl ? "Jednorazowe wsparcie odblokowuje wszystkie materiały patronów — na zawsze." : "A one-time tip unlocks every patron video — forever."}
+        </p>
 
         <div className="space-y-3 text-center">
           {showTermsError && (
             <p
               id={termsErrorId}
               role="alert"
-              className="text-destructive font-sans font-bold text-[10px] uppercase tracking-widest"
+              className="text-destructive font-sans font-bold text-[10px] uppercase tracking-widest animate-pulse"
             >
               {t.pleaseAcceptTerms}
             </p>
           )}
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-0">
             <label
               htmlFor={amountInputId}
-              className="block text-xs font-semibold uppercase tracking-wider text-neutral-400"
+              className="block text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#7a7a7a]"
             >
-              {language === "pl"
-                ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})`
-                : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`}
+              {isPl
+                ? `KWOTA (MIN ${minAmount} ${selectedCurrency})`
+                : `AMOUNT (MIN ${minAmount} ${selectedCurrency})`}
             </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 right-0 flex items-center">
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => onCurrencyChange(e.target.value)}
-                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-neutral-400 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
-                  aria-label="Select Currency"
-                >
-                  {availableCurrencies.map((curr) => (
-                    <option key={curr} value={curr}>
-                      {curr}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-4 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
-                  <ChevronDown size={14} />
+            <div className="relative bg-white border border-accent-ring rounded-[11px] overflow-hidden">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <div className="relative flex items-center">
+                    <select
+                    value={selectedCurrency}
+                    onChange={(e) => onCurrencyChange(e.target.value)}
+                    className="bg-transparent border-none pr-6 pl-2 font-brand text-[16px] font-bold text-primary focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
+                    aria-label="Select Currency"
+                    >
+                    {availableCurrencies.map((curr) => (
+                        <option key={curr} value={curr}>
+                        {curr}
+                        </option>
+                    ))}
+                    </select>
+                    <div className="absolute right-0 pointer-events-none text-primary">
+                    <ChevronDown size={14} />
+                    </div>
                 </div>
               </div>
               <input
@@ -115,7 +124,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 onChange={(e) => onAmountChange(e.target.value)}
                 aria-invalid={amountTooLow}
                 aria-describedby={amountTooLow ? amountErrorId : undefined}
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
+                className="w-full bg-transparent border-none py-3 px-4 font-brand text-[24px] font-bold text-[#1a1a1a] focus:ring-0 outline-none transition-all placeholder:text-neutral-200 tabular-nums"
                 placeholder={String(minAmount)}
               />
             </div>
@@ -123,11 +132,11 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               <p
                 id={amountErrorId}
                 role="alert"
-                className="font-mono text-[10px] text-destructive font-bold uppercase"
+                className="font-brand text-[10px] text-destructive font-bold uppercase tracking-wider"
               >
-                {language === "pl"
-                  ? `Błąd: Nie osiągnięto minimum (${minAmount} ${selectedCurrency})`
-                  : `Error: Minimum amount not met (${minAmount} ${selectedCurrency})`}
+                {isPl
+                  ? `MINIMUM: ${minAmount} ${selectedCurrency}`
+                  : `MINIMUM: ${minAmount} ${selectedCurrency}`}
               </p>
             )}
           </div>
@@ -138,8 +147,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           onClick={onSupport}
           disabled={isLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="w-full h-12 uppercase tracking-wider text-sm"
-          size="lg"
+          className="w-full h-[48px] rounded-[11px] bg-primary text-white font-bold text-[15px] uppercase tracking-wider hover:brightness-[1.07] active:scale-[0.98] transition-all"
         >
           {isLoading ? (
             <>
@@ -156,24 +164,24 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           )}
         </Button>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-1">
           <label className="flex items-center gap-2 cursor-pointer group transition-opacity">
             <Checkbox
               id="accept-terms"
               checked={isTermsAccepted}
-              className="border-neutral-300"
+              className="border-accent-ring data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               onCheckedChange={onTermsChange}
               aria-invalid={showTermsError}
               aria-describedby={showTermsError ? termsErrorId : undefined}
             />
-            <span className="text-neutral-500 font-sans font-medium text-[10px] tracking-tight transition-colors">
-              {language === "pl" ? (
+            <span className="text-[#7a7a7a] font-sans font-medium text-[11px] tracking-tight transition-colors">
+              {isPl ? (
                 <>
                   Akceptuję{" "}
                   <button
                     type="button"
                     onClick={onOpenRegulamin}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-[#0f0f0f]"
                   >
                     Regulamin
                   </button>{" "}
@@ -181,9 +189,9 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenPolityka}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-[#0f0f0f]"
                   >
-                    Politykę Prywatności
+                    Politykę
                   </button>
                 </>
               ) : (
@@ -192,7 +200,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenRegulamin}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-[#0f0f0f]"
                   >
                     Terms
                   </button>{" "}
@@ -200,14 +208,17 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenPolityka}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-[#0f0f0f]"
                   >
-                    Privacy Policy
+                    Privacy
                   </button>
                 </>
               )}
             </span>
           </label>
+        </div>
+        <div className="text-[10px] text-[#9a958b] italic">
+            {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
         </div>
       </div>
     </div>

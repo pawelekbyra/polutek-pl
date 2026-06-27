@@ -61,6 +61,8 @@ const config = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))'
         },
+        'accent-soft': 'hsl(var(--accent-soft))',
+        'accent-ring': 'hsl(var(--accent-ring))',
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
@@ -77,16 +79,16 @@ const config = {
         }
       },
       animation: {
-        glow: 'glow 2s ease-in-out infinite alternate',
+        glow: 'pl-glow 2.4s ease-out infinite',
         shimmer: 'shimmer 2s infinite'
       },
       keyframes: {
-        glow: {
+        'pl-glow': {
           '0%': {
-            boxShadow: '0 0 5px rgba(59, 130, 246, 0.2)'
+            boxShadow: '0 0 0 0 var(--accent-ring), 0 10px 30px rgba(0,0,0,.35)'
           },
           '100%': {
-            boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
+            boxShadow: '0 0 0 14px rgba(37,99,235,0), 0 10px 30px rgba(0,0,0,.35)'
           }
         },
         shimmer: {

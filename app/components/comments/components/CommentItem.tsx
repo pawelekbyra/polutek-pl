@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Star, Trash2, ThumbsUp, ThumbsDown, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import { Star, Trash2, ThumbsUp, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -42,7 +42,6 @@ export function CommentItem({
   onPin,
   onEdit,
   onReport,
-  isPinPending,
   isReply = false
 }: CommentItemProps) {
   const isDeletedForPublic = comment.status === 'DELETED';
@@ -115,45 +114,43 @@ export function CommentItem({
       ref={commentRef}
       className={cn(
         "flex items-start transition-colors duration-1000",
-        isReply ? "gap-2.5 group/reply" : "gap-3 group/comment",
+        isReply ? "gap-[13px] group/reply" : "gap-[13px] group/comment",
         isHighlighted && "bg-blue-50 ring-2 ring-blue-100 rounded-lg p-2 -m-2"
       )}
     >
-      <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-8" : "w-11")}>
-        <SafeAvatar
-          src={comment.author?.imageUrl}
-          alt={comment.author?.displayName || "Avatar"}
-          size={isReply ? 24 : 36}
-          fallbackSeed={getAvatarSeed(comment)}
-          className={cn(
-            "mt-0",
-            authorIsPatron
-              ? isReply
-                ? "border-2 border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]"
-                : "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-              : "border border-[#e9eef6]",
-          )}
-        />
+      <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
+        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-border relative">
+            <SafeAvatar
+            src={comment.author?.imageUrl}
+            alt={comment.author?.displayName || "Avatar"}
+            size={38}
+            fallbackSeed={getAvatarSeed(comment)}
+            className="w-full h-full object-cover"
+            />
+        </div>
       </div>
-      <div className="flex-1 space-y-0.5 min-w-0 pt-0.5">
+      <div className="flex-1 space-y-[2px] min-w-0 pt-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-1.5 leading-none">
             <span
               className={cn(
-                "font-bold text-[#0f0f0f] leading-none",
-                isReply ? "text-[11px]" : "text-[12px]",
-                authorIsPatron && "text-amber-900",
+                "font-bold text-[#0f0f0f] leading-tight text-[13px]",
               )}
             >
               {comment.author?.displayName || "Użytkownik"}
             </span>
+            {authorIsPatron && (
+               <span className="bg-accent-soft text-primary text-[9px] font-extrabold px-[7px] py-[2px] rounded-full border border-accent-ring tracking-wider uppercase">
+                  {language === "pl" ? "Patron" : "Patron"}
+               </span>
+            )}
             {!isReply && comment.isPinned && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
                 <Star size={10} className="fill-blue-600" />
                 {language === "pl" ? "Przypięty" : "Pinned"}
               </span>
             )}
-            <span className={cn("text-[#606060] leading-none", isReply ? "text-[10px]" : "text-[11px]")}>
+            <span className={cn("text-[#8A857B] leading-none text-[12px]")}>
               {isClient &&
               comment.createdAt &&
               !isNaN(new Date(comment.createdAt).getTime())
@@ -252,14 +249,13 @@ export function CommentItem({
                             const res = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
                             if (res.ok) {
                                 toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
-                                // We could force refetch but let's keep it simple
                             }
                         } catch (err) {}
                         setShowMenu(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-blue-600"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-primary"
                   >
-                    <Star size={14} className={isHearted ? "fill-blue-600" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
+                    <Star size={14} className={isHearted ? "fill-primary" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
                   </button>
                 )}
               </div>
@@ -272,27 +268,27 @@ export function CommentItem({
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-secondary border border-border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />
             <div className="flex gap-2">
                <button
                 onClick={() => setIsEditing(false)}
-                className="text-xs font-bold px-3 py-1 rounded-md hover:bg-neutral-100"
+                className="text-xs font-bold px-3 py-1 rounded-md hover:bg-secondary"
                >
                  {t.cancel}
                </button>
                <button
                 onClick={() => { onEdit(comment.id, editText); setIsEditing(false); }}
                 disabled={!editText.trim() || editText === comment.text}
-                className="text-xs font-bold px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="text-xs font-bold px-3 py-1 bg-primary text-white rounded-md hover:brightness-110 disabled:opacity-50"
                >
                  {language === "pl" ? "Zapisz" : "Save"}
                </button>
             </div>
           </div>
         ) : (
-          <p className="text-[#0f0f0f] text-[13px] leading-relaxed">
+          <p className="text-[#0f0f0f] text-[14px] leading-[1.5]">
             {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
           </p>
         )}
@@ -304,44 +300,44 @@ export function CommentItem({
           onSubmit={(reason, note) => onReport(comment.id, reason, note)}
         />
 
-        <div className="flex items-center gap-3 pt-0.5">
+        <div className="flex items-center gap-[12px] pt-1">
           <button
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
-              "inline-flex h-6 min-w-8 items-center justify-center gap-1 rounded-md px-1 transition-all group",
+              "inline-flex h-6 items-center justify-center gap-1.5 transition-all group",
               isLiked
                 ? "text-primary"
                 : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
             <ThumbsUp
-              size={isReply ? 11 : 13}
+              size={14}
               className={cn(isLiked && "fill-primary")}
             />
-            <span className={cn("font-normal", isReply ? "text-[10px]" : "text-[11px]")}>
+            <span className={cn("font-semibold text-[13px]")}>
               {comment.likesCount || 0}
             </span>
           </button>
 
           {isHearted && (
-             <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1.5 py-0.5 border border-neutral-200">
+             <div className="flex items-center gap-1 bg-accent-soft rounded-full px-1.5 py-0.5 border border-accent-ring">
                 <SafeAvatar
-                  src={null} // We could show creator avatar but simplified for now
+                  src={null}
                   alt="Creator Heart"
                   size={12}
-                  className="rounded-full bg-blue-500 flex items-center justify-center border-none"
+                  className="rounded-full bg-primary flex items-center justify-center border-none"
                   fallbackSeed="heart"
                 />
-                <span className="text-[9px] font-black uppercase text-blue-600 tracking-tighter">Serce twórcy</span>
+                <span className="text-[9px] font-extrabold uppercase text-primary tracking-tighter">Serce twórcy</span>
              </div>
           )}
 
           {!isReply && canComment && (
             <button
               onClick={() => userProfile && onReply(comment.id)}
-              className="text-[11px] font-bold text-[#0f0f0f] hover:bg-[#dbeafe] px-2.5 py-0.5 rounded-md ml-1 transition-all"
+              className="text-[12px] font-bold text-[#0f0f0f] hover:bg-secondary px-2.5 py-0.5 rounded-md transition-all"
             >
-              {t.reply}
+              {t.reply || "Odpowiedz"}
             </button>
           )}
         </div>
