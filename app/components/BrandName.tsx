@@ -14,10 +14,10 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic' })
 
   return (
     <span className={cn(
-      isClassic ? "font-brand font-bold tracking-[-0.03em] lowercase text-[#171717]" : "font-handwriting font-bold uppercase text-neutral-950",
+      isClassic ? "font-brand font-bold tracking-[-0.03em] uppercase text-[#171717]" : "font-handwriting font-bold uppercase text-neutral-950",
       className
     )}>
-      {baseName.toLowerCase()}<span className="text-primary">{dotSuffixMatch?.[0] ?? ''}</span>
+      {baseName.toUpperCase()}<span className="text-primary">{(dotSuffixMatch?.[0] ?? '').toUpperCase()}</span>
     </span>
   );
 };
