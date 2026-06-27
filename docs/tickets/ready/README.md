@@ -18,20 +18,68 @@ Aktualnie realizujemy refaktoryzację według roadmapy:
 
 Każda nowa sesja pracy nad repo ma zacząć od przeczytania wskazanej roadmapy. Roadmapa jest aktualnym źródłem priorytetów refaktoryzacyjnych: krytyczne bugi, niedokończone funkcje, cleanup legacy warstw oraz standardy implementacyjne.
 
+## Progress update rule — mandatory for every agent
+
+Każdy agent po zakończeniu pracy **musi zaktualizować ten plik w tym samym PR/commicie**, zanim uzna pracę za skończoną.
+
+Wymagane aktualizacje:
+
+1. Zmień status itemu w tabeli `Queue` oraz checkbox w `Roadmap progress tracker`.
+2. Dopisz PR/commit/evidence w kolumnie `Evidence`.
+3. Jeśli item nie jest w pełni zrobiony, ustaw `PARTIAL` i dopisz co zostało.
+4. Jeśli znaleziono blokadę, ustaw `BLOCKED` i dopisz konkretny powód.
+5. Nie zostawiaj ukończonej pracy jako `TODO`.
+
+Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED_BY_OWNER`.
+
 ## Queue
 
-| Order | Ticket | Status |
-| ---: | --- | --- |
-| 1 | `REFACTORING-ROADMAP-2026-06-27` | `ACTIVE` |
-| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `TODO` |
-| 1.2 | `BUG-002` — admin users export auth check before processing | `TODO` |
-| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `TODO` |
-| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `TODO` |
-| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` |
-| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` |
-| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `TODO` |
-| 2 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` |
-| 3 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` |
+| Order | Ticket | Status | Evidence |
+| ---: | --- | --- | --- |
+| 1 | `REFACTORING-ROADMAP-2026-06-27` | `ACTIVE` | README pointer added in commit `ef9f6a125a7899d350dd04ed7d474263281272e5` |
+| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `TODO` | — |
+| 1.2 | `BUG-002` — admin users export auth check before processing | `TODO` | — |
+| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `TODO` | — |
+| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `TODO` | — |
+| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` | — |
+| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` | — |
+| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `TODO` | — |
+| 2 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | — |
+| 3 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | — |
+
+## Roadmap progress tracker
+
+### Setup / control-plane work
+
+- [x] Point canonical ready queue at `REFACTORING-ROADMAP-2026-06-27` — commit `ef9f6a125a7899d350dd04ed7d474263281272e5`
+- [x] Add mandatory post-work update rule for agents — commit pending/current update
+
+### Critical bugs from roadmap
+
+- [ ] `BUG-001` — Redis failure fallback in playback-event recording
+- [ ] `BUG-002` — admin users export auth check before processing
+- [ ] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500
+- [ ] `BUG-004` — replace string-matching error classification in payment/admin routes
+- [ ] `BUG-005` — support custom Vercel Blob public host in thumbnail response service
+- [ ] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data
+- [ ] `BUG-007` — malformed JSON handling in admin routes
+
+### Incomplete features from roadmap
+
+- [ ] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation decision/work
+- [ ] `INCOMPLETE-002` — referral system finish-or-remove decision/work
+- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync
+- [ ] `INCOMPLETE-004` — bounce/complaint email auto-suppression
+- [ ] `INCOMPLETE-005` — admin refund endpoint/UI
+- [ ] `INCOMPLETE-006` — Stripe reconciliation job
+- [ ] `INCOMPLETE-007` — remove dead `Actor.isPatron`
+- [ ] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper
+
+### Cleanup from roadmap
+
+- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution
+- [ ] `CLEANUP-002` — API error handling standardization
+- [ ] `CLEANUP-003` — user-visible typo cleanup
 
 ## Working rules for this mode
 
@@ -40,6 +88,7 @@ Każda nowa sesja pracy nad repo ma zacząć od przeczytania wskazanej roadmapy.
 - Each PR must name the exact roadmap item it addresses, for example `BUG-001`.
 - Preserve `AGENTS.md` rules and existing control-plane guardrails.
 - Public launch remains `NO_GO` unless a separate launch-certification ticket explicitly changes that.
+- Before finishing, every agent must update this README with the status/evidence of the work just completed.
 
 ## Recently completed / HISTORICAL
 
