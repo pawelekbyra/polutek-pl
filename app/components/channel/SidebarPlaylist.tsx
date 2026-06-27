@@ -111,6 +111,10 @@ export function SidebarPlaylist({
     fetchLayout();
   }, [selectedVideoId]);
 
+  const hasSidebarSupportTarget = (items: SidebarLayoutItem[] = []) => {
+    return items.some((item) => item.creatorId) || sortedVideos.some((video) => video.creatorId);
+  };
+
   const renderVideoItem = (video: SidebarLayoutItem) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
@@ -136,83 +140,83 @@ export function SidebarPlaylist({
             isCurrent ? "bg-secondary" : "hover:bg-secondary",
           )}
         >
-        <div className="w-[158px] h-[90px] shrink-0 overflow-hidden rounded-[9px] bg-black relative group/thumb border border-input">
-          <div className="relative w-full h-full">
-            {lockState ? (
-              <div className="pointer-events-none">
-                <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
-              </div>
-            ) : video.thumbnailUrl ? (
-              <Image
-                src={video.thumbnailUrl}
-                alt={displayTitle}
-                fill
-                className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                <Video className="text-white/20 w-8 h-8" />
-              </div>
-            )}
+          <div className="w-[158px] h-[90px] shrink-0 overflow-hidden rounded-[9px] bg-black relative group/thumb border border-input">
+            <div className="relative w-full h-full">
+              {lockState ? (
+                <div className="pointer-events-none">
+                  <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+                </div>
+              ) : video.thumbnailUrl ? (
+                <Image
+                  src={video.thumbnailUrl}
+                  alt={displayTitle}
+                  fill
+                  className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                  <Video className="text-white/20 w-8 h-8" />
+                </div>
+              )}
 
-            {video.duration && (
-              <div className="absolute bottom-[5px] right-[5px] bg-black/80 text-white text-[10px] font-bold px-[5px] py-0.5 rounded-[4px] z-30 pointer-events-none font-mono">
-                {video.duration}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-start pt-[1px] gap-0 z-10 relative">
-          <h4 className="font-heading text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity">
-            {displayTitle}
-          </h4>
-          <div className="text-[12px] text-muted-foreground flex flex-col mt-0">
-            <div className="transition-colors w-fit relative z-20 leading-[1.4]">
-              {video.creator?.name || "Polutek"}
-            </div>
-            <div className="flex items-center gap-1">
-              <span>
-                {mounted
-                  ? video.views?.toLocaleString(
-                      language === "pl" ? "pl-PL" : "en-US",
-                    )
-                  : video.views}{" "}
-                {t.views}
-              </span>
-              {video.publishedAt && (
-                <>
-                  <span>·</span>
-                  <span>
-                    {mounted
-                      ? formatDistanceToNow(new Date(video.publishedAt), {
-                          addSuffix: true,
-                          locale: language === "pl" ? pl : undefined,
-                        }).replace("około", "ok.")
-                      : ""}
-                  </span>
-                </>
+              {video.duration && (
+                <div className="absolute bottom-[5px] right-[5px] bg-black/80 text-white text-[10px] font-bold px-[5px] py-0.5 rounded-[4px] z-30 pointer-events-none font-mono">
+                  {video.duration}
+                </div>
               )}
             </div>
           </div>
-          {/* Access Indicator Badge */}
-          {mounted &&
-            (() => {
-              const badge = getSidebarAccessBadge(video, hasAccess, language);
-              if (!badge) return null;
-              return (
-                <div
-                  className={cn(
-                    "absolute bottom-[5px] left-[-169px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
-                    badge.variant === "unlocked" &&
-                      "bg-primary border-transparent",
-                    badge.variant === "locked" && video.tier === "PATRON" && "bg-neutral-800 border-border"
-                  )}
-                >
-                  {badge.text}
-                </div>
-              );
-            })()}
-        </div>
+          <div className="flex-1 min-w-0 flex flex-col justify-start pt-[1px] gap-0 z-10 relative">
+            <h4 className="font-heading text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity">
+              {displayTitle}
+            </h4>
+            <div className="text-[12px] text-muted-foreground flex flex-col mt-0">
+              <div className="transition-colors w-fit relative z-20 leading-[1.4]">
+                {video.creator?.name || "Polutek"}
+              </div>
+              <div className="flex items-center gap-1">
+                <span>
+                  {mounted
+                    ? video.views?.toLocaleString(
+                        language === "pl" ? "pl-PL" : "en-US",
+                      )
+                    : video.views}{" "}
+                  {t.views}
+                </span>
+                {video.publishedAt && (
+                  <>
+                    <span>·</span>
+                    <span>
+                      {mounted
+                        ? formatDistanceToNow(new Date(video.publishedAt), {
+                            addSuffix: true,
+                            locale: language === "pl" ? pl : undefined,
+                          }).replace("około", "ok.")
+                        : ""}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Access Indicator Badge */}
+            {mounted &&
+              (() => {
+                const badge = getSidebarAccessBadge(video, hasAccess, language);
+                if (!badge) return null;
+                return (
+                  <div
+                    className={cn(
+                      "absolute bottom-[5px] left-[-169px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
+                      badge.variant === "unlocked" &&
+                        "bg-primary border-transparent",
+                      badge.variant === "locked" && video.tier === "PATRON" && "bg-neutral-800 border-border"
+                    )}
+                  >
+                    {badge.text}
+                  </div>
+                );
+              })()}
+          </div>
         </Link>
       </div>
     );
@@ -233,7 +237,7 @@ export function SidebarPlaylist({
     const cdClock = premiereCountdown.split(' ').slice(2).join('') || '--:--:--';
 
     return (
-      <div className="margin-[18px_0_26px] border border-accent-ring bg-gradient-to-b from-accent-soft to-white rounded-[16px] p-[18px] shadow-[0_6px_22px_rgba(37,99,235,0.07)] mb-6">
+      <div className="my-[18px] border border-accent-ring bg-gradient-to-b from-accent-soft to-white rounded-[16px] p-[18px] shadow-[0_6px_22px_rgba(37,99,235,0.07)] mb-6">
         <div className="flex items-center gap-2 mb-[4px]">
           <Heart size={17} className="text-primary fill-primary" />
           <h4 className="font-heading text-[16px] font-bold text-[#0f0f0f] m-0">
@@ -265,8 +269,8 @@ export function SidebarPlaylist({
 
         <button
           onClick={() => {
-             const el = document.getElementById('support-box');
-             if (el) el.scrollIntoView({ behavior: 'smooth' });
+            const el = document.getElementById('support-box') || document.getElementById('donations');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
           className="w-full h-[44px] border-none rounded-[11px] bg-primary text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 hover:brightness-[1.07] active:scale-[0.98] transition-all"
         >
@@ -285,7 +289,10 @@ export function SidebarPlaylist({
   }
 
   if (error || !layout) {
-    if (!sortedVideos || sortedVideos.length === 0) {
+    const fallbackItems = sortedVideos || [];
+    const showPatronBox = !viewerIsPatron && hasSidebarSupportTarget(fallbackItems);
+
+    if (fallbackItems.length === 0) {
       return (
         <div className="p-8 text-center border-2 border-dashed border-neutral-100 rounded-2xl">
           <p className="text-sm text-neutral-500 italic">
@@ -300,7 +307,7 @@ export function SidebarPlaylist({
     return (
       <div className="space-y-2">
         {renderSectionHeader(language === "pl" ? "Dostępne filmy" : "Available videos", <AlertCircle size={14} className="text-amber-500" />)}
-        {sortedVideos.map((v) =>
+        {fallbackItems.map((v) =>
           renderVideoItem({
             ...v,
             isLocked:
@@ -311,6 +318,7 @@ export function SidebarPlaylist({
                   : false,
           }),
         )}
+        {showPatronBox && <PatronBox />}
       </div>
     );
   }
@@ -318,9 +326,8 @@ export function SidebarPlaylist({
   const publicSection = layout.sections.find((s) => s.type === "FREE");
   const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
-  const supportItem = layout.sections
-    .flatMap((section) => section.items)
-    .find((item) => item.creatorId);
+  const sidebarItems = layout.sections.flatMap((section) => section.items);
+  const showPatronBox = !viewerIsPatron && hasSidebarSupportTarget(sidebarItems);
 
   return (
     <>
@@ -337,11 +344,7 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {!viewerIsPatron &&
-        (() => {
-          if (!supportItem?.creatorId) return null;
-          return <PatronBox />;
-        })()}
+      {showPatronBox && <PatronBox />}
 
       {patronSection && (
         <div className="mb-6">
