@@ -447,6 +447,27 @@ export class VideoRepository {
   }
 
   async upsertAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
+    if (input.isPrimary === false) {
+      return await tx.videoAsset.create({
+        data: {
+          videoId,
+          provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+          objectKey: input.objectKey || input.providerAssetId || videoId,
+          bucket: input.bucket,
+          providerAssetId: input.providerAssetId,
+          providerPlaybackId: input.providerPlaybackId,
+          processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
+          isPrimary: false,
+          failureReason: input.failureReason,
+          providerSyncedAt: input.providerSyncedAt,
+          processingStartedAt: input.processingStartedAt,
+          processingEndedAt: input.processingEndedAt,
+          mimeType: input.mimeType,
+          sizeBytes: input.sizeBytes,
+        },
+      });
+    }
+
     return await this.updateVideoAsset(videoId, input, tx);
   }
 

@@ -42,6 +42,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
         updateMany: vi.fn(),
       },
       videoAsset: {
+        findMany: vi.fn(),
         findFirst: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
@@ -50,6 +51,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
       },
       $transaction: vi.fn((cb) => cb(mockPrisma)),
     };
+    mockPrisma.videoAsset.findMany.mockResolvedValue([]);
     mockCtx = { prisma: mockPrisma, actor: { type: "admin", userId: "admin-id" } };
   });
 

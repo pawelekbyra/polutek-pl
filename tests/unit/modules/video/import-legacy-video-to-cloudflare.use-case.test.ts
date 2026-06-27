@@ -15,6 +15,7 @@ describe('importLegacyVideoToCloudflare', () => {
       update: vi.fn(),
     },
     videoAsset: {
+      findMany: vi.fn(),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -72,6 +73,7 @@ describe('importLegacyVideoToCloudflare', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.videoAsset.findMany?.mockResolvedValue([]);
     process.env.MAIN_CREATOR_SLUG = 'main-creator';
     process.env.CLOUDFLARE_ACCOUNT_ID = 'account-1';
     process.env.CLOUDFLARE_API_TOKEN = 'secret-token';

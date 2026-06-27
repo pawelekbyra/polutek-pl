@@ -47,6 +47,7 @@ const mockPrisma: any = {
     updateMany: vi.fn()
   },
   videoAsset: {
+      findMany: vi.fn(),
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     create: vi.fn(),
@@ -65,6 +66,7 @@ const mockCtx: any = {
 describe('Video Upload Flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.videoAsset.findMany?.mockResolvedValue([]);
   });
 
   describe('createAdminVideo', () => {

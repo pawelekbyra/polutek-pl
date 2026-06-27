@@ -168,8 +168,10 @@ export function SidebarPlaylist({
               )}
 
               {lockState && (
-                <div className="pointer-events-none absolute inset-0 z-20">
-                  <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+                <div className="pointer-events-none">
+                  <div className="absolute inset-0 z-20">
+                    <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+                  </div>
                 </div>
               )}
 
@@ -238,6 +240,8 @@ export function SidebarPlaylist({
     );
   };
 
+  const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
+
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
     <div className="pb-[6px] border-b border-border mb-[14px] flex items-center gap-2">
       {icon}
@@ -248,6 +252,8 @@ export function SidebarPlaylist({
   );
 
   const PatronBox = () => {
+    if (!supportItem?.creatorId) return null;
+
     const isPl = language === "pl";
     const cdDays = premiereCountdown.split(" ")[0] || "—";
     const cdClock = premiereCountdown.split(" ").slice(2).join("") || "--:--:--";

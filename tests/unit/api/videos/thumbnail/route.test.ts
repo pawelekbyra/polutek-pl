@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '@/app/api/videos/[videoId]/thumbnail/route';
+import { GET } from '@/app/api/videos/[id]/thumbnail/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -42,7 +42,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     });
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
-    await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
+    await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
     expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith(
       'v1',
@@ -59,7 +59,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     });
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
-    const res = await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
+    const res = await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
     expect(res.status).toBe(403);
     const data = await res.json();
@@ -75,7 +75,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     });
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
-    await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
+    await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
     expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalled();
   });
@@ -85,7 +85,7 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     mockPrisma.video.findUnique.mockResolvedValue(null);
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
-    const res = await GET(req, { params: Promise.resolve({ videoId: 'v1' }) });
+    const res = await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
     expect(res.status).toBe(404);
   });
