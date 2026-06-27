@@ -92,7 +92,9 @@ describe('Cloudflare Sync Hardening', () => {
         videoId: 'video-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
       };
-      mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
+      mockPrisma.videoAsset.findFirst
+        .mockResolvedValueOnce(asset) // findAssetByProviderId
+        .mockResolvedValueOnce(null); // no existing primary
       mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: 'READY' });
       mockPrisma.video.update.mockResolvedValue({});
 

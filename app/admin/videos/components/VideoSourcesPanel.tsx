@@ -63,10 +63,10 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error((err as Record<string, string>).error || "Nie udało się zmienić źródła głównego.");
+        toast((err as Record<string, string>).error || "Nie udało się zmienić źródła głównego.", "error");
         return;
       }
-      toast.success("Źródło główne zostało zmienione.");
+      toast("Źródło główne zostało zmienione.", "success");
       onChanged();
     } finally {
       setLoading(null);
@@ -80,10 +80,10 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
       const res = await fetch(`/api/admin/videos/${videoId}/sources/${assetId}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error((err as Record<string, string>).error || "Nie udało się usunąć źródła.");
+        toast((err as Record<string, string>).error || "Nie udało się usunąć źródła.", "error");
         return;
       }
-      toast.success("Źródło zostało usunięte.");
+      toast("Źródło zostało usunięte.", "success");
       onChanged();
     } finally {
       setLoading(null);
@@ -101,10 +101,10 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error((err as Record<string, string>).error || "Nie udało się dodać źródła Cloudflare.");
+        toast((err as Record<string, string>).error || "Nie udało się dodać źródła Cloudflare.", "error");
         return;
       }
-      toast.success("Źródło Cloudflare Stream dodane.");
+      toast("Źródło Cloudflare Stream dodane.", "success");
       setCfAssetId("");
       setShowAddCf(false);
       onChanged();
@@ -124,10 +124,10 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error((err as Record<string, string>).error || "Nie udało się dodać źródła YouTube.");
+        toast((err as Record<string, string>).error || "Nie udało się dodać źródła YouTube.", "error");
         return;
       }
-      toast.success("Źródło YouTube dodane.");
+      toast("Źródło YouTube dodane.", "success");
       setYtVideoId("");
       setShowAddYt(false);
       onChanged();

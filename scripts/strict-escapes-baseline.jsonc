@@ -618,13 +618,6 @@
     },
     {
       "file": "lib/modules/video/application/make-source-primary.use-case.ts",
-      "line": 28,
-      "label": "explicit any annotation",
-      "text": "const target = assets.find((a: any) => a.id === input.assetId);",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/application/make-source-primary.use-case.ts",
       "line": 55,
       "label": "explicit any annotation",
       "text": "const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {",
@@ -649,13 +642,6 @@
       "line": 26,
       "label": "explicit any annotation",
       "text": "const assets = (video as any).assets ?? [];",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/video/application/remove-video-source.use-case.ts",
-      "line": 27,
-      "label": "explicit any annotation",
-      "text": "const target = assets.find((a: any) => a.id === input.assetId);",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
