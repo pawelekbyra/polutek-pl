@@ -278,10 +278,9 @@ function LoginArrowIcon({ className }: { className?: string }) {
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M2.7 10.3 12 21l9.3-10.7" />
-      <path d="M12 21 7 3h10l-5 18Z" />
-      <path d="M2.7 10.3H21.3" />
-      <path d="M7 3l5 7.3L17 3" />
+      <path d="M6 3h12l4 6-10 13L2 9Z" />
+      <path d="M11 3 8 9l4 13 4-13-3-6" />
+      <path d="M2 9h20" />
     </svg>
   );
 }
