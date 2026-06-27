@@ -255,6 +255,8 @@ enum StorageProvider {
   CLOUDFLARE_STREAM
   /// Design-compatible optional provider identity; runtime integration is intentionally not implemented here.
   MUX
+  /// Public YouTube embed source. Only valid for PUBLIC/non-patron videos.
+  YOUTUBE
 }
 
 enum VideoAssetProcessingState {
@@ -273,6 +275,10 @@ model VideoAsset {
   bucket              String?
   providerAssetId     String?
   providerPlaybackId  String?
+  /// For YOUTUBE: the video ID (e.g. "dQw4w9WgXcQ") extracted from the URL.
+  externalVideoId     String?
+  /// For YOUTUBE: canonical watch URL provided by the admin (e.g. https://www.youtube.com/watch?v=...).
+  externalUrl         String?
   processingState     VideoAssetProcessingState @default(READY)
   isPrimary           Boolean                   @default(true)
   failureReason       String?

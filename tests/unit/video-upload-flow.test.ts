@@ -47,6 +47,7 @@ const mockPrisma: any = {
     updateMany: vi.fn()
   },
   videoAsset: {
+    findMany: vi.fn().mockResolvedValue([]),
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     create: vi.fn(),
@@ -159,7 +160,7 @@ describe('Video Upload Flow', () => {
 
   describe('handleCloudflareStreamWebhook', () => {
     it('should update asset to READY and make it primary', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //
         id: 'asset-id',
         videoId: 'video-id',
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
@@ -184,7 +185,7 @@ describe('Video Upload Flow', () => {
     });
 
     it('publishes video with pending publish intent when Cloudflare webhook reaches READY', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //
         id: 'asset-id', videoId: 'video-id', provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
       });
@@ -206,7 +207,7 @@ describe('Video Upload Flow', () => {
     });
 
     it('webhook READY is idempotent for repeated calls', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //  id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
       mockPrisma.video.findUnique.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED', publishAfterAssetReady: false, publishAfterAssetReadyCompletedAt: new Date() });
 
       const result = await handleCloudflareStreamWebhook({ uid: 'cf-uid-123', status: { state: 'ready' } }, mockCtx);
@@ -233,7 +234,7 @@ describe('Video Upload Flow', () => {
         data: expect.objectContaining({ publishAfterAssetReady: true })
       }));
 
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING });
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //  id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING });
       mockPrisma.videoAsset.update.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
       mockPrisma.video.findUnique.mockResolvedValue({ id: 'video-id', status: 'DRAFT', publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null });
       mockPrisma.video.findFirst.mockResolvedValue({

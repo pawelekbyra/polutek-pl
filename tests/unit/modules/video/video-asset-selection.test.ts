@@ -20,6 +20,7 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
     processingEndedAt: null,
     mimeType: null,
     sizeBytes: null,
+    externalVideoId: overrides.externalVideoId ?? null,     externalUrl: overrides.externalUrl ?? null,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
   };

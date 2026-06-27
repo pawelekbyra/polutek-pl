@@ -15,6 +15,7 @@ describe('importLegacyVideoToCloudflare', () => {
       update: vi.fn(),
     },
     videoAsset: {
+    findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -65,7 +66,7 @@ describe('importLegacyVideoToCloudflare', () => {
     providerAssetId: 'cloudflare-uid-1',
     providerPlaybackId: 'cloudflare-uid-1',
     processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-    isPrimary: false,
+    isPrimary: true,
     createdAt: new Date('2026-06-11T00:00:00Z'),
     updatedAt: new Date('2026-06-11T00:00:00Z'),
   };
@@ -117,7 +118,7 @@ describe('importLegacyVideoToCloudflare', () => {
         providerAssetId: 'cloudflare-uid-1',
         providerPlaybackId: 'cloudflare-uid-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
       }),
     }));
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -205,7 +206,7 @@ describe('importLegacyVideoToCloudflare', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.videoUrl).toBe(baseVideo.videoUrl);
-      expect(result.data.asset?.isPrimary).toBe(false);
+      expect(result.data.asset?.isPrimary).toBe(true);
       expect((result.data.asset as any).playbackToken).toBeUndefined();
       expect((result.data.asset as any).signedUrl).toBeUndefined();
       expect((result.data.asset as any).uploadUrl).toBeUndefined();

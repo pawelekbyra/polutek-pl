@@ -41,6 +41,7 @@ describe('attachCloudflareAsset', () => {
       updateMany: vi.fn(),
     },
     videoAsset: {
+    findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -89,7 +90,7 @@ describe('attachCloudflareAsset', () => {
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: 'cf-uid-123',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
         videoId,
       })
     }));
@@ -105,7 +106,7 @@ describe('attachCloudflareAsset', () => {
       data: expect.objectContaining({
         providerAssetId: 'cf-uid-123',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
         processingStartedAt: expect.any(Date),
       })
     }));
@@ -169,7 +170,7 @@ describe('attachCloudflareAsset', () => {
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId: 'cf-uid-123',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
-        isPrimary: false,
+        isPrimary: true,
       },
     });
 

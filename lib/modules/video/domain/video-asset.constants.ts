@@ -13,8 +13,28 @@ export const VIDEO_PROVIDER: Record<string, StorageProvider> = {
   S3: 'S3',
   VERCEL_BLOB: 'VERCEL_BLOB',
   CLOUDFLARE_STREAM: 'CLOUDFLARE_STREAM',
-  MUX: 'MUX'
+  MUX: 'MUX',
+  YOUTUBE: 'YOUTUBE',
 };
+
+/** Providers that are production-ready and can be set as primary. */
+export const PLAYABLE_PROVIDERS: StorageProvider[] = ['CLOUDFLARE_STREAM', 'YOUTUBE'];
+
+/** Extract a YouTube video ID from common URL formats. Returns null if not a valid YouTube URL. */
+export function extractYouTubeVideoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0] || null;
+    if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
+      if (u.pathname === '/watch') return u.searchParams.get('v');
+      const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
+      if (embedMatch) return embedMatch[1];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function mapCloudflareStateToProcessingState(cfState: string): VideoAssetProcessingState {
   switch (cfState) {

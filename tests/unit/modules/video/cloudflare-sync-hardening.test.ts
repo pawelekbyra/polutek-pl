@@ -45,7 +45,7 @@ describe('Cloudflare Sync Hardening', () => {
         videoId: 'video-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.READY
       };
-      mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve(asset); return Promise.resolve(null); });
 
       const payload = {
         uid: 'cf-uid-123',
@@ -68,7 +68,7 @@ describe('Cloudflare Sync Hardening', () => {
         processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
         sizeBytes: 1000
       };
-      mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve(asset); return Promise.resolve(null); });
       mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, sizeBytes: 2000 });
       mockPrisma.video.update.mockResolvedValue({});
 
@@ -92,7 +92,7 @@ describe('Cloudflare Sync Hardening', () => {
         videoId: 'video-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
       };
-      mockPrisma.videoAsset.findFirst.mockResolvedValue(asset);
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid-123") return Promise.resolve(asset); return Promise.resolve(null); });
       mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: 'READY' });
       mockPrisma.video.update.mockResolvedValue({});
 

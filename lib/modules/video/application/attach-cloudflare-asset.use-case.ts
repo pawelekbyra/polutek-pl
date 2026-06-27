@@ -86,7 +86,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
       providerAssetId,
       providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,
       processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-      isPrimary: false,
+      isPrimary: true,
       providerSyncedAt: new Date(),
       processingStartedAt: new Date(),
       processingEndedAt: null,
@@ -100,7 +100,7 @@ export async function attachCloudflareAsset(input: AttachCloudflareAssetInput, c
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         providerAssetId,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
       },
     }, tx);
     return repository.findByIdForMainChannel(video.id, mainChannel.id);

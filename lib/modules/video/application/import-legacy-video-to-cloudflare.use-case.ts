@@ -129,7 +129,7 @@ updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
       providerAssetId,
       providerPlaybackId: providerAssetId,
       processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-      isPrimary: false,
+      isPrimary: true,
       failureReason: null,
       providerSyncedAt: new Date(),
       processingStartedAt: new Date(),

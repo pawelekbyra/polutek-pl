@@ -35,6 +35,8 @@ export interface AdminVideoAssetDto {
   bucket?: string | null;
   providerAssetId?: string | null;
   providerPlaybackId?: string | null;
+  externalVideoId?: string | null;
+  externalUrl?: string | null;
   status: VideoAssetProcessingState;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
@@ -45,7 +47,8 @@ export interface AdminVideoAssetDto {
   mimeType?: string | null;
   sizeBytes?: number | null;
   requiresSignedUrl: boolean;
-  sourceMode: "CLOUDFLARE_STREAM" | "LEGACY_PROVIDER_ASSET";
+  isPlayable: boolean;
+  sourceMode: "CLOUDFLARE_STREAM" | "YOUTUBE" | "LEGACY_PROVIDER_ASSET";
   durationSeconds?: number | null;
   thumbnailUrl?: string | null;
   previewUrl?: string | null;
@@ -92,6 +95,8 @@ export type AdminVideoAssetInput = {
   bucket?: string | null;
   providerAssetId?: string | null;
   providerPlaybackId?: string | null;
+  externalVideoId?: string | null;
+  externalUrl?: string | null;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   failureReason?: string | null;
@@ -149,6 +154,13 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
 export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
+  const sourceMode: AdminVideoAssetDto["sourceMode"] =
+    asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM"
+    : asset.provider === "YOUTUBE" ? "YOUTUBE"
+    : "LEGACY_PROVIDER_ASSET";
+
+  const isPlayable = asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "YOUTUBE";
+
   return {
     id: asset.id,
     videoId: asset.videoId,
@@ -157,6 +169,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     bucket: asset.bucket,
     providerAssetId: asset.providerAssetId,
     providerPlaybackId: asset.providerPlaybackId,
+    externalVideoId: asset.externalVideoId ?? null,
+    externalUrl: asset.externalUrl ?? null,
     status: asset.processingState,
     processingState: asset.processingState,
     isPrimary: asset.isPrimary,
@@ -167,7 +181,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     mimeType: asset.mimeType,
     sizeBytes: asset.sizeBytes,
     requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
-    sourceMode: asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM" : "LEGACY_PROVIDER_ASSET",
+    isPlayable,
+    sourceMode,
     durationSeconds: asset.durationSeconds ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
     previewUrl: asset.previewUrl ?? null,

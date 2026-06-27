@@ -42,6 +42,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
         updateMany: vi.fn(),
       },
       videoAsset: {
+    findMany: vi.fn().mockResolvedValue([]),
         findFirst: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
@@ -61,7 +62,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
         videoUrl: "https://legacy.url/video.mp4",
         publishAfterAssetReady: false,
       });
-      mockPrisma.videoAsset.findFirst.mockResolvedValue(null);
+      mockPrisma.videoAsset.findFirst.mockImplementation(() => Promise.resolve(null));
 
       const result = await importLegacyVideoToCloudflare(
         { videoId: "video-id", publishAfterAssetReady: true },
@@ -81,7 +82,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
         creatorId: "main-channel-id",
         videoUrl: "https://legacy.url/video.mp4",
       });
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid" || args.where.providerAssetId === "new-cf-uid" || args.where.providerAssetId === "existing-uid" || args.where.providerAssetId === "some-uid") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //
         id: "other-asset-id",
         videoId: "other-video-id",
         providerAssetId: "new-cf-uid",
@@ -148,7 +149,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
         id: "video-id",
         creatorId: "main-channel-id",
       });
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid" || args.where.providerAssetId === "new-cf-uid" || args.where.providerAssetId === "existing-uid" || args.where.providerAssetId === "some-uid") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //
         videoId: "other-video-id",
         providerAssetId: "some-uid",
       });
@@ -167,14 +168,14 @@ describe("Cloudflare Lifecycle Hardening", () => {
 
   describe("handleCloudflareStreamWebhook", () => {
     it("should set asset as primary and trigger auto-publish on READY", async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
+      mockPrisma.videoAsset.findFirst.mockImplementation((args) => { if (args.where.providerAssetId === "cf-uid" || args.where.providerAssetId === "new-cf-uid" || args.where.providerAssetId === "existing-uid" || args.where.providerAssetId === "some-uid") return Promise.resolve({ id: "asset-id", videoId: "video-id", provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING }); return Promise.resolve(null); }); //
         id: "asset-id",
         videoId: "video-id",
         provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
       });
 
-      mockPrisma.videoAsset.update.mockResolvedValue({
+      mockPrisma.videoAsset.update.mockResolvedValue({ isPrimary: true,
         id: "asset-id",
         videoId: "video-id",
         processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
