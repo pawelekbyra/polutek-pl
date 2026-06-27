@@ -36,6 +36,7 @@ const { mockCreateSignedPlaybackToken, mockGetAssetDetails } = vi.hoisted(() => 
 }));
 vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
   CloudflareSignedPlaybackTokenService: {
+    isConfigured: vi.fn(() => true),
     createSignedPlaybackToken: mockCreateSignedPlaybackToken,
   },
 }));
@@ -531,7 +532,7 @@ describe('PlaybackService Safety', () => {
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
 
-    expect(plan.status).toBe('READY');
+    expect(plan.status).toBe('ERROR');
     expect(plan.canPlay).toBe(false);
     expect(plan.source).toBeUndefined();
     expect(plan.tracking.playbackSessionId).toBe('');

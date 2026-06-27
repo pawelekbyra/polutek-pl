@@ -95,6 +95,8 @@ const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
     'Temporary admin query parser helper; move to route-local/module query DTO parser.',
   'app/api/admin/videos/route.ts':
     'Temporary admin query parser helper; move to route-local/module query DTO parser.',
+  'app/api/videos/[videoId]/thumbnail/route.ts':
+    'Temporary thumbnail proxy bridge; move to storage/media module.',
 };
 
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {

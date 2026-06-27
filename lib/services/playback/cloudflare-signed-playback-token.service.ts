@@ -43,6 +43,16 @@ function readKeyId(): string {
 }
 
 export class CloudflareSignedPlaybackTokenService {
+  static isConfigured(): boolean {
+    try {
+      const kid = process.env.CLOUDFLARE_STREAM_SIGNING_KEY_ID;
+      const raw = process.env.CLOUDFLARE_STREAM_SIGNING_PRIVATE_KEY || process.env.CLOUDFLARE_STREAM_SIGNING_KEY_PEM;
+      return Boolean(kid?.trim() && raw?.trim());
+    } catch {
+      return false;
+    }
+  }
+
   static createSignedPlaybackToken(input: CloudflareSignedPlaybackTokenInput): CloudflareSignedPlaybackToken {
     const videoUid = input.videoUid.trim();
     if (!videoUid) throw new Error('Cloudflare Stream video uid is required for signed playback');
