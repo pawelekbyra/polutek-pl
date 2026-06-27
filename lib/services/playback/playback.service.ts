@@ -67,7 +67,7 @@ function buildCloudflareSignedIframeUrl(token: string): string {
   return `https://iframe.videodelivery.net/${encodeCloudflarePlaybackToken(token)}`;
 }
 
-function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
+function toSafeAssetContract(asset: VideoAsset | null | undefined): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
   return {
