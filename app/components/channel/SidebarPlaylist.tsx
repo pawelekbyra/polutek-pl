@@ -138,11 +138,7 @@ export function SidebarPlaylist({
         >
           <div className="w-[158px] h-[90px] shrink-0 overflow-hidden rounded-[9px] bg-black relative group/thumb border border-input">
             <div className="relative w-full h-full">
-              {lockState ? (
-                <div className="pointer-events-none">
-                  <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
-                </div>
-              ) : video.thumbnailUrl ? (
+              {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
                   alt={displayTitle}
@@ -155,7 +151,13 @@ export function SidebarPlaylist({
                 </div>
               )}
 
-              {video.duration && (
+              {lockState && (
+                <div className="pointer-events-none absolute inset-0 z-20">
+                  <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+                </div>
+              )}
+
+              {video.duration && !lockState && (
                 <div className="absolute bottom-[5px] right-[5px] bg-black/80 text-white text-[10px] font-bold px-[5px] py-0.5 rounded-[4px] z-30 pointer-events-none font-mono">
                   {video.duration}
                 </div>
