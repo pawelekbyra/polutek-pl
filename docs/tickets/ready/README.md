@@ -1,21 +1,45 @@
 # Ready Ticket Queue
 
-Status: **POST-REFACTOR PRODUCT MODE**
+Status: **ACTIVE_REFACTORING_ROADMAP_MODE**
 
-Po zakończonej stabilizacji nie ma aktywnego dużego ticketu kodowego.
+Aktualnie realizujemy refaktoryzację według roadmapy:
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: NONE -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: NONE -->
+- Source branch/file: `claude/beautiful-albattani-ajvwik:docs/REFACTORING-ROADMAP.md`
+- Source URL: https://github.com/pawelekbyra/polutek-pl/blob/claude/beautiful-albattani-ajvwik/docs/REFACTORING-ROADMAP.md
+- Roadmap title: `Polutek.pl — Refactoring Roadmap`
+- Roadmap date: `2026-06-27` — pełny audyt 10 agentów równolegle
+
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: REFACTORING-ROADMAP-2026-06-27 -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/REFACTORING-ROADMAP.md@claude/beautiful-albattani-ajvwik -->
 
 ## Current Control-Plane Ticket
 
-Brak aktywnego dużego ticketu kodowego. Nowe prace muszą być małe, jawnie opisane i zgodne z `AGENTS.md`.
+`REFACTORING-ROADMAP-2026-06-27` — realizować prace wynikające z `docs/REFACTORING-ROADMAP.md` z brancha `claude/beautiful-albattani-ajvwik`.
+
+Każda nowa sesja pracy nad repo ma zacząć od przeczytania wskazanej roadmapy. Roadmapa jest aktualnym źródłem priorytetów refaktoryzacyjnych: krytyczne bugi, niedokończone funkcje, cleanup legacy warstw oraz standardy implementacyjne.
 
 ## Queue
 
 | Order | Ticket | Status |
 | ---: | --- | --- |
-| — | `NONE` | `NO_ACTIVE_LARGE_CODE_TICKET` |
+| 1 | `REFACTORING-ROADMAP-2026-06-27` | `ACTIVE` |
+| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `TODO` |
+| 1.2 | `BUG-002` — admin users export auth check before processing | `TODO` |
+| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `TODO` |
+| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `TODO` |
+| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` |
+| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` |
+| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `TODO` |
+| 2 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` |
+| 3 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` |
+
+## Working rules for this mode
+
+- Do not invent a separate priority order: follow the roadmap order unless the owner explicitly changes it.
+- Keep changes small and reviewable. Prefer one bug/incomplete/cleanup item per PR.
+- Each PR must name the exact roadmap item it addresses, for example `BUG-001`.
+- Preserve `AGENTS.md` rules and existing control-plane guardrails.
+- Public launch remains `NO_GO` unless a separate launch-certification ticket explicitly changes that.
 
 ## Recently completed / HISTORICAL
 
