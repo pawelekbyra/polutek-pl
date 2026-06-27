@@ -74,7 +74,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   updatedAt: Date;
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
-  assets?: AdminVideoAssetDto[];
+  assets?: AdminVideoDtoAsset[];
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
   publishAfterAssetReadyRequestedAt: Date | null;
@@ -82,9 +82,9 @@ export interface AdminVideoDto extends BaseVideoDto {
   publishAfterAssetReadyError: string | null;
 }
 
-type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
+export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
 
-type AdminVideoAssetInput = {
+export type AdminVideoAssetInput = {
   id: string;
   videoId: string;
   provider: StorageProvider;
@@ -109,7 +109,9 @@ type AdminVideoAssetInput = {
   updatedAt: Date;
 };
 
-type AdminVideoInput = PublicVideoInput & {
+export type AdminVideoDtoAsset = AdminVideoAssetDto;
+
+export type AdminVideoInput = PublicVideoInput & {
   videoUrl: string | null;
   status: VideoStatus;
   creatorId: string;
