@@ -34,7 +34,7 @@ vi.mock('@/lib/modules/patron/infrastructure/patron.repository', () => {
 
 describe('grantPatron use case', () => {
   it('requires admin or system actor', async () => {
-    const actor: Actor = { type: 'user', userId: 'u1', isPatron: false };
+    const actor: Actor = { type: 'user', userId: 'u1' };
     const ctx = createAppContext({
         actor,
         prisma: {

@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pay
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { paymentId } = await params;
-    const ctx = createAppContext({ actor: { type: 'user', userId, isPatron: false } });
+    const ctx = createAppContext({ actor: { type: 'user', userId } });
     const result = await getOwnedPaymentStatus({ paymentId, userId }, ctx);
     if (!result.ok) return handleApiError(result.error);
     if (!result.data) return NextResponse.json({ error: 'Not found' }, { status: 404 });

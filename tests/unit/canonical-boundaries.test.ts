@@ -38,7 +38,7 @@ describe("Canonical Boundaries Verification", () => {
 
   describe("Video Access - Revoked Admin", () => {
     it("VERIFY: Revoked admin (USER type actor) cannot access draft/private videos", async () => {
-      const revokedAdminActor = { type: "user" as const, userId: "revoked_1", isPatron: false };
+      const revokedAdminActor = { type: "user" as const, userId: "revoked_1" };
       const ctx = createCtx(revokedAdminActor);
 
       const draftVideo = {
@@ -85,7 +85,7 @@ describe("Canonical Boundaries Verification", () => {
 
   describe("Comment Policy - Revoked Admin", () => {
     it("VERIFY: Actor of type 'user' (revoked admin) cannot perform moderator actions", () => {
-        const revokedAdminActor = { type: "user" as const, userId: "revoked_1", isPatron: false };
+        const revokedAdminActor = { type: "user" as const, userId: "revoked_1" };
 
         expect(CommentPolicy.canModerateComment(revokedAdminActor, false)).toBe(false);
         expect(CommentPolicy.canDeleteComment(revokedAdminActor, "other_author", false)).toBe(false);

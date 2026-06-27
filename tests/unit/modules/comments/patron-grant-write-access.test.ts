@@ -154,7 +154,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const result = await createVideoComment(
       { videoId, text: 'hello' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(result.ok).toBe(true);
@@ -169,7 +169,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const result = await createVideoComment(
       { videoId, text: 'hello' },
-      createCtx({ type: 'user', userId, isPatron: true }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(result.ok).toBe(false);
@@ -187,7 +187,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const result = await toggleCommentLike(
       { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(result.ok).toBe(true);
@@ -203,7 +203,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const result = await toggleCommentLike(
       { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId, isPatron: true }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(result.ok).toBe(false);
@@ -221,7 +221,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const result = await toggleVideoLike(
       { videoId },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(result.ok).toBe(true);
@@ -325,7 +325,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const readResult = await listVideoComments(
       { videoId, sortBy: 'newest', limit: 10 },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(readResult.ok).toBe(true);
@@ -338,7 +338,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const writeResult = await createVideoComment(
       { videoId, text: 'non-patron should not write' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(writeResult.ok).toBe(false);
@@ -358,7 +358,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const readResult = await listVideoComments(
       { videoId, sortBy: 'newest', limit: 10 },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(readResult.ok).toBe(true);
@@ -370,11 +370,11 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const reactionResult = await toggleCommentLike(
       { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
     const reportResult = await reportComment(
       { commentId, reason: 'SPAM' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(reactionResult.ok).toBe(false);
@@ -407,7 +407,7 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const readResult = await listVideoComments(
       { videoId, sortBy: 'newest', limit: 10 },
-      createCtx({ type: 'user', userId, isPatron: true }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(readResult.ok).toBe(true);
@@ -422,12 +422,12 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const writeResult = await createVideoComment(
       { videoId, text: 'stale patron flag should not write' },
-      createCtx({ type: 'user', userId, isPatron: true }),
+      createCtx({ type: 'user', userId }),
     );
 
     const reactionResult = await toggleCommentLike(
       { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId, isPatron: true }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(writeResult.ok).toBe(false);
@@ -450,18 +450,18 @@ describe('Comments PatronGrant-backed write access', () => {
 
     const createResult = await createVideoComment(
       { videoId, text: 'patron smoke comment' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     mockPrisma.comment.findUnique.mockResolvedValue({ ...commentWithAuthor, authorId: 'other-user' });
 
     const reactionResult = await toggleCommentLike(
       { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
     const reportResult = await reportComment(
       { commentId, reason: 'SPAM' },
-      createCtx({ type: 'user', userId, isPatron: false }),
+      createCtx({ type: 'user', userId }),
     );
 
     expect(createResult.ok).toBe(true);

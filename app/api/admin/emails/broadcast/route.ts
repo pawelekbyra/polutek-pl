@@ -15,7 +15,12 @@ export async function POST(req: NextRequest) {
   );
   if (response) return response;
 
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const schema = z.object({
     subject: z.string().optional(),
     body: z.string().optional(),

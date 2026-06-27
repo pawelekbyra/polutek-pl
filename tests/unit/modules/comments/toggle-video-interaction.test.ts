@@ -51,7 +51,7 @@ describe('Video Interaction Use Cases', () => {
 
     it('denies user without video access', async () => {
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
-      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) {
           expect(result.error.type).toBe('FORBIDDEN');
@@ -64,7 +64,7 @@ describe('Video Interaction Use Cases', () => {
       mockPrisma.videoLike.findUnique.mockResolvedValue(null);
       mockPrisma.videoDislike.findUnique.mockResolvedValue(null);
 
-      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId }));
 
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.liked).toBe(true);
@@ -77,7 +77,7 @@ describe('Video Interaction Use Cases', () => {
       mockPrisma.videoLike.findUnique.mockResolvedValue({ id: 'l1' });
       mockPrisma.videoDislike.findUnique.mockResolvedValue(null);
 
-      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId }));
 
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.liked).toBe(false);

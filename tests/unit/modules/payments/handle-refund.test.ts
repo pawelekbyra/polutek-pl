@@ -75,7 +75,7 @@ describe('handleRefund', () => {
 
     (revokePatron as any).mockResolvedValue({
       ok: true,
-      data: { userId, isPatron: false, normalizedTotal: 0 },
+      data: { userId, normalizedTotal: 0 },
     });
 
     const result = await handleRefund({ paymentId, reportedRefundedMinor: amountMinor }, ctx);
@@ -115,7 +115,7 @@ describe('handleRefund', () => {
 
     (recalculatePatronStatus as any).mockResolvedValue({
       ok: true,
-      data: { userId, isPatron: true, normalizedTotal: 500 },
+      data: { userId, normalizedTotal: 500 },
     });
 
     const result = await handleRefund({ paymentId, reportedRefundedMinor: refundMinor }, ctx);

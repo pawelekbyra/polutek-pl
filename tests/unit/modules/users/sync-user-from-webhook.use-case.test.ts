@@ -90,7 +90,7 @@ describe('SyncUserFromWebhookUseCase', () => {
       data: { email: expect.stringMatching(/^user@example\.com_stale_/) },
     });
     expect(prisma.user.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ id: 'new_user', email: 'user@example.com', isPatron: false, role: 'USER' }),
+      data: expect.objectContaining({ id: 'new_user', email: 'user@example.com', role: 'USER' }),
     });
     expect(prisma.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'old_user' } });
     expect(prisma.emailPreference.deleteMany).toHaveBeenCalledWith({ where: { userId: 'old_user' } });

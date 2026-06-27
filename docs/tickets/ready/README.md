@@ -37,16 +37,21 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | Order | Ticket | Status | Evidence |
 | ---: | --- | --- | --- |
 | 1 | `REFACTORING-ROADMAP-2026-06-27` | `ACTIVE` | README pointer added in commit `ef9f6a125a7899d350dd04ed7d474263281272e5` |
-| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `TODO` | — |
-| 1.2 | `BUG-002` — admin users export auth check before processing | `TODO` | — |
-| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `TODO` | — |
-| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `TODO` | — |
-| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` | — |
-| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` | — |
-| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `TODO` | — |
+| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `DONE` | Zweryfikowane w kodzie: `record-playback-event.use-case.ts:227-229` try/catch obecny |
+| 1.2 | `BUG-002` — admin users export auth check before processing | `DONE` | Zweryfikowane w kodzie: `app/api/admin/users/export/route.ts:12` requireAdminForApi na początku |
+| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `DONE` | Zweryfikowane w kodzie: wszystkie 4 routes używają `fromUseCaseResult()` |
+| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `DONE` | Zweryfikowane w kodzie: używa `statusCode` zamiast `includes('Forbidden')` |
+| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `DONE` | Zweryfikowane w kodzie: `thumbnail-response.service.ts:99` sprawdza `NEXT_PUBLIC_BLOB_PUBLIC_HOST` |
+| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `video.repository.ts:268` zmienione na `?? ''` |
+| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: try/catch przy `req.json()` w `emails/broadcast/route.ts` (actions już miało) |
 | 1.8 | `#1204` — complete multi-source video system (diagnostics, YouTube thumbnail, SEO, oEmbed, security tests) | `DONE` | PR claude/pr-1200-review-7ru1bo |
-| 2 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | — |
-| 3 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | — |
+| 2.1 | `INCOMPLETE-007` — remove dead `Actor.isPatron` | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: usunięte z `actor.ts`, konstruktorów i testów |
+| 2.2 | `INCOMPLETE-004` — bounce/complaint email auto-suppression | `DONE` | Zweryfikowane w kodzie: `handle-resend-webhook.use-case.ts:269` ustawia `marketingEmails: false` |
+| 2.3 | `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper | `DONE` | Zweryfikowane w kodzie: `VideoPlayer.tsx:456-458` komentarz potwierdza świadomą decyzję — PremiumWrapper owns loading |
+| 2.4 | `CLEANUP-003` — user-visible typo cleanup | `DONE` | Zweryfikowane w kodzie: `LanguageContext.tsx:76` — `Subskrybuj` poprawne |
+| 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
+| 3 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-001, 002, 003, 005, 006 |
+| 4 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | Pozostałe: CLEANUP-001, 002, 005, 006 |
 
 ## Roadmap progress tracker
 
@@ -57,30 +62,33 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ### Critical bugs from roadmap
 
-- [ ] `BUG-001` — Redis failure fallback in playback-event recording
-- [ ] `BUG-002` — admin users export auth check before processing
-- [ ] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500
-- [ ] `BUG-004` — replace string-matching error classification in payment/admin routes
-- [ ] `BUG-005` — support custom Vercel Blob public host in thumbnail response service
-- [ ] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data
-- [ ] `BUG-007` — malformed JSON handling in admin routes
+- [x] `BUG-001` — Redis failure fallback in playback-event recording — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-002` — admin users export auth check before processing — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-004` — replace string-matching error classification in payment/admin routes — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-005` — support custom Vercel Blob public host in thumbnail response service — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `BUG-007` — malformed JSON handling in admin routes — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 
 ### Incomplete features from roadmap
 
 - [ ] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation decision/work
 - [ ] `INCOMPLETE-002` — referral system finish-or-remove decision/work
 - [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync
-- [ ] `INCOMPLETE-004` — bounce/complaint email auto-suppression
+- [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
 - [ ] `INCOMPLETE-005` — admin refund endpoint/UI
 - [ ] `INCOMPLETE-006` — Stripe reconciliation job
-- [ ] `INCOMPLETE-007` — remove dead `Actor.isPatron`
-- [ ] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper
+- [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 
 ### Cleanup from roadmap
 
 - [ ] `CLEANUP-001` — legacy service layer migration/removal map execution
 - [ ] `CLEANUP-002` — API error handling standardization
-- [ ] `CLEANUP-003` — user-visible typo cleanup
+- [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
+- [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [ ] `CLEANUP-005` — SearchPage missing sizes in Image
+- [ ] `CLEANUP-006` — CoverImageUpload zbędne unoptimized
 
 ## Working rules for this mode
 

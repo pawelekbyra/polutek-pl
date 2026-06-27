@@ -43,11 +43,9 @@ export async function POST(req: NextRequest) {
     const tempCtx = createAppContext();
     const userResult = await getOrCreateCurrentUser(tempCtx, userId);
 
-    // Create actor from user result or auth session
     const actor: Actor = {
       type: 'user',
       userId,
-      isPatron: userResult?.isPatron ?? false
     };
     const ctx = createAppContext(actor);
 

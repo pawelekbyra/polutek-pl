@@ -73,7 +73,7 @@ describe('Audit Module', () => {
 
     const ctx = createAppContext({
       prisma: mockPrisma,
-      actor: { type: 'user', userId: 'user-123', isPatron: false },
+      actor: { type: 'user', userId: 'user-123' },
     });
 
     await recordAuditEvent(ctx, { action: 'USER_ACTION' });

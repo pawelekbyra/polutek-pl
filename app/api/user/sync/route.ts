@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const ctx = createAppContext({
-      actor: { type: "user", userId, isPatron: false },
+      actor: { type: "user", userId },
     });
 
     // Ensure user exists using modular use case

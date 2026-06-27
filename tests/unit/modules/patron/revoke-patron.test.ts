@@ -36,7 +36,7 @@ describe('revokePatron use case', () => {
   });
 
   it('requires admin or system actor', async () => {
-    const userActor: Actor = { type: 'user', userId: 'u1', isPatron: true };
+    const userActor: Actor = { type: 'user', userId: 'u1' };
     const userCtx = createAppContext({
         actor: userActor,
         prisma: {
@@ -54,7 +54,7 @@ describe('revokePatron use case', () => {
   it('successfully revokes all patron status if no paymentId provided', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue(null);
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', isPatron: false, paymentTotals: [] });
+    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.listActiveGrants.mockResolvedValue([]);
 
     const result = await revokePatron({ userId: 'user-1', note: 'test revoke' }, ctx);
@@ -70,7 +70,7 @@ describe('revokePatron use case', () => {
   it('successfully revokes specific grant if paymentId provided', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue({ id: 'g2', source: 'admin', createdAt: new Date() });
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', isPatron: true, patronSource: 'admin', paymentTotals: [] });
+    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', patronSource: 'admin', paymentTotals: [] });
     mockRepo.listActiveGrants.mockResolvedValue([{ id: 'g2' }]);
 
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123', note: 'refund' }, ctx);
@@ -87,7 +87,7 @@ describe('revokePatron use case', () => {
   it('sets isPatron to false if last grant revoked', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue(null);
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', isPatron: false, paymentTotals: [] });
+    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.listActiveGrants.mockResolvedValue([]);
 
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123' }, ctx);

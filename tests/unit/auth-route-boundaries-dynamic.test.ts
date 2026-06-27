@@ -159,7 +159,7 @@ describe("dynamic auth route boundaries", () => {
       { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     await hideAdminComment("comment_1", {
-      actor: { type: "user", userId: "revoked_admin", isPatron: false },
+      actor: { type: "user", userId: "revoked_admin" },
     } as never);
 
     expect(patch.status).toBe(403);

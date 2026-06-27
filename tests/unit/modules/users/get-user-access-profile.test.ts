@@ -70,7 +70,7 @@ describe('getUserAccessProfile Use Case', () => {
   });
 
   it('correctly identifies deleted user', async () => {
-    vi.mocked(UserRepository.prototype.findById).mockResolvedValue({ id: 'u3', isDeleted: true, role: 'USER', isPatron: true } as any);
+    vi.mocked(UserRepository.prototype.findById).mockResolvedValue({ id: 'u3', isDeleted: true, role: 'USER' } as any);
     vi.mocked(UserRepository.prototype.hasActivePatronGrant).mockResolvedValue(false);
     const result = await getUserAccessProfile(ctx, 'u3');
     expect(result?.isDeleted).toBe(true);

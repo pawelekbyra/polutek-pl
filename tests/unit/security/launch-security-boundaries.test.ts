@@ -220,9 +220,9 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
 
   it('keeps comment/community mutations tied to authenticated access and object ownership/admin rules', () => {
     expect(CommentPolicy.canCreateComment({ type: 'guest' }, { hasAccess: true })).toBe(false);
-    expect(CommentPolicy.canReactToComment({ type: 'user', userId: 'u1', isPatron: false }, { hasAccess: false, reason: 'PATRON_REQUIRED' })).toBe(false);
-    expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1', isPatron: true }, 'u2')).toBe(false);
-    expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1', isPatron: true }, 'u1')).toBe(true);
+    expect(CommentPolicy.canReactToComment({ type: 'user', userId: 'u1' }, { hasAccess: false, reason: 'PATRON_REQUIRED' })).toBe(false);
+    expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1' }, 'u2')).toBe(false);
+    expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1' }, 'u1')).toBe(true);
     expect(CommentPolicy.canDeleteComment({ type: 'admin', userId: 'admin-1' }, 'u2', false)).toBe(true);
     expect(CommentPolicy.canReportComment({ type: 'guest' }, { hasAccess: true })).toBe(false);
   });

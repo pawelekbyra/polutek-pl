@@ -73,7 +73,7 @@ describe('Comments Core Use Cases', () => {
     it('denies non-patron on patron-only video (returns FORBIDDEN)', async () => {
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
       mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
-      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) {
           expect(result.error.type).toBe('FORBIDDEN');
@@ -87,7 +87,7 @@ describe('Comments Core Use Cases', () => {
       mockPrisma.comment.create.mockResolvedValue({ id: 'new-c', createdAt: new Date(), updatedAt: new Date() });
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'new-c', videoId, createdAt: new Date(), updatedAt: new Date(), author: { id: userId, role: 'USER' }, reactions: [] });
 
-      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId, isPatron: true }));
+      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(true);
     });
   });
@@ -95,7 +95,7 @@ describe('Comments Core Use Cases', () => {
   describe('updateComment', () => {
     it('denies non-owner', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', authorId: 'other', status: 'VISIBLE' });
-      const result = await updateComment({ commentId: 'c1', text: 'new text' }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await updateComment({ commentId: 'c1', text: 'new text' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });
@@ -105,7 +105,7 @@ describe('Comments Core Use Cases', () => {
       mockPrisma.comment.update.mockResolvedValue({ id: 'c1' });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'admin' } });
 
-      const result = await updateComment({ commentId: 'c1', text: 'new text' }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await updateComment({ commentId: 'c1', text: 'new text' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(true);
     });
   });
@@ -115,7 +115,7 @@ describe('Comments Core Use Cases', () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', authorId: 'other', videoId });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'mod' } });
 
-      const result = await deleteComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: 'mod', isPatron: false }));
+      const result = await deleteComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: 'mod' }));
       expect(result.ok).toBe(true);
     });
 
@@ -123,7 +123,7 @@ describe('Comments Core Use Cases', () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', authorId: 'other', videoId });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'mod' } });
 
-      const result = await deleteComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: 'user2', isPatron: false }));
+      const result = await deleteComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: 'user2' }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });

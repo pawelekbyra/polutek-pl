@@ -27,7 +27,7 @@ describe('getGatedMedia Use Case', () => {
       data: { hasAccess: true } as any,
     });
 
-    const ctx = createAppContext({ actor: { type: 'user', userId: 'u1', isPatron: false }, prisma: mockPrisma });
+    const ctx = createAppContext({ actor: { type: 'user', userId: 'u1' }, prisma: mockPrisma });
     const result = await getGatedMedia({ videoIdOrSlug: 'v1' }, ctx);
 
     expect(result.ok).toBe(true);

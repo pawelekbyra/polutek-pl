@@ -12,7 +12,7 @@ describe('UserPolicy.canSeeProfile', () => {
   });
 
   it('regular user cannot see deleted user', () => {
-    const actor: Actor = { type: 'user', userId: 'u3', isPatron: false };
+    const actor: Actor = { type: 'user', userId: 'u3' };
     expect(UserPolicy.canSeeProfile(actor, deletedUser)).toBe(false);
   });
 
@@ -27,7 +27,7 @@ describe('UserPolicy.canSeeProfile', () => {
   });
 
   it('regular user can see active user', () => {
-    const actor: Actor = { type: 'user', userId: 'u3', isPatron: false };
+    const actor: Actor = { type: 'user', userId: 'u3' };
     expect(UserPolicy.canSeeProfile(actor, activeUser)).toBe(true);
   });
 });

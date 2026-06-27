@@ -73,7 +73,7 @@ describe('Payment Settings Use Cases', () => {
 
   describe('updatePaymentSettings', () => {
     it('should reject non-admin actors', async () => {
-      ctx.actor = { type: 'user', userId: 'user_1', isPatron: false } as Actor;
+      ctx.actor = { type: 'user', userId: 'user_1' } as Actor;
 
       const result = await updatePaymentSettings({
         limits: [{ currency: 'PLN', minAmount: 20 }]

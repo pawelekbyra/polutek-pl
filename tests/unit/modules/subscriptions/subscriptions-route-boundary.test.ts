@@ -37,7 +37,7 @@ describe('subscriptions route behavior', () => {
     });
 
     it('returns status for authenticated user without requiring email claim', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
       vi.mocked(GetSubscriptionStatusUseCase.execute).mockResolvedValue({
         isSubscribed: true,
@@ -59,7 +59,7 @@ describe('subscriptions route behavior', () => {
 
   describe('POST', () => {
     it('returns 400 when trusted email is missing from claims', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'POST' });
@@ -72,7 +72,7 @@ describe('subscriptions route behavior', () => {
     });
 
     it('syncs user and subscribes when trusted email is present', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({
         sessionClaims: { email: 'test@example.com', name: 'Test' }
       } as any);
@@ -89,7 +89,7 @@ describe('subscriptions route behavior', () => {
     });
 
     it('maps EMAIL_PREFERENCE_IDENTITY_CONFLICT to HTTP 409', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({
         sessionClaims: { email: 'test@example.com' }
       } as any);
@@ -110,7 +110,7 @@ describe('subscriptions route behavior', () => {
 
   describe('DELETE', () => {
     it('returns 400 when trusted email is missing', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'DELETE' });
@@ -121,7 +121,7 @@ describe('subscriptions route behavior', () => {
     });
 
     it('syncs user and unsubscribes when trusted email is present', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({
         sessionClaims: { primary_email_address: 'test@example.com' }
       } as any);
@@ -135,7 +135,7 @@ describe('subscriptions route behavior', () => {
     });
 
     it('remains fail-safe and returns success even if conflict occurred (behavioral proof)', async () => {
-      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1', isPatron: false });
+      vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
       vi.mocked(auth).mockResolvedValue({
         sessionClaims: { primary_email_address: 'test@example.com' }
       } as any);

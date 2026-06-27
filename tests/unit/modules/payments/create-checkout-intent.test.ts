@@ -69,7 +69,7 @@ describe('createCheckoutIntent use case', () => {
   });
 
   it('successfully creates checkout intent for user actor', async () => {
-    const actor: Actor = { type: 'user', userId: 'user-1', isPatron: false };
+    const actor: Actor = { type: 'user', userId: 'user-1' };
     const ctx = createAppContext({
         actor,
         prisma: {} as any,

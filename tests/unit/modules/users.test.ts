@@ -84,7 +84,7 @@ describe('Users Module', () => {
 
       const ctx = createAppContext({
         prisma: mockPrisma,
-        actor: { type: 'user', userId: 'user_123', isPatron: false }
+        actor: { type: 'user', userId: 'user_123' }
       });
       const profile = await getActorAccessProfile(ctx);
       expect(profile?.id).toBe('user_123');
@@ -109,7 +109,7 @@ describe('Users Module', () => {
 
       const ctx = createAppContext({
         prisma: mockPrisma,
-        actor: { type: 'user', userId: 'user_123', isPatron: false }
+        actor: { type: 'user', userId: 'user_123' }
       });
       const profile = await getActorAccessProfile(ctx);
       expect(profile).toBeNull();
@@ -180,7 +180,7 @@ describe('Users Module', () => {
         },
       } as any;
 
-      const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_1', isPatron: false } });
+      const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_1' } });
       const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
 
       expect(profile).toBeDefined();
@@ -192,7 +192,7 @@ describe('Users Module', () => {
     it('returns null for deleted user when accessed by non-admin', async () => {
         const mockUser = { id: 'user_1', isDeleted: true };
         const mockPrisma = { user: { findUnique: vi.fn().mockResolvedValue(mockUser) } } as any;
-        const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_2', isPatron: false } });
+        const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_2' } });
 
         const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
         expect(profile).toBeNull();
@@ -217,7 +217,7 @@ describe('Users Module', () => {
 
       const ctx = createAppContext({
         prisma: mockPrisma,
-        actor: { type: 'user', userId: 'user_1', isPatron: false }
+        actor: { type: 'user', userId: 'user_1' }
       });
 
       const result = await SyncCurrentUserUseCase.execute(ctx);
@@ -229,7 +229,7 @@ describe('Users Module', () => {
 
   describe('GetOrCreateUserUseCase', () => {
     it('does not allow escalating isPatron or role through sync', async () => {
-       const mockUser = { id: 'user_1', role: 'USER', isPatron: false };
+       const mockUser = { id: 'user_1', role: 'USER' };
        const mockPrisma = {
          user: {
            findUnique: vi.fn().mockResolvedValue(mockUser),
