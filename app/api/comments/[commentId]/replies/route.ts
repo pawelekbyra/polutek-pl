@@ -14,13 +14,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ comme
 
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "guest") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const ctx = createAppContext({ actor });
     const result = await listCommentReplies(
       { commentId: params.commentId, cursor, limit },
