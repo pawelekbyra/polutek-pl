@@ -29,14 +29,14 @@ describe('sitemap', () => {
 
   it('generates basic routes and creator/video routes', async () => {
     vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue({ slug: 'main' } as any);
-    vi.mocked(VideoContentService.getSitemapVideos).mockResolvedValue([{ id: 'v1', publishedAt: new Date() }] as any);
+    vi.mocked(VideoContentService.getSitemapVideos).mockResolvedValue([{ id: 'v1', slug: 'my-video', publishedAt: new Date() }] as any);
 
     const result = await sitemap();
 
     expect(result).toEqual(expect.arrayContaining([
       expect.objectContaining({ url: 'https://test.local' }),
       expect.objectContaining({ url: 'https://test.local/channel/main' }),
-      expect.objectContaining({ url: 'https://test.local/?v=v1' }),
+      expect.objectContaining({ url: 'https://test.local/watch/my-video' }),
     ]));
   });
 });
