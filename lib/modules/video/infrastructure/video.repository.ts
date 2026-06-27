@@ -236,7 +236,7 @@ export class VideoRepository {
       description: input.description ?? null,
       titleEn: input.titleEn ?? null,
       descriptionEn: input.descriptionEn ?? null,
-      thumbnailUrl: input.thumbnailUrl ?? null,
+      thumbnailUrl: input.thumbnailUrl ?? '',
       duration: input.duration ?? null,
       tier: input.tier || 'PUBLIC',
       videoUrl: input.videoUrl?.trim() || '',
