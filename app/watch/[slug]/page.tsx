@@ -98,12 +98,12 @@ export async function generateMetadata(props: WatchPageProps): Promise<Metadata>
   const video = await getPublishedVideoBySlug(slug);
 
   if (!video) {
-    return { title: "Nie znaleziono filmu — Polutek.pl" };
+    return { title: "Nie znaleziono filmu — POLUTEK.PL" };
   }
 
   return {
-    title: `${getCanonicalVideoTitle(video)} — Polutek.pl`,
-    description: getCanonicalVideoDescription(video) || "Film na Polutek.pl",
+    title: `${getCanonicalVideoTitle(video)} — POLUTEK.PL`,
+    description: getCanonicalVideoDescription(video) || "Film na POLUTEK.PL",
     openGraph: {
       title: getCanonicalVideoTitle(video),
       description: getCanonicalVideoDescription(video) || undefined,
