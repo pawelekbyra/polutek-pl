@@ -28,6 +28,7 @@ import { VideoUploadSection } from "../components/VideoUploadSection";
 import { readAdminApiError } from "../components/api-error";
 import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import { VideoSourcesPanel } from "../components/VideoSourcesPanel";
 
 export default function VideoDetailsPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
@@ -171,66 +172,23 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="md:col-span-2 space-y-6">
-                            <Card className="shadow-sm">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle className="text-lg">Zasób Cloudflare Stream</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => handleAction('sync-cloudflare')} disabled={video.asset?.provider !== 'CLOUDFLARE_STREAM'}>
-                                            <RotateCcw className="mr-2 h-3 w-3" /> Synchronizuj status
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {video.asset?.provider === 'CLOUDFLARE_STREAM' ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider</Label><div><Badge variant="secondary">{video.asset.provider}</Badge></div></div>
-                                                    <div>
-                                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Stan przetwarzania</Label>
-                                                        <div><Badge variant={video.asset.processingState === 'READY' ? 'default' : video.asset.processingState === 'FAILED' ? 'destructive' : 'outline'}>{video.asset.processingState}</Badge></div>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Primary Asset</Label><div>{video.asset.isPrimary ? <Badge className="bg-green-600">TAK — używany do odtwarzania</Badge> : <Badge variant="outline">NIE — nie używany do odtwarzania</Badge>}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider UID</Label><div className="p-2 bg-muted rounded font-mono text-xs break-all">{video.asset.providerAssetId}</div></div>
-                                                {video.asset.failureReason && (
-                                                    <div className="p-3 bg-red-50 border border-red-100 rounded text-red-800 text-xs">
-                                                        <p className="font-bold flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Błąd providera:</p>
-                                                        <p>{video.asset.failureReason}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Ostatnia synchronizacja</Label><div className="text-sm">{formatDate(video.asset.providerSyncedAt)}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Rozpoczęto przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingStartedAt)}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Zakończono przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingEndedAt) || "W toku..."}</div></div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="py-12 text-center border-dashed border-2 rounded-xl bg-muted/20">
-                                            <FileVideo className="h-10 w-10 mx-auto opacity-20 mb-2" />
-                                            <p className="text-sm text-muted-foreground italic">Brak przypisanego zasobu Cloudflare Stream.</p>
-                                        </div>
-                                    )}
+                            <VideoSourcesPanel
+                              videoId={video.id}
+                              videoTier={video.tier}
+                              sources={video.assets || (video.asset ? [video.asset] : [])}
+                              onRefresh={fetchVideo}
+                            />
 
-                                    <div className="pt-6 border-t">
-                                        <h4 className="text-sm font-bold mb-4">Inne akcje media</h4>
-                                        <div className="flex flex-wrap gap-3">
-                                            {video.videoUrl && !video.asset && (
-                                                <Button variant="secondary" size="sm" onClick={() => handleAction('import-legacy-to-cloudflare', { publishAfterAssetReady: true })}>
-                                                    <Send className="mr-2 h-4 w-4" /> Importuj legacy URL do Cloudflare
-                                                </Button>
-                                            )}
-                                            <Button variant="outline" size="sm" onClick={() => {
-                                                const uid = window.prompt("Podaj Cloudflare Stream UID:");
-                                                if (uid) handleAction('attach-asset', { providerAssetId: uid, publishAfterAssetReady: true });
-                                            }}>
-                                                <Settings className="mr-2 h-4 w-4" /> Podepnij ręcznie UID
-                                            </Button>
-                                        </div>
-                                    </div>
+                            {video.videoUrl && !video.asset && (
+                              <Card className="shadow-sm">
+                                <CardHeader><CardTitle className="text-lg">Akcje media</CardTitle></CardHeader>
+                                <CardContent>
+                                  <Button variant="secondary" size="sm" onClick={() => handleAction('import-legacy-to-cloudflare', { publishAfterAssetReady: true })}>
+                                    <Send className="mr-2 h-4 w-4" /> Importuj legacy URL do Cloudflare
+                                  </Button>
                                 </CardContent>
-                            </Card>
+                              </Card>
+                            )}
                         </div>
 
                         <div className="space-y-6">
