@@ -141,10 +141,10 @@ const Navbar = () => {
                   if (setLanguage) setLanguage("pl");
                 }}
                 className={cn(
-                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
+                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all border",
                   language === "pl"
-                    ? "bg-zinc-900 text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-zinc-50 text-zinc-950 border-zinc-300 shadow-sm"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-50",
                 )}
               >
                 PL
@@ -154,10 +154,10 @@ const Navbar = () => {
                   if (setLanguage) setLanguage("en");
                 }}
                 className={cn(
-                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all",
+                  "text-[11px] font-bold tracking-widest uppercase px-[9px] py-1 rounded-full transition-all border",
                   language === "en"
-                    ? "bg-zinc-900 text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-zinc-50 text-zinc-950 border-zinc-300 shadow-sm"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-50",
                 )}
               >
                 EN
