@@ -32,12 +32,12 @@ export function selectPrimaryVideoAsset<T extends SelectableVideoAsset>(
   return ordered.find((asset) => asset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) ?? ordered[0];
 }
 
-export function withPrimaryAsset<T extends { assets?: VideoAsset[] | null }>(
+export function withPrimaryAsset<T extends { assets?: VideoAsset[] | null; asset?: VideoAsset | null }>(
   video: T | null
 ): (T & { asset: VideoAsset | null }) | null {
   if (!video) return null;
   return {
     ...video,
-    asset: selectPrimaryVideoAsset(video.assets),
+    asset: selectPrimaryVideoAsset(video.assets) ?? video.asset ?? null,
   };
 }
