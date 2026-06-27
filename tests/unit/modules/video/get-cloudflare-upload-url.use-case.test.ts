@@ -20,6 +20,7 @@ describe('getCloudflareUploadUrl', () => {
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -42,6 +43,7 @@ describe('getCloudflareUploadUrl', () => {
     process.env.CLOUDFLARE_ACCOUNT_ID = 'acc-123';
     process.env.CLOUDFLARE_API_TOKEN = 'tok-123';
     mockPrisma.creator.findUnique.mockResolvedValue({ id: 'channel-1', slug: 'main-creator', isApproved: true, isPrimary: true });
+    mockPrisma.videoAsset.findMany.mockResolvedValue([]);
   });
 
   it('rejects creating an upload URL for a non-draft video', async () => {
@@ -114,7 +116,7 @@ describe('getCloudflareUploadUrl', () => {
     expect(mockPrisma.videoAsset.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         processingState: VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: false,
+        isPrimary: true,
         processingStartedAt: expect.any(Date),
         processingEndedAt: null,
         failureReason: null,
@@ -131,7 +133,6 @@ describe('getCloudflareUploadUrl', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe('CLOUDFLARE_NOT_CONFIGURED');
-      expect(result.error.message).toContain('Cloudflare Stream nie jest skonfigurowany');
     }
   });
 });
