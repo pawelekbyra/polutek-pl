@@ -1,4 +1,4 @@
-import { createSign } from "node:crypto";
+import { createPrivateKey, createSign } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,13 @@ function readPrivateKeyEnv() {
 }
 
 function normalizePrivateKey(raw: string): string {
-  return raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
+  const trimmed = raw.trim();
+  const unquoted = (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) ? trimmed.slice(1, -1) : trimmed;
+
+  return unquoted.includes("\\n") ? unquoted.replace(/\\n/g, "\n") : unquoted;
 }
 
 function getToken(req: NextRequest): string | null {
@@ -42,25 +48,71 @@ function getToken(req: NextRequest): string | null {
   );
 }
 
+function getPemSummary(raw: string, normalized: string) {
+  const lines = normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const headerLine = lines[0] ?? null;
+  const footerLine = lines[lines.length - 1] ?? null;
+  const body = lines.slice(1, -1).join("");
+
+  return {
+    containsEscapedNewlines: raw.includes("\\n"),
+    startsWithQuote: raw.trim().startsWith('"') || raw.trim().startsWith("'"),
+    endsWithQuote: raw.trim().endsWith('"') || raw.trim().endsWith("'"),
+    lineCount: lines.length,
+    headerLine,
+    footerLine,
+    bodyLooksBase64: body.length > 0 && /^[A-Za-z0-9+/=]+$/.test(body),
+    bodyLength: body.length,
+  };
+}
+
 function validatePrivateKey(raw: string) {
   const normalized = normalizePrivateKey(raw);
+  const pemSummary = getPemSummary(raw, normalized);
   const hasPemHeader = /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(normalized);
   const hasPemFooter = /-----END [A-Z ]*PRIVATE KEY-----/.test(normalized);
 
   try {
-    createSign("RSA-SHA256").update("polutek-cloudflare-stream-diagnostic").end().sign(normalized);
-    return {
-      valid: true,
-      hasPemHeader,
-      hasPemFooter,
-      error: null,
-    };
-  } catch (error) {
+    const keyObject = createPrivateKey(normalized);
+
+    try {
+      createSign("RSA-SHA256")
+        .update("polutek-cloudflare-stream-diagnostic")
+        .end()
+        .sign(keyObject);
+
+      return {
+        valid: true,
+        hasPemHeader,
+        hasPemFooter,
+        keyType: keyObject.asymmetricKeyType ?? null,
+        canCreatePrivateKey: true,
+        canSignDiagnosticPayload: true,
+        error: null,
+        pemSummary,
+      };
+    } catch (signError) {
+      return {
+        valid: false,
+        hasPemHeader,
+        hasPemFooter,
+        keyType: keyObject.asymmetricKeyType ?? null,
+        canCreatePrivateKey: true,
+        canSignDiagnosticPayload: false,
+        error: signError instanceof Error ? signError.message : "Unknown signing error",
+        pemSummary,
+      };
+    }
+  } catch (parseError) {
     return {
       valid: false,
       hasPemHeader,
       hasPemFooter,
-      error: error instanceof Error ? error.message : "Unknown private key parse/signing error",
+      keyType: null,
+      canCreatePrivateKey: false,
+      canSignDiagnosticPayload: false,
+      error: parseError instanceof Error ? parseError.message : "Unknown private key parse error",
+      pemSummary,
     };
   }
 }
@@ -115,10 +167,19 @@ export async function GET(req: NextRequest) {
       missing,
       invalid,
       privateKeyFormat: privateKeyEnv && privateKeyValidation ? {
-        containsEscapedNewlines: privateKeyEnv.raw.includes("\\n"),
+        containsEscapedNewlines: privateKeyValidation.pemSummary.containsEscapedNewlines,
+        startsWithQuote: privateKeyValidation.pemSummary.startsWithQuote,
+        endsWithQuote: privateKeyValidation.pemSummary.endsWithQuote,
+        lineCount: privateKeyValidation.pemSummary.lineCount,
+        headerLine: privateKeyValidation.pemSummary.headerLine,
+        footerLine: privateKeyValidation.pemSummary.footerLine,
+        bodyLooksBase64: privateKeyValidation.pemSummary.bodyLooksBase64,
+        bodyLength: privateKeyValidation.pemSummary.bodyLength,
         hasPemHeader: privateKeyValidation.hasPemHeader,
         hasPemFooter: privateKeyValidation.hasPemFooter,
-        canSignDiagnosticPayload: privateKeyValidation.valid,
+        keyType: privateKeyValidation.keyType,
+        canCreatePrivateKey: privateKeyValidation.canCreatePrivateKey,
+        canSignDiagnosticPayload: privateKeyValidation.canSignDiagnosticPayload,
         error: privateKeyValidation.error,
       } : null,
     },
