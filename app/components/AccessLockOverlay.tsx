@@ -25,10 +25,10 @@ const scaleClasses = {
   default: {
     content: "p-6 sm:p-8 md:p-10",
     centerCluster: "",
-    icon: "h-[clamp(6rem,13cqi,8rem)] w-[clamp(6rem,13cqi,8rem)] shrink-0 aspect-square",
+    icon: "h-[clamp(5rem,11cqi,7rem)] w-[clamp(5rem,11cqi,7rem)] shrink-0 aspect-square",
     iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
-    headline: "text-[clamp(3.25rem,13cqi,8rem)]",
-    divider: "my-[clamp(0.5rem,1.1cqi,0.7rem)] w-[clamp(8rem,22cqi,16rem)]",
+    headline: "text-[clamp(2.75rem,10.5cqi,6.5rem)]",
+    divider: "my-[clamp(0.5rem,1.1cqi,0.7rem)] w-[clamp(7rem,20cqi,14rem)]",
     cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
     ctaLine: "w-[1px] h-[clamp(12px,2.2cqi,20px)]",
     ctaText: "text-[clamp(9px,1.4cqi,14px)] tracking-[0.42em]",
