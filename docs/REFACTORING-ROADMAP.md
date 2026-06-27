@@ -508,7 +508,43 @@ NEXT_PUBLIC_SUPPORT_EMAIL=     # Wyświetlany w Footer i AccessLockOverlay
 
 ### Strefa: Konfiguracja — wyniki oczekiwane
 
-*(Agent konfiguracji jeszcze pracuje — wyniki zostaną dodane po zakończeniu)*
+**Nieużywane paczki (usunąć):**
+- `artplayer` — zera importów, projekt używa wyłącznie `@vidstack/react`
+- `tw-animate-css` — duplikuje `tailwindcss-animate`
+- `@react-email/render` — zero importów, email działa przez Resend
+- `@base-ui/react` — zero importów
+- `sharp` — zero importów (Next.js ma własną optymalizację obrazów)
+- Kilka `@radix-ui/*` paczek (checkbox, dialog, dropdown-menu, label, select, tabs) — zero bezpośrednich importów
+- `shadcn` — narzędzie CLI, powinno być w `devDependencies`, nie `dependencies`
+
+**Zduplikowane funkcjonalności:**
+- Dwa playery: `artplayer` + `vidstack` — usunąć artplayer
+- Dwie biblioteki animacji: `tailwindcss-animate` + `tw-animate-css` — usunąć tw-animate-css
+
+**Brakujące wpisy w `.env.example`:**
+- `VERCEL_BLOB_ACCESS` (public/private)
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+- `CLOUDFLARE_STREAM_SIGNING_KEY_ID`, `CLOUDFLARE_STREAM_SIGNING_PRIVATE_KEY`
+- `RESEND_WEBHOOK_SECRET`
+- Zmienne `E2E_*` dla testów Playwright
+- Feature flags: `ENABLE_DEBUG_LOGS`, `DEBUG_HOME_CONTENT`
+
+**Konfiguracja TypeScript — brakujące opcje:**
+- `noUnusedLocals: true` — nie włączone
+- `noUnusedParameters: true` — nie włączone
+
+**ESLint — brakujące reguły:**
+- `@typescript-eslint/recommended` — nie skonfigurowane
+- `no-console` — brak, kod produkcyjny ma `console.error/warn` zamiast strukturyzowanego loggera
+
+**CI/CD — luki:**
+- `npm audit --audit-level=high` jest **non-blocking** — powinno blokować build
+- Brak Dependabot (`.github/dependabot.yml`)
+- Brak CodeQL dla statycznej analizy bezpieczeństwa
+- E2E testy nieobecne w CI pipeline
+
+**Uwaga krytyczna dla testów:**
+- `vitest.config.ts` — `environment: 'node'` zamiast `'jsdom'` — komponenty React testowane w środowisku Node mogą nie działać poprawnie jeśli korzystają z DOM API
 
 ---
 
