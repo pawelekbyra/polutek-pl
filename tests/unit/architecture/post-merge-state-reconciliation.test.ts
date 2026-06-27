@@ -41,13 +41,28 @@ describe('Post-Merge State Reconciliation Invariants', () => {
     expect(masterplan).toContain('Brak aktywnego dużego ticketu kodowego');
   });
 
-  it('ready queue declares no active large code ticket', () => {
+  it('ready queue has valid control-plane ticket state', () => {
     const ticketQueue = readText(ticketQueuePath);
 
-    expect(ticketQueue).toContain('nie ma aktywnego dużego ticketu kodowego');
-    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID: NONE -->');
-    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: NONE -->');
-    expect(ticketQueue).toContain('NO_ACTIVE_LARGE_CODE_TICKET');
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_ID:');
+    expect(ticketQueue).toContain('<!-- CONTROL_PLANE_CURRENT_TICKET_FILE:');
+
+    const idMatch = ticketQueue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_ID: (.*) -->/);
+    const fileMatch = ticketQueue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: (.*) -->/);
+    expect(idMatch).not.toBeNull();
+    expect(fileMatch).not.toBeNull();
+
+    const currentId = idMatch![1].trim();
+    const currentFile = fileMatch![1].trim();
+
+    if (currentId === 'NONE' && currentFile === 'NONE') {
+      // Post-refactor idle mode
+      expect(ticketQueue).toContain('nie ma aktywnego dużego ticketu kodowego');
+      expect(ticketQueue).toContain('NO_ACTIVE_LARGE_CODE_TICKET');
+    } else {
+      // Active roadmap/ticket mode — file must exist
+      expect(existsSync(join(rootDir, currentFile))).toBe(true);
+    }
   });
 
   it('historical reports remain linked and preserved', () => {

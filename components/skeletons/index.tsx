@@ -38,18 +38,34 @@ export function HomePageSkeleton() {
       </div>
       <div className="max-w-6xl mx-auto w-full px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="col-span-12 lg:col-span-8">
             <PlayerSkeleton />
-            <div className="space-y-4 pt-3">
-              <Skeleton className="h-8 w-3/4" />
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
+            <div className="mt-[18px] mb-[14px]">
+              <Skeleton className="h-[26px] w-3/4" />
+            </div>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-[14px]">
+              <div className="flex items-center gap-[13px]">
+                <Skeleton className="w-[46px] h-[46px] rounded-full shrink-0" />
+                <div className="space-y-[5px]">
+                  <Skeleton className="h-[15px] w-[130px]" />
+                  <Skeleton className="h-[12px] w-[90px]" />
                 </div>
+                <Skeleton className="ml-[6px] h-[34px] w-[110px] rounded-full" />
               </div>
-              <Skeleton className="h-24 w-full rounded-xl bg-[#ebebeb]" />
+              <div className="flex items-center gap-[9px]">
+                <Skeleton className="h-[38px] w-[120px] rounded-full" />
+                <Skeleton className="h-[38px] w-[90px] rounded-full" />
+                <Skeleton className="h-[38px] w-[38px] rounded-full" />
+              </div>
+            </div>
+            <div className="mt-[16px] bg-secondary rounded-[14px] p-[14px] space-y-[8px]">
+              <div className="flex gap-2">
+                <Skeleton className="h-[13px] w-[80px]" />
+                <Skeleton className="h-[13px] w-[100px]" />
+              </div>
+              <Skeleton className="h-[13px] w-full" />
+              <Skeleton className="h-[13px] w-5/6" />
+              <Skeleton className="h-[13px] w-2/3" />
             </div>
           </div>
           <div className="hidden lg:block lg:col-span-4 space-y-4">
@@ -106,27 +122,7 @@ export function ChannelPageSkeleton() {
 
 export function PlayerSkeleton() {
   return (
-    <div className="aspect-video w-full bg-neutral-900 rounded-xl relative overflow-hidden group">
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-          <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[15px] border-l-white/20 border-b-[10px] border-b-transparent ml-1" />
-        </div>
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-4 space-y-4 bg-gradient-to-t from-black/60 to-transparent">
-        <Skeleton className="h-1.5 w-full bg-white/20" />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-5 w-5 bg-white/20" />
-            <Skeleton className="h-5 w-5 bg-white/20" />
-            <Skeleton className="h-5 w-20 bg-white/20" />
-          </div>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-5 w-5 bg-white/20" />
-            <Skeleton className="h-5 w-5 bg-white/20" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <div className="aspect-video w-full rounded-[14px] bg-neutral-200/70 relative overflow-hidden motion-reduce:after:hidden after:absolute after:inset-0 after:translate-x-[-100%] after:animate-shimmer after:bg-gradient-to-r after:from-transparent after:via-white/40 after:to-transparent" />
   );
 }
 

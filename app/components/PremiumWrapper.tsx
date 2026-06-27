@@ -388,7 +388,7 @@ function PlaybackPlanStateOverlay({
 
           {content.action === "support" && (
             <a
-              href="mailto:pawel.perfect@gmail.com?subject=Problem%20z%20dost%C4%99pem%20do%20wideo"
+              href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'pawel.perfect@gmail.com'}?subject=Problem%20z%20dost%C4%99pem%20do%20wideo`}
               className="rounded-full border border-white/10 bg-white/5 px-8 py-3 text-[min(11px,3cqi)] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
             >
               {content.actionLabel}

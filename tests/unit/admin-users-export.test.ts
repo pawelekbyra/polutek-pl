@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/admin/users/export/route';
-import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
+import * as authUtils from '@/lib/auth-utils';
 import { exportAdminUsers } from '@/lib/modules/users';
 import { ok } from '@/lib/modules/shared/result';
 
-vi.mock('@/lib/api/app-context-factory', () => ({
-  createAppContextFromRequest: vi.fn(),
-}));
+vi.mock('@/lib/auth-utils', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return { ...actual, requireAdminForApi: vi.fn() };
+});
 
 vi.mock('@/lib/modules/users', async (importOriginal) => {
   const actual = await importOriginal<any>();
@@ -23,8 +24,9 @@ describe('Admin Users Export Route', () => {
   });
 
   it('returns 403 if actor is not an admin', async () => {
-    (createAppContextFromRequest as any).mockResolvedValue({
-      actor: { type: 'user', userId: 'user_1' }
+    vi.mocked(authUtils.requireAdminForApi).mockResolvedValue({
+      adminUserId: null,
+      response: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as any,
     });
 
     const req = new NextRequest('http://localhost/api/admin/users/export');
@@ -35,8 +37,9 @@ describe('Admin Users Export Route', () => {
 
   it('returns CSV content if actor is admin', async () => {
     const adminId = 'admin_1';
-    (createAppContextFromRequest as any).mockResolvedValue({
-      actor: { type: 'admin', userId: adminId }
+    vi.mocked(authUtils.requireAdminForApi).mockResolvedValue({
+      adminUserId: adminId,
+      response: null,
     });
 
     const mockUsers = [
