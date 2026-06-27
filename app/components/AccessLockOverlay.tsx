@@ -24,18 +24,18 @@ const shellRadius = {
 const scaleClasses = {
   default: {
     content: "p-6 sm:p-8 md:p-10",
-    centerCluster: "-translate-y-[clamp(0.2rem,1.2cqi,0.8rem)]",
-    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)] shrink-0 aspect-square",
+    centerCluster: "",
+    icon: "h-[clamp(6rem,13cqi,8rem)] w-[clamp(6rem,13cqi,8rem)] shrink-0 aspect-square",
     iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
-    headline: "text-[clamp(2rem,10cqi,6rem)]",
-    divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,18cqi,12rem)]",
+    headline: "text-[clamp(3.25rem,13cqi,8rem)]",
+    divider: "my-[clamp(0.5rem,1.1cqi,0.7rem)] w-[clamp(8rem,22cqi,16rem)]",
     cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
     ctaLine: "w-[1px] h-[clamp(12px,2.2cqi,20px)]",
     ctaText: "text-[clamp(9px,1.4cqi,14px)] tracking-[0.42em]",
   },
   thumbnail: {
     content: "p-3",
-    centerCluster: "-translate-y-[clamp(0.1rem,1cqi,0.35rem)]",
+    centerCluster: "",
     icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)] shrink-0 aspect-square",
     iconSpace: "mb-[clamp(0.35rem,2.1cqi,0.65rem)]",
     headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
@@ -46,7 +46,7 @@ const scaleClasses = {
   },
   thumbnailCompact: {
     content: "p-2",
-    centerCluster: "-translate-y-[clamp(0.05rem,0.8cqi,0.22rem)]",
+    centerCluster: "",
     icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)] shrink-0 aspect-square",
     iconSpace: "mb-[clamp(0.25rem,1.9cqi,0.48rem)]",
     headline: "text-[clamp(0.9rem,13cqi,2rem)]",
@@ -68,6 +68,7 @@ const overlayConfig = {
     ctaHover: "group-hover/cta:text-[#60a5fa]",
     aurora:
       "bg-[linear-gradient(135deg,#1e3a8a_0%,#000_52%,#172554_100%)]",
+    auroraOpacity: "opacity-55",
     shadow: "drop-shadow-[0_14px_30px_rgba(96,165,250,0.30)]",
     noise: false,
   },
@@ -81,6 +82,7 @@ const overlayConfig = {
     ctaHover: "group-hover/cta:text-[#f59e0b]",
     aurora:
       "bg-[radial-gradient(circle_at_35%_28%,rgba(245,158,11,0.55),transparent_30%),linear-gradient(135deg,#78350f_0%,#000_48%,#451a03_100%)]",
+    auroraOpacity: "opacity-60",
     shadow: "drop-shadow-[0_0_28px_rgba(245,158,11,0.35)]",
     noise: true,
   },
@@ -104,10 +106,10 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         )}
       >
         {/* Aurora background */}
-        <div className="absolute inset-0 z-0 opacity-60">
+        <div className={cn("absolute inset-0 z-0", config.auroraOpacity)}>
           <div
             className={cn(
-              "h-full w-full blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
+              "h-full w-full scale-[1.04] blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
               config.aurora,
             )}
           />
