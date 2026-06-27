@@ -546,8 +546,10 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     aspectRatio="16/9"
                     onCanPlay={() => sendEvent('PLAYER_READY')}
                     onPlay={() => {
-                        setHasStartedPlayback(true);
-                        sendEvent('PLAY_STARTED');
+                        if (!hasStartedPlayback) {
+                            setHasStartedPlayback(true);
+                            sendEvent('PLAY_STARTED');
+                        }
                     }}
                     onPause={() => sendEvent('PLAY_PAUSED')}
                     onEnded={() => {
