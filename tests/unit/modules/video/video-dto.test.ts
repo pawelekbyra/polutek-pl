@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toPublicVideoDto, toAdminVideoDto, toAdminVideoAssetDto } from '@/lib/modules/video/domain/video.dto';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { AccessTier, VideoStatus, StorageProvider, VideoAssetProcessingState } from '@prisma/client';
 
 const mockVideo = {
   id: 'v1',
@@ -52,12 +52,12 @@ describe('Video DTOs', () => {
     const asset = {
       id: 'asset-1',
       videoId: 'v1',
-      provider: 'CLOUDFLARE_STREAM',
+      provider: StorageProvider.CLOUDFLARE_STREAM,
       objectKey: 'cloudflare-stream/cf-video-uid',
       bucket: null,
       providerAssetId: 'cf-video-uid',
       providerPlaybackId: 'cf-playback-uid',
-      processingState: 'PROCESSING',
+      processingState: VideoAssetProcessingState.PROCESSING,
       isPrimary: true,
       failureReason: null,
       providerSyncedAt: syncedAt,
@@ -92,7 +92,8 @@ describe('Video DTOs', () => {
   it('toAdminVideoAssetDto preserves legacy object-storage assets as representable migration states', () => {
     const createdAt = new Date('2026-06-11T00:00:00Z');
 
-    for (const provider of ['R2', 'S3', 'VERCEL_BLOB']) {
+    const legacyProviders: StorageProvider[] = [StorageProvider.R2, StorageProvider.S3, StorageProvider.VERCEL_BLOB];
+    for (const provider of legacyProviders) {
       const dto = toAdminVideoAssetDto({
         id: `asset-${provider}`,
         videoId: 'v1',
@@ -101,7 +102,7 @@ describe('Video DTOs', () => {
         bucket: 'legacy-bucket',
         providerAssetId: null,
         providerPlaybackId: null,
-        processingState: 'READY',
+        processingState: VideoAssetProcessingState.READY,
         isPrimary: true,
         failureReason: null,
         providerSyncedAt: null,
@@ -127,9 +128,9 @@ describe('Video DTOs', () => {
     const dto = toPublicVideoDto({
       ...mockVideo,
       asset: {
-        provider: 'CLOUDFLARE_STREAM',
+        provider: StorageProvider.CLOUDFLARE_STREAM,
         providerAssetId: 'cloudflare-uid-1',
-        processingState: 'PENDING',
+        processingState: VideoAssetProcessingState.PENDING,
       },
       playbackUrl: 'https://customer.cloudflarestream.com/leak',
       playbackToken: 'token-leak',
@@ -148,12 +149,12 @@ describe('Video DTOs', () => {
       asset: {
         id: 'asset-mux-design-compatible',
         videoId: 'v1',
-        provider: 'MUX',
+        provider: StorageProvider.MUX,
         objectKey: 'mux/mux-asset-id',
         bucket: null,
         providerAssetId: 'mux-asset-id',
         providerPlaybackId: 'mux-playback-id',
-        processingState: 'FAILED',
+        processingState: VideoAssetProcessingState.FAILED,
         isPrimary: true,
         failureReason: 'provider fixture failure',
         providerSyncedAt,
@@ -183,12 +184,12 @@ describe('Video DTOs', () => {
       asset: {
         id: 'asset-failed',
         videoId: 'v1',
-        provider: 'CLOUDFLARE_STREAM',
+        provider: StorageProvider.CLOUDFLARE_STREAM,
         objectKey: 'cloudflare-stream/cf-failed',
         bucket: null,
         providerAssetId: 'cf-failed',
         providerPlaybackId: 'cf-playback',
-        processingState: 'FAILED',
+        processingState: VideoAssetProcessingState.FAILED,
         isPrimary: true,
         failureReason: 'transcode failed',
         providerSyncedAt: updatedAt,
@@ -214,7 +215,7 @@ describe('Video DTOs', () => {
     it('READY when Cloudflare Stream asset is READY', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY' }
+        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY }
       });
       expect(dto.migrationStatus).toBe('READY');
     });
@@ -222,7 +223,7 @@ describe('Video DTOs', () => {
     it('MIGRATION_REQUIRED when using R2 asset', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: 'R2', processingState: 'READY' }
+        asset: { provider: StorageProvider.R2, processingState: VideoAssetProcessingState.READY }
       });
       expect(dto.migrationStatus).toBe('MIGRATION_REQUIRED');
     });
@@ -239,7 +240,7 @@ describe('Video DTOs', () => {
     it('PROCESSING when Cloudflare Stream asset is PROCESSING', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'PROCESSING' }
+        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.PROCESSING }
       });
       expect(dto.migrationStatus).toBe('PROCESSING');
     });
@@ -247,7 +248,7 @@ describe('Video DTOs', () => {
     it('FAILED when Cloudflare Stream asset is FAILED', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'FAILED' }
+        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.FAILED }
       });
       expect(dto.migrationStatus).toBe('FAILED');
     });
