@@ -83,7 +83,7 @@ describe("public loading/access state UX contracts", () => {
     const overlay = read("app/components/AccessLockOverlay.tsx");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Wyślij napiwek, aby dołączyć");
+    expect(overlay).toContain("Odblokuj dostęp");
     expect(overlay).toContain('href="#donations"');
     expect(overlay).toContain('getElementById("donations")');
     expect(overlay).toContain("Zaloguj");
