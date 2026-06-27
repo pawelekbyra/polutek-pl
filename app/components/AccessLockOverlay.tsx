@@ -24,11 +24,11 @@ const shellRadius = {
 const scaleClasses = {
   default: {
     content: "p-6 sm:p-8 md:p-10",
-    centerCluster: "-translate-y-[clamp(0.2rem,1.2cqi,0.8rem)]",
-    icon: "h-[clamp(4rem,10cqi,6rem)] w-[clamp(4rem,10cqi,6rem)] shrink-0 aspect-square",
+    centerCluster: "",
+    icon: "h-[clamp(5rem,12cqi,7rem)] w-[clamp(5rem,12cqi,7rem)] shrink-0 aspect-square",
     iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
-    headline: "text-[clamp(2rem,10cqi,6rem)]",
-    divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,18cqi,12rem)]",
+    headline: "text-[clamp(3rem,12cqi,7rem)]",
+    divider: "my-[clamp(0.45rem,1.05cqi,0.6rem)] w-[clamp(6rem,20cqi,14rem)]",
     cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
     ctaLine: "w-[1px] h-[clamp(12px,2.2cqi,20px)]",
     ctaText: "text-[clamp(9px,1.4cqi,14px)] tracking-[0.42em]",
@@ -104,10 +104,10 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         )}
       >
         {/* Aurora background */}
-        <div className="absolute inset-0 z-0 opacity-60">
+        <div className="absolute inset-0 z-0 opacity-55">
           <div
             className={cn(
-              "h-full w-full blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
+              "h-full w-full scale-[1.04] blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
               config.aurora,
             )}
           />
