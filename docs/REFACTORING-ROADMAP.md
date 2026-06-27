@@ -336,7 +336,31 @@ npm run build        # Build check
 
 ---
 
-## 6. Znane ograniczenia (nie naprawiać bez konsultacji)
+## 6. Wymagania nienaruszalne (respektować w każdej sesji)
+
+### Mobile-first — priorytet właściciela
+Aplikacja musi zawsze działać i wyglądać dobrze na iPhone i różnych rozmiarach telefonów. To nie jest opcjonalne — sprawdzać przy każdej zmianie UI.
+
+**Zasady:**
+- Każdy nowy lub zmieniany komponent testować na: iPhone SE (375px), iPhone 14 (390px), duży Android (412px), tablet (768px)
+- Żadnych elementów wychodzących poza ekran, żadnych overflow-x
+- Przyciski i linki dotykalne — min. 44×44px (Apple HIG)
+- Tekst czytelny bez zoomu — min. 16px dla treści, 14px dla etykiet
+- Nawigacja dostępna jedną ręką — ważne akcje na dole ekranu (kciuk)
+- Wideo player działający poprawnie na iOS Safari (specyfika: autoplay, fullscreen, controls)
+- Admin panel: sprawdzać czy da się używać na tablecie (właściciel może zarządzać z iPada)
+
+**Narzędzia do weryfikacji:**
+```bash
+# Przed commitem z UI:
+# 1. Chrome DevTools → Toggle Device Toolbar → iPhone SE i iPhone 14
+# 2. Sprawdzić czy brak horizontal scroll
+# 3. Sprawdzić touch targets
+```
+
+---
+
+## 7. Znane ograniczenia (nie naprawiać bez konsultacji)
 
 - **Single-channel mode** — aplikacja jest zaprojektowana pod jeden kanał (MAIN_CREATOR_SLUG). Nie dodawać multi-channel bez decyzji właściciela.
 - **HLS/DASH** — brak adaptive bitrate streaming. Cloudflare Stream dostarcza bezpośredni URL lub iframe embed. Zmiana wymaga inwestycji w infrastrukturę.
