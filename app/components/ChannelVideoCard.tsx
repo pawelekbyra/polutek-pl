@@ -76,9 +76,7 @@ export default function ChannelVideoCard({
         <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
         <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
           <div className="relative h-full w-full">
-            {lockState ? (
-              <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
-            ) : video.thumbnailUrl ? (
+            {video.thumbnailUrl ? (
               <Image
                 src={video.thumbnailUrl}
                 alt={displayTitle}
@@ -91,7 +89,12 @@ export default function ChannelVideoCard({
                 Video
               </div>
             )}
-            {video.duration && (
+            {lockState && (
+              <div className="absolute inset-0 z-20">
+                <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+              </div>
+            )}
+            {video.duration && !lockState && (
               <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded z-30">
                 {video.duration}
               </div>
