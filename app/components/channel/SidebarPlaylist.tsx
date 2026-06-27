@@ -111,10 +111,6 @@ export function SidebarPlaylist({
     fetchLayout();
   }, [selectedVideoId]);
 
-  const hasSidebarSupportTarget = (items: SidebarLayoutItem[] = []) => {
-    return items.some((item) => item.creatorId) || sortedVideos.some((video) => video.creatorId);
-  };
-
   const renderVideoItem = (video: SidebarLayoutItem) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
@@ -290,7 +286,6 @@ export function SidebarPlaylist({
 
   if (error || !layout) {
     const fallbackItems = sortedVideos || [];
-    const showPatronBox = !viewerIsPatron && hasSidebarSupportTarget(fallbackItems);
 
     if (fallbackItems.length === 0) {
       return (
@@ -318,7 +313,7 @@ export function SidebarPlaylist({
                   : false,
           }),
         )}
-        {showPatronBox && <PatronBox />}
+        <PatronBox />
       </div>
     );
   }
@@ -326,8 +321,6 @@ export function SidebarPlaylist({
   const publicSection = layout.sections.find((s) => s.type === "FREE");
   const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
-  const sidebarItems = layout.sections.flatMap((section) => section.items);
-  const showPatronBox = !viewerIsPatron && hasSidebarSupportTarget(sidebarItems);
 
   return (
     <>
@@ -344,7 +337,7 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {showPatronBox && <PatronBox />}
+      <PatronBox />
 
       {patronSection && (
         <div className="mb-6">
