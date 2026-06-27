@@ -348,7 +348,7 @@ Aplikacja musi zawsze działać i wyglądać dobrze na iPhone i różnych rozmia
 - Tekst czytelny bez zoomu — min. 16px dla treści, 14px dla etykiet
 - Nawigacja dostępna jedną ręką — ważne akcje na dole ekranu (kciuk)
 - Wideo player działający poprawnie na iOS Safari (specyfika: autoplay, fullscreen, controls)
-- Admin panel: sprawdzać czy da się używać na tablecie (właściciel może zarządzać z iPada)
+- **Admin panel jest wyjątkiem** — przeznaczony wyłącznie na komputer, nie wymaga responsywności mobilnej
 
 **Narzędzia do weryfikacji:**
 ```bash
