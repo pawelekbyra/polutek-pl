@@ -111,7 +111,9 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   };
 
   const handleUpload = async () => {
-    if (!canUploadCover) {
+    const currentVideoId = videoId;
+
+    if (!currentVideoId) {
       setError(SAVE_DRAFT_BEFORE_COVER_MESSAGE);
       return;
     }
@@ -127,7 +129,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
 
       const formData = new FormData();
       formData.append("file", croppedImageBlob, "cover.webp");
-      formData.append("videoId", videoId);
+      formData.append("videoId", currentVideoId);
 
       const response = await fetch("/api/admin/videos/cover-upload", {
         method: "POST",
