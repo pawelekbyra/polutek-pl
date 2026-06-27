@@ -253,16 +253,30 @@ Usunąć dług techniczny:
 3. **INCOMPLETE-001** — HELD_FOR_REVIEW albo usunąć z schematu albo zaimplementować
 4. **INCOMPLETE-002** — referrals: decyzja (usunąć ze schematu lub zaimplementować)
 
-### FAZA 4: Dokończenie admin panelu (2-3 sesje)
-Na podstawie audytu admin panelu — w kolejności ważności:
+### FAZA 4: Redesign admin panelu (3-5 sesji)
+Panel admina jest funkcjonalny ale niespójny wizualnie z resztą aplikacji, nieintuicyjny i miejscami zagmatwany (np. flow dodawania/edycji filmów). Wymaga przeprojektowania od podstaw — nie tylko dodania brakujących funkcji.
 
-1. Broadcast history — empty state zamiast null
-2. Dispute resolution UI w payments
-3. Status filter w moderacji komentarzy
-4. Bulk actions w komentarzach
-5. Template preview modal
-6. Video upload — pause/resume, ETA
-7. Inline sidebar reorder z potwierdzeniem
+**Problemy systemowe:**
+- Wygląd odbiega od reszty aplikacji — brak spójnej estetyki
+- Nawigacja nieintuicyjna, łatwo się zgubić
+- Flow dodawania/edycji filmów chaotyczny — za wiele kroków, nielogiczna kolejność
+- Część sekcji niepowiązana ze sobą (nested w dziwny sposób)
+- Brak loading states, skeleton screens, pustych stanów (empty states)
+- Część stron server components, część klient — bez logicznego podziału
+
+**Co zrobić:**
+1. Zaprojektować nowy layout admina (sidebar, nagłówki, breadcrumbs) spójny z resztą aplikacji
+2. Przeprojektować flow dodawania/edycji filmów — jeden ekran, logiczne sekcje
+3. Ujednolicić wszystkie formularze (walidacja, error handling, loading states)
+4. Dodać brakujące funkcje:
+   - Broadcast history — empty state
+   - Dispute resolution UI w payments
+   - Status filter w moderacji komentarzy
+   - Bulk actions w komentarzach
+   - Template preview modal
+   - Video upload — pause/resume, ETA
+   - Inline sidebar reorder z potwierdzeniem
+5. Naprawić osierocone strony (layout, reports) — dodać do nawigacji
 
 ### FAZA 5: Dokumentacja (1 sesja)
 1. Nowy `README.md` — aktualny, dla AI-programistów
