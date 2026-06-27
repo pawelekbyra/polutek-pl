@@ -1,6 +1,6 @@
-# Polutek.pl )
+# Polutek.pl
 
-Polutek.pl to aktywny produkt VOD twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system patronów i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
+Polutek.pl to aktywny produkt VOD jednego twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system wsparcia i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
 
 ```txt
 Polutek.pl is not a platform.
@@ -11,15 +11,33 @@ Polutek.pl is a place.
 
 - Główne fundamenty refaktoru i stabilizacji są zakończone.
 - Aplikacja jest utrzymywana jako aktywny produkt, a dalsze prace są prowadzone małymi, jawnie opisanymi zmianami.
-- Public launch i operacje produkcyjne pozostają decyzjami właściciela oraz wymagają właściwych dowodów operatora, prawnych i produkcyjnych — nie są aktywnymi blockerami dużej kolejki refaktoru.
+- Dawna roadmapa refaktoryzacji pozostaje technicznym audytem/bazą długu, ale nie jest już jedynym opisem aktualnych decyzji produktowych.
+- Public launch i operacje produkcyjne pozostają decyzjami właściciela oraz wymagają właściwych dowodów operatora, prawnych i produkcyjnych.
 
 ## Aktualny stan projektu
 
-Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), a techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md).
+Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md), a bieżąca kolejka product/tech work w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
 
 ## Kolejka zadań
 
-Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md). Po stabilizacji nie ma aktywnego dużego ticketu kodowego; nowe prace powinny być małe, jednoznaczne i zgodne z `AGENTS.md`.
+Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
+
+Aktualnie obowiązuje tryb **active product roadmap**:
+
+- najpierw utrzymać build/deploy i poprawki bezpieczeństwa,
+- potem realizować strategiczne product work opisane w issue,
+- większe refaktory robić etapami i tylko wtedy, gdy wspierają aktywne wymagania produktu,
+- nowe prace powinny być małe, jednoznaczne i zgodne z `AGENTS.md`.
+
+## Najważniejsze aktualne decyzje produktowe
+
+- Multi-source video ma być pełnym systemem admin create/edit + provider switch + playback end-to-end. Kanoniczny ticket: #1204.
+- Providerzy wideo mają być projektowani rozszerzalnie: Cloudflare Stream, YouTube, strategicznie Mux, dalej R2 i Vimeo.
+- Player nie może znać szczegółów providerów; docelowo renderuje zunifikowany playback plan.
+- Strefa Fenju / Thank You Zone jest bonusem w podziękowaniu za wsparcie, a nie komunikowana jako zakup płatnej treści.
+- Miniatury i media mają działać z private Vercel Blob; raw private URL nie powinny trafiać do użytkownika.
+- Brak miniatury filmu ma być rozwiązywany fallbackiem, nie przez trwałe zapisywanie `/logo.png` jako danych filmu.
+- Napisy PL/EN per film są opcjonalnym feature accessibility/quality, docelowo przez WebVTT `.vtt`.
 
 ## Operacje VOD / Cloudflare Stream signed playback
 
@@ -51,6 +69,7 @@ Notatki operacyjne:
 - Decyzje właściciela: [`docs/strategy/OWNER-DECISIONS.md`](docs/strategy/OWNER-DECISIONS.md)
 - Stan projektu: [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md)
 - Masterplan: [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md)
+- Kanoniczna kolejka product/tech: [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md)
 - Backlog launch/operacji: [`docs/roadmap/Launch-Execution-Backlog.md`](docs/roadmap/Launch-Execution-Backlog.md)
 - Indeks raportów historycznych: [`docs/reports/reconciliation/README.md`](docs/reports/reconciliation/README.md)
 

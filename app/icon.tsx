@@ -14,24 +14,37 @@ export default function Icon() {
         style={{
           width: '100%',
           height: '100%',
-          borderRadius: '9999px',
-          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          background: 'transparent',
         }}
       >
-        <img
-          src="/favicon.ico"
-          alt="POLUTEK.PL"
-          width="192"
-          height="192"
+        <div
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: 160,
+            height: 160,
+            borderRadius: '9999px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
           }}
-        />
+        >
+          <img
+            src="/favicon.ico"
+            alt="POLUTEK.PL"
+            width="160"
+            height="160"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: '9999px',
+            }}
+          />
+        </div>
       </div>
     ),
     size,

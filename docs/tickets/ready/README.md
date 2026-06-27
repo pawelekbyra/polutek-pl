@@ -1,22 +1,31 @@
 # Ready Ticket Queue
 
-Status: **ACTIVE_REFACTORING_ROADMAP_MODE**
+Status: **ACTIVE_PRODUCT_ROADMAP_MODE**
 
-Aktualnie realizujemy refaktoryzację według roadmapy:
+Ten plik jest kanoniczną kolejką wykonywalnych prac dla bieżącego produktu.
 
-- Source branch/file: `claude/beautiful-albattani-ajvwik:docs/REFACTORING-ROADMAP.md`
-- Source URL: https://github.com/pawelekbyra/polutek-pl/blob/claude/beautiful-albattani-ajvwik/docs/REFACTORING-ROADMAP.md
-- Roadmap title: `Polutek.pl — Refactoring Roadmap`
-- Roadmap date: `2026-06-27` — pełny audyt 10 agentów równolegle
+Polutek.pl jest po stabilizacji dużego refaktoru, ale produkt nadal aktywnie się rozwija. Aktualna kolejka łączy:
 
-<!-- CONTROL_PLANE_CURRENT_TICKET_ID: REFACTORING-ROADMAP-2026-06-27 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/REFACTORING-ROADMAP.md -->
+- P0 build/deploy health,
+- P1 product work zaakceptowany przez właściciela,
+- P2 quality/admin/media/accessibility features,
+- techniczny dług z `docs/REFACTORING-ROADMAP.md`, realizowany małymi slice’ami.
 
-## Current Control-Plane Ticket
+`docs/REFACTORING-ROADMAP.md` pozostaje ważną techniczną bazą długu i audytem z 2026-06-27, ale nie jest już jedyną aktualną roadmapą produktu.
 
-`REFACTORING-ROADMAP-2026-06-27` — realizować prace wynikające z `docs/REFACTORING-ROADMAP.md` z brancha `claude/beautiful-albattani-ajvwik`.
+<!-- CONTROL_PLANE_CURRENT_MODE: ACTIVE_PRODUCT_ROADMAP_MODE -->
+<!-- CONTROL_PLANE_CURRENT_QUEUE_FILE: docs/tickets/ready/README.md -->
 
-Każda nowa sesja pracy nad repo ma zacząć od przeczytania wskazanej roadmapy. Roadmapa jest aktualnym źródłem priorytetów refaktoryzacyjnych: krytyczne bugi, niedokończone funkcje, cleanup legacy warstw oraz standardy implementacyjne.
+## Current Control-Plane Rule
+
+Każda nowa sesja pracy nad repo ma zacząć od:
+
+1. Sprawdzenia, czy main/build/deploy nie jest zepsuty.
+2. Przeczytania tego pliku.
+3. Jeśli praca dotyczy długu technicznego, przeczytania `docs/REFACTORING-ROADMAP.md`.
+4. Jeśli praca dotyczy launch/operacji, sprawdzenia `docs/roadmap/Launch-Execution-Backlog.md`.
+
+Nie wolno wracać do trybu „duży refactor wszystko naraz”. Prace mają być małe, jednoznaczne i reviewable.
 
 ## Progress update rule — mandatory for every agent
 
@@ -24,13 +33,13 @@ Każdy agent po zakończeniu pracy **musi zaktualizować ten plik w tym samym PR
 
 Wymagane aktualizacje:
 
-1. Zmień status itemu w tabeli `Queue` oraz checkbox w `Roadmap progress tracker`.
+1. Zmień status itemu w tabeli `Queue` oraz checkbox w odpowiedniej sekcji progress tracker.
 2. Dopisz PR/commit/evidence w kolumnie `Evidence`.
 3. Jeśli item nie jest w pełni zrobiony, ustaw `PARTIAL` i dopisz co zostało.
 4. Jeśli znaleziono blokadę, ustaw `BLOCKED` i dopisz konkretny powód.
 5. Nie zostawiaj ukończonej pracy jako `TODO`.
 
-Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED_BY_OWNER`.
+Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED_BY_OWNER`, `ACTIVE`, `WATCH`.
 
 ## Queue
 
@@ -92,15 +101,18 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ## Working rules for this mode
 
-- Do not invent a separate priority order: follow the roadmap order unless the owner explicitly changes it.
-- Keep changes small and reviewable. Prefer one bug/incomplete/cleanup item per PR.
-- Each PR must name the exact roadmap item it addresses, for example `BUG-001`.
+- Do not invent a separate priority order: follow this file unless the owner explicitly changes it.
+- P0 build/deploy failures override all product work.
+- Keep changes small and reviewable. Prefer one product slice, bug, incomplete item, or cleanup item per PR.
+- Each PR/commit should name the exact item it addresses where possible, for example `#1218`, `BUG-001`, or `THANK-YOU-ZONE-COPY`.
 - Preserve `AGENTS.md` rules and existing control-plane guardrails.
 - Public launch remains `NO_GO` unless a separate launch-certification ticket explicitly changes that.
 - Before finishing, every agent must update this README with the status/evidence of the work just completed.
 
 ## Recently completed / HISTORICAL
 
+- `REFACTORING-ROADMAP-2026-06-27` — historical technical audit baseline; no longer the only active product roadmap.
+- `#1217` — duplicate scope merged into #1204 and closed.
 - `LEGACY-ACCESS-POLICY-RETIREMENT-001` — DONE by PR #1075; legacy `AccessPolicy` and `comment-access` runtime surface removed, with architecture-boundary and Vitest guardrails added.
 - `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` — DONE by PR #1008.
 - `ADMIN-AUTH-ACTOR-CANONICALIZATION-001` — HISTORICAL implementation evidence; PR #922/#923/#929 path is no longer the current executable ticket and future reverification is tracked separately.
@@ -111,7 +123,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
 - `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
 - `OWNER-LAUNCH-DECISIONS-001` — HISTORICAL; owner decisions are recorded, but runtime implementation, legal review, operator evidence, and X7 remain incomplete.
-- `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — HISTORICAL verifier task for #951; public launch remains `NO_GO` pending #956/#1031 production evidence, legal review, remaining implementation requirements, and final owner certification.
+- `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — HISTORICAL verifier task for #951; public launch remains `NO_GO` pending production evidence, legal review, remaining implementation requirements, and final owner certification.
 
 ## Non-executable owner/evidence review packs
 
