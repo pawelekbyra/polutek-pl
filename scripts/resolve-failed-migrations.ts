@@ -10,6 +10,11 @@ const ROLLBACK_SAFE_FAILED_MIGRATIONS = new Set([
   // previous production deploy can leave it failed in _prisma_migrations after
   // the columns were created, which blocks every later migrate deploy with P3009.
   '20260603140000_add_video_presentation_columns',
+  // This migration was part of a removed YouTube source experiment and is not
+  // present in the canonical migration history. If a production deployment
+  // failed while trying that transient migration, rolling it back unblocks the
+  // canonical migration set without applying obsolete schema changes.
+  '20260627000000_video_sources_youtube',
 ]);
 
 type FailedMigrationRow = {
