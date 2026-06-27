@@ -114,7 +114,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
     }
 
     const headers: Record<string, string> = {};
-    if (actor.type === "anonymous") {
+    if (actor.type === "guest") {
       headers["Cache-Control"] = "public, s-maxage=60, stale-while-revalidate=300";
     }
 
