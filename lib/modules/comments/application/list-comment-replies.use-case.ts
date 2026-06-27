@@ -29,17 +29,14 @@ export async function listCommentReplies(
      return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
   }
 
-  // Comments inherit video access
+  // Comments are publicly readable even on patron-only or login-required videos.
+  // Only hard-block if the video itself doesn't exist or is deleted.
   if (!accessResult.data.hasAccess) {
-    if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
-        return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
+    const reason = accessResult.data.reason;
+    if (reason === 'NOT_FOUND' || reason === 'DELETED') {
+      return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
     }
-    return fail({
-        type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Komentarze pod tym filmem są dostępne tylko dla Patronów."
-            : "Brak dostępu do komentarzy."
-    });
+    // PATRON_REQUIRED / LOGIN_REQUIRED: allow read, viewer permissions will restrict writes.
   }
 
   const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
