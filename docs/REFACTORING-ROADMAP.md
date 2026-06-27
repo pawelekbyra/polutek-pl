@@ -1,5 +1,7 @@
 # Polutek.pl — Refactoring Roadmap
 
+<!-- Ticket ID: REFACTORING-ROADMAP-2026-06-27 -->
+
 > **Cel dokumentu:** Żywa roadmapa refaktoryzacji. Każdy AI-programista pracujący nad tym projektem powinien zacząć od przeczytania tego pliku. Dokument opisuje co jest, co jest zepsute, co jest niedokończone i w jakiej kolejności to naprawiać.
 >
 > **Ostatnia aktualizacja:** 2026-06-27 (pełny audyt 10 agentów równolegle)

@@ -35,9 +35,12 @@ export interface AdminVideoAssetDto {
   bucket?: string | null;
   providerAssetId?: string | null;
   providerPlaybackId?: string | null;
+  externalVideoId?: string | null;
+  externalUrl?: string | null;
   status: VideoAssetProcessingState;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
+  isPlayable: boolean;
   failureReason?: string | null;
   providerSyncedAt?: Date | null;
   processingStartedAt?: Date | null;
@@ -45,7 +48,7 @@ export interface AdminVideoAssetDto {
   mimeType?: string | null;
   sizeBytes?: number | null;
   requiresSignedUrl: boolean;
-  sourceMode: "CLOUDFLARE_STREAM" | "LEGACY_PROVIDER_ASSET";
+  sourceMode: "CLOUDFLARE_STREAM" | "YOUTUBE" | "LEGACY_PROVIDER_ASSET";
   durationSeconds?: number | null;
   thumbnailUrl?: string | null;
   previewUrl?: string | null;
@@ -92,6 +95,8 @@ export type AdminVideoAssetInput = {
   bucket?: string | null;
   providerAssetId?: string | null;
   providerPlaybackId?: string | null;
+  externalVideoId?: string | null;
+  externalUrl?: string | null;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   failureReason?: string | null;
@@ -146,6 +151,18 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
   };
 }
 
+function resolveSourceMode(provider: StorageProvider): AdminVideoAssetDto["sourceMode"] {
+  if (provider === "CLOUDFLARE_STREAM") return "CLOUDFLARE_STREAM";
+  if (provider === "YOUTUBE") return "YOUTUBE";
+  return "LEGACY_PROVIDER_ASSET";
+}
+
+function resolveIsPlayable(provider: StorageProvider, processingState: VideoAssetProcessingState, externalVideoId?: string | null): boolean {
+  if (provider === "YOUTUBE") return Boolean(externalVideoId);
+  if (provider === "CLOUDFLARE_STREAM") return processingState === "READY";
+  return false;
+}
+
 export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
@@ -157,9 +174,12 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     bucket: asset.bucket,
     providerAssetId: asset.providerAssetId,
     providerPlaybackId: asset.providerPlaybackId,
+    externalVideoId: asset.externalVideoId ?? null,
+    externalUrl: asset.externalUrl ?? null,
     status: asset.processingState,
     processingState: asset.processingState,
     isPrimary: asset.isPrimary,
+    isPlayable: resolveIsPlayable(asset.provider, asset.processingState, asset.externalVideoId),
     failureReason: asset.failureReason,
     providerSyncedAt: asset.providerSyncedAt,
     processingStartedAt: asset.processingStartedAt,
@@ -167,7 +187,7 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     mimeType: asset.mimeType,
     sizeBytes: asset.sizeBytes,
     requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
-    sourceMode: asset.provider === "CLOUDFLARE_STREAM" ? "CLOUDFLARE_STREAM" : "LEGACY_PROVIDER_ASSET",
+    sourceMode: resolveSourceMode(asset.provider),
     durationSeconds: asset.durationSeconds ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
     previewUrl: asset.previewUrl ?? null,
@@ -190,6 +210,8 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
       if (asset.processingState === "READY") migrationStatus = "READY";
       else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
       else migrationStatus = "PROCESSING";
+    } else if (asset.provider === "YOUTUBE") {
+      migrationStatus = asset.externalVideoId ? "READY" : "MISSING_SOURCE";
     } else {
       migrationStatus = "MIGRATION_REQUIRED";
     }

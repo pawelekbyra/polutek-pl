@@ -161,12 +161,14 @@ describe('Video Upload Flow', () => {
 
   describe('handleCloudflareStreamWebhook', () => {
     it('should update asset to READY and make it primary', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
-        id: 'asset-id',
-        videoId: 'video-id',
-        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
-      });
+      mockPrisma.videoAsset.findFirst
+        .mockResolvedValueOnce({
+          id: 'asset-id',
+          videoId: 'video-id',
+          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+          processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
+        })
+        .mockResolvedValueOnce(null); // no existing primary → promote this asset
       mockPrisma.videoAsset.update.mockResolvedValue({ id: 'asset-id', processingState: 'READY' });
 
       const result = await handleCloudflareStreamWebhook({
@@ -326,7 +328,7 @@ describe('Video Upload Flow', () => {
       const result = await publishAdminVideo('video-id', mockCtx);
 
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error.code).toBe('VIDEO_PUBLICATION_NON_CLOUDFLARE_ASSET');
+      if (!result.ok) expect(result.error.code).toBe('VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER');
     });
   });
 });

@@ -71,7 +71,6 @@ export async function handleCloudflareStreamWebhook(
     }
 
     if (newState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-        dataToUpdate.isPrimary = true;
         dataToUpdate.failureReason = null;
 
         if (payload.size != null) {
@@ -84,11 +83,19 @@ export async function handleCloudflareStreamWebhook(
           }
         }
 
-        // Unset primary for all other assets of this video
-        await tx.videoAsset.updateMany({
-            where: { videoId: asset.videoId, id: { not: asset.id } },
-            data: { isPrimary: false }
+        // Only promote to primary if no other READY primary already exists for this video.
+        // This preserves an intentionally-set YouTube or other primary source.
+        const existingPrimary = await tx.videoAsset.findFirst({
+          where: { videoId: asset.videoId, isPrimary: true, id: { not: asset.id } },
         });
+
+        if (!existingPrimary) {
+          dataToUpdate.isPrimary = true;
+          await tx.videoAsset.updateMany({
+              where: { videoId: asset.videoId, id: { not: asset.id } },
+              data: { isPrimary: false }
+          });
+        }
     }
 
     const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);

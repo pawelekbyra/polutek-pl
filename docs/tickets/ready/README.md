@@ -10,7 +10,7 @@ Aktualnie realizujemy refaktoryzację według roadmapy:
 - Roadmap date: `2026-06-27` — pełny audyt 10 agentów równolegle
 
 <!-- CONTROL_PLANE_CURRENT_TICKET_ID: REFACTORING-ROADMAP-2026-06-27 -->
-<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/REFACTORING-ROADMAP.md@claude/beautiful-albattani-ajvwik -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: docs/REFACTORING-ROADMAP.md -->
 
 ## Current Control-Plane Ticket
 

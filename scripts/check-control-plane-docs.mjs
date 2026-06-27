@@ -138,7 +138,13 @@ if (existsSync(filePath('docs/PROJECT-STATE.md'))) {
   requireRegex('PROJECT-STATE', projectState, /STABILIZACJA ZAKOŃCZONA|stabilizacja[^\n]+zakończona/i, 'major refactor/stabilization complete');
 }
 requireIncludes('MASTERPLAN', read('docs/MASTERPLAN.md'), 'STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT');
-requireRegex('ready queue', queue, /nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'no active large code ticket');
+// Only require "no active ticket" phrase when ticket is NONE (active roadmap mode is also valid)
+const earlyTicketIdMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_ID: (.*) -->/);
+if (!earlyTicketIdMatch || earlyTicketIdMatch[1].trim() === 'NONE') {
+  requireRegex('ready queue', queue, /nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'no active large code ticket');
+} else {
+  pass('ready queue has active ticket — skipping no-active-ticket phrase check');
+}
 
 // DYNAMIC TICKET VALIDATION
 if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');

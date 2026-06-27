@@ -38,6 +38,8 @@ const allowedAppRoutes = [
   "app/api/admin/users/stats/route.ts",
   "app/api/admin/videos/[id]/actions/route.ts",
   "app/api/admin/videos/[id]/comments/route.ts",
+  "app/api/admin/videos/[id]/sources/route.ts",
+  "app/api/admin/videos/[id]/sources/[sourceId]/route.ts",
   "app/api/admin/comments/[commentId]/delete/route.ts",
   "app/api/admin/comments/[commentId]/heart/route.ts",
   "app/api/admin/comments/[commentId]/hide/route.ts",

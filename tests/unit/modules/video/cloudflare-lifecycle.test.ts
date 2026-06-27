@@ -169,12 +169,14 @@ describe("Cloudflare Lifecycle Hardening", () => {
 
   describe("handleCloudflareStreamWebhook", () => {
     it("should set asset as primary and trigger auto-publish on READY", async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
-        id: "asset-id",
-        videoId: "video-id",
-        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
-      });
+      mockPrisma.videoAsset.findFirst
+        .mockResolvedValueOnce({
+          id: "asset-id",
+          videoId: "video-id",
+          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+          processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
+        })
+        .mockResolvedValueOnce(null); // no existing primary
 
       mockPrisma.videoAsset.update.mockResolvedValue({
         id: "asset-id",

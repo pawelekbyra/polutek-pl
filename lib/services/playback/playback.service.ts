@@ -10,6 +10,7 @@ import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallb
 import { CloudflareSignedPlaybackTokenService } from './cloudflare-signed-playback-token.service';
 import { getPrimaryPlayableAsset } from './primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video/domain/video-asset-selection';
+import { extractYouTubeVideoId } from '@/lib/modules/video/domain/video-asset.constants';
 import type { VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
@@ -292,6 +293,79 @@ export class PlaybackService {
                 asset: safeAsset,
             });
         }
+      }
+
+      if (asset.provider === 'YOUTUBE') {
+        const ytVideoId = (asset as VideoAsset & { externalVideoId?: string | null }).externalVideoId
+          || extractYouTubeVideoId((asset as VideoAsset & { externalUrl?: string | null }).externalUrl || '');
+
+        if (!ytVideoId) {
+          return unavailablePlan({
+            videoId,
+            status: 'UNAVAILABLE',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['YouTube asset is missing a valid video ID'],
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+
+        if (tier === 'PATRON') {
+          return unavailablePlan({
+            videoId,
+            status: 'UNAVAILABLE',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['YouTube playback is not permitted for PATRON-tier videos'],
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+
+        const session = await prisma.videoPlaybackSession.create({
+          data: {
+            videoId,
+            userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
+            ipHash,
+            userAgentHash,
+            sourceKind: 'youtube',
+            accessTier: tier as any,
+            isAdminPreview: actor.type === 'admin',
+          }
+        });
+
+        const embedUrl = `https://www.youtube-nocookie.com/embed/${ytVideoId}`;
+
+        return {
+          videoId,
+          status: 'READY',
+          canPlay: true,
+          access: { allowed: true },
+          source: {
+            provider: 'YOUTUBE',
+            kind: 'youtube',
+            embedUrl,
+            posterUrl: thumbnailUrl,
+            needsProxy: false,
+            isExternalEmbed: true,
+            isSignedUrl: false,
+            asset: safeAsset,
+          },
+          player: playerFor({ thumbnailUrl, title }, true),
+          diagnostics: {
+            warnings: [],
+            sourceConfidence: 'HIGH',
+            providerResolutionAllowed: true,
+            providerResolutionAttempted: false,
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          },
+          tracking: {
+            playbackSessionId: session.id,
+            heartbeatIntervalSeconds: 60,
+          },
+        };
       }
 
       if (PROVIDER_BACKED_PLAYBACK_PROVIDERS.has(asset.provider)) {
