@@ -60,12 +60,14 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   return (
     <div
       id="support-box"
-      className="bg-white border border-neutral-200 p-6 shadow-md relative overflow-hidden rounded-xl text-center"
+      className="bg-white border border-border p-[18px] shadow-sm relative overflow-hidden rounded-[16px] text-center"
     >
       <div className="space-y-4 relative z-10">
-        <h3 className="text-xl font-sans font-black text-neutral-900 uppercase tracking-tight flex flex-wrap items-center justify-center gap-2">
+        <h3 className="font-heading text-[20px] font-bold text-[#0f0f0f] tracking-[-0.01em] flex flex-wrap items-center justify-center gap-2">
           {t.donate}
-          <Trophy size={32} className="text-neutral-900" />
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-white">
+            <Trophy size={18} />
+          </span>
         </h3>
 
         <div className="space-y-3 text-center">
@@ -79,21 +81,21 @@ const SupportBox: React.FC<SupportBoxProps> = ({
             </p>
           )}
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-1">
             <label
               htmlFor={amountInputId}
-              className="block text-xs font-semibold uppercase tracking-wider text-neutral-400"
+              className="block text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground"
             >
               {language === "pl"
                 ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})`
                 : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`}
             </label>
             <div className="relative group">
-              <div className="absolute inset-y-0 right-0 flex items-center">
+              <div className="absolute inset-y-0 right-0 z-10 flex items-center">
                 <select
                   value={selectedCurrency}
                   onChange={(e) => onCurrencyChange(e.target.value)}
-                  className="h-full bg-transparent border-none pr-8 pl-4 font-mono text-xl font-bold text-neutral-400 focus:text-neutral-900 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
+                  className="h-full bg-transparent border-none pr-8 pl-4 font-brand text-[16px] font-bold text-zinc-600 focus:text-zinc-950 focus:ring-0 outline-none cursor-pointer appearance-none transition-colors"
                   aria-label="Select Currency"
                 >
                   {availableCurrencies.map((curr) => (
@@ -102,7 +104,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-4 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
+                <div className="absolute right-4 pointer-events-none text-zinc-400 group-hover:text-zinc-700 transition-colors">
                   <ChevronDown size={14} />
                 </div>
               </div>
@@ -115,7 +117,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                 onChange={(e) => onAmountChange(e.target.value)}
                 aria-invalid={amountTooLow}
                 aria-describedby={amountTooLow ? amountErrorId : undefined}
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-lg py-4 px-12 font-mono text-3xl font-black text-neutral-900 text-center focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-neutral-200"
+                className="w-full bg-zinc-50 border border-input rounded-[12px] py-4 pl-4 pr-24 font-brand text-[28px] font-extrabold text-zinc-950 text-center focus:ring-2 focus:ring-accent-ring focus:border-primary outline-none transition-all placeholder:text-zinc-300 tabular-nums"
                 placeholder={String(minAmount)}
               />
             </div>
@@ -123,7 +125,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               <p
                 id={amountErrorId}
                 role="alert"
-                className="font-mono text-[10px] text-destructive font-bold uppercase"
+                className="font-brand text-[10px] text-destructive font-bold uppercase tracking-wider"
               >
                 {language === "pl"
                   ? `Błąd: Nie osiągnięto minimum (${minAmount} ${selectedCurrency})`
@@ -138,7 +140,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           onClick={onSupport}
           disabled={isLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="w-full h-12 uppercase tracking-wider text-sm"
+          className="w-full h-[48px] rounded-[12px] bg-zinc-900 text-white uppercase tracking-wider text-sm font-bold hover:bg-zinc-800 active:scale-[0.98] transition-all"
           size="lg"
         >
           {isLoading ? (
@@ -161,19 +163,19 @@ const SupportBox: React.FC<SupportBoxProps> = ({
             <Checkbox
               id="accept-terms"
               checked={isTermsAccepted}
-              className="border-neutral-300"
+              className="border-input data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
               onCheckedChange={onTermsChange}
               aria-invalid={showTermsError}
               aria-describedby={showTermsError ? termsErrorId : undefined}
             />
-            <span className="text-neutral-500 font-sans font-medium text-[10px] tracking-tight transition-colors">
+            <span className="text-muted-foreground font-sans font-medium text-[11px] tracking-tight transition-colors">
               {language === "pl" ? (
                 <>
                   Akceptuję{" "}
                   <button
                     type="button"
                     onClick={onOpenRegulamin}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-zinc-950"
                   >
                     Regulamin
                   </button>{" "}
@@ -181,7 +183,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenPolityka}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-zinc-950"
                   >
                     Politykę Prywatności
                   </button>
@@ -192,7 +194,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenRegulamin}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-zinc-950"
                   >
                     Terms
                   </button>{" "}
@@ -200,7 +202,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
                   <button
                     type="button"
                     onClick={onOpenPolityka}
-                    className="underline hover:text-neutral-900"
+                    className="underline hover:text-zinc-950"
                   >
                     Privacy Policy
                   </button>
