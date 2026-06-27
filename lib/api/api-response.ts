@@ -6,8 +6,8 @@ export function handleApiResponse<T>(data: T, status: number = 200) {
   return NextResponse.json(data, { status });
 }
 
-export function fromUseCaseResult<T>(
-  result: UseCaseResult<T>,
+export function fromUseCaseResult<T, E = unknown>(
+  result: UseCaseResult<T, E>,
   mapper?: (data: T) => NextResponse
 ) {
   if (result.ok) {

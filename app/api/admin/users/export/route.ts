@@ -1,19 +1,18 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { handleApiError } from '@/lib/errors';
+import { requireAdminForApi } from '@/lib/auth-utils';
 import { parseAdminUsersExportQueryParams } from '@/lib/api/admin-users-export-query';
-import { createAppContextFromRequest } from '@/lib/api/app-context-factory';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { exportAdminUsers } from '@/lib/modules/users';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await createAppContextFromRequest("EXPORT_ADMIN_USERS");
+    const { adminUserId, response } = await requireAdminForApi("EXPORT_ADMIN_USERS");
+    if (response) return response;
 
-    if (ctx.actor.type !== 'admin') {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+    const ctx = createAppContext({ actor: { type: 'admin', userId: adminUserId! } });
     const filters = parseAdminUsersExportQueryParams(req);
     const result = await exportAdminUsers(filters, ctx);
 
