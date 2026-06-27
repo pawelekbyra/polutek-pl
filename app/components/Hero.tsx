@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
-import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal, X } from './icons';
+import { ThumbsUp, ThumbsDown, MoreHorizontal } from './icons';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
@@ -34,7 +34,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCupGameOpen, setIsCupGameOpen] = useState(false);
-  const [selectedCup, setSelectedCup] = useState<number | null>(null);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
   const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
@@ -111,25 +110,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     });
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: displayTitle,
-      text: video.description || "",
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast(language === 'pl' ? "Link skopiowany do schowka!" : "Link copied to clipboard!", 'success');
-      }
-    } catch (err) {
-      logger.error("Error sharing:", err);
-    }
-  };
-
   const handleDislike = async () => {
     if (!userId) return openSignIn();
     if (isPending) return;
@@ -179,44 +159,44 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     <section className="bg-transparent">
       <div className="w-full">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-neutral-400 mb-3 group bg-black">
+        <div className="relative aspect-video w-full rounded-[14px] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.06)] border border-[#322f2b] mb-[18px] group bg-black">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
         </div>
 
         {/* INFO SECTION */}
-        <div className="space-y-3 pt-3">
-          <h2 className="text-[20px] font-bold text-[#0f0f0f] tracking-tight leading-[1.2]">
+        <div className="space-y-3">
+          <h1 className="font-heading font-bold text-[23px] text-[#0f0f0f] tracking-[-0.01em] leading-[1.25] mb-[14px]">
              {displayTitle}
-          </h2>
+          </h1>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 w-full lg:w-auto">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-[14px]">
+            <div className="flex items-center gap-[13px] min-w-0">
                <Link
                  href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                 className="w-10 h-10 rounded-full bg-white border border-neutral-400 overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
+                 className="w-[46px] h-[46px] rounded-full bg-gradient-to-br from-[#2f2c27] to-[#4a463f] border border-input overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
                >
                   <Image
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
                     alt={video.creator?.name || 'Creator'}
                     fill
-                    sizes="40px"
+                    sizes="46px"
                     className="object-cover"
                   />
                </Link>
-               <div className="min-w-0 flex flex-col flex-1 lg:flex-none">
+               <div className="min-w-0 flex flex-col">
                   <Link
                     href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                    className="font-bold text-[#0f0f0f] text-[16px] leading-tight truncate block hover:underline"
+                    className="font-bold text-[#0f0f0f] text-[15.5px] leading-[1.2] truncate block"
                   >
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
-                  <span className="text-[12px] text-[#606060] whitespace-nowrap">
+                  <span className="text-[12.5px] text-muted-foreground mt-[1px]">
                      {mounted ? formatCount(localSubState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
-               <div className="ml-auto lg:ml-2 shrink-0">
+               <div className="ml-[6px] shrink-0">
                   <SubscribeButton
                     creatorId={video.creatorId}
                     creatorSlug={video.creator?.slug}
@@ -233,63 +213,62 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full lg:w-auto">
-               <div className="flex items-center bg-white rounded-full h-9 flex-[3] lg:flex-none overflow-hidden border border-neutral-400">
+            <div className="flex items-center gap-[9px]">
+               <div className="flex items-center bg-white rounded-full h-[38px] overflow-hidden border border-input">
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "flex items-center justify-center gap-2 pl-4 pr-3 h-full flex-1 hover:bg-neutral-100 transition-colors border-r border-neutral-400 relative active:bg-neutral-200",
-                        interactionState.isLiked && "text-blue-600",
+                        "flex items-center justify-center gap-2 pl-5 pr-4 h-full hover:bg-secondary transition-colors border-r border-[#E4E0D6] relative active:bg-secondary/80",
+                        interactionState.isLiked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
                   >
-                     <ThumbsUp size={18} className={cn(interactionState.isLiked && "fill-blue-600")} />
+                     <ThumbsUp size={18} className={cn(interactionState.isLiked && "fill-primary")} />
                      <span className="text-[14px] font-bold">{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "flex h-full w-12 flex-none items-center justify-center px-0 hover:bg-neutral-100 transition-colors active:bg-neutral-200",
-                        interactionState.isDisliked && "text-blue-600",
+                        "flex h-full w-[44px] items-center justify-center hover:bg-secondary transition-colors active:bg-secondary/80",
+                        interactionState.isDisliked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
-                     <ThumbsDown size={18} className={cn("block", interactionState.isDisliked && "fill-blue-600")} />
+                     <ThumbsDown size={18} className={cn(interactionState.isDisliked && "fill-primary")} />
                   </button>
                </div>
                   <ShareButton
                     url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
                     title={displayTitle}
                     text={video.description || undefined}
-                    className="flex-[2] lg:flex-none"
                   />
                <button
                  onClick={openCupGame}
-                 className="w-9 h-9 flex items-center justify-center bg-white hover:bg-neutral-100 rounded-full transition-colors shrink-0 border border-neutral-400 active:scale-95"
+                 className="w-[38px] h-[38px] flex items-center justify-center bg-white hover:bg-secondary rounded-full transition-colors shrink-0 border border-input active:scale-95"
                  aria-label={language === 'pl' ? 'Otwórz grę w trzy kubki' : 'Open shell game'}
                >
-                  <MoreHorizontal size={16} />
+                  <MoreHorizontal size={18} className="text-[#171717]" />
                </button>
             </div>
           </div>
         </div>
 
         {/* DESCRIPTION BOX */}
-        <div className="mt-2 bg-[#ebebeb] rounded-xl p-3 pt-1 transition-colors cursor-pointer border border-transparent hover:bg-[#e2e2e2]" onClick={() => setIsExpanded(!isExpanded)}>
-           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1 items-baseline">
-              <span className="text-[14px] font-semibold text-[#0f0f0f]">
+        <div className="mt-[16px] bg-secondary rounded-[14px] p-[14px] pt-[14px] transition-colors cursor-pointer border border-border hover:bg-secondary/80" onClick={() => setIsExpanded(!isExpanded)}>
+           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
+              <span className="text-[13.5px] font-bold text-[#0f0f0f]">
                  {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
               </span>
-              <span className="text-[14px] font-semibold text-[#0f0f0f]">
-                 {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
+              <span className="text-[13.5px] font-bold text-[#0f0f0f]">
+                 · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
               </span>
            </div>
 
-           <div className="text-[14px] text-[#0f0f0f] leading-relaxed whitespace-pre-wrap">
+           <div className="text-[13.5px] text-[#0f0f0f] leading-[1.6] whitespace-pre-wrap">
               {isExpanded ? (
                 displayDescription
               ) : (
@@ -297,7 +276,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   {displayDescription.slice(0, 160).trim()}
                   {displayDescription.length > 160 && (
                     <span
-                      className="text-[14px] font-semibold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
+                      className="text-[13.5px] font-bold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsExpanded(true);
@@ -312,7 +291,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
            {isExpanded && (
              <button
-               className="text-[14px] font-semibold text-[#0f0f0f] mt-1 hover:underline inline-block"
+               className="text-[13.5px] font-bold text-[#0f0f0f] mt-1 hover:underline inline-block"
                onClick={(e) => {
                  e.stopPropagation();
                  setIsExpanded(false);
