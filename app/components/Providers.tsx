@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LanguageProvider } from "./LanguageContext";
 import { ToastProvider } from "@/app/hooks/useToast";
 import { MotionConfig } from "framer-motion";
@@ -80,6 +80,10 @@ function installClientApiFetchTimeout() {
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  if (typeof window !== "undefined") {
+    installClientApiFetchTimeout();
+  }
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -92,10 +96,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
-
-  useEffect(() => {
-    installClientApiFetchTimeout();
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
