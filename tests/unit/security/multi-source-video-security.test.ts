@@ -103,8 +103,9 @@ describe('Multi-source video security: oEmbed validation', () => {
     ctx.prisma.video.findFirst.mockResolvedValue(makeVideo({ tier: 'FREE' }));
     vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 404 } as Response);
 
+    // 11-char string matching YouTube ID pattern → passes local validation, hits oEmbed
     const result = await addVideoSource(
-      { videoId: 'video-id', provider: 'YOUTUBE', externalVideoId: 'notarealidXX' },
+      { videoId: 'video-id', provider: 'YOUTUBE', externalVideoId: 'XXXXXXXXXXX' },
       ctx,
     );
 
@@ -119,8 +120,9 @@ describe('Multi-source video security: oEmbed validation', () => {
     ctx.prisma.video.findFirst.mockResolvedValue(makeVideo({ tier: 'FREE' }));
     vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 401 } as Response);
 
+    // 11-char string matching YouTube ID pattern → passes local validation, hits oEmbed
     const result = await addVideoSource(
-      { videoId: 'video-id', provider: 'YOUTUBE', externalVideoId: 'privatevideo1' },
+      { videoId: 'video-id', provider: 'YOUTUBE', externalVideoId: 'YYYYYYYYYYY' },
       ctx,
     );
 
