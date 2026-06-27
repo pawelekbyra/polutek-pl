@@ -1,4 +1,5 @@
 import { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
+import { selectPrimaryVideoAsset } from "./video-asset-selection";
 
 export interface BaseVideoDto {
   id: string;
@@ -73,6 +74,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   updatedAt: Date;
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
+  assets?: AdminVideoAssetDto[];
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
   publishAfterAssetReadyRequestedAt: Date | null;
@@ -80,8 +82,51 @@ export interface AdminVideoDto extends BaseVideoDto {
   publishAfterAssetReadyError: string | null;
 }
 
-export function toPublicVideoDto(video: any): PublicVideoDto {
-  const dto = {
+export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
+
+export type AdminVideoAssetInput = {
+  id: string;
+  videoId: string;
+  provider: StorageProvider;
+  objectKey: string;
+  bucket?: string | null;
+  providerAssetId?: string | null;
+  providerPlaybackId?: string | null;
+  processingState: VideoAssetProcessingState;
+  isPrimary: boolean;
+  failureReason?: string | null;
+  providerSyncedAt?: Date | null;
+  processingStartedAt?: Date | null;
+  processingEndedAt?: Date | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  durationSeconds?: number | null;
+  thumbnailUrl?: string | null;
+  previewUrl?: string | null;
+  hlsManifestUrl?: string | null;
+  dashManifestUrl?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type AdminVideoInput = PublicVideoInput & {
+  videoUrl: string | null;
+  status: VideoStatus;
+  creatorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  commentsCount?: number | null;
+  _count?: { comments?: number | null } | null;
+  asset?: AdminVideoAssetInput | null;
+  assets?: AdminVideoAssetInput[] | null;
+  publishAfterAssetReady?: boolean | null;
+  publishAfterAssetReadyRequestedAt?: Date | null;
+  publishAfterAssetReadyCompletedAt?: Date | null;
+  publishAfterAssetReadyError?: string | null;
+};
+
+export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
+  return {
     id: video.id,
     slug: video.slug,
     title: video.title,
@@ -99,17 +144,9 @@ export function toPublicVideoDto(video: any): PublicVideoDto {
     showInSidebar: video.showInSidebar,
     sidebarOrder: video.sidebarOrder,
   };
-
-  // Strip any accidental sensitive fields if they exist in the input object
-  const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
-  for (const field of forbidden) {
-      if (field in dto) delete (dto as any)[field];
-  }
-
-  return dto as PublicVideoDto;
 }
 
-export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
+export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
   return {
@@ -142,8 +179,10 @@ export function toAdminVideoAssetDto(asset: any): AdminVideoAssetDto | null {
   };
 }
 
-export function toAdminVideoDto(video: any): AdminVideoDto {
-  const asset = video.asset;
+export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto {
+  const video = input as AdminVideoInput;
+  const rawAssets = video.assets ?? [];
+  const asset = video.asset ?? selectPrimaryVideoAsset(rawAssets);
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
   if (asset) {
@@ -152,7 +191,6 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
       else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
       else migrationStatus = "PROCESSING";
     } else {
-      // R2, S3, Vercel Blob
       migrationStatus = "MIGRATION_REQUIRED";
     }
   } else if (video.videoUrl) {
@@ -168,6 +206,9 @@ export function toAdminVideoDto(video: any): AdminVideoDto {
     updatedAt: video.updatedAt,
     commentsCount: video._count?.comments || video.commentsCount || 0,
     asset: toAdminVideoAssetDto(asset),
+    assets: rawAssets
+      .map((rawAsset: AdminVideoAssetInput) => toAdminVideoAssetDto(rawAsset))
+      .filter((assetDto: AdminVideoAssetDto | null): assetDto is AdminVideoAssetDto => Boolean(assetDto)),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
@@ -233,7 +274,7 @@ export interface RecordPlaybackEventInput {
   errorMessage?: string;
   provider?: string;
   sourceKind?: string;
-  metadata?: any;
+  metadata?: unknown;
   ipHash: string;
   uaHash: string;
   fingerprint: string;

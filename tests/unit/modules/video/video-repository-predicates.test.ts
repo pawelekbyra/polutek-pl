@@ -79,7 +79,7 @@ describe('VideoRepository Predicates', () => {
 
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
-          asset: { is: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } }
+          assets: { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } }
         })
       }));
     });
@@ -93,8 +93,8 @@ describe('VideoRepository Predicates', () => {
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
           OR: [
-            { asset: { is: { provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
-            { AND: [ { asset: null }, { videoUrl: { not: '' } } ] }
+            { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
+            { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
           ]
         })
       }));
@@ -117,7 +117,7 @@ describe('VideoRepository asset foundation queries', () => {
     };
     const db = {
       video: {
-        findUnique: vi.fn().mockResolvedValue({ id: 'v1', asset }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'v1', assets: [asset] }),
       },
     } as any;
     const repository = new VideoRepository(db);
@@ -126,7 +126,7 @@ describe('VideoRepository asset foundation queries', () => {
 
     expect(db.video.findUnique).toHaveBeenCalledWith({
       where: { id: 'v1' },
-      include: { asset: true },
+      include: { assets: true },
     });
     expect(result?.asset?.provider).toBe('CLOUDFLARE_STREAM');
     expect(result?.asset?.providerAssetId).toBe('cf-video-uid');

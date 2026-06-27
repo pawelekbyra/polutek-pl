@@ -9,6 +9,8 @@ import { MediaPolicy } from '@/lib/modules/media';
 import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
 import { CloudflareSignedPlaybackTokenService } from './cloudflare-signed-playback-token.service';
 import { getPrimaryPlayableAsset } from './primary-playable-asset';
+import { selectPrimaryVideoAsset } from '@/lib/modules/video/domain/video-asset-selection';
+import type { VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -20,7 +22,10 @@ export type PlaybackErrorCode =
   | "VIDEO_SOURCE_NOT_ALLOWED"
   | "UNKNOWN_PLAYBACK_ERROR";
 
-type VideoWithAsset = Awaited<ReturnType<AppContext['prisma']['video']['findUnique']>>;
+type VideoWithAssets = Awaited<ReturnType<AppContext['prisma']['video']['findUnique']>> & {
+  assets?: VideoAsset[] | null;
+  asset?: VideoAsset | null;
+};
 
 type PlayerDefaults = Pick<PlaybackPlan, 'player' | 'tracking'>;
 
@@ -62,7 +67,7 @@ function buildCloudflareSignedIframeUrl(token: string): string {
   return `https://iframe.videodelivery.net/${encodeCloudflarePlaybackToken(token)}`;
 }
 
-function toSafeAssetContract(asset: any): PlaybackAssetContract | undefined {
+function toSafeAssetContract(asset: VideoAsset | null | undefined): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
   return {
@@ -125,9 +130,9 @@ export class PlaybackService {
     const video = await prisma.video.findUnique({
       where: { id: videoId },
       include: {
-        asset: true,
+        assets: true,
       }
-    }) as VideoWithAsset & { asset?: any };
+    }) as VideoWithAssets;
 
     const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
 
@@ -181,7 +186,7 @@ export class PlaybackService {
         }
     }
 
-    const asset = video?.asset;
+    const asset = selectPrimaryVideoAsset(video?.assets) ?? video?.asset;
     const safeAsset = toSafeAssetContract(asset);
 
     if (asset) {
