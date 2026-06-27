@@ -95,7 +95,13 @@ export class ThumbnailResponseService {
   private static isVercelBlobUrl(url: string): boolean {
     try {
       const hostname = new URL(url).hostname.toLowerCase();
-      return hostname.endsWith(".public.blob.vercel-storage.com");
+      if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
+      const customHost = process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST;
+      if (customHost) {
+        const customHostname = new URL(customHost.startsWith('http') ? customHost : `https://${customHost}`).hostname.toLowerCase();
+        return hostname === customHostname;
+      }
+      return false;
     } catch {
       return false;
     }

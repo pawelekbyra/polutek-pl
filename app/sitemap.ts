@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const videos = await VideoContentService.getSitemapVideos().catch(() => []);
   const videoRoutes = videos.map((video) => ({
-    url: `${baseUrl}/?v=${encodeURIComponent(video.id)}`,
+    url: `${baseUrl}/watch/${encodeURIComponent(video.slug)}`,
     lastModified: video.publishedAt ? new Date(video.publishedAt) : new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.6,

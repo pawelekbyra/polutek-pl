@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { hideAdminComment } from "@/lib/modules/comments";
-import { handleApiError } from "@/lib/errors";
+import { handleApiError, fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
@@ -14,8 +14,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
       params.commentId,
       createAppContext({ actor }),
     );
-    if (result.ok) return NextResponse.json({ success: true });
-    return NextResponse.json({ error: result.error.message }, { status: 500 });
+    return fromUseCaseResult(result);
   } catch (error: unknown) {
     return handleApiError(error);
   }

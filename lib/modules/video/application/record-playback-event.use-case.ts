@@ -223,7 +223,12 @@ export async function recordPlaybackEventUseCase(
     if (type === 'WATCHED_10_SECONDS' && session && hasCredibleWatchedEvidence && !session.isAdminPreview && !session.countedAsView) {
         const identifier = userId ? `u:${userId}` : `f:${fingerprint}`;
         const lockKey = `video:view:${videoId}:${identifier}`;
-        const isNewView = await setNxEx(lockKey, '1', 86400);
+        let isNewView = true;
+        try {
+          isNewView = await setNxEx(lockKey, '1', 86400);
+        } catch {
+          // Redis unavailable — proceed without deduplication guarantee
+        }
 
         if (isNewView) {
             const recordViewResult = await db.writeTransaction(async (tx) => {

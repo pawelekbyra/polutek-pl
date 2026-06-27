@@ -46,7 +46,7 @@ describe('current main build safety', () => {
 
     expect(source).toContain('getSitemapVideos');
     expect(source).toContain('catch(() => [])');
-    expect(source).toContain('encodeURIComponent(video.id)');
+    expect(source).toContain('encodeURIComponent(video.slug)');
 
     for (const forbidden of [
       'playbackUrl',
