@@ -13,6 +13,20 @@ import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
+import { translations } from "@/app/components/LanguageContext";
+
+type UserProfile = {
+  id: string;
+  email: string;
+  imageUrl?: string | null;
+  totalPaid: number;
+  initialInteraction?: { liked: boolean; disliked: boolean };
+  initialIsSubscribed?: boolean;
+  isPatronDecorative?: boolean;
+  role?: string;
+} | null | undefined;
+
+type Translations = typeof translations.pl;
 
 type SidebarLayoutItem = PublicVideoDTO & {
   isLocked?: boolean;
@@ -35,9 +49,9 @@ type SidebarLayout = {
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
   selectedVideoId?: string;
-  userProfile: any;
+  userProfile: UserProfile;
   viewerIsPatron: boolean;
-  t: any;
+  t: Translations;
   language: string;
   mounted: boolean;
   premiereCountdown: string;
@@ -56,7 +70,7 @@ export function SidebarPlaylist({
   onVideoMouseEnter,
 }: SidebarPlaylistProps) {
   const getSidebarAccessBadge = (
-    video: any,
+    video: SidebarLayoutItem,
     hasAccess: boolean,
     lang: string,
   ) => {
@@ -143,6 +157,7 @@ export function SidebarPlaylist({
                   src={video.thumbnailUrl}
                   alt={displayTitle}
                   fill
+                  sizes="158px"
                   className="object-cover opacity-90 transition duration-700 group-hover/thumb:scale-105"
                 />
               ) : (
@@ -207,7 +222,9 @@ export function SidebarPlaylist({
                       "absolute bottom-[5px] left-[-169px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
                       badge.variant === "unlocked" &&
                         "bg-primary border-transparent",
-                      badge.variant === "locked" && video.tier === "PATRON" && "bg-neutral-800 border-border"
+                      badge.variant === "locked" &&
+                        video.tier === "PATRON" &&
+                        "bg-neutral-800 border-border",
                     )}
                   >
                     {badge.text}
@@ -231,8 +248,8 @@ export function SidebarPlaylist({
 
   const PatronBox = () => {
     const isPl = language === "pl";
-    const cdDays = premiereCountdown.split(' ')[0] || '—';
-    const cdClock = premiereCountdown.split(' ').slice(2).join('') || '--:--:--';
+    const cdDays = premiereCountdown.split(" ")[0] || "—";
+    const cdClock = premiereCountdown.split(" ").slice(2).join("") || "--:--:--";
 
     return (
       <div className="my-[18px] border border-accent-ring bg-gradient-to-b from-accent-soft to-white rounded-[16px] p-[18px] shadow-[0_6px_22px_rgba(37,99,235,0.07)] mb-6">
@@ -243,7 +260,9 @@ export function SidebarPlaylist({
           </h4>
         </div>
         <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
-          {isPl ? "Jednorazowe wsparcie odblokowuje wszystkie materiały patronów — na zawsze. Bez subskrypcji." : "A one-time tip unlocks every patron video — forever. No subscription."}
+          {isPl
+            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały patronów — na zawsze. Bez subskrypcji."
+            : "A one-time tip unlocks every patron video — forever. No subscription."}
         </p>
 
         <div className="bg-white border border-accent-ring rounded-[11px] p-[12px_14px] mb-[14px]">
@@ -267,8 +286,10 @@ export function SidebarPlaylist({
 
         <button
           onClick={() => {
-            const el = document.getElementById('support-box') || document.getElementById('donations');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const el =
+              document.getElementById("support-box") ||
+              document.getElementById("donations");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
           className="w-full h-[44px] border-none rounded-[11px] bg-primary text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 hover:brightness-[1.07] active:scale-[0.98] transition-all"
         >
@@ -303,7 +324,10 @@ export function SidebarPlaylist({
 
     return (
       <div className="space-y-2">
-        {renderSectionHeader(language === "pl" ? "Dostępne filmy" : "Available videos", <AlertCircle size={14} className="text-amber-500" />)}
+        {renderSectionHeader(
+          language === "pl" ? "Dostępne filmy" : "Available videos",
+          <AlertCircle size={14} className="text-amber-500" />,
+        )}
         {fallbackItems.map((v) =>
           renderVideoItem({
             ...v,
@@ -343,7 +367,10 @@ export function SidebarPlaylist({
 
       {patronSection && (
         <div className="mb-6">
-          {renderSectionHeader(patronSection.title, <Video size={13} className="stroke-[#1a1a1a] stroke-[2.4]" />)}
+          {renderSectionHeader(
+            patronSection.title,
+            <Video size={13} className="stroke-[#1a1a1a] stroke-[2.4]" />,
+          )}
           {patronSection.items.map(renderVideoItem)}
         </div>
       )}
