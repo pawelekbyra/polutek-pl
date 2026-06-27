@@ -269,18 +269,19 @@ function LoginArrowIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 48 48"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.4"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M28 8H38a2 2 0 0 1 2 2V38a2 2 0 0 1-2 2H28" />
-      <path d="M6 24H30" />
-      <path d="M22 16l8 8-8 8" />
+      <path d="M2.7 10.3 12 21l9.3-10.7" />
+      <path d="M12 21 7 3h10l-5 18Z" />
+      <path d="M2.7 10.3H21.3" />
+      <path d="M7 3l5 7.3L17 3" />
     </svg>
   );
 }
