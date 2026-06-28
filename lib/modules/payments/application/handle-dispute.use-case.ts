@@ -5,7 +5,7 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
-import { syncClerkAccess } from "@/lib/modules/users/application/sync-clerk-access";
+import { syncClerkAccess } from "@/lib/modules/users";
 import { recalculatePatronStatus } from "@/lib/modules/patron";
 
 export interface HandleDisputeInput {

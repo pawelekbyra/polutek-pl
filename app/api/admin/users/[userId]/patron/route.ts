@@ -2,7 +2,7 @@ import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { grantPatron, revokePatron } from "@/lib/modules/patron";
-import { syncClerkAccess } from "@/lib/modules/users/application/sync-clerk-access";
+import { syncClerkAccess } from "@/lib/modules/users";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 

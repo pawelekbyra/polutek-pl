@@ -12,7 +12,7 @@ import { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
 import { SupportedCurrency } from "@/lib/constants";
 import { PaymentPolicy } from "../domain/payment.policy";
 import { EmailService } from "@/lib/services/email.service";
-import { syncClerkAccess } from "@/lib/modules/users/application/sync-clerk-access";
+import { syncClerkAccess } from "@/lib/modules/users";
 import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface FulfillPaymentInput {
