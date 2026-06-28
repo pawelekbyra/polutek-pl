@@ -6,9 +6,9 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
-import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER, extractYouTubeVideoId } from "../domain/video-asset.constants";
+import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER, extractYouTubeVideoId, extractVimeoVideoId } from "../domain/video-asset.constants";
 
-export type AddVideoSourceProvider = "CLOUDFLARE_STREAM" | "YOUTUBE";
+export type AddVideoSourceProvider = "CLOUDFLARE_STREAM" | "MUX" | "YOUTUBE" | "VIMEO";
 
 export interface AddVideoSourceInput {
   videoId: string;
@@ -140,6 +140,127 @@ export async function addVideoSource(
         targetType: "Video",
         targetId: video.id,
         metadata: { provider: "YOUTUBE", externalVideoId: videoId },
+      }, tx);
+
+      return repository.findByIdForMainChannel(video.id, mainChannel.id);
+    }).catch((error: unknown) => {
+      if (error instanceof AppError) return error;
+      throw error;
+    });
+
+    if (updatedVideo instanceof AppError) return fail(updatedVideo);
+    if (!updatedVideo) return fail(new VideoNotFoundError(input.videoId));
+    return ok(toAdminVideoDto(updatedVideo));
+  }
+
+  if (input.provider === "MUX") {
+    const providerAssetId = input.providerAssetId?.trim();
+    if (!providerAssetId) {
+      return fail(new AppError("providerAssetId (Mux playback ID) is required for MUX.", 400, "MISSING_PROVIDER_ASSET_ID"));
+    }
+
+    const existing = await repository.findAssetByProviderId(VIDEO_PROVIDER.MUX, providerAssetId);
+    if (existing && existing.videoId !== video.id) {
+      return fail(new AppError(`Mux asset ${providerAssetId} is already attached to another video.`, 409, "MUX_ASSET_IN_USE"));
+    }
+    if (existing && existing.videoId === video.id) {
+      return ok(toAdminVideoDto(video));
+    }
+
+    const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
+      await (tx as any).videoAsset.create({
+        data: {
+          videoId: video.id,
+          provider: VIDEO_PROVIDER.MUX,
+          objectKey: `mux:${providerAssetId}`,
+          providerAssetId,
+          providerPlaybackId: input.providerPlaybackId?.trim() || providerAssetId,
+          processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+          isPrimary: false,
+          pendingPrimaryIntent: false,
+          providerSyncedAt: new Date(),
+          processingStartedAt: new Date(),
+          processingEndedAt: new Date(),
+        },
+      });
+
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_SOURCE_ADDED",
+        targetType: "Video",
+        targetId: video.id,
+        metadata: { provider: "MUX", providerAssetId },
+      }, tx);
+
+      return repository.findByIdForMainChannel(video.id, mainChannel.id);
+    }).catch((error: unknown) => {
+      if (error instanceof AppError) return error;
+      throw error;
+    });
+
+    if (updatedVideo instanceof AppError) return fail(updatedVideo);
+    if (!updatedVideo) return fail(new VideoNotFoundError(input.videoId));
+    return ok(toAdminVideoDto(updatedVideo));
+  }
+
+  if (input.provider === "VIMEO") {
+    const rawId = input.externalVideoId?.trim() || "";
+    const videoIdExtracted = extractVimeoVideoId(rawId) || (/^\d+$/.test(rawId) ? rawId : null);
+    if (!videoIdExtracted) {
+      return fail(new AppError("A valid Vimeo video ID or URL is required.", 400, "INVALID_VIMEO_VIDEO_ID"));
+    }
+
+    if (video.tier === "PATRON") {
+      return fail(new AppError("Vimeo cannot be used as a source for PATRON-tier videos — no private playback available.", 400, "VIMEO_PATRON_FORBIDDEN"));
+    }
+
+    const canonicalUrl = `https://vimeo.com/${videoIdExtracted}`;
+
+    try {
+      const oembedRes = await fetch(
+        `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(canonicalUrl)}`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      if (!oembedRes.ok) {
+        return fail(new AppError("Vimeo video not found or not embeddable.", 422, "VIMEO_VIDEO_NOT_FOUND"));
+      }
+    } catch {
+      return fail(new AppError("Could not verify Vimeo video (network error). Try again.", 502, "VIMEO_OEMBED_UNAVAILABLE"));
+    }
+
+    const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
+      const existingVimeo = await tx.videoAsset.findFirst({
+        where: { videoId: video.id, provider: "VIMEO" },
+      });
+
+      if (existingVimeo) {
+        await (tx as any).videoAsset.update({
+          where: { id: existingVimeo.id },
+          data: {
+            externalVideoId: videoIdExtracted,
+            externalUrl: canonicalUrl,
+            objectKey: `vimeo:${videoIdExtracted}`,
+            processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+          },
+        });
+      } else {
+        await (tx as any).videoAsset.create({
+          data: {
+            videoId: video.id,
+            provider: "VIMEO",
+            objectKey: `vimeo:${videoIdExtracted}`,
+            externalVideoId: videoIdExtracted,
+            externalUrl: canonicalUrl,
+            processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+            isPrimary: false,
+          },
+        });
+      }
+
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_SOURCE_ADDED",
+        targetType: "Video",
+        targetId: video.id,
+        metadata: { provider: "VIMEO", externalVideoId: videoIdExtracted },
       }, tx);
 
       return repository.findByIdForMainChannel(video.id, mainChannel.id);

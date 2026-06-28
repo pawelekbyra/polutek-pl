@@ -22,6 +22,8 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
     processingEndedAt: null,
     mimeType: null,
     sizeBytes: null,
+    pendingPrimaryIntent: false,
+    muxUploadId: null,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
   };

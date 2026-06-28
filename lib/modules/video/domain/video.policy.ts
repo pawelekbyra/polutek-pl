@@ -40,10 +40,12 @@ export class VideoPolicy {
       if (!asset.isPrimary) blockers.push({ code: 'VIDEO_PUBLICATION_NON_PRIMARY_ASSET', message: 'Publikacja wymaga primary assetu.', field: 'asset' });
 
       const isYoutube = asset.provider === VIDEO_PROVIDER.YOUTUBE;
+      const isVimeo = asset.provider === VIDEO_PROVIDER.VIMEO;
       const isCfStream = asset.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
+      const isMux = asset.provider === VIDEO_PROVIDER.MUX;
 
-      if (!isCfStream && !isYoutube) {
-        blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Primary asset musi pochodzić z Cloudflare Stream lub YouTube.', field: 'asset' });
+      if (!isCfStream && !isMux && !isYoutube && !isVimeo) {
+        blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Primary asset musi pochodzić z Cloudflare Stream, Mux, YouTube lub Vimeo.', field: 'asset' });
       }
 
       if (isCfStream) {
@@ -51,9 +53,19 @@ export class VideoPolicy {
         if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Cloudflare Stream.', field: 'asset' });
       }
 
+      if (isMux) {
+        if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Mux nie jest jeszcze READY.', field: 'asset' });
+        if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Mux.', field: 'asset' });
+      }
+
       if (isYoutube) {
         if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_YOUTUBE_PATRON_FORBIDDEN', message: 'YouTube nie może być źródłem dla filmów PATRON.', field: 'asset' });
         if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_YOUTUBE_VIDEO_ID', message: 'Brakuje identyfikatora YouTube.', field: 'asset' });
+      }
+
+      if (isVimeo) {
+        if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_VIMEO_PATRON_FORBIDDEN', message: 'Vimeo nie może być źródłem dla filmów PATRON — brak bezpiecznego prywatnego playbacku.', field: 'asset' });
+        if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_VIMEO_VIDEO_ID', message: 'Brakuje identyfikatora Vimeo.', field: 'asset' });
       }
     }
     return blockers;
