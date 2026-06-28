@@ -12,7 +12,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export async function POST(req: NextRequest) {
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "anonymous") {
+    if (actor.type === "guest") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
