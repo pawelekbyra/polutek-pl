@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put, del } from "@vercel/blob";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../../../../lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { getBlobAccess } from "@/lib/blob-config";
