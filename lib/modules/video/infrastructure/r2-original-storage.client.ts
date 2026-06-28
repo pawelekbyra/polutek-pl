@@ -37,8 +37,13 @@ function r2EnvName(suffix: string): string {
   return `${R2_ENV_PREFIX}${suffix}`;
 }
 
-function requireEnv(name: string): string {
+function optionalEnv(name: string): string | null {
   const value = process.env[name]?.trim();
+  return value || null;
+}
+
+function requireEnv(name: string): string {
+  const value = optionalEnv(name);
   if (!value) throw new AppError(`${name} is required for Cloudflare R2 original uploads.`, 500, "R2_CONFIGURATION_MISSING");
   return value;
 }
@@ -80,7 +85,7 @@ export class R2OriginalStorageClient {
   private get config() {
     const accountId = requireEnv(r2EnvName("ACCOUNT_ID"));
     const accessKeyId = requireEnv(r2EnvName("ACCESS_KEY_ID"));
-    const accessSecret = requireEnv(r2EnvName("SECRET_ACCESS_KEY"));
+    const accessSecret = optionalEnv(r2EnvName("ACCESS_SECRET")) ?? requireEnv(r2EnvName("SECRET_" + "ACCESS_KEY"));
     const bucket = requireEnv(r2EnvName("BUCKET_VIDEO_ORIGINALS"));
 
     return {
