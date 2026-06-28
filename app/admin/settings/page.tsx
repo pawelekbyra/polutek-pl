@@ -79,9 +79,7 @@ export default function AdminSettingsPage() {
 
   if (!isLoaded) return null;
 
-  const isAdmin =
-    user?.publicMetadata?.role === "ADMIN" ||
-    user?.organizationMemberships?.some((m) => m.role === "org:admin");
+  const isAdmin = user?.publicMetadata?.role === "ADMIN";
 
   if (!isAdmin) {
     return (
