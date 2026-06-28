@@ -68,7 +68,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.x | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-003, 005, 006 |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/cleanup-audit-service: DTOs przeniesione: `payments-admin.dto` → modules/payments, `videos-admin.dto` → modules/video, `comment.dto` → modules/comments; pozostałe: `playback.dto.ts` (brak modułu), `user-access.service.ts`, `profile.service.ts`, `email.service.ts` |
+| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/cleanup-audit-service: DTOs przeniesione: `payments-admin.dto` → modules/payments, `videos-admin.dto` → modules/video, `comment.dto` → modules/comments; audit.service callers migrated; pozostałe: `playback.dto.ts` (brak modułu), `user-access.service.ts`, `profile.service.ts`, `email.service.ts` |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Roadmap progress tracker
