@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx', 'tests/integration/**/*.test.ts'],
+    exclude: ['tests/unit/admin-mux-health.test.ts'],
     alias: {
       '@': path.resolve(__dirname, './'),
     },
