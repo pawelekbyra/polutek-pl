@@ -1,5 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { sendWelcomeEmail, sendPasswordChangedEmail } from "@/lib/modules/email";
+import { EmailService } from "@/lib/services/email.service"; // R5/R9 boundary: legacy email service
 import { AccountDeletionCleanupUseCase } from "./account-deletion-cleanup.use-case";
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
 import { WebhookEventStatus } from "@prisma/client";
@@ -82,7 +82,7 @@ export class SyncUserFromWebhookUseCase {
 
     // Handle side effects (R5/R9 boundary)
     if (eventType === 'user.created') {
-        await sendWelcomeEmail(data.email, data.name || undefined, data.language as any).catch(e => {
+        await EmailService.sendWelcomeEmail(data.email, data.name || undefined, data.language as any).catch(e => {
             console.error('[ClerkWebhook] Failed to send welcome email:', e);
         });
     }
@@ -106,7 +106,7 @@ export class SyncUserFromWebhookUseCase {
           select: { email: true }
       });
       if (user?.email) {
-          await sendPasswordChangedEmail(user.email).catch(e => {
+          await EmailService.sendPasswordChangedEmail(user.email).catch(e => {
               console.error('[ClerkWebhook] Failed to send password changed email:', e);
           });
       }
