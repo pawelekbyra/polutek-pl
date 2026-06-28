@@ -96,7 +96,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
       - run: npm run quality:architecture-boundaries
 
   control-plane-docs:
@@ -121,7 +120,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
+      - run: npx tsc -p tsconfig.typecheck.json --noEmit
 
   tests-coverage:
     name: tests/coverage
