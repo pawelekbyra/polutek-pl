@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw } from "@/app/components/icons";
+import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw, Youtube } from "@/app/components/icons";
 import { CoverImageUpload } from "./CoverImageUpload";
 
-export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE";
+export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE" | "YOUTUBE" | "VIMEO" | "NONE";
 
 interface VideoFormData {
   id: string;
@@ -49,6 +49,10 @@ interface VideoFormProps {
   onCreateSourceModeChange?: (mode: CreateVideoSourceMode) => void;
   existingCloudflareSource?: string;
   onExistingCloudflareSourceChange?: (value: string) => void;
+  externalSourceId?: string;
+  onExternalSourceIdChange?: (value: string) => void;
+  /** Current video tier — needed to gate YouTube/Vimeo options */
+  currentTier?: string;
 }
 
 export function VideoForm({
@@ -66,11 +70,22 @@ export function VideoForm({
   createSourceMode = "UPLOAD",
   onCreateSourceModeChange,
   existingCloudflareSource = "",
-  onExistingCloudflareSourceChange
+  onExistingCloudflareSourceChange,
+  externalSourceId = "",
+  onExternalSourceIdChange,
+  currentTier,
 }: VideoFormProps) {
   const isCreate = !formData.id;
   const wantsPublish = formData.status === "PUBLISHED";
-  const hasCreateSource = createSourceMode === "UPLOAD" ? Boolean(selectedVideoFile) : existingCloudflareSource.trim().length > 0;
+  const isPatron = (currentTier || formData.tier) === "PATRON";
+
+  function hasCreateSource(): boolean {
+    if (createSourceMode === "UPLOAD") return Boolean(selectedVideoFile);
+    if (createSourceMode === "EXISTING_CLOUDFLARE") return existingCloudflareSource.trim().length > 0;
+    if (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") return externalSourceId.trim().length > 0;
+    if (createSourceMode === "NONE") return true;
+    return false;
+  }
 
   return (
     <form onSubmit={onSubmit} className={cn("max-w-4xl mx-auto p-4 md:p-8 space-y-8", className)}>
@@ -102,7 +117,7 @@ export function VideoForm({
           <Button
             type="submit"
             data-intent={isCreate ? "PUBLISHED" : "SAVE"}
-            disabled={isSubmitting || !formData.title.trim() || !formData.slug.trim() || (isCreate && !hasCreateSource)}
+            disabled={isSubmitting || !formData.title.trim() || !formData.slug.trim() || (isCreate && !hasCreateSource())}
             onClick={() => isCreate ? setFormData({...formData, status: "PUBLISHED"}) : undefined}
           >
             {isCreate ? <Send className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
@@ -153,25 +168,29 @@ export function VideoForm({
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileVideo className="h-5 w-5" /> Plik wideo</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileVideo className="h-5 w-5" /> Źródła wideo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {isCreate ? (
                 <>
                   <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
-                    <p className="font-semibold">Jednoetapowe dodawanie</p>
-                    <p className="mt-1 text-xs">Wybierz plik albo podaj istniejący Cloudflare Stream UID/adres. System utworzy techniczny szkic i — jeśli wybierzesz publikację — opublikuje dopiero po stanie READY.</p>
+                    <p className="font-semibold">Wybierz źródło główne</p>
+                    <p className="mt-1 text-xs">Pierwsze źródło stanie się primary. Kolejne źródła alternatywne możesz dodać po zapisie w zakładce Media.</p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Źródło Cloudflare</Label>
+                    <Label>Typ źródła</Label>
                     <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="UPLOAD">Upload pliku do Cloudflare</SelectItem>
-                        <SelectItem value="EXISTING_CLOUDFLARE">Istniejący Cloudflare Stream UID/adres</SelectItem>
+                        <SelectItem value="UPLOAD">Cloudflare Stream — upload pliku</SelectItem>
+                        <SelectItem value="EXISTING_CLOUDFLARE">Cloudflare Stream — istniejący UID</SelectItem>
+                        {!isPatron && <SelectItem value="YOUTUBE">YouTube — URL lub ID</SelectItem>}
+                        {!isPatron && <SelectItem value="VIMEO">Vimeo — URL lub ID</SelectItem>}
+                        <SelectItem value="NONE">Brak źródła — zapisz szkic</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {createSourceMode === "UPLOAD" ? (
+
+                  {createSourceMode === "UPLOAD" && (
                     <div className="space-y-2">
                       <Label htmlFor="videoFile">Plik wideo {wantsPublish ? "(wymagany do publikacji)" : "(opcjonalny dla szkicu)"}</Label>
                       <Input
@@ -184,29 +203,65 @@ export function VideoForm({
                       {selectedVideoFile ? (
                         <p className="text-xs font-medium text-muted-foreground">Wybrano: {selectedVideoFile.name}</p>
                       ) : (
-                        <p className="text-xs text-muted-foreground">Możesz zapisać pusty szkic, ale publikacja wymaga pliku albo istniejącego assetu Cloudflare.</p>
+                        <p className="text-xs text-muted-foreground">Można zapisać pusty szkic, ale publikacja wymaga pliku.</p>
                       )}
                     </div>
-                  ) : (
+                  )}
+
+                  {createSourceMode === "EXISTING_CLOUDFLARE" && (
                     <div className="space-y-2">
                       <Label htmlFor="existingCloudflareSource">Cloudflare Stream UID albo adres</Label>
                       <Input
                         id="existingCloudflareSource"
                         value={existingCloudflareSource}
                         onChange={(event) => onExistingCloudflareSourceChange?.(event.target.value)}
-                        placeholder="np. 31c9291ab41fac05471db4e73aa11717 albo https://iframe.videodelivery.net/..."
+                        placeholder="np. 31c9291ab41fac05471db4e73aa11717"
                         disabled={isSubmitting}
                       />
-                      {existingCloudflareSource.trim() ? (
-                        <p className="text-xs font-medium text-muted-foreground">Po zapisie sprawdzę status assetu w Cloudflare i opublikuję tylko jeśli jest READY.</p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Podaj identyfikator/adres istniejącego assetu Cloudflare Stream.</p>
+                      {existingCloudflareSource.trim() && (
+                        <p className="text-xs text-muted-foreground">Po zapisie sprawdzę status assetu w Cloudflare i opublikuję tylko jeśli jest READY.</p>
                       )}
                     </div>
                   )}
+
+                  {createSourceMode === "YOUTUBE" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="externalSourceId" className="flex items-center gap-1"><Youtube className="h-3 w-3 text-red-600" />YouTube URL lub ID</Label>
+                      <Input
+                        id="externalSourceId"
+                        value={externalSourceId}
+                        onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
+                        placeholder="np. https://youtube.com/watch?v=abc lub abc123"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+
+                  {createSourceMode === "VIMEO" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="externalSourceId" className="flex items-center gap-1"><span className="text-sky-700 font-bold text-sm">◈</span>Vimeo URL lub ID</Label>
+                      <Input
+                        id="externalSourceId"
+                        value={externalSourceId}
+                        onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
+                        placeholder="np. https://vimeo.com/123456789 lub 123456789"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+
+                  {createSourceMode === "NONE" && (
+                    <p className="text-xs text-muted-foreground rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      Film zostanie zapisany jako szkic bez źródła. Źródła możesz dodać później w szczegółach filmu.
+                    </p>
+                  )}
+
+                  {isPatron && (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") && (
+                    <p className="text-xs text-destructive">YouTube i Vimeo niedostępne dla tieru PATRON — brak bezpiecznego prywatnego playbacku.</p>
+                  )}
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Upload i diagnostyka assetu są dostępne w zakładce Media szczegółów filmu.</p>
+                <p className="text-sm text-muted-foreground">Upload i zarządzanie źródłami są dostępne w zakładce Media szczegółów filmu.</p>
               )}
             </CardContent>
           </Card>

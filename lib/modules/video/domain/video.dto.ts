@@ -48,7 +48,7 @@ export interface AdminVideoAssetDto {
   mimeType?: string | null;
   sizeBytes?: number | null;
   requiresSignedUrl: boolean;
-  sourceMode: "CLOUDFLARE_STREAM" | "YOUTUBE" | "LEGACY_PROVIDER_ASSET";
+  sourceMode: "CLOUDFLARE_STREAM" | "MUX" | "YOUTUBE" | "VIMEO" | "LEGACY_PROVIDER_ASSET";
   durationSeconds?: number | null;
   thumbnailUrl?: string | null;
   previewUrl?: string | null;
@@ -153,13 +153,15 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
 
 function resolveSourceMode(provider: StorageProvider): AdminVideoAssetDto["sourceMode"] {
   if (provider === "CLOUDFLARE_STREAM") return "CLOUDFLARE_STREAM";
+  if (provider === "MUX") return "MUX";
   if (provider === "YOUTUBE") return "YOUTUBE";
+  if (provider === "VIMEO") return "VIMEO";
   return "LEGACY_PROVIDER_ASSET";
 }
 
 function resolveIsPlayable(provider: StorageProvider, processingState: VideoAssetProcessingState, externalVideoId?: string | null): boolean {
-  if (provider === "YOUTUBE") return Boolean(externalVideoId);
-  if (provider === "CLOUDFLARE_STREAM") return processingState === "READY";
+  if (provider === "YOUTUBE" || provider === "VIMEO") return Boolean(externalVideoId);
+  if (provider === "CLOUDFLARE_STREAM" || provider === "MUX") return processingState === "READY";
   return false;
 }
 
@@ -186,7 +188,7 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     processingEndedAt: asset.processingEndedAt,
     mimeType: asset.mimeType,
     sizeBytes: asset.sizeBytes,
-    requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM",
+    requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "MUX",
     sourceMode: resolveSourceMode(asset.provider),
     durationSeconds: asset.durationSeconds ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
@@ -206,11 +208,11 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
   if (asset) {
-    if (asset.provider === "CLOUDFLARE_STREAM") {
+    if (asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "MUX") {
       if (asset.processingState === "READY") migrationStatus = "READY";
       else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
       else migrationStatus = "PROCESSING";
-    } else if (asset.provider === "YOUTUBE") {
+    } else if (asset.provider === "YOUTUBE" || asset.provider === "VIMEO") {
       migrationStatus = asset.externalVideoId ? "READY" : "MISSING_SOURCE";
     } else {
       migrationStatus = "MIGRATION_REQUIRED";

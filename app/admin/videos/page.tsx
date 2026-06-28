@@ -31,6 +31,8 @@ export default function AdminVideosPage() {
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [deleteDialogVideoId, setDeleteDialogVideoId] = useState<string | null>(null);
 
+  const [externalSourceId, setExternalSourceId] = useState("");
+
   const {
     error, setError, videos, stats, isInitialLoading, setIsInitialLoading, isRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
@@ -105,6 +107,7 @@ export default function AdminVideosPage() {
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
+    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -135,6 +138,7 @@ export default function AdminVideosPage() {
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
+    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -146,6 +150,7 @@ export default function AdminVideosPage() {
     setFormData(INITIAL_FORM_DATA);
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
+    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -156,9 +161,14 @@ export default function AdminVideosPage() {
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
     const intent = submitter?.dataset.intent === "PUBLISHED" || (!submitter && formData.status === "PUBLISHED") ? "PUBLISHED" : "DRAFT";
     const existingProviderAssetId = normalizeCloudflareSource(existingCloudflareSource);
-    const hasCreateSource = createSourceMode === "UPLOAD" ? Boolean(selectedVideoFile) : Boolean(existingProviderAssetId);
-    if (!formData.id && intent === "PUBLISHED" && !hasCreateSource) {
-      setFormError("Wybierz plik albo podaj istniejący Cloudflare Stream UID/adres przed publikacją. Szkic możesz zapisać bez źródła.");
+    const hasCreateSource = (() => {
+      if (createSourceMode === "UPLOAD") return Boolean(selectedVideoFile);
+      if (createSourceMode === "EXISTING_CLOUDFLARE") return Boolean(existingProviderAssetId);
+      if (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") return Boolean(externalSourceId?.trim());
+      return false; // NONE
+    })();
+    if (!formData.id && intent === "PUBLISHED" && !hasCreateSource && createSourceMode !== "NONE") {
+      setFormError("Wybierz plik albo podaj URL źródła przed publikacją. Szkic możesz zapisać bez źródła.");
       return;
     }
     setIsSubmitting(true);
@@ -217,6 +227,8 @@ export default function AdminVideosPage() {
             isAttachingExisting: true,
           });
           await attachExistingCloudflareAsset(data.id, existingProviderAssetId, intent === "PUBLISHED");
+        } else if ((createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") && externalSourceId?.trim()) {
+          await addExternalSource(data.id, createSourceMode, externalSourceId.trim(), intent === "PUBLISHED");
         } else {
           setIsEditing(false);
         }
@@ -281,6 +293,41 @@ export default function AdminVideosPage() {
     }
   }, [router, toast, setCreateUploadState, setExistingCloudflareSource, setFormError, setIsEditing]);
 
+  const addExternalSource = useCallback(async (videoId: string, provider: "YOUTUBE" | "VIMEO", url: string, publishAfterReady: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/videos/${videoId}/sources`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, externalVideoId: url, primaryIntent: true }),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        setFormError(readAdminApiError(resData, `Nie udało się dodać źródła ${provider}.`));
+        return;
+      }
+      if (publishAfterReady) {
+        const pubRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "publish" }),
+        });
+        if (!pubRes.ok) {
+          toast("Źródło dodane, ale publikacja nie powiodła się.", "error");
+        } else {
+          toast("Źródło dodane i film opublikowany.", "success");
+        }
+      } else {
+        toast(`Źródło ${provider} dodane do szkicu.`, "success");
+      }
+      setIsEditing(false);
+      setExternalSourceId("");
+      router.push(`/admin/videos/${encodeURIComponent(videoId)}?tab=media#media`);
+    } catch (err) {
+      logger.error("Add external source failed", err);
+      setFormError("Błąd połączenia podczas dodawania źródła.");
+    }
+  }, [router, toast, setFormError, setIsEditing]);
+
   const handleDelete = async (id: string) => {
       setDeleteDialogVideoId(null);
       setDeletingVideoId(id);
@@ -327,9 +374,13 @@ export default function AdminVideosPage() {
           setCreateSourceMode(mode);
           setSelectedVideoFile(null);
           setExistingCloudflareSource("");
+          setExternalSourceId("");
         }}
         existingCloudflareSource={existingCloudflareSource}
         onExistingCloudflareSourceChange={setExistingCloudflareSource}
+        externalSourceId={externalSourceId}
+        onExternalSourceIdChange={setExternalSourceId}
+        currentTier={formData.tier}
         fetchVideos={fetchVideos}
         page={page}
       />

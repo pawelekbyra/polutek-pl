@@ -20,6 +20,9 @@ interface AdminVideoEditViewProps {
   onCreateSourceModeChange: (mode: CreateVideoSourceMode) => void;
   existingCloudflareSource: string;
   onExistingCloudflareSourceChange: (val: string) => void;
+  externalSourceId?: string;
+  onExternalSourceIdChange?: (val: string) => void;
+  currentTier?: string;
   fetchVideos: (page: number) => void;
   page: number;
 }
@@ -41,6 +44,9 @@ export function AdminVideoEditView({
   onCreateSourceModeChange,
   existingCloudflareSource,
   onExistingCloudflareSourceChange,
+  externalSourceId,
+  onExternalSourceIdChange,
+  currentTier,
   fetchVideos,
   page
 }: AdminVideoEditViewProps) {
@@ -66,6 +72,9 @@ export function AdminVideoEditView({
         onCreateSourceModeChange={onCreateSourceModeChange}
         existingCloudflareSource={existingCloudflareSource}
         onExistingCloudflareSourceChange={onExistingCloudflareSourceChange}
+        externalSourceId={externalSourceId}
+        onExternalSourceIdChange={onExternalSourceIdChange}
+        currentTier={currentTier}
       />
       {createUploadState?.isAttachingExisting ? (
         <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
