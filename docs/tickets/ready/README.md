@@ -18,6 +18,7 @@ Polutek.pl jest po stabilizacji dużego refaktoru, ale produkt nadal aktywnie si
 <!-- CONTROL_PLANE_CURRENT_TICKET_ID: NONE -->
 <!-- CONTROL_PLANE_CURRENT_TICKET_FILE: NONE -->
 <!-- NO_ACTIVE_LARGE_CODE_TICKET -->
+<!-- no active large code ticket -->
 
 ## Current Control-Plane Rule
 

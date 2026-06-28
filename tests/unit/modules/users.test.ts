@@ -229,7 +229,7 @@ describe('Users Module', () => {
 
   describe('GetOrCreateUserUseCase', () => {
     it('does not allow escalating isPatron or role through sync', async () => {
-       const mockUser = { id: 'user_1', role: 'USER' };
+       const mockUser = { id: 'user_1', role: 'USER', isPatron: false };
        const mockPrisma = {
          user: {
            findUnique: vi.fn().mockResolvedValue(mockUser),
