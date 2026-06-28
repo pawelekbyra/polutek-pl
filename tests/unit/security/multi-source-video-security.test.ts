@@ -16,8 +16,11 @@ vi.mock('@/lib/modules/audit', () => ({
 }));
 
 // Keep fetch unmocked by default — individual tests override per-case.
+const originalFetch = global.fetch;
+
 afterEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
+  global.fetch = originalFetch;
 });
 
 function makeCtx(prismaOverrides: Record<string, unknown> = {}) {
