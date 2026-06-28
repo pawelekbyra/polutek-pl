@@ -1,1 +1,17 @@
-export const dtoPlaceholder = true;
+import type { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
+
+export type BaseVideoDto = Record<string, unknown> & { id: string; slug: string; title: string; thumbnailUrl: string; tier: AccessTier; views: number; likesCount: number; dislikesCount: number; publishedAt: Date | null; isMainFeatured: boolean; showInSidebar: boolean; sidebarOrder: number };
+export type PublicVideoDto = BaseVideoDto;
+export type AdminVideoOriginalDto = Record<string, unknown> & { id: string; status: string; objectKey: string; sizeBytes: string | null };
+export type AdminVideoAssetDto = Record<string, unknown> & { id: string; videoId: string; provider: StorageProvider; objectKey: string; processingState: VideoAssetProcessingState; status: VideoAssetProcessingState; isPrimary: boolean; isPlayable: boolean; createdAt: Date; updatedAt: Date; fallbackPriority: number };
+export type MigrationStatus = "READY" | "MIGRATION_REQUIRED" | "MISSING_SOURCE" | "PROCESSING" | "FAILED";
+export type AdminVideoDto = BaseVideoDto & Record<string, unknown> & { videoUrl: string | null; status: VideoStatus; creatorId: string; createdAt: Date; updatedAt: Date; commentsCount: number; asset?: AdminVideoAssetDto | null; assets?: AdminVideoAssetDto[]; original?: AdminVideoOriginalDto | null; migrationStatus: MigrationStatus; publishAfterAssetReady: boolean; publishAfterAssetReadyRequestedAt: Date | null; publishAfterAssetReadyCompletedAt: Date | null; publishAfterAssetReadyError: string | null };
+export type PublicVideoInput = BaseVideoDto;
+export type AdminVideoOriginalInput = Record<string, unknown> & { id: string; status: string; objectKey: string; sizeBytes?: bigint | string | null };
+export type AdminVideoAssetInput = Record<string, unknown> & { id: string; videoId: string; provider: StorageProvider; objectKey: string; processingState: VideoAssetProcessingState; isPrimary: boolean; createdAt: Date; updatedAt: Date; fallbackPriority?: number | null };
+export type AdminVideoInput = PublicVideoInput & Record<string, unknown> & { videoUrl: string | null; status: VideoStatus; creatorId: string; createdAt: Date; updatedAt: Date; commentsCount?: number | null; asset?: AdminVideoAssetInput | null; assets?: AdminVideoAssetInput[] | null; original?: AdminVideoOriginalInput | null };
+
+export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto { return video; }
+export function toAdminVideoOriginalDto(original: AdminVideoOriginalInput | null | undefined): AdminVideoOriginalDto | null { return original ? { ...original, sizeBytes: original.sizeBytes == null ? null : String(original.sizeBytes) } : null; }
+export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null { return asset ? { ...asset, status: asset.processingState, isPlayable: true, fallbackPriority: asset.fallbackPriority ?? 100 } : null; }
+export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto { const video = input as AdminVideoInput; const firstAsset = video.asset ?? video.assets?.[0] ?? null; return { ...video, commentsCount: video.commentsCount ?? 0, asset: toAdminVideoAssetDto(firstAsset), assets: (video.assets ?? []).map(toAdminVideoAssetDto).filter((item): item is AdminVideoAssetDto => Boolean(item)), original: toAdminVideoOriginalDto(video.original), migrationStatus: "MISSING_SOURCE", publishAfterAssetReady: false, publishAfterAssetReadyRequestedAt: null, publishAfterAssetReadyCompletedAt: null, publishAfterAssetReadyError: null }; }
