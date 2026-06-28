@@ -54,7 +54,7 @@ export function CommentItem({
   const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
-  const isHearted = (comment as any).isHearted || false;
+  const [isHearted, setIsHearted] = React.useState<boolean>((comment as any).isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -128,6 +128,11 @@ export function CommentItem({
             className="w-full h-full object-cover"
             />
         </div>
+        {authorIsPatron && (
+          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-accent-ring tracking-wider uppercase whitespace-nowrap">
+            6-7
+          </span>
+        )}
       </div>
       <div className="flex-1 space-y-[2px] min-w-0 pt-0">
         <div className="flex items-start justify-between">
@@ -139,11 +144,7 @@ export function CommentItem({
             >
               {comment.author?.displayName || "Użytkownik"}
             </span>
-            {authorIsPatron && (
-               <span className="bg-accent-soft text-primary text-[9px] font-extrabold px-[7px] py-[2px] rounded-full border border-accent-ring tracking-wider uppercase">
-                  {language === "pl" ? "Patron" : "Patron"}
-               </span>
-            )}
+
             {!isReply && comment.isPinned && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
                 <Star size={10} className="fill-blue-600" />
@@ -248,6 +249,7 @@ export function CommentItem({
                         try {
                             const res = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
                             if (res.ok) {
+                                setIsHearted(prev => !prev);
                                 toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
                             }
                         } catch (err) {}
@@ -300,11 +302,11 @@ export function CommentItem({
           onSubmit={(reason, note) => onReport(comment.id, reason, note)}
         />
 
-        <div className="flex items-center gap-[12px] pt-1">
+        <div className="flex flex-wrap items-center gap-[10px] pt-1 min-w-0">
           <button
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
-              "inline-flex h-6 items-center justify-center gap-1.5 transition-all group",
+              "inline-flex h-6 shrink-0 items-center justify-center gap-1.5 transition-all group",
               isLiked
                 ? "text-primary"
                 : "text-[#606060] hover:text-[#0f0f0f]",

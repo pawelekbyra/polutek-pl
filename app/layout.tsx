@@ -1,7 +1,7 @@
 import Providers from "@/app/components/Providers";
 import ClerkLocalizationProvider from "@/app/components/ClerkLocalizationProvider";
 import { Suspense } from 'react';
-import { jakarta, outfit, spaceGrotesk } from "./fonts";
+import { jakarta, outfit, spaceGrotesk, bebasNeue } from "./fonts";
 import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="pl"
       suppressHydrationWarning
-      className={`${jakarta.variable} ${outfit.variable} ${spaceGrotesk.variable}`}
+      className={`${jakarta.variable} ${outfit.variable} ${spaceGrotesk.variable} ${bebasNeue.variable}`}
     >
       <body className="font-sans bg-background text-foreground min-h-screen relative" suppressHydrationWarning>
         <Suspense fallback={<div className="min-h-screen bg-background" />}>

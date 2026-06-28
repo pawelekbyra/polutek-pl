@@ -92,6 +92,16 @@ const checks = [
     ]),
   },
   {
+    name: 'Mux',
+    ok: () => hasAll([
+      'MUX_TOKEN_ID',
+      'MUX_TOKEN_SECRET',
+      'MUX_WEBHOOK_SECRET',
+      'MUX_SIGNING_KEY_ID',
+      'MUX_SIGNING_PRIVATE_KEY',
+    ]),
+  },
+  {
     name: 'media host allowlist',
     ok: () => hasAny([
       'MEDIA_BUCKET_HOST',

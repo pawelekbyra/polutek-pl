@@ -68,7 +68,7 @@ export default function ShareButton({
         )}
       >
         <Share2 size={18} />
-        <span className="hidden sm:inline">Udostępnij</span>
+        <span className="hidden sm:inline">Szeruj</span>
       </button>
 
       {isOpen && !isMobile && (
@@ -98,7 +98,7 @@ export default function ShareButton({
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <XIcon className="text-foreground" />
-            <span>Udostępnij na X</span>
+            <span>Szeruj na X</span>
           </div>
 
           <div
@@ -106,7 +106,7 @@ export default function ShareButton({
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
           >
             <Facebook size={16} className="text-[#1877F2]" />
-            <span>Udostępnij na Facebook</span>
+            <span>Szeruj na Facebook</span>
           </div>
 
           <div

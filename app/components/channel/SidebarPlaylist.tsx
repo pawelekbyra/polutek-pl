@@ -98,6 +98,15 @@ export function SidebarPlaylist({
     return null;
   };
 
+  const getViewsLabel = (count: number) => {
+    if (language !== "pl") return count === 1 ? "view" : "views";
+    if (count === 1) return "wyświetlenie";
+    const last = count % 10;
+    const lastTwo = count % 100;
+    if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "wyświetlenia";
+    return "wyświetleń";
+  };
+
   const [layout, setLayout] = useState<SidebarLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
@@ -197,7 +206,7 @@ export function SidebarPlaylist({
                         language === "pl" ? "pl-PL" : "en-US",
                       )
                     : video.views}{" "}
-                  {t.views}
+                  {mounted ? getViewsLabel(video.views ?? 0) : t.views}
                 </span>
                 {video.publishedAt && (
                   <>
@@ -259,24 +268,21 @@ export function SidebarPlaylist({
     const cdClock = premiereCountdown.split(" ").slice(2).join("") || "--:--:--";
 
     return (
-      <div className="my-[18px] border border-accent-ring bg-gradient-to-b from-accent-soft to-white rounded-[16px] p-[18px] shadow-[0_6px_22px_rgba(37,99,235,0.07)] mb-6">
-        <div className="flex items-center gap-2 mb-[4px]">
-          <Heart size={17} className="text-primary fill-primary" />
-          <h4 className="font-heading text-[16px] font-bold text-[#0f0f0f] m-0">
-            {isPl ? "Zostań patronem" : "Become a patron"}
-          </h4>
-        </div>
+      <div className="my-[18px] border border-neutral-200 bg-white rounded-[16px] p-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] mb-6">
+        <h4 className="font-heading text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]">
+          {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
+        </h4>
         <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
           {isPl
-            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały patronów — na zawsze. Bez subskrypcji."
-            : "A one-time tip unlocks every patron video — forever. No subscription."}
+            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
+            : "A one-time tip unlocks every bonus video — forever. No subscription."}
         </p>
 
-        <div className="bg-white border border-accent-ring rounded-[11px] p-[12px_14px] mb-[14px]">
-          <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px]">
-            {isPl ? "DO PREMIERY PATRONÓW" : "PATRON PREMIERE IN"}
+        <div className="bg-neutral-50 border border-neutral-200 rounded-[11px] p-[12px_14px] mb-[14px]">
+          <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center">
+            {isPl ? "DO PREMIERY" : "PREMIERE IN"}
           </div>
-          <div className="flex items-baseline gap-[10px]">
+          <div className="flex items-baseline gap-[10px] justify-center">
             <div className="flex items-baseline gap-[5px]">
               <span className="font-brand text-[30px] font-bold text-primary leading-none tabular-nums">
                 {cdDays}
@@ -301,7 +307,6 @@ export function SidebarPlaylist({
           className="w-full h-[44px] border-none rounded-[11px] bg-primary text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 hover:brightness-[1.07] active:scale-[0.98] transition-all"
         >
           {isPl ? "Wesprzyj" : "Support"}
-          <span className="font-semibold opacity-[0.85]">· od 20 zł</span>
         </button>
         <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
           {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
@@ -375,8 +380,7 @@ export function SidebarPlaylist({
       {patronSection && (
         <div className="mb-6">
           {renderSectionHeader(
-            patronSection.title,
-            <Video size={13} className="stroke-[#1a1a1a] stroke-[2.4]" />,
+            language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
           {patronSection.items.map(renderVideoItem)}
         </div>

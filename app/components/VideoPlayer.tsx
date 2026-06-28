@@ -520,7 +520,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
     return (
         <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
-            <PolutekWatermark />
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"

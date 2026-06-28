@@ -17,7 +17,6 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThreeCupsGame } from './ThreeCupsGame';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -33,7 +32,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isCupGameOpen, setIsCupGameOpen] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
   const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
@@ -147,7 +145,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   };
 
 
-  const openCupGame = () => {
     if (!userId) {
       openSignIn();
       return;
@@ -247,9 +244,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     text={video.description || undefined}
                   />
                <button
-                 onClick={openCupGame}
+                 type="button"
                  className="w-[38px] h-[38px] flex items-center justify-center bg-white hover:bg-secondary rounded-full transition-colors shrink-0 border border-input active:scale-95"
-                 aria-label={language === 'pl' ? 'Otwórz grę w trzy kubki' : 'Open shell game'}
+                 aria-label="Menu"
                >
                   <MoreHorizontal size={18} className="text-[#171717]" />
                </button>
@@ -303,12 +300,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
       </div>
 
-      {isCupGameOpen && (
-        <ThreeCupsGame
-          language={language}
-          onClose={() => setIsCupGameOpen(false)}
-        />
-      )}
+
     </section>
   );
 };
