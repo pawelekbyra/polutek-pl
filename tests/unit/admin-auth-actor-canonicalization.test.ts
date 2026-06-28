@@ -85,7 +85,6 @@ describe("canonical server actor resolution", () => {
     await expect(getActorFromAuth({ allowGuest: false })).resolves.toEqual({
       type: "user",
       userId: "user_1",
-      isPatron: false,
     });
     const { response } = await requireAdminForApi("TEST_CLAIM_ADMIN_DB_USER");
     expect(response?.status).toBe(403);
