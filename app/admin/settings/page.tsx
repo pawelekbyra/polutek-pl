@@ -10,6 +10,7 @@ export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,6 +28,7 @@ export default function AdminSettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploading(true);
+    setIsConfirmingDelete(false);
     setMessage(null);
     try {
       const fd = new FormData();
@@ -51,13 +53,19 @@ export default function AdminSettingsPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Remove the default thumbnail?")) return;
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      setMessage({ text: "Click Remove again to remove the default thumbnail.", type: "error" });
+      return;
+    }
+
     setIsDeleting(true);
     setMessage(null);
     try {
       const res = await fetch("/api/admin/settings/media/default-video-thumbnail", { method: "DELETE" });
       if (res.ok) {
         setCurrentUrl(null);
+        setIsConfirmingDelete(false);
         setMessage({ text: "Default thumbnail removed.", type: "success" });
       } else {
         setMessage({ text: "Failed to remove thumbnail.", type: "error" });
@@ -121,7 +129,7 @@ export default function AdminSettingsPage() {
                 disabled={isDeleting}
                 className="text-[13px] font-bold px-4 py-2 border border-neutral-200 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
               >
-                {isDeleting ? "Removing…" : "Remove"}
+                {isDeleting ? "Removing…" : isConfirmingDelete ? "Click again to remove" : "Remove"}
               </button>
             </div>
           </div>
