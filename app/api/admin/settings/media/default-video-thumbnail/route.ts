@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
       await del(existing.value).catch(() => null);
     }
 
-    const blob = await put(pathname, file, { access });
+    const blob = access === "private"
+      ? await put(pathname, file, { access: "private" })
+      : await put(pathname, file, { access: "public" });
 
     await prisma.appSetting.upsert({
       where: { key: SETTING_KEY },
