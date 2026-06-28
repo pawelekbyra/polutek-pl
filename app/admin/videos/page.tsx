@@ -37,7 +37,7 @@ export default function AdminVideosPage() {
     error, setError, videos, stats, isInitialLoading, setIsInitialLoading, isRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
-    createSourceMode, setCreateSourceMode, existingCloudflareSource, setExistingCloudflareSource,
+    createSourceMode, setCreateSourceMode, preferredProvider, setPreferredProvider, existingCloudflareSource, setExistingCloudflareSource,
     createUploadState, setCreateUploadState, formData, setFormData, total,
     page, totalPages, searchQuery, setSearchQuery,
     statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,
@@ -201,6 +201,7 @@ export default function AdminVideosPage() {
           duration: formData.duration?.trim() || null,
           tier: formData.tier,
           publishAfterAssetReady: intent === "PUBLISHED",
+          publishAfterAssetReadyProvider: intent === "PUBLISHED" ? preferredProvider : null,
         })
       });
       const data = await res.json();
@@ -383,6 +384,8 @@ export default function AdminVideosPage() {
         currentTier={formData.tier}
         fetchVideos={fetchVideos}
         page={page}
+        preferredProvider={preferredProvider}
+        onPreferredProviderChange={setPreferredProvider}
       />
     );
   }

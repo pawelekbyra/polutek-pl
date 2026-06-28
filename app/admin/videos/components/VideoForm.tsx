@@ -51,6 +51,8 @@ interface VideoFormProps {
   onExistingCloudflareSourceChange?: (value: string) => void;
   externalSourceId?: string;
   onExternalSourceIdChange?: (value: string) => void;
+  preferredProvider?: string;
+  onPreferredProviderChange?: (value: string) => void;
   /** Current video tier — needed to gate YouTube/Vimeo options */
   currentTier?: string;
 }
@@ -73,6 +75,8 @@ export function VideoForm({
   onExistingCloudflareSourceChange,
   externalSourceId = "",
   onExternalSourceIdChange,
+  preferredProvider = "CLOUDFLARE_STREAM",
+  onPreferredProviderChange,
   currentTier,
 }: VideoFormProps) {
   const isCreate = !formData.id;
@@ -205,6 +209,22 @@ export function VideoForm({
                       ) : (
                         <p className="text-xs text-muted-foreground">Można zapisać pusty szkic, ale publikacja wymaga pliku.</p>
                       )}
+                    </div>
+                  )}
+
+                  {createSourceMode === "UPLOAD" && wantsPublish && (
+                    <div className="space-y-2">
+                      <Label>Publikuj po przetworzeniu przez</Label>
+                      <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
+                          <SelectItem value="MUX">Mux</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Film opublikuje się gdy wybrany provider będzie READY. Drugi provider przetwarza równolegle jako fallback.
+                      </p>
                     </div>
                   )}
 

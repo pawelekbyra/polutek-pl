@@ -25,6 +25,8 @@ interface AdminVideoEditViewProps {
   currentTier?: string;
   fetchVideos: (page: number) => void;
   page: number;
+  preferredProvider?: string;
+  onPreferredProviderChange?: (value: string) => void;
 }
 
 export function AdminVideoEditView({
@@ -48,7 +50,9 @@ export function AdminVideoEditView({
   onExternalSourceIdChange,
   currentTier,
   fetchVideos,
-  page
+  page,
+  preferredProvider,
+  onPreferredProviderChange,
 }: AdminVideoEditViewProps) {
   const isCreateFlowLocked = Boolean(createUploadState);
 
@@ -75,6 +79,8 @@ export function AdminVideoEditView({
         externalSourceId={externalSourceId}
         onExternalSourceIdChange={onExternalSourceIdChange}
         currentTier={currentTier}
+        preferredProvider={preferredProvider}
+        onPreferredProviderChange={onPreferredProviderChange}
       />
       {createUploadState?.isAttachingExisting ? (
         <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
