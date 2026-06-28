@@ -30,6 +30,18 @@ interface CommentComposerProps {
 }
 
 const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
+const EXTENDED_EMOJIS = [
+  "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗",
+  "🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜",
+  "😝","🤤","😒","😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧","😨",
+  "😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪","😵","🥴","😠","😡","🤬","😷","🤒","🤕","🤢","🤮","🤧",
+  "🥳","🥸","😇","🤠","🥺","🫠","🫣","🫡","🫢","🫤","🤭","🫨","😶‍🌫️","😮‍💨","😤",
+  "👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉",
+  "👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","✍️","💪",
+  "🦾","🦿","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁️","👅","👄","🫦",
+  "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️",
+  "🔥","💯","✨","⭐","🌟","💫","⚡","🌈","🎉","🎊","🎈","🎁","🏆","🥇","🎯","💥","❄️","🌊","🍀","🌸",
+];
 
 export function CommentComposer({
   userProfile,
@@ -52,6 +64,10 @@ export function CommentComposer({
   language,
 }: CommentComposerProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [showEmojiPanel, setShowEmojiPanel] = React.useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = React.useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = React.useState(false);
   const graphemeCount = countGraphemes(newComment);
   const isTooLong = graphemeCount > 2000;
   const textareaId = replyTo ? "comment-reply-textarea" : "comment-textarea";
@@ -76,6 +92,24 @@ export function CommentComposer({
       }
     }, 0);
   };
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    setIsUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/comments/image-upload", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        setUploadedImageUrl(data.url);
+      }
+    } catch {}
+    setIsUploadingImage(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <div
       className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}
@@ -86,12 +120,7 @@ export function CommentComposer({
           alt={userProfile.name || "Avatar"}
           size={40}
           fallbackSeed={userProfile.id}
-          className={cn(
-            "mt-1",
-            isPatronDecorative
-              ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.18)]"
-              : "border border-[#e9eef6]",
-          )}
+          className="mt-1 border border-[#e9eef6]"
         />
       )}
       <div className="flex-1 min-w-0">
@@ -189,18 +218,58 @@ export function CommentComposer({
           {(isInputFocused || newComment.trim() || replyTo) && canComment && (
             <div className="flex flex-col gap-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex gap-1.5">
-                  {QUICK_EMOJIS.map((emoji) => (
+                <div className="flex items-center gap-1.5 relative">
+                  {QUICK_EMOJIS.slice(0, 5).map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => insertEmoji(emoji)}
                       disabled={isPending}
-                      className="hover:bg-neutral-100 p-1 rounded-md transition-colors"
+                      className="hover:bg-neutral-100 p-1 rounded-md transition-colors text-[16px]"
                     >
                       {emoji}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPanel(prev => !prev)}
+                    disabled={isPending}
+                    className="hover:bg-neutral-100 px-1.5 py-1 rounded-md transition-colors text-[11px] font-bold text-neutral-500"
+                  >
+                    {showEmojiPanel ? "✕" : "więcej"}
+                  </button>
+                  {showEmojiPanel && (
+                    <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-neutral-200 rounded-xl shadow-xl p-2 w-[300px] max-h-[200px] overflow-y-auto">
+                      <div className="flex flex-wrap gap-0.5">
+                        {EXTENDED_EMOJIS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => { insertEmoji(emoji); setShowEmojiPanel(false); }}
+                            className="hover:bg-neutral-100 p-1 rounded text-[18px] leading-none transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isPending || isUploadingImage}
+                    className="hover:bg-neutral-100 p-1 rounded-md transition-colors text-neutral-500 text-[11px] font-bold"
+                    title={language === "pl" ? "Dodaj obrazek" : "Add image"}
+                  >
+                    {isUploadingImage ? "⏳" : "📷"}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
                 </div>
 
                 <div
@@ -228,6 +297,16 @@ export function CommentComposer({
                 </p>
               )}
 
+              {uploadedImageUrl && (
+                <div className="relative inline-block mb-2">
+                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-neutral-200 object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => setUploadedImageUrl(null)}
+                    className="absolute -top-1 -right-1 bg-white border border-neutral-200 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
+                  >✕</button>
+                </div>
+              )}
               <div className="flex justify-start gap-2">
                 <Button
                   type="button"

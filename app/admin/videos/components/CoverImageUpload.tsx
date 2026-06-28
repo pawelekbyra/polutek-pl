@@ -143,7 +143,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
       }
 
       setPreviewUrl(data.url);
-      onUploadSuccess(data.url);
+      onUploadSuccess(data.storageUrl || data.url);
       setIsCropping(false);
       setImage(null);
     } catch (err) {

@@ -7,7 +7,7 @@ import { ArrowLeft } from '@/app/components/icons';
 
 export default function RegulaminPage() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1a1a1a] font-serif leading-relaxed">
+    <div className="min-h-screen bg-background text-[#1a1a1a] font-serif leading-relaxed">
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-16">
         <h1 className="text-3xl font-black uppercase tracking-tighter mb-12 border-b-2 border-[#1a1a1a]/10 pb-8">Regulamin Serwisu {APP_NAME}</h1>

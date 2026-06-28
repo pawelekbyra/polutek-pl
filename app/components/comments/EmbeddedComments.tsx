@@ -242,7 +242,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const getCommentsLabel = (count: number) => {
     if (language === "pl") {
-      if (count === 1) return "Komentarz";
+      if (count === 1) return "komentarz";
       const lastDigit = count % 10;
       const lastTwoDigits = count % 100;
       if (
@@ -250,9 +250,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         lastDigit <= 4 &&
         (lastTwoDigits < 12 || lastTwoDigits > 14)
       ) {
-        return "Komentarze";
+        return "komentarze";
       }
-      return "Komentarzy";
+      return "komentarzy";
     }
     return count === 1 ? "comment" : "comments";
   };
@@ -292,11 +292,29 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           )}
         </div>
 
-        <div className="flex gap-[16px] order-1 sm:order-2 self-end sm:self-auto items-center">
-          <div className="flex items-center gap-2 text-[#5B5B5B] cursor-pointer hover:text-[#0f0f0f] transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line></svg>
-            <span className="text-[13px] font-semibold">{language === "pl" ? "Sortuj według" : "Sort by"}</span>
-          </div>
+        <div className="flex gap-[8px] order-1 sm:order-2 self-end sm:self-auto items-center">
+          <button
+            onClick={() => setSortBy("newest")}
+            className={cn(
+              "text-[12px] font-bold px-3 py-1.5 rounded-full transition-all",
+              sortBy === "newest"
+                ? "bg-[#0f0f0f] text-white"
+                : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]"
+            )}
+          >
+            {language === "pl" ? "Najnowsze" : "Newest"}
+          </button>
+          <button
+            onClick={() => setSortBy("top")}
+            className={cn(
+              "text-[12px] font-bold px-3 py-1.5 rounded-full transition-all",
+              sortBy === "top"
+                ? "bg-[#0f0f0f] text-white"
+                : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]"
+            )}
+          >
+            {language === "pl" ? "Najlepsze" : "Top"}
+          </button>
         </div>
       </div>
 
@@ -462,15 +480,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </div>
         )}
 
-        {showStickyHeader && (
-          <button
-            onClick={scrollToTop}
-            className="fixed bottom-10 right-10 z-40 bg-primary text-white p-3 rounded-full shadow-xl hover:brightness-110 transition-all animate-in fade-in zoom-in"
-            title="Wróć na górę komentarzy"
-          >
-            <ChevronUp size={24} />
-          </button>
-        )}
+
       </div>
     </div>
   );
