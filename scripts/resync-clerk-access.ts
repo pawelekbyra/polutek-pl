@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { UserAccessService } from "../lib/services/user-access.service";
+import { syncClerkAccess } from "../lib/modules/users/application/sync-clerk-access";
 import { DISPLAY_EUR_TO_PLN_RATE } from "../lib/constants";
 
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
       const normalizedTotal = (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
 
       console.log(`Resyncing user ${user.id} (${user.email})...`);
-      await UserAccessService.syncClerkAccess(user.id, user.isPatron, normalizedTotal);
+      await syncClerkAccess(user.id, user.isPatron, normalizedTotal);
     }
 
     console.log("=== RESYNC COMPLETE ===");

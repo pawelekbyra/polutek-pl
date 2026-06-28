@@ -4,17 +4,15 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { Actor } from '@/lib/modules/shared/actor';
 import { PaymentStatus } from '@prisma/client';
 import { revokePatron, recalculatePatronStatus } from '@/lib/modules/patron';
-import { UserAccessService } from '@/lib/services/user-access.service';
+import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 vi.mock('@/lib/modules/patron', () => ({
   revokePatron: vi.fn(),
   recalculatePatronStatus: vi.fn(),
 }));
 
-vi.mock('@/lib/services/user-access.service', () => ({
-  UserAccessService: {
-    syncClerkAccess: vi.fn(),
-  },
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: vi.fn(),
 }));
 
 vi.mock('@/lib/observability', () => ({
@@ -92,7 +90,7 @@ describe('handleRefund', () => {
       ctx,
       mockTx // Critical: verify tx sharing
     );
-    expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith(userId, false, 0);
+    expect(syncClerkAccess).toHaveBeenCalledWith(userId, false, 0);
   });
 
   it('should perform partial refund and recalculate patron status in the same transaction', async () => {
@@ -123,7 +121,7 @@ describe('handleRefund', () => {
     expect(result.ok).toBe(true);
     expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(recalculatePatronStatus).toHaveBeenCalledWith(userId, ctx, mockTx);
-    expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith(userId, true, 500);
+    expect(syncClerkAccess).toHaveBeenCalledWith(userId, true, 500);
   });
 
   it('should be idempotent and not perform sync if no delta', async () => {
@@ -146,7 +144,7 @@ describe('handleRefund', () => {
     expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
+    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 
   it('should handle CAS conflict by not performing further actions', async () => {
@@ -171,7 +169,7 @@ describe('handleRefund', () => {
     expect(result.ok).toBe(true);
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
+    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 
   it('should handle zero delta refund', async () => {
@@ -194,6 +192,6 @@ describe('handleRefund', () => {
     expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(UserAccessService.syncClerkAccess).not.toHaveBeenCalled();
+    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 });

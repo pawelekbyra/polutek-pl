@@ -26,10 +26,8 @@ vi.mock('@/lib/modules/patron', () => ({
   revokePatron: mockRevokePatron,
 }));
 
-vi.mock('@/lib/services/user-access.service', () => ({
-  UserAccessService: {
-    syncClerkAccess: mockSyncClerkAccess,
-  },
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: mockSyncClerkAccess,
 }));
 
 vi.mock('@/lib/modules/video', () => ({

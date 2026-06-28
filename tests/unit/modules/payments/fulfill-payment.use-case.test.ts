@@ -3,11 +3,17 @@ import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payme
 import { PaymentStatus, PatronGrantSource } from '@prisma/client';
 import { grantPatron } from '@/lib/modules/patron';
 
+const { mockSyncClerkAccess } = vi.hoisted(() => ({
+  mockSyncClerkAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mocking dependencies
 vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
 vi.mock('@/lib/services/email.service');
-vi.mock('@/lib/services/user-access.service');
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: mockSyncClerkAccess,
+}));
 vi.mock('@/lib/modules/audit');
 
 // Mock getPaymentCurrencyLimits
@@ -30,6 +36,7 @@ vi.mock('@/lib/modules/patron', () => ({
 
 vi.mock('@/lib/modules/users', () => ({
   normalizePaymentTotals: vi.fn().mockReturnValue(25),
+  syncClerkAccess: mockSyncClerkAccess,
 }));
 
 describe('fulfillPayment use case', () => {
@@ -216,7 +223,7 @@ describe('fulfillPayment use case', () => {
   });
 
   it('syncs Clerk with truth even on replay if legacy isPatron is false but active grant exists', async () => {
-    const { UserAccessService } = await import('@/lib/services/user-access.service');
+    const { syncClerkAccess } = await import('@/lib/modules/users/application/sync-clerk-access');
     const input = {
       paymentId: 'pay_replay',
       userId: 'user_mismatch',
@@ -246,6 +253,6 @@ describe('fulfillPayment use case', () => {
 
     expect(result.ok).toBe(true);
     // Should sync Clerk with isPatron: true based on patronGrants.length > 0
-    expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith('user_mismatch', true, 25);
+    expect(syncClerkAccess).toHaveBeenCalledWith('user_mismatch', true, 25);
   });
 });

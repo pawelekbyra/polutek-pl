@@ -5,7 +5,7 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
-import { UserAccessService } from "@/lib/services/user-access.service";
+import { syncClerkAccess } from "@/lib/modules/users";
 import { revokePatron, recalculatePatronStatus } from "@/lib/modules/patron";
 
 export interface HandleRefundInput {
@@ -84,7 +84,7 @@ export async function handleRefund(
     });
 
     if (syncData) {
-      await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
+      await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
     }
 
     return ok(undefined);

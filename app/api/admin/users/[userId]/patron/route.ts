@@ -2,7 +2,7 @@ import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { grantPatron, revokePatron } from "@/lib/modules/patron";
-import { UserAccessService } from "@/lib/services/user-access.service";
+import { syncClerkAccess } from "@/lib/modules/users";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 
@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, props: Context) {
 
       if (!result.ok) return handleApiError(result.error);
 
-      await UserAccessService.syncClerkAccess(
+      await syncClerkAccess(
         params.userId,
         true,
         result.data.normalizedTotal,
@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest, props: Context) {
 
       if (!result.ok) return handleApiError(result.error);
 
-      await UserAccessService.syncClerkAccess(
+      await syncClerkAccess(
         params.userId,
         false,
         result.data.normalizedTotal,

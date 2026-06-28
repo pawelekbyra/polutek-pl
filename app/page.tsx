@@ -3,7 +3,7 @@ import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
-import { normalizePaymentTotals } from '@/lib/services/user-access.service';
+import { normalizePaymentTotals } from '@/lib/modules/users/domain/payment-totals';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Metadata } from 'next';

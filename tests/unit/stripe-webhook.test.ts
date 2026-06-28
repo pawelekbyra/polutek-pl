@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { PaymentFulfillmentService } from '@/lib/services/payments/fulfillment.service';
 import { UserAccessService } from '@/lib/services/user-access.service';
+import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 const mockConstructEvent = vi.fn();
 
@@ -66,9 +67,12 @@ vi.mock('@/lib/services/payments/fulfillment.service', () => ({
 
 vi.mock('@/lib/services/user-access.service', () => ({
   UserAccessService: {
-    syncClerkAccess: vi.fn().mockResolvedValue(undefined),
     recalculateUserPatronStatus: vi.fn().mockResolvedValue({ isPatron: true, normalizedTotal: 100 }),
   },
+}));
+
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
 // LEGACY COVERAGE ONLY:
@@ -147,7 +151,7 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
 
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
       expect(UserAccessService.recalculateUserPatronStatus).toHaveBeenCalledWith('user_1', prisma);
-      expect(UserAccessService.syncClerkAccess).toHaveBeenCalledWith('user_1', false, 5);
+      expect(syncClerkAccess).toHaveBeenCalledWith('user_1', false, 5);
   });
 
 });
