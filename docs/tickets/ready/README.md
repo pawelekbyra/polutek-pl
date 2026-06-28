@@ -65,11 +65,24 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
 | 3.1 | `INCOMPLETE-001` — HELD_FOR_REVIEW implementation | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: use cases hold/approve, auto-trigger (próg 3), API routes, admin UI |
 | 3 | `INCOMPLETE-002` — remove referral system | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: schema, model, user fields, patron referralId, use cases, services, tests |
-| 3.x | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-003, 005, 006 |
+| 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `TODO` | 2026-06-28 audit: webhook dispute handling exists, but admin payments page remains list/filter-only and no manual dispute-sync route was found. |
+| 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `TODO` | 2026-06-28 audit: `handleRefund` is webhook/internal processing only; no admin refund POST route or UI action was found. |
+| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-28 audit: no Vercel cron config or Stripe reconciliation job was found. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
 | 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved to `lib/modules/users` and callers updated. Active map reconciled in `docs/tickets/active/CLEANUP-001-legacy-services.md`. Remaining: remove `user-access.service.ts` bridge, maybe delete stale `audit.service.ts`, migrate `email.service.ts`, migrate `user/profile.service.ts`. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
+
+## Current verified remainder — 2026-06-28
+
+Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokumentu względem kodu aktualny otwarty zakres wykonywalny to:
+
+1. `INCOMPLETE-003` — admin UI/manual sync dla sporów Stripe.
+2. `INCOMPLETE-005` — admin refund endpoint/UI.
+3. `INCOMPLETE-006` — Stripe reconciliation job/cron.
+4. `CLEANUP-001` — częściowa migracja legacy services, wykonywać małymi slice’ami.
+
+Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Launch-Execution-Backlog.md`. To nie jest bieżący kodowy ticket, ale public launch pozostaje `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
 
 ## Roadmap progress tracker
 
@@ -92,10 +105,10 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 - [x] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-002` — referral system removed — `DONE` PR claude/polutek-pl-proposals-qfkm9y
-- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync
+- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `TODO`, 2026-06-28 audit confirms webhook handling exists but manual admin control is still missing
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
-- [ ] `INCOMPLETE-005` — admin refund endpoint/UI
-- [ ] `INCOMPLETE-006` — Stripe reconciliation job
+- [ ] `INCOMPLETE-005` — admin refund endpoint/UI — `TODO`, 2026-06-28 audit confirms only webhook/internal refund handling exists
+- [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, 2026-06-28 audit found no cron/reconciliation job
 - [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 
