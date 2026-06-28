@@ -31,6 +31,11 @@ env:
   MEDIA_BUCKET_HOST: media.example.com
   UPSTASH_REDIS_REST_URL: https://redis.example.com
   UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+  MUX_TOKEN_ID: ci_mux_token_id
+  MUX_TOKEN_SECRET: ci_mux_token_secret
+  MUX_WEBHOOK_SECRET: ci_mux_webhook_secret
+  MUX_SIGNING_KEY_ID: ci_mux_signing_key_id
+  MUX_SIGNING_PRIVATE_KEY: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCmNpCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 
 jobs:
   environment-validation:
