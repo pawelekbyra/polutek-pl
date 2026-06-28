@@ -26,7 +26,7 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
     muxUploadId: null,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
-  };
+  } as VideoAsset;
 }
 
 describe('selectPrimaryVideoAsset', () => {
