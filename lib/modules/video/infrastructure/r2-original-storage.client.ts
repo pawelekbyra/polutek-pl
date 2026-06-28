@@ -104,7 +104,8 @@ export class R2OriginalStorageClient {
         contentType: result.ContentType ?? null,
       };
     } catch (err: any) {
-      if (err?.name === "NotFound" || err?.$metadata?.httpStatusCode === 404) {
+      // AWS SDK v3 throws 'NoSuchKey' for HeadObject on missing objects
+      if (err?.name === "NoSuchKey" || err?.name === "NotFound" || err?.$metadata?.httpStatusCode === 404) {
         return { exists: false, sizeBytes: null, contentType: null };
       }
       throw err;

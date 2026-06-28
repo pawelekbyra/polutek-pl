@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
-  Upload, CheckCircle2, XCircle, Loader2, FileVideo,
-  Star, Trash2, ChevronDown, ChevronUp, Play,
+  Upload, XCircle, Loader2, FileVideo,
+  Star, ChevronDown, ChevronUp, Play,
 } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { CoverImageUpload } from "./CoverImageUpload";
@@ -52,7 +52,7 @@ interface VideoStudioProps {
   onSaved?: () => void;
 }
 
-// ─── Mirror pipeline node ─────────────────────────────────────────────────────
+// ─── Pipeline node ────────────────────────────────────────────────────────────
 
 function PipelineNode({
   provider,
@@ -61,7 +61,6 @@ function PipelineNode({
   status,
   isPending,
   onMakePrimary,
-  onRemove,
   makingPrimary,
 }: {
   provider: string;
@@ -70,7 +69,6 @@ function PipelineNode({
   status?: string;
   isPending?: boolean;
   onMakePrimary?: () => void;
-  onRemove?: () => void;
   makingPrimary?: boolean;
 }) {
   const state = isOriginal ? status : asset?.processingState;
@@ -112,9 +110,7 @@ function PipelineNode({
           {makingPrimary ? "..." : "ustaw primary"}
         </button>
       )}
-      {isFailed && (
-        <span className="text-[9px] text-red-500">błąd</span>
-      )}
+      {isFailed && <span className="text-[9px] text-red-500">błąd</span>}
     </div>
   );
 }
@@ -139,7 +135,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
   const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "completing" | "done" | "failed">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const uploadStartRef = useRef<number>(0);
-  const lastBytesRef = useRef<number>(0);
 
   // Mirror config
   const [mirrorMux, setMirrorMux] = useState(true);
@@ -153,11 +148,12 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
   // Collapsible sections
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // SSE connection
+  // SSE connection — stored in ref so cleanup always sees the latest instance
   const sseRef = useRef<EventSource | null>(null);
 
   const startSSE = useCallback(() => {
-    if (sseRef.current) sseRef.current.close();
+    // Always close the previous connection before opening a new one
+    sseRef.current?.close();
     const es = new EventSource(`/api/admin/videos/${videoId}/stream`);
     sseRef.current = es;
 
@@ -169,27 +165,32 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
     es.addEventListener("done", () => {
       es.close();
-      sseRef.current = null;
+      if (sseRef.current === es) sseRef.current = null;
     });
 
     es.addEventListener("error", () => {
       es.close();
-      sseRef.current = null;
+      if (sseRef.current === es) sseRef.current = null;
     });
   }, [videoId]);
 
   useEffect(() => {
-    // Auto-start SSE if there's in-progress work
     const hasInProgress =
-      (original && original.status !== "READY" && original.status !== "FAILED") ||
-      assets.some((a) => a.processingState !== "READY" && a.processingState !== "FAILED");
+      (initialVideo.original &&
+        initialVideo.original.status !== "READY" &&
+        initialVideo.original.status !== "FAILED") ||
+      (initialVideo.assets ?? []).some(
+        (a) => a.processingState !== "READY" && a.processingState !== "FAILED"
+      );
 
     if (hasInProgress) startSSE();
 
+    // Cleanup always closes whatever sseRef points to at unmount time
     return () => {
       sseRef.current?.close();
+      sseRef.current = null;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [startSSE, initialVideo.original, initialVideo.assets]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -207,10 +208,8 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
     setUploadError(null);
     setUploadProgress(0);
     uploadStartRef.current = Date.now();
-    lastBytesRef.current = 0;
 
     try {
-      // 1. Provision R2 upload
       const provRes = await fetch(`/api/admin/videos/${videoId}/original-upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -228,7 +227,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
       const { uploadUrl, originalId } = await provRes.json();
 
-      // 2. XHR upload to R2 with progress
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl);
@@ -240,12 +238,13 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           setUploadProgress(pct);
 
           const elapsed = (Date.now() - uploadStartRef.current) / 1000;
+          if (elapsed <= 0) return;
           const bytesPerSec = ev.loaded / elapsed;
           const remaining = ev.total - ev.loaded;
           const etaSec = remaining / bytesPerSec;
 
           setUploadSpeed(formatBytes(bytesPerSec) + "/s");
-          setUploadEta(etaSec > 0 ? formatEta(etaSec) : null);
+          setUploadEta(etaSec > 0 && isFinite(etaSec) ? formatEta(etaSec) : null);
         };
 
         xhr.onload = () => {
@@ -256,7 +255,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
         xhr.send(file);
       });
 
-      // 3. Complete upload — trigger mirrors
       setUploadPhase("completing");
       const completeRes = await fetch(`/api/admin/videos/${videoId}/original-upload`, {
         method: "PATCH",
@@ -273,7 +271,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
       }
 
       setUploadPhase("done");
-      toast("Plik wgrany! Mirrorowanie do Mux i Cloudflare w toku.", "success");
+      toast("Plik wgrany! Mirrorowanie w toku.", "success");
       startSSE();
     } catch (err: any) {
       setUploadError(err.message ?? "Nieznany błąd.");
@@ -319,13 +317,11 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
   const primaryAsset = assets.find((a) => a.isPrimary);
   const hasReadyAsset = assets.some((a) => a.processingState === "READY");
-  const isUploading = uploadPhase === "uploading" || uploadPhase === "completing";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 p-4 md:p-6 min-h-screen">
       {/* ── Left: player / upload area ── */}
       <div className="space-y-4">
-        {/* Video area */}
         <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black/90 border border-border/50 shadow-lg">
           {hasReadyAsset ? (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -339,7 +335,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
               <FileVideo className="h-10 w-10 text-white/50" />
               <div className="w-full max-w-sm space-y-2">
                 <div className="flex justify-between text-white/70 text-sm">
-                  <span>{uploadSpeed ? `${uploadSpeed}` : "Przesyłanie..."}</span>
+                  <span>{uploadSpeed ?? "Przesyłanie..."}</span>
                   <span className="font-mono">{uploadProgress}%</span>
                 </div>
                 <Progress value={uploadProgress} className="h-1.5 bg-white/10" />
@@ -381,14 +377,12 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
               <p className="text-white/50 text-sm group-hover:text-white/70 transition">
                 {file ? file.name : "Przeciągnij film lub kliknij"}
               </p>
-              {file && (
-                <p className="text-white/30 text-xs">{formatBytes(file.size)}</p>
-              )}
+              {file && <p className="text-white/30 text-xs">{formatBytes(file.size)}</p>}
             </label>
           )}
         </div>
 
-        {/* File selected but not uploading yet */}
+        {/* File selected — mirror options + start button */}
         {file && uploadPhase === "idle" && (
           <div className="rounded-xl border border-border/50 bg-muted/30 p-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
@@ -416,7 +410,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
         <div className="rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
           <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-3">Pipeline</p>
           <div className="flex items-start gap-2 flex-wrap">
-            {/* R2 */}
             <PipelineNode
               provider="R2"
               isOriginal
@@ -437,7 +430,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
                       makingPrimary={makingPrimary === asset.id}
                     />
                   ))}
-                {/* Pending placeholders when no assets yet */}
                 {assets.length === 0 && uploadPhase === "done" && (
                   <>
                     {mirrorMux && <PipelineNode provider="MUX" isPending />}
@@ -458,7 +450,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
       {/* ── Right: form sidebar ── */}
       <div className="space-y-5">
-        {/* Cover */}
         <div className="space-y-2">
           <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Miniatura</Label>
           <CoverImageUpload
@@ -468,7 +459,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           />
         </div>
 
-        {/* Title */}
         <div className="space-y-1.5">
           <Label htmlFor="studio-title" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tytuł</Label>
           <Input
@@ -479,7 +469,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           />
         </div>
 
-        {/* Description */}
         <div className="space-y-1.5">
           <Label htmlFor="studio-desc" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Opis</Label>
           <Textarea
@@ -491,7 +480,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           />
         </div>
 
-        {/* Tier */}
         <div className="space-y-1.5">
           <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Dostęp</Label>
           <Select value={tier} onValueChange={setTier}>
@@ -506,7 +494,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           </Select>
         </div>
 
-        {/* Primary source info */}
         {primaryAsset && (
           <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs space-y-0.5">
             <p className="text-muted-foreground font-bold uppercase tracking-wide text-[10px]">Aktywne źródło</p>
@@ -517,7 +504,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           </div>
         )}
 
-        {/* Advanced: other sources */}
         {assets.length > 1 && (
           <div>
             <button
@@ -554,7 +540,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           </div>
         )}
 
-        {/* Save */}
         <Button onClick={handleSave} disabled={saving} className="w-full">
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Zapisz
@@ -567,10 +552,10 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (!isFinite(bytes) || bytes <= 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i];
 }
 

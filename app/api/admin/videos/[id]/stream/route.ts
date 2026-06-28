@@ -8,6 +8,9 @@ import { VideoRepository } from "@/lib/modules/video/infrastructure/video.reposi
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Keep under Vercel's 60s default / 300s Pro limit
+const MAX_STREAM_MS = 270_000;
+
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { adminUserId, response } = await requireAdminForApi("STREAM_VIDEO_STATUS");
@@ -30,20 +33,40 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         }
       };
 
-      const poll = async () => {
-        try {
-          const mainChannel = await MainChannelService.getRequired(ctx);
-          const repo = new VideoRepository(ctx.prisma);
-          const video = await repo.findByIdWithAssets(videoId);
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        try { controller.close(); } catch {}
+      };
 
-          if (!video || (video as any).creatorId !== mainChannel.id) {
+      // Resolve channel + ownership once before polling loop
+      const mainChannel = await MainChannelService.getRequired(ctx);
+      const repo = new VideoRepository(ctx.prisma);
+
+      const initialVideo = await repo.findByIdForMainChannel(videoId, mainChannel.id);
+      if (!initialVideo) {
+        send("error", { code: "NOT_FOUND" });
+        close();
+        return;
+      }
+
+      let pollRunning = false;
+
+      const poll = async () => {
+        if (closed || pollRunning) return;
+        pollRunning = true;
+        try {
+          const [video, original] = await Promise.all([
+            repo.findByIdWithAssets(videoId),
+            ctx.prisma.videoOriginal.findUnique({ where: { videoId } }),
+          ]);
+
+          if (!video) {
             send("error", { code: "NOT_FOUND" });
-            closed = true;
-            controller.close();
+            close();
             return;
           }
 
-          const original = await ctx.prisma.videoOriginal.findUnique({ where: { videoId } });
           const assets = ((video as any).assets ?? []).map((a: any) => ({
             id: a.id,
             provider: a.provider,
@@ -70,66 +93,60 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             assets,
           });
 
-          // Stop polling when everything is settled
-          const allSettled = assets.every((a: any) =>
+          const originalSettled = !original || original.status === "READY" || original.status === "FAILED";
+          const assetsSettled = assets.length > 0 && assets.every((a: any) =>
             a.processingState === "READY" || a.processingState === "FAILED"
           );
-          const originalSettled = !original || original.status === "READY" || original.status === "FAILED";
 
-          if (allSettled && originalSettled && assets.length > 0) {
+          if (originalSettled && assetsSettled) {
             send("done", { videoId });
-            closed = true;
-            controller.close();
-            return;
+            close();
           }
         } catch (err) {
           console.error("SSE poll error", err);
+        } finally {
+          pollRunning = false;
         }
       };
 
-      // Initial snapshot immediately
+      // Initial snapshot
       await poll();
-
       if (closed) return;
 
-      // Poll every 4 seconds
-      const interval = setInterval(async () => {
-        if (closed) {
-          clearInterval(interval);
-          return;
-        }
-        await poll();
-      }, 4000);
+      // Self-scheduling poll — waits for previous to finish before next tick
+      let pollTimeout: ReturnType<typeof setTimeout>;
+      const schedulePoll = () => {
+        if (closed) return;
+        pollTimeout = setTimeout(async () => {
+          await poll();
+          schedulePoll();
+        }, 4000);
+      };
+      schedulePoll();
 
-      // Keepalive ping every 20s
+      // Keepalive ping every 15s (under common proxy idle timeouts)
       const ping = setInterval(() => {
-        if (closed) {
-          clearInterval(ping);
-          return;
-        }
+        if (closed) { clearInterval(ping); return; }
         try {
           controller.enqueue(encoder.encode(": ping\n\n"));
         } catch {
           closed = true;
           clearInterval(ping);
         }
-      }, 20000);
+      }, 15000);
 
-      // Stop after 10 min max
-      setTimeout(() => {
-        clearInterval(interval);
+      // Hard stop respecting Vercel limits
+      const maxTimeout = setTimeout(() => {
         clearInterval(ping);
-        if (!closed) {
-          closed = true;
-          try { controller.close(); } catch {}
-        }
-      }, 600_000);
+        clearTimeout(pollTimeout);
+        close();
+      }, MAX_STREAM_MS);
 
       req.signal.addEventListener("abort", () => {
-        closed = true;
-        clearInterval(interval);
         clearInterval(ping);
-        try { controller.close(); } catch {}
+        clearTimeout(pollTimeout);
+        clearTimeout(maxTimeout);
+        close();
       });
     },
   });

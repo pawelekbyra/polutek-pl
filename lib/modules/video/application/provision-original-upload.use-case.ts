@@ -36,17 +36,12 @@ export async function provisionOriginalUpload(
   const video = await repository.findByIdForMainChannel(input.videoId, mainChannel.id);
   if (!video) return fail(new VideoNotFoundError(input.videoId));
 
-  const ext = input.fileName?.split(".").pop() ?? "mp4";
+  const rawExt = input.fileName?.split(".").pop() ?? "mp4";
+  const ext = /^[a-z0-9]{1,10}$/i.test(rawExt) ? rawExt.toLowerCase() : "mp4";
   const objectKey = `originals/${video.id}/${Date.now()}.${ext}`;
   const bucket = process.env.CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS!;
 
-  const r2 = new R2OriginalStorageClient();
-  const { uploadUrl } = await r2.createPresignedUploadUrl({
-    objectKey,
-    contentType: input.contentType,
-    expiresInSeconds: 7200,
-  });
-
+  // Create DB record first — if presign fails after, no orphaned URL exists
   const original = await ctx.prisma.videoOriginal.upsert({
     where: { videoId: video.id },
     create: {
@@ -70,6 +65,13 @@ export async function provisionOriginalUpload(
       uploadCompletedAt: null,
       failureReason: null,
     },
+  });
+
+  const r2 = new R2OriginalStorageClient();
+  const { uploadUrl } = await r2.createPresignedUploadUrl({
+    objectKey,
+    contentType: input.contentType,
+    expiresInSeconds: 7200,
   });
 
   await recordAuditEvent(ctx, {
