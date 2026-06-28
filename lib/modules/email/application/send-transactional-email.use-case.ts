@@ -56,7 +56,7 @@ async function getResendClient() {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) throw new Error("RESEND_API_KEY is missing");
     const { Resend: Client } = await import("resend");
-    resendClient = new Client(apiKey) as ResendClient;
+    resendClient = new Client(apiKey) as unknown as ResendClient;
   }
   return resendClient;
 }
