@@ -96,6 +96,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   original?: AdminVideoOriginalDto | null;
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
+  publishAfterAssetReadyProvider: string | null;
   publishAfterAssetReadyRequestedAt: Date | null;
   publishAfterAssetReadyCompletedAt: Date | null;
   publishAfterAssetReadyError: string | null;
@@ -157,6 +158,7 @@ export type AdminVideoInput = PublicVideoInput & {
   assets?: AdminVideoAssetInput[] | null;
   original?: AdminVideoOriginalInput | null;
   publishAfterAssetReady?: boolean | null;
+  publishAfterAssetReadyProvider?: string | null;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
   publishAfterAssetReadyError?: string | null;
@@ -286,6 +288,7 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     original: toAdminVideoOriginalDto(video.original),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
+    publishAfterAssetReadyProvider: video.publishAfterAssetReadyProvider || null,
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
     publishAfterAssetReadyCompletedAt: video.publishAfterAssetReadyCompletedAt || null,
     publishAfterAssetReadyError: video.publishAfterAssetReadyError || null,

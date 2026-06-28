@@ -130,7 +130,7 @@ export async function handleCloudflareStreamWebhook(
   });
 
   if (updatedAsset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-    await attemptPublishAfterAssetReady(updatedAsset.videoId, ctx);
+    await attemptPublishAfterAssetReady(updatedAsset.videoId, ctx, VIDEO_PROVIDER.CLOUDFLARE_STREAM);
   }
 
   return ok({ assetId: updatedAsset.id, status: updatedAsset.processingState });

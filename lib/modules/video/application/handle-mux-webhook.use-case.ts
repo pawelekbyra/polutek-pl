@@ -142,7 +142,7 @@ export async function handleMuxWebhook(
   });
 
   if (updatedAsset.processingState === VIDEO_ASSET_PROCESSING_STATE.READY) {
-    await attemptPublishAfterAssetReady(updatedAsset.videoId, ctx);
+    await attemptPublishAfterAssetReady(updatedAsset.videoId, ctx, VIDEO_PROVIDER.MUX);
   }
 
   return ok({ assetId: updatedAsset.id, status: updatedAsset.processingState });

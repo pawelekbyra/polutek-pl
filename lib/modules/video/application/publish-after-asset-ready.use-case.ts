@@ -27,15 +27,17 @@ export async function requestPublishAfterAssetReady(videoId: string, ctx: AppCon
   });
 }
 
-export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppContext): Promise<void> {
+export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppContext, triggerProvider?: string): Promise<void> {
   const videoDelegate = (ctx.prisma as any).video;
   if (!videoDelegate?.findUnique) return;
 
   const current = await videoDelegate.findUnique({
     where: { id: videoId },
-    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true },
+    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true, publishAfterAssetReadyProvider: true },
   });
   if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED") return;
+
+  if (current.publishAfterAssetReadyProvider && triggerProvider && current.publishAfterAssetReadyProvider !== triggerProvider) return;
 
   const result = await publishAdminVideo(videoId, ctx);
   if (result.ok) {

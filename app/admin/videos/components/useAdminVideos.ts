@@ -30,6 +30,7 @@ export function useAdminVideos(isAdmin: boolean) {
   const [isSlugManual, setIsSlugManual] = useState<boolean>(false);
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [createSourceMode, setCreateSourceMode] = useState<CreateVideoSourceMode>("UPLOAD");
+  const [preferredProvider, setPreferredProvider] = useState("CLOUDFLARE_STREAM");
   const [existingCloudflareSource, setExistingCloudflareSource] = useState("");
   const [createUploadState, setCreateUploadState] = useState<{
     videoId: string;
@@ -138,7 +139,7 @@ export function useAdminVideos(isAdmin: boolean) {
     error, setError, videos, setVideos, stats, setStats, isInitialLoading, setIsInitialLoading, isRefetching, setIsRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
-    createSourceMode, setCreateSourceMode, existingCloudflareSource, setExistingCloudflareSource,
+    createSourceMode, setCreateSourceMode, preferredProvider, setPreferredProvider, existingCloudflareSource, setExistingCloudflareSource,
     createUploadState, setCreateUploadState, formData, setFormData, total, setTotal,
     page, setPage, totalPages, setTotalPages, searchQuery, setSearchQuery,
     statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,

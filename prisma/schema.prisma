@@ -219,6 +219,7 @@ model Video {
   status         VideoStatus @default(DRAFT)
   publishedAt    DateTime?
   publishAfterAssetReady Boolean @default(false)
+  publishAfterAssetReadyProvider String?
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?
   publishAfterAssetReadyError String?

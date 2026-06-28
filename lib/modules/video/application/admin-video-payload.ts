@@ -107,6 +107,9 @@ export function buildAdminVideoCreatePayload(body: AdminVideoRequestBody): Creat
     publishAfterAssetReady: readBooleanField(body, "publishAfterAssetReady") === true,
   };
 
+  const publishAfterAssetReadyProvider = readNullableTextField(body, "publishAfterAssetReadyProvider");
+  if (publishAfterAssetReadyProvider !== undefined) payload.publishAfterAssetReadyProvider = publishAfterAssetReadyProvider;
+
   const description = readNullableTextField(body, "description");
   if (description !== undefined) payload.description = description;
 
