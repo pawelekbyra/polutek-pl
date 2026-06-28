@@ -12,7 +12,7 @@ import { MessageSquare, EyeOff, Trash2, RotateCcw, Search, Clock, CheckCircle2 }
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
-import { CommentDto } from "@/lib/services/comments/comment.dto";
+import { CommentDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const commentActionLabels = {

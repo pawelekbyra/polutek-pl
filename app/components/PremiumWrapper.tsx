@@ -14,7 +14,7 @@ import type {
   PlaybackPlan,
   PlaybackPlanStatus,
 } from "@/lib/services/playback/playback.dto";
-import { AccessTierDto } from "@/lib/services/comments/comment.dto";
+import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";

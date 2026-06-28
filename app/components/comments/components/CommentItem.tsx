@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
-import { CommentReportReasonDto } from "@/lib/services/comments/comment.dto";
+import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
 
 interface CommentItemProps {

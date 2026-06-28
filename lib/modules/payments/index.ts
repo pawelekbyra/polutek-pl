@@ -9,6 +9,7 @@ export * from "./application/list-admin-payments.use-case";
 export * from "./application/get-user-payments.use-case";
 export * from "./application/get-payment-status.use-case";
 export * from "./domain/payment.dto";
+export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";
 export * from "./domain/payment.policy";
 export * from "./domain/stripe-event.dto";

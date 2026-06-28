@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CommentReportReasonDto } from "@/lib/services/comments/comment.dto";
+import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 
 interface ReportDialogProps {
   isOpen: boolean;
