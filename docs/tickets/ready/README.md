@@ -63,7 +63,8 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 2.3 | `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper | `DONE` | Zweryfikowane w kodzie: `VideoPlayer.tsx:456-458` komentarz potwierdza świadomą decyzję — PremiumWrapper owns loading |
 | 2.4 | `CLEANUP-003` — user-visible typo cleanup | `DONE` | Zweryfikowane w kodzie: `LanguageContext.tsx:76` — `Subskrybuj` poprawne |
 | 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
-| 3 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-001, 002, 003, 005, 006 |
+| 3.1 | `INCOMPLETE-001` — HELD_FOR_REVIEW implementation | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: use cases hold/approve, auto-trigger (próg 3), API routes, admin UI |
+| 3 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-002, 003, 005, 006 |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
 | 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/polutek-pl-proposals-qfkm9y: usunięto `user.service.ts`, `user/subscription.service.ts`, `admin/payments-admin.service.ts`; pozostałe: DTOs, utility, refactor |
@@ -88,7 +89,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ### Incomplete features from roadmap
 
-- [ ] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation decision/work
+- [x] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [ ] `INCOMPLETE-002` — referral system finish-or-remove decision/work
 - [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)

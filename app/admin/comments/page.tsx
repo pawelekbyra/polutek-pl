@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, EyeOff, Trash2, RotateCcw, Search } from "@/app/components/icons";
+import { MessageSquare, EyeOff, Trash2, RotateCcw, Search, Clock, CheckCircle2 } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
@@ -19,6 +19,8 @@ const commentActionLabels = {
   hide: "ukrycia komentarza",
   restore: "przywrócenia komentarza",
   delete: "usunięcia komentarza",
+  hold: "wstrzymania komentarza",
+  approve: "zatwierdzenia komentarza",
 } as const;
 
 export default function AdminCommentsPage() {
@@ -72,7 +74,7 @@ export default function AdminCommentsPage() {
 
   const refreshComments = () => fetchComments(search);
 
-  const handleAction = async (commentId: string, action: 'hide' | 'restore' | 'delete') => {
+  const handleAction = async (commentId: string, action: 'hide' | 'restore' | 'delete' | 'hold' | 'approve') => {
     try {
       const res = await fetch(`/api/admin/comments/${commentId}/${action}`, { method: 'POST' });
       if (res.ok) {
@@ -160,9 +162,19 @@ export default function AdminCommentsPage() {
                     <TableCell><Badge variant="outline" className="text-[10px] uppercase">{comment.status}</Badge></TableCell>
                     <TableCell className="text-[10px] whitespace-nowrap">{new Date(comment.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right space-x-1">
-                      {comment.status === 'VISIBLE' ? (
-                        <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8"><EyeOff size={14} /></Button>
-                      ) : (
+                      {comment.status === 'VISIBLE' && (
+                        <>
+                          <Button onClick={() => handleAction(comment.id, 'hold')} variant="ghost" size="icon" className="h-8 w-8 text-amber-600" title="Wstrzymaj do przeglądu"><Clock size={14} /></Button>
+                          <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj"><EyeOff size={14} /></Button>
+                        </>
+                      )}
+                      {comment.status === 'HELD_FOR_REVIEW' && (
+                        <>
+                          <Button onClick={() => handleAction(comment.id, 'approve')} variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Zatwierdź"><CheckCircle2 size={14} /></Button>
+                          <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj"><EyeOff size={14} /></Button>
+                        </>
+                      )}
+                      {(comment.status === 'HIDDEN' || comment.status === 'DELETED') && (
                         <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8"><RotateCcw size={14} /></Button>
                       )}
                       <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600"><Trash2 size={14} /></Button>

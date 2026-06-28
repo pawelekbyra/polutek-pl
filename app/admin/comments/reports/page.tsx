@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink } from "@/app/components/icons";
+import { MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink, Clock } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
 import { formatDistanceToNow } from "date-fns";
@@ -60,6 +60,17 @@ export default function AdminCommentReportsPage() {
           }
       } catch (err) {
           logger.error("Failed to hide comment", err);
+      }
+  };
+
+  const handleHoldComment = async (commentId: string, reportId: string) => {
+      try {
+          const res = await fetch(`/api/admin/comments/${commentId}/hold`, { method: 'POST' });
+          if (res.ok) {
+              await handleResolve(reportId, 'ACTION_TAKEN');
+          }
+      } catch (err) {
+          logger.error("Failed to hold comment", err);
       }
   };
 
@@ -178,6 +189,14 @@ export default function AdminCommentReportsPage() {
                                         onClick={() => handleResolve(report.id, 'DISMISSED')}
                                     >
                                         <CheckCircle2 size={12} className="mr-1" /> Oddal
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[10px] text-amber-600 border-amber-200 hover:bg-amber-50"
+                                        onClick={() => handleHoldComment(report.comment.id, report.id)}
+                                    >
+                                        <Clock size={12} className="mr-1" /> Wstrzymaj
                                     </Button>
                                     <Button
                                         size="sm"
