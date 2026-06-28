@@ -7,6 +7,7 @@ export interface AppContext {
   actor: Actor;
   now: () => Date;
   requestId?: string;
+  waitUntil?: (promise: Promise<unknown>) => void;
   db: {
     read: ReadDb;
     writeTransaction: <T>(fn: (tx: WriteTx) => Promise<T>) => Promise<T>;
@@ -18,6 +19,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
   let prisma: DbClient;
   let now: () => Date;
   let requestId: string | undefined;
+  let waitUntil: ((promise: Promise<unknown>) => void) | undefined;
 
   if ('type' in actorOrOverrides) {
     actor = actorOrOverrides as Actor;
@@ -29,6 +31,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     prisma = overrides.prisma || defaultPrisma;
     now = overrides.now || (() => new Date());
     requestId = overrides.requestId;
+    waitUntil = overrides.waitUntil;
   }
 
   return {
@@ -36,6 +39,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     actor,
     now,
     requestId,
+    waitUntil,
     db: {
       read: prisma,
       writeTransaction: async (fn) => {
