@@ -3,11 +3,17 @@ import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payme
 import { PaymentStatus, PatronGrantSource } from '@prisma/client';
 import { grantPatron } from '@/lib/modules/patron';
 
+const { mockSyncClerkAccess } = vi.hoisted(() => ({
+  mockSyncClerkAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mocking dependencies
 vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
 vi.mock('@/lib/services/email.service');
-vi.mock('@/lib/modules/users/application/sync-clerk-access');
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: mockSyncClerkAccess,
+}));
 vi.mock('@/lib/modules/audit');
 
 // Mock getPaymentCurrencyLimits
@@ -30,6 +36,7 @@ vi.mock('@/lib/modules/patron', () => ({
 
 vi.mock('@/lib/modules/users', () => ({
   normalizePaymentTotals: vi.fn().mockReturnValue(25),
+  syncClerkAccess: mockSyncClerkAccess,
 }));
 
 describe('fulfillPayment use case', () => {
