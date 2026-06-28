@@ -25,7 +25,7 @@ export async function makeSourcePrimary(
   if (!video || video.creatorId !== mainChannel.id) return fail(new VideoNotFoundError(input.videoId));
 
   const assets = (video as any).assets ?? [];
-  const target = assets.find((a: any) => a.id === input.assetId);
+  const target = assets.find((asset: { id: string }) => asset.id === input.assetId);
   if (!target) return fail(new AppError("Asset not found on this video.", 404, "ASSET_NOT_FOUND"));
 
   // Guard: only PLAYABLE providers can be primary
@@ -38,6 +38,14 @@ export async function makeSourcePrimary(
     return fail(new AppError("Only Cloudflare Stream, Mux, YouTube and Vimeo assets can be set as primary.", 400, "NON_PLAYABLE_PROVIDER"));
   }
 
+  if (video.tier === "PATRON" && isYoutube) {
+    return fail(new AppError("YouTube sources are not allowed for PATRON-tier videos.", 403, "YOUTUBE_PATRON_FORBIDDEN"));
+  }
+
+  if (video.tier === "PATRON" && isVimeo) {
+    return fail(new AppError("Vimeo sources are not allowed for PATRON-tier videos.", 403, "VIMEO_PATRON_FORBIDDEN"));
+  }
+
   if ((isCloudflare || isMux) && target.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) {
     return fail(new AppError(`${target.provider} asset must be in READY state to become primary.`, 400, "ASSET_NOT_READY"));
   }
@@ -48,10 +56,6 @@ export async function makeSourcePrimary(
 
   if (isVimeo && !target.externalVideoId) {
     return fail(new AppError("Vimeo asset is missing a video ID.", 400, "MISSING_VIMEO_VIDEO_ID"));
-  }
-
-  if ((isYoutube || isVimeo) && video.tier === "PATRON") {
-    return fail(new AppError(`${target.provider} cannot be the primary source for PATRON-tier videos — no private playback available.`, 400, "EMBED_ONLY_PATRON_FORBIDDEN"));
   }
 
   if (target.isPrimary) {

@@ -51,6 +51,7 @@ const allowedAppRoutes = [
   "app/api/admin/users/stats/route.ts",
   "app/api/admin/videos/[id]/actions/route.ts",
   "app/api/admin/videos/[id]/comments/route.ts",
+  "app/api/admin/videos/[id]/original-upload/route.ts",
   "app/api/admin/videos/[id]/route.ts",
   "app/api/admin/videos/[id]/sources/[sourceId]/route.ts",
   "app/api/admin/videos/[id]/sources/mux-upload/route.ts",
@@ -101,6 +102,7 @@ const allowedAppRoutes = [
 ].sort();
 
 const approvedRoutesMatchingOutOfScopeWords = new Set([
+  "app/api/admin/videos/[id]/original-upload/route.ts",
   "app/api/admin/videos/[id]/upload/route.ts",
   "app/api/admin/videos/[id]/sources/mux-upload/route.ts",
   "app/api/admin/videos/cover-upload/route.ts",

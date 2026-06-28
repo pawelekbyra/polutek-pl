@@ -77,7 +77,8 @@ export class VideoRepository {
         where: { id, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            assets: true
+            assets: true,
+            original: true,
         }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
@@ -92,7 +93,8 @@ export class VideoRepository {
         where: { slug, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            assets: true
+            assets: true,
+            original: true,
         }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);

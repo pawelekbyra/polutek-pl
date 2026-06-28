@@ -230,6 +230,7 @@ model Video {
   videoLikes    VideoLike[]
   videoDislikes VideoDislike[]
   assets        VideoAsset[]
+  original      VideoOriginal?
   videoViews    VideoView[]
   playbackSessions VideoPlaybackSession[]
   playbackEvents   VideoPlaybackEvent[]
@@ -253,9 +254,9 @@ enum StorageProvider {
   CLOUDFLARE_STREAM
   /// Full VOD provider with signed HLS playback. Requires MUX_TOKEN_ID, MUX_TOKEN_SECRET, MUX_SIGNING_KEY_ID, MUX_SIGNING_PRIVATE_KEY.
   MUX
-  /// Public YouTube embed source. Allowed only as primary for PUBLIC/non-patron videos.
+  /// YouTube embed source. Admin can enable for any tier.
   YOUTUBE
-  /// Public Vimeo embed source. Allowed only as primary for PUBLIC/non-patron videos.
+  /// Vimeo embed source. Admin can enable for any tier.
   VIMEO
 }
 
@@ -268,27 +269,33 @@ enum VideoAssetProcessingState {
 }
 
 model VideoAsset {
-  id                  String                    @id @default(uuid())
-  videoId             String
-  provider            StorageProvider
-  objectKey           String
-  bucket              String?
-  providerAssetId     String?
-  providerPlaybackId  String?
-  externalVideoId     String?
-  externalUrl         String?
-  processingState     VideoAssetProcessingState @default(READY)
-  isPrimary           Boolean                   @default(true)
-  pendingPrimaryIntent Boolean                  @default(false)
-  muxUploadId         String?
-  failureReason       String?
-  providerSyncedAt    DateTime?
-  processingStartedAt DateTime?
-  processingEndedAt   DateTime?
-  mimeType            String?
-  sizeBytes           Int?
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id                    String                    @id @default(uuid())
+  videoId               String
+  provider              StorageProvider
+  objectKey             String
+  bucket                String?
+  providerAssetId       String?
+  providerPlaybackId    String?
+  externalVideoId       String?
+  externalUrl           String?
+  processingState       VideoAssetProcessingState @default(READY)
+  isPrimary             Boolean                   @default(true)
+  pendingPrimaryIntent  Boolean                   @default(false)
+  muxUploadId           String?
+  failureReason         String?
+  providerSyncedAt      DateTime?
+  processingStartedAt   DateTime?
+  processingEndedAt     DateTime?
+  mimeType              String?
+  sizeBytes             Int?
+  // Mirror metadata
+  fallbackPriority      Int                       @default(100)
+  mirrorSourceOriginalId String?
+  mirrorRequestedAt     DateTime?
+  mirrorCompletedAt     DateTime?
+  mirrorFailureReason   String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
 
   video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
@@ -297,6 +304,28 @@ model VideoAsset {
   @@index([provider])
   @@index([processingState])
   @@index([provider, providerAssetId])
+}
+
+model VideoOriginal {
+  id                  String    @id @default(uuid())
+  videoId             String    @unique
+  bucket              String
+  objectKey           String
+  originalFileName    String?
+  mimeType            String?
+  sizeBytes           BigInt?
+  checksumSha256      String?
+  status              String    @default("UPLOADING")
+  failureReason       String?
+  uploadStartedAt     DateTime?
+  uploadCompletedAt   DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId])
+  @@index([status])
 }
 
 
