@@ -12,7 +12,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
 import { Button } from "@/components/ui/button";
-import { AccessTierDto } from "@/lib/services/comments/comment.dto";
+import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
