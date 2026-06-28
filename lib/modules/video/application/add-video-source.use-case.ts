@@ -36,6 +36,14 @@ export async function addVideoSource(
   const video = await repository.findByIdForMainChannel(input.videoId, mainChannel.id);
   if (!video) return fail(new VideoNotFoundError(input.videoId));
 
+  if (video.tier === "PATRON" && input.provider === "YOUTUBE") {
+    return fail(new AppError("YouTube sources are not allowed for PATRON-tier videos.", 403, "YOUTUBE_PATRON_FORBIDDEN"));
+  }
+
+  if (video.tier === "PATRON" && input.provider === "VIMEO") {
+    return fail(new AppError("Vimeo sources are not allowed for PATRON-tier videos.", 403, "VIMEO_PATRON_FORBIDDEN"));
+  }
+
   if (input.provider === "CLOUDFLARE_STREAM") {
     const providerAssetId = input.providerAssetId?.trim();
     if (!providerAssetId) return fail(new AppError("providerAssetId is required for CLOUDFLARE_STREAM.", 400, "MISSING_PROVIDER_ASSET_ID"));
