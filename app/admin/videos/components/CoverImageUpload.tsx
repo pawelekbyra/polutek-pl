@@ -186,7 +186,6 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
                 alt="Miniatura"
                 fill
                 className="object-cover"
-                unoptimized
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button type="button" variant="secondary" size="sm" onClick={openFilePicker} disabled={!canUploadCover}>

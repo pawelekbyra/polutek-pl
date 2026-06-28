@@ -64,7 +64,10 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 2.4 | `CLEANUP-003` — user-visible typo cleanup | `DONE` | Zweryfikowane w kodzie: `LanguageContext.tsx:76` — `Subskrybuj` poprawne |
 | 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
 | 3 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-001, 002, 003, 005, 006 |
-| 4 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | Pozostałe: CLEANUP-001, 002, 005, 006 |
+| 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
+| 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
+| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/polutek-pl-proposals-qfkm9y: usunięto `user.service.ts`, `user/subscription.service.ts`, `admin/payments-admin.service.ts`; pozostałe: DTOs, utility, refactor |
+| 4 | `CLEANUP-002` — API error handling standardization | `TODO` | 63 route'y, 4 wzorce — duże zadanie |
 
 ## Roadmap progress tracker
 
@@ -96,12 +99,12 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ### Cleanup from roadmap
 
-- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution
+- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL` dead files removed, DTOs/utility/refactor remain
 - [ ] `CLEANUP-002` — API error handling standardization
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
-- [ ] `CLEANUP-005` — SearchPage missing sizes in Image
-- [ ] `CLEANUP-006` — CoverImageUpload zbędne unoptimized
+- [x] `CLEANUP-005` — SearchPage missing sizes in Image — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `CLEANUP-006` — CoverImageUpload zbędne unoptimized — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 
 ## Working rules for this mode
 

@@ -60,6 +60,7 @@ export default async function SearchPage(props: SearchPageProps) {
                       src={video.thumbnailUrl}
                       alt={`Miniatura filmu: ${video.title}`}
                       fill
+                      sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 100vw"
                       className="object-cover opacity-90 transition duration-500 group-hover:scale-105"
                     />
                   ) : null}
