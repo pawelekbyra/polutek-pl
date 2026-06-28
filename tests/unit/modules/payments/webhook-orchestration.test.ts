@@ -15,6 +15,10 @@ const mockConstructEvent = vi.fn().mockReturnValue({
     data: { object: { id: 'pi_123', amount: 1000, currency: 'pln', metadata: { paymentId: 'pay_123', userId: 'user_123' } } }
 });
 
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('stripe', () => {
   return {
     default: class {
