@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
@@ -25,33 +26,32 @@ export async function handleMuxWebhook(
   const logger = createScopedLogger("handleMuxWebhook");
   const repository = new VideoRepository(ctx.prisma);
 
-  const assetId = payload.data.id;
+  const muxAssetId = payload.data.id;
   const eventType = payload.type;
 
-  logger.info("Processing Mux webhook", { type: eventType, assetId });
+  logger.info("Processing Mux webhook", { type: eventType, muxAssetId });
 
-  // Find asset by Mux asset ID (providerAssetId) or by muxUploadId if this is an upload event
-  let asset = await repository.findAssetByProviderId(VIDEO_PROVIDER.MUX, assetId);
+  // Find asset by Mux asset ID (providerAssetId) or by muxUploadId if this is an upload event.
+  let asset = await repository.findAssetByProviderId(VIDEO_PROVIDER.MUX, muxAssetId);
 
-  // For upload.asset_created events, the data.id is the asset ID from Mux
-  // but we stored the upload ID in muxUploadId. Find by upload ID if direct lookup fails.
+  // For upload.asset_created events, data.id is the Mux asset ID, but we stored the upload ID.
   if (!asset && payload.data.upload_id) {
     asset = await ctx.prisma.videoAsset.findFirst({
-      where: { provider: "MUX", muxUploadId: payload.data.upload_id },
+      where: { provider: VIDEO_PROVIDER.MUX, muxUploadId: payload.data.upload_id },
     }) ?? null;
   }
 
   if (!asset) {
-    logger.warn("Received Mux webhook for unknown asset", { assetId, eventType });
+    logger.warn("Received Mux webhook for unknown asset", { muxAssetId, eventType });
     return ok({ assetId: "unknown", status: "ignored" });
   }
 
   if (eventType === "video.upload.asset_created") {
-    // Mux created the asset from the upload — store the real asset ID
+    // Mux created the asset from the upload — store the real asset ID.
     await ctx.prisma.videoAsset.update({
       where: { id: asset.id },
       data: {
-        providerAssetId: assetId,
+        providerAssetId: muxAssetId,
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
         providerSyncedAt: new Date(),
       },
@@ -68,12 +68,12 @@ export async function handleMuxWebhook(
     return ok({ assetId: asset.id, status: "no-change" });
   }
 
-  const publicPlaybackId = payload.data.playback_ids?.find(p => p.policy === "public")?.id;
-  const signedPlaybackId = payload.data.playback_ids?.find(p => p.policy === "signed")?.id;
+  const publicPlaybackId = payload.data.playback_ids?.find((playback) => playback.policy === "public")?.id;
+  const signedPlaybackId = payload.data.playback_ids?.find((playback) => playback.policy === "signed")?.id;
   const playbackId = signedPlaybackId || publicPlaybackId;
 
   const updatedAsset = await ctx.db.writeTransaction(async (tx) => {
-    const dataToUpdate: Record<string, unknown> = {
+    const dataToUpdate: Prisma.VideoAssetUpdateInput = {
       processingState: newState,
       providerSyncedAt: new Date(),
     };
@@ -119,7 +119,10 @@ export async function handleMuxWebhook(
       }
     }
 
-    const updated = await repository.updateAsset(asset.id, dataToUpdate, tx);
+    const updated = await tx.videoAsset.update({
+      where: { id: asset.id },
+      data: dataToUpdate,
+    });
 
     await recordAuditEvent(ctx, {
       action: "VIDEO_ASSET_STATUS_UPDATED",
@@ -128,7 +131,7 @@ export async function handleMuxWebhook(
       metadata: {
         assetId: asset.id,
         provider: VIDEO_PROVIDER.MUX,
-        muxAssetId: assetId,
+        muxAssetId,
         oldState: asset.processingState,
         newState,
         muxEvent: eventType,
