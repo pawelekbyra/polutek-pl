@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../../../../../lib/prisma";
 import { handleApiError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
