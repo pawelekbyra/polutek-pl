@@ -87,8 +87,8 @@ const SupportBox: React.FC<SupportBoxProps> = ({
               className="block text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground"
             >
               {language === "pl"
-                ? `Przekaż napiwek (Min ${minAmount}.00 ${selectedCurrency})`
-                : `Send a tip (Min ${minAmount}.00 ${selectedCurrency})`}
+                ? `Wesprzyj rozwój serwisu (Min ${minAmount}.00 ${selectedCurrency})`
+                : `Support the site's development (Min ${minAmount}.00 ${selectedCurrency})`}
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 right-0 z-10 flex items-center">
