@@ -228,7 +228,7 @@ export async function addVideoSource(
     }
 
     const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
-      const existingVimeo = await (tx as any).videoAsset.findFirst({
+      const existingVimeo = await tx.videoAsset.findFirst({
         where: { videoId: video.id, provider: "VIMEO" },
       });
 

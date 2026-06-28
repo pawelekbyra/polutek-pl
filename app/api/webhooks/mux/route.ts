@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleMuxWebhook, MuxWebhookPayload } from "@/lib/modules/video/application/handle-mux-webhook.use-case";
+import { handleMuxWebhook } from "@/lib/modules/video";
+import type { MuxWebhookPayload } from "@/lib/modules/video";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { createScopedLogger } from "@/lib/logger";
 

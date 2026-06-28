@@ -314,7 +314,7 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
           <div className="space-y-2 p-3 rounded-lg border border-violet-200 bg-violet-50/50">
             <p className="text-sm font-medium text-violet-900">Upload do Mux</p>
             <p className="text-xs text-violet-700">
-              Kliknij „Otwórz upload" — zostanie wygenerowany link do uploadu Mux i otwarty w nowej karcie.
+              {'Kliknij „Otwórz upload” — zostanie wygenerowany link do uploadu Mux i otwarty w nowej karcie.'}
               Gdy upload się zakończy, Mux przetworzy film i wyśle webhook do systemu — asset pojawi się automatycznie.
             </p>
             <Button

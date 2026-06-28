@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
-import { provisionMuxUpload } from "@/lib/modules/video/application/provision-mux-upload.use-case";
+import { provisionMuxUpload } from "@/lib/modules/video";
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 

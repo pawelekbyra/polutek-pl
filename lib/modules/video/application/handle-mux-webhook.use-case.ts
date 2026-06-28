@@ -36,9 +36,9 @@ export async function handleMuxWebhook(
   // For upload.asset_created events, the data.id is the asset ID from Mux
   // but we stored the upload ID in muxUploadId. Find by upload ID if direct lookup fails.
   if (!asset && payload.data.upload_id) {
-    asset = await (ctx.prisma as any).videoAsset.findFirst({
+    asset = await ctx.prisma.videoAsset.findFirst({
       where: { provider: "MUX", muxUploadId: payload.data.upload_id },
-    });
+    }) ?? undefined;
   }
 
   if (!asset) {
@@ -72,8 +72,8 @@ export async function handleMuxWebhook(
   const signedPlaybackId = payload.data.playback_ids?.find(p => p.policy === "signed")?.id;
   const playbackId = signedPlaybackId || publicPlaybackId;
 
-  const updatedAsset = await (ctx.prisma as any).$transaction(async (tx: any) => {
-    const dataToUpdate: any = {
+  const updatedAsset = await ctx.writeTransaction(async (tx) => {
+    const dataToUpdate: Record<string, unknown> = {
       processingState: newState,
       providerSyncedAt: new Date(),
     };
