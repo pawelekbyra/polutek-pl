@@ -50,8 +50,8 @@ vi.mock('@/lib/services/email.service', () => ({
   },
 }));
 
-vi.mock('@/lib/services/audit.service', () => ({
-  writeAuditLog: vi.fn(),
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn(),
 }));
 
 const ctx = {

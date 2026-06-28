@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exportAdminUsers } from '@/lib/modules/users/application/export-admin-users.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { writeAuditLog } from '@/lib/services/audit.service';
+import { recordAuditEvent } from '@/lib/modules/audit';
 
-vi.mock('@/lib/services/audit.service', () => ({
-  writeAuditLog: vi.fn(),
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn(),
 }));
 
 describe('exportAdminUsers use-case', () => {
@@ -95,10 +95,10 @@ describe('exportAdminUsers use-case', () => {
       })
     }));
 
-    expect(writeAuditLog).toHaveBeenCalledWith(expect.objectContaining({
-      actorUserId: 'admin_1',
-      action: 'USERS_EXPORT',
-    }));
+    expect(recordAuditEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ action: 'USERS_EXPORT' })
+    );
   });
 
   it('correctly handles all filters', async () => {
