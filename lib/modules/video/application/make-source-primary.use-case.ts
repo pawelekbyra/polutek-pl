@@ -25,7 +25,7 @@ export async function makeSourcePrimary(
   if (!video || video.creatorId !== mainChannel.id) return fail(new VideoNotFoundError(input.videoId));
 
   const assets = (video as any).assets ?? [];
-  const target = assets.find((a: any) => a.id === input.assetId);
+  const target = assets.find((asset: { id: string }) => asset.id === input.assetId);
   if (!target) return fail(new AppError("Asset not found on this video.", 404, "ASSET_NOT_FOUND"));
 
   // Guard: only PLAYABLE providers can be primary
