@@ -15,7 +15,7 @@ import { CreditCard, Search, Download, Filter, Calendar } from "@/app/components
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
-import { AdminPaymentListItem, AdminPaymentsListResponse } from "@/lib/services/admin/payments-admin.dto";
+import { AdminPaymentListItemDto as AdminPaymentListItem, AdminPaymentsListResponseDto as AdminPaymentsListResponse } from "@/lib/modules/payments";
 import { AdminPaymentsPageSkeleton } from "@/components/skeletons/admin";
 
 function formatDate(value: string | Date | null) {

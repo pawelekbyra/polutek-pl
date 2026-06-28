@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { VIDEO_SORT_FIELDS, VideoSortField } from './videos-admin.dto';
-import { PAYMENT_SORT_FIELDS, PaymentSortField } from './payments-admin.dto';
+import { PAYMENT_SORT_FIELDS, PaymentSortField } from '@/lib/modules/payments';
 import { VideoStatus, AccessTier, SystemRole, PatronGrantSource, PaymentStatus } from '@prisma/client';
 
 export const USER_SORT_FIELDS = [
