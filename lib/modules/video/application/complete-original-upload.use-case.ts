@@ -90,7 +90,7 @@ export async function completeOriginalUpload(
     }
   }
 
-  if (plan.cloudflare && CloudflareStreamClient.isConfigured()) {
+  if (plan.cloudflare) {
     const hasCF = existingAssets.some(
       (a) => a.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && a.processingState !== VIDEO_ASSET_PROCESSING_STATE.FAILED
     );
