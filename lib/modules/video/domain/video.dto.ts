@@ -11,7 +11,7 @@ export type AdminVideoOriginalInput = Record<string, unknown> & { id: string; st
 export type AdminVideoAssetInput = Record<string, unknown> & { id: string; videoId: string; provider: StorageProvider; objectKey: string; processingState: VideoAssetProcessingState; isPrimary: boolean; createdAt: Date; updatedAt: Date; fallbackPriority?: number | null };
 export type AdminVideoInput = PublicVideoInput & Record<string, unknown> & { videoUrl: string | null; status: VideoStatus; creatorId: string; createdAt: Date; updatedAt: Date; commentsCount?: number | null; asset?: AdminVideoAssetInput | null; assets?: AdminVideoAssetInput[] | null; original?: AdminVideoOriginalInput | null };
 export type \u0050laybackEventType = string;
-export type Record\u0050laybackEventInput = Record<string, unknown> & { videoId: string; type: string };
+export type Record\u0050laybackEventInput = { videoId: string; sessionId?: string; type: string; positionMs?: number; durationMs?: number; bufferedMs?: number; volume?: number; muted?: boolean; fullscreen?: boolean; errorCode?: string; errorMessage?: string; provider?: string; sourceKind?: string; metadata?: unknown; ipHash: string; uaHash: string; fingerprint: string };
 export const PLA\u0059BACK_EVENT_TYPES: string[] = [];
 
 export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto { return video; }
