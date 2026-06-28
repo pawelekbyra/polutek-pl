@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
-import { provisionOriginalUpload } from "@/lib/modules/video/application/provision-original-upload.use-case";
-import { completeOriginalUpload } from "@/lib/modules/video/application/complete-original-upload.use-case";
+import { provisionOriginalUpload, completeOriginalUpload } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
