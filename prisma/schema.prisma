@@ -253,10 +253,12 @@ enum StorageProvider {
   VERCEL_BLOB
   /// Owner-approved first private video provider for new video assets.
   CLOUDFLARE_STREAM
-  /// Design-compatible optional provider identity; runtime integration is intentionally not implemented here.
+  /// Full VOD provider with signed HLS playback. Requires MUX_TOKEN_ID, MUX_TOKEN_SECRET, MUX_SIGNING_KEY_ID, MUX_SIGNING_PRIVATE_KEY.
   MUX
   /// Public YouTube embed source. Allowed only as primary for PUBLIC/non-patron videos.
   YOUTUBE
+  /// Public Vimeo embed source. Allowed only as primary for PUBLIC/non-patron videos.
+  VIMEO
 }
 
 enum VideoAssetProcessingState {
@@ -279,6 +281,8 @@ model VideoAsset {
   externalUrl         String?
   processingState     VideoAssetProcessingState @default(READY)
   isPrimary           Boolean                   @default(true)
+  pendingPrimaryIntent Boolean                  @default(false)
+  muxUploadId         String?
   failureReason       String?
   providerSyncedAt    DateTime?
   processingStartedAt DateTime?

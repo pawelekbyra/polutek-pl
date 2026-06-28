@@ -10,7 +10,8 @@ import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallb
 import { CloudflareSignedPlaybackTokenService } from './cloudflare-signed-playback-token.service';
 import { getPrimaryPlayableAsset } from './primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video/domain/video-asset-selection';
-import { extractYouTubeVideoId } from '@/lib/modules/video/domain/video-asset.constants';
+import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video/domain/video-asset.constants';
+import { MuxClient } from '@/lib/modules/video/infrastructure/mux.client';
 import type { VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
@@ -368,32 +369,146 @@ export class PlaybackService {
         };
       }
 
-      if (PROVIDER_BACKED_PLAYBACK_PROVIDERS.has(asset.provider)) {
+      if (asset.provider === 'MUX') {
+        try {
+          const playbackId = asset.providerPlaybackId || asset.providerAssetId;
+          if (!playbackId) throw new Error('Mux asset missing playback ID');
+
+          let playbackUrl: string;
+          let isSignedUrl = false;
+
+          if (MuxClient.isSigningConfigured()) {
+            const muxClient = new MuxClient();
+            const token = muxClient.createSignedPlaybackToken(playbackId);
+            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
+            isSignedUrl = true;
+          } else {
+            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8`;
+          }
+
+          const posterUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
+          const isAdminPreview = actor.type === 'admin';
+
+          const session = await prisma.videoPlaybackSession.create({
+            data: {
+              videoId,
+              userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
+              ipHash,
+              userAgentHash,
+              sourceKind: 'mux',
+              accessTier: tier as any,
+              isAdminPreview,
+            },
+          });
+
+          return {
+            videoId,
+            status: 'READY',
+            canPlay: true,
+            access: { allowed: true },
+            source: {
+              provider: 'MUX',
+              kind: 'mux',
+              playbackUrl,
+              posterUrl: thumbnailUrl || posterUrl,
+              mimeType: 'application/x-mpegURL',
+              needsProxy: false,
+              isExternalEmbed: false,
+              isSignedUrl,
+              asset: safeAsset,
+            },
+            player: playerFor({ thumbnailUrl, title }, true),
+            diagnostics: {
+              warnings: [],
+              sourceConfidence: 'HIGH',
+              providerResolutionAllowed: true,
+              providerResolutionAttempted: true,
+              sourceMode: 'PROVIDER_ASSET',
+              asset: safeAsset,
+            },
+            tracking: { playbackSessionId: session.id, heartbeatIntervalSeconds: 60 },
+          };
+        } catch (e) {
+          console.error('[PLAYBACK_SERVICE] Mux resolution failed', e);
+          return unavailablePlan({
+            videoId,
+            status: 'ERROR',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['Failed to resolve Mux playback source'],
+            providerResolutionAllowed: true,
+            providerResolutionAttempted: true,
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+      }
+
+      if (asset.provider === 'VIMEO') {
+        const vimeoId = (asset as VideoAsset & { externalVideoId?: string | null }).externalVideoId
+          || extractVimeoVideoId((asset as VideoAsset & { externalUrl?: string | null }).externalUrl || '');
+
+        if (!vimeoId) {
+          return unavailablePlan({
+            videoId,
+            status: 'UNAVAILABLE',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['Vimeo asset is missing a valid video ID'],
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+
+        if (tier === 'PATRON') {
+          return unavailablePlan({
+            videoId,
+            status: 'UNAVAILABLE',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['Vimeo playback is not permitted for PATRON-tier videos'],
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+
+        const session = await prisma.videoPlaybackSession.create({
+          data: {
+            videoId,
+            userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
+            ipHash,
+            userAgentHash,
+            sourceKind: 'vimeo',
+            accessTier: tier as any,
+            isAdminPreview: actor.type === 'admin',
+          },
+        });
+
         return {
           videoId,
           status: 'READY',
-          canPlay: false,
+          canPlay: true,
           access: { allowed: true },
           source: {
-            provider: asset.provider,
-            kind: String(asset.provider).toLowerCase(),
+            provider: 'VIMEO',
+            kind: 'vimeo',
+            embedUrl: `https://player.vimeo.com/video/${vimeoId}`,
             posterUrl: thumbnailUrl,
-            mimeType: asset.mimeType ?? undefined,
             needsProxy: false,
-            isExternalEmbed: false,
+            isExternalEmbed: true,
             isSignedUrl: false,
             asset: safeAsset,
           },
-          player: playerFor({ thumbnailUrl, title }, false),
+          player: playerFor({ thumbnailUrl, title }, true),
           diagnostics: {
-            warnings: ['Provider-backed playback resolution is gated and not implemented in this ticket'],
-            sourceConfidence: 'MEDIUM',
+            warnings: [],
+            sourceConfidence: 'HIGH',
             providerResolutionAllowed: true,
             providerResolutionAttempted: false,
             sourceMode: 'PROVIDER_ASSET',
             asset: safeAsset,
           },
-          tracking: emptyPlaybackRuntime(),
+          tracking: { playbackSessionId: session.id, heartbeatIntervalSeconds: 60 },
         };
       }
     }
