@@ -4,7 +4,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { normalizePaymentTotals } from "../domain/payment-totals";
 import { PatronTruthReadModel, buildPatronTruthReadModel } from "./patron-read-model";
 import { ADMIN_PATRON_QUERY_SORT_CONTRACT, AdminPatronQuerySortContractDto } from "./list-admin-users.use-case";
-import { writeAuditLog } from "@/lib/services/audit.service";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface ExportAdminUsersInput {
   query?: string;
@@ -109,8 +109,7 @@ export async function exportAdminUsers(
     };
   });
 
-  await writeAuditLog({
-    actorUserId: actor.userId,
+  await recordAuditEvent(ctx, {
     action: "USERS_EXPORT",
     targetType: "System",
     metadata: { filterOptions: input as any, count: items.length }

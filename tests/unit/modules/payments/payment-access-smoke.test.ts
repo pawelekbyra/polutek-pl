@@ -8,7 +8,7 @@ vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
 vi.mock('@/lib/services/email.service');
 vi.mock('@/lib/services/user-access.service');
-vi.mock('@/lib/services/audit.service');
+vi.mock('@/lib/modules/audit');
 
 // Mock getPaymentCurrencyLimits to control thresholds for smoke test
 vi.mock('@/lib/payments/currency-settings', () => ({

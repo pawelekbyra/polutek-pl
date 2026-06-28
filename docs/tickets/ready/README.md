@@ -68,8 +68,8 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.x | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-003, 005, 006 |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/polutek-pl-proposals-qfkm9y: usunięto `user.service.ts`, `user/subscription.service.ts`, `admin/payments-admin.service.ts`; pozostałe: DTOs, utility, refactor |
-| 4 | `CLEANUP-002` — API error handling standardization | `TODO` | 63 route'y, 4 wzorce — duże zadanie |
+| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/polutek-pl-proposals-qfkm9y: usunięto `user.service.ts`, `user/subscription.service.ts`, `admin/payments-admin.service.ts`; `audit.service` importers w use-casach przeniesione do `lib/modules/audit`; pozostałe: DTOs, `user-access.service.ts` |
+| 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Roadmap progress tracker
 
@@ -102,7 +102,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 ### Cleanup from roadmap
 
 - [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL` dead files removed, DTOs/utility/refactor remain
-- [ ] `CLEANUP-002` — API error handling standardization
+- [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `CLEANUP-005` — SearchPage missing sizes in Image — `DONE` PR claude/polutek-pl-proposals-qfkm9y
