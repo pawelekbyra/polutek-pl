@@ -8,6 +8,10 @@ import { fail } from '@/lib/modules/shared/result';
 import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
 import Stripe from 'stripe';
 
+const { mockSyncClerkAccess } = vi.hoisted(() => ({
+  mockSyncClerkAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock Stripe correctly using a dummy class
 const mockConstructEvent = vi.fn().mockReturnValue({
     id: 'evt_123',
@@ -16,7 +20,30 @@ const mockConstructEvent = vi.fn().mockReturnValue({
 });
 
 vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: vi.fn().mockResolvedValue(undefined),
+  syncClerkAccess: mockSyncClerkAccess,
+}));
+
+vi.mock('@/lib/modules/users', () => ({
+  normalizePaymentTotals: vi.fn().mockReturnValue(10),
+  syncClerkAccess: mockSyncClerkAccess,
+}));
+
+vi.mock('@/lib/services/email.service', () => ({
+  EmailService: {
+    sendBecomePatronEmail: vi.fn().mockResolvedValue(undefined),
+    sendDonationThankYouEmail: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/payments/currency-settings', () => ({
+  getPaymentCurrencyLimits: vi.fn().mockResolvedValue({
+    PLN: { minAmountMinor: 1000 },
+    EUR: { minAmountMinor: 1000 },
+  }),
 }));
 
 vi.mock('stripe', () => {
@@ -47,7 +74,7 @@ describe('handleStripeWebhook', () => {
         },
         payment: {
             updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-            findUnique: vi.fn().mockResolvedValue({ id: 'pay_123', amountMinor: 1000, currency: 'pln', status: 'PENDING' }),
+            findUnique: vi.fn().mockResolvedValue({ id: 'pay_123', userId: 'user_123', amountMinor: 1000, currency: 'pln', status: 'PENDING' }),
             update: vi.fn().mockResolvedValue({})
         },
         user: {
@@ -63,7 +90,7 @@ describe('handleStripeWebhook', () => {
             create: vi.fn().mockResolvedValue({}),
             findUnique: vi.fn().mockResolvedValue(null),
             findFirst: vi.fn().mockResolvedValue(null),
-            findMany: vi.fn().mockResolvedValue([]),
+            findMany: vi.fn().mockResolvedValue([{ id: 'grant_123' }]),
             updateMany: vi.fn().mockResolvedValue({ count: 1 })
         },
         $transaction: vi.fn(async (fn) => await fn(mockPrisma))
