@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { PaymentStatus, WebhookEventStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 import { UserAccessService } from './user-access.service';
+import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 import { PaymentCheckoutService } from './payments/checkout.service';
 import { PaymentFulfillmentService } from './payments/fulfillment.service';
 import { PaymentRefundService, calculateRefundAdjustment } from './payments/refund.service';
@@ -113,7 +114,7 @@ export class PaymentService {
                 const dispute = event.data.object as Stripe.Dispute;
                 const syncData = await this.handleDispute(dispute);
                 if (syncData) {
-                    await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
+                    await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
                 }
                 break;
             }
@@ -192,7 +193,7 @@ export class PaymentService {
     });
 
     if (syncData) {
-        await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-refund sync failed:", e));
+        await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-refund sync failed:", e));
     }
     return syncData;
   }
@@ -216,7 +217,7 @@ export class PaymentService {
             const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
-        if (syncData) await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute sync failed:", e));
+        if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute sync failed:", e));
         recordAlert('payment.dispute_lost', { currency: payment.currency });
         return syncData;
     }
@@ -230,7 +231,7 @@ export class PaymentService {
             const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
-        if (syncData) await UserAccessService.syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute-win sync failed:", e));
+        if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute-win sync failed:", e));
         logger.info(`[PaymentService] Dispute WON for payment ${payment.id}. Patron status restored if applicable.`);
         return syncData;
     }

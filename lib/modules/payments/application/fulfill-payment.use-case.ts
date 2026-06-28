@@ -12,7 +12,7 @@ import { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
 import { SupportedCurrency } from "@/lib/constants";
 import { PaymentPolicy } from "../domain/payment.policy";
 import { EmailService } from "@/lib/services/email.service";
-import { UserAccessService } from "@/lib/services/user-access.service";
+import { syncClerkAccess } from "@/lib/modules/users/application/sync-clerk-access";
 import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface FulfillPaymentInput {
@@ -145,7 +145,7 @@ export async function fulfillPayment(
       return ok({ isFirstFulfillment: false });
     }
 
-    await UserAccessService.syncClerkAccess(result.userId, result.isPatron, result.normalizedTotal);
+    await syncClerkAccess(result.userId, result.isPatron, result.normalizedTotal);
 
     if (result.isFirstFulfillment) {
       const { email, language, userId, becamePatronNow, wasEligible, isPatron } = result;

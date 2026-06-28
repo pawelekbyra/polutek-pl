@@ -16,7 +16,7 @@ describe('normalizePaymentTotals display currency rates', () => {
     process.env.DISPLAY_USD_TO_PLN_RATE = '4.75';
     vi.resetModules();
 
-    const { normalizePaymentTotals } = await import('@/lib/services/user-access.service');
+    const { normalizePaymentTotals } = await import('@/lib/modules/users/domain/payment-totals');
 
     expect(normalizePaymentTotals([{ currency: 'USD', amountMinor: 1000 }])).toBe(47.5);
   });
@@ -25,7 +25,7 @@ describe('normalizePaymentTotals display currency rates', () => {
     process.env.DISPLAY_USD_TO_PLN_RATE = '9.99';
     vi.resetModules();
 
-    const { normalizePaymentTotals } = await import('@/lib/services/user-access.service');
+    const { normalizePaymentTotals } = await import('@/lib/modules/users/domain/payment-totals');
     const largeDisplayTotal = normalizePaymentTotals([{ currency: 'USD', amountMinor: 100_000 }]);
 
     expect(largeDisplayTotal).toBe(9990);

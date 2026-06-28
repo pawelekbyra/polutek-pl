@@ -38,8 +38,8 @@ vi.mock('@/lib/observability', () => ({
   recordDurationMetric: vi.fn(),
 }));
 
-vi.mock('@/lib/services/user-access.service', () => ({
-  UserAccessService: { syncClerkAccess: vi.fn() },
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: vi.fn(),
 }));
 
 vi.mock('@/lib/services/email.service', () => ({

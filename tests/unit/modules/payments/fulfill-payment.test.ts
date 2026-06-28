@@ -37,10 +37,8 @@ vi.mock('@/lib/payments/currency-settings', () => ({
   }),
 }));
 
-vi.mock('@/lib/services/user-access.service', () => ({
-  UserAccessService: {
-    syncClerkAccess: mockSyncClerkAccess,
-  },
+vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
+  syncClerkAccess: mockSyncClerkAccess,
 }));
 
 vi.mock('@/lib/services/email.service', () => ({
