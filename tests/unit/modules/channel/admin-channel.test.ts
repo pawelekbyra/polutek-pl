@@ -26,7 +26,7 @@ describe('Channel Admin Use Cases', () => {
 
   describe('getAdminChannelSettings', () => {
     it('throws if actor is not admin', async () => {
-      const ctx = createAppContext({ actor: { type: 'user', userId: '1', isPatron: false } });
+      const ctx = createAppContext({ actor: { type: 'user', userId: '1' } });
       await expect(getAdminChannelSettings(ctx)).rejects.toThrow('Only admins');
     });
 

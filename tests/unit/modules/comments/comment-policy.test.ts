@@ -5,7 +5,7 @@ import { AccessDecisionDto } from '@/lib/modules/access';
 
 describe('CommentPolicy Boundary', () => {
   const guest: Actor = { type: 'guest' };
-  const user: Actor = { type: 'user', userId: 'u1', isPatron: false };
+  const user: Actor = { type: 'user', userId: 'u1' };
   const admin: Actor = { type: 'admin', userId: 'a1' };
 
   const accessAllowed: AccessDecisionDto = { hasAccess: true };

@@ -360,3 +360,54 @@ For example: explicit confirmation does not automatically mean checkbox.
 ## 16. Blocked behavior
 
 Jeżeli ticket wymaga niedozwolonej ścieżki, decyzji właściciela, schema change, package update, global doc bez zgody lub konfliktuje z innym PR-em, agent ma zatrzymać się i zwrócić `BLOCKED` z opisem unblock condition.
+
+## 17. Obowiązkowa aktualizacja dokumentacji po każdej pracy (Documentation-First Finish Protocol)
+
+**Zasada:** Agent MUSI zaktualizować dokumentację stanu ticketów PRZED push i w tym samym commicie lub PR co zmiana kodu. Praca bez aktualizacji dokumentacji = praca niezakończona.
+
+### 17.1 Co musi zaktualizować każdy agent po wykonaniu pracy
+
+**Plik: `docs/tickets/ready/README.md`**
+
+Dla każdego wykonanego ticketu agent MUSI:
+
+1. Zmienić status w tabeli `Queue` z `TODO` / `IN_PROGRESS` → `DONE` (lub `PARTIAL` / `BLOCKED` z powodem).
+2. Wpisać evidence w kolumnie `Evidence` — numer PR lub SHA commitu.
+3. Zaznaczyć checkbox `[x]` w sekcji `Roadmap progress tracker`.
+4. Jeśli ticket jest `PARTIAL` — dopisać co zostało i dlaczego.
+5. Jeśli ticket jest `BLOCKED` — dopisać konkretny unblock condition.
+
+**Plik: `docs/REFACTORING-ROADMAP.md`**
+
+Jeśli praca dotyczy roadmapy, agent MUSI zaktualizować opis itemu lub oznaczyć go jako wykonany komentarzem `<!-- DONE: <evidence> -->`.
+
+### 17.2 Dozwolone statusy
+
+| Status | Znaczenie |
+|--------|-----------|
+| `TODO` | Nie zaczęto |
+| `IN_PROGRESS` | Aktywna praca w toku |
+| `DONE` | Zakończone, zmergowane, przetestowane |
+| `PARTIAL` | Część zrobiona — reszta opisana w `Evidence` |
+| `BLOCKED` | Nie można skończyć bez zewnętrznej akcji — powód w `Evidence` |
+| `SKIPPED_BY_OWNER` | Właściciel zdecydował pominąć |
+
+### 17.3 Weryfikacja pre-push
+
+Przed każdym `git push` agent MUSI sprawdzić:
+
+```bash
+# Upewnij się że dokumentacja jest zaktualizowana
+grep -c "TODO" docs/tickets/ready/README.md  # Porównaj z faktycznym stanem
+```
+
+Jeśli wykonano pracę z ticketu który nadal widnieje jako `TODO` — agent nie może pushować bez aktualizacji dokumentacji.
+
+### 17.4 Dlaczego to jest obowiązkowe
+
+Bez aktualizacji dokumentacji kolejny agent startuje od zera i nie wie co jest zrobione. To prowadzi do:
+- Duplikowania pracy
+- Błędnego oszacowania stanu projektu
+- Regreskji (cofania gotowych bugfixów przez nieświadomego agenta)
+
+Dokumentacja stanu ticketów jest tak samo częścią pracy jak kod.

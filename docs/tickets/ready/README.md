@@ -15,6 +15,10 @@ Polutek.pl jest po stabilizacji dużego refaktoru, ale produkt nadal aktywnie si
 
 <!-- CONTROL_PLANE_CURRENT_MODE: ACTIVE_PRODUCT_ROADMAP_MODE -->
 <!-- CONTROL_PLANE_CURRENT_QUEUE_FILE: docs/tickets/ready/README.md -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_ID: NONE -->
+<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: NONE -->
+<!-- NO_ACTIVE_LARGE_CODE_TICKET -->
+<!-- no active large code ticket — nie ma aktywnego dużego ticketu kodowego -->
 
 ## Current Control-Plane Rule
 
@@ -45,85 +49,59 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 | Order | Ticket | Status | Evidence |
 | ---: | --- | --- | --- |
-| 0 | `BUILD-DEPLOY-HEALTH` — main musi się budować i deployować | `ACTIVE` | Ostatni znany build blocker naprawiony commit `24bf278dd3c05b038c6734c97395efd0243ac15f`; każdy nowy failed build ma pierwszeństwo. |
-| 1 | `#1204` — pełny multi-source video: admin create/edit, provider switch i playback E2E | `ACTIVE` | #1204 jest kanonicznym issue po scaleniu #1217; zawiera Cloudflare/YouTube/Mux/R2/Vimeo, player E2E i source builder. |
-| 2 | `VIDEO-PROVIDER-MUX-R2-VIMEO` — provider extensibility pod #1204 | `TODO_AFTER_1204_SLICE` | Projektować provider adaptery i playback plan, nie hardkodować providerów w playerze. |
-| 3 | `#1218` — adminowalna domyślna miniatura filmów z cropperem | `TODO` | Issue #1218. Powiązane z `BUG-006`, ale jako feature globalnego fallbacku. |
-| 4 | `#1219` — opcjonalne napisy PL/EN per film | `TODO` | Issue #1219. WebVTT `.vtt`, upload/edit/delete, access-controlled tracks. |
-| 5 | `THANK-YOU-ZONE-COPY` — Strefa Fenju / Thank You Zone jako bonus w podziękowaniu | `WATCH` | Copy zmienione w `LanguageContext.tsx`; dalsze zmiany prawne/marketingowe muszą zachować ten kierunek. |
-| 6 | `BUG-001` — Redis failure fallback in playback-event recording | `TODO` | Refactoring roadmap debt. |
-| 7 | `BUG-002` — admin users export auth check before processing | `TODO` | Refactoring roadmap debt. |
-| 8 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `TODO` | Refactoring roadmap debt. |
-| 9 | `BUG-004` — replace string-matching error classification in payment/admin routes | `TODO` | Refactoring roadmap debt. |
-| 10 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `TODO` | Refactoring roadmap debt; verify against current private Blob story before implementing. |
-| 11 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `TODO` | Refactoring roadmap debt; coordinate with #1218. |
-| 12 | `BUG-007` — malformed JSON handling in admin routes | `TODO` | Refactoring roadmap debt. |
-| 13 | `INCOMPLETE-*` items from refactoring roadmap | `TODO_AFTER_BUGS_AND_ACTIVE_PRODUCT` | Do not start as a large batch. One item per PR. |
-| 14 | `CLEANUP-*` items from refactoring roadmap | `TODO_AFTER_INCOMPLETE` | Do not start as a large batch. One item per PR. |
-| 15 | `LAUNCH-OPERATOR-LEGAL` — public launch evidence, legal/privacy/cookies/support copy | `BLOCKED_OPERATOR_LEGAL` | Tracked in `docs/roadmap/Launch-Execution-Backlog.md`; public launch remains `NO_GO`. |
+| 1 | `REFACTORING-ROADMAP-2026-06-27` | `ACTIVE` | README pointer added in commit `ef9f6a125a7899d350dd04ed7d474263281272e5` |
+| 1.1 | `BUG-001` — Redis failure fallback in playback-event recording | `DONE` | Zweryfikowane w kodzie: `record-playback-event.use-case.ts:227-229` try/catch obecny |
+| 1.2 | `BUG-002` — admin users export auth check before processing | `DONE` | Zweryfikowane w kodzie: `app/api/admin/users/export/route.ts:12` requireAdminForApi na początku |
+| 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `DONE` | Zweryfikowane w kodzie: wszystkie 4 routes używają `fromUseCaseResult()` |
+| 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `DONE` | Zweryfikowane w kodzie: używa `statusCode` zamiast `includes('Forbidden')` |
+| 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `DONE` | Zweryfikowane w kodzie: `thumbnail-response.service.ts:99` sprawdza `NEXT_PUBLIC_BLOB_PUBLIC_HOST` |
+| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `video.repository.ts:268` zmienione na `?? ''` |
+| 1.7 | `BUG-007` — malformed JSON handling in admin routes | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: try/catch przy `req.json()` w `emails/broadcast/route.ts` (actions już miało) |
+| 1.8 | `#1204` — complete multi-source video system (diagnostics, YouTube thumbnail, SEO, oEmbed, security tests) | `DONE` | PR claude/pr-1200-review-7ru1bo |
+| 2.1 | `INCOMPLETE-007` — remove dead `Actor.isPatron` | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: usunięte z `actor.ts`, konstruktorów i testów |
+| 2.2 | `INCOMPLETE-004` — bounce/complaint email auto-suppression | `DONE` | Zweryfikowane w kodzie: `handle-resend-webhook.use-case.ts:269` ustawia `marketingEmails: false` |
+| 2.3 | `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper | `DONE` | Zweryfikowane w kodzie: `VideoPlayer.tsx:456-458` komentarz potwierdza świadomą decyzję — PremiumWrapper owns loading |
+| 2.4 | `CLEANUP-003` — user-visible typo cleanup | `DONE` | Zweryfikowane w kodzie: `LanguageContext.tsx:76` — `Subskrybuj` poprawne |
+| 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
+| 3 | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-001, 002, 003, 005, 006 |
+| 4 | `CLEANUP-*` items from roadmap | `TODO_AFTER_INCOMPLETE` | Pozostałe: CLEANUP-001, 002, 005, 006 |
 
-## Product roadmap progress tracker
+## Roadmap progress tracker
 
-### P0 — Build/deploy health
+### Setup / control-plane work
 
-- [x] Fix TypeScript build blocker in `CoverImageUpload.tsx` — commit `24bf278dd3c05b038c6734c97395efd0243ac15f`.
-- [ ] Keep main deployable; any failed Vercel build preempts normal product work.
+- [x] Point canonical ready queue at `REFACTORING-ROADMAP-2026-06-27` — commit `ef9f6a125a7899d350dd04ed7d474263281272e5`
+- [x] Add mandatory post-work update rule for agents — commit pending/current update
 
-### P1 — Video/media product core
+### Critical bugs from roadmap
 
-- [ ] `#1204` — admin create flow can add multiple video sources before save.
-- [ ] `#1204` — admin edit flow can add/remove/switch video sources.
-- [ ] `#1204` — one-click primary switch only for READY/playable/tier-safe source.
-- [ ] `#1204` — player/playback E2E for every enabled provider.
-- [ ] `#1204` — Mux treated as strategic full VOD provider, not dead enum.
-- [ ] `#1204` — R2 has an explicit security/playback decision.
-- [ ] `#1204` — Vimeo planned as external embed provider with tier limits.
+- [x] `BUG-001` — Redis failure fallback in playback-event recording — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-002` — admin users export auth check before processing — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-004` — replace string-matching error classification in payment/admin routes — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-005` — support custom Vercel Blob public host in thumbnail response service — `DONE` (zweryfikowane w kodzie)
+- [x] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `BUG-007` — malformed JSON handling in admin routes — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 
-### P2 — Admin media UX
+### Incomplete features from roadmap
 
-- [ ] `#1218` — global default video thumbnail controlled by admin.
-- [ ] `#1218` — cropper 16:9 for global default thumbnail.
-- [ ] `#1218` — fallback order: video thumbnail → provider thumbnail → global default → final code fallback.
-- [ ] `#1219` — optional PL captions per video.
-- [ ] `#1219` — optional EN captions per video.
-- [ ] `#1219` — upload/change/delete captions in create/edit flow.
-- [ ] `#1219` — validated WebVTT and access-controlled player tracks.
+- [ ] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation decision/work
+- [ ] `INCOMPLETE-002` — referral system finish-or-remove decision/work
+- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync
+- [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
+- [ ] `INCOMPLETE-005` — admin refund endpoint/UI
+- [ ] `INCOMPLETE-006` — Stripe reconciliation job
+- [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 
-### Copy / positioning guardrails
+### Cleanup from roadmap
 
-- [x] Rename right playlist/support area to `STREFA FENJU` / `THANK YOU ZONE`.
-- [x] Reframe support area as thank-you bonus, not paid content purchase.
-- [ ] Keep legal/support copy aligned with this positioning in future changes.
-
-### Critical bugs from refactoring roadmap
-
-- [ ] `BUG-001` — Redis failure fallback in playback-event recording.
-- [ ] `BUG-002` — admin users export auth check before processing.
-- [ ] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500.
-- [ ] `BUG-004` — replace string-matching error classification in payment/admin routes.
-- [ ] `BUG-005` — support custom Vercel Blob public host in thumbnail response service.
-- [ ] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data.
-- [ ] `BUG-007` — malformed JSON handling in admin routes.
-
-### Incomplete features from refactoring roadmap
-
-- [ ] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation decision/work.
-- [ ] `INCOMPLETE-002` — referral system finish-or-remove decision/work.
-- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync.
-- [ ] `INCOMPLETE-004` — bounce/complaint email auto-suppression.
-- [ ] `INCOMPLETE-005` — admin refund endpoint/UI.
-- [ ] `INCOMPLETE-006` — Stripe reconciliation job.
-- [ ] `INCOMPLETE-007` — remove dead `Actor.isPatron`.
-- [ ] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper.
-
-### Cleanup from refactoring roadmap
-
-- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution.
-- [ ] `CLEANUP-002` — API error handling standardization.
-- [ ] `CLEANUP-003` — user-visible typo cleanup.
-- [ ] `CLEANUP-004` — hardcoded support email cleanup.
-- [ ] `CLEANUP-005` — SearchPage image sizes.
-- [ ] `CLEANUP-006` — CoverImageUpload image optimization review.
+- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution
+- [ ] `CLEANUP-002` — API error handling standardization
+- [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
+- [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [ ] `CLEANUP-005` — SearchPage missing sizes in Image
+- [ ] `CLEANUP-006` — CoverImageUpload zbędne unoptimized
 
 ## Working rules for this mode
 

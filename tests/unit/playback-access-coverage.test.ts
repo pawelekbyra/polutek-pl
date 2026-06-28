@@ -26,7 +26,7 @@ describe('PlaybackService Cloudflare resolution error', () => {
   };
 
   const ctx = createAppContext({
-    actor: { type: 'user', userId: 'user-1', isPatron: false },
+    actor: { type: 'user', userId: 'user-1' },
     prisma: mockPrisma as any,
   });
 

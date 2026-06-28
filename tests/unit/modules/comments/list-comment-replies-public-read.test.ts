@@ -46,7 +46,7 @@ describe('listCommentReplies public read access', () => {
 
     const result = await listCommentReplies(
       { commentId: parentComment.id, limit: 10 },
-      createAppContext({ actor: { type: 'user', userId: 'user-1', isPatron: false }, prisma: {} as any }),
+      createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: {} as any }),
     );
 
     expect(result.ok).toBe(true);

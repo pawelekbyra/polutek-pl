@@ -3,8 +3,7 @@ import { AppError } from "@/lib/errors";
 import { Actor } from "@/lib/modules/shared/actor";
 import { prisma } from "@/lib/prisma";
 import { isConfiguredAdminUserId } from "@/lib/admin-config";
-import { getPatronStatus } from "@/lib/modules/patron";
-import { createAppContext } from "@/lib/modules/shared/app-context";
+
 
 function metadataValue(claims: unknown, key: string): unknown {
   if (!claims || typeof claims !== "object") return undefined;
@@ -43,17 +42,9 @@ export async function resolveDbBackedActor(userId: string): Promise<Actor> {
     return { type: "admin", userId };
   }
 
-  const ctx = createAppContext({
-    actor: { type: "user", userId, isPatron: false },
-  });
-  const patronStatus = await getPatronStatus(userId, ctx);
-
   return {
     type: "user",
     userId,
-    isPatron: patronStatus.ok
-      ? patronStatus.data.activeGrants.length > 0
-      : false,
   };
 }
 
@@ -78,7 +69,7 @@ async function resolveDbBackedAdminActor(
 
 export async function requireAdminSession() {
   const actor = await requireAdminActor();
-  return { userId: actor.userId, role: "admin" as const, isPatron: undefined };
+  return { userId: actor.userId, role: "admin" as const };
 }
 
 /**

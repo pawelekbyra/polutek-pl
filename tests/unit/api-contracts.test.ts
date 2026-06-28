@@ -264,7 +264,7 @@ describe('API Contracts', () => {
   describe('POST /api/checkout/create-intent', () => {
     it('matches the documented response shape', async () => {
       vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1', isPatron: false } as any);
+      vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1' } as any);
       vi.mocked(createCheckoutIntent).mockResolvedValue({
           ok: true,
           data: { paymentId: 'pay_1', clientSecret: 'secret_1' }

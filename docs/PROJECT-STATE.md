@@ -6,7 +6,7 @@ Duży refaktor i stabilizacja fundamentów produktu są zakończone. Polutek.pl 
 
 ## Co to oznacza
 
-- Nie ma aktywnego dużego ticketu refaktoryzacyjnego do ponownego otwierania.
+- Nie ma aktywnego dużego ticketu kodowego do ponownego otwierania.
 - Jest aktywna kolejka **product/tech work** w `docs/tickets/ready/README.md`; ona ma pierwszeństwo przed historycznymi raportami i starą roadmapą refaktoryzacji.
 - Dawna `docs/REFACTORING-ROADMAP.md` pozostaje ważną techniczną bazą długu i standardów, ale nie opisuje sama całej aktualnej roadmapy produktu.
 - Public launch, operacje produkcyjne, dowody operatora i przegląd prawny pozostają decyzjami oraz ścieżkami właściciela.

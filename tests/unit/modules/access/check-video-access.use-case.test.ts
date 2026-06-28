@@ -55,7 +55,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('allows logged-in user to see public published video', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(baseVideo);
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
     });
@@ -84,7 +84,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     it('allows local user', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(loggedInVideo);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
     });
@@ -92,7 +92,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     it('denies deleted user with DELETED', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(loggedInVideo);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: true });
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -116,10 +116,10 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('denies logged-in non-patron with PATRON_REQUIRED (no active grants)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
       (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
 
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -129,20 +129,20 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('allows patron based on active PatronGrant (ignoring User.isPatron false)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
       (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] }));
 
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
     });
 
     it('denies patron based on missing active PatronGrant (ignoring User.isPatron true)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: true });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
       (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
 
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: true }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -153,7 +153,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     it('denies for missing local user', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -201,7 +201,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('draft video returns NOT_FOUND for non-admin', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, status: VideoStatus.DRAFT });
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -211,7 +211,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('future published video returns NOT_FOUND for non-admin', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, publishedAt: new Date(now.getTime() + 10000) });
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
@@ -236,7 +236,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
             creator: { id: 'other', isApproved: true, isPrimary: true }
         });
         // Note: findFirst in checkVideoAccess already scopes to mainChannelId, but if it didn't:
-        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
         expect(result.ok).toBe(true);
         if (result.ok) {
             expect(result.data.hasAccess).toBe(false);

@@ -126,7 +126,7 @@ describe('R8 Comments Access and Permissions', () => {
 
         const result = await (await import('@/lib/modules/comments/application/list-video-comments.use-case')).listVideoComments(
           { videoId, sortBy: 'newest', limit: 10 },
-          createCtx({ type: 'user', userId, isPatron: false })
+          createCtx({ type: 'user', userId })
         );
 
         expect(result.ok).toBe(true);
@@ -139,14 +139,14 @@ describe('R8 Comments Access and Permissions', () => {
 
     it('blocks non-patron from liking a comment on patron-only video', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId });
-      const result = await toggleCommentLike({ commentId: 'c1', action: 'LIKE' }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await toggleCommentLike({ commentId: 'c1', action: 'LIKE' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });
 
     it('blocks non-patron from reporting a comment on patron-only video', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId, authorId: 'other' });
-      const result = await reportComment({ commentId: 'c1', reason: 'SPAM' }, createCtx({ type: 'user', userId, isPatron: false }));
+      const result = await reportComment({ commentId: 'c1', reason: 'SPAM' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });

@@ -34,7 +34,7 @@ describe('Checkout API Route Response Verification', () => {
 
   it('returns status and terminal in JSON response', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'user_123' } as any);
-    vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_123', isPatron: false } as any);
+    vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_123' } as any);
     vi.mocked(createCheckoutIntent).mockResolvedValue(ok({
       paymentId: 'pay_123',
       clientSecret: 'secret_123',
@@ -61,7 +61,7 @@ describe('Checkout API Route Response Verification', () => {
 
   it('returns status and terminal when payment is already terminal', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'user_123' } as any);
-    vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_123', isPatron: false } as any);
+    vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_123' } as any);
     vi.mocked(createCheckoutIntent).mockResolvedValue(ok({
       paymentId: 'pay_already_succeeded',
       clientSecret: null,

@@ -48,12 +48,12 @@ describe('PatronGrant Source of Truth Guard', () => {
   it('denies access if User.isPatron is true but PatronGrant is missing (Cache-only protection)', async () => {
     mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
     // User object has isPatron: true (the cache field)
-    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: true });
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
 
     // BUT getPatronStatus (which checks PatronGrant table) returns no active grants
     (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
 
-    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: true }));
+    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -65,12 +65,12 @@ describe('PatronGrant Source of Truth Guard', () => {
   it('allows access if User.isPatron is false but PatronGrant is active (Self-healing truth)', async () => {
     mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
     // User object has isPatron: false (the cache field is stale/wrong)
-    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false, isPatron: false });
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
 
     // BUT getPatronStatus finds an active grant
     (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] }));
 
-    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1', isPatron: false }));
+    const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
 
     expect(result.ok).toBe(true);
     if (result.ok) {

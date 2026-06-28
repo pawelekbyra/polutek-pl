@@ -24,7 +24,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
   });
 
   it('DELETE /api/comments/[commentId]: blocks unauthorized user from deleting others comment', async () => {
-    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'attacker_1', isPatron: false });
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'attacker_1' });
     vi.mocked(deleteComment).mockResolvedValue({
         ok: false,
         error: { type: 'FORBIDDEN', message: 'Forbidden' }
@@ -43,7 +43,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
     // Our new PATCH route only accepts { text: string } and doesn't allow pinning.
     // So we should verify it returns 400 or ignoring 'pinned' field if it's not in the schema.
 
-    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'random_user', isPatron: false });
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'random_user' });
 
     const req = new NextRequest('http://localhost/api/comments/comment_1', {
       method: 'PATCH',

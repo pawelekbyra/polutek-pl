@@ -52,7 +52,7 @@ vi.mock('@/lib/logger', () => {
 
 describe('Subscriptions Use-Cases', () => {
   const mockMainChannel = { id: 'c1', slug: 'polutek', subscribersCount: 10 };
-  const mockActor = { type: 'user', userId: 'u1', isPatron: false };
+  const mockActor = { type: 'user', userId: 'u1' };
   const mockCtx = {
     actor: mockActor,
     requestId: 'req_123',

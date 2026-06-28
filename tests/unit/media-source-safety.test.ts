@@ -100,7 +100,7 @@ describe('PlaybackService Safety', () => {
 
   it('should not return source, session, or provider data for logged-in non-patron denied on patron-only video', async () => {
     const userCtx = createAppContext({
-      actor: { type: 'user', userId: 'u1', isPatron: false },
+      actor: { type: 'user', userId: 'u1' },
     });
 
     vi.mocked(prisma.video.findUnique).mockResolvedValue({

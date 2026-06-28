@@ -127,7 +127,7 @@ describe('Payment to PatronGrant Smoke Test', () => {
     };
 
     // Initialize state
-    dbState.users.set('u1', { id: 'u1', email: 'u1@example.com', isPatron: false, language: 'pl' });
+    dbState.users.set('u1', { id: 'u1', email: 'u1@example.com', language: 'pl' });
     dbState.payments.set('pay_qualifying', { id: 'pay_qualifying', userId: 'u1', amountMinor: 1000, currency: 'PLN', status: PaymentStatus.PENDING });
     dbState.payments.set('pay_under', { id: 'pay_under', userId: 'u1', amountMinor: 500, currency: 'PLN', status: PaymentStatus.PENDING });
   });

@@ -98,7 +98,6 @@ describe("dynamic auth route boundaries", () => {
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
@@ -114,7 +113,6 @@ describe("dynamic auth route boundaries", () => {
     expect(actor).toEqual({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     expect(checkVideoAccess).toHaveBeenCalledWith(
       { videoIdOrSlug: "draft_video" },
@@ -126,7 +124,6 @@ describe("dynamic auth route boundaries", () => {
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     vi.mocked(updateComment).mockResolvedValue({
       ok: false,
@@ -159,7 +156,7 @@ describe("dynamic auth route boundaries", () => {
       { params: Promise.resolve({ commentId: "comment_1" }) },
     );
     await hideAdminComment("comment_1", {
-      actor: { type: "user", userId: "revoked_admin", isPatron: false },
+      actor: { type: "user", userId: "revoked_admin" },
     } as never);
 
     expect(patch.status).toBe(403);

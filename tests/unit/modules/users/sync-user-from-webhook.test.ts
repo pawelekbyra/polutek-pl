@@ -48,7 +48,7 @@ describe('SyncUserFromWebhookUseCase', () => {
   });
 
   it('updates existing local user and preserves current isPatron state', async () => {
-    const existing = { id: 'u1', name: 'Old', isPatron: true, language: 'pl' };
+    const existing = { id: 'u1', name: 'Old', language: 'pl' };
     mockPrisma.user.findUnique.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
 
     await SyncUserFromWebhookUseCase.execute(ctx(), {

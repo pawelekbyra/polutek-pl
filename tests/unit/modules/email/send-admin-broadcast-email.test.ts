@@ -88,8 +88,8 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
 
   it('deduplicates recipient emails', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'duplicate@ex.com', language: 'pl', name: 'U1', isPatron: false },
-      { id: 'u2', email: 'DUPLICATE@ex.com', language: 'pl', name: 'U2', isPatron: false },
+      { id: 'u1', email: 'duplicate@ex.com', language: 'pl', name: 'U1' },
+      { id: 'u2', email: 'DUPLICATE@ex.com', language: 'pl', name: 'U2' },
     ]);
     prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
 
@@ -120,8 +120,8 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
 
   it('filters out recipients based on negative preference override', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'optout@ex.com', language: 'pl', name: 'Opt Out', isPatron: false },
-      { id: 'u2', email: 'optin@ex.com', language: 'pl', name: 'Opt In', isPatron: false },
+      { id: 'u1', email: 'optout@ex.com', language: 'pl', name: 'Opt Out' },
+      { id: 'u2', email: 'optin@ex.com', language: 'pl', name: 'Opt In' },
     ]);
     prismaMock.emailPreference.findUnique.mockImplementation(async ({ where }) => {
       if (where.email === 'optout@ex.com') return { marketingEmails: false };
@@ -149,7 +149,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
 
   it('requires active Subscription; marketingEmails true alone is skipped', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'legacytrue@ex.com', language: 'pl', name: 'Legacy', isPatron: false },
+      { id: 'u1', email: 'legacytrue@ex.com', language: 'pl', name: 'Legacy' },
     ]);
     prismaMock.emailPreference.findUnique.mockResolvedValue({ marketingEmails: true });
     prismaMock.subscription.findUnique.mockResolvedValue(null);
@@ -167,7 +167,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
 
   it('skips active Subscription with missing EmailPreference', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u1', email: 'subscribed@ex.com', language: 'pl', name: 'Sub', isPatron: false },
+      { id: 'u1', email: 'subscribed@ex.com', language: 'pl', name: 'Sub' },
     ]);
     prismaMock.emailPreference.findUnique.mockResolvedValue(null);
     prismaMock.subscription.findUnique.mockResolvedValue({ id: 's1' });

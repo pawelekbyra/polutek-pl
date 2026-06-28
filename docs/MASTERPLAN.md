@@ -4,6 +4,8 @@ Status: **STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT**
 
 This is the canonical entry point for technical state, risk register, owner decisions and ordered product/tech backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
 
+Brak aktywnego dużego ticketu kodowego — duży refaktor jest zakończony. Pracę prowadzi się małymi izolowanymi ticketami zgodnie z `docs/tickets/ready/README.md`.
+
 ## 1. Baseline State
 
 - **Historical accepted implementation baseline SHA:** `f7fc603183120895359e9e52464de2d01e100980` through PR #899.

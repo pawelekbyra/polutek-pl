@@ -45,7 +45,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
   it('grants access when PatronGrant is active, even if User.isPatron cache in DB is false', async () => {
     const ctx = createAppContext({
       prisma: prismaMock,
-      actor: { type: 'user', userId: 'u1', isPatron: false }, // Clerk claim is false
+      actor: { type: 'user', userId: 'u1' }, // Clerk claim is false
     });
 
     prismaMock.video.findFirst.mockResolvedValue({
@@ -81,7 +81,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
   it('denies access when PatronGrant is missing, even if User.isPatron cache in DB is true', async () => {
     const ctx = createAppContext({
       prisma: prismaMock,
-      actor: { type: 'user', userId: 'u1', isPatron: true }, // Clerk claim is true
+      actor: { type: 'user', userId: 'u1' }, // Clerk claim is true
     });
 
     prismaMock.video.findFirst.mockResolvedValue({
@@ -118,7 +118,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
   it('denies access when PatronGrant is missing, even if Clerk actor claim says isPatron: true', async () => {
     const ctx = createAppContext({
       prisma: prismaMock,
-      actor: { type: 'user', userId: 'u1', isPatron: true }, // Clerk claim
+      actor: { type: 'user', userId: 'u1' }, // Clerk claim
     });
 
     prismaMock.video.findFirst.mockResolvedValue({
@@ -156,7 +156,7 @@ describe('Patron Access Source of Truth - checkVideoAccess (Narrow Follow-up)', 
       // Mock actor with stale Clerk claim isPatron: true
       const ctx = createAppContext({
         prisma: prismaMock,
-        actor: { type: 'user', userId: 'u1', isPatron: true },
+        actor: { type: 'user', userId: 'u1' },
       });
 
       prismaMock.video.findUnique.mockResolvedValue({ id: 'v1', slug: 'v1-slug' });

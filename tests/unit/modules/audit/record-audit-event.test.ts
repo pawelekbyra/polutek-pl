@@ -12,7 +12,7 @@ describe('recordAuditEvent Use Case', () => {
 
     const ctx = createAppContext({
       prisma: mockPrisma as any,
-      actor: { type: 'user', userId: 'user-123', isPatron: false },
+      actor: { type: 'user', userId: 'user-123' },
     });
 
     const result = await recordAuditEvent(ctx, {

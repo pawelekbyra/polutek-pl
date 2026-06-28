@@ -48,7 +48,7 @@ describe('AccountDeletionCleanupUseCase', () => {
     expect(prisma.creator.updateMany).toHaveBeenCalledWith({ where: { id: 'creator-1' }, data: { subscribersCount: 4 } });
     expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'u1' },
-      data: expect.objectContaining({ isDeleted: true, isPatron: false, patronSince: null, patronSource: null, stripeCustomerId: null, imageUrl: null }),
+      data: expect.objectContaining({ isDeleted: true, patronSince: null, patronSource: null, stripeCustomerId: null, imageUrl: null }),
     }));
     expect(prisma.user.update.mock.calls[0][0].data.email).toMatch(/^deleted_.*@deleted\.com$/);
     expect(prisma.auditLog.create).toHaveBeenCalled();

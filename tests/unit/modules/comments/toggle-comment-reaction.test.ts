@@ -43,7 +43,7 @@ describe('Comment Reaction Use Case', () => {
     (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
     mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
 
-    const result = await toggleCommentLike({ commentId, action: 'LIKE' }, createCtx({ type: 'user', userId, isPatron: false }));
+    const result = await toggleCommentLike({ commentId, action: 'LIKE' }, createCtx({ type: 'user', userId }));
 
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.liked).toBe(true);
@@ -55,7 +55,7 @@ describe('Comment Reaction Use Case', () => {
     (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
     mockPrisma.commentReaction.findUnique.mockResolvedValue({ id: 'r1' });
 
-    const result = await toggleCommentLike({ commentId, action: 'UNLIKE' }, createCtx({ type: 'user', userId, isPatron: false }));
+    const result = await toggleCommentLike({ commentId, action: 'UNLIKE' }, createCtx({ type: 'user', userId }));
 
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.liked).toBe(false);

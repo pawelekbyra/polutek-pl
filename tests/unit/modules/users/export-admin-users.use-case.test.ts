@@ -21,7 +21,7 @@ describe('exportAdminUsers use-case', () => {
   it('fails if actor is not an admin', async () => {
     const ctx = createAppContext({
       prisma: mockPrisma as any,
-      actor: { type: 'user', userId: 'user_1', isPatron: false },
+      actor: { type: 'user', userId: 'user_1' },
     });
 
     const result = await exportAdminUsers({}, ctx);

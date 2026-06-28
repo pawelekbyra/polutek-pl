@@ -8,11 +8,10 @@ describe('Actor & AppContext', () => {
   });
 
   it('should support user actor', () => {
-    const ctx = createAppContext({ actor: { type: 'user', userId: 'u1', isPatron: false } });
+    const ctx = createAppContext({ actor: { type: 'user', userId: 'u1' } });
     expect(ctx.actor.type).toBe('user');
     if (ctx.actor.type === 'user') {
       expect(ctx.actor.userId).toBe('u1');
-      expect(ctx.actor.isPatron).toBe(false);
     }
   });
 
@@ -40,7 +39,7 @@ describe('Actor & AppContext', () => {
 
   it('should strip userId and role if passed in overrides', () => {
     const ctx = createAppContext({
-      actor: { type: 'user', userId: 'u1', isPatron: true },
+      actor: { type: 'user', userId: 'u1' },
       userId: 'legacy-id',
       role: 'legacy-role'
     } as any);
