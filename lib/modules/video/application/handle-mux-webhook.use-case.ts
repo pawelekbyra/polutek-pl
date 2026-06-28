@@ -38,7 +38,7 @@ export async function handleMuxWebhook(
   if (!asset && payload.data.upload_id) {
     asset = await ctx.prisma.videoAsset.findFirst({
       where: { provider: "MUX", muxUploadId: payload.data.upload_id },
-    }) ?? undefined;
+    }) ?? null;
   }
 
   if (!asset) {
@@ -72,7 +72,7 @@ export async function handleMuxWebhook(
   const signedPlaybackId = payload.data.playback_ids?.find(p => p.policy === "signed")?.id;
   const playbackId = signedPlaybackId || publicPlaybackId;
 
-  const updatedAsset = await ctx.writeTransaction(async (tx) => {
+  const updatedAsset = await ctx.db.writeTransaction(async (tx) => {
     const dataToUpdate: Record<string, unknown> = {
       processingState: newState,
       providerSyncedAt: new Date(),

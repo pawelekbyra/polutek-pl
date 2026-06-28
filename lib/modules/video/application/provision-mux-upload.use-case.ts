@@ -38,7 +38,7 @@ export async function provisionMuxUpload(
   try {
     const upload = await client.createDirectUpload();
 
-    const asset = await ctx.writeTransaction(async (tx) => {
+    const asset = await ctx.db.writeTransaction(async (tx) => {
       const created = await tx.videoAsset.create({
         data: {
           videoId: video.id,
