@@ -67,7 +67,6 @@ async function main() {
         select: {
             id: true,
             paymentId: true,
-            referralId: true
         }
     });
     console.log("✓ PatronGrant table schema is up to date.");

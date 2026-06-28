@@ -20,12 +20,6 @@ model User {
   // Do not use for patron eligibility, financial reporting, access decisions, or payment sync.
   // Use UserPaymentTotal per currency or normalized totals instead.
   legacyTotalPaidMinor_DoNotUse Int        @default(0) @map("totalPaidMinor")
-  referralCode                  String     @unique @default(cuid())
-  referralPoints                Int        @default(0)
-  referralCount                 Int        @default(0)
-  referredById                  String?
-  referredBy                    User?      @relation("UserReferrals", fields: [referredById], references: [id])
-  referrals                     User[]     @relation("UserReferrals")
   stripeCustomerId              String?    @unique
   imageUrl                      String?
   /// LEGACY: cache/display-only field. Do not use for backend access control.
@@ -50,8 +44,6 @@ model User {
   payments         Payment[]
   paymentTotals    UserPaymentTotal[]
   patronGrants     PatronGrant[]
-  referralsSent    Referral[]         @relation("ReferralReferrer")
-  referralReceived Referral?          @relation("ReferralReferred")
   subscriptions    Subscription[]
 
   @@index([email])
@@ -136,7 +128,6 @@ model PatronGrant {
   userId      String
   source      PatronGrantSource
   paymentId   String?           @unique
-  referralId  String?           @unique
   grantedById String?
   reason      String?
   createdAt   DateTime          @default(now())
@@ -297,30 +288,6 @@ model VideoAsset {
   @@index([provider, providerAssetId])
 }
 
-enum ReferralStatus {
-  PENDING
-  CLAIMED
-  REJECTED
-  CANCELED
-}
-
-model Referral {
-  id         String         @id @default(uuid())
-  referrerId String
-  referredId String         @unique
-  status     ReferralStatus @default(PENDING)
-  source     String?
-  claimedAt  DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-
-  referrer User @relation("ReferralReferrer", fields: [referrerId], references: [id])
-  referred User @relation("ReferralReferred", fields: [referredId], references: [id])
-
-  @@unique([referrerId, referredId])
-  @@index([referrerId])
-  @@index([status])
-}
 
 model VideoLike {
   id        String   @id @default(uuid())

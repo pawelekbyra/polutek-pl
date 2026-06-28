@@ -60,14 +60,26 @@ export async function reportComment(
 
     if (existing) return ok(undefined);
 
+    const HOLD_THRESHOLD = 3;
+
     await (prisma as PrismaClient).$transaction(async (tx) => {
       await tx.commentReport.create({
         data: { commentId, reporterId: userId, reason, note }
       });
-      await tx.comment.update({
+      const updated = await tx.comment.update({
         where: { id: commentId },
-        data: { reportsCount: { increment: 1 } }
+        data: { reportsCount: { increment: 1 } },
+        select: { reportsCount: true, status: true },
       });
+      if (
+        updated.reportsCount >= HOLD_THRESHOLD &&
+        updated.status === CommentStatus.VISIBLE
+      ) {
+        await tx.comment.update({
+          where: { id: commentId },
+          data: { status: CommentStatus.HELD_FOR_REVIEW, moderatedAt: new Date() },
+        });
+      }
     });
 
     await recordAuditEvent(ctx, {

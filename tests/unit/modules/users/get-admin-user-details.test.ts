@@ -43,11 +43,9 @@ describe('getAdminUserDetails Use Case', () => {
       updatedAt: new Date(),
       imageUrl: 'https://example.com/image.png',
       stripeCustomerId: 'cus_123',
-      referralCode: 'REF123',
       paymentTotals: [{ currency: 'PLN', amountMinor: 10000 }],
       _count: {
           comments: 5,
-          referrals: 2,
           videoLikes: 10,
           videoDislikes: 1
       }
@@ -91,9 +89,8 @@ describe('getAdminUserDetails Use Case', () => {
       updatedAt: new Date('2022-01-02'),
       imageUrl: null,
       stripeCustomerId: null,
-      referralCode: 'REF123',
       paymentTotals: [],
-      _count: { comments: 0, referrals: 0, videoLikes: 0, videoDislikes: 0 },
+      _count: { comments: 0, videoLikes: 0, videoDislikes: 0 },
     });
     mockPrisma.patronGrant.findMany.mockResolvedValue([
       { id: 'pg-active', source: 'ADMIN', createdAt: activeGrantCreatedAt, revokedAt: null },
@@ -129,9 +126,8 @@ describe('getAdminUserDetails Use Case', () => {
       updatedAt: new Date('2022-01-02'),
       imageUrl: null,
       stripeCustomerId: null,
-      referralCode: 'REF123',
       paymentTotals: [],
-      _count: { comments: 0, referrals: 0, videoLikes: 0, videoDislikes: 0 },
+      _count: { comments: 0, videoLikes: 0, videoDislikes: 0 },
     });
     mockPrisma.patronGrant.findMany.mockResolvedValue([
       { id: 'pg-revoked', source: 'STRIPE_TIP', createdAt: new Date('2023-01-01'), revokedAt: new Date('2024-01-01') },

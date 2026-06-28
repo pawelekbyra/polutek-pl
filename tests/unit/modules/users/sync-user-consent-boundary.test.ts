@@ -31,7 +31,6 @@ describe('profile sync subscription consent boundary', () => {
       subscription: { findMany: vi.fn().mockResolvedValue([{ creatorId: 'creator-1' }]), deleteMany: vi.fn(), count: vi.fn().mockResolvedValue(0) },
       emailPreference: { deleteMany: vi.fn() },
       creator: { updateMany: vi.fn() },
-      referral: { updateMany: vi.fn() },
     };
     vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(tx));
   });

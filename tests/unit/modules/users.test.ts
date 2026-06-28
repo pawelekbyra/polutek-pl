@@ -169,9 +169,6 @@ describe('Users Module', () => {
         language: 'pl',
         isDeleted: false,
         createdAt: new Date(),
-        referralCode: 'ref1',
-        referralCount: 5,
-        referralPoints: 100,
       };
 
       const mockPrisma = {
@@ -186,7 +183,6 @@ describe('Users Module', () => {
       expect(profile).toBeDefined();
       expect(profile?.id).toBe('user_1');
       expect((profile as any).email).toBeUndefined(); // Email should not be in DTO
-      expect(profile?.referralCount).toBe(5);
     });
 
     it('returns null for deleted user when accessed by non-admin', async () => {

@@ -1,7 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
 import { logger } from "@/lib/logger";
-import crypto from "crypto";
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
 import { UserDeletedError, UserHasNoEmailError } from "../domain/user.errors";
 
@@ -61,7 +60,6 @@ export async function updateUserLanguage(
     username,
     imageUrl,
     language,
-    referralCode: existingUser?.referralCode || crypto.randomBytes(6).toString("hex"),
   });
 
   // Sync to Identity Provider

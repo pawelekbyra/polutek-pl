@@ -1,13 +1,12 @@
 import { PatronGrantSource } from '@prisma/client';
 
-export type PatronGrantSourceInput = 'stripe_tip' | 'referral' | 'admin' | 'migration';
+export type PatronGrantSourceInput = 'stripe_tip' | 'admin' | 'migration';
 
 export interface PatronGrantDto {
   id: string;
   userId: string;
   source: PatronGrantSource;
   paymentId: string | null;
-  referralId: string | null;
   grantedById: string | null;
   reason: string | null;
   createdAt: Date;
@@ -29,7 +28,6 @@ export interface GrantPatronInput {
   note?: string;
   grantedByUserId?: string;
   paymentId?: string;
-  referralId?: string;
 }
 
 export interface RevokePatronInput {

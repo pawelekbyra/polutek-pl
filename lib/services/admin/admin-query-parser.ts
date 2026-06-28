@@ -9,8 +9,6 @@ export const USER_SORT_FIELDS = [
   'email',
   'name',
   'patronSince',
-  'referralPoints',
-  'referralCount',
   'role'
 ] as const;
 

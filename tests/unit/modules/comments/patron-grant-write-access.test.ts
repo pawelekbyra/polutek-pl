@@ -447,6 +447,7 @@ describe('Comments PatronGrant-backed write access', () => {
     mockCreatedComment();
     mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
     mockPrisma.commentReport.findUnique.mockResolvedValue(null);
+    mockPrisma.comment.update.mockResolvedValue({ reportsCount: 1, status: 'VISIBLE' });
 
     const createResult = await createVideoComment(
       { videoId, text: 'patron smoke comment' },
@@ -479,6 +480,7 @@ describe('Comments PatronGrant-backed write access', () => {
     mockCreatedComment();
     mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
     mockPrisma.commentReport.findUnique.mockResolvedValue(null);
+    mockPrisma.comment.update.mockResolvedValue({ reportsCount: 1, status: 'VISIBLE' });
 
     const createResult = await createVideoComment(
       { videoId, text: 'admin hello' },

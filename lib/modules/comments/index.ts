@@ -14,6 +14,8 @@ export * from "./application/report-comment.use-case";
 export * from "./application/list-comment-reports.use-case";
 export * from "./application/toggle-admin-comment-heart.use-case";
 export * from "./application/hide-admin-comment.use-case";
+export * from "./application/hold-comment-for-review.use-case";
+export * from "./application/approve-held-comment.use-case";
 export * from "./application/restore-admin-comment.use-case";
 export * from "./application/delete-admin-comment.use-case";
 export * from "./application/resolve-comment-report.use-case";

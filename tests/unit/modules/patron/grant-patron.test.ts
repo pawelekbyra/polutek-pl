@@ -7,7 +7,6 @@ import { PatronGrantSource } from '@prisma/client';
 const mockRepo = {
   findActiveGrantByAdmin: vi.fn(),
   findGrantByPaymentId: vi.fn(),
-  findGrantByReferralId: vi.fn(),
   findUserWithPaymentTotals: vi.fn().mockResolvedValue({
       id: 'user-1',
       isPatron: false,
