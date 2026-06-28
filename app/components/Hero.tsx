@@ -144,14 +144,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     });
   };
 
-
-    if (!userId) {
-      openSignIn();
-      return;
-    }
-    setIsCupGameOpen(true);
-  };
-
   return (
     <section className="bg-transparent">
       <div className="w-full">
@@ -299,8 +291,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
            )}
         </div>
       </div>
-
-
     </section>
   );
 };
