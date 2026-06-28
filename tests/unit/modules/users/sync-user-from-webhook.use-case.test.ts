@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
-import { EmailService } from '@/lib/services/email.service';
+import { sendWelcomeEmail, sendPasswordChangedEmail } from '@/lib/modules/email';
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
-    sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
-  },
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+  sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('SyncUserFromWebhookUseCase', () => {
@@ -70,7 +68,7 @@ describe('SyncUserFromWebhookUseCase', () => {
       },
     });
     expect(prisma.user.update.mock.calls[0][0].data).not.toHaveProperty('isPatron');
-    expect(EmailService.sendWelcomeEmail).toHaveBeenCalledWith('user@example.com', 'User One', 'en');
+    expect(sendWelcomeEmail).toHaveBeenCalledWith('user@example.com', 'User One', 'en');
   });
 
   it('does not transfer mailing consent when a webhook email conflicts with another active identity', async () => {

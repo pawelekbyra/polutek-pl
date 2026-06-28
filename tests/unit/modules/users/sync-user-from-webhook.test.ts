@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { EmailService } from '@/lib/services/email.service';
+import { sendWelcomeEmail, sendAccountDeletedEmail, sendPasswordChangedEmail } from '@/lib/modules/email';
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
-    sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
-    sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
-  }
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+  sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
+  sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('SyncUserFromWebhookUseCase', () => {
@@ -94,7 +92,7 @@ describe('SyncUserFromWebhookUseCase', () => {
     expect(updateCall.data.email).toMatch(/^deleted_.*@deleted\.com$/);
     expect(updateCall.data.username).toMatch(/^deleted_/);
 
-    expect(EmailService.sendAccountDeletedEmail).toHaveBeenCalledWith('john@example.com');
+    expect(sendAccountDeletedEmail).toHaveBeenCalledWith('john@example.com');
   });
 
   it('guarantees that softDelete never calls hard delete on user', async () => {

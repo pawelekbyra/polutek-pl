@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
-import { EmailService } from '@/lib/services/email.service';
+import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
 export type AccountDeletionCleanupSource = 'CLERK_WEBHOOK' | 'APP_ACCOUNT_DELETION' | 'CLERK_RECONCILIATION';
 
@@ -90,7 +90,7 @@ export class AccountDeletionCleanupUseCase {
     });
 
     if (originalEmail) {
-      await EmailService.sendAccountDeletedEmail(originalEmail).catch((error) => {
+      await sendAccountDeletedEmail(originalEmail).catch((error) => {
         console.error('[AccountDeletionCleanup] Failed to send account deleted email:', error);
       });
     }

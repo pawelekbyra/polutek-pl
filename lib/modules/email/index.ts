@@ -1,4 +1,11 @@
 export { sendAdminBroadcastEmail } from "./application/send-admin-broadcast-email.use-case";
+export {
+  sendWelcomeEmail,
+  sendPasswordChangedEmail,
+  sendAccountDeletedEmail,
+  sendDonationThankYouEmail,
+  sendBecomePatronEmail,
+} from "./application/send-transactional-email.use-case";
 export { handleResendWebhook } from "./application/handle-resend-webhook.use-case";
 export { listAdminBroadcastEmails } from "./application/list-admin-broadcast-emails.use-case";
 export { listInboundEmails } from "./application/list-inbound-emails.use-case";

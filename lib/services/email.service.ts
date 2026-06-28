@@ -5,33 +5,11 @@ import { APP_NAME } from '../constants';
 import { flags } from '@/lib/feature-flags';
 import { buildContentUnsubscribeUrl } from '@/lib/modules/subscriptions';
 
-const WELCOME_EMAIL_SLUG = 'welcome-email';
-
-const EMAIL_DICTIONARY: Record<string, { subject: string; html: string; subjectEn?: string; htmlEn?: string }> = {
-  'account-deleted': {
-    subject: `Twoje konto zostało usunięte - ${APP_NAME}`,
-    html: '<h1>Potwierdzenie usunięcia konta</h1><p>Twoje dane zostały pomyślnie usunięte z naszego systemu. Będzie nam Cię brakować!</p>',
-    subjectEn: `Your account has been deleted - ${APP_NAME}`,
-    htmlEn: '<h1>Account Deletion Confirmed</h1><p>Your data has been successfully removed from our system. We will miss you!</p>',
-  },
-  'password-changed': {
-    subject: `Hasło zostało zmienione - ${APP_NAME}`,
-    html: '<h1>Bezpieczeństwo konta</h1><p>Twoje hasło zostało właśnie zaktualizowane. Jeśli to nie Ty, skontaktuj się z nami natychmiast.</p>',
-    subjectEn: `Password changed - ${APP_NAME}`,
-    htmlEn: '<h1>Account Security</h1><p>Your password has been updated. If this was not you, please contact us immediately.</p>',
-  },
-  'thank-you-donation': {
-    subject: `Dziękujemy za wsparcie! - ${APP_NAME}`,
-    html: '<h1>Wielkie dzięki!</h1><p>Otrzymaliśmy Twój napiwek w wysokości {{amount}} {{currency}}. Twoje wsparcie pozwala nam tworzyć więcej treści!</p>',
-    subjectEn: `Thank you for your support! - ${APP_NAME}`,
-    htmlEn: '<h1>Big Thanks!</h1><p>We received your tip of {{amount}} {{currency}}. Your support helps us create more content!</p>',
-  },
-  'become-patron': {
-    subject: `Zostałeś Patronem! - ${APP_NAME}`,
-    html: '<h1>Witaj w gronie Patronów!</h1><p>Dziękujemy za zaufanie. Otrzymaliśmy Twoje wsparcie w wysokości {{amount}} {{currency}}. Masz teraz dostęp do ekskluzywnych materiałów w Strefie Patronów.</p>',
-    subjectEn: `You are now a Patron! - ${APP_NAME}`,
-    htmlEn: '<h1>Welcome to the Patrons!</h1><p>Thank you for your trust. We received your support of {{amount}} {{currency}}. You now have access to exclusive materials in the Patrons\' Zone.</p>',
-  },
+export type BroadcastRecipientInput = {
+    userId?: string;
+    email: string;
+    name?: string;
+    language?: string;
 };
 
 let resendClient: Resend | null = null;
@@ -53,120 +31,11 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
   }, value);
 }
 
-export type BroadcastRecipientInput = {
-    userId?: string;
-    email: string;
-    name?: string;
-    language?: string;
-};
-
-type SendTemplateEmailInput = {
-  to: string;
-  slug: string;
-  variables?: Record<string, string | null | undefined>;
-  fallback?: { subject: string; html: string; subjectEn?: string; htmlEn?: string };
-};
-
-async function sendTemplateEmail({ to, slug, variables = {}, fallback, language = 'pl' }: SendTemplateEmailInput & { language?: string }) {
-  const template = await prisma.emailTemplate.findUnique({
-    where: { slug },
-    select: { subject: true, html: true, subjectEn: true, htmlEn: true },
-  });
-
-  if (!template && !fallback) {
-    throw new Error(`Email template with slug "${slug}" was not found and no fallback provided.`);
-  }
-
-  if (!template && fallback) {
-    logger.warn(`[EmailService] Using hardcoded fallback for template: ${slug}`);
-  }
-
-  const safeVariables = {
-    ...Object.fromEntries(
-        Object.entries(variables).map(([key, value]) => [key, value ?? ''])
-    ),
-    appName: APP_NAME,
-    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    email: to,
-    userLanguage: language,
-    preferencesLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/profile/settings`
-  };
-  let subjectBase = template?.subject ?? fallback!.subject;
-  let htmlBase = template?.html ?? fallback!.html;
-
-  if (language === 'en') {
-    subjectBase = template?.subjectEn || fallback?.subjectEn || subjectBase;
-    htmlBase = template?.htmlEn || fallback?.htmlEn || htmlBase;
-  }
-
-  const subject = replaceTemplateVariables(subjectBase, safeVariables);
-  const html = replaceTemplateVariables(htmlBase, safeVariables);
-
-  const resend = getResendClient();
-  const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
-
-  if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
-    logger.error('[EmailService] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
-  }
-
-  const { data, error } = await resend.emails.send({
-    from,
-    to: [to],
-    subject,
-    html,
-  });
-
-  if (error) {
-    logger.error(`[EmailService] Resend failed to send "${slug}" email to ${to}:`, error);
-    throw new Error(`Resend failed to send "${slug}" email: ${JSON.stringify(error)}`);
-  }
-
-  logger.info(`[EmailService] Email "${slug}" sent successfully to ${to}. ID: ${data?.id}`);
-  return data;
-}
-
-export async function sendWelcomeEmail(to: string, firstName?: string | null, language: string = 'pl') {
-  const firstName_ = firstName || (language === 'en' ? 'User' : 'Użytkowniku');
-  return sendTemplateEmail({
-    to,
-    slug: WELCOME_EMAIL_SLUG,
-    variables: {
-      firstName: firstName_,
-      appName: APP_NAME,
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    },
-    fallback: {
-      subject: language === 'en'
-        ? `Welcome to ${APP_NAME}, ${firstName_}!`
-        : `Witaj w ${APP_NAME}, ${firstName_}!`,
-      html: language === 'en'
-        ? `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
-             <h1 style="font-size:24px;margin-bottom:16px">Welcome to ${APP_NAME}</h1>
-             <p>Hi ${firstName_},</p>
-             <p>Thanks for joining. You can now comment and rate videos.</p>
-             <p>Visit <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}">${APP_NAME}</a> to get started.</p>
-           </div>`
-        : `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
-             <h1 style="font-size:24px;margin-bottom:16px">Witaj w ${APP_NAME}</h1>
-             <p>Cześć ${firstName_},</p>
-             <p>Dziękujemy za dołączenie. Możesz teraz komentować i oceniać materiały.</p>
-             <p>Odwiedź <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}">${APP_NAME}</a>, aby zacząć.</p>
-           </div>`,
-    },
-    language,
-  });
-}
-
 /**
- * R9 legacy email bridge.
- * Keeps existing provider/template behavior while moving route ownership to lib/modules/email.
- * Future R9 pass should split provider adapter, templates, delivery logs and retry/outbox.
+ * @deprecated Transactional email methods moved to lib/modules/email.
+ * Only sendBroadcast remains here for LegacyEmailServiceProvider.
  */
 export class EmailService {
-  static async sendWelcomeEmail(toEmail: string, firstName?: string | null, language: string = 'pl') {
-    return sendWelcomeEmail(toEmail, firstName, language);
-  }
-
   static async sendBroadcast(broadcastId: string) {
     const broadcast = await prisma.broadcastEmail.findUnique({
         where: { id: broadcastId },
@@ -247,7 +116,7 @@ export class EmailService {
             }
 
             const vars = {
-                firstName: recipient.email.split('@')[0], // Fallback if no name
+                firstName: recipient.email.split('@')[0],
                 name: recipient.email.split('@')[0],
                 email: recipient.email,
                 appName: APP_NAME,
@@ -314,48 +183,6 @@ export class EmailService {
             sentCount: counts['SENT'] || 0,
             errorCount: totalFailed
         }
-    });
-  }
-
-  static async sendAccountDeletedEmail(toEmail: string) {
-    return sendTemplateEmail({
-      to: toEmail,
-      slug: 'account-deleted',
-      fallback: EMAIL_DICTIONARY['account-deleted'],
-    });
-  }
-
-  static async sendPasswordChangedEmail(toEmail: string) {
-    return sendTemplateEmail({
-      to: toEmail,
-      slug: 'password-changed',
-      fallback: EMAIL_DICTIONARY['password-changed'],
-    });
-  }
-
-  static async sendDonationThankYouEmail(toEmail: string, amount: number, currency: string, language?: string) {
-    return sendTemplateEmail({
-      to: toEmail,
-      slug: 'thank-you-donation',
-      variables: {
-        amount: amount.toFixed(2),
-        currency,
-      },
-      fallback: EMAIL_DICTIONARY['thank-you-donation'],
-      language,
-    });
-  }
-
-  static async sendBecomePatronEmail(toEmail: string, amount: number, currency: string, language?: string) {
-    return sendTemplateEmail({
-      to: toEmail,
-      slug: 'become-patron',
-      variables: {
-        amount: amount.toFixed(2),
-        currency,
-      },
-      fallback: EMAIL_DICTIONARY['become-patron'],
-      language,
     });
   }
 }
