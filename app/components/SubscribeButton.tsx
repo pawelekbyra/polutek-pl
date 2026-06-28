@@ -30,7 +30,7 @@ export default function SubscribeButton({
   variant = "default",
   onStatusChange,
 }: SubscribeButtonProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { userId } = useAuth();
   const { openSignIn } = useClerk();
   const [isSubscribed, setIsSubscribed] = useState(
@@ -148,15 +148,24 @@ export default function SubscribeButton({
         )}
       >
         <BellSimple size={16} className="mr-2" fill={isSubscribed ? "#171717" : "none"} />
-        <span>{isSubscribed ? (t.subscribed || "Subskrybujesz") : (t.subscribe || "Subskrybuj")}</span>
+        <span>{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "subskrajb")}</span>
       </motion.button>
       {errorMessage && (
-        <p
-          className="mt-2 max-w-[260px] text-xs font-medium text-red-600"
-          role="alert"
-        >
-          {errorMessage}
-        </p>
+        <div className="mt-2 max-w-[280px] flex flex-col gap-1">
+          <p
+            className="text-xs font-medium text-red-600"
+            role="alert"
+          >
+            {errorMessage}
+          </p>
+          <button
+            type="button"
+            onClick={() => { setErrorMessage(null); executeSubscribe(); }}
+            className="text-xs font-bold text-primary underline hover:opacity-70 text-left"
+          >
+            {language === "pl" ? "Spróbuj ponownie" : "Try again"}
+          </button>
+        </div>
       )}
 
       <EmailSubscriptionConsentModal

@@ -34,6 +34,11 @@ const requiredProductionVars = [
   'REFERRAL_PATRON_THRESHOLD',
   'HEALTHCHECK_TOKEN',
   'EMAIL_UNSUBSCRIBE_SIGNING_SECRET',
+  'MUX_TOKEN_ID',
+  'MUX_TOKEN_SECRET',
+  'MUX_WEBHOOK_SECRET',
+  'MUX_SIGNING_KEY_ID',
+  'MUX_SIGNING_PRIVATE_KEY',
 ] as const;
 
 const optionalButRecommendedProductionVars = [
@@ -114,6 +119,17 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
 
   if (hasValue(env, 'EMAIL_UNSUBSCRIBE_SIGNING_SECRET') && env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET!.trim().length < 32) {
     errors.push('EMAIL_UNSUBSCRIBE_SIGNING_SECRET must be at least 32 characters.');
+  }
+
+  if (hasValue(env, 'MUX_SIGNING_PRIVATE_KEY')) {
+    try {
+      const decoded = Buffer.from(env.MUX_SIGNING_PRIVATE_KEY!, 'base64').toString('utf-8');
+      if (!decoded.includes('-----BEGIN') || !decoded.includes('-----END')) {
+        errors.push('MUX_SIGNING_PRIVATE_KEY must be a base64-encoded PEM private key.');
+      }
+    } catch {
+      errors.push('MUX_SIGNING_PRIVATE_KEY must be a base64-encoded PEM private key.');
+    }
   }
 
   return {

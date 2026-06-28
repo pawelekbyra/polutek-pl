@@ -154,6 +154,13 @@ model AuditLog {
   @@index([createdAt])
 }
 
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
 model Creator {
   id               String         @id @default(uuid())
   userId           String

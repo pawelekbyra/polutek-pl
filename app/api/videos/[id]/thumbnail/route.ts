@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { ThumbnailResponseService } from "@/lib/services/storage/thumbnail-response.service";
+import { resolveVideoThumbnailUrl } from "@/lib/services/storage/default-thumbnail.service";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export async function GET(
       select: { id: true, thumbnailUrl: true, status: true }
     });
 
-    if (!video || !video.thumbnailUrl) {
+    if (!video) {
       return NextResponse.json({ error: "Thumbnail not found" }, { status: 404 });
     }
 
@@ -48,8 +49,14 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden: Video is not public" }, { status: 403 });
     }
 
-    // 3. Delegate to ThumbnailResponseService to handle storage streaming/redirect
-    return ThumbnailResponseService.getThumbnailResponse(video.id, video.thumbnailUrl);
+    // 3. Resolve thumbnail URL, falling back to global default if not set
+    const resolvedUrl = await resolveVideoThumbnailUrl(video.thumbnailUrl);
+    if (!resolvedUrl) {
+      return NextResponse.json({ error: "Thumbnail not found" }, { status: 404 });
+    }
+
+    // 4. Delegate to ThumbnailResponseService to handle storage streaming/redirect
+    return ThumbnailResponseService.getThumbnailResponse(video.id, resolvedUrl);
 
   } catch (error) {
     scopedLogger.error("[THUMBNAIL_PROXY_ERROR]", error);

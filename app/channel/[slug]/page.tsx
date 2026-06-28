@@ -54,6 +54,14 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   };
 }
 
+function getVideoCountLabel(count: number) {
+  if (count === 1) return "film";
+  const last = count % 10;
+  const lastTwo = count % 100;
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "filmy";
+  return "filmów";
+}
+
 export default async function ChannelPage(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
   const mainSlug = getConfiguredSlugSafe();
@@ -131,7 +139,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
   const displayBio = creator.bio || "Witamy na oficjalnym kanale.";
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#0f0f0f] font-serif">
+    <div className="min-h-screen bg-background text-[#0f0f0f] font-serif">
       <Navbar />
 
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
@@ -168,7 +176,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
             <div className="text-[14px] text-[#606060] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
                <span className="font-bold text-[#0f0f0f]">@{creator.slug}</span>
                <span>•</span>
-               <span>{formatCount(allVideos.length)} filmów</span>
+               <span>{formatCount(allVideos.length)} {getVideoCountLabel(allVideos.length)}</span>
             </div>
             <p className="text-[14px] text-[#606060] line-clamp-1 max-w-2xl font-sans mt-1">
                {displayBio}

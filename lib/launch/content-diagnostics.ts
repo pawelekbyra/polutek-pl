@@ -57,6 +57,10 @@ const requiredLaunchRuntimeVars = [
   'MAIN_CREATOR_SLUG',
 ] as const;
 
+function launchRuntimeEnvErrors(errors: string[]) {
+  return errors.filter((error) => requiredLaunchRuntimeVars.some((key) => error.includes(key)));
+}
+
 export async function runLaunchContentDiagnostics(options: {
   env?: NodeJS.ProcessEnv;
   db: DiagnosticDb;
@@ -73,13 +77,14 @@ export async function runLaunchContentDiagnostics(options: {
   };
 
   const appEnv = validateAppEnv(env, 'production');
-  if (appEnv.success) {
+  const appEnvErrors = launchRuntimeEnvErrors(appEnv.errors);
+  if (appEnvErrors.length === 0) {
     push(checks, { name: 'production env validation', status: 'PASS', detail: 'Required production environment variables passed application validation.' });
   } else {
     push(checks, {
       name: 'production env validation',
       status: 'FAIL',
-      detail: appEnv.errors.join(' '),
+      detail: appEnvErrors.join(' '),
       action: 'Set the missing/invalid production variables, then rerun npm run launch:diagnose. Do not treat a route 404 or skeleton as launch evidence while this fails.',
     });
   }

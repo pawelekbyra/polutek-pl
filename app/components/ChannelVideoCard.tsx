@@ -19,6 +19,15 @@ interface ChannelVideoCardProps {
   role?: string;
 }
 
+function getViewsLabel(count: number, language: string) {
+  if (language !== "pl") return count === 1 ? "view" : "views";
+  if (count === 1) return "wyświetlenie";
+  const last = count % 10;
+  const lastTwo = count % 100;
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "wyświetlenia";
+  return "wyświetleń";
+}
+
 export default function ChannelVideoCard({
   video,
   isLoggedIn,
@@ -129,7 +138,7 @@ export default function ChannelVideoCard({
                         t.currency === "PLN" ? "pl-PL" : "en-US",
                       )
                     : video.views}{" "}
-                  {t.views}
+                  {mounted ? getViewsLabel(video.views, language) : t.views}
                 </span>
                 {video.publishedAt && (
                   <>
