@@ -126,6 +126,35 @@ export class MuxClient {
     return `${header}.${payload}.${signature}`;
   }
 
+  async createAssetFromUrl(input: {
+    url: string;
+    primaryIntent?: boolean;
+  }): Promise<MuxAsset & { id: string }> {
+    const body = {
+      input: [{ url: input.url }],
+      playback_policy: [process.env.MUX_SIGNING_KEY_ID ? "signed" : "public"],
+      mp4_support: "none",
+    };
+
+    const response = await fetch("https://api.mux.com/video/v1/assets", {
+      method: "POST",
+      headers: {
+        Authorization: this.auth,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      this.logger.error("Mux createAssetFromUrl failed", { status: response.status, body: text });
+      throw new Error(`Mux asset creation from URL failed (HTTP ${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+    return data.data as MuxAsset & { id: string };
+  }
+
   static isSigningConfigured(): boolean {
     return Boolean(process.env.MUX_SIGNING_KEY_ID && process.env.MUX_SIGNING_PRIVATE_KEY);
   }

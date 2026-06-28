@@ -87,10 +87,6 @@ export async function addVideoSource(
       return fail(new AppError("A valid YouTube video ID or URL is required.", 400, "INVALID_YOUTUBE_VIDEO_ID"));
     }
 
-    if (video.tier === "PATRON") {
-      return fail(new AppError("YouTube cannot be used as a source for PATRON-tier videos.", 400, "YOUTUBE_PATRON_FORBIDDEN"));
-    }
-
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
     // Validate video exists via keyless oEmbed (no API key / quota needed).
@@ -207,10 +203,6 @@ export async function addVideoSource(
     const videoIdExtracted = extractVimeoVideoId(rawId) || (/^\d+$/.test(rawId) ? rawId : null);
     if (!videoIdExtracted) {
       return fail(new AppError("A valid Vimeo video ID or URL is required.", 400, "INVALID_VIMEO_VIDEO_ID"));
-    }
-
-    if (video.tier === "PATRON") {
-      return fail(new AppError("Vimeo cannot be used as a source for PATRON-tier videos — no private playback available.", 400, "VIMEO_PATRON_FORBIDDEN"));
     }
 
     const canonicalUrl = `https://vimeo.com/${videoIdExtracted}`;

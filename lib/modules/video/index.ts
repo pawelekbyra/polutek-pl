@@ -27,6 +27,8 @@ export * from './application/add-video-source.use-case';
 export * from './application/make-source-primary.use-case';
 export * from './application/remove-video-source.use-case';
 export * from './application/admin-video-payload';
+export * from './application/provision-original-upload.use-case';
+export * from './application/complete-original-upload.use-case';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';

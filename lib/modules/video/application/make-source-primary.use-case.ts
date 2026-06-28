@@ -50,10 +50,6 @@ export async function makeSourcePrimary(
     return fail(new AppError("Vimeo asset is missing a video ID.", 400, "MISSING_VIMEO_VIDEO_ID"));
   }
 
-  if ((isYoutube || isVimeo) && video.tier === "PATRON") {
-    return fail(new AppError(`${target.provider} cannot be the primary source for PATRON-tier videos — no private playback available.`, 400, "EMBED_ONLY_PATRON_FORBIDDEN"));
-  }
-
   if (target.isPrimary) {
     return ok(toAdminVideoDto(video));
   }
