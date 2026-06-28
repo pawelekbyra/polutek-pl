@@ -12,7 +12,7 @@ import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { useToast } from "@/app/hooks/useToast";
 import { AdminVideoLayoutSkeleton } from "@/components/skeletons/admin";
-import type { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import type { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 
 export default function ChannelLayoutPage() {
   const [videos, setVideos] = useState<AdminVideoListItem[]>([]);

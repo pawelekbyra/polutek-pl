@@ -1,4 +1,4 @@
-import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 import { AdminTableSkeleton } from "@/components/skeletons/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoTable } from "./VideoTable";

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { VIDEO_SORT_FIELDS, VideoSortField } from './videos-admin.dto';
+import { VIDEO_SORT_FIELDS, VideoSortField } from '@/lib/modules/video/domain/admin-video-list.dto';
 import { PAYMENT_SORT_FIELDS, PaymentSortField } from '@/lib/modules/payments';
 import { VideoStatus, AccessTier, SystemRole, PatronGrantSource, PaymentStatus } from '@prisma/client';
 

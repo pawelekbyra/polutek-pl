@@ -7,7 +7,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
-import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 
 interface VideoTableProps {
   videos: AdminVideoListItem[];

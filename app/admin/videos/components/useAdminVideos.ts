@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { AdminVideoListItem } from "@/lib/services/admin/videos-admin.dto";
+import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 import { logger } from "@/lib/logger";
 import { CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA } from "./video-utils";
