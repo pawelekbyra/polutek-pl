@@ -41,11 +41,9 @@ vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
   syncClerkAccess: mockSyncClerkAccess,
 }));
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendBecomePatronEmail: mockSendBecomePatronEmail,
-    sendDonationThankYouEmail: mockSendDonationThankYouEmail,
-  },
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendBecomePatronEmail: mockSendBecomePatronEmail,
+  sendDonationThankYouEmail: mockSendDonationThankYouEmail,
 }));
 
 vi.mock('@/lib/modules/audit', () => ({

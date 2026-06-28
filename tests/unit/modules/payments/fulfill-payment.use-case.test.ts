@@ -10,7 +10,7 @@ const { mockSyncClerkAccess } = vi.hoisted(() => ({
 // Mocking dependencies
 vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
-vi.mock('@/lib/services/email.service');
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case');
 vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
   syncClerkAccess: mockSyncClerkAccess,
 }));
