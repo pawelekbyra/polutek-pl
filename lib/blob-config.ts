@@ -1,4 +1,4 @@
-export type BlobAccess = string;
+export type BlobAccess = any;
 
 export function getBlobAccess(): BlobAccess {
   return "public";
