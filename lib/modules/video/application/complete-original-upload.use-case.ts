@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
@@ -109,8 +108,11 @@ export async function completeOriginalUpload(
     });
   });
 
-  // after() keeps the serverless function alive until mirrors complete
-  after(runMirrors);
+  if (ctx.waitUntil) {
+    ctx.waitUntil(runMirrors);
+  } else {
+    void runMirrors;
+  }
 
   await recordAuditEvent(ctx, {
     action: "VIDEO_ORIGINAL_UPLOAD_COMPLETED",
