@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
-import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '@/lib/constants';
+import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
 
@@ -31,19 +31,6 @@ const EMAIL_DICTIONARY: Record<string, { subject: string; html: string; subjectE
     htmlEn: '<h1>Welcome to the Patrons!</h1><p>Thank you for your trust. We received your support of {{amount}} {{currency}}. You now have access to exclusive materials in the Patrons\' Zone.</p>',
   },
 };
-
-let resendClient: Resend | null = null;
-
-function getResendClient() {
-  if (!resendClient) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY is missing. Add it to Vercel/environment variables.');
-    }
-    resendClient = new Resend(apiKey);
-  }
-  return resendClient;
-}
 
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {
   return Object.entries(variables).reduce((result, [key, replacement]) => {
@@ -95,19 +82,8 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
   const subject = replaceTemplateVariables(subjectBase, safeVariables);
   const html = replaceTemplateVariables(htmlBase, safeVariables);
 
-  const resend = getResendClient();
-  const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
-
-  if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
-    logger.error('[email] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
-  }
-
-  const { data, error } = await resend.emails.send({
-    from,
-    to: [to],
-    subject,
-    html,
-  });
+  const provider = new LegacyEmailServiceProvider();
+  const { data, error } = await provider.sendTransactionalEmail({ to, subject, html });
 
   if (error) {
     logger.error(`[email] Resend failed to send "${slug}" email to ${to}:`, error);
