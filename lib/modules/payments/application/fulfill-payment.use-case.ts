@@ -13,7 +13,7 @@ import { SupportedCurrency } from "@/lib/constants";
 import { PaymentPolicy } from "../domain/payment.policy";
 import { EmailService } from "@/lib/services/email.service";
 import { UserAccessService } from "@/lib/services/user-access.service";
-import { writeAuditLog } from "@/lib/services/audit.service";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface FulfillPaymentInput {
   paymentId: string;
@@ -161,11 +161,10 @@ export async function fulfillPayment(
         }
       } catch (error) {
         logger.error(`[EMAIL_FAILED] Payment fulfillment email failed for ${userId}`, error);
-        await writeAuditLog({
+        await recordAuditEvent(ctx, {
           action: "EMAIL_SEND_FAILED",
           targetType: "Payment",
           targetId: input.paymentId,
-          actorUserId: userId,
           metadata: {
             emailType: shouldSendPatronEmail ? "become_patron" : "donation_thank_you",
             error: error instanceof Error ? error.message : String(error),
