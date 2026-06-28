@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import {
     Video, Globe, Lock, ShieldCheck, BarChart3,
     MessageSquare, History, AlertTriangle,
@@ -24,9 +23,8 @@ import { AdminVideoDetailsSkeleton } from "@/components/skeletons/admin";
 import { formatDate } from "../components/utils";
 import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
-import { VideoUploadSection } from "../components/VideoUploadSection";
-import { VideoSourcesPanel } from "../components/VideoSourcesPanel";
 import { readAdminApiError } from "../components/api-error";
+import { VideoStudio } from "../components/VideoStudio";
 import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 
@@ -130,11 +128,9 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                             </Card>
 
                             {video.status === 'DRAFT' && (!video.asset || video.asset.processingState !== 'READY') && (
-                                <VideoUploadSection
-                                  videoId={video.id}
-                                  onUploadComplete={fetchVideo}
-                                  initialAsset={video.asset}
-                                />
+                                <div className="mt-2 text-xs text-muted-foreground italic">
+                                    Przejdź do zakładki <button className="underline text-primary" onClick={() => handleTabChange('media')}>Media</button> aby wgrać film.
+                                </div>
                             )}
                         </div>
                         <Card className="shadow-sm">
@@ -160,119 +156,21 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                 </TabsContent>
 
                 <TabsContent value="content"><VideoDetailsPanel video={video} /></TabsContent>
-                <TabsContent value="media" id="media" className="space-y-6">
-                    {video.status === 'DRAFT' && (!video.asset || video.asset.processingState !== 'READY') && (
-                        <VideoUploadSection
-                          videoId={video.id}
-                          onUploadComplete={fetchVideo}
-                          initialAsset={video.asset}
-                          publishAfterReady={video.publishAfterAssetReady}
-                        />
-                    )}
-
-                    <VideoSourcesPanel
+                <TabsContent value="media" id="media">
+                    <VideoStudio
                       videoId={video.id}
-                      assets={video.assets ?? (video.asset ? [video.asset] : [])}
-                      tier={video.tier}
-                      onChanged={fetchVideo}
+                      initialVideo={{
+                        title: video.title,
+                        description: video.description,
+                        slug: video.slug,
+                        tier: video.tier,
+                        thumbnailUrl: video.thumbnailUrl,
+                        status: video.status,
+                        assets: video.assets ?? (video.asset ? [video.asset] : []),
+                        original: video.original ?? null,
+                      }}
+                      onSaved={fetchVideo}
                     />
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2 space-y-6">
-                            <Card className="shadow-sm">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle className="text-lg">Zasób Cloudflare Stream</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => handleAction('sync-cloudflare')} disabled={video.asset?.provider !== 'CLOUDFLARE_STREAM'}>
-                                            <RotateCcw className="mr-2 h-3 w-3" /> Synchronizuj status
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {video.asset?.provider === 'CLOUDFLARE_STREAM' ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider</Label><div><Badge variant="secondary">{video.asset.provider}</Badge></div></div>
-                                                    <div>
-                                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Stan przetwarzania</Label>
-                                                        <div><Badge variant={video.asset.processingState === 'READY' ? 'default' : video.asset.processingState === 'FAILED' ? 'destructive' : 'outline'}>{video.asset.processingState}</Badge></div>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Primary Asset</Label><div>{video.asset.isPrimary ? <Badge className="bg-green-600">TAK — używany do odtwarzania</Badge> : <Badge variant="outline">NIE — nie używany do odtwarzania</Badge>}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Provider UID</Label><div className="p-2 bg-muted rounded font-mono text-xs break-all">{video.asset.providerAssetId}</div></div>
-                                                {video.asset.failureReason && (
-                                                    <div className="p-3 bg-red-50 border border-red-100 rounded text-red-800 text-xs">
-                                                        <p className="font-bold flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Błąd providera:</p>
-                                                        <p>{video.asset.failureReason}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Ostatnia synchronizacja</Label><div className="text-sm">{formatDate(video.asset.providerSyncedAt)}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Rozpoczęto przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingStartedAt)}</div></div>
-                                                <div className="space-y-1"><Label className="text-[10px] uppercase font-bold text-muted-foreground">Zakończono przetwarzanie</Label><div className="text-sm">{formatDate(video.asset.processingEndedAt) || "W toku..."}</div></div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="py-12 text-center border-dashed border-2 rounded-xl bg-muted/20">
-                                            <FileVideo className="h-10 w-10 mx-auto opacity-20 mb-2" />
-                                            <p className="text-sm text-muted-foreground italic">Brak przypisanego zasobu Cloudflare Stream.</p>
-                                        </div>
-                                    )}
-
-                                    <div className="pt-6 border-t">
-                                        <h4 className="text-sm font-bold mb-4">Inne akcje media</h4>
-                                        <div className="flex flex-wrap gap-3">
-                                            {video.videoUrl && !video.asset && (
-                                                <Button variant="secondary" size="sm" onClick={() => handleAction('import-legacy-to-cloudflare', { publishAfterAssetReady: true })}>
-                                                    <Send className="mr-2 h-4 w-4" /> Importuj legacy URL do Cloudflare
-                                                </Button>
-                                            )}
-                                            <Button variant="outline" size="sm" onClick={() => {
-                                                const uid = window.prompt("Podaj Cloudflare Stream UID:");
-                                                if (uid) handleAction('attach-asset', { providerAssetId: uid, publishAfterAssetReady: true });
-                                            }}>
-                                                <Settings className="mr-2 h-4 w-4" /> Podepnij ręcznie UID
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        <div className="space-y-6">
-                            <Card className="shadow-sm">
-                                <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Automatyzacja</CardTitle></CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex justify-between items-center py-2 border-b">
-                                        <span className="text-xs">Auto-publikacja</span>
-                                        <Badge variant={video.publishAfterAssetReady ? "default" : "outline"}>
-                                            {video.publishAfterAssetReady ? "WŁĄCZONA" : "WYŁĄCZONA"}
-                                        </Badge>
-                                    </div>
-                                    {video.publishAfterAssetReady && (
-                                        <div className="space-y-3">
-                                            <div className="text-[10px] text-muted-foreground space-y-1">
-                                                <p>Status: {video.publishAfterAssetReadyCompletedAt ? "ZAKOŃCZONO" : video.publishAfterAssetReadyError ? "BŁĄD" : "OCZEKIWANIE"}</p>
-                                                {video.publishAfterAssetReadyCompletedAt && <p>Gotowe: {formatDate(video.publishAfterAssetReadyCompletedAt)}</p>}
-                                            </div>
-                                            {video.publishAfterAssetReadyError && (
-                                                <div className="p-2 bg-red-50 border border-red-100 rounded text-red-800 text-[10px]">
-                                                    <p className="font-bold">Błąd auto-publikacji:</p>
-                                                    <p>{video.publishAfterAssetReadyError}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    <div className="rounded-lg bg-sky-50 p-3 text-[10px] text-sky-950">
-                                        <p className="font-semibold mb-1">Jak to działa?</p>
-                                        <p>Gdy zasób Cloudflare Stream osiągnie stan <strong>READY</strong>, backend automatycznie opublikuje film, jeśli ta opcja jest aktywna.</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
                 </TabsContent>
 
                 <TabsContent value="access" className="space-y-6">

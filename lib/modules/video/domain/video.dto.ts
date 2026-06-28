@@ -27,6 +27,16 @@ export interface PublicVideoDto extends BaseVideoDto {
   providerUrl?: never;
 }
 
+export interface AdminVideoOriginalDto {
+  id: string;
+  status: string;
+  objectKey: string;
+  sizeBytes: string | null;
+  uploadStartedAt: Date | null;
+  uploadCompletedAt: Date | null;
+  failureReason: string | null;
+}
+
 export interface AdminVideoAssetDto {
   id: string;
   videoId: string;
@@ -57,6 +67,11 @@ export interface AdminVideoAssetDto {
   lastSyncAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  fallbackPriority: number;
+  mirrorSourceOriginalId?: string | null;
+  mirrorRequestedAt?: Date | null;
+  mirrorCompletedAt?: Date | null;
+  mirrorFailureReason?: string | null;
   playbackUrl?: never;
   playbackToken?: never;
   signedUrl?: never;
@@ -78,6 +93,7 @@ export interface AdminVideoDto extends BaseVideoDto {
   commentsCount: number;
   asset?: AdminVideoAssetDto | null;
   assets?: AdminVideoAssetDto[];
+  original?: AdminVideoOriginalDto | null;
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
   publishAfterAssetReadyRequestedAt: Date | null;
@@ -112,6 +128,21 @@ export type AdminVideoAssetInput = {
   dashManifestUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  fallbackPriority?: number | null;
+  mirrorSourceOriginalId?: string | null;
+  mirrorRequestedAt?: Date | null;
+  mirrorCompletedAt?: Date | null;
+  mirrorFailureReason?: string | null;
+};
+
+export type AdminVideoOriginalInput = {
+  id: string;
+  status: string;
+  objectKey: string;
+  sizeBytes?: bigint | null;
+  uploadStartedAt?: Date | null;
+  uploadCompletedAt?: Date | null;
+  failureReason?: string | null;
 };
 
 export type AdminVideoInput = PublicVideoInput & {
@@ -124,6 +155,7 @@ export type AdminVideoInput = PublicVideoInput & {
   _count?: { comments?: number | null } | null;
   asset?: AdminVideoAssetInput | null;
   assets?: AdminVideoAssetInput[] | null;
+  original?: AdminVideoOriginalInput | null;
   publishAfterAssetReady?: boolean | null;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
@@ -165,6 +197,19 @@ function resolveIsPlayable(provider: StorageProvider, processingState: VideoAsse
   return false;
 }
 
+export function toAdminVideoOriginalDto(original: AdminVideoOriginalInput | null | undefined): AdminVideoOriginalDto | null {
+  if (!original) return null;
+  return {
+    id: original.id,
+    status: original.status,
+    objectKey: original.objectKey,
+    sizeBytes: original.sizeBytes != null ? original.sizeBytes.toString() : null,
+    uploadStartedAt: original.uploadStartedAt ?? null,
+    uploadCompletedAt: original.uploadCompletedAt ?? null,
+    failureReason: original.failureReason ?? null,
+  };
+}
+
 export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefined): AdminVideoAssetDto | null {
   if (!asset) return null;
 
@@ -198,6 +243,11 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     lastSyncAt: asset.providerSyncedAt ?? null,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,
+    fallbackPriority: asset.fallbackPriority ?? 100,
+    mirrorSourceOriginalId: asset.mirrorSourceOriginalId ?? null,
+    mirrorRequestedAt: asset.mirrorRequestedAt ?? null,
+    mirrorCompletedAt: asset.mirrorCompletedAt ?? null,
+    mirrorFailureReason: asset.mirrorFailureReason ?? null,
   };
 }
 
@@ -233,6 +283,7 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     assets: rawAssets
       .map((rawAsset: AdminVideoAssetInput) => toAdminVideoAssetDto(rawAsset))
       .filter((assetDto: AdminVideoAssetDto | null): assetDto is AdminVideoAssetDto => Boolean(assetDto)),
+    original: toAdminVideoOriginalDto((video as any).original),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,

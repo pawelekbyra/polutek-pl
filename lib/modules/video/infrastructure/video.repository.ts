@@ -73,11 +73,12 @@ export class VideoRepository {
   }
 
   async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
-    const video = await this.db.video.findFirst({
+    const video = await (this.db as any).video.findFirst({
         where: { id, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            assets: true
+            assets: true,
+            original: true,
         }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
@@ -88,11 +89,12 @@ export class VideoRepository {
   }
 
   async findBySlugForMainChannel(slug: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
-    const video = await this.db.video.findFirst({
+    const video = await (this.db as any).video.findFirst({
         where: { slug, creatorId: mainChannelId },
         include: {
             _count: { select: { comments: true } },
-            assets: true
+            assets: true,
+            original: true,
         }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
