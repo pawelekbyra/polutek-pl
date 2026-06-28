@@ -38,6 +38,14 @@ export async function makeSourcePrimary(
     return fail(new AppError("Only Cloudflare Stream, Mux, YouTube and Vimeo assets can be set as primary.", 400, "NON_PLAYABLE_PROVIDER"));
   }
 
+  if (video.tier === "PATRON" && isYoutube) {
+    return fail(new AppError("YouTube sources are not allowed for PATRON-tier videos.", 403, "YOUTUBE_PATRON_FORBIDDEN"));
+  }
+
+  if (video.tier === "PATRON" && isVimeo) {
+    return fail(new AppError("Vimeo sources are not allowed for PATRON-tier videos.", 403, "VIMEO_PATRON_FORBIDDEN"));
+  }
+
   if ((isCloudflare || isMux) && target.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) {
     return fail(new AppError(`${target.provider} asset must be in READY state to become primary.`, 400, "ASSET_NOT_READY"));
   }
