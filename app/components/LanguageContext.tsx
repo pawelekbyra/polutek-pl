@@ -96,7 +96,7 @@ export const translations = {
     support: 'Mecenat',
     materials: 'Publiczne',
     videosTab: 'Filmy',
-    donate: 'STREFA FENJU',
+    donate: 'STREFA THANK YOU',
     available: 'Odblokowane',
     publicStatus: 'Publiczny',
     unlockedStatus: 'Bonus odblokowany',
@@ -114,20 +114,20 @@ export const translations = {
     independencyTitle: 'Nie masz psychy się zalogować',
     welcomeOn: 'WITAJ NA',
     independencyTitleLoggedIn: `WITAJ NA ${APP_NAME}`,
-    patronZone: 'STREFA FENJU',
+    patronZone: 'STREFA THANK YOU',
     patronZoneLine1: 'STREFA',
-    patronZoneLine2: 'FENJU',
+    patronZoneLine2: 'THANK YOU',
     currency: 'PLN',
     loginGatedText: 'Zaloguj się, aby obejrzeć',
-    donationDescription: 'Wpłaty od widzów pomagają rozwijać kanał i tworzyć kolejne materiały. W podziękowaniu za napiwek zapraszam do Strefy Fenju jako bonusu.',
-    paywallUnlock: 'Wyślij napiwek, aby odebrać bonus',
+    donationDescription: 'Wsparcie od widzów pomaga rozwijać serwis Polutek.pl i tworzyć kolejne materiały. W podziękowaniu otrzymujesz dostęp do Strefy Thank You.',
+    paywallUnlock: 'Wesprzyj rozwój serwisu i odblokuj dostęp',
     confirmSubscribeTitle: 'CZY CHCESZ SUBSKRYBOWAĆ?',
     confirmSubscribeText: 'Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.',
     yes: 'TAK',
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
-    pleaseAcceptTerms: 'Zaakceptuj regulamin, aby odebrać bonus w Strefie Fenju',
-    tipTheGuy: 'NAPIWKUJ'
+    pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Thank You',
+    tipTheGuy: 'WSPOMÓŻ I ODBLOKUJ'
   },
   en: {
     views: 'views',
@@ -179,15 +179,15 @@ export const translations = {
     patronZoneLine2: 'ZONE',
     currency: 'USD',
     loginGatedText: 'Log in to watch additional content',
-    donationDescription: "Viewer contributions help grow the channel and create new content. As a thank-you for your tip, I invite you to the Thank You Zone as a bonus.",
-    paywallUnlock: 'Send a tip to unlock the bonus',
+    donationDescription: "Viewer support helps develop Polutek.pl and create new content. As a thank-you, you receive access to the Thank You Zone.",
+    paywallUnlock: "Support the site's development and unlock access",
     confirmSubscribeTitle: 'DO YOU WANT TO SUBSCRIBE?',
     confirmSubscribeText: 'Subscribing means you agree to receive email notifications about news.',
     yes: 'YES',
     no: 'NO',
     acceptTerms: 'I accept the Terms and Privacy Policy',
-    pleaseAcceptTerms: 'Accept the terms to unlock the Thank You Zone bonus',
-    tipTheGuy: 'TIP THE GUY'
+    pleaseAcceptTerms: 'Accept the terms to receive access to the Thank You Zone',
+    tipTheGuy: 'SUPPORT AND UNLOCK'
   }
 };
 
