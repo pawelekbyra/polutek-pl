@@ -40,11 +40,10 @@ const allowedAppRoutes = [
   "app/api/admin/videos/[id]/comments/route.ts",
   "app/api/admin/videos/[id]/sources/route.ts",
   "app/api/admin/videos/[id]/sources/[sourceId]/route.ts",
-  "app/api/admin/comments/[commentId]/approve/route.ts",
+  "app/api/admin/videos/[id]/sources/mux-upload/route.ts",
   "app/api/admin/comments/[commentId]/delete/route.ts",
   "app/api/admin/comments/[commentId]/heart/route.ts",
   "app/api/admin/comments/[commentId]/hide/route.ts",
-  "app/api/admin/comments/[commentId]/hold/route.ts",
   "app/api/admin/comments/[commentId]/restore/route.ts",
   "app/api/admin/comments/reports/[reportId]/resolve/route.ts",
   "app/api/admin/comments/reports/route.ts",
@@ -82,6 +81,7 @@ const allowedAppRoutes = [
   "app/api/videos/[id]/thumbnail/route.ts",
   "app/api/webhooks/clerk/route.ts",
   "app/api/webhooks/cloudflare-stream/route.ts",
+  "app/api/webhooks/mux/route.ts",
   "app/api/webhooks/resend/route.ts",
   "app/api/webhooks/stripe/route.ts",
   "app/channel/[slug]/page.tsx",
@@ -95,6 +95,7 @@ const allowedAppRoutes = [
 
 const approvedRoutesMatchingOutOfScopeWords = new Set([
   "app/api/admin/videos/[id]/upload/route.ts",
+  "app/api/admin/videos/[id]/sources/mux-upload/route.ts",
   "app/api/admin/videos/cover-upload/route.ts",
 ]);
 
