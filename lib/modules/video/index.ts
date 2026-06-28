@@ -9,6 +9,7 @@ export * from './application/update-admin-video.use-case';
 export * from './application/publish-admin-video.use-case';
 export * from './application/create-admin-video.use-case';
 export * from './application/provision-cloudflare-upload.use-case';
+export * from './application/provision-original-upload.use-case';
 export * from './application/sync-cloudflare-status.use-case';
 export * from './application/archive-admin-video.use-case';
 export * from './application/delete-admin-video.use-case';
