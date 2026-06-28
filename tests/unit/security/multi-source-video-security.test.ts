@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { addVideoSource } from '@/lib/modules/video/application/add-video-source.use-case';
 
 // ---------------------------------------------------------------------------
@@ -16,6 +16,9 @@ vi.mock('@/lib/modules/audit', () => ({
 }));
 
 // Keep fetch unmocked by default — individual tests override per-case.
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function makeCtx(prismaOverrides: Record<string, unknown> = {}) {
   const prisma: any = {
