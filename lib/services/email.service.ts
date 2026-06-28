@@ -4,10 +4,6 @@ import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '../constants';
 import { flags } from '@/lib/feature-flags';
 import { buildContentUnsubscribeUrl } from '@/lib/modules/subscriptions';
-import {
-  sendPasswordChangedEmail as sendTransactionalPasswordChangedEmail,
-  sendWelcomeEmail as sendTransactionalWelcomeEmail,
-} from '@/lib/modules/email/application/send-transactional-email.use-case';
 
 export type BroadcastRecipientInput = {
     userId?: string;
@@ -40,14 +36,6 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
  * Only sendBroadcast remains here for LegacyEmailServiceProvider.
  */
 export class EmailService {
-  static async sendWelcomeEmail(toEmail: string, firstName?: string | null, language: string = 'pl') {
-    return sendTransactionalWelcomeEmail(toEmail, firstName, language);
-  }
-
-  static async sendPasswordChangedEmail(toEmail: string) {
-    return sendTransactionalPasswordChangedEmail(toEmail);
-  }
-
   static async sendBroadcast(broadcastId: string) {
     const broadcast = await prisma.broadcastEmail.findUnique({
         where: { id: broadcastId },
