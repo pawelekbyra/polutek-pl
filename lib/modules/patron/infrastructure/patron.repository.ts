@@ -22,17 +22,10 @@ export class PatronRepository {
     });
   }
 
-  async findGrantByReferralId(referralId: string, db: ReadDb): Promise<PatronGrantDto | null> {
-    return await db.patronGrant.findUnique({
-      where: { referralId },
-    });
-  }
-
   async createGrant(data: {
     userId: string;
     source: PatronGrantSource;
     paymentId?: string;
-    referralId?: string;
     grantedById?: string;
     reason?: string;
   }, tx: WriteTx): Promise<PatronGrantDto> {
@@ -41,7 +34,6 @@ export class PatronRepository {
         userId: data.userId,
         source: data.source,
         paymentId: data.paymentId,
-        referralId: data.referralId,
         grantedById: data.grantedById,
         reason: data.reason,
       },

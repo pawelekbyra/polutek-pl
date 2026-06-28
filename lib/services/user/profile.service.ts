@@ -2,7 +2,6 @@ import { logger } from "@/lib/logger";
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
-import crypto from 'crypto';
 import { ClerkPublicMetadata, ClerkUnsafeMetadata } from '@/app/types/clerk';
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { UserAdminService } from './admin.service';
@@ -173,7 +172,6 @@ export class UserProfileService {
             imageUrl,
             role: targetRole,
             language: language || 'en',
-            referralCode: crypto.randomBytes(6).toString('hex'),
           }
         });
 
@@ -279,10 +277,6 @@ export class UserProfileService {
             await tx.creator.updateMany({ where: { id: sub.creatorId }, data: { subscribersCount: activeCount } });
           }
           await tx.emailPreference.deleteMany({ where: { userId: oldId } });
-
-          // Referrals
-          await tx.referral.updateMany({ where: { referrerId: oldId }, data: { referrerId: id } });
-          await tx.referral.updateMany({ where: { referredId: oldId }, data: { referredId: id } });
 
           logger.info(`[UserProfileService.syncUser] Merged records from ${oldId} to ${id}`, {
               movedComments: movedComments.count,

@@ -5,7 +5,7 @@ import { UserProfileService } from "@/lib/services/user/profile.service";
  * getOrCreateCurrentUser is a modular bridge use case.
  *
  * R5 legacy bridge: It currently delegates to UserProfileService.getOrCreateUser
- * to leverage its complex conflict resolution, referral linking, and account merging logic.
+ * to leverage its complex conflict resolution and account merging logic.
  *
  * Future work: Move the core synchronization and conflict resolution logic into
  * the Users module and retire this bridge.

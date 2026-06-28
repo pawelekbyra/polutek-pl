@@ -1,8 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { isConfiguredAdminUserId } from '../../admin-config';
 import { MAIN_CREATOR_NAME, ADMIN_EMAIL } from '../../constants';
-import crypto from 'crypto';
-
 export class UserAdminService {
   /**
    * Helper for seeder and local development only.
@@ -22,7 +20,6 @@ export class UserAdminService {
             name: MAIN_CREATOR_NAME,
             role: 'ADMIN',
             language: "pl",
-            referralCode: `admin-dev-${crypto.randomBytes(4).toString('hex')}`
         }
     });
   }

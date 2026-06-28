@@ -1,7 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { EmailService } from "@/lib/services/email.service"; // R5/R9 boundary: legacy email service
 import { AccountDeletionCleanupUseCase } from "./account-deletion-cleanup.use-case";
-import crypto from 'crypto';
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
 import { WebhookEventStatus } from "@prisma/client";
 
@@ -61,7 +60,6 @@ export class SyncUserFromWebhookUseCase {
             username: data.username,
             imageUrl: data.imageUrl,
             language: data.language || 'pl',
-            referralCode: crypto.randomBytes(6).toString('hex'),
             isPatron: false, // Default is false, regardless of Clerk metadata
             role: 'USER',
           },

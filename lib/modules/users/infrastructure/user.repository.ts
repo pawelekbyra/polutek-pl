@@ -41,45 +41,9 @@ export class UserRepository {
         username: true,
         imageUrl: true,
         language: true,
-        referralCode: true,
-        referralCount: true,
-        referralPoints: true,
-        referredById: true,
         isDeleted: true,
         createdAt: true,
       }
-    });
-  }
-
-  async findByReferralCodeOrId(codeOrId: string) {
-    return await this.user.findFirst({
-      where: {
-        OR: [
-          { referralCode: codeOrId },
-          { id: codeOrId },
-        ],
-      },
-    });
-  }
-
-  async incrementReferralStats(id: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
-    return await db.user.update({
-      where: { id },
-      data: {
-        referralCount: { increment: 1 },
-        referralPoints: { increment: 1 },
-      },
-    });
-  }
-
-  async setReferredBy(userId: string, referrerId: string, tx?: WriteTx) {
-    const db = tx || (this.db as any);
-    return await db.user.update({
-      where: { id: userId },
-      data: {
-        referredById: referrerId,
-      },
     });
   }
 
@@ -97,7 +61,6 @@ export class UserRepository {
     username?: string | null;
     imageUrl?: string | null;
     language?: string;
-    referralCode?: string;
   }) {
     return await this.user.upsert({
       where: { id: data.id },
@@ -115,7 +78,6 @@ export class UserRepository {
         username: data.username,
         imageUrl: data.imageUrl,
         language: data.language || 'en',
-        referralCode: data.referralCode,
       },
     });
   }

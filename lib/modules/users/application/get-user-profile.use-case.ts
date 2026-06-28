@@ -8,9 +8,6 @@ export interface UserProfileDTO {
   username: string | null;
   imageUrl: string | null;
   language: string;
-  referralCode: string | null;
-  referralCount: number;
-  referralPoints: number;
   isDeleted: boolean;
   createdAt: Date;
 }
@@ -34,9 +31,6 @@ export class GetUserProfileUseCase {
       username: user.username,
       imageUrl: user.imageUrl,
       language: user.language || 'pl',
-      referralCode: user.referralCode,
-      referralCount: user.referralCount || 0,
-      referralPoints: user.referralPoints || 0,
       isDeleted: user.isDeleted,
       createdAt: user.createdAt,
     };

@@ -3,8 +3,6 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { logger } from "@/lib/logger";
 import { isGeneratedClerkUsername } from '@/lib/utils/auth';
 import { isPrismaErrorCode } from '@/lib/utils/db';
-import crypto from 'crypto';
-
 function emailLocalPart(email: string | null) {
   const localPart = email?.split('@')[0]?.trim();
   return localPart || null;
@@ -48,7 +46,6 @@ export class UserLanguageService {
           username,
           imageUrl,
           language,
-          referralCode: crypto.randomBytes(6).toString('hex'),
         }
       });
 

@@ -40,7 +40,6 @@ type GrantRecord = {
   userId: string;
   source: PatronGrantSource;
   paymentId: string | null;
-  referralId: string | null;
   grantedById: string | null;
   reason: string | null;
   createdAt: Date;
@@ -113,7 +112,6 @@ function createHarness() {
     patronGrant: {
       findUnique: vi.fn(async ({ where }) => {
         if (where.paymentId !== undefined) return state.grants.find((grant) => grant.paymentId === where.paymentId) ?? null;
-        if (where.referralId !== undefined) return state.grants.find((grant) => grant.referralId === where.referralId) ?? null;
         return null;
       }),
       findFirst: vi.fn(async ({ where, orderBy }) => {
@@ -130,7 +128,6 @@ function createHarness() {
         const grant = {
           ...data,
           id: `grant_${state.grants.length + 1}`,
-          referralId: data.referralId ?? null,
           grantedById: data.grantedById ?? null,
           reason: data.reason ?? null,
           createdAt: new Date(`2026-06-12T00:00:0${state.grants.length}Z`),
@@ -218,7 +215,6 @@ function createHarness() {
       userId,
       source: PatronGrantSource.STRIPE_TIP,
       paymentId,
-      referralId: null,
       grantedById: null,
       reason,
       createdAt: new Date('2026-06-01T00:00:00Z'),

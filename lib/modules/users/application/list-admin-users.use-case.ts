@@ -31,7 +31,6 @@ const adminUserListInclude = Prisma.validator<Prisma.UserInclude>()({
   _count: {
     select: {
       payments: true,
-      referrals: true,
       subscriptions: true,
     },
   },
@@ -86,8 +85,6 @@ export interface AdminUserListItemDto {
   hasSubscriptions: boolean;
   paymentCount: number;
   lastPaymentAt: Date | null;
-  referralPoints: number;
-  referralCount: number;
   paymentTotals: Array<{
     currency: string;
     totalPaidMinor: number;
@@ -207,8 +204,6 @@ export async function listAdminUsers(
             hasSubscriptions: u._count.subscriptions > 0,
             paymentCount: u._count.payments,
             lastPaymentAt: u.payments[0]?.createdAt || null,
-            referralPoints: u.referralPoints,
-            referralCount: u._count.referrals,
             paymentTotals: dtoTotals,
             normalizedTotal: normalizePaymentTotals(domainTotals)
         };

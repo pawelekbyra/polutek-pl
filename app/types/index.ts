@@ -9,9 +9,6 @@ export interface UserProfile {
   role: SystemRole;
   isPatron: boolean;
   totalPaid: number;
-  referralCount: number;
-  referralPoints: number;
-  referralCode?: string | null;
   language: string;
 }
 

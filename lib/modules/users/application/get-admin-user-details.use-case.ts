@@ -24,11 +24,8 @@ export interface AdminUserDetailsDto {
   updatedAt: Date;
   imageUrl: string | null;
   stripeCustomerId: string | null;
-  referralCode: string | null;
-  // Core lookup DTO includes relations count
   _count: {
     comments: number;
-    referrals: number;
     videoLikes: number;
     videoDislikes: number;
   };
@@ -54,7 +51,6 @@ export async function getAdminUserDetails(
       _count: {
           select: {
               comments: true,
-              referrals: true,
               videoLikes: true,
               videoDislikes: true
           }
@@ -98,7 +94,6 @@ export async function getAdminUserDetails(
       updatedAt: user.updatedAt,
       imageUrl: user.imageUrl,
       stripeCustomerId: user.stripeCustomerId,
-      referralCode: user.referralCode,
       _count: user._count,
       paymentTotals: user.paymentTotals,
       patronGrants,

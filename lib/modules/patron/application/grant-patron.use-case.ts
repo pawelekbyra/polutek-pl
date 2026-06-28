@@ -11,7 +11,6 @@ import { WriteTx } from "@/lib/modules/shared/db";
 
 const SOURCE_MAP: Record<string, PatronGrantSource> = {
   stripe_tip: PatronGrantSource.STRIPE_TIP,
-  referral: PatronGrantSource.REFERRAL,
   admin: PatronGrantSource.ADMIN,
   migration: PatronGrantSource.MIGRATION,
 };
@@ -65,24 +64,6 @@ export async function grantPatron(
         });
       }
     }
-    if (input.referralId) {
-      const existingGrant = await repo.findGrantByReferralId(input.referralId, currentTx);
-      if (existingGrant) {
-        const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
-        if (!user) return failure(new UserNotFoundError(input.userId));
-
-        const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
-
-        return success({
-          userId: user.id,
-          isPatron: activeGrants.length > 0,
-          patronSince: activeGrants[0]?.createdAt ?? null,
-          patronSource: activeGrants[0]?.source ?? null,
-          activeGrants,
-          normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-        });
-      }
-    }
     const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
@@ -101,7 +82,6 @@ export async function grantPatron(
       userId: input.userId,
       source,
       paymentId: input.paymentId,
-      referralId: input.referralId,
       grantedById: input.grantedByUserId,
       reason: input.note,
     }, currentTx);
@@ -124,11 +104,10 @@ export async function grantPatron(
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           const target = (error.meta?.target as string[]) || [];
           const paymentIdMatch = input.paymentId && target.includes('paymentId');
-          const referralIdMatch = input.referralId && target.includes('referralId');
 
-          if (paymentIdMatch || referralIdMatch) {
+          if (paymentIdMatch) {
               const db = tx || ctx.db.read;
-              const existingGrant = await repo.findGrantByPaymentId(input.paymentId!, db) || await repo.findGrantByReferralId(input.referralId!, db);
+              const existingGrant = await repo.findGrantByPaymentId(input.paymentId!, db);
               if (existingGrant) {
                   const user = await repo.findUserWithPaymentTotals(input.userId, db);
                   if (!user) return failure(new UserNotFoundError(input.userId));

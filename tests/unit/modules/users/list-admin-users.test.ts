@@ -72,14 +72,12 @@ describe('listAdminUsers API contract', () => {
         language: 'pl',
         createdAt: new Date('2022-01-01'),
         updatedAt: new Date('2022-01-02'),
-        referralPoints: 10,
         paymentTotals: [
           { currency: 'PLN', amountMinor: 10000 }, // 100 PLN
           { currency: 'USD', amountMinor: 5000 },  // 50 USD
         ],
         _count: {
           payments: 5,
-          referrals: 2,
           subscriptions: 1,
         },
         payments: [{ createdAt: new Date('2023-06-01') }],
@@ -95,7 +93,6 @@ describe('listAdminUsers API contract', () => {
       email: 'u1@example.com',
       normalizedTotal: expect.any(Number),
       paymentCount: 5,
-      referralCount: 2,
       hasSubscriptions: true,
       activeGrantSince: new Date('2023-01-01'),
       activeGrantSource: 'STRIPE_TIP',
@@ -124,9 +121,8 @@ describe('listAdminUsers API contract', () => {
       isDeleted: false,
       language: 'pl',
       updatedAt: new Date('2024-04-01'),
-      referralPoints: 0,
       paymentTotals: [],
-      _count: { payments: 0, referrals: 0, subscriptions: 0 },
+      _count: { payments: 0, subscriptions: 0 },
       payments: [],
     };
 
@@ -233,9 +229,8 @@ describe('listAdminUsers API contract', () => {
         language: 'pl',
         createdAt: new Date('2022-01-01'),
         updatedAt: new Date('2022-01-02'),
-        referralPoints: 0,
         paymentTotals: [],
-        _count: { payments: 0, referrals: 0, subscriptions: 0 },
+        _count: { payments: 0, subscriptions: 0 },
         payments: [],
         patronGrants: [{ id: 'pg-active', source: 'ADMIN', createdAt: new Date('2024-01-01'), revokedAt: null }],
       },

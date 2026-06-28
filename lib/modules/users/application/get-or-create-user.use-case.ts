@@ -1,7 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
-import crypto from 'crypto';
-
 export interface ClerkUserSyncData {
   id: string;
   email: string;
@@ -38,7 +36,6 @@ export class GetOrCreateUserUseCase {
         username: data.username,
         imageUrl: data.imageUrl,
         language: data.language || 'pl',
-        referralCode: crypto.randomBytes(6).toString('hex'),
         // Security: Ensure defaults are safe
         isPatron: false,
         role: 'USER',
