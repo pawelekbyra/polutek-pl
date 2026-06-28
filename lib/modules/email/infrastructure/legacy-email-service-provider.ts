@@ -22,6 +22,22 @@ export class LegacyEmailServiceProvider implements EmailProvider {
     return this.resendClient;
   }
 
+  async sendTransactionalEmail(input: { to: string; subject: string; html: string }) {
+    const resend = this.getResendClient();
+    const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+
+    if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
+      logger.error('[email] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
+    }
+
+    return resend.emails.send({
+      from,
+      to: [input.to],
+      subject: input.subject,
+      html: input.html,
+    });
+  }
+
   async sendBroadcast(input: {
     subject: string;
     body: string;
