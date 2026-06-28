@@ -68,7 +68,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.x | `INCOMPLETE-*` items from roadmap | `TODO_AFTER_BUGS` | Pozostałe: INCOMPLETE-003, 005, 006 |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` (partial) — dead service files removal | `PARTIAL` | PR claude/cleanup-audit-service: DTOs przeniesione: `payments-admin.dto` → modules/payments, `videos-admin.dto` → modules/video, `comment.dto` → modules/comments; audit.service callers migrated; pozostałe: `playback.dto.ts` (brak modułu), `user-access.service.ts`, `profile.service.ts`, `email.service.ts` |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved to `lib/modules/users` and callers updated. Active map reconciled in `docs/tickets/active/CLEANUP-001-legacy-services.md`. Remaining: remove `user-access.service.ts` bridge, maybe delete stale `audit.service.ts`, migrate `email.service.ts`, migrate `user/profile.service.ts`. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Roadmap progress tracker
@@ -101,7 +101,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ### Cleanup from roadmap
 
-- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL` dead files removed, DTOs/utility/refactor remain
+- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 completed `syncClerkAccess`; next slice is legacy bridge/deletion cleanup before email/profile services
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
@@ -120,6 +120,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 
 ## Recently completed / HISTORICAL
 
+- `#1224` — CLEANUP-001 partial: `syncClerkAccess` migrated to `lib/modules/users`; payment/admin/script callers updated; CI green after follow-up test mock fixes.
 - `REFACTORING-ROADMAP-2026-06-27` — historical technical audit baseline; no longer the only active product roadmap.
 - `#1217` — duplicate scope merged into #1204 and closed.
 - `LEGACY-ACCESS-POLICY-RETIREMENT-001` — DONE by PR #1075; legacy `AccessPolicy` and `comment-access` runtime surface removed, with architecture-boundary and Vitest guardrails added.

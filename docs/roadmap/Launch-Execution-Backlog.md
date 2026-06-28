@@ -4,6 +4,7 @@ Status: ACTIVE
 Purpose: non-executable launch backlog summary
 Current executable source: docs/tickets/ready/README.md
 Launch status: NO_GO
+Last reconciled: 2026-06-28 after PR #1224
 
 This document is not an executable queue. Only `docs/tickets/ready/README.md` may identify the current executable ticket.
 
@@ -18,6 +19,7 @@ This document is not an executable queue. Only `docs/tickets/ready/README.md` ma
 | 5 | CI/test/control-plane signal | `CI-SIGNAL-RECONCILIATION-002 / DONE` | Architecture audit follow-up: real test-suite signal, strict-escapes baseline drift, hotspots, masterplan risk accuracy. |
 | 6 | Admin auth/channel diagnostics | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001 / DONE` | Completed by PR #1008. No active large code ticket remains in the canonical ready queue. |
 | 7 | AccessPolicy decommissioning | `LEGACY-ACCESS-POLICY-RETIREMENT-001 / DONE` | Completed by PR #1075: removed legacy `AccessPolicy` / `comment-access` runtime surface and added dual-layer guardrails. Broader patron-cache cleanup was completed and closed in issue #1036. |
+| 8 | Legacy service cleanup | `CLEANUP-001 / PARTIAL / NEXT_SLICE_READY` | PR #1224 completed `syncClerkAccess` migration into `lib/modules/users`. Remaining work is small-slice cleanup: legacy payment bridge, `email.service.ts`, `user/profile.service.ts`, and possible stale `audit.service.ts` deletion. Canonical details live in `docs/tickets/active/CLEANUP-001-legacy-services.md`. |
 
 ## Architecture audit findings routed
 
@@ -31,10 +33,18 @@ Important findings from `docs/reports/reconciliation/2026-06-20-architecture-lau
 | masterplan CI-risk accuracy | `CI-SIGNAL-RECONCILIATION-002` |
 | payments metadata-user source-of-truth | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998 |
 | payments request-id idempotency | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998 |
-| dead legacy payments services | later cleanup if still unused; not an active ticket in the canonical ready queue |
+| dead legacy payments services | `CLEANUP-001` — partially complete; continue only via the canonical ready queue and active cleanup ticket |
 | admin auth wrapper consistency | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | playback `getGatedMedia` footgun | already playback-domain evidence; only revisit if PR #994 did not resolve it |
 | deprecated AccessPolicy runtime surface | `LEGACY-ACCESS-POLICY-RETIREMENT-001` — resolved by PR #1075; broader patron-cache/UI metadata cleanup was completed and closed in issue #1036 |
+
+## Resolved or superseded launch-roadmap items
+
+These items were previously listed as remaining work but are no longer open launch-code prompts:
+
+- Bounce/complaint suppression — DONE in current code path and tracked as completed in `docs/tickets/ready/README.md`.
+- Referral notifications — SUPERSEDED because the referral system was removed; do not create new referral-notification work unless the owner reintroduces referrals.
+- `syncClerkAccess` service migration — DONE by PR #1224; remaining cleanup is only the legacy bridge/deletion work under `CLEANUP-001`.
 
 ## Historical or superseded runtime tickets
 
@@ -46,4 +56,4 @@ Vercel, Cloudflare and Stripe production smoke/evidence tickets remain operator 
 
 ## Continuing launch backlog
 
-Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`. Remaining non-code and evidence work includes Email consent boundary, Signed unsubscribe, Bounce/complaint suppression, System email events, Language persistence, Referral notifications, Runtime/provider privacy inventory, Legal copy PL/EN, Vercel production evidence, Stripe production evidence, Cloudflare production evidence, Backup, restore and alerts, X6.2, X6.3, X6.4, X6.5, X6.6, X6.7, X6.8, X6 certification, X7 Launch Evidence Pack, X7 certification, and Final owner launch decision. Public launch remains `NO_GO`.
+Legal/privacy/cookies/support copy remains `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING`. Remaining launch/evidence work includes Email consent boundary evidence, Signed unsubscribe evidence, System email events evidence, Language persistence evidence, Runtime/provider privacy inventory, Legal copy PL/EN, Vercel production evidence, Stripe production evidence, Cloudflare production evidence, Backup, restore and alerts, X6.2, X6.3, X6.4, X6.5, X6.6, X6.7, X6.8, X6 certification, X7 Launch Evidence Pack, X7 certification, and Final owner launch decision. Public launch remains `NO_GO`.
