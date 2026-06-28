@@ -58,7 +58,7 @@ async function getResendClient() {
     const { Resend: Client } = await import("resend");
     resendClient = new Client(apiKey) as unknown as ResendClient;
   }
-  return resendClient;
+  return resendClient!;
 }
 
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {
