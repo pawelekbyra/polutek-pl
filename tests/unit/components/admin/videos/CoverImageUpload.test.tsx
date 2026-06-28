@@ -18,12 +18,12 @@ vi.mock('next/image', () => ({
 
 describe('CoverImageUpload', () => {
   it('renders upload button initially when no url provided', () => {
-    render(<CoverImageUpload onUploadSuccess={() => {}} />);
+    render(<CoverImageUpload videoId="video_test_123" onUploadSuccess={() => {}} />);
     expect(screen.getByText(/Wybierz lub upuść obraz/)).toBeDefined();
   });
 
   it('renders preview when initialUrl is provided', () => {
-    render(<CoverImageUpload initialUrl="https://example.com/image.jpg" onUploadSuccess={() => {}} />);
+    render(<CoverImageUpload videoId="video_test_123" initialUrl="https://example.com/image.jpg" onUploadSuccess={() => {}} />);
     const img = screen.getByRole('img');
     expect(img).toBeDefined();
     expect(img.getAttribute('src')).toContain('example.com');
@@ -37,7 +37,7 @@ describe('CoverImageUpload', () => {
       }
     });
 
-    render(<CoverImageUpload onUploadSuccess={() => {}} />);
+    render(<CoverImageUpload videoId="video_test_123" onUploadSuccess={() => {}} />);
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['dummy content'], 'test.png', { type: 'image/png' });

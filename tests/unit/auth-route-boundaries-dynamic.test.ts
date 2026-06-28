@@ -98,7 +98,6 @@ describe("dynamic auth route boundaries", () => {
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
@@ -114,7 +113,6 @@ describe("dynamic auth route boundaries", () => {
     expect(actor).toEqual({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     expect(checkVideoAccess).toHaveBeenCalledWith(
       { videoIdOrSlug: "draft_video" },
@@ -126,7 +124,6 @@ describe("dynamic auth route boundaries", () => {
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: "user",
       userId: "revoked_admin",
-      isPatron: false,
     });
     vi.mocked(updateComment).mockResolvedValue({
       ok: false,
