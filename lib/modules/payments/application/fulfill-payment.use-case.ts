@@ -11,7 +11,7 @@ import { grantPatron } from "@/lib/modules/patron";
 import { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
 import { SupportedCurrency } from "@/lib/constants";
 import { PaymentPolicy } from "../domain/payment.policy";
-import { EmailService } from "@/lib/services/email.service";
+import { sendBecomePatronEmail, sendDonationThankYouEmail } from "@/lib/modules/email";
 import { syncClerkAccess } from "@/lib/modules/users";
 import { recordAuditEvent } from "@/lib/modules/audit";
 
@@ -155,9 +155,9 @@ export async function fulfillPayment(
 
       try {
         if (shouldSendPatronEmail) {
-          await EmailService.sendBecomePatronEmail(email, amount, currency, language);
+          await sendBecomePatronEmail(email, amount, currency, language);
         } else {
-          await EmailService.sendDonationThankYouEmail(email, amount, currency, language);
+          await sendDonationThankYouEmail(email, amount, currency, language);
         }
       } catch (error) {
         logger.error(`[EMAIL_FAILED] Payment fulfillment email failed for ${userId}`, error);

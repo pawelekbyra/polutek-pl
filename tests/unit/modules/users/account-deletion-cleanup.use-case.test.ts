@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { AccountDeletionCleanupUseCase } from '@/lib/modules/users/application/account-deletion-cleanup.use-case';
-import { EmailService } from '@/lib/services/email.service';
+import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: { sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined) },
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('AccountDeletionCleanupUseCase', () => {
@@ -52,7 +52,7 @@ describe('AccountDeletionCleanupUseCase', () => {
     }));
     expect(prisma.user.update.mock.calls[0][0].data.email).toMatch(/^deleted_.*@deleted\.com$/);
     expect(prisma.auditLog.create).toHaveBeenCalled();
-    expect(EmailService.sendAccountDeletedEmail).toHaveBeenCalledWith('user@example.com');
+    expect(sendAccountDeletedEmail).toHaveBeenCalledWith('user@example.com');
   });
 
   it('treats missing local user as successful idempotent cleanup', async () => {
@@ -70,6 +70,6 @@ describe('AccountDeletionCleanupUseCase', () => {
     await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'CLERK_WEBHOOK' });
 
     expect(prisma.user.update.mock.calls[0][0].data.email).toBe('deleted_abc@deleted.com');
-    expect(EmailService.sendAccountDeletedEmail).not.toHaveBeenCalled();
+    expect(sendAccountDeletedEmail).not.toHaveBeenCalled();
   });
 });

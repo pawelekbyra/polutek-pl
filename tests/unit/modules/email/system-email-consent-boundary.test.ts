@@ -39,7 +39,7 @@ describe('system email consent boundary', () => {
   });
 
   it('sendWelcomeEmail sends email without Resend Contacts or local consent mutation', async () => {
-    const { sendWelcomeEmail } = await import('@/lib/services/email.service');
+    const { sendWelcomeEmail } = await import('@/lib/modules/email');
 
     await sendWelcomeEmail('user@example.com', 'User');
 
@@ -52,9 +52,9 @@ describe('system email consent boundary', () => {
   });
 
   it('tip thank-you email sends without Resend Contacts', async () => {
-    const { EmailService } = await import('@/lib/services/email.service');
+    const { sendDonationThankYouEmail } = await import('@/lib/modules/email');
 
-    await EmailService.sendDonationThankYouEmail('tipper@example.com', 10, 'PLN');
+    await sendDonationThankYouEmail('tipper@example.com', 10, 'PLN');
 
     expect(emailsSend).toHaveBeenCalledTimes(1);
     expect(contactsCreate).not.toHaveBeenCalled();
@@ -63,9 +63,9 @@ describe('system email consent boundary', () => {
   });
 
   it('patron notification email sends without Resend Contacts', async () => {
-    const { EmailService } = await import('@/lib/services/email.service');
+    const { sendBecomePatronEmail } = await import('@/lib/modules/email');
 
-    await EmailService.sendBecomePatronEmail('patron@example.com', 10, 'PLN');
+    await sendBecomePatronEmail('patron@example.com', 10, 'PLN');
 
     expect(emailsSend).toHaveBeenCalledTimes(1);
     expect(contactsCreate).not.toHaveBeenCalled();
@@ -74,9 +74,9 @@ describe('system email consent boundary', () => {
   });
 
   it('account deleted email sends without Resend Contacts', async () => {
-    const { EmailService } = await import('@/lib/services/email.service');
+    const { sendAccountDeletedEmail } = await import('@/lib/modules/email');
 
-    await EmailService.sendAccountDeletedEmail('deleted@example.com');
+    await sendAccountDeletedEmail('deleted@example.com');
 
     expect(emailsSend).toHaveBeenCalledTimes(1);
     expect(contactsCreate).not.toHaveBeenCalled();
@@ -85,9 +85,9 @@ describe('system email consent boundary', () => {
   });
 
   it('security email sends without Resend Contacts', async () => {
-    const { EmailService } = await import('@/lib/services/email.service');
+    const { sendPasswordChangedEmail } = await import('@/lib/modules/email');
 
-    await EmailService.sendPasswordChangedEmail('secure@example.com');
+    await sendPasswordChangedEmail('secure@example.com');
 
     expect(emailsSend).toHaveBeenCalledTimes(1);
     expect(contactsCreate).not.toHaveBeenCalled();

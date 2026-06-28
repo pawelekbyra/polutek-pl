@@ -3,12 +3,10 @@ import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
-    sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
-    sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
-  }
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+  sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
+  sendPasswordChangedEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Account Deletion Integrity', () => {

@@ -6,7 +6,7 @@ import { PaymentStatus, PatronGrantSource } from '@prisma/client';
 // Mock dependencies
 vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
-vi.mock('@/lib/services/email.service');
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case');
 vi.mock('@/lib/modules/users/application/sync-clerk-access');
 vi.mock('@/lib/modules/audit');
 
