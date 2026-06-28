@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { isConfiguredAdminUserId } from '../../admin-config';
 import { MAIN_CREATOR_NAME, ADMIN_EMAIL } from '../../constants';
