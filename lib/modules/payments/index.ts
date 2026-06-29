@@ -10,6 +10,7 @@ export * from "./application/admin-refund.use-case";
 export * from "./application/admin-dispute-sync.use-case";
 export * from "./application/get-user-payments.use-case";
 export * from "./application/get-payment-status.use-case";
+export * from "./application/stripe-reconciliation.use-case";
 export * from "./domain/payment.dto";
 export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";

@@ -28,12 +28,6 @@ vi.mock('@/lib/modules/users', () => ({
   syncClerkAccess: mockSyncClerkAccess,
 }));
 
-vi.mock('@/lib/services/email.service', () => ({
-  EmailService: {
-    sendBecomePatronEmail: vi.fn().mockResolvedValue(undefined),
-    sendDonationThankYouEmail: vi.fn().mockResolvedValue(undefined),
-  },
-}));
 
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue(undefined),

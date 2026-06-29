@@ -67,10 +67,10 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3 | `INCOMPLETE-002` — remove referral system | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: schema, model, user fields, patron referralId, use cases, services, tests |
 | 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/dispute-sync` + `adminDisputeSync` use case + UI button (DISPUTED/CHARGEBACK_LOST rows) |
 | 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/refund` + `adminRefund` use case + refund dialog UI |
-| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-28 audit: no Vercel cron config or Stripe reconciliation job was found. |
+| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `DONE` | branch `claude/roadmap-stripe-cleanup-2dm6tc`: `stripe-reconciliation.use-case.ts` + `app/api/cron/stripe-reconciliation/route.ts` + `vercel.json` cron `0 * * * *`. Requires `CRON_SECRET` env var in Vercel. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved. branch `claude/roadmap-stripe-cleanup-2dm6tc`: `user-access.service.ts` deleted, `recalculateUserPatronStatus` inlined to `payment.service.ts`, `audit.service.ts` deleted (no callers). Remaining: migrate `email.service.ts`, migrate `user/profile.service.ts`. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved. branch `claude/roadmap-stripe-cleanup-2dm6tc`: `user-access.service.ts` deleted; `email.service.ts` deleted — `sendBroadcast` moved to `LegacyEmailServiceProvider`; `audit.service.ts` deleted. Remaining: migrate `user/profile.service.ts`. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Current verified remainder — 2026-06-28
@@ -108,7 +108,7 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 - [x] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `DONE`, branch `claude/work-options-discussion-gw0nn5`
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
 - [x] `INCOMPLETE-005` — admin refund endpoint/UI — `DONE`, branch `claude/work-options-discussion-gw0nn5`
-- [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, 2026-06-28 audit found no cron/reconciliation job
+- [x] `INCOMPLETE-006` — Stripe reconciliation job — `DONE`, branch `claude/roadmap-stripe-cleanup-2dm6tc`
 - [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 

@@ -85,7 +85,7 @@ Pliki już usunięte z `lib/services/`:
 
 1. ✅ DTOs przeniesione
 2. ✅ **user-access.service.ts** — usunięty; `recalculateUserPatronStatus` wyinlinowany do `payment.service.ts` jako bezpośrednie wywołanie `recalculatePatronStatus`; `audit.service.ts` usunięty (brak callerów); testy zaktualizowane
-3. ⬜ email.service.ts — średni, metody transakcyjne wymagają nowych use-casów
+3. ✅ email.service.ts — usunięty; `sendBroadcast` przeniesiony do `LegacyEmailServiceProvider`; testy zaktualizowane
 4. ⬜ profile.service.ts — największy, Clerk claims, zacząć od testów
 
 ## Zasady dla agentów pracujących nad tym
