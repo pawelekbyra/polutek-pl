@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   '/channel/(.*)',
   '/katalog',
   '/katalog2',
+  '/katalog3',
   '/eksperyment1',
   '/eksperyment2',
   '/eksperyment3',
