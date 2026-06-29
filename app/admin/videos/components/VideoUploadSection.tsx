@@ -19,6 +19,27 @@ interface VideoUploadSectionProps {
   preferredProvider?: string;
 }
 
+type R2Diagnostics = {
+  configured: boolean;
+  missing: string[];
+  bucketWarning: string | null;
+  variables: Array<{
+    name: string;
+    present: boolean;
+    preview: string | null;
+    expected: string;
+    howToGet: string;
+  }>;
+  connection: {
+    checked: boolean;
+    ok: boolean;
+    message: string;
+    errorName?: string;
+    httpStatusCode?: number;
+    hint?: string;
+  };
+};
+
 export function VideoUploadSection({
   videoId,
   onUploadComplete,
@@ -36,10 +57,30 @@ export function VideoUploadSection({
   const [status, setStatus] = useState<"IDLE" | "PROVISIONING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "CANCELLED" | "PROCESSING_TIMEOUT">("IDLE");
   const [error, setError] = useState<string | null>(null);
   const [asset, setAsset] = useState<any>(initialAsset);
+  const [r2Diagnostics, setR2Diagnostics] = useState<R2Diagnostics | null>(null);
+  const [r2DiagnosticsLoading, setR2DiagnosticsLoading] = useState(false);
   const toast = useToast();
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
   const autoStartedRef = useRef(false);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
+
+  const loadR2Diagnostics = useCallback(async () => {
+    setR2DiagnosticsLoading(true);
+    try {
+      const res = await fetch("/api/admin/videos/r2-diagnostics", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json() as R2Diagnostics;
+      setR2Diagnostics(data);
+    } catch (err) {
+      console.error("R2 diagnostics error", err);
+    } finally {
+      setR2DiagnosticsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadR2Diagnostics();
+  }, [loadR2Diagnostics]);
 
   const stopPolling = useCallback(() => {
     if (pollingInterval.current) {
@@ -123,7 +164,11 @@ export function VideoUploadSection({
       });
       if (!provisionRes.ok) {
         const body = await provisionRes.json().catch((): unknown => null);
-        throw new Error((body != null && typeof body === "object" && "error" in body && typeof (body as { error: unknown }).error === "string" ? (body as { error: string }).error : null) ?? "Nie udało się przygotować uploadu.");
+        const message = (body != null && typeof body === "object" && "error" in body && typeof (body as { error: unknown }).error === "string" ? (body as { error: string }).error : null) ?? "Nie udało się przygotować uploadu.";
+        if (message.includes("R2") || message.includes("r2")) {
+          loadR2Diagnostics();
+        }
+        throw new Error(message);
       }
       const provision = await provisionRes.json() as { uploadUrl: string; originalId: string };
 
@@ -175,7 +220,7 @@ export function VideoUploadSection({
       setStatus("FAILED");
       toast(err.message, "error");
     }
-  }, [file, videoId, preferredProvider, onUploadReady, startPolling, toast]);
+  }, [file, videoId, preferredProvider, onUploadReady, loadR2Diagnostics, startPolling, toast]);
 
   useEffect(() => {
     if (!autoStart || autoStartedRef.current || !file || status !== "IDLE") return;
@@ -205,6 +250,7 @@ export function VideoUploadSection({
   };
 
   const providerLabel = preferredProvider === "MUX" ? "Mux" : "Cloudflare Stream";
+  const r2Ready = Boolean(r2Diagnostics?.configured && r2Diagnostics.connection.ok);
 
   return (
     <Card className="shadow-sm">
@@ -218,6 +264,48 @@ export function VideoUploadSection({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className={r2Ready ? "rounded-xl border border-green-100 bg-green-50 p-4 text-green-900" : "rounded-xl border border-amber-100 bg-amber-50 p-4 text-amber-950"}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-bold flex items-center gap-2">
+                {r2Ready ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                Diagnostyka R2 originals
+              </p>
+              <p className="text-xs opacity-80">
+                {r2DiagnosticsLoading
+                  ? "Sprawdzam konfigurację R2..."
+                  : r2Diagnostics?.connection.message ?? "Brak wyniku diagnostyki R2."}
+              </p>
+              {r2Diagnostics?.bucketWarning && <p className="text-xs font-medium">Bucket: {r2Diagnostics.bucketWarning}</p>}
+              {r2Diagnostics?.connection.hint && <p className="text-xs font-medium">Co zrobić: {r2Diagnostics.connection.hint}</p>}
+              {r2Diagnostics?.connection.checked && !r2Diagnostics.connection.ok && (
+                <p className="text-[11px] opacity-70">
+                  Szczegóły testu: {r2Diagnostics.connection.errorName ?? "unknown"}
+                  {r2Diagnostics.connection.httpStatusCode ? ` / HTTP ${r2Diagnostics.connection.httpStatusCode}` : ""}
+                </p>
+              )}
+            </div>
+            <Button variant="outline" size="sm" className="h-7 text-xs bg-white" onClick={loadR2Diagnostics} disabled={r2DiagnosticsLoading}>
+              {r2DiagnosticsLoading ? "Sprawdzam..." : "Odśwież"}
+            </Button>
+          </div>
+          {r2Diagnostics?.variables && (
+            <div className="mt-3 grid gap-2 text-xs">
+              {r2Diagnostics.variables.map((variable) => (
+                <div key={variable.name} className="rounded-lg bg-white/70 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <code className="font-mono text-[11px] font-bold">{variable.name}</code>
+                    <Badge variant={variable.present ? "outline" : "destructive"}>{variable.present ? "ustawiona" : "brak"}</Badge>
+                  </div>
+                  <p className="mt-1 opacity-80">Oczekiwane: {variable.expected}</p>
+                  {variable.preview && <p className="mt-1 opacity-80">Wartość: {variable.preview}</p>}
+                  {!variable.present && <p className="mt-1 font-medium">Jak uzupełnić: {variable.howToGet}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {(status === "IDLE" || status === "CANCELLED" || status === "FAILED") ? (
           <div className="space-y-4">
             <div className="border-2 border-dashed rounded-xl p-8 text-center space-y-4 bg-muted/20">
