@@ -37,13 +37,12 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           --green: rgba(191, 220, 190, 0.58);
           --blue: #1f5bd8;
           min-height: 100vh;
-          padding-inline: clamp(12px, 3vw, 44px);
           color: var(--ink);
           background:
             linear-gradient(90deg, var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
             linear-gradient(var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
             var(--paper);
-          background-attachment: fixed;
+          background-attachment: scroll;
           font-family: "Comic Sans MS", "Comic Sans", "Segoe Print", "Bradley Hand", "Chalkboard SE", cursive;
         }
 
@@ -59,7 +58,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
 
         .exp4-drawing {
           position: relative;
-          width: min(100%, 1500px);
+          width: 100%;
           min-height: 100vh;
           margin-inline: auto;
           overflow: visible;
@@ -70,7 +69,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
           background: transparent !important;
           background-color: transparent !important;
-          padding-top: 78px;
+          padding-top: 0;
         }
 
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden > .fixed.z-0,
@@ -78,30 +77,41 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           display: none !important;
         }
 
-        .exp4-drawing > div:first-child,
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
-          position: fixed !important;
+          position: sticky !important;
           top: 0 !important;
-          left: clamp(12px, 3vw, 44px) !important;
-          right: clamp(12px, 3vw, 44px) !important;
+          left: auto !important;
+          right: auto !important;
           z-index: 1000 !important;
-          width: auto !important;
-          max-width: 1500px;
-          margin-inline: auto;
+          width: 100% !important;
+          max-width: none !important;
+          min-height: 78px !important;
+          margin-inline: 0 !important;
+          padding: 12px 16px 8px !important;
           overflow: visible !important;
-          background: transparent !important;
+          background: rgba(248, 243, 231, 0.92) !important;
           border-bottom: 0 !important;
           box-shadow: none !important;
-          backdrop-filter: none !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
         }
 
-        .exp4-drawing > div:first-child::after,
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav > div:first-child {
+          min-height: 46px !important;
+          height: 46px !important;
+          width: 100% !important;
+        }
+
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav > div {
+          width: 100% !important;
+        }
+
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav::after {
           content: "";
           position: absolute;
-          left: 18px;
-          right: 18px;
-          bottom: -3px;
+          left: 16px;
+          right: 16px;
+          bottom: 5px;
           height: 7px;
           background: var(--ink);
           opacity: .82;
@@ -328,18 +338,9 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         }
 
         @media (max-width: 768px) {
-          .experiment4-frame-skin {
-            padding-inline: 0;
-          }
-
-          .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
-            padding-top: 72px;
-          }
-
-          .exp4-drawing > div:first-child,
           .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
-            left: 0 !important;
-            right: 0 !important;
+            min-height: 72px !important;
+            padding-inline: 12px !important;
           }
 
           .exp4-drawing aside {
