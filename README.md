@@ -23,7 +23,8 @@ Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT
 W repo mogą istnieć publiczne, tymczasowe adresy typu katalog/eksperyment, obecnie m.in.:
 
 - `/katalog`, `/katalog2`, `/katalog3` — katalogi/prototypy elementów stylu, narzędzi i wariantów UI,
-- `/eksperyment1`–`/eksperyment15` oraz `/eksperyment20`–`/eksperyment22` — kompletne warianty strony głównej służące do porównywania kierunków wizualnych.
+- `/katalogeksperymentow` — indeks linków do wszystkich istniejących eksperymentów,
+- `/eksperyment1`–`/eksperyment18` — kompletne warianty strony głównej służące do porównywania kierunków wizualnych.
 
 Te adresy nie są docelową architekturą produktu ani osobnymi funkcjami dla użytkownika końcowego. Służą wyłącznie do tymczasowego szukania właściwego kierunku wizualnego: papier, cienkopis, ręczna kreska, obramowania, SVG, roughjs/perfect-freehand/rough-notation/wired-elements oraz spokojniejsze warianty bloków i ramek.
 
