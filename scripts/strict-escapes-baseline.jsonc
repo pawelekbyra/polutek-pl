@@ -947,6 +947,48 @@
       "label": "explicit any annotation",
       "text": "\"wired-link\": any;",
       "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 9,
+      "label": "explicit any annotation",
+      "text": "\"wired-button\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 10,
+      "label": "explicit any annotation",
+      "text": "\"wired-card\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 11,
+      "label": "explicit any annotation",
+      "text": "\"wired-divider\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 12,
+      "label": "explicit any annotation",
+      "text": "\"wired-progress\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 13,
+      "label": "explicit any annotation",
+      "text": "\"wired-slider\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/eksperyment11/ExperimentElevenSkin.tsx",
+      "line": 14,
+      "label": "explicit any annotation",
+      "text": "\"wired-toggle\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
     }
   ]
 }
