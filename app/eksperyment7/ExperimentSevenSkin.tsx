@@ -165,6 +165,7 @@ export default function ExperimentSevenSkin({ children }: { children: React.Reac
           color: inherit !important;
         }
 
+        .exp7-stage > .exp7-caption + div,
         .exp7-stage > div:first-child:not(.exp7-caption) {
           position: sticky !important;
           top: 0 !important;
