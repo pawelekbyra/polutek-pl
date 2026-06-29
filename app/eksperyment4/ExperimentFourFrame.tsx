@@ -42,7 +42,6 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           background:
             linear-gradient(90deg, var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
             linear-gradient(var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
-            radial-gradient(rgba(18,18,18,.04) .8px, transparent .8px) 0 0 / 18px 18px,
             var(--paper);
           font-family: "Comic Sans MS", "Comic Sans", "Segoe Print", "Bradley Hand", "Chalkboard SE", cursive;
         }
@@ -57,14 +56,20 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           min-height: 100vh;
           margin-inline: auto;
           overflow: visible;
-          background:
-            linear-gradient(90deg, rgba(18,18,18,.05) 1px, transparent 1px) 0 0 / 34px 34px,
-            linear-gradient(rgba(18,18,18,.05) 1px, transparent 1px) 0 0 / 34px 34px,
-            rgba(247,241,228,.9);
+          background: transparent;
           isolation: isolate;
         }
 
-        .exp4-drawing > div:first-child {
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
+          background-color: transparent !important;
+        }
+
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > .fixed.z-0 {
+          display: none !important;
+        }
+
+        .exp4-drawing > div:first-child,
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
           position: sticky !important;
           top: 0 !important;
           z-index: 1000 !important;
@@ -75,7 +80,8 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           backdrop-filter: blur(8px);
         }
 
-        .exp4-drawing > div:first-child::after {
+        .exp4-drawing > div:first-child::after,
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav::after {
           content: "";
           position: absolute;
           left: 18px;
