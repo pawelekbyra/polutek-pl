@@ -12,6 +12,9 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
   const { language, setLanguage, isInitialized } = useLanguage();
   const { user, isLoaded } = useUser();
   const [syncedOnce, setSyncedOnce] = useState(false);
+  // Track the language that is already persisted in Clerk metadata so we don't
+  // make a redundant API call on every mount.
+  const [persistedLanguage, setPersistedLanguage] = useState<string | null>(null);
 
   // Sync DB preference to Context ONLY ONCE on login
   useEffect(() => {
@@ -19,25 +22,32 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
       try {
         const metadata = user.publicMetadata as Record<string, unknown>;
         const metadataLanguage = metadata.language || metadata.preferredLanguage;
-        const dbLang = metadataLanguage === 'pl' || metadataLanguage === 'en' ? metadataLanguage : null;
+        const dbLang = metadataLanguage === 'pl' || metadataLanguage === 'en' ? metadataLanguage as string : null;
         if (dbLang && dbLang !== language) {
-          setLanguage(dbLang, true);
+          setLanguage(dbLang as 'en' | 'pl', true);
         }
+        // Record what language is already stored so we skip a redundant write
+        setPersistedLanguage(dbLang ?? language);
         setSyncedOnce(true);
       } catch (e) {
         logger.error("[ClerkLocalizationProvider] Error syncing metadata:", e);
+        setSyncedOnce(true);
       }
     }
   }, [user, isLoaded, isInitialized, language, setLanguage, syncedOnce]);
 
-  // Sync Context to DB/Metadata on change
+  // Sync Context to DB/Metadata only when language actually changes after initial load
   useEffect(() => {
-    if (isLoaded && user && isInitialized && syncedOnce) {
-       updateUserLanguage(language).catch(err => {
-         logger.warn("[ClerkLocalizationProvider] Failed to persist language choice:", err);
-       });
-    }
-  }, [language, user, isLoaded, isInitialized, syncedOnce]);
+    if (!isLoaded || !user || !isInitialized || !syncedOnce) return;
+    // Skip if the language is already what Clerk has stored
+    if (language === persistedLanguage) return;
+    updateUserLanguage(language).then(() => {
+      setPersistedLanguage(language);
+    }).catch(err => {
+      logger.warn("[ClerkLocalizationProvider] Failed to persist language choice:", err);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, syncedOnce]);
 
   return (
     <>

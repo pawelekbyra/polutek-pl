@@ -33,7 +33,7 @@ export default function Icon() {
           }}
         >
           <img
-            src="/favicon.ico"
+            src={`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.polutek.pl'}/favicon.ico`}
             alt="POLUTEK.PL"
             width="160"
             height="160"
