@@ -233,7 +233,7 @@ const Navbar = () => {
       </div>
 
       {/* Separator pod navbarem */}
-      <NajsSeparator className="px-4" />
+      <NajsSeparator className="px-4 -mb-[10px]" />
     </div>
   );
 };
