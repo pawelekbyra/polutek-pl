@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { APP_NAME } from '@/lib/constants';
 import { loadHomeContent } from '@/lib/services/home-content.loader';
-import RoughHome from './eksperyment1/RoughHome';
+import MainRoughHome from './components/MainRoughHome';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +46,10 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
   }
 
   return (
-    <RoughHome
+    <MainRoughHome
       mainVideo={content.mainVideo}
       allVideos={content.allVideos}
       currentVideoId={searchParams.v}
-      basePath="/"
-      experimentLabel={null}
     />
   );
 }
