@@ -93,6 +93,7 @@ const allowedAppRoutes = [
   "app/api/webhooks/resend/route.ts",
   "app/api/webhooks/stripe/route.ts",
   "app/channel/[slug]/page.tsx",
+  "app/katalog/page.tsx",
   "app/page.tsx",
   "app/polityka-prywatnosci/page.tsx",
   "app/regulamin/page.tsx",

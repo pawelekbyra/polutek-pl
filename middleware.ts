@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/watch/(.*)',
   '/channel/(.*)',
+  '/katalog',
   '/regulamin',
   '/polityka-prywatnosci',
   '/api/webhooks(.*)',
