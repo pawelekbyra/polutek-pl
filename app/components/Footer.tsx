@@ -10,14 +10,14 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border bg-secondary mt-12">
-      <div className="max-w-[1180px] mx-auto flex flex-wrap items-center justify-between gap-[14px] p-[22px]">
-        <div className="w-32" />
+      <div className="max-w-[1180px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
+        <div className="hidden w-32 md:block" />
 
-        <span className="text-[13px] font-black tracking-[0.12em] uppercase text-[#3a3a3a]">
+        <span className="order-2 text-center text-[13px] font-black tracking-[0.12em] uppercase text-[#3a3a3a] md:order-none">
           WWW.POLUTEK.PL
         </span>
 
-        <div className="flex gap-[22px] text-[12.5px] text-muted-foreground font-medium">
+        <div className="order-1 flex justify-center gap-[22px] text-center text-[12.5px] text-muted-foreground font-medium md:order-none">
           <Link href="/regulamin" className="hover:text-foreground transition-colors">
             {isPl ? "Regulamin" : "Terms"}
           </Link>
