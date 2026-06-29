@@ -1,0 +1,18 @@
+import { Metadata } from "next";
+import ExperimentHomePage from "../_experiments/ExperimentHomePage";
+import ExperimentTwentyTwoSkin from "./ExperimentTwentyTwoSkin";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Eksperyment 22 — bauhaus scroll background · Polutek",
+  description: "Wariant eksperymentu 7 z nieruchomym topbarem i tłem przesuwającym się razem ze scrollowaniem.",
+};
+
+export default async function Eksperyment22Page(props: { searchParams: Promise<{ v?: string; q?: string }> }) {
+  return ExperimentHomePage({
+    Skin: ExperimentTwentyTwoSkin,
+    searchParams: props.searchParams,
+    loggerPrefix: "EXPERIMENT22",
+  });
+}
