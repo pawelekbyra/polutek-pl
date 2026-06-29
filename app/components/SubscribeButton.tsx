@@ -34,30 +34,28 @@ const SubscribeBellIcon = ({
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    className={cn("najs-pen-icon", className)}
+    className={className}
     aria-hidden="true"
   >
-    {filled && (
-      <path
-        d="M6.4 16.7c.35-1.1 1.25-2.3 1.25-6.35 0-3.55 1.78-5.45 4.35-5.45s4.35 1.9 4.35 5.45c0 4.05.9 5.25 1.25 6.35H6.4Z"
-        fill="currentColor"
-        opacity="0.12"
-      />
-    )}
     <path
-      d="M6.25 16.75c.46-.62 1.42-1.76 1.42-6.18 0-3.68 1.75-5.6 4.33-5.6 2.63 0 4.35 1.92 4.35 5.6 0 4.42.97 5.56 1.43 6.18.19.26.02.66-.33.66H6.58c-.35 0-.53-.4-.33-.66Z"
+      d="M18.4 9.9c0-3.55-2.48-6.15-6.4-6.15S5.6 6.35 5.6 9.9c0 4.7-1.95 5.9-2.55 6.55-.33.36-.07 1.05.48 1.05h16.94c.55 0 .81-.69.48-1.05-.6-.65-2.55-1.85-2.55-6.55Z"
+      fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="1.65"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <path
-      d="M9.78 19.25c.43.57 1.2.91 2.22.91 1.01 0 1.78-.34 2.22-.91"
+      d="M9.55 20.2c.55.72 1.4 1.15 2.45 1.15s1.9-.43 2.45-1.15"
       stroke="currentColor"
-      strokeWidth="1.65"
+      strokeWidth="2"
+      strokeLinecap="round"
     />
     <path
-      d="M11.93 4.96c-.03-.7.18-1.24.55-1.37.46-.16.88.32.91 1.08"
+      d="M12 3.75V2.6"
       stroke="currentColor"
-      strokeWidth="1.65"
+      strokeWidth="2"
+      strokeLinecap="round"
     />
   </svg>
 );
@@ -181,7 +179,7 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "najs-action-button text-[13.5px] font-bold rounded-full h-[38px] px-[20px] flex items-center justify-center transition-all active:scale-95 border",
+          "text-[13.5px] font-bold rounded-full h-[38px] px-[20px] flex items-center justify-center transition-all active:scale-95 border",
           isSubscribed
             ? "bg-secondary text-[#171717] border-input"
             : "bg-[#171717] text-white border-[#171717]",
@@ -189,7 +187,7 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <SubscribeBellIcon size={17} className="mr-2" filled={isSubscribed} />
+        <SubscribeBellIcon size={16} className="mr-2" filled={isSubscribed} />
         <span>{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
