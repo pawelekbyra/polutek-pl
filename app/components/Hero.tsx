@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
+import { ThumbsUp, ThumbsDown, MoreHorizontal } from './icons';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
@@ -22,92 +23,6 @@ interface HeroProps {
   initialInteraction?: { liked: boolean; disliked: boolean };
   initialIsSubscribed?: boolean;
 }
-
-const NajsThumbsUp = ({ size = 18, filled = false, className }: { size?: number; filled?: boolean; className?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={cn("najs-pen-icon", className)}
-    aria-hidden="true"
-  >
-    {filled && (
-      <path
-        d="M9.05 10.1c1.45-.95 2.28-2.23 2.78-4.3.18-.73.67-1.08 1.23-.85.85.36 1.18 1.7.95 3.1-.08.48-.2.95-.33 1.4h3.55c1.38 0 2.15.72 2.05 1.88-.08.87-.42 1.4-.95 1.68.28.37.35.96.16 1.55-.16.52-.5.91-.94 1.12.15.44.05.98-.25 1.42-.36.52-.91.79-1.57.79h-6.7V10.1Z"
-        fill="currentColor"
-        opacity="0.12"
-      />
-    )}
-    <path
-      d="M8.75 10.15c1.47-.98 2.42-2.2 2.9-4.18.18-.76.62-1.22 1.14-1.08.75.2 1.25 1.45 1.05 2.82-.07.54-.22 1.05-.4 1.58-.08.23.08.47.33.47h3.44c1.28 0 2.05.67 1.98 1.66-.05.68-.38 1.15-.92 1.43.4.37.47.98.27 1.54-.17.5-.54.83-1.05 1.01.18.41.1.93-.19 1.33-.34.49-.89.73-1.55.73H8.75"
-      stroke="currentColor"
-      strokeWidth="1.55"
-    />
-    <path
-      d="M4.62 9.58h3.3c.41 0 .73.32.73.73v7.18c0 .43-.31.76-.72.76H4.69c-.41 0-.69-.32-.69-.73v-7.2c0-.41.25-.7.62-.74Z"
-      stroke="currentColor"
-      strokeWidth="1.55"
-    />
-    <path
-      d="M6.42 12.2h.05"
-      stroke="currentColor"
-      strokeWidth="2"
-    />
-  </svg>
-);
-
-const NajsThumbsDown = ({ size = 18, filled = false, className }: { size?: number; filled?: boolean; className?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={cn("najs-pen-icon", className)}
-    aria-hidden="true"
-  >
-    {filled && (
-      <path
-        d="M9.05 13.9c1.45.95 2.28 2.23 2.78 4.3.18.73.67 1.08 1.23.85.85-.36 1.18-1.7.95-3.1-.08-.48-.2-.95-.33-1.4h3.55c1.38 0 2.15-.72 2.05-1.88-.08-.87-.42-1.4-.95-1.68.28-.37.35-.96.16-1.55-.16-.52-.5-.91-.94-1.12.15-.44.05-.98-.25-1.42-.36-.52-.91-.79-1.57-.79h-6.7v7.79Z"
-        fill="currentColor"
-        opacity="0.12"
-      />
-    )}
-    <path
-      d="M8.75 13.85c1.47.98 2.42 2.2 2.9 4.18.18.76.62 1.22 1.14 1.08.75-.2 1.25-1.45 1.05-2.82-.07-.54-.22-1.05-.4-1.58-.08-.23.08-.47.33-.47h3.44c1.28 0 2.05-.67 1.98-1.66-.05-.68-.38-1.15-.92-1.43.4-.37.47-.98.27-1.54-.17-.5-.54-.83-1.05-1.01.18-.41.1-.93-.19-1.33-.34-.49-.89-.73-1.55-.73H8.75"
-      stroke="currentColor"
-      strokeWidth="1.55"
-    />
-    <path
-      d="M4.62 14.42h3.3c.41 0 .73-.32.73-.73V6.51c0-.43-.31-.76-.72-.76H4.69c-.41 0-.69.32-.69.73v7.2c0 .41.25.7.62.74Z"
-      stroke="currentColor"
-      strokeWidth="1.55"
-    />
-    <path
-      d="M6.42 11.8h.05"
-      stroke="currentColor"
-      strokeWidth="2"
-    />
-  </svg>
-);
-
-const NajsMoreHorizontal = ({ size = 18, className }: { size?: number; className?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={cn("najs-pen-icon", className)}
-    aria-hidden="true"
-  >
-    <path d="M6.1 12.1h.05" stroke="currentColor" strokeWidth="2.2" />
-    <path d="M12 11.9h.05" stroke="currentColor" strokeWidth="2.2" />
-    <path d="M17.9 12.05h.05" stroke="currentColor" strokeWidth="2.2" />
-  </svg>
-);
 
 const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
   const { t, language } = useLanguage();
@@ -288,7 +203,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className="flex w-full items-center gap-[9px] lg:w-auto">
-               <div className="najs-action-button flex h-[38px] flex-1 items-center overflow-hidden rounded-full border border-input bg-white lg:flex-none">
+               <div className="flex h-[38px] flex-1 items-center overflow-hidden rounded-full border border-input bg-white lg:flex-none">
                   <button
                     onClick={handleLike}
                     disabled={isPending}
@@ -299,7 +214,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     )}
                     title="Lubię to"
                   >
-                     <NajsThumbsUp size={19} filled={interactionState.isLiked} />
+                     <ThumbsUp size={18} className={cn(interactionState.isLiked && "fill-primary")} />
                      <span className="text-[14px] font-bold">{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
                   <button
@@ -312,7 +227,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     )}
                     title="Nie lubię"
                   >
-                     <NajsThumbsDown size={19} filled={interactionState.isDisliked} />
+                     <ThumbsDown size={18} className={cn(interactionState.isDisliked && "fill-primary")} />
                      <span className="text-[14px] font-bold">{interactionState.dislikesCount.toLocaleString('pl-PL')}</span>
                   </button>
                </div>
@@ -323,10 +238,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   />
                <button
                  type="button"
-                 className="najs-action-button w-[38px] h-[38px] flex items-center justify-center bg-white hover:bg-secondary rounded-full transition-colors shrink-0 border border-input active:scale-95"
+                 className="w-[38px] h-[38px] flex items-center justify-center bg-white hover:bg-secondary rounded-full transition-colors shrink-0 border border-input active:scale-95"
                  aria-label="Menu"
                >
-                  <NajsMoreHorizontal size={19} className="text-[#171717]" />
+                  <MoreHorizontal size={18} className="text-[#171717]" />
                </button>
             </div>
           </div>
