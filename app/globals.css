@@ -110,6 +110,13 @@
     }
   }
 
+  .experiment2-skin svg path,
+  .experiment3-skin svg path,
+  .experiment4-skin svg path {
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+
   @keyframes pl-glow {
     0% {
       box-shadow: 0 0 0 0 var(--accent-ring), 0 10px 30px rgba(0,0,0,.35);
