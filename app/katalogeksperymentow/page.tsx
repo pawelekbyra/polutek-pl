@@ -25,6 +25,9 @@ const experiments = [
   { number: 16, href: "/eksperyment16", title: "bauhaus bez czerwieni", description: "Geometryczne bloki bez czerwonego koloru i bez nieruchomego tła." },
   { number: 17, href: "/eksperyment17", title: "spokojny szkic", description: "Kratkowana, spokojna stylizacja inspirowana eksperymentem 4." },
   { number: 18, href: "/eksperyment18", title: "bauhaus scroll background", description: "Wariant eksperymentu 7 z topbarem sticky i tłem przewijanym ze stroną." },
+  { number: 19, href: "/eksperyment19", title: "rough notation paper", description: "Papierowe tło z liniatury, adnotacje w stylu rough-notation, amber zakreślenia i cienkopis." },
+  { number: 20, href: "/eksperyment20", title: "thin pen clean", description: "Czysty papier i cienkopis — zaokrąglone ramki, przyciski pillowe, systemowy sans-serif." },
+  { number: 21, href: "/eksperyment21", title: "sketch cards amber", description: "Papier w kropki, szkicowe karty z zaokrąglonymi narożnikami, etykiety i amber + niebieski akcent." },
 ];
 
 export default function KatalogEksperymentowPage() {
