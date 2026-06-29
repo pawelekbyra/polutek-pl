@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import Image from "next/image";
-import { Video, AlertCircle, Heart } from "../icons";
+import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
@@ -15,6 +15,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
+import { Frame, NajsIcon, NajsSeparator, HachureFill, INK, BLUE, BLUE_DARK } from "../najs/primitives";
 
 type UserProfile = {
   id: string;
@@ -163,8 +164,10 @@ export function SidebarPlaylist({
             isCurrent ? "bg-secondary" : "hover:bg-secondary",
           )}
         >
-          <div className="w-[158px] h-[90px] shrink-0 overflow-hidden rounded-[9px] bg-black relative group/thumb border border-input">
-            <div className="relative w-full h-full">
+          <div className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb">
+            <Frame radius={9} seed={33} stroke={INK} strokeWidth={1} />
+            <div className="absolute inset-0 overflow-hidden rounded-[8px]">
+              <div className="relative w-full h-full">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -175,7 +178,7 @@ export function SidebarPlaylist({
                 />
               ) : (
                 <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                  <Video className="text-white/20 w-8 h-8" />
+                  <NajsIcon name="video" className="text-white/20 w-8 h-8" stroke="rgba(255,255,255,0.2)" />
                 </div>
               )}
 
@@ -192,10 +195,11 @@ export function SidebarPlaylist({
                   {video.duration}
                 </div>
               )}
+              </div>
             </div>
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-start pt-[1px] gap-0 z-10 relative">
-            <h4 className="font-heading text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity">
+            <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {displayTitle}
             </h4>
             <div className="text-[12px] text-muted-foreground flex flex-col mt-0">
@@ -270,11 +274,14 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="pb-[6px] border-b border-border mb-[14px] flex items-center gap-2">
-      {icon}
-      <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]">
-        {title}
-      </h3>
+    <div className="mb-[14px]">
+      <div className="flex items-center gap-2 mb-[4px]">
+        {icon}
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+          {title}
+        </h3>
+      </div>
+      <NajsSeparator />
     </div>
   );
 
@@ -286,48 +293,56 @@ export function SidebarPlaylist({
     const cdClock = premiereCountdown.split(" ").slice(2).join("") || "--:--:--";
 
     return (
-      <div className="my-[18px] border border-neutral-200 bg-white rounded-[16px] p-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] mb-6">
-        <h4 className="font-heading text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]">
-          {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
-        </h4>
-        <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
-          {isPl
-            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
-            : "A one-time tip unlocks every bonus video — forever. No subscription."}
-        </p>
+      <div className="relative my-[18px] p-[18px] mb-6">
+        <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
+        <div className="relative z-10">
+          <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
+          </h4>
+          <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
+            {isPl
+              ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
+              : "A one-time tip unlocks every bonus video — forever. No subscription."}
+          </p>
 
-        <div className="bg-neutral-50 border border-neutral-200 rounded-[11px] p-[12px_14px] mb-[14px]">
-          <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center">
-            {isPl ? "DO PREMIERY" : "PREMIERE IN"}
-          </div>
-          <div className="flex items-baseline gap-[10px] justify-center">
-            <div className="flex items-baseline gap-[5px]">
-              <span className="font-brand text-[30px] font-bold text-primary leading-none tabular-nums">
-                {cdDays}
-              </span>
-              <span className="text-[12px] font-bold text-muted-foreground">
-                {isPl ? "dni" : "days"}
-              </span>
+          <div className="relative p-[12px_14px] mb-[14px]">
+            <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.85)" />
+            <div className="relative z-10">
+              <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                {isPl ? "DO PREMIERY" : "PREMIERE IN"}
+              </div>
+              <div className="flex items-baseline gap-[10px] justify-center">
+                <div className="flex items-baseline gap-[5px]">
+                  <span className="text-[30px] font-bold text-primary leading-none tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                    {cdDays}
+                  </span>
+                  <span className="text-[12px] font-bold text-muted-foreground">
+                    {isPl ? "dni" : "days"}
+                  </span>
+                </div>
+                <span className="text-[19px] font-semibold text-[#1a1a1a] tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                  {cdClock}
+                </span>
+              </div>
             </div>
-            <span className="font-brand text-[19px] font-semibold text-[#1a1a1a] tabular-nums tracking-[0.02em]">
-              {cdClock}
-            </span>
           </div>
-        </div>
 
-        <button
-          onClick={() => {
-            const el =
-              document.getElementById("support-box") ||
-              document.getElementById("donations");
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-          className="w-full h-[44px] border-none rounded-[11px] bg-primary text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 hover:brightness-[1.07] active:scale-[0.98] transition-all"
-        >
-          {isPl ? "Wesprzyj" : "Support"}
-        </button>
-        <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
-          {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
+          <button
+            onClick={() => {
+              const el =
+                document.getElementById("support-box") ||
+                document.getElementById("donations");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all overflow-hidden rounded-[11px]"
+            style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+          >
+            <HachureFill fill={BLUE} stroke={BLUE_DARK} seed={5} />
+            <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
+          </button>
+          <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
+            {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
+          </div>
         </div>
       </div>
     );
