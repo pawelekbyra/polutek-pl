@@ -15,17 +15,18 @@ export const metadata = {
   themeColor: "#f7f1e4",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: APP_NAME,
   },
   icons: {
     icon: [
       { url: '/icon-enter.svg', type: 'image/svg+xml' },
       { url: '/icon', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512', type: 'image/png', sizes: '512x512' },
     ],
     shortcut: ['/icon-enter.svg'],
     apple: [
-      { url: '/icon-enter.svg', type: 'image/svg+xml' },
+      { url: '/icon', type: 'image/png', sizes: '192x192' },
     ],
   },
 };
@@ -39,18 +40,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="application-name" content={APP_NAME} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
         <meta name="theme-color" content="#f7f1e4" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icon-enter.svg" />
+        <link rel="apple-touch-icon" href="/icon" />
       </head>
-      <body className="font-sans bg-background text-foreground min-h-screen relative" suppressHydrationWarning>
+      <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <SplashScreen />
         <ServiceWorkerRegistration />
-        <Suspense fallback={<div className="min-h-screen bg-background" />}>
+        <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers>
             <ClerkLocalizationProvider>
               {children}
