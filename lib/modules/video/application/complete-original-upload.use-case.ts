@@ -19,6 +19,7 @@ export interface CompleteOriginalUploadInput {
   videoId: string;
   originalId: string;
   mirrorPlan?: Partial<MirrorPlan>;
+  preferredProvider?: string;
 }
 
 export interface CompleteOriginalUploadDto {
@@ -49,6 +50,14 @@ export async function completeOriginalUpload(
   const meta = await r2.getObjectMeta(original.objectKey);
   if (!meta.exists) {
     return fail(new AppError("Upload not found in R2. Complete the upload before calling this endpoint.", 400, "R2_OBJECT_MISSING"));
+  }
+
+  // Store preferred provider on video so webhooks can respect it
+  if (input.preferredProvider) {
+    await ctx.prisma.video.update({
+      where: { id: video.id },
+      data: { publishAfterAssetReadyProvider: input.preferredProvider },
+    });
   }
 
   // Mark original READY + fetch existing assets in one transaction
@@ -86,7 +95,8 @@ export async function completeOriginalUpload(
     );
     if (!hasMux) {
       mirrorsStarted.push("MUX");
-      mirrorPromises.push(startMuxMirror(video.id, original.id, signedSourceUrl, existingAssets.length === 0, ctx));
+      const muxPrimaryIntent = input.preferredProvider === VIDEO_PROVIDER.MUX;
+      mirrorPromises.push(startMuxMirror(video.id, original.id, signedSourceUrl, muxPrimaryIntent, ctx));
     }
   }
 

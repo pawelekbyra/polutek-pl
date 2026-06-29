@@ -212,18 +212,18 @@ export function VideoForm({
                     </div>
                   )}
 
-                  {createSourceMode === "UPLOAD" && wantsPublish && (
+                  {createSourceMode === "UPLOAD" && (
                     <div className="space-y-2">
-                      <Label>Publikuj po przetworzeniu przez</Label>
+                      <Label>Primary provider</Label>
                       <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Wybierz provider..." /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
                           <SelectItem value="MUX">Mux</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Film opublikuje się gdy wybrany provider będzie READY. Drugi provider przetwarza równolegle jako fallback.
+                        Plik trafi na R2, następnie zostanie zmirrorowany na oba providery. Wybrany stanie się primary — z niego będzie serwowane wideo.
                       </p>
                     </div>
                   )}

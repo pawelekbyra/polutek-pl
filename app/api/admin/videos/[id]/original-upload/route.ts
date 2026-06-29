@@ -41,6 +41,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       videoId,
       originalId: body.originalId,
       mirrorPlan: body.mirrorPlan,
+      preferredProvider: typeof body.preferredProvider === "string" ? body.preferredProvider : undefined,
     },
     ctx
   );
