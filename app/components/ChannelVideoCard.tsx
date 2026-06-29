@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MoreVertical } from "./icons";
 import { cn } from "@/lib/utils";
 import { PublicVideoDTO } from "@/app/types/video";
 import { formatDistanceToNow } from "date-fns";
@@ -11,6 +10,7 @@ import { pl } from "date-fns/locale";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
+import { Frame, NajsIcon, INK } from "./najs/primitives";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -83,7 +83,9 @@ export default function ChannelVideoCard({
     <div className="group cursor-pointer flex flex-col">
       <div className="block relative">
         <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
-        <div className="relative aspect-video rounded-md overflow-hidden bg-black mb-2.5 z-10 border border-neutral-300">
+        <div className="relative aspect-video rounded-md bg-black mb-2.5 z-10">
+          <Frame radius={8} seed={22} stroke={INK} strokeWidth={1} />
+          <div className="absolute inset-0 overflow-hidden rounded-md">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
               <Image
@@ -94,8 +96,8 @@ export default function ChannelVideoCard({
                 className="object-cover opacity-90 transition duration-500 group-hover:scale-105 motion-reduce:transition-none"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-xs font-bold uppercase tracking-widest text-white/45">
-                Video
+              <div className="flex h-full w-full items-center justify-center bg-neutral-900">
+                <NajsIcon name="video" className="w-8 h-8" stroke="rgba(255,255,255,0.2)" />
               </div>
             )}
             {lockState && (
@@ -108,25 +110,25 @@ export default function ChannelVideoCard({
                 {video.duration}
               </div>
             )}
+            {/* Access Indicator Badge on Thumbnail */}
+            {badge && hasAccess && (
+              <div
+                className={cn(
+                  "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
+                  badge.variant === "unlocked" &&
+                    "bg-primary/80 border-primary/20",
+                )}
+              >
+                {badge.text}
+              </div>
+            )}
           </div>
-
-          {/* Access Indicator Badge on Thumbnail */}
-          {badge && hasAccess && (
-            <div
-              className={cn(
-                "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
-                badge.variant === "unlocked" &&
-                  "bg-primary/80 border-primary/20",
-              )}
-            >
-              {badge.text}
-            </div>
-          )}
+          </div>
         </div>
         <div className="flex gap-2 relative z-10">
           <div className="flex-1 min-w-0">
             <Link href={`/?v=${video.id}`}>
-              <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 uppercase tracking-tight mb-1 hover:opacity-80 transition-opacity">
+              <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {displayTitle}
               </h3>
             </Link>
@@ -156,8 +158,9 @@ export default function ChannelVideoCard({
               </div>
             </div>
           </div>
-          <button className="h-fit p-1 hover:bg-[#000000]/5 rounded-md transition-colors opacity-0 group-hover:opacity-100 shrink-0 border border-neutral-300 hover:bg-neutral-50">
-            <MoreVertical size={20} />
+          <button className="relative h-[28px] w-[28px] flex items-center justify-center opacity-0 group-hover:opacity-100 shrink-0 active:scale-95 transition-opacity">
+            <Frame radius={8} seed={55} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.88)" />
+            <NajsIcon name="more-vertical" className="relative h-[16px] w-[16px]" stroke={INK} />
           </button>
         </div>
       </div>

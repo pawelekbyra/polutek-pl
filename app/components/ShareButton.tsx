@@ -5,6 +5,7 @@ import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
 import { Share2 } from './icons';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
+import { Frame, NajsIcon, INK } from './najs/primitives';
 
 interface ShareButtonProps {
   url?: string;
@@ -63,12 +64,14 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "flex items-center justify-center gap-2 h-[38px] px-5 rounded-full bg-white hover:bg-secondary transition-colors border border-input active:scale-95 text-[#171717] font-bold text-[13.5px]",
+          "relative flex items-center justify-center gap-2 h-[38px] px-5 active:scale-95 text-[#171717] font-bold text-[13.5px]",
           className
         )}
+        style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
-        <Share2 size={18} />
-        <span className="hidden sm:inline">Szeruj</span>
+        <Frame radius={20} seed={41} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+        <NajsIcon name="send" className="relative h-[17px] w-[17px]" stroke={INK} />
+        <span className="relative hidden sm:inline">Szeruj</span>
       </button>
 
       {isOpen && !isMobile && (

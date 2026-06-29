@@ -170,7 +170,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="text-[36px] font-semibold leading-tight tracking-tight mb-1">
+            <h1 className="text-[36px] font-semibold leading-tight mb-1" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {displayName}
             </h1>
             <div className="text-[14px] text-[#606060] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
@@ -192,11 +192,11 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
           </div>
         </div>
 
-        <div className="flex border-b border-neutral-200 mt-6 overflow-x-auto no-scrollbar gap-8">
-           <button className="pb-3 border-b-2 border-[#0f0f0f] text-[14px] font-bold uppercase tracking-widest">Wideo</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors">Playlisty</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors">Społeczność</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors">Informacje</button>
+        <div className="flex border-b border-neutral-200/60 mt-6 overflow-x-auto no-scrollbar gap-8">
+           <button className="pb-3 border-b-2 border-[#171717] text-[14px] font-bold uppercase tracking-widest" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>Wideo</button>
+           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>Playlisty</button>
+           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>Społeczność</button>
+           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>Informacje</button>
            <div className="ml-auto pb-3 flex items-center gap-4">
               <Search size={20} className="text-[#606060] cursor-pointer" />
            </div>

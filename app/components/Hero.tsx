@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
-import { ThumbsUp, ThumbsDown, MoreHorizontal } from './icons';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
@@ -17,6 +16,7 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
+import { Frame, NajsIcon, INK } from './najs/primitives';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -148,15 +148,18 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     <section className="bg-transparent">
       <div className="w-full">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full rounded-[14px] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.06)] border border-[#322f2b] mb-[18px] group bg-black">
-          <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
-            <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
-          </PremiumWrapper>
+        <div className="relative aspect-video w-full mb-[18px] group">
+          <Frame radius={14} seed={7} stroke={INK} strokeWidth={1.5} />
+          <div className="absolute inset-0 overflow-hidden rounded-[12px] bg-black">
+            <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
+              <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
+            </PremiumWrapper>
+          </div>
         </div>
 
         {/* INFO SECTION */}
         <div className="space-y-3">
-          <h1 className="font-heading font-bold text-[23px] text-[#0f0f0f] tracking-[-0.01em] leading-[1.25] mb-[14px]">
+          <h1 className="font-bold text-[23px] text-[#0f0f0f] leading-[1.25] mb-[14px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
              {displayTitle}
           </h1>
 
@@ -203,32 +206,34 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className="flex w-full items-center gap-[9px] lg:w-auto">
-               <div className="flex h-[38px] flex-1 items-center overflow-hidden rounded-full border border-input bg-white lg:flex-none">
+               <div className="relative flex h-[38px] flex-1 items-center lg:flex-none">
+                  <Frame radius={20} seed={23} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 hover:bg-secondary transition-colors border-r border-[#E4E0D6] relative active:bg-secondary/80 lg:flex-none lg:pl-5 lg:pr-4",
+                        "relative flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:flex-none lg:pl-5 lg:pr-4",
                         interactionState.isLiked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
                   >
-                     <ThumbsUp size={18} className={cn(interactionState.isLiked && "fill-primary")} />
-                     <span className="text-[14px] font-bold">{interactionState.likesCount.toLocaleString('pl-PL')}</span>
+                     <NajsIcon name="like" className="h-[18px] w-[18px]" stroke={interactionState.isLiked ? "#2563eb" : INK} />
+                     <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
+                  <span className="relative h-5 w-px bg-neutral-900/20" />
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 hover:bg-secondary transition-colors active:bg-secondary/80 lg:flex-none",
+                        "relative flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:flex-none",
                         interactionState.isDisliked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
-                     <ThumbsDown size={18} className={cn(interactionState.isDisliked && "fill-primary")} />
-                     <span className="text-[14px] font-bold">{interactionState.dislikesCount.toLocaleString('pl-PL')}</span>
+                     <NajsIcon name="dislike" className="h-[18px] w-[18px]" stroke={interactionState.isDisliked ? "#2563eb" : INK} />
+                     <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.dislikesCount.toLocaleString('pl-PL')}</span>
                   </button>
                </div>
                   <ShareButton
@@ -238,58 +243,62 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   />
                <button
                  type="button"
-                 className="w-[38px] h-[38px] flex items-center justify-center bg-white hover:bg-secondary rounded-full transition-colors shrink-0 border border-input active:scale-95"
+                 className="relative w-[38px] h-[38px] flex items-center justify-center shrink-0 active:scale-95"
                  aria-label="Menu"
                >
-                  <MoreHorizontal size={18} className="text-[#171717]" />
+                  <Frame radius={20} seed={31} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                  <NajsIcon name="more" className="relative h-[18px] w-[18px]" stroke={INK} />
                </button>
             </div>
           </div>
         </div>
 
         {/* DESCRIPTION BOX */}
-        <div className="mt-[16px] bg-secondary rounded-[14px] p-[14px] pt-[14px] transition-colors cursor-pointer border border-border hover:bg-secondary/80" onClick={() => setIsExpanded(!isExpanded)}>
-           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
-              <span className="text-[13.5px] font-bold text-[#0f0f0f]">
-                 {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
-              </span>
-              <span className="text-[13.5px] font-bold text-[#0f0f0f]">
-                 · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
-              </span>
-           </div>
+        <div className="relative mt-[16px] p-[14px] cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+           <Frame radius={14} seed={11} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.95)" />
+           <div className="relative z-10">
+             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
+                <span className="text-[13.5px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                   {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
+                </span>
+                <span className="text-[13.5px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                   · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
+                </span>
+             </div>
 
-           <div className="text-[13.5px] text-[#0f0f0f] leading-[1.6] whitespace-pre-wrap">
-              {isExpanded ? (
-                displayDescription
-              ) : (
-                <>
-                  {displayDescription.slice(0, 160).trim()}
-                  {displayDescription.length > 160 && (
-                    <span
-                      className="text-[13.5px] font-bold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsExpanded(true);
-                      }}
-                    >
-                      {t.showMore}
-                    </span>
-                  )}
-                </>
-              )}
-           </div>
+             <div className="text-[13.5px] text-[#0f0f0f] leading-[1.6] whitespace-pre-wrap">
+                {isExpanded ? (
+                  displayDescription
+                ) : (
+                  <>
+                    {displayDescription.slice(0, 160).trim()}
+                    {displayDescription.length > 160 && (
+                      <span
+                        className="text-[13.5px] font-bold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsExpanded(true);
+                        }}
+                      >
+                        {t.showMore}
+                      </span>
+                    )}
+                  </>
+                )}
+             </div>
 
-           {isExpanded && (
-             <button
-               className="text-[13.5px] font-bold text-[#0f0f0f] mt-1 hover:underline inline-block"
-               onClick={(e) => {
-                 e.stopPropagation();
-                 setIsExpanded(false);
-               }}
-             >
-                {t.showLess}
-             </button>
-           )}
+             {isExpanded && (
+               <button
+                 className="text-[13.5px] font-bold text-[#0f0f0f] mt-1 hover:underline inline-block"
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   setIsExpanded(false);
+                 }}
+               >
+                  {t.showLess}
+               </button>
+             )}
+           </div>
         </div>
       </div>
     </section>
