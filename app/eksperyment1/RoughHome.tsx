@@ -6,6 +6,8 @@ import { annotate } from "rough-notation";
 import Link from "next/link";
 import Image from "next/image";
 import { PublicVideoDTO } from "@/app/types/video";
+import PremiumWrapper from "@/app/components/PremiumWrapper";
+import VideoPlayer from "@/app/components/VideoPlayer";
 
 const PAPER_NOISE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 const INK = "#171717";
@@ -281,6 +283,7 @@ interface RoughHomeProps {
 
 export default function RoughHome({ mainVideo, allVideos, currentVideoId, basePath = "/eksperyment1", experimentLabel = "eksperyment1 — layout głównej + N4/B5" }: RoughHomeProps) {
   const selectedVideo = allVideos.find((v) => v.id === currentVideoId || v.slug === currentVideoId) || mainVideo;
+  const isExperiment4 = basePath === "/eksperyment4";
   const [countdown, setCountdown] = useState("105 dni 00:00:00");
 
   useEffect(() => {
@@ -311,9 +314,9 @@ export default function RoughHome({ mainVideo, allVideos, currentVideoId, basePa
 
       <nav className="sticky top-0 z-40 bg-[#f8f3e7]/92 px-4 py-3 backdrop-blur-md md:px-6">
         <div className="mx-auto flex h-[46px] max-w-6xl items-center gap-4">
-          <Link href="/" className="relative shrink-0 pr-3 text-xl font-black uppercase leading-none tracking-[-.06em]">
+          <Link href="/" className={`relative shrink-0 pr-3 ${isExperiment4 ? "text-[22px]" : "text-xl"} font-black uppercase leading-none tracking-[-.06em]`}>
             POLUTEK<span className="text-blue-600">.PL</span><span className="relative -top-2 ml-1 inline-flex text-[8px] tracking-wide text-neutral-800">BETA</span>
-            <svg className="absolute -bottom-2 left-0 h-3 w-[72%]" viewBox="0 0 160 12" preserveAspectRatio="none" aria-hidden="true"><path d="M 2 8 Q 78 2 158 7" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" /></svg>
+            {!isExperiment4 && <svg className="absolute -bottom-2 left-0 h-3 w-[72%]" viewBox="0 0 160 12" preserveAspectRatio="none" aria-hidden="true"><path d="M 2 8 Q 78 2 158 7" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" /></svg>}
           </Link>
           <div className="relative mx-auto hidden h-[42px] max-w-lg flex-1 items-center md:flex">
             <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
@@ -332,9 +335,17 @@ export default function RoughHome({ mainVideo, allVideos, currentVideoId, basePa
             <div className="relative aspect-video">
               <Frame radius={15} seed={101} stroke={INK} strokeWidth={1.55} fill="rgba(255,255,255,.12)" />
               <div className="absolute inset-[6px] overflow-hidden rounded-[12px] bg-neutral-950">
-                {selectedVideo.thumbnailUrl ? <Image src={selectedVideo.thumbnailUrl} alt={selectedVideo.title} fill className="object-cover" priority /> : <div className="flex h-full w-full items-center justify-center text-5xl text-white/25">▶</div>}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/12 via-transparent to-black/8" />
-                <div className="absolute inset-0 flex items-center justify-center"><I name="pause" className="h-14 w-16 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,.35)]" stroke="white" /></div>
+                {isExperiment4 ? (
+                  <PremiumWrapper videoId={selectedVideo.id} requiredTier={selectedVideo.tier} isMainFeatured={selectedVideo.isMainFeatured}>
+                    <VideoPlayer video={selectedVideo} />
+                  </PremiumWrapper>
+                ) : (
+                  <>
+                    {selectedVideo.thumbnailUrl ? <Image src={selectedVideo.thumbnailUrl} alt={selectedVideo.title} fill className="object-cover" priority /> : <div className="flex h-full w-full items-center justify-center text-5xl text-white/25">▶</div>}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/12 via-transparent to-black/8" />
+                    <div className="absolute inset-0 flex items-center justify-center"><I name="pause" className="h-14 w-16 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,.35)]" stroke="white" /></div>
+                  </>
+                )}
               </div>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
@@ -347,7 +358,7 @@ export default function RoughHome({ mainVideo, allVideos, currentVideoId, basePa
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                <div className="relative inline-flex h-9 items-center overflow-hidden rounded-full"><Frame radius={18} seed={143} stroke={INK} strokeWidth={1.1} fill="rgba(248,243,231,.88)" /><Counter icon="like" value={1} /><span className="relative h-6 w-px bg-neutral-900/35" /><Counter icon="dislike" value={0} /></div>
+                <div className="relative inline-flex h-9 items-center overflow-hidden rounded-full"><Frame radius={18} seed={143} stroke={INK} strokeWidth={1.1} fill="rgba(248,243,231,.88)" /><Counter icon="like" value={selectedVideo.likesCount ?? 0} /><span className="relative h-6 w-px bg-neutral-900/35" /><Counter icon="dislike" value={selectedVideo.dislikesCount ?? 0} /></div>
                 <Btn icon="send">Szeruj</Btn><Btn icon="more" compact />
               </div>
             </div>
