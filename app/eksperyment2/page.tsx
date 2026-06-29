@@ -16,8 +16,8 @@ import ExperimentTwoSkin from "./ExperimentTwoSkin";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Eksperyment 2 — Polutek Rough UI",
-  description: "Prawdziwa strona główna Polutek w dopracowanym stylu papier + cienkopis.",
+  title: "Eksperyment 2 — UI concept board · Polutek",
+  description: "Strona główna Polutek jako szkicowy concept board inspirowany /katalog.",
 };
 
 export default async function Eksperyment2Page(props: { searchParams: Promise<{ v?: string; q?: string }> }) {
