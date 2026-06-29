@@ -129,6 +129,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     : null;
 
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -138,6 +139,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const commentsTopRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -172,6 +174,26 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     if (loadMoreRef.current) observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!isSortMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (
+        sortMenuRef.current &&
+        !sortMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsSortMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [isSortMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -257,6 +279,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     return count === 1 ? "comment" : "comments";
   };
 
+  const handleSortChange = (nextSort: "newest" | "top") => {
+    setSortBy(nextSort);
+    setIsSortMenuOpen(false);
+  };
+
   return (
     <div
       ref={commentsTopRef}
@@ -292,29 +319,79 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           )}
         </div>
 
-        <div className="flex gap-[8px] order-1 sm:order-2 self-end sm:self-auto items-center">
-          <button
-            onClick={() => setSortBy("newest")}
-            className={cn(
-              "text-[12px] font-bold px-3 py-1.5 rounded-full transition-all",
-              sortBy === "newest"
-                ? "bg-[#0f0f0f] text-white"
-                : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]"
+        <div className="flex gap-[16px] order-1 sm:order-2 self-end sm:self-auto items-center">
+          <div ref={sortMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsSortMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={isSortMenuOpen}
+              className="flex items-center gap-2 text-[#5B5B5B] hover:text-[#0f0f0f] transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="2" y1="14" x2="6" y2="14"></line>
+                <line x1="10" y1="8" x2="14" y2="8"></line>
+                <line x1="18" y1="16" x2="22" y2="16"></line>
+              </svg>
+              <span className="text-[13px] font-semibold">
+                {language === "pl" ? "Sortuj według" : "Sort by"}
+              </span>
+            </button>
+
+            {isSortMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-30 mt-2 min-w-[158px] rounded-2xl border border-neutral-200 bg-white p-1 shadow-lg"
+              >
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortBy === "newest"}
+                  onClick={() => handleSortChange("newest")}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
+                    sortBy === "newest"
+                      ? "bg-[#0f0f0f] text-white"
+                      : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
+                  )}
+                >
+                  {language === "pl" ? "Najnowsze" : "Newest"}
+                  {sortBy === "newest" && <span aria-hidden="true">•</span>}
+                </button>
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortBy === "top"}
+                  onClick={() => handleSortChange("top")}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
+                    sortBy === "top"
+                      ? "bg-[#0f0f0f] text-white"
+                      : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
+                  )}
+                >
+                  {language === "pl" ? "Najlepsze" : "Top"}
+                  {sortBy === "top" && <span aria-hidden="true">•</span>}
+                </button>
+              </div>
             )}
-          >
-            {language === "pl" ? "Najnowsze" : "Newest"}
-          </button>
-          <button
-            onClick={() => setSortBy("top")}
-            className={cn(
-              "text-[12px] font-bold px-3 py-1.5 rounded-full transition-all",
-              sortBy === "top"
-                ? "bg-[#0f0f0f] text-white"
-                : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]"
-            )}
-          >
-            {language === "pl" ? "Najlepsze" : "Top"}
-          </button>
+          </div>
         </div>
       </div>
 
