@@ -1,4 +1,27 @@
 /** @type {import('next').NextConfig} */
+const parseHosts = (value) => {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      try {
+        return new URL(entry.startsWith('http') ? entry : `https://${entry}`).hostname;
+      } catch {
+        return entry.replace(/^https?:\/\//, '').split('/')[0];
+      }
+    })
+    .filter(Boolean);
+};
+
+const configuredImageHosts = Array.from(new Set([
+  ...parseHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
+  ...parseHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
+  ...parseHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
+  ...parseHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
+]));
+
 const nextConfig = {
   productionBrowserSourceMaps: false,
   typescript: {
@@ -22,6 +45,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'www.dicebear.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'img.clerk.com',
       },
       {
@@ -32,6 +59,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.ytimg.com',
       },
+      ...configuredImageHosts.map((hostname) => ({
+        protocol: 'https',
+        hostname,
+        pathname: '/**',
+      })),
     ],
   },
   async headers() {
