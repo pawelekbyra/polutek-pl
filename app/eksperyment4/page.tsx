@@ -14,7 +14,7 @@ export default async function Eksperyment4Page(props: { searchParams: Promise<{ 
   const searchParams = await props.searchParams;
   const content = await loadHomeContent();
 
-  if (content.status === "error" || content.status === "empty") {
+  if (content.status === "error" || content.status === "empty" || !content.mainVideo) {
     return (
       <main className="min-h-screen bg-[#f8f3e7] px-6 py-20 text-center text-neutral-950">
         <div className="mx-auto max-w-3xl rounded-[28px] border-2 border-neutral-900/70 bg-[#f8f3e7]/80 p-10 shadow-none">
