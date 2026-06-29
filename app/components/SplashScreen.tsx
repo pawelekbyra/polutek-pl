@@ -102,7 +102,7 @@ export function SplashScreen() {
 
   return (
     <AnimatePresence>
-      {!isExiting && phase !== "done" && (
+      {!isExiting && (
         <motion.div
           key="splash"
           style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: PAPER, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
