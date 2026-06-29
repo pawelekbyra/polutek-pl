@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Eksperyment 4 · Polutek",
-  description: "Strona główna Polutek w uproszczonej ramie z bocznymi marginesami.",
+  description: "Strona główna Polutek w eksperymentalnej stylizacji bez zmiany układu bazowego.",
 };
 
 export default async function Eksperyment4Page(props: { searchParams: Promise<{ v?: string; q?: string }> }) {
@@ -121,6 +121,7 @@ export default async function Eksperyment4Page(props: { searchParams: Promise<{ 
 
   return (
     <ExperimentFourSkin>
+      <Navbar />
       <main className="relative">
         <ChannelHome
           mainVideo={mainVideo}
