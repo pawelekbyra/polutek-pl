@@ -103,7 +103,7 @@ export class VideoContentService {
         slug: video.slug,
         description: video.description,
         descriptionEn: video.descriptionEn,
-        thumbnailUrl: video.thumbnailUrl || `/api/videos/${video.id}/thumbnail`,
+        thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
         duration: video.duration,
         tier: video.tier,
         status: video.status ?? VideoStatus.PUBLISHED,
