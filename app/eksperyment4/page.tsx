@@ -11,13 +11,13 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { Metadata } from "next";
 import { getOrCreateCurrentUser } from "@/lib/modules/users";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import ExperimentFourSkin from "./ExperimentFourSkin";
+import ExperimentFourSkin from "./ExperimentFourFrame";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Eksperyment 4 — ink blueprint · Polutek",
-  description: "Precyzyjny, szkicowy blueprint Polutek z bracketami, markerem i kreskowaniem.",
+  title: "Eksperyment 4 · Polutek",
+  description: "Strona główna Polutek w uproszczonej ramie z bocznymi marginesami.",
 };
 
 export default async function Eksperyment4Page(props: { searchParams: Promise<{ v?: string; q?: string }> }) {
