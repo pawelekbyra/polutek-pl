@@ -180,7 +180,7 @@ const Navbar = () => {
             {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
                 <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-input bg-white text-[#171717] font-bold text-[13px] transition-all active:scale-95 active:bg-zinc-50 active:border-zinc-300 active:shadow-inner hover:bg-zinc-50 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-ring focus-visible:border-zinc-300 sm:w-auto sm:gap-2 sm:px-4"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#DAD6CC] bg-white text-[#171717] font-bold text-[13px] transition-all active:scale-95 active:bg-zinc-50 active:border-[#DAD6CC] hover:bg-zinc-50 hover:border-[#DAD6CC] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#DAD6CC] sm:w-auto sm:gap-2 sm:px-4"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
