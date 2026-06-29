@@ -17,3 +17,4 @@ coverage/
 
 /app/generated/prisma
 tsconfig.tsbuildinfo
+tsconfig.typecheck.tsbuildinfo
