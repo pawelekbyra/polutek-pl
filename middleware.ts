@@ -23,6 +23,8 @@ const isPublicRoute = createRouteMatcher([
   '/eksperyment13',
   '/eksperyment14',
   '/eksperyment15',
+  '/eksperyment20',
+  '/eksperyment21',
   '/regulamin',
   '/polityka-prywatnosci',
   '/api/webhooks(.*)',
