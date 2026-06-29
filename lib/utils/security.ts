@@ -1,5 +1,16 @@
 import { parseMediaHosts } from "@/lib/modules/media/domain/media-safety";
 
+function getR2UploadHosts() {
+  const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID?.trim();
+  const bucket = process.env.CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS?.trim();
+
+  return Array.from(new Set([
+    accountId && bucket ? `${bucket}.${accountId}.r2.cloudflarestorage.com` : null,
+    accountId ? `${accountId}.r2.cloudflarestorage.com` : null,
+    '*.r2.cloudflarestorage.com',
+  ].filter((host): host is string => Boolean(host))));
+}
+
 export function generateCSP() {
   const clerkDomains = [
     'clerk.com',
@@ -58,6 +69,7 @@ export function generateCSP() {
     ...clerkDomains,
     ...cloudflareStreamUploadHosts,
     ...cloudflareStreamPlaybackHosts,
+    ...getR2UploadHosts(),
     'api.stripe.com',
     'fonts.googleapis.com',
     ...configuredMediaHosts,
