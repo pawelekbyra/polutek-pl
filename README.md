@@ -18,6 +18,23 @@ Polutek.pl is a place.
 
 Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md), a bieżąca kolejka product/tech work w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
 
+## Tymczasowe katalogi i eksperymenty stylistyczne
+
+W repo mogą istnieć publiczne, tymczasowe adresy typu katalog/eksperyment, obecnie m.in.:
+
+- `/katalog`, `/katalog2`, `/katalog3` — katalogi/prototypy elementów stylu, narzędzi i wariantów UI,
+- `/eksperyment1`–`/eksperyment15` — kompletne warianty strony głównej służące do porównywania kierunków wizualnych.
+
+Te adresy nie są docelową architekturą produktu ani osobnymi funkcjami dla użytkownika końcowego. Służą wyłącznie do tymczasowego szukania właściwego kierunku wizualnego: papier, cienkopis, ręczna kreska, obramowania, SVG, roughjs/perfect-freehand/rough-notation/wired-elements oraz spokojniejsze warianty bloków i ramek.
+
+Zasady utrzymania porządku:
+
+- traktować katalogi i eksperymenty jako izolowane laboratorium stylistyczne,
+- nie podpinać ich jako stałej nawigacji produkcyjnej,
+- nie rozbudowywać ich bez końca po wybraniu finalnego kierunku,
+- po decyzji projektowej przenieść zwycięskie elementy do normalnych komponentów/design systemu,
+- usunąć albo zarchiwizować zbędne warianty, żeby nie robiły bałaganu w aplikacji.
+
 ## Kolejka zadań
 
 Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
@@ -43,23 +60,12 @@ Aktualnie obowiązuje tryb **active product roadmap**:
 
 Po #1173 playback prywatnych/patronowskich materiałów Cloudflare Stream używa lokalnie generowanych signed playback tokenów. Viewer hot path nie powinien wołać Cloudflare Admin API ani endpointu `/token` per widz.
 
-Przed uruchomieniem produkcyjnym ustaw w env:
-
-```txt
-CLOUDFLARE_STREAM_SIGNING_KEY_ID=...
-CLOUDFLARE_STREAM_SIGNING_PRIVATE_KEY=...
-# albo alternatywnie:
-CLOUDFLARE_STREAM_SIGNING_KEY_PEM=...
-
-# opcjonalnie, domyślnie 3600 sekund:
-CLOUDFLARE_STREAM_SIGNED_TOKEN_TTL_SECONDS=3600
-```
+Przed uruchomieniem produkcyjnym trzeba mieć skonfigurowane w środowisku wdrożeniowym właściwe zmienne dla Cloudflare Stream signing key oraz TTL tokenów. Wartości sekretów nie wolno logować, wklejać do issue, PR, screenshotów ani komentarzy.
 
 Notatki operacyjne:
 
-- `CLOUDFLARE_STREAM_SIGNING_PRIVATE_KEY` / `CLOUDFLARE_STREAM_SIGNING_KEY_PEM` może zawierać escaped newlines (`\n`).
+- Signing key może zawierać escaped newlines.
 - Brak signing key powoduje fail-closed dla signed playback: backend nie powinien zwrócić źródła odtwarzania.
-- Nie logować ani nie wklejać prywatnego klucza w issue, PR, screenshoty ani komentarze.
 - Po rotacji signing key trzeba zaktualizować env w środowiskach produkcyjnych i preview, które mają odtwarzać signed Cloudflare Stream.
 - #1106 nadal nie jest w pełni zamknięte: kolejne slice’y to cache/rate limit playback planu, event batching/collector, queue/worker/analytics aggregation oraz readiness/load-test/runbook.
 
