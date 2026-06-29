@@ -42,6 +42,7 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   html,
@@ -52,6 +53,34 @@
 
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior-y: contain;
+    /* Safe area for iPhone notch / home bar */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Prevent double-tap zoom on interactive elements */
+  button,
+  a,
+  [role="button"],
+  label {
+    touch-action: manipulation;
+  }
+
+  /* No accidental text selection on UI chrome */
+  button,
+  [role="button"],
+  nav,
+  header {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* No drag on images, logos, icons */
+  img,
+  svg {
+    -webkit-user-drag: none;
+    user-drag: none;
   }
 
   @supports not (overflow: clip) {
