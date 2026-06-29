@@ -43,7 +43,14 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
             linear-gradient(90deg, var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
             linear-gradient(var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
             var(--paper);
+          background-attachment: fixed;
           font-family: "Comic Sans MS", "Comic Sans", "Segoe Print", "Bradley Hand", "Chalkboard SE", cursive;
+        }
+
+        .experiment4-frame-skin *,
+        .experiment4-frame-skin *::before,
+        .experiment4-frame-skin *::after {
+          box-sizing: border-box;
         }
 
         .experiment4-frame-skin * {
@@ -61,23 +68,31 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         }
 
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
+          background: transparent !important;
           background-color: transparent !important;
+          padding-top: 78px;
         }
 
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > .fixed.z-0 {
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > .fixed.z-0,
+        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > [style*="backgroundImage"] {
           display: none !important;
         }
 
         .exp4-drawing > div:first-child,
         .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
-          position: sticky !important;
+          position: fixed !important;
           top: 0 !important;
+          left: clamp(12px, 3vw, 44px) !important;
+          right: clamp(12px, 3vw, 44px) !important;
           z-index: 1000 !important;
+          width: auto !important;
+          max-width: 1500px;
+          margin-inline: auto;
           overflow: visible !important;
-          background: rgba(247, 241, 228, 0.94) !important;
+          background: transparent !important;
           border-bottom: 0 !important;
           box-shadow: none !important;
-          backdrop-filter: blur(8px);
+          backdrop-filter: none !important;
         }
 
         .exp4-drawing > div:first-child::after,
@@ -99,9 +114,10 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         .exp4-drawing main[class*="bg-neutral-50"],
         .exp4-drawing .bg-neutral-50,
         .exp4-drawing .bg-white,
-        .exp4-drawing .bg-background\/80,
+        .exp4-drawing [class*="bg-background"],
         .exp4-drawing .bg-secondary {
           background: transparent !important;
+          background-color: transparent !important;
         }
 
         .exp4-drawing .border,
@@ -119,7 +135,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
 
         .exp4-drawing input,
         .exp4-drawing textarea {
-          background: rgba(247, 241, 228, .94) !important;
+          background: rgba(247, 241, 228, .72) !important;
           border: 1.8px solid rgba(18,18,18,.78) !important;
           border-radius: 3px !important;
           box-shadow: none !important;
@@ -193,7 +209,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           position: relative;
           border: 1.6px solid rgba(18,18,18,.68) !important;
           border-radius: 3px !important;
-          background: rgba(247,241,228,.74) !important;
+          background: rgba(247,241,228,.56) !important;
         }
 
         .exp4-drawing section.bg-transparent a[href^="/channel/"] {
@@ -268,7 +284,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           overflow: visible;
           border: 1.6px solid rgba(18,18,18,.68) !important;
           border-radius: 3px !important;
-          background: rgba(247,241,228,.82) !important;
+          background: rgba(247,241,228,.54) !important;
         }
 
         .exp4-drawing aside a[href^="/?v="]::before {
@@ -301,7 +317,7 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         .exp4-drawing div[class*="rounded-[16px]"],
         .exp4-drawing div[class*="rounded-2xl"],
         .exp4-drawing [role="menu"] {
-          background: rgba(247,241,228,.96) !important;
+          background: rgba(247,241,228,.58) !important;
           border-color: rgba(18,18,18,.66) !important;
           border-radius: 4px !important;
         }
@@ -314,6 +330,16 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         @media (max-width: 768px) {
           .experiment4-frame-skin {
             padding-inline: 0;
+          }
+
+          .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
+            padding-top: 72px;
+          }
+
+          .exp4-drawing > div:first-child,
+          .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
+            left: 0 !important;
+            right: 0 !important;
           }
 
           .exp4-drawing aside {
