@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Hero from "./Hero";
 import EmbeddedComments from "./comments/EmbeddedComments";
 import { PublicVideoDTO } from "../types/video";
@@ -11,6 +12,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
+import RoughHome from "../eksperyment1/RoughHome";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -51,6 +53,7 @@ export default function ChannelHome({
   userProfile,
 }: ChannelHomeProps) {
   const { t, language } = useLanguage();
+  const pathname = usePathname();
   const selectedVideo =
     (allVideos || []).find(
       (v) => v.id === currentVideoId || v.slug === currentVideoId,
@@ -100,6 +103,20 @@ export default function ChannelHome({
         </div>
       </main>
     );
+
+  const experimentRoute = pathname?.match(/^\/eksperyment([2-4])(?:\/|$)/);
+  if (experimentRoute) {
+    const experimentNumber = experimentRoute[1];
+    return (
+      <RoughHome
+        mainVideo={mainVideo || selectedVideo}
+        allVideos={allVideos}
+        currentVideoId={currentVideoId}
+        basePath={`/eksperyment${experimentNumber}`}
+        experimentLabel={`eksperyment${experimentNumber} — szkic ikon z 623bddad + N4/B5`}
+      />
+    );
+  }
 
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
