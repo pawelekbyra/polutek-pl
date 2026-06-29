@@ -202,7 +202,7 @@ describe("Cloudflare Lifecycle Hardening", () => {
       }));
 
       const { attemptPublishAfterAssetReady } = await import("@/lib/modules/video/application/publish-after-asset-ready.use-case");
-      expect(attemptPublishAfterAssetReady).toHaveBeenCalledWith("video-id", mockCtx);
+      expect(attemptPublishAfterAssetReady).toHaveBeenCalledWith("video-id", mockCtx, VIDEO_PROVIDER.CLOUDFLARE_STREAM);
     });
   });
 });

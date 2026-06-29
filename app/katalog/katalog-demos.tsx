@@ -25,7 +25,13 @@ function getSvgPathFromStroke(stroke: number[][]) {
 
 // --- Basic Components ---
 
-export const RoughLine = ({ width = 200, height = 20, params = {} }: any) => {
+interface BaseDemoProps {
+  width?: number;
+  height?: number;
+  params?: Record<string, unknown>;
+}
+
+export const RoughLine = ({ width = 200, height = 20, params = {} }: BaseDemoProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -34,7 +40,7 @@ export const RoughLine = ({ width = 200, height = 20, params = {} }: any) => {
       svgRef.current.innerHTML = '';
       const line = rc.line(10, height / 2, width - 10, height / 2, {
         stroke: 'currentColor',
-        ...params
+        ...params as any // intentional experimental style override
       });
       svgRef.current.appendChild(line);
     }
@@ -43,7 +49,7 @@ export const RoughLine = ({ width = 200, height = 20, params = {} }: any) => {
   return <svg ref={svgRef} width={width} height={height} className="text-slate-900" />;
 };
 
-export const RoughRect = ({ width = 200, height = 100, params = {} }: any) => {
+export const RoughRect = ({ width = 200, height = 100, params = {} }: BaseDemoProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -52,7 +58,7 @@ export const RoughRect = ({ width = 200, height = 100, params = {} }: any) => {
       svgRef.current.innerHTML = '';
       const rect = rc.rectangle(5, 5, width - 10, height - 10, {
         stroke: 'currentColor',
-        ...params
+        ...params as any // intentional experimental style override
       });
       svgRef.current.appendChild(rect);
     }
@@ -61,14 +67,14 @@ export const RoughRect = ({ width = 200, height = 100, params = {} }: any) => {
   return <svg ref={svgRef} width={width} height={height} className="text-slate-900" />;
 };
 
-export const FreehandLine = ({ width = 200, height = 40, params = {} }: any) => {
+export const FreehandLine = ({ width = 200, height = 40, params = {} }: BaseDemoProps) => {
   const points: [number, number, number][] = [
     [10, height / 2, 0.5],
     [width / 2, height / 2 + (Math.random() - 0.5) * 10, 0.8],
     [width - 10, height / 2, 0.3],
   ];
 
-  const stroke = getStroke(points, params);
+  const stroke = getStroke(points, params as any); // intentional experimental style override
   const pathData = getSvgPathFromStroke(stroke);
 
   return (
@@ -78,7 +84,7 @@ export const FreehandLine = ({ width = 200, height = 40, params = {} }: any) => 
   );
 };
 
-export const CustomPath = ({ width = 200, height = 40, path = 'M 10 20 Q 100 25 190 20', params = {} }: any) => {
+export const CustomPath = ({ width = 200, height = 40, path = 'M 10 20 Q 100 25 190 20', params = {} }: BaseDemoProps & { path?: string }) => {
   return (
     <svg width={width} height={height} className="text-slate-900 fill-none stroke-current stroke-2">
       <path d={path} strokeLinecap="round" strokeLinejoin="round" />
@@ -91,7 +97,7 @@ export const CustomPath = ({ width = 200, height = 40, path = 'M 10 20 Q 100 25 
 
 // --- Section Demos ---
 
-export const SectionLDemos: Record<string, React.FC<any>> = {
+export const SectionLDemos: Record<string, React.FC<BaseDemoProps>> = {
   L1: (p) => <RoughLine {...p} params={{ roughness: 1, strokeWidth: 1 }} />,
   L2: (p) => <RoughLine {...p} params={{ roughness: 1.5, strokeWidth: 3 }} />,
   L3: (p) => <RoughLine {...p} params={{ roughness: 4, strokeWidth: 2 }} />,
@@ -112,7 +118,7 @@ export const SectionLDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionBDemos: Record<string, React.FC<any>> = {
+export const SectionBDemos: Record<string, React.FC<BaseDemoProps>> = {
   B1: (p) => <RoughRect width={150} height={100} params={{ roughness: 1.2 }} />,
   B2: (p) => <RoughRect width={250} height={150} params={{ roughness: 0.8, strokeWidth: 1.5 }} />,
   B3: (p) => <RoughRect width={120} height={50} params={{ bowing: 2, roughness: 2 }} />,
@@ -144,7 +150,7 @@ export const SectionBDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionSDemos: Record<string, React.FC<any>> = {
+export const SectionSDemos: Record<string, React.FC<BaseDemoProps>> = {
   S1: (p) => <RoughLine {...p} params={{ roughness: 0.5 }} />,
   S2: (p) => <CustomPath {...p} path="M 10 20 C 50 10, 150 30, 190 20" />,
   S3: (p) => (
@@ -178,7 +184,7 @@ export const SectionSDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionNDemos: Record<string, React.FC<any>> = {
+export const SectionNDemos: Record<string, React.FC<BaseDemoProps>> = {
   N1: () => <AnnotatedText type="underline">Podkreślony tekst</AnnotatedText>,
   N2: () => <AnnotatedText type="box">Tekst w pudełku</AnnotatedText>,
   N3: () => <AnnotatedText type="circle">Zakreślone kółkiem</AnnotatedText>,
@@ -205,7 +211,7 @@ export const SectionNDemos: Record<string, React.FC<any>> = {
   N12: () => <AnnotatedText type="box" animate={false}>Statyczny szkic</AnnotatedText>,
 };
 
-export const SectionZDemos: Record<string, React.FC<any>> = {
+export const SectionZDemos: Record<string, React.FC<BaseDemoProps>> = {
   Z1: () => (
     <div className="flex flex-col items-center">
       <AnnotatedText type="underline">Nagłówek sekcji</AnnotatedText>
@@ -256,7 +262,7 @@ export const SectionZDemos: Record<string, React.FC<any>> = {
   Z10: () => <AnnotatedText type="highlight" animate={false}>Statyczne Z10</AnnotatedText>,
 };
 
-export const SectionPDemos: Record<string, React.FC<any>> = {
+export const SectionPDemos: Record<string, React.FC<BaseDemoProps>> = {
   P1: () => (
     <button className="px-4 py-2 relative">
       <div className="absolute inset-0"><RoughRect width={100} height={40} params={{ roughness: 1 }} /></div>
@@ -296,7 +302,7 @@ export const SectionPDemos: Record<string, React.FC<any>> = {
   P8: () => <WiredButton>Wired Button</WiredButton>,
 };
 
-export const SectionKDemos: Record<string, React.FC<any>> = {
+export const SectionKDemos: Record<string, React.FC<BaseDemoProps>> = {
   K1: () => (
     <div className="p-6 relative w-64 h-40">
       <div className="absolute inset-0"><RoughRect width={256} height={160} params={{ roughness: 1.5, iterations: 3 }} /></div>
@@ -346,7 +352,7 @@ export const SectionKDemos: Record<string, React.FC<any>> = {
   K8: () => <div className="flex gap-4"><SectionKDemos.K1 /><SectionKDemos.K3 /></div>,
 };
 
-export const SectionVDemos: Record<string, React.FC<any>> = {
+export const SectionVDemos: Record<string, React.FC<BaseDemoProps>> = {
   V1: () => (
     <div className="w-64 aspect-video relative">
       <div className="absolute inset-0"><RoughRect width={256} height={144} /></div>
@@ -397,7 +403,7 @@ export const SectionVDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionWDemos: Record<string, React.FC<any>> = {
+export const SectionWDemos: Record<string, React.FC<BaseDemoProps>> = {
   W1: () => <WiredButton>Wired Button</WiredButton>,
   W2: () => <WiredInput placeholder="Twój e-mail" />,
   W3: () => <div className="flex items-center gap-2"><WiredCheckbox /><span>Zgadzam się</span></div>,
@@ -412,7 +418,7 @@ export const SectionWDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionTDemos: Record<string, React.FC<any>> = {
+export const SectionTDemos: Record<string, React.FC<BaseDemoProps>> = {
   T1: () => (
     <div className="w-full h-32 bg-[#fdfbf7] relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }}></div>
@@ -462,7 +468,7 @@ export const SectionTDemos: Record<string, React.FC<any>> = {
   ),
 };
 
-export const SectionCDemos: Record<string, React.FC<any>> = {
+export const SectionCDemos: Record<string, React.FC<BaseDemoProps>> = {
   C1: () => <SectionLDemos.L1 />,
   C2: () => <SectionBDemos.B1 />,
   C3: () => <SectionSDemos.S1 />,
@@ -472,7 +478,7 @@ export const SectionCDemos: Record<string, React.FC<any>> = {
   C7: () => <SectionVDemos.V3 />,
 };
 
-export const AllDemos: Record<string, Record<string, React.FC<any>>> = {
+export const AllDemos: Record<string, Record<string, React.FC<BaseDemoProps>>> = {
   L: SectionLDemos,
   B: SectionBDemos,
   S: SectionSDemos,

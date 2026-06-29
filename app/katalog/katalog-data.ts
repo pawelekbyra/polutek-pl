@@ -8,7 +8,7 @@ export interface KatalogItem {
   description: string;
   useCase: string;
   status: Status;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
 }
 
 export interface KatalogSection {

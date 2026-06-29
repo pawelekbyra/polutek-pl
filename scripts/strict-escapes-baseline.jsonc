@@ -709,6 +709,76 @@
       "label": "explicit any annotation",
       "text": "accessTier: tier as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 8,
+      "label": "explicit any annotation",
+      "text": "'wired-button': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 9,
+      "label": "explicit any annotation",
+      "text": "'wired-input': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 10,
+      "label": "explicit any annotation",
+      "text": "'wired-checkbox': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 11,
+      "label": "explicit any annotation",
+      "text": "'wired-radio': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 12,
+      "label": "explicit any annotation",
+      "text": "'wired-card': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/components/WiredWrappers.tsx",
+      "line": 13,
+      "label": "explicit any annotation",
+      "text": "'wired-slider': any; // intentional experimental style override",
+      "reason": "Experimental hand-drawn style catalog requires dynamic custom elements."
+    },
+    {
+      "file": "app/katalog/katalog-demos.tsx",
+      "line": 43,
+      "label": "explicit any annotation",
+      "text": "...params as any // intentional experimental style override",
+      "reason": "RoughJS options object is extremely permissive and hard to type strictly without excessive boilerplate in this experiment."
+    },
+    {
+      "file": "app/katalog/katalog-demos.tsx",
+      "line": 61,
+      "label": "explicit any annotation",
+      "text": "...params as any // intentional experimental style override",
+      "reason": "RoughJS options object is extremely permissive and hard to type strictly without excessive boilerplate in this experiment."
+    },
+    {
+      "file": "app/katalog/katalog-demos.tsx",
+      "line": 77,
+      "label": "explicit any annotation",
+      "text": "const stroke = getStroke(points, params as any); // intentional experimental style override",
+      "reason": "Perfect Freehand options object is extremely permissive and hard to type strictly without excessive boilerplate in this experiment."
+    },
+    {
+      "file": "app/katalog/components/AnnotatedText.tsx",
+      "line": 32,
+      "label": "explicit any annotation",
+      "text": "brackets: brackets as any // intentional experimental style override",
+      "reason": "Rough-notation brackets prop typing mismatch in experimental code."
     }
   ]
 }

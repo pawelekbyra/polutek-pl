@@ -29,7 +29,7 @@ export const AnnotatedText: React.FC<AnnotatedTextProps> = ({
         color,
         animate,
         multiline,
-        brackets: brackets as any
+        brackets: brackets as any // intentional experimental style override
       });
       annotation.show();
       return () => annotation.remove();
