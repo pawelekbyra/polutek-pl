@@ -2,24 +2,33 @@
   "name": "Polutek",
   "short_name": "Polutek",
   "description": "Niezależny kanał wideo — materiały publiczne, dla zalogowanych i patronackie.",
+  "id": "/",
   "start_url": "/",
-  "display": "standalone",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait-primary",
   "background_color": "#f7f1e4",
   "theme_color": "#f7f1e4",
   "lang": "pl",
   "icons": [
     {
+      "src": "/icon",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/icon-enter.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/icon-enter.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     }
   ],
   "screenshots": [],
