@@ -161,7 +161,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           </h1>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-[14px]">
-            <div className="flex items-center gap-[13px] min-w-0">
+            <div className="flex w-full items-center gap-[13px] min-w-0 lg:w-auto">
                <Link
                  href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
                  className="w-[46px] h-[46px] rounded-full bg-gradient-to-br from-[#2f2c27] to-[#4a463f] border border-input overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
@@ -185,7 +185,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      {mounted ? formatCount(localSubState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
-               <div className="ml-[6px] shrink-0">
+               <div className="ml-auto shrink-0 lg:ml-[6px]">
                   <SubscribeButton
                     creatorId={video.creatorId}
                     creatorSlug={video.creator?.slug}
@@ -202,13 +202,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </div>
             </div>
 
-            <div className="flex items-center gap-[9px]">
-               <div className="flex items-center bg-white rounded-full h-[38px] overflow-hidden border border-input">
+            <div className="flex w-full items-center gap-[9px] lg:w-auto">
+               <div className="flex h-[38px] flex-1 items-center overflow-hidden rounded-full border border-input bg-white lg:flex-none">
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "flex items-center justify-center gap-2 pl-5 pr-4 h-full hover:bg-secondary transition-colors border-r border-[#E4E0D6] relative active:bg-secondary/80",
+                        "flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 hover:bg-secondary transition-colors border-r border-[#E4E0D6] relative active:bg-secondary/80 lg:flex-none lg:pl-5 lg:pr-4",
                         interactionState.isLiked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
@@ -221,13 +221,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "flex h-full w-[44px] items-center justify-center hover:bg-secondary transition-colors active:bg-secondary/80",
+                        "flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 hover:bg-secondary transition-colors active:bg-secondary/80 lg:flex-none",
                         interactionState.isDisliked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
                      <ThumbsDown size={18} className={cn(interactionState.isDisliked && "fill-primary")} />
+                     <span className="text-[14px] font-bold">{interactionState.dislikesCount.toLocaleString('pl-PL')}</span>
                   </button>
                </div>
                   <ShareButton
