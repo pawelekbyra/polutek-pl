@@ -97,6 +97,7 @@ export function AdminVideoEditView({
             autoStart
             onUploadComplete={() => fetchVideos(page)}
             publishAfterReady={createUploadState.publishAfterReady}
+            preferredProvider={preferredProvider}
           />
           {createUploadState.publishAfterReady ? (
             <p className="mt-3 text-sm text-muted-foreground">
