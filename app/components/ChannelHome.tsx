@@ -104,9 +104,9 @@ export default function ChannelHome({
       </main>
     );
 
-  const experimentRoute = pathname?.match(/^\/eksperyment([2-4])(?:\/|$)/);
-  if (experimentRoute) {
-    const experimentNumber = experimentRoute[1];
+  const roughExperimentRoute = pathname?.match(/^\/eksperyment([2-3])(?:\/|$)/);
+  if (roughExperimentRoute) {
+    const experimentNumber = roughExperimentRoute[1];
     return (
       <RoughHome
         mainVideo={mainVideo || selectedVideo}
