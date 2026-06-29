@@ -55,9 +55,9 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 1.3 | `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 | `DONE` | Zweryfikowane w kodzie: wszystkie 4 routes używają `fromUseCaseResult()` |
 | 1.4 | `BUG-004` — replace string-matching error classification in payment/admin routes | `DONE` | Zweryfikowane w kodzie: używa `statusCode` zamiast `includes('Forbidden')` |
 | 1.5 | `BUG-005` — support custom Vercel Blob public host in thumbnail response service | `DONE` | Zweryfikowane w kodzie: `thumbnail-response.service.ts:99` sprawdza `NEXT_PUBLIC_BLOB_PUBLIC_HOST` |
-| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `video.repository.ts:268` zmienione na `?? ''` |
+| 1.6 | `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `video.repository.ts:268` zmienione na `?? ''`; later PR #1256 keeps thumbnails behind `/api/videos/[id]/thumbnail` |
 | 1.7 | `BUG-007` — malformed JSON handling in admin routes | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: try/catch przy `req.json()` w `emails/broadcast/route.ts` (actions już miało) |
-| 1.8 | `#1204` — complete multi-source video system (diagnostics, YouTube thumbnail, SEO, oEmbed, security tests) | `DONE` | PR claude/pr-1200-review-7ru1bo |
+| 1.8 | `#1204` — multi-source video slice: diagnostics, YouTube thumbnail, SEO, oEmbed, security tests | `DONE` | PR #1205. Later provider/upload expansion continued through #1227 and #1248; #1204/#1228 may remain product containers, not this old refactor remainder. |
 | 2.1 | `INCOMPLETE-007` — remove dead `Actor.isPatron` | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: usunięte z `actor.ts`, konstruktorów i testów |
 | 2.2 | `INCOMPLETE-004` — bounce/complaint email auto-suppression | `DONE` | Zweryfikowane w kodzie: `handle-resend-webhook.use-case.ts:269` ustawia `marketingEmails: false` |
 | 2.3 | `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper | `DONE` | Zweryfikowane w kodzie: `VideoPlayer.tsx:456-458` komentarz potwierdza świadomą decyzję — PremiumWrapper owns loading |
@@ -65,31 +65,29 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
 | 3.1 | `INCOMPLETE-001` — HELD_FOR_REVIEW implementation | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: use cases hold/approve, auto-trigger (próg 3), API routes, admin UI |
 | 3 | `INCOMPLETE-002` — remove referral system | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: schema, model, user fields, patron referralId, use cases, services, tests |
-| 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/dispute-sync` + `adminDisputeSync` use case + UI button (DISPUTED/CHARGEBACK_LOST rows) |
-| 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/refund` + `adminRefund` use case + refund dialog UI |
-| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-28 audit: no Vercel cron config or Stripe reconciliation job was found. |
+| 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `DONE` | PR #1250: `POST /api/admin/payments/[id]/dispute-sync`, `adminDisputeSync` use case and admin UI action |
+| 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `DONE` | PR #1250: `POST /api/admin/payments/[id]/refund`, `adminRefund` use case and refund dialog UI |
+| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-30 search still found no Vercel cron config or Stripe reconciliation job. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved. branch `claude/roadmap-stripe-cleanup-2dm6tc`: `user-access.service.ts` deleted, `recalculateUserPatronStatus` inlined to `payment.service.ts`, `audit.service.ts` deleted (no callers). Remaining: migrate `email.service.ts`, migrate `user/profile.service.ts`. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224 moved `syncClerkAccess`; PR #1259 deleted `user-access.service.ts`, inlined `recalculateUserPatronStatus` to `payment.service.ts`, and deleted `audit.service.ts`. Remaining: migrate `email.service.ts`, migrate `lib/services/user/profile.service.ts`. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
-## Current verified remainder — 2026-06-28
+## Current verified remainder — 2026-06-30
 
-Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokumentu względem kodu aktualny otwarty zakres wykonywalny to:
+Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokumentu względem kodu i ostatnich merge’y aktualny otwarty zakres wykonywalny to tylko:
 
-1. `INCOMPLETE-003` — admin UI/manual sync dla sporów Stripe.
-2. `INCOMPLETE-005` — admin refund endpoint/UI.
-3. `INCOMPLETE-006` — Stripe reconciliation job/cron.
-4. `CLEANUP-001` — częściowa migracja legacy services, wykonywać małymi slice’ami.
+1. `INCOMPLETE-006` — Stripe reconciliation job/cron.
+2. `CLEANUP-001` — końcowa migracja legacy services: `email.service.ts` oraz `lib/services/user/profile.service.ts`, wykonywana małymi slice’ami.
 
-Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Launch-Execution-Backlog.md`. To nie jest bieżący kodowy ticket, ale public launch pozostaje `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
+`INCOMPLETE-003` i `INCOMPLETE-005` nie są już remainderem: oba zostały scalone w PR #1250. Public launch pozostaje osobnym `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
 
 ## Roadmap progress tracker
 
 ### Setup / control-plane work
 
 - [x] Point canonical ready queue at `REFACTORING-ROADMAP-2026-06-27` — commit `ef9f6a125a7899d350dd04ed7d474263281272e5`
-- [x] Add mandatory post-work update rule for agents — commit pending/current update
+- [x] Add mandatory post-work update rule for agents
 
 ### Critical bugs from roadmap
 
@@ -98,23 +96,23 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 - [x] `BUG-003` — admin comments routes return typed use-case errors, not hardcoded 500 — `DONE` (zweryfikowane w kodzie)
 - [x] `BUG-004` — replace string-matching error classification in payment/admin routes — `DONE` (zweryfikowane w kodzie)
 - [x] `BUG-005` — support custom Vercel Blob public host in thumbnail response service — `DONE` (zweryfikowane w kodzie)
-- [x] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data — `DONE` PR claude/polutek-pl-proposals-qfkm9y
+- [x] `BUG-006` — stop persisting `/logo.png` fallback as real thumbnail data — `DONE` PR claude/polutek-pl-proposals-qfkm9y; later hardened by PR #1256
 - [x] `BUG-007` — malformed JSON handling in admin routes — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 
 ### Incomplete features from roadmap
 
 - [x] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-002` — referral system removed — `DONE` PR claude/polutek-pl-proposals-qfkm9y
-- [x] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `DONE`, branch `claude/work-options-discussion-gw0nn5`
+- [x] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `DONE` PR #1250
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
-- [x] `INCOMPLETE-005` — admin refund endpoint/UI — `DONE`, branch `claude/work-options-discussion-gw0nn5`
-- [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, 2026-06-28 audit found no cron/reconciliation job
+- [x] `INCOMPLETE-005` — admin refund endpoint/UI — `DONE` PR #1250
+- [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, no cron/reconciliation job found in current main search
 - [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 
 ### Cleanup from roadmap
 
-- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 + branch `claude/roadmap-stripe-cleanup-2dm6tc` completed `syncClerkAccess` migration and deleted `user-access.service.ts`/`audit.service.ts`; remaining: `email.service.ts`, `profile.service.ts`
+- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 + PR #1259 completed `syncClerkAccess`, deleted `user-access.service.ts` and deleted `audit.service.ts`; remaining: `email.service.ts`, `lib/services/user/profile.service.ts`
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
@@ -133,6 +131,12 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 
 ## Recently completed / HISTORICAL
 
+- `#1259` — CLEANUP-001 partial: `user-access.service.ts` and `audit.service.ts` deleted; legacy bridge reduced to `email.service.ts` and `lib/services/user/profile.service.ts`.
+- `#1258` — Clerk language update rate-limit guard, absolute icon URL and `EmailTemplate.name` migration fix.
+- `#1257` — najs hand-drawn style applied to real homepage/channel surfaces after the experiment pass.
+- `#1256` — thumbnail display now proxies through `/api/videos/[id]/thumbnail`; private blob URL stays backend-only.
+- `#1250` — `INCOMPLETE-003` and `INCOMPLETE-005` completed: admin dispute sync and refund UI/API.
+- `#1248` — preferred provider selection for video upload; admin chooses Cloudflare/Mux primary while R2 mirror pipeline keeps fallback.
 - `#1224` — CLEANUP-001 partial: `syncClerkAccess` migrated to `lib/modules/users`; payment/admin/script callers updated; CI green after follow-up test mock fixes.
 - `REFACTORING-ROADMAP-2026-06-27` — historical technical audit baseline; no longer the only active product roadmap.
 - `#1217` — duplicate scope merged into #1204 and closed.
@@ -143,8 +147,8 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 - `SECURITY-DEPENDENCY-REMEDIATION-001` — HISTORICAL; implementation merged by PR #946, high audit findings reached zero, and this is not the current executable ticket.
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
-- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001`
-- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001`
+- `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — historical completed video-state contract work.
+- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — historical completed provider-lifecycle work.
 - `OWNER-LAUNCH-DECISIONS-001` — HISTORICAL; owner decisions are recorded, but runtime implementation, legal review, operator evidence, and X7 remain incomplete.
 - `LAUNCH-CERTIFICATION-AFTER-CI-DEBT-CLOSURE-001` — HISTORICAL verifier task for #951; public launch remains `NO_GO` pending production evidence, legal review, remaining implementation requirements, and final owner certification.
 
