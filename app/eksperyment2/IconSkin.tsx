@@ -1,5 +1,5 @@
 "use client";
 
 export default function IconSkin() {
-  return null;
+  return <span aria-hidden="true" hidden />;
 }
