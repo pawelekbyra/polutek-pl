@@ -121,6 +121,7 @@ export default async function Eksperyment4Page(props: { searchParams: Promise<{ 
 
   return (
     <ExperimentFourSkin>
+      <Navbar />
       <main className="relative">
         <ChannelHome
           mainVideo={mainVideo}
