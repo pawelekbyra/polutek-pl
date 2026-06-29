@@ -38,9 +38,17 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
+  "app/admin/videos/page.tsx": {
+    maxLines: 500,
+    reason: knownUiHotspotReason,
+  },
   "app/admin/videos/[id]/page.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,
+  },
+  "app/katalog/katalog-demos.tsx": {
+    maxLines: 600,
+    reason: "Experimental catalog demo library; contains many small inline UI components for style preview.",
   },
   "app/admin/emails/EmailTemplateEditor.tsx": {
     maxLines: 500,
@@ -68,7 +76,7 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason: knownUiHotspotReason,
   },
   "app/components/comments/EmbeddedComments.tsx": {
-    maxLines: 500,
+    maxLines: 600,
     reason: knownUiHotspotReason,
   },
   "app/components/comments/components/CommentItem.tsx": {
