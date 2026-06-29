@@ -50,6 +50,14 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 600,
     reason: "Experimental catalog demo library; contains many small inline UI components for style preview.",
   },
+  "app/eksperyment2/ExperimentTwoSkin.tsx": {
+    maxLines: 720,
+    reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
+  },
+  "app/eksperyment7/ExperimentSevenSkin.tsx": {
+    maxLines: 480,
+    reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
+  },
   "app/admin/emails/EmailTemplateEditor.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,
