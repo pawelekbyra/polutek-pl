@@ -6,6 +6,8 @@ export * from "./application/handle-stripe-webhook.use-case";
 export * from "./application/get-payment-settings.use-case";
 export * from "./application/update-payment-settings.use-case";
 export * from "./application/list-admin-payments.use-case";
+export * from "./application/admin-refund.use-case";
+export * from "./application/admin-dispute-sync.use-case";
 export * from "./application/get-user-payments.use-case";
 export * from "./application/get-payment-status.use-case";
 export * from "./domain/payment.dto";

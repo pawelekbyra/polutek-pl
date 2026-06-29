@@ -65,8 +65,8 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 2.5 | `CLEANUP-004` — hardcoded support email in components | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `PremiumWrapper.tsx:391` fallback zmieniony z email na `''` |
 | 3.1 | `INCOMPLETE-001` — HELD_FOR_REVIEW implementation | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: use cases hold/approve, auto-trigger (próg 3), API routes, admin UI |
 | 3 | `INCOMPLETE-002` — remove referral system | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: schema, model, user fields, patron referralId, use cases, services, tests |
-| 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `TODO` | 2026-06-28 audit: webhook dispute handling exists, but admin payments page remains list/filter-only and no manual dispute-sync route was found. |
-| 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `TODO` | 2026-06-28 audit: `handleRefund` is webhook/internal processing only; no admin refund POST route or UI action was found. |
+| 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/dispute-sync` + `adminDisputeSync` use case + UI button (DISPUTED/CHARGEBACK_LOST rows) |
+| 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `DONE` | branch `claude/work-options-discussion-gw0nn5`: `POST /api/admin/payments/[id]/refund` + `adminRefund` use case + refund dialog UI |
 | 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-28 audit: no Vercel cron config or Stripe reconciliation job was found. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
@@ -105,9 +105,9 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 
 - [x] `INCOMPLETE-001` — HELD_FOR_REVIEW implementation — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-002` — referral system removed — `DONE` PR claude/polutek-pl-proposals-qfkm9y
-- [ ] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `TODO`, 2026-06-28 audit confirms webhook handling exists but manual admin control is still missing
+- [x] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `DONE`, branch `claude/work-options-discussion-gw0nn5`
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
-- [ ] `INCOMPLETE-005` — admin refund endpoint/UI — `TODO`, 2026-06-28 audit confirms only webhook/internal refund handling exists
+- [x] `INCOMPLETE-005` — admin refund endpoint/UI — `DONE`, branch `claude/work-options-discussion-gw0nn5`
 - [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, 2026-06-28 audit found no cron/reconciliation job
 - [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
