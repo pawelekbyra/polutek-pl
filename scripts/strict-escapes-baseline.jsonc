@@ -309,6 +309,20 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
+      "file": "lib/modules/payments/application/admin-dispute-sync.use-case.ts",
+      "line": 23,
+      "label": "explicit any annotation",
+      "text": "return new Stripe(key, { apiVersion: \"2024-12-18.acacia\" as any });",
+      "reason": "Stripe SDK apiVersion type requires as any; same pattern as handle-stripe-webhook.use-case.ts. Added by INCOMPLETE-003."
+    },
+    {
+      "file": "lib/modules/payments/application/admin-refund.use-case.ts",
+      "line": 31,
+      "label": "explicit any annotation",
+      "text": "return new Stripe(key, { apiVersion: \"2024-12-18.acacia\" as any });",
+      "reason": "Stripe SDK apiVersion type requires as any; same pattern as handle-stripe-webhook.use-case.ts. Added by INCOMPLETE-005."
+    },
+    {
       "file": "lib/modules/payments/application/handle-stripe-webhook.use-case.ts",
       "line": 103,
       "label": "explicit any annotation",

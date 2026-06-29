@@ -77,15 +77,15 @@ export async function adminDisputeSync(
       return ok({ disputeId: null, disputeStatus: null, synced: false, message: "No charges found for this payment intent" });
     }
 
-    if (!charge.dispute) {
+    const disputes = await stripe.disputes.list({ charge: charge.id, limit: 1 });
+    if (!disputes.data[0]) {
       return ok({ disputeId: null, disputeStatus: null, synced: false, message: "No dispute found for this payment" });
     }
-
-    const disputeId = typeof charge.dispute === "string" ? charge.dispute : charge.dispute.id;
-    dispute = await stripe.disputes.retrieve(disputeId);
-  } catch (err: any) {
+    dispute = disputes.data[0];
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     logger.error(`[AdminDisputeSync] Stripe API error for payment ${payment.id}:`, err);
-    return fail(new PaymentProviderError(`Stripe dispute fetch failed: ${err.message}`));
+    return fail(new PaymentProviderError(`Stripe dispute fetch failed: ${msg}`));
   }
 
   const { mappedStatus, isLost, isWon } = mapStripeDisputeStatus(dispute.status);

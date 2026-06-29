@@ -87,9 +87,10 @@ export async function adminRefund(
       amount: requestedAmount,
       ...(input.reason ? { reason: "requested_by_customer" } : {}),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     logger.error(`[AdminRefund] Stripe API error for payment ${payment.id}:`, err);
-    return fail(new PaymentProviderError(`Stripe refund failed: ${err.message}`));
+    return fail(new PaymentProviderError(`Stripe refund failed: ${msg}`));
   }
 
   // Apply refund in DB immediately — webhook is idempotent via CAS and will be a no-op

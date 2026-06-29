@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { adminDisputeSync } from "@/lib/modules/payments/application/admin-dispute-sync.use-case";
+import { adminDisputeSync } from "@/lib/modules/payments";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
 
