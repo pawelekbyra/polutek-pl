@@ -287,7 +287,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   return (
     <div
       ref={commentsTopRef}
-      className="space-y-[30px] max-w-full bg-transparent pt-3 rounded-none border-none shadow-none my-[30px] relative"
+      className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent pt-1 sm:pt-3 rounded-none border-none shadow-none mt-2 mb-[30px] sm:my-[30px] relative"
     >
       {/* Sticky Header */}
       {showStickyHeader && (
@@ -308,7 +308,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-[20px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
         <div className="flex items-center gap-3 order-2 sm:order-1">
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
@@ -367,7 +367,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   className={cn(
                     "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
                     sortBy === "newest"
-                      ? "bg-[#0f0f0f] text-white"
+                      ? "bg-[#f1f1f1] text-[#0f0f0f]"
                       : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
                   )}
                 >
@@ -382,7 +382,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   className={cn(
                     "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
                     sortBy === "top"
-                      ? "bg-[#0f0f0f] text-white"
+                      ? "bg-[#f1f1f1] text-[#0f0f0f]"
                       : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
                   )}
                 >
