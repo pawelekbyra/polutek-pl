@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { PaymentFulfillmentService } from '@/lib/services/payments/fulfillment.service';
-import { UserAccessService } from '@/lib/services/user-access.service';
+import { recalculatePatronStatus } from '@/lib/modules/patron';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 const mockConstructEvent = vi.fn();
@@ -65,10 +65,8 @@ vi.mock('@/lib/services/payments/fulfillment.service', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user-access.service', () => ({
-  UserAccessService: {
-    recalculateUserPatronStatus: vi.fn().mockResolvedValue({ isPatron: true, normalizedTotal: 100 }),
-  },
+vi.mock('@/lib/modules/patron', () => ({
+  recalculatePatronStatus: vi.fn().mockResolvedValue({ ok: true, data: { isPatron: true, normalizedTotal: 100 } }),
 }));
 
 vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
@@ -145,12 +143,12 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
       vi.mocked(prisma.payment.updateMany).mockResolvedValue({ count: 1 } as any);
       vi.mocked((prisma as any).userPaymentTotal.findUnique).mockResolvedValue({ amountMinor: 1000 });
       vi.mocked((prisma as any).userPaymentTotal.update).mockResolvedValue({} as any);
-      vi.mocked(UserAccessService.recalculateUserPatronStatus).mockResolvedValue({ isPatron: false, normalizedTotal: 5 });
+      vi.mocked(recalculatePatronStatus).mockResolvedValue({ ok: true, data: { isPatron: false, normalizedTotal: 5 } } as any);
 
       await PaymentService.handleWebhook(body, sig);
 
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
-      expect(UserAccessService.recalculateUserPatronStatus).toHaveBeenCalledWith('user_1', prisma);
+      expect(recalculatePatronStatus).toHaveBeenCalledWith('user_1', expect.any(Object), prisma);
       expect(syncClerkAccess).toHaveBeenCalledWith('user_1', false, 5);
   });
 

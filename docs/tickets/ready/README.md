@@ -70,7 +70,7 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-28 audit: no Vercel cron config or Stripe reconciliation job was found. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved to `lib/modules/users` and callers updated. Active map reconciled in `docs/tickets/active/CLEANUP-001-legacy-services.md`. Remaining: remove `user-access.service.ts` bridge, maybe delete stale `audit.service.ts`, migrate `email.service.ts`, migrate `user/profile.service.ts`. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224: `syncClerkAccess` moved. branch `claude/roadmap-stripe-cleanup-2dm6tc`: `user-access.service.ts` deleted, `recalculateUserPatronStatus` inlined to `payment.service.ts`, `audit.service.ts` deleted (no callers). Remaining: migrate `email.service.ts`, migrate `user/profile.service.ts`. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Current verified remainder — 2026-06-28
@@ -114,7 +114,7 @@ Osobno nadal istnieje większy launch/legal/evidence backlog z `docs/roadmap/Lau
 
 ### Cleanup from roadmap
 
-- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 completed `syncClerkAccess`; next slice is legacy bridge/deletion cleanup before email/profile services
+- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 + branch `claude/roadmap-stripe-cleanup-2dm6tc` completed `syncClerkAccess` migration and deleted `user-access.service.ts`/`audit.service.ts`; remaining: `email.service.ts`, `profile.service.ts`
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
