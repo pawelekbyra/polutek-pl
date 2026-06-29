@@ -779,6 +779,174 @@
       "label": "explicit any annotation",
       "text": "brackets: brackets as any // intentional experimental style override",
       "reason": "Rough-notation brackets prop typing mismatch in experimental code."
+    },
+    {
+      "file": "app/katalog2/sections/BorderSection.tsx",
+      "line": 48,
+      "label": "explicit any annotation",
+      "text": "fillStyle: fill !== \"none\" ? (fillStyle as any) : undefined,",
+      "reason": "RoughJS fillStyle union type not exported; as any is unavoidable without duplicating library internals in this experimental catalog."
+    },
+    {
+      "file": "app/katalog2/sections/NotationSection.tsx",
+      "line": 34,
+      "label": "explicit any annotation",
+      "text": "brackets: brackets as any,",
+      "reason": "Rough-notation brackets prop typing mismatch in experimental catalog code."
+    },
+    {
+      "file": "app/katalog2/sections/PaperSection.tsx",
+      "line": 80,
+      "label": "explicit any annotation",
+      "text": "<DemoBox key={label} title={label} status={status as any} tech=\"CSS/SVG\">",
+      "reason": "Status string narrowing in experimental catalog demo array; widening to any avoids redundant type assertion per array element."
+    },
+    {
+      "file": "app/katalog2/sections/PlaygroundSection.tsx",
+      "line": 82,
+      "label": "explicit any annotation",
+      "text": "fillStyle: params.fillEnabled ? (params.fillStyle as any) : undefined,",
+      "reason": "RoughJS fillStyle union type not exported; as any is unavoidable without duplicating library internals in this experimental catalog."
+    },
+    {
+      "file": "app/katalog2/sections/PlaygroundSection.tsx",
+      "line": 95,
+      "label": "explicit any annotation",
+      "text": "type: params.notationType as any,",
+      "reason": "Rough-notation annotation type driven by dynamic string param; as any avoids duplicating the union type in experimental playground."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 9,
+      "label": "explicit any annotation",
+      "text": "\"wired-button\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 10,
+      "label": "explicit any annotation",
+      "text": "\"wired-input\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 11,
+      "label": "explicit any annotation",
+      "text": "\"wired-checkbox\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 12,
+      "label": "explicit any annotation",
+      "text": "\"wired-radio\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 13,
+      "label": "explicit any annotation",
+      "text": "\"wired-card\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 14,
+      "label": "explicit any annotation",
+      "text": "\"wired-slider\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 15,
+      "label": "explicit any annotation",
+      "text": "\"wired-progress\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 16,
+      "label": "explicit any annotation",
+      "text": "\"wired-textarea\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 17,
+      "label": "explicit any annotation",
+      "text": "\"wired-toggle\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 18,
+      "label": "explicit any annotation",
+      "text": "\"wired-tab\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 19,
+      "label": "explicit any annotation",
+      "text": "\"wired-tabs\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 20,
+      "label": "explicit any annotation",
+      "text": "\"wired-item\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 21,
+      "label": "explicit any annotation",
+      "text": "\"wired-listbox\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 22,
+      "label": "explicit any annotation",
+      "text": "\"wired-combo\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 23,
+      "label": "explicit any annotation",
+      "text": "\"wired-search-input\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 24,
+      "label": "explicit any annotation",
+      "text": "\"wired-spinner\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 25,
+      "label": "explicit any annotation",
+      "text": "\"wired-divider\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 26,
+      "label": "explicit any annotation",
+      "text": "\"wired-icon-button\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
+    },
+    {
+      "file": "app/katalog2/sections/WiredSection.tsx",
+      "line": 27,
+      "label": "explicit any annotation",
+      "text": "\"wired-link\": any;",
+      "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
     }
   ]
 }
