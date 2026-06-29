@@ -14,7 +14,8 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
 
       event.preventDefault();
       const url = new URL(link.href, window.location.origin);
-      router.push(`/eksperyment4?v=${encodeURIComponent(url.searchParams.get("v") || "")}`);
+      const videoId = url.searchParams.get("v") || "";
+      router.push(videoId ? `/eksperyment4?v=${encodeURIComponent(videoId)}` : "/eksperyment4");
     };
 
     document.addEventListener("click", handleClick, true);
@@ -23,9 +24,9 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
 
   return (
     <div className="experiment4-frame-skin">
-      <main className="exp4-drawing" aria-label="Eksperyment 4">
+      <div className="exp4-drawing" aria-label="Eksperyment 4">
         {children}
-      </main>
+      </div>
 
       <style jsx global>{`
         .experiment4-frame-skin {
@@ -35,7 +36,6 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           --ink-faint: rgba(18, 18, 18, 0.13);
           --marker: rgba(250, 213, 103, 0.72);
           min-height: 100vh;
-          padding-inline: clamp(12px, 3vw, 44px);
           color: var(--ink);
           background:
             linear-gradient(90deg, var(--ink-faint) 1px, transparent 1px) 0 0 / 42px 42px,
@@ -57,43 +57,36 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
 
         .exp4-drawing {
           position: relative;
-          width: min(100%, 1500px);
+          width: 100%;
           min-height: 100vh;
-          margin-inline: auto;
           overflow: visible;
           background: transparent;
           isolation: isolate;
         }
 
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > .fixed.z-0,
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > [style*="backgroundImage"] {
-          display: none !important;
-        }
-
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav {
-          background: rgba(248, 243, 231, .92) !important;
-          box-shadow: none !important;
-          backdrop-filter: blur(12px) !important;
-          -webkit-backdrop-filter: blur(12px) !important;
-        }
-
-        .exp4-drawing .relative.min-h-screen.overflow-x-hidden > nav a[href="/"] svg.absolute {
-          display: none !important;
-        }
-
-        .exp4-drawing > main,
-        .exp4-drawing main[class*="bg-neutral-50"],
+        .exp4-drawing .min-h-screen,
         .exp4-drawing .bg-neutral-50,
         .exp4-drawing .bg-white,
         .exp4-drawing [class*="bg-background"],
         .exp4-drawing .bg-secondary {
           background: transparent !important;
           background-color: transparent !important;
+        }
+
+        .exp4-drawing nav {
+          background: rgba(248, 243, 231, .92) !important;
+          box-shadow: none !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+        }
+
+        .exp4-drawing nav a[href="/"] svg.absolute {
+          display: none !important;
+        }
+
+        .exp4-drawing .fixed.z-0,
+        .exp4-drawing [style*="backgroundImage"] {
+          display: none !important;
         }
 
         .exp4-drawing .border,
@@ -123,48 +116,15 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           box-shadow: 0 0 0 3px rgba(250, 213, 103, .36) !important;
         }
 
-        .exp4-drawing section.bg-transparent {
-          position: relative;
-        }
-
-        .exp4-drawing section.bg-transparent::before,
-        .exp4-drawing section.bg-transparent::after {
-          content: "";
-          position: absolute;
-          top: 15px;
-          bottom: 166px;
-          width: 18px;
-          border-color: var(--ink);
-          pointer-events: none;
-          z-index: 20;
-          opacity: .65;
-        }
-
-        .exp4-drawing section.bg-transparent::before {
-          left: -14px;
-          border-left: 2px solid;
-          border-top: 2px solid;
-          border-bottom: 2px solid;
-        }
-
-        .exp4-drawing section.bg-transparent::after {
-          right: -14px;
-          border-right: 2px solid;
-          border-top: 2px solid;
-          border-bottom: 2px solid;
-        }
-
-        .exp4-drawing section.bg-transparent > div > div.relative.aspect-video,
-        .exp4-drawing .relative.aspect-video > div.absolute.inset-\[6px\] {
-          position: relative;
-          overflow: hidden;
+        .exp4-drawing .relative.aspect-video > div.absolute.inset-\[6px\],
+        .exp4-drawing .relative.aspect-video > div[class*="absolute"] {
           border: 2px solid var(--ink) !important;
           border-radius: 3px !important;
           background: #151515 !important;
         }
 
-        .exp4-drawing section.bg-transparent > div > div.relative.aspect-video::before,
-        .exp4-drawing .relative.aspect-video > div.absolute.inset-\[6px\]::before {
+        .exp4-drawing .relative.aspect-video > div.absolute.inset-\[6px\]::before,
+        .exp4-drawing .relative.aspect-video > div[class*="absolute"]::before {
           content: "";
           position: absolute;
           inset: 0;
@@ -172,17 +132,20 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           background:
             linear-gradient(30deg, transparent 49.4%, rgba(247,241,228,.45) 49.4% 50.6%, transparent 50.6%),
             linear-gradient(-30deg, transparent 49.4%, rgba(247,241,228,.45) 49.4% 50.6%, transparent 50.6%);
-          opacity: .32;
+          opacity: .24;
           pointer-events: none;
         }
 
-        .exp4-drawing section.bg-transparent h1 {
-          display: inline;
+        .exp4-drawing h1 {
           letter-spacing: .005em !important;
+        }
+
+        .exp4-drawing h1 span,
+        .exp4-drawing h1 strong {
           background: linear-gradient(transparent 49%, var(--marker) 49% 82%, transparent 82%);
         }
 
-        .exp4-drawing section.bg-transparent div[class*="rounded-[14px]"],
+        .exp4-drawing div[class*="rounded-[14px]"],
         .exp4-drawing div[class*="rounded-[16px]"],
         .exp4-drawing div[class*="rounded-2xl"],
         .exp4-drawing [role="menu"] {
@@ -191,13 +154,12 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           background: rgba(247,241,228,.58) !important;
         }
 
-        .exp4-drawing section.bg-transparent a[href^="/channel/"] {
+        .exp4-drawing a[href^="/channel/"] {
           border-radius: 0 !important;
           border: 1.8px solid var(--ink) !important;
-          transform: rotate(-1deg);
         }
 
-        .exp4-drawing section.bg-transparent a[href^="/channel/"] img {
+        .exp4-drawing a[href^="/channel/"] img {
           border-radius: 0 !important;
           filter: contrast(1.05) grayscale(.12);
         }
@@ -213,21 +175,12 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
           background-color: var(--ink) !important;
         }
 
-        .exp4-drawing aside {
-          position: relative;
-          padding-left: 22px;
-          border-left: 2px solid rgba(18,18,18,.62);
-        }
-
         .exp4-drawing aside h3 {
           color: var(--ink) !important;
           border-bottom: 2px solid var(--ink);
         }
 
         .exp4-drawing aside a[href^="/?v="] {
-          position: relative;
-          margin-bottom: 12px !important;
-          overflow: visible;
           border: 1.6px solid rgba(18,18,18,.68) !important;
           border-radius: 3px !important;
           background: rgba(247,241,228,.54) !important;
@@ -236,17 +189,6 @@ export default function ExperimentFourFrame({ children }: { children: React.Reac
         .exp4-drawing footer {
           background: transparent !important;
           border-color: rgba(18,18,18,.45) !important;
-        }
-
-        @media (max-width: 768px) {
-          .experiment4-frame-skin {
-            padding-inline: 0;
-          }
-
-          .exp4-drawing aside {
-            padding-left: 0;
-            border-left: 0;
-          }
         }
       `}</style>
     </div>
