@@ -248,7 +248,6 @@ function SketchBadge({ text, variant = "public" }: { text: string; variant?: "pu
 function CounterButton({ icon, value }: { icon: IconName; value?: number }) {
   return (
     <span className="relative inline-flex h-[38px] items-center gap-2 px-3 text-sm font-black">
-      <SketchFrame radius={18} seed={84 + (value || 0)} stroke={INK} strokeWidth={1.15} fill="rgba(248,243,231,0.82)" />
       <SketchIcon name={icon} className="relative h-5 w-5" />
       {typeof value === "number" && <span className="relative min-w-3">{value}</span>}
     </span>
@@ -268,7 +267,7 @@ function VideoThumbnailCard({ video, isSelected = false }: { video: PublicVideoD
           <div className="relative aspect-video w-full">
             <SketchFrame radius={10} seed={video.id.charCodeAt(0) + 20} stroke={INK} strokeWidth={1.05} fill="rgba(255,255,255,0.35)" />
             {video.thumbnailUrl ? (
-              <Image src={video.thumbnailUrl} alt={displayTitle} fill className="absolute inset-[3px] object-cover" sizes="128px" />
+              <Image src={video.thumbnailUrl} alt={displayTitle} fill className="object-cover" sizes="128px" />
             ) : (
               <div className="absolute inset-[3px] flex items-center justify-center bg-neutral-200 text-[9px] text-neutral-400">Video</div>
             )}
@@ -447,7 +446,7 @@ export default function RoughHome({ mainVideo, allVideos, currentVideoId }: Roug
             )}
           </section>
 
-          <aside className="col-span-12 hidden lg:block">
+          <aside className="hidden lg:col-span-4 lg:block">
             <div className="space-y-5">
               <section>
                 <h2 className="mb-1 text-[24px] font-black uppercase tracking-[0.08em]">Publiczne</h2>
