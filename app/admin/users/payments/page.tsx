@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { CreditCard, Search, Download, Filter, Calendar } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
@@ -23,6 +24,9 @@ function formatDate(value: string | Date | null) {
   return new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+type RefundDialogState = { open: boolean; payment: AdminPaymentListItem | null; amountInput: string; loading: boolean; error: string | null };
+type DisputeSyncState = { open: boolean; payment: AdminPaymentListItem | null; loading: boolean; error: string | null; result: string | null };
+
 export default function AdminPaymentsListPage() {
   const [payments, setPayments] = useState<AdminPaymentListItem[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -31,6 +35,9 @@ export default function AdminPaymentsListPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+
+  const [refundDialog, setRefundDialog] = useState<RefundDialogState>({ open: false, payment: null, amountInput: "", loading: false, error: null });
+  const [disputeSync, setDisputeSync] = useState<DisputeSyncState>({ open: false, payment: null, loading: false, error: null, result: null });
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +86,55 @@ export default function AdminPaymentsListPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchPayments(1);
+  };
+
+  const openRefundDialog = (payment: AdminPaymentListItem) => {
+    const alreadyRefunded = payment.refundedAmountMinor ?? 0;
+    const maxRefundable = (payment.amountMinor - alreadyRefunded) / 100;
+    setRefundDialog({ open: true, payment, amountInput: maxRefundable.toFixed(2), loading: false, error: null });
+  };
+
+  const submitRefund = async () => {
+    if (!refundDialog.payment) return;
+    setRefundDialog((s: RefundDialogState) => ({ ...s, loading: true, error: null }));
+    try {
+      const amountMinor = Math.round(parseFloat(refundDialog.amountInput) * 100);
+      const res = await fetch(`/api/admin/payments/${refundDialog.payment.id}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amountMinor }),
+      });
+      if (res.ok) {
+        setRefundDialog((s: RefundDialogState) => ({ ...s, open: false, loading: false }));
+        fetchPayments(page);
+      } else {
+        const data = await res.json();
+        setRefundDialog((s: RefundDialogState) => ({ ...s, loading: false, error: data.error || "Nie udało się wykonać zwrotu." }));
+      }
+    } catch {
+      setRefundDialog((s: RefundDialogState) => ({ ...s, loading: false, error: "Błąd połączenia." }));
+    }
+  };
+
+  const openDisputeSync = (payment: AdminPaymentListItem) => {
+    setDisputeSync({ open: true, payment, loading: false, error: null, result: null });
+  };
+
+  const submitDisputeSync = async () => {
+    if (!disputeSync.payment) return;
+    setDisputeSync((s: DisputeSyncState) => ({ ...s, loading: true, error: null, result: null }));
+    try {
+      const res = await fetch(`/api/admin/payments/${disputeSync.payment.id}/dispute-sync`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setDisputeSync((s: DisputeSyncState) => ({ ...s, loading: false, result: data.message }));
+        fetchPayments(page);
+      } else {
+        setDisputeSync((s: DisputeSyncState) => ({ ...s, loading: false, error: data.error || "Nie udało się zsynchronizować sporu." }));
+      }
+    } catch {
+      setDisputeSync((s: DisputeSyncState) => ({ ...s, loading: false, error: "Błąd połączenia." }));
+    }
   };
 
   if (isLoading && page === 1 && payments.length === 0) {
@@ -214,18 +270,19 @@ export default function AdminPaymentsListPage() {
                                 <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold">Stripe ID</TableHead>
                                 <TableHead className="text-right text-[10px] uppercase font-bold">Data</TableHead>
+                                <TableHead className="text-right text-[10px] uppercase font-bold">Akcje</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {error ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="py-12 text-center text-destructive">
+                                    <TableCell colSpan={7} className="py-12 text-center text-destructive">
                                         <p className="font-bold mb-2">{error}</p>
                                         <Button variant="outline" size="sm" onClick={() => fetchPayments(page)}>Spróbuj ponownie</Button>
                                     </TableCell>
                                 </TableRow>
                             ) : isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie płatności...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="py-20 text-center italic text-muted-foreground animate-pulse">Pobieranie płatności...</TableCell></TableRow>
                             ) : payments.map((p) => (
                                 <TableRow key={p.id}>
                                     <TableCell>
@@ -277,10 +334,24 @@ export default function AdminPaymentsListPage() {
                                         <div className="text-[10px] font-medium">{formatDate(p.createdAt)}</div>
                                         <div className="text-[9px] text-muted-foreground italic mt-0.5">ID: {p.id.split('-')[0]}...</div>
                                     </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1.5">
+                                            {(p.status === 'SUCCEEDED' || p.status === 'PARTIALLY_REFUNDED' || p.status === 'DISPUTED') && (
+                                                <Button size="sm" variant="outline" className="h-7 text-[9px] px-2 text-red-700 border-red-200 hover:bg-red-50" onClick={() => openRefundDialog(p)}>
+                                                    Zwrot
+                                                </Button>
+                                            )}
+                                            {(p.status === 'DISPUTED' || p.status === 'CHARGEBACK_LOST') && (
+                                                <Button size="sm" variant="outline" className="h-7 text-[9px] px-2 text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => openDisputeSync(p)}>
+                                                    Sync sporu
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                             {!isLoading && payments.length === 0 && (
-                                <TableRow><TableCell colSpan={6} className="py-20 text-center text-muted-foreground italic border-b-0">Brak transakcji spełniających kryteria.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="py-20 text-center text-muted-foreground italic border-b-0">Brak transakcji spełniających kryteria.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -296,6 +367,72 @@ export default function AdminPaymentsListPage() {
             </CardContent>
         </Card>
       </main>
+
+      <Dialog open={refundDialog.open} onOpenChange={(open) => setRefundDialog(s => ({ ...s, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Zwrot płatności</DialogTitle>
+            <DialogDescription>
+              {refundDialog.payment && (
+                <>Płatność {refundDialog.payment.id.split('-')[0]}... — {refundDialog.payment.email}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-bold mb-1 block">Kwota zwrotu ({refundDialog.payment?.currency})</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={refundDialog.amountInput}
+                onChange={(e) => setRefundDialog(s => ({ ...s, amountInput: e.target.value }))}
+                className="h-9"
+              />
+              {refundDialog.payment && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Maks. do zwrotu: {((refundDialog.payment.amountMinor - (refundDialog.payment.refundedAmountMinor ?? 0)) / 100).toFixed(2)} {refundDialog.payment.currency}
+                </p>
+              )}
+            </div>
+            {refundDialog.error && <p className="text-sm text-destructive font-medium">{refundDialog.error}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundDialog(s => ({ ...s, open: false }))}>Anuluj</Button>
+            <Button variant="destructive" onClick={submitRefund} disabled={refundDialog.loading}>
+              {refundDialog.loading ? "Przetwarzanie..." : "Wykonaj zwrot"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={disputeSync.open} onOpenChange={(open) => setDisputeSync(s => ({ ...s, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Synchronizuj spór ze Stripe</DialogTitle>
+            <DialogDescription>
+              {disputeSync.payment && (
+                <>Płatność {disputeSync.payment.id.split('-')[0]}... — {disputeSync.payment.email}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground">
+              Pobierze aktualny status sporu z Stripe i zaktualizuje lokalną bazę danych oraz dostęp patrona.
+            </p>
+            {disputeSync.error && <p className="text-sm text-destructive font-medium mt-3">{disputeSync.error}</p>}
+            {disputeSync.result && <p className="text-sm text-green-700 font-medium mt-3">{disputeSync.result}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeSync(s => ({ ...s, open: false }))}>Zamknij</Button>
+            {!disputeSync.result && (
+              <Button onClick={submitDisputeSync} disabled={disputeSync.loading}>
+                {disputeSync.loading ? "Synchronizuję..." : "Synchronizuj"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
