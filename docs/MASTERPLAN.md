@@ -1,6 +1,7 @@
 # Polutek.pl Masterplan
 
-Status: **STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT**
+Status: **STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT**  
+Last reconciled: 2026-06-30 after PR #1259
 
 This is the canonical entry point for technical state, risk register, owner decisions and ordered product/tech backlog. It does not contain an eternally current Git head; read Git for current HEAD and the ready queue for execution.
 
@@ -45,24 +46,18 @@ A failed Vercel build is implementation evidence and must be fixed immediately b
 | Risk ID | Title | Evidence Class | Classification | Impact | Owner |
 | --- | --- | --- | --- | --- | --- |
 | `BUILD-DEPLOY-HEALTH` | Main branch must build and deploy before product work is considered shippable | `VERCEL_PRODUCTION_EVIDENCE / LOCAL_BUILD_EVIDENCE` | `ACTIVE_GUARDRAIL` | **P0** | active maintainer |
-| `MULTI-SOURCE-E2E` | Multi-source video must work from admin create/edit through playback/player, not only schema/UI | `GITHUB_ISSUE_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P1** | #1204 |
-| `VIDEO-PROVIDER-EXTENSIBILITY` | Mux/R2/Vimeo must not be bolted onto player/UI without provider adapters, diagnostics and security checks | `OWNER_DECISION / GITHUB_ISSUE_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P1/P2** | #1204 |
-| `MEDIA-FALLBACKS` | Thumbnail fallback must not persist `/logo.png` as real video data and should support admin-managed default thumbnail | `REPOSITORY_EVIDENCE / GITHUB_ISSUE_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P2** | BUG-006 / #1218 |
+| `OLD-REFACTOR-REMAINDER` | Old refactor/audit queue must not be reopened as one large task | `REPOSITORY_EVIDENCE / DOCS_RECONCILIATION` | `SMALL_REMAINDER` | **P1 control-plane** | `docs/tickets/ready/README.md` |
+| `STRIPE-RECONCILIATION` | Stripe reconciliation job/cron is still missing | `REPOSITORY_EVIDENCE` | `TODO` | **P1/P2 payments ops** | `INCOMPLETE-006` |
+| `LEGACY-SERVICE-CLEANUP` | Legacy service cleanup remains partial | `REPOSITORY_EVIDENCE / MERGED_PR_EVIDENCE` | `PARTIAL` | **P2 tech debt** | `CLEANUP-001` |
+| `MULTI-SOURCE-E2E` | Multi-source video must work from admin create/edit through playback/player, not only schema/UI | `GITHUB_ISSUE_EVIDENCE / MERGED_PR_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P1** | #1204 / #1228 |
+| `VIDEO-PROVIDER-EXTENSIBILITY` | Mux/R2/Vimeo must not be bolted onto player/UI without provider adapters, diagnostics and security checks | `OWNER_DECISION / GITHUB_ISSUE_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P1/P2** | #1204 / #1228 |
+| `MEDIA-FALLBACKS` | Thumbnail fallback must not persist `/logo.png` as real video data and private Blob display must stay proxied | `REPOSITORY_EVIDENCE / MERGED_PR_EVIDENCE` | `MOSTLY_RESOLVED / WATCH` | **P2** | BUG-006 / PR #1256 / #1218 |
 | `CAPTIONS-ACCESSIBILITY` | Per-video PL/EN captions are optional but need validated WebVTT, storage and player tracks | `GITHUB_ISSUE_EVIDENCE` | `ACTIVE_PRODUCT_WORK` | **P2** | #1219 |
 | `THANK-YOU-ZONE-COPY` | Strefa Fenju / Thank You Zone should be framed as thank-you bonus, not paid content purchase | `OWNER_DECISION / REPOSITORY_EVIDENCE` | `ACTIVE_COPY_RULE` | **P1 copy** | active owner decision |
-| `CI-SIGNAL-002` | CI/test signal correctly proves the full available test suite and guard state | `AUTOMATED_TEST_EVIDENCE / REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `STRICT-ESCAPES-DRIFT` | strict-escapes baseline/current violations are reconciled | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `HOTSPOT-ADMIN-VIDEOS` | admin video page hotspot is split mechanically and under budget | `REPOSITORY_EVIDENCE` | `RESOLVED_BY_PR_1000` | **GREEN** | `CI-SIGNAL-RECONCILIATION-002` |
-| `PAYMENTS-TRUTH-001` | Payment fulfillment validates against local Payment truth, not mutable provider metadata | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-IDEMPOTENCY-001` | Checkout request idempotency has local `(userId, requestId)` backing | `REPOSITORY_EVIDENCE` | `MERGED_IN_PR_998` | **GREEN** | `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` |
-| `PAYMENTS-WEBHOOK-SEMANTICS` | Stripe webhook route distinguishes verification/client errors from post-verification processing failures | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1029` | **GREEN** | `PAYMENT-WEBHOOK-ROUTE-FAILURE-SEMANTICS-001` |
-| `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME` | Cloudflare iframe playback can still report watched progress through a fallback timer | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1033` | **GREEN** | `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME-001` |
-| `PAYMENTS-LEGACY-SERVICE-DEADCODE` | legacy Stripe fulfillment/webhook service paths should be deleted if they still have zero production callers | `AGENT_DECLARATION / REPOSITORY_EVIDENCE` | `ROUTED_TO_LATER_CLEANUP` | **P2 FOOTGUN** | final cleanup |
-| `ADMIN-AUTH-WRAPPER-CONSISTENCY` | multiple admin route wrapper idioms share one DB truth but make review harder | `MERGED_PR_EVIDENCE` | `RESOLVED_BY_PR_1008` | **GREEN** | `ADMIN-AUTH-CHANNEL-DIAGNOSTICS-001` |
 | `OPERATOR-EVIDENCE` | production provider evidence, backup/restore, X6/X7 and final owner decision remain open | `OPERATOR_EVIDENCE` | `REQUIRES_OPERATOR_EVIDENCE` | **LAUNCH BLOCKER** | operator launch evidence |
 | `LEGAL-COPY` | Terms/privacy/cookies/support copy incomplete | `LEGAL_REVIEW` | `LEGAL_REVIEW_REQUIRED / IMPLEMENTATION_MISSING` | **LAUNCH BLOCKER** | legal/operator track |
 
-Historical risk IDs from POST-929 remain useful evidence but are not the current executable queue. Completed video/provider/playback items are tracked in recent closeout reports and `docs/tickets/ready/README.md`.
+Historical risk IDs from POST-929 remain useful evidence but are not the current executable queue. Completed video/provider/playback/payment/admin items are tracked in recent closeout reports and `docs/tickets/ready/README.md`.
 
 ## 5. Ordered Masterplan
 
@@ -76,17 +71,28 @@ Historical risk IDs from POST-929 remain useful evidence but are not the current
 
 Use `docs/tickets/ready/README.md` as the source of truth.
 
+The old refactor/audit backlog currently has only two executable remainders:
+
+1. `INCOMPLETE-006` — Stripe reconciliation job/cron.
+2. `CLEANUP-001` — migrate `email.service.ts` and `lib/services/user/profile.service.ts` in small slices.
+
 Current product/tech work is no longer described as one big refactor. It is a prioritized queue of small shippable slices:
 
 1. P0 build/deploy fixes when main fails.
-2. P1 multi-source video completion (#1204).
-3. P1/P2 provider extensibility and playback safety, especially Mux/R2/Vimeo under #1204.
-4. P2 media/admin quality work: global default thumbnail (#1218), captions PL/EN (#1219), private Blob correctness.
-5. Technical debt from `docs/REFACTORING-ROADMAP.md`, executed only in small reviewable tickets.
-6. Operator/legal launch work, tracked outside code prompts unless a code defect is identified.
+2. P1/P2 accepted product issues such as #1204/#1228/#1218/#1219.
+3. P2 media/admin quality work: global default thumbnail, captions PL/EN, private Blob correctness.
+4. Technical debt from `docs/REFACTORING-ROADMAP.md`, executed only in small reviewable tickets.
+5. Operator/legal launch work, tracked outside code prompts unless a code defect is identified.
 
 ### RECENTLY_COMPLETED
 
+- `CLEANUP-001` partial — PR #1259 deleted `user-access.service.ts` and `audit.service.ts`; remaining scope is `email.service.ts` and `lib/services/user/profile.service.ts`.
+- `Clerk/icon/email-template production fixes` — DONE by PR #1258.
+- `NAJS real surface styling` — DONE by PR #1257.
+- `Thumbnail private Blob display hardening` — DONE by PR #1256.
+- `INCOMPLETE-003` + `INCOMPLETE-005` — DONE by PR #1250: admin dispute sync and admin refund endpoint/UI.
+- `Preferred provider upload selection` — DONE by PR #1248.
+- `R2 original upload foundation` — PR #1229 was closed unmerged; do not count it as merged evidence. Later merged provider/upload evidence must come from merged PRs such as #1248.
 - `ADMIN-EMAIL-HTML-PREVIEW-SANITIZE-001` — DONE by PR #1049 and PR #1050.
 - `ADMIN-EMAIL-BROADCAST-UX-CONSISTENCY-001` — DONE by PR #1042.
 - `VIDEO-VIEW-COUNTER-CLOUDFLARE-IFRAME-001` — DONE by PR #1033.
@@ -97,7 +103,6 @@ Current product/tech work is no longer described as one big refactor. It is a pr
 - `PAYMENTS-FULFILLMENT-IDEMPOTENCY-HARDENING-001` — DONE by PR #998.
 - `PLAYBACK-ACCESS-LEGACY-RETIREMENT-001` — DONE by PR #994.
 - `VIDEO-PUBLICATION-HERO-STATE-CONTRACT-001` — DONE by PR #990.
-- `VIDEO-PROVIDER-LIFECYCLE-HARDENING-001` — DONE before the publication/hero state-contract ticket.
 
 ### OPERATOR_EVIDENCE
 
@@ -115,5 +120,7 @@ Current product/tech work is no longer described as one big refactor. It is a pr
 - Current Queue: [tickets/ready/README.md](tickets/ready/README.md)
 - Refactoring Debt Baseline: [REFACTORING-ROADMAP.md](REFACTORING-ROADMAP.md)
 - Launch Backlog: [roadmap/Launch-Execution-Backlog.md](roadmap/Launch-Execution-Backlog.md)
+- Active Execution Dashboard: [roadmap/Active-Execution-Roadmap.md](roadmap/Active-Execution-Roadmap.md)
+- Owner Timeline: [roadmap/OWNER-TIMELINE.md](roadmap/OWNER-TIMELINE.md)
 - Architecture Launch-Readiness Audit: [reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md](reports/reconciliation/2026-06-20-architecture-launch-readiness-audit.md)
 - Latest historical baseline reconciliation: [reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md](reports/reconciliation/POST-929-EMERGENCY-CONTROL-PLANE-RECONCILIATION.md)
