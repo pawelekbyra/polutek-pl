@@ -74,15 +74,25 @@ const Navbar = () => {
           >
             <X size={20} />
           </button>
-          <form onSubmit={handleSearch} className="flex-1 flex">
+          <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
             <input
               type="text"
               autoFocus
               placeholder={searchLabel}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="w-full h-[38px] bg-white border border-input rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring focus:border-primary transition-all"
+              className="w-full h-[38px] bg-white border border-input rounded-l-full pl-4 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring focus:border-primary transition-all min-w-0"
             />
+            <button
+              type="submit"
+              className="h-[38px] w-[46px] bg-secondary border border-input border-l-0 rounded-r-full hover:bg-secondary/80 transition-colors shrink-0 flex items-center justify-center text-[#5b5b5b]"
+              aria-label={searchLabel}
+              title={searchLabel}
+            >
+              <span className="text-[20px] leading-none" aria-hidden="true">
+                →
+              </span>
+            </button>
           </form>
         </div>
       ) : (
