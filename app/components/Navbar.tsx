@@ -65,7 +65,7 @@ const Navbar = () => {
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
 
   return (
-    <div className="flex items-center bg-background/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-border px-4 lg:px-6 h-[58px] min-h-[58px] font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-visible">
+    <div className="flex items-center bg-background/80 backdrop-blur-md sticky top-0 z-[1000] border-b border-border px-4 lg:px-6 h-[58px] min-h-[58px] font-sans justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
       {isMobileSearchOpen ? (
         <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
           <button
@@ -125,7 +125,7 @@ const Navbar = () => {
             </form>
           </div>
 
-          <div className="flex items-center justify-end gap-1 md:gap-[14px]">
+          <div className="flex min-w-0 items-center justify-end gap-1 md:gap-[14px]">
             <div className="flex items-center gap-1 sm:hidden">
               <button
                 onClick={() => setIsMobileSearchOpen(true)}
@@ -169,9 +169,13 @@ const Navbar = () => {
 
             {isLoaded && !isSignedIn && (
               <SignInButton mode="modal">
-                <button className="bg-white text-[#171717] hover:bg-[#fbfaf7] hover:border-[#171717] font-bold text-[13px] flex items-center gap-2 px-4 h-9 rounded-full transition-all active:scale-95 border border-input">
+                <button
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-input bg-white text-[#171717] font-bold text-[13px] transition-all active:scale-95 hover:bg-[#fbfaf7] hover:border-[#171717] sm:w-auto sm:gap-2 sm:px-4"
+                  aria-label={t.signIn}
+                  title={t.signIn}
+                >
                   <LogIn size={16} className="text-[#171717]" />
-                  <span>{t.signIn}</span>
+                  <span className="hidden sm:inline">{t.signIn}</span>
                 </button>
               </SignInButton>
             )}
