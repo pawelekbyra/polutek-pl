@@ -87,7 +87,7 @@ export class ChannelLayoutService {
             slug: v.slug,
             title: v.title,
             titleEn: v.titleEn,
-            thumbnailUrl: v.thumbnailUrl,
+            thumbnailUrl: `/api/videos/${v.id}/thumbnail`,
             tier: v.tier,
             status: v.status,
             duration: v.duration,

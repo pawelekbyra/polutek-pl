@@ -16,8 +16,6 @@ interface CoverImageUploadProps {
   className?: string;
 }
 
-const SAVE_DRAFT_BEFORE_COVER_MESSAGE =
-  "Najpierw zapisz film jako szkic, a potem dodaj miniaturę. Prywatny storage wymaga ID filmu do bezpiecznego zapisu obrazu.";
 
 export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, className }: CoverImageUploadProps) {
   const [image, setImage] = useState<string | null>(null);
@@ -29,19 +27,12 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialUrl || null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canUploadCover = Boolean(videoId);
-
   // Sync with prop changes (e.g. manual URL edit or reset in parent)
   useEffect(() => {
     setPreviewUrl(initialUrl || null);
   }, [initialUrl]);
 
   const openFilePicker = () => {
-    if (!canUploadCover) {
-      setError(SAVE_DRAFT_BEFORE_COVER_MESSAGE);
-      return;
-    }
-
     fileInputRef.current?.click();
   };
 
@@ -50,12 +41,6 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!canUploadCover) {
-      setError(SAVE_DRAFT_BEFORE_COVER_MESSAGE);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -111,13 +96,6 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   };
 
   const handleUpload = async () => {
-    const currentVideoId = videoId;
-
-    if (!currentVideoId) {
-      setError(SAVE_DRAFT_BEFORE_COVER_MESSAGE);
-      return;
-    }
-
     if (!image || !croppedAreaPixels) return;
 
     setIsUploading(true);
@@ -129,7 +107,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
 
       const formData = new FormData();
       formData.append("file", croppedImageBlob, "cover.webp");
-      formData.append("videoId", currentVideoId);
+      if (videoId) formData.append("videoId", videoId);
 
       const response = await fetch("/api/admin/videos/cover-upload", {
         method: "POST",
@@ -167,18 +145,10 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
         <p className="text-xs text-muted-foreground">
           Zalecane: 1280x720 px, JPG/PNG/WebP, max 5 MB.
         </p>
-        {!canUploadCover && (
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-            Zapisz film jako szkic, żeby przesłać miniaturę do prywatnego storage.
-          </p>
-        )}
       </div>
 
       {!isCropping ? (
-        <div className={cn(
-          "relative group aspect-video w-full overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/50 transition-colors hover:border-muted-foreground/50",
-          !canUploadCover && "opacity-75"
-        )}>
+        <div className="relative group aspect-video w-full overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/50 transition-colors hover:border-muted-foreground/50">
           {previewUrl ? (
             <>
               <Image
@@ -188,7 +158,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
                 className="object-cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button type="button" variant="secondary" size="sm" onClick={openFilePicker} disabled={!canUploadCover}>
+                <Button type="button" variant="secondary" size="sm" onClick={openFilePicker}>
                   <RotateCcw className="mr-2 h-4 w-4" /> Zmień
                 </Button>
               </div>
@@ -196,13 +166,12 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
           ) : (
             <button
               type="button"
-              className="flex h-full w-full flex-col items-center justify-center gap-2 disabled:cursor-not-allowed"
+              className="flex h-full w-full flex-col items-center justify-center gap-2"
               onClick={openFilePicker}
-              disabled={!canUploadCover}
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
               <span className="text-sm font-medium text-muted-foreground">
-                {canUploadCover ? "Wybierz lub upuść obraz" : "Miniaturę dodasz po zapisaniu szkicu"}
+                Wybierz lub upuść obraz
               </span>
             </button>
           )}
@@ -240,7 +209,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
               <Button type="button" variant="outline" size="sm" onClick={reset} disabled={isUploading}>
                 <X className="mr-2 h-4 w-4" /> Anuluj
               </Button>
-              <Button type="button" size="sm" onClick={handleUpload} disabled={isUploading || !canUploadCover}>
+              <Button type="button" size="sm" onClick={handleUpload} disabled={isUploading}>
                 {isUploading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -263,7 +232,6 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
         onChange={handleFileChange}
         accept="image/jpeg,image/png,image/webp"
         className="hidden"
-        disabled={!canUploadCover}
       />
     </div>
   );

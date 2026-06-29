@@ -8,14 +8,8 @@ export class ThumbnailResponseService {
     videoId: string,
     thumbnailUrl: string
   ): Promise<NextResponse> {
-    // 1. Validate the host using existing MediaPolicy
-    if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
-      logger.warn("[ThumbnailResponseService] Blocked unauthorized thumbnail host", { videoId, thumbnailUrl });
-      return new NextResponse("Unauthorized Thumbnail Host", { status: 403 });
-    }
-
     try {
-      // 2. Identify Vercel Blob URLs
+      // 1. Vercel Blob URLs (our own storage) are always trusted — no MediaPolicy needed
       if (this.isVercelBlobUrl(thumbnailUrl)) {
         // For Vercel Blob (even if private), use backend access to get the stream
         try {
@@ -55,7 +49,13 @@ export class ThumbnailResponseService {
         }
       }
 
-      // 3. For other allowed external URLs, stream them to avoid 400 errors from Next Image config
+      // 2. For other external URLs, validate against MediaPolicy first
+      if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
+        logger.warn("[ThumbnailResponseService] Blocked unauthorized thumbnail host", { videoId, thumbnailUrl });
+        return new NextResponse("Unauthorized Thumbnail Host", { status: 403 });
+      }
+
+      // 3. Stream external URL to avoid Next Image config restrictions
       try {
         const response = await fetch(thumbnailUrl);
 
@@ -95,7 +95,7 @@ export class ThumbnailResponseService {
   private static isVercelBlobUrl(url: string): boolean {
     try {
       const hostname = new URL(url).hostname.toLowerCase();
-      if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
+      if (hostname.endsWith(".blob.vercel-storage.com")) return true;
       const customHost = process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST;
       if (customHost) {
         const customHostname = new URL(customHost.startsWith('http') ? customHost : `https://${customHost}`).hostname.toLowerCase();
