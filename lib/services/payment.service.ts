@@ -2,7 +2,8 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { PaymentStatus, WebhookEventStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
-import { UserAccessService } from './user-access.service';
+import { recalculatePatronStatus } from '@/lib/modules/patron';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 import { PaymentCheckoutService } from './payments/checkout.service';
 import { PaymentFulfillmentService } from './payments/fulfillment.service';
@@ -188,7 +189,10 @@ export class PaymentService {
             await tx.patronGrant.updateMany({ where: { paymentId: payment.id, revokedAt: null }, data: { revokedAt: new Date(), reason: 'Payment fully refunded' } });
         }
 
-        const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+        const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });
+        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+        if (!recalcResult.ok) throw new Error(recalcResult.error.message);
+        const { isPatron, normalizedTotal } = recalcResult.data;
         return { userId: payment.userId, isPatron, normalizedTotal };
     });
 
@@ -214,7 +218,10 @@ export class PaymentService {
     if (dispute.status === 'lost') {
         const syncData = await prisma.$transaction(async (tx) => {
             await PaymentRefundService.applyLostChargeback(tx, payment, dispute.status);
-            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });
+            const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+            if (!recalcResult.ok) throw new Error(recalcResult.error.message);
+            const { isPatron, normalizedTotal } = recalcResult.data;
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
         if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute sync failed:", e));
@@ -228,7 +235,10 @@ export class PaymentService {
                 where: { id: payment.id },
                 data: { status: PaymentStatus.SUCCEEDED }
             });
-            const { isPatron, normalizedTotal } = await UserAccessService.recalculateUserPatronStatus(payment.userId, tx);
+            const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });
+            const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+            if (!recalcResult.ok) throw new Error(recalcResult.error.message);
+            const { isPatron, normalizedTotal } = recalcResult.data;
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
         if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute-win sync failed:", e));

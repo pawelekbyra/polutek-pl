@@ -84,7 +84,7 @@ Pliki już usunięte z `lib/services/`:
 ## Kolejność
 
 1. ✅ DTOs przeniesione
-2. 🔄 **user-access.service.ts** (IN_PROGRESS) — najmniejszy, najlepsza izolacja
+2. ✅ **user-access.service.ts** — usunięty; `recalculateUserPatronStatus` wyinlinowany do `payment.service.ts` jako bezpośrednie wywołanie `recalculatePatronStatus`; `audit.service.ts` usunięty (brak callerów); testy zaktualizowane
 3. ⬜ email.service.ts — średni, metody transakcyjne wymagają nowych use-casów
 4. ⬜ profile.service.ts — największy, Clerk claims, zacząć od testów
 
