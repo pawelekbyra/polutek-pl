@@ -70,6 +70,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [preferredProvider, setPreferredProvider] = useState("CLOUDFLARE_STREAM");
   const assets = initialVideo.assets ?? [];
   const original = initialVideo.original ?? null;
 
@@ -121,7 +122,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
       const completeRes = await fetch(`/api/admin/videos/${videoId}/original-upload`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ originalId: provision.originalId, mirrorPlan: { mux: true, cloudflare: true } }),
+        body: JSON.stringify({ originalId: provision.originalId, mirrorPlan: { mux: true, cloudflare: true }, preferredProvider }),
       });
       if (!completeRes.ok) {
         const body = await completeRes.json().catch((): unknown => null);
@@ -172,6 +173,16 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
         <div className="rounded-lg border bg-background p-4 space-y-3">
           <Label htmlFor="studio-file-input" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nowy oryginał</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Primary provider</Label>
+            <Select value={preferredProvider} onValueChange={setPreferredProvider} disabled={uploading}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
+                <SelectItem value="MUX">Mux</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Input id="studio-file-input" type="file" accept="video/*" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
           {file && <p className="text-xs text-muted-foreground">{file.name} · {formatBytes(file.size)}</p>}
           {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}

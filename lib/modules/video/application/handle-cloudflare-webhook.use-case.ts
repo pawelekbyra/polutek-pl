@@ -83,18 +83,25 @@ export async function handleCloudflareStreamWebhook(
           }
         }
 
-        // Only promote to primary if no other READY primary already exists for this video.
-        // This preserves an intentionally-set YouTube or other primary source.
+        // Only promote to primary if no other READY primary already exists for this video,
+        // AND if Mux is not the preferred provider (Mux takes primary via its own webhook).
         const existingPrimary = await tx.videoAsset.findFirst({
           where: { videoId: asset.videoId, isPrimary: true, id: { not: asset.id } },
         });
 
         if (!existingPrimary) {
-          dataToUpdate.isPrimary = true;
-          await tx.videoAsset.updateMany({
-              where: { videoId: asset.videoId, id: { not: asset.id } },
-              data: { isPrimary: false }
+          const video = await tx.video.findUnique({
+            where: { id: asset.videoId },
+            select: { publishAfterAssetReadyProvider: true },
           });
+          const muxIsPreferred = video?.publishAfterAssetReadyProvider === VIDEO_PROVIDER.MUX;
+          if (!muxIsPreferred) {
+            dataToUpdate.isPrimary = true;
+            await tx.videoAsset.updateMany({
+                where: { videoId: asset.videoId, id: { not: asset.id } },
+                data: { isPrimary: false }
+            });
+          }
         }
     }
 
