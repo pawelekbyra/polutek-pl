@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
-import { Share2 } from './icons';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +15,29 @@ interface ShareButtonProps {
 const XIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={cn("h-4 w-4 fill-current", className)}>
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
+const NajsShareIcon = ({ size = 18 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="najs-pen-icon"
+    aria-hidden="true"
+  >
+    <path
+      d="M4.2 11.8c4.1-1.72 8.3-3.44 12.46-5.05 1.13-.44 2.1-.72 2.47-.39.35.31.02 1.17-.45 2.12-1.28 2.56-2.52 5.14-3.77 7.72-.33.68-.75 1.44-1.28 1.38-.43-.05-.78-.6-1.12-1.15l-2.02-3.25-3.48 2.4c-.47.32-1.03.63-1.37.39-.33-.24-.18-.86.04-1.38l1.22-2.82"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
+    <path
+      d="M10.5 13.18c1.76-1.56 3.53-3.03 5.3-4.48"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
   </svg>
 );
 
@@ -63,11 +85,11 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "flex items-center justify-center gap-2 h-[38px] px-5 rounded-full bg-white hover:bg-secondary transition-colors border border-input active:scale-95 text-[#171717] font-bold text-[13.5px]",
+          "najs-action-button flex items-center justify-center gap-2 h-[38px] px-5 rounded-full bg-white hover:bg-secondary transition-colors border border-input active:scale-95 text-[#171717] font-bold text-[13.5px]",
           className
         )}
       >
-        <Share2 size={18} />
+        <NajsShareIcon size={18} />
         <span className="hidden sm:inline">Szeruj</span>
       </button>
 
