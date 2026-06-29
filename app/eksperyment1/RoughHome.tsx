@@ -250,8 +250,8 @@ export default function RoughHome({ mainVideo, allVideos, currentVideoId }: Roug
               <RoughButton filled className="ml-1">🔔 Subskrybuj</RoughButton>
 
               <div className="flex items-center gap-1 ml-auto">
-                <RoughButton>👍 {selectedVideo.likes ?? 0}</RoughButton>
-                <RoughButton>👎 {selectedVideo.dislikes ?? 0}</RoughButton>
+                <RoughButton>👍</RoughButton>
+                <RoughButton>👎</RoughButton>
                 <RoughButton>→ Szeruj</RoughButton>
                 <RoughButton>•••</RoughButton>
               </div>

@@ -131,6 +131,12 @@ function WiredForm() {
   );
 }
 
+function WiredButtonDemo() {
+  const loaded = useWired();
+  if (!loaded) return <div className="text-neutral-400 text-xs">ładowanie...</div>;
+  return <wired-button>Subskrybuj</wired-button>;
+}
+
 export default function WiredSection() {
   return (
     <div>
@@ -191,11 +197,7 @@ export default function WiredSection() {
           <div className="flex flex-wrap gap-8 items-center justify-center py-4">
             <div className="flex flex-col items-center gap-2">
               <span className="text-[10px] font-mono text-neutral-400">wired-elements</span>
-              {React.createElement(() => {
-                const loaded = useWired();
-                if (!loaded) return <div className="text-neutral-400 text-xs">ładowanie...</div>;
-                return <wired-button>Subskrybuj</wired-button>;
-              })}
+              <WiredButtonDemo />
             </div>
 
             <div className="flex flex-col items-center gap-2">

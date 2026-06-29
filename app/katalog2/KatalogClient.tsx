@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const FontSection = dynamic(() => import("./sections/FontSection"), { ssr: false });
 const LinesSection = dynamic(() => import("./sections/LinesSection"), { ssr: false });
@@ -59,9 +60,9 @@ export default function KatalogClient() {
       <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <a href="/" className="text-[11px] font-mono text-neutral-400 hover:text-neutral-700 transition-colors">
+            <Link href="/" className="text-[11px] font-mono text-neutral-400 hover:text-neutral-700 transition-colors">
               ← polutek.pl
-            </a>
+            </Link>
             <span className="text-neutral-200">/</span>
             <span className="font-black uppercase tracking-tighter text-neutral-900">Katalog Technik</span>
             <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded">v2</span>
