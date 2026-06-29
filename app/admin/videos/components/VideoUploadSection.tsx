@@ -123,7 +123,7 @@ export function VideoUploadSection({
       });
       if (!provisionRes.ok) {
         const body = await provisionRes.json().catch((): unknown => null);
-        throw new Error((body as any)?.error || "Nie udało się przygotować uploadu.");
+        throw new Error((body != null && typeof body === "object" && "error" in body && typeof (body as { error: unknown }).error === "string" ? (body as { error: string }).error : null) ?? "Nie udało się przygotować uploadu.");
       }
       const provision = await provisionRes.json() as { uploadUrl: string; originalId: string };
 
@@ -160,7 +160,7 @@ export function VideoUploadSection({
       });
       if (!completeRes.ok) {
         const body = await completeRes.json().catch((): unknown => null);
-        throw new Error((body as any)?.error || "Nie udało się uruchomić mirrorów.");
+        throw new Error((body != null && typeof body === "object" && "error" in body && typeof (body as { error: unknown }).error === "string" ? (body as { error: string }).error : null) ?? "Nie udało się uruchomić mirrorów.");
       }
 
       const providerLabel = preferredProvider === "MUX" ? "Mux" : "Cloudflare Stream";
