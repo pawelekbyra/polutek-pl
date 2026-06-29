@@ -6,7 +6,6 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
-import { BellSimple } from "./icons";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 
 interface SubscribeButtonProps {
@@ -19,6 +18,47 @@ interface SubscribeButtonProps {
   variant?: "default" | "compact";
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
+
+const SubscribeBellIcon = ({
+  size = 16,
+  filled = false,
+  className,
+}: {
+  size?: number;
+  filled?: boolean;
+  className?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    aria-hidden="true"
+  >
+    <path
+      d="M18.4 9.9c0-3.55-2.48-6.15-6.4-6.15S5.6 6.35 5.6 9.9c0 4.7-1.95 5.9-2.55 6.55-.33.36-.07 1.05.48 1.05h16.94c.55 0 .81-.69.48-1.05-.6-.65-2.55-1.85-2.55-6.55Z"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9.55 20.2c.55.72 1.4 1.15 2.45 1.15s1.9-.43 2.45-1.15"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 3.75V2.6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 export default function SubscribeButton({
   creatorId,
@@ -147,8 +187,8 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <BellSimple size={16} className="mr-2" fill={isSubscribed ? "#171717" : "none"} />
-        <span>{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "subskrajb")}</span>
+        <SubscribeBellIcon size={16} className="mr-2" filled={isSubscribed} />
+        <span>{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">
