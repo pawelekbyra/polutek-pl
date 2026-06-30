@@ -21,6 +21,29 @@ Duży refaktor i stabilizacja fundamentów produktu są zakończone. Polutek.pl 
 - Strefa Fenju / Thank You Zone: komunikowana jako bonus w podziękowaniu za wsparcie, nie jako zakup płatnej treści.
 - Dług techniczny z refactoring roadmapy nadal obowiązuje, ale powinien być realizowany w małych slice’ach i nie wypierać decyzji właściciela.
 
+## Dług techniczny — do zrobienia (zidentyfikowany 2026-06-30)
+
+Poniższe zadania zostały zweryfikowane bezpośrednio w kodzie i czekają na realizację:
+
+### PR B — migracja `lib/services/` (28 plików legacy)
+Etapami, z CI po każdym kroku. Kolejność:
+1. USUŃ (martwe): `user.service.ts`, `content.service.ts`, `subscription.service.ts`, `payments-admin.service.ts`
+2. PRZENIEŚ (DTO): `comment.dto.ts`, `playback.dto.ts`, `videos-admin.dto.ts`, `payments-admin.dto.ts`
+3. ZREFAKTORYZUJ: `email.service.ts`, `user-access.service.ts`, `profile.service.ts`
+
+### PR C — nieużywane paczki npm
+Do weryfikacji grep przed usunięciem: `@react-email/render`, `@base-ui/react`, `sharp`.
+(`artplayer`, `tw-animate-css` — już usunięte w PR #1279.)
+
+### PR D — admin panel UX
+- Bulk actions w komentarzach (zaznaczanie wielu, masowe ukrycie/usunięcie)
+- Spójne loading states w tabelach
+- Nawigacja do osieroconych stron
+
+Szczegóły: `docs/audit/CODE-AUDIT-2026-06-30.md` (na branchu main, sekcja 7).
+
+---
+
 ## Linki
 
 - Masterplan: `docs/MASTERPLAN.md`
