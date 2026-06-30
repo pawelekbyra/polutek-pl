@@ -133,6 +133,7 @@ Aktualny otwarty zakres wykonywalny z tej gałęzi audytu to tylko:
 
 ## Recently completed / HISTORICAL
 
+- `2026-06-30-style-experiments` — DONE in local commit: added four public hand-drawn homepage style experiment routes `/eksperyment1`, `/eksperyment2`, `/eksperyment3`, and `/e4`.
 - `#1259` — CLEANUP-001 partial: `user-access.service.ts` and `audit.service.ts` deleted; legacy bridge reduced to `email.service.ts` and `lib/services/user/profile.service.ts`.
 - `#1258` — Clerk language update rate-limit guard, absolute icon URL and `EmailTemplate.name` migration fix.
 - `#1257` — najs hand-drawn style applied to real homepage/channel surfaces after the experiment pass.
