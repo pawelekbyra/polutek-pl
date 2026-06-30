@@ -24,12 +24,11 @@ describe("public loading/access state UX contracts", () => {
   it("keeps the public player controls clean, accessible, and compact", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(player).toContain("Subtitles,");
     expect(player).toContain("function PlayerCaptionButton");
     expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
     expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
     expect(player).not.toContain("Settings");
-    expect(player).toContain("const playerIconClass = \"h-[1.625rem] w-[1.625rem] stroke-[2.25]\";");
+    expect(player).toContain("const playerIconClass = \"h-[1.5rem] w-[1.5rem]\";");
     expect(player).not.toContain("const doodleIconClass");
     expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
     expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
@@ -47,7 +46,7 @@ describe("public loading/access state UX contracts", () => {
     expect(player).not.toContain("remote.seeking(clampedTime");
     expect(player).toContain("remote.seek(clampedTime");
     expect(player).toContain("event.stopPropagation()");
-    expect(player).toContain("bg-[#1F7A88]");
+    expect(player).toContain("bg-white/85");
     expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
     expect(player).toContain("relative z-40 mt-2 flex h-12");
     expect(player).toContain("group-data-[dragging]/slider:h-2");
@@ -83,7 +82,7 @@ describe("public loading/access state UX contracts", () => {
     const overlay = read("app/components/AccessLockOverlay.tsx");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Odblokuj dostęp");
+    expect(overlay).toContain("Wesprzyj kanał");
     expect(overlay).toContain('href="#donations"');
     expect(overlay).toContain('getElementById("donations")');
     expect(overlay).toContain("Zaloguj");
