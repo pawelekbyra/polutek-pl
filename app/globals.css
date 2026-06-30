@@ -14,11 +14,11 @@
     /* ===== Paper background — styl najs ===== */
     --background: 40 57% 94%;              /* #f8f3e7 papier */
     --foreground: 240 10% 3.9%;            /* #09090B Zinc-950 equivalent */
-    --card: 0 0% 100%;                     /* #FFFFFF */
+    --card: 40 57% 94%;                    /* papier — spójny z tłem strony */
     --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
+    --popover: 40 50% 96%;                 /* lekko papierowy popover */
     --popover-foreground: 240 10% 3.9%;
-    --secondary: 240 4.8% 95.9%;           /* #F1F1F1 Zinc-100 tła wtórne / hover */
+    --secondary: 40 35% 90%;              /* ciepły papierowy hover zamiast szarego */
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;    /* #71717A Zinc-500 meta */

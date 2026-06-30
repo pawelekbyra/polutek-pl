@@ -1,7 +1,0 @@
-.iconSkin {
-  display: contents;
-}
-
-:global(.experiment2-skin svg) {
-  overflow: visible;
-}

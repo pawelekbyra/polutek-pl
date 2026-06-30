@@ -132,7 +132,7 @@ export default function ChannelVideoCard({
                 {displayTitle}
               </h3>
             </Link>
-            <div className="text-[12px] text-[#606060] font-sans leading-relaxed">
+            <div className="text-[12px] text-[#606060] leading-relaxed" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               <div className="flex items-center gap-1">
                 <span>
                   {mounted

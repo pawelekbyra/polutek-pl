@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans, Outfit, Space_Grotesk, Bebas_Neue, Kalam } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Space_Grotesk, Bebas_Neue, Kalam, Patrick_Hand } from "next/font/google";
 
 export const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
@@ -29,5 +29,12 @@ export const kalam = Kalam({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "700"],
   variable: "--font-najs",
+  display: "swap",
+});
+
+export const patrickHand = Patrick_Hand({
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  variable: "--font-patrick",
   display: "swap",
 });

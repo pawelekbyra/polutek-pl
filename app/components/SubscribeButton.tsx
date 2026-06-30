@@ -7,6 +7,8 @@ import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
+import { Frame, INK, BLUE } from "./najs/primitives";
+import { useIsV2 } from "@/app/eksperyment1/V2Context";
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -16,6 +18,7 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: "default" | "compact";
+  colorScheme?: "default" | "v2";
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
@@ -68,10 +71,12 @@ export default function SubscribeButton({
   initialIsSubscribed,
   className,
   variant = "default",
+  colorScheme = "default",
   onStatusChange,
 }: SubscribeButtonProps) {
   const { t, language } = useLanguage();
   const { userId } = useAuth();
+  const isV2 = useIsV2();
   const { openSignIn } = useClerk();
   const [isSubscribed, setIsSubscribed] = useState(
     initialIsSubscribed ?? false,
@@ -179,16 +184,23 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "text-[13.5px] font-bold rounded-full h-[38px] px-[20px] flex items-center justify-center transition-all active:scale-95 border",
-          isSubscribed
-            ? "bg-secondary text-[#171717] border-input"
-            : "bg-[#171717] text-white border-[#171717]",
+          "relative text-[13.5px] font-bold h-[38px] px-[20px] flex items-center justify-center transition-all active:scale-95",
+          isSubscribed ? "text-[#171717]" : "text-white",
           isPending && "opacity-50 cursor-wait",
           className,
         )}
+        style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
-        <SubscribeBellIcon size={16} className="mr-2" filled={isSubscribed} />
-        <span>{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
+        <Frame
+          radius={20}
+          seed={37}
+          stroke={INK}
+          strokeWidth={1.2}
+          fill={isSubscribed ? "rgba(248,243,231,.88)" : (colorScheme === "v2" || isV2) ? BLUE : "#171717"}
+          showShadow={colorScheme === "v2" || isV2}
+        />
+        <SubscribeBellIcon size={16} className="mr-2 relative" filled={isSubscribed} />
+        <span className="relative">{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">
