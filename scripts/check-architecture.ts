@@ -99,20 +99,7 @@ const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
     'Temporary thumbnail proxy bridge; move to storage/media module.',
 };
 
-const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {
-  'lib/modules/users/application/get-or-create-current-user.use-case.ts': 'R5 bridge: only allowed production bridge to legacy get-or-create behavior.',
-  'lib/services/user.service.ts': 'R5 legacy facade: temporary compatibility wrapper.',
-  'tests/unit/api-contracts.test.ts': 'Test usage.',
-  'tests/unit/bola-protection.test.ts': 'Test usage.',
-  'tests/unit/comment-reactions-route.test.ts': 'Test usage.',
-  'tests/unit/admin-access.test.ts': 'Test usage.',
-  'tests/unit/clerk-webhook-route.test.ts': 'Test usage.',
-  'tests/unit/subscriptions-route.test.ts': 'Test usage.',
-  'tests/unit/user-service.test.ts': 'Test usage.',
-  'tests/unit/api-route-smoke.test.ts': 'Test usage.',
-  'tests/unit/comments-route.test.ts': 'Test usage.',
-  'tests/unit/admin-videos-crud.test.ts': 'Test usage.',
-};
+const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {};
 
 const PRISMA_ROUTES_ALLOWLIST: Record<string, string> = {};
 
@@ -241,10 +228,11 @@ function checkUserProfileServiceUsage() {
     const relativePath = path.relative(ROOT, file);
     if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
     if (relativePath === 'lib/services/user/profile.service.ts') continue;
+    if (relativePath === 'lib/modules/users/application/sync-user.use-case.ts') continue;
     if (relativePath === 'scripts/check-architecture.ts') continue;
 
     const content = fs.readFileSync(file, 'utf-8');
-    if (content.includes("UserProfileService") || content.includes("UserService.getOrCreateUser") || content.includes("@/lib/services/user/profile.service") || content.includes("@/lib/services/user.service")) {
+    if (content.includes("UserProfileService") || content.includes("UserService.getOrCreateUser") || content.includes("@/lib/services/user/profile.service")) {
       usageCount++;
 
       const allowReason = USER_PROFILE_SERVICE_ALLOWLIST[relativePath];

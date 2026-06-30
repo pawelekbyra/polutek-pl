@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { isConfiguredAdminUserId } from '../../admin-config';
-import { MAIN_CREATOR_NAME, ADMIN_EMAIL } from '../../constants';
+import { isConfiguredAdminUserId } from '@/lib/admin-config';
+import { MAIN_CREATOR_NAME, ADMIN_EMAIL } from '@/lib/constants';
 export class UserAdminService {
   /**
    * Helper for seeder and local development only.

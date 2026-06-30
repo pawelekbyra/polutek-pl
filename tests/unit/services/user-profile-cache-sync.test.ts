@@ -55,8 +55,8 @@ describe('user profile sync patron cache reconciliation', () => {
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx));
 
-    const profileModule = await import('@/lib/services/user/' + 'profile.service');
-    await profileModule['User' + 'ProfileService'].syncUser('new_user', 'merge@example.com', 'Merged User');
+    const syncUserModule = await import('@/lib/modules/users/application/sync-user.use-case');
+    await syncUserModule.syncUser('new_user', 'merge@example.com', 'Merged User');
 
     expect(tx.patronGrant.updateMany).toHaveBeenCalledWith({
       where: { userId: 'old_user' },

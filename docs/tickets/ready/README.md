@@ -67,10 +67,10 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3 | `INCOMPLETE-002` — remove referral system | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: schema, model, user fields, patron referralId, use cases, services, tests |
 | 3.2 | `INCOMPLETE-003` — Stripe disputes admin UI/manual sync | `DONE` | PR #1250: `POST /api/admin/payments/[id]/dispute-sync`, `adminDisputeSync` use case and admin UI action |
 | 3.3 | `INCOMPLETE-005` — admin refund endpoint/UI | `DONE` | PR #1250: `POST /api/admin/payments/[id]/refund`, `adminRefund` use case and refund dialog UI |
-| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `TODO` | 2026-06-30 search still found no Vercel cron config or Stripe reconciliation job. |
+| 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `DONE` | PR #1263 — Implemented Vercel cron reconciliation job in `app/api/cron/stripe-reconciliation`. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1224 moved `syncClerkAccess`; PR #1259 deleted `user-access.service.ts`, inlined `recalculateUserPatronStatus` to `payment.service.ts`, and deleted `audit.service.ts`. Remaining: migrate `email.service.ts`, migrate `lib/services/user/profile.service.ts`. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `DONE` | PR #1263 — Migrated `email.service.ts` and `profile.service.ts`. Legacy service layer removed. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Current verified remainder — 2026-06-30
@@ -106,13 +106,13 @@ Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokum
 - [x] `INCOMPLETE-003` — Stripe disputes admin UI/manual sync — `DONE` PR #1250
 - [x] `INCOMPLETE-004` — bounce/complaint email auto-suppression — `DONE` (zweryfikowane w kodzie)
 - [x] `INCOMPLETE-005` — admin refund endpoint/UI — `DONE` PR #1250
-- [ ] `INCOMPLETE-006` — Stripe reconciliation job — `TODO`, no cron/reconciliation job found in current main search
+- [x] `INCOMPLETE-006` — Stripe reconciliation job — `DONE` in PR #1263.
 - [x] `INCOMPLETE-007` — remove dead `Actor.isPatron` — `DONE` PR claude/polutek-pl-proposals-qfkm9y
 - [x] `INCOMPLETE-008` — unify loading state around VideoPlayer/PremiumWrapper — `DONE` (zweryfikowane w kodzie, świadoma implementacja)
 
 ### Cleanup from roadmap
 
-- [~] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; PR #1224 + PR #1259 completed `syncClerkAccess`, deleted `user-access.service.ts` and deleted `audit.service.ts`; remaining: `email.service.ts`, `lib/services/user/profile.service.ts`
+- [x] `CLEANUP-001` — legacy service layer migration/removal map execution — `DONE` in PR #1263. All legacy services removed.
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y
@@ -137,6 +137,7 @@ Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokum
 - `#1256` — thumbnail display now proxies through `/api/videos/[id]/thumbnail`; private blob URL stays backend-only.
 - `#1250` — `INCOMPLETE-003` and `INCOMPLETE-005` completed: admin dispute sync and refund UI/API.
 - `#1248` — preferred provider selection for video upload; admin chooses Cloudflare/Mux primary while R2 mirror pipeline keeps fallback.
+- `#1263` — INCOMPLETE-006: Stripe reconciliation cron; CLEANUP-001: legacy services removal.
 - `#1224` — CLEANUP-001 partial: `syncClerkAccess` migrated to `lib/modules/users`; payment/admin/script callers updated; CI green after follow-up test mock fixes.
 - `REFACTORING-ROADMAP-2026-06-27` — historical technical audit baseline; no longer the only active product roadmap.
 - `#1217` — duplicate scope merged into #1204 and closed.

@@ -45,11 +45,11 @@ describe("Subscription to Patron guard", () => {
       if (!source.toLowerCase().includes("subscription")) return [];
       if (
         file.includes("admin") ||
-        file.includes("profile.service.ts") ||
+      file.includes("sync-user.use-case.ts") ||
         file.includes("email.repository.ts") ||
         file.includes("sync-user-from-webhook.use-case.ts") ||
         file.includes("account-deletion-cleanup.use-case.ts")
-      ) return []; // Allow admin, profile, email repository and user deletion cleanup to use these fields for cache cleanup/soft-delete.
+    ) return []; // Allow admin, sync-user, email repository and user deletion cleanup to use these fields for cache cleanup/soft-delete.
 
       return unsafeGrantPatterns
         .filter((pattern) => pattern.test(source))

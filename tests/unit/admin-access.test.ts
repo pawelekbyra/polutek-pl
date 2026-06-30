@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { UserProfileService as UserService } from "@/lib/services/user/profile.service";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { GET as getAdminStats } from "@/app/api/admin/stats/route";
 
@@ -28,18 +27,18 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/services/user/profile.service", () => ({
-  UserProfileService: {
-    getOrCreateUser: vi.fn(),
-  },
+vi.mock("@/lib/modules/users/application/sync-user.use-case", () => ({
+  getOrCreateUser: vi.fn(),
 }));
+
+import { getOrCreateUser } from "@/lib/modules/users/application/sync-user.use-case";
 
 describe("admin API access protection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_EMAIL = "admin@example.com";
     process.env.ADMIN_CLERK_USER_IDS = "";
-    vi.mocked(UserService.getOrCreateUser).mockResolvedValue({
+    vi.mocked(getOrCreateUser).mockResolvedValue({
       id: "user_1",
     } as never);
   });
@@ -55,7 +54,7 @@ describe("admin API access protection", () => {
     expect(adminUserId).toBeNull();
     expect(response?.status).toBe(401);
     expect(await response?.json()).toEqual({ error: "Unauthorized" });
-    expect(UserService.getOrCreateUser).not.toHaveBeenCalled();
+    expect(getOrCreateUser).not.toHaveBeenCalled();
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
