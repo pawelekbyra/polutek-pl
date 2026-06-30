@@ -8,25 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, AlertCircle, Loader2, Star, Trash2, Plus, Youtube, Globe } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
-
-interface VideoAsset {
-  id: string;
-  provider: string;
-  processingState: string;
-  isPrimary: boolean;
-  isPlayable: boolean;
-  sourceMode: string;
-  externalVideoId?: string | null;
-  externalUrl?: string | null;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
-  failureReason?: string | null;
-  createdAt: string;
-}
+import { AdminVideoAssetDto } from "@/lib/modules/video/domain/video.dto";
 
 interface VideoSourcesPanelProps {
   videoId: string;
-  assets: VideoAsset[];
+  assets: AdminVideoAssetDto[];
   tier: string;
   onChanged: () => void;
 }

@@ -121,7 +121,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
       <div className="space-y-4">
         <VideoSourcesPanel
           videoId={videoId}
-          assets={assets as any}
+          assets={assets}
           tier={tier}
           onChanged={() => onSaved?.()}
         />
