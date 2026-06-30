@@ -455,7 +455,7 @@ export default function AdminVideosPage() {
             onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={setDeleteDialogVideoId} deletingVideoId={deletingVideoId} onPageChange={(nextPage) => fetchVideos(nextPage, { pending: true })}
         />
 
-        <Dialog open={deleteDialogVideoId !== null} onOpenChange={(open) => { if (!open) setDeleteDialogVideoId(null); }}>
+        <Dialog open={deleteDialogVideoId !== null} onOpenChange={(open: boolean) => { if (!open) setDeleteDialogVideoId(null); }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Usunąć film?</DialogTitle>

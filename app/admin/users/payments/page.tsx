@@ -206,7 +206,7 @@ export default function AdminPaymentsListPage() {
                 </form>
 
                 <div className="flex flex-wrap gap-2 items-center flex-1">
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "ALL")}>
+                    <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v || "ALL")}>
                         <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Wszystkie statusy</SelectItem>
@@ -218,7 +218,7 @@ export default function AdminPaymentsListPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={currencyFilter} onValueChange={(v) => setCurrencyFilter(v || "ALL")}>
+                    <Select value={currencyFilter} onValueChange={(v: string) => setCurrencyFilter(v || "ALL")}>
                         <SelectTrigger className="w-[100px] h-9 text-xs"><SelectValue placeholder="Waluta" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Wszystkie</SelectItem>
@@ -235,7 +235,7 @@ export default function AdminPaymentsListPage() {
                         <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="bg-transparent text-[10px] font-bold focus:outline-none" />
                     </div>
 
-                    <Select value={orderBy} onValueChange={(v) => setOrderBy(v || "createdAt")}>
+                    <Select value={orderBy} onValueChange={(v: string) => setOrderBy(v || "createdAt")}>
                         <SelectTrigger className="w-[140px] h-9 text-xs">
                              <div className="flex items-center gap-2"><Filter className="h-3 w-3 opacity-70" /><SelectValue placeholder="Sortuj" /></div>
                         </SelectTrigger>
@@ -247,7 +247,7 @@ export default function AdminPaymentsListPage() {
                     </Select>
 
                     <div className="flex items-center space-x-2 bg-background/50 px-3 py-1.5 rounded-md border h-9">
-                        <Checkbox id="refunded" checked={refundedOnly} onCheckedChange={(v) => setRefundedOnly(!!v)} />
+                        <Checkbox id="refunded" checked={refundedOnly} onCheckedChange={(v: boolean | "indeterminate") => setRefundedOnly(!!v)} />
                         <Label htmlFor="refunded" className="text-[10px] font-bold uppercase cursor-pointer">Tylko zwroty</Label>
                     </div>
                 </div>
@@ -368,7 +368,7 @@ export default function AdminPaymentsListPage() {
         </Card>
       </main>
 
-      <Dialog open={refundDialog.open} onOpenChange={(open) => setRefundDialog(s => ({ ...s, open }))}>
+      <Dialog open={refundDialog.open} onOpenChange={(open: boolean) => setRefundDialog(s => ({ ...s, open }))}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Zwrot płatności</DialogTitle>

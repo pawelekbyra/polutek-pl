@@ -146,7 +146,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
             </Button>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 shadow-sm">
-                    <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked) => setIsActive(!!checked)} />
+                    <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked: boolean | "indeterminate") => setIsActive(!!checked)} />
                     <Label htmlFor="active-switch" className="text-[10px] font-black uppercase text-neutral-500 cursor-pointer">Aktywny</Label>
                 </div>
                 <Button onClick={handleSave} disabled={status === "saving" || !subject.trim() || !html.trim()} className="bg-neutral-900 hover:bg-black text-white rounded-xl px-8 h-10">

@@ -199,7 +199,7 @@ export function VideoFilters({
 
                     <div className="flex items-end pb-0.5">
                         <div className="flex items-center space-x-2 bg-background border px-3 py-1.5 rounded-md h-9 w-full">
-                            <Checkbox id="attention" checked={needsAttention} onCheckedChange={(val) => onNeedsAttentionChange(!!val)} />
+                            <Checkbox id="attention" checked={needsAttention} onCheckedChange={(val: boolean | "indeterminate") => onNeedsAttentionChange(!!val)} />
                             <Label htmlFor="attention" className="text-xs font-medium cursor-pointer">Wymaga uwagi</Label>
                         </div>
                     </div>

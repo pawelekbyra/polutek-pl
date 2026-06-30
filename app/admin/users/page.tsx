@@ -179,7 +179,7 @@ export default function AdminUsersPage() {
                 </form>
 
                 <div className="flex flex-wrap gap-2 items-center flex-1">
-                    <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v || "ALL")}>
+                    <Select value={roleFilter} onValueChange={(v: string) => setRoleFilter(v || "ALL")}>
                         <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue placeholder="Rola" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Wszystkie role</SelectItem>
@@ -188,7 +188,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={patronFilter} onValueChange={(v) => setPatronFilter(v || "ALL")}>
+                    <Select value={patronFilter} onValueChange={(v: string) => setPatronFilter(v || "ALL")}>
                         <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Wszyscy</SelectItem>
@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={languageFilter} onValueChange={(v) => setLanguageFilter(v || "ALL")}>
+                    <Select value={languageFilter} onValueChange={(v: string) => setLanguageFilter(v || "ALL")}>
                         <SelectTrigger className="w-[100px] h-9 text-xs"><SelectValue placeholder="Język" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Język: Dowolny</SelectItem>
@@ -206,7 +206,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={patronSourceFilter} onValueChange={(v) => { setPatronSourceFilter(v || "ALL"); setPage(1); }}>
+                    <Select value={patronSourceFilter} onValueChange={(v: string) => { setPatronSourceFilter(v || "ALL"); setPage(1); }}>
                         <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="Źródło Patronatu" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Dowolne źródło</SelectItem>
@@ -219,7 +219,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={orderBy} onValueChange={(v) => setOrderBy(v || "createdAt")}>
+                    <Select value={orderBy} onValueChange={(v: string) => setOrderBy(v || "createdAt")}>
                         <SelectTrigger className="w-[160px] h-9 text-xs">
                             <div className="flex items-center gap-2"><Filter className="h-3 w-3 opacity-70" /><SelectValue placeholder="Sortuj" /></div>
                         </SelectTrigger>
