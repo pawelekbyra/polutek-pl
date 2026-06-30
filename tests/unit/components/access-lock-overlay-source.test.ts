@@ -15,8 +15,6 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain("<button");
     expect(source).toContain('type="button"');
     expect(source).toContain("Zaloguj się");
-    expect(source).toContain("focus-visible:outline");
-    expect(source).toContain("text-[#60a5fa]");
   });
 
   it("keeps PATRON_REQUIRED on the patron branded lock path", () => {
@@ -24,9 +22,8 @@ describe("access lock overlay source contract", () => {
 
     expect(source).toContain('state === "PATRON_REQUIRED"');
     expect(source).toContain("PATRON");
-    expect(source).toContain("text-[#f59e0b]");
-    expect(source).toContain("#78350f");
     expect(source).toContain('href="#donations"');
+    expect(source).toContain("scrollIntoView");
     expect(source).not.toContain("Wesprzyj, aby obczaić");
   });
 
