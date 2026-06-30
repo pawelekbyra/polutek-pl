@@ -60,7 +60,6 @@ export class SyncUserFromWebhookUseCase {
             username: data.username,
             imageUrl: data.imageUrl,
             language: data.language || 'pl',
-            isPatron: false, // Default is false, regardless of Clerk metadata
             role: 'USER',
           },
         });

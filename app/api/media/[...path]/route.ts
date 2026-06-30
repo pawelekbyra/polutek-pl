@@ -12,6 +12,7 @@ import { recordAlert } from "@/lib/observability";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getGatedMedia } from "@/lib/modules/media";
+import { isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/services/playback/legacy-private-fallback.policy";
 
 function rateLimitedResponse(videoId: string) {
   recordAlert("media_proxy.rate_limited", { videoId });
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ path: str
 
     if (
       playbackPolicyVideo?.tier === "PATRON" &&
-      process.env.ALLOW_LEGACY_PRIVATE_FALLBACK !== "true"
+      !isLegacyPrivatePlaybackFallbackAllowed()
     ) {
       return NextResponse.json(
         {

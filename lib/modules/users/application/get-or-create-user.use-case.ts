@@ -37,7 +37,6 @@ export class GetOrCreateUserUseCase {
         imageUrl: data.imageUrl,
         language: data.language || 'pl',
         // Security: Ensure defaults are safe
-        isPatron: false,
         role: 'USER',
     });
   }

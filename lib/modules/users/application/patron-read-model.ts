@@ -14,18 +14,6 @@ export interface PatronDiagnosticsReadModel {
   finalPatronStatus: 'ACTIVE_GRANT' | 'NO_ACTIVE_GRANT';
   finalPatronStatusSource: 'ACTIVE_PATRON_GRANT';
   truth: PatronTruthReadModel;
-  /** Legacy cache data from User table for diagnostic purposes. */
-  legacyPatronCache: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: string | null;
-  };
-  /** Indicates if the legacy cache differs from the current source of truth in terms of access. */
-  accessTruthMismatch: boolean;
-  /** Alias for accessTruthMismatch for backward compatibility. */
-  cacheTruthMismatch: boolean;
-  /** Indicates if the legacy cache metadata (since, source) differs from the current source of truth. */
-  legacyMetadataMismatch: boolean;
 }
 
 export function buildPatronTruthReadModel(
@@ -62,27 +50,13 @@ export function buildPatronDiagnosticsReadModel(
     source: string;
     createdAt: Date;
     revokedAt: Date | null;
-  }>,
-  legacyCache: {
-    isPatron: boolean;
-    patronSince: Date | null;
-    patronSource: string | null;
-  }
+  }>
 ): PatronDiagnosticsReadModel {
   const truth = buildPatronTruthReadModel(patronGrants);
-
-  const accessMismatch = truth.isPatron !== legacyCache.isPatron;
-  const metadataMismatch =
-    truth.activeGrantSince?.getTime() !== legacyCache.patronSince?.getTime() ||
-    truth.activeGrantSource !== legacyCache.patronSource;
 
   return {
     finalPatronStatus: truth.isPatron ? 'ACTIVE_GRANT' : 'NO_ACTIVE_GRANT',
     finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
     truth,
-    legacyPatronCache: legacyCache,
-    accessTruthMismatch: accessMismatch,
-    cacheTruthMismatch: accessMismatch, // Alias for accessTruthMismatch
-    legacyMetadataMismatch: metadataMismatch,
   };
 }

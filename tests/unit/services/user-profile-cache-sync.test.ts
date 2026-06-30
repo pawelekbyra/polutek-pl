@@ -62,17 +62,5 @@ describe('user profile sync patron cache reconciliation', () => {
       where: { userId: 'old_user' },
       data: { userId: 'new_user' },
     });
-    expect(tx.patronGrant.findFirst).toHaveBeenCalledWith({
-      where: { userId: 'new_user', revokedAt: null },
-      orderBy: { createdAt: 'asc' },
-    });
-    expect(tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'new_user' },
-      data: {
-        isPatron: true,
-        patronSince: activeGrant.createdAt,
-        patronSource: PatronGrantSource.STRIPE_TIP,
-      },
-    });
   });
 });

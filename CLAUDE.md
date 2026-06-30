@@ -1,0 +1,231 @@
+# CLAUDE.md — AI Agent Guide for Polutek.pl
+
+This file is the primary entry point for AI agents working on this codebase. Read it in full before touching any code.
+
+**Maintenance rule:** When you add a meaningful new feature, change a critical invariant, introduce a new module, or rename a key file, update this document. Future agents depend on it being accurate.
+
+---
+
+## 1. What This Product Is
+
+Polutek.pl is a **single-channel VOD platform** for one creator. It is not a marketplace, not a multi-tenant SaaS, not a subscription service. Core facts:
+
+- One channel, one catalogue of videos, one patron system, one admin cockpit.
+- Patron access is a **permanent, lifetime reward** for a qualifying one-time Stripe tip. No recurring subscriptions.
+- Videos have three access tiers: `PUBLIC`, `LOGGED_IN`, `PATRON`.
+- Comments are visible to all but writing/reacting requires login (PUBLIC/LOGGED_IN videos) or patron status (PATRON videos).
+
+---
+
+## 2. Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 App Router (deployed on Vercel) |
+| Database | Neon PostgreSQL via Prisma ORM |
+| Auth/Identity | Clerk (identity only — NOT patron authority) |
+| Payments | Stripe (webhooks → fulfillPayment → PatronGrant) |
+| Video delivery | Cloudflare Stream (primary) |
+| Email | Resend |
+| Storage | Vercel Blob (legacy thumbnails/media), Cloudflare R2 (future) |
+| Rate limiting | Upstash Redis / Vercel KV |
+| Crons | Vercel Crons (`vercel.json` `"crons"` array) |
+| UI | Tailwind CSS + shadcn/ui components in `components/ui/` |
+| Tests | Vitest |
+
+---
+
+## 3. Module Map
+
+```
+lib/modules/
+  access/           # Video access policy (checkVideoAccess, PlaybackPlan)
+  audit/            # Audit event recording
+  email/            # Email repository, broadcast use cases, Resend adapter
+  patron/
+    application/    # grant-patron, revoke-patron, recalculate-patron-status use cases
+    domain/         # patron.dto, patron.errors, patron.policy
+    infrastructure/ # PatronRepository (listActiveGrants, createGrant, revokeActiveGrants…)
+  payments/         # Payment recording, fulfillPayment (canonical replay-safe path)
+  users/
+    application/    # get-admin-user-details, patron-read-model, sync-user use cases
+    domain/         # user DTOs, errors, policies
+    infrastructure/ # UserRepository
+  shared/           # AppContext, Actor, result types (ok/failure), db helpers
+
+app/                # Next.js App Router pages and API routes
+app/api/            # API routes
+app/admin/          # Admin panel pages and components
+app/api/admin/      # Admin API routes
+app/api/cron/       # Vercel Cron handlers (auth via CRON_SECRET bearer token)
+app/api/media/      # Media proxy — only safe playback path for blob/legacy video
+app/api/webhooks/   # Stripe and Cloudflare webhook handlers
+
+prisma/
+  schema.prisma     # Single source of schema truth
+  migrations/       # Never edit existing migrations; always add new files
+```
+
+---
+
+## 4. Critical Invariants — Read Before Editing
+
+### 4.1 Patron Status Source of Truth
+
+**`PatronGrant` table is the sole source of patron access.** A user is a patron iff:
+
+```prisma
+patronGrants: { some: { revokedAt: null } }
+```
+
+- `User.isPatron`, `User.patronSince`, `User.patronSource` fields **do not exist** (removed in migration `20260630000000_remove_legacy_user_patron_cache`).
+- Never write patron status to the `User` table. Never read it from there.
+- `recalculatePatronStatus()` is a pure read — it computes status from active grants, no writes.
+
+### 4.2 Patron Grant Lifecycle
+
+```
+Stripe webhook (signature verified)
+  → record StripeEvent
+  → record Payment (financial fact)
+  → Patron eligibility policy (amount ≥ threshold)
+  → fulfillPayment() — canonical, replay-safe
+      → creates PatronGrant
+      → syncs Clerk metadata (cache only)
+      → sends confirmation email
+```
+
+`fulfillPayment()` in `lib/modules/payments/` is idempotent and replay-safe. Always use it for payment fulfillment, never issue `updateMany({ status: 'SUCCEEDED' })` manually.
+
+### 4.3 Video Playback Security
+
+- **Never expose `videoUrl` to the public frontend.** Use `PublicVideoDTO` for all public-facing data.
+- `/api/media/[...path]` is the only public playback path for blob/legacy videos.
+- `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder. Never mount a player, fetch streams, request tokens, or log views for a denied plan.
+- `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/services/playback/legacy-private-fallback.policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
+
+### 4.4 Access Checks
+
+Access is checked via `checkVideoAccess()` in `lib/modules/access/`. It reads `PatronGrant`, not `User.isPatron`. Actor type comes from `getActorFromAuth()`.
+
+### 4.5 Clerk Is Identity Only
+
+Clerk provides user identity (userId, email, name). It does not control patron access. Clerk metadata is a sync cache — the database is always authoritative.
+
+### 4.6 Email Audience
+
+`lib/modules/email/infrastructure/email.repository.ts` filters patron audience via `patronGrants: { some: { revokedAt: null } }`. Do not filter by `User.isPatron`.
+
+---
+
+## 5. Admin Panel
+
+Located in `app/admin/`. Key areas:
+
+| Path | Purpose |
+|---|---|
+| `/admin` | Dashboard overview |
+| `/admin/videos` | Video list with filters (`VideoTable`, `VideoFilters`) |
+| `/admin/videos/[id]` | Video detail (media, diagnostics) |
+| `/admin/videos/[id]/edit` | Metadata edit form |
+| `/admin/videos/new` | Create video (Cloudflare upload or existing UID) |
+| `/admin/users` | User list |
+| `/admin/users/[id]` | User detail + patron diagnostics |
+| `/admin/comments` | Comment moderation + reports link |
+| `/admin/comments/reports` | Reported comments queue |
+| `/admin/emails` | Email broadcast |
+
+`AdminLayoutShell` wraps all admin pages. `AdminNavigation` provides breadcrumb back-navigation.
+
+---
+
+## 6. Cron Jobs
+
+Registered in `vercel.json` under `"crons"`. All cron routes live in `app/api/cron/`. Auth via `Authorization: Bearer <CRON_SECRET>` header.
+
+| Route | Schedule | Purpose |
+|---|---|---|
+| `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers PENDING payments stuck 15min–7d by re-running `fulfillPayment()` or marking as FAILED |
+
+---
+
+## 7. Key Files to Know
+
+| File | Role |
+|---|---|
+| `lib/modules/patron/application/grant-patron.use-case.ts` | Grant patron status (admin/system only) |
+| `lib/modules/patron/application/revoke-patron.use-case.ts` | Revoke patron status |
+| `lib/modules/patron/application/recalculate-patron-status.use-case.ts` | Pure read — derive status from active grants |
+| `lib/modules/payments/application/fulfill-payment.use-case.ts` | Canonical, replay-safe payment fulfillment |
+| `lib/modules/access/application/check-video-access.use-case.ts` | Gate keeper for video access |
+| `lib/services/playback/legacy-private-fallback.policy.ts` | Always returns false; controls legacy blob playback |
+| `app/api/media/[...path]/route.ts` | Media proxy (uses the policy above) |
+| `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
+| `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
+| `lib/modules/users/application/patron-read-model.ts` | `buildPatronDiagnosticsReadModel(grants[])` — diagnostics only |
+| `prisma/schema.prisma` | Database schema (single-writer) |
+
+---
+
+## 8. Environment Variables
+
+See `.env.example` for all variables. Critical ones:
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | Auth |
+| `DATABASE_URL` / `DATABASE_URL_UNPOOLED` | Neon PostgreSQL |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe |
+| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_WEBHOOK_SECRET` | Cloudflare Stream |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Email |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob (legacy media) |
+| `CRON_SECRET` | Authenticates cron API routes (≥32 random chars) |
+| `ADMIN_CLERK_USER_IDS` | Comma-separated Clerk user IDs with admin access |
+| `MAIN_CREATOR_SLUG` | Required; identifies the single channel |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Rate limiting (required in production) |
+| `MEDIA_BUCKET_HOST` / `NEXT_PUBLIC_R2_PUBLIC_HOST` | Allowlisted media hosts |
+| `ALLOWED_THUMBNAIL_HOSTS` | Comma-separated allowed thumbnail image hosts |
+| `PATRON_MIN_TIP_AMOUNT` / `PATRON_MIN_TIP_CURRENCY` | Patron qualification threshold |
+| `HEALTHCHECK_TOKEN` | `/api/health` auth |
+| `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` | Signs unsubscribe tokens |
+
+---
+
+## 9. Testing
+
+Tests live in `tests/unit/`. Run with:
+
+```bash
+npx vitest run
+```
+
+Key test areas:
+- `tests/unit/modules/patron/` — grant, revoke, recalculate, repository logic
+- `tests/unit/modules/users/patron-read-model.test.ts` — `buildPatronDiagnosticsReadModel`
+- `tests/unit/api/media-proxy-route.test.ts` — media proxy security
+- `tests/unit/media-source-safety.test.ts` — playback plan safety
+
+Typecheck:
+```bash
+npx tsc --noEmit
+```
+
+---
+
+## 10. What NOT To Do
+
+- Do not write to `User.isPatron`, `User.patronSince`, or `User.patronSource` — these fields do not exist.
+- Do not read patron status from Clerk metadata as an access gate.
+- Do not expose `videoUrl` in any public-facing API response.
+- Do not mount a video player without a `READY` PlaybackPlan.
+- Do not manually set payment status to `SUCCEEDED` — always go through `fulfillPayment()`.
+- Do not check `process.env.ALLOW_LEGACY_PRIVATE_FALLBACK` directly; use the policy function.
+- Do not add new cron jobs without registering them in `vercel.json`.
+- Do not create new database migrations by editing existing migration files.
+- Do not add multi-channel, multi-creator, or SaaS-style features.
+
+---
+
+## 11. Documentation Maintenance
+
+When you make a change that materially affects how agents navigate this codebase — a new module, a renamed canonical pattern, a removed invariant, a new cron, a new critical env var, a new mandatory security rule — update this file in the same PR. Stale documentation misleads future agents and creates silent bugs.

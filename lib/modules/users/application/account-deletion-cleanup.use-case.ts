@@ -72,9 +72,6 @@ export class AccountDeletionCleanupUseCase {
           username: user.isDeleted ? undefined : `deleted_${anonymousId.split('-')[0]}`,
           imageUrl: null,
           stripeCustomerId: null,
-          isPatron: false,
-          patronSince: null,
-          patronSource: null,
           isDeleted: true,
         },
       });

@@ -104,13 +104,16 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
   }
 
   const userCtx = createAppContext();
-  const [userDb, initialSubscribed] = await Promise.all([
+  const [userDb, initialSubscribed, isPatronUser] = await Promise.all([
     userId ? getOrCreateCurrentUser(userCtx, userId).catch(() => null) : Promise.resolve(null),
     userId
       ? prisma.subscription.findUnique({
           where: { userId_creatorId: { userId, creatorId: creator.id } },
           select: { id: true },
         }).catch(() => null).then(Boolean)
+      : Promise.resolve(false),
+    userId
+      ? prisma.patronGrant.findFirst({ where: { userId, revokedAt: null }, select: { id: true } }).then(Boolean).catch(() => false)
       : Promise.resolve(false),
   ]);
 
@@ -209,7 +212,7 @@ export default async function ChannelPage(props: { params: Promise<{ slug: strin
                 key={video.id}
                 video={video}
                 isLoggedIn={!!userId}
-                isPatron={userDb?.isPatron}
+                isPatron={isPatronUser}
                 role={userDb?.role}
               />
             ))}

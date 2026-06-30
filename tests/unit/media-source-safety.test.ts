@@ -71,7 +71,6 @@ describe('PlaybackService Safety', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
   });
 
   it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
@@ -297,8 +296,7 @@ describe('PlaybackService Safety', () => {
   });
 
 
-  it('ignores ALLOW_LEGACY_PRIVATE_FALLBACK and keeps patron legacy fallback blocked', async () => {
-    process.env.ALLOW_LEGACY_PRIVATE_FALLBACK = 'true';
+  it('keeps patron legacy fallback blocked regardless of env flags', async () => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       ...baseVideo,
       videoUrl: 'https://kraufanding-media.s3.amazonaws.com/private.mp4',

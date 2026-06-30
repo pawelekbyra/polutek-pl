@@ -10,9 +10,8 @@ async function main() {
     await prisma.user.findFirst({
       select: {
         id: true,
-        patronSource: true,
-        isPatron: true,
-        patronSince: true,
+        email: true,
+        isDeleted: true,
       },
     });
     console.log("✓ User table schema is up to date.");

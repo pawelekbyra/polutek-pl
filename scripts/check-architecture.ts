@@ -97,6 +97,8 @@ const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
     'Temporary admin query parser helper; move to route-local/module query DTO parser.',
   'app/api/videos/[id]/thumbnail/route.ts':
     'Temporary thumbnail proxy bridge; move to storage/media module.',
+  'app/api/media/[...path]/route.ts':
+    'Playback safety policy import; isLegacyPrivatePlaybackFallbackAllowed() always returns false and must stay in lib/services until media module absorbs playback policy.',
 };
 
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {};

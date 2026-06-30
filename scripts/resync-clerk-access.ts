@@ -8,7 +8,8 @@ async function main() {
   try {
     const users = await prisma.user.findMany({
       include: {
-        paymentTotals: true
+        paymentTotals: true,
+        patronGrants: { where: { revokedAt: null }, select: { id: true } },
       }
     });
 
@@ -18,9 +19,10 @@ async function main() {
       const totalPLN = user.paymentTotals.find(t => t.currency === 'PLN')?.amountMinor || 0;
       const totalEUR = user.paymentTotals.find(t => t.currency === 'EUR')?.amountMinor || 0;
       const normalizedTotal = (totalPLN / 100) + (totalEUR / 100 * DISPLAY_EUR_TO_PLN_RATE);
+      const isPatron = user.patronGrants.length > 0;
 
       console.log(`Resyncing user ${user.id} (${user.email})...`);
-      await syncClerkAccess(user.id, user.isPatron, normalizedTotal);
+      await syncClerkAccess(user.id, isPatron, normalizedTotal);
     }
 
     console.log("=== RESYNC COMPLETE ===");

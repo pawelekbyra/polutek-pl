@@ -2,74 +2,59 @@ import { describe, it, expect } from 'vitest';
 import { buildPatronDiagnosticsReadModel } from '@/lib/modules/users/application/patron-read-model';
 
 describe('Patron Read Model Diagnostics', () => {
-  it('identifies accessTruthMismatch when isPatron differs', () => {
+  it('returns ACTIVE_GRANT status when active grants exist', () => {
     const grants = [
       { id: 'g1', source: 'admin', createdAt: new Date('2024-01-01'), revokedAt: null }
     ];
-    const legacyCache = {
-      isPatron: false,
-      patronSince: new Date('2024-01-01'),
-      patronSource: 'admin'
-    };
 
-    const diagnostics = buildPatronDiagnosticsReadModel(grants, legacyCache);
+    const diagnostics = buildPatronDiagnosticsReadModel(grants);
 
-    expect(diagnostics.accessTruthMismatch).toBe(true);
-    expect(diagnostics.cacheTruthMismatch).toBe(true); // alias
-    // metadata matches, but access mismatch might override or be separate.
-    // In our implementation, metadataMismatch is calculated independently.
-    expect(diagnostics.legacyMetadataMismatch).toBe(false);
+    expect(diagnostics.finalPatronStatus).toBe('ACTIVE_GRANT');
+    expect(diagnostics.finalPatronStatusSource).toBe('ACTIVE_PATRON_GRANT');
+    expect(diagnostics.truth.isPatron).toBe(true);
   });
 
-  it('identifies legacyMetadataMismatch when metadata differs but access is same', () => {
-    const date1 = new Date('2024-01-01');
-    const date2 = new Date('2020-01-01');
+  it('returns NO_ACTIVE_GRANT status when no active grants exist', () => {
     const grants = [
-      { id: 'g1', source: 'stripe_tip', createdAt: date1, revokedAt: null }
+      { id: 'g1', source: 'admin', createdAt: new Date('2024-01-01'), revokedAt: new Date('2025-01-01') }
     ];
-    const legacyCache = {
-      isPatron: true,
-      patronSince: date2,
-      patronSource: 'admin'
-    };
 
-    const diagnostics = buildPatronDiagnosticsReadModel(grants, legacyCache);
+    const diagnostics = buildPatronDiagnosticsReadModel(grants);
 
-    expect(diagnostics.accessTruthMismatch).toBe(false);
-    expect(diagnostics.cacheTruthMismatch).toBe(false);
-    expect(diagnostics.legacyMetadataMismatch).toBe(true);
+    expect(diagnostics.finalPatronStatus).toBe('NO_ACTIVE_GRANT');
+    expect(diagnostics.truth.isPatron).toBe(false);
   });
 
-  it('identifies both mismatches when both differ', () => {
-    const grants = [
-      { id: 'g1', source: 'stripe_tip', createdAt: new Date('2024-01-01'), revokedAt: null }
-    ];
-    const legacyCache = {
-      isPatron: false,
-      patronSince: new Date('2020-01-01'),
-      patronSource: 'admin'
-    };
-
-    const diagnostics = buildPatronDiagnosticsReadModel(grants, legacyCache);
-
-    expect(diagnostics.accessTruthMismatch).toBe(true);
-    expect(diagnostics.legacyMetadataMismatch).toBe(true);
-  });
-
-  it('identifies no mismatch when everything is consistent', () => {
+  it('exposes correct activeGrantSince from first active grant', () => {
     const date = new Date('2024-01-01');
     const grants = [
-      { id: 'g1', source: 'admin', createdAt: date, revokedAt: null }
+      { id: 'g1', source: 'stripe_tip', createdAt: date, revokedAt: null }
     ];
-    const legacyCache = {
-      isPatron: true,
-      patronSince: date,
-      patronSource: 'admin'
-    };
 
-    const diagnostics = buildPatronDiagnosticsReadModel(grants, legacyCache);
+    const diagnostics = buildPatronDiagnosticsReadModel(grants);
 
-    expect(diagnostics.accessTruthMismatch).toBe(false);
-    expect(diagnostics.legacyMetadataMismatch).toBe(false);
+    expect(diagnostics.truth.activeGrantSince).toEqual(date);
+    expect(diagnostics.truth.activeGrantSource).toBe('stripe_tip');
+  });
+
+  it('returns null activeGrantSince when no grants at all', () => {
+    const diagnostics = buildPatronDiagnosticsReadModel([]);
+
+    expect(diagnostics.finalPatronStatus).toBe('NO_ACTIVE_GRANT');
+    expect(diagnostics.truth.isPatron).toBe(false);
+    expect(diagnostics.truth.activeGrantSince).toBeNull();
+    expect(diagnostics.truth.activeGrantSource).toBeNull();
+  });
+
+  it('counts only active grants in activeGrantCount', () => {
+    const grants = [
+      { id: 'g1', source: 'admin', createdAt: new Date('2023-01-01'), revokedAt: new Date('2024-01-01') },
+      { id: 'g2', source: 'stripe_tip', createdAt: new Date('2024-06-01'), revokedAt: null },
+    ];
+
+    const diagnostics = buildPatronDiagnosticsReadModel(grants);
+
+    expect(diagnostics.truth.activeGrantCount).toBe(1);
+    expect(diagnostics.truth.activeGrantIds).toEqual(['g2']);
   });
 });
