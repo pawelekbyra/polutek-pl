@@ -17,6 +17,14 @@ interface CoverImageUploadProps {
 }
 
 
+function toDisplayUrl(url: string | undefined, videoId?: string): string | null {
+  if (!url) return null;
+  if (url.includes('.blob.vercel-storage.com') && videoId) {
+    return `/api/videos/${videoId}/thumbnail`;
+  }
+  return url;
+}
+
 export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, className }: CoverImageUploadProps) {
   const [image, setImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
@@ -24,13 +32,12 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialUrl || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(toDisplayUrl(initialUrl, videoId));
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Sync with prop changes (e.g. manual URL edit or reset in parent)
   useEffect(() => {
-    setPreviewUrl(initialUrl || null);
-  }, [initialUrl]);
+    setPreviewUrl(toDisplayUrl(initialUrl, videoId));
+  }, [initialUrl, videoId]);
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
@@ -120,7 +127,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
         throw new Error(data.error || "Błąd podczas przesyłania miniatury.");
       }
 
-      setPreviewUrl(data.url);
+      setPreviewUrl(toDisplayUrl(data.storageUrl || data.url, videoId));
       onUploadSuccess(data.storageUrl || data.url);
       setIsCropping(false);
       setImage(null);
