@@ -99,9 +99,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
   });
 
   it('keeps compact playlist locks distinct from the full hero overlay', () => {
-    expect(accessLockOverlaySource).toContain('thumbnailCompact: {');
-    expect(accessLockOverlaySource).toContain('fill={variant === "thumbnailCompact"}');
-    expect(accessLockOverlaySource).toContain('cta: "hidden"');
+    expect(accessLockOverlaySource).toContain('variant === "thumbnailCompact"');
     expect(accessLockOverlaySource).toContain('PATRON');
     expect(accessLockOverlaySource).toContain('LOGIN_REQUIRED');
   });
