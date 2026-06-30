@@ -14,3 +14,14 @@ export function formatCount(count: number): string {
   }
   return count.toString();
 }
+
+export function getBaseUrl() {
+  const DEFAULT_BASE_URL = 'https://polutek.pl';
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || DEFAULT_BASE_URL;
+
+  try {
+    return new URL(configuredUrl).origin;
+  } catch {
+    return DEFAULT_BASE_URL;
+  }
+}

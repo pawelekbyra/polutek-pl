@@ -8,6 +8,7 @@ import VideoPlayer from "@/app/components/VideoPlayer";
 import type { PublicVideoDTO } from "@/app/types/video";
 import { WatchVideoHeader } from "./WatchVideoHeader";
 import { getCanonicalVideoDescription, getCanonicalVideoTitle } from "@/lib/video-title-overrides";
+import { getBaseUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -108,9 +109,13 @@ export async function generateMetadata(props: WatchPageProps): Promise<Metadata>
 
   const ytVideoId = primaryYouTubeAsset?.externalVideoId;
   const thumbnailUrl = video.thumbnailUrl || (ytVideoId ? `https://i.ytimg.com/vi/${ytVideoId}/hqdefault.jpg` : undefined);
+  const baseUrl = getBaseUrl();
 
   return {
     title: `${getCanonicalVideoTitle(video)} — POLUTEK.PL`,
+    alternates: {
+      canonical: `${baseUrl}/watch/${encodeURIComponent(slug)}`,
+    },
     description: getCanonicalVideoDescription(video) || "Film na POLUTEK.PL",
     openGraph: {
       title: getCanonicalVideoTitle(video),

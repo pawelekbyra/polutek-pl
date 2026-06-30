@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft } from '@/app/components/icons';
 
 export default function PolitykaPrywatnosciPage() {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
+
   return (
     <div className="min-h-screen bg-background text-[#1a1a1a] font-serif">
       <Navbar />
@@ -50,7 +52,11 @@ export default function PolitykaPrywatnosciPage() {
           <section>
             <h2 className="text-xl font-black uppercase tracking-tight text-[#1a1a1a]">5. Kontakt</h2>
             <p>
-              W sprawach dotyczących Twoich danych osobowych, możesz kontaktować się bezpośrednio z twórcą serwisu pod adresem email: pawel.perfect@gmail.com.
+              W sprawach dotyczących Twoich danych osobowych, możesz kontaktować się bezpośrednio z twórcą serwisu pod adresem email: {supportEmail ? (
+                <a href={`mailto:${supportEmail}`} className="underline hover:text-primary transition-colors">{supportEmail}</a>
+              ) : (
+                'niedostępny'
+              )}.
             </p>
           </section>
         </div>
