@@ -48,6 +48,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1063.0",
     "@aws-sdk/s3-request-presigner": "^3.1063.0",
+    "@base-ui/react": "^1.6.0",
     "@clerk/localizations": "^4.2.4",
     "@clerk/nextjs": "^7.5.3",
     "@prisma/client": "^6.19.3",
