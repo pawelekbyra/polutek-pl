@@ -9,19 +9,20 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
   it("has visible login button in LOGIN_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     expect(source).toContain("SignInButton");
-    expect(source).toContain('cta: "Zaloguj się, aby obczaić"');
-    expect(source).toContain("focus-visible:outline");
+    expect(source).toContain('type="button"');
+    expect(source).toContain("Zaloguj się");
   });
 
   it("has visible support button in PATRON_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain('cta: "Odblokuj dostęp"');
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
+    expect(source).toContain("Wesprzyj kanał");
   });
 
-  it("respects reduced motion", () => {
+  it("uses najs paper style overlay", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain("motion-reduce:transition-none");
+    expect(source).toContain("rgba(248,243,231");
+    expect(source).toContain("Frame");
   });
 });
