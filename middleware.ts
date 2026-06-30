@@ -28,6 +28,7 @@ const isPublicRoute = createRouteMatcher([
   '/eksperyment16',
   '/eksperyment17',
   '/eksperyment18',
+  '/e4',
   '/regulamin',
   '/polityka-prywatnosci',
   '/api/webhooks(.*)',
