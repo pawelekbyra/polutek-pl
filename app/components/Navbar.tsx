@@ -79,7 +79,7 @@ const Navbar = () => {
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="relative w-full h-full bg-transparent pl-4 pr-12 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
-                  style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                  style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
                 />
                 <button
                   type="submit"
@@ -233,9 +233,9 @@ const Navbar = () => {
       </div>
 
       {/* Separator pod navbarem */}
-      <div className="relative h-[12px] w-full px-4">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 0 6 Q 300 5 600 6" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
+      <div className="relative h-[7px] w-full px-4">
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 7" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 6 Q 300 5.5 600 6" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
         </svg>
       </div>
     </div>

@@ -106,8 +106,17 @@ export default function ChannelHome({
     onVideoMouseEnter: prefetchComments,
   };
 
+  const INK_FAINT = "rgba(23,23,23,0.09)";
+
   return (
-    <main className="bg-transparent min-h-screen">
+    <main
+      className="min-h-screen"
+      style={{
+        backgroundImage: `linear-gradient(90deg, ${INK_FAINT} 1px, transparent 1px), linear-gradient(${INK_FAINT} 1px, transparent 1px)`,
+        backgroundSize: "42px 42px",
+        backgroundColor: "#f8f3e7",
+      }}
+    >
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
@@ -116,14 +125,14 @@ export default function ChannelHome({
               initialInteraction={userProfile?.initialInteraction}
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
-            <div className="lg:hidden mt-4">
+            <div className="lg:hidden mt-3">
               <div className="flex" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {(["comments", "videos"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={cn(
-                      "flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-all",
+                      "flex-1 py-2 text-[13px] font-bold uppercase tracking-widest transition-all",
                       activeTab === tab
                         ? "text-[#171717]"
                         : "text-[#171717]/35",
@@ -135,7 +144,7 @@ export default function ChannelHome({
               </div>
               <NajsSeparator className="px-0" />
             </div>
-            <div className="lg:hidden mt-10">
+            <div className="lg:hidden mt-4">
               {activeTab === "comments" ? (
                 <EmbeddedComments
                   videoId={selectedVideo.id}

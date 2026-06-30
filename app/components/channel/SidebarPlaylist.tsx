@@ -279,7 +279,7 @@ export function SidebarPlaylist({
       <div className="flex items-center gap-2 mb-[2px]">
         {icon}
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <span style={{ background: "linear-gradient(180deg, transparent 52%, #FBE08A 52%, #FBE08A 92%, transparent 92%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
+          <span style={{ background: "linear-gradient(180deg, transparent 30%, #e8b800 30%, #e8b800 88%, transparent 88%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
             {title}
           </span>
         </h3>

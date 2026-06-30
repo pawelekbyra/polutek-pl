@@ -149,12 +149,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       <div className="w-full">
         {/* FEATURED MEDIA */}
         <div className="relative aspect-video w-full mb-[18px] group">
-          <Frame radius={14} seed={7} stroke={INK} strokeWidth={1.5} />
           <div className="absolute inset-0 overflow-hidden rounded-[12px] bg-black">
             <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
               <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
             </PremiumWrapper>
           </div>
+          <Frame radius={14} seed={7} stroke={INK} strokeWidth={1.5} />
         </div>
 
         {/* INFO SECTION */}

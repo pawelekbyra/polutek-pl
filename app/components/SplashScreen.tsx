@@ -252,18 +252,19 @@ export function SplashScreen() {
             }} />
           </div>
 
-          {/* POLUTEK.PL signature */}
+          {/* Logo signature */}
           <motion.div
             style={{
               position: "absolute", bottom: 20, right: 20,
-              fontFamily: FONT, fontSize: 10, letterSpacing: "0.22em",
-              color: INK, userSelect: "none",
+              fontFamily: FONT, fontSize: 13, letterSpacing: "0.01em",
+              userSelect: "none", display: "flex", alignItems: "baseline",
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
-            POLUTEK.PL
+            <span style={{ color: INK, fontWeight: 700, textTransform: "uppercase" }}>POLUTEK</span>
+            <span style={{ color: "#2563eb", fontWeight: 700, textTransform: "uppercase" }}>.PL</span>
           </motion.div>
         </motion.div>
       )}

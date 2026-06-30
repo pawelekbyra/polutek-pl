@@ -140,7 +140,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
           onClick={onSupport}
           disabled={isLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="w-full h-[48px] rounded-[12px] bg-zinc-900 text-white uppercase tracking-wider text-sm font-bold hover:bg-zinc-800 active:scale-[0.98] transition-all"
+          className="w-full h-[48px] rounded-[12px] bg-zinc-900 text-white uppercase tracking-wider text-sm font-bold hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-none"
           size="lg"
         >
           {isLoading ? (

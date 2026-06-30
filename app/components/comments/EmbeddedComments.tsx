@@ -287,7 +287,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   return (
     <div
       ref={commentsTopRef}
-      className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent pt-1 sm:pt-3 rounded-none border-none shadow-none mt-2 mb-[30px] sm:my-[30px] relative"
+      className="space-y-[18px] sm:space-y-[26px] max-w-full bg-transparent pt-0 sm:pt-2 rounded-none border-none shadow-none mt-1 mb-[30px] sm:my-[30px] relative"
+      style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
     >
       {/* Sticky Header */}
       {showStickyHeader && (
@@ -327,6 +328,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               aria-haspopup="menu"
               aria-expanded={isSortMenuOpen}
               className="flex items-center gap-2 text-[#5B5B5B] hover:text-[#0f0f0f] transition-colors"
+              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
             >
               <svg
                 width="14"
@@ -349,7 +351,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 <line x1="10" y1="8" x2="14" y2="8"></line>
                 <line x1="18" y1="16" x2="22" y2="16"></line>
               </svg>
-              <span className="text-[13px] font-semibold">
+              <span className="text-[13px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {language === "pl" ? "Sortuj według" : "Sort by"}
               </span>
             </button>
