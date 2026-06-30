@@ -116,10 +116,10 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
   if (content.status === 'error' || content.status === 'empty') {
     const isError = content.status === 'error';
     return (
-      <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
-          <h1 className="text-2xl font-bold mb-4">
+          <h1 className="text-2xl font-bold mb-4" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             {isError ? 'Błąd wczytywania' : 'Brak materiałów'}
           </h1>
           <p className="text-neutral-600 mb-8">
@@ -169,7 +169,7 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <main className="relative">
         <ChannelHome
