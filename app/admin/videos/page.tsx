@@ -294,6 +294,39 @@ export default function AdminVideosPage() {
     }
   }, [router, toast, setCreateUploadState, setExistingCloudflareSource, setFormError, setIsEditing]);
 
+  const handleMetadataSaveDuringUpload = async () => {
+    if (!createUploadState?.videoId) return;
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      const res = await fetch(`/api/admin/videos/${createUploadState.videoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title?.trim(),
+          slug: formData.slug?.trim(),
+          description: formData.description?.trim() || null,
+          titleEn: formData.titleEn?.trim() || null,
+          descriptionEn: formData.descriptionEn?.trim() || null,
+          thumbnailUrl: formData.thumbnailUrl?.trim() || "",
+          tier: formData.tier,
+        })
+      });
+      if (res.ok) {
+        toast("Metadane zostały zapisane w trakcie uploadu.", "success");
+        await fetchVideos(page, { pending: true });
+      } else {
+        const data = await res.json();
+        setFormError(readAdminApiError(data, "Nie udało się zapisać metadanych."));
+      }
+    } catch (err) {
+      logger.error("Metadata save during upload failed", err);
+      setFormError("Błąd połączenia z serwerem.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const addExternalSource = useCallback(async (videoId: string, provider: "YOUTUBE" | "VIMEO", url: string, publishAfterReady: boolean) => {
     try {
       const res = await fetch(`/api/admin/videos/${videoId}/sources`, {
@@ -386,6 +419,7 @@ export default function AdminVideosPage() {
         page={page}
         preferredProvider={preferredProvider}
         onPreferredProviderChange={setPreferredProvider}
+        onMetadataSaveDuringUpload={handleMetadataSaveDuringUpload}
       />
     );
   }

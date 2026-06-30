@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/app/hooks/useToast";
 import { AdminLayoutShell } from "../../components/AdminLayoutShell";
+import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm } from "../../components/VideoForm";
 import { readAdminApiError } from "../../components/api-error";
@@ -158,6 +159,14 @@ export default function AdminVideoEditPage(props: EditPageProps) {
 
   return (
     <AdminLayoutShell>
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-4">
+        <AdminNavigation
+          backHref={`/admin/videos/${id}`}
+          backLabel="Wróć do filmu"
+          currentLabel="Edycja"
+          breadcrumbs={[{ href: "/admin/videos", label: "Filmy" }]}
+        />
+      </div>
       {isSubmitting && <AdminFormSkeleton />}
       <VideoForm
         className={isSubmitting ? "hidden" : ""}

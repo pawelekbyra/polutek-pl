@@ -7,17 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload } from "@/app/components/icons";
+import { Loader2, Upload, Edit } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { CoverImageUpload } from "./CoverImageUpload";
-
-interface StudioAsset {
-  id: string;
-  provider: string;
-  processingState: string;
-  isPrimary: boolean;
-  fallbackPriority: number;
-}
+import { VideoSourcesPanel } from "./VideoSourcesPanel";
+import { AdminVideoAssetDto } from "@/lib/modules/video/domain/video.dto";
+import Link from "next/link";
 
 interface StudioOriginal {
   id: string;
@@ -36,7 +31,7 @@ interface VideoStudioProps {
     tier: string;
     thumbnailUrl?: string | null;
     status: string;
-    assets?: StudioAsset[];
+    assets?: AdminVideoAssetDto[];
     original?: StudioOriginal | null;
   };
   onSaved?: () => void;
@@ -73,24 +68,6 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
   const [preferredProvider, setPreferredProvider] = useState("CLOUDFLARE_STREAM");
   const assets = initialVideo.assets ?? [];
   const original = initialVideo.original ?? null;
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/videos/${videoId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, tier, thumbnailUrl }),
-      });
-      if (!res.ok) throw new Error("Nie udało się zapisać.");
-      toast("Zapisano.", "success");
-      onSaved?.();
-    } catch {
-      toast("Błąd zapisu.", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleUpload = async () => {
     if (!file) return;
@@ -141,37 +118,19 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
   return (
     <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-[1fr_360px] md:p-6">
-      <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pipeline</p>
-            <h2 className="text-lg font-semibold">Oryginał i mirrory</h2>
-          </div>
-          <Badge variant={original?.status === "READY" ? "default" : "outline"}>{original?.status ?? "BRAK ORYGINAŁU"}</Badge>
-        </div>
-
-        <div className="rounded-lg border bg-background p-3 text-sm">
-          {assets.length > 0 ? (
-            <div className="space-y-2">
-              {assets
-                .slice()
-                .sort((a, b) => a.fallbackPriority - b.fallbackPriority)
-                .map((asset) => (
-                  <div key={asset.id} className="flex items-center justify-between gap-3 border-b py-2 last:border-b-0">
-                    <span className="font-medium">{asset.provider.replace("_", " ")}</span>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={asset.processingState === "READY" ? "default" : "outline"}>{asset.processingState}</Badge>
-                      {asset.isPrimary && <Badge variant="secondary">primary</Badge>}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Brak aktywnych źródeł wideo.</p>
-          )}
-        </div>
+      <div className="space-y-4">
+        <VideoSourcesPanel
+          videoId={videoId}
+          assets={assets as any}
+          tier={tier}
+          onChanged={() => onSaved?.()}
+        />
 
         <div className="rounded-lg border bg-background p-4 space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Oryginał (R2)</h3>
+            <Badge variant={original?.status === "READY" ? "default" : "outline"}>{original?.status ?? "BRAK"}</Badge>
+          </div>
           <Label htmlFor="studio-file-input" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nowy oryginał</Label>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Primary provider</Label>
@@ -198,29 +157,19 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
           <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Miniatura</Label>
           <CoverImageUpload videoId={videoId} initialUrl={thumbnailUrl} onUploadSuccess={(url) => setThumbnailUrl(url)} />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="studio-title">Tytuł</Label>
-          <Input id="studio-title" value={title} onChange={(event) => setTitle(event.target.value)} />
+
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Metadane</h4>
+            <Button variant="outline" asChild className="w-full justify-start gap-2 h-11">
+                <Link href={`/admin/videos/${videoId}/edit`}>
+                    <Edit className="h-4 w-4" />
+                    Edytuj tytuł, opis i dostęp →
+                </Link>
+            </Button>
+            <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
+                Tytuł, opis i ustawienia dostępu (tier) są zarządzane w głównym formularzu edycji filmu.
+            </p>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="studio-desc">Opis</Label>
-          <Textarea id="studio-desc" value={description} onChange={(event) => setDescription(event.target.value)} rows={4} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Dostęp</Label>
-          <Select value={tier} onValueChange={setTier}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PUBLIC">Publiczny</SelectItem>
-              <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-              <SelectItem value="PATRON">Patron</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={handleSave} disabled={saving} className="w-full">
-          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Zapisz
-        </Button>
       </div>
     </div>
   );
