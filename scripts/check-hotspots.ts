@@ -87,6 +87,10 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 600,
     reason: knownUiHotspotReason,
   },
+  "app/components/channel/SidebarPlaylist.tsx": {
+    maxLines: 470,
+    reason: "Expanded with patron countdown timer and Frame-based button during style refinement; tracked for extraction of PatronBox into a standalone component.",
+  },
   "app/components/comments/components/CommentItem.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,
