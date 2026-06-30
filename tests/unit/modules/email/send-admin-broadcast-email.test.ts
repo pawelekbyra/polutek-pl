@@ -34,6 +34,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     emailPreference: { findUnique: vi.fn() },
     creator: { findUnique: vi.fn() },
     subscription: { findUnique: vi.fn() },
+    emailSuppression: { findUnique: vi.fn() },
   };
 
   const ctx = createAppContext({
@@ -48,6 +49,7 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     prismaMock.emailPreference.findUnique.mockResolvedValue({ marketingEmails: true });
     prismaMock.creator.findUnique.mockResolvedValue({ id: 'c1' });
     prismaMock.subscription.findUnique.mockResolvedValue({ id: 's1' });
+    prismaMock.emailSuppression.findUnique.mockResolvedValue(null);
   });
 
   it('rejects missing subject or body', async () => {
@@ -182,5 +184,51 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.recipientCount).toBe(0);
     expect(prismaMock.broadcastEmailRecipient.createMany).not.toHaveBeenCalled();
+  });
+
+  it('skips suppressed recipients even if all other criteria are met', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: 'u1', email: 'suppressed@ex.com', language: 'pl', name: 'Suppressed', patronGrants: [] },
+    ]);
+    prismaMock.emailSuppression.findUnique.mockResolvedValue({ id: 'sup1', active: true });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Suppressed',
+      body: 'Body',
+      audience: 'ALL_SUBSCRIBERS',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.recipientCount).toBe(0);
+    expect(prismaMock.broadcastEmailRecipient.createMany).not.toHaveBeenCalled();
+  });
+
+  it('skips suppressed MANUAL recipients', async () => {
+    prismaMock.emailSuppression.findUnique.mockResolvedValue({ id: 'sup1', active: true });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Manual Suppressed',
+      body: 'Body',
+      audience: 'MANUAL',
+      manualRecipients: [{ email: 'suppressed@ex.com', name: 'Manual User' }],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.recipientCount).toBe(0);
+  });
+
+  it('skips suppressed TEST recipients', async () => {
+    prismaMock.emailSuppression.findUnique.mockResolvedValue({ id: 'sup1', active: true });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Test Suppressed',
+      body: 'Body',
+      audience: 'TEST',
+      testRecipientEmail: 'suppressed@ex.com',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.recipientCount).toBe(0);
+    expect(mockSendTestEmail).not.toHaveBeenCalled();
   });
 });

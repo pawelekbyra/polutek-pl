@@ -28,6 +28,9 @@ describe('handleResendWebhook use case - hardening', () => {
     inboundEmail: {
       create: vi.fn(),
     },
+    emailSuppression: {
+      upsert: vi.fn(),
+    },
   };
 
   const ctx = createAppContext({
@@ -194,7 +197,8 @@ describe('handleResendWebhook use case - hardening', () => {
       prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
           id: 'r1',
           broadcastEmailId: 'b1',
-          status: 'PENDING'
+          status: 'PENDING',
+          email: 'user@example.com'
       });
       prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
 
@@ -221,7 +225,8 @@ describe('handleResendWebhook use case - hardening', () => {
       prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
           id: 'r1',
           broadcastEmailId: 'b1',
-          status: 'SENT'
+          status: 'SENT',
+          email: 'user@example.com'
       });
       prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
 
@@ -241,5 +246,67 @@ describe('handleResendWebhook use case - hardening', () => {
       // It should update recipient to DELIVERED, but NOT increment BroadcastEmail.sentCount again
       expect(prismaMock.broadcastEmailRecipient.updateMany).toHaveBeenCalled();
       expect(prismaMock.broadcastEmail.update).not.toHaveBeenCalled();
+  });
+
+  it('creates durable suppression for BOUNCE event', async () => {
+    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+        id: 'r1',
+        broadcastEmailId: 'b1',
+        status: 'SENT',
+        email: 'bounced@example.com'
+    });
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await handleResendWebhook(ctx, {
+        type: 'email.bounced',
+        eventId: 'evt_bounce_1',
+        data: {
+            email_id: 're_123',
+            from: 'no-reply@polutek.pl',
+            to: ['bounced@example.com'],
+            subject: 'Hello',
+            created_at: new Date().toISOString(),
+        },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(prismaMock.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        where: { email: 'bounced@example.com' },
+        create: expect.objectContaining({
+            reason: 'BOUNCE',
+            active: true
+        })
+    }));
+  });
+
+  it('creates durable suppression for COMPLAINT event', async () => {
+    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
+        id: 'r1',
+        broadcastEmailId: 'b1',
+        status: 'SENT',
+        email: 'complainer@example.com'
+    });
+    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await handleResendWebhook(ctx, {
+        type: 'email.complained',
+        eventId: 'evt_complaint_1',
+        data: {
+            email_id: 're_123',
+            from: 'no-reply@polutek.pl',
+            to: ['complainer@example.com'],
+            subject: 'Hello',
+            created_at: new Date().toISOString(),
+        },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(prismaMock.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        where: { email: 'complainer@example.com' },
+        create: expect.objectContaining({
+            reason: 'COMPLAINT',
+            active: true
+        })
+    }));
   });
 });
