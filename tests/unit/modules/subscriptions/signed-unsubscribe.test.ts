@@ -272,6 +272,7 @@ describe('signed content unsubscribe flow', () => {
       creator: { findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }) },
       subscription: { findUnique: vi.fn().mockResolvedValue({ id: 'sub_1' }) },
       emailPreference: { findUnique: vi.fn() },
+      emailSuppression: { findUnique: vi.fn().mockResolvedValue(null) },
     };
     prisma.emailPreference.findUnique.mockResolvedValueOnce({ marketingEmails: false });
     await expect(EmailPolicy.canReceiveBroadcastEmail(prisma as any, 'person@example.com', 'user_opaque_1')).resolves.toBe(false);

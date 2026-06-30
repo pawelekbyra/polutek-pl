@@ -91,20 +91,28 @@ export async function sendAdminBroadcastEmail(
         return true;
     });
 
-    // 3. Apply Domain Policy (Opt-out check)
+    // 3. Apply Domain Policy (Opt-out and Suppression check)
     // For large lists, this should be optimized. For now we do it per recipient or keep it in bridge.
     // Actually, LegacyEmailServiceProvider calls EmailService which already checks preferences.
     // For R9 certification, we add the boundary check here but keep it async-safe.
 
-    if (audience !== "TEST") {
-        const eligibleRecipients: BroadcastRecipientDto[] = [];
-        for (const r of recipients) {
+    const eligibleRecipients: BroadcastRecipientDto[] = [];
+    for (const r of recipients) {
+        // TEST audience skips normal consent check but MUST still respect global suppression
+        if (audience === "TEST") {
+            const suppressed = await EmailPolicy.isSuppressed(ctx.prisma, r.email);
+            if (!suppressed) {
+                eligibleRecipients.push(r);
+            } else {
+                logger.warn(`[sendAdminBroadcastEmail] Skipping suppressed TEST recipient: ${r.email}`);
+            }
+        } else {
             if (await EmailPolicy.canReceiveBroadcastEmail(ctx.prisma, r.email, r.userId)) {
                 eligibleRecipients.push(r);
             }
         }
-        recipients = eligibleRecipients;
     }
+    recipients = eligibleRecipients;
 
     if (recipients.length === 0) {
       return ok({

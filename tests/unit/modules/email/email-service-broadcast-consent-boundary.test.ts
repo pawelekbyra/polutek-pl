@@ -31,6 +31,7 @@ vi.mock('@/lib/prisma', () => ({
     emailPreference: { findMany: preferenceFindMany },
     subscription: { findMany: subscriptionFindMany, create: subscriptionCreate },
     creator: { findUnique: creatorFindUnique },
+    emailSuppression: { findUnique: vi.fn().mockResolvedValue(null) },
   },
 }));
 

@@ -558,6 +558,27 @@ enum EmailTemplateCategory {
   OTHER
 }
 
+enum EmailSuppressionReason {
+  BOUNCE
+  COMPLAINT
+}
+
+model EmailSuppression {
+  id              String                 @id @default(uuid())
+  email           String                 @unique
+  reason          EmailSuppressionReason
+  active          Boolean                @default(true)
+  firstSeenAt     DateTime               @default(now())
+  lastSeenAt      DateTime               @updatedAt
+  providerEmailId String?
+  source          String                 @default("RESEND_WEBHOOK")
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([active])
+  @@index([reason])
+}
+
 model EmailTemplate {
   id          String                @id @default(uuid())
   slug        String                @unique // e.g., "welcome-email"

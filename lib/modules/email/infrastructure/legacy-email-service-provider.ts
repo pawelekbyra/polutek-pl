@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { flags } from "@/lib/feature-flags";
 import { buildContentUnsubscribeUrl } from "@/lib/modules/subscriptions";
+import { EmailPolicy } from "../domain/email.policy";
 
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {
   return Object.entries(variables).reduce((result, [key, replacement]) => {
@@ -109,6 +110,16 @@ export class LegacyEmailServiceProvider implements EmailProvider {
         const batch = recipients.slice(i, i + batchSize);
 
         await Promise.all(batch.map(async (recipient) => {
+            // Final check: Global suppression
+            const suppressed = await EmailPolicy.isSuppressed(prisma, recipient.email);
+            if (suppressed) {
+                await prisma.broadcastEmailRecipient.update({
+                    where: { id: recipient.id },
+                    data: { status: 'SKIPPED', error: 'GLOBAL_SUPPRESSION_ACTIVE' }
+                });
+                return;
+            }
+
             if (!recipient.userId || !activeSubscriptionUserIds.has(recipient.userId)) {
                 await prisma.broadcastEmailRecipient.update({
                     where: { id: recipient.id },

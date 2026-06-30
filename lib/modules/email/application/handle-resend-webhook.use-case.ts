@@ -117,9 +117,11 @@ export async function handleResendWebhook(
             break;
           case 'email.bounced':
             await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() }, true);
+            await handleSuppression(ctx, 'BOUNCE', data.to?.[0], resendEmailId);
             break;
           case 'email.complained':
             await updateRecipientStatus(ctx, resendEmailId, 'COMPLAINED', { complainedAt: new Date() }, true);
+            await handleSuppression(ctx, 'COMPLAINT', data.to?.[0], resendEmailId);
             break;
           case 'email.opened':
             await updateRecipientStatus(ctx, resendEmailId, 'OPENED', { openedAt: new Date() });
@@ -301,4 +303,38 @@ async function handleInboundEmail(ctx: AppContext, data: any) {
         // Rethrow other errors to fail the webhook processing and allow retry
         throw e;
     }
+}
+
+async function handleSuppression(ctx: AppContext, reason: 'BOUNCE' | 'COMPLAINT', emailFromPayload?: string, resendEmailId?: string) {
+    // Try to get email from recipient first (more reliable/verifiable according to ticket)
+    let email = emailFromPayload;
+    if (resendEmailId) {
+        const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
+            where: { resendEmailId },
+            select: { email: true }
+        });
+        if (recipient) email = recipient.email;
+    }
+
+    if (!email) {
+        // Fail-safe: if we can't determine the address, we must not mark the webhook as success
+        throw new EmailError(`Failed to determine email for ${reason} suppression. marking as retryable failure.`, 400, 'MISSING_EMAIL');
+    }
+
+    await ctx.prisma.emailSuppression.upsert({
+        where: { email },
+        create: {
+            email,
+            reason,
+            active: true,
+            providerEmailId: resendEmailId,
+            source: 'RESEND_WEBHOOK'
+        },
+        update: {
+            reason,
+            active: true,
+            providerEmailId: resendEmailId,
+        }
+    });
+    logger.info(`[handleResendWebhook] Durable suppression created/updated for ${email} (reason: ${reason})`);
 }
