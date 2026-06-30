@@ -12,6 +12,14 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
   }, value);
 }
 
+function buildTransactionalEmailHeaders(unsubscribeUrl?: string | null) {
+  if (!unsubscribeUrl) return undefined;
+
+  return {
+    'List-Unsubscribe': `<${unsubscribeUrl}>`,
+  };
+}
+
 /**
  * R9 legacy email bridge.
  * Adapts the legacy EmailService logic to the new EmailProvider interface.
@@ -30,9 +38,10 @@ export class LegacyEmailServiceProvider implements EmailProvider {
     return this.resendClient;
   }
 
-  async sendTransactionalEmail(input: { to: string; subject: string; html: string }) {
+  async sendTransactionalEmail(input: { to: string; subject: string; html: string; unsubscribeUrl?: string | null }) {
     const resend = this.getResendClient();
     const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@polutek.pl>`;
+    const headers = buildTransactionalEmailHeaders(input.unsubscribeUrl);
 
     if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
       logger.error('[email] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
@@ -43,6 +52,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
       to: [input.to],
       subject: input.subject,
       html: input.html,
+      ...(headers ? { headers } : {}),
     });
   }
 

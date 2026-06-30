@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '@/lib/constants';
+import { buildContentUnsubscribeUrl } from '@/lib/modules/subscriptions';
 import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
 
 const WELCOME_EMAIL_SLUG = 'welcome-email';
@@ -36,6 +37,25 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
   return Object.entries(variables).reduce((result, [key, replacement]) => {
     return result.split(`{{${key}}}`).join(replacement);
   }, value);
+}
+
+async function resolveTransactionalUnsubscribeUrl(to: string, slug: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: to },
+      select: { id: true },
+    });
+
+    if (!user) return null;
+
+    return buildContentUnsubscribeUrl(
+      user.id,
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    );
+  } catch {
+    logger.warn(`[email] Failed to resolve transactional unsubscribe URL for "${slug}" email`);
+    return null;
+  }
 }
 
 type SendTemplateEmailInput = {
@@ -81,9 +101,10 @@ async function sendTemplateEmail({ to, slug, variables = {}, fallback, language 
 
   const subject = replaceTemplateVariables(subjectBase, safeVariables);
   const html = replaceTemplateVariables(htmlBase, safeVariables);
+  const unsubscribeUrl = await resolveTransactionalUnsubscribeUrl(to, slug);
 
   const provider = new LegacyEmailServiceProvider();
-  const { data, error } = await provider.sendTransactionalEmail({ to, subject, html });
+  const { data, error } = await provider.sendTransactionalEmail({ to, subject, html, unsubscribeUrl });
 
   if (error) {
     logger.error(`[email] Resend failed to send "${slug}" email to ${to}:`, error);

@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { emailsSend, contactsCreate, contactsUpdate, contactsGet, emailTemplateFindUnique, emailPreferenceUpsert, subscriptionCreate } = vi.hoisted(() => ({
+const ORIGINAL_ENV = { ...process.env };
+
+const { emailsSend, contactsCreate, contactsUpdate, contactsGet, emailTemplateFindUnique, emailPreferenceUpsert, subscriptionCreate, userFindUnique } = vi.hoisted(() => ({
   emailsSend: vi.fn(),
   contactsCreate: vi.fn(),
   contactsUpdate: vi.fn(),
@@ -8,6 +10,7 @@ const { emailsSend, contactsCreate, contactsUpdate, contactsGet, emailTemplateFi
   emailTemplateFindUnique: vi.fn(),
   emailPreferenceUpsert: vi.fn(),
   subscriptionCreate: vi.fn(),
+  userFindUnique: vi.fn(),
 }));
 
 vi.mock('resend', () => ({
@@ -23,6 +26,7 @@ vi.mock('resend', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    user: { findUnique: userFindUnique },
     emailTemplate: { findUnique: emailTemplateFindUnique },
     emailPreference: { upsert: emailPreferenceUpsert },
     subscription: { create: subscriptionCreate },
@@ -32,10 +36,20 @@ vi.mock('@/lib/prisma', () => ({
 describe('system email consent boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.RESEND_API_KEY = 'test_key';
-    process.env.RESEND_AUDIENCE_ID = 'audience_123';
+    process.env = {
+      ...ORIGINAL_ENV,
+      RESEND_API_KEY: 'test_key',
+      RESEND_AUDIENCE_ID: 'audience_123',
+      NEXT_PUBLIC_APP_URL: 'https://polutek.example',
+      EMAIL_UNSUBSCRIBE_SIGNING_SECRET: 'a'.repeat(32),
+    };
     emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
     emailTemplateFindUnique.mockResolvedValue(null);
+    userFindUnique.mockResolvedValue({ id: 'user_opaque_1' });
+  });
+
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
   });
 
   it('sendWelcomeEmail sends email without Resend Contacts or local consent mutation', async () => {
@@ -71,6 +85,23 @@ describe('system email consent boundary', () => {
     expect(contactsCreate).not.toHaveBeenCalled();
     expect(contactsUpdate).not.toHaveBeenCalled();
     expect(contactsGet).not.toHaveBeenCalled();
+  });
+
+  it('patron notification email includes a signed List-Unsubscribe header without exposing the recipient email', async () => {
+    const { sendBecomePatronEmail } = await import('@/lib/modules/email');
+
+    await sendBecomePatronEmail('patron@example.com', 10, 'PLN');
+
+    const sendInput = emailsSend.mock.calls[0][0];
+    expect(userFindUnique).toHaveBeenCalledWith({
+      where: { email: 'patron@example.com' },
+      select: { id: true },
+    });
+    expect(sendInput.headers).toEqual(expect.objectContaining({
+      'List-Unsubscribe': expect.stringMatching(/^<https:\/\/polutek\.example\/unsubscribe\?token=.+>$/),
+    }));
+    expect(sendInput.headers['List-Unsubscribe']).not.toContain('patron@example.com');
+    expect(sendInput.headers).not.toHaveProperty('List-Unsubscribe-Post');
   });
 
   it('account deleted email sends without Resend Contacts', async () => {
