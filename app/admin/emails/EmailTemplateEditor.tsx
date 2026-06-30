@@ -40,6 +40,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
   const [html, setHtml] = useState("");
   const [subjectEn, setSubjectEn] = useState("");
   const [htmlEn, setHtmlEn] = useState("");
+  const [activeTab, setActiveTab] = useState<"pl" | "en">("pl");
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -133,7 +134,11 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
   }
 
   const insertVariable = (variable: string) => {
-    setHtml(prev => prev + " " + variable);
+    if (activeTab === "en") {
+      setHtmlEn(prev => prev + " " + variable);
+    } else {
+      setHtml(prev => prev + " " + variable);
+    }
   };
 
   if (status === "loading") return <div className="animate-pulse h-96 bg-neutral-100 rounded-xl" />;
@@ -146,7 +151,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
             </Button>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 shadow-sm">
-                    <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked) => setIsActive(!!checked)} />
+                    <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked: boolean | "indeterminate") => setIsActive(!!checked)} />
                     <Label htmlFor="active-switch" className="text-[10px] font-black uppercase text-neutral-500 cursor-pointer">Aktywny</Label>
                 </div>
                 <Button onClick={handleSave} disabled={status === "saving" || !subject.trim() || !html.trim()} className="bg-neutral-900 hover:bg-black text-white rounded-xl px-8 h-10">
@@ -190,7 +195,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                     </CardContent>
                 </Card>
 
-                <Tabs defaultValue="pl">
+                <Tabs defaultValue="pl" onValueChange={(v) => setActiveTab(v as "pl" | "en")}>
                     <TabsList className="grid w-full grid-cols-2 mb-6">
                         <TabsTrigger value="pl">Polski</TabsTrigger>
                         <TabsTrigger value="en">Angielski</TabsTrigger>

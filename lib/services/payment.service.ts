@@ -28,14 +28,11 @@ function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
 
 export { PaymentCheckoutService, PaymentFulfillmentService, PaymentRefundService };
 
-/**
- * @deprecated Use specialized services from @/lib/services/payments/ or modular use cases from @/lib/modules/payments
- */
 export { calculateRefundAdjustment, calculateChargebackNetAdjustment, applyLostChargeback } from './payments/refund.service';
 
 /**
  * @deprecated Use modular use cases from @/lib/modules/payments.
- * R10 cleanup candidate.
+ * Kept as compatibility shim for test coverage only.
  */
 export class PaymentService {
   static createPayment = PaymentCheckoutService.createPayment.bind(PaymentCheckoutService);

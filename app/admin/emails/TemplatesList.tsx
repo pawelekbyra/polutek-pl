@@ -160,7 +160,7 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
       </div>
       )}
 
-      <Dialog open={templateToDelete !== null} onOpenChange={(open) => { if (!open) setTemplateToDelete(null); }}>
+      <Dialog open={templateToDelete !== null} onOpenChange={(open: boolean) => { if (!open) setTemplateToDelete(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Usunąć szablon?</DialogTitle>
