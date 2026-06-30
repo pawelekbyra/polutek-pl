@@ -1,380 +1,232 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PublicVideoDTO } from "../types/video";
-import Hero from "../components/Hero";
-import EmbeddedComments from "../components/comments/EmbeddedComments";
-import SubscribeButton from "../components/SubscribeButton";
-import { Frame, HachureFill, NajsIcon, INK, BLUE } from "../components/najs/primitives";
-import { useLanguage } from "../components/LanguageContext";
-import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
-import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
 
-const HAND = "var(--font-patrick, 'Patrick Hand', cursive)";
-const SANS = "var(--font-system, system-ui, -apple-system, sans-serif)";
+const BLUE = "#2563eb";
+const NIGHT = "#100f0c";
+const NIGHT2 = "#1a1915";
+const BORDER = "rgba(248,243,231,0.08)";
+const TEXT = "#f8f3e7";
+const TEXT_DIM = "rgba(248,243,231,0.45)";
 
-interface E2HomeProps {
-  mainVideo: PublicVideoDTO | null;
-  allVideos: PublicVideoDTO[];
-  currentVideoId?: string;
-  userProfile?: {
-    id: string;
-    email: string;
-    imageUrl?: string | null;
-    totalPaid: number;
-    initialInteraction?: { liked: boolean; disliked: boolean };
-    initialIsSubscribed?: boolean;
-    isPatronDecorative?: boolean;
-    role?: string;
-  } | null;
-}
+const MOCK_VIDEOS = [
+  { id: "1", title: "Dlaczego nikt nie mówi prawdy w internecie", duration: "18:42", locked: false, views: 4821, badge: null },
+  { id: "2", title: "Algorytm cię kontroluje (i wiesz o tym)", duration: "24:11", locked: true, views: 12340, badge: "PATRON" },
+  { id: "3", title: "Ekranowy tłum i jego złudzenie wspólnoty", duration: "31:05", locked: true, views: 8970, badge: "PATRON" },
+  { id: "4", title: "Wolne słowo kontra korporacyjne filtry", duration: "14:28", locked: false, views: 2140, badge: null },
+];
 
-function SectionHeader({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3 my-6">
-      <svg className="flex-1 h-[2px]" viewBox="0 0 100 2" preserveAspectRatio="none">
-        <path d="M0 1 Q25 0.2 50 1 Q75 1.8 100 1" fill="none" stroke={INK} strokeWidth="1.2" opacity=".55" />
-      </svg>
-      <span
-        className="text-[11px] font-black uppercase tracking-[0.22em] text-[#171717] shrink-0 px-1"
-        style={{ fontFamily: SANS }}
-      >
-        {label}
-      </span>
-      <svg className="flex-1 h-[2px]" viewBox="0 0 100 2" preserveAspectRatio="none">
-        <path d="M0 1 Q25 1.8 50 1 Q75 0.2 100 1" fill="none" stroke={INK} strokeWidth="1.2" opacity=".55" />
-      </svg>
-    </div>
-  );
-}
-
-function DashedLine() {
-  return (
-    <div className="w-full h-px my-4" style={{
-      backgroundImage: `repeating-linear-gradient(90deg, ${INK} 0, ${INK} 6px, transparent 6px, transparent 14px)`,
-      opacity: 0.18,
-    }} />
-  );
-}
-
-function TierChip({ tier, language }: { tier: string; language: string }) {
-  const isPl = language === "pl";
-  if (!tier || tier === "PUBLIC") {
-    return (
-      <span
-        className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full text-[#171717] relative"
-        style={{ fontFamily: SANS }}
-      >
-        <span className="absolute inset-0 rounded-full border border-[#171717] opacity-40" />
-        <span className="relative">{isPl ? "Publiczne" : "Public"}</span>
-      </span>
-    );
-  }
-  if (tier === "PATRON") {
-    return (
-      <span
-        className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full text-white bg-[#171717] relative"
-        style={{ fontFamily: SANS }}
-      >
-        {isPl ? "Patron" : "Patron"}
-      </span>
-    );
-  }
+function Tag({ children, blue = false }: { children: React.ReactNode; blue?: boolean }) {
   return (
     <span
-      className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full text-white bg-[#2563EB] relative"
-      style={{ fontFamily: SANS }}
+      className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded"
+      style={{
+        fontFamily: "var(--font-outfit, Outfit, sans-serif)",
+        background: blue ? BLUE : "rgba(248,243,231,0.08)",
+        color: blue ? "white" : TEXT_DIM,
+        letterSpacing: "0.12em",
+      }}
     >
-      <NajsIcon name="lock" className="h-3 w-3" stroke="white" />
-      {isPl ? "Odblokowane" : "Unlocked"}
+      {children}
     </span>
   );
 }
 
-function VideoCard({
-  video,
-  isSelected,
-  language,
-  onClick,
-}: {
-  video: PublicVideoDTO;
-  isSelected: boolean;
-  language: string;
-  onClick: () => void;
-}) {
-  const title = getVideoDisplayTitle(video, language);
-  const isLocked = video.tier === "PATRON";
-  const timeAgo = video.publishedAt
-    ? formatDistanceToNow(new Date(video.publishedAt), {
-        addSuffix: true,
-        locale: language === "pl" ? pl : undefined,
-      })
-    : null;
-
+function GlowDot() {
   return (
-    <button
-      onClick={onClick}
-      className="text-left w-full group"
-    >
-      <div className={`relative rounded-[9px] overflow-hidden aspect-video mb-2 transition-all duration-200 ${isSelected ? "ring-2 ring-[#2563EB]" : ""}`}>
-        {video.thumbnailUrl ? (
-          <Image
-            src={video.thumbnailUrl}
-            alt={title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[#1a1a1a]" />
-        )}
-        {isLocked && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <NajsIcon name="lock" className="h-8 w-8" stroke="white" />
-          </div>
-        )}
-        {video.duration && (
-          <span
-            className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded font-mono"
-          >
-            {video.duration}
-          </span>
-        )}
-        {isSelected && (
-          <div className="absolute top-1.5 left-1.5">
-            <span className="bg-[#2563EB] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ fontFamily: SANS }}>
-              Teraz
-            </span>
-          </div>
-        )}
-        <Frame radius={9} seed={video.id.charCodeAt(0) % 99 + 1} stroke={INK} strokeWidth={1.1} showShadow={false} />
-      </div>
-      <p
-        className={`text-[13px] leading-snug mb-1 transition-colors line-clamp-2 ${isSelected ? "text-[#2563EB]" : "text-[#171717] group-hover:text-[#2563EB]"}`}
-        style={{ fontFamily: HAND }}
-      >
-        {title}
-      </p>
-      <div className="flex items-center gap-2 flex-wrap">
-        <TierChip tier={video.tier} language={language} />
-        {timeAgo && (
-          <span className="text-[10px] text-[#71717A]" style={{ fontFamily: SANS }}>{timeAgo}</span>
-        )}
-      </div>
-    </button>
+    <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: BLUE, boxShadow: `0 0 6px ${BLUE}` }} />
   );
 }
 
-export default function E2Home({
-  mainVideo,
-  allVideos = [],
-  currentVideoId,
-  userProfile,
-}: E2HomeProps) {
-  const { t, language } = useLanguage();
-  const router = useRouter();
+export default function E2Home() {
+  const [active, setActive] = useState("1");
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"archiwum" | "komentarze">("komentarze");
+  useEffect(() => setMounted(true), []);
 
-  useEffect(() => { setMounted(true); }, []);
-
-  const selectedVideo =
-    allVideos.find(v => v.id === currentVideoId || v.slug === currentVideoId) || mainVideo;
-
-  const sortedVideos = [...allVideos].sort(compareSidebarItems);
-  const publicVideos = sortedVideos.filter(v => v.tier === "PUBLIC" || v.tier === "LOGGED_IN");
-  const patronVideos = sortedVideos.filter(v => v.tier === "PATRON");
-
-  const handleVideoSelect = (video: PublicVideoDTO) => {
-    router.push(`/eksperyment2?v=${video.slug || video.id}`);
-  };
-
-  if (!selectedVideo) {
-    return (
-      <main className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <NajsIcon name="alert" className="h-12 w-12 mx-auto mb-4 text-[#71717A]" />
-        <p style={{ fontFamily: HAND }} className="text-lg text-[#71717A]">Brak materiałów</p>
-      </main>
-    );
-  }
+  const video = MOCK_VIDEOS.find((v) => v.id === active) || MOCK_VIDEOS[0];
 
   return (
-    <main
+    <div
       className="min-h-screen"
-      style={{ fontFamily: HAND, "--font-najs": HAND } as React.CSSProperties}
+      style={{ background: NIGHT, color: TEXT, fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
     >
-      {/* === HERO + PLAYER === */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-2">
-        <div className="grid grid-cols-12 gap-5">
-          {/* Player column */}
-          <div className="col-span-12 lg:col-span-8">
-            <Hero
-              video={selectedVideo}
-              initialInteraction={userProfile?.initialInteraction}
-              initialIsSubscribed={userProfile?.initialIsSubscribed}
-            />
+      {/* Nav */}
+      <nav
+        className="sticky top-0 z-50 flex items-center justify-between px-5 h-14"
+        style={{ background: `${NIGHT}ee`, backdropFilter: "blur(10px)", borderBottom: `1px solid ${BORDER}` }}
+      >
+        <div className="flex items-center gap-3">
+          <GlowDot />
+          <span
+            className="text-lg tracking-[0.08em] uppercase font-bold"
+            style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)", color: TEXT }}
+          >
+            Polutek
+          </span>
+        </div>
+        <div className="flex gap-3 text-[11px]" style={{ color: TEXT_DIM }}>
+          <Link href="/eksperyment1" className="hover:text-white transition-colors">→ Rough Press</Link>
+          <Link href="/eksperyment3" className="hover:text-white transition-colors">→ Editorial</Link>
+          <Link href="/kreator" className="hover:text-white transition-colors">→ Kreator</Link>
+          <Link href="/" className="hover:text-white transition-colors">→ Oryginał</Link>
+        </div>
+      </nav>
 
-            {/* Mobile tabs */}
-            <div className="lg:hidden mt-4">
-              <div className="flex gap-1">
-                {(["komentarze", "archiwum"] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className="relative flex-1 py-2.5 text-[12px] font-black uppercase tracking-widest transition-all"
-                    style={{ fontFamily: SANS, color: activeTab === tab ? "#171717" : "rgba(23,23,23,0.3)" }}
+      <div className="text-center py-2.5 text-[10px] tracking-widest uppercase" style={{ color: TEXT_DIM, borderBottom: `1px solid ${BORDER}` }}>
+        Eksperyment 2 — Noir
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
+
+          {/* Player */}
+          <div>
+            <div
+              className="aspect-video w-full flex items-center justify-center rounded-sm overflow-hidden relative"
+              style={{ background: "#000", border: `1px solid ${BORDER}` }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div
+                    className="text-6xl mb-2"
+                    style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)", letterSpacing: "0.08em", color: BLUE, textShadow: `0 0 40px ${BLUE}66` }}
                   >
-                    {activeTab === tab && (
-                      <span className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-[#171717]" />
-                    )}
-                    {tab === "komentarze" ? t.comments : "Archiwum"}
-                  </button>
+                    POLUTEK.PL
+                  </div>
+                  <p className="text-xs" style={{ color: TEXT_DIM }}>Odtwarzacz wideo</p>
+                </div>
+              </div>
+              {/* vignette overlay */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)" }} />
+            </div>
+
+            {/* Video info */}
+            <div className="mt-4 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1
+                    className="text-xl font-bold leading-snug mb-2"
+                    style={{ color: TEXT }}
+                  >
+                    {video.title}
+                  </h1>
+                  <div className="flex items-center gap-3 text-xs" style={{ color: TEXT_DIM }}>
+                    <span>{video.views.toLocaleString("pl")} wyświetleń</span>
+                    <span>·</span>
+                    <span>{video.duration}</span>
+                    {video.badge && <Tag>{video.badge}</Tag>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mt-4">
+                <button
+                  className="h-9 px-5 rounded text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                  style={{ background: BLUE, boxShadow: `0 0 18px ${BLUE}44`, fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
+                >
+                  Zaloguj się
+                </button>
+                <button
+                  className="h-9 px-5 rounded text-sm font-medium transition-all hover:bg-white/10 active:scale-95"
+                  style={{ border: `1px solid ${BORDER}`, color: TEXT, background: "transparent" }}
+                >
+                  Udostępnij
+                </button>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mt-4 rounded-sm p-4 text-sm leading-relaxed" style={{ background: NIGHT2, border: `1px solid ${BORDER}`, color: TEXT_DIM }}>
+              Niezależny kanał wideo. Materiały publiczne, patronackie i dla zalogowanych.
+              Bez algorytmów, bez reklam, bez kompromisów.
+            </div>
+
+            {/* Comments */}
+            <div className="mt-6">
+              <h2 className="font-semibold mb-4 text-sm tracking-wide uppercase" style={{ color: TEXT_DIM, letterSpacing: "0.1em" }}>
+                Komentarze
+              </h2>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full shrink-0" style={{ background: NIGHT2, border: `1px solid ${BORDER}` }} />
+                    <div className="flex-1">
+                      <div className="h-2.5 rounded w-20 mb-2" style={{ background: "rgba(248,243,231,0.1)" }} />
+                      <div className="h-2.5 rounded w-full mb-1.5" style={{ background: "rgba(248,243,231,0.06)" }} />
+                      <div className="h-2.5 rounded w-2/3" style={{ background: "rgba(248,243,231,0.06)" }} />
+                    </div>
+                  </div>
                 ))}
               </div>
-              <DashedLine />
-            </div>
-
-            {/* Mobile: comments or archive */}
-            <div className="lg:hidden mt-4">
-              {activeTab === "komentarze" ? (
-                <EmbeddedComments
-                  videoId={selectedVideo.id}
-                  userProfile={userProfile}
-                  videoTier={selectedVideo.tier}
-                />
-              ) : (
-                <VideoGrid
-                  videos={sortedVideos}
-                  selectedId={selectedVideo.id}
-                  language={language}
-                  onSelect={handleVideoSelect}
-                  publicVideos={publicVideos}
-                  patronVideos={patronVideos}
-                />
-              )}
-            </div>
-
-            {/* Desktop: comments */}
-            <div className="hidden lg:block mt-8">
-              <SectionHeader label={language === "pl" ? "Komentarze" : "Comments"} />
-              <EmbeddedComments
-                videoId={selectedVideo.id}
-                userProfile={userProfile}
-                videoTier={selectedVideo.tier}
-              />
             </div>
           </div>
 
           {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-4">
-            <VideoGrid
-              videos={sortedVideos}
-              selectedId={selectedVideo.id}
-              language={language}
-              onSelect={handleVideoSelect}
-              publicVideos={publicVideos}
-              patronVideos={patronVideos}
-            />
-
-            {/* Wesprzyj CTA */}
-            <DashedLine />
-            <div className="relative h-[54px] mt-4">
-              <HachureFill fill={BLUE} seed={42} />
-              <button
-                className="absolute inset-0 flex items-center justify-center gap-2 text-white font-black text-[15px] tracking-wide"
-                style={{ fontFamily: HAND }}
-                onClick={() => window.open("https://patronite.pl", "_blank")}
-              >
-                Wesprzyj POLUTEK.PL
-              </button>
+          <div className="space-y-4">
+            {/* Playlist */}
+            <div className="rounded-sm overflow-hidden" style={{ border: `1px solid ${BORDER}`, background: NIGHT2 }}>
+              <div className="px-4 py-3 text-xs font-bold tracking-widest uppercase" style={{ color: TEXT_DIM, borderBottom: `1px solid ${BORDER}` }}>
+                Wszystkie materiały
+              </div>
+              <div>
+                {MOCK_VIDEOS.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setActive(v.id)}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left transition-all"
+                    style={{
+                      background: v.id === active ? "rgba(37,99,235,0.12)" : "transparent",
+                      borderLeft: v.id === active ? `2px solid ${BLUE}` : "2px solid transparent",
+                    }}
+                  >
+                    <div
+                      className="w-14 h-9 shrink-0 flex items-center justify-center text-[10px] rounded-sm"
+                      style={{ background: "#000", color: TEXT_DIM, fontFamily: "var(--font-outfit, Outfit, sans-serif)", border: `1px solid ${BORDER}` }}
+                    >
+                      {v.duration}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium leading-snug line-clamp-2" style={{ color: v.id === active ? TEXT : TEXT_DIM }}>
+                        {v.title}
+                      </p>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-[10px]" style={{ color: "rgba(248,243,231,0.25)" }}>{v.views.toLocaleString("pl")}</span>
+                        {v.badge && <Tag blue>{v.badge}</Tag>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Subscribe pill */}
-            <div className="mt-3 flex justify-center">
-              <SubscribeButton
-                creatorId={selectedVideo.creatorId}
-                creatorSlug={selectedVideo.creator?.slug}
-                creatorName={selectedVideo.creator?.name}
-                initialIsSubscribed={userProfile?.initialIsSubscribed}
-                colorScheme="v2"
-              />
+            {/* Donation */}
+            <div
+              className="rounded-sm p-5"
+              style={{ border: `1px solid rgba(37,99,235,0.3)`, background: "rgba(37,99,235,0.06)", boxShadow: `0 0 30px rgba(37,99,235,0.08)` }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <GlowDot />
+                <h3 className="font-bold text-sm" style={{ color: TEXT }}>Wesprzyj kanał</h3>
+              </div>
+              <p className="text-xs leading-relaxed mb-4" style={{ color: TEXT_DIM }}>
+                Jednorazowe wsparcie odblokowuje dostęp do treści patronackich na zawsze.
+              </p>
+              <div className="flex gap-2">
+                {["20 zł", "50 zł", "100 zł"].map((amt) => (
+                  <button
+                    key={amt}
+                    className="flex-1 h-8 text-xs font-bold rounded transition-all hover:brightness-110 active:scale-95"
+                    style={{ background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.4)`, color: "#93c5fd" }}
+                  >
+                    {amt}
+                  </button>
+                ))}
+              </div>
             </div>
-          </aside>
+          </div>
         </div>
       </div>
-
-      {/* === MOBILE CTA === */}
-      <div className="lg:hidden px-4 mt-6 mb-2">
-        <div className="relative h-[54px]">
-          <HachureFill fill={BLUE} seed={42} />
-          <button
-            className="absolute inset-0 flex items-center justify-center gap-2 text-white font-black text-[15px]"
-            style={{ fontFamily: HAND }}
-          >
-            Wesprzyj POLUTEK.PL
-          </button>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function VideoGrid({
-  videos,
-  selectedId,
-  language,
-  onSelect,
-  publicVideos,
-  patronVideos,
-}: {
-  videos: PublicVideoDTO[];
-  selectedId: string;
-  language: string;
-  onSelect: (v: PublicVideoDTO) => void;
-  publicVideos: PublicVideoDTO[];
-  patronVideos: PublicVideoDTO[];
-}) {
-  const isPl = language === "pl";
-
-  return (
-    <div>
-      {publicVideos.length > 0 && (
-        <>
-          <SectionHeader label={isPl ? "Dostępne filmy" : "Available"} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-            {publicVideos.map(v => (
-              <VideoCard
-                key={v.id}
-                video={v}
-                isSelected={v.id === selectedId}
-                language={language}
-                onClick={() => onSelect(v)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      {patronVideos.length > 0 && (
-        <>
-          <SectionHeader label={isPl ? "Strefa Fenkju" : "Patron Zone"} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-            {patronVideos.map(v => (
-              <VideoCard
-                key={v.id}
-                video={v}
-                isSelected={v.id === selectedId}
-                language={language}
-                onClick={() => onSelect(v)}
-              />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }

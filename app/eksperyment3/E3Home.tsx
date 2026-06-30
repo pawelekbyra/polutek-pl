@@ -1,389 +1,274 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { PublicVideoDTO } from "../types/video";
-import Hero from "../components/Hero";
-import EmbeddedComments from "../components/comments/EmbeddedComments";
-import SubscribeButton from "../components/SubscribeButton";
-import { Frame, HachureFill, NajsIcon, NajsSeparator, INK, BLUE } from "../components/najs/primitives";
-import { useLanguage } from "../components/LanguageContext";
-import BrandName from "../components/BrandName";
-import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
-import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import React, { useEffect, useRef, useState } from "react";
+import { annotate } from "rough-notation";
+import Link from "next/link";
 
-// V3 tokens
-const PAPER = "#FAF6EC";
-const MARKER = "#FBE08A";
-const HAND = "var(--font-patrick, 'Patrick Hand', cursive)";
-const SANS = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
+const BLUE = "#2563eb";
+const PAPER = "#fafaf8";
+const INK = "#171717";
+const RULE = "#17171718";
 
-// Notatnik background: red margin + blue horizontal + blue vertical grid, fixed
-const NOTEBOOK_BG = `
-  linear-gradient(90deg, transparent 47px, rgba(196,82,60,.28) 47px, rgba(196,82,60,.28) 48px, transparent 48px),
-  repeating-linear-gradient(to bottom, rgba(40,70,130,.10) 0, rgba(40,70,130,.10) 1px, transparent 1px, transparent 42px),
-  repeating-linear-gradient(to right, rgba(40,70,130,.07) 0, rgba(40,70,130,.07) 1px, transparent 1px, transparent 42px)
-`.trim();
+const MOCK_VIDEOS = [
+  { id: "1", title: "Dlaczego nikt nie mówi prawdy w internecie", duration: "18:42", locked: false, views: 4821, col: 1 },
+  { id: "2", title: "Algorytm cię kontroluje (i wiesz o tym)", duration: "24:11", locked: true, views: 12340, col: 2 },
+  { id: "3", title: "Ekranowy tłum i jego złudzenie wspólnoty", duration: "31:05", locked: true, views: 8970, col: 3 },
+  { id: "4", title: "Wolne słowo kontra korporacyjne filtry", duration: "14:28", locked: false, views: 2140, col: 1 },
+];
 
-interface E3HomeProps {
-  mainVideo: PublicVideoDTO | null;
-  allVideos: PublicVideoDTO[];
-  currentVideoId?: string;
-  userProfile?: {
-    id: string;
-    email: string;
-    imageUrl?: string | null;
-    totalPaid: number;
-    initialInteraction?: { liked: boolean; disliked: boolean };
-    initialIsSubscribed?: boolean;
-    isPatronDecorative?: boolean;
-    role?: string;
-  } | null;
+function BoxAnnotation({ children, color = "#fde68a" }: { children: React.ReactNode; color?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const ann = annotate(ref.current, {
+      type: "box",
+      color,
+      strokeWidth: 2,
+      animate: true,
+      animationDuration: 800,
+    });
+    const t = setTimeout(() => ann.show(), 400);
+    return () => { clearTimeout(t); ann.remove(); };
+  }, [color]);
+  return <span ref={ref}>{children}</span>;
 }
 
-// Yellow marker highlight on section heading text
-function Marked({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        background: `linear-gradient(180deg, transparent 52%, ${MARKER} 52%, ${MARKER} 92%, transparent 92%)`,
-        padding: "0 3px",
-        WebkitBoxDecorationBreak: "clone",
-        boxDecorationBreak: "clone",
-      } as React.CSSProperties}
-    >
-      {children}
-    </span>
-  );
+function CircleAnnotation({ children, color = BLUE }: { children: React.ReactNode; color?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const ann = annotate(ref.current, {
+      type: "circle",
+      color,
+      strokeWidth: 2.5,
+      animate: true,
+      animationDuration: 900,
+      padding: 6,
+    });
+    const t = setTimeout(() => ann.show(), 600);
+    return () => { clearTimeout(t); ann.remove(); };
+  }, [color]);
+  return <span ref={ref}>{children}</span>;
 }
 
-function SectionTitle({ label }: { label: string }) {
-  return (
-    <h3
-      className="text-[11px] font-black uppercase tracking-[0.2em] mb-3 whitespace-nowrap"
-      style={{ fontFamily: SANS }}
-    >
-      <Marked>{label}</Marked>
-    </h3>
-  );
-}
-
-// Single-contur Frame (V3: no shadow)
-function CleanFrame({ radius = 14, seed = 1, fill = "transparent" }: { radius?: number; seed?: number; fill?: string }) {
-  return <Frame radius={radius} seed={seed} stroke={INK} strokeWidth={1.4} fill={fill} showShadow={false} />;
-}
-
-function VideoRow({
-  video,
-  isSelected,
-  language,
-  onClick,
-}: {
-  video: PublicVideoDTO;
-  isSelected: boolean;
-  language: string;
-  onClick: () => void;
-}) {
-  const title = getVideoDisplayTitle(video, language);
-  const isPatron = video.tier === "PATRON";
-  const timeAgo = video.publishedAt
-    ? formatDistanceToNow(new Date(video.publishedAt), {
-        addSuffix: true,
-        locale: language === "pl" ? pl : undefined,
-      })
-    : null;
-
-  return (
-    <button
-      onClick={onClick}
-      className="flex gap-3 w-full text-left group py-2 border-b border-dashed"
-      style={{ borderColor: "rgba(40,70,130,.12)" }}
-    >
-      {/* Thumbnail */}
-      <div className="relative shrink-0 w-[100px] aspect-video rounded-[9px] overflow-hidden">
-        {video.thumbnailUrl ? (
-          <Image
-            src={video.thumbnailUrl}
-            alt={title}
-            fill
-            className="object-cover transition-transform duration-200 group-hover:scale-[1.04]"
-            sizes="100px"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[#1a1a1a]" />
-        )}
-        {isPatron && (
-          <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
-            <NajsIcon name="lock" className="h-4 w-4" stroke="white" />
-          </div>
-        )}
-        {video.duration && (
-          <span className="absolute bottom-0.5 right-1 text-[9px] font-mono text-white bg-black/75 px-1 rounded">
-            {video.duration}
-          </span>
-        )}
-        <CleanFrame radius={9} seed={(video.id.charCodeAt(0) % 80) + 1} />
-      </div>
-
-      {/* Meta */}
-      <div className="flex-1 min-w-0 pt-0.5">
-        <p
-          className="text-[12.5px] leading-snug line-clamp-2 mb-1 transition-colors"
-          style={{
-            fontFamily: HAND,
-            color: isSelected ? BLUE : "#171717",
-            fontWeight: isSelected ? "bold" : "normal",
-          }}
-        >
-          {title}
-        </p>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {isSelected && (
-            <span
-              className="text-[9px] font-black uppercase tracking-wider text-white rounded-full px-2 py-0.5"
-              style={{ fontFamily: SANS, background: BLUE }}
-            >
-              {language === "pl" ? "Teraz" : "Now"}
-            </span>
-          )}
-          {isPatron && (
-            <span
-              className="text-[9px] font-black uppercase tracking-wider bg-[#171717] text-white rounded-full px-2 py-0.5"
-              style={{ fontFamily: SANS }}
-            >
-              Patron
-            </span>
-          )}
-          {timeAgo && (
-            <span className="text-[10px] text-[#71717A]" style={{ fontFamily: SANS }}>
-              {timeAgo}
-            </span>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function Sidebar({
-  videos,
-  selectedId,
-  language,
-  onSelect,
-  userProfile,
-  selectedVideo,
-}: {
-  videos: PublicVideoDTO[];
-  selectedId: string;
-  language: string;
-  onSelect: (v: PublicVideoDTO) => void;
-  userProfile: E3HomeProps["userProfile"];
-  selectedVideo: PublicVideoDTO;
-}) {
-  const isPl = language === "pl";
-  const publicVideos = videos.filter(v => v.tier !== "PATRON");
-  const patronVideos = videos.filter(v => v.tier === "PATRON");
-
-  return (
-    <div>
-      {/* Subscribe + Wesprzyj */}
-      <div className="mb-5 flex flex-col gap-2">
-        <div className="relative h-[46px]">
-          <HachureFill fill={BLUE} seed={7} />
-          <button
-            className="absolute inset-0 flex items-center justify-center text-white font-black text-[14px]"
-            style={{ fontFamily: HAND }}
-          >
-            Wesprzyj POLUTEK.PL
-          </button>
-        </div>
-        <div className="flex justify-center">
-          <SubscribeButton
-            creatorId={selectedVideo.creatorId}
-            creatorSlug={selectedVideo.creator?.slug}
-            creatorName={selectedVideo.creator?.name}
-            initialIsSubscribed={userProfile?.initialIsSubscribed}
-            colorScheme="v2"
-          />
-        </div>
-      </div>
-
-      <NajsSeparator />
-
-      {publicVideos.length > 0 && (
-        <div className="mt-4">
-          <SectionTitle label={isPl ? "Dostępne filmy" : "Available"} />
-          <div className="space-y-0">
-            {publicVideos.map(v => (
-              <VideoRow
-                key={v.id}
-                video={v}
-                isSelected={v.id === selectedId}
-                language={language}
-                onClick={() => onSelect(v)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {patronVideos.length > 0 && (
-        <div className="mt-5">
-          <SectionTitle label={isPl ? "Strefa Fenkju" : "Patron Zone"} />
-          <div className="space-y-0">
-            {patronVideos.map(v => (
-              <VideoRow
-                key={v.id}
-                video={v}
-                isSelected={v.id === selectedId}
-                language={language}
-                onClick={() => onSelect(v)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function E3Home({
-  mainVideo,
-  allVideos = [],
-  currentVideoId,
-  userProfile,
-}: E3HomeProps) {
-  const { t, language } = useLanguage();
-  const router = useRouter();
+export default function E3Home() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
-
-  useEffect(() => { setMounted(true); }, []);
-
-  const selectedVideo =
-    allVideos.find(v => v.id === currentVideoId || v.slug === currentVideoId) || mainVideo;
-
-  const sortedVideos = [...allVideos].sort(compareSidebarItems);
-
-  const handleVideoSelect = (video: PublicVideoDTO) => {
-    router.push(`/eksperyment3?v=${video.slug || video.id}`);
-  };
-
-  const wrapperStyle: React.CSSProperties = {
-    fontFamily: HAND,
-    backgroundColor: PAPER,
-    backgroundImage: NOTEBOOK_BG,
-    backgroundAttachment: "fixed",
-    minHeight: "100vh",
-    color: INK,
-    WebkitFontSmoothing: "antialiased",
-    "--font-najs": HAND,
-  } as React.CSSProperties;
-
-  if (!selectedVideo) {
-    return (
-      <div style={wrapperStyle}>
-        <Navbar />
-        <main className="max-w-3xl mx-auto px-6 py-20 text-center">
-          <NajsIcon name="alert" className="h-10 w-10 mx-auto mb-4 text-[#71717A]" />
-          <p className="text-[#71717A]" style={{ fontFamily: HAND }}>Brak materiałów</p>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const isPl = language === "pl";
+  const [active, setActive] = useState("1");
+  useEffect(() => setMounted(true), []);
+  const video = MOCK_VIDEOS.find((v) => v.id === active) || MOCK_VIDEOS[0];
 
   return (
-    <div style={wrapperStyle}>
-      <Navbar />
+    <div
+      className="min-h-screen"
+      style={{ background: PAPER, color: INK, fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
+    >
+      {/* Masthead */}
+      <header style={{ borderBottom: `3px double ${INK}` }}>
+        <div className="max-w-6xl mx-auto px-4">
+          <div
+            className="flex items-center justify-between py-1 text-[10px] tracking-widest uppercase"
+            style={{ borderBottom: `1px solid ${RULE}`, color: "rgba(23,23,23,0.4)" }}
+          >
+            <span>Niezależne media</span>
+            <div className="flex gap-4">
+              <Link href="/eksperyment1" className="hover:underline">→ Rough Press</Link>
+              <Link href="/eksperyment2" className="hover:underline">→ Noir</Link>
+              <Link href="/kreator" className="hover:underline">→ Kreator</Link>
+              <Link href="/" className="hover:underline">→ Oryginał</Link>
+            </div>
+          </div>
+          <div className="text-center py-5">
+            <div
+              className="text-[3.5rem] leading-none tracking-[0.06em] uppercase"
+              style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)" }}
+            >
+              Polutek.pl
+            </div>
+            <div
+              className="text-[10px] tracking-[0.25em] uppercase mt-1"
+              style={{ color: "rgba(23,23,23,0.45)" }}
+            >
+              Eksperyment 3 — Editorial
+            </div>
+          </div>
+        </div>
+      </header>
 
-      <main className="max-w-6xl mx-auto px-4 md:px-6 py-5">
-        <div className="grid grid-cols-12 gap-5">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Hero headline */}
+        <div
+          className="pb-6 mb-6"
+          style={{ borderBottom: `2px solid ${INK}` }}
+        >
+          <h1
+            className="text-[2.8rem] sm:text-[4rem] leading-[0.9] uppercase tracking-tight mb-4"
+            style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)" }}
+          >
+            {mounted ? (
+              <>
+                <BoxAnnotation color="#fde68a">Dlaczego nikt</BoxAnnotation>
+                <br />
+                nie mówi
+                <br />
+                <span style={{ color: BLUE }}>prawdy</span>
+                <br />
+                w internecie
+              </>
+            ) : (
+              "Dlaczego nikt nie mówi prawdy w internecie"
+            )}
+          </h1>
+          <div className="flex items-center gap-4 text-xs" style={{ color: "rgba(23,23,23,0.5)" }}>
+            <span>4 821 wyświetleń</span>
+            <span>·</span>
+            <span>18 min 42 s</span>
+            <span>·</span>
+            <span style={{ fontStyle: "italic" }}>publiczny</span>
+          </div>
+        </div>
 
-          {/* === LEFT: player + comments === */}
-          <div className="col-span-12 lg:col-span-8 min-w-0">
-            <Hero
-              video={selectedVideo}
-              initialInteraction={userProfile?.initialInteraction}
-              initialIsSubscribed={userProfile?.initialIsSubscribed}
-            />
-
-            {/* Mobile tabs */}
-            <div className="lg:hidden mt-4">
-              <div className="flex">
-                {(["comments", "videos"] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className="flex-1 py-3 text-[12px] font-black uppercase tracking-widest transition-colors"
-                    style={{
-                      fontFamily: SANS,
-                      color: activeTab === tab ? INK : "rgba(23,23,23,0.3)",
-                      borderBottom: activeTab === tab ? `2px solid ${INK}` : "2px solid transparent",
-                    }}
-                  >
-                    {tab === "comments" ? t.comments : (isPl ? "Filmy" : "Videos")}
-                  </button>
-                ))}
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
+          {/* Player + description */}
+          <div>
+            <div
+              className="aspect-video w-full mb-5 flex items-center justify-center"
+              style={{ background: "#0d0d0b", border: `1px solid ${RULE}` }}
+            >
+              <div className="text-center">
+                <div
+                  className="text-5xl mb-2"
+                  style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)", color: BLUE, letterSpacing: "0.1em" }}
+                >
+                  POLUTEK.PL
+                </div>
+                <p className="text-xs text-white/40">Odtwarzacz wideo</p>
               </div>
             </div>
 
-            {/* Mobile: comments */}
-            <div className={`lg:hidden mt-5 ${activeTab === "comments" ? "block" : "hidden"}`}>
-              <SectionTitle label={isPl ? "Komentarze" : "Comments"} />
-              <EmbeddedComments
-                videoId={selectedVideo.id}
-                userProfile={userProfile}
-                videoTier={selectedVideo.tier}
-              />
+            <div className="flex gap-3 mb-5">
+              <button
+                className="h-10 px-6 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                style={{ background: BLUE, fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
+              >
+                Zaloguj się
+              </button>
+              <button
+                className="h-10 px-6 text-sm font-medium transition-all hover:bg-black/5 active:scale-95"
+                style={{ border: `1px solid ${RULE}`, background: "transparent" }}
+              >
+                Udostępnij
+              </button>
             </div>
 
-            {/* Mobile: videos */}
-            <div className={`lg:hidden mt-5 ${activeTab === "videos" ? "block" : "hidden"}`}>
-              <Sidebar
-                videos={sortedVideos}
-                selectedId={selectedVideo.id}
-                language={language}
-                onSelect={handleVideoSelect}
-                userProfile={userProfile}
-                selectedVideo={selectedVideo}
-              />
+            {/* Description in newspaper columns */}
+            <div
+              className="text-sm leading-relaxed mb-6 pb-6"
+              style={{
+                columnCount: 2,
+                columnGap: "2rem",
+                columnRule: `1px solid ${RULE}`,
+                borderBottom: `1px solid ${RULE}`,
+                color: "rgba(23,23,23,0.7)",
+              }}
+            >
+              Niezależny kanał wideo — bez algorytmów, bez reklam, bez kompromisów.
+              Materiały dostępne publicznie, dla zalogowanych i dla patronów.
+              Jednorazowe wsparcie odblokowuje dostęp do treści patronackich na zawsze.
+              To nie jest subskrypcja cykliczna — to wyraz solidarności z niezależnymi mediami.
+              Każdy materiał jest efektem pracy bez zewnętrznego finansowania i bez nacisku wydawców.
             </div>
 
-            {/* Desktop: comments */}
-            <div className="hidden lg:block mt-8">
-              <SectionTitle label={isPl ? "Komentarze" : "Comments"} />
-              <EmbeddedComments
-                videoId={selectedVideo.id}
-                userProfile={userProfile}
-                videoTier={selectedVideo.tier}
-              />
+            {/* Comments */}
+            <div>
+              <h2
+                className="text-lg uppercase tracking-widest mb-4"
+                style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)", borderBottom: `1px solid ${RULE}`, paddingBottom: "0.5rem" }}
+              >
+                Komentarze
+              </h2>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3" style={{ paddingBottom: "1rem", borderBottom: `1px solid ${RULE}` }}>
+                    <div className="w-8 h-8 rounded-full bg-black/5 shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-2.5 rounded w-20 mb-2 bg-black/10" />
+                      <div className="h-2.5 rounded w-full mb-1.5 bg-black/6" />
+                      <div className="h-2.5 rounded w-2/3 bg-black/6" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* === RIGHT: sidebar === */}
-          <aside className="hidden lg:block lg:col-span-4">
-            <Sidebar
-              videos={sortedVideos}
-              selectedId={selectedVideo.id}
-              language={language}
-              onSelect={handleVideoSelect}
-              userProfile={userProfile}
-              selectedVideo={selectedVideo}
-            />
-          </aside>
+          {/* Sidebar — playlist + donate */}
+          <div>
+            <div style={{ borderLeft: `2px solid ${INK}`, paddingLeft: "1.5rem" }}>
+              <h2
+                className="text-lg uppercase tracking-widest mb-4"
+                style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)" }}
+              >
+                Wszystkie materiały
+              </h2>
+              <div className="space-y-0">
+                {MOCK_VIDEOS.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setActive(v.id)}
+                    className="w-full text-left py-4 block"
+                    style={{ borderBottom: `1px solid ${RULE}` }}
+                  >
+                    <p
+                      className="text-sm font-semibold leading-snug mb-1 line-clamp-2"
+                      style={{ color: v.id === active ? BLUE : INK, textDecoration: v.id === active ? "underline" : "none" }}
+                    >
+                      {v.title}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px]" style={{ color: "rgba(23,23,23,0.4)" }}>
+                      <span>{v.duration}</span>
+                      <span>·</span>
+                      <span>{v.views.toLocaleString("pl")} wyśw.</span>
+                      {v.locked && (
+                        <span
+                          className="font-bold tracking-widest"
+                          style={{ color: BLUE, fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
+                        >
+                          PATRON
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
 
+              {/* Donate */}
+              <div className="mt-6 p-4" style={{ border: `1px solid ${INK}` }}>
+                <h3
+                  className="text-base uppercase tracking-widest mb-2"
+                  style={{ fontFamily: "var(--font-brand, Bebas Neue, sans-serif)" }}
+                >
+                  {mounted ? <CircleAnnotation color={BLUE}>Wesprzyj</CircleAnnotation> : "Wesprzyj"} kanał
+                </h3>
+                <p className="text-xs leading-relaxed mb-3" style={{ color: "rgba(23,23,23,0.6)" }}>
+                  Jednorazowe wsparcie. Brak subskrypcji. Dostęp na zawsze.
+                </p>
+                <div className="flex gap-2">
+                  {["20 zł", "50 zł", "100 zł"].map((amt) => (
+                    <button
+                      key={amt}
+                      className="flex-1 h-8 text-xs font-bold transition-all hover:bg-black hover:text-white active:scale-95"
+                      style={{ border: `1px solid ${INK}`, background: "transparent" }}
+                    >
+                      {amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }
