@@ -24,12 +24,6 @@ function useParentSize<T extends SVGSVGElement>() {
       svg.setAttribute("height", String(height));
     };
     read();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", read);
-      return () => window.removeEventListener("resize", read);
-    }
-
     const observer = new ResizeObserver(read);
     observer.observe(parent);
     return () => observer.disconnect();
@@ -114,12 +108,6 @@ export function HachureFill({
       );
     };
     draw();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", draw);
-      return () => window.removeEventListener("resize", draw);
-    }
-
     const observer = new ResizeObserver(draw);
     observer.observe(parent);
     return () => observer.disconnect();
@@ -148,8 +136,7 @@ export function NajsSeparator({ label, className = "" }: { label?: string; class
 export type NajsIconName =
   | "search" | "login" | "bell" | "like" | "dislike" | "send"
   | "more" | "more-vertical" | "lock" | "close" | "shield"
-  | "download" | "video" | "alert" | "heart" | "play" | "pause"
-  | "volume" | "volume-off" | "subtitles" | "fullscreen";
+  | "download" | "video" | "alert" | "heart" | "pause";
 
 export function NajsIcon({
   name,
@@ -161,7 +148,6 @@ export function NajsIcon({
   stroke?: string;
 }) {
   const c = { fill: "none", stroke, strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-  const player = { fill: "none", stroke, strokeWidth: 2.05, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
       {name === "search" && <><circle cx="10" cy="10" r="6.3" {...c} /><path d="M15 15.5 L21 21" {...c} /></>}
@@ -179,12 +165,7 @@ export function NajsIcon({
       {name === "video" && <><path d="M2 8 h12 v8 H2 Z" {...c} /><path d="M14 10 l6 -3 v10 l -6 -3" {...c} /></>}
       {name === "alert" && <><circle cx="12" cy="12" r="9" {...c} /><path d="M12 8 v4" {...c} /><circle cx="12" cy="16" r="0.5" fill={stroke} stroke="none" /></>}
       {name === "heart" && <path d="M12 21 C12 21 3 14 3 8 c0 -3 2 -5 5 -5 c2 0 3.5 1 4 2.5 C12.5 4 14 3 16 3 c3 0 5 2 5 5 C21 14 12 21 12 21 Z" {...c} />}
-      {name === "play" && <path d="M8 5.8 L18.2 12.1 L8.2 18.3 Z" fill={stroke} stroke={stroke} strokeWidth="1.2" strokeLinejoin="round" />}
-      {name === "pause" && <><path d="M8.4 6.4 v11.2" {...player} strokeWidth="2.65" /><path d="M15.6 6.4 v11.2" {...player} strokeWidth="2.65" /></>}
-      {name === "volume" && <><path d="M4 10.2 h4.2 L13.5 6 v12 l-5.3 -4.2 H4 Z" {...player} /><path d="M16.2 9.2 c1.1 1.3 1.1 4.3 0 5.6" {...player} /><path d="M18.7 7.1 c2.2 2.8 2.2 7 0 9.8" {...player} /></>}
-      {name === "volume-off" && <><path d="M4 10.2 h4.2 L13.5 6 v12 l-5.3 -4.2 H4 Z" {...player} /><path d="M17 9 l4 6" {...player} /><path d="M21 9 l-4 6" {...player} /></>}
-      {name === "subtitles" && <><path d="M4.2 6.4 h15.6 v11.2 H4.2 Z" {...player} /><path d="M7.3 12.4 h4.4" {...player} /><path d="M13.3 12.4 h3.4" {...player} /><path d="M7.3 15.2 h7.9" {...player} /></>}
-      {name === "fullscreen" && <><path d="M8.4 4.6 H4.6 v3.8" {...player} /><path d="M15.6 4.6 h3.8 v3.8" {...player} /><path d="M4.6 15.6 v3.8 h3.8" {...player} /><path d="M19.4 15.6 v3.8 h-3.8" {...player} /></>}
+      {name === "pause" && <path d="M8 6 v12 M16 6 v12" fill="none" stroke={stroke} strokeWidth={4} strokeLinecap="round" />}
     </svg>
   );
 }
