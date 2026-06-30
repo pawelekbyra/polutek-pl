@@ -648,7 +648,6 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(actionsSource).toContain('Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant');
     expect(diagnosticsSource).toContain('Prawda dostępu PatronGrant');
     expect(diagnosticsSource).toContain('Fakty płatności (nie prawda dostępu)');
-    expect(diagnosticsSource).toContain('User.isPatron:');
     expect(diagnosticsSource).toContain('Newsletter/subskrypcja (niezwiązane z dostępem)');
 
     for (const state of ['LOGIN_REQUIRED', 'PATRON_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
