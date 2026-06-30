@@ -26,7 +26,7 @@ describe('SyncUserFromWebhookUseCase', () => {
     };
   });
 
-  it('creates a new local user and preserves isPatron: false', async () => {
+  it('creates a new local user without patron fields', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(null);
 
     await SyncUserFromWebhookUseCase.execute(ctx(), {
@@ -40,9 +40,9 @@ describe('SyncUserFromWebhookUseCase', () => {
       data: expect.objectContaining({
         id: 'u1',
         email: 'test@example.com',
-        isPatron: false, // Source of truth must be protected
       }),
     });
+    expect(mockPrisma.user.create.mock.calls[0][0].data).not.toHaveProperty('isPatron');
   });
 
   it('updates existing local user and preserves current isPatron state', async () => {
@@ -79,11 +79,8 @@ describe('SyncUserFromWebhookUseCase', () => {
         where: { id: 'u1' },
         data: expect.objectContaining({
             isDeleted: true,
-            isPatron: false,
             imageUrl: null,
             stripeCustomerId: null,
-            patronSince: null,
-            patronSource: null,
             name: "Usunięty Użytkownik"
         })
     }));

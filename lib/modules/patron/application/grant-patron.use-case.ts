@@ -71,7 +71,6 @@ export async function grantPatron(
       userId: input.userId,
       source,
       paymentId: input.paymentId,
-      referralId: input.referralId,
       grantedById: input.grantedByUserId,
       reason: input.note,
     }, currentTx);
