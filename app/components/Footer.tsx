@@ -15,7 +15,7 @@ const Footer = () => {
       <div className="max-w-[1180px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
         <div className="hidden w-32 md:block" />
 
-        <span className="order-2 text-center text-[13px] font-black tracking-[0.12em] uppercase text-[#3a3a3a] md:order-none" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+        <span className="order-2 text-center text-[13px] font-black tracking-[0.12em] uppercase text-[#3a3a3a] md:order-none" style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>
           WWW.POLUTEK.PL
         </span>
 

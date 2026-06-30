@@ -313,7 +313,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
-            <h3 className="font-heading text-[17px] font-bold text-[#0f0f0f]">
+            <h3 className="text-[17px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {totalCount} {getCommentsLabel(totalCount)}
             </h3>
           )}
