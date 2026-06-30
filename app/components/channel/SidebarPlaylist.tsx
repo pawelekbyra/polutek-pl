@@ -15,7 +15,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
-import { Frame, NajsIcon, NajsSeparator, HachureFill, INK, BLUE, BLUE_DARK } from "../najs/primitives";
+import { Frame, NajsIcon, NajsSeparator, INK, BLUE } from "../najs/primitives";
 
 type UserProfile = {
   id: string;
@@ -58,7 +58,7 @@ interface SidebarPlaylistProps {
   t: Translations;
   language: string;
   mounted: boolean;
-  premiereCountdown: string;
+  premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
 }
 
@@ -70,7 +70,6 @@ export function SidebarPlaylist({
   t,
   language,
   mounted,
-  premiereCountdown,
   onVideoMouseEnter,
 }: SidebarPlaylistProps) {
   const getSidebarAccessBadge = (
@@ -274,11 +273,13 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-[14px]">
-      <div className="flex items-center gap-2 mb-[4px]">
+    <div className="mb-[6px]">
+      <div className="flex items-center gap-2 mb-[3px]">
         {icon}
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          {title}
+          <span style={{ background: "linear-gradient(180deg, transparent 52%, #FBE08A 52%, #FBE08A 92%, transparent 92%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
+            {title}
+          </span>
         </h3>
       </div>
       <NajsSeparator />
@@ -289,11 +290,36 @@ export function SidebarPlaylist({
     if (!supportItem?.creatorId) return null;
 
     const isPl = language === "pl";
-    const cdDays = premiereCountdown.split(" ")[0] || "—";
-    const cdClock = premiereCountdown.split(" ").slice(2).join("") || "--:--:--";
+    const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
+    const [localCountdown, setLocalCountdown] = useState(() => {
+      const ms = PATRON_PREMIERE_DATE.getTime() - Date.now();
+      if (ms <= 0) return isPl ? "Premiera już dostępna" : "Premiere available now";
+      const s = Math.floor(ms / 1000);
+      const d = Math.floor(s / 86400);
+      const pad = (v: number) => v.toString().padStart(2, "0");
+      return isPl
+        ? `${d} dni ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
+        : `${d} days ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+    });
+    useEffect(() => {
+      const update = () => {
+        const ms = PATRON_PREMIERE_DATE.getTime() - Date.now();
+        if (ms <= 0) { setLocalCountdown(isPl ? "Premiera już dostępna" : "Premiere available now"); return; }
+        const s = Math.floor(ms / 1000);
+        const d = Math.floor(s / 86400);
+        const pad = (v: number) => v.toString().padStart(2, "0");
+        setLocalCountdown(isPl
+          ? `${d} dni ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
+          : `${d} days ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`);
+      };
+      const interval = setInterval(update, 1000);
+      return () => clearInterval(interval);
+    }, [isPl]);
+    const cdDays = localCountdown.split(" ")[0] || "—";
+    const cdClock = localCountdown.split(" ").slice(2).join("") || "--:--:--";
 
     return (
-      <div className="relative my-[18px] p-[18px] mb-6">
+      <div className="relative my-[10px] p-[18px] mb-3">
         <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
         <div className="relative z-10">
           <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
@@ -334,10 +360,10 @@ export function SidebarPlaylist({
                 document.getElementById("donations");
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all overflow-hidden rounded-[11px]"
+            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
             style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
           >
-            <HachureFill fill={BLUE} stroke={BLUE_DARK} seed={5} />
+            <Frame radius={11} seed={5} stroke={BLUE} strokeWidth={1.6} fill={BLUE} showShadow={true} />
             <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
           </button>
           <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
@@ -396,13 +422,13 @@ export function SidebarPlaylist({
   return (
     <>
       {publicSection && (
-        <div className="mb-6">
+        <div className="mb-3">
           {renderSectionHeader(publicSection.title)}
           {publicSection.items.map(renderVideoItem)}
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-6">
+        <div className="mb-3">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map(renderVideoItem)}
         </div>
@@ -411,7 +437,7 @@ export function SidebarPlaylist({
       <PatronBox />
 
       {patronSection && (
-        <div className="mb-6">
+        <div className="mb-3">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}

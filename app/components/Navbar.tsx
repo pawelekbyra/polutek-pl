@@ -60,7 +60,7 @@ const Navbar = () => {
       className="sticky top-0 z-[1000] w-full flex flex-col"
       style={{ background: "rgba(248,243,231,.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
     >
-      <div className="flex items-center px-4 lg:px-6 h-[58px] min-h-[58px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
+      <div className="flex items-center px-4 lg:px-6 h-[48px] min-h-[48px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -78,8 +78,8 @@ const Navbar = () => {
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="relative w-full h-full bg-transparent pl-4 pr-12 text-sm outline-none"
-                  style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+                  className="relative w-full h-full bg-transparent pl-4 pr-12 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                  style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                 />
                 <button
                   type="submit"
@@ -103,11 +103,11 @@ const Navbar = () => {
                   <BrandName
                     className="text-[22px] leading-none"
                     variant="classic"
-                    style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+                    style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
                   />
                   <span
-                    className="bg-[#171717] text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-white px-[2px] py-px rounded-[2px] select-none mt-[1px]"
-                    style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+                    className="text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#171717] select-none mt-[1px] px-[2px]"
+                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                   >
                     Beta
                   </span>
@@ -125,8 +125,8 @@ const Navbar = () => {
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="relative w-full h-full bg-transparent pl-5 pr-14 text-sm outline-none"
-                    style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+                    className="relative w-full h-full bg-transparent pl-5 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                   />
                   <button
                     type="submit"
@@ -233,7 +233,7 @@ const Navbar = () => {
       </div>
 
       {/* Separator pod navbarem */}
-      <NajsSeparator className="px-4 -mb-[10px]" />
+      <NajsSeparator className="px-4" />
     </div>
   );
 };

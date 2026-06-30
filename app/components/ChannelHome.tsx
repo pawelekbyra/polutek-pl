@@ -29,21 +29,6 @@ interface ChannelHomeProps {
   } | null;
 }
 
-const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
-
-const formatPremiereCountdown = (targetDate: Date, language: string) => {
-  const remainingMs = targetDate.getTime() - Date.now();
-  if (remainingMs <= 0)
-    return language === "pl"
-      ? "Premiera już dostępna"
-      : "Premiere available now";
-  const totalSeconds = Math.floor(remainingMs / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const pad = (v: number) => v.toString().padStart(2, "0");
-  return language === "pl"
-    ? `${days} dni ${pad(Math.floor((totalSeconds % 86400) / 3600))}:${pad(Math.floor((totalSeconds % 3600) / 60))}:${pad(totalSeconds % 60)}`
-    : `${days} days ${pad(Math.floor((totalSeconds % 86400) / 3600))}:${pad(Math.floor((totalSeconds % 3600) / 60))}:${pad(totalSeconds % 60)}`;
-};
 
 export default function ChannelHome({
   mainVideo,
@@ -59,23 +44,12 @@ export default function ChannelHome({
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
   const [mounted, setMounted] = useState(false);
-  const [premiereCountdown, setPremiereCountdown] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
     setMounted(true);
     if (selectedVideo?.id) window.scrollTo({ top: 0, behavior: "auto" });
   }, [selectedVideo?.id]);
-
-  useEffect(() => {
-    const update = () =>
-      setPremiereCountdown(
-        formatPremiereCountdown(PATRON_PREMIERE_DATE, language),
-      );
-    update();
-    const interval = window.setInterval(update, 1000);
-    return () => window.clearInterval(interval);
-  }, [language]);
 
   if (!selectedVideo)
     return (
@@ -129,7 +103,6 @@ export default function ChannelHome({
     t,
     language,
     mounted,
-    premiereCountdown,
     onVideoMouseEnter: prefetchComments,
   };
 

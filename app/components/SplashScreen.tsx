@@ -8,7 +8,7 @@ type Phase = "skip" | "showing" | "ready" | "exiting" | "done";
 const PAPER = "#f7f1e4";
 const INK = "#121212";
 const INK_FAINT = "rgba(18,18,18,0.13)";
-const FONT = '"Comic Sans MS","Comic Sans","Chalkboard SE","Bradley Hand",cursive';
+const FONT = "var(--font-patrick, 'Patrick Hand', cursive)";
 const MIN_MS = 1600;
 
 function useReducedMotion() {
@@ -93,7 +93,7 @@ export function SplashScreen() {
       <div
         style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: PAPER, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
       >
-        <button onClick={handleEnter} style={{ fontFamily: FONT, fontSize: 22, letterSpacing: 10, color: INK, border: `2px solid ${INK}`, borderRadius: 8, padding: "24px 48px", background: "transparent", cursor: "pointer" }}>
+        <button onClick={handleEnter} style={{ fontFamily: FONT, fontSize: 22, letterSpacing: 10, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, padding: "24px 48px", background: "transparent", cursor: "pointer" }}>
           ENTER
         </button>
       </div>
@@ -147,7 +147,7 @@ export function SplashScreen() {
               {/* Arrow shaft */}
               <motion.path
                 d="M 30 2 C 28 14, 26 28, 24 44 C 23 52, 21 60, 20 68"
-                fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round"
+                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.5, delay: 1.1, ease: "easeInOut" }}
@@ -155,7 +155,7 @@ export function SplashScreen() {
               {/* Arrow head left */}
               <motion.path
                 d="M 20 68 L 10 56"
-                fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round"
+                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.22, delay: 1.62, ease: "easeOut" }}
@@ -163,7 +163,7 @@ export function SplashScreen() {
               {/* Arrow head right */}
               <motion.path
                 d="M 20 68 L 32 58"
-                fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round"
+                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.22, delay: 1.62, ease: "easeOut" }}
@@ -195,28 +195,28 @@ export function SplashScreen() {
               <svg width="240" height="80" viewBox="0 0 240 80" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
                 {/* Top */}
                 <motion.path d="M 10 12 C 70 9, 150 7, 215 10 C 228 11, 234 10, 234 11"
-                  fill="none" stroke={inkColor} strokeWidth="2.2" strokeLinecap="round"
+                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
                   initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.38, delay: 1.82, ease: "easeOut" }}
                   style={{ transition: "stroke 0.3s ease" }}
                 />
                 {/* Right */}
                 <motion.path d="M 233 11 C 235 28, 236 52, 234 66 C 234 71, 233 70, 233 70"
-                  fill="none" stroke={inkColor} strokeWidth="2.2" strokeLinecap="round"
+                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
                   initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.22, delay: 2.2, ease: "easeOut" }}
                   style={{ transition: "stroke 0.3s ease" }}
                 />
                 {/* Bottom */}
                 <motion.path d="M 234 69 C 180 72, 100 74, 30 71 C 16 70, 8 71, 7 70"
-                  fill="none" stroke={inkColor} strokeWidth="2.2" strokeLinecap="round"
+                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
                   initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.38, delay: 2.42, ease: "easeOut" }}
                   style={{ transition: "stroke 0.3s ease" }}
                 />
                 {/* Left */}
                 <motion.path d="M 8 70 C 6 55, 7 32, 8 18 C 8 14, 10 12, 10 12"
-                  fill="none" stroke={inkColor} strokeWidth="2.2" strokeLinecap="round"
+                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
                   initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.22, delay: 2.8, ease: "easeOut" }}
                   style={{ transition: "stroke 0.3s ease" }}
@@ -257,10 +257,10 @@ export function SplashScreen() {
             style={{
               position: "absolute", bottom: 20, right: 20,
               fontFamily: FONT, fontSize: 10, letterSpacing: "0.22em",
-              color: INK, opacity: 0.35, userSelect: "none",
+              color: INK, userSelect: "none",
             }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.35 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
             POLUTEK.PL
