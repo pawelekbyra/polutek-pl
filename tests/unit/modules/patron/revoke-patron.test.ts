@@ -7,7 +7,6 @@ const mockRepo = {
   findUserWithPaymentTotals: vi.fn(),
   revokeActiveGrants: vi.fn(),
   revokeGrantByPaymentId: vi.fn(),
-  updateUserPatronFields: vi.fn(),
   listActiveGrants: vi.fn(),
   findFirstActiveGrant: vi.fn(),
 };
@@ -54,7 +53,6 @@ describe('revokePatron use case', () => {
   it('successfully revokes all patron status if no paymentId provided', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue(null);
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.listActiveGrants.mockResolvedValue([]);
 
     const result = await revokePatron({ userId: 'user-1', note: 'test revoke' }, ctx);
@@ -70,8 +68,7 @@ describe('revokePatron use case', () => {
   it('successfully revokes specific grant if paymentId provided', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue({ id: 'g2', source: 'admin', createdAt: new Date() });
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', patronSource: 'admin', paymentTotals: [] });
-    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'g2' }]);
+    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'g2', createdAt: new Date(), source: 'admin' }]);
 
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123', note: 'refund' }, ctx);
 
@@ -87,7 +84,6 @@ describe('revokePatron use case', () => {
   it('sets isPatron to false if last grant revoked', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.findFirstActiveGrant.mockResolvedValue(null);
-    mockRepo.updateUserPatronFields.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
     mockRepo.listActiveGrants.mockResolvedValue([]);
 
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123' }, ctx);

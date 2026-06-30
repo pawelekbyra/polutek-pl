@@ -1,92 +1,52 @@
 import { describe, it, expect, vi } from 'vitest';
 import { PatronRepository } from '@/lib/modules/patron/infrastructure/patron.repository';
-import { PatronGrantSource } from '@prisma/client';
 
-describe('PatronRepository.updateUserPatronFields logic', () => {
-  it('preserves existing patronSince when preserveExistingPatronSince option is true', async () => {
-    const historicalDate = new Date('2020-01-01');
-    const mockTx = {
-      user: {
-        findUnique: vi.fn().mockResolvedValue({ patronSince: historicalDate }),
-        update: vi.fn().mockResolvedValue({ id: 'u1', paymentTotals: [] }),
+describe('PatronRepository.listActiveGrants logic', () => {
+  it('returns only grants where revokedAt is null', async () => {
+    const activeGrant = { id: 'g1', userId: 'u1', source: 'ADMIN', createdAt: new Date('2024-01-01'), revokedAt: null };
+    const mockDb = {
+      patronGrant: {
+        findMany: vi.fn().mockResolvedValue([activeGrant]),
       },
     } as any;
 
     const repo = new PatronRepository();
-    await repo.updateUserPatronFields(
-      'u1',
-      { isPatron: true, patronSince: new Date(), patronSource: PatronGrantSource.ADMIN },
-      mockTx,
-      { preserveExistingPatronSince: true }
-    );
+    const grants = await repo.listActiveGrants('u1', mockDb);
 
-    expect(mockTx.user.update).toHaveBeenCalledWith({
-      where: { id: 'u1' },
-      data: {
-        isPatron: true,
-        patronSource: PatronGrantSource.ADMIN,
-      },
-      include: { paymentTotals: true },
+    expect(mockDb.patronGrant.findMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', revokedAt: null },
+      orderBy: { createdAt: 'asc' },
     });
-    // Ensure patronSince was NOT in the data object
-    const updateData = mockTx.user.update.mock.calls[0][0].data;
-    expect(updateData).not.toHaveProperty('patronSince');
+    expect(grants).toHaveLength(1);
+    expect(grants[0].id).toBe('g1');
   });
 
-  it('updates patronSince when no existing patronSince exists even if preserve is true', async () => {
-    const newDate = new Date('2026-01-01');
-    const mockTx = {
-      user: {
-        findUnique: vi.fn().mockResolvedValue({ patronSince: null }),
-        update: vi.fn().mockResolvedValue({ id: 'u1', paymentTotals: [] }),
+  it('returns empty array when no active grants exist', async () => {
+    const mockDb = {
+      patronGrant: {
+        findMany: vi.fn().mockResolvedValue([]),
       },
     } as any;
 
     const repo = new PatronRepository();
-    await repo.updateUserPatronFields(
-      'u1',
-      { isPatron: true, patronSince: newDate, patronSource: PatronGrantSource.ADMIN },
-      mockTx,
-      { preserveExistingPatronSince: true }
-    );
+    const grants = await repo.listActiveGrants('u1', mockDb);
 
-    expect(mockTx.user.update).toHaveBeenCalledWith({
-      where: { id: 'u1' },
-      data: {
-        isPatron: true,
-        patronSource: PatronGrantSource.ADMIN,
-        patronSince: newDate,
-      },
-      include: { paymentTotals: true },
-    });
+    expect(grants).toHaveLength(0);
   });
 
-  it('updates patronSince when preserveExistingPatronSince is false', async () => {
-    const newDate = new Date('2026-01-01');
-    const mockTx = {
-      user: {
-        findUnique: vi.fn(),
-        update: vi.fn().mockResolvedValue({ id: 'u1', paymentTotals: [] }),
+  it('orders grants by createdAt ascending', async () => {
+    const grant1 = { id: 'g1', userId: 'u1', source: 'ADMIN', createdAt: new Date('2024-01-01'), revokedAt: null };
+    const grant2 = { id: 'g2', userId: 'u1', source: 'STRIPE_TIP', createdAt: new Date('2025-01-01'), revokedAt: null };
+    const mockDb = {
+      patronGrant: {
+        findMany: vi.fn().mockResolvedValue([grant1, grant2]),
       },
     } as any;
 
     const repo = new PatronRepository();
-    await repo.updateUserPatronFields(
-      'u1',
-      { isPatron: true, patronSince: newDate, patronSource: PatronGrantSource.ADMIN },
-      mockTx,
-      { preserveExistingPatronSince: false }
-    );
+    const grants = await repo.listActiveGrants('u1', mockDb);
 
-    expect(mockTx.user.update).toHaveBeenCalledWith({
-      where: { id: 'u1' },
-      data: {
-        isPatron: true,
-        patronSource: PatronGrantSource.ADMIN,
-        patronSince: newDate,
-      },
-      include: { paymentTotals: true },
-    });
-    expect(mockTx.user.findUnique).not.toHaveBeenCalled();
+    expect(grants[0].id).toBe('g1');
+    expect(grants[1].id).toBe('g2');
   });
 });

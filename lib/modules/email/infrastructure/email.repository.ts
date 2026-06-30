@@ -17,9 +17,9 @@ export class EmailRepository {
     let where: any = { isDeleted: false };
 
     if (audience === "PATRONS") {
-      where.isPatron = true;
+      where.patronGrants = { some: { revokedAt: null } };
     } else if (audience === "NON_PATRONS") {
-      where.isPatron = false;
+      where.patronGrants = { none: { revokedAt: null } };
     } else if (audience === "ALL_SUBSCRIBERS") {
       where.subscriptions = { some: {} };
     }
@@ -31,7 +31,7 @@ export class EmailRepository {
         email: true,
         language: true,
         name: true,
-        isPatron: true,
+        patronGrants: { where: { revokedAt: null }, select: { id: true } },
       }
     });
 
@@ -39,7 +39,7 @@ export class EmailRepository {
       userId: u.id,
       email: u.email,
       name: u.name,
-      isPatron: u.isPatron,
+      isPatron: u.patronGrants.length > 0,
       language: u.language || 'pl',
     }));
   }

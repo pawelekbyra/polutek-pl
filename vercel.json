@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/cron/stripe-reconciliation",
-      "schedule": "0 3 * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }

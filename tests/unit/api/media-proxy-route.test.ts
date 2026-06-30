@@ -35,7 +35,6 @@ vi.mock('@/lib/prisma', () => ({
 describe('Media Proxy Route Safety', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.ALLOW_LEGACY_PRIVATE_FALLBACK;
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       tier: 'PUBLIC',
       asset: null,

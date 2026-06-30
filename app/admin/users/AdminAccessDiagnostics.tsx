@@ -22,10 +22,6 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
   const paidButLocked = hasPaymentFacts && activeGrantCount === 0;
   const subscriptionCount = user.subscriptions?.length ?? 0;
 
-  const legacyCache = user.patronDiagnostics?.legacyPatronCache;
-  const hasAccessMismatch = user.patronDiagnostics?.accessTruthMismatch;
-  const hasMetadataMismatch = user.patronDiagnostics?.legacyMetadataMismatch;
-
   return (
     <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-[10px] text-muted-foreground space-y-3" aria-label="Diagnostyka dostępu paid-but-locked">
       <div className="flex items-center justify-between gap-2">
@@ -54,35 +50,6 @@ export function AdminAccessDiagnostics({ user, formatDate }: AdminAccessDiagnost
           <dd>Suma wsparcia: ~{(user.normalizedTotal ?? 0).toFixed(2)} PLN</dd>
           <dd>Wczytane płatności: {paymentCount}</dd>
           <dd>Ostatnia płatność: {latestPayment ? `${formatMoney(latestPayment.amountMinor, latestPayment.currency)} / ${latestPayment.status}` : "—"}</dd>
-        </div>
-
-        <div>
-          <dt className="font-bold text-foreground text-amber-600">Legacy cache diagnostics (deprecated)</dt>
-          {legacyCache ? (
-              <>
-                  <dd>User.isPatron: {legacyCache.isPatron ? "TRUE" : "FALSE"}</dd>
-                  <dd>User.patronSince: {formatDate(legacyCache.patronSince)}</dd>
-                  <dd>User.patronSource: {legacyCache.patronSource || "—"}</dd>
-
-                  {hasAccessMismatch && (
-                      <dd className="text-destructive font-bold mt-1">
-                          ⚠️ BŁĄD DOSTĘPU: Cache isPatron różni się od źródła prawdy PatronGrant!
-                      </dd>
-                  )}
-
-                  {hasMetadataMismatch && !hasAccessMismatch && (
-                      <dd className="text-amber-500 font-medium mt-1">
-                          ℹ️ Mismatch metadanych: Legacy data/source różnią się od aktywnego grantu (brak wpływu na dostęp).
-                      </dd>
-                  )}
-              </>
-          ) : (
-              <dd>Brak danych legacy cache.</dd>
-          )}
-          <dd className="mt-1 italic text-[9px]">
-            Ważne: Faktyczny dostęp zawsze wynika z aktywnego uprawnienia w tabeli PatronGrant.
-            Pola User są tylko pomocniczym cache.
-          </dd>
         </div>
 
         <div>

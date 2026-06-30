@@ -22,10 +22,17 @@ export class PatronRepository {
     });
   }
 
+  async findGrantByReferralId(referralId: string, db: ReadDb): Promise<PatronGrantDto | null> {
+    return await db.patronGrant.findUnique({
+      where: { referralId },
+    });
+  }
+
   async createGrant(data: {
     userId: string;
     source: PatronGrantSource;
     paymentId?: string;
+    referralId?: string;
     grantedById?: string;
     reason?: string;
   }, tx: WriteTx): Promise<PatronGrantDto> {
@@ -34,6 +41,7 @@ export class PatronRepository {
         userId: data.userId,
         source: data.source,
         paymentId: data.paymentId,
+        referralId: data.referralId,
         grantedById: data.grantedById,
         reason: data.reason,
       },
@@ -47,50 +55,6 @@ export class PatronRepository {
         revokedAt: new Date(),
         reason: reason,
       },
-    });
-  }
-
-  async updateUserPatronFields(
-    userId: string,
-    data: {
-      isPatron: boolean;
-      patronSince: Date | null;
-      patronSource: PatronGrantSource | null;
-    },
-    tx: WriteTx,
-    options?: { preserveExistingPatronSince?: boolean }
-  ) {
-    type PatronUserUpdateData = {
-      isPatron: boolean;
-      patronSource: PatronGrantSource | null;
-      patronSince?: Date | null;
-    };
-
-    const updateData: PatronUserUpdateData = {
-      isPatron: data.isPatron,
-      patronSource: data.patronSource,
-    };
-
-    let shouldUpdatePatronSince = true;
-
-    if (options?.preserveExistingPatronSince) {
-      const existing = await tx.user.findUnique({
-        where: { id: userId },
-        select: { patronSince: true },
-      });
-      if (existing?.patronSince) {
-        shouldUpdatePatronSince = false;
-      }
-    }
-
-    if (shouldUpdatePatronSince) {
-      updateData.patronSince = data.patronSince;
-    }
-
-    return await tx.user.update({
-      where: { id: userId },
-      data: updateData,
-      include: { paymentTotals: true },
     });
   }
 

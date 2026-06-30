@@ -67,21 +67,11 @@ export async function grantPatron(
     const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
     if (!user) return failure(new UserNotFoundError(input.userId));
 
-    const now = new Date();
-    const updatedUser = await repo.updateUserPatronFields(
-      input.userId,
-      {
-        isPatron: true,
-        patronSince: now,
-        patronSource: source,
-      },
-      currentTx,
-      { preserveExistingPatronSince: true }
-    );
     await repo.createGrant({
       userId: input.userId,
       source,
       paymentId: input.paymentId,
+      referralId: input.referralId,
       grantedById: input.grantedByUserId,
       reason: input.note,
     }, currentTx);
@@ -89,12 +79,12 @@ export async function grantPatron(
     const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
     return success({
-      userId: updatedUser.id,
+      userId: user.id,
       isPatron: activeGrants.length > 0,
       patronSince: activeGrants[0]?.createdAt ?? null,
       patronSource: activeGrants[0]?.source ?? null,
       activeGrants,
-      normalizedTotal: normalizePaymentTotals(updatedUser.paymentTotals),
+      normalizedTotal: normalizePaymentTotals(user.paymentTotals),
     });
   };
 
