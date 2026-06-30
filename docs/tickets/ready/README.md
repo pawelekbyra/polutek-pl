@@ -70,17 +70,19 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `DONE` | PR #1263 — Implemented Vercel cron reconciliation job in `app/api/cron/stripe-reconciliation`. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `DONE` | PR #1263 — Migrated `email.service.ts` and `profile.service.ts`. Legacy service layer removed. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1263 migrated the highest-risk bridge files, but 2026-06-30 code recheck confirms `lib/services/**` is still an active compatibility layer used by runtime/tests. Next work must be targeted service-by-service, not a bulk delete. |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
 ## Current verified remainder — 2026-06-30
 
-Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokumentu względem kodu i ostatnich merge’y aktualny otwarty zakres wykonywalny to tylko:
+Po ponownej weryfikacji kodu 2026-06-30 stan krótkiej listy jest bardzo dobry: szybkie poprawki PR-A z audytu są zamknięte w kodzie (bounce/complaint suppression, copy typo, support email, canonical URLs, usunięte martwe komponenty i typed comment-report result).
 
-1. `INCOMPLETE-006` — Stripe reconciliation job/cron.
-2. `CLEANUP-001` — końcowa migracja legacy services: `email.service.ts` oraz `lib/services/user/profile.service.ts`, wykonywana małymi slice’ami.
+Aktualny otwarty zakres wykonywalny z tej gałęzi audytu to tylko:
 
-`INCOMPLETE-003` i `INCOMPLETE-005` nie są już remainderem: oba zostały scalone w PR #1250. Public launch pozostaje osobnym `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
+1. `CLEANUP-001` — dalsza, ostrożna migracja aktywnie używanego `lib/services/**`; katalog nie jest martwy i nie wolno usuwać go hurtowo.
+2. Dependency cleanup — `artplayer` oraz `tw-animate-css` zostały usunięte, a `@base-ui/react`, `@react-email/render` i `sharp` zostają jako uzasadnione zależności produkcyjne/toolingowe.
+
+`INCOMPLETE-003`, `INCOMPLETE-005` i `INCOMPLETE-006` nie są już remainderem. Public launch pozostaje osobnym `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
 
 ## Roadmap progress tracker
 
@@ -112,7 +114,7 @@ Nie zostało dużo z pierwotnej roadmapy refaktoryzacyjnej. Po sprawdzeniu dokum
 
 ### Cleanup from roadmap
 
-- [x] `CLEANUP-001` — legacy service layer migration/removal map execution — `DONE` in PR #1263. All legacy services removed.
+- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; code recheck confirms `lib/services/**` remains active and must be migrated in small slices.
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y

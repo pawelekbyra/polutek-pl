@@ -548,18 +548,17 @@ NEXT_PUBLIC_SUPPORT_EMAIL=     # Wyświetlany w Footer i AccessLockOverlay
 
 ### Strefa: Konfiguracja — wyniki oczekiwane
 
-**Nieużywane paczki (usunąć):**
-- `artplayer` — zera importów, projekt używa wyłącznie `@vidstack/react`
-- `tw-animate-css` — duplikuje `tailwindcss-animate`
-- `@react-email/render` — zero importów, email działa przez Resend
-- `@base-ui/react` — zero importów
-- `sharp` — zero importów (Next.js ma własną optymalizację obrazów)
-- Kilka `@radix-ui/*` paczek (checkbox, dialog, dropdown-menu, label, select, tabs) — zero bezpośrednich importów
-- `shadcn` — narzędzie CLI, powinno być w `devDependencies`, nie `dependencies`
+**Nieużywane paczki — status po rechecku 2026-06-30:**
+- `artplayer` — **DONE**, usunięte; projekt używa `@vidstack/react` / `vidstack`.
+- `tw-animate-css` — **DONE**, usunięte; zostaje `tailwindcss-animate`.
+- `@base-ui/react` — **KEEP**, używane przez `components/ui/*`.
+- `@react-email/render` — **KEEP**, wymagane jawnie dla stabilnego builda Resend/Vercel zgodnie z `HOTFIX-VERCEL-001`.
+- `sharp` — **KEEP**, produkcyjna optymalizacja obrazów Next.js.
+- Kilka `@radix-ui/*` paczek oraz `shadcn` — **DO_RECHECK_SEPARATELY**, nie usuwać bez osobnego grep/build PR.
 
 **Zduplikowane funkcjonalności:**
-- Dwa playery: `artplayer` + `vidstack` — usunąć artplayer
-- Dwie biblioteki animacji: `tailwindcss-animate` + `tw-animate-css` — usunąć tw-animate-css
+- Dwa playery: `artplayer` + `vidstack` — **DONE**, `artplayer` usunięty.
+- Dwie biblioteki animacji: `tailwindcss-animate` + `tw-animate-css` — **DONE**, `tw-animate-css` usunięte.
 
 **Brakujące wpisy w `.env.example`:**
 - `VERCEL_BLOB_ACCESS` (public/private)
