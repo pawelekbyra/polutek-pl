@@ -50,6 +50,10 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 600,
     reason: "Experimental catalog demo library; contains many small inline UI components for style preview.",
   },
+  "app/styler/StylerClient.tsx": {
+    maxLines: 550,
+    reason: "Style demonstrator with 5 inline style columns (Złoto/Ink/Neon/Akwarela/Brutalist) + shared RoughBox helpers; tracked for extraction before launch certification.",
+  },
   "app/eksperyment2/ExperimentTwoSkin.tsx": {
     maxLines: 720,
     reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
