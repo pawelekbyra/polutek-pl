@@ -58,9 +58,10 @@
     @apply bg-background text-foreground;
     overscroll-behavior-y: contain;
     background-image:
-      linear-gradient(rgba(23,23,23,.038) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23,23,23,.038) 1px, transparent 1px);
+      linear-gradient(rgba(23,23,23,.065) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23,23,23,.065) 1px, transparent 1px);
     background-size: 42px 42px;
+    background-attachment: scroll;
     /* Safe area for iPhone notch / home bar */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);

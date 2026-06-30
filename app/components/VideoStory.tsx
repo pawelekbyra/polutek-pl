@@ -25,7 +25,7 @@ const VideoStory: React.FC<VideoStoryProps> = ({ video }) => {
             {language === 'en' ? (video.descriptionEn || video.description) : video.description}
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400 italic">
+          <p className="text-gray-500 dark:text-gray-400">
             Brak opisu dla tego filmu.
           </p>
         )}

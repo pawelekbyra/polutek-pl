@@ -4,6 +4,8 @@ import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
 import { PlayerStateFrame } from "./PlayerStateFrame";
+import { Frame, INK, BLUE } from "./najs/primitives";
+import { useLanguage } from "./LanguageContext";
 
 type AccessLockState = Extract<
   PlaybackPlanStatus,
@@ -15,192 +17,112 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const shellRadius = {
-  default: "rounded-xl",
-  thumbnail: "rounded-lg",
-  thumbnailCompact: "rounded-md",
-} as const;
+function LockSvg({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={INK}
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 11 V8 c0 -3 2 -5 5 -5 s5 2 5 5 v3" />
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <circle cx="12" cy="16.5" r="1.3" fill={INK} stroke="none" />
+    </svg>
+  );
+}
 
-const scaleClasses = {
-  default: {
-    content: "p-6 sm:p-8 md:p-10",
-    centerCluster: "",
-    icon: "h-[clamp(5rem,11cqi,7rem)] w-[clamp(5rem,11cqi,7rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.75rem,2.2cqi,1.45rem)]",
-    headline: "text-[clamp(2.75rem,10.5cqi,6.5rem)]",
-    divider: "my-[clamp(0.5rem,1.1cqi,0.7rem)] w-[clamp(7rem,20cqi,14rem)]",
-    cta: "bottom-[clamp(1.5rem,4cqi,2.5rem)]",
-    ctaLine: "w-[1px] h-[clamp(12px,2.2cqi,20px)]",
-    ctaText: "text-[clamp(9px,1.4cqi,14px)] tracking-[0.42em]",
-  },
-  thumbnail: {
-    content: "p-3",
-    centerCluster: "",
-    icon: "h-[clamp(2rem,18cqi,3.25rem)] w-[clamp(2rem,18cqi,3.25rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.35rem,2.1cqi,0.65rem)]",
-    headline: "text-[clamp(1.05rem,14cqi,2.55rem)]",
-    divider: "my-[clamp(0.18rem,1.25cqi,0.32rem)] w-[clamp(3.1rem,26cqi,5.75rem)]",
-    cta: "hidden",
-    ctaLine: "",
-    ctaText: "",
-  },
-  thumbnailCompact: {
-    content: "p-2",
-    centerCluster: "",
-    icon: "h-[clamp(1.75rem,18cqi,2.55rem)] w-[clamp(1.75rem,18cqi,2.55rem)] shrink-0 aspect-square",
-    iconSpace: "mb-[clamp(0.25rem,1.9cqi,0.48rem)]",
-    headline: "text-[clamp(0.9rem,13cqi,2rem)]",
-    divider: "my-[clamp(0.14rem,1.1cqi,0.24rem)] w-[clamp(2.8rem,25cqi,4.8rem)]",
-    cta: "hidden",
-    ctaLine: "",
-    ctaText: "",
-  },
-} as const;
-
-const overlayConfig = {
-  LOGIN_REQUIRED: {
-    firstLine: "Strefa",
-    secondLine: "Zalogowanych",
-    cta: "Zaloguj się, aby obczaić",
-    accent: "text-[#60a5fa]",
-    firstLineColor: "text-white",
-    secondLineColor: "text-[#60a5fa]",
-    ctaHover: "group-hover/cta:text-[#60a5fa]",
-    aurora:
-      "bg-[linear-gradient(135deg,#1e3a8a_0%,#000_52%,#172554_100%)]",
-    auroraOpacity: "opacity-55",
-    shadow: "drop-shadow-[0_14px_30px_rgba(96,165,250,0.30)]",
-    noise: false,
-  },
-  PATRON_REQUIRED: {
-    firstLine: "Strefa",
-    secondLine: "Patronów",
-    cta: "Odblokuj dostęp",
-    accent: "text-[#f59e0b]",
-    firstLineColor: "text-[#f59e0b]",
-    secondLineColor: "text-white",
-    ctaHover: "group-hover/cta:text-[#f59e0b]",
-    aurora:
-      "bg-[radial-gradient(circle_at_35%_28%,rgba(245,158,11,0.55),transparent_30%),linear-gradient(135deg,#78350f_0%,#000_48%,#451a03_100%)]",
-    auroraOpacity: "opacity-60",
-    shadow: "drop-shadow-[0_0_28px_rgba(245,158,11,0.35)]",
-    noise: true,
-  },
-} as const;
+function StarSvg({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#b45309"
+      strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2 L14.8 9 L22 9 L16.2 13.8 L18.5 21 L12 16.8 L5.5 21 L7.8 13.8 L2 9 L9.2 9 Z"
+        fill="rgba(251,224,138,0.65)" />
+    </svg>
+  );
+}
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
-  const isPatronState = state === "PATRON_REQUIRED";
-  const config = overlayConfig[state];
-  const size = scaleClasses[variant];
+  const { language } = useLanguage();
+  const isPatron = state === "PATRON_REQUIRED";
+  const isPl = language === "pl";
   const isCompact = variant !== "default";
 
-  return (
-    <PlayerStateFrame
-      fill={variant === "thumbnailCompact"}
-      className={shellRadius[variant]}
-    >
-      <div
-        className={cn(
-          "group/paywall absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0a] text-white [container-type:inline-size]",
-          shellRadius[variant],
-        )}
-      >
-        {/* Aurora background */}
-        <div className={cn("absolute inset-0 z-0", config.auroraOpacity)}>
-          <div
-            className={cn(
-              "h-full w-full scale-[1.04] blur-[18px] transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
-              config.aurora,
-            )}
-          />
-        </div>
+  if (isCompact) {
+    const isTiny = variant === "thumbnailCompact";
+    const iconSize = isTiny ? 18 : 22;
+    const label = isPatron
+      ? (isPl ? "Patroni" : "Patrons")
+      : (isPl ? "Zaloguj się" : "Sign in");
 
-        {/* Noise grid — patron overlay, full player only */}
-        {config.noise && !isCompact && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-[1] opacity-65"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px)",
-              backgroundSize: "28px 28px",
-              maskImage: "radial-gradient(circle,black,transparent 78%)",
-              WebkitMaskImage: "radial-gradient(circle,black,transparent 78%)",
-            }}
-          />
-        )}
-
+    return (
+      <PlayerStateFrame fill className={isTiny ? "rounded-md" : "rounded-lg"}>
         <div
-          className={cn(
-            "relative z-10 h-full w-full text-center",
-            size.content,
-          )}
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[3px] [container-type:inline-size]"
+          style={{ background: "rgba(248,243,231,0.95)" }}
         >
-          {/* Headline cluster; full-player icon is anchored outside headline flow. */}
-          <div
-            className={cn(
-              isCompact
-                ? "absolute left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-3"
-                : "absolute left-0 right-0 top-1/2 flex -translate-y-1/2 flex-col items-center text-center px-3",
-              size.centerCluster,
-            )}
+          <svg className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true">
+            <path
+              d={`M 3 4 Q 3 3 4 3 L ${isTiny ? 99 : 154} 3 Q ${isTiny ? 100 : 155} 3 ${isTiny ? 100 : 155} 4 L ${isTiny ? 100 : 155} ${isTiny ? 85 : 87} Q ${isTiny ? 100 : 155} 88 ${isTiny ? 99 : 154} 88 L 4 88 Q 3 88 3 ${isTiny ? 85 : 87} Z`}
+              fill="none" stroke={INK} strokeWidth="0.9" opacity="0.4"
+            />
+          </svg>
+          <span className="relative">{isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}</span>
+          <span
+            className="relative text-[clamp(7px,3.2cqi,11px)] font-bold text-[#171717] leading-tight px-1 text-center"
+            style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
           >
-            {isPatronState ? (
-              <div
-                className={cn(
-                  "inline-flex shrink-0 items-center justify-center transition-transform duration-700 ease-out group-hover/paywall:scale-110 motion-reduce:transition-none",
-                  isCompact
-                    ? size.iconSpace
-                    : "absolute left-1/2 bottom-full mb-[clamp(0.75rem,2.2cqi,1.45rem)] -translate-x-1/2",
-                )}
-                aria-label="Strefa Patronów"
-              >
-                <GiftBoxIcon
-                  className={cn(size.icon, config.accent, config.shadow)}
-                />
-              </div>
-            ) : (
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className={cn(
-                    "inline-flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition duration-200 hover:scale-105 hover:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#60a5fa] motion-reduce:transition-none",
-                    isCompact
-                      ? size.iconSpace
-                      : "absolute left-1/2 bottom-full mb-[clamp(0.75rem,2.2cqi,1.45rem)] -translate-x-1/2",
-                  )}
-                  aria-label="Zaloguj się"
-                >
-                  <LoginArrowIcon
-                    className={cn(size.icon, config.accent, config.shadow)}
-                  />
-                </button>
-              </SignInButton>
-            )}
+            {label}
+          </span>
+        </div>
+      </PlayerStateFrame>
+    );
+  }
 
-            <div
-              className={cn(
-                "font-brand font-black uppercase leading-[0.86] tracking-[-0.01em] whitespace-nowrap",
-                config.firstLineColor,
-                size.headline,
-              )}
-            >
-              {config.firstLine}
-            </div>
-            <div className={cn("h-px bg-white/12", size.divider)} />
-            <div
-              className={cn(
-                "font-brand font-black uppercase leading-[0.86] tracking-[-0.01em] whitespace-nowrap",
-                config.secondLineColor,
-                size.headline,
-              )}
-            >
-              {config.secondLine}
-            </div>
+  // Default — full player overlay
+  return (
+    <PlayerStateFrame className="rounded-xl">
+      <div
+        className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden rounded-xl [container-type:inline-size]"
+        style={{ background: "rgba(248,243,231,0.97)" }}
+      >
+        {/* Subtle grid */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(23,23,23,.052) 1px, transparent 1px), linear-gradient(90deg, rgba(23,23,23,.052) 1px, transparent 1px)",
+            backgroundSize: "42px 42px",
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col items-center text-center gap-[clamp(12px,2.5cqi,22px)] px-4 w-full max-w-[380px]">
+          {/* Icon in a najs frame */}
+          <div className="relative flex items-center justify-center w-[clamp(56px,11cqi,80px)] h-[clamp(56px,11cqi,80px)]">
+            <Frame radius={18} seed={9} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,0.5)" />
+            <span className="relative">
+              {isPatron ? <StarSvg size={32} /> : <LockSvg size={32} />}
+            </span>
           </div>
 
-          {/* CTA — hidden in all thumbnail variants via size.cta = "hidden" */}
-          {isPatronState ? (
+          {/* Heading */}
+          <div className="flex flex-col gap-[clamp(4px,1cqi,8px)]">
+            <h2
+              className="text-[clamp(20px,5cqi,38px)] font-bold text-[#171717] leading-tight"
+              style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+            >
+              {isPatron
+                ? (isPl ? "Strefa Patronów" : "Patron Zone")
+                : (isPl ? "Zaloguj się" : "Sign In")}
+            </h2>
+            <p
+              className="text-[clamp(11px,2.2cqi,16px)] text-[#555] leading-snug"
+              style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+            >
+              {isPatron
+                ? (isPl ? "Jednorazowe wsparcie odblokowuje dostęp na zawsze" : "One-time support unlocks access forever")
+                : (isPl ? "aby obejrzeć ten materiał" : "to watch this video")}
+            </p>
+          </div>
+
+          {/* CTA */}
+          {isPatron ? (
             <a
               href="#donations"
               onClick={(e) => {
@@ -209,50 +131,24 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   .getElementById("donations")
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className={cn(
-                "group/cta absolute left-1/2 flex -translate-x-1/2 flex-col items-center gap-[10px] text-white/40 no-underline transition-colors duration-300 motion-reduce:transition-none",
-                config.ctaHover,
-                size.cta,
-              )}
+              className="relative flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all"
+              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
             >
-              <span
-                className={cn(
-                  "bg-gradient-to-b from-transparent to-white/20",
-                  size.ctaLine,
-                )}
-              />
-              <span
-                className={cn(
-                  "font-brand font-black uppercase leading-none",
-                  size.ctaText,
-                )}
-              >
-                {config.cta}
+              <Frame radius={24} seed={5} stroke={INK} strokeWidth={1.4} fill="#171717" showShadow />
+              <span className="relative z-10 whitespace-nowrap">
+                {isPl ? "Wesprzyj kanał" : "Support Channel"}
               </span>
             </a>
           ) : (
             <SignInButton mode="modal">
               <button
                 type="button"
-                className={cn(
-                  "group/cta absolute left-1/2 flex -translate-x-1/2 cursor-pointer flex-col items-center gap-[10px] border-0 bg-transparent p-0 text-white/40 transition-colors duration-300 motion-reduce:transition-none",
-                  config.ctaHover,
-                  size.cta,
-                )}
+                className="relative flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all"
+                style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
               >
-                <span
-                  className={cn(
-                    "bg-gradient-to-b from-transparent to-white/20",
-                    size.ctaLine,
-                  )}
-                />
-                <span
-                  className={cn(
-                    "font-brand font-black uppercase leading-none",
-                    size.ctaText,
-                  )}
-                >
-                  {config.cta}
+                <Frame radius={24} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
+                <span className="relative z-10 whitespace-nowrap">
+                  {isPl ? "Zaloguj się" : "Sign In"}
                 </span>
               </button>
             </SignInButton>
@@ -264,45 +160,3 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 }
 
 export default AccessLockOverlay;
-
-function LoginArrowIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M6 3h12l4 6-10 13L2 9Z" />
-      <path d="M11 3 8 9l4 13 4-13-3-6" />
-      <path d="M2 9h20" />
-    </svg>
-  );
-}
-
-function GiftBoxIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect x="3" y="8" width="18" height="4" rx="1" />
-      <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
-      <path d="M12 8v13" />
-      <path d="M12 8C12 8 11 3 8 3a2.5 2.5 0 0 0 0 5h4Z" />
-      <path d="M12 8C12 8 13 3 16 3a2.5 2.5 0 0 1 0 5h-4Z" />
-    </svg>
-  );
-}
