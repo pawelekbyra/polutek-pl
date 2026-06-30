@@ -52,12 +52,14 @@ export function Frame({
   stroke = INK,
   strokeWidth = 1.2,
   fill = "transparent",
+  showShadow = false,
 }: {
   radius?: number;
   seed?: number;
   stroke?: string;
   strokeWidth?: number;
   fill?: string;
+  showShadow?: boolean;
 }) {
   const { ref, size } = useParentSize<SVGSVGElement>();
   const d = size.w && size.h ? roundedPath(size.w, size.h, radius, seed) : "";
@@ -66,8 +68,11 @@ export function Frame({
     <svg ref={ref} className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true">
       {d && (
         <>
+          {showShadow && (
+            <path d={d} transform="translate(2,2)" fill="none" stroke="#171717" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" opacity="0.16" />
+          )}
           <path d={d} fill={fill} />
-          <path d={d} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={d} fill="none" stroke={stroke} strokeWidth={strokeWidth + 0.3} strokeLinecap="round" strokeLinejoin="round" />
           <path d={d2} fill="none" stroke={stroke} strokeWidth=".65" opacity=".28" />
         </>
       )}

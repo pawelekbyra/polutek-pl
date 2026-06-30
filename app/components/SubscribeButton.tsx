@@ -7,7 +7,8 @@ import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
-import { Frame, INK } from "./najs/primitives";
+import { Frame, INK, BLUE } from "./najs/primitives";
+import { useIsV2 } from "@/app/eksperyment1/V2Context";
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -17,6 +18,7 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: "default" | "compact";
+  colorScheme?: "default" | "v2";
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
@@ -69,10 +71,12 @@ export default function SubscribeButton({
   initialIsSubscribed,
   className,
   variant = "default",
+  colorScheme = "default",
   onStatusChange,
 }: SubscribeButtonProps) {
   const { t, language } = useLanguage();
   const { userId } = useAuth();
+  const isV2 = useIsV2();
   const { openSignIn } = useClerk();
   const [isSubscribed, setIsSubscribed] = useState(
     initialIsSubscribed ?? false,
@@ -192,7 +196,8 @@ export default function SubscribeButton({
           seed={37}
           stroke={INK}
           strokeWidth={1.2}
-          fill={isSubscribed ? "rgba(248,243,231,.88)" : "#171717"}
+          fill={isSubscribed ? "rgba(248,243,231,.88)" : (colorScheme === "v2" || isV2) ? BLUE : "#171717"}
+          showShadow={colorScheme === "v2" || isV2}
         />
         <SubscribeBellIcon size={16} className="mr-2 relative" filled={isSubscribed} />
         <span className="relative">{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
