@@ -40,6 +40,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
   const [html, setHtml] = useState("");
   const [subjectEn, setSubjectEn] = useState("");
   const [htmlEn, setHtmlEn] = useState("");
+  const [activeTab, setActiveTab] = useState<"pl" | "en">("pl");
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -133,7 +134,11 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
   }
 
   const insertVariable = (variable: string) => {
-    setHtml(prev => prev + " " + variable);
+    if (activeTab === "en") {
+      setHtmlEn(prev => prev + " " + variable);
+    } else {
+      setHtml(prev => prev + " " + variable);
+    }
   };
 
   if (status === "loading") return <div className="animate-pulse h-96 bg-neutral-100 rounded-xl" />;
@@ -190,7 +195,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                     </CardContent>
                 </Card>
 
-                <Tabs defaultValue="pl">
+                <Tabs defaultValue="pl" onValueChange={(v) => setActiveTab(v as "pl" | "en")}>
                     <TabsList className="grid w-full grid-cols-2 mb-6">
                         <TabsTrigger value="pl">Polski</TabsTrigger>
                         <TabsTrigger value="en">Angielski</TabsTrigger>

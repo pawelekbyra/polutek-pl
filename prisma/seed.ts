@@ -1,4 +1,5 @@
 import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/client';
+import { ensureRequiredEmailTemplates } from '../scripts/ensure-required-emails';
 
 const prisma = new PrismaClient();
 
@@ -124,6 +125,7 @@ async function main() {
     });
   }
 
+  await ensureRequiredEmailTemplates(prisma.emailTemplate);
   console.log('Seeding finished successfully.');
 }
 
