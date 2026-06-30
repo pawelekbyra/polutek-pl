@@ -194,6 +194,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
+                    gold
                     initialIsSubscribed={localSubState.isSubscribed}
                     onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
                         setLocalSubState(prev => ({

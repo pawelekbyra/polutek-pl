@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans, Outfit, Space_Grotesk, Bebas_Neue, Kalam, Patrick_Hand } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Space_Grotesk, Bebas_Neue, Kalam, Patrick_Hand, Caveat } from "next/font/google";
 
 export const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
@@ -36,5 +36,12 @@ export const patrickHand = Patrick_Hand({
   subsets: ["latin", "latin-ext"],
   weight: "400",
   variable: "--font-patrick",
+  display: "swap",
+});
+
+export const caveat = Caveat({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-caveat",
   display: "swap",
 });
