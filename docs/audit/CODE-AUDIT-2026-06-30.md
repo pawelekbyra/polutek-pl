@@ -252,3 +252,14 @@ Bulk actions w komentarzach, spójne loading states, nawigacja do osieroconych s
 ---
 
 *Audyt: 2026-06-30. Weryfikacja przez bezpośrednie czytanie plików źródłowych na branchu main po zmerżowaniu PR #1272.*
+
+
+---
+
+## 8. Post-audit update — 2026-06-30 dependency/control-plane cleanup
+
+Ten historyczny audyt pozostaje zapisem stanu z chwili wykonania. Późniejszy recheck kodu potwierdził, że szybkie punkty PR-A zostały domknięte w runtime: bounce/complaint suppression, copy typo, support email, canonical URLs, usunięcie `VideoStory`/`VideoTabs` oraz typed result w route komentarzy.
+
+Dodatkowo usunięto dwie faktycznie nieużywane zależności: `artplayer` i `tw-animate-css`. `@base-ui/react`, `@react-email/render` oraz `sharp` zostają, bo aktualny kod/build ma dla nich uzasadnienie.
+
+Pozostały dług: `lib/services/**` nadal jest aktywnie używany przez runtime/testy i wymaga dalszej migracji małymi, bezpiecznymi slice’ami. To nie jest blocker dla zamkniętych szybkich poprawek, ale nie wolno dokumentować go jako fizycznie usuniętego.
