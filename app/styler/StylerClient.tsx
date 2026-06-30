@@ -1,550 +1,461 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import rough from "roughjs";
 import { annotate } from "rough-notation";
 import Link from "next/link";
 
-/* ─── shared mock data ─── */
-const VIDEO = {
-  title: "Dlaczego nikt nie mówi prawdy w internecie",
-  duration: "18:42",
-  views: "4 821",
-};
+/* ── shared mock content ── */
+const VIDEO_TITLE = "Dlaczego nikt nie mówi prawdy w internecie";
+const VIDEO_META = "4 821 wyśw. · 18 min 42 s";
 const PLAYLIST = [
-  { title: "Algorytm cię kontroluje", duration: "24:11", patron: true },
-  { title: "Ekranowy tłum", duration: "31:05", patron: true },
-  { title: "Wolne słowo", duration: "14:28", patron: false },
+  { t: "Algorytm cię kontroluje", d: "24:11", p: true },
+  { t: "Ekranowy tłum", d: "31:05", p: true },
+  { t: "Wolne słowo", d: "14:28", p: false },
 ];
 
-/* ─── roughjs box (reusable) ─── */
-function RoughRect({
-  roughness = 2,
-  seed = 1,
-  stroke,
-  fill,
-  strokeWidth = 1.4,
-  className = "",
-  children,
-  style,
+/* ── accent presets ── */
+const ACCENTS = [
+  { name: "Niebieski", v: "#2563eb" },
+  { name: "Złoty", v: "#d4a020" },
+  { name: "Zieleń", v: "#16a34a" },
+  { name: "Fiolet", v: "#7c3aed" },
+  { name: "Karmin", v: "#dc2626" },
+  { name: "Różowy", v: "#db2777" },
+];
+
+/* ── RoughBox ── */
+function RB({
+  r = 2, s = 1, stroke, fill, sw = 1.4, className = "", children, style,
 }: {
-  roughness?: number;
-  seed?: number;
-  stroke: string;
-  fill: string;
-  strokeWidth?: number;
-  className?: string;
-  children: React.ReactNode;
-  style?: React.CSSProperties;
+  r?: number; s?: number; stroke: string; fill: string; sw?: number;
+  className?: string; children: React.ReactNode; style?: React.CSSProperties;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const wRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const wrap = wrapRef.current;
-    const svg = svgRef.current;
-    if (!wrap || !svg) return;
+    const w = wRef.current; const svg = svgRef.current;
+    if (!w || !svg) return;
     const draw = () => {
-      const { width, height } = wrap.getBoundingClientRect();
-      if (!width || !height) return;
-      svg.setAttribute("width", String(width));
-      svg.setAttribute("height", String(height));
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      const { width: W, height: H } = w.getBoundingClientRect();
+      if (!W || !H) return;
+      svg.setAttribute("width", String(W)); svg.setAttribute("height", String(H));
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
       while (svg.firstChild) svg.removeChild(svg.firstChild);
       const rc = rough.svg(svg);
-      svg.appendChild(
-        rc.rectangle(4, 4, width - 8, height - 8, {
-          roughness,
-          seed,
-          fill,
-          fillStyle: "solid",
-          stroke,
-          strokeWidth,
-        })
-      );
+      svg.appendChild(rc.rectangle(4, 4, W - 8, H - 8, { roughness: r, seed: s, fill, fillStyle: "solid", stroke, strokeWidth: sw }));
     };
     draw();
     const ro = new ResizeObserver(draw);
-    ro.observe(wrap);
+    ro.observe(w);
     return () => ro.disconnect();
-  }, [roughness, seed, stroke, fill, strokeWidth]);
+  }, [r, s, stroke, fill, sw]);
 
   return (
-    <div ref={wrapRef} className={`relative ${className}`} style={style}>
+    <div ref={wRef} className={`relative ${className}`} style={style}>
       <svg ref={svgRef} className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
       <div className="relative z-10">{children}</div>
     </div>
   );
 }
 
-/* ─── rough-notation underline ─── */
-function RoughUnder({ children, color, delay = 400 }: { children: React.ReactNode; color: string; delay?: number }) {
+/* ── Rough annotation helpers ── */
+function RU({ children, color, delay = 300 }: { children: React.ReactNode; color: string; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (!ref.current) return;
-    const ann = annotate(ref.current, { type: "underline", color, strokeWidth: 2.5, animate: true, animationDuration: 600 });
-    const t = setTimeout(() => ann.show(), delay);
-    return () => { clearTimeout(t); ann.remove(); };
+    const a = annotate(ref.current, { type: "underline", color, strokeWidth: 2.5, animate: true, animationDuration: 700 });
+    const t = setTimeout(() => a.show(), delay);
+    return () => { clearTimeout(t); a.remove(); };
   }, [color, delay]);
   return <span ref={ref}>{children}</span>;
 }
 
-function RoughHighlight({ children, color, delay = 600 }: { children: React.ReactNode; color: string; delay?: number }) {
+function RH({ children, color, delay = 500 }: { children: React.ReactNode; color: string; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (!ref.current) return;
-    const ann = annotate(ref.current, { type: "highlight", color, animate: true, animationDuration: 800 });
-    const t = setTimeout(() => ann.show(), delay);
-    return () => { clearTimeout(t); ann.remove(); };
+    const a = annotate(ref.current, { type: "highlight", color, animate: true, animationDuration: 900 });
+    const t = setTimeout(() => a.show(), delay);
+    return () => { clearTimeout(t); a.remove(); };
   }, [color, delay]);
   return <span ref={ref}>{children}</span>;
 }
 
-/* ════════════════════════════════════════════════
-   STYLE 1 — INK
-   Kalam, roughjs, papier, czarny atrament
-════════════════════════════════════════════════ */
-function ColInk({ accent, mounted }: { accent: string; mounted: boolean }) {
-  const bg = "#f8f3e7";
-  const ink = "#171717";
+/* ══════════════════════════════════════════════════════
+   STYLE A — ZŁOTO
+   Cel: maksymalny wow, złoto jako materiał, papier + atrament
+══════════════════════════════════════════════════════ */
+const GOLD_CSS = `
+@keyframes goldShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.gold-shimmer {
+  background: linear-gradient(105deg,
+    #3d2000 0%, #9a6800 12%, #d4a020 25%,
+    #f7e060 40%, #fff5b0 50%,
+    #f7e060 60%, #d4a020 75%, #9a6800 88%, #3d2000 100%
+  );
+  background-size: 260% 100%;
+  animation: goldShimmer 4s linear infinite;
+  box-shadow: 0 2px 24px rgba(212,160,32,.5), inset 0 1px 0 rgba(255,240,140,.4), inset 0 -1px 0 rgba(60,30,0,.35);
+}
+@keyframes neonPulse {
+  0%,100% { box-shadow: 0 0 8px var(--nc), 0 0 24px var(--nc), inset 0 0 6px rgba(0,220,255,.08); }
+  50%      { box-shadow: 0 0 16px var(--nc), 0 0 40px var(--nc), inset 0 0 10px rgba(0,220,255,.14); }
+}
+.neon-btn {
+  animation: neonPulse 2.5s ease-in-out infinite;
+}
+@keyframes waterIn {
+  from { opacity:0; transform: scaleX(0.85); }
+  to   { opacity:1; transform: scaleX(1); }
+}
+`;
+
+function StyleZloto({ accent, mounted }: { accent: string; mounted: boolean }) {
+  const BG = "#f8f3e7", INK = "#171717";
+  const GOLD = "#d4a020", GOLDDARK = "#b8860b";
   return (
-    <div style={{ background: bg, fontFamily: "var(--font-najs, Kalam, cursive)", color: ink }}>
-      {/* header */}
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px dashed ${ink}44` }}>
-        <span className="font-brand tracking-[0.06em] uppercase text-sm">Polutek</span>
-        <span className="text-[10px] opacity-40 uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Ink</span>
+    <div style={{ background: BG, fontFamily: "var(--font-najs, Kalam, cursive)", color: INK, height: "100%" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: `1px dashed ${INK}33` }}>
+        <span className="font-brand text-sm tracking-[0.06em] uppercase">Polutek</span>
+        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: GOLD, fontFamily: "var(--font-outfit, sans-serif)" }}>ZŁOTO</span>
       </div>
 
-      {/* player */}
-      <RoughRect roughness={2.4} seed={3} stroke={ink} fill={bg} strokeWidth={1.6} className="m-2">
-        <div className="aspect-video flex items-center justify-center text-xs" style={{ background: "#0d0d0b", color: accent, fontFamily: "var(--font-brand, Bebas Neue)" }}>
-          POLUTEK.PL
+      <RB r={2.3} s={3} stroke={INK} fill={BG} sw={1.6} className="m-3">
+        <div className="aspect-video flex items-center justify-center relative overflow-hidden" style={{ background: "#0d0d0b" }}>
+          <span style={{ color: GOLD, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1.1rem", letterSpacing: "0.1em", textShadow: `0 0 30px ${GOLD}88` }}>POLUTEK.PL</span>
         </div>
-      </RoughRect>
+      </RB>
 
-      {/* title */}
-      <div className="px-3 pt-1 pb-2">
+      <div className="px-4 pb-3">
         <p className="text-[13px] font-bold leading-snug mb-1">
-          {mounted ? <RoughUnder color={accent}>{VIDEO.title}</RoughUnder> : VIDEO.title}
+          {mounted ? <RU color={GOLD}>{VIDEO_TITLE}</RU> : VIDEO_TITLE}
         </p>
-        <p className="text-[10px] opacity-50">{VIDEO.views} wyśw. · {VIDEO.duration}</p>
-      </div>
+        <p className="text-[10px] opacity-50 mb-3">{VIDEO_META}</p>
 
-      {/* buttons */}
-      <div className="px-3 flex gap-2 pb-2">
-        <RoughRect roughness={2.8} seed={7} stroke={accent} fill={accent} strokeWidth={1.5} className="inline-block">
-          <button className="h-8 px-4 text-[11px] font-bold text-white">Zaloguj się</button>
-        </RoughRect>
-        <RoughRect roughness={2.5} seed={12} stroke={ink} fill="transparent" strokeWidth={1.2} className="inline-block">
-          <button className="h-8 px-4 text-[11px] font-bold" style={{ color: ink }}>Udostępnij</button>
-        </RoughRect>
-      </div>
-
-      {/* badges */}
-      <div className="px-3 flex gap-1.5 pb-2">
-        <RoughRect roughness={3} seed={20} stroke={ink} fill="transparent" strokeWidth={1} className="inline-block">
-          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
-        </RoughRect>
-        <RoughRect roughness={3} seed={21} stroke={accent} fill={`${accent}18`} strokeWidth={1.2} className="inline-block">
-          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest" style={{ color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>PATRON</span>
-        </RoughRect>
-      </div>
-
-      {/* separator */}
-      <div className="mx-3 my-1" style={{ borderTop: `1px dashed ${ink}33` }} />
-
-      {/* playlist */}
-      <div className="px-3 pb-2">
-        <p className="text-[10px] font-bold mb-1.5 uppercase opacity-40" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Playlist</p>
-        {PLAYLIST.map((v, i) => (
-          <RoughRect key={i} roughness={2.2} seed={30 + i} stroke={ink + "33"} fill="transparent" strokeWidth={0.9} className="mb-1.5">
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <div className="w-10 h-6 flex items-center justify-center text-[9px] shrink-0" style={{ background: "#0d0d0b", color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-outfit, sans-serif)" }}>{v.duration}</div>
-              <span className="text-[10px] flex-1 leading-tight line-clamp-1">{v.title}</span>
-              {v.patron && <span className="text-[8px] font-bold shrink-0" style={{ color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>P</span>}
-            </div>
-          </RoughRect>
-        ))}
-      </div>
-
-      {/* donate */}
-      <RoughRect roughness={2} seed={50} stroke={accent} fill={`${accent}08`} strokeWidth={1.4} className="mx-3 mb-3 p-2.5">
-        <p className="text-[11px] font-bold mb-1">Wesprzyj kanał</p>
-        <div className="flex gap-1.5">
-          {["20 zł", "50 zł", "100 zł"].map((a) => (
-            <RoughRect key={a} roughness={3} seed={Math.random() * 99 | 0} stroke={accent} fill="transparent" strokeWidth={1} className="inline-block">
-              <button className="h-6 px-2 text-[9px] font-bold" style={{ color: accent }}>{a}</button>
-            </RoughRect>
-          ))}
-        </div>
-      </RoughRect>
-
-      {/* description */}
-      <div className="mx-3 mb-3">
-        {mounted
-          ? <p className="text-[10px] leading-relaxed opacity-60">Materiały <RoughHighlight color="#fde68a">publiczne, patronackie i dla zalogowanych</RoughHighlight>. Bez reklam.</p>
-          : <p className="text-[10px] leading-relaxed opacity-60">Materiały publiczne, patronackie i dla zalogowanych. Bez reklam.</p>
-        }
-      </div>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════
-   STYLE 2 — CIENKOPIS
-   Outfit, 0.6px lines, pill buttons, clean
-════════════════════════════════════════════════ */
-function ColCienkopis({ accent }: { accent: string }) {
-  const bg = "#fafaf8";
-  const ink = "#1a1a18";
-  const subtle = `${ink}12`;
-  return (
-    <div style={{ background: bg, fontFamily: "var(--font-outfit, Outfit, sans-serif)", color: ink }}>
-      {/* header */}
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `0.6px solid ${ink}20` }}>
-        <span className="font-bold tracking-[0.08em] uppercase text-[13px]" style={{ fontFamily: "var(--font-brand, Bebas Neue)" }}>Polutek</span>
-        <span className="text-[10px] opacity-30 uppercase tracking-widest">Cienkopis</span>
-      </div>
-
-      {/* player */}
-      <div className="m-2 aspect-video flex items-center justify-center" style={{ background: "#0d0d0b", border: `0.6px solid ${ink}18`, color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem", letterSpacing: "0.08em" }}>
-        POLUTEK.PL
-      </div>
-
-      {/* title */}
-      <div className="px-3 pt-1 pb-2">
-        <p className="text-[12px] font-semibold leading-snug mb-1" style={{ borderBottom: `0.6px solid ${accent}`, paddingBottom: "2px", display: "inline" }}>
-          {VIDEO.title}
-        </p>
-        <p className="text-[10px] opacity-40 mt-1.5">{VIDEO.views} wyśw. · {VIDEO.duration}</p>
-      </div>
-
-      {/* buttons */}
-      <div className="px-3 flex gap-2 pb-2">
-        <button
-          className="h-8 px-4 text-[11px] font-bold text-white transition-all"
-          style={{ background: accent, borderRadius: "999px" }}
-        >
-          Zaloguj się
-        </button>
-        <button
-          className="h-8 px-4 text-[11px] font-medium transition-all"
-          style={{ border: `0.8px solid ${ink}30`, borderRadius: "999px", background: "transparent" }}
-        >
-          Udostępnij
-        </button>
-      </div>
-
-      {/* badges */}
-      <div className="px-3 flex gap-1.5 pb-2">
-        <span className="px-2.5 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ border: `0.6px solid ${ink}30`, borderRadius: "999px", color: ink + "80" }}>PUBLICZNE</span>
-        <span className="px-2.5 py-0.5 text-[9px] uppercase tracking-widest font-bold text-white" style={{ background: accent, borderRadius: "999px" }}>PATRON</span>
-      </div>
-
-      {/* separator */}
-      <div className="mx-3 my-1.5 flex items-center gap-2">
-        <div className="flex-1" style={{ height: "0.6px", background: `${ink}14` }} />
-        <span className="text-[9px] opacity-30 tracking-widest uppercase">Playlist</span>
-        <div className="flex-1" style={{ height: "0.6px", background: `${ink}14` }} />
-      </div>
-
-      {/* playlist */}
-      <div className="px-3 pb-2 space-y-1">
-        {PLAYLIST.map((v, i) => (
-          <div key={i} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `0.6px solid ${ink}0e` }}>
-            <div className="w-10 h-6 flex items-center justify-center text-[9px] shrink-0 font-mono" style={{ background: "#0d0d0b", color: "rgba(255,255,255,0.4)" }}>{v.duration}</div>
-            <span className="text-[10px] flex-1 leading-tight line-clamp-1">{v.title}</span>
-            {v.patron && <span className="text-[8px] font-bold shrink-0 px-1.5 py-0.5 text-white" style={{ background: accent, borderRadius: "999px" }}>P</span>}
+        {/* Gold subscribe button */}
+        <div className="flex gap-2 mb-3">
+          <div className="relative inline-block">
+            <RB r={2.6} s={7} stroke={GOLDDARK} fill="transparent" sw={1.7} className="inline-block">
+              <button className="gold-shimmer relative z-10 h-9 px-5 text-[12px] font-bold" style={{ color: "#2d1400", fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                ♪ Subskrajb
+              </button>
+            </RB>
           </div>
-        ))}
-      </div>
-
-      {/* donate */}
-      <div className="mx-3 mb-3 p-2.5" style={{ border: `0.6px solid ${accent}50`, borderRadius: "8px" }}>
-        <p className="text-[11px] font-semibold mb-1.5">Wesprzyj kanał</p>
-        <div className="flex gap-1.5">
-          {["20 zł", "50 zł", "100 zł"].map((a) => (
-            <button key={a} className="h-6 px-2.5 text-[9px] font-bold flex-1 transition-all" style={{ border: `0.8px solid ${accent}`, borderRadius: "999px", color: accent }}>
-              {a}
-            </button>
-          ))}
+          <RB r={2.3} s={12} stroke={`${INK}55`} fill="transparent" sw={1.1} className="inline-block">
+            <button className="relative z-10 h-9 px-4 text-[11px] font-bold" style={{ color: INK }}>Udostępnij</button>
+          </RB>
         </div>
-      </div>
 
-      {/* description */}
-      <p className="mx-3 mb-3 text-[10px] leading-relaxed opacity-40">
-        Materiały publiczne, patronackie i dla zalogowanych. Bez reklam.
-      </p>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════════════════
-   STYLE 3 — SPLASH
-   Caveat, roughjs grubszy, żółty+niebieski, biały bg
-════════════════════════════════════════════════ */
-function ColSplash({ accent, mounted }: { accent: string; mounted: boolean }) {
-  const bg = "#ffffff";
-  const ink = "#1a1a18";
-  const yellow = "#fde047";
-  return (
-    <div style={{ background: bg, fontFamily: "var(--font-caveat, Caveat, cursive)", color: ink }}>
-      {/* header */}
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `2px solid ${ink}` }}>
-        <span className="font-bold text-[15px] tracking-wide">Polutek</span>
-        <span className="text-[9px] opacity-30 uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Splash</span>
-      </div>
-
-      {/* player */}
-      <RoughRect roughness={2.8} seed={5} stroke={ink} fill="#0d0d0b" strokeWidth={2.2} className="m-2">
-        <div className="aspect-video flex items-center justify-center" style={{ color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1.1rem", letterSpacing: "0.1em" }}>
-          POLUTEK.PL
+        {/* Gold badges */}
+        <div className="flex gap-2 mb-3">
+          <RB r={3} s={20} stroke={`${INK}40`} fill="transparent" sw={0.9} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
+          </RB>
+          <RB r={3} s={21} stroke={GOLDDARK} fill={`${GOLD}18`} sw={1.3} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ color: GOLDDARK, fontFamily: "var(--font-outfit, sans-serif)" }}>♔ PATRON</span>
+          </RB>
         </div>
-      </RoughRect>
 
-      {/* title */}
-      <div className="px-3 pt-1 pb-2">
-        <p className="text-[15px] font-bold leading-snug mb-1">
-          {mounted ? <RoughHighlight color={yellow}>{VIDEO.title}</RoughHighlight> : VIDEO.title}
-        </p>
-        <p className="text-[10px] opacity-50" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>{VIDEO.views} wyśw. · {VIDEO.duration}</p>
-      </div>
+        <div style={{ borderTop: `1px dashed ${INK}25`, margin: "8px 0" }} />
 
-      {/* buttons */}
-      <div className="px-3 flex gap-2 pb-2">
-        <RoughRect roughness={2.6} seed={8} stroke={accent} fill={accent} strokeWidth={2} className="inline-block">
-          <button className="h-8 px-4 text-[12px] font-bold text-white">Zaloguj się</button>
-        </RoughRect>
-        <RoughRect roughness={2.4} seed={14} stroke={ink} fill="transparent" strokeWidth={1.8} className="inline-block">
-          <button className="h-8 px-4 text-[12px] font-bold" style={{ color: ink }}>Udostępnij</button>
-        </RoughRect>
-      </div>
-
-      {/* badges */}
-      <div className="px-3 flex gap-1.5 pb-2">
-        <RoughRect roughness={3.5} seed={22} stroke={ink} fill={yellow} strokeWidth={1.5} className="inline-block">
-          <span className="px-2 py-0.5 text-[10px] font-bold" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
-        </RoughRect>
-        <RoughRect roughness={3} seed={23} stroke={accent} fill={accent} strokeWidth={1.5} className="inline-block">
-          <span className="px-2 py-0.5 text-[10px] font-bold text-white" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>PATRON</span>
-        </RoughRect>
-      </div>
-
-      {/* separator */}
-      <div className="mx-3 my-1" style={{ borderTop: `2px solid ${ink}` }} />
-
-      {/* playlist */}
-      <div className="px-3 pb-2">
-        <p className="text-[11px] font-bold mb-1.5 uppercase" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Playlist</p>
+        {/* Playlist */}
+        <p className="text-[9px] font-bold uppercase tracking-widest opacity-40 mb-2" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Playlist</p>
         {PLAYLIST.map((v, i) => (
-          <RoughRect key={i} roughness={2.5} seed={32 + i} stroke={i === 0 ? accent : `${ink}33`} fill={i === 0 ? `${accent}10` : "transparent"} strokeWidth={i === 0 ? 1.6 : 0.9} className="mb-1.5">
+          <RB key={i} r={2.2} s={30 + i} stroke={i === 0 ? GOLDDARK : `${INK}22`} fill={i === 0 ? `${GOLD}10` : "transparent"} sw={i === 0 ? 1.4 : 0.8} className="mb-1.5">
             <div className="flex items-center gap-2 px-2 py-1.5">
-              <div className="w-10 h-6 flex items-center justify-center text-[9px] shrink-0" style={{ background: "#0d0d0b", color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-outfit, sans-serif)" }}>{v.duration}</div>
-              <span className="text-[11px] flex-1 leading-tight line-clamp-1">{v.title}</span>
-              {v.patron && <span className="text-[8px] font-bold shrink-0 px-1 py-0.5 text-white" style={{ background: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>P</span>}
+              <div className="w-11 h-7 flex items-center justify-center text-[9px] shrink-0" style={{ background: "#0d0d0b", color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-outfit, sans-serif)" }}>{v.d}</div>
+              <span className="text-[10px] flex-1 line-clamp-1 leading-tight">{v.t}</span>
+              {v.p && <span className="text-[8px] font-bold shrink-0" style={{ color: GOLDDARK }}>♔</span>}
             </div>
-          </RoughRect>
+          </RB>
         ))}
-      </div>
 
-      {/* donate */}
-      <RoughRect roughness={2.2} seed={55} stroke={accent} fill={`${yellow}40`} strokeWidth={2} className="mx-3 mb-3 p-2.5">
-        <p className="text-[13px] font-bold mb-1">Wesprzyj kanał</p>
-        <div className="flex gap-1.5">
-          {["20 zł", "50 zł", "100 zł"].map((a) => (
-            <RoughRect key={a} roughness={3.2} seed={Math.random() * 99 | 0} stroke={ink} fill="transparent" strokeWidth={1.5} className="inline-block flex-1">
-              <button className="h-6 w-full text-[10px] font-bold" style={{ color: ink }}>{a}</button>
-            </RoughRect>
-          ))}
-        </div>
-      </RoughRect>
+        <RB r={2} s={50} stroke={GOLDDARK} fill={`${GOLD}09`} sw={1.5} className="mt-3 p-3">
+          <p className="text-[11px] font-bold mb-1.5">Wesprzyj kanał</p>
+          <div className="flex gap-1.5">
+            {["20 zł", "50 zł", "100 zł"].map((a, i) => (
+              <RB key={a} r={3} s={60 + i} stroke={GOLDDARK} fill="transparent" sw={1.1} className="inline-block flex-1">
+                <button className="h-7 w-full text-[10px] font-bold" style={{ color: GOLDDARK }}>{a}</button>
+              </RB>
+            ))}
+          </div>
+        </RB>
+      </div>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════
-   STYLE 4 — MONO
-   Dark, Space Grotesk, glow, zero roughjs
-════════════════════════════════════════════════ */
-function ColMono({ accent }: { accent: string }) {
-  const bg = "#0f0f0d";
-  const bg2 = "#1a1a17";
-  const text = "#f0ede6";
-  const dim = "rgba(240,237,230,0.38)";
-  const border = "rgba(240,237,230,0.08)";
+/* ══════════════════════════════════════════════════════
+   STYLE B — INK (current baseline)
+══════════════════════════════════════════════════════ */
+function StyleInk({ accent, mounted }: { accent: string; mounted: boolean }) {
+  const BG = "#f8f3e7", INK = "#171717";
   return (
-    <div style={{ background: bg, fontFamily: "var(--font-space-grotesk, Space Grotesk, sans-serif)", color: text }}>
-      {/* header */}
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${border}` }}>
+    <div style={{ background: BG, fontFamily: "var(--font-najs, Kalam, cursive)", color: INK, height: "100%" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: `1px dashed ${INK}33` }}>
+        <span className="font-brand text-sm tracking-[0.06em] uppercase">Polutek</span>
+        <span className="text-[10px] opacity-30 tracking-widest uppercase" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>INK (obecny)</span>
+      </div>
+      <RB r={2.2} s={3} stroke={INK} fill={BG} sw={1.5} className="m-3">
+        <div className="aspect-video flex items-center justify-center" style={{ background: "#0d0d0b" }}>
+          <span style={{ color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem", letterSpacing: "0.1em" }}>POLUTEK.PL</span>
+        </div>
+      </RB>
+      <div className="px-4 pb-3">
+        <p className="text-[13px] font-bold leading-snug mb-1">
+          {mounted ? <RU color={accent}>{VIDEO_TITLE}</RU> : VIDEO_TITLE}
+        </p>
+        <p className="text-[10px] opacity-50 mb-3">{VIDEO_META}</p>
+        <div className="flex gap-2 mb-3">
+          <RB r={2.6} s={7} stroke={accent} fill={accent} sw={1.5} className="inline-block">
+            <button className="relative z-10 h-9 px-5 text-[11px] font-bold text-white">Subskrajb</button>
+          </RB>
+          <RB r={2.3} s={12} stroke={`${INK}55`} fill="transparent" sw={1.1} className="inline-block">
+            <button className="relative z-10 h-9 px-4 text-[11px] font-bold" style={{ color: INK }}>Udostępnij</button>
+          </RB>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <RB r={3} s={20} stroke={`${INK}40`} fill="transparent" sw={0.9} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
+          </RB>
+          <RB r={3} s={21} stroke={accent} fill={`${accent}15`} sw={1.2} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>PATRON</span>
+          </RB>
+        </div>
+        <div style={{ borderTop: `1px dashed ${INK}25`, margin: "8px 0" }} />
+        <p className="text-[9px] font-bold uppercase tracking-widest opacity-40 mb-2" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Playlist</p>
+        {PLAYLIST.map((v, i) => (
+          <RB key={i} r={2.2} s={30 + i} stroke={i === 0 ? accent : `${INK}22`} fill={i === 0 ? `${accent}10` : "transparent"} sw={i === 0 ? 1.3 : 0.8} className="mb-1.5">
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              <div className="w-11 h-7 flex items-center justify-center text-[9px] shrink-0" style={{ background: "#0d0d0b", color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-outfit, sans-serif)" }}>{v.d}</div>
+              <span className="text-[10px] flex-1 line-clamp-1 leading-tight">{v.t}</span>
+              {v.p && <span className="text-[8px] font-bold shrink-0" style={{ color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>P</span>}
+            </div>
+          </RB>
+        ))}
+        <RB r={2} s={50} stroke={accent} fill={`${accent}08`} sw={1.4} className="mt-3 p-3">
+          <p className="text-[11px] font-bold mb-1.5">Wesprzyj kanał</p>
+          <div className="flex gap-1.5">
+            {["20 zł", "50 zł", "100 zł"].map((a, i) => (
+              <RB key={a} r={3} s={60 + i} stroke={accent} fill="transparent" sw={1} className="inline-block flex-1">
+                <button className="h-7 w-full text-[10px] font-bold" style={{ color: accent }}>{a}</button>
+              </RB>
+            ))}
+          </div>
+        </RB>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   STYLE C — NEON INK
+   Ciemne tło, świecące roughjs granice, atrament na nocy
+══════════════════════════════════════════════════════ */
+function StyleNeon({ accent, mounted }: { accent: string; mounted: boolean }) {
+  const BG = "#0c0c0a", BG2 = "#161612";
+  const TEXT = "#f0ede5", DIM = "rgba(240,237,229,0.42)";
+  const NEON = accent;
+  const neonGlow = `0 0 8px ${NEON}, 0 0 24px ${NEON}55`;
+  return (
+    <div style={{ background: BG, fontFamily: "var(--font-najs, Kalam, cursive)", color: TEXT, height: "100%" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
         <div className="flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent, boxShadow: `0 0 6px ${accent}` }} />
-          <span className="font-bold tracking-[0.06em] text-sm" style={{ fontFamily: "var(--font-brand, Bebas Neue)" }}>Polutek</span>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: NEON, boxShadow: neonGlow }} />
+          <span className="font-brand text-sm tracking-[0.06em] uppercase">Polutek</span>
         </div>
-        <span className="text-[10px] uppercase tracking-widest" style={{ color: dim }}>Mono</span>
+        <span className="text-[10px] tracking-widest uppercase" style={{ color: NEON, fontFamily: "var(--font-outfit, sans-serif)", textShadow: `0 0 8px ${NEON}` }}>NEON INK</span>
       </div>
-
-      {/* player */}
-      <div className="m-2 aspect-video flex items-center justify-center relative overflow-hidden" style={{ background: "#000", border: `1px solid ${border}` }}>
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)" }} />
-        <span className="relative" style={{ color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem", letterSpacing: "0.1em", textShadow: `0 0 24px ${accent}88` }}>POLUTEK.PL</span>
-      </div>
-
-      {/* title */}
-      <div className="px-3 pt-1 pb-2">
-        <p className="text-[12px] font-semibold leading-snug mb-1" style={{ color: text }}>{VIDEO.title}</p>
-        <p className="text-[10px]" style={{ color: dim }}>{VIDEO.views} wyśw. · {VIDEO.duration}</p>
-      </div>
-
-      {/* buttons */}
-      <div className="px-3 flex gap-2 pb-2">
-        <button
-          className="h-8 px-4 text-[11px] font-bold text-white transition-all"
-          style={{ background: accent, boxShadow: `0 0 14px ${accent}44` }}
-        >
-          Zaloguj się
-        </button>
-        <button
-          className="h-8 px-4 text-[11px] font-medium transition-all"
-          style={{ border: `1px solid ${border}`, color: dim, background: "transparent" }}
-        >
-          Udostępnij
-        </button>
-      </div>
-
-      {/* badges */}
-      <div className="px-3 flex gap-1.5 pb-2">
-        <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ border: `1px solid ${border}`, color: dim }}>PUBLICZNE</span>
-        <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold text-white" style={{ background: `${accent}22`, border: `1px solid ${accent}44`, color: accent }}>PATRON</span>
-      </div>
-
-      {/* separator */}
-      <div className="mx-3 my-1.5" style={{ height: "1px", background: border }} />
-
-      {/* playlist */}
-      <div className="px-3 pb-2 space-y-0">
+      <RB r={2.3} s={4} stroke={NEON} fill={BG} sw={1.6} className="m-3" style={{ filter: `drop-shadow(0 0 6px ${NEON}55)` }}>
+        <div className="aspect-video flex items-center justify-center relative overflow-hidden" style={{ background: "#000" }}>
+          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${NEON}08 0%, transparent 70%)` }} />
+          <span className="relative" style={{ color: NEON, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem", letterSpacing: "0.1em", textShadow: `0 0 20px ${NEON}` }}>POLUTEK.PL</span>
+        </div>
+      </RB>
+      <div className="px-4 pb-3">
+        <p className="text-[13px] font-bold leading-snug mb-1">{VIDEO_TITLE}</p>
+        <p className="text-[10px] mb-3" style={{ color: DIM }}>{VIDEO_META}</p>
+        <div className="flex gap-2 mb-3">
+          <RB r={2.5} s={8} stroke={NEON} fill="transparent" sw={1.7} className="inline-block" style={{ filter: `drop-shadow(0 0 4px ${NEON}66)` }}>
+            <button className="relative z-10 h-9 px-5 text-[11px] font-bold" style={{ color: NEON }}>Subskrajb</button>
+          </RB>
+          <RB r={2.2} s={13} stroke="rgba(255,255,255,0.15)" fill="transparent" sw={1} className="inline-block">
+            <button className="relative z-10 h-9 px-4 text-[11px] font-bold" style={{ color: DIM }}>Udostępnij</button>
+          </RB>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest border font-bold" style={{ borderColor: "rgba(255,255,255,0.15)", color: DIM, fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
+          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ background: `${NEON}20`, border: `1px solid ${NEON}55`, color: NEON, fontFamily: "var(--font-outfit, sans-serif)", textShadow: `0 0 6px ${NEON}` }}>PATRON</span>
+        </div>
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "8px 0" }} />
+        <p className="text-[9px] uppercase tracking-widest mb-2" style={{ color: DIM, fontFamily: "var(--font-outfit, sans-serif)" }}>Playlist</p>
         {PLAYLIST.map((v, i) => (
-          <div key={i} className="flex items-center gap-2 py-2" style={{ borderLeft: i === 0 ? `2px solid ${accent}` : "2px solid transparent", paddingLeft: "6px", background: i === 0 ? `${accent}08` : "transparent" }}>
-            <div className="w-10 h-6 flex items-center justify-center text-[9px] shrink-0 font-mono" style={{ background: "#000", color: "rgba(255,255,255,0.35)", border: `1px solid ${border}` }}>{v.duration}</div>
-            <span className="text-[10px] flex-1 leading-tight line-clamp-1" style={{ color: i === 0 ? text : dim }}>{v.title}</span>
-            {v.patron && <span className="text-[8px] font-bold shrink-0" style={{ color: accent }}>●</span>}
+          <div key={i} className="flex items-center gap-2 mb-1.5 py-2" style={{
+            borderLeft: i === 0 ? `2px solid ${NEON}` : "2px solid transparent",
+            paddingLeft: "6px",
+            background: i === 0 ? `${NEON}08` : "transparent",
+          }}>
+            <div className="w-11 h-7 flex items-center justify-center text-[9px] shrink-0" style={{ background: "#000", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.07)", fontFamily: "var(--font-outfit, sans-serif)" }}>{v.d}</div>
+            <span className="text-[10px] flex-1 line-clamp-1 leading-tight" style={{ color: i === 0 ? TEXT : DIM }}>{v.t}</span>
+            {v.p && <span className="text-[9px] font-bold shrink-0" style={{ color: NEON, textShadow: `0 0 6px ${NEON}` }}>●</span>}
           </div>
         ))}
-      </div>
-
-      {/* donate */}
-      <div className="mx-3 mb-3 p-2.5" style={{ border: `1px solid ${accent}30`, background: `${accent}06`, boxShadow: `0 0 20px ${accent}08` }}>
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="inline-block w-1 h-1 rounded-full" style={{ background: accent, boxShadow: `0 0 4px ${accent}` }} />
-          <p className="text-[11px] font-semibold">Wesprzyj kanał</p>
-        </div>
-        <div className="flex gap-1.5">
-          {["20 zł", "50 zł", "100 zł"].map((a) => (
-            <button key={a} className="h-6 px-2 text-[9px] font-bold flex-1 transition-all" style={{ border: `1px solid ${accent}40`, color: accent, background: "transparent" }}>
-              {a}
-            </button>
-          ))}
+        <div className="mt-3 p-3" style={{ border: `1px solid ${NEON}35`, background: `${NEON}06`, boxShadow: `0 0 20px ${NEON}10` }}>
+          <p className="text-[11px] font-bold mb-1.5">Wesprzyj kanał</p>
+          <div className="flex gap-1.5">
+            {["20 zł", "50 zł", "100 zł"].map((a) => (
+              <button key={a} className="h-7 px-2 text-[10px] font-bold flex-1" style={{ border: `1px solid ${NEON}45`, color: NEON, background: "transparent" }}>{a}</button>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* description */}
-      <p className="mx-3 mb-3 text-[10px] leading-relaxed" style={{ color: dim }}>
-        Materiały publiczne, patronackie i dla zalogowanych. Bez reklam.
-      </p>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════
-   STYLE 5 — PRESS
-   Bebas Neue headers, double rule, 2-col, Patrick Hand body
-════════════════════════════════════════════════ */
-function ColPress({ accent, mounted }: { accent: string; mounted: boolean }) {
-  const bg = "#f5f2eb";
-  const ink = "#1a1a14";
-  const rule = `${ink}1a`;
+/* ══════════════════════════════════════════════════════
+   STYLE D — AKWARELA
+   Miękkie watercolor washe za roughjs liniami, elegancja
+══════════════════════════════════════════════════════ */
+function StyleAkwarela({ accent, mounted }: { accent: string; mounted: boolean }) {
+  const BG = "#fffefa", INK = "#1a1814";
+  const wash = (hex: string, a: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+  const A = accent;
   return (
-    <div style={{ background: bg, fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)", color: ink }}>
-      {/* masthead */}
-      <div className="px-3 pt-2 pb-1.5 text-center" style={{ borderBottom: `2.5px double ${ink}` }}>
-        <div className="text-[1.1rem] leading-none tracking-[0.06em] uppercase" style={{ fontFamily: "var(--font-brand, Bebas Neue)" }}>Polutek</div>
-        <div className="text-[8px] tracking-[0.2em] uppercase opacity-40 mt-0.5" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>Press</div>
+    <div style={{ background: BG, fontFamily: "var(--font-caveat, Caveat, cursive)", color: INK, height: "100%" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: `0.8px solid ${INK}20` }}>
+        <span className="font-bold text-[15px]">Polutek</span>
+        <span className="text-[10px] opacity-30 tracking-widest uppercase" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>AKWARELA</span>
       </div>
-
-      {/* player */}
-      <div className="m-2 aspect-video flex items-center justify-center" style={{ background: "#0d0d0b", border: `1px solid ${rule}`, color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "0.95rem", letterSpacing: "0.08em" }}>
-        POLUTEK.PL
-      </div>
-
-      {/* headline */}
-      <div className="px-3 pt-1 pb-1.5" style={{ borderBottom: `1.5px solid ${ink}` }}>
-        <p className="text-[0.85rem] leading-tight font-bold uppercase tracking-tight" style={{ fontFamily: "var(--font-brand, Bebas Neue)" }}>
-          {mounted ? <RoughUnder color={accent} delay={500}>{VIDEO.title}</RoughUnder> : VIDEO.title}
-        </p>
-        <p className="text-[9px] opacity-50 mt-0.5" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>{VIDEO.views} wyśw. · {VIDEO.duration}</p>
-      </div>
-
-      {/* buttons */}
-      <div className="px-3 pt-2 flex gap-2 pb-2">
-        <button className="h-8 px-4 text-[11px] font-bold text-white" style={{ background: ink, fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>
-          → Zaloguj się
-        </button>
-        <button className="h-8 px-4 text-[11px] font-medium" style={{ border: `1px solid ${ink}`, fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>
-          Udostępnij
-        </button>
-      </div>
-
-      {/* badges */}
-      <div className="px-3 flex gap-1.5 pb-1.5">
-        <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ border: `1px solid ${ink}`, fontFamily: "var(--font-outfit, sans-serif)" }}>PUBLICZNE</span>
-        <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ border: `1px solid ${accent}`, color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>PATRON</span>
-      </div>
-
-      {/* two-col body */}
-      <div className="mx-3 py-1.5 text-[9.5px] leading-relaxed" style={{ borderTop: `1px solid ${rule}`, borderBottom: `1px solid ${rule}`, columnCount: 2, columnGap: "12px", columnRule: `1px solid ${rule}`, color: `${ink}88` }}>
-        Niezależny kanał. Materiały publiczne, patronackie i dla zalogowanych. Bez algorytmów, bez reklam.
-      </div>
-
-      {/* playlist */}
-      <div className="px-3 pt-1.5 pb-1">
-        <div className="text-[9px] uppercase tracking-widest opacity-40 mb-1.5 flex items-center gap-2" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>
-          <div className="flex-1" style={{ height: "1px", background: rule }} />
-          Playlist
-          <div className="flex-1" style={{ height: "1px", background: rule }} />
+      {/* Player — rough line, watercolor fill */}
+      <RB r={1.8} s={5} stroke={`${INK}60`} fill={wash(A, 0.06)} sw={1.2} className="m-3">
+        <div className="aspect-video flex items-center justify-center relative" style={{ background: "transparent" }}>
+          <span style={{ color: A, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem", letterSpacing: "0.1em", opacity: 0.8 }}>POLUTEK.PL</span>
         </div>
+      </RB>
+      <div className="px-4 pb-3">
+        <p className="text-[15px] font-bold leading-snug mb-1">
+          {mounted ? <RH color={wash(A, 0.25)}>{VIDEO_TITLE}</RH> : VIDEO_TITLE}
+        </p>
+        <p className="text-[10px] opacity-40 mb-3" style={{ fontFamily: "var(--font-outfit, sans-serif)" }}>{VIDEO_META}</p>
+        <div className="flex gap-2 mb-3">
+          <RB r={1.6} s={9} stroke={A} fill={wash(A, 0.15)} sw={1.3} className="inline-block">
+            <button className="relative z-10 h-9 px-5 text-[12px] font-bold" style={{ color: A }}>Subskrajb</button>
+          </RB>
+          <RB r={1.5} s={14} stroke={`${INK}30`} fill="transparent" sw={0.9} className="inline-block">
+            <button className="relative z-10 h-9 px-4 text-[12px] font-bold" style={{ color: INK, opacity: 0.6 }}>Udostępnij</button>
+          </RB>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <RB r={2} s={22} stroke={`${INK}25`} fill={`${INK}05`} sw={0.8} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest" style={{ fontFamily: "var(--font-outfit, sans-serif)", opacity: 0.6 }}>PUBLICZNE</span>
+          </RB>
+          <RB r={2} s={23} stroke={A} fill={wash(A, 0.18)} sw={1.1} className="inline-block">
+            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-bold" style={{ color: A, fontFamily: "var(--font-outfit, sans-serif)" }}>PATRON</span>
+          </RB>
+        </div>
+        {/* watercolor separator */}
+        <div className="my-2 h-[2px] rounded-full" style={{ background: `linear-gradient(to right, transparent, ${wash(A, 0.3)}, transparent)` }} />
+        <p className="text-[11px] font-bold mb-2 opacity-50">Playlist</p>
         {PLAYLIST.map((v, i) => (
-          <div key={i} className="flex items-center gap-2 py-1" style={{ borderBottom: `1px solid ${rule}` }}>
-            <span className="text-[9px] font-mono opacity-40 shrink-0">{v.duration}</span>
-            <span className="text-[10px] flex-1 leading-tight line-clamp-1">{v.title}</span>
-            {v.patron && <span className="text-[8px] font-bold shrink-0" style={{ color: accent, fontFamily: "var(--font-outfit, sans-serif)" }}>P</span>}
+          <RB key={i} r={1.5} s={33 + i} stroke={i === 0 ? A : `${INK}18`} fill={i === 0 ? wash(A, 0.09) : "transparent"} sw={i === 0 ? 1.1 : 0.7} className="mb-1.5">
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              <div className="w-11 h-7 flex items-center justify-center text-[9px] shrink-0 rounded" style={{ background: wash(A, 0.1), color: A, fontFamily: "var(--font-outfit, sans-serif)" }}>{v.d}</div>
+              <span className="text-[11px] flex-1 line-clamp-1 leading-tight">{v.t}</span>
+              {v.p && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wash(A, 0.5) }} />}
+            </div>
+          </RB>
+        ))}
+        <RB r={1.5} s={55} stroke={A} fill={wash(A, 0.07)} sw={1.2} className="mt-3 p-3">
+          <p className="text-[13px] font-bold mb-2">Wesprzyj kanał</p>
+          <div className="flex gap-1.5">
+            {["20 zł", "50 zł", "100 zł"].map((a, i) => (
+              <RB key={a} r={2} s={62 + i} stroke={A} fill={wash(A, 0.12)} sw={0.9} className="inline-block flex-1">
+                <button className="h-7 w-full text-[11px] font-bold" style={{ color: A }}>{a}</button>
+              </RB>
+            ))}
+          </div>
+        </RB>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   STYLE E — BRUTALIST
+   Grube linie 3px+, duże typo, czarno-białe + akcent
+══════════════════════════════════════════════════════ */
+function StyleBrutalist({ accent, mounted }: { accent: string; mounted: boolean }) {
+  const BG = "#f5f2eb", INK = "#0a0a08";
+  return (
+    <div style={{ background: BG, fontFamily: "var(--font-outfit, Outfit, sans-serif)", color: INK, height: "100%" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: `3px solid ${INK}` }}>
+        <span className="font-bold text-[13px] tracking-[0.08em] uppercase" style={{ fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1rem" }}>Polutek</span>
+        <span className="text-[9px] font-bold tracking-widest uppercase" style={{ background: accent, color: "white", padding: "2px 6px" }}>BRUTAL</span>
+      </div>
+      <RB r={3.5} s={6} stroke={INK} fill={BG} sw={3} className="m-3">
+        <div className="aspect-video flex items-center justify-center" style={{ background: INK }}>
+          <span style={{ color: accent, fontFamily: "var(--font-brand, Bebas Neue)", fontSize: "1.2rem", letterSpacing: "0.12em" }}>POLUTEK.PL</span>
+        </div>
+      </RB>
+      <div className="px-4 pb-3">
+        <p className="text-[1rem] font-black leading-tight mb-1 uppercase" style={{ fontFamily: "var(--font-brand, Bebas Neue)", letterSpacing: "0.02em" }}>
+          {VIDEO_TITLE}
+        </p>
+        <p className="text-[10px] font-bold opacity-40 mb-3 uppercase tracking-widest">{VIDEO_META}</p>
+        <div className="flex gap-2 mb-3">
+          <RB r={3.2} s={9} stroke={INK} fill={accent} sw={2.5} className="inline-block">
+            <button className="relative z-10 h-9 px-5 text-[11px] font-black text-white uppercase tracking-widest">Subskrajb</button>
+          </RB>
+          <RB r={3} s={14} stroke={INK} fill="transparent" sw={2} className="inline-block">
+            <button className="relative z-10 h-9 px-4 text-[11px] font-black uppercase tracking-widest" style={{ color: INK }}>→ Udostępnij</button>
+          </RB>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-black border-2" style={{ borderColor: INK }}>PUBLICZNE</span>
+          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-black text-white" style={{ background: accent }}>PATRON</span>
+        </div>
+        <div style={{ height: "3px", background: INK, margin: "10px 0" }} />
+        <p className="text-[9px] font-black uppercase tracking-widest mb-2">Playlist</p>
+        {PLAYLIST.map((v, i) => (
+          <div key={i} className="flex items-center gap-2 mb-1.5" style={{ borderLeft: `3px solid ${i === 0 ? accent : INK}`, paddingLeft: "6px", background: i === 0 ? `${accent}12` : "transparent" }}>
+            <span className="text-[9px] font-mono font-bold opacity-50 shrink-0">{v.d}</span>
+            <span className="text-[10px] flex-1 line-clamp-1 font-bold">{v.t}</span>
+            {v.p && <span className="text-[8px] font-black shrink-0 text-white px-1" style={{ background: accent }}>P</span>}
           </div>
         ))}
-      </div>
-
-      {/* donate */}
-      <div className="mx-3 mt-2 mb-3 p-2.5" style={{ border: `1px solid ${ink}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ fontFamily: "var(--font-brand, Bebas Neue)" }}>Wesprzyj kanał</p>
-        <div className="flex gap-1.5">
-          {["20 zł", "50 zł", "100 zł"].map((a) => (
-            <button key={a} className="h-6 px-2 text-[10px] font-bold flex-1 transition-all hover:bg-black hover:text-white" style={{ border: `1px solid ${ink}`, background: "transparent", fontFamily: "var(--font-patrick, 'Patrick Hand')" }}>
-              {a}
-            </button>
-          ))}
+        <div className="mt-3 p-3" style={{ border: `3px solid ${INK}` }}>
+          <p className="text-[12px] font-black uppercase mb-2">Wesprzyj kanał</p>
+          <div className="flex gap-1.5">
+            {["20 zł", "50 zł", "100 zł"].map((a) => (
+              <button key={a} className="h-7 px-2 text-[10px] font-black uppercase flex-1 transition-all hover:bg-black hover:text-white" style={{ border: `2px solid ${INK}`, background: "transparent" }}>{a}</button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════
-   MAIN PAGE
-════════════════════════════════════════════════ */
-const ACCENT_PRESETS = [
-  { label: "Niebieski", value: "#2563eb" },
-  { label: "Zieleń", value: "#16a34a" },
-  { label: "Czerwień", value: "#dc2626" },
-  { label: "Fiolet", value: "#7c3aed" },
-  { label: "Bursztyn", value: "#d97706" },
-  { label: "Różowy", value: "#db2777" },
+/* ══════════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════════ */
+const STYLES = [
+  { id: "zloto", label: "Złoto", desc: "metaliczny blask + roughjs", Component: StyleZloto },
+  { id: "ink", label: "Ink", desc: "obecny baseline", Component: StyleInk },
+  { id: "neon", label: "Neon Ink", desc: "ciemność + glow", Component: StyleNeon },
+  { id: "akwarela", label: "Akwarela", desc: "watercolor + Caveat", Component: StyleAkwarela },
+  { id: "brutalist", label: "Brutalist", desc: "3px+ border, czarno-białe", Component: StyleBrutalist },
 ];
 
 export default function StylerClient() {
@@ -552,89 +463,66 @@ export default function StylerClient() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const COLS = [
-    { id: "ink", label: "Ink", Component: () => <ColInk accent={accent} mounted={mounted} /> },
-    { id: "cienkopis", label: "Cienkopis", Component: () => <ColCienkopis accent={accent} /> },
-    { id: "splash", label: "Splash", Component: () => <ColSplash accent={accent} mounted={mounted} /> },
-    { id: "mono", label: "Mono", Component: () => <ColMono accent={accent} /> },
-    { id: "press", label: "Press", Component: () => <ColPress accent={accent} mounted={mounted} /> },
-  ];
-
   return (
-    <div className="min-h-screen" style={{ background: "#0d0d0b", color: "#f0ede6", fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}>
+    <div className="min-h-screen" style={{ background: "#0a0a08", color: "#f0ede5", fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}>
+      <style>{GOLD_CSS}</style>
+
       {/* Top bar */}
-      <div className="sticky top-0 z-50 px-4 flex items-center justify-between h-12" style={{ background: "#0d0d0b", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-bold tracking-wide opacity-80">Styler</span>
-          <span className="text-[11px] opacity-30">5 stylów · te same komponenty</span>
-        </div>
+      <div className="sticky top-0 z-50 px-5 h-11 flex items-center justify-between" style={{ background: "#0a0a08ee", backdropFilter: "blur(8px)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="flex items-center gap-3">
-          {/* accent presets */}
+          <span className="text-[13px] font-bold tracking-widest uppercase opacity-70">Styler</span>
+          <span className="text-[10px] opacity-20">5 kierunków stylu · ten sam kanał</span>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* color switcher */}
           <div className="flex items-center gap-1.5">
-            {ACCENT_PRESETS.map((p) => (
+            <span className="text-[10px] opacity-30 mr-1">akcent:</span>
+            {ACCENTS.map((p) => (
               <button
-                key={p.value}
-                title={p.label}
-                onClick={() => setAccent(p.value)}
-                className="w-5 h-5 rounded-full transition-transform hover:scale-125"
+                key={p.v}
+                title={p.name}
+                onClick={() => setAccent(p.v)}
+                className="w-4 h-4 rounded-full transition-all hover:scale-125"
                 style={{
-                  background: p.value,
-                  border: accent === p.value ? `2px solid white` : "2px solid rgba(255,255,255,0.15)",
-                  boxShadow: accent === p.value ? `0 0 8px ${p.value}` : "none",
+                  background: p.v,
+                  border: accent === p.v ? "2px solid white" : "2px solid rgba(255,255,255,0.12)",
+                  boxShadow: accent === p.v ? `0 0 10px ${p.v}` : "none",
                 }}
               />
             ))}
-            <input
-              type="color"
-              value={accent}
-              onChange={(e) => setAccent(e.target.value)}
-              className="w-5 h-5 rounded-full cursor-pointer border-0 opacity-60 hover:opacity-100 transition-opacity"
-              style={{ padding: 0 }}
-              title="Własny kolor"
-            />
+            <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)}
+              className="w-4 h-4 rounded-full cursor-pointer opacity-40 hover:opacity-100 transition-opacity border-0"
+              style={{ padding: 0 }} title="własny" />
           </div>
-          {/* links */}
-          <div className="flex gap-2 text-[11px] opacity-30">
-            <Link href="/kreator" className="hover:opacity-100 transition-opacity">Kreator</Link>
-            <Link href="/eksperyment1" className="hover:opacity-100 transition-opacity">E1</Link>
-            <Link href="/eksperyment2" className="hover:opacity-100 transition-opacity">E2</Link>
-            <Link href="/eksperyment3" className="hover:opacity-100 transition-opacity">E3</Link>
-            <Link href="/" className="hover:opacity-100 transition-opacity">← Oryginał</Link>
+          <div className="flex gap-3 text-[11px] opacity-30">
+            <Link href="/" className="hover:opacity-100 transition-opacity">← Główna</Link>
           </div>
         </div>
       </div>
 
-      {/* Style name bar */}
-      <div className="grid border-b" style={{ gridTemplateColumns: `repeat(${COLS.length}, 1fr)`, borderColor: "rgba(255,255,255,0.07)" }}>
-        {COLS.map((col) => (
-          <div key={col.id} className="px-3 py-2 text-center" style={{ borderRight: "1px solid rgba(255,255,255,0.07)" }}>
-            <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: accent }}>{col.label}</span>
+      {/* style headers */}
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${STYLES.length}, 1fr)`, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        {STYLES.map((s) => (
+          <div key={s.id} className="px-3 py-2 text-center" style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="text-[12px] font-bold tracking-wide" style={{ color: accent }}>{s.label}</div>
+            <div className="text-[9px] opacity-30 mt-0.5">{s.desc}</div>
           </div>
         ))}
       </div>
 
-      {/* Columns */}
-      <div className="grid" style={{ gridTemplateColumns: `repeat(${COLS.length}, 1fr)` }}>
-        {COLS.map((col) => (
-          <div key={col.id} className="overflow-hidden" style={{ borderRight: "1px solid rgba(255,255,255,0.06)", minWidth: 0 }}>
-            <col.Component />
+      {/* style columns */}
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${STYLES.length}, 1fr)`, alignItems: "start" }}>
+        {STYLES.map((s, idx) => (
+          <div key={s.id} style={{ borderRight: "1px solid rgba(255,255,255,0.05)", minWidth: 0 }}>
+            <s.Component accent={accent} mounted={mounted} />
           </div>
         ))}
       </div>
 
-      {/* Footer legend */}
-      <div className="px-6 py-6 mt-2 flex flex-wrap gap-4 justify-center text-[11px]" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)" }}>
-        <span><b style={{ color: "rgba(255,255,255,0.5)" }}>Ink</b> — obecny styl, roughjs + Kalam</span>
-        <span>·</span>
-        <span><b style={{ color: "rgba(255,255,255,0.5)" }}>Cienkopis</b> — 0.6px, pill, Outfit</span>
-        <span>·</span>
-        <span><b style={{ color: "rgba(255,255,255,0.5)" }}>Splash</b> — Caveat, żółty akcent, grubszy rough</span>
-        <span>·</span>
-        <span><b style={{ color: "rgba(255,255,255,0.5)" }}>Mono</b> — ciemny, Space Grotesk, glow</span>
-        <span>·</span>
-        <span><b style={{ color: "rgba(255,255,255,0.5)" }}>Press</b> — Bebas Neue, double rule, kolumny</span>
-        <span>·</span>
-        <span>Kolor akcentu zmienia się we wszystkich kolumnach jednocześnie</span>
+      {/* footer */}
+      <div className="px-6 py-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <span className="text-[10px] opacity-20">Zmień kolor akcentu u góry — aktualizuje wszystkie 5 kolumn jednocześnie.</span>
+        <Link href="/" className="text-[11px] opacity-30 hover:opacity-70 transition-opacity">← Wróć do głównej</Link>
       </div>
     </div>
   );
