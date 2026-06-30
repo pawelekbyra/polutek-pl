@@ -17,6 +17,8 @@ import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
 import { Frame, NajsIcon, NajsSeparator, INK, BLUE } from "../najs/primitives";
 
+const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
+
 type UserProfile = {
   id: string;
   email: string;
@@ -287,10 +289,7 @@ export function SidebarPlaylist({
   );
 
   const PatronBox = () => {
-    if (!supportItem?.creatorId) return null;
-
     const isPl = language === "pl";
-    const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
     const [localCountdown, setLocalCountdown] = useState(() => {
       const ms = PATRON_PREMIERE_DATE.getTime() - Date.now();
       if (ms <= 0) return isPl ? "Premiera już dostępna" : "Premiere available now";
@@ -315,6 +314,9 @@ export function SidebarPlaylist({
       const interval = setInterval(update, 1000);
       return () => clearInterval(interval);
     }, [isPl]);
+
+    if (!supportItem?.creatorId) return null;
+
     const cdDays = localCountdown.split(" ")[0] || "—";
     const cdClock = localCountdown.split(" ").slice(2).join("") || "--:--:--";
 
