@@ -23,16 +23,16 @@ describe('Referral Decommissioning Source Contract', () => {
     expect(content).not.toContain('referrerId');
   });
 
-  it('lib/services/user/profile.service.ts no longer reads unsafeMetadata.referrerId', () => {
-    const content = readFile('lib/services/user/profile.service.ts');
+  it('lib/modules/users/application/sync-user.use-case.ts no longer reads unsafeMetadata.referrerId', () => {
+    const content = readFile('lib/modules/users/application/sync-user.use-case.ts');
     expect(content).not.toContain('unsafeMetadata.referrerId');
     // Note: referrerId remains in DB migration logic (merging records), but not in Clerk sync
     expect(content).not.toContain('const referrerId =');
     expect(content).not.toContain('clerkUser.unsafeMetadata.referrerId');
   });
 
-  it('lib/services/user/profile.service.ts no longer writes referredBy', () => {
-    const content = readFile('lib/services/user/profile.service.ts');
+  it('lib/modules/users/application/sync-user.use-case.ts no longer writes referredBy', () => {
+    const content = readFile('lib/modules/users/application/sync-user.use-case.ts');
     expect(content).not.toContain('referredBy');
   });
 

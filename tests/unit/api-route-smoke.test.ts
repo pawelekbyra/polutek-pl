@@ -37,10 +37,8 @@ vi.mock('@/lib/services/payments/checkout.service', () => ({
   },
 }));
 
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    getOrCreateUser: vi.fn(),
-  },
+vi.mock('@/lib/modules/users', () => ({
+  getOrCreateCurrentUser: vi.fn(),
 }));
 
 describe('API route smoke checks', () => {

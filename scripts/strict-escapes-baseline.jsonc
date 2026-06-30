@@ -1004,5 +1004,13 @@
       "text": "\"wired-toggle\": any;",
       "reason": "Wired Elements are untyped Web Components; JSX namespace declaration with any is the standard pattern for untyped custom elements."
     }
+    ,
+    {
+      "file": "app/api/cron/stripe-reconciliation/route.ts",
+      "line": 24,
+      "label": "explicit any annotation",
+      "text": "const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });",
+      "reason": "Stripe SDK apiVersion type requires as any; same pattern as handle-stripe-webhook.use-case.ts. Added by INCOMPLETE-006."
+    }
   ]
 }

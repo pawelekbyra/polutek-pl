@@ -3,7 +3,6 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
-import { UserProfileService as UserService } from '@/lib/services/user/profile.service';
 import { toggleCommentLike } from '@/lib/modules/comments';
 import { PUT as likeComment } from '@/app/api/comments/[commentId]/reaction/route';
 import { getActorFromAuth } from '@/lib/api/auth';
@@ -30,17 +29,17 @@ vi.mock('@/lib/modules/comments', () => ({
   toggleCommentLike: vi.fn(),
 }));
 
-vi.mock('@/lib/services/user/profile.service', () => ({
-  UserProfileService: {
-    getOrCreateUserFromAuth: vi.fn(),
-  },
+vi.mock('@/lib/modules/users/application/sync-user.use-case', () => ({
+  getOrCreateUserFromAuth: vi.fn(),
 }));
+
+import { getOrCreateUserFromAuth } from '@/lib/modules/users/application/sync-user.use-case';
 
 describe('/api/comments/like', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 59 });
-    vi.mocked(UserService.getOrCreateUserFromAuth).mockResolvedValue({ id: 'local-user-id' } as Awaited<ReturnType<typeof UserService.getOrCreateUserFromAuth>>);
+    vi.mocked(getOrCreateUserFromAuth).mockResolvedValue({ id: 'local-user-id' } as any);
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: 'user',
       userId: 'local-user-id',

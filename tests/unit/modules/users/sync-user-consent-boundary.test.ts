@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/prisma', () => ({ prisma: { $transaction: vi.fn() } }));
 vi.mock('@clerk/nextjs/server', () => ({ clerkClient: vi.fn(), currentUser: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() } }));
-vi.mock('@/lib/services/user/admin.service', () => ({ UserAdminService: { isConfiguredAdmin: vi.fn().mockReturnValue(false) } }));
+vi.mock('@/lib/modules/users/infrastructure/user-admin.service', () => ({ UserAdminService: { isConfiguredAdmin: vi.fn().mockReturnValue(false) } }));
 
 import { prisma } from '@/lib/prisma';
 
@@ -36,8 +36,8 @@ describe('profile sync subscription consent boundary', () => {
   });
 
   it('does not transfer Subscription rows or positive EmailPreference during email-conflict merge', async () => {
-    const profileModule = await import('@/lib/services/user/' + 'profile.service');
-    await profileModule['User' + 'Profile' + 'Service'].syncUser('new', 'same@example.com', 'New User', null, 'pl');
+    const syncUserModule = await import('@/lib/modules/users/application/sync-user.use-case');
+    await syncUserModule.syncUser('new', 'same@example.com', 'New User', null, 'pl');
 
     expect(tx.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'old' } });
     expect(tx.subscription.findMany).toHaveBeenCalledWith({ where: { userId: 'old' }, select: { creatorId: true } });
@@ -51,8 +51,8 @@ describe('profile sync subscription consent boundary', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'old-deleted', role: 'USER', email: 'same@example.com', isDeleted: true });
 
-    const profileModule = await import('@/lib/services/user/' + 'profile.service');
-    await profileModule['User' + 'Profile' + 'Service'].syncUser('new', 'same@example.com', 'New User', null, 'pl');
+    const syncUserModule = await import('@/lib/modules/users/application/sync-user.use-case');
+    await syncUserModule.syncUser('new', 'same@example.com', 'New User', null, 'pl');
 
     expect(tx.comment.updateMany).not.toHaveBeenCalled();
     expect(tx.subscription.deleteMany).not.toHaveBeenCalled();

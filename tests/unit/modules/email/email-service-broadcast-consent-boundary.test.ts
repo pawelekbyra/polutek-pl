@@ -58,8 +58,14 @@ describe('EmailService broadcast content consent boundary', () => {
       htmlEn: '<p>{{email}}</p>',
       recipients,
     });
-    const { EmailService } = await import('@/lib/services/email.service');
-    await EmailService.sendBroadcast('b1');
+    const { LegacyEmailServiceProvider } = await import('@/lib/modules/email/infrastructure/legacy-email-service-provider');
+    const provider = new LegacyEmailServiceProvider();
+    await provider.sendBroadcast({
+      broadcastId: 'b1',
+      subject: '',
+      body: '',
+      recipients: [],
+    });
   }
 
   it('sends content broadcast only with active Subscription and explicit preference opt-in', async () => {
