@@ -20,7 +20,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { Maximize, Pause, Play, Subtitles, Volume2, VolumeX } from 'lucide-react';
+import { NajsIcon, INK } from './najs/primitives';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -32,15 +32,20 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-const playerIconClass = "h-[1.625rem] w-[1.625rem] stroke-[2.25]";
-const centerPauseIconClass = "h-16 w-16 stroke-[2.35] drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
-const sliderAccentClass = "bg-[#1F7A88]";
+const playerIconClass = "h-[1.5rem] w-[1.5rem]";
+const centerPauseIconClass = "h-14 w-14 drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
+const sliderAccentClass = "bg-white/85";
 
 function PolutekWatermark() {
     return (
-        <div className="pointer-events-none absolute right-3 top-3 z-20 flex h-11 w-11 rotate-3 items-center justify-center rounded-[1.15rem] border-2 border-sky-300/80 bg-white/88 text-2xl font-black italic text-sky-600 shadow-[3px_4px_0_rgba(14,165,233,0.28)] ring-1 ring-white/60 backdrop-blur-sm sm:right-5 sm:top-5">
-            <span className="-translate-y-0.5 font-serif drop-shadow-[1px_1px_0_rgba(255,255,255,0.95)]">P</span>
-            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-amber-300 shadow-sm" />
+        <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
+            <div className="relative flex h-9 w-9 items-center justify-center">
+                <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 36 36" aria-hidden="true">
+                    <path d={`M 5 7 C 4 5 5 4 7 4 L 29 4 C 31 4 32 5 32 7 L 32 29 C 32 31 31 32 29 32 L 7 32 C 5 32 4 31 4 29 Z`}
+                        fill="rgba(248,243,231,0.88)" stroke={INK} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="relative text-[17px] font-bold text-[#171717]" style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>P</span>
+            </div>
         </div>
     );
 }
@@ -94,7 +99,7 @@ function PlayerPlayButton({ className }: { className: string }) {
                 togglePlayback(event);
             }}
         >
-            {paused ? <Play className={playerIconClass} aria-hidden="true" fill="currentColor" /> : <Pause className={playerIconClass} aria-hidden="true" fill="currentColor" />}
+            {paused ? <NajsIcon name="play" className={playerIconClass} stroke="currentColor" /> : <NajsIcon name="pause" className={playerIconClass} stroke="currentColor" />}
         </button>
     );
 }
@@ -116,7 +121,7 @@ function PlayerTapTarget() {
                 togglePlayback(event);
             }}
         >
-            {paused ? <Pause className={centerPauseIconClass} aria-hidden="true" fill="currentColor" /> : null}
+            {paused ? <NajsIcon name="play" className={centerPauseIconClass} stroke="currentColor" /> : null}
         </button>
     );
 }
@@ -124,9 +129,9 @@ function PlayerTapTarget() {
 function PlayerMuteIcon() {
     const muted = useMediaState('muted');
     const volume = useMediaState('volume');
-    const Icon = muted || volume === 0 ? VolumeX : Volume2;
+    const iconName = muted || volume === 0 ? "mute" : "volume";
 
-    return <Icon className={playerIconClass} aria-hidden="true" />;
+    return <NajsIcon name={iconName} className={playerIconClass} stroke="currentColor" />;
 }
 
 function PlayerCaptionButton({ className, disabled = false }: { className: string; disabled?: boolean }) {
@@ -141,7 +146,7 @@ function PlayerCaptionButton({ className, disabled = false }: { className: strin
             disabled={disabled}
             title={disabled ? "Brak napisów dla tego filmu" : undefined}
         >
-            <Subtitles className={playerIconClass} aria-hidden="true" />
+            <NajsIcon name="subtitles" className={playerIconClass} stroke="currentColor" />
         </CaptionButton>
     );
 }
@@ -173,9 +178,9 @@ function PlayerTimeReadout() {
 }
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-[5px] w-full overflow-hidden rounded-full bg-white/30 transition-[height] group-data-[dragging]/slider:h-2";
-    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1F7A88] shadow-[0_0_0_3px_rgba(255,255,255,0.22),0_4px_12px_rgba(31,122,136,0.45)] ring-2 ring-white/85 transition-transform group-data-[dragging]/slider:scale-125";
+    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
+    const trackClass = "relative h-[3px] w-full overflow-hidden rounded-full bg-white/22 transition-[height] group-data-[dragging]/slider:h-[4px]";
+    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-[15px] w-[15px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_2px_0_rgba(0,0,0,0.35)] transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
@@ -200,7 +205,7 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
 
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                     <PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />
-                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><Maximize className={playerIconClass} aria-hidden="true" /></FullscreenButton>
+                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><NajsIcon name="maximize" className={playerIconClass} stroke="currentColor" /></FullscreenButton>
                 </div>
             </Controls.Group>
         </Controls.Root>

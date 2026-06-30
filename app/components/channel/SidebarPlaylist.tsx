@@ -15,7 +15,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
-import { Frame, NajsIcon, NajsSeparator, INK, BLUE } from "../najs/primitives";
+import { Frame, NajsIcon, INK, BLUE } from "../najs/primitives";
 
 const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
 
@@ -275,8 +275,8 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-[6px]">
-      <div className="flex items-center gap-2 mb-[3px]">
+    <div className="mb-[2px]">
+      <div className="flex items-center gap-2 mb-[2px]">
         {icon}
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
           <span style={{ background: "linear-gradient(180deg, transparent 52%, #FBE08A 52%, #FBE08A 92%, transparent 92%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
@@ -284,7 +284,11 @@ export function SidebarPlaylist({
           </span>
         </h3>
       </div>
-      <NajsSeparator />
+      <div className="relative h-[8px] w-full">
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 8" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 4 Q 300 3 600 4" fill="none" stroke={INK} strokeWidth="1.1" strokeLinecap="round" opacity=".55"/>
+        </svg>
+      </div>
     </div>
   );
 
@@ -365,7 +369,7 @@ export function SidebarPlaylist({
             className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
             style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
           >
-            <Frame radius={11} seed={5} stroke={BLUE} strokeWidth={1.6} fill={BLUE} showShadow={true} />
+            <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow={true} />
             <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
           </button>
           <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
@@ -386,7 +390,7 @@ export function SidebarPlaylist({
     if (fallbackItems.length === 0) {
       return (
         <div className="p-8 text-center border-2 border-dashed border-neutral-100 rounded-2xl">
-          <p className="text-sm text-neutral-500 italic">
+          <p className="text-sm text-neutral-500">
             {language === "pl"
               ? "Brak filmów do wyświetlenia."
               : "No videos to show."}
