@@ -12,7 +12,8 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
-import RoughHome from "../eksperyment1/RoughHome";
+import dynamic from "next/dynamic";
+const RoughHome = dynamic(() => import("../eksperyment1/RoughHome"), { ssr: false });
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
