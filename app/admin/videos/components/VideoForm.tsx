@@ -37,6 +37,7 @@ interface VideoFormProps {
   setFormData: (data: VideoFormData | ((prev: VideoFormData) => VideoFormData)) => void;
   formError: string | null;
   isSubmitting: boolean;
+  isSourceLocked?: boolean;
   onCancel: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onTitleChange: (val: string) => void;
@@ -62,6 +63,7 @@ export function VideoForm({
   setFormData,
   formError,
   isSubmitting,
+  isSourceLocked = false,
   onCancel,
   onSubmit,
   onTitleChange,
@@ -182,7 +184,7 @@ export function VideoForm({
                   </div>
                   <div className="space-y-2">
                     <Label>Typ źródła</Label>
-                    <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting}>
+                    <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting || isSourceLocked}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="UPLOAD">Cloudflare Stream — upload pliku</SelectItem>
@@ -201,7 +203,7 @@ export function VideoForm({
                         id="videoFile"
                         type="file"
                         accept="video/*"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isSourceLocked}
                         onChange={(event) => onVideoFileChange?.(event.target.files?.[0] || null)}
                       />
                       {selectedVideoFile ? (
@@ -215,7 +217,7 @@ export function VideoForm({
                   {createSourceMode === "UPLOAD" && (
                     <div className="space-y-2">
                       <Label>Primary provider</Label>
-                      <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting}>
+                      <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting || isSourceLocked}>
                         <SelectTrigger><SelectValue placeholder="Wybierz provider..." /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
@@ -236,7 +238,7 @@ export function VideoForm({
                         value={existingCloudflareSource}
                         onChange={(event) => onExistingCloudflareSourceChange?.(event.target.value)}
                         placeholder="np. 31c9291ab41fac05471db4e73aa11717"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isSourceLocked}
                       />
                       {existingCloudflareSource.trim() && (
                         <p className="text-xs text-muted-foreground">Po zapisie sprawdzę status assetu w Cloudflare i opublikuję tylko jeśli jest READY.</p>
@@ -252,7 +254,7 @@ export function VideoForm({
                         value={externalSourceId}
                         onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
                         placeholder="np. https://youtube.com/watch?v=abc lub abc123"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isSourceLocked}
                       />
                     </div>
                   )}
@@ -265,7 +267,7 @@ export function VideoForm({
                         value={externalSourceId}
                         onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
                         placeholder="np. https://vimeo.com/123456789 lub 123456789"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isSourceLocked}
                       />
                     </div>
                   )}

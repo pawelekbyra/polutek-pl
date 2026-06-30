@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2, Upload, Trash2, ImageIcon } from "@/app/components/icons";
 
 export default function AdminSettingsPage() {
-  const { user, isLoaded } = useUser();
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,13 +41,13 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage({ text: data.error || "Upload failed", type: "error" });
+        setMessage({ text: data.error || "Wgrywanie nie powiodło się", type: "error" });
       } else {
         setCurrentUrl(data.url ?? null);
-        setMessage({ text: "Default thumbnail updated successfully.", type: "success" });
+        setMessage({ text: "Domyślna miniatura została zaktualizowana.", type: "success" });
       }
     } catch {
-      setMessage({ text: "Upload failed. Please try again.", type: "error" });
+      setMessage({ text: "Wgrywanie nie powiodło się. Spróbuj ponownie.", type: "error" });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -55,7 +57,7 @@ export default function AdminSettingsPage() {
   const handleDelete = async () => {
     if (!isConfirmingDelete) {
       setIsConfirmingDelete(true);
-      setMessage({ text: "Click Remove again to remove the default thumbnail.", type: "error" });
+      setMessage({ text: "Kliknij ponownie Usuń, aby potwierdzić.", type: "error" });
       return;
     }
 
@@ -66,95 +68,98 @@ export default function AdminSettingsPage() {
       if (res.ok) {
         setCurrentUrl(null);
         setIsConfirmingDelete(false);
-        setMessage({ text: "Default thumbnail removed.", type: "success" });
+        setMessage({ text: "Domyślna miniatura została usunięta.", type: "success" });
       } else {
-        setMessage({ text: "Failed to remove thumbnail.", type: "error" });
+        setMessage({ text: "Nie udało się usunąć miniatury.", type: "error" });
       }
     } catch {
-      setMessage({ text: "Request failed. Please try again.", type: "error" });
+      setMessage({ text: "Żądanie nie powiodło się. Spróbuj ponownie.", type: "error" });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (!isLoaded) return null;
-
-  const isAdmin = user?.publicMetadata?.role === "ADMIN";
-
-  if (!isAdmin) {
-    return (
-      <div className="p-8 text-center font-bold text-red-600">
-        Access denied.
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto p-8 space-y-8">
-      <h1 className="text-2xl font-black uppercase tracking-tight">Media Settings</h1>
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <AdminNavigation backHref="/admin/channel" backLabel="Wróć do ustawień kanału" currentLabel="Ustawienia mediów" breadcrumbs={[{ href: "/admin/channel", label: "Kanał" }]} />
 
-      <section className="border border-neutral-200 rounded-xl p-6 space-y-4">
-        <div>
-          <h2 className="text-[15px] font-bold uppercase tracking-wide mb-1">Default Video Thumbnail</h2>
-          <p className="text-[13px] text-neutral-500">
-            Shown for videos that have no thumbnail set. Recommended: 16:9, at least 1280×720 px, JPEG/PNG/WebP, max 5 MB.
-          </p>
-        </div>
+      <div className="mb-6 rounded-3xl border bg-card p-6 shadow-sm md:p-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Ustawienia globalne</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Media</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Konfiguracja domyślnych assetów wizualnych dla całej aplikacji.
+        </p>
+      </div>
 
-        {isLoading ? (
-          <div className="w-full aspect-video bg-neutral-100 rounded-lg animate-pulse" />
-        ) : currentUrl ? (
-          <div className="space-y-3">
-            <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100">
-              <Image
-                src={currentUrl}
-                alt="Default video thumbnail"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Domyślna miniatura wideo</CardTitle>
+            <CardDescription>
+              Używana dla filmów, które nie mają ustawionej własnej miniatury. Zalecane: 16:9, min. 1280×720 px, JPEG/PNG/WebP, max 5 MB.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {isLoading ? (
+              <div className="w-full max-w-md aspect-video bg-muted rounded-lg animate-pulse" />
+            ) : currentUrl ? (
+              <div className="space-y-4">
+                <div className="relative aspect-video w-full max-w-md rounded-lg overflow-hidden border bg-muted shadow-inner">
+                  <Image
+                    src={currentUrl}
+                    alt="Domyślna miniatura wideo"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="gap-2"
+                  >
+                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    Zmień obraz
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {isConfirmingDelete ? "Potwierdź usunięcie" : "Usuń"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="text-[13px] font-bold px-4 py-2 bg-[#0f0f0f] text-white rounded-lg hover:bg-[#272727] transition-colors disabled:opacity-50"
+                className="gap-2"
               >
-                {isUploading ? "Uploading…" : "Replace"}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="text-[13px] font-bold px-4 py-2 border border-neutral-200 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
-              >
-                {isDeleting ? "Removing…" : isConfirmingDelete ? "Click again to remove" : "Remove"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="text-[13px] font-bold px-4 py-2 bg-[#0f0f0f] text-white rounded-lg hover:bg-[#272727] transition-colors disabled:opacity-50"
-          >
-            {isUploading ? "Uploading…" : "Upload default thumbnail"}
-          </button>
-        )}
+                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Wgraj domyślną miniaturę
+              </Button>
+            )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={handleUpload}
-        />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleUpload}
+            />
 
-        {message && (
-          <p className={`text-[13px] font-bold ${message.type === "success" ? "text-green-700" : "text-red-600"}`}>
-            {message.text}
-          </p>
-        )}
-      </section>
-    </div>
+            {message && (
+              <div className={`p-4 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"}`}>
+                {message.text}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }

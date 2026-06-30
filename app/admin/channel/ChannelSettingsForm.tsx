@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon, Save, Settings, RotateCcw } from "@/app/components/icons";
+import { ImageIcon, Save, Settings, RotateCcw, ArrowRight } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import Link from "next/link";
 
 type ChannelCreator = {
   id: string;
@@ -210,6 +211,23 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">Jeśli nie ustawisz avatara kanału, zostanie użyte zdjęcie profilowe z konta właściciela kanału w Clerk.</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-100 bg-blue-50/30">
+            <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Media globalne</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Button variant="outline" asChild className="w-full justify-between bg-white">
+                    <Link href="/admin/settings">
+                        Domyślna miniatura
+                        <ArrowRight className="h-4 w-4" />
+                    </Link>
+                </Button>
+                <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
+                    Ustaw obraz wyświetlany dla wszystkich filmów, które nie mają własnej miniatury.
+                </p>
             </CardContent>
           </Card>
         </aside>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, EyeOff, Trash2, RotateCcw, Search, Clock, CheckCircle2 } from "@/app/components/icons";
+import { MessageSquare, EyeOff, Trash2, RotateCcw, Search, Clock, CheckCircle2, Shield } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
@@ -26,6 +26,7 @@ const commentActionLabels = {
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingReportsCount, setPendingReportsCount] = useState<number | null>(null);
   const initialParams = useMemo(() => {
     if (typeof window === "undefined") return { q: "", videoId: "" };
 
@@ -72,6 +73,17 @@ export default function AdminCommentsPage() {
     fetchComments();
   }, [fetchComments]);
 
+  useEffect(() => {
+    fetch("/api/admin/comments/reports?status=PENDING")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPendingReportsCount(data.length);
+        }
+      })
+      .catch(err => console.error("Failed to fetch reports count", err));
+  }, []);
+
   const refreshComments = () => fetchComments(search);
 
   const handleAction = async (commentId: string, action: 'hide' | 'restore' | 'delete' | 'hold' | 'approve') => {
@@ -101,7 +113,19 @@ export default function AdminCommentsPage() {
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">Przeglądaj, ukrywaj, przywracaj i usuwaj komentarze.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+             <Button variant="outline" asChild className="gap-2 relative">
+                <Link href="/admin/comments/reports">
+                  <Shield className="h-4 w-4" />
+                  Zgłoszenia
+                  {pendingReportsCount !== null && pendingReportsCount > 0 && (
+                    <Badge variant="destructive" className="ml-1 px-1.5 h-5 min-w-[20px] flex items-center justify-center">
+                      {pendingReportsCount}
+                    </Badge>
+                  )}
+                </Link>
+             </Button>
+             <div className="w-px h-8 bg-border mx-1" />
              <Input
                 placeholder="Szukaj komentarzy..."
                 className="w-64 bg-white"

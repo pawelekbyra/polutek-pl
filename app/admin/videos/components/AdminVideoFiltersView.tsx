@@ -33,6 +33,19 @@ export function AdminVideoFiltersView({
   orderBy, setOrderBy,
   needsAttention, setNeedsAttention
 }: AdminVideoFiltersViewProps) {
+  const handleReset = () => {
+    setSearchQuery("");
+    setStatusFilter("ALL");
+    setTierFilter("ALL");
+    setSourceKindFilter("ALL");
+    setMigrationStatusFilter("ALL");
+    setIsMainFeatured("ALL");
+    setShowInSidebar("ALL");
+    setOrderBy("createdAt");
+    setNeedsAttention(false);
+    fetchVideos(1, { pending: true });
+  };
+
   return (
     <VideoFilters
       searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1, { pending: true })}
@@ -44,6 +57,7 @@ export function AdminVideoFiltersView({
       showInSidebar={showInSidebar} onShowInSidebarChange={setShowInSidebar}
       orderBy={orderBy} onOrderByChange={setOrderBy}
       needsAttention={needsAttention} onNeedsAttentionChange={setNeedsAttention}
+      onResetFilters={handleReset}
     />
   );
 }

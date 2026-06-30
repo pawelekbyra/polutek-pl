@@ -27,6 +27,7 @@ interface AdminVideoEditViewProps {
   page: number;
   preferredProvider?: string;
   onPreferredProviderChange?: (value: string) => void;
+  onMetadataSaveDuringUpload?: () => Promise<void>;
 }
 
 export function AdminVideoEditView({
@@ -53,6 +54,7 @@ export function AdminVideoEditView({
   page,
   preferredProvider,
   onPreferredProviderChange,
+  onMetadataSaveDuringUpload,
 }: AdminVideoEditViewProps) {
   const isCreateFlowLocked = Boolean(createUploadState);
 
@@ -64,7 +66,8 @@ export function AdminVideoEditView({
         formData={formData}
         setFormData={setFormData}
         formError={formError}
-        isSubmitting={isSubmitting || isCreateFlowLocked}
+        isSubmitting={isSubmitting}
+        isSourceLocked={isCreateFlowLocked}
         onCancel={onCancel}
         onSubmit={onSubmit}
         onTitleChange={onTitleChange}
@@ -91,6 +94,20 @@ export function AdminVideoEditView({
       ) : null}
       {createUploadState && selectedVideoFile ? (
         <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
+          <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-blue-600">Trwa przesyłanie</p>
+              <p className="text-xs text-muted-foreground">Możesz teraz uzupełnić metadane filmu.</p>
+            </div>
+            <button
+              onClick={onMetadataSaveDuringUpload}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting && <div className="h-3 w-3 border-2 border-white/30 border-t-white animate-spin rounded-full" />}
+              Zapisz zmiany metadanych
+            </button>
+          </div>
           <VideoUploadSection
             videoId={createUploadState.videoId}
             initialFile={selectedVideoFile}
