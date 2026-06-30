@@ -24,6 +24,12 @@ function useParentSize<T extends SVGSVGElement>() {
       svg.setAttribute("height", String(height));
     };
     read();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", read);
+      return () => window.removeEventListener("resize", read);
+    }
+
     const observer = new ResizeObserver(read);
     observer.observe(parent);
     return () => observer.disconnect();
@@ -108,6 +114,12 @@ export function HachureFill({
       );
     };
     draw();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", draw);
+      return () => window.removeEventListener("resize", draw);
+    }
+
     const observer = new ResizeObserver(draw);
     observer.observe(parent);
     return () => observer.disconnect();
