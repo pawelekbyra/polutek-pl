@@ -457,7 +457,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <p className="font-black uppercase tracking-widest text-[11px]">
                 {language === "pl" ? "Brak komentarzy" : "No comments yet"}
               </p>
-              <p className="text-xs italic">
+              <p className="text-xs">
                 {viewer?.canComment
                   ? language === "pl"
                     ? "Bądź pierwszy i napisz coś sensownego."

@@ -136,7 +136,8 @@ export function NajsSeparator({ label, className = "" }: { label?: string; class
 export type NajsIconName =
   | "search" | "login" | "bell" | "like" | "dislike" | "send"
   | "more" | "more-vertical" | "lock" | "close" | "shield"
-  | "download" | "video" | "alert" | "heart" | "pause";
+  | "download" | "video" | "alert" | "heart" | "pause"
+  | "play" | "maximize" | "volume" | "mute" | "subtitles" | "check";
 
 export function NajsIcon({
   name,
@@ -166,6 +167,12 @@ export function NajsIcon({
       {name === "alert" && <><circle cx="12" cy="12" r="9" {...c} /><path d="M12 8 v4" {...c} /><circle cx="12" cy="16" r="0.5" fill={stroke} stroke="none" /></>}
       {name === "heart" && <path d="M12 21 C12 21 3 14 3 8 c0 -3 2 -5 5 -5 c2 0 3.5 1 4 2.5 C12.5 4 14 3 16 3 c3 0 5 2 5 5 C21 14 12 21 12 21 Z" {...c} />}
       {name === "pause" && <path d="M8 6 v12 M16 6 v12" fill="none" stroke={stroke} strokeWidth={4} strokeLinecap="round" />}
+      {name === "play" && <path d="M7 5 L20 12 L7 19 Z" fill={stroke} stroke="none" />}
+      {name === "maximize" && <><path d="M4 10 V4 H10" {...c} /><path d="M14 4 H20 V10" {...c} /><path d="M4 14 V20 H10" {...c} /><path d="M14 20 H20 V14" {...c} /></>}
+      {name === "volume" && <><path d="M11 5 L6 9 H2 v6 h4 l5 4 Z" {...c} /><path d="M15.5 9 c2 1.8 2 5.2 0 7" {...c} /></>}
+      {name === "mute" && <><path d="M11 5 L6 9 H2 v6 h4 l5 4 Z" {...c} /><path d="M15 10 L21 16 M21 10 L15 16" {...c} /></>}
+      {name === "subtitles" && <><path d="M3 7 Q3 6 4 6 h16 Q21 6 21 7 v11 Q21 19 20 19 H4 Q3 19 3 18 Z" {...c} /><path d="M6 12 h4 M12 12 h3 M17 12 h1" {...c} /><path d="M6 16 h2 M10 16 h3 M15 16 h4" {...c} /></>}
+      {name === "check" && <path d="M4 12 L10 18 L20 7" {...c} />}
     </svg>
   );
 }

@@ -9,7 +9,7 @@ import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
-import { Frame, NajsIcon, NajsSeparator, INK } from "./najs/primitives";
+import { Frame, NajsIcon, INK } from "./najs/primitives";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -60,7 +60,7 @@ const Navbar = () => {
       className="sticky top-0 z-[1000] w-full flex flex-col"
       style={{ background: "rgba(248,243,231,.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
     >
-      <div className="flex items-center px-4 lg:px-6 h-[48px] min-h-[48px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
+      <div className="flex items-center px-4 lg:px-6 h-[44px] min-h-[44px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -233,7 +233,11 @@ const Navbar = () => {
       </div>
 
       {/* Separator pod navbarem */}
-      <NajsSeparator className="px-4" />
+      <div className="relative h-[12px] w-full px-4">
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 6 Q 300 5 600 6" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
+        </svg>
+      </div>
     </div>
   );
 };
