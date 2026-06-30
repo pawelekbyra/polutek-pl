@@ -46,7 +46,9 @@ export default function AdminCommentsPage() {
   const toast = useToast();
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedSearch(search), 400);
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
     return () => window.clearTimeout(timeout);
   }, [search]);
 
