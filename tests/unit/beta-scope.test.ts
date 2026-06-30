@@ -3,7 +3,6 @@ import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const approvedPublicDesignRoutes = [
-  "app/eksperyment1/page.tsx",
   "app/katalog/page.tsx",
   "app/katalog2/page.tsx",
   "app/katalog3/page.tsx",
