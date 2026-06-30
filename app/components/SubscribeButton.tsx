@@ -236,7 +236,7 @@ export default function SubscribeButton({
           showShadow={colorScheme === "v2" || isGoldActive}
         />
         <SubscribeBellIcon size={16} className="mr-2 relative" filled={isSubscribed} />
-        <span className="relative">{isSubscribed ? (t.subscribed || "subskrajbd") : (t.subscribe || "Subskrajb")}</span>
+        <span className="relative">{isSubscribed ? (t.subscribed || "Subskrybujesz") : (t.subscribe || "Subskrybuj")}</span>
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">

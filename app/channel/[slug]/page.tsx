@@ -12,7 +12,7 @@ import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
-import { formatCount } from '@/lib/utils';
+import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 
@@ -37,8 +37,13 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
   if (!creator) return { title: 'Kanał nie znaleziony' };
 
+  const baseUrl = getBaseUrl();
+
   return {
     title: creator.name,
+    alternates: {
+      canonical: `${baseUrl}/channel/${encodeURIComponent(params.slug)}`,
+    },
     description: creator.bio ?? `Kanał ${creator.name} — materiały wideo`,
     openGraph: {
       title: creator.name,
