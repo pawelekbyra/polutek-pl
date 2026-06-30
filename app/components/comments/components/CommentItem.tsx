@@ -3,7 +3,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Star, Trash2, ThumbsUp, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import {
+  Star,
+  Trash2,
+  ThumbsUp,
+  MoreVertical,
+  Edit,
+  Flag,
+  Link as LinkIcon,
+  EyeOff,
+  RotateCcw,
+} from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -42,9 +52,9 @@ export function CommentItem({
   onPin,
   onEdit,
   onReport,
-  isReply = false
+  isReply = false,
 }: CommentItemProps) {
-  const isDeletedForPublic = comment.status === 'DELETED';
+  const isDeletedForPublic = comment.status === "DELETED";
 
   const authorIsPatron = isPatronAuthor(comment.author);
   const [isEditing, setIsEditing] = useState(false);
@@ -54,15 +64,23 @@ export function CommentItem({
   const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
-  const [isHearted, setIsHearted] = React.useState<boolean>((comment as any).isHearted || false);
+  const [isHearted, setIsHearted] = React.useState<boolean>(
+    (comment as any).isHearted || false,
+  );
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash === `#comment-${comment.id}`
+    ) {
       setIsHighlighted(true);
-      commentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      commentRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
       const timer = setTimeout(() => setIsHighlighted(false), 3000);
       return () => clearTimeout(timer);
     }
@@ -80,9 +98,14 @@ export function CommentItem({
 
   const handleHide = async () => {
     try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/hide`, { method: "POST" });
+      const res = await fetch(`/api/admin/comments/${comment.id}/hide`, {
+        method: "POST",
+      });
       if (res.ok) {
-        toast(language === "pl" ? "Komentarz ukryty." : "Comment hidden.", "success");
+        toast(
+          language === "pl" ? "Komentarz ukryty." : "Comment hidden.",
+          "success",
+        );
       } else {
         toast(language === "pl" ? "Błąd ukrywania." : "Error hiding.", "error");
       }
@@ -94,11 +117,19 @@ export function CommentItem({
 
   const handleRestore = async () => {
     try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/restore`, { method: "POST" });
+      const res = await fetch(`/api/admin/comments/${comment.id}/restore`, {
+        method: "POST",
+      });
       if (res.ok) {
-        toast(language === "pl" ? "Komentarz przywrócony." : "Comment restored.", "success");
+        toast(
+          language === "pl" ? "Komentarz przywrócony." : "Comment restored.",
+          "success",
+        );
       } else {
-        toast(language === "pl" ? "Błąd przywracania." : "Error restoring.", "error");
+        toast(
+          language === "pl" ? "Błąd przywracania." : "Error restoring.",
+          "error",
+        );
       }
     } catch (err) {
       toast("Error", "error");
@@ -115,18 +146,23 @@ export function CommentItem({
       className={cn(
         "flex items-start transition-colors duration-1000",
         isReply ? "gap-[13px] group/reply" : "gap-[13px] group/comment",
-        isHighlighted && "bg-blue-50 ring-2 ring-blue-100 rounded-lg p-2 -m-2"
+        isHighlighted && "bg-blue-50 ring-2 ring-blue-100 rounded-lg p-2 -m-2",
       )}
     >
-      <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
+      <div
+        className={cn(
+          "flex shrink-0 flex-col items-center gap-1",
+          isReply ? "w-[38px]" : "w-[38px]",
+        )}
+      >
         <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-border relative">
-            <SafeAvatar
+          <SafeAvatar
             src={comment.author?.imageUrl}
             alt={comment.author?.displayName || "Avatar"}
             size={38}
             fallbackSeed={getAvatarSeed(comment)}
             className="w-full h-full object-cover"
-            />
+          />
         </div>
         {authorIsPatron && (
           <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-accent-ring tracking-wider uppercase whitespace-nowrap">
@@ -134,7 +170,7 @@ export function CommentItem({
           </span>
         )}
       </div>
-      <div className="flex-1 space-y-[2px] min-w-0 pt-0">
+      <div className="flex-1 min-w-0 rounded-[16px] border border-[#171717]/12 bg-white px-4 py-3 shadow-[0_8px_18px_rgba(23,23,23,0.12)]">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-1.5 leading-none">
             <span
@@ -160,7 +196,9 @@ export function CommentItem({
                     locale: pl,
                   }).replace("około", "ok.")
                 : isClient
-                  ? (isReply ? t.justNow : "niedawno")
+                  ? isReply
+                    ? t.justNow
+                    : "niedawno"
                   : ""}
             </span>
           </div>
@@ -169,7 +207,9 @@ export function CommentItem({
               onClick={() => setShowMenu(!showMenu)}
               className={cn(
                 "p-1 rounded-full hover:bg-neutral-100 transition-opacity",
-                showMenu ? "opacity-100" : "opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100"
+                showMenu
+                  ? "opacity-100"
+                  : "opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100",
               )}
             >
               <MoreVertical size={16} />
@@ -186,12 +226,16 @@ export function CommentItem({
                   }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
                 >
-                  <LinkIcon size={14} /> {language === "pl" ? "Kopiuj link" : "Copy link"}
+                  <LinkIcon size={14} />{" "}
+                  {language === "pl" ? "Kopiuj link" : "Copy link"}
                 </button>
 
                 {comment.viewerCanEdit && (
                   <button
-                    onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                    onClick={() => {
+                      setIsEditing(true);
+                      setShowMenu(false);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
                   >
                     <Edit size={14} /> {language === "pl" ? "Edytuj" : "Edit"}
@@ -199,7 +243,10 @@ export function CommentItem({
                 )}
                 {comment.viewerCanDelete && (
                   <button
-                    onClick={() => { if(confirm(t.deleteComment)) onDelete(comment.id); setShowMenu(false); }}
+                    onClick={() => {
+                      if (confirm(t.deleteComment)) onDelete(comment.id);
+                      setShowMenu(false);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-neutral-600"
                   >
                     <Trash2 size={14} /> {language === "pl" ? "Usuń" : "Delete"}
@@ -208,7 +255,10 @@ export function CommentItem({
 
                 {comment.viewerCanReport && (
                   <button
-                    onClick={() => { setIsReportDialogOpen(true); setShowMenu(false); }}
+                    onClick={() => {
+                      setIsReportDialogOpen(true);
+                      setShowMenu(false);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
                   >
                     <Flag size={14} /> {language === "pl" ? "Zgłoś" : "Report"}
@@ -217,47 +267,81 @@ export function CommentItem({
 
                 {/* Admin/Moderator actions */}
                 {!isReply && comment.viewerCanPin && (
-                   <button
-                    onClick={() => { onPin(comment.id, !comment.isPinned); setShowMenu(false); }}
+                  <button
+                    onClick={() => {
+                      onPin(comment.id, !comment.isPinned);
+                      setShowMenu(false);
+                    }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
                   >
-                    <Star size={14} /> {comment.isPinned ? (language === "pl" ? "Odepnij" : "Unpin") : (language === "pl" ? "Przypnij" : "Pin")}
+                    <Star size={14} />{" "}
+                    {comment.isPinned
+                      ? language === "pl"
+                        ? "Odepnij"
+                        : "Unpin"
+                      : language === "pl"
+                        ? "Przypnij"
+                        : "Pin"}
                   </button>
                 )}
 
-                {comment.viewerCanModerate && comment.status === 'VISIBLE' && !isReply && (
-                  <button
-                    onClick={handleHide}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
-                  >
-                    <EyeOff size={14} /> {language === "pl" ? "Ukryj" : "Hide"}
-                  </button>
-                )}
+                {comment.viewerCanModerate &&
+                  comment.status === "VISIBLE" &&
+                  !isReply && (
+                    <button
+                      onClick={handleHide}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                    >
+                      <EyeOff size={14} />{" "}
+                      {language === "pl" ? "Ukryj" : "Hide"}
+                    </button>
+                  )}
 
-                {comment.viewerCanModerate && comment.status === 'HIDDEN' && !isReply && (
-                  <button
-                    onClick={handleRestore}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
-                  >
-                    <RotateCcw size={14} /> {language === "pl" ? "Przywróć" : "Restore"}
-                  </button>
-                )}
+                {comment.viewerCanModerate &&
+                  comment.status === "HIDDEN" &&
+                  !isReply && (
+                    <button
+                      onClick={handleRestore}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                    >
+                      <RotateCcw size={14} />{" "}
+                      {language === "pl" ? "Przywróć" : "Restore"}
+                    </button>
+                  )}
 
                 {comment.viewerCanModerate && !isReply && (
                   <button
                     onClick={async () => {
-                        try {
-                            const res = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
-                            if (res.ok) {
-                                setIsHearted(prev => !prev);
-                                toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
-                            }
-                        } catch (err) {}
-                        setShowMenu(false);
+                      try {
+                        const res = await fetch(
+                          `/api/admin/comments/${comment.id}/heart`,
+                          { method: "POST" },
+                        );
+                        if (res.ok) {
+                          setIsHearted((prev) => !prev);
+                          toast(
+                            language === "pl"
+                              ? "Serce twórcy zaktualizowane."
+                              : "Creator heart updated.",
+                            "success",
+                          );
+                        }
+                      } catch (err) {}
+                      setShowMenu(false);
                     }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-primary"
                   >
-                    <Star size={14} className={isHearted ? "fill-primary" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
+                    <Star
+                      size={14}
+                      className={isHearted ? "fill-primary" : ""}
+                    />{" "}
+                    {isHearted
+                      ? language === "pl"
+                        ? "Usuń serce"
+                        : "Remove heart"
+                      : language === "pl"
+                        ? "Daj serce"
+                        : "Give heart"}
                   </button>
                 )}
               </div>
@@ -270,28 +354,36 @@ export function CommentItem({
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-secondary border border-border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-white border border-[#171717]/20 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />
             <div className="flex gap-2">
-               <button
+              <button
                 onClick={() => setIsEditing(false)}
                 className="text-xs font-bold px-3 py-1 rounded-md hover:bg-secondary"
-               >
-                 {t.cancel}
-               </button>
-               <button
-                onClick={() => { onEdit(comment.id, editText); setIsEditing(false); }}
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={() => {
+                  onEdit(comment.id, editText);
+                  setIsEditing(false);
+                }}
                 disabled={!editText.trim() || editText === comment.text}
                 className="text-xs font-bold px-3 py-1 bg-primary text-white rounded-md hover:brightness-110 disabled:opacity-50"
-               >
-                 {language === "pl" ? "Zapisz" : "Save"}
-               </button>
+              >
+                {language === "pl" ? "Zapisz" : "Save"}
+              </button>
             </div>
           </div>
         ) : (
           <p className="text-[#0f0f0f] text-[14px] leading-[1.5]">
-            {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
+            {comment.text ||
+              (comment.status === "DELETED"
+                ? language === "pl"
+                  ? "Komentarz usunięty"
+                  : "Comment deleted"
+                : "")}
           </p>
         )}
 
@@ -307,31 +399,28 @@ export function CommentItem({
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
               "inline-flex h-6 shrink-0 items-center justify-center gap-1.5 transition-all group",
-              isLiked
-                ? "text-primary"
-                : "text-[#606060] hover:text-[#0f0f0f]",
+              isLiked ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
-            <ThumbsUp
-              size={14}
-              className={cn(isLiked && "fill-primary")}
-            />
+            <ThumbsUp size={14} className={cn(isLiked && "fill-primary")} />
             <span className={cn("font-semibold text-[13px]")}>
               {comment.likesCount || 0}
             </span>
           </button>
 
           {isHearted && (
-             <div className="flex items-center gap-1 bg-accent-soft rounded-full px-1.5 py-0.5 border border-accent-ring">
-                <SafeAvatar
-                  src={null}
-                  alt="Creator Heart"
-                  size={12}
-                  className="rounded-full bg-primary flex items-center justify-center border-none"
-                  fallbackSeed="heart"
-                />
-                <span className="text-[9px] font-extrabold uppercase text-primary tracking-tighter">Serce twórcy</span>
-             </div>
+            <div className="flex items-center gap-1 bg-accent-soft rounded-full px-1.5 py-0.5 border border-accent-ring">
+              <SafeAvatar
+                src={null}
+                alt="Creator Heart"
+                size={12}
+                className="rounded-full bg-primary flex items-center justify-center border-none"
+                fallbackSeed="heart"
+              />
+              <span className="text-[9px] font-extrabold uppercase text-primary tracking-tighter">
+                Serce twórcy
+              </span>
+            </div>
           )}
 
           {!isReply && canComment && (

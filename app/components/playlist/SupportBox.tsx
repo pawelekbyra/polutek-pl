@@ -60,7 +60,7 @@ const SupportBox: React.FC<SupportBoxProps> = ({
   return (
     <div
       id="support-box"
-      className="bg-white border border-border p-[18px] shadow-sm relative overflow-hidden rounded-[16px] text-center"
+      className="bg-white border border-border p-[18px] shadow-[0_12px_22px_rgba(23,23,23,0.18)] relative overflow-hidden rounded-[16px] text-center"
     >
       <div className="space-y-4 relative z-10">
         <h3 className="font-heading text-[20px] font-bold text-[#0f0f0f] tracking-[-0.01em] flex flex-wrap items-center justify-center gap-2">

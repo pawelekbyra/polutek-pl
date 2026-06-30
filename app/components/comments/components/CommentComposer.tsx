@@ -31,16 +31,198 @@ interface CommentComposerProps {
 
 const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
 const EXTENDED_EMOJIS = [
-  "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗",
-  "🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜",
-  "😝","🤤","😒","😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😞","😟","😤","😢","😭","😦","😧","😨",
-  "😩","🤯","😬","😰","😱","🥵","🥶","😳","🤪","😵","🥴","😠","😡","🤬","😷","🤒","🤕","🤢","🤮","🤧",
-  "🥳","🥸","😇","🤠","🥺","🫠","🫣","🫡","🫢","🫤","🤭","🫨","😶‍🌫️","😮‍💨","😤",
-  "👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉",
-  "👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","✍️","💪",
-  "🦾","🦿","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁️","👅","👄","🫦",
-  "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️",
-  "🔥","💯","✨","⭐","🌟","💫","⚡","🌈","🎉","🎊","🎈","🎁","🏆","🥇","🎯","💥","❄️","🌊","🍀","🌸",
+  "😀",
+  "😁",
+  "😂",
+  "🤣",
+  "😃",
+  "😄",
+  "😅",
+  "😆",
+  "😉",
+  "😊",
+  "😋",
+  "😎",
+  "😍",
+  "😘",
+  "🥰",
+  "😗",
+  "😙",
+  "😚",
+  "🙂",
+  "🤗",
+  "🤩",
+  "🤔",
+  "🤨",
+  "😐",
+  "😑",
+  "😶",
+  "🙄",
+  "😏",
+  "😣",
+  "😥",
+  "😮",
+  "🤐",
+  "😯",
+  "😪",
+  "😫",
+  "🥱",
+  "😴",
+  "😌",
+  "😛",
+  "😜",
+  "😝",
+  "🤤",
+  "😒",
+  "😓",
+  "😔",
+  "😕",
+  "🙃",
+  "🤑",
+  "😲",
+  "☹️",
+  "🙁",
+  "😖",
+  "😞",
+  "😟",
+  "😤",
+  "😢",
+  "😭",
+  "😦",
+  "😧",
+  "😨",
+  "😩",
+  "🤯",
+  "😬",
+  "😰",
+  "😱",
+  "🥵",
+  "🥶",
+  "😳",
+  "🤪",
+  "😵",
+  "🥴",
+  "😠",
+  "😡",
+  "🤬",
+  "😷",
+  "🤒",
+  "🤕",
+  "🤢",
+  "🤮",
+  "🤧",
+  "🥳",
+  "🥸",
+  "😇",
+  "🤠",
+  "🥺",
+  "🫠",
+  "🫣",
+  "🫡",
+  "🫢",
+  "🫤",
+  "🤭",
+  "🫨",
+  "😶‍🌫️",
+  "😮‍💨",
+  "😤",
+  "👋",
+  "🤚",
+  "🖐️",
+  "✋",
+  "🖖",
+  "🫱",
+  "🫲",
+  "🫳",
+  "🫴",
+  "👌",
+  "🤌",
+  "🤏",
+  "✌️",
+  "🤞",
+  "🫰",
+  "🤟",
+  "🤘",
+  "🤙",
+  "👈",
+  "👉",
+  "👆",
+  "🖕",
+  "👇",
+  "☝️",
+  "🫵",
+  "👍",
+  "👎",
+  "✊",
+  "👊",
+  "🤛",
+  "🤜",
+  "👏",
+  "🙌",
+  "🫶",
+  "👐",
+  "🤲",
+  "🤝",
+  "🙏",
+  "✍️",
+  "💪",
+  "🦾",
+  "🦿",
+  "🦵",
+  "🦶",
+  "👂",
+  "🦻",
+  "👃",
+  "🫀",
+  "🫁",
+  "🧠",
+  "🦷",
+  "🦴",
+  "👀",
+  "👁️",
+  "👅",
+  "👄",
+  "🫦",
+  "❤️",
+  "🧡",
+  "💛",
+  "💚",
+  "💙",
+  "💜",
+  "🖤",
+  "🤍",
+  "🤎",
+  "💔",
+  "❣️",
+  "💕",
+  "💞",
+  "💓",
+  "💗",
+  "💖",
+  "💘",
+  "💝",
+  "💟",
+  "☮️",
+  "🔥",
+  "💯",
+  "✨",
+  "⭐",
+  "🌟",
+  "💫",
+  "⚡",
+  "🌈",
+  "🎉",
+  "🎊",
+  "🎈",
+  "🎁",
+  "🏆",
+  "🥇",
+  "🎯",
+  "💥",
+  "❄️",
+  "🌊",
+  "🍀",
+  "🌸",
 ];
 
 export function CommentComposer({
@@ -66,7 +248,9 @@ export function CommentComposer({
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [showEmojiPanel, setShowEmojiPanel] = React.useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = React.useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = React.useState<string | null>(
+    null,
+  );
   const [isUploadingImage, setIsUploadingImage] = React.useState(false);
   const graphemeCount = countGraphemes(newComment);
   const isTooLong = graphemeCount > 2000;
@@ -100,7 +284,10 @@ export function CommentComposer({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/comments/image-upload", { method: "POST", body: fd });
+      const res = await fetch("/api/comments/image-upload", {
+        method: "POST",
+        body: fd,
+      });
       if (res.ok) {
         const data = await res.json();
         setUploadedImageUrl(data.url);
@@ -124,7 +311,11 @@ export function CommentComposer({
         />
       )}
       <div className="flex-1 min-w-0">
-        <form className="relative" onSubmit={handleSubmit} noValidate>
+        <form
+          className="relative rounded-[18px] border border-[#171717]/15 bg-white px-4 py-3 shadow-[0_8px_18px_rgba(23,23,23,0.12)]"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           {replyTo && userProfile && (
             <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#e9eef6]">
               <CornerDownRight size={12} />
@@ -210,7 +401,7 @@ export function CommentComposer({
                 aria-invalid={Boolean(errorMessage || isTooLong)}
                 aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
                 disabled={isPending}
-                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
+                className="w-full bg-white text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#171717]/20 focus:border-b-2 focus:border-[#171717] transition-all resize-none py-2 min-h-[2.5rem]"
               />
             </>
           )}
@@ -232,7 +423,7 @@ export function CommentComposer({
                   ))}
                   <button
                     type="button"
-                    onClick={() => setShowEmojiPanel(prev => !prev)}
+                    onClick={() => setShowEmojiPanel((prev) => !prev)}
                     disabled={isPending}
                     className="hover:bg-neutral-100 px-1.5 py-1 rounded-md transition-colors text-[11px] font-bold text-neutral-500"
                   >
@@ -245,7 +436,10 @@ export function CommentComposer({
                           <button
                             key={emoji}
                             type="button"
-                            onClick={() => { insertEmoji(emoji); setShowEmojiPanel(false); }}
+                            onClick={() => {
+                              insertEmoji(emoji);
+                              setShowEmojiPanel(false);
+                            }}
                             className="hover:bg-neutral-100 p-1 rounded text-[18px] leading-none transition-colors"
                           >
                             {emoji}
@@ -299,12 +493,18 @@ export function CommentComposer({
 
               {uploadedImageUrl && (
                 <div className="relative inline-block mb-2">
-                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-neutral-200 object-contain" />
+                  <img
+                    src={uploadedImageUrl}
+                    alt="upload preview"
+                    className="max-h-[120px] max-w-[200px] rounded-lg border border-neutral-200 object-contain"
+                  />
                   <button
                     type="button"
                     onClick={() => setUploadedImageUrl(null)}
                     className="absolute -top-1 -right-1 bg-white border border-neutral-200 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
-                  >✕</button>
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
               <div className="flex justify-start gap-2">

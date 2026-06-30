@@ -42,13 +42,21 @@ const Navbar = () => {
     let cancelled = false;
     if (!user) {
       setServerIsAdmin(false);
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }
     fetch("/api/user/profile", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
-      .then((profile) => { if (!cancelled) setServerIsAdmin(profile?.isAdmin === true); })
-      .catch(() => { if (!cancelled) setServerIsAdmin(false); });
-    return () => { cancelled = true; };
+      .then((profile) => {
+        if (!cancelled) setServerIsAdmin(profile?.isAdmin === true);
+      })
+      .catch(() => {
+        if (!cancelled) setServerIsAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
@@ -58,7 +66,11 @@ const Navbar = () => {
   return (
     <div
       className="sticky top-0 z-[1000] w-full flex flex-col"
-      style={{ background: "rgba(248,243,231,.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      style={{
+        background: "rgba(248,243,231,.95)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
     >
       <div className="flex items-center px-4 lg:px-6 h-[44px] min-h-[44px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
@@ -71,7 +83,13 @@ const Navbar = () => {
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
               <div className="relative flex-1 flex items-center min-w-0 h-[38px]">
-                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                <Frame
+                  radius={20}
+                  seed={18}
+                  stroke={INK}
+                  strokeWidth={1.2}
+                  fill="rgba(248,243,231,.88)"
+                />
                 <input
                   type="text"
                   autoFocus
@@ -103,11 +121,16 @@ const Navbar = () => {
                   <BrandName
                     className="text-[22px] leading-none"
                     variant="classic"
-                    style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+                    style={{
+                      fontFamily:
+                        "var(--font-patrick, 'Patrick Hand', cursive)",
+                    }}
                   />
                   <span
                     className="text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#171717] select-none mt-[1px] px-[2px]"
-                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                    style={{
+                      fontFamily: "system-ui, -apple-system, sans-serif",
+                    }}
                   >
                     Beta
                   </span>
@@ -119,14 +142,22 @@ const Navbar = () => {
             <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
                 <div className="relative flex-1 flex items-center min-w-0 h-[42px]">
-                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                  <Frame
+                    radius={20}
+                    seed={18}
+                    stroke={INK}
+                    strokeWidth={1.2}
+                    fill="rgba(248,243,231,.88)"
+                  />
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                     className="relative w-full h-full bg-transparent pl-5 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
-                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                    style={{
+                      fontFamily: "system-ui, -apple-system, sans-serif",
+                    }}
                   />
                   <button
                     type="submit"
@@ -153,23 +184,36 @@ const Navbar = () => {
               </div>
 
               {/* Language switcher */}
-              <div className="relative flex h-9 items-center px-1 text-sm font-black" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                <Frame radius={18} seed={52} stroke={INK} strokeWidth={1.1} fill="rgba(248,243,231,.8)" />
+              <div
+                className="relative flex h-9 items-center px-1 text-sm font-black"
+                style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+              >
+                <Frame
+                  radius={18}
+                  seed={52}
+                  stroke={INK}
+                  strokeWidth={1.1}
+                  fill="rgba(248,243,231,.8)"
+                />
                 <button
-                  onClick={() => { if (setLanguage) setLanguage("pl"); }}
+                  onClick={() => {
+                    if (setLanguage) setLanguage("pl");
+                  }}
                   className={cn(
                     "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
-                    language === "pl" ? "text-[#171717]" : "text-neutral-500"
+                    language === "pl" ? "text-[#171717]" : "text-neutral-500",
                   )}
                 >
                   PL
                 </button>
-                <span className="relative h-5 w-px bg-neutral-900/35" />
+                <span className="relative h-5 w-px bg-[#171717]" />
                 <button
-                  onClick={() => { if (setLanguage) setLanguage("en"); }}
+                  onClick={() => {
+                    if (setLanguage) setLanguage("en");
+                  }}
                   className={cn(
                     "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
-                    language === "en" ? "text-[#171717]" : "text-neutral-500"
+                    language === "en" ? "text-[#171717]" : "text-neutral-500",
                   )}
                 >
                   EN
@@ -187,9 +231,21 @@ const Navbar = () => {
                     title={t.signIn}
                     style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
                   >
-                    <Frame radius={18} seed={39} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-                    <NajsIcon name="login" className="relative h-4 w-4" stroke={INK} />
-                    <span className="hidden sm:inline relative text-[13px] font-bold uppercase tracking-wide">{t.signIn}</span>
+                    <Frame
+                      radius={18}
+                      seed={39}
+                      stroke={INK}
+                      strokeWidth={1.2}
+                      fill="rgba(248,243,231,.88)"
+                    />
+                    <NajsIcon
+                      name="login"
+                      className="relative h-4 w-4"
+                      stroke={INK}
+                    />
+                    <span className="hidden sm:inline relative text-[13px] font-bold uppercase tracking-wide">
+                      {t.signIn}
+                    </span>
                   </button>
                 </SignInButton>
               )}
@@ -200,15 +256,19 @@ const Navbar = () => {
                     "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
                     isPatron
                       ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-                      : ""
+                      : "",
                   )}
                   title={isPatron ? "Patron" : undefined}
                 >
                   <UserButton
                     appearance={{
                       elements: {
-                        userButtonBox: isPatron ? "overflow-visible" : undefined,
-                        userButtonTrigger: isPatron ? "overflow-visible" : undefined,
+                        userButtonBox: isPatron
+                          ? "overflow-visible"
+                          : undefined,
+                        userButtonTrigger: isPatron
+                          ? "overflow-visible"
+                          : undefined,
                         userButtonAvatarBox: isPatron
                           ? "h-9 w-9 border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
                           : undefined,
@@ -234,8 +294,20 @@ const Navbar = () => {
 
       {/* Separator pod navbarem */}
       <div className="relative h-[12px] w-full px-4">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 0 6 Q 300 5 600 6" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
+        <svg
+          className="absolute inset-0 h-full w-full"
+          viewBox="0 0 600 12"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M 0 6 Q 300 5 600 6"
+            fill="none"
+            stroke={INK}
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            opacity=".72"
+          />
         </svg>
       </div>
     </div>

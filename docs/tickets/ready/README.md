@@ -133,6 +133,7 @@ Aktualny otwarty zakres wykonywalny z tej gałęzi audytu to tylko:
 
 ## Recently completed / HISTORICAL
 
+- Owner UI polish request — `DONE`: video/support/description shadows, subscribe button/icon alignment, black separators, and white paper-style comments; evidence: this commit.
 - `#1259` — CLEANUP-001 partial: `user-access.service.ts` and `audit.service.ts` deleted; legacy bridge reduced to `email.service.ts` and `lib/services/user/profile.service.ts`.
 - `#1258` — Clerk language update rate-limit guard, absolute icon URL and `EmailTemplate.name` migration fix.
 - `#1257` — najs hand-drawn style applied to real homepage/channel surfaces after the experiment pass.
