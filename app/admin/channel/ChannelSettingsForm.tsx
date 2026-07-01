@@ -18,6 +18,7 @@ type ChannelCreator = {
   name: string;
   bio: string | null;
   bannerUrl: string | null;
+  defaultThumbnailUrl: string | null;
   subscribersCount: number;
   displaySubscribersCount: number | null;
   user?: { imageUrl: string | null; name: string | null } | null;
@@ -33,6 +34,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
   const [bannerUrl, setBannerUrl] = useState(initialCreator?.bannerUrl || "");
+  const [defaultThumbnailUrl, setDefaultThumbnailUrl] = useState(initialCreator?.defaultThumbnailUrl || "");
   const [displaySubscribersCount, setDisplaySubscribersCount] = useState(initialCreator?.displaySubscribersCount?.toString() || "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
       const response = await fetch("/api/admin/channel", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, bannerUrl, displaySubscribersCount: displaySubscribersCount.trim() === "" ? null : Number(displaySubscribersCount) }),
+        body: JSON.stringify({ name, bio, bannerUrl, defaultThumbnailUrl: defaultThumbnailUrl.trim() || null, displaySubscribersCount: displaySubscribersCount.trim() === "" ? null : Number(displaySubscribersCount) }),
       });
       const payload = await response.json().catch(() => null);
 
@@ -58,6 +60,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
       setName(payload.creator.name || "");
       setBio(payload.creator.bio || "");
       setBannerUrl(payload.creator.bannerUrl || "");
+      setDefaultThumbnailUrl(payload.creator.defaultThumbnailUrl || "");
       setDisplaySubscribersCount(payload.creator.displaySubscribersCount?.toString() || "");
       setStatus("saved");
     } catch (saveError) {
@@ -179,6 +182,11 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                 <Label htmlFor="channel-banner">Cover photo / banner URL</Label>
                 <Input id="channel-banner" value={bannerUrl} onChange={(event) => setBannerUrl(event.target.value)} placeholder="https://..." />
                 <p className="text-xs text-muted-foreground">Cover photo należy do kanału i nie jest pobierane z Clerk.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="default-thumbnail-url">Domyślna miniatura (URL)</Label>
+                <Input id="default-thumbnail-url" value={defaultThumbnailUrl} onChange={(event) => setDefaultThumbnailUrl(event.target.value)} placeholder="https://..." />
+                <p className="text-xs text-muted-foreground">URL obrazu wyświetlanego dla filmów bez własnej miniatury. Ma pierwszeństwo przed miniaturą wgraną przez wgrywarkę plików.</p>
               </div>
               <div className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm">

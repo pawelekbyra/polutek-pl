@@ -8,6 +8,7 @@ export interface UpdateAdminChannelSettingsInput {
   name: string;
   bio?: string | null;
   bannerUrl?: string | null;
+  defaultThumbnailUrl?: string | null;
   displaySubscribersCount?: number | null;
 }
 

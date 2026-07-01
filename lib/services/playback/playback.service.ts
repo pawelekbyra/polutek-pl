@@ -38,13 +38,17 @@ function emptyPlaybackRuntime(): PlayerDefaults['tracking'] {
   return { playbackSessionId: '', heartbeatIntervalSeconds: 0 };
 }
 
-function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null } | null, controls = false): PlayerDefaults['player'] {
+function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
+  const textTracks: PlayerDefaults['player']['textTracks'] = [];
+  if (video?.subtitleUrlPl) textTracks.push({ src: video.subtitleUrlPl, label: 'Polski', language: 'pl', kind: 'subtitles' });
+  if (video?.subtitleUrlEn) textTracks.push({ src: video.subtitleUrlEn, label: 'English', language: 'en', kind: 'subtitles' });
   return {
     autoplayAllowed: controls,
     mutedAutoplay: controls,
     controls,
     poster: video?.thumbnailUrl || '',
     title: video?.title || '',
+    ...(textTracks.length > 0 ? { textTracks } : {}),
   };
 }
 

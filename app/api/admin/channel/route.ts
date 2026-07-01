@@ -7,6 +7,7 @@ import {
   getAdminChannelSettings,
   updateAdminChannelSettings,
 } from "@/lib/modules/channel";
+import { invalidateDefaultThumbnailCache } from "@/lib/services/storage/default-thumbnail.service";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ const channelPatchSchema = z.object({
     .nullable()
     .transform((value) => value || null),
   bannerUrl: optionalUrl,
+  defaultThumbnailUrl: optionalUrl,
   displaySubscribersCount: z.number().int().min(0).nullable().optional(),
 });
 
@@ -127,6 +129,7 @@ export async function PATCH(request: NextRequest) {
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
     const creator = await updateAdminChannelSettings(ctx, result.data);
+    if ('defaultThumbnailUrl' in result.data) invalidateDefaultThumbnailCache();
 
     return NextResponse.json({ creator });
   } catch (error) {

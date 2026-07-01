@@ -103,7 +103,9 @@ export default function AdminVideosPage() {
       views: vid.views,
       isMainFeatured: vid.isMainFeatured || false,
       showInSidebar: vid.showInSidebar ?? true,
-      sidebarOrder: vid.sidebarOrder || 0
+      sidebarOrder: vid.sidebarOrder || 0,
+      subtitleUrlPl: "",
+      subtitleUrlEn: "",
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
@@ -134,7 +136,9 @@ export default function AdminVideosPage() {
       views: 0,
       isMainFeatured: false,
       showInSidebar: false,
-      sidebarOrder: 0
+      sidebarOrder: 0,
+      subtitleUrlPl: "",
+      subtitleUrlEn: "",
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");

@@ -9,6 +9,7 @@ export type AdminChannelCreatorDto = {
   name: string;
   bio: string | null;
   bannerUrl: string | null;
+  defaultThumbnailUrl: string | null;
   subscribersCount: number;
   displaySubscribersCount: number | null;
   user: {
@@ -53,6 +54,7 @@ export async function getAdminChannelSettings(
       name: true,
       bio: true,
       bannerUrl: true,
+      defaultThumbnailUrl: true,
       subscribersCount: true,
       displaySubscribersCount: true,
       user: { select: { id: true, email: true, name: true, imageUrl: true } },

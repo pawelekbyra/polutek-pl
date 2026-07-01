@@ -37,5 +37,7 @@ export const INITIAL_FORM_DATA = {
   views: 0,
   isMainFeatured: false,
   showInSidebar: false,
-  sidebarOrder: 0
+  sidebarOrder: 0,
+  subtitleUrlPl: "",
+  subtitleUrlEn: "",
 };
