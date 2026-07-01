@@ -69,6 +69,25 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
   const assets = initialVideo.assets ?? [];
   const original = initialVideo.original ?? null;
 
+  const handleThumbnailUpload = async (url: string) => {
+    setThumbnailUrl(url);
+    try {
+      const res = await fetch(`/api/admin/videos/${videoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thumbnailUrl: url }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch((): unknown => null);
+        throw new Error(readApiError(body) ?? "Nie udało się zapisać miniatury.");
+      }
+      toast("Miniatura zapisana.", "success");
+      onSaved?.();
+    } catch (error) {
+      toast(getErrorMessage(error), "error");
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
@@ -155,7 +174,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
       <div className="space-y-5">
         <div className="space-y-2">
           <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Miniatura</Label>
-          <CoverImageUpload videoId={videoId} initialUrl={thumbnailUrl} onUploadSuccess={(url) => setThumbnailUrl(url)} />
+          <CoverImageUpload videoId={videoId} initialUrl={thumbnailUrl} onUploadSuccess={handleThumbnailUpload} />
         </div>
 
         <div className="rounded-xl border bg-card p-4 shadow-sm">

@@ -128,25 +128,6 @@
     background-color: hsl(var(--primary) / 0.85) !important;
   }
 
-  [role="slider"][aria-label="Postęp filmu"] {
-    bottom: 3.25rem;
-    height: 1.5rem !important;
-    left: 0.5rem;
-    margin-top: 0 !important;
-    padding-bottom: 0.6875rem !important;
-    padding-top: 0.6875rem !important;
-    position: absolute !important;
-    right: 0.5rem;
-    width: auto !important;
-  }
-
-  @media (min-width: 640px) {
-    [role="slider"][aria-label="Postęp filmu"] {
-      left: 0.75rem;
-      right: 0.75rem;
-    }
-  }
-
   .experiment2-skin svg path,
   .experiment3-skin svg path,
   .experiment4-skin svg path {

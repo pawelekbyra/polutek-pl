@@ -308,18 +308,18 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
-        <div className="flex items-center gap-3 order-2 sm:order-1">
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
+        <div className="flex items-center gap-3 min-w-0">
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
-            <h3 className="text-[17px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <h3 className="text-[15px] sm:text-[17px] font-bold text-[#0f0f0f] truncate" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {totalCount} {getCommentsLabel(totalCount)}
             </h3>
           )}
         </div>
 
-        <div className="flex gap-[16px] order-1 sm:order-2 self-end sm:self-auto items-center">
+        <div className="flex gap-[16px] shrink-0 items-center">
           <div ref={sortMenuRef} className="relative">
             <button
               type="button"

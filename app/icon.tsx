@@ -1,4 +1,10 @@
 import { ImageResponse } from 'next/og';
+import {
+  APP_ICON_BACKGROUND,
+  APP_ICON_INK,
+  loadPatrickHandFont,
+  roundedSquarePath,
+} from '@/lib/icons/app-icon';
 
 export const runtime = 'edge';
 export const size = {
@@ -7,46 +13,49 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-export default function Icon() {
+export default async function Icon() {
+  const fontData = await loadPatrickHandFont();
+  const borderPath = roundedSquarePath(size.width, 30, 7, 6);
+  const innerPath = roundedSquarePath(size.width, 31, 57, 8);
+
   return new ImageResponse(
     (
       <div
         style={{
           width: '100%',
           height: '100%',
+          position: 'relative',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'transparent',
+          background: APP_ICON_BACKGROUND,
         }}
       >
+        <svg
+          width={size.width}
+          height={size.height}
+          viewBox={`0 0 ${size.width} ${size.height}`}
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          <path d={borderPath} fill="none" stroke={APP_ICON_INK} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={innerPath} fill="none" stroke={APP_ICON_INK} strokeWidth={1.5} opacity={0.3} />
+        </svg>
         <div
           style={{
-            width: 160,
-            height: 160,
-            borderRadius: '9999px',
-            overflow: 'hidden',
+            position: 'absolute',
+            inset: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'transparent',
           }}
         >
-          <img
-            src={`${process.env.NEXT_PUBLIC_APP_URL || 'https://www.polutek.pl'}/favicon.ico`}
-            alt="POLUTEK.PL"
-            width="160"
-            height="160"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              borderRadius: '9999px',
-            }}
-          />
+          <span style={{ fontFamily: 'Patrick Hand', fontSize: 104, color: APP_ICON_INK, lineHeight: 1 }}>
+            P
+          </span>
         </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      fonts: [{ name: 'Patrick Hand', data: fontData, style: 'normal', weight: 400 }],
+    },
   );
 }

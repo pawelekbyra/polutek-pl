@@ -32,11 +32,18 @@ vi.mock('@/app/components/subscriptions/EmailSubscriptionConsentModal', () => ({
   }
 }));
 
-// Mock Clerk useAuth
+// Mock Clerk useAuth / useUser
 const mockUseAuth = vi.fn();
+const mockUseUser = vi.fn();
 vi.mock('@clerk/nextjs', () => ({
   useAuth: () => mockUseAuth(),
+  useUser: () => mockUseUser(),
 }));
+
+// This prompt is now gated to only auto-open within a short window after
+// account creation (i.e. "first login after registration"), so tests that
+// expect it to open must simulate a freshly-created Clerk user.
+const FRESHLY_REGISTERED_USER = { createdAt: new Date() };
 
 // Mock logger
 vi.mock('@/lib/logger', () => ({
@@ -51,6 +58,7 @@ describe('UnsubscribedEmailConsentPrompt', () => {
     vi.clearAllMocks();
     localStorage.clear();
     global.fetch = vi.fn();
+    mockUseUser.mockReturnValue({ user: FRESHLY_REGISTERED_USER });
   });
 
   afterEach(() => {
@@ -76,6 +84,16 @@ describe('UnsubscribedEmailConsentPrompt', () => {
     await waitFor(() => {
       expect(container.firstChild).toBeNull();
     });
+  });
+
+  it('renders nothing for a returning user (not a fresh registration)', async () => {
+    mockUseAuth.mockReturnValue({ isLoaded: true, userId: 'user_123' });
+    mockUseUser.mockReturnValue({ user: { createdAt: new Date('2020-01-01T00:00:00Z') } });
+
+    const { container } = render(<UnsubscribedEmailConsentPrompt />);
+
+    expect(container.firstChild).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('renders nothing if already dismissed in localStorage', async () => {

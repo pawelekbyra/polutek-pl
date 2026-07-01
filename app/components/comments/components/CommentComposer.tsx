@@ -210,7 +210,7 @@ export function CommentComposer({
                 aria-invalid={Boolean(errorMessage || isTooLong)}
                 aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
                 disabled={isPending}
-                className="w-full bg-transparent text-[#0f0f0f] focus:outline-none text-[14px] leading-5 border-b border-[#e9eef6] focus:border-b-2 focus:border-[#3b82f6] transition-all resize-none py-2 min-h-[2.5rem]"
+                className="w-full bg-white text-[#0f0f0f] placeholder:text-neutral-400 focus:outline-none text-[14px] leading-5 rounded-xl border border-[#e2e2e2] focus:border-[#3b82f6] shadow-sm transition-all resize-none px-3.5 py-2.5 min-h-[2.75rem]"
               />
             </>
           )}

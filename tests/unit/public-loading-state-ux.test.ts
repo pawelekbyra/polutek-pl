@@ -48,7 +48,8 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("event.stopPropagation()");
     expect(player).toContain("bg-white/85");
     expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
-    expect(player).toContain("relative z-40 mt-2 flex h-12");
+    expect(player).toContain("relative z-40 mt-1 flex h-7 w-full");
+    expect(player).toContain("sm:mt-2 sm:h-12 sm:py-3");
     expect(player).toContain("group-data-[dragging]/slider:h-[4px]");
     expect(player).not.toContain("group-data-[active]/slider:h-2.5");
     expect(player).not.toContain("before:-inset-3");

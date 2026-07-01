@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { logger } from '@/lib/logger';
 import EmailSubscriptionConsentModal from './EmailSubscriptionConsentModal';
 
+// How long after account creation we still consider this the user's "first
+// login after registration" — the only automatic (non-button-click) trigger
+// for this modal, so it doesn't nag returning users on every page load.
+const FRESH_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
+
 export default function UnsubscribedEmailConsentPrompt() {
   const { userId, isLoaded } = useAuth();
+  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -18,7 +24,12 @@ export default function UnsubscribedEmailConsentPrompt() {
     if (isLoaded && userId && !hasCheckedStatus) {
       const isDismissed = DISMISSED_KEY ? localStorage.getItem(DISMISSED_KEY) === 'true' : false;
 
-      if (isDismissed) {
+      const isFreshRegistration = Boolean(
+        user?.createdAt &&
+        Date.now() - new Date(user.createdAt).getTime() < FRESH_REGISTRATION_WINDOW_MS
+      );
+
+      if (isDismissed || !isFreshRegistration) {
         setHasCheckedStatus(true);
         return;
       }
@@ -30,10 +41,11 @@ export default function UnsubscribedEmailConsentPrompt() {
           return res.json();
         })
         .then((data) => {
-          if (data) {
-            if (!data.isSubscribed) {
-              setIsOpen(true);
-            }
+          if (data && !data.isSubscribed) {
+            setIsOpen(true);
+            // Mark as shown immediately (not only on explicit confirm/dismiss) so
+            // abandoning the page without answering still counts as "shown once".
+            if (DISMISSED_KEY) localStorage.setItem(DISMISSED_KEY, 'true');
           }
           setHasCheckedStatus(true);
         })
@@ -42,7 +54,7 @@ export default function UnsubscribedEmailConsentPrompt() {
           setHasCheckedStatus(true);
         });
     }
-  }, [isLoaded, userId, hasCheckedStatus, DISMISSED_KEY]);
+  }, [isLoaded, userId, hasCheckedStatus, DISMISSED_KEY, user?.createdAt]);
 
   const handleConfirm = () => {
     setErrorMessage(null);

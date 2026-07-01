@@ -154,12 +154,15 @@ describe('POST /api/admin/videos/cover-upload', () => {
     expect(put).toHaveBeenCalledWith(expect.any(String), expect.any(File), { access: 'private' });
   });
 
-  it('rejects private access upload without videoId', async () => {
+  it('allows private access upload without a videoId yet (e.g. a brand-new, unsaved video)', async () => {
     vi.mocked(requireAdminForApi).mockResolvedValue({
       adminUserId: 'admin-1',
       response: null as any,
     });
     vi.mocked(getBlobAccess).mockReturnValue('private');
+
+    const mockBlobUrl = 'https://blob.vercel.com/private-cover-new.webp';
+    vi.mocked(put).mockResolvedValue({ url: mockBlobUrl } as any);
 
     const formData = new FormData();
     const file = new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' });
@@ -173,8 +176,14 @@ describe('POST /api/admin/videos/cover-upload', () => {
     const res = await POST(req);
     const data = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(data.error).toMatch(/Video must be saved/);
+    // Without a videoId there's no DB record yet to proxy the private thumbnail
+    // through, so both fields fall back to the raw storage URL; the client
+    // renders an immediate local preview instead of relying on this URL, and
+    // the raw URL gets persisted once the video is actually saved.
+    expect(res.status).toBe(200);
+    expect(data.url).toBe(mockBlobUrl);
+    expect(data.storageUrl).toBe(mockBlobUrl);
+    expect(put).toHaveBeenCalledWith(expect.stringContaining('videos/new/covers/'), expect.any(File), { access: 'private' });
   });
 
   it('handles Vercel Blob access conflict errors', async () => {

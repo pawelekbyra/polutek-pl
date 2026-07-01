@@ -164,7 +164,7 @@ const Navbar = () => {
                 >
                   PL
                 </button>
-                <span className="relative h-5 w-px bg-neutral-900/35" />
+                <span className="relative h-5 w-px bg-[#171717]" />
                 <button
                   onClick={() => { if (setLanguage) setLanguage("en"); }}
                   className={cn(

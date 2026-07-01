@@ -117,13 +117,13 @@ export default function ChannelHome({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+              <div className="flex font-sans">
                 {(["comments", "videos"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={cn(
-                      "flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-all",
+                      "flex-1 py-3 text-[13px] font-bold not-italic uppercase tracking-widest transition-all",
                       activeTab === tab
                         ? "text-[#171717]"
                         : "text-[#171717]/35",
@@ -135,7 +135,7 @@ export default function ChannelHome({
               </div>
               <NajsSeparator className="px-0" />
             </div>
-            <div className="lg:hidden mt-10">
+            <div className="lg:hidden mt-4">
               {activeTab === "comments" ? (
                 <EmbeddedComments
                   videoId={selectedVideo.id}
