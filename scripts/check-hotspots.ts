@@ -104,6 +104,11 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason:
       "Added Mux (signed JWT HLS) and Vimeo (embed) provider resolvers in the multi-source video feature (#1204); tracked for extraction into provider-specific adapter modules before launch certification.",
   },
+  "lib/modules/video/infrastructure/video.repository.ts": {
+    maxLines: 560,
+    reason:
+      "Added subtitleUrlPl/subtitleUrlEn fields for WebVTT track support; tracked for extraction once subtitle management is modularized.",
+  },
 };
 
 type Violation = {

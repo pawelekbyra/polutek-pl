@@ -160,7 +160,8 @@ model Creator {
   slug             String         @unique
   name             String
   bio              String?
-  bannerUrl        String?
+  bannerUrl           String?
+  defaultThumbnailUrl String?
   subscribersCount Int            @default(0)
   displaySubscribersCount Int?
   isApproved       Boolean        @default(false)
@@ -201,6 +202,8 @@ model Video {
   descriptionEn  String?
   videoUrl       String? // Legacy field
   thumbnailUrl   String
+  subtitleUrlPl  String?
+  subtitleUrlEn  String?
   duration       String? // e.g. "12:45"
   tier           AccessTier  @default(PUBLIC)
   views          Int         @default(0)

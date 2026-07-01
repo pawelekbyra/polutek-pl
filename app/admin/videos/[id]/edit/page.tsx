@@ -38,6 +38,8 @@ function toEditableFormData(video: Record<string, unknown>): VideoFormData {
     isMainFeatured: Boolean(video.isMainFeatured),
     showInSidebar: Boolean(video.showInSidebar),
     sidebarOrder: Number(video.sidebarOrder || 0),
+    subtitleUrlPl: String(video.subtitleUrlPl || ""),
+    subtitleUrlEn: String(video.subtitleUrlEn || ""),
   };
 }
 
@@ -110,6 +112,8 @@ export default function AdminVideoEditPage(props: EditPageProps) {
           isMainFeatured: formData.isMainFeatured,
           showInSidebar: formData.showInSidebar,
           sidebarOrder: formData.sidebarOrder,
+          subtitleUrlPl: formData.subtitleUrlPl.trim() || null,
+          subtitleUrlEn: formData.subtitleUrlEn.trim() || null,
         }),
       });
       const data = await res.json().catch(() => null);

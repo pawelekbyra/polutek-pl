@@ -116,6 +116,12 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 
 `lib/modules/email/infrastructure/email.repository.ts` filters patron audience via `patronGrants: { some: { revokedAt: null } }`. Do not filter by `User.isPatron`.
 
+### 4.7 Video Subtitle Tracks
+
+- `Video.subtitleUrlPl` and `Video.subtitleUrlEn` are optional URL fields for WebVTT subtitle files.
+- The playback service builds `textTracks` in the `PlaybackPlan.player` from these fields automatically.
+- Set them via the admin video edit form or API. The `VideoPlayer` component already consumes `textTracks`.
+
 ---
 
 ## 5. Admin Panel
@@ -134,8 +140,18 @@ Located in `app/admin/`. Key areas:
 | `/admin/comments` | Comment moderation + reports link |
 | `/admin/comments/reports` | Reported comments queue |
 | `/admin/emails` | Email broadcast |
+| `/admin/channel` | Channel settings (name, bio, banner, default thumbnail URL) |
+| `/admin/settings` | Media settings (default thumbnail file upload via Vercel Blob) |
 
 `AdminLayoutShell` wraps all admin pages. `AdminNavigation` provides breadcrumb back-navigation.
+
+### Default Thumbnail Resolution
+
+`lib/services/storage/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
+
+1. `Creator.defaultThumbnailUrl` — URL field set via `/admin/channel`. Direct URL, no proxy.
+2. `AppSetting` key `default_video_thumbnail` — Vercel Blob URL set via `/admin/settings` file upload.
+3. `null` — no fallback.
 
 ---
 
@@ -163,6 +179,8 @@ Registered in `vercel.json` under `"crons"`. All cron routes live in `app/api/cr
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
 | `lib/modules/users/application/patron-read-model.ts` | `buildPatronDiagnosticsReadModel(grants[])` — diagnostics only |
+| `lib/services/storage/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
+| `lib/services/payment.service.ts` | Legacy compatibility shim — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
 | `prisma/schema.prisma` | Database schema (single-writer) |
 
 ---

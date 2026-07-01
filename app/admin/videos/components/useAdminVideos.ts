@@ -125,7 +125,9 @@ export function useAdminVideos(isAdmin: boolean) {
           views: vid.views,
           isMainFeatured: vid.isMainFeatured || false,
           showInSidebar: vid.showInSidebar ?? true,
-          sidebarOrder: vid.sidebarOrder || 0
+          sidebarOrder: vid.sidebarOrder || 0,
+          subtitleUrlPl: vid.subtitleUrlPl || "",
+          subtitleUrlEn: vid.subtitleUrlEn || "",
         });
         setIsEditing(true);
         setIsSlugManual(true);
