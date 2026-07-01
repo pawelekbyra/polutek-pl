@@ -10,7 +10,7 @@ import { pl } from "date-fns/locale";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
-import { NajsIcon, INK, YELLOW, BLUE } from "./najs/primitives";
+import { Frame, NajsIcon, INK } from "./najs/primitives";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -83,15 +83,8 @@ export default function ChannelVideoCard({
     <div className="group cursor-pointer flex flex-col">
       <div className="block relative">
         <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
-        <div
-          className="relative aspect-video rounded-[10px] bg-black mb-2.5 z-10 transition-all duration-300"
-          style={{ border: `2.5px solid ${INK}`, boxShadow: "5px 6px 0 rgba(0,0,0,.13)" }}
-        >
-          <div
-            className="pointer-events-none absolute -bottom-[5px] left-[4%] right-[4%] h-[4px] scale-x-0 rounded-full transition-transform duration-300 group-hover:scale-x-100"
-            style={{ background: YELLOW, boxShadow: `0 2px 0 ${INK}` }}
-            aria-hidden="true"
-          />
+        <div className="relative aspect-video rounded-md bg-black mb-2.5 z-10">
+          <Frame radius={8} seed={22} stroke={INK} strokeWidth={1} />
           <div className="absolute inset-0 overflow-hidden rounded-md">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
@@ -135,7 +128,7 @@ export default function ChannelVideoCard({
         <div className="flex gap-2 relative z-10">
           <div className="flex-1 min-w-0">
             <Link href={`/?v=${video.id}`}>
-              <h3 className="text-[14px] font-black text-[#0f0f0f] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+              <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {displayTitle}
               </h3>
             </Link>
@@ -165,11 +158,9 @@ export default function ChannelVideoCard({
               </div>
             </div>
           </div>
-          <button
-            className="h-[28px] w-[28px] flex items-center justify-center opacity-0 group-hover:opacity-100 shrink-0 active:scale-95 transition-opacity rounded-[7px]"
-            style={{ border: `2px solid ${INK}`, boxShadow: "2px 2px 0 rgba(0,0,0,.12)", background: "rgba(248,243,231,.9)" }}
-          >
-            <NajsIcon name="more-vertical" className="h-[16px] w-[16px]" stroke={INK} />
+          <button className="relative h-[28px] w-[28px] flex items-center justify-center opacity-0 group-hover:opacity-100 shrink-0 active:scale-95 transition-opacity">
+            <Frame radius={8} seed={55} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.88)" />
+            <NajsIcon name="more-vertical" className="relative h-[16px] w-[16px]" stroke={INK} />
           </button>
         </div>
       </div>
