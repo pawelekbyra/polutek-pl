@@ -46,8 +46,8 @@ describe('Referral Decommissioning Source Contract', () => {
     expect(content).not.toContain('claim-referral.use-case');
   });
 
-  it('app/components/VideoPlaylist.tsx no longer imports ReferralModal or ReferralInfo', () => {
-    const content = readFile('app/components/VideoPlaylist.tsx');
+  it('app/components/channel/DonationBox.tsx no longer imports ReferralModal or ReferralInfo', () => {
+    const content = readFile('app/components/channel/DonationBox.tsx');
     expect(content).not.toContain('ReferralModal');
     expect(content).not.toContain('ReferralInfo');
   });

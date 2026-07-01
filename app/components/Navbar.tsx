@@ -232,10 +232,10 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Separator pod navbarem */}
-      <div className="relative h-[12px] w-full px-4">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 0 6 Q 300 5 600 6" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
+      {/* Separator pod navbarem — hugs the row, no trailing dead space below the line */}
+      <div className="relative h-[3px] w-full px-4">
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 3" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 1.5 Q 300 1 600 1.5" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
         </svg>
       </div>
     </div>

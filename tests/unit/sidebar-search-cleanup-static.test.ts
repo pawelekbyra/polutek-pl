@@ -45,7 +45,7 @@ describe("#1104 search/sidebar cleanup contracts", () => {
   });
 
   it("removes dead isPatron prop and tip gate language", () => {
-    expect(source("app/components/VideoPlaylist.tsx")).not.toContain("isPatron");
+    expect(source("app/components/channel/DonationBox.tsx")).not.toContain("isPatron");
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect(sidebar).not.toContain("isPatron=");
     expect(sidebar).not.toContain("TIP GATE");

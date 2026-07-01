@@ -46,7 +46,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
   if (isCompact) {
     const isTiny = variant === "thumbnailCompact";
-    const iconSize = isTiny ? 18 : 22;
+    const iconSize = isTiny ? 28 : 34;
     const label = isPatron
       ? (isPl ? "Patroni" : "Patrons")
       : (isPl ? "Zaloguj się" : "Sign in");
@@ -54,13 +54,13 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
     return (
       <PlayerStateFrame fill className={isTiny ? "rounded-md" : "rounded-lg"}>
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[3px] [container-type:inline-size]"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[6px] [container-type:inline-size]"
           style={{ background: "rgba(248,243,231,0.95)" }}
         >
           <Frame radius={isTiny ? 10 : 14} seed={9} stroke={INK} strokeWidth={isTiny ? 0.9 : 1.1} />
           <span className="relative">{isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}</span>
           <span
-            className="relative text-[clamp(7px,3.2cqi,11px)] font-bold text-[#171717] leading-tight px-1 text-center"
+            className="relative text-[clamp(10px,8cqi,16px)] font-bold text-[#171717] leading-tight px-1 text-center"
             style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
           >
             {label}

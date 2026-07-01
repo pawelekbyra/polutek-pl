@@ -179,11 +179,11 @@ function PlayerTimeReadout() {
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-[3px] w-full overflow-hidden rounded-full bg-white/22 transition-[height] group-data-[dragging]/slider:h-[4px]";
+    const trackClass = "relative h-[4px] w-full overflow-hidden rounded-full bg-white/30 shadow-[0_0_0_1px_rgba(0,0,0,0.25)] transition-[height] group-hover/slider:h-[6px] group-data-[dragging]/slider:h-[6px]";
     const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-[15px] w-[15px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_2px_0_rgba(0,0,0,0.35)] transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
-        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-2 pb-1.5 pt-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4 sm:pb-3 sm:pt-10">
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-2 pb-1.5 pt-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4 sm:pb-3 sm:pt-8">
             <PlayerTimeScrubber trackClass={trackClass} thumbClass={thumbClass} />
 
             <Controls.Group className="mt-0 flex min-h-9 min-w-0 items-center justify-between gap-2 sm:min-h-11 sm:gap-3">
@@ -280,7 +280,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     return (
         <div
             ref={scrubberRef}
-            className="group/slider relative z-40 mt-1 flex h-7 w-full cursor-pointer touch-none select-none items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60 sm:mt-2 sm:h-12 sm:py-3"
+            className="group/slider relative z-40 mt-1 flex h-7 w-full cursor-pointer touch-none select-none items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60 sm:mt-1.5 sm:h-9 sm:py-2"
             style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
             data-dragging={isDragging ? "" : undefined}
             data-disabled={!safeDuration}

@@ -4,6 +4,7 @@ import { generateCSP } from "@/lib/utils/security";
 
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/search',
   '/watch/(.*)',
   '/channel/(.*)',
   '/katalog',

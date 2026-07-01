@@ -13,7 +13,7 @@ interface InstallAppMenuProps {
 export default function InstallAppMenu({ className }: InstallAppMenuProps) {
   const { language } = useLanguage();
   const isPl = language === "pl";
-  const { installed, canInstallDirectly, install } = usePwaInstall();
+  const { installed, isIOS, canInstallDirectly, install } = usePwaInstall();
   const [isOpen, setIsOpen] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -31,13 +31,22 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  // Nothing to offer: not installable (no captured native prompt) and not an
+  // Apple device (the only platform where we fall back to manual instructions,
+  // since iOS never exposes an installability signal at all).
+  if (!installed && !isIOS && !canInstallDirectly) {
+    return null;
+  }
+
   const handleInstallClick = async () => {
+    if (isIOS) {
+      setShowIosInstructions(true);
+      return;
+    }
     if (canInstallDirectly) {
       setIsOpen(false);
       await install();
-      return;
     }
-    setShowIosInstructions(true);
   };
 
   return (

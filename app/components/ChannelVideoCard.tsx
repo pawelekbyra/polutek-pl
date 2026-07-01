@@ -111,7 +111,7 @@ export default function ChannelVideoCard({
               </div>
             )}
             {/* Access Indicator Badge on Thumbnail */}
-            {badge && hasAccess && (
+            {badge && (
               <div
                 className={cn(
                   "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",

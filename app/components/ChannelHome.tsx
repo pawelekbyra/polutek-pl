@@ -48,7 +48,7 @@ export default function ChannelHome({
 
   useEffect(() => {
     setMounted(true);
-    if (selectedVideo?.id) window.scrollTo({ top: 0, behavior: "auto" });
+    if (selectedVideo?.id) window.scrollTo({ top: 0, behavior: "smooth" });
   }, [selectedVideo?.id]);
 
   if (!selectedVideo)
@@ -135,7 +135,7 @@ export default function ChannelHome({
               </div>
               <NajsSeparator className="px-0" />
             </div>
-            <div className="lg:hidden mt-4">
+            <div className="lg:hidden mt-2">
               {activeTab === "comments" ? (
                 <EmbeddedComments
                   videoId={selectedVideo.id}
@@ -144,11 +144,6 @@ export default function ChannelHome({
                 />
               ) : (
                 <div className="space-y-2">
-                  <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-                      {t.materials}
-                    </h3>
-                  </div>
                   <SidebarPlaylist {...commonSidebarProps} />
                 </div>
               )}
