@@ -1,6 +1,6 @@
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { validateAppEnv } from '@/lib/env/validation';
-import { visiblePublishedAtFilter } from '@/lib/services/content/video.service';
+import { visiblePublishedAtFilter } from '@/lib/modules/video/infrastructure/video-content.service';
 
 type DiagnosticCreator = {
   id: string;

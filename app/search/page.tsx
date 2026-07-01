@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
-import { VideoSearchService } from "@/lib/services/content/video-search.service";
+import { VideoSearchService } from "@/lib/modules/video/application/video-search.service";
 
 export const dynamic = "force-dynamic";
 

@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { loadHomeContent } from '@/lib/services/home-content.loader';
-import { CreatorContentService, VideoContentService } from '@/lib/services/content.service';
+import { loadHomeContent } from '@/lib/modules/channel/application/home-content.loader';
+import { CreatorContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
+import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 
-vi.mock('@/lib/services/content.service', () => ({
+vi.mock('@/lib/modules/channel/infrastructure/creator-content.service', () => ({
   CreatorContentService: {
     getConfiguredOrDefaultCreator: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/modules/video/infrastructure/video-content.service', () => ({
   VideoContentService: {
     getAllVideos: vi.fn(),
     getMainFeaturedVideo: vi.fn(),

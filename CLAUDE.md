@@ -159,7 +159,15 @@ Located in `app/admin/`. Key areas:
 
 Registered in `vercel.json` under `"crons"`. All cron routes live in `app/api/cron/`. Auth via `Authorization: Bearer <CRON_SECRET>` header.
 
-| Route | Schedule | Purpose |
+**Uwaga:** Cron `stripe-reconciliation` został usunięty z `vercel.json` ponieważ konto Hobby na Vercel nie obsługuje harmonogramów częstszych niż raz dziennie (wyrażenie `*/15 * * * *` blokuje deployment). Trasa API `/api/cron/stripe-reconciliation` nadal istnieje i działa — przy upgrade na plan Pro wystarczy dodać poniższy wpis z powrotem do `vercel.json`:
+
+```json
+{ "path": "/api/cron/stripe-reconciliation", "schedule": "*/15 * * * *" }
+```
+
+Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min (do 7 dni) i odpala `fulfillPayment()` ponownie — zabezpieczenie na wypadek utraty webhooka Stripe. Bez crona patron może czekać na dostęp do czasu ręcznej interwencji lub ponownej próby webhooka przez Stripe.
+
+| Route | Schedule (Pro) | Purpose |
 |---|---|---|
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers PENDING payments stuck 15min–7d by re-running `fulfillPayment()` or marking as FAILED |
 

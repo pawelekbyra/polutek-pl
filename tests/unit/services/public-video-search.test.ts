@@ -4,7 +4,7 @@ import type { PublicVideoDTO } from "@/app/types/video";
 import {
   normalizePublicVideoSearchQuery,
   searchPublicVideos,
-} from "@/lib/services/public-video-search";
+} from "@/lib/modules/video/application/video-search.service";
 
 const makeVideo = (overrides: Partial<PublicVideoDTO>): PublicVideoDTO => ({
   id: overrides.id ?? "v1",

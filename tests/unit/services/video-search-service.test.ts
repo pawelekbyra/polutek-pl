@@ -5,7 +5,7 @@ const findMany = vi.fn();
 const getOptional = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({ prisma: { video: { findMany } } }));
-vi.mock("@/lib/channel/main-channel.service", () => ({
+vi.mock("@/lib/modules/channel", () => ({
   MainChannelService: { getOptional },
 }));
 
@@ -47,14 +47,14 @@ describe("VideoSearchService", () => {
   });
 
   it("normalizes diacritics, ł, case, whitespace, hyphens and underscores", async () => {
-    const { VideoSearchService } = await import("@/lib/services/content/video-search.service");
+    const { VideoSearchService } = await import("@/lib/modules/video/application/video-search.service");
     expect(VideoSearchService.normalizeQuery("  ŻÓŁĆ  ")).toBe("zolc");
     expect(VideoSearchService.normalizeQuery("test-film__NOWY   odcinek")).toBe("test film nowy odcinek");
     expect(VideoSearchService.normalizeQuery(null)).toBe("");
   });
 
   it("queries the public metadata catalog without showInSidebar and includes all public-visible tiers", async () => {
-    const { VideoSearchService } = await import("@/lib/services/content/video-search.service");
+    const { VideoSearchService } = await import("@/lib/modules/video/application/video-search.service");
     findMany.mockResolvedValue([
       row({ id: "public", title: "Szukaj", tier: AccessTier.PUBLIC }),
       row({ id: "logged", title: "Szukaj", tier: AccessTier.LOGGED_IN }),
@@ -76,7 +76,7 @@ describe("VideoSearchService", () => {
   });
 
   it("matches title, titleEn, descriptions, slug and creator name", async () => {
-    const { VideoSearchService } = await import("@/lib/services/content/video-search.service");
+    const { VideoSearchService } = await import("@/lib/modules/video/application/video-search.service");
     const videos = [
       row({ id: "title", title: "Tajemnica" }),
       row({ id: "title-en", title: "Inne", titleEn: "English Story" }),
@@ -94,7 +94,7 @@ describe("VideoSearchService", () => {
   });
 
   it("ranks exact and title matches above weaker matches with stable tie-breakers", async () => {
-    const { VideoSearchService } = await import("@/lib/services/content/video-search.service");
+    const { VideoSearchService } = await import("@/lib/modules/video/application/video-search.service");
     const results = VideoSearchService.rankVideos([
       row({ id: "desc", title: "Other", description: "alpha" }),
       row({ id: "include", title: "Other alpha" }),

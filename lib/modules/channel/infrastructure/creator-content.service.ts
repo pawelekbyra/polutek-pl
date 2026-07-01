@@ -4,8 +4,8 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
-import { VideoContentService, publicVideoOrderBy } from './video.service';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { VideoContentService, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
+import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 
 export class CreatorContentService {
   static async getCreatorBySlug(slug: string | null): Promise<PublicCreatorPageDTO | null> {

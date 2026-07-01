@@ -1,9 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AccessTier, VideoStatus } from '@prisma/client';
-import { buildPublicVideoWhere } from '@/lib/services/content/video.service';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { buildPublicVideoWhere } from '@/lib/modules/video/infrastructure/video-content.service';
+import { MainChannelService } from '@/lib/modules/channel';
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
+vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getOptional: vi.fn(),
   },

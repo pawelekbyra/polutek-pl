@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
-import { parseVideoQueryParams, parseUserQueryParams, parsePaymentQueryParams } from '@/lib/services/admin/admin-query-parser';
+import { parseVideoQueryParams, parseUserQueryParams, parsePaymentQueryParams } from '@/lib/admin/query-parser';
 
 describe('Admin Query Parsers', () => {
   describe('parseVideoQueryParams', () => {

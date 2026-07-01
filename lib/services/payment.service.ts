@@ -5,9 +5,13 @@ import Stripe from 'stripe';
 import { recalculatePatronStatus } from '@/lib/modules/patron';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
-import { PaymentCheckoutService } from './payments/checkout.service';
-import { PaymentFulfillmentService } from './payments/fulfillment.service';
-import { PaymentRefundService, calculateRefundAdjustment } from './payments/refund.service';
+import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
+import {
+  calculateRefundAdjustment,
+  calculateChargebackNetAdjustment,
+  applyLostChargeback,
+  decrementUserNetPaymentTotals,
+} from '@/lib/modules/payments/domain/payment-adjustments';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 
 function getStripe() {
@@ -26,17 +30,22 @@ function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
   };
 }
 
-export { PaymentCheckoutService, PaymentFulfillmentService, PaymentRefundService };
-
-export { calculateRefundAdjustment, calculateChargebackNetAdjustment, applyLostChargeback } from './payments/refund.service';
-
 /**
  * @deprecated Use modular use cases from @/lib/modules/payments.
  * Kept as compatibility shim for test coverage only.
  */
 export class PaymentService {
-  static createPayment = PaymentCheckoutService.createPayment.bind(PaymentCheckoutService);
-  static fulfillPayment = PaymentFulfillmentService.fulfillPayment.bind(PaymentFulfillmentService);
+  static async fulfillPayment(intent: Stripe.PaymentIntent) {
+    const result = await fulfillPayment({
+      paymentId: intent.metadata?.paymentId,
+      stripeIntentId: intent.id,
+      metadataUserId: intent.metadata?.userId,
+      amountMinor: intent.amount,
+      currency: intent.currency,
+    }, createAppContext({ actor: { type: 'system', reason: 'legacy Stripe fulfillment delegate' } }));
+
+    if (!result.ok) throw result.error;
+  }
 
   static async handleWebhook(body: string, sig: string) {
     const startedAt = startTimer();
@@ -180,7 +189,7 @@ export class PaymentService {
           return null;
         }
 
-        await PaymentRefundService.decrementUserTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
+        await decrementUserNetPaymentTotals(tx, payment.userId, payment.currency, refund.deltaRefundMinor);
 
         if (refund.isFullRefund) {
             await tx.patronGrant.updateMany({ where: { paymentId: payment.id, revokedAt: null }, data: { revokedAt: new Date(), reason: 'Payment fully refunded' } });
@@ -214,7 +223,7 @@ export class PaymentService {
 
     if (dispute.status === 'lost') {
         const syncData = await prisma.$transaction(async (tx) => {
-            await PaymentRefundService.applyLostChargeback(tx, payment, dispute.status);
+            await applyLostChargeback(tx, payment, dispute.status);
             const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });
             const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
             if (!recalcResult.ok) throw new Error(recalcResult.error.message);
