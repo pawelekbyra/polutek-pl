@@ -12,6 +12,8 @@ interface ShareButtonProps {
   title: string;
   text?: string;
   className?: string;
+  /** Stretch to fill remaining row width on mobile, matching desktop's fixed width from `lg` up. */
+  fill?: boolean;
 }
 
 const XIcon = ({ className }: { className?: string }) => (
@@ -24,7 +26,8 @@ export default function ShareButton({
   url: propUrl,
   title,
   text,
-  className
+  className,
+  fill = false,
 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { isMobile, share, copied, copyToClipboard } = useShare();
@@ -60,18 +63,19 @@ export default function ShareButton({
   };
 
   return (
-    <div className="relative inline-block">
+    <div className={cn("relative", fill ? "flex-1 lg:flex-none" : "inline-block")}>
       <button
         onClick={handleShareClick}
         className={cn(
           "relative flex items-center justify-center gap-2 h-[38px] px-5 active:scale-95 text-[#171717] font-bold text-[13.5px]",
+          fill && "w-full",
           className
         )}
         style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
         <Frame radius={20} seed={41} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
         <NajsIcon name="send" className="relative h-[17px] w-[17px]" stroke={INK} />
-        <span className="relative hidden sm:inline">Szeruj</span>
+        <span className="relative">Szeruj</span>
       </button>
 
       {isOpen && !isMobile && (

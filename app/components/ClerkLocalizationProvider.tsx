@@ -5,16 +5,31 @@ import { ClerkProvider, useUser } from '@clerk/nextjs';
 import { plPL } from '@clerk/localizations';
 import { useLanguage } from './LanguageContext';
 import { updateUserLanguage } from '@/lib/actions/user';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import UnsubscribedEmailConsentPrompt from './subscriptions/UnsubscribedEmailConsentPrompt';
 
 function LocalizationLogic({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { language, setLanguage, isInitialized } = useLanguage();
   const { user, isLoaded } = useUser();
   const [syncedOnce, setSyncedOnce] = useState(false);
   // Track the language that is already persisted in Clerk metadata so we don't
   // make a redundant API call on every mount.
   const [persistedLanguage, setPersistedLanguage] = useState<string | null>(null);
+  // null = not yet observed. Used to detect a live sign-in transition (as opposed
+  // to already being signed in on first mount) so server-rendered patron/access/
+  // comment state gets refetched instead of staying stale until a manual reload.
+  const wasSignedInRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const isSignedIn = Boolean(user);
+    if (wasSignedInRef.current === false && isSignedIn) {
+      router.refresh();
+    }
+    wasSignedInRef.current = isSignedIn;
+  }, [isLoaded, user, router]);
 
   // Sync DB preference to Context ONLY ONCE on login
   useEffect(() => {

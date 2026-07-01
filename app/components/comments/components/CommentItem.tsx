@@ -113,9 +113,9 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "flex items-start transition-colors duration-1000",
-        isReply ? "gap-[13px] group/reply" : "gap-[13px] group/comment",
-        isHighlighted && "bg-blue-50 ring-2 ring-blue-100 rounded-lg p-2 -m-2"
+        "flex items-start gap-[13px] rounded-xl border bg-white p-3 shadow-sm transition-colors duration-1000",
+        isReply ? "group/reply" : "group/comment",
+        isHighlighted ? "border-blue-200 bg-blue-50 ring-2 ring-blue-100" : "border-[#ececec]"
       )}
     >
       <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>

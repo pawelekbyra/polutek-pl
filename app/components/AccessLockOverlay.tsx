@@ -57,12 +57,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[3px] [container-type:inline-size]"
           style={{ background: "rgba(248,243,231,0.95)" }}
         >
-          <svg className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true">
-            <path
-              d={`M 3 4 Q 3 3 4 3 L ${isTiny ? 99 : 154} 3 Q ${isTiny ? 100 : 155} 3 ${isTiny ? 100 : 155} 4 L ${isTiny ? 100 : 155} ${isTiny ? 85 : 87} Q ${isTiny ? 100 : 155} 88 ${isTiny ? 99 : 154} 88 L 4 88 Q 3 88 3 ${isTiny ? 85 : 87} Z`}
-              fill="none" stroke={INK} strokeWidth="0.9" opacity="0.4"
-            />
-          </svg>
+          <Frame radius={isTiny ? 10 : 14} seed={9} stroke={INK} strokeWidth={isTiny ? 0.9 : 1.1} />
           <span className="relative">{isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}</span>
           <span
             className="relative text-[clamp(7px,3.2cqi,11px)] font-bold text-[#171717] leading-tight px-1 text-center"

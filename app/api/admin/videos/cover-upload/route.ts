@@ -41,12 +41,6 @@ export async function POST(req: NextRequest) {
     }
 
     const access = getBlobAccess();
-    if (access === "private" && !videoId) {
-      return NextResponse.json(
-        { error: "Video must be saved as a draft before uploading a cover when using private storage." },
-        { status: 400 }
-      );
-    }
 
     const uuid = crypto.randomUUID();
     const extension = file.type.split("/")[1] || "webp";

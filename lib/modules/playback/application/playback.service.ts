@@ -12,7 +12,7 @@ import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
 import { MuxClient } from '@/lib/modules/video';
-import type { VideoAsset } from '@prisma/client';
+import { VideoStatus, type VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -36,6 +36,12 @@ const LEGACY_STORAGE_PROVIDERS = new Set(['R2', 'S3', 'VERCEL_BLOB']);
 
 function emptyPlaybackRuntime(): PlayerDefaults['tracking'] {
   return { playbackSessionId: '', heartbeatIntervalSeconds: 0 };
+}
+
+// Only draft/unpublished admin previews are excluded from view counts — once a
+// video is PUBLISHED, the admin's own genuine watches count like anyone else's.
+function isAdminPreviewSession(actorType: string, videoStatus: VideoStatus | string | null | undefined): boolean {
+  return actorType === 'admin' && videoStatus !== VideoStatus.PUBLISHED;
 }
 
 function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
@@ -237,7 +243,7 @@ export class PlaybackService {
             const playbackUrl = buildCloudflareSignedHlsManifestUrl(signedPlayback.token);
             const embedUrl = buildCloudflareSignedIframeUrl(signedPlayback.token);
 
-            const isAdminPreview = actor.type === 'admin';
+            const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
 
             // Create a session only after successful resolution
             const session = await prisma.videoPlaybackSession.create({
@@ -336,7 +342,7 @@ export class PlaybackService {
             userAgentHash,
             sourceKind: 'youtube',
             accessTier: tier as any,
-            isAdminPreview: actor.type === 'admin',
+            isAdminPreview: isAdminPreviewSession(actor.type, video?.status),
           }
         });
 
@@ -391,7 +397,7 @@ export class PlaybackService {
           }
 
           const posterUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
-          const isAdminPreview = actor.type === 'admin';
+          const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
 
           const session = await prisma.videoPlaybackSession.create({
             data: {
@@ -484,7 +490,7 @@ export class PlaybackService {
             userAgentHash,
             sourceKind: 'vimeo',
             accessTier: tier as any,
-            isAdminPreview: actor.type === 'admin',
+            isAdminPreview: isAdminPreviewSession(actor.type, video?.status),
           },
         });
 
@@ -583,7 +589,7 @@ export class PlaybackService {
         sourceInfo.playbackUrl = `/api/media/${videoId}`;
     }
 
-    const isAdminPreview = actor.type === 'admin';
+    const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
 
     // Create sessions only for a concrete playable legacy/embed plan. Denied,
     // not-ready, and provider-placeholder plans never get sessions and therefore

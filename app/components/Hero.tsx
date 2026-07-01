@@ -15,6 +15,7 @@ import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
+import InstallAppMenu from './InstallAppMenu';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Frame, NajsIcon, INK } from './najs/primitives';
 
@@ -76,6 +77,16 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     if (!userId) return openSignIn();
     if (isPending) return;
 
+    const previousState = interactionState;
+    const nextIsLiked = !previousState.isLiked;
+    // Optimistic update: reflect the click immediately, reconcile with the server after.
+    setInteractionState({
+        isLiked: nextIsLiked,
+        isDisliked: nextIsLiked ? false : previousState.isDisliked,
+        likesCount: Math.max(0, previousState.likesCount + (nextIsLiked ? 1 : -1)),
+        dislikesCount: nextIsLiked && previousState.isDisliked ? Math.max(0, previousState.dislikesCount - 1) : previousState.dislikesCount,
+    });
+
     startTransition(async () => {
         try {
             logger.debug("[Hero] Toggling LIKE for video:", video.id);
@@ -83,6 +94,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
             if (result.error) {
                 logger.error("[Hero] LIKE Action failed:", result.error, result.message);
+                setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -103,6 +115,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             }
         } catch (error: unknown) {
             logger.error("[Hero] Transition error during LIKE:", error);
+            setInteractionState(previousState);
             toast("Błąd serwera podczas polubienia. Sprawdź połączenie.", 'error');
         }
     });
@@ -112,6 +125,16 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     if (!userId) return openSignIn();
     if (isPending) return;
 
+    const previousState = interactionState;
+    const nextIsDisliked = !previousState.isDisliked;
+    // Optimistic update: reflect the click immediately, reconcile with the server after.
+    setInteractionState({
+        isDisliked: nextIsDisliked,
+        isLiked: nextIsDisliked ? false : previousState.isLiked,
+        dislikesCount: Math.max(0, previousState.dislikesCount + (nextIsDisliked ? 1 : -1)),
+        likesCount: nextIsDisliked && previousState.isLiked ? Math.max(0, previousState.likesCount - 1) : previousState.likesCount,
+    });
+
     startTransition(async () => {
         try {
             logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
@@ -119,6 +142,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
             if (result.error) {
                 logger.error("[Hero] DISLIKE Action failed:", result.error, result.message);
+                setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
                     openSignIn();
                 } else if (result.error === 'CLERK_ERROR') {
@@ -139,6 +163,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             }
         } catch (error: unknown) {
             logger.error("[Hero] Transition error during DISLIKE:", error);
+            setInteractionState(previousState);
             toast("Błąd serwera podczas oceny. Sprawdź połączenie.", 'error');
         }
     });
@@ -159,7 +184,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3">
-          <h1 className="font-bold text-[23px] text-[#0f0f0f] leading-[1.25] mb-[14px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+          <h1 className="font-sans font-bold not-italic text-[23px] text-[#0f0f0f] leading-[1.25] mb-[14px]">
              {displayTitle}
           </h1>
 
@@ -194,7 +219,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
-                    gold
                     initialIsSubscribed={localSubState.isSubscribed}
                     onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
                         setLocalSubState(prev => ({
@@ -207,13 +231,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className="flex w-full items-center gap-[9px] lg:w-auto">
-               <div className="relative flex h-[38px] flex-1 items-center lg:flex-none">
+               <div className="relative flex h-[38px] shrink-0 items-center">
                   <Frame radius={20} seed={23} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "relative flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:flex-none lg:pl-5 lg:pr-4",
+                        "relative flex h-full items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:pl-5 lg:pr-4",
                         interactionState.isLiked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
@@ -222,12 +246,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      <NajsIcon name="like" className="h-[18px] w-[18px]" stroke={interactionState.isLiked ? "#2563eb" : INK} />
                      <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
-                  <span className="relative h-5 w-px bg-neutral-900/20" />
+                  <span className="relative h-5 w-px bg-[#171717]" />
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "relative flex h-full flex-1 min-w-0 items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:flex-none",
+                        "relative flex h-full items-center justify-center gap-2 px-4 transition-colors active:opacity-70",
                         interactionState.isDisliked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
@@ -241,15 +265,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
                     title={displayTitle}
                     text={video.description || undefined}
+                    fill
                   />
-               <button
-                 type="button"
-                 className="relative w-[38px] h-[38px] flex items-center justify-center shrink-0 active:scale-95"
-                 aria-label="Menu"
-               >
-                  <Frame radius={20} seed={31} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-                  <NajsIcon name="more" className="relative h-[18px] w-[18px]" stroke={INK} />
-               </button>
+               <InstallAppMenu />
             </div>
           </div>
         </div>
@@ -259,10 +277,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
            <Frame radius={14} seed={11} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.95)" />
            <div className="relative z-10">
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
-                <span className="text-[13.5px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                <span className="font-sans text-[13.5px] font-bold not-italic text-[#0f0f0f]">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
-                <span className="text-[13.5px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                <span className="font-sans text-[13.5px] font-bold not-italic text-[#0f0f0f]">
                    · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>

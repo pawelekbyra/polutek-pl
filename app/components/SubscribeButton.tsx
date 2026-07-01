@@ -18,7 +18,6 @@ interface SubscribeButtonProps {
   className?: string;
   variant?: "default" | "compact";
   colorScheme?: "default" | "v2";
-  gold?: boolean;
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
@@ -72,7 +71,6 @@ export default function SubscribeButton({
   className,
   variant = "default",
   colorScheme = "default",
-  gold = false,
   onStatusChange,
 }: SubscribeButtonProps) {
   const { t, language } = useLanguage();
@@ -176,52 +174,16 @@ export default function SubscribeButton({
     });
   };
 
-  const isGoldActive = gold && !isSubscribed;
-
   return (
     <>
-      {isGoldActive && (
-        <style>{`
-          @keyframes goldShimmer {
-            0%   { background-position: 200% center; }
-            100% { background-position: -200% center; }
-          }
-          .gold-btn {
-            background: linear-gradient(105deg,
-              #3d2000 0%,
-              #9a6800 12%,
-              #d4a020 24%,
-              #f7e060 38%,
-              #fff0a0 50%,
-              #f7e060 62%,
-              #d4a020 76%,
-              #9a6800 88%,
-              #3d2000 100%
-            );
-            background-size: 250% 100%;
-            animation: goldShimmer 4s linear infinite;
-            box-shadow:
-              0 2px 22px rgba(212,160,32,0.45),
-              0 1px 0 rgba(255,240,140,0.35) inset,
-              0 -1px 0 rgba(60,30,0,0.3) inset;
-          }
-          .gold-btn:hover {
-            box-shadow:
-              0 4px 32px rgba(212,160,32,0.65),
-              0 1px 0 rgba(255,240,140,0.5) inset,
-              0 -1px 0 rgba(60,30,0,0.3) inset;
-          }
-        `}</style>
-      )}
       <motion.button
         whileHover={{ y: -1 }}
         whileTap={{ scale: 0.97 }}
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-[13.5px] font-bold h-[38px] px-[20px] flex items-center justify-center transition-all active:scale-95",
-          isSubscribed ? "text-[#171717]" : isGoldActive ? "text-[#2d1400]" : "text-white",
-          isGoldActive && "gold-btn",
+          "relative text-[13.5px] font-bold h-[38px] px-[20px] flex items-center justify-center gap-2 transition-all active:scale-95",
+          isSubscribed ? "text-[#171717]" : "text-white",
           isPending && "opacity-50 cursor-wait",
           className,
         )}
@@ -230,13 +192,13 @@ export default function SubscribeButton({
         <Frame
           radius={20}
           seed={37}
-          stroke={isGoldActive ? "#b8860b" : INK}
-          strokeWidth={isGoldActive ? 1.6 : 1.2}
-          fill={isGoldActive ? "transparent" : isSubscribed ? "rgba(248,243,231,.88)" : colorScheme === "v2" ? BLUE : "#171717"}
-          showShadow={colorScheme === "v2" || isGoldActive}
+          stroke={INK}
+          strokeWidth={1.2}
+          fill={isSubscribed ? "rgba(248,243,231,.88)" : colorScheme === "v2" ? BLUE : "#171717"}
+          showShadow={colorScheme === "v2"}
         />
-        <SubscribeBellIcon size={16} className="mr-2 relative" filled={isSubscribed} />
-        <span className="relative">{isSubscribed ? (t.subscribed || "Subskrybujesz") : (t.subscribe || "Subskrybuj")}</span>
+        <SubscribeBellIcon size={16} className="relative shrink-0" filled={isSubscribed} />
+        <span className="relative leading-none">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">

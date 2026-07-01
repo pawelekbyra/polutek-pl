@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Frame, INK as FRAME_INK } from "./najs/primitives";
 
 type Phase = "skip" | "showing" | "ready" | "exiting" | "done";
 
@@ -10,6 +11,20 @@ const INK = "#121212";
 const INK_FAINT = "rgba(18,18,18,0.13)";
 const FONT = "var(--font-patrick, 'Patrick Hand', cursive)";
 const MIN_MS = 1600;
+
+// Same square hand-drawn mark rendered by app/icon.tsx / app/icon-512 (the OS
+// launch icon). Showing it here too — instantly, unanimated — is what makes the
+// handoff from the native splash to this screen read as a single continuous splash.
+function AppIconMark() {
+  return (
+    <div style={{ position: "relative", width: 64, height: 64 }}>
+      <Frame radius={16} seed={7} stroke={FRAME_INK} strokeWidth={2.2} fill={PAPER} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontFamily: FONT, fontSize: 34, color: INK, lineHeight: 1 }}>P</span>
+      </div>
+    </div>
+  );
+}
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -93,7 +108,8 @@ export function SplashScreen() {
       <div
         style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: PAPER, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
       >
-        <button onClick={handleEnter} style={{ fontFamily: FONT, fontSize: 22, letterSpacing: 10, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, padding: "24px 48px", background: "transparent", cursor: "pointer" }}>
+        <AppIconMark />
+        <button onClick={handleEnter} style={{ marginTop: 28, fontFamily: FONT, fontSize: 22, letterSpacing: 10, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, padding: "24px 48px", background: "transparent", cursor: "pointer" }}>
           ENTER
         </button>
       </div>
@@ -123,6 +139,12 @@ export function SplashScreen() {
 
           {/* Main content */}
           <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+
+            {/* App icon mark — present at the same spot/size as the OS launch icon it hands off
+                from, with no entrance animation, so the transition is imperceptible. */}
+            <div style={{ marginBottom: 20 }}>
+              <AppIconMark />
+            </div>
 
             {/* Handwritten text */}
             <motion.div

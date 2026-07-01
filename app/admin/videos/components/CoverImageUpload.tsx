@@ -35,9 +35,22 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
   const [previewUrl, setPreviewUrl] = useState<string | null>(toDisplayUrl(initialUrl, videoId));
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  // Tracks the raw storage URL we just uploaded so the sync effect below doesn't
+  // clobber the freshly-uploaded local preview with a stale DB-backed proxy URL
+  // (the video record isn't persisted with the new thumbnailUrl until the form is saved).
+  const uploadedRawUrlRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (initialUrl && initialUrl === uploadedRawUrlRef.current) return;
     setPreviewUrl(toDisplayUrl(initialUrl, videoId));
   }, [initialUrl, videoId]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
@@ -127,7 +140,14 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
         throw new Error(data.error || "Błąd podczas przesyłania miniatury.");
       }
 
-      setPreviewUrl(toDisplayUrl(data.storageUrl || data.url, videoId));
+      // Show the freshly cropped image immediately from the local blob instead of
+      // round-tripping through the DB-backed thumbnail proxy, which still serves the
+      // old value until the form is actually saved.
+      const localPreviewUrl = URL.createObjectURL(croppedImageBlob);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = localPreviewUrl;
+      uploadedRawUrlRef.current = data.storageUrl || data.url;
+      setPreviewUrl(localPreviewUrl);
       onUploadSuccess(data.storageUrl || data.url);
       setIsCropping(false);
       setImage(null);
@@ -162,6 +182,7 @@ export function CoverImageUpload({ videoId, initialUrl, onUploadSuccess, classNa
                 src={previewUrl}
                 alt="Miniatura"
                 fill
+                unoptimized={previewUrl.startsWith("blob:")}
                 className="object-cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">

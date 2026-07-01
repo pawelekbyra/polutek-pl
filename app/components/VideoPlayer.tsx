@@ -183,10 +183,10 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-[15px] w-[15px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_2px_0_rgba(0,0,0,0.35)] transition-transform group-data-[dragging]/slider:scale-125";
 
     return (
-        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4">
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-2 pb-1.5 pt-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4 sm:pb-3 sm:pt-10">
             <PlayerTimeScrubber trackClass={trackClass} thumbClass={thumbClass} />
 
-            <Controls.Group className="mt-0 flex min-h-11 min-w-0 items-center justify-between gap-2 sm:gap-3">
+            <Controls.Group className="mt-0 flex min-h-9 min-w-0 items-center justify-between gap-2 sm:min-h-11 sm:gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
                     <PlayerPlayButton className={buttonClass} />
 
@@ -280,7 +280,7 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     return (
         <div
             ref={scrubberRef}
-            className="group/slider relative z-40 mt-2 flex h-12 w-full cursor-pointer touch-none select-none items-center py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60"
+            className="group/slider relative z-40 mt-1 flex h-7 w-full cursor-pointer touch-none select-none items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60 sm:mt-2 sm:h-12 sm:py-3"
             style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
             data-dragging={isDragging ? "" : undefined}
             data-disabled={!safeDuration}
