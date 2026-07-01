@@ -37,9 +37,9 @@ function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
 export class PaymentService {
   static async fulfillPayment(intent: Stripe.PaymentIntent) {
     const result = await fulfillPayment({
-      paymentId: intent.metadata.paymentId,
+      paymentId: intent.metadata?.paymentId,
       stripeIntentId: intent.id,
-      metadataUserId: intent.metadata.userId,
+      metadataUserId: intent.metadata?.userId,
       amountMinor: intent.amount,
       currency: intent.currency,
     }, createAppContext({ actor: { type: 'system', reason: 'legacy Stripe fulfillment delegate' } }));

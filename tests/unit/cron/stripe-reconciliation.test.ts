@@ -22,7 +22,10 @@ vi.mock('@/lib/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
   },
+  createScopedLogger: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
 }));
 
 const mockRetrieve = vi.fn();
