@@ -1,6 +1,6 @@
+import { PaymentStatus, Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { prisma } from '@/lib/prisma';
-import { PaymentStatus, Prisma } from '@prisma/client';
 
 type RefundCalculationInput = {
   amountMinor: number;
@@ -65,7 +65,7 @@ export async function applyLostChargeback(
   });
 
   if (count === 0) {
-    logger.info(`[PaymentRefundService] Payment ${payment.id} already marked as CHARGEBACK_LOST or not found.`);
+    logger.info(`[PaymentAdjustments] Payment ${payment.id} already marked as CHARGEBACK_LOST or not found.`);
     return;
   }
 
@@ -80,15 +80,4 @@ export async function applyLostChargeback(
     where: { paymentId: payment.id, revokedAt: null },
     data: { revokedAt: new Date(), reason: `Payment disputed: ${disputeStatus}` },
   });
-}
-
-/**
- * @deprecated Use handleRefund or handleDispute use cases from @/lib/modules/payments.
- * R10 cleanup candidate.
- */
-export class PaymentRefundService {
-  static calculateRefundAdjustment = calculateRefundAdjustment;
-  static calculateChargebackNetAdjustment = calculateChargebackNetAdjustment;
-  static applyLostChargeback = applyLostChargeback;
-  static decrementUserTotals = decrementUserNetPaymentTotals;
 }

@@ -1,5 +1,6 @@
 export * from "./application/main-channel.service";
 export * from "./application/main-channel.maintenance";
+export { ChannelLayoutService } from "./application/channel-layout.service";
 export * from "./application/get-admin-channel-settings.use-case";
 export * from "./application/update-admin-channel-settings.use-case";
 export * from "./application/resync-subscribers.use-case";

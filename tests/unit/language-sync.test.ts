@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { UserLanguageService as UserService } from '@/lib/services/user/language.service';
+import { UserLanguageService as UserService } from '@/lib/modules/users/application/user-language.service';
 import { prisma } from '@/lib/prisma';
 import { clerkClient } from '@clerk/nextjs/server';
 

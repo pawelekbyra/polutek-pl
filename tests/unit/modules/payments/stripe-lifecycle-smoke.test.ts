@@ -6,6 +6,7 @@ import { getPatronStatus, revokePatron } from '@/lib/modules/patron';
 
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  createScopedLogger: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
 }));
 
 vi.mock('@/lib/observability', () => ({

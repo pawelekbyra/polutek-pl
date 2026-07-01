@@ -9,6 +9,8 @@ export interface BaseVideoDto {
   description?: string | null;
   descriptionEn?: string | null;
   thumbnailUrl: string;
+  subtitleUrlPl?: string | null;
+  subtitleUrlEn?: string | null;
   duration?: string | null;
   tier: AccessTier;
   views: number;
@@ -173,6 +175,8 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     description: video.description,
     descriptionEn: video.descriptionEn,
     thumbnailUrl: video.thumbnailUrl,
+    subtitleUrlPl: video.subtitleUrlPl ?? null,
+    subtitleUrlEn: video.subtitleUrlEn ?? null,
     duration: video.duration,
     tier: video.tier,
     views: video.views,

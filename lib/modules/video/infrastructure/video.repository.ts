@@ -17,6 +17,8 @@ export interface CreateVideoInput {
   titleEn?: string | null;
   descriptionEn?: string | null;
   duration?: string | null;
+  subtitleUrlPl?: string | null;
+  subtitleUrlEn?: string | null;
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
@@ -33,6 +35,8 @@ export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
   sidebarOrder?: number;
+  subtitleUrlPl?: string | null;
+  subtitleUrlEn?: string | null;
 }
 
 export interface UpdateVideoInput extends AdminUpdateVideoInput {
@@ -283,6 +287,8 @@ export class VideoRepository {
     if (data.publishAfterAssetReadyRequestedAt !== undefined) updateData.publishAfterAssetReadyRequestedAt = data.publishAfterAssetReadyRequestedAt;
     if (data.publishAfterAssetReadyCompletedAt !== undefined) updateData.publishAfterAssetReadyCompletedAt = data.publishAfterAssetReadyCompletedAt;
     if (data.publishAfterAssetReadyError !== undefined) updateData.publishAfterAssetReadyError = data.publishAfterAssetReadyError;
+    if (data.subtitleUrlPl !== undefined) updateData.subtitleUrlPl = data.subtitleUrlPl;
+    if (data.subtitleUrlEn !== undefined) updateData.subtitleUrlEn = data.subtitleUrlEn;
 
     if (status && status !== VideoStatus.PUBLISHED) {
       updateData.status = status;

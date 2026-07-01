@@ -30,6 +30,8 @@ interface VideoFormData {
   isMainFeatured: boolean;
   showInSidebar: boolean;
   sidebarOrder: number;
+  subtitleUrlPl: string;
+  subtitleUrlEn: string;
 }
 
 interface VideoFormProps {
@@ -164,6 +166,16 @@ export function VideoForm({
                 <div className="space-y-2">
                   <Label htmlFor="duration">Czas trwania (opcjonalnie)</Label>
                   <Input id="duration" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} disabled={isSubmitting} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="subtitleUrlPl">URL napisów PL (opcjonalnie)</Label>
+                  <Input id="subtitleUrlPl" placeholder="https://..." value={formData.subtitleUrlPl} onChange={e => setFormData({...formData, subtitleUrlPl: e.target.value})} disabled={isSubmitting} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subtitleUrlEn">URL napisów EN (opcjonalnie)</Label>
+                  <Input id="subtitleUrlEn" placeholder="https://..." value={formData.subtitleUrlEn} onChange={e => setFormData({...formData, subtitleUrlEn: e.target.value})} disabled={isSubmitting} />
                 </div>
               </div>
               <div className="space-y-2">

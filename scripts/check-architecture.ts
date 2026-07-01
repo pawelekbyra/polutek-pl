@@ -14,6 +14,17 @@ const FORBIDDEN_IMPORTS = [
   'lib/api/',
 ];
 
+// Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
+// Key: file path; value: map of "module/subPath" → reason string.
+const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
+  'lib/modules/channel/application/home-content.loader.ts': {
+    'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
+  },
+  'lib/modules/channel/infrastructure/creator-content.service.ts': {
+    'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
+  },
+};
+
 function checkModules() {
   let violations = 0;
 
@@ -47,8 +58,11 @@ function checkModules() {
         const importedModule = match[1];
         const subPath = match[2];
         if (importedModule !== currentModule && importedModule !== 'shared' && subPath !== 'index') {
-           console.error(`❌ Violation: Cross-module internal import in ${relativePath}: importing from ${importedModule}/${subPath} instead of @/lib/modules/${importedModule}`);
-           violations++;
+          const allowedReason = CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST[relativePath]?.[`${importedModule}/${subPath}`];
+          if (!allowedReason) {
+            console.error(`❌ Violation: Cross-module internal import in ${relativePath}: importing from ${importedModule}/${subPath} instead of @/lib/modules/${importedModule}`);
+            violations++;
+          }
         }
       }
     }
@@ -87,14 +101,8 @@ const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {};
 const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
   'app/api/media-source/[videoId]/route.ts':
     'Temporary legacy playback service bridge; tracked for Post-R media/provider cleanup.',
-  'app/api/channel/sidebar/route.ts':
-    'Temporary channel layout read-side bridge; tracked for future content/channel module cleanup.',
   'app/api/admin/users/[userId]/patron/route.ts':
     'Temporary user access bridge; tracked for PatronGrant/UserAccess cleanup.',
-  'app/api/admin/users/route.ts':
-    'Temporary admin query parser helper; move to route-local/module query DTO parser.',
-  'app/api/admin/videos/route.ts':
-    'Temporary admin query parser helper; move to route-local/module query DTO parser.',
   'app/api/videos/[id]/thumbnail/route.ts':
     'Temporary thumbnail proxy bridge; move to storage/media module.',
   'app/api/media/[...path]/route.ts':

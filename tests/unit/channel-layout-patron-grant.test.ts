@@ -10,9 +10,9 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
-    getPublicRequired: vi.fn().mockResolvedValue({ id: 'creator-1' }),
+    getRequired: vi.fn().mockResolvedValue({ id: 'creator-1' }),
   },
 }));
 
@@ -55,7 +55,7 @@ describe('ChannelLayoutService patron access truth', () => {
       patronGrants: [{ id: 'grant-1' }],
     });
 
-    const { ChannelLayoutService } = await import('@/lib/services/channel/channel-layout.service');
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({
@@ -75,7 +75,7 @@ describe('ChannelLayoutService patron access truth', () => {
       patronGrants: [],
     });
 
-    const { ChannelLayoutService } = await import('@/lib/services/channel/channel-layout.service');
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(layout.viewerState).toBe('LOGGED_IN');

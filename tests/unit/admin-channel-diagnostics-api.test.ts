@@ -56,6 +56,7 @@ describe("admin channel diagnostics API", () => {
         name: "Polutek",
         bio: null,
         bannerUrl: null,
+        defaultThumbnailUrl: null,
         subscribersCount: 3,
         displaySubscribersCount: null,
         user: {

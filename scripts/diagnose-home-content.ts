@@ -106,7 +106,7 @@ async function main() {
 
     console.log(`\n--- Runtime ContentService Check ---`);
     try {
-        const { ContentService } = await import('../lib/services/content.service');
+        const { VideoContentService: ContentService } = await import('../lib/modules/video/infrastructure/video-content.service');
         const allVideos = await ContentService.getAllVideos();
         const mainVideo = await ContentService.getMainFeaturedVideo();
 

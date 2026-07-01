@@ -3,7 +3,7 @@
 import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { UserLanguageService as UserService } from "@/lib/services/user/language.service";
+import { UserLanguageService as UserService } from "@/lib/modules/users/application/user-language.service";
 
 export async function updateUserLanguage(language: 'en' | 'pl') {
   const { userId } = await auth();

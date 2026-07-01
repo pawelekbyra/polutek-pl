@@ -96,6 +96,12 @@ export function buildAdminVideoUpdatePayload(body: AdminVideoRequestBody): Updat
   const sidebarOrder = readNumberField(body, "sidebarOrder");
   if (sidebarOrder !== undefined) payload.sidebarOrder = sidebarOrder;
 
+  const subtitleUrlPl = readNullableTextField(body, "subtitleUrlPl");
+  if (subtitleUrlPl !== undefined) payload.subtitleUrlPl = subtitleUrlPl;
+
+  const subtitleUrlEn = readNullableTextField(body, "subtitleUrlEn");
+  if (subtitleUrlEn !== undefined) payload.subtitleUrlEn = subtitleUrlEn;
+
   return payload;
 }
 

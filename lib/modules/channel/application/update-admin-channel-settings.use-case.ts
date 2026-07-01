@@ -3,11 +3,13 @@ import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { invalidateDefaultThumbnailCache } from "@/lib/services/storage/default-thumbnail.service";
 
 export interface UpdateAdminChannelSettingsInput {
   name: string;
   bio?: string | null;
   bannerUrl?: string | null;
+  defaultThumbnailUrl?: string | null;
   displaySubscribersCount?: number | null;
 }
 
@@ -36,6 +38,8 @@ export async function updateAdminChannelSettings(
     targetId: updated.id,
     metadata: { slug: updated.slug, fields: Object.keys(input) }
   });
+
+  if ('defaultThumbnailUrl' in input) invalidateDefaultThumbnailCache();
 
   return updated;
 }
