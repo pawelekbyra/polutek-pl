@@ -15,7 +15,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
-import { Frame, NajsIcon, INK, BLUE } from "../najs/primitives";
+import { Frame, NajsIcon, INK, BLUE, YELLOW, Highlight, ScribbleFrame } from "../najs/primitives";
 
 const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
 
@@ -165,8 +165,10 @@ export function SidebarPlaylist({
             isCurrent ? "bg-[rgba(248,243,231,0.75)]" : "hover:bg-[rgba(248,243,231,0.75)]",
           )}
         >
-          <div className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb">
-            <Frame radius={9} seed={33} stroke={INK} strokeWidth={1} />
+          <div
+            className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb"
+            style={{ border: `2px solid ${INK}`, boxShadow: "3px 3px 0 rgba(0,0,0,.12)" }}
+          >
             <div className="absolute inset-0 overflow-hidden rounded-[8px]">
               <div className="relative w-full h-full">
               {video.thumbnailUrl ? (
@@ -275,20 +277,23 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-[2px]">
-      <div className="flex items-center gap-2 mb-[2px]">
+    <div className="mb-[6px]">
+      <div className="flex items-center gap-[6px] mb-[4px]">
         {icon}
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <span style={{ background: "linear-gradient(180deg, transparent 52%, #FBE08A 52%, #FBE08A 92%, transparent 92%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
-            {title}
-          </span>
+        <h3
+          className="text-[12px] font-black uppercase tracking-[0.18em] text-[#1a1a1a]"
+          style={{
+            fontFamily: "var(--font-najs, Kalam, cursive)",
+            textDecoration: "underline",
+            textDecorationColor: BLUE,
+            textDecorationThickness: "3px",
+            textUnderlineOffset: "3px",
+          }}
+        >
+          {title}
         </h3>
       </div>
-      <div className="relative h-[8px] w-full">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 8" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 0 4 Q 300 3 600 4" fill="none" stroke={INK} strokeWidth="1.1" strokeLinecap="round" opacity=".55"/>
-        </svg>
-      </div>
+      <div className="h-[2px] w-full" style={{ background: INK, opacity: 0.08 }} />
     </div>
   );
 
@@ -325,10 +330,25 @@ export function SidebarPlaylist({
     const cdClock = localCountdown.split(" ").slice(2).join("") || "--:--:--";
 
     return (
-      <div className="relative my-[10px] p-[18px] mb-3">
-        <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
-        <div className="relative z-10">
-          <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+      <ScribbleFrame className="my-[10px] mb-3" fill="rgba(248,243,231,.97)">
+        <div className="p-[18px] relative">
+          <div
+            aria-hidden="true"
+            className="absolute -top-[10px] -right-[6px] z-20 text-[9px] font-black uppercase tracking-[0.08em] px-[8px] py-[3px]"
+            style={{ background: YELLOW, color: INK, transform: "rotate(6deg)", border: `1.5px solid ${INK}`, boxShadow: `2px 2px 0 ${INK}`, fontFamily: "var(--font-najs, Kalam, cursive)" }}
+          >
+            {isPl ? "na zawsze" : "forever"}
+          </div>
+          <h4
+            className="text-[17px] font-black text-[#0f0f0f] m-0 mb-[10px]"
+            style={{
+              fontFamily: "var(--font-najs, Kalam, cursive)",
+              textDecoration: "underline",
+              textDecorationColor: YELLOW,
+              textDecorationThickness: "4px",
+              textUnderlineOffset: "3px",
+            }}
+          >
             {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
           </h4>
           <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
@@ -337,46 +357,48 @@ export function SidebarPlaylist({
               : "A one-time tip unlocks every bonus video — forever. No subscription."}
           </p>
 
-          <div className="relative p-[12px_14px] mb-[14px]">
-            <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.85)" />
-            <div className="relative z-10">
-              <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                {isPl ? "DO PREMIERY" : "PREMIERE IN"}
-              </div>
-              <div className="flex items-baseline gap-[10px] justify-center">
-                <div className="flex items-baseline gap-[5px]">
-                  <span className="text-[30px] font-bold text-primary leading-none tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                    {cdDays}
-                  </span>
-                  <span className="text-[12px] font-bold text-muted-foreground">
-                    {isPl ? "dni" : "days"}
-                  </span>
-                </div>
-                <span className="text-[19px] font-semibold text-[#1a1a1a] tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                  {cdClock}
+          <div
+            className="p-[12px_14px] mb-[14px] rounded-[12px]"
+            style={{ border: `2px solid ${INK}`, background: `rgba(255,191,47,.12)`, boxShadow: "3px 3px 0 rgba(0,0,0,.1)" }}
+          >
+            <div className="text-[10px] font-black tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+              <Highlight>{isPl ? "DO PREMIERY" : "PREMIERE IN"}</Highlight>
+            </div>
+            <div className="flex items-baseline gap-[10px] justify-center">
+              <div className="flex items-baseline gap-[5px]">
+                <span className="text-[30px] font-black text-primary leading-none tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                  {cdDays}
+                </span>
+                <span className="text-[12px] font-black text-muted-foreground">
+                  {isPl ? "dni" : "days"}
                 </span>
               </div>
+              <span className="text-[19px] font-black text-[#1a1a1a] tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                {cdClock}
+              </span>
             </div>
           </div>
 
           <button
             onClick={() => {
-              const el =
-                document.getElementById("support-box") ||
-                document.getElementById("donations");
+              const el = document.getElementById("support-box") || document.getElementById("donations");
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-            style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+            className="w-full h-[44px] text-white font-black text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:-translate-y-[1px] rounded-[11px]"
+            style={{
+              fontFamily: "var(--font-najs, Kalam, cursive)",
+              background: BLUE,
+              border: `2.5px solid ${INK}`,
+              boxShadow: "4px 4px 0 rgba(0,0,0,.18)",
+            }}
           >
-            <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow={true} />
-            <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
+            {isPl ? "Wesprzyj" : "Support"}
           </button>
-          <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
+          <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px] font-black uppercase tracking-[0.1em]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
           </div>
         </div>
-      </div>
+      </ScribbleFrame>
     );
   };
 
