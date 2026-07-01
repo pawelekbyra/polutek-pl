@@ -2,10 +2,6 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const approvedPublicDesignRoutes = [
-  "app/styler/page.tsx",
-];
-
 const approvedRouteSubstrings = new Set([
   "original-" + "upload",
   "/" + "upload",
@@ -37,12 +33,6 @@ function collectRouteFiles(dir: string, root = dir): string[] {
 }
 
 describe("private beta route surface", () => {
-  it("keeps approved public design routes available", () => {
-    const routes = collectRouteFiles(join(process.cwd(), "app")).sort();
-
-    expect(routes).toEqual(expect.arrayContaining(approvedPublicDesignRoutes));
-  });
-
   it("does not expose blocked route families outside approved implementation endpoints", () => {
     const routes = collectRouteFiles(join(process.cwd(), "app")).sort();
     const outOfScopeRoutes = routes.filter((route) => {

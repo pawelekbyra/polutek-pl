@@ -18,24 +18,6 @@ Polutek.pl is a place.
 
 Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md), a bieżąca kolejka product/tech work w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
 
-## Tymczasowe katalogi i eksperymenty stylistyczne
-
-W repo mogą istnieć publiczne, tymczasowe adresy typu katalog/eksperyment, obecnie m.in.:
-
-- `/katalog`, `/katalog2`, `/katalog3` — katalogi/prototypy elementów stylu, narzędzi i wariantów UI,
-- `/katalogeksperymentow` — indeks linków do wszystkich istniejących eksperymentów,
-- `/eksperyment1`–`/eksperyment18` — kompletne warianty strony głównej służące do porównywania kierunków wizualnych.
-
-Te adresy nie są docelową architekturą produktu ani osobnymi funkcjami dla użytkownika końcowego. Służą wyłącznie do tymczasowego szukania właściwego kierunku wizualnego: papier, cienkopis, ręczna kreska, obramowania, SVG, roughjs/perfect-freehand/rough-notation/wired-elements oraz spokojniejsze warianty bloków i ramek.
-
-Zasady utrzymania porządku:
-
-- traktować katalogi i eksperymenty jako izolowane laboratorium stylistyczne,
-- nie podpinać ich jako stałej nawigacji produkcyjnej,
-- nie rozbudowywać ich bez końca po wybraniu finalnego kierunku,
-- po decyzji projektowej przenieść zwycięskie elementy do normalnych komponentów/design systemu,
-- usunąć albo zarchiwizować zbędne warianty, żeby nie robiły bałaganu w aplikacji.
-
 ## Kolejka zadań
 
 Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
