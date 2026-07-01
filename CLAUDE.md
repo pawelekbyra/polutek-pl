@@ -57,6 +57,10 @@ lib/modules/
     domain/         # user DTOs, errors, policies
     infrastructure/ # UserRepository
   shared/           # AppContext, Actor, result types (ok/failure), db helpers
+  playback/
+    domain/         # playback.dto, playback-policy, primary-playable-asset
+    application/    # PlaybackService (resolves playable sources)
+    infrastructure/ # CloudflareSignedPlaybackTokenService
 
 app/                # Next.js App Router pages and API routes
 app/api/            # API routes
@@ -107,7 +111,7 @@ Stripe webhook (signature verified)
 - **Never expose `videoUrl` to the public frontend.** Use `PublicVideoDTO` for all public-facing data.
 - `/api/media/[...path]` is the only public playback path for blob/legacy videos.
 - `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder. Never mount a player, fetch streams, request tokens, or log views for a denied plan.
-- `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/services/playback/legacy-private-fallback.policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
+- `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/modules/playback/domain/playback-policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
 
 ### 4.4 Access Checks
 
@@ -152,7 +156,7 @@ Located in `app/admin/`. Key areas:
 
 ### Default Thumbnail Resolution
 
-`lib/services/storage/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
+`lib/modules/media/application/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
 
 1. `Creator.defaultThumbnailUrl` — URL field set via `/admin/channel`. Direct URL, no proxy.
 2. `AppSetting` key `default_video_thumbnail` — Vercel Blob URL set via `/admin/settings` file upload.
@@ -187,7 +191,7 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 | `lib/modules/patron/application/recalculate-patron-status.use-case.ts` | Pure read — derive status from active grants |
 | `lib/modules/payments/application/fulfill-payment.use-case.ts` | Canonical, replay-safe payment fulfillment |
 | `lib/modules/access/application/check-video-access.use-case.ts` | Gate keeper for video access |
-| `lib/services/playback/legacy-private-fallback.policy.ts` | Always returns false; controls legacy blob playback |
+| `lib/modules/playback/domain/playback-policy.ts` | Always returns false; controls legacy blob playback |
 | `app/api/media/[...path]/route.ts` | Media proxy (uses the policy above) |
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createVerify, generateKeyPairSync } from 'node:crypto';
-import { CloudflareSignedPlaybackTokenService } from '@/lib/modules/playback';
+import { CloudflareSignedPlaybackTokenService } from '@/lib/modules/playback/infrastructure/cloudflare-signed-playback-token.service';
 
 function base64UrlDecode(part: string): Buffer {
   const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
