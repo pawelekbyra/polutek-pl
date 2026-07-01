@@ -7,6 +7,9 @@ export const INK = "#171717";
 export const PAPER = "#f8f3e7";
 export const BLUE = "#2563eb";
 export const BLUE_DARK = "#1748b8";
+export const YELLOW = "#ffbf2f";
+export const YELLOW_DARK = "#c98a00";
+export const HIGHLIGHT = "#fbe08a";
 
 function useParentSize<T extends SVGSVGElement>() {
   const ref = useRef<T>(null);
@@ -115,6 +118,54 @@ export function HachureFill({
   return <svg ref={ref} className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true" />;
 }
 
+export function Highlight({
+  children,
+  color = HIGHLIGHT,
+  className = "",
+}: {
+  children: React.ReactNode;
+  color?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={className}
+      style={{
+        background: `linear-gradient(180deg, transparent 52%, ${color} 52%, ${color} 92%, transparent 92%)`,
+        padding: "0 3px",
+        WebkitBoxDecorationBreak: "clone",
+        boxDecorationBreak: "clone",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function Sticker({
+  children,
+  angle = -4,
+  className = "",
+}: {
+  children: React.ReactNode;
+  angle?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border-[1.5px] px-2 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.08em] shadow-brutalist-yellow transition-transform hover:rotate-0 hover:scale-105 ${className}`}
+      style={{
+        background: YELLOW,
+        borderColor: INK,
+        color: INK,
+        transform: `rotate(${angle}deg)`,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function NajsSeparator({ label, className = "" }: { label?: string; className?: string }) {
   return (
     <div className={`relative h-5 w-full ${className}`}>
@@ -130,6 +181,110 @@ export function NajsSeparator({ label, className = "" }: { label?: string; class
         </span>
       )}
     </div>
+  );
+}
+
+export function DoodleLayer({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`pointer-events-none fixed inset-0 z-[-1] h-full w-full overflow-visible ${className}`}
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern id="najs-grid" width="42" height="42" patternUnits="userSpaceOnUse">
+          <path d="M42 0H0V42" fill="none" stroke={INK} strokeOpacity=".065" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#najs-grid)" />
+      <path d="M 68 108 c52-22 100-13 148 20 M 72 130 c46-16 96-11 138 14" fill="none" stroke={BLUE} strokeWidth="6" strokeLinecap="round" opacity=".28"/>
+      <path d="M 1020 72 l40 13 -25 28 44 13" fill="none" stroke={YELLOW} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity=".38"/>
+      <path d="M 80 660 q72-82 144 0 t144 0" fill="none" stroke={YELLOW} strokeWidth="6" strokeLinecap="round" opacity=".3"/>
+      <circle cx="91%" cy="78%" r="42" fill="none" stroke={BLUE} strokeWidth="5" strokeDasharray="8 11" opacity=".28"/>
+      <circle cx="4%" cy="30%" r="28" fill="none" stroke={YELLOW} strokeWidth="4" strokeDasharray="5 8" opacity=".25"/>
+    </svg>
+  );
+}
+
+export function ScribbleFrame({
+  children,
+  className = "",
+  fill = "rgba(248,243,231,.97)",
+  noClip = false,
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  fill?: string;
+  noClip?: boolean;
+  style?: React.CSSProperties;
+}) {
+  const clipPath = "polygon(0 2%, 99% 0, 100% 96%, 2% 100%)";
+  const clipPathShadow = "polygon(1% 4%, 98% 1%, 100% 92%, 3% 100%)";
+  return (
+    <div className={`relative ${className}`} style={style}>
+      <div
+        className="absolute inset-0"
+        style={{
+          transform: "translate(3px,4px)",
+          borderRadius: 20,
+          border: `2.5px solid ${INK}`,
+          opacity: 0.2,
+          clipPath: noClip ? undefined : clipPathShadow,
+        }}
+        aria-hidden="true"
+      />
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 20,
+          border: `3px solid ${INK}`,
+          background: fill,
+          boxShadow: "9px 11px 0 rgba(0,0,0,.15)",
+          clipPath: noClip ? undefined : clipPath,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function ScribbleBadge({
+  children,
+  angle = -6,
+  className = "",
+}: {
+  children: React.ReactNode;
+  angle?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-block text-[7px] font-black uppercase tracking-[0.1em] px-[5px] py-[1.5px] leading-none ${className}`}
+      style={{
+        background: YELLOW,
+        color: INK,
+        transform: `rotate(${angle}deg)`,
+        boxShadow: `1.5px 1.5px 0 ${INK}`,
+        fontFamily: "var(--font-najs, Kalam, cursive)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function MarkerLine({
+  color = YELLOW,
+  className = "",
+}: {
+  color?: string;
+  className?: string;
+}) {
+  return (
+    <svg className={`w-full h-[5px] ${className}`} aria-hidden="true" viewBox="0 0 200 5" preserveAspectRatio="none">
+      <path d="M 3 3 Q 100 1 197 3" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.72"/>
+    </svg>
   );
 }
 
