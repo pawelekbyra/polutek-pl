@@ -226,7 +226,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
   });
 
   it('keeps denied and non-ready playback source-contracts free of provider calls, URLs, tokens, sessions and views', () => {
-    const playbackSource = source('lib/services/playback/playback.service.ts');
+    const playbackSource = source('lib/modules/playback/application/playback.service.ts');
     const denialBlock = playbackSource.slice(
       playbackSource.indexOf('if (!decision.hasAccess)'),
       playbackSource.indexOf('// At this point decision.hasAccess is true')

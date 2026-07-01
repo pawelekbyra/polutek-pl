@@ -13,7 +13,7 @@ import { RefreshCcw, AlertCircle } from "./icons";
 import type {
   PlaybackPlan,
   PlaybackPlanStatus,
-} from "@/lib/services/playback/playback.dto";
+} from "@/lib/modules/playback";
 import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";

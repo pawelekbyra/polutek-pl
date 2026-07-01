@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PlaybackService } from '@/lib/services/playback/playback.service';
-import { CloudflareSignedPlaybackTokenService } from '@/lib/services/playback/cloudflare-signed-playback-token.service';
+import { PlaybackService } from '@/lib/modules/playback';
+import { CloudflareSignedPlaybackTokenService } from '@/lib/modules/playback';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
 
@@ -8,7 +8,7 @@ vi.mock('@/lib/modules/access', () => ({
   checkVideoAccess: vi.fn(),
 }));
 
-vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
+vi.mock('@/lib/modules/playback', () => ({
   CloudflareSignedPlaybackTokenService: {
     isConfigured: vi.fn(),
     createSignedPlaybackToken: vi.fn(),

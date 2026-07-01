@@ -12,7 +12,7 @@ import { recordAlert } from "@/lib/observability";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getGatedMedia } from "@/lib/modules/media";
-import { isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/services/playback/legacy-private-fallback.policy";
+import { isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/modules/playback";
 
 function rateLimitedResponse(videoId: string) {
   recordAlert("media_proxy.rate_limited", { videoId });

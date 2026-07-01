@@ -2,16 +2,16 @@
 import { checkVideoAccess } from '@/lib/modules/access';
 import { getVideoSourceInfo } from '@/lib/media/video-source';
 import { isAllowedVideoSourceUrl } from '@/lib/blob';
-import { StorageService } from '../storage/storage.service';
-import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from './playback.dto';
+import { StorageService } from '@/lib/modules/media';
+import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from '../domain/playback.dto';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy } from '@/lib/modules/media';
-import { shouldBlockLegacyPrivatePlaybackFallback } from './legacy-private-fallback.policy';
-import { CloudflareSignedPlaybackTokenService } from './cloudflare-signed-playback-token.service';
-import { getPrimaryPlayableAsset } from './primary-playable-asset';
-import { selectPrimaryVideoAsset } from '@/lib/modules/video/domain/video-asset-selection';
-import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video/domain/video-asset.constants';
-import { MuxClient } from '@/lib/modules/video/infrastructure/mux.client';
+import { shouldBlockLegacyPrivatePlaybackFallback } from '../domain/playback-policy';
+import { CloudflareSignedPlaybackTokenService } from '../infrastructure/cloudflare-signed-playback-token.service';
+import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
+import { selectPrimaryVideoAsset } from '@/lib/modules/video';
+import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
+import { MuxClient } from '@/lib/modules/video';
 import type { VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =

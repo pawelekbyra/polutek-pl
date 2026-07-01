@@ -4,8 +4,8 @@ import { getCorrelationId } from "@/lib/utils/correlation";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { ThumbnailResponseService } from "@/lib/services/storage/thumbnail-response.service";
-import { resolveVideoThumbnailUrl } from "@/lib/services/storage/default-thumbnail.service";
+import { ThumbnailResponseService } from "@/lib/modules/media";
+import { resolveVideoThumbnailUrl } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 

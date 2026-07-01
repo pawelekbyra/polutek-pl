@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PlaybackService } from '@/lib/services/playback/playback.service';
+import { PlaybackService } from '@/lib/modules/playback';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { prisma } from '@/lib/prisma';
-import { StorageService } from '@/lib/services/storage/storage.service';
+import { StorageService } from '@/lib/modules/media';
 
 vi.mock('@/lib/modules/access', () => ({
   checkVideoAccess: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('@/lib/blob', () => ({
     isAllowedVideoSourceUrl: vi.fn().mockReturnValue(true)
 }));
 
-vi.mock('@/lib/services/storage/storage.service', () => ({
+vi.mock('@/lib/modules/media', () => ({
   StorageService: {
     getPresignedUrl: vi.fn(),
   },
@@ -34,7 +34,7 @@ const { mockCreateSignedPlaybackToken, mockGetAssetDetails } = vi.hoisted(() => 
   mockCreateSignedPlaybackToken: vi.fn(),
   mockGetAssetDetails: vi.fn(),
 }));
-vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
+vi.mock('@/lib/modules/playback', () => ({
   CloudflareSignedPlaybackTokenService: {
     isConfigured: vi.fn(() => true),
     createSignedPlaybackToken: mockCreateSignedPlaybackToken,

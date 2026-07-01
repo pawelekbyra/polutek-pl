@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPrimaryPlayableAsset, PrimaryPlayableAssetInput } from '@/lib/services/playback/primary-playable-asset';
+import { getPrimaryPlayableAsset, PrimaryPlayableAssetInput } from '@/lib/modules/playback';
 
 describe('getPrimaryPlayableAsset', () => {
   it('selects a READY primary Cloudflare Stream asset for provider-backed playback', () => {
