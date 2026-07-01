@@ -21,7 +21,7 @@ vi.mock("@/lib/api/auth", () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock("@/lib/services/playback/playback.service", () => ({
+vi.mock("@/lib/modules/playback", () => ({
   PlaybackService: {
     createPlaybackPlanWithContext: vi.fn(),
   },

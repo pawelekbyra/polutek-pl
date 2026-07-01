@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { GetOrCreateUserUseCase, getOrCreateCurrentUser, updateUserLanguage } from '@/lib/modules/users';
-import { PlaybackService } from '@/lib/services/playback/playback.service';
+import { PlaybackService } from '@/lib/modules/playback';
 import { createCheckoutIntent } from '@/lib/modules/payments';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
@@ -60,7 +60,7 @@ vi.mock('@/lib/modules/users', () => ({
   },
 }));
 
-vi.mock('@/lib/services/playback/playback.service', () => ({
+vi.mock('@/lib/modules/playback', () => ({
   PlaybackService: {
     createPlaybackPlanWithContext: vi.fn(),
   },

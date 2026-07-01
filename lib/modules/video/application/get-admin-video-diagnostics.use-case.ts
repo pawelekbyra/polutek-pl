@@ -6,7 +6,7 @@ import { VideoStatus, AccessTier } from "@prisma/client";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
 import { MediaPolicy } from "@/lib/modules/media";
-import { hasReadyProviderBackedPlaybackAsset, isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/services/playback/legacy-private-fallback.policy";
+import { hasReadyProviderBackedPlaybackAsset, isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/modules/playback";
 import { VideoPolicy } from "../domain/video.policy";
 
 export type DiagnosticIssue = {

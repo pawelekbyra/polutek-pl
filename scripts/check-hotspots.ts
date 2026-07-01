@@ -119,7 +119,7 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
-  "lib/services/playback/playback.service.ts": {
+  "lib/modules/playback/application/playback.service.ts": {
     maxLines: 700,
     reason:
       "Added Mux (signed JWT HLS) and Vimeo (embed) provider resolvers in the multi-source video feature (#1204); tracked for extraction into provider-specific adapter modules before launch certification.",

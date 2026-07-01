@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/media-source/[videoId]/route';
 import { NextRequest } from 'next/server';
-import { PlaybackService } from '@/lib/services/playback/playback.service';
+import { PlaybackService } from '@/lib/modules/playback';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -9,7 +9,7 @@ vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/services/playback/playback.service', () => ({
+vi.mock('@/lib/modules/playback', () => ({
   PlaybackService: {
     createPlaybackPlanWithContext: vi.fn(),
   },

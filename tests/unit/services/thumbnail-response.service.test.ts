@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ThumbnailResponseService } from '@/lib/services/storage/thumbnail-response.service';
+import { ThumbnailResponseService } from '@/lib/modules/media/infrastructure/thumbnail-response.service';
 import { MediaPolicy } from '@/lib/modules/media';
 import { get } from '@vercel/blob';
 

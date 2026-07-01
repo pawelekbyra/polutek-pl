@@ -42,11 +42,16 @@ lib/modules/
   access/           # Video access policy (checkVideoAccess, PlaybackPlan)
   audit/            # Audit event recording
   email/            # Email repository, broadcast use cases, Resend adapter
+  media/            # Thumbnail resolution, storage (S3/R2 presigned URLs), thumbnail HTTP response
   patron/
     application/    # grant-patron, revoke-patron, recalculate-patron-status use cases
     domain/         # patron.dto, patron.errors, patron.policy
     infrastructure/ # PatronRepository (listActiveGrants, createGrant, revokeActiveGrants…)
   payments/         # Payment recording, fulfillPayment (canonical replay-safe path)
+  playback/
+    application/    # playback.service — resolves playable sources for a video
+    domain/         # playback.dto, playback-policy, primary-playable-asset
+    infrastructure/ # cloudflare-signed-playback-token.service
   users/
     application/    # get-admin-user-details, patron-read-model, sync-user use cases
     domain/         # user DTOs, errors, policies
@@ -102,7 +107,7 @@ Stripe webhook (signature verified)
 - **Never expose `videoUrl` to the public frontend.** Use `PublicVideoDTO` for all public-facing data.
 - `/api/media/[...path]` is the only public playback path for blob/legacy videos.
 - `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder. Never mount a player, fetch streams, request tokens, or log views for a denied plan.
-- `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/services/playback/legacy-private-fallback.policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
+- `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/modules/playback/domain/playback-policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
 
 ### 4.4 Access Checks
 
@@ -147,7 +152,7 @@ Located in `app/admin/`. Key areas:
 
 ### Default Thumbnail Resolution
 
-`lib/services/storage/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
+`lib/modules/media/application/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
 
 1. `Creator.defaultThumbnailUrl` — URL field set via `/admin/channel`. Direct URL, no proxy.
 2. `AppSetting` key `default_video_thumbnail` — Vercel Blob URL set via `/admin/settings` file upload.
@@ -182,13 +187,16 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 | `lib/modules/patron/application/recalculate-patron-status.use-case.ts` | Pure read — derive status from active grants |
 | `lib/modules/payments/application/fulfill-payment.use-case.ts` | Canonical, replay-safe payment fulfillment |
 | `lib/modules/access/application/check-video-access.use-case.ts` | Gate keeper for video access |
-| `lib/services/playback/legacy-private-fallback.policy.ts` | Always returns false; controls legacy blob playback |
+| `lib/modules/playback/domain/playback-policy.ts` | Always returns false; controls legacy blob playback |
 | `app/api/media/[...path]/route.ts` | Media proxy (uses the policy above) |
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
 | `lib/modules/users/application/patron-read-model.ts` | `buildPatronDiagnosticsReadModel(grants[])` — diagnostics only |
-| `lib/services/storage/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
-| `lib/services/payment.service.ts` | Legacy compatibility shim — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
+| `lib/modules/media/application/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
+| `lib/modules/media/infrastructure/thumbnail-response.service.ts` | Fetches thumbnail blob and returns HTTP response with proper caching headers |
+| `lib/modules/playback/application/playback.service.ts` | Resolves playable video source (Cloudflare/Mux/YouTube/legacy) based on access plan |
+| `lib/modules/playback/domain/playback-policy.ts` | Policy gates for legacy private playback fallback (always returns false) |
+| `lib/services/payment.service.ts` | Deprecated bridge — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
 | `prisma/schema.prisma` | Database schema (single-writer) |
 
 ---

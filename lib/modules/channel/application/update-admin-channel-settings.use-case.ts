@@ -3,7 +3,7 @@ import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { AppError } from "@/lib/modules/shared/app-error";
-import { invalidateDefaultThumbnailCache } from "@/lib/services/storage/default-thumbnail.service";
+import { invalidateDefaultThumbnailCache } from "@/lib/modules/media";
 
 export interface UpdateAdminChannelSettingsInput {
   name: string;

@@ -2,7 +2,7 @@
 
 import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
-import type { PlaybackPlanStatus } from "@/lib/services/playback/playback.dto";
+import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import { Frame, INK, BLUE } from "./najs/primitives";
 import { useLanguage } from "./LanguageContext";

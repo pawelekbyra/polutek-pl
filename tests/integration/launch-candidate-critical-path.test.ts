@@ -13,7 +13,7 @@ import { handleDispute } from '@/lib/modules/payments/application/handle-dispute
 import { handleRefund } from '@/lib/modules/payments/application/handle-refund.use-case';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { getPatronStatus, grantPatron, revokePatron } from '@/lib/modules/patron';
-import { PlaybackService } from '@/lib/services/playback/playback.service';
+import { PlaybackService } from '@/lib/modules/playback';
 import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/record-playback-event.use-case';
 
 const { cloudflareTokenCalls, rateLimitLocks } = vi.hoisted(() => ({
@@ -54,10 +54,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/playback/cloudflare-signed-playback-token.service', () => ({
+vi.mock('@/lib/modules/playback/infrastructure/cloudflare-signed-playback-token.service', () => ({
   CloudflareSignedPlaybackTokenService: {
     isConfigured: vi.fn(() => true),
-    createSignedPlaybackToken: vi.fn(({ videoUid }) => {
+    createSignedPlaybackToken: vi.fn(({ videoUid }: { videoUid: string }) => {
       cloudflareTokenCalls.push(videoUid);
       return {
         token: `signed-token-for-${videoUid}`,

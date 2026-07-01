@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createScopedLogger } from "@/lib/logger";
 import { getCorrelationId } from "@/lib/utils/correlation";
-import { PlaybackService } from "@/lib/services/playback/playback.service";
+import { PlaybackService } from "@/lib/modules/playback";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   buildMediaRateLimitKey,

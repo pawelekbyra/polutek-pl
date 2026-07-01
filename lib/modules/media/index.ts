@@ -4,3 +4,6 @@ export * from './domain/media.dto';
 export * from './domain/media.errors';
 export * from './application/get-gated-media.use-case';
 export * from './infrastructure/media-storage.service';
+export * from './application/default-thumbnail.service';
+export * from './infrastructure/storage.service';
+export * from './infrastructure/thumbnail-response.service';

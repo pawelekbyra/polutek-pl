@@ -3,7 +3,7 @@ import { GET } from '@/app/api/videos/[id]/thumbnail/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { ThumbnailResponseService } from '@/lib/services/storage/thumbnail-response.service';
+import { ThumbnailResponseService } from '@/lib/modules/media';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
@@ -13,10 +13,11 @@ vi.mock('@/lib/modules/shared/app-context', () => ({
   createAppContext: vi.fn(),
 }));
 
-vi.mock('@/lib/services/storage/thumbnail-response.service', () => ({
+vi.mock('@/lib/modules/media', () => ({
   ThumbnailResponseService: {
     getThumbnailResponse: vi.fn(),
   },
+  resolveVideoThumbnailUrl: vi.fn((url: string | null | undefined) => Promise.resolve(url ?? null)),
 }));
 
 describe('GET /api/videos/[videoId]/thumbnail', () => {
