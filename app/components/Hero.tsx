@@ -251,14 +251,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
-                        "relative flex h-full items-center justify-center gap-2 px-4 transition-colors active:opacity-70",
+                        "relative flex h-full items-center justify-center px-4 transition-colors active:opacity-70",
                         interactionState.isDisliked ? "text-primary" : "text-[#171717]",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                   >
                      <NajsIcon name="dislike" className="h-[18px] w-[18px]" stroke={interactionState.isDisliked ? "#2563eb" : INK} />
-                     <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.dislikesCount.toLocaleString('pl-PL')}</span>
                   </button>
                </div>
                   <ShareButton

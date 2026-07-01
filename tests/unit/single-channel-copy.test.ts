@@ -20,7 +20,7 @@ const FILES_TO_CHECK = [
   'app/components/Hero.tsx',
   'app/regulamin/page.tsx',
   'app/polityka-prywatnosci/page.tsx',
-  'app/components/VideoPlaylist.tsx',
+  'app/components/channel/DonationBox.tsx',
   'app/admin/users/payments/page.tsx',
   'app/admin/users/[userId]/page.tsx',
   'app/components/playlist/CheckoutModal.tsx',

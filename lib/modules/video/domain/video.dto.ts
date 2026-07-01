@@ -174,7 +174,11 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     titleEn: video.titleEn,
     description: video.description,
     descriptionEn: video.descriptionEn,
-    thumbnailUrl: video.thumbnailUrl,
+    // Always route through the thumbnail proxy (same pattern as the sidebar
+    // layout DTO): the raw stored value may be a private Vercel Blob URL that
+    // browsers can't fetch directly, and the proxy also resolves the global
+    // fallback thumbnail when a video has none set.
+    thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
     subtitleUrlPl: video.subtitleUrlPl ?? null,
     subtitleUrlEn: video.subtitleUrlEn ?? null,
     duration: video.duration,

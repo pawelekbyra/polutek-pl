@@ -165,6 +165,7 @@ export function CommentItem({
             </span>
           </div>
           <div className="relative" ref={menuRef}>
+            {userProfile && (
             <button
               onClick={() => setShowMenu(!showMenu)}
               className={cn(
@@ -174,8 +175,9 @@ export function CommentItem({
             >
               <MoreVertical size={16} />
             </button>
+            )}
 
-            {showMenu && (
+            {userProfile && showMenu && (
               <div className="absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-150">
                 <button
                   onClick={() => {

@@ -49,8 +49,8 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("bg-white/85");
     expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
     expect(player).toContain("relative z-40 mt-1 flex h-7 w-full");
-    expect(player).toContain("sm:mt-2 sm:h-12 sm:py-3");
-    expect(player).toContain("group-data-[dragging]/slider:h-[4px]");
+    expect(player).toContain("sm:mt-1.5 sm:h-9 sm:py-2");
+    expect(player).toContain("group-hover/slider:h-[6px]");
     expect(player).not.toContain("group-data-[active]/slider:h-2.5");
     expect(player).not.toContain("before:-inset-3");
     expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
@@ -76,7 +76,7 @@ describe("public loading/access state UX contracts", () => {
     expect(card).not.toContain("/api/media-source");
     expect(card).toContain("const hasAccess = clientHasAccess;");
     expect(card).toContain("const lockState = !hasAccess");
-    expect(card).toContain("{badge && hasAccess &&");
+    expect(card).toContain("{badge && (");
   });
 
   it("shows visible access CTAs for both full and compact lock states without framer infinite motion", () => {
@@ -106,8 +106,8 @@ describe("public loading/access state UX contracts", () => {
     expect(embedded).toContain("Ładowanie...");
   });
 
-  it("keeps SupportBox errors associated and pending state readable", () => {
-    const support = read("app/components/playlist/SupportBox.tsx");
+  it("keeps DonationBox errors associated and pending state readable", () => {
+    const support = read("app/components/channel/DonationBox.tsx");
 
     expect(support).toContain("aria-invalid={amountTooLow}");
     expect(support).toContain(

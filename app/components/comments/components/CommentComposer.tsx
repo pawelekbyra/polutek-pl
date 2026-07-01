@@ -7,6 +7,7 @@ import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { SafeAvatar } from "../../SafeAvatar";
 import { countGraphemes } from "@/lib/utils/graphemes";
+import { Frame, INK } from "../../najs/primitives";
 
 interface CommentComposerProps {
   userProfile: any;
@@ -152,39 +153,46 @@ export function CommentComposer({
             </div>
           )}
           {isViewerLoading ? (
-            <div
-              className="w-full border-b border-[#e9eef6] py-2 min-h-[2.5rem] flex items-center justify-center text-[13px] font-bold text-neutral-500"
-              role="status"
-              aria-live="polite"
-            >
-              {language === "pl"
-                ? "Sprawdzamy możliwość komentowania..."
-                : "Checking comment access..."}
+            <div className="relative min-h-[2.75rem]">
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
+              <div
+                className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5 text-[13px] font-bold text-neutral-500"
+                role="status"
+                aria-live="polite"
+              >
+                {language === "pl"
+                  ? "Sprawdzamy możliwość komentowania..."
+                  : "Checking comment access..."}
+              </div>
             </div>
           ) : !canComment ? (
-            <div className="w-full border-b border-[#e9eef6] py-1 min-h-[1.5rem] flex items-center justify-center">
-              {isPatronGated && userProfile ? (
-                <a
-                  href="#donations"
-                  className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
-                >
-                  {language === "pl"
-                    ? "Zostań Patronem, żeby komentować"
-                    : "Become a Patron to comment"}
-                </a>
-              ) : (
-                <SignInButton mode="modal">
-                  <button
-                    type="button"
+            <div className="relative min-h-[2.75rem]">
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
+              <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5">
+                {isPatronGated && userProfile ? (
+                  <a
+                    href="#donations"
                     className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
                   >
-                    {t.signInToComment}
-                  </button>
-                </SignInButton>
-              )}
+                    {language === "pl"
+                      ? "Zostaw napiwek, aby komentować"
+                      : "Leave a tip to comment"}
+                  </a>
+                ) : (
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                    >
+                      {t.signInToComment}
+                    </button>
+                  </SignInButton>
+                )}
+              </div>
             </div>
           ) : (
-            <>
+            <div className="relative min-h-[2.75rem]">
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
               <label htmlFor={textareaId} className="sr-only">
                 {replyTo ? t.addReply : t.addComment}
               </label>
@@ -210,9 +218,9 @@ export function CommentComposer({
                 aria-invalid={Boolean(errorMessage || isTooLong)}
                 aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
                 disabled={isPending}
-                className="w-full bg-white text-[#0f0f0f] placeholder:text-neutral-400 focus:outline-none text-[14px] leading-5 rounded-xl border border-[#e2e2e2] focus:border-[#3b82f6] shadow-sm transition-all resize-none px-3.5 py-2.5 min-h-[2.75rem]"
+                className="relative w-full bg-transparent text-[#0f0f0f] placeholder:text-neutral-500 focus:outline-none text-[14px] leading-5 transition-all resize-none px-3.5 py-2.5 min-h-[2.75rem]"
               />
-            </>
+            </div>
           )}
 
           {(isInputFocused || newComment.trim() || replyTo) && canComment && (

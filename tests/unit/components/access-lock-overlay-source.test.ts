@@ -37,11 +37,11 @@ describe("access lock overlay source contract", () => {
     expect(source).not.toContain("blur-2xl");
   });
 
-  it("keeps ChannelVideoCard badges behind access state", () => {
+  it("renders ChannelVideoCard badges regardless of access state", () => {
     const source = component("app/components/ChannelVideoCard.tsx");
 
-    expect(source).toContain("{badge && hasAccess && (");
-    expect(source).not.toContain("{badge && (");
+    expect(source).toContain("{badge && (");
+    expect(source).not.toContain("{badge && hasAccess && (");
   });
 
   it("supports thumbnailCompact variant in overlays and wrappers", () => {

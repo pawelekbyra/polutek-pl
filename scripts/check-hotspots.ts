@@ -46,42 +46,6 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
-  "app/katalog/katalog-demos.tsx": {
-    maxLines: 600,
-    reason: "Experimental catalog demo library; contains many small inline UI components for style preview.",
-  },
-  "app/styler/StylerClient.tsx": {
-    maxLines: 550,
-    reason: "Style demonstrator with 5 inline style columns (Złoto/Ink/Neon/Akwarela/Brutalist) + shared RoughBox helpers; tracked for extraction before launch certification.",
-  },
-  "app/eksperyment2/ExperimentTwoSkin.tsx": {
-    maxLines: 720,
-    reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
-  },
-  "app/components/experiments/Layout8Watercolor.tsx": {
-    maxLines: 460,
-    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for SVG watercolor effects. Style-lab only, not in production flows.",
-  },
-  "app/components/experiments/Layout12Blueprint.tsx": {
-    maxLines: 490,
-    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for blueprint/technical drawing effects. Style-lab only, not in production flows.",
-  },
-  "app/components/experiments/Layout13Risograph.tsx": {
-    maxLines: 480,
-    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for risograph print simulation. Style-lab only, not in production flows.",
-  },
-  "app/components/experiments/Layout14InkCalligraphy.tsx": {
-    maxLines: 470,
-    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for calligraphy/ink effects. Style-lab only, not in production flows.",
-  },
-  "app/components/experiments/Layout15WiredElements.tsx": {
-    maxLines: 540,
-    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for wired-elements web component demo. Style-lab only, not in production flows.",
-  },
-  "app/eksperyment7/ExperimentSevenSkin.tsx": {
-    maxLines: 480,
-    reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
-  },
   "app/admin/emails/EmailTemplateEditor.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,

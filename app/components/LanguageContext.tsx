@@ -127,7 +127,7 @@ export const translations = {
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
     pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Thank You',
-    tipTheGuy: 'WSPOMÓŻ I ODBLOKUJ'
+    tipTheGuy: 'Napiwek'
   },
   en: {
     views: 'views',
@@ -187,7 +187,7 @@ export const translations = {
     no: 'NO',
     acceptTerms: 'I accept the Terms and Privacy Policy',
     pleaseAcceptTerms: 'Accept the terms to receive access to the Thank You Zone',
-    tipTheGuy: 'SUPPORT AND UNLOCK'
+    tipTheGuy: 'TIP THE GUY'
   }
 };
 

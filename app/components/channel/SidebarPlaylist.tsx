@@ -15,9 +15,8 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
-import { Frame, NajsIcon, INK, BLUE } from "../najs/primitives";
-
-const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
+import { Frame, NajsIcon, INK } from "../najs/primitives";
+import DonationBox from "./DonationBox";
 
 type UserProfile = {
   id: string;
@@ -196,6 +195,27 @@ export function SidebarPlaylist({
                   {video.duration}
                 </div>
               )}
+              {/* Access Indicator Badge, anchored to the thumbnail itself (not a
+                  fragile negative-offset reach from the text column) */}
+              {mounted &&
+                (() => {
+                  const badge = getSidebarAccessBadge(video, hasAccess, language);
+                  if (!badge) return null;
+                  return (
+                    <div
+                      className={cn(
+                        "absolute top-[5px] right-[5px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
+                        badge.variant === "unlocked" &&
+                          "bg-primary border-transparent",
+                        badge.variant === "locked" &&
+                          video.tier === "PATRON" &&
+                          "bg-neutral-800 border-border",
+                      )}
+                    >
+                      {badge.text}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -231,26 +251,6 @@ export function SidebarPlaylist({
                 )}
               </div>
             </div>
-            {/* Access Indicator Badge */}
-            {mounted &&
-              (() => {
-                const badge = getSidebarAccessBadge(video, hasAccess, language);
-                if (!badge) return null;
-                return (
-                  <div
-                    className={cn(
-                      "absolute bottom-[5px] left-[-169px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
-                      badge.variant === "unlocked" &&
-                        "bg-primary border-transparent",
-                      badge.variant === "locked" &&
-                        video.tier === "PATRON" &&
-                        "bg-neutral-800 border-border",
-                    )}
-                  >
-                    {badge.text}
-                  </div>
-                );
-              })()}
           </div>
         </Link>
 
@@ -293,91 +293,8 @@ export function SidebarPlaylist({
   );
 
   const PatronBox = () => {
-    const isPl = language === "pl";
-    const [localCountdown, setLocalCountdown] = useState(() => {
-      const ms = PATRON_PREMIERE_DATE.getTime() - Date.now();
-      if (ms <= 0) return isPl ? "Premiera już dostępna" : "Premiere available now";
-      const s = Math.floor(ms / 1000);
-      const d = Math.floor(s / 86400);
-      const pad = (v: number) => v.toString().padStart(2, "0");
-      return isPl
-        ? `${d} dni ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
-        : `${d} days ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
-    });
-    useEffect(() => {
-      const update = () => {
-        const ms = PATRON_PREMIERE_DATE.getTime() - Date.now();
-        if (ms <= 0) { setLocalCountdown(isPl ? "Premiera już dostępna" : "Premiere available now"); return; }
-        const s = Math.floor(ms / 1000);
-        const d = Math.floor(s / 86400);
-        const pad = (v: number) => v.toString().padStart(2, "0");
-        setLocalCountdown(isPl
-          ? `${d} dni ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
-          : `${d} days ${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`);
-      };
-      const interval = setInterval(update, 1000);
-      return () => clearInterval(interval);
-    }, [isPl]);
-
     if (!supportItem?.creatorId) return null;
-
-    const cdDays = localCountdown.split(" ")[0] || "—";
-    const cdClock = localCountdown.split(" ").slice(2).join("") || "--:--:--";
-
-    return (
-      <div className="relative my-[10px] p-[18px] mb-3">
-        <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
-        <div className="relative z-10">
-          <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-            {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
-          </h4>
-          <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
-            {isPl
-              ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
-              : "A one-time tip unlocks every bonus video — forever. No subscription."}
-          </p>
-
-          <div className="relative p-[12px_14px] mb-[14px]">
-            <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.85)" />
-            <div className="relative z-10">
-              <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                {isPl ? "DO PREMIERY" : "PREMIERE IN"}
-              </div>
-              <div className="flex items-baseline gap-[10px] justify-center">
-                <div className="flex items-baseline gap-[5px]">
-                  <span className="text-[30px] font-bold text-primary leading-none tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                    {cdDays}
-                  </span>
-                  <span className="text-[12px] font-bold text-muted-foreground">
-                    {isPl ? "dni" : "days"}
-                  </span>
-                </div>
-                <span className="text-[19px] font-semibold text-[#1a1a1a] tabular-nums" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                  {cdClock}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              const el =
-                document.getElementById("support-box") ||
-                document.getElementById("donations");
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-            style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-          >
-            <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow={true} />
-            <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
-          </button>
-          <div className="text-center text-[11px] text-[#7a7a7a] mt-[9px]">
-            {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
-          </div>
-        </div>
-      </div>
-    );
+    return <DonationBox videoTitle={supportItem?.title} />;
   };
 
   if (loading) {
