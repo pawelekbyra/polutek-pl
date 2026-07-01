@@ -24,8 +24,8 @@ describe('comments UI production contract', () => {
     expect(source).toContain('<SignInButton mode="modal">');
     expect(source).toContain('isPatronGated && userProfile');
     expect(source).toContain('href="#donations"');
-    expect(source).toContain('Zostań Patronem, żeby komentować');
-    expect(source).toContain('Become a Patron to comment');
+    expect(source).toContain('Zostaw napiwek, aby komentować');
+    expect(source).toContain('Leave a tip to comment');
     expect(source).not.toContain('<span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">');
   });
 
