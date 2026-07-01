@@ -11,7 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
-import { Frame, NajsSeparator, INK } from "./najs/primitives";
+import { Frame, NajsSeparator, INK, BLUE, YELLOW, Highlight, DoodleLayer } from "./najs/primitives";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -107,7 +107,8 @@ export default function ChannelHome({
   };
 
   return (
-    <main className="bg-transparent min-h-screen">
+    <main className="bg-transparent min-h-screen relative overflow-x-clip">
+      <DoodleLayer />
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
@@ -123,13 +124,16 @@ export default function ChannelHome({
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={cn(
-                      "flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-all",
-                      activeTab === tab
-                        ? "text-[#171717]"
-                        : "text-[#171717]/35",
+                      "flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-all relative",
+                      activeTab === tab ? "text-[#171717]" : "text-[#171717]/35",
                     )}
                   >
-                    {tab === "comments" ? t.comments : t.videosTab}
+                    <span>{tab === "comments" ? t.comments : t.videosTab}</span>
+                    {activeTab === tab && (
+                      <svg className="absolute bottom-[6px] left-[10%] right-[10%] w-[80%] h-[4px]" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+                        <path d="M 3 2.5 Q 50 0.5 97 2.5" fill="none" stroke={tab === "comments" ? BLUE : YELLOW} strokeWidth="2.8" strokeLinecap="round" opacity="0.85"/>
+                      </svg>
+                    )}
                   </button>
                 ))}
               </div>
@@ -146,7 +150,7 @@ export default function ChannelHome({
                 <div className="space-y-2">
                   <div className="flex justify-between items-end border-b border-neutral-100 pb-1 mb-2">
                     <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a1a1a]">
-                      {t.materials}
+                      <Highlight>{t.materials}</Highlight>
                     </h3>
                   </div>
                   <SidebarPlaylist {...commonSidebarProps} />

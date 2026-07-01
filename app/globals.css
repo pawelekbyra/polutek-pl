@@ -39,6 +39,11 @@
     --font-najs: Kalam, "Comic Sans MS", cursive;
     --najs-ink: #171717;
     --najs-paper: #f8f3e7;
+
+    /* ===== Marker żółty — drugi akcent (inspiracja: eksperyment1) ===== */
+    --najs-yellow: #ffbf2f;        /* naklejki, plakietki, obwódki na hover */
+    --najs-yellow-dark: #c98a00;   /* cień/obrys elementów żółtych */
+    --najs-highlight: #fbe08a;     /* miękki zakreślacz pod nagłówkami */
   }
 }
 
@@ -58,9 +63,13 @@
     @apply bg-background text-foreground;
     overscroll-behavior-y: contain;
     background-image:
-      linear-gradient(rgba(23,23,23,.065) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23,23,23,.065) 1px, transparent 1px);
-    background-size: 42px 42px;
+      radial-gradient(ellipse 1000px 700px at 5% -5%, rgba(255,191,47,.14), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 105% 20%, rgba(37,99,235,.09), transparent 55%),
+      radial-gradient(ellipse 600px 400px at 50% 100%, rgba(255,191,47,.07), transparent 65%),
+      linear-gradient(rgba(23,23,23,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23,23,23,.06) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 42px 42px, 42px 42px;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
     background-attachment: scroll;
     /* Safe area for iPhone notch / home bar */
     padding-top: env(safe-area-inset-top);

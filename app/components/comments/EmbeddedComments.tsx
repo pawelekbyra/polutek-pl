@@ -17,6 +17,7 @@ import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { useComments } from "./hooks/useComments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Highlight, BLUE, YELLOW, INK, MarkerLine } from "../najs/primitives";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -313,9 +314,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
-            <h3 className="text-[17px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-              {totalCount} {getCommentsLabel(totalCount)}
-            </h3>
+            <div>
+              <h3 className="text-[17px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                <Highlight>{totalCount} {getCommentsLabel(totalCount)}</Highlight>
+              </h3>
+              <MarkerLine color={BLUE} className="mt-[2px] max-w-[80%]" />
+            </div>
           )}
         </div>
 
@@ -326,7 +330,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               onClick={() => setIsSortMenuOpen((open) => !open)}
               aria-haspopup="menu"
               aria-expanded={isSortMenuOpen}
-              className="flex items-center gap-2 text-[#5B5B5B] hover:text-[#0f0f0f] transition-colors"
+              className="flex items-center gap-2 text-[#5B5B5B] hover:text-[#0f0f0f] transition-colors border-b border-dashed border-current pb-[1px]"
+              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
             >
               <svg
                 width="14"
@@ -451,10 +456,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </Button>
           </div>
         ) : comments.length === 0 ? (
-          <div className="py-16 flex flex-col items-center justify-center text-center space-y-3 opacity-60">
-            <MessageSquare size={48} className="text-neutral-300" />
-            <div className="space-y-1">
-              <p className="font-black uppercase tracking-widest text-[11px]">
+          <div className="py-16 flex flex-col items-center justify-center text-center space-y-3">
+            <div className="relative">
+              <MessageSquare size={48} className="text-neutral-300" />
+              <span className="absolute -top-[6px] -right-[6px] inline-block text-[7px] font-black uppercase px-[4px] py-[1px]" style={{ background: YELLOW, color: INK, transform: "rotate(8deg)", boxShadow: `1px 1px 0 ${INK}`, fontFamily: "var(--font-najs, Kalam, cursive)" }} aria-hidden="true">0</span>
+            </div>
+            <div className="space-y-1 opacity-60">
+              <p className="font-black uppercase tracking-widest text-[11px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {language === "pl" ? "Brak komentarzy" : "No comments yet"}
               </p>
               <p className="text-xs">

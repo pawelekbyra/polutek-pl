@@ -7,6 +7,9 @@ export const INK = "#171717";
 export const PAPER = "#f8f3e7";
 export const BLUE = "#2563eb";
 export const BLUE_DARK = "#1748b8";
+export const YELLOW = "#ffbf2f";
+export const YELLOW_DARK = "#c98a00";
+export const HIGHLIGHT = "#fbe08a";
 
 function useParentSize<T extends SVGSVGElement>() {
   const ref = useRef<T>(null);
@@ -115,6 +118,54 @@ export function HachureFill({
   return <svg ref={ref} className="absolute inset-0 h-full w-full pointer-events-none" aria-hidden="true" />;
 }
 
+export function Highlight({
+  children,
+  color = HIGHLIGHT,
+  className = "",
+}: {
+  children: React.ReactNode;
+  color?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={className}
+      style={{
+        background: `linear-gradient(180deg, transparent 52%, ${color} 52%, ${color} 92%, transparent 92%)`,
+        padding: "0 3px",
+        WebkitBoxDecorationBreak: "clone",
+        boxDecorationBreak: "clone",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function Sticker({
+  children,
+  angle = -4,
+  className = "",
+}: {
+  children: React.ReactNode;
+  angle?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border-[1.5px] px-2 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.08em] shadow-brutalist-yellow transition-transform hover:rotate-0 hover:scale-105 ${className}`}
+      style={{
+        background: YELLOW,
+        borderColor: INK,
+        color: INK,
+        transform: `rotate(${angle}deg)`,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function NajsSeparator({ label, className = "" }: { label?: string; className?: string }) {
   return (
     <div className={`relative h-5 w-full ${className}`}>
@@ -130,6 +181,63 @@ export function NajsSeparator({ label, className = "" }: { label?: string; class
         </span>
       )}
     </div>
+  );
+}
+
+export function DoodleLayer({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`pointer-events-none fixed inset-0 z-[-1] h-full w-full overflow-visible ${className}`}
+      aria-hidden="true"
+    >
+      <path d="M -40 180 Q 200 174 460 182 Q 720 190 1060 176" fill="none" stroke={BLUE} strokeWidth="1.4" opacity="0.08" strokeLinecap="round"/>
+      <path d="M -40 440 Q 300 434 600 442 Q 900 450 1240 436" fill="none" stroke={YELLOW} strokeWidth="2.2" opacity="0.09" strokeLinecap="round"/>
+      <path d="M 60 700 Q 400 694 740 702 Q 1000 708 1260 696" fill="none" stroke={BLUE} strokeWidth="1.1" opacity="0.06" strokeLinecap="round"/>
+      <circle cx="1130" cy="88" r="76" fill="none" stroke={YELLOW} strokeWidth="1.2" strokeDasharray="5 10" opacity="0.14"/>
+      <circle cx="34" cy="590" r="54" fill="none" stroke={BLUE} strokeWidth="0.9" strokeDasharray="4 8" opacity="0.1"/>
+      <path d="M 72 308 m-9 0 h18 m-9 -9 v18" fill="none" stroke={INK} strokeWidth="1.2" opacity="0.1" strokeLinecap="round"/>
+      <path d="M 1162 462 m-9 0 h18 m-9 -9 v18" fill="none" stroke={YELLOW} strokeWidth="1.4" opacity="0.11" strokeLinecap="round"/>
+      <path d="M 920 820 m-7 0 h14 m-7 -7 v14" fill="none" stroke={BLUE} strokeWidth="1.1" opacity="0.09" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+export function ScribbleBadge({
+  children,
+  angle = -6,
+  className = "",
+}: {
+  children: React.ReactNode;
+  angle?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-block text-[7px] font-black uppercase tracking-[0.1em] px-[5px] py-[1.5px] leading-none ${className}`}
+      style={{
+        background: YELLOW,
+        color: INK,
+        transform: `rotate(${angle}deg)`,
+        boxShadow: `1.5px 1.5px 0 ${INK}`,
+        fontFamily: "var(--font-najs, Kalam, cursive)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function MarkerLine({
+  color = YELLOW,
+  className = "",
+}: {
+  color?: string;
+  className?: string;
+}) {
+  return (
+    <svg className={`w-full h-[5px] ${className}`} aria-hidden="true" viewBox="0 0 200 5" preserveAspectRatio="none">
+      <path d="M 3 3 Q 100 1 197 3" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.72"/>
+    </svg>
   );
 }
 

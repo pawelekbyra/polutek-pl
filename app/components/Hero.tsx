@@ -16,7 +16,7 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { Frame, NajsIcon, INK } from './najs/primitives';
+import { Frame, NajsIcon, INK, BLUE, YELLOW, MarkerLine } from './najs/primitives';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -150,6 +150,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         {/* FEATURED MEDIA */}
         <div className="relative aspect-video w-full mb-[18px] group">
           <Frame radius={14} seed={7} stroke={INK} strokeWidth={1.5} />
+          <div
+            className="absolute -top-[8px] -right-[4px] z-20 text-[8px] font-black uppercase tracking-[0.12em] px-[7px] py-[2px] leading-none"
+            style={{ background: YELLOW, color: INK, transform: "rotate(3deg)", boxShadow: `1.5px 1.5px 0 ${INK}`, fontFamily: "var(--font-najs, Kalam, cursive)" }}
+            aria-hidden="true"
+          >
+            video
+          </div>
           <div className="absolute inset-0 overflow-hidden rounded-[12px] bg-black">
             <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
               <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
@@ -159,9 +166,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3">
-          <h1 className="font-bold text-[23px] text-[#0f0f0f] leading-[1.25] mb-[14px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-             {displayTitle}
-          </h1>
+          <div className="mb-[14px]">
+            <h1 className="font-bold text-[23px] text-[#0f0f0f] leading-[1.25]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+              {displayTitle}
+            </h1>
+            <MarkerLine color={BLUE} className="mt-[3px] max-w-[60%]" />
+          </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-[14px]">
             <div className="flex w-full items-center gap-[13px] min-w-0 lg:w-auto">
@@ -257,6 +267,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         {/* DESCRIPTION BOX */}
         <div className="relative mt-[16px] p-[14px] cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
            <Frame radius={14} seed={11} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.95)" />
+           <div className="absolute top-[6px] left-[6px] bottom-[6px] w-[3px] rounded-full overflow-hidden" aria-hidden="true">
+             <div className="h-full w-full" style={{ background: `linear-gradient(to bottom, ${YELLOW}, ${BLUE})`, opacity: 0.55 }} />
+           </div>
            <div className="relative z-10">
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
                 <span className="text-[13.5px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
