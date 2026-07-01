@@ -57,10 +57,6 @@ lib/modules/
     domain/         # user DTOs, errors, policies
     infrastructure/ # UserRepository
   shared/           # AppContext, Actor, result types (ok/failure), db helpers
-  playback/
-    domain/         # playback.dto, playback-policy, primary-playable-asset
-    application/    # PlaybackService (resolves playable sources)
-    infrastructure/ # CloudflareSignedPlaybackTokenService
 
 app/                # Next.js App Router pages and API routes
 app/api/            # API routes
