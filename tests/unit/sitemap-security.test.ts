@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { prisma } from '@/lib/prisma';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { MainChannelService } from '@/lib/modules/channel';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -11,7 +11,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
+vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getOptional: vi.fn(),
   },

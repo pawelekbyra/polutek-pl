@@ -6,6 +6,7 @@ import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { MainChannelService } from '@/lib/modules/channel';
+import { createAppContext } from '@/lib/modules/shared/app-context';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -15,7 +16,7 @@ export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => (
 });
 
 export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Prisma.VideoWhereInput> {
-  const mainChannel = await MainChannelService.getOptional();
+  const mainChannel = await MainChannelService.getOptional(createAppContext());
   return {
     status: VideoStatus.PUBLISHED,
     creatorId: mainChannel?.id || 'none',
@@ -39,7 +40,7 @@ export class VideoContentService {
    * Strictly excludes PATRON and LOGGED_IN tiers.
    */
   static async getSitemapVideos(): Promise<PublicVideoDTO[]> {
-    const mainChannel = await MainChannelService.getOptional();
+    const mainChannel = await MainChannelService.getOptional(createAppContext());
     const now = new Date();
 
     const videos = await prisma.video.findMany({

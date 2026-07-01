@@ -5,7 +5,7 @@ const findMany = vi.fn();
 const getOptional = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({ prisma: { video: { findMany } } }));
-vi.mock("@/lib/channel/main-channel.service", () => ({
+vi.mock("@/lib/modules/channel", () => ({
   MainChannelService: { getOptional },
 }));
 

@@ -2,6 +2,7 @@ import type { PublicVideoDTO } from "@/app/types/video";
 import { prisma } from "@/lib/prisma";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { MainChannelService } from "@/lib/modules/channel";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoContentService, visiblePublishedAtFilter } from "@/lib/modules/video/infrastructure/video-content.service";
 
 export type VideoSearchMatchedField =
@@ -63,7 +64,7 @@ export class VideoSearchService {
     const normalizedQuery = this.normalizeQuery(query);
     if (!normalizedQuery) return [];
 
-    const mainChannel = await MainChannelService.getOptional();
+    const mainChannel = await MainChannelService.getOptional(createAppContext());
     const now = new Date();
     const videos = await prisma.video.findMany({
       where: {

@@ -10,9 +10,9 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/channel/main-channel.service', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
-    getPublicRequired: vi.fn().mockResolvedValue({ id: 'creator-1' }),
+    getRequired: vi.fn().mockResolvedValue({ id: 'creator-1' }),
   },
 }));
 
