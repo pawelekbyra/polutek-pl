@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { compareSidebarItems, normalizeSidebarOrder } from "@/lib/services/content/sidebar-order";
+import { compareSidebarItems, normalizeSidebarOrder } from "@/lib/modules/video/domain/sidebar-order";
 
 const source = (path: string) => readFileSync(path, "utf8");
 
@@ -30,12 +30,12 @@ describe("#1104 search/sidebar cleanup contracts", () => {
   });
 
   it("backend and fallback import the shared sidebar order helper", () => {
-    expect(source("lib/services/channel/channel-layout.service.ts")).toContain("compareSidebarItems");
+    expect(source("lib/modules/channel/application/channel-layout.service.ts")).toContain("compareSidebarItems");
     expect(source("app/components/ChannelHome.tsx")).toContain("compareSidebarItems");
   });
 
   it("sidebar exposes top-level creatorId and support box does not send an empty creator id", () => {
-    const layout = source("lib/services/channel/channel-layout.service.ts");
+    const layout = source("lib/modules/channel/application/channel-layout.service.ts");
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect(layout).toContain("creatorId: string");
     expect(layout).toContain("creatorId: v.creatorId");

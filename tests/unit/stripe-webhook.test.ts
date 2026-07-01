@@ -3,7 +3,7 @@ import { PaymentService } from '@/lib/services/payment.service';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
-import { PaymentFulfillmentService } from '@/lib/services/payments/fulfillment.service';
+import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 import { recalculatePatronStatus } from '@/lib/modules/patron';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
@@ -59,10 +59,8 @@ vi.mock('@/lib/prisma', () => ({
   }
 }));
 
-vi.mock('@/lib/services/payments/fulfillment.service', () => ({
-  PaymentFulfillmentService: {
-    fulfillPayment: vi.fn(),
-  },
+vi.mock('@/lib/modules/payments/application/fulfill-payment.use-case', () => ({
+  fulfillPayment: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock('@/lib/modules/patron', () => ({
@@ -100,7 +98,7 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
 
     await PaymentService.handleWebhook(body, sig);
 
-    expect(PaymentFulfillmentService.fulfillPayment).not.toHaveBeenCalled();
+    expect(fulfillPayment).not.toHaveBeenCalled();
     expect(prisma.stripeEvent.update).not.toHaveBeenCalled();
   });
 
@@ -108,7 +106,7 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
       const event = { id: 'evt_1', type: 'payment_intent.succeeded', data: { object: {} } } as any;
       mockConstructEvent.mockReturnValue(event);
       vi.mocked(prisma.stripeEvent.create).mockResolvedValue({} as any);
-      vi.mocked(PaymentFulfillmentService.fulfillPayment).mockRejectedValue(new Error('fulfillment failed'));
+      vi.mocked(fulfillPayment).mockRejectedValue(new Error('fulfillment failed'));
 
       await expect(PaymentService.handleWebhook(body, sig)).rejects.toThrow('fulfillment failed');
 

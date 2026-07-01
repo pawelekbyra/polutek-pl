@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { VideoContentService } from '@/lib/services/content/video.service';
+import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { prisma } from '@/lib/prisma';
 import { MainChannelService } from '@/lib/channel/main-channel.service';
 

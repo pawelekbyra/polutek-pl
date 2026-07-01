@@ -2,7 +2,7 @@ import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
-import { parseUserQueryParams } from "@/lib/services/admin/admin-query-parser";
+import { parseUserQueryParams } from "@/lib/admin/query-parser";
 import { listAdminUsers } from "@/lib/modules/users";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 

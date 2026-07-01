@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { ChannelLayoutService } from '@/lib/services/channel/channel-layout.service';
+import { ChannelLayoutService } from '@/lib/modules/channel/application/channel-layout.service';
 import { handleApiError } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';

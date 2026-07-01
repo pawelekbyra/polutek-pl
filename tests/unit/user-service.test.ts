@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getOrCreateUser, getOrCreateUserFromAuth, syncUser } from '@/lib/modules/users/application/sync-user.use-case';
-import { UserLanguageService } from '@/lib/services/user/language.service';
+import { UserLanguageService } from '@/lib/modules/users/application/user-language.service';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 

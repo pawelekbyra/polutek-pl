@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import sitemap from '@/app/sitemap';
-import { CreatorContentService, VideoContentService } from '@/lib/services/content.service';
+import { CreatorContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
+import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -10,11 +11,14 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/services/content.service', () => ({
+vi.mock('@/lib/modules/channel/infrastructure/creator-content.service', () => ({
   CreatorContentService: {
     getCreatorBySlug: vi.fn(),
     getConfiguredOrDefaultCreator: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/modules/video/infrastructure/video-content.service', () => ({
   VideoContentService: {
     getAllVideos: vi.fn(),
     getSitemapVideos: vi.fn(),

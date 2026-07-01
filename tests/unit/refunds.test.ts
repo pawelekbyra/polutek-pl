@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PaymentStatus } from '@prisma/client';
-import { applyLostChargeback, calculateChargebackNetAdjustment, calculateRefundAdjustment } from '@/lib/services/payments/refund.service';
+import { applyLostChargeback, calculateChargebackNetAdjustment, calculateRefundAdjustment } from '@/lib/modules/payments/domain/payment-adjustments';
 
 describe('refund amount adjustments', () => {
   it('calculates the first partial refund delta without revoking patron access', () => {

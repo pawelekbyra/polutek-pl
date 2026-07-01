@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { CreatorContentService as ContentService, VideoContentService } from '@/lib/services/content.service';
+import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
+import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 
 const DEFAULT_BASE_URL = 'https://polutek.pl';
 

@@ -7,7 +7,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search } from '@/app/components/icons';
-import { CreatorContentService as ContentService } from '@/lib/services/content/creator.service';
+import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/channel/main-channel.service';

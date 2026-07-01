@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
-import { compareSidebarItems } from "@/lib/services/content/sidebar-order";
+import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, NajsSeparator, INK } from "./najs/primitives";
 
 interface ChannelHomeProps {

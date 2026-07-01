@@ -55,7 +55,7 @@ describe('ChannelLayoutService patron access truth', () => {
       patronGrants: [{ id: 'grant-1' }],
     });
 
-    const { ChannelLayoutService } = await import('@/lib/services/channel/channel-layout.service');
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({
@@ -75,7 +75,7 @@ describe('ChannelLayoutService patron access truth', () => {
       patronGrants: [],
     });
 
-    const { ChannelLayoutService } = await import('@/lib/services/channel/channel-layout.service');
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(layout.viewerState).toBe('LOGGED_IN');

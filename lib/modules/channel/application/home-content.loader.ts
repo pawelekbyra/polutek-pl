@@ -1,6 +1,7 @@
 import { PublicCreatorPageDTO, PublicVideoDTO } from "@/app/types/video";
-import { CreatorContentService, VideoContentService } from "./content.service";
-import { logger } from "../logger";
+import { CreatorContentService } from "@/lib/modules/channel/infrastructure/creator-content.service";
+import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
+import { logger } from "@/lib/logger";
 
 export interface HomeContent {
   status: 'loading' | 'ready' | 'error' | 'empty';

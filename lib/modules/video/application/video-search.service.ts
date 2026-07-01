@@ -2,7 +2,7 @@ import type { PublicVideoDTO } from "@/app/types/video";
 import { prisma } from "@/lib/prisma";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { MainChannelService } from "@/lib/channel/main-channel.service";
-import { VideoContentService, visiblePublishedAtFilter } from "@/lib/services/content/video.service";
+import { VideoContentService, visiblePublishedAtFilter } from "@/lib/modules/video/infrastructure/video-content.service";
 
 export type VideoSearchMatchedField =
   | "title"
@@ -143,4 +143,15 @@ export class VideoSearchService {
     if (score <= 0) return null;
     return { ...video, matchedFields, score };
   }
+}
+
+export const normalizePublicVideoSearchQuery = VideoSearchService.normalizeQuery.bind(VideoSearchService);
+
+export function searchPublicVideos(
+  videos: PublicVideoDTO[],
+  query: string | null | undefined,
+): VideoSearchResult[] {
+  const normalizedQuery = VideoSearchService.normalizeQuery(query);
+  if (!normalizedQuery) return [];
+  return VideoSearchService.rankVideos(videos, normalizedQuery);
 }
