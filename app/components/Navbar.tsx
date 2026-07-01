@@ -9,7 +9,7 @@ import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
-import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { Frame, NajsIcon, INK, ScribbleBadge, YELLOW } from "./najs/primitives";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -99,18 +99,20 @@ const Navbar = () => {
                 href="/"
                 className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
               >
-                <div className="flex items-start gap-[2px]">
-                  <BrandName
-                    className="text-[22px] leading-none"
-                    variant="classic"
-                    style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
-                  />
-                  <span
-                    className="text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#171717] select-none mt-[1px] px-[2px]"
-                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-                  >
+                <div className="flex items-start gap-[3px]">
+                  <div className="flex flex-col items-start">
+                    <BrandName
+                      className="text-[22px] leading-none"
+                      variant="classic"
+                      style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+                    />
+                    <svg className="w-full h-[3px] mt-[1px]" viewBox="0 0 80 3" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M 2 2 Q 40 0.5 78 2" fill="none" stroke={YELLOW} strokeWidth="2.2" strokeLinecap="round" opacity="0.85"/>
+                    </svg>
+                  </div>
+                  <ScribbleBadge angle={-6} className="ml-[1px] mt-[1px]">
                     Beta
-                  </span>
+                  </ScribbleBadge>
                 </div>
               </Link>
             </div>

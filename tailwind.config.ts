@@ -33,6 +33,15 @@ const config = {
       colors: {
         cream: '#FDFBF7',
         charcoal: '#1a1a1a',
+        najs: {
+          ink: '#171717',
+          paper: '#f8f3e7',
+          blue: '#2563eb',
+          'blue-dark': '#1748b8',
+          yellow: '#ffbf2f',
+          'yellow-dark': '#c98a00',
+          highlight: '#fbe08a',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           dark: '#1d4ed8',
@@ -100,7 +109,8 @@ const config = {
       boxShadow: {
         'brutalist-sm': '2px 2px 0px 0px #1a1a1a',
         brutalist: '4px 4px 0px 0px #1a1a1a',
-        'brutalist-lg': '8px 8px 0px 0px #1a1a1a'
+        'brutalist-lg': '8px 8px 0px 0px #1a1a1a',
+        'brutalist-yellow': '3px 3px 0px 0px #c98a00'
       },
       borderRadius: {
         lg: 'var(--radius)',

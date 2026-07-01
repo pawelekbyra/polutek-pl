@@ -15,7 +15,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Download } from "lucide-react";
 import { DownloadSheet } from "./DownloadSheet";
-import { Frame, NajsIcon, INK, BLUE } from "../najs/primitives";
+import { Frame, NajsIcon, INK, BLUE, YELLOW, Highlight, MarkerLine, HachureFill } from "../najs/primitives";
 
 const PATRON_PREMIERE_DATE = new Date("2026-10-13T00:00:00+02:00");
 
@@ -276,12 +276,11 @@ export function SidebarPlaylist({
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
     <div className="mb-[2px]">
-      <div className="flex items-center gap-2 mb-[2px]">
+      <div className="flex items-center gap-[6px] mb-[2px]">
+        <span className="inline-block w-[8px] h-[8px] shrink-0" style={{ background: YELLOW, boxShadow: `1px 1px 0 ${INK}`, transform: "rotate(12deg)" }} aria-hidden="true" />
         {icon}
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <span style={{ background: "linear-gradient(180deg, transparent 52%, #FBE08A 52%, #FBE08A 92%, transparent 92%)", padding: "0 3px", WebkitBoxDecorationBreak: "clone", boxDecorationBreak: "clone" }}>
-            {title}
-          </span>
+          <Highlight>{title}</Highlight>
         </h3>
       </div>
       <div className="relative h-[8px] w-full">
@@ -327,10 +326,18 @@ export function SidebarPlaylist({
     return (
       <div className="relative my-[10px] p-[18px] mb-3">
         <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
+        <div
+          aria-hidden="true"
+          className="absolute -top-[9px] -right-[7px] z-20 rounded-full border-[1.5px] px-2 py-[3px] text-[10px] font-extrabold uppercase tracking-[0.06em] shadow-brutalist-yellow"
+          style={{ background: YELLOW, borderColor: INK, color: INK, transform: "rotate(6deg)" }}
+        >
+          {isPl ? "na zawsze" : "forever"}
+        </div>
         <div className="relative z-10">
-          <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[8px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+          <h4 className="text-[16px] font-bold text-[#0f0f0f] m-0 mb-[3px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
           </h4>
+          <MarkerLine color={YELLOW} className="mb-[8px] max-w-[80%]" />
           <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
             {isPl
               ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
@@ -338,10 +345,11 @@ export function SidebarPlaylist({
           </p>
 
           <div className="relative p-[12px_14px] mb-[14px]">
-            <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.85)" />
+            <HachureFill fill="rgba(255,191,47,.18)" stroke="rgba(255,191,47,.3)" seed={42} />
+            <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="transparent" />
             <div className="relative z-10">
               <div className="text-[10px] font-extrabold tracking-[0.16em] uppercase text-[#7a7a7a] mb-[7px] text-center" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                {isPl ? "DO PREMIERY" : "PREMIERE IN"}
+                <Highlight>{isPl ? "DO PREMIERY" : "PREMIERE IN"}</Highlight>
               </div>
               <div className="flex items-baseline gap-[10px] justify-center">
                 <div className="flex items-baseline gap-[5px]">
@@ -366,9 +374,14 @@ export function SidebarPlaylist({
                 document.getElementById("donations");
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            className="group relative w-full h-[44px] text-white font-bold text-[14px] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:-translate-y-[1px]"
             style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
           >
+            <span
+              className="absolute inset-0 rounded-[11px] opacity-0 blur-[6px] transition-opacity duration-200 group-hover:opacity-60"
+              style={{ background: YELLOW }}
+              aria-hidden="true"
+            />
             <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow={true} />
             <span className="relative z-10">{isPl ? "Wesprzyj" : "Support"}</span>
           </button>

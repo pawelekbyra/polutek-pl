@@ -10,7 +10,7 @@ import { pl } from "date-fns/locale";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
-import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { Frame, NajsIcon, INK, YELLOW } from "./najs/primitives";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -85,6 +85,11 @@ export default function ChannelVideoCard({
         <Link href={`/?v=${video.id}`} className="absolute inset-0 z-0" />
         <div className="relative aspect-video rounded-md bg-black mb-2.5 z-10">
           <Frame radius={8} seed={22} stroke={INK} strokeWidth={1} />
+          <div
+            className="pointer-events-none absolute -bottom-[3px] left-[6%] right-[6%] h-[3px] scale-x-0 rounded-full transition-transform duration-300 group-hover:scale-x-100"
+            style={{ background: YELLOW }}
+            aria-hidden="true"
+          />
           <div className="absolute inset-0 overflow-hidden rounded-md">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
