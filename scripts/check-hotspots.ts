@@ -58,6 +58,26 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 720,
     reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",
   },
+  "app/components/experiments/Layout8Watercolor.tsx": {
+    maxLines: 460,
+    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for SVG watercolor effects. Style-lab only, not in production flows.",
+  },
+  "app/components/experiments/Layout12Blueprint.tsx": {
+    maxLines: 490,
+    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for blueprint/technical drawing effects. Style-lab only, not in production flows.",
+  },
+  "app/components/experiments/Layout13Risograph.tsx": {
+    maxLines: 480,
+    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for risograph print simulation. Style-lab only, not in production flows.",
+  },
+  "app/components/experiments/Layout14InkCalligraphy.tsx": {
+    maxLines: 470,
+    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for calligraphy/ink effects. Style-lab only, not in production flows.",
+  },
+  "app/components/experiments/Layout15WiredElements.tsx": {
+    maxLines: 540,
+    reason: "Experimental homepage layout showcase; dense inline CSS-in-JS styles for wired-elements web component demo. Style-lab only, not in production flows.",
+  },
   "app/eksperyment7/ExperimentSevenSkin.tsx": {
     maxLines: 480,
     reason: "Experimental UI skin with dense inline CSS-in-JS styles; tracked as style-lab debt, tolerated until a final skin direction is chosen.",

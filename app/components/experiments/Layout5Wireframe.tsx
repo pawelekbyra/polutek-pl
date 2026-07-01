@@ -127,6 +127,7 @@ function RoughLine({ x1 = 0, y1 = 0, x2 = 100, y2 = 0, roughness = 1.2, stroke =
 function RoughButton({ children, filled = false, onClick }: { children: React.ReactNode; filled?: boolean; onClick?: () => void }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [svgHtml, setSvgHtml] = useState("");
 
   useEffect(() => {
     if (!ref.current) return;
@@ -136,6 +137,20 @@ function RoughButton({ children, filled = false, onClick }: { children: React.Re
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!size.w || !size.h) return;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const rc = new RoughSVG(svg);
+    const node = rc.rectangle(2, 2, size.w - 4, size.h - 4, {
+      roughness: 1.8,
+      fill: filled ? INK : "none",
+      fillStyle: filled ? "solid" : "none",
+      stroke: INK,
+      strokeWidth: filled ? 1.5 : 1.2,
+    });
+    setSvgHtml(node.outerHTML);
+  }, [size, filled]);
 
   return (
     <motion.button
@@ -149,21 +164,11 @@ function RoughButton({ children, filled = false, onClick }: { children: React.Re
         fontFamily: "var(--font-najs)", fontSize: 15, color: INK,
       }}
     >
-      {size.w > 0 && (
+      {svgHtml && (
         <svg style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-          width={size.w} height={size.h}>
-          {(() => {
-            const rc = new RoughSVG(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
-            const node = rc.rectangle(2, 2, size.w - 4, size.h - 4, {
-              roughness: 1.8,
-              fill: filled ? INK : "none",
-              fillStyle: filled ? "solid" : "none",
-              stroke: INK,
-              strokeWidth: filled ? 1.5 : 1.2,
-            });
-            return <g dangerouslySetInnerHTML={{ __html: node.outerHTML }} />;
-          })()}
-        </svg>
+          width={size.w} height={size.h}
+          dangerouslySetInnerHTML={{ __html: svgHtml }}
+        />
       )}
       <span style={{ position: "relative", zIndex: 1, color: filled ? PAPER : INK }}>
         {children}
@@ -182,6 +187,17 @@ const videos = [
 function VideoCard({ video, delay = 0 }: { video: typeof videos[0]; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const { w, h } = useSize(ref as React.RefObject<HTMLDivElement>);
+  const [thumbHtml, setThumbHtml] = useState("");
+
+  useEffect(() => {
+    if (!w) return;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const rc = new RoughSVG(svg);
+    const rr = rc.rectangle(2, 2, 100, 56, { roughness: 1.2, stroke: INK, strokeWidth: 1 });
+    const l1 = rc.line(2, 2, 102, 58, { roughness: 0.8, stroke: INK, strokeWidth: 0.8 });
+    const l2 = rc.line(102, 2, 2, 58, { roughness: 0.8, stroke: INK, strokeWidth: 0.8 });
+    setThumbHtml(rr.outerHTML + l1.outerHTML + l2.outerHTML);
+  }, [w]);
 
   return (
     <motion.div
@@ -200,19 +216,10 @@ function VideoCard({ video, delay = 0 }: { video: typeof videos[0]; delay?: numb
         {/* Video thumbnail placeholder — X marks the spot */}
         <div style={{ position: "relative", aspectRatio: "16/9", marginBottom: 10 }}>
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-            {(() => {
-              const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-              const rc = new RoughSVG(svg);
-              const rr = rc.rectangle(2, 2, 100, 56, { roughness: 1.2, stroke: INK, strokeWidth: 1 });
-              const l1 = rc.line(2, 2, 102, 58, { roughness: 0.8, stroke: INK, strokeWidth: 0.8 });
-              const l2 = rc.line(102, 2, 2, 58, { roughness: 0.8, stroke: INK, strokeWidth: 0.8 });
-              return (
-                <g>
-                  <rect width="100%" height="100%" fill={PAPER2} />
-                  <g dangerouslySetInnerHTML={{ __html: rr.outerHTML + l1.outerHTML + l2.outerHTML }} transform={`scale(${w / 110}, 1)`} />
-                </g>
-              );
-            })()}
+            <rect width="100%" height="100%" fill={PAPER2} />
+            {thumbHtml && (
+              <g dangerouslySetInnerHTML={{ __html: thumbHtml }} transform={`scale(${w / 110}, 1)`} />
+            )}
           </svg>
           {/* Time badge */}
           <div style={{
@@ -241,6 +248,14 @@ function VideoCard({ video, delay = 0 }: { video: typeof videos[0]; delay?: numb
 export default function Layout5Wireframe() {
   const heroRef = useRef<HTMLDivElement>(null);
   const { w: hw, h: hh } = useSize(heroRef as React.RefObject<HTMLDivElement>);
+  const [playCircleHtml, setPlayCircleHtml] = useState("");
+
+  useEffect(() => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const rc = new RoughSVG(svg);
+    const c = rc.circle(36, 36, 64, { roughness: 1.5, stroke: INK, strokeWidth: 1.5, fill: PAPER, fillStyle: "solid" });
+    setPlayCircleHtml(c.outerHTML);
+  }, []);
 
   return (
     <main style={{
@@ -309,14 +324,9 @@ export default function Layout5Wireframe() {
                     position: "relative", width: 72, height: 72, cursor: "pointer",
                   }}
                 >
-                  <svg width="72" height="72" viewBox="0 0 72 72">
-                    {(() => {
-                      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                      const rc = new RoughSVG(svg);
-                      const c = rc.circle(36, 36, 64, { roughness: 1.5, stroke: INK, strokeWidth: 1.5, fill: PAPER, fillStyle: "solid" });
-                      return <g dangerouslySetInnerHTML={{ __html: c.outerHTML }} />;
-                    })()}
-                  </svg>
+                  <svg width="72" height="72" viewBox="0 0 72 72"
+                    dangerouslySetInnerHTML={{ __html: playCircleHtml }}
+                  />
                   <div style={{
                     position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: "var(--font-najs)", fontSize: 22,
