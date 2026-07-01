@@ -24,11 +24,15 @@ vi.mock('@/lib/blob', () => ({
     isAllowedVideoSourceUrl: vi.fn().mockReturnValue(true)
 }));
 
-vi.mock('@/lib/modules/media', () => ({
-  StorageService: {
-    getPresignedUrl: vi.fn(),
-  },
-}));
+vi.mock('@/lib/modules/media', async () => {
+  const { MediaPolicy } = await import('@/lib/modules/media/domain/media.policy');
+  return {
+    MediaPolicy,
+    StorageService: {
+      getPresignedUrl: vi.fn(),
+    },
+  };
+});
 
 const { mockCreateSignedPlaybackToken, mockGetAssetDetails } = vi.hoisted(() => ({
   mockCreateSignedPlaybackToken: vi.fn(),

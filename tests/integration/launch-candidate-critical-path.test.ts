@@ -54,19 +54,23 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/modules/playback', () => ({
-  CloudflareSignedPlaybackTokenService: {
-    isConfigured: vi.fn(() => true),
-    createSignedPlaybackToken: vi.fn(({ videoUid }) => {
-      cloudflareTokenCalls.push(videoUid);
-      return {
-        token: `signed-token-for-${videoUid}`,
-        expiresAt: new Date('2026-01-01T13:00:00.000Z'),
-        expiresInSeconds: 3600,
-      };
-    }),
-  },
-}));
+vi.mock('@/lib/modules/playback', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/modules/playback')>();
+  return {
+    ...actual,
+    CloudflareSignedPlaybackTokenService: {
+      isConfigured: vi.fn(() => true),
+      createSignedPlaybackToken: vi.fn(({ videoUid }: { videoUid: string }) => {
+        cloudflareTokenCalls.push(videoUid);
+        return {
+          token: `signed-token-for-${videoUid}`,
+          expiresAt: new Date('2026-01-01T13:00:00.000Z'),
+          expiresInSeconds: 3600,
+        };
+      }),
+    },
+  };
+});
 
 vi.mock('@/lib/rate-limit', () => ({
   setNxEx: vi.fn(async (key: string, value: string) => {
