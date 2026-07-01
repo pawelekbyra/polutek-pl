@@ -1,6 +1,6 @@
 ## POLUTEK.PL
 
-Polutek.pl to aktywny produkt VOD jednego twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system wsparcia i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
+Polutek.pl jest to aktywny produkt VOD jednego twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system wsparcia i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
 
 ```txt
 Polutek.pl is not a platform.
