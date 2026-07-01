@@ -675,7 +675,7 @@
 
 
     {
-      "file": "lib/services/content/video.service.ts",
+      "file": "lib/modules/video/infrastructure/video-content.service.ts",
       "line": 128,
       "label": "explicit any annotation",
       "text": "if (field in dto) delete (dto as any)[field];",

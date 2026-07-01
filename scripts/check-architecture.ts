@@ -14,6 +14,17 @@ const FORBIDDEN_IMPORTS = [
   'lib/api/',
 ];
 
+// Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
+// Key: file path; value: map of "module/subPath" → reason string.
+const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
+  'lib/modules/channel/application/home-content.loader.ts': {
+    'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
+  },
+  'lib/modules/channel/infrastructure/creator-content.service.ts': {
+    'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
+  },
+};
+
 function checkModules() {
   let violations = 0;
 
@@ -47,8 +58,11 @@ function checkModules() {
         const importedModule = match[1];
         const subPath = match[2];
         if (importedModule !== currentModule && importedModule !== 'shared' && subPath !== 'index') {
-           console.error(`❌ Violation: Cross-module internal import in ${relativePath}: importing from ${importedModule}/${subPath} instead of @/lib/modules/${importedModule}`);
-           violations++;
+          const allowedReason = CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST[relativePath]?.[`${importedModule}/${subPath}`];
+          if (!allowedReason) {
+            console.error(`❌ Violation: Cross-module internal import in ${relativePath}: importing from ${importedModule}/${subPath} instead of @/lib/modules/${importedModule}`);
+            violations++;
+          }
         }
       }
     }

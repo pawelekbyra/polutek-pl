@@ -5,7 +5,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
+import { MainChannelService } from '@/lib/modules/channel';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [

@@ -1,7 +1,7 @@
 import type { PublicVideoDTO } from "@/app/types/video";
 import { prisma } from "@/lib/prisma";
 import { AccessTier, VideoStatus } from "@prisma/client";
-import { MainChannelService } from "@/lib/channel/main-channel.service";
+import { MainChannelService } from "@/lib/modules/channel";
 import { VideoContentService, visiblePublishedAtFilter } from "@/lib/modules/video/infrastructure/video-content.service";
 
 export type VideoSearchMatchedField =

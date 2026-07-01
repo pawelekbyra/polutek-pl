@@ -33,4 +33,5 @@ export * from './application/complete-original-upload.use-case';
 export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
+export * from './domain/sidebar-order';
 export type { CreateVideoInput, UpdateVideoInput } from './infrastructure/video.repository';

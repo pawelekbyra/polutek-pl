@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus } from '@prisma/client';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
-import { compareSidebarItems } from '@/lib/modules/video/domain/sidebar-order';
+import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
+import { compareSidebarItems } from '@/lib/modules/video';
 
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
 
