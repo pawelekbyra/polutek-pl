@@ -70,19 +70,16 @@ Dozwolone statusy: `TODO`, `IN_PROGRESS`, `PARTIAL`, `BLOCKED`, `DONE`, `SKIPPED
 | 3.4 | `INCOMPLETE-006` — Stripe reconciliation job | `DONE` | PR #1263 — Implemented Vercel cron reconciliation job in `app/api/cron/stripe-reconciliation`. |
 | 4.1 | `CLEANUP-005` — SearchPage missing sizes in Image | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `app/search/page.tsx` dodano `sizes=` |
 | 4.2 | `CLEANUP-006` — CoverImageUpload zbędne unoptimized | `DONE` | PR claude/polutek-pl-proposals-qfkm9y: `CoverImageUpload.tsx:189` usunięto `unoptimized` |
-| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `PARTIAL` | PR #1263 migrated the highest-risk bridge files, but 2026-06-30 code recheck confirms `lib/services/**` is still an active compatibility layer used by runtime/tests. Next work must be targeted service-by-service, not a bulk delete. |
+| 4.3 | `CLEANUP-001` — legacy service layer migration/removal | `DONE` | PR #1285 migrated payment/channel/user/admin services; PR claude/pr-review-fixes-iuf60l completed migration of lib/services/playback/ and lib/services/storage/ to lib/modules/playback/ and lib/modules/media/. Only lib/services/payment.service.ts remains as an intentional deprecated bridge (test coverage only, delegates to modular use-cases). |
 | 4 | `CLEANUP-002` — API error handling standardization | `DONE` | 53/63 route'ów już używało wzorca; pozostałe 10 to proxy/webhooki/diagnostyki — świadomie bez fromUseCaseResult |
 
-## Current verified remainder — 2026-06-30
+## Current verified remainder — 2026-07-01
 
-Po ponownej weryfikacji kodu 2026-06-30 stan krótkiej listy jest bardzo dobry: szybkie poprawki PR-A z audytu są zamknięte w kodzie (bounce/complaint suppression, copy typo, support email, canonical URLs, usunięte martwe komponenty i typed comment-report result).
+Stan na 2026-07-01: cała roadmapa techniczna z refaktoru jest ZAMKNIĘTA. Wszystkie bugi, incomplete features i cleanup zostały domknięte. `lib/services/` zredukowany do jednego pliku — deprecated bridge `payment.service.ts` (świadomie zachowany dla test coverage, deleguje do modularnych use-cases).
 
-Aktualny otwarty zakres wykonywalny z tej gałęzi audytu to tylko:
+Dependency cleanup — `artplayer` oraz `tw-animate-css` zostały usunięte, a `@base-ui/react`, `@react-email/render` i `sharp` zostają jako uzasadnione zależności produkcyjne/toolingowe.
 
-1. `CLEANUP-001` — dalsza, ostrożna migracja aktywnie używanego `lib/services/**`; katalog nie jest martwy i nie wolno usuwać go hurtowo.
-2. Dependency cleanup — `artplayer` oraz `tw-animate-css` zostały usunięte, a `@base-ui/react`, `@react-email/render` i `sharp` zostają jako uzasadnione zależności produkcyjne/toolingowe.
-
-`INCOMPLETE-003`, `INCOMPLETE-005` i `INCOMPLETE-006` nie są już remainderem. Public launch pozostaje osobnym `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty.
+Kod jest w dobrym stanie i gotowy do testowania produkcyjnego. Public launch pozostaje osobnym `NO_GO`, dopóki operator/legal/evidence work nie zostanie domknięty przez właściciela.
 
 ## Roadmap progress tracker
 
@@ -114,7 +111,7 @@ Aktualny otwarty zakres wykonywalny z tej gałęzi audytu to tylko:
 
 ### Cleanup from roadmap
 
-- [ ] `CLEANUP-001` — legacy service layer migration/removal map execution — `PARTIAL`; code recheck confirms `lib/services/**` remains active and must be migrated in small slices.
+- [x] `CLEANUP-001` — legacy service layer migration/removal map execution — `DONE` — PR #1285 + PR claude/pr-review-fixes-iuf60l: playback/storage migrated to lib/modules/playback and lib/modules/media; only payment.service.ts deprecated bridge remains.
 - [x] `CLEANUP-002` — API error handling standardization — `DONE` (10 pozostałych route'ów to proxy/webhooki/diagnostyki, świadomie bez wzorca)
 - [x] `CLEANUP-003` — user-visible typo cleanup — `DONE` (zweryfikowane w kodzie)
 - [x] `CLEANUP-004` — hardcoded support email in components — `DONE` PR claude/polutek-pl-proposals-qfkm9y

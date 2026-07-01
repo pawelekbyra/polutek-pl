@@ -42,11 +42,16 @@ lib/modules/
   access/           # Video access policy (checkVideoAccess, PlaybackPlan)
   audit/            # Audit event recording
   email/            # Email repository, broadcast use cases, Resend adapter
+  media/            # Thumbnail resolution, storage (S3/R2 presigned URLs), thumbnail HTTP response
   patron/
     application/    # grant-patron, revoke-patron, recalculate-patron-status use cases
     domain/         # patron.dto, patron.errors, patron.policy
     infrastructure/ # PatronRepository (listActiveGrants, createGrant, revokeActiveGrants…)
   payments/         # Payment recording, fulfillPayment (canonical replay-safe path)
+  playback/
+    application/    # playback.service — resolves playable sources for a video
+    domain/         # playback.dto, playback-policy, primary-playable-asset
+    infrastructure/ # cloudflare-signed-playback-token.service
   users/
     application/    # get-admin-user-details, patron-read-model, sync-user use cases
     domain/         # user DTOs, errors, policies
@@ -187,8 +192,11 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
 | `lib/modules/users/application/patron-read-model.ts` | `buildPatronDiagnosticsReadModel(grants[])` — diagnostics only |
-| `lib/services/storage/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
-| `lib/services/payment.service.ts` | Legacy compatibility shim — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
+| `lib/modules/media/application/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
+| `lib/modules/media/infrastructure/thumbnail-response.service.ts` | Fetches thumbnail blob and returns HTTP response with proper caching headers |
+| `lib/modules/playback/application/playback.service.ts` | Resolves playable video source (Cloudflare/Mux/YouTube/legacy) based on access plan |
+| `lib/modules/playback/domain/playback-policy.ts` | Policy gates for legacy private playback fallback (always returns false) |
+| `lib/services/payment.service.ts` | Deprecated bridge — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
 | `prisma/schema.prisma` | Database schema (single-writer) |
 
 ---

@@ -13,6 +13,10 @@ Duży refaktor i stabilizacja fundamentów produktu są zakończone. Polutek.pl 
 - Bieżący kod i testy są implementation truth; aktualne issue i dokumenty roadmapy są product/specification truth.
 - Historyczne raporty reconciliacji pozostają zachowane w `docs/reports/reconciliation/`.
 
+## Stan kodu — 2026-07-01
+
+Cała roadmapa techniczna z refaktoru jest zamknięta. `lib/services/` zredukowany do jednego pliku — deprecated bridge `payment.service.ts` (świadomie zachowany dla test coverage). Nowy moduł `lib/modules/playback/` przejął logikę odtwarzania. Kod jest w dobrym stanie i gotowy do testowania produkcyjnego.
+
 ## Aktualne kierunki produktu
 
 - Pełny multi-source video system: admin create/edit, provider switch i playback end-to-end — kanonicznie #1204.
