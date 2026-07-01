@@ -697,29 +697,50 @@
     },
 
     {
-      "file": "lib/services/playback/playback.service.ts",
-      "line": 145,
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 171,
       "label": "explicit any annotation",
       "text": "accessReason: decision.reason as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/services/playback/playback.service.ts",
-      "line": 165,
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 191,
       "label": "explicit any annotation",
       "text": "tier = fallback.tier as any;",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/services/playback/playback.service.ts",
-      "line": 245,
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 250,
       "label": "explicit any annotation",
       "text": "accessTier: tier as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/services/playback/playback.service.ts",
-      "line": 402,
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 338,
+      "label": "explicit any annotation",
+      "text": "accessTier: tier as any,",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 403,
+      "label": "explicit any annotation",
+      "text": "accessTier: tier as any,",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 486,
+      "label": "explicit any annotation",
+      "text": "accessTier: tier as any,",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "line": 598,
       "label": "explicit any annotation",
       "text": "accessTier: tier as any,",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
