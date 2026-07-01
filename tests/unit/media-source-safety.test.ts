@@ -34,12 +34,16 @@ const { mockCreateSignedPlaybackToken, mockGetAssetDetails } = vi.hoisted(() => 
   mockCreateSignedPlaybackToken: vi.fn(),
   mockGetAssetDetails: vi.fn(),
 }));
-vi.mock('@/lib/modules/playback', () => ({
-  CloudflareSignedPlaybackTokenService: {
-    isConfigured: vi.fn(() => true),
-    createSignedPlaybackToken: mockCreateSignedPlaybackToken,
-  },
-}));
+vi.mock('@/lib/modules/playback', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/modules/playback')>();
+  return {
+    ...actual,
+    CloudflareSignedPlaybackTokenService: {
+      isConfigured: vi.fn(() => true),
+      createSignedPlaybackToken: mockCreateSignedPlaybackToken,
+    },
+  };
+});
 
 const baseVideo = {
   id: 'v1',
