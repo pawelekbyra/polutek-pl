@@ -31,12 +31,10 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Nothing to offer: not installable (no captured native prompt) and not an
-  // Apple device (the only platform where we fall back to manual instructions,
-  // since iOS never exposes an installability signal at all).
-  if (!installed && !isIOS && !canInstallDirectly) {
-    return null;
-  }
+  // The install action is only actually available on iOS (manual
+  // instructions) or when the browser captured a native install prompt.
+  // Otherwise the button stays visible but inactive/informational.
+  const canOfferInstall = !installed && (isIOS || canInstallDirectly);
 
   const handleInstallClick = async () => {
     if (isIOS) {
@@ -57,13 +55,16 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           setIsOpen((open) => !open);
           setShowIosInstructions(false);
         }}
-        className="relative w-[38px] h-[38px] flex items-center justify-center shrink-0 active:scale-95"
-        aria-label="Menu"
+        className={cn(
+          "relative w-[38px] h-[38px] flex items-center justify-center shrink-0 active:scale-95",
+          !installed && !canOfferInstall && "opacity-50",
+        )}
+        aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
         <Frame radius={20} seed={31} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-        <NajsIcon name="more" className="relative h-[18px] w-[18px]" stroke={INK} />
+        <NajsIcon name="download" className="relative h-[18px] w-[18px]" stroke={INK} />
       </button>
 
       {isOpen && (
@@ -86,7 +87,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
                   : 'Tap the Share icon in Safari, then "Add to Home Screen".'}
               </p>
             </div>
-          ) : (
+          ) : canOfferInstall ? (
             <button
               type="button"
               role="menuitem"
@@ -96,6 +97,12 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               <NajsIcon name="download" className="h-[16px] w-[16px]" stroke={INK} />
               {isPl ? "Zainstaluj aplikację" : "Install app"}
             </button>
+          ) : (
+            <div className="px-3 py-2.5 text-[12px] font-bold text-neutral-500">
+              {isPl
+                ? "Instalacja niedostępna w tej przeglądarce"
+                : "Installation isn't available in this browser"}
+            </div>
           )}
         </div>
       )}

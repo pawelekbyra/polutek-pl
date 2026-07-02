@@ -10,8 +10,8 @@ describe("Comments loading state verification", () => {
     const source = component("app/components/comments/EmbeddedComments.tsx");
     expect(source).toContain("{isLoading ? (");
     expect(source).toContain("<Skeleton className=\"h-7 w-48\" />");
-    // Updated to match the najs font header style (font-heading removed)
-    expect(source).toContain("<h3 className=\"text-[15px] sm:text-[17px] font-bold text-[#0f0f0f] truncate\"");
+    // Updated to a non-italic, uppercase heading style
+    expect(source).toContain("<h3 className=\"font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate\"");
   });
 
   it("displays loading text in load more button", () => {

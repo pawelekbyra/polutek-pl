@@ -3,20 +3,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Star, Trash2, ThumbsUp, ThumbsDown, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
-import { Frame, INK } from "../../najs/primitives";
-
-// Deterministyczne po id, żeby SSR = klient
-const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
-const tiltFor = (id: string) => ["-0.35deg", "0.3deg", "-0.25deg"][Math.abs(hash(id)) % 3];
-const tapeTiltFor = (id: string) => ["-2.5deg", "2deg", "-1.5deg"][Math.abs(hash(id)) % 3];
-const seedFor = (id: string) => Math.abs(hash(id)) % 1000;
+import { NajsIcon } from "../../najs/primitives";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -121,19 +115,17 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "relative flex items-start gap-[13px] p-[16px_14px] transition-colors duration-1000",
+        "relative flex items-start gap-[13px] rounded-2xl bg-white p-[16px_14px] shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)] transition-colors duration-1000",
         isReply ? "group/reply" : "group/comment",
         isHighlighted && "ring-2 ring-blue-100",
       )}
-      style={{ transform: `rotate(${tiltFor(comment.id)})` }}
     >
-      <Frame radius={12} seed={seedFor(comment.id)} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
-      {/* taśma klejąca */}
-      <div
-        className="absolute -top-[7px] left-[26px] h-[15px] w-[54px] bg-[#FBE08A]/75 border border-[#171717]/15 shadow-sm"
-        style={{ transform: `rotate(${tapeTiltFor(comment.id)})` }}
-        aria-hidden="true"
-      />
+      {!isReply && comment.isPinned && (
+        <span className="absolute right-0 top-0 z-[6] inline-flex items-center gap-1 rounded-bl-lg rounded-tr-2xl bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-blue-600">
+          <Star size={10} className="fill-blue-600" />
+          {language === "pl" ? "Przypięty" : "Pinned"}
+        </span>
+      )}
       <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
         <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-border relative">
             <SafeAvatar
@@ -150,7 +142,7 @@ export function CommentItem({
           </span>
         )}
       </div>
-      <div className="relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0">
+      <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-[86px]")}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-1.5 leading-none">
             <span
@@ -161,12 +153,6 @@ export function CommentItem({
               {comment.author?.displayName || "Użytkownik"}
             </span>
 
-            {!isReply && comment.isPinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-blue-600">
-                <Star size={10} className="fill-blue-600" />
-                {language === "pl" ? "Przypięty" : "Pinned"}
-              </span>
-            )}
             <span className={cn("text-[#8A857B] leading-none text-[12px]")}>
               {isClient &&
               comment.createdAt &&
@@ -330,9 +316,10 @@ export function CommentItem({
                 : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
-            <ThumbsUp
-              size={14}
-              className={cn(isLiked && "fill-primary")}
+            <NajsIcon
+              name="like"
+              className="h-[15px] w-[15px]"
+              stroke={isLiked ? "#2563eb" : "currentColor"}
             />
             <span className={cn("font-semibold text-[13px]")}>
               {comment.likesCount || 0}
@@ -347,7 +334,11 @@ export function CommentItem({
             )}
             aria-label={language === "pl" ? "Nie lubię" : "Dislike"}
           >
-            <ThumbsDown size={14} className={cn(comment.viewerReaction === "DISLIKE" && "fill-primary")} />
+            <NajsIcon
+              name="dislike"
+              className="h-[15px] w-[15px]"
+              stroke={comment.viewerReaction === "DISLIKE" ? "#2563eb" : "currentColor"}
+            />
           </button>
 
           {isHearted && (

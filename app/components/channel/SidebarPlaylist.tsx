@@ -13,8 +13,6 @@ import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
-import { Download } from "lucide-react";
-import { DownloadSheet } from "./DownloadSheet";
 import { Frame, NajsIcon, INK } from "../najs/primitives";
 import DonationBox from "./DonationBox";
 
@@ -113,7 +111,6 @@ export function SidebarPlaylist({
   const [layout, setLayout] = useState<SidebarLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
-  const [downloadTarget, setDownloadTarget] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     async function fetchLayout() {
@@ -253,21 +250,6 @@ export function SidebarPlaylist({
             </div>
           </div>
         </Link>
-
-        {/* Download button — only for unlocked videos */}
-        {hasAccess && (
-          <button
-            onClick={(e: React.MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDownloadTarget({ id: video.id, title: displayTitle });
-            }}
-            title={language === "pl" ? "Pobierz wideo" : "Download video"}
-            className="absolute top-[6px] right-[6px] z-40 w-7 h-7 rounded-[7px] bg-white/90 border border-neutral-200 shadow-sm flex items-center justify-center opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity hover:bg-neutral-100 active:scale-95"
-          >
-            <Download size={13} className="text-neutral-600" />
-          </button>
-        )}
       </div>
     );
   };
@@ -366,15 +348,6 @@ export function SidebarPlaylist({
           )}
           {patronSection.items.map(renderVideoItem)}
         </div>
-      )}
-
-      {downloadTarget && (
-        <DownloadSheet
-          videoId={downloadTarget.id}
-          videoTitle={downloadTarget.title}
-          language={language}
-          onClose={() => setDownloadTarget(null)}
-        />
       )}
     </>
   );

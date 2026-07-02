@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { AlertCircle, RefreshCcw } from './icons';
 import { useLanguage } from './LanguageContext';
 import { Button } from '@/components/ui/button';
+import { NajsIcon } from './najs/primitives';
 
 interface PlayerErrorOverlayProps {
   errorCode?: string;
@@ -73,7 +73,7 @@ export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] text-white p-6 text-center animate-in fade-in duration-500 [container-type:inline-size]">
       <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
-        <AlertCircle className="w-8 h-8 text-red-500" />
+        <NajsIcon name="alert" className="w-8 h-8 text-red-500" stroke="currentColor" />
       </div>
 
       <h3 className="text-[min(1.2rem,6cqi)] font-black uppercase tracking-tight mb-2 max-w-md">
@@ -90,7 +90,7 @@ export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
           variant="outline"
           className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-full px-8 h-[min(3rem,12cqi)] font-black uppercase tracking-widest text-[min(11px,3cqi)] transition-all active:scale-95"
         >
-          <RefreshCcw size={14} className="mr-2" />
+          <NajsIcon name="refresh" className="mr-2 h-3.5 w-3.5" stroke="currentColor" />
           {retryLabel}
         </Button>
       )}

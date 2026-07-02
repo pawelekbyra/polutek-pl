@@ -148,7 +148,7 @@ export default function ChannelHome({
                 </div>
               )}
             </div>
-            <div className="hidden lg:block mt-10">
+            <div className="hidden lg:block mt-4">
               <EmbeddedComments
                 videoId={selectedVideo.id}
                 userProfile={userProfile}
