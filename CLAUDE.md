@@ -108,6 +108,7 @@ Stripe webhook (signature verified)
 - `/api/media/[...path]` is the only public playback path for blob/legacy videos.
 - `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder. Never mount a player, fetch streams, request tokens, or log views for a denied plan.
 - `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/modules/playback/domain/playback-policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
+- **Never CDN-cache `/api/media-source` responses** (no `s-maxage`/`public` Cache-Control). The response carries a per-viewer `playbackSessionId` bound to the requester's IP/UA fingerprint; a shared cached copy hands one viewer's session to others and all their playback events fail with 403.
 
 ### 4.4 Access Checks
 

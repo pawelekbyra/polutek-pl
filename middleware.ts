@@ -9,11 +9,16 @@ const isPublicRoute = createRouteMatcher([
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
+  // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
+  // so /manifest.json must be explicitly public or anonymous visitors get 404.
+  '/manifest.json',
   '/api/webhooks(.*)',
   '/api/health',
   '/api/access(.*)',
   '/api/media-source/(.*)',
   '/api/videos/(.*)/playback-event',
+  // Read-only tip minimums consumed by the public DonationBox.
+  '/api/payment-settings',
   // Thumbnail proxy must be publicly reachable: the route enforces its own
   // policy (published = public, drafts = admin-only) and the Next image
   // optimizer fetches it without auth cookies.

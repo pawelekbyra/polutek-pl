@@ -362,6 +362,15 @@ function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; th
     );
 }
 
+const RECOVERABLE_SESSION_ERRORS = [
+    'SESSION_EXPIRED',
+    'INVALID_SESSION',
+    'SESSION_OWNERSHIP_MISMATCH',
+    'SESSION_USER_MISMATCH',
+    'SESSION_ANONYMOUS_FORBIDDEN',
+    'SESSION_REQUIRES_AUTH',
+];
+
 export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
@@ -382,9 +391,15 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
+    const consecutiveEventFailures = useRef(0);
+    const trackingDisabled = useRef(false);
+    // One recovery (plan refresh) per video: a refresh mints a new playback
+    // session, so retrying refreshes on every failure would loop forever when
+    // the server keeps rejecting.
+    const sessionRecoveryAttempted = useRef(false);
 
     const sendEvent = useCallback(async (type: string, extra = {}): Promise<{ ok: boolean; viewCounted?: boolean }> => {
-        if (!tracking?.playbackSessionId) return { ok: false };
+        if (!tracking?.playbackSessionId || trackingDisabled.current) return { ok: false };
         try {
             const res = await fetch(`/api/videos/${video.id}/playback-event`, {
                 method: 'POST',
@@ -399,14 +414,21 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
             });
 
             if (res.status === 403) {
-                const { error } = await res.json();
-                if (error === 'SESSION_EXPIRED') {
+                consecutiveEventFailures.current += 1;
+                const { error } = await res.json().catch(() => ({ error: null }));
+                if (RECOVERABLE_SESSION_ERRORS.includes(error) && !sessionRecoveryAttempted.current) {
+                    sessionRecoveryAttempted.current = true;
                     refreshPlaybackPlan();
+                } else if (consecutiveEventFailures.current >= 3) {
+                    // Playback keeps working; only telemetry is rejected. Stop
+                    // hammering the API for the rest of this session.
+                    trackingDisabled.current = true;
                 }
                 return { ok: false };
             }
 
             const data = await res.json().catch(() => ({}));
+            if (res.ok) consecutiveEventFailures.current = 0;
             return { ok: res.ok, viewCounted: data?.viewCounted === true };
         } catch (e) {
             console.warn("Failed to send playback event", type, e);
@@ -446,7 +468,13 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
+        consecutiveEventFailures.current = 0;
+        trackingDisabled.current = false;
     }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
+
+    useEffect(() => {
+        sessionRecoveryAttempted.current = false;
+    }, [video.id]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
