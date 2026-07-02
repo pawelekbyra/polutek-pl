@@ -17,6 +17,8 @@ vi.mock('@/lib/modules/media', () => ({
   ThumbnailResponseService: {
     getThumbnailResponse: vi.fn(),
   },
+  PUBLIC_THUMBNAIL_CACHE_CONTROL: 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+  PRIVATE_THUMBNAIL_CACHE_CONTROL: 'private, max-age=300',
   resolveVideoThumbnailUrl: vi.fn((url: string | null | undefined) => Promise.resolve(url ?? null)),
 }));
 
@@ -47,7 +49,8 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
 
     expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith(
       'v1',
-      'https://images.unsplash.com/photo-123'
+      'https://images.unsplash.com/photo-123',
+      expect.stringContaining('s-maxage')
     );
   });
 
@@ -78,7 +81,11 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
     await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
-    expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalled();
+    expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith(
+      'v1',
+      'https://images.unsplash.com/photo-123',
+      expect.stringContaining('private')
+    );
   });
 
   it('returns 404 if video or thumbnail missing', async () => {

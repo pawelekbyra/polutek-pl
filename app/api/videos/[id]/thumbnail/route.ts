@@ -4,7 +4,11 @@ import { getCorrelationId } from "@/lib/utils/correlation";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { ThumbnailResponseService } from "@/lib/modules/media";
+import {
+  ThumbnailResponseService,
+  PUBLIC_THUMBNAIL_CACHE_CONTROL,
+  PRIVATE_THUMBNAIL_CACHE_CONTROL,
+} from "@/lib/modules/media";
 import { resolveVideoThumbnailUrl } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +66,14 @@ export async function GET(
       return NextResponse.redirect(new URL(resolvedUrl, req.nextUrl.origin), 307);
     }
 
-    // 4. Delegate to ThumbnailResponseService to handle storage streaming/redirect
-    return ThumbnailResponseService.getThumbnailResponse(video.id, resolvedUrl);
+    // 4. Delegate to ThumbnailResponseService to handle storage streaming/redirect.
+    // Published thumbnails may be CDN-cached (same bytes for everyone); drafts
+    // are admin-only and must stay private so the CDN never serves them to guests.
+    return ThumbnailResponseService.getThumbnailResponse(
+      video.id,
+      resolvedUrl,
+      isPublic ? PUBLIC_THUMBNAIL_CACHE_CONTROL : PRIVATE_THUMBNAIL_CACHE_CONTROL,
+    );
 
   } catch (error) {
     scopedLogger.error("[THUMBNAIL_PROXY_ERROR]", error);

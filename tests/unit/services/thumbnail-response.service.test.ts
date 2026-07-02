@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ThumbnailResponseService } from '@/lib/modules/media/infrastructure/thumbnail-response.service';
+import {
+  ThumbnailResponseService,
+  PUBLIC_THUMBNAIL_CACHE_CONTROL,
+  PRIVATE_THUMBNAIL_CACHE_CONTROL,
+} from '@/lib/modules/media/infrastructure/thumbnail-response.service';
 import { MediaPolicy } from '@/lib/modules/media';
 import { get } from '@vercel/blob';
 
@@ -44,6 +48,25 @@ describe('ThumbnailResponseService', () => {
     const res = await ThumbnailResponseService.getThumbnailResponse('v1', url);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/jpeg');
+    // Default (no cache profile) must be private — never CDN-cacheable.
+    expect(res.headers.get('Cache-Control')).toBe(PRIVATE_THUMBNAIL_CACHE_CONTROL);
+  });
+
+  it('applies the public CDN cache profile when requested', async () => {
+    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
+    const url = 'https://images.unsplash.com/photo-123';
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      // Origin tries to force its own caching — our policy must win.
+      headers: new Headers({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' }),
+      body: new ReadableStream(),
+    } as any);
+
+    const res = await ThumbnailResponseService.getThumbnailResponse('v1', url, PUBLIC_THUMBNAIL_CACHE_CONTROL);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe(PUBLIC_THUMBNAIL_CACHE_CONTROL);
+    expect(res.headers.get('Cache-Control')).toContain('s-maxage');
   });
 
   it('streams allowed Vercel Blob URLs using private access', async () => {

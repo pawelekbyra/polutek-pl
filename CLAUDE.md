@@ -134,6 +134,8 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 - The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`. The Next image optimizer (`/_next/image`) fetches URLs without auth cookies, so gating the proxy behind Clerk breaks every thumbnail on the site.
 - Admin components render this proxy with `unoptimized` on `next/image` (the browser then sends admin cookies directly, so draft thumbnails stay visible in the panel).
 - `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming — never a relative proxy path.
+- Cache policy: published-video thumbnails are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL` — a CDN-cached draft thumbnail would leak to anonymous visitors. External origins' Cache-Control headers are ignored on purpose.
+- Planned: thumbnail storage moves from Vercel Blob to Cloudflare R2 (free egress) — see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
 - The default-thumbnail preview in `/admin/settings` uses `/api/admin/settings/media/default-video-thumbnail/proxy` (admin-only streaming route).
 
 ### 4.9 Comment Reactions

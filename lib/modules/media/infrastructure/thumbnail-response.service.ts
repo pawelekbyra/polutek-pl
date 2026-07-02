@@ -3,10 +3,18 @@ import { NextResponse } from "next/server";
 import { MediaPolicy } from "@/lib/modules/media";
 import { logger } from "@/lib/logger";
 
+// Published thumbnails are identical for every viewer, so the CDN may cache
+// them (s-maxage). Draft thumbnails are admin-only and must never be CDN
+// cached — a shared cached copy would leak them to anonymous visitors.
+export const PUBLIC_THUMBNAIL_CACHE_CONTROL =
+  "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400";
+export const PRIVATE_THUMBNAIL_CACHE_CONTROL = "private, max-age=300";
+
 export class ThumbnailResponseService {
   static async getThumbnailResponse(
     videoId: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    cacheControl: string = PRIVATE_THUMBNAIL_CACHE_CONTROL
   ): Promise<NextResponse> {
     try {
       // 1. Vercel Blob URLs (our own storage) are always trusted — no MediaPolicy needed
@@ -25,7 +33,7 @@ export class ThumbnailResponseService {
           result.headers.forEach((value, key) => {
             resHeaders.set(key, value);
           });
-          resHeaders.set("Cache-Control", "public, max-age=3600");
+          resHeaders.set("Cache-Control", cacheControl);
 
           if (result.statusCode === 304) {
             return new NextResponse(null, {
@@ -69,13 +77,13 @@ export class ThumbnailResponseService {
         }
 
         const resHeaders = new Headers();
-        ["Content-Type", "Content-Length", "Cache-Control"].forEach((h) => {
+        ["Content-Type", "Content-Length"].forEach((h) => {
           const val = response.headers.get(h);
           if (val) resHeaders.set(h, val);
         });
-        if (!resHeaders.has("Cache-Control")) {
-           resHeaders.set("Cache-Control", "public, max-age=3600");
-        }
+        // Always enforce our own caching policy — the external origin's
+        // Cache-Control must not decide whether the CDN may cache a draft.
+        resHeaders.set("Cache-Control", cacheControl);
 
         return new NextResponse(response.body, {
           status: 200,
