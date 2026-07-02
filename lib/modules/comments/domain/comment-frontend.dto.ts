@@ -4,7 +4,7 @@ export type CommentDeletedReasonDto = 'AUTHOR_DELETED' | 'MODERATOR_DELETED' | '
 
 export type CommentReportReasonDto = 'SPAM' | 'HARASSMENT' | 'HATE' | 'NSFW' | 'SPOILER' | 'OTHER';
 
-export type CommentReactionDto = 'LIKE';
+export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 
 export type CommentAuthorBadgeDto = 'ADMIN' | 'PATRON' | 'AUTHOR';
 

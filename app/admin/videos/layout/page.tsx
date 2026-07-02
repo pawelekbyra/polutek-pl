@@ -160,7 +160,7 @@ export default function ChannelLayoutPage() {
                             </div>
 
                             <div className="relative w-20 h-11 rounded overflow-hidden bg-muted border shrink-0">
-                                {video.thumbnailUrl && <Image src={video.thumbnailUrl} alt="" fill className="object-cover" />}
+                                {video.thumbnailUrl && <Image src={video.thumbnailUrl} alt="" fill unoptimized className="object-cover" />}
                             </div>
 
                             <div className="flex-1 min-w-0">

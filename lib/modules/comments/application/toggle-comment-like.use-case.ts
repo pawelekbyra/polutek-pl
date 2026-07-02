@@ -8,13 +8,14 @@ import { PrismaClient } from "@prisma/client";
 
 export interface ToggleCommentLikeInput {
   commentId: string;
-  action: 'LIKE' | 'UNLIKE';
+  /** LIKE/DISLIKE set that reaction (replacing the other), UNLIKE clears any reaction. */
+  action: 'LIKE' | 'DISLIKE' | 'UNLIKE';
 }
 
 export async function toggleCommentLike(
   input: ToggleCommentLikeInput,
   ctx: AppContext
-): Promise<UseCaseResult<{ liked: boolean; likesCount: number }, CommentError>> {
+): Promise<UseCaseResult<{ liked: boolean; viewerReaction: string | null; likesCount: number }, CommentError>> {
   const { commentId, action } = input;
   const { actor, prisma } = ctx;
 
@@ -50,9 +51,13 @@ export async function toggleCommentLike(
       const existing = await txRepo.findCommentReaction(userId, commentId);
 
       if (action === 'LIKE') {
-        if (!existing) await txRepo.createCommentLike(userId, commentId);
+        if (existing && existing.type !== 'LIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
+        if (!existing || existing.type !== 'LIKE') await txRepo.createCommentLike(userId, commentId);
+      } else if (action === 'DISLIKE') {
+        if (existing && existing.type !== 'DISLIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
+        if (!existing || existing.type !== 'DISLIKE') await txRepo.createCommentDislike(userId, commentId);
       } else {
-        if (existing) await txRepo.deleteCommentReaction(existing.id, commentId);
+        if (existing) await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
       }
 
       const snapshot = await txRepo.getCommentReactionSnapshot(userId, commentId);

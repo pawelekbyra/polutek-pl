@@ -161,7 +161,7 @@ export function SidebarPlaylist({
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
             "group flex gap-[11px] p-[6px] rounded-[11px] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mb-1",
-            isCurrent ? "bg-[rgba(248,243,231,0.75)]" : "hover:bg-[rgba(248,243,231,0.75)]",
+            isCurrent ? "bg-[#f1ead9]" : "hover:bg-[#f1ead9]/60",
           )}
         >
           <div className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb">

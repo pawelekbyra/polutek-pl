@@ -23,8 +23,12 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
       );
     }
 
+    // Body is optional for backward compatibility — bare PUT means LIKE
+    const body = await request.json().catch(() => null) as { type?: unknown } | null;
+    const action = body?.type === "DISLIKE" ? "DISLIKE" : "LIKE";
+
     const ctx = createAppContext({ actor });
-    const result = await toggleCommentLike({ commentId, action: "LIKE" }, ctx);
+    const result = await toggleCommentLike({ commentId, action }, ctx);
 
     if (!result.ok) {
       return NextResponse.json(
@@ -33,7 +37,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
       );
     }
 
-    return NextResponse.json({ success: true, liked: result.data.liked, likesCount: result.data.likesCount });
+    return NextResponse.json({ success: true, liked: result.data.liked, viewerReaction: result.data.viewerReaction, likesCount: result.data.likesCount });
   } catch (error: unknown) {
     scopedLogger.error("[COMMENT_REACTION_PUT_ERROR]", error);
     return handleApiError(error);
