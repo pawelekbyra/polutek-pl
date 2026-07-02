@@ -2,6 +2,8 @@
 
 This file is the primary entry point for AI agents working on this codebase. Read it in full before touching any code.
 
+The full product documentation index lives at `docs/README.md` (architecture, specs, runbooks, audits, ticket queue). Historical multi-agent process docs were retired 2026-07-02 — do not recreate reconciliation reports, roadmaps, or role protocols; durable conclusions belong here, in `KNOWN_LIMITATIONS.md`, or in `docs/audit/`.
+
 **Maintenance rule:** When you add a meaningful new feature, change a critical invariant, introduce a new module, or rename a key file, update this document. Future agents depend on it being accurate.
 
 ---

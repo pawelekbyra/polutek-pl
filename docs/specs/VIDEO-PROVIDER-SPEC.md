@@ -70,4 +70,4 @@ Video, VideoAsset, VideoProvider interface, provider webhook handlers, media coc
 
 This section is informational and references current reconciliation evidence. The normative requirements above remain the product standard.
 
-Current main status is summarized in `docs/reports/reconciliation/DOCS-RECONCILE-001-CURRENT-MAIN-SOURCE-OF-TRUTH.md`. Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.
+Merged implementation/local tests do not equal production launch certification; X6/X7 production/manual evidence remains required.

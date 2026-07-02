@@ -10,7 +10,7 @@
 - Playwright smoke scaffolding exists, but local attempts to install Playwright Chromium can fail when the CDN returns 403; full E2E/screenshot checks must be run in CI/Vercel/staging or another environment with browser access and `E2E_*` state.
 - `db:smoke` and `db:migrate:deploy` require real `DATABASE_URL` and `DATABASE_URL_UNPOOLED`; without them local results are environment failures, not release PASS.
 - Production rate limiting requires writable Upstash Redis or Vercel KV REST credentials. Memory fallback is allowed only outside production.
-- CI is present, but the GitHub-hosted `integration-postgres` and security jobs still need their first real remote run before they can be treated as proven release evidence.
+- CI (13 gates including `integration-postgres` and security jobs) runs on every PR and has a proven track record on GitHub-hosted runners.
 - Demo fallback content is now fail-closed in production: `ENABLE_DEMO_FALLBACKS=true` is honored only outside `NODE_ENV=production`, so real production content must come from the database.
 - Scalability ceiling on the current plans (Vercel Hobby + Neon Free) is roughly hundreds of concurrent viewers: `/` and `/watch/[slug]` are `force-dynamic` (every anonymous page view hits a function and the database) and the thumbnail proxy has no CDN cache (`s-maxage`). Video delivery itself scales independently via Cloudflare Stream. Details and the remediation order: `docs/audit/POST-DEPLOY-AUDIT-2026-07-02.md`.
 - The `stripe-reconciliation` cron is disabled on the Vercel Hobby plan (see CLAUDE.md §6); stuck PENDING payments need manual re-fulfillment or a Stripe webhook retry until the project moves to Pro.

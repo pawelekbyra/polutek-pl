@@ -1,67 +1,75 @@
 # Polutek.pl
 
-Polutek.pl to aktywny produkt VOD jednego twórcy po zakończonej stabilizacji dużego refaktoru: jedno oficjalne miejsce, jeden katalog wideo, jeden system wsparcia i dostępu, jedna społeczność, jedna lista mailingowa oraz jeden kokpit admina.
+Polutek.pl to aktywny produkt VOD jednego twórcy: jedno oficjalne miejsce,
+jeden katalog wideo, jeden system wsparcia i dostępu, jedna społeczność,
+jedna lista mailingowa oraz jeden kokpit admina.
 
 ```txt
 Polutek.pl is not a platform.
 Polutek.pl is a place.
 ```
 
-## Stan produktu po stabilizacji
+Widzowie oglądają filmy w trzech poziomach dostępu (PUBLIC / LOGGED_IN /
+PATRON), a jednorazowy napiwek Stripe powyżej progu nadaje dożywotni status
+patrona (`PatronGrant`). Brak subskrypcji cyklicznych, brak multi-tenant.
 
-- Główne fundamenty refaktoru i stabilizacji są zakończone.
-- Aplikacja jest utrzymywana jako aktywny produkt, a dalsze prace są prowadzone małymi, jawnie opisanymi zmianami.
-- Dawna roadmapa refaktoryzacji pozostaje technicznym audytem/bazą długu, ale nie jest już jedynym opisem aktualnych decyzji produktowych.
-- Public launch i operacje produkcyjne pozostają decyzjami właściciela oraz wymagają właściwych dowodów operatora, prawnych i produkcyjnych.
+## Stack
 
-## Aktualny stan projektu
+Next.js 14 (App Router, Vercel) · Neon PostgreSQL + Prisma · Clerk
+(tożsamość) · Stripe (płatności) · Cloudflare Stream (wideo) · Resend
+(email) · Upstash Redis (rate limiting).
 
-Aktualny stan stabilizacji jest opisany w [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md), techniczny masterplan w [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md), a bieżąca kolejka product/tech work w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
+## Szybki start
 
-## Kolejka zadań
+```bash
+npm install
+cp .env.example .env   # uzupełnij wartości
+npx prisma generate
+npm run dev
+```
 
-Kanoniczna kolejka gotowych zadań znajduje się w [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md).
+Testy i jakość (to samo co bramki CI):
 
-Aktualnie obowiązuje tryb **active product roadmap**:
+```bash
+npx vitest run                                # testy jednostkowe
+npx tsc -p tsconfig.typecheck.json --noEmit   # typecheck
+npm run quality:hotspots                      # budżety rozmiaru plików
+```
 
-- najpierw utrzymać build/deploy i poprawki bezpieczeństwa,
-- potem realizować strategiczne product work opisane w issue,
-- większe refaktory robić etapami i tylko wtedy, gdy wspierają aktywne wymagania produktu,
-- nowe prace powinny być małe, jednoznaczne i zgodne z `AGENTS.md`.
+## Dokumentacja
 
-## Najważniejsze aktualne decyzje produktowe
+- **[`CLAUDE.md`](CLAUDE.md)** — przewodnik po kodzie: moduły, krytyczne
+  inwarianty, czego nie robić. Czytaj przed każdą zmianą.
+- **[`docs/README.md`](docs/README.md)** — indeks dokumentacji produktu
+  (architektura, specyfikacje, runbooki, audyty, decyzje właściciela).
+- **[`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md)** — znane ograniczenia
+  i sufit skalowalności.
+- Otwarte zadania: [`docs/tickets/ready/`](docs/tickets/ready/).
 
-- Multi-source video ma być pełnym systemem admin create/edit + provider switch + playback end-to-end. Kanoniczny ticket: #1204.
-- Providerzy wideo mają być projektowani rozszerzalnie: Cloudflare Stream, YouTube, strategicznie Mux, dalej R2 i Vimeo.
-- Player nie może znać szczegółów providerów; docelowo renderuje zunifikowany playback plan.
-- Strefa Fenju / Thank You Zone jest bonusem w podziękowaniu za wsparcie, a nie komunikowana jako zakup płatnej treści.
-- Miniatury i media mają działać z private Vercel Blob; raw private URL nie powinny trafiać do użytkownika.
-- Brak miniatury filmu ma być rozwiązywany fallbackiem, nie przez trwałe zapisywanie `/logo.png` jako danych filmu.
-- Napisy PL/EN per film są opcjonalnym feature accessibility/quality, docelowo przez WebVTT `.vtt`.
+## Kierunki produktowe
 
-## Operacje VOD / Cloudflare Stream signed playback
+- Multi-source video: pełny system admin create/edit + provider switch +
+  playback end-to-end. Providerzy projektowani rozszerzalnie (Cloudflare
+  Stream, YouTube, strategicznie Mux, dalej R2 i Vimeo).
+- Player nie zna szczegółów providerów — renderuje zunifikowany playback
+  plan z backendu.
+- Strefa podziękowań dla patronów jest bonusem za wsparcie, nie „zakupem
+  płatnej treści".
+- Napisy PL/EN per film przez WebVTT (opcjonalny feature accessibility).
 
-Po #1173 playback prywatnych/patronowskich materiałów Cloudflare Stream używa lokalnie generowanych signed playback tokenów. Viewer hot path nie powinien wołać Cloudflare Admin API ani endpointu `/token` per widz.
+## Operacje: Cloudflare Stream signed playback
 
-Przed uruchomieniem produkcyjnym trzeba mieć skonfigurowane w środowisku wdrożeniowym właściwe zmienne dla Cloudflare Stream signing key oraz TTL tokenów. Wartości sekretów nie wolno logować, wklejać do issue, PR, screenshotów ani komentarzy.
+Playback prywatnych/patrońskich materiałów Cloudflare Stream używa lokalnie
+generowanych signed playback tokenów; viewer hot path nie woła Cloudflare
+Admin API per widz. Wymagane env: signing key + TTL tokenów (sekretów nie
+logować i nie wklejać do issue/PR). Brak signing key = fail-closed (backend
+nie zwraca źródła odtwarzania). Po rotacji klucza zaktualizuj env w
+środowiskach produkcyjnych i preview.
 
-Notatki operacyjne:
+## Zasady zmian
 
-- Signing key może zawierać escaped newlines.
-- Brak signing key powoduje fail-closed dla signed playback: backend nie powinien zwrócić źródła odtwarzania.
-- Po rotacji signing key trzeba zaktualizować env w środowiskach produkcyjnych i preview, które mają odtwarzać signed Cloudflare Stream.
-- #1106 nadal nie jest w pełni zamknięte: kolejne slice’y to cache/rate limit playback planu, event batching/collector, queue/worker/analytics aggregation oraz readiness/load-test/runbook.
-
-## Dokumenty kanoniczne
-
-- Zasady agentów i inwarianty produktu: [`AGENTS.md`](AGENTS.md)
-- Decyzje właściciela: [`docs/strategy/OWNER-DECISIONS.md`](docs/strategy/OWNER-DECISIONS.md)
-- Stan projektu: [`docs/PROJECT-STATE.md`](docs/PROJECT-STATE.md)
-- Masterplan: [`docs/MASTERPLAN.md`](docs/MASTERPLAN.md)
-- Kanoniczna kolejka product/tech: [`docs/tickets/ready/README.md`](docs/tickets/ready/README.md)
-- Backlog launch/operacji: [`docs/roadmap/Launch-Execution-Backlog.md`](docs/roadmap/Launch-Execution-Backlog.md)
-- Indeks raportów historycznych: [`docs/reports/reconciliation/README.md`](docs/reports/reconciliation/README.md)
-
-## Zachowane raporty historyczne
-
-Historyczne raporty i tickety pozostają zachowane jako dowód wcześniejszych etapów. Nie należy przepisywać ich wyników jako obecnego runtime; należy czytać je jako historyczne evidence z daty powstania.
+- Małe, izolowane zmiany; każda przechodzi pełne CI.
+- Krytyczne inwarianty z CLAUDE.md §4 są nienegocjowalne.
+- Status patrona, płatności i dostęp do wideo zmienia się wyłącznie przez
+  kanoniczne use-case'y — nigdy bezpośrednimi zapisami do bazy.
+- Dokumentacja opisuje stan obecny; historia żyje w git, nie w plikach.
