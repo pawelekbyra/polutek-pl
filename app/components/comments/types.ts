@@ -25,13 +25,14 @@ export type CommentView = {
   likesCount: number;
   repliesCount: number;
   reportsCount?: number;
-  viewerReaction: "LIKE" | null;
+  viewerReaction: "LIKE" | "DISLIKE" | null;
   viewerCanEdit: boolean;
   viewerCanDelete: boolean;
   viewerCanReport: boolean;
   viewerCanModerate: boolean;
   viewerCanPin: boolean;
   isPinned: boolean;
+  isHearted?: boolean;
   repliesPreview: CommentView[];
 };
 

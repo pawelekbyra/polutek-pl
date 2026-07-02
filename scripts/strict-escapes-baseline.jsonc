@@ -120,13 +120,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "app/components/comments/components/CommentItem.tsx",
-      "line": 58,
-      "label": "explicit any annotation",
-      "text": "const isHearted = (comment as any).isHearted || false;",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "app/components/comments/hooks/useComments.ts",
       "line": 33,
       "label": "explicit any annotation",

@@ -14,6 +14,10 @@ const isPublicRoute = createRouteMatcher([
   '/api/access(.*)',
   '/api/media-source/(.*)',
   '/api/videos/(.*)/playback-event',
+  // Thumbnail proxy must be publicly reachable: the route enforces its own
+  // policy (published = public, drafts = admin-only) and the Next image
+  // optimizer fetches it without auth cookies.
+  '/api/videos/(.*)/thumbnail',
   '/api/channel/sidebar',
   // Only GET comments is public if product requires it
   '/api/comments'

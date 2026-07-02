@@ -43,7 +43,9 @@ export default function AdminSettingsPage() {
       if (!res.ok) {
         setMessage({ text: data.error || "Wgrywanie nie powiodło się", type: "error" });
       } else {
-        setCurrentUrl(data.url ?? null);
+        // The proxy URL is constant and cached — bust it so the fresh image shows immediately
+        const freshUrl = data.url ? `${data.url}${data.url.includes("?") ? "&" : "?"}v=${Date.now()}` : null;
+        setCurrentUrl(freshUrl);
         setMessage({ text: "Domyślna miniatura została zaktualizowana.", type: "success" });
       }
     } catch {

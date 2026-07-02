@@ -55,6 +55,13 @@ export async function GET(
       return NextResponse.json({ error: "Thumbnail not found" }, { status: 404 });
     }
 
+    // Relative URLs (legacy values like "/logo.png") are same-origin public
+    // assets — redirect instead of server-side fetching, which cannot resolve
+    // a relative URL.
+    if (resolvedUrl.startsWith("/")) {
+      return NextResponse.redirect(new URL(resolvedUrl, req.nextUrl.origin), 307);
+    }
+
     // 4. Delegate to ThumbnailResponseService to handle storage streaming/redirect
     return ThumbnailResponseService.getThumbnailResponse(video.id, resolvedUrl);
 

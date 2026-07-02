@@ -44,7 +44,7 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
               <TableCell>
                   <div className="relative w-16 aspect-video bg-muted rounded overflow-hidden">
                       {vid.thumbnailUrl ? (
-                          <Image src={vid.thumbnailUrl} alt={vid.title} fill className="object-cover" />
+                          <Image src={vid.thumbnailUrl} alt={vid.title} fill unoptimized className="object-cover" />
                       ) : (
                           <div className="flex items-center justify-center h-full"><FileVideo className="h-4 w-4 text-muted-foreground" /></div>
                       )}
