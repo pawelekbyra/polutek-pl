@@ -113,12 +113,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
       return NextResponse.json(response, { status: 403 });
     }
 
-    const headers: Record<string, string> = {};
-    if (actor.type === "guest") {
-      headers["Cache-Control"] = "public, s-maxage=60, stale-while-revalidate=300";
-    }
-
-    return NextResponse.json(response, { headers });
+    // Never CDN-cache this response: it carries a per-viewer playbackSessionId
+    // bound to the requester's IP/UA fingerprint. A shared cached copy hands
+    // one viewer's session to everyone else, whose playback events then fail
+    // fingerprint validation with 403 for the whole watch session.
+    return NextResponse.json(response, {
+      headers: { "Cache-Control": "private, no-store" },
+    });
   } catch (error) {
     scopedLogger.error("[MEDIA_SOURCE_GET_ERROR]", error);
     return handleApiError(error);

@@ -25,6 +25,7 @@ import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
+import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -383,36 +384,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
 
-    const sendEvent = useCallback(async (type: string, extra = {}): Promise<{ ok: boolean; viewCounted?: boolean }> => {
-        if (!tracking?.playbackSessionId) return { ok: false };
-        try {
-            const res = await fetch(`/api/videos/${video.id}/playback-event`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: tracking.playbackSessionId,
-                    type,
-                    positionMs: player.current ? Math.floor(player.current.currentTime * 1000) : 0,
-                    durationMs: player.current ? Math.floor(player.current.duration * 1000) : 0,
-                    ...extra
-                })
-            });
-
-            if (res.status === 403) {
-                const { error } = await res.json();
-                if (error === 'SESSION_EXPIRED') {
-                    refreshPlaybackPlan();
-                }
-                return { ok: false };
-            }
-
-            const data = await res.json().catch(() => ({}));
-            return { ok: res.ok, viewCounted: data?.viewCounted === true };
-        } catch (e) {
-            console.warn("Failed to send playback event", type, e);
-            return { ok: false };
-        }
-    }, [video.id, tracking?.playbackSessionId, refreshPlaybackPlan]);
+    const sendEvent = usePlaybackTelemetry({
+        videoId: video.id,
+        playbackSessionId: tracking?.playbackSessionId,
+        refreshPlaybackPlan,
+        playerRef: player,
+    });
 
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
