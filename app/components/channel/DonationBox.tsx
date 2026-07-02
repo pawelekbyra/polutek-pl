@@ -12,7 +12,7 @@ import { useLanguage } from "../LanguageContext";
 import { useToast } from "@/app/hooks/useToast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronDown } from "../icons";
+import { Loader2, ChevronDown, Heart } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import CheckoutModal from "../playlist/CheckoutModal";
 
@@ -217,11 +217,16 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
 
   return (
     <div id="donations" className="relative my-[10px] scroll-mt-20 p-[18px] mb-3">
-      <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
+      <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="#ffffff" />
       <div className="relative z-10">
-        <h4 className="m-0 mb-[8px] text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
-        </h4>
+        <div className="mb-2 flex items-center gap-2">
+          <Heart size={17} className="shrink-0 text-primary" />
+          <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)" }}>
+              {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
+            </span>
+          </h4>
+        </div>
         <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
           {isPl
             ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
@@ -235,7 +240,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
         )}
 
         <div className="relative mb-[12px] p-[10px_12px]">
-          <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="rgba(255,255,255,.9)" />
+          <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="#f8f3e7" />
           <div className="relative z-10 space-y-1.5">
             <label
               htmlFor={amountInputId}
@@ -254,7 +259,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
                 aria-invalid={amountTooLow}
                 aria-describedby={amountTooLow ? amountErrorId : undefined}
                 placeholder={String(minAmount)}
-                className="w-full bg-transparent pr-16 text-[26px] font-extrabold tabular-nums text-[#0f0f0f] outline-none placeholder:text-[#c9c4b8]"
+                className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[#0f0f0f] outline-none placeholder:text-[#c9c4b8]"
                 style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
               />
               <div className="absolute right-0 flex items-center">
@@ -281,7 +286,28 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           </div>
         </div>
 
-        <label className="mb-[12px] flex cursor-pointer items-start gap-2 text-left">
+        <button
+          type="button"
+          onClick={onSupport}
+          disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
+          aria-busy={isLoading}
+          className="relative flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 text-[14px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+        >
+          <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
+          {isLoading ? (
+            <span className="relative z-10 inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <span role="status" aria-live="polite">
+                {isPl ? "Przetwarzanie..." : "Processing..."}
+              </span>
+            </span>
+          ) : (
+            <span className="relative z-10">{t.tipTheGuy}</span>
+          )}
+        </button>
+
+        <label className="mt-3 flex cursor-pointer items-start gap-2 px-1 text-left">
           <Checkbox
             id="donation-accept-terms"
             checked={isTermsAccepted}
@@ -319,30 +345,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
             )}
           </span>
         </label>
-
-        <button
-          type="button"
-          onClick={onSupport}
-          disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
-          aria-busy={isLoading}
-          className="relative flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 text-[14px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
-          style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-        >
-          <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
-          {isLoading ? (
-            <span className="relative z-10 inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-              <span role="status" aria-live="polite">
-                {isPl ? "Przetwarzanie..." : "Processing..."}
-              </span>
-            </span>
-          ) : (
-            <span className="relative z-10">{t.tipTheGuy}</span>
-          )}
-        </button>
-        <div className="mt-[9px] text-center text-[11px] text-[#7a7a7a]">
-          {isPl ? "Jednorazowo · dostęp dożywotni" : "One-time · lifetime access"}
-        </div>
       </div>
 
       {isMounted &&

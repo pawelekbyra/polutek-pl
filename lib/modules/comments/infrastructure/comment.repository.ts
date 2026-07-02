@@ -95,8 +95,13 @@ export class CommentRepository {
     await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { likesCount: { increment: 1 }, score: { increment: 1 } } });
     return reaction;
   }
-  async deleteCommentReaction(id: string, commentId: string): Promise<void> {
+  // Dislike has no public counter (like on YT) — likesCount/score stay untouched
+  async createCommentDislike(userId: string, commentId: string): Promise<CommentReaction> {
+    return await (this.db as WriteTx).commentReaction.create({ data: { userId, commentId, type: "DISLIKE" } });
+  }
+  async deleteCommentReaction(id: string, commentId: string, type: CommentReactionType = "LIKE"): Promise<void> {
     await (this.db as WriteTx).commentReaction.delete({ where: { id } });
+    if (type !== "LIKE") return;
     await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { likesCount: { decrement: 1 }, score: { increment: -1 } } });
     await (this.db as WriteTx).comment.updateMany({ where: { id: commentId, likesCount: { lt: 0 } }, data: { likesCount: 0, score: 0 } });
   }
@@ -110,6 +115,7 @@ export class CommentRepository {
     ]);
     return {
       liked: reaction?.type === "LIKE",
+      viewerReaction: reaction?.type ?? null,
       likesCount: Math.max(0, comment?.likesCount ?? 0),
     };
   }

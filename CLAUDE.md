@@ -127,6 +127,20 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 - The playback service builds `textTracks` in the `PlaybackPlan.player` from these fields automatically.
 - Set them via the admin video edit form or API. The `VideoPlayer` component already consumes `textTracks`.
 
+### 4.8 Thumbnail Display Path
+
+- All video thumbnails are served through `/api/videos/[id]/thumbnail`, which streams the blob server-side (private Vercel Blob supported) and enforces its own policy: published videos are public, drafts are admin-only.
+- The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`. The Next image optimizer (`/_next/image`) fetches URLs without auth cookies, so gating the proxy behind Clerk breaks every thumbnail on the site.
+- Admin components render this proxy with `unoptimized` on `next/image` (the browser then sends admin cookies directly, so draft thumbnails stay visible in the panel).
+- `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming — never a relative proxy path.
+- The default-thumbnail preview in `/admin/settings` uses `/api/admin/settings/media/default-video-thumbnail/proxy` (admin-only streaming route).
+
+### 4.9 Comment Reactions
+
+- `CommentReactionType` enum is `LIKE | DISLIKE` (one reaction per user per comment via `@@unique([userId, commentId])`).
+- Dislike has **no public counter** — only `likesCount` is aggregated; deleting/replacing a DISLIKE must never touch `likesCount`.
+- `toggleCommentLike` use case handles `LIKE`/`DISLIKE`/`UNLIKE` (clear). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }` (no body = LIKE), `DELETE` clears any reaction.
+
 ---
 
 ## 5. Admin Panel

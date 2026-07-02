@@ -129,7 +129,7 @@ function updateCommentReactionInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   videoId: string,
   commentId: string,
-  action: "LIKE" | "UNLIKE",
+  action: "LIKE" | "DISLIKE" | "CLEAR",
 ) {
   // We must target all variants of sortBy to prevent rollback when switching views
   const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
@@ -145,13 +145,13 @@ function updateCommentReactionInCache(
           viewerReaction: "LIKE",
           likesCount: wasLiked ? likes : likes + 1,
         };
-      } else {
-        return {
-          ...c,
-          viewerReaction: null,
-          likesCount: wasLiked ? Math.max(0, likes - 1) : likes,
-        };
       }
+      // DISLIKE has no counter, but replaces a LIKE; CLEAR removes any reaction
+      return {
+        ...c,
+        viewerReaction: action === "DISLIKE" ? "DISLIKE" : null,
+        likesCount: wasLiked ? Math.max(0, likes - 1) : likes,
+      };
     }
     if (c.repliesPreview) return { ...c, repliesPreview: c.repliesPreview.map(updateComment) };
     return c;
@@ -307,20 +307,26 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
     },
   });
 
-  const getCommentLikeAction = (commentId: string): "LIKE" | "UNLIKE" => {
+  const findCachedComment = (commentId: string): CommentView | undefined => {
     const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
       .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
-    const comment = allComments.find(c => c?.id === commentId) ||
+    return allComments.find(c => c?.id === commentId) ||
       allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
-    return comment?.viewerReaction === "LIKE" ? "UNLIKE" : "LIKE";
+  };
+
+  // Toggle semantics: clicking the active reaction clears it, otherwise the
+  // new reaction replaces the previous one (LIKE ⇄ DISLIKE are exclusive).
+  const getCommentReactionAction = (commentId: string, reaction: "LIKE" | "DISLIKE"): "LIKE" | "DISLIKE" | "CLEAR" => {
+    return findCachedComment(commentId)?.viewerReaction === reaction ? "CLEAR" : reaction;
   };
 
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
-    mutationFn: async ({ commentId, action }: { commentId: string; action: "LIKE" | "UNLIKE" }) => {
+    mutationFn: async ({ commentId, action }: { commentId: string; action: "LIKE" | "DISLIKE" | "CLEAR" }) => {
       const res = await fetch(`/api/comments/${commentId}/reaction`, {
-        method: action === "LIKE" ? "PUT" : "DELETE",
+        method: action === "CLEAR" ? "DELETE" : "PUT",
         headers: { "Content-Type": "application/json" },
+        ...(action === "CLEAR" ? {} : { body: JSON.stringify({ type: action }) }),
       });
       return parseJsonResponse(res);
     },
@@ -504,8 +510,13 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
     postMutation,
     likeMutation: {
       ...likeMutation,
-      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentLikeAction(commentId) }),
-      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentLikeAction(commentId) }),
+      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "LIKE") }),
+      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "LIKE") }),
+    },
+    dislikeMutation: {
+      ...likeMutation,
+      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") }),
+      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") }),
     },
     pinMutation,
     deleteMutation,

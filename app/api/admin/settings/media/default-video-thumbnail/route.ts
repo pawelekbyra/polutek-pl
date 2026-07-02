@@ -4,6 +4,7 @@ import { prisma } from "../../../../../../lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { getBlobAccess } from "@/lib/blob-config";
+import { invalidateDefaultThumbnailCache } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
       await del(existing.value).catch(() => null);
     }
 
-    const blob = await put(pathname, file, { access: "public" });
+    const blob = await put(pathname, file, { access });
 
     await prisma.appSetting.upsert({
       where: { key: SETTING_KEY },
@@ -76,6 +77,8 @@ export async function POST(req: NextRequest) {
         targetId: SETTING_KEY,
       },
     });
+
+    invalidateDefaultThumbnailCache();
 
     const proxyUrl = access === "private" ? "/api/admin/settings/media/default-video-thumbnail/proxy" : blob.url;
 
@@ -98,6 +101,7 @@ export async function DELETE() {
 
     await del(setting.value).catch(() => null);
     await prisma.appSetting.delete({ where: { key: SETTING_KEY } });
+    invalidateDefaultThumbnailCache();
 
     await prisma.auditLog.create({
       data: {

@@ -155,6 +155,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     refetch,
     postMutation,
     likeMutation,
+    dislikeMutation,
     pinMutation,
     deleteMutation,
     editMutation,
@@ -307,6 +308,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </button>
         </div>
       )}
+
+      {/* separator sekcji komentarzy */}
+      <div className="relative h-[14px] w-full mt-[34px] mb-[18px]" aria-hidden="true">
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 14" preserveAspectRatio="none">
+          <path d="M 0 7 Q 300 5.4 600 7" fill="none" stroke="#171717" strokeWidth="1.1"
+            strokeLinecap="round" opacity=".55" vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
 
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
         <div className="flex items-center gap-3 min-w-0">
@@ -479,7 +488,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 t={t}
                 canComment={viewer?.canComment ?? false}
                 onLike={(id) => likeMutation.mutate(id)}
-                onDislike={() => {}}
+                onDislike={(id) => dislikeMutation.mutate(id)}
                 onReply={(id) => {
                   setReplyTo(id);
                   scrollToTop();
@@ -510,7 +519,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       t={t}
                       canComment={viewer?.canComment ?? false}
                       onLike={(id) => likeMutation.mutate(id)}
-                      onDislike={() => {}}
+                      onDislike={(id) => dislikeMutation.mutate(id)}
                       onReply={() => {}}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onPin={() => {}}

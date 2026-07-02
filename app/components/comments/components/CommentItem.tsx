@@ -3,13 +3,20 @@
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Star, Trash2, ThumbsUp, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import { Star, Trash2, ThumbsUp, ThumbsDown, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
+import { Frame, INK } from "../../najs/primitives";
+
+// Deterministyczne po id, żeby SSR = klient
+const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
+const tiltFor = (id: string) => ["-0.35deg", "0.3deg", "-0.25deg"][Math.abs(hash(id)) % 3];
+const tapeTiltFor = (id: string) => ["-2.5deg", "2deg", "-1.5deg"][Math.abs(hash(id)) % 3];
+const seedFor = (id: string) => Math.abs(hash(id)) % 1000;
 
 interface CommentItemProps {
   comment: CommentView;
@@ -37,6 +44,7 @@ export function CommentItem({
   t,
   canComment,
   onLike,
+  onDislike,
   onReply,
   onDelete,
   onPin,
@@ -54,7 +62,7 @@ export function CommentItem({
   const toast = useToast();
 
   const isLiked = comment.viewerReaction === "LIKE";
-  const [isHearted, setIsHearted] = React.useState<boolean>((comment as any).isHearted || false);
+  const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -113,12 +121,20 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "flex items-start gap-[13px] rounded-xl border bg-white p-3 shadow-sm transition-colors duration-1000",
+        "relative flex items-start gap-[13px] p-[16px_14px] transition-colors duration-1000",
         isReply ? "group/reply" : "group/comment",
-        isHighlighted ? "border-blue-200 bg-blue-50 ring-2 ring-blue-100" : "border-[#ececec]"
+        isHighlighted && "ring-2 ring-blue-100",
       )}
+      style={{ transform: `rotate(${tiltFor(comment.id)})` }}
     >
-      <div className={cn("flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
+      <Frame radius={12} seed={seedFor(comment.id)} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+      {/* taśma klejąca */}
+      <div
+        className="absolute -top-[7px] left-[26px] h-[15px] w-[54px] bg-[#FBE08A]/75 border border-[#171717]/15 shadow-sm"
+        style={{ transform: `rotate(${tapeTiltFor(comment.id)})` }}
+        aria-hidden="true"
+      />
+      <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
         <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-border relative">
             <SafeAvatar
             src={comment.author?.imageUrl}
@@ -134,7 +150,7 @@ export function CommentItem({
           </span>
         )}
       </div>
-      <div className="flex-1 space-y-[2px] min-w-0 pt-0">
+      <div className="relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-1.5 leading-none">
             <span
@@ -323,17 +339,21 @@ export function CommentItem({
             </span>
           </button>
 
+          <button
+            onClick={() => userProfile && onDislike(comment.id)}
+            className={cn(
+              "inline-flex h-6 shrink-0 items-center justify-center transition-all",
+              comment.viewerReaction === "DISLIKE" ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]",
+            )}
+            aria-label={language === "pl" ? "Nie lubię" : "Dislike"}
+          >
+            <ThumbsDown size={14} className={cn(comment.viewerReaction === "DISLIKE" && "fill-primary")} />
+          </button>
+
           {isHearted && (
-             <div className="flex items-center gap-1 bg-accent-soft rounded-full px-1.5 py-0.5 border border-accent-ring">
-                <SafeAvatar
-                  src={null}
-                  alt="Creator Heart"
-                  size={12}
-                  className="rounded-full bg-primary flex items-center justify-center border-none"
-                  fallbackSeed="heart"
-                />
-                <span className="text-[9px] font-extrabold uppercase text-primary tracking-tighter">Serce twórcy</span>
-             </div>
+            <span title={language === "pl" ? "Serce twórcy" : "Creator heart"} className="inline-flex items-center">
+              <Heart size={14} className="fill-primary text-primary" />
+            </span>
           )}
 
           {!isReply && canComment && (

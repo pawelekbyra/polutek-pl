@@ -154,7 +154,7 @@ export function CommentComposer({
           )}
           {isViewerLoading ? (
             <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
               <div
                 className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5 text-[13px] font-bold text-neutral-500"
                 role="status"
@@ -167,7 +167,7 @@ export function CommentComposer({
             </div>
           ) : !canComment ? (
             <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
               <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
@@ -192,7 +192,7 @@ export function CommentComposer({
             </div>
           ) : (
             <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.92)" />
+              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
               <label htmlFor={textareaId} className="sr-only">
                 {replyTo ? t.addReply : t.addComment}
               </label>
