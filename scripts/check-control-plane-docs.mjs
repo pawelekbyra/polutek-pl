@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Docs structure guard. Successor of the retired multi-agent "control plane"
+// validator (2026-07-02): it now protects the lean product documentation set
+// instead of the historical process files.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -16,236 +19,57 @@ const requireIncludes = (label, text, needle) => {
   if (!text.includes(needle)) fail(`${label} must include: ${needle}`);
   else pass(`${label} includes: ${needle}`);
 };
-const forbidIncludes = (label, text, needle) => {
-  if (text.includes(needle)) fail(`${label} must not include: ${needle}`);
-  else pass(`${label} excludes: ${needle}`);
+const forbidFile = (file, reason) => {
+  if (existsSync(filePath(file))) fail(`retired file must not exist (${reason}): ${file}`);
+  else pass(`retired file absent: ${file}`);
 };
-const requireRegex = (label, text, regex, message = String(regex)) => {
-  if (!regex.test(text)) fail(`${label} must match: ${message}`);
-  else pass(`${label} matches: ${message}`);
-};
-const count = (text, needle) => text.split(needle).length - 1;
 
-const requiredFiles = [
-  'AGENTS.md',
+// The living documentation set.
+for (const file of [
+  'CLAUDE.md',
   'README.md',
-  'docs/roadmap/Active-Execution-Roadmap.md',
-  'docs/roadmap/OWNER-TIMELINE.md',
-  'docs/roadmap/Launch-Execution-Backlog.md',
-  'docs/strategy/OWNER-DECISIONS.md',
-  'docs/strategy/OWNER-LAUNCH-DECISIONS-001.md',
+  'KNOWN_LIMITATIONS.md',
+  'DEPLOY_CHECKLIST.md',
+  'AGENTS.md',
+  'docs/README.md',
   'docs/tickets/ready/README.md',
-  'docs/templates/TICKET_TEMPLATE.md',
-  'docs/templates/PR_REPORT_TEMPLATE.md',
   '.github/pull_request_template.md',
-];
-for (const file of requiredFiles) requireFile(file);
+]) requireFile(file);
 
 if (checks.some((check) => !check.ok)) {
   for (const check of checks) console.error(`${check.ok ? 'PASS' : 'FAIL'} ${check.message}`);
   process.exit(1);
 }
 
+// CLAUDE.md must keep its critical-invariants anchor sections.
+const claude = read('CLAUDE.md');
+for (const needle of [
+  'Critical Invariants',
+  'PatronGrant',
+  'fulfillPayment',
+  'Never CDN-cache `/api/media-source`',
+  'What NOT To Do',
+]) requireIncludes('CLAUDE.md', claude, needle);
+
+// AGENTS.md stays a pointer, not a resurrected process document.
 const agents = read('AGENTS.md');
-const readme = read('README.md');
-const roadmap = read('docs/roadmap/Active-Execution-Roadmap.md');
-const timeline = read('docs/roadmap/OWNER-TIMELINE.md');
-const backlog = read('docs/roadmap/Launch-Execution-Backlog.md');
-const owner = read('docs/strategy/OWNER-DECISIONS.md');
-const launch = read('docs/strategy/OWNER-LAUNCH-DECISIONS-001.md');
-const queue = read('docs/tickets/ready/README.md');
-const ticketTemplate = read('docs/templates/TICKET_TEMPLATE.md');
-const prReportTemplate = read('docs/templates/PR_REPORT_TEMPLATE.md');
-const githubPrTemplate = read('.github/pull_request_template.md');
+requireIncludes('AGENTS.md', agents, 'CLAUDE.md');
+if (agents.length > 4000) fail('AGENTS.md must stay a short pointer to CLAUDE.md (grew past 4000 chars)');
+else pass('AGENTS.md stays a short pointer');
 
-// HISTORICAL SAFEGUARDS
-const historicalOwnerFile = 'docs/tickets/ready/OWNER-LAUNCH-DECISIONS-001-consolidate-launch-blocking-decisions.md';
-const historicalOwner = read(historicalOwnerFile);
-requireIncludes('historical owner ticket', historicalOwner, 'MERGED / HISTORICAL');
-requireIncludes('historical owner ticket', historicalOwner, 'PR #890');
-requireIncludes('historical owner ticket', historicalOwner, '#891');
-forbidIncludes('historical owner ticket', historicalOwner, 'Status: READY_FOR_REVIEW');
-
-// ACCEPTED TICKET SAFEGUARDS
-const acceptedTicketFile = 'docs/tickets/ready/LAUNCH-EMAIL-003-email-consent-boundary-runtime-hardening.md';
-const acceptedTicket = read(acceptedTicketFile);
-requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Ticket ID: LAUNCH-EMAIL-003');
-requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, 'Status: MERGED / ACCEPTED');
-requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Accepted PR:\*\* #899|Accepted PR: #899/);
-requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Merge SHA:\*\* `f7fc603183120895359e9e52464de2d01e100980`|Merge SHA: f7fc603183120895359e9e52464de2d01e100980/);
-requireRegex('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, /Public launch: NO_GO|Public launch remains `NO_GO`/);
-
-for (const phrase of [
-  'Missing content-notification preference means NOT OPTED IN',
-  'System emails must not add to Resend Audience',
-  'Unsubscribe never revokes `PatronGrant`',
-]) requireIncludes('accepted ticket LAUNCH-EMAIL-003', acceptedTicket, phrase);
-
-const nonGoalsIndex = acceptedTicket.indexOf('## Non-goals');
-const signedIndex = acceptedTicket.indexOf('signed unsubscribe token');
-if (nonGoalsIndex !== -1 && signedIndex !== -1 && signedIndex > nonGoalsIndex) {
-    pass('signed unsubscribe token remains a Non-goal in LAUNCH-EMAIL-003');
-} else {
-    fail('signed unsubscribe token must appear in the Non-goals section of LAUNCH-EMAIL-003');
+// Docs index must link the ticket queue and audits.
+const docsIndex = read('docs/README.md');
+for (const needle of ['tickets/ready/', 'audit/', 'KNOWN_LIMITATIONS.md']) {
+  requireIncludes('docs/README.md', docsIndex, needle);
 }
 
-
-for (const phrase of [
-  'Portable workspace baseline',
-  'Product-policy supersession',
-  'Owner-decision provenance',
-  'Current-ticket source of truth',
-  'Backlog versus executable queue',
-  'Precision contract',
-]) requireIncludes('AGENTS.md', agents, phrase);
-
-for (const field of [
-  'Decision source:',
-  'Approved by:',
-  'Approval date:',
-  'Recorded by:',
-  'Supersedes:',
-  'Does not supersede:',
-  'Implementation status:',
-  'Legal status:',
-  'Operator-evidence status:',
-  'Launch status:',
-]) requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, field);
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'This record is product-policy truth.');
-requireIncludes('OWNER-LAUNCH-DECISIONS-001', launch, 'It is not implementation evidence, legal approval, operator evidence,');
-
-for (const text of [owner, launch]) {
-  forbidIncludes('owner decision files', text, 'może prowadzić do nadania PatronGrant');
-  forbidIncludes('owner decision files', text, 'may create PatronGrant');
-  forbidIncludes('owner decision files', text, 'checkbox');
-  requireIncludes('owner decision files', text, 'musi');
-  requireIncludes('owner decision files', text, 'dokładnie jeden aktywny PatronGrant');
-  requireIncludes('owner decision files', text, 'Payment pozostaje osobnym faktem finansowym');
-  requireIncludes('owner decision files', text, 'nie narzuca');
-  requireIncludes('owner decision files', text, 'konkretnego komponentu UI');
-  requireIncludes('owner decision files', text, 'jednoznacznego');
-  requireIncludes('owner decision files', text, 'potwierdzenia');
-}
-
-// POST-REFACTOR PRODUCT MODE VALIDATION
-requireRegex('README.md', readme, /Polutek\.pl/i, 'Polutek.pl product identity');
-requireRegex('README.md', readme, /aktywny produkt|active product/i, 'active product after stabilization');
-forbidIncludes('README.md', readme, 'Current Main Control Panel');
-forbidIncludes('README.md', readme, 'Public launch: `NO_GO`');
-requireFile('docs/PROJECT-STATE.md');
-if (existsSync(filePath('docs/PROJECT-STATE.md'))) {
-  const projectState = read('docs/PROJECT-STATE.md');
-  requireRegex('PROJECT-STATE', projectState, /STABILIZACJA ZAKOŃCZONA|stabilizacja[^\n]+zakończona/i, 'major refactor/stabilization complete');
-}
-requireIncludes('MASTERPLAN', read('docs/MASTERPLAN.md'), 'STABILIZACJA ZAKOŃCZONA / AKTYWNY PRODUKT');
-// Only require "no active ticket" phrase when ticket is NONE (active roadmap mode is also valid)
-const earlyTicketIdMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_ID: (.*) -->/);
-if (!earlyTicketIdMatch || earlyTicketIdMatch[1].trim() === 'NONE') {
-  requireRegex('ready queue', queue, /nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'no active large code ticket');
-} else {
-  pass('ready queue has active ticket — skipping no-active-ticket phrase check');
-}
-
-// DYNAMIC TICKET VALIDATION
-if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_ID') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_ID marker');
-else pass('queue contains exactly one current-ticket ID marker');
-if (count(queue, 'CONTROL_PLANE_CURRENT_TICKET_FILE') !== 1) fail('queue must contain exactly one CONTROL_PLANE_CURRENT_TICKET_FILE marker');
-else pass('queue contains exactly one current-ticket file marker');
-
-const ticketIdMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_ID: (.*) -->/);
-const ticketFileMatch = queue.match(/<!-- CONTROL_PLANE_CURRENT_TICKET_FILE: (.*) -->/);
-
-if (!ticketIdMatch || !ticketFileMatch) {
-    fail('Failed to extract current ticket ID or file from queue README');
-} else {
-    const currentId = ticketIdMatch[1].trim();
-    const currentFilePath = ticketFileMatch[1].trim();
-
-    if (currentId === 'NONE' && currentFilePath === 'NONE') {
-        requireRegex('ready queue', queue, /NO_ACTIVE_LARGE_CODE_TICKET|nie ma aktywnego dużego ticketu kodowego|no active large code ticket/i, 'post-refactor no active large code ticket state');
-        pass('queue explicitly declares no active large code ticket');
-    } else if (!currentId || !currentFilePath) {
-        fail('Current ticket ID or file path is empty');
-    } else {
-        pass(`Current ticket identified: ${currentId} at ${currentFilePath}`);
-        requireFile(currentFilePath);
-        if (existsSync(filePath(currentFilePath))) {
-            const currentTicketContent = read(currentFilePath);
-            requireIncludes(`current ticket ${currentId}`, currentTicketContent, `Ticket ID: ${currentId}`);
-        }
-    }
-}
-
-for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline]]) {
-  forbidIncludes(label, text, 'OWNER-LAUNCH-DECISIONS-001 — Consolidate launch-blocking owner decisions');
-  requireIncludes(label, text, 'docs/tickets/ready/README.md');
-  requireIncludes(label, text, 'docs/roadmap/Launch-Execution-Backlog.md');
-}
-
-const closedDecisionContexts = [
-  /partial refund[^\n|]*OWNER_DECISION_REQUIRED/i,
-  /email[^\n|]*(content[- ]notifications|content notifications)[^\n|]*OWNER_DECISION_REQUIRED/i,
-  /RPO\/RTO[^\n|]*OWNER_DECISION_REQUIRED/i,
-  /alert channel[^\n|]*OWNER_DECISION_REQUIRED/i,
-  /Cloudflare originals[^\n|]*OWNER_DECISION_REQUIRED/i,
-  /(reactions|hearts)[^\n|]*OWNER_DECISION_REQUIRED/i,
-];
-for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline], ['ready queue', queue]]) {
-  for (const regex of closedDecisionContexts) {
-    if (regex.test(text)) {
-      fail(`${label} must not use OWNER_DECISION_REQUIRED for closed owner-decision context: ${regex}`);
-      requireRegex(`${label} closed-decision context`, text, /LEGAL_REVIEW_REQUIRED|IMPLEMENTATION_MISSING|OPERATOR_PENDING|BLOCKED_OPERATOR_ACCESS|MISSING \/ NOT_EXECUTED|RECORDED|HISTORICAL|SUPERSEDED|NOT_LAUNCH_CRITICAL/, 'valid post-decision status present');
-    } else {
-      pass(`${label} has no stale OWNER_DECISION_REQUIRED context: ${regex}`);
-    }
-  }
-}
-requireIncludes('control plane docs', readme + roadmap + timeline + queue, 'LEGAL_REVIEW_REQUIRED');
-
-for (const [label, text] of [
-  ['Active roadmap', roadmap],
-  ['Owner timeline', timeline],
-  ['Launch backlog', backlog],
-  ['OWNER-LAUNCH-DECISIONS-001', launch],
-]) requireIncludes(label, text, 'NO_GO');
-for (const [label, text] of [['README.md', readme], ['Active roadmap', roadmap], ['Owner timeline', timeline], ['Launch backlog', backlog], ['OWNER-LAUNCH-DECISIONS-001', launch]]) {
-  forbidIncludes(label, text, 'Public launch: GO');
-  forbidIncludes(label, text, 'LAUNCH_READY');
-  forbidIncludes(label, text, 'X7: CERTIFIED');
-}
-
-for (const workstream of [
-  'Email consent boundary',
-  'Signed unsubscribe',
-  'Bounce/complaint suppression',
-  'System email events',
-  'Language persistence',
-  'Referral notifications',
-  'Runtime/provider privacy inventory',
-  'Legal copy PL/EN',
-  'Vercel production evidence',
-  'Stripe production evidence',
-  'Cloudflare production evidence',
-  'Backup, restore and alerts',
-  'X6.2',
-  'X6.3',
-  'X6.4',
-  'X6.5',
-  'X6.6',
-  'X6.7',
-  'X6.8',
-  'X6 certification',
-  'X7 Launch Evidence Pack',
-  'X7 certification',
-  'Final owner launch decision',
-]) requireIncludes('Launch backlog', backlog, workstream);
-requireIncludes('Launch backlog', backlog, 'This document is not an executable queue.');
-
-requireIncludes('ticket template', ticketTemplate, 'Control-plane provenance');
-requireIncludes('ticket template', ticketTemplate, 'Semantic preservation checklist');
-requireIncludes('PR report template', prReportTemplate, 'Semantic Preservation Matrix');
-requireIncludes('GitHub PR template', githubPrTemplate, 'Semantic Preservation Matrix');
-requireIncludes('GitHub PR template', githubPrTemplate, 'Public launch remains `NO_GO`');
+// Guard against the historical control plane creeping back in.
+for (const [file, reason] of [
+  ['docs/reports', 'reconciliation report tree retired 2026-07-02'],
+  ['docs/roadmap', 'process roadmaps retired 2026-07-02'],
+  ['docs/templates', 'certification templates retired 2026-07-02'],
+  ['docs/governance/BOLEK-OPERATING-MODEL.md', 'operating model retired 2026-07-02'],
+]) forbidFile(file, reason);
 
 for (const check of checks) console.log(`${check.ok ? 'PASS' : 'FAIL'} ${check.message}`);
 if (checks.some((check) => !check.ok)) process.exit(1);

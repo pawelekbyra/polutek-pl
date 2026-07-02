@@ -2,6 +2,8 @@
 
 This file is the primary entry point for AI agents working on this codebase. Read it in full before touching any code.
 
+The full product documentation index lives at `docs/README.md` (architecture, specs, runbooks, audits, ticket queue). Historical multi-agent process docs were retired 2026-07-02 — do not recreate reconciliation reports, roadmaps, or role protocols; durable conclusions belong here, in `KNOWN_LIMITATIONS.md`, or in `docs/audit/`.
+
 **Maintenance rule:** When you add a meaningful new feature, change a critical invariant, introduce a new module, or rename a key file, update this document. Future agents depend on it being accurate.
 
 ---
@@ -134,6 +136,8 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 - The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`. The Next image optimizer (`/_next/image`) fetches URLs without auth cookies, so gating the proxy behind Clerk breaks every thumbnail on the site.
 - Admin components render this proxy with `unoptimized` on `next/image` (the browser then sends admin cookies directly, so draft thumbnails stay visible in the panel).
 - `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming — never a relative proxy path.
+- Cache policy: published-video thumbnails are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL` — a CDN-cached draft thumbnail would leak to anonymous visitors. External origins' Cache-Control headers are ignored on purpose.
+- Planned: thumbnail storage moves from Vercel Blob to Cloudflare R2 (free egress) — see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
 - The default-thumbnail preview in `/admin/settings` uses `/api/admin/settings/media/default-video-thumbnail/proxy` (admin-only streaming route).
 
 ### 4.9 Comment Reactions

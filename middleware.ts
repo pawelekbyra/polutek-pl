@@ -12,6 +12,11 @@ const isPublicRoute = createRouteMatcher([
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
+  // Email unsubscribe must work without login: List-Unsubscribe headers and
+  // email footer links target /unsubscribe?token=..., and the page posts the
+  // signed token to the API. Both are token-authorized, not session-authorized.
+  '/unsubscribe',
+  '/api/subscriptions/unsubscribe',
   '/api/webhooks(.*)',
   '/api/health',
   '/api/access(.*)',
