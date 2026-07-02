@@ -262,7 +262,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
                 className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[#0f0f0f] outline-none placeholder:text-[#c9c4b8]"
                 style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
               />
-              <div className="absolute right-0 flex items-center">
+              <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
                 <select
                   value={selectedCurrency}
                   onChange={(e) => handleCurrencyChange(e.target.value)}

@@ -7,7 +7,6 @@ import { SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { SafeAvatar } from "../../SafeAvatar";
 import { countGraphemes } from "@/lib/utils/graphemes";
-import { Frame, INK } from "../../najs/primitives";
 
 interface CommentComposerProps {
   userProfile: any;
@@ -153,8 +152,7 @@ export function CommentComposer({
             </div>
           )}
           {isViewerLoading ? (
-            <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
               <div
                 className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5 text-[13px] font-bold text-neutral-500"
                 role="status"
@@ -166,8 +164,7 @@ export function CommentComposer({
               </div>
             </div>
           ) : !canComment ? (
-            <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
               <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
@@ -191,8 +188,7 @@ export function CommentComposer({
               </div>
             </div>
           ) : (
-            <div className="relative min-h-[2.75rem]">
-              <Frame radius={16} seed={45} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
               <label htmlFor={textareaId} className="sr-only">
                 {replyTo ? t.addReply : t.addComment}
               </label>

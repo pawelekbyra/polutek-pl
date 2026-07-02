@@ -288,7 +288,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   return (
     <div
       ref={commentsTopRef}
-      className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent pt-1 sm:pt-3 rounded-none border-none shadow-none mt-2 mb-[30px] sm:my-[30px] relative"
+      className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent rounded-none border-none shadow-none mb-[30px] relative"
     >
       {/* Sticky Header */}
       {showStickyHeader && (
@@ -309,20 +309,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       )}
 
-      {/* separator sekcji komentarzy */}
-      <div className="relative h-[14px] w-full mt-[34px] mb-[18px]" aria-hidden="true">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 14" preserveAspectRatio="none">
-          <path d="M 0 7 Q 300 5.4 600 7" fill="none" stroke="#171717" strokeWidth="1.1"
-            strokeLinecap="round" opacity=".55" vectorEffect="non-scaling-stroke" />
-        </svg>
-      </div>
-
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
         <div className="flex items-center gap-3 min-w-0">
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
-            <h3 className="text-[15px] sm:text-[17px] font-bold text-[#0f0f0f] truncate" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <h3 className="font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate">
               {totalCount} {getCommentsLabel(totalCount)}
             </h3>
           )}

@@ -6,11 +6,13 @@ import { plPL } from '@clerk/localizations';
 import { useLanguage } from './LanguageContext';
 import { updateUserLanguage } from '@/lib/actions/user';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useRef, useState } from 'react';
 import UnsubscribedEmailConsentPrompt from './subscriptions/UnsubscribedEmailConsentPrompt';
 
 function LocalizationLogic({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { language, setLanguage, isInitialized } = useLanguage();
   const { user, isLoaded } = useUser();
   const [syncedOnce, setSyncedOnce] = useState(false);
@@ -27,10 +29,14 @@ function LocalizationLogic({ children }: { children: React.ReactNode }) {
     if (!isLoaded) return;
     const isSignedIn = Boolean(user);
     if (wasSignedInRef.current !== null && wasSignedInRef.current !== isSignedIn) {
+      // Client-side caches (comments, viewer permissions, sidebar layout) are
+      // keyed independent of auth state, so a plain router.refresh() leaves
+      // them showing the previous session's data until they naturally go stale.
+      queryClient.clear();
       router.refresh();
     }
     wasSignedInRef.current = isSignedIn;
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, queryClient]);
 
   // Sync DB preference to Context ONLY ONCE on login
   useEffect(() => {
