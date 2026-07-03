@@ -10,11 +10,12 @@ import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { useLanguage } from "../LanguageContext";
 import { useToast } from "@/app/hooks/useToast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronDown, Heart } from "../icons";
+import { Loader2, Heart } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import CheckoutModal from "../playlist/CheckoutModal";
+import DonationAmountField from "./DonationAmountField";
+import DonationLegalDialog from "./DonationLegalDialog";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -22,13 +23,15 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 interface DonationBoxProps {
   videoTitle?: string;
+  /** True when the signed-in viewer already holds an active Patron grant. */
+  viewerIsPatron?: boolean;
 }
 
 function getSuggestedAmount(currency: string) {
   return currency === "PLN" ? 25 : 10;
 }
 
-export default function DonationBox({ videoTitle }: DonationBoxProps) {
+export default function DonationBox({ videoTitle, viewerIsPatron = false }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const toast = useToast();
@@ -55,14 +58,17 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
+  const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
-  const minAmount = minimums[selectedCurrency.toUpperCase() as SupportedCurrency] ?? minimums.PLN;
+  const checkoutMinAmount = minimums[selectedCurrency.toUpperCase() as SupportedCurrency] ?? minimums.PLN;
+  const patronThreshold = patronThresholds[selectedCurrency.toUpperCase() as SupportedCurrency] ?? checkoutMinAmount;
+  // Non-patrons must clear the patron threshold so a successful tip always grants access, as promised in the copy.
+  // Existing patrons already have access, so they may support with any amount down to the checkout floor.
+  const minAmount = viewerIsPatron ? checkoutMinAmount : Math.max(checkoutMinAmount, patronThreshold);
   const availableCurrencies = [...SUPPORTED_CURRENCIES].filter(
     (currency) => !(language === "en" && currency === "PLN"),
   );
   const amountTooLow = typeof amount === "number" && amount < minAmount;
-  const amountInputId = "donation-amount";
-  const amountErrorId = "donation-amount-error";
   const termsErrorId = "donation-terms-error";
 
   useEffect(() => {
@@ -76,6 +82,13 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           if (Number.isFinite(min) && min > 0) nextMinimums[currency] = min;
         }
         setMinimums(nextMinimums);
+
+        const nextThresholds = { ...nextMinimums } as Record<SupportedCurrency, number>;
+        for (const currency of SUPPORTED_CURRENCIES) {
+          const threshold = Number(data.patronThresholds?.[currency]?.threshold);
+          if (Number.isFinite(threshold) && threshold > 0) nextThresholds[currency] = threshold;
+        }
+        setPatronThresholds(nextThresholds);
       })
       .catch((error) => logger.warn("[DonationBox] Failed to fetch payment minimums:", error))
       .finally(() => setIsInitialLoading(false));
@@ -132,12 +145,20 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
 
   useEffect(() => {
     setSelectedCurrency(t.currency);
+    if (!viewerIsPatron) return;
     setAmount(getSuggestedAmount(t.currency));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t.currency]);
+
+  // Non-patrons pay the fixed, admin-set patron threshold — the amount is not user-editable,
+  // so a successful tip always grants access as the copy promises.
+  useEffect(() => {
+    if (!viewerIsPatron) setAmount(minAmount);
+  }, [viewerIsPatron, minAmount]);
 
   const handleCurrencyChange = (curr: string) => {
     setSelectedCurrency(curr);
-    setAmount(getSuggestedAmount(curr));
+    if (viewerIsPatron) setAmount(getSuggestedAmount(curr));
   };
 
   const onSupport = useCallback(async () => {
@@ -215,23 +236,65 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     }
   }, [userId, openSignIn, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
 
+  const subtitle = viewerIsPatron
+    ? (isPl ? "Masz już dostęp do Strefy Fenkju" : "You already have Thank You Zone access")
+    : (isPl ? "Dostęp do Strefy Fenkju" : "Access to the Thank You Zone");
+
+  const bodyCopy = viewerIsPatron
+    ? (isPl
+        ? "Twój dostęp do Strefy Fenkju jest już zapewniony i ta wpłata niczego nowego nie odblokowuje. To czysty gest wsparcia — dowolna kwota, dla samego wspierania."
+        : "Your access to the Thank You Zone is already secured, and this tip doesn't unlock anything new. It's a pure show of support — any amount, just for the sake of it.")
+    : (isPl
+        ? "Jednorazowa wpłata finansuje rozwój POLUTEK.PL — projektu, który dopiero raczkuje — i odblokowuje dożywotni dostęp do Strefy Fenkju: wszystkich obecnych i przyszłych materiałów dodatkowych. Bez subskrypcji i ukrytych kosztów."
+        : "A one-time tip funds the growth of POLUTEK.PL — a project still in its early days — and unlocks lifetime access to the Thank You Zone: all current and future bonus materials. No subscription, no hidden costs.");
+
+  const bullets: { text: string; soft?: boolean }[] = viewerIsPatron
+    ? [
+        { text: isPl ? "Masz już pełny dostęp do Strefy Fenkju" : "You already have full Thank You Zone access" },
+        { text: isPl ? "Dowolna kwota — bez nowych korzyści" : "Any amount — no new benefits" },
+        { text: isPl ? "Bezpośrednio wspiera dalszy rozwój kanału" : "Directly supports the channel's continued growth", soft: true },
+      ]
+    : [
+        { text: isPl ? "Dożywotni dostęp do Strefy Fenkju" : "Lifetime access to the Thank You Zone" },
+        { text: isPl ? "Jedna wpłata, bez subskrypcji" : "One payment, no subscription" },
+        {
+          text: isPl
+            ? "Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej"
+            : "Not much there yet, but thanks to you it'll keep growing",
+          soft: true,
+        },
+      ];
+
   return (
     <div id="donations" className="relative my-[10px] scroll-mt-20 p-[18px] mb-3">
       <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="#ffffff" />
       <div className="relative z-10">
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-1 flex items-center gap-2">
           <Heart size={17} className="shrink-0 text-primary" />
           <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)" }}>
-              {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
+              {isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL"}
             </span>
           </h4>
         </div>
-        <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
-          {isPl
-            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
-            : "A one-time tip unlocks every bonus video — forever. No subscription."}
-        </p>
+        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide text-[#7a7a7a]">{subtitle}</p>
+        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">{bodyCopy}</p>
+
+        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[#171717]/15 pt-[10px] text-[12.5px]">
+          {bullets.map((bullet) => (
+            <li
+              key={bullet.text}
+              className={bullet.soft ? "flex items-start gap-[7px] italic text-[#7a7a7a]" : "flex items-start gap-[7px] text-[#171717]"}
+            >
+              {bullet.soft ? (
+                <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
+              ) : (
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+              )}
+              {bullet.text}
+            </li>
+          ))}
+        </ul>
 
         {showTermsError && (
           <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
@@ -239,52 +302,17 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           </p>
         )}
 
-        <div className="relative mb-[12px] p-[10px_12px]">
-          <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="#f8f3e7" />
-          <div className="relative z-10 space-y-1.5">
-            <label
-              htmlFor={amountInputId}
-              className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a7a7a]"
-            >
-              {isPl ? `Kwota (min. ${minAmount} ${selectedCurrency})` : `Amount (min. ${minAmount} ${selectedCurrency})`}
-            </label>
-            <div className="relative flex items-center">
-              <input
-                id={amountInputId}
-                type="number"
-                min={minAmount}
-                step="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
-                aria-invalid={amountTooLow}
-                aria-describedby={amountTooLow ? amountErrorId : undefined}
-                placeholder={String(minAmount)}
-                className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[#0f0f0f] outline-none placeholder:text-[#c9c4b8]"
-                style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-              />
-              <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => handleCurrencyChange(e.target.value)}
-                  aria-label="Currency"
-                  className="cursor-pointer appearance-none bg-transparent pr-5 text-[14px] font-bold text-[#4a4a4a] outline-none"
-                >
-                  {availableCurrencies.map((curr) => (
-                    <option key={curr} value={curr}>
-                      {curr}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={13} className="pointer-events-none absolute right-0 text-[#9a958b]" />
-              </div>
-            </div>
-            {amountTooLow && (
-              <p id={amountErrorId} role="alert" className="text-[10px] font-bold uppercase tracking-wide text-destructive">
-                {isPl ? `Minimum to ${minAmount} ${selectedCurrency}` : `Minimum is ${minAmount} ${selectedCurrency}`}
-              </p>
-            )}
-          </div>
-        </div>
+        <DonationAmountField
+          viewerIsPatron={viewerIsPatron}
+          isPl={isPl}
+          amount={amount}
+          setAmount={setAmount}
+          minAmount={minAmount}
+          selectedCurrency={selectedCurrency}
+          availableCurrencies={availableCurrencies}
+          onCurrencyChange={handleCurrencyChange}
+          amountTooLow={amountTooLow}
+        />
 
         <button
           type="button"
@@ -358,6 +386,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
             amount={amount}
             selectedCurrency={selectedCurrency}
             videoTitle={videoTitle}
+            viewerIsPatron={viewerIsPatron}
             clientSecret={clientSecret}
             paymentId={paymentId}
             paymentUiStatus={paymentUiStatus}
@@ -374,39 +403,27 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           document.body,
         )}
 
-      <Dialog open={isRegulaminOpen} onOpenChange={setIsRegulaminOpen}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="border-b pb-4 text-2xl font-black uppercase tracking-tighter">
-              {isPl ? "Regulamin serwisu" : "Terms of Service"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="prose prose-sm prose-neutral max-w-none text-foreground">
-            <p>
-              {isPl
-                ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Wsparcie ma charakter jednorazowego, dobrowolnego napiwku i nie jest subskrypcją."
-                : "Polutek.pl is a private, independent video channel. Support is a one-time, voluntary tip and not a subscription."}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DonationLegalDialog
+        open={isRegulaminOpen}
+        onOpenChange={setIsRegulaminOpen}
+        title={isPl ? "Regulamin serwisu" : "Terms of Service"}
+        body={
+          isPl
+            ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Wsparcie ma charakter jednorazowego, dobrowolnego napiwku i nie jest subskrypcją."
+            : "Polutek.pl is a private, independent video channel. Support is a one-time, voluntary tip and not a subscription."
+        }
+      />
 
-      <Dialog open={isPolitykaOpen} onOpenChange={setIsPolitykaOpen}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="border-b pb-4 text-2xl font-black uppercase tracking-tighter">
-              {isPl ? "Polityka Prywatności" : "Privacy Policy"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="prose prose-sm prose-neutral max-w-none text-foreground">
-            <p>
-              {isPl
-                ? "Dla bezpieczeństwa i wygody użytkowników serwis korzysta z zewnętrznego systemu uwierzytelniania Clerk oraz Stripe do obsługi płatności."
-                : "For security and convenience, the service uses the Clerk authentication system and Stripe for payment processing."}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DonationLegalDialog
+        open={isPolitykaOpen}
+        onOpenChange={setIsPolitykaOpen}
+        title={isPl ? "Polityka Prywatności" : "Privacy Policy"}
+        body={
+          isPl
+            ? "Dla bezpieczeństwa i wygody użytkowników serwis korzysta z zewnętrznego systemu uwierzytelniania Clerk oraz Stripe do obsługi płatności."
+            : "For security and convenience, the service uses the Clerk authentication system and Stripe for payment processing."
+        }
+      />
     </div>
   );
 }

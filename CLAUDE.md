@@ -146,6 +146,21 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 - Dislike has **no public counter** — only `likesCount` is aggregated; deleting/replacing a DISLIKE must never touch `likesCount`.
 - `toggleCommentLike` use case handles `LIKE`/`DISLIKE`/`UNLIKE` (clear). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }` (no body = LIKE), `DELETE` clears any reaction.
 
+### 4.10 Donation/Tip Widget — Two Copy Variants, One Payment Path
+
+`app/components/channel/DonationBox.tsx` is the single tip widget (rendered via `SidebarPlaylist.tsx`'s `PatronBox`), but it renders **two different copy/threshold variants** depending on the `viewerIsPatron` prop (already computed in `ChannelHome.tsx` from `userProfile?.isPatronDecorative` / `role === 'ADMIN'`, threaded through `SidebarPlaylist`):
+
+- **Non-patron viewer** (`viewerIsPatron` false/undefined): copy promises that a successful tip grants lifetime Thank You Zone access. The input minimum is therefore `Math.max(checkout floor, patron threshold)` — never let a non-patron submit an amount that would take payment without crossing the patron eligibility threshold, or the "this grants access" copy becomes false.
+- **Existing patron** (`viewerIsPatron` true): copy explicitly states access is already secured and this tip unlocks nothing new — free-form additional support. The input minimum relaxes to the checkout floor only (`/api/payment-settings` → `limits`), since no reward is being promised.
+
+Two distinct minimums are involved and must not be conflated:
+- **Checkout floor** — `getPaymentCurrencyLimits()` / `MIN_PAYMENT_BY_CURRENCY`, the smallest amount Stripe/the checkout will accept at all.
+- **Patron threshold** — `resolvePatronThresholdMinor()` / `PATRON_MIN_TIP_AMOUNT`, the amount a tip must reach to actually grant a `PatronGrant`. This can be higher than the checkout floor.
+
+`GET /api/payment-settings` returns both (`limits` and `patronThresholds`) so the client can compute the correct minimum for each variant without duplicating the threshold-resolution logic.
+
+The left column of `app/components/playlist/CheckoutModal.tsx` (desktop payment modal) carries matching copy for the same reason — keep it in sync with `DonationBox.tsx` when either changes.
+
 ---
 
 ## 5. Admin Panel

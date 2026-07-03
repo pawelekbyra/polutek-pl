@@ -108,12 +108,13 @@ describe("public loading/access state UX contracts", () => {
 
   it("keeps DonationBox errors associated and pending state readable", () => {
     const support = read("app/components/channel/DonationBox.tsx");
+    const amountField = read("app/components/channel/DonationAmountField.tsx");
 
-    expect(support).toContain("aria-invalid={amountTooLow}");
-    expect(support).toContain(
-      "aria-describedby={amountTooLow ? amountErrorId : undefined}",
+    expect(amountField).toContain("aria-invalid={amountTooLow}");
+    expect(amountField).toContain(
+      "aria-describedby={amountTooLow ? errorId : undefined}",
     );
-    expect(support).toContain('role="alert"');
+    expect(amountField).toContain('role="alert"');
     expect(support).toContain("aria-busy={isLoading}");
     expect(support).toContain("Processing...");
     expect(support).toContain("motion-reduce:animate-none");
