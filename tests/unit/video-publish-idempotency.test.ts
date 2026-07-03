@@ -16,6 +16,10 @@ const mockPrisma: any = {
     findUnique: vi.fn(),
     update: vi.fn()
   },
+  videoAsset: {
+    // Default: a READY primary asset exists, so publication is allowed to proceed.
+    findFirst: vi.fn().mockResolvedValue({ id: 'asset-ready' })
+  },
   $transaction: vi.fn((cb) => cb(mockPrisma))
 };
 
@@ -116,5 +120,48 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
       action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_FAILED',
       metadata: expect.objectContaining({ error: newError })
     }), expect.anything());
+  });
+});
+
+describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-ready' });
+  });
+
+  it('publishes as soon as a READY primary asset exists, regardless of which provider triggered', async () => {
+    const videoId = 'video-xyz';
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: videoId,
+      status: 'DRAFT',
+      publishAfterAssetReady: true,
+      publishAfterAssetReadyCompletedAt: null,
+    });
+    vi.mocked(publishAdminVideo).mockResolvedValue({ ok: true } as any);
+
+    // A Cloudflare webhook triggers publication even though (historically) Mux may have been
+    // the "preferred" provider — a broken Mux webhook must no longer block a ready Cloudflare asset.
+    await attemptPublishAfterAssetReady(videoId, mockCtx, 'cloudflare_stream');
+
+    expect(publishAdminVideo).toHaveBeenCalledWith(videoId, mockCtx);
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED',
+      metadata: expect.objectContaining({ triggeredByProvider: 'cloudflare_stream' }),
+    }));
+  });
+
+  it('does NOT publish while no READY primary asset exists yet', async () => {
+    const videoId = 'video-not-ready';
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: videoId,
+      status: 'DRAFT',
+      publishAfterAssetReady: true,
+      publishAfterAssetReadyCompletedAt: null,
+    });
+    mockPrisma.videoAsset.findFirst.mockResolvedValue(null); // nothing playable yet
+
+    await attemptPublishAfterAssetReady(videoId, mockCtx, 'mux');
+
+    expect(publishAdminVideo).not.toHaveBeenCalled();
   });
 });

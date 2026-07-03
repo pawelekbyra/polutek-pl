@@ -83,25 +83,27 @@ export async function handleCloudflareStreamWebhook(
           }
         }
 
-        // Only promote to primary if no other READY primary already exists for this video,
-        // AND if Mux is not the preferred provider (Mux takes primary via its own webhook).
-        const existingPrimary = await tx.videoAsset.findFirst({
-          where: { videoId: asset.videoId, isPrimary: true, id: { not: asset.id } },
+        // Promote to primary if no other READY primary asset exists yet. Publication is
+        // readiness-driven and provider-agnostic: the first provider to deliver a READY
+        // asset serves playback. A preferred provider that becomes READY later re-points
+        // primary via its own webhook (pendingPrimaryIntent); it must never block a working
+        // asset from serving, otherwise a broken/lost webhook on the preferred provider
+        // would leave a perfectly playable video permanently unpublished.
+        const existingReadyPrimary = await tx.videoAsset.findFirst({
+          where: {
+            videoId: asset.videoId,
+            isPrimary: true,
+            processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
+            id: { not: asset.id },
+          },
         });
 
-        if (!existingPrimary) {
-          const video = await tx.video.findUnique({
-            where: { id: asset.videoId },
-            select: { publishAfterAssetReadyProvider: true },
+        if (!existingReadyPrimary) {
+          dataToUpdate.isPrimary = true;
+          await tx.videoAsset.updateMany({
+              where: { videoId: asset.videoId, id: { not: asset.id } },
+              data: { isPrimary: false }
           });
-          const muxIsPreferred = video?.publishAfterAssetReadyProvider === VIDEO_PROVIDER.MUX;
-          if (!muxIsPreferred) {
-            dataToUpdate.isPrimary = true;
-            await tx.videoAsset.updateMany({
-                where: { videoId: asset.videoId, id: { not: asset.id } },
-                data: { isPrimary: false }
-            });
-          }
         }
     }
 

@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
+import { VIDEO_ASSET_PROCESSING_STATE } from "../domain/video-asset.constants";
 
 export async function requestPublishAfterAssetReady(videoId: string, ctx: AppContext): Promise<void> {
   const now = new Date();
@@ -33,11 +34,20 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
 
   const current = await videoDelegate.findUnique({
     where: { id: videoId },
-    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true, publishAfterAssetReadyProvider: true },
+    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true },
   });
   if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED") return;
 
-  if (current.publishAfterAssetReadyProvider && triggerProvider && current.publishAfterAssetReadyProvider !== triggerProvider) return;
+  // Publication is gated on readiness, not on which provider's webhook fired. A video is
+  // publishable as soon as it has a READY primary (playable) asset, regardless of the
+  // preferred provider. This keeps publication resilient to a broken/lost webhook on a
+  // *different* provider (e.g. Cloudflare succeeded while Mux never delivered): the
+  // triggerProvider is now informational only and never blocks publication.
+  const primaryReady = await ctx.prisma.videoAsset.findFirst({
+    where: { videoId, isPrimary: true, processingState: VIDEO_ASSET_PROCESSING_STATE.READY },
+    select: { id: true },
+  });
+  if (!primaryReady) return;
 
   const result = await publishAdminVideo(videoId, ctx);
   if (result.ok) {
@@ -45,7 +55,7 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
       action: "VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED",
       targetType: "Video",
       targetId: videoId,
-      metadata: { completedAt: new Date().toISOString() },
+      metadata: { completedAt: new Date().toISOString(), triggeredByProvider: triggerProvider ?? null },
     }).catch(() => undefined);
     return;
   }
