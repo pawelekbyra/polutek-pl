@@ -153,6 +153,39 @@ describe('fulfillPayment use case', () => {
     expect(grantPatron).not.toHaveBeenCalled();
   });
 
+  it('does NOT create a second PatronGrant when an existing patron tips above threshold again', async () => {
+    const { syncClerkAccess } = await import('@/lib/modules/users/application/sync-clerk-access');
+    const input = {
+      paymentId: 'pay_extra',
+      userId: 'user_123',
+      amountMinor: 5000, // well above the 10 PLN threshold
+      currency: 'PLN',
+    };
+
+    mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.payment.findUnique.mockResolvedValue({
+      id: 'pay_extra',
+      userId: 'user_123',
+      amountMinor: 5000,
+      currency: 'PLN',
+      status: PaymentStatus.SUCCEEDED,
+    });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: 'user_123',
+      email: 'test@example.com',
+      isPatron: true,
+      paymentTotals: [{ currency: 'PLN', amountMinor: 5000 }],
+      patronGrants: [{ id: 'grant_existing' }], // already an active patron
+    });
+
+    const result = await fulfillPayment(input, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(grantPatron).not.toHaveBeenCalled();
+    // Clerk should still be synced as a patron, just without minting a new grant.
+    expect(syncClerkAccess).toHaveBeenCalledWith('user_123', true, 25);
+  });
+
   it('does NOT grant patron status when currency is not supported by limits', async () => {
     const input = {
       paymentId: 'pay_123',
