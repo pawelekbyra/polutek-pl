@@ -15,6 +15,8 @@ interface CheckoutModalProps {
   amount: number | '';
   selectedCurrency: string;
   videoTitle?: string;
+  /** True when the signed-in viewer already holds an active Patron grant. */
+  viewerIsPatron?: boolean;
   clientSecret: string | null;
   paymentId?: string | null;
   paymentUiStatus?: string | null;
@@ -30,6 +32,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   amount,
   selectedCurrency,
   videoTitle,
+  viewerIsPatron = false,
   clientSecret,
   paymentId,
   paymentUiStatus,
@@ -52,12 +55,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-700 delay-100 fill-mode-both">
             <div className="relative inline-block overflow-hidden rounded-full group">
               <span className="relative z-10 inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-500/30 text-blue-400 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.3em]">
-                {language === 'pl' ? 'Dobrowolny napiwek' : 'Voluntary Tip'}
+                {viewerIsPatron
+                  ? (language === 'pl' ? 'Dodatkowe wsparcie' : 'Extra Support')
+                  : (language === 'pl' ? 'Dobrowolny napiwek' : 'Voluntary Tip')}
               </span>
               <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shimmer" />
             </div>
             <h1 className="text-6xl lg:text-7xl font-brand font-black uppercase tracking-[-0.05em] leading-[0.9] mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
-              {language === 'pl' ? <>Zostań <br /> Patronem</> : <>Become a <br /> Patron</>}
+              {viewerIsPatron
+                ? (language === 'pl' ? <>Wspierasz <br /> Dalej</> : <>Keep <br /> Supporting</>)
+                : (language === 'pl' ? <>Zostań <br /> Patronem</> : <>Become a <br /> Patron</>)}
             </h1>
             <div className="h-1.5 w-24 bg-blue-600 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.8)]" />
             <p className="text-lg text-neutral-400 font-medium italic max-w-md border-l-2 border-blue-600/30 pl-6 py-2">
@@ -72,37 +79,75 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
 
             <div className="space-y-6">
-              <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
-                <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
-                  <Star size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {language === 'pl' ? 'Dostęp do Strefy Thank You' : 'Access to the Thank You Zone'}
-                  </p>
-                  <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
-                    {language === 'pl'
-                      ? 'Jednorazowa wpłata daje dożywotni, nielimitowany dostęp do wszystkich obecnych i przyszłych materiałów dodatkowych.'
-                      : 'A one-time tip grants lifetime, unlimited access to all current and future bonus materials.'}
-                  </p>
-                </div>
-              </div>
+              {viewerIsPatron ? (
+                <>
+                  <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                    <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                      <Star size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
+                        {language === 'pl' ? 'Masz już pełny dostęp' : 'You already have full access'}
+                      </p>
+                      <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
+                        {language === 'pl'
+                          ? 'Twój dostęp do Strefy Fenkju jest już zapewniony. Ta wpłata niczego nowego nie odblokowuje.'
+                          : 'Your access to the Thank You Zone is already secured. This tip doesn’t unlock anything new.'}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
-                <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
-                  <Gem size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {language === 'pl' ? 'Rosnąca biblioteka' : 'Growing library'}
-                  </p>
-                  <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium italic group-hover:text-neutral-400">
-                    {language === 'pl'
-                      ? 'Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej.'
-                      : "Not much there yet, but thanks to you it'll keep growing."}
-                  </p>
-                </div>
-              </div>
+                  <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                    <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                      <Gem size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
+                        {language === 'pl' ? 'Czysty gest wsparcia' : 'A pure show of support'}
+                      </p>
+                      <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium italic group-hover:text-neutral-400">
+                        {language === 'pl'
+                          ? 'Dowolna kwota, bez nowych korzyści — bezpośrednio wspiera dalszy rozwój kanału.'
+                          : 'Any amount, no new benefits — it directly supports the channel’s continued growth.'}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                    <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                      <Star size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
+                        {language === 'pl' ? 'Dostęp do Strefy Fenkju' : 'Access to the Thank You Zone'}
+                      </p>
+                      <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
+                        {language === 'pl'
+                          ? 'Jednorazowa wpłata finansuje rozwój POLUTEK.PL — projektu, który dopiero raczkuje — i daje dożywotni, nielimitowany dostęp do wszystkich obecnych i przyszłych materiałów dodatkowych.'
+                          : 'A one-time tip funds the growth of POLUTEK.PL — a project still in its early days — and grants lifetime, unlimited access to all current and future bonus materials.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-5 group hover:bg-white/[0.04] p-5 -ml-5 rounded-[2rem] transition-all duration-500 hover:scale-[1.02] border border-transparent hover:border-white/[0.05] backdrop-blur-sm">
+                    <div className="w-14 h-14 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.1] group-hover:border-blue-500/50 transition-all duration-500 shadow-2xl">
+                      <Gem size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
+                        {language === 'pl' ? 'Rosnąca biblioteka' : 'Growing library'}
+                      </p>
+                      <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium italic group-hover:text-neutral-400">
+                        {language === 'pl'
+                          ? 'Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej.'
+                          : "Not much there yet, but thanks to you it'll keep growing."}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -119,14 +119,14 @@ export const translations = {
     patronZoneLine2: 'THANK YOU',
     currency: 'PLN',
     loginGatedText: 'Zaloguj się, aby obejrzeć',
-    donationDescription: 'Wsparcie od widzów pomaga rozwijać serwis Polutek.pl i tworzyć kolejne materiały. W podziękowaniu otrzymujesz dostęp do Strefy Thank You.',
+    donationDescription: 'Wsparcie od widzów pomaga rozwijać serwis Polutek.pl i tworzyć kolejne materiały. W podziękowaniu otrzymujesz dostęp do Strefy Fenkju.',
     paywallUnlock: 'Wesprzyj rozwój serwisu i odblokuj dostęp',
     confirmSubscribeTitle: 'CZY CHCESZ SUBSKRYBOWAĆ?',
     confirmSubscribeText: 'Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.',
     yes: 'TAK',
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
-    pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Thank You',
+    pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
     tipTheGuy: 'Wspieram'
   },
   en: {
