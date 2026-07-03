@@ -79,7 +79,13 @@ function installClientApiFetchTimeout() {
   }) as typeof window.fetch;
 }
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  initialLanguage,
+}: {
+  children: React.ReactNode;
+  initialLanguage?: "pl" | "en";
+}) {
   if (typeof window !== "undefined") {
     installClientApiFetchTimeout();
   }
@@ -99,7 +105,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
+      <LanguageProvider initialLanguage={initialLanguage}>
         <MotionConfig reducedMotion="user">
           <ToastProvider>{children}</ToastProvider>
         </MotionConfig>

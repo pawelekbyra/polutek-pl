@@ -21,6 +21,9 @@ interface SubscribeButtonProps {
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
+// Hand-drawn bell in the same "najs" sketch style as the like/share/download icons
+// (app/components/najs/primitives.tsx). Uses the shared bell silhouette so the subscribe
+// control matches the rest of the UI; fills the body when the viewer is subscribed.
 const SubscribeBellIcon = ({
   size = 16,
   filled = false,
@@ -40,24 +43,20 @@ const SubscribeBellIcon = ({
     aria-hidden="true"
   >
     <path
-      d="M18.4 9.9c0-3.55-2.48-6.15-6.4-6.15S5.6 6.35 5.6 9.9c0 4.7-1.95 5.9-2.55 6.55-.33.36-.07 1.05.48 1.05h16.94c.55 0 .81-.69.48-1.05-.6-.65-2.55-1.85-2.55-6.55Z"
+      d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
-      d="M9.55 20.2c.55.72 1.4 1.15 2.45 1.15s1.9-.43 2.45-1.15"
+      d="M10 20 c1.3 1 2.7 1 4 0"
+      fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.8"
       strokeLinecap="round"
-    />
-    <path
-      d="M12 3.75V2.6"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );

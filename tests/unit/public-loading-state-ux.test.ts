@@ -28,7 +28,7 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
     expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
     expect(player).not.toContain("Settings");
-    expect(player).toContain("const playerIconClass = \"h-[1.5rem] w-[1.5rem]\";");
+    expect(player).toContain("const playerIconClass = \"h-[1.25rem] w-[1.25rem]\";");
     expect(player).not.toContain("const doodleIconClass");
     expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
     expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
@@ -36,27 +36,27 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("inline-flex min-w-[5.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
     expect(player).toContain("text-[12px] font-semibold");
     expect(player).toContain("sm:min-w-[8.5rem] sm:text-[15px]");
-    expect(player).toContain("function PlayerTimeScrubber");
-    expect(player).toContain("optimisticSeekTime");
-    expect(player).toContain("setOptimisticSeekTime(clampedTime)");
+    // Progress bar now uses Vidstack's built-in TimeSlider, which handles seeking correctly —
+    // including seeking after the video has ended — instead of the hand-rolled scrubber.
+    expect(player).toContain("<TimeSlider.Root");
+    expect(player).toContain("<TimeSlider.Track");
+    expect(player).toContain("<TimeSlider.TrackFill");
+    expect(player).toContain("<TimeSlider.Thumb");
+    expect(player).not.toContain("function PlayerTimeScrubber");
+    expect(player).not.toContain("optimisticSeekTime");
     expect(player).not.toContain("pendingSeekTime");
-    expect(player).toContain("role=\"slider\"");
-    expect(player).toContain("onPointerMove={(event) =>");
-    expect(player).toContain("getTimeFromPointer(event.clientX)");
+    expect(player).not.toContain("--slider-fill");
+    expect(player).toContain("PROGRESS_PLAYED_COLOR");
     expect(player).not.toContain("remote.seeking(clampedTime");
-    expect(player).toContain("remote.seek(clampedTime");
     expect(player).toContain("event.stopPropagation()");
     expect(player).toContain("bg-white/85");
-    expect(player).toContain("pointer-events-auto absolute left-[var(--slider-fill)]");
-    expect(player).toContain("relative z-40 mt-1 flex h-7 w-full");
-    expect(player).toContain("sm:mt-1.5 sm:h-9 sm:py-2");
-    expect(player).toContain("group-hover/slider:h-[6px]");
+    expect(player).toContain("group-hover/tslider:h-[5px]");
     expect(player).not.toContain("group-data-[active]/slider:h-2.5");
     expect(player).not.toContain("before:-inset-3");
     expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
-    expect(player).toContain("grid h-9 w-9 shrink-0 place-items-center");
-    expect(player).toContain("sm:h-11 sm:w-11");
-    expect(player).toContain('aria-label="Postęp filmu"');
+    // Compact, YouTube-sized control buttons in a tight row under the bar.
+    expect(player).toContain("grid h-8 w-8 shrink-0 place-items-center");
+    expect(player).toContain("sm:h-9 sm:w-9");
     expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');
     expect(player).toContain('aria-label="Wycisz / włącz dźwięk"');
     expect(player).toContain('aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}');
@@ -123,8 +123,9 @@ describe("public loading/access state UX contracts", () => {
 
   it("ensures LanguageContext does not use lazy initializer in useState to avoid hydration mismatch", () => {
     const content = read("app/components/LanguageContext.tsx");
-    // Should use a static value "pl" instead of a function () => { ... }
-    expect(content).toContain('useState<Language>("pl")');
+    // Initial state must come from a static/server-provided value, never a lazy initializer that
+    // reads localStorage during render (which would diverge from the server-rendered markup).
+    expect(content).toContain('useState<Language>(initialLanguage ?? "pl")');
     expect(content).not.toMatch(/useState<Language>\(\(\) =>/);
     expect(content).toContain("useEffect(() => {");
     expect(content).toContain("localStorage.getItem('app-language')");

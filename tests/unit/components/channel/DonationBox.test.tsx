@@ -70,12 +70,12 @@ describe('DonationBox', () => {
   it('renders the access-granting copy and a fixed, non-editable amount for a non-patron viewer', async () => {
     renderDonationBox({ viewerIsPatron: false });
 
-    expect(screen.getByText('Wspieraj POLUTEK.PL')).toBeInTheDocument();
-    expect(screen.getByText('Dostęp do Strefy Fenkju')).toBeInTheDocument();
+    expect(screen.getByText('Zostań Patronem Projektu')).toBeInTheDocument();
+    expect(screen.getByText('Wspieraj POLUTEK.PL i wbijaj do Strefy Fenkju')).toBeInTheDocument();
     expect(
       screen.getByText(/Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej/),
     ).toBeInTheDocument();
-    expect(screen.getByText(/projektu, który dopiero raczkuje/)).toBeInTheDocument();
+    expect(screen.getByText(/sfinansuje rozwój kanału POLUTEK.PL/)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText('20')).toBeInTheDocument();

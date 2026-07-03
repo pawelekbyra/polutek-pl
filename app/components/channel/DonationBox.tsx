@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
 import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
+import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
 import { useToast } from "@/app/hooks/useToast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +17,7 @@ import { Frame, INK, BLUE } from "../najs/primitives";
 import CheckoutModal from "../playlist/CheckoutModal";
 import DonationAmountField from "./DonationAmountField";
 import DonationLegalDialog from "./DonationLegalDialog";
+import { RegulaminContent, PolitykaContent } from "../legal/LegalDocs";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -43,7 +45,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [selectedCurrency, setSelectedCurrency] = useState(t.currency);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(t.currency);
   const [amount, setAmount] = useState<number | "">(getSuggestedAmount(t.currency));
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
@@ -59,15 +61,18 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   const [isSyncing, setIsSyncing] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
   const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
+  const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
-  const checkoutMinAmount = minimums[selectedCurrency.toUpperCase() as SupportedCurrency] ?? minimums.PLN;
-  const patronThreshold = patronThresholds[selectedCurrency.toUpperCase() as SupportedCurrency] ?? checkoutMinAmount;
-  // Non-patrons must clear the patron threshold so a successful tip always grants access, as promised in the copy.
-  // Existing patrons already have access, so they may support with any amount down to the checkout floor.
-  const minAmount = viewerIsPatron ? checkoutMinAmount : Math.max(checkoutMinAmount, patronThreshold);
-  const availableCurrencies = [...SUPPORTED_CURRENCIES].filter(
-    (currency) => !(language === "en" && currency === "PLN"),
-  );
+  const currencyKey = selectedCurrency.toUpperCase() as SupportedCurrency;
+  const checkoutMinAmount = minimums[currencyKey] ?? minimums.PLN;
+  // Non-patrons pay a fixed gate price (the patron threshold), so a successful tip always grants
+  // access as the copy promises. Existing patrons already have access, so they may support with any
+  // amount down to the admin-configured free-amount box minimum (independent of the gate price).
+  const patronThreshold = patronThresholds[currencyKey] ?? checkoutMinAmount;
+  const patronBoxMin = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
+  const minAmount = viewerIsPatron ? patronBoxMin : patronThreshold;
+  // Currency switcher is available in both languages; only the pre-selected default differs.
+  const availableCurrencies = [...SUPPORTED_CURRENCIES];
   const amountTooLow = typeof amount === "number" && amount < minAmount;
   const termsErrorId = "donation-terms-error";
 
@@ -89,6 +94,13 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           if (Number.isFinite(threshold) && threshold > 0) nextThresholds[currency] = threshold;
         }
         setPatronThresholds(nextThresholds);
+
+        const nextBoxMins = { ...nextMinimums } as Record<SupportedCurrency, number>;
+        for (const currency of SUPPORTED_CURRENCIES) {
+          const boxMin = Number(data.patronBoxMinimums?.[currency]?.min);
+          if (Number.isFinite(boxMin) && boxMin > 0) nextBoxMins[currency] = boxMin;
+        }
+        setPatronBoxMinimums(nextBoxMins);
       })
       .catch((error) => logger.warn("[DonationBox] Failed to fetch payment minimums:", error))
       .finally(() => setIsInitialLoading(false));
@@ -143,12 +155,14 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     };
   }, [isCheckoutModalOpen]);
 
+  // Pre-select the default currency for the active language: PLN for Polish, geolocation-based
+  // (USD/GBP/EUR/CHF) for English. The user can still switch via the currency picker.
   useEffect(() => {
-    setSelectedCurrency(t.currency);
-    if (!viewerIsPatron) return;
-    setAmount(getSuggestedAmount(t.currency));
+    const nextCurrency = detectDefaultCurrency(language);
+    setSelectedCurrency(nextCurrency);
+    if (viewerIsPatron) setAmount(getSuggestedAmount(nextCurrency));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t.currency]);
+  }, [language]);
 
   // Non-patrons pay the fixed, admin-set patron threshold — the amount is not user-editable,
   // so a successful tip always grants access as the copy promises.
@@ -236,17 +250,21 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     }
   }, [userId, openSignIn, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
 
+  const title = viewerIsPatron
+    ? (isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL")
+    : (isPl ? "Zostań Patronem Projektu" : "Become a Project Patron");
+
   const subtitle = viewerIsPatron
     ? (isPl ? "Masz już dostęp do Strefy Fenkju" : "You already have Thank You Zone access")
-    : (isPl ? "Dostęp do Strefy Fenkju" : "Access to the Thank You Zone");
+    : (isPl ? "Wspieraj POLUTEK.PL i wbijaj do Strefy Fenkju" : "Support POLUTEK.PL and get into the Thank You Zone");
 
   const bodyCopy = viewerIsPatron
     ? (isPl
         ? "Twój dostęp do Strefy Fenkju jest już zapewniony i ta wpłata niczego nowego nie odblokowuje. To czysty gest wsparcia — dowolna kwota, dla samego wspierania."
         : "Your access to the Thank You Zone is already secured, and this tip doesn't unlock anything new. It's a pure show of support — any amount, just for the sake of it.")
     : (isPl
-        ? "Jednorazowa wpłata finansuje rozwój POLUTEK.PL — projektu, który dopiero raczkuje — i odblokowuje dożywotni dostęp do Strefy Fenkju: wszystkich obecnych i przyszłych materiałów dodatkowych. Bez subskrypcji i ukrytych kosztów."
-        : "A one-time tip funds the growth of POLUTEK.PL — a project still in its early days — and unlocks lifetime access to the Thank You Zone: all current and future bonus materials. No subscription, no hidden costs.");
+        ? "Jednorazowa wpłata sfinansuje rozwój kanału POLUTEK.PL i odblokuje wieczny dostęp do Strefy Fenkju: wszystkich obecnych i przyszłych materiałów dodatkowych. Bez subskrypcji i ukrytych kosztów."
+        : "A one-time tip funds the growth of the POLUTEK.PL channel and unlocks lifetime access to the Thank You Zone: all current and future bonus materials. No subscription, no hidden costs.");
 
   const bullets: { text: string; soft?: boolean }[] = viewerIsPatron
     ? [
@@ -255,12 +273,13 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         { text: isPl ? "Bezpośrednio wspiera dalszy rozwój kanału" : "Directly supports the channel's continued growth", soft: true },
       ]
     : [
+        { text: isPl ? "Rozwój kanału POLUTEK.PL" : "Grow the POLUTEK.PL channel" },
         { text: isPl ? "Dożywotni dostęp do Strefy Fenkju" : "Lifetime access to the Thank You Zone" },
         { text: isPl ? "Jedna wpłata, bez subskrypcji" : "One payment, no subscription" },
         {
           text: isPl
-            ? "Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej"
-            : "Not much there yet, but thanks to you it'll keep growing",
+            ? "Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej."
+            : "Not much there yet, but thanks to you it'll keep growing.",
           soft: true,
         },
       ];
@@ -273,7 +292,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           <Heart size={17} className="shrink-0 text-primary" />
           <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)" }}>
-              {isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL"}
+              {title}
             </span>
           </h4>
         </div>
@@ -407,27 +426,23 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         open={isRegulaminOpen}
         onOpenChange={setIsRegulaminOpen}
         title={isPl ? "Regulamin serwisu" : "Terms of Service"}
-        body={
-          isPl
-            ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Jednorazowa wpłata daje dożywotni dostęp do Strefy Fenkju — bez subskrypcji. Dostęp uruchamiamy od razu, dlatego po jego uruchomieniu nie przysługuje odstąpienie od umowy."
-            : "Polutek.pl is a private, independent video channel. A one-time tip grants lifetime access to the Thank You Zone — no subscription. Access starts immediately, so the right of withdrawal expires once it is activated."
-        }
+        intro={isPl ? undefined : "The full legal document is available in Polish."}
         href="/regulamin"
-        hrefLabel={isPl ? "Przeczytaj pełny regulamin" : "Read the full terms (Polish)"}
-      />
+        hrefLabel={isPl ? "Otwórz regulamin na osobnej stronie" : "Open the full terms on a separate page"}
+      >
+        <RegulaminContent />
+      </DonationLegalDialog>
 
       <DonationLegalDialog
         open={isPolitykaOpen}
         onOpenChange={setIsPolitykaOpen}
         title={isPl ? "Polityka Prywatności" : "Privacy Policy"}
-        body={
-          isPl
-            ? "Zbieramy tylko dane potrzebne do działania serwisu (konto, płatności, komentarze). Logowanie obsługuje Clerk, płatności Stripe — nie widzimy danych Twojej karty. Bez cookies reklamowych."
-            : "We only collect data needed to run the service (account, payments, comments). Sign-in is handled by Clerk and payments by Stripe — we never see your card details. No advertising cookies."
-        }
+        intro={isPl ? undefined : "The full legal document is available in Polish."}
         href="/polityka-prywatnosci"
-        hrefLabel={isPl ? "Przeczytaj pełną politykę prywatności" : "Read the full privacy policy (Polish)"}
-      />
+        hrefLabel={isPl ? "Otwórz politykę na osobnej stronie" : "Open the full privacy policy on a separate page"}
+      >
+        <PolitykaContent />
+      </DonationLegalDialog>
     </div>
   );
 }

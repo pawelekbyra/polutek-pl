@@ -12,6 +12,8 @@ const settingsSchema = z.object({
   limits: z.array(z.object({
     currency: z.enum(SUPPORTED_CURRENCIES),
     minAmount: z.number().positive().max(1_000_000),
+    patronThreshold: z.number().positive().max(1_000_000).nullable().optional(),
+    patronBoxMin: z.number().positive().max(1_000_000).nullable().optional(),
   })).min(1),
 });
 

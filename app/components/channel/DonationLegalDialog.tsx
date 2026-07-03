@@ -1,33 +1,54 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LEGAL_EFFECTIVE_DATE } from "@/app/components/legal/LegalDocs";
 
 interface DonationLegalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  body: string;
-  /** Route to the full legal document, e.g. /regulamin. */
+  /** Optional short lead-in shown above the full document. */
+  intro?: string;
+  /** Full legal document body (e.g. <RegulaminContent />). */
+  children?: React.ReactNode;
+  /** Route to the standalone full legal document, e.g. /regulamin. */
   href?: string;
   hrefLabel?: string;
 }
 
-export default function DonationLegalDialog({ open, onOpenChange, title, body, href, hrefLabel }: DonationLegalDialogProps) {
+export default function DonationLegalDialog({
+  open,
+  onOpenChange,
+  title,
+  intro,
+  children,
+  href,
+  hrefLabel,
+}: DonationLegalDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="border-b pb-4 text-2xl font-black uppercase tracking-tighter">{title}</DialogTitle>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto bg-background">
+        <DialogHeader className="border-b-2 border-[#1a1a1a]/10 pb-4">
+          <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a]">{title}</DialogTitle>
+          <p className="mt-1 text-xs text-[#7a7a7a]">{LEGAL_EFFECTIVE_DATE}</p>
         </DialogHeader>
-        <div className="prose prose-sm prose-neutral max-w-none text-foreground">
-          <p>{body}</p>
+
+        <div className="pt-2 text-[#1a1a1a]">
+          {intro && <p className="mb-6 text-[13px] leading-[1.6] text-[#4a4a4a]">{intro}</p>}
+          {children}
           {href && (
-            <p>
-              <Link href={href} className="font-bold underline hover:text-primary" target="_blank" rel="noopener noreferrer">
+            <div className="mt-10 border-t border-[#1a1a1a]/10 pt-6">
+              <Link
+                href={href}
+                className="text-sm font-bold underline hover:text-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {hrefLabel ?? href}
               </Link>
-            </p>
+            </div>
           )}
         </div>
       </DialogContent>

@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { normalizePaymentTotals } from "@/lib/modules/users";
 import { grantPatron } from "@/lib/modules/patron";
-import { getPaymentCurrencyLimits, resolvePatronThresholdMinor } from "@/lib/payments/currency-settings";
+import { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
 import { SupportedCurrency } from "@/lib/constants";
 import { PaymentPolicy } from "../domain/payment.policy";
 import { sendBecomePatronEmail, sendDonationThankYouEmail } from "@/lib/modules/email";
@@ -92,10 +92,9 @@ export async function fulfillPayment(
 
       const limits = await getPaymentCurrencyLimits();
       const currency = payment.currency.toUpperCase() as SupportedCurrency;
-      const checkoutMinimumMinor = limits[currency]?.minAmountMinor;
-      const thresholdMinor = checkoutMinimumMinor === undefined
-        ? undefined
-        : resolvePatronThresholdMinor(currency, checkoutMinimumMinor);
+      // Patron eligibility uses the resolved per-currency gate price (admin setting → env → floor),
+      // computed centrally in getPaymentCurrencyLimits so UI and fulfillment stay in lockstep.
+      const thresholdMinor = limits[currency]?.patronThresholdMinor;
 
       const alreadyPatron = user.patronGrants.length > 0;
 

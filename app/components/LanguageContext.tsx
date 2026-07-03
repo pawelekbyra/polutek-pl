@@ -15,11 +15,36 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>("pl");
+// One-year cookie so the server can resolve the language on the very first paint (see
+// lib/i18n/server-language.ts). Kept in sync with localStorage on every change.
+function persistLanguage(lang: Language) {
+  try {
+    localStorage.setItem('app-language', lang);
+  } catch {
+    /* private mode / storage disabled — cookie still covers persistence */
+  }
+  document.cookie = `app-language=${lang}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLanguage?: Language }> = ({
+  children,
+  initialLanguage,
+}) => {
+  // The server already resolved the language (DB → cookie → geolocation → Accept-Language),
+  // so we start from that value: correct first paint, no hydration mismatch.
+  const [language, setLanguageState] = useState<Language>(initialLanguage ?? "pl");
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    if (initialLanguage) {
+      // Mirror the server decision into cookie + localStorage so client reads and the next
+      // SSR pass agree, and so a logged-out choice survives future visits.
+      persistLanguage(initialLanguage);
+      setIsInitialized(true);
+      return;
+    }
+
+    // Fallback for when no server value was provided: prior client-only detection.
     const saved = localStorage.getItem('app-language');
     if (saved === 'pl' || saved === 'en') {
       setLanguageState(saved as Language);
@@ -29,23 +54,22 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLanguageState('en');
     }
     setIsInitialized(true);
-  }, []);
+  }, [initialLanguage]);
 
   const setLanguage = useCallback(async (lang: Language, skipSync: boolean = false) => {
     const prevLang = language;
     setLanguageState(lang);
-    localStorage.setItem('app-language', lang);
+    persistLanguage(lang);
 
-    // Sync with database if requested and changed
+    // Logged-in users additionally persist to the database (authoritative on next load) and to
+    // Clerk metadata. A 401 just means the visitor is logged out — the cookie already covers them.
     if (!skipSync && lang !== prevLang && isInitialized) {
       try {
-        const res = await fetch('/api/user/language', {
+        await fetch('/api/user/language', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ language: lang })
         });
-
-        // No need to alert on 401, user just might not be logged in
       } catch (e) {
         logger.warn('[LanguageContext] Failed to sync language with DB:', e);
       }

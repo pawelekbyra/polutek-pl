@@ -275,6 +275,10 @@ export function SidebarPlaylist({
   );
 
   const PatronBox = () => {
+    // Only show the support/tip widget to signed-in users. Logged-out visitors shouldn't be
+    // confronted with a payment prompt before they've even created an account. `userProfile` is
+    // the same server-derived "is logged in" signal used to gate LOGGED_IN videos above.
+    if (!userProfile) return null;
     if (!supportItem?.creatorId) return null;
     return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
   };

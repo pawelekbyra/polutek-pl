@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,10 +14,25 @@ type Props = {
   initialLimits: Record<SupportedCurrency, CurrencyLimit>;
 };
 
+type EditableField = "patronThreshold" | "patronBoxMin" | "minAmount";
+
 export function PaymentSettingsForm({ initialLimits }: Props) {
   const [limits, setLimits] = useState<Record<SupportedCurrency, CurrencyLimit>>(initialLimits);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+
+  function updateField(currency: SupportedCurrency, field: EditableField, raw: string) {
+    const next = Number(raw);
+    const value = Number.isFinite(next) ? next : 0;
+    setLimits((current) => ({
+      ...current,
+      [currency]: {
+        ...current[currency],
+        [field]: value,
+        [`${field}Minor`]: Math.round(value * 100),
+      },
+    }));
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,6 +47,8 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
           limits: SUPPORTED_CURRENCIES.map((currency) => ({
             currency,
             minAmount: limits[currency].minAmount,
+            patronThreshold: limits[currency].patronThreshold,
+            patronBoxMin: limits[currency].patronBoxMin,
           })),
         }),
       });
@@ -46,65 +62,92 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
     }
   }
 
+  function fieldGrid(field: EditableField) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {SUPPORTED_CURRENCIES.map((currency) => (
+          <div key={`${field}-${currency}`} className="space-y-2 rounded-2xl border bg-muted/30 p-4">
+            <Label htmlFor={`${field}-${currency}`}>{currency}</Label>
+            <Input
+              id={`${field}-${currency}`}
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={limits[currency][field]}
+              onChange={(event) => updateField(currency, field, event.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <AdminNavigation backHref="/admin" backLabel="Wróć do panelu admina" currentLabel="Płatności" />
 
       <div className="mb-6 rounded-3xl border bg-card p-6 shadow-sm md:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Płatności</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Bramka napiwkowa</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Bramka wsparcia</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Edytuj minimalną kwotę napiwku osobno dla każdej waluty. Udana płatność automatycznie nadaje status Patrona.
+          Trzy niezależne kwoty na walutę. Nie mieszaj ich ze sobą — każda steruje czym innym.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Minimalne kwoty</CardTitle>
-          <CardDescription>Kwoty są zapisywane dynamicznie i używane zarówno w interfejsie, jak i w walidacji API checkoutu.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {SUPPORTED_CURRENCIES.map((currency) => (
-                <div key={currency} className="space-y-2 rounded-2xl border bg-muted/30 p-4">
-                  <Label htmlFor={`min-${currency}`}>Minimum {currency}</Label>
-                  <Input
-                    id={`min-${currency}`}
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={limits[currency].minAmount}
-                    onChange={(event) => {
-                      const next = Number(event.target.value);
-                      setLimits((current) => ({
-                        ...current,
-                        [currency]: {
-                          ...current[currency],
-                          minAmount: Number.isFinite(next) ? next : 0,
-                          minAmountMinor: Number.isFinite(next) ? Math.round(next * 100) : 0,
-                        },
-                      }));
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
+              Próg zostania Patronem
+            </CardTitle>
+            <CardDescription>
+              Kwota, którą musi wpłacić <strong>osoba niebędąca patronem</strong>, aby odblokować dożywotni dostęp do Strefy
+              Fenkju. To ta kwota widnieje w support boxie dla niepatronów i decyduje o nadaniu statusu patrona po udanej płatności.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{fieldGrid("patronThreshold")}</CardContent>
+        </Card>
 
-            <div className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm">
-                {status === "saved" && <span className="text-green-600">Zapisano ustawienia.</span>}
-                {status === "error" && <span className="text-destructive">{error}</span>}
-                {status === "idle" && <span className="text-muted-foreground">CHF i GBP są dostępne w bramce obok PLN, EUR i USD.</span>}
-                {status === "saving" && <span className="text-muted-foreground">Zapisywanie...</span>}
-              </div>
-              <Button type="submit" disabled={status === "saving"}>
-                <Save className="mr-2 h-4 w-4" /> {status === "saving" ? "Zapisuję..." : "Zapisz"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">2</span>
+              Minimalna wpłata patrona (dowolna kwota)
+            </CardTitle>
+            <CardDescription>
+              Najniższa kwota, jaką <strong>istniejący patron</strong> może wpłacić w support boxie z dowolną kwotą. To osobny
+              mechanizm — nie ma nic wspólnego z progiem zostania patronem powyżej.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{fieldGrid("patronBoxMin")}</CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" /> Techniczne minimum checkoutu
+            </CardTitle>
+            <CardDescription>
+              Absolutny dolny limit, który akceptuje bramka płatności (Stripe). Zwykle nie ma potrzeby go zmieniać — obie kwoty
+              powyżej nie mogą zejść poniżej tej wartości.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{fieldGrid("minAmount")}</CardContent>
+        </Card>
+
+        <div className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm">
+            {status === "saved" && <span className="text-green-600">Zapisano ustawienia.</span>}
+            {status === "error" && <span className="text-destructive">{error}</span>}
+            {status === "idle" && <span className="text-muted-foreground">Wszystkie waluty: PLN, EUR, USD, CHF, GBP.</span>}
+            {status === "saving" && <span className="text-muted-foreground">Zapisywanie...</span>}
+          </div>
+          <Button type="submit" disabled={status === "saving"}>
+            <Save className="mr-2 h-4 w-4" /> {status === "saving" ? "Zapisuję..." : "Zapisz"}
+          </Button>
+        </div>
+      </form>
     </main>
   );
 }

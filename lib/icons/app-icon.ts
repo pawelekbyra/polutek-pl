@@ -5,6 +5,8 @@
 
 export const APP_ICON_BACKGROUND = "#f7f1e4";
 export const APP_ICON_INK = "#171717";
+// Brand blue — same accent used by the site's buttons/logo and the <Frame> primitive (BLUE).
+export const APP_ICON_BLUE = "#2563eb";
 
 // Same deterministic "hand-drawn wobble" used by the site's <Frame> primitive
 // (app/components/najs/primitives.tsx), reproduced here so the icon border
@@ -43,4 +45,34 @@ export function enterGlyphPaths(canvas: number): { main: string; head1: string; 
   const head2 = `M ${P(24, 64)} L ${P(41, 78)}`;
 
   return { main, head1, head2, strokeWidth: Math.max(2, canvas * 0.05) };
+}
+
+// Filled "Enter / Return" key glyph (↵) — a solid, chunky L-shaped return arrow: a tall
+// riser on the right, a rounded elbow, a horizontal bar running left, ending in a big
+// left-pointing arrowhead. Rendered as a single closed polygon so it can be *filled*
+// (brand blue) with a bold ink outline, matching the app's Enter-key visual language.
+// Coordinates come from a normalized 100×100 box scaled into `canvas` and centered, so
+// the mark stays dead-centre at any size (splash, favicon, PWA launch icon).
+export function enterGlyphFilledPath(canvas: number): { path: string; strokeWidth: number } {
+  const box = canvas * 0.62; // filled mark reads best slightly larger than the line-art one
+  const off = (canvas - box) / 2;
+  const s = box / 100;
+  const P = (x: number, y: number) => `${(off + x * s).toFixed(2)} ${(off + y * s).toFixed(2)}`;
+
+  // Outline walked clockwise from the top-right of the riser. The riser occupies x 60→78,
+  // the horizontal bar y 52→70, and the arrowhead is a triangle with its tip at the left.
+  const path = [
+    `M ${P(78, 15)}`,   // top-right of riser
+    `L ${P(78, 70)}`,   // down the right edge to the bottom bar
+    `L ${P(40, 70)}`,   // left along the bottom edge to the arrowhead base
+    `L ${P(40, 82)}`,   // down to the arrowhead's bottom corner
+    `L ${P(8, 61)}`,    // to the arrowhead tip (pointing left)
+    `L ${P(40, 40)}`,   // up to the arrowhead's top corner
+    `L ${P(40, 52)}`,   // in to the top edge of the horizontal bar
+    `L ${P(60, 52)}`,   // right along the top edge to the inner elbow
+    `L ${P(60, 15)}`,   // up the inner edge of the riser
+    "Z",
+  ].join(" ");
+
+  return { path, strokeWidth: Math.max(2, canvas * 0.045) };
 }

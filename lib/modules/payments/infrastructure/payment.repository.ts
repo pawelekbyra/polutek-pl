@@ -154,11 +154,16 @@ export class PaymentRepository {
     return await db.paymentCurrencySetting.findMany();
   }
 
-  async upsertCurrencySetting(currency: string, minAmountMinor: number, tx: WriteTx) {
+  async upsertCurrencySetting(
+    currency: string,
+    values: { minAmountMinor: number; patronThresholdMinor: number | null; patronBoxMinMinor: number | null },
+    tx: WriteTx,
+  ) {
+    const { minAmountMinor, patronThresholdMinor, patronBoxMinMinor } = values;
     return await tx.paymentCurrencySetting.upsert({
       where: { currency },
-      create: { currency, minAmountMinor },
-      update: { minAmountMinor }
+      create: { currency, minAmountMinor, patronThresholdMinor, patronBoxMinMinor },
+      update: { minAmountMinor, patronThresholdMinor, patronBoxMinMinor }
     });
   }
 

@@ -93,7 +93,11 @@ describe('Payment Settings Use Cases', () => {
       }, ctx);
 
       expect(result.ok).toBe(true);
-      expect(mockRepo.upsertCurrencySetting).toHaveBeenCalledWith('PLN', 3000, expect.anything());
+      expect(mockRepo.upsertCurrencySetting).toHaveBeenCalledWith(
+        'PLN',
+        { minAmountMinor: 3000, patronThresholdMinor: null, patronBoxMinMinor: null },
+        expect.anything(),
+      );
       // Verify response shape of update is same as get
       if (result.ok) {
         expect(result.data.PLN.minAmount).toBe(10); // Note: getPaymentSettings called with fresh mock repo result

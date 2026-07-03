@@ -545,9 +545,17 @@ model UserPaymentTotal {
 }
 
 model PaymentCurrencySetting {
-  currency       String   @id
-  minAmountMinor Int
-  updatedAt      DateTime @updatedAt
+  currency             String   @id
+  // Technical checkout floor — the smallest tip the checkout/Stripe will accept at all.
+  minAmountMinor       Int
+  // Patron-eligibility gate price. A tip at or above this grants lifetime patron access,
+  // and it is the fixed amount shown to non-patrons in the support box. Null → falls back
+  // to the PATRON_MIN_TIP_* env (matching currency) or, failing that, to minAmountMinor.
+  patronThresholdMinor Int?
+  // Minimum for the free-amount patron support box (existing patrons). Independent of the
+  // patron threshold above. Null → falls back to minAmountMinor (the checkout floor).
+  patronBoxMinMinor    Int?
+  updatedAt            DateTime @updatedAt
 
   @@index([updatedAt])
 }
