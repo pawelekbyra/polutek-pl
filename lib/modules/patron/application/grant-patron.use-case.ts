@@ -8,6 +8,7 @@ import { PatronRepository } from "../infrastructure/patron.repository";
 import { normalizePaymentTotals } from "@/lib/modules/users";
 import { Prisma } from "@prisma/client";
 import { WriteTx } from "@/lib/modules/shared/db";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 const SOURCE_MAP: Record<string, PatronGrantSource> = {
   stripe_tip: PatronGrantSource.STRIPE_TIP,
@@ -75,6 +76,18 @@ export async function grantPatron(
       reason: input.note,
     }, currentTx);
 
+    await recordAuditEvent(ctx, {
+      action: 'PATRON_GRANTED',
+      targetType: 'User',
+      targetId: input.userId,
+      metadata: {
+        source,
+        paymentId: input.paymentId,
+        grantedByUserId: input.grantedByUserId,
+        note: input.note,
+      },
+    }, currentTx);
+
     const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
     return success({
@@ -95,7 +108,8 @@ export async function grantPatron(
           const paymentIdMatch = input.paymentId && target.includes('paymentId');
 
           if (paymentIdMatch) {
-              const db = tx || ctx.db.read;
+              if (tx) throw error;
+              const db = ctx.db.read;
               const existingGrant = await repo.findGrantByPaymentId(input.paymentId!, db);
               if (existingGrant) {
                   const user = await repo.findUserWithPaymentTotals(input.userId, db);

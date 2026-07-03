@@ -392,6 +392,23 @@ export class PlaybackService {
             const token = muxClient.createSignedPlaybackToken(playbackId);
             playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
             isSignedUrl = true;
+          } else if (tier === 'PATRON') {
+            return {
+              videoId,
+              status: 'ERROR',
+              canPlay: false,
+              access: { allowed: true },
+              player: playerFor({ thumbnailUrl, title }, false),
+              diagnostics: {
+                warnings: ['Mux signing is not configured; patron-only playback is blocked to avoid public URL exposure.'],
+                sourceConfidence: 'HIGH',
+                providerResolutionAllowed: true,
+                providerResolutionAttempted: true,
+                sourceMode: 'PROVIDER_ASSET',
+                asset: safeAsset,
+              },
+              tracking: emptyPlaybackRuntime(),
+            };
           } else {
             playbackUrl = `https://stream.mux.com/${playbackId}.m3u8`;
           }

@@ -45,6 +45,23 @@ export async function getPaymentCurrencyLimits(): Promise<Record<SupportedCurren
     };
   }
 
+  const patronThresholdCurrency = process.env.PATRON_MIN_TIP_CURRENCY?.toUpperCase() as SupportedCurrency | undefined;
+  const patronThresholdAmount = Number(process.env.PATRON_MIN_TIP_AMOUNT);
+  if (
+    patronThresholdCurrency &&
+    SUPPORTED_CURRENCIES.includes(patronThresholdCurrency) &&
+    Number.isSafeInteger(patronThresholdAmount) &&
+    patronThresholdAmount > 0
+  ) {
+    const fallback = defaults[patronThresholdCurrency];
+    const minAmountMinor = patronThresholdAmount * 100;
+    defaults[patronThresholdCurrency] = {
+      ...fallback,
+      minAmountMinor,
+      minAmount: patronThresholdAmount,
+    };
+  }
+
   return defaults;
 }
 

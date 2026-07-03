@@ -55,7 +55,7 @@ export async function handleStripeWebhook(
     return ok({ received: true });
   }
   if (lockStatus === 'CONFLICT') {
-    return ok({ received: true }); // Acknowledge Stripe even if we have a conflict, to stop retries if another process is handling it
+    return fail(new PaymentError('Stripe event is already being processed'));
   }
 
   // 2. Handle Event
@@ -100,7 +100,7 @@ export async function handleStripeWebhook(
         const intent = event.data.object as Stripe.PaymentIntent;
         const payment = await repo.findByIntentId(intent.id, ctx.db.read);
         if (payment) {
-          await repo.updatePayment(payment.id, { status: PaymentStatus.FAILED }, ctx.prisma as any);
+          await repo.updatePaymentStatusWithCAS(payment.id, PaymentStatus.PENDING, PaymentStatus.FAILED, ctx.prisma as any);
         }
         recordAlert('payment.failure', { stripeIntentId: intent.id });
         break;

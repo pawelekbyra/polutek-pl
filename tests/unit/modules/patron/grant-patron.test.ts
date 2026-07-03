@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { grantPatron } from '@/lib/modules/patron/application/grant-patron.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { Actor } from '@/lib/modules/shared/actor';
+import { recordAuditEvent } from '@/lib/modules/audit';
 
 const mockRepo = {
   findActiveGrantByAdmin: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock('@/lib/modules/patron/infrastructure/patron.repository', () => {
     PatronRepository: function() { return mockRepo; },
   };
 });
+
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('grantPatron use case', () => {
   it('requires admin or system actor', async () => {

@@ -102,7 +102,7 @@ describe('Stripe Webhook Safety & Idempotency', () => {
     expect(mockPrisma.stripeEvent.update).not.toHaveBeenCalled(); // No release needed for already processed
   });
 
-  it('handles concurrent/close-arrival duplicate event (CONFLICT)', async () => {
+  it('asks Stripe to retry concurrent duplicate events (CONFLICT)', async () => {
     const event = createMockEvent('evt_1', 'payment_intent.succeeded', { id: 'pi_1', metadata: {} });
     mockConstructEvent.mockReturnValue(event);
 
@@ -114,7 +114,7 @@ describe('Stripe Webhook Safety & Idempotency', () => {
 
     const result = await handleStripeWebhook({ body: '{}', signature: 'sig' }, ctx);
 
-    expect(result.ok).toBe(true); // Still returns 200 to Stripe to stop retries
+    expect(result.ok).toBe(false); // Return non-2xx to Stripe so a stuck PROCESSING lock is retried
     expect(fulfillPayment).not.toHaveBeenCalled();
   });
 

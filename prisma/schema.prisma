@@ -178,7 +178,7 @@ model Creator {
 
 model Subscription {
   /// LEGACY: historical channel-follow/subscription records only.
-  /// Do not use this model for premium/patron content access; User.isPatron is the only access source of truth.
+  /// Do not use this model for premium/patron content access; active PatronGrant rows are the only access source of truth.
   id        String   @id @default(uuid())
   userId    String
   creatorId String

@@ -97,6 +97,17 @@ export async function handleDispute(
         return { userId: payment.userId, isPatron, normalizedTotal };
       }
 
+      if (input.status === 'warning_closed') {
+        await repo.updatePayment(payment.id, { status: PaymentStatus.SUCCEEDED }, tx);
+        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+        if (!recalcResult.ok) {
+          throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
+        }
+        const { isPatron, normalizedTotal } = recalcResult.data;
+        logger.info(`[HandleDispute] Dispute warning closed for payment ${payment.id}; patron access unchanged.`);
+        return { userId: payment.userId, isPatron, normalizedTotal };
+      }
+
       // Default: DISPUTED
       const disputeId = input.disputeId || `unknown:${input.stripeIntentId}`;
       await repo.updatePayment(payment.id, { status: PaymentStatus.DISPUTED }, tx);
