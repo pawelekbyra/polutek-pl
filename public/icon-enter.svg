@@ -9,14 +9,13 @@
         fill="none" stroke="#171717" stroke-width="4" opacity="0.3"/>
 
   <!--
-    Enter / Return glyph (↵): vertical riser on the right, rounded corner, then a
-    horizontal stroke left into a left-pointing arrowhead. Centred in the 512 canvas
-    from the same normalized coordinates as lib/icons/app-icon.ts enterGlyphPaths(),
-    so the SVG favicon, the PNG launch icons and the in-app splash all show one mark.
+    Filled Enter / Return glyph (↵): a chunky L-shaped return arrow — riser on the right,
+    rounded elbow, horizontal bar left into a big left-pointing arrowhead. Filled in brand
+    blue with a bold ink outline. Centred in the 512 canvas from the same normalized
+    coordinates as lib/icons/app-icon.ts enterGlyphFilledPath(), so the SVG favicon, the PNG
+    launch icons and the in-app splash all show one identical mark.
   -->
-  <g fill="none" stroke="#171717" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M 322.56 184.32 L 322.56 276.48 Q 322.56 291.84 307.2 291.84 L 189.44 291.84"/>
-    <path d="M 189.44 291.84 L 232.96 256"/>
-    <path d="M 189.44 291.84 L 232.96 327.68"/>
-  </g>
+  <path
+    d="M 344.88 144.90 L 344.88 319.49 L 224.26 319.49 L 224.26 357.58 L 122.68 290.92 L 224.26 224.26 L 224.26 262.35 L 287.74 262.35 L 287.74 144.90 Z"
+    fill="#2563eb" stroke="#171717" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

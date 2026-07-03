@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Frame, INK as FRAME_INK } from "./najs/primitives";
-import { enterGlyphPaths } from "@/lib/icons/app-icon";
+import { enterGlyphFilledPath, APP_ICON_BLUE } from "@/lib/icons/app-icon";
 
 type Phase = "skip" | "showing" | "ready" | "exiting" | "done";
 
@@ -14,14 +14,18 @@ const FONT = "var(--font-patrick, 'Patrick Hand', cursive)";
 const MIN_MS = 1600;
 
 // The enter mark shown dead-centre on the splash. It is the *same* rounded-square +
-// line-art Enter (↵) glyph the OS launch icon renders (app/icon.tsx, app/icon-512,
-// public/icon-enter.svg — all fed by enterGlyphPaths), drawn at the same spot with no
-// entrance animation. That is what makes the native PWA splash hand off to this screen
+// filled blue Enter (↵) glyph the OS launch icon renders (app/icon.tsx, app/icon-512,
+// public/icon-enter.svg — all fed by enterGlyphFilledPath), drawn at the same spot with
+// no entrance animation. That is what makes the native PWA splash hand off to this screen
 // as one continuous image: same background, same centred mark, same shape.
 const MARK_SIZE = 128;
 
-function EnterMark({ ink }: { ink: string }) {
-  const enter = enterGlyphPaths(MARK_SIZE);
+function EnterMark({ active }: { active: boolean }) {
+  const enter = enterGlyphFilledPath(MARK_SIZE);
+  // Before the app is ready the mark is a muted blue; once you can click, it lights up to the
+  // full brand blue with a bold ink outline (matching the reference Enter-key button).
+  const fill = active ? APP_ICON_BLUE : "rgba(37,99,235,0.32)";
+  const stroke = active ? INK : "rgba(18,18,18,0.4)";
   return (
     <div style={{ position: "relative", width: MARK_SIZE, height: MARK_SIZE }}>
       <Frame radius={26} seed={7} stroke={FRAME_INK} strokeWidth={4.5} fill={PAPER} />
@@ -32,9 +36,15 @@ function EnterMark({ ink }: { ink: string }) {
         style={{ position: "absolute", inset: 0 }}
         aria-hidden="true"
       >
-        <path d={enter.main} fill="none" stroke={ink} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke 0.35s ease" }} />
-        <path d={enter.head1} fill="none" stroke={ink} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke 0.35s ease" }} />
-        <path d={enter.head2} fill="none" stroke={ink} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke 0.35s ease" }} />
+        <path
+          d={enter.path}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={enter.strokeWidth}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          style={{ transition: "fill 0.35s ease, stroke 0.35s ease" }}
+        />
       </svg>
     </div>
   );
@@ -114,7 +124,6 @@ export function SplashScreen() {
 
   const isReady = phase === "ready";
   const isExiting = phase === "exiting";
-  const inkColor = isReady ? INK : "rgba(18,18,18,0.4)";
 
   // Reduced motion: no animation, mark active immediately, dead-centre.
   if (reduced) {
@@ -122,7 +131,7 @@ export function SplashScreen() {
       <div style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: PAPER, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <button onClick={handleEnter} aria-label="Enter" style={{ position: "relative", background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>
           <SplashText />
-          <EnterMark ink={INK} />
+          <EnterMark active={true} />
         </button>
       </div>
     );
@@ -184,7 +193,7 @@ export function SplashScreen() {
               </span>
             </motion.div>
 
-            <EnterMark ink={inkColor} />
+            <EnterMark active={isReady} />
 
             {/* "kliknij" hint under the mark once ready */}
             <motion.span
@@ -206,8 +215,8 @@ export function SplashScreen() {
             <div style={{
               height: "100%",
               width: `${progress}%`,
-              backgroundColor: INK,
-              opacity: 0.35,
+              backgroundColor: APP_ICON_BLUE,
+              opacity: 0.55,
               transition: "width 0.3s ease",
             }} />
           </div>
