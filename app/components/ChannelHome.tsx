@@ -128,8 +128,8 @@ export default function ChannelHome({
                       className={cn(
                         "flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
                         isActive
-                          ? "bg-[#26231d] text-[#f7f1e4]"
-                          : "bg-[#f5efdf] text-[#171717]/55 hover:bg-[#efe7d3] hover:text-[#171717]/80",
+                          ? "bg-[#6f6555] text-[#f7f2e7]"
+                          : "bg-[#f1ebdb] text-[#171717]/55 hover:bg-[#eae2ce] hover:text-[#171717]/80",
                       )}
                     >
                       {tab === "comments" ? t.comments : t.videosTab}
