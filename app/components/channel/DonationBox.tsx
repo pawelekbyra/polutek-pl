@@ -17,6 +17,7 @@ import { Frame, INK, BLUE } from "../najs/primitives";
 import CheckoutModal from "../playlist/CheckoutModal";
 import DonationAmountField from "./DonationAmountField";
 import DonationLegalDialog from "./DonationLegalDialog";
+import { RegulaminContent, PolitykaContent } from "../legal/LegalDocs";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -425,27 +426,23 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         open={isRegulaminOpen}
         onOpenChange={setIsRegulaminOpen}
         title={isPl ? "Regulamin serwisu" : "Terms of Service"}
-        body={
-          isPl
-            ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Jednorazowa wpłata daje dożywotni dostęp do Strefy Fenkju — bez subskrypcji. Dostęp uruchamiamy od razu, dlatego po jego uruchomieniu nie przysługuje odstąpienie od umowy."
-            : "Polutek.pl is a private, independent video channel. A one-time tip grants lifetime access to the Thank You Zone — no subscription. Access starts immediately, so the right of withdrawal expires once it is activated."
-        }
+        intro={isPl ? undefined : "The full legal document is available in Polish."}
         href="/regulamin"
-        hrefLabel={isPl ? "Przeczytaj pełny regulamin" : "Read the full terms (Polish)"}
-      />
+        hrefLabel={isPl ? "Otwórz regulamin na osobnej stronie" : "Open the full terms on a separate page"}
+      >
+        <RegulaminContent />
+      </DonationLegalDialog>
 
       <DonationLegalDialog
         open={isPolitykaOpen}
         onOpenChange={setIsPolitykaOpen}
         title={isPl ? "Polityka Prywatności" : "Privacy Policy"}
-        body={
-          isPl
-            ? "Zbieramy tylko dane potrzebne do działania serwisu (konto, płatności, komentarze). Logowanie obsługuje Clerk, płatności Stripe — nie widzimy danych Twojej karty. Bez cookies reklamowych."
-            : "We only collect data needed to run the service (account, payments, comments). Sign-in is handled by Clerk and payments by Stripe — we never see your card details. No advertising cookies."
-        }
+        intro={isPl ? undefined : "The full legal document is available in Polish."}
         href="/polityka-prywatnosci"
-        hrefLabel={isPl ? "Przeczytaj pełną politykę prywatności" : "Read the full privacy policy (Polish)"}
-      />
+        hrefLabel={isPl ? "Otwórz politykę na osobnej stronie" : "Open the full privacy policy on a separate page"}
+      >
+        <PolitykaContent />
+      </DonationLegalDialog>
     </div>
   );
 }
