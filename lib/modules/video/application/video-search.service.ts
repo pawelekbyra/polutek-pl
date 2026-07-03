@@ -21,7 +21,7 @@ export type VideoSearchResult = PublicVideoDTO & {
 
 type SearchableVideo = PublicVideoDTO & { createdAt?: Date | string | null };
 
-const SEARCHABLE_TIERS = [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON];
+const SEARCHABLE_TIERS = [AccessTier.PUBLIC, AccessTier.LOGGED_IN];
 const POLISH_DIACRITICS: Record<string, string> = {
   ą: "a",
   ć: "c",

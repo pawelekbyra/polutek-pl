@@ -15,6 +15,7 @@ vi.mock('@/lib/payments/currency-settings', () => ({
   getPaymentCurrencyLimits: vi.fn().mockResolvedValue({
     PLN: { minAmountMinor: 1000 }, // 10 PLN
   }),
+  resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
 }));
 
 describe('Payment to PatronGrant Smoke Test', () => {

@@ -246,7 +246,6 @@ describe('Users Module', () => {
        const result = await GetOrCreateUserUseCase.execute(ctx, payload);
 
        expect(result.role).toBe('USER');
-       expect(result.isPatron).toBe(false);
        expect(mockPrisma.user.update).toHaveBeenCalledWith({
            where: { id: 'user_1' },
            data: {

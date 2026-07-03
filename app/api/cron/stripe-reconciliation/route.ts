@@ -4,14 +4,15 @@ import { PaymentStatus } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { fulfillPayment } from "@/lib/modules/payments";
 import Stripe from "stripe";
+import { timingSafeEqual } from "crypto";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('Authorization');
-  const expectedToken = `Bearer ${process.env.CRON_SECRET}`;
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const expectedToken = `Bearer ${process.env.CRON_SECRET ?? ''}`;
 
-  if (!process.env.CRON_SECRET || authHeader !== expectedToken) {
+  if (!process.env.CRON_SECRET || authHeader.length !== expectedToken.length || !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedToken))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -39,16 +40,6 @@ export async function GET(req: NextRequest) {
         gt: sevenDaysAgo,
       },
     },
-    include: {
-        user: {
-            include: {
-                patronGrants: {
-                    where: { revokedAt: null },
-                    take: 1
-                }
-            }
-        }
-    }
   });
 
   let checked = 0;
@@ -63,27 +54,11 @@ export async function GET(req: NextRequest) {
       const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
 
       if (intent.status === 'succeeded') {
-        // Skip if local PatronGrant already exists for this user
-        const hasPatronGrant = payment.user.patronGrants.length > 0;
-        if (hasPatronGrant) {
-          logger.info(`[Cron:StripeReconciliation] Payment ${payment.id} is SUCCEEDED on Stripe and user already has PatronGrant. Marking locally if needed.`);
-          if (payment.status !== PaymentStatus.SUCCEEDED) {
-             await ctx.db.writeTransaction(async (tx) => {
-                await tx.payment.updateMany({
-                    where: { id: payment.id, status: PaymentStatus.PENDING },
-                    data: { status: PaymentStatus.SUCCEEDED }
-                });
-             });
-             updated++;
-          }
-          continue;
-        }
-
         const result = await fulfillPayment({
           paymentId: payment.id,
           stripeIntentId: payment.stripeIntentId,
-          amountMinor: payment.amountMinor,
-          currency: payment.currency,
+          amountMinor: intent.amount,
+          currency: intent.currency,
         }, ctx);
 
         if (result.ok) {
@@ -93,18 +68,25 @@ export async function GET(req: NextRequest) {
           logger.error(`[Cron:StripeReconciliation] Failed to fulfill payment ${payment.id}: ${result.error.message}`);
           errors++;
         }
-      } else if (intent.status === 'canceled' || intent.status === 'requires_payment_method') {
-        // Stripe requires_payment_method (and createdAt > 1h) -> FAILED
-        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-
-        if (intent.status === 'canceled' || (intent.status === 'requires_payment_method' && payment.createdAt < oneHourAgo)) {
+      } else if (intent.status === 'canceled') {
+        await ctx.db.writeTransaction(async (tx) => {
+          await tx.payment.updateMany({
+              where: { id: payment.id, status: PaymentStatus.PENDING },
+              data: { status: PaymentStatus.FAILED }
+          });
+        });
+        logger.info(`[Cron:StripeReconciliation] Marked payment ${payment.id} as FAILED (Stripe ${intent.status})`);
+        updated++;
+      } else if (intent.status === 'requires_payment_method') {
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        if (payment.createdAt < twentyFourHoursAgo) {
           await ctx.db.writeTransaction(async (tx) => {
             await tx.payment.updateMany({
                 where: { id: payment.id, status: PaymentStatus.PENDING },
                 data: { status: PaymentStatus.FAILED }
             });
           });
-          logger.info(`[Cron:StripeReconciliation] Marked payment ${payment.id} as FAILED (Stripe ${intent.status})`);
+          logger.info(`[Cron:StripeReconciliation] Marked payment ${payment.id} as FAILED after 24h (Stripe ${intent.status})`);
           updated++;
         }
       } else {

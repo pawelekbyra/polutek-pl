@@ -24,6 +24,11 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
     sizeBytes: overrides.sizeBytes ?? null,
     pendingPrimaryIntent: overrides.pendingPrimaryIntent ?? false,
     muxUploadId: overrides.muxUploadId ?? null,
+    fallbackPriority: overrides.fallbackPriority ?? 0,
+    mirrorSourceOriginalId: overrides.mirrorSourceOriginalId ?? null,
+    mirrorRequestedAt: overrides.mirrorRequestedAt ?? null,
+    mirrorCompletedAt: overrides.mirrorCompletedAt ?? null,
+    mirrorFailureReason: overrides.mirrorFailureReason ?? null,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
   };

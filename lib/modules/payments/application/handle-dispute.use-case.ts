@@ -97,6 +97,41 @@ export async function handleDispute(
         return { userId: payment.userId, isPatron, normalizedTotal };
       }
 
+      if (input.status === 'warning_closed') {
+        // An inquiry / early-warning that closes without a chargeback. The matching
+        // dispute.created (default branch below) set the payment to DISPUTED and revoked
+        // the payment-linked grant with disputeSuspensionReason(). Restore both here —
+        // recalculatePatronStatus() is a pure read and will NOT un-revoke the grant, so the
+        // reactivation must be done explicitly (mirroring the isWon branch above).
+        if (payment.status === PaymentStatus.REFUNDED || payment.status === PaymentStatus.CHARGEBACK_LOST) {
+          return null;
+        }
+
+        await repo.updatePayment(payment.id, { status: PaymentStatus.SUCCEEDED }, tx);
+
+        if (input.disputeId) {
+          await tx.patronGrant.updateMany({
+            where: {
+              paymentId: payment.id,
+              revokedAt: { not: null },
+              reason: disputeSuspensionReason(input.disputeId),
+            },
+            data: {
+              revokedAt: null,
+              reason: `Dispute inquiry closed without chargeback; access reactivated: stripeDisputeId=${input.disputeId}`,
+            },
+          });
+        }
+
+        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
+        if (!recalcResult.ok) {
+          throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
+        }
+        const { isPatron, normalizedTotal } = recalcResult.data;
+        logger.info(`[HandleDispute] Dispute inquiry closed without chargeback for payment ${payment.id}; patron access restored.`);
+        return { userId: payment.userId, isPatron, normalizedTotal };
+      }
+
       // Default: DISPUTED
       const disputeId = input.disputeId || `unknown:${input.stripeIntentId}`;
       await repo.updatePayment(payment.id, { status: PaymentStatus.DISPUTED }, tx);

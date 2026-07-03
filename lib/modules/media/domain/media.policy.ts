@@ -252,6 +252,8 @@ export class MediaPolicy {
       '.r2.cloudflarestorage.com',
       'storage.googleapis.com',
       'supabase.co/storage',
+      'stream.mux.com',
+      'videodelivery.net',
     ];
 
     if (rawPatterns.some(pattern => lowerUrl.includes(pattern))) {

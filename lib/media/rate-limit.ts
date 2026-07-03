@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server';
 
 export function getMediaClientIp(req: NextRequest) {
+  const forwardedFor = req.headers.get('x-forwarded-for')
+    ?.split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    forwardedFor?.[forwardedFor.length - 1] ||
     req.headers.get('x-real-ip')?.trim() ||
     'unknown'
   );

@@ -48,6 +48,35 @@ export async function getPaymentCurrencyLimits(): Promise<Record<SupportedCurren
   return defaults;
 }
 
+/**
+ * Resolves the patron-eligibility threshold (in minor units) for a given currency.
+ *
+ * This is intentionally separate from `getPaymentCurrencyLimits()`, which controls the
+ * *checkout minimum* (the smallest tip a user may send). The patron threshold is the amount
+ * at or above which a successful tip grants lifetime patron access. When
+ * `PATRON_MIN_TIP_AMOUNT` / `PATRON_MIN_TIP_CURRENCY` are configured and match the payment
+ * currency, they raise the threshold above the checkout minimum without blocking smaller tips.
+ * For any other currency (or when the env is unset), the threshold falls back to the checkout
+ * minimum, preserving the prior behaviour.
+ */
+export function resolvePatronThresholdMinor(
+  currency: SupportedCurrency,
+  fallbackMinor: number,
+): number {
+  const configuredCurrency = process.env.PATRON_MIN_TIP_CURRENCY?.toUpperCase();
+  const configuredAmount = Number(process.env.PATRON_MIN_TIP_AMOUNT);
+
+  if (
+    configuredCurrency === currency &&
+    Number.isSafeInteger(configuredAmount) &&
+    configuredAmount > 0
+  ) {
+    return Math.max(fallbackMinor, configuredAmount * 100);
+  }
+
+  return fallbackMinor;
+}
+
 export async function getPaymentLimit(currency: SupportedCurrency) {
   const limits = await getPaymentCurrencyLimits();
   return limits[currency];

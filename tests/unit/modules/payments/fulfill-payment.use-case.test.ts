@@ -22,6 +22,7 @@ vi.mock('@/lib/payments/currency-settings', () => ({
     PLN: { minAmountMinor: 1000 },
     EUR: { minAmountMinor: 1000 },
   }),
+  resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
 }));
 
 vi.mock('@/lib/modules/patron', () => ({

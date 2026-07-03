@@ -319,7 +319,7 @@
       "file": "lib/modules/payments/application/handle-stripe-webhook.use-case.ts",
       "line": 103,
       "label": "explicit any annotation",
-      "text": "await repo.updatePayment(payment.id, { status: PaymentStatus.FAILED }, ctx.prisma as any);",
+      "text": "await repo.updatePaymentStatusWithCAS(payment.id, PaymentStatus.PENDING, PaymentStatus.FAILED, ctx.prisma as any);",
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {

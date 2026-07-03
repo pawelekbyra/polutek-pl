@@ -79,7 +79,7 @@ describe('Stripe Reconciliation Cron', () => {
 
     vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
 
-    mockRetrieve.mockResolvedValue({ status: 'succeeded' } as any);
+    mockRetrieve.mockResolvedValue({ status: 'succeeded', amount: 1000, currency: 'PLN' } as any);
 
     const fulfillSpy = vi.spyOn(fulfillModule, 'fulfillPayment').mockResolvedValue(ok({ isFirstFulfillment: true }));
 
@@ -134,14 +134,14 @@ describe('Stripe Reconciliation Cron', () => {
     }));
   });
 
-  it('updates status to FAILED if Stripe status is requires_payment_method and older than 1h', async () => {
+  it('updates status to FAILED if Stripe status is requires_payment_method and older than 24h', async () => {
     const mockPayment = {
       id: 'pay_3',
       stripeIntentId: 'pi_3',
       amountMinor: 1000,
       currency: 'PLN',
       status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 70 * 60 * 1000), // 70 mins ago
+      createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25 hours ago
       user: {
         patronGrants: [],
       },
@@ -165,7 +165,7 @@ describe('Stripe Reconciliation Cron', () => {
     expect(prisma.payment.updateMany).toHaveBeenCalled();
   });
 
-  it('skips if Stripe status is requires_payment_method and younger than 1h', async () => {
+  it('skips if Stripe status is requires_payment_method and younger than 24h', async () => {
     const mockPayment = {
       id: 'pay_4',
       stripeIntentId: 'pi_4',

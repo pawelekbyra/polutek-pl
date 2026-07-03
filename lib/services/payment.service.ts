@@ -237,8 +237,8 @@ export class PaymentService {
 
     if (dispute.status === 'won') {
         const syncData = await prisma.$transaction(async (tx) => {
-            await tx.payment.update({
-                where: { id: payment.id },
+            await tx.payment.updateMany({
+                where: { id: payment.id, status: PaymentStatus.DISPUTED },
                 data: { status: PaymentStatus.SUCCEEDED }
             });
             const ctx = createAppContext({ type: 'system', reason: 'legacy_bridge_recalculation' });

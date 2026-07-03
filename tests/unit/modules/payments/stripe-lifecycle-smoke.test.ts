@@ -281,6 +281,42 @@ describe('Stripe refund/dispute to PatronGrant lifecycle smoke test', () => {
     expect(harness.activeGrants('user_1')).toEqual([grant]);
   });
 
+  it('inquiry closed without chargeback (warning_closed) restores the suspended grant', async () => {
+    harness.seedUser('user_1', true);
+    harness.seedPayment('pay_1', 'user_1');
+    const grant = harness.seedGrant('grant_1', 'user_1', 'pay_1');
+
+    // dispute.created for an inquiry suspends the grant
+    await handleDispute({ stripeIntentId: 'pi_pay_1', disputeId: 'dp_1', status: 'needs_response', isLost: false, isWon: false }, harness.ctx);
+    expect(grant.revokedAt).toBeInstanceOf(Date);
+    expect(harness.activeGrants('user_1')).toHaveLength(0);
+
+    // dispute.closed with warning_closed (neither won nor lost) must reactivate access
+    const result = await handleDispute({ stripeIntentId: 'pi_pay_1', disputeId: 'dp_1', status: 'warning_closed', isLost: false, isWon: false }, harness.ctx);
+
+    expect(result.ok).toBe(true);
+    expect(harness.state.payments.get('pay_1')?.status).toBe(PaymentStatus.SUCCEEDED);
+    expect(grant.revokedAt).toBeNull();
+    expect(harness.activeGrants('user_1')).toEqual([grant]);
+    const status = await getPatronStatus('user_1', harness.ctx);
+    expect(status.ok && status.data.isPatron).toBe(true);
+  });
+
+  it('warning_closed after full refund does not resurrect the payment or grant', async () => {
+    harness.seedUser('user_1', true);
+    harness.seedPayment('pay_1', 'user_1');
+    const grant = harness.seedGrant('grant_1', 'user_1', 'pay_1');
+
+    await handleRefund({ paymentId: 'pay_1', reportedRefundedMinor: 1000 }, harness.ctx);
+    expect(grant.revokedAt).toBeInstanceOf(Date);
+
+    await handleDispute({ stripeIntentId: 'pi_pay_1', disputeId: 'dp_1', status: 'warning_closed', isLost: false, isWon: false }, harness.ctx);
+
+    expect(harness.state.payments.get('pay_1')?.status).toBe(PaymentStatus.REFUNDED);
+    expect(grant.revokedAt).toBeInstanceOf(Date);
+    expect(harness.activeGrants('user_1')).toHaveLength(0);
+  });
+
   it('dispute won after full refund does not reactivate the grant', async () => {
     harness.seedUser('user_1', true);
     harness.seedPayment('pay_1', 'user_1');
