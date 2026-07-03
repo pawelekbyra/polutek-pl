@@ -117,7 +117,7 @@ export default function ChannelHome({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex overflow-hidden rounded-2xl border-[1.5px] border-[#171717]/15 font-sans">
+              <div className="flex overflow-hidden rounded-xl border-[1.5px] border-[#171717]/15 font-sans">
                 {(["comments", "videos"] as const).map((tab, i) => {
                   const isActive = activeTab === tab;
                   return (
