@@ -11,7 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
-import { Frame, NajsSeparator, INK, BLUE } from "./najs/primitives";
+import { Frame, INK } from "./najs/primitives";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -117,8 +117,8 @@ export default function ChannelHome({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex font-sans">
-                {(["comments", "videos"] as const).map((tab) => {
+              <div className="flex overflow-hidden rounded-2xl border-[1.5px] border-[#171717]/15 font-sans">
+                {(["comments", "videos"] as const).map((tab, i) => {
                   const isActive = activeTab === tab;
                   return (
                     <button
@@ -126,36 +126,18 @@ export default function ChannelHome({
                       onClick={() => setActiveTab(tab)}
                       aria-pressed={isActive}
                       className={cn(
-                        "flex-1 pt-1 pb-2 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
+                        "flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
+                        i === 0 && "border-r-[1.5px] border-[#171717]/12",
                         isActive
-                          ? "text-[#171717]"
-                          : "text-[#171717]/35 hover:text-[#171717]/60",
+                          ? "bg-[#8d8471] text-white"
+                          : "bg-[#eae3d4] text-[#171717]/55 hover:bg-[#e2dac9] hover:text-[#171717]/80",
                       )}
                     >
-                      <span className="relative inline-block px-1">
-                        {tab === "comments" ? t.comments : t.videosTab}
-                        {isActive && (
-                          <svg
-                            className="absolute -bottom-1.5 left-0 h-[6px] w-full"
-                            viewBox="0 0 100 6"
-                            preserveAspectRatio="none"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M1 3.5 Q 25 1.2 50 3 T 99 2.6"
-                              fill="none"
-                              stroke={BLUE}
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        )}
-                      </span>
+                      {tab === "comments" ? t.comments : t.videosTab}
                     </button>
                   );
                 })}
               </div>
-              <NajsSeparator className="mt-2 px-0" />
             </div>
             <div className="lg:hidden mt-2">
               {activeTab === "comments" ? (

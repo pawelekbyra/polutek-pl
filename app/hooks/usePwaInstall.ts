@@ -22,6 +22,20 @@ function isIOSDevice() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+// Once the app has been installed we remember it, so a *later* visit in a normal
+// browser tab (where display-mode is no longer standalone and no install prompt
+// fires) can still tell "you already have the app" apart from "this browser can't
+// install it".
+const INSTALLED_FLAG = "polutek_pwa_installed";
+
+function rememberInstalled() {
+  try { localStorage.setItem(INSTALLED_FLAG, "1"); } catch {}
+}
+
+function wasRememberedInstalled() {
+  try { return localStorage.getItem(INSTALLED_FLAG) === "1"; } catch { return false; }
+}
+
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
 
@@ -39,21 +53,40 @@ if (typeof window !== "undefined") {
   });
   window.addEventListener("appinstalled", () => {
     deferredPrompt = null;
+    rememberInstalled();
     notify();
   });
 }
+
+type NavigatorWithRelatedApps = Navigator & {
+  getInstalledRelatedApps?: () => Promise<unknown[]>;
+};
 
 export function usePwaInstall() {
   const [canInstallDirectly, setCanInstallDirectly] = useState(false);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    setInstalled(isStandaloneDisplay());
+    const resolveInstalled = () => isStandaloneDisplay() || wasRememberedInstalled();
+    setInstalled(resolveInstalled());
     setCanInstallDirectly(Boolean(deferredPrompt));
+
+    // Chrome (Android) can confirm the PWA is installed even from a browser tab.
+    const nav = navigator as NavigatorWithRelatedApps;
+    if (typeof nav.getInstalledRelatedApps === "function") {
+      nav.getInstalledRelatedApps()
+        .then((apps) => {
+          if (Array.isArray(apps) && apps.length > 0) {
+            rememberInstalled();
+            setInstalled(true);
+          }
+        })
+        .catch(() => {});
+    }
 
     const onChange = () => {
       setCanInstallDirectly(Boolean(deferredPrompt));
-      setInstalled(isStandaloneDisplay());
+      setInstalled(resolveInstalled());
     };
     listeners.add(onChange);
     return () => {

@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import {
   APP_ICON_BACKGROUND,
   APP_ICON_INK,
+  enterGlyphPaths,
+  roundedSquarePath,
 } from '@/lib/icons/app-icon';
 
 export const runtime = 'edge';
@@ -12,6 +14,10 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Icon() {
+  const borderPath = roundedSquarePath(size.width, 30, 7, 6);
+  const innerPath = roundedSquarePath(size.width, 31, 57, 8);
+  const enter = enterGlyphPaths(size.width);
+
   return new ImageResponse(
     (
       <div
@@ -29,49 +35,16 @@ export default async function Icon() {
           viewBox={`0 0 ${size.width} ${size.height}`}
           style={{ position: 'absolute', inset: 0 }}
         >
-          <path
-            d="M 108 164 C 107 125, 136 94, 176 94 L 350 94 C 391 94, 421 125, 421 166 L 421 250 C 421 291, 391 322, 350 322 L 270 322 L 270 379 C 270 397, 249 407, 235 395 L 94 279 C 82 269, 82 250, 94 240 L 133 207 C 119 198, 108 183, 108 164 Z"
-            transform={`scale(${size.width / 512})`}
-            fill="#2563eb"
-            stroke={APP_ICON_INK}
-            strokeWidth={size.width === 512 ? 15 : 5.625}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M 173 166 L 347 166 C 361 166, 371 176, 371 190 L 371 231 C 371 245, 361 255, 347 255 L 236 255"
-            transform={`scale(${size.width / 512})`}
-            fill="none"
-            stroke={APP_ICON_INK}
-            strokeWidth={size.width === 512 ? 12 : 4.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.78"
-          />
-          <path
-            d="M 242 222 L 199 258 L 242 294"
-            transform={`scale(${size.width / 512})`}
-            fill="none"
-            stroke={APP_ICON_INK}
-            strokeWidth={size.width === 512 ? 12 : 4.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.78"
-          />
-          <path
-            d="M 123 174 C 149 158, 209 153, 278 155 C 338 157, 386 154, 407 169"
-            transform={`scale(${size.width / 512})`}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth={size.width === 512 ? 8 : 3}
-            strokeLinecap="round"
-            opacity="0.2"
-          />
+          <path d={borderPath} fill="none" stroke={APP_ICON_INK} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={innerPath} fill="none" stroke={APP_ICON_INK} strokeWidth={1.5} opacity={0.3} />
+          <path d={enter.main} fill="none" stroke={APP_ICON_INK} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={enter.head1} fill="none" stroke={APP_ICON_INK} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={enter.head2} fill="none" stroke={APP_ICON_INK} strokeWidth={enter.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     ),
     {
-      ...size
+      ...size,
     },
   );
 }

@@ -1,7 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Paper background (matches theme_color / splash background) -->
   <rect width="512" height="512" fill="#f7f1e4"/>
-  <path d="M 108 164 C 107 125, 136 94, 176 94 L 350 94 C 391 94, 421 125, 421 166 L 421 250 C 421 291, 391 322, 350 322 L 270 322 L 270 379 C 270 397, 249 407, 235 395 L 94 279 C 82 269, 82 250, 94 240 L 133 207 C 119 198, 108 183, 108 164 Z" fill="#2563eb" stroke="#171717" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 173 166 L 347 166 C 361 166, 371 176, 371 190 L 371 231 C 371 245, 361 255, 347 255 L 236 255" fill="none" stroke="#171717" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
-  <path d="M 242 222 L 199 258 L 242 294" fill="none" stroke="#171717" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
-  <path d="M 123 174 C 149 158, 209 153, 278 155 C 338 157, 386 154, 407 169" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.2"/>
+
+  <!-- Hand-drawn rounded-square frame — same look as the site's cards and the PNG launch icon -->
+  <rect x="16" y="16" width="480" height="480" rx="80" ry="80"
+        fill="none" stroke="#171717" stroke-width="18" stroke-linejoin="round"/>
+  <rect x="57" y="57" width="398" height="398" rx="57" ry="57"
+        fill="none" stroke="#171717" stroke-width="4" opacity="0.3"/>
+
+  <!--
+    Enter / Return glyph (↵): vertical riser on the right, rounded corner, then a
+    horizontal stroke left into a left-pointing arrowhead. Centred in the 512 canvas
+    from the same normalized coordinates as lib/icons/app-icon.ts enterGlyphPaths(),
+    so the SVG favicon, the PNG launch icons and the in-app splash all show one mark.
+  -->
+  <g fill="none" stroke="#171717" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 322.56 184.32 L 322.56 276.48 Q 322.56 291.84 307.2 291.84 L 189.44 291.84"/>
+    <path d="M 189.44 291.84 L 232.96 256"/>
+    <path d="M 189.44 291.84 L 232.96 327.68"/>
+  </g>
 </svg>
