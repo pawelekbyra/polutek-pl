@@ -7,6 +7,7 @@ import "./globals.css";
 import { APP_NAME } from '@/lib/constants';
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { ServiceWorkerRegistration } from "@/app/components/ServiceWorkerRegistration";
+import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 
 export const metadata = {
   title: APP_NAME,
@@ -31,10 +32,11 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const initialLanguage = await resolveInitialLanguage();
   return (
     <html
-      lang="pl"
+      lang={initialLanguage}
       suppressHydrationWarning
       className={`${jakarta.variable} ${outfit.variable} ${spaceGrotesk.variable} ${bebasNeue.variable} ${kalam.variable} ${patrickHand.variable} ${caveat.variable}`}
     >
@@ -53,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SplashScreen />
         <ServiceWorkerRegistration />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
-          <Providers>
+          <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>
               {children}
             </ClerkLocalizationProvider>

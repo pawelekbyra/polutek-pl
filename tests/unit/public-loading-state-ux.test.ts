@@ -123,8 +123,9 @@ describe("public loading/access state UX contracts", () => {
 
   it("ensures LanguageContext does not use lazy initializer in useState to avoid hydration mismatch", () => {
     const content = read("app/components/LanguageContext.tsx");
-    // Should use a static value "pl" instead of a function () => { ... }
-    expect(content).toContain('useState<Language>("pl")');
+    // Initial state must come from a static/server-provided value, never a lazy initializer that
+    // reads localStorage during render (which would diverge from the server-rendered markup).
+    expect(content).toContain('useState<Language>(initialLanguage ?? "pl")');
     expect(content).not.toMatch(/useState<Language>\(\(\) =>/);
     expect(content).toContain("useEffect(() => {");
     expect(content).toContain("localStorage.getItem('app-language')");
