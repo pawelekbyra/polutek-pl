@@ -10,6 +10,7 @@ import {
     MediaPlayer,
     MediaProvider,
     MuteButton,
+    TimeSlider,
     VolumeSlider,
     useMediaRemote,
     isTrackCaptionKind,
@@ -33,9 +34,11 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-const playerIconClass = "h-[1.5rem] w-[1.5rem]";
+const playerIconClass = "h-[1.25rem] w-[1.25rem]";
 const centerPauseIconClass = "h-14 w-14 drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
 const sliderAccentClass = "bg-white/85";
+// Played portion of the progress bar — site blue accent, matching the brand.
+const PROGRESS_PLAYED_COLOR = "#2563eb";
 
 function PolutekWatermark() {
     return (
@@ -179,32 +182,46 @@ function PlayerTimeReadout() {
 }
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/12 hover:text-white active:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:w-11";
-    const trackClass = "relative h-[4px] w-full overflow-hidden rounded-full bg-white/30 shadow-[0_0_0_1px_rgba(0,0,0,0.25)] transition-[height] group-hover/slider:h-[6px] group-data-[dragging]/slider:h-[6px]";
-    const thumbClass = "pointer-events-auto absolute left-[var(--slider-fill)] top-1/2 z-10 h-[15px] w-[15px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_2px_0_rgba(0,0,0,0.35)] transition-transform group-data-[dragging]/slider:scale-125";
+    // Small, YouTube-sized control buttons that sit in a tight row under the progress bar.
+    const buttonClass = "grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9";
+    // Compact volume slider (revealed on hover of the mute button, YouTube-style).
+    const volTrackClass = "relative h-[3px] w-full rounded-full bg-white/30 ring-1 ring-black/25";
+    const volThumbClass = "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_1px_0_rgba(0,0,0,0.3)]";
 
     return (
-        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-2 pb-1.5 pt-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-4 sm:pb-3 sm:pt-8">
-            <PlayerTimeScrubber trackClass={trackClass} thumbClass={thumbClass} />
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2 pb-1 pt-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-3 sm:pb-1.5 sm:pt-10">
+            {/* Progress bar: thin brand-styled line pinned just above the controls row (YouTube layout).
+                Built on Vidstack's TimeSlider so seeking — including seeking after the video has ended —
+                behaves correctly out of the box. */}
+            <TimeSlider.Root className="group/tslider relative mb-0.5 flex h-4 w-full cursor-pointer touch-none select-none items-center outline-none">
+                <TimeSlider.Track className="relative h-[3px] w-full rounded-full bg-white/30 ring-1 ring-black/25 transition-[height] duration-150 group-hover/tslider:h-[5px] group-data-[dragging]/tslider:h-[5px]">
+                    <TimeSlider.Progress className="absolute h-full rounded-full bg-white/40" />
+                    <TimeSlider.TrackFill className="absolute h-full rounded-full" style={{ backgroundColor: PROGRESS_PLAYED_COLOR }} />
+                </TimeSlider.Track>
+                <TimeSlider.Thumb className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/70 bg-white opacity-0 shadow-[1px_1px_0_rgba(0,0,0,0.35)] transition-opacity duration-150 will-change-[left] group-hover/tslider:opacity-100 group-data-[dragging]/tslider:scale-110 group-data-[dragging]/tslider:opacity-100" />
+            </TimeSlider.Root>
 
-            <Controls.Group className="mt-0 flex min-h-9 min-w-0 items-center justify-between gap-2 sm:min-h-11 sm:gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+            <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-0.5 sm:gap-1.5">
                     <PlayerPlayButton className={buttonClass} />
 
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="group/vol flex shrink-0 items-center">
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                        <VolumeSlider.Root className="group/slider relative hidden h-11 w-28 shrink-0 cursor-pointer touch-none select-none items-center py-3 md:flex" aria-label="Głośność">
-                            <VolumeSlider.Track className={trackClass}>
+                        <VolumeSlider.Root
+                            className="group/slider relative hidden h-9 w-0 shrink-0 origin-left cursor-pointer touch-none select-none items-center overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/vol:w-16 group-hover/vol:opacity-100 group-focus-within/vol:w-16 group-focus-within/vol:opacity-100 md:flex"
+                            aria-label="Głośność"
+                        >
+                            <VolumeSlider.Track className={volTrackClass}>
                                 <VolumeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
                             </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className={thumbClass} />
+                            <VolumeSlider.Thumb className={volThumbClass} />
                         </VolumeSlider.Root>
                     </div>
 
                     <PlayerTimeReadout />
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
                     <PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />
                     <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><NajsIcon name="maximize" className={playerIconClass} stroke="currentColor" /></FullscreenButton>
                 </div>
@@ -222,145 +239,6 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
         const language = track.language?.trim();
         return Boolean(src && label && language && (track.kind === 'subtitles' || track.kind === 'captions'));
     });
-}
-
-function PlayerTimeScrubber({ trackClass, thumbClass }: { trackClass: string; thumbClass: string }) {
-    const remote = useMediaRemote();
-    const currentTime = useMediaState('currentTime');
-    const duration = useMediaState('duration');
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragTime, setDragTime] = useState(0);
-    const [optimisticSeekTime, setOptimisticSeekTime] = useState<number | null>(null);
-    const scrubberRef = useRef<HTMLDivElement>(null);
-    const isDraggingRef = useRef(false);
-    const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
-    const displayTime = isDragging ? dragTime : optimisticSeekTime ?? currentTime;
-    const safeTime = safeDuration ? Math.min(Math.max(displayTime || 0, 0), safeDuration) : 0;
-    const fillPercent = safeDuration ? (safeTime / safeDuration) * 100 : 0;
-
-    useEffect(() => {
-        if (optimisticSeekTime === null || isDragging) return;
-
-        const resolvedTime = Number.isFinite(currentTime) ? currentTime : 0;
-        if (Math.abs(resolvedTime - optimisticSeekTime) < 0.35) {
-            setOptimisticSeekTime(null);
-        }
-    }, [currentTime, optimisticSeekTime, isDragging]);
-
-    const setDraggingState = useCallback((nextValue: boolean) => {
-        isDraggingRef.current = nextValue;
-        setIsDragging(nextValue);
-    }, []);
-
-    const getTimeFromPointer = useCallback((clientX: number) => {
-        const rect = scrubberRef.current?.getBoundingClientRect();
-        if (!rect || !safeDuration) return null;
-
-        const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-        return ratio * safeDuration;
-    }, [safeDuration]);
-
-    const seekToPointerTime = useCallback((nextTime: number, event: React.SyntheticEvent | PointerEvent | KeyboardEvent, keepDragging: boolean, playAfterSeek = false) => {
-        if (!safeDuration || !Number.isFinite(nextTime)) {
-            setDraggingState(false);
-            return;
-        }
-
-        const playerEvent = getPlayerEvent(event);
-        const clampedTime = Math.min(Math.max(nextTime, 0), safeDuration);
-        setDragTime(clampedTime);
-        setOptimisticSeekTime(clampedTime);
-        setDraggingState(keepDragging);
-        remote.seek(clampedTime, playerEvent);
-
-        if (playAfterSeek) {
-            requestAnimationFrame(() => remote.play(playerEvent));
-        }
-    }, [remote, safeDuration, setDraggingState]);
-
-    return (
-        <div
-            ref={scrubberRef}
-            className="group/slider relative z-40 mt-1 flex h-7 w-full cursor-pointer touch-none select-none items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85 data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-60 sm:mt-1.5 sm:h-9 sm:py-2"
-            style={{ "--slider-fill": `${fillPercent}%` } as React.CSSProperties}
-            data-dragging={isDragging ? "" : undefined}
-            data-disabled={!safeDuration}
-            role="slider"
-            tabIndex={safeDuration ? 0 : -1}
-            aria-label="Postęp filmu"
-            aria-valuemin={0}
-            aria-valuemax={safeDuration || 0}
-            aria-valuenow={safeTime}
-            aria-disabled={!safeDuration}
-            onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const nextTime = getTimeFromPointer(event.clientX);
-                if (nextTime === null) return;
-
-                event.preventDefault();
-                event.stopPropagation();
-                event.currentTarget.setPointerCapture?.(event.pointerId);
-                seekToPointerTime(nextTime, event, true);
-            }}
-            onPointerMove={(event) => {
-                if (!isDraggingRef.current) return;
-
-                event.preventDefault();
-                event.stopPropagation();
-                const nextTime = getTimeFromPointer(event.clientX);
-                if (nextTime === null) return;
-                seekToPointerTime(nextTime, event, true);
-            }}
-            onPointerUp={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                if (!isDraggingRef.current) return;
-
-                event.preventDefault();
-                event.stopPropagation();
-                event.currentTarget.releasePointerCapture?.(event.pointerId);
-                const nextTime = getTimeFromPointer(event.clientX) ?? dragTime;
-                seekToPointerTime(nextTime, event, false, true);
-            }}
-            onPointerCancel={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                if (!isDraggingRef.current) return;
-                seekToPointerTime(dragTime, event, false);
-            }}
-            onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-            }}
-            onKeyDown={(event) => {
-                if (!safeDuration) return;
-
-                const step = event.shiftKey ? 10 : 5;
-                if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
-                    event.preventDefault();
-                    seekToPointerTime(safeTime - step, event, false);
-                }
-                if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-                    event.preventDefault();
-                    seekToPointerTime(safeTime + step, event, false);
-                }
-                if (event.key === 'Home') {
-                    event.preventDefault();
-                    seekToPointerTime(0, event, false);
-                }
-                if (event.key === 'End') {
-                    event.preventDefault();
-                    seekToPointerTime(safeDuration, event, false);
-                }
-            }}
-        >
-            <div className={trackClass}>
-                <div className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} style={{ width: `${fillPercent}%` }} />
-            </div>
-            <div className={thumbClass} />
-        </div>
-    );
 }
 
 export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
