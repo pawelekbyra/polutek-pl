@@ -8,6 +8,7 @@ import { pl } from "date-fns/locale";
 import Image from "next/image";
 import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
+import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 import { SidebarPlaylistSkeleton } from "@/components/skeletons";
@@ -71,6 +72,10 @@ export function SidebarPlaylist({
   mounted,
   onVideoMouseEnter,
 }: SidebarPlaylistProps) {
+  // Live client-side auth state. We gate the support widget on this (not the server-derived
+  // `userProfile` prop) so it reliably shows for signed-in viewers regardless of how the prop
+  // was threaded/hydrated. See docs: support box must be visible only to logged-in users.
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const getSidebarAccessBadge = (
     video: SidebarLayoutItem,
     hasAccess: boolean,
@@ -276,9 +281,8 @@ export function SidebarPlaylist({
 
   const PatronBox = () => {
     // Only show the support/tip widget to signed-in users. Logged-out visitors shouldn't be
-    // confronted with a payment prompt before they've even created an account. `userProfile` is
-    // the same server-derived "is logged in" signal used to gate LOGGED_IN videos above.
-    if (!userProfile) return null;
+    // confronted with a payment prompt before they've even created an account.
+    if (!authLoaded || !isSignedIn) return null;
     if (!supportItem?.creatorId) return null;
     return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
   };
