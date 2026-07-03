@@ -73,8 +73,8 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {installed ? (
-            <div className="px-3 py-2.5 text-[12px] font-bold text-neutral-500">
-              {isPl ? "Aplikacja jest już zainstalowana" : "The app is already installed"}
+            <div className="px-3 py-2.5 text-[13px] font-bold text-[#171717]">
+              {isPl ? "Przecież już masz ściągniętą apkę 😎" : "You've already got the app 😎"}
             </div>
           ) : showIosInstructions ? (
             <div className="px-3 py-2.5 text-[12.5px] leading-relaxed text-[#171717]">
