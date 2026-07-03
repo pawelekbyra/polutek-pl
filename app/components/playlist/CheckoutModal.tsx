@@ -78,12 +78,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {language === 'pl' ? 'Status Patrona' : 'Patron Status'}
+                    {language === 'pl' ? 'Dostęp do Strefy Thank You' : 'Access to the Thank You Zone'}
                   </p>
                   <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
                     {language === 'pl'
-                      ? 'Każdy udany jednorazowy napiwek nadaje status Patrona i dostęp do materiałów premium.'
-                      : 'Every successful one-time tip grants Patron status and access to premium materials.'}
+                      ? 'Jednorazowa wpłata daje dożywotni, nielimitowany dostęp do wszystkich obecnych i przyszłych materiałów dodatkowych.'
+                      : 'A one-time tip grants lifetime, unlimited access to all current and future bonus materials.'}
                   </p>
                 </div>
               </div>
@@ -94,12 +94,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-sm font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {language === 'pl' ? 'Unikalna Ranga' : 'Unique Rank'}
+                    {language === 'pl' ? 'Rosnąca biblioteka' : 'Growing library'}
                   </p>
-                  <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium group-hover:text-neutral-400">
+                  <p className="text-[13px] text-neutral-500 leading-relaxed max-w-xs font-medium italic group-hover:text-neutral-400">
                     {language === 'pl'
-                      ? 'Specjalne wyróżnienie Twojego profilu w komentarzach.'
-                      : 'Special recognition for your profile in comments.'}
+                      ? 'Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej.'
+                      : "Not much there yet, but thanks to you it'll keep growing."}
                   </p>
                 </div>
               </div>

@@ -22,13 +22,15 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 interface DonationBoxProps {
   videoTitle?: string;
+  /** True when the signed-in viewer already holds an active Patron grant. */
+  viewerIsPatron?: boolean;
 }
 
 function getSuggestedAmount(currency: string) {
   return currency === "PLN" ? 25 : 10;
 }
 
-export default function DonationBox({ videoTitle }: DonationBoxProps) {
+export default function DonationBox({ videoTitle, viewerIsPatron = false }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const toast = useToast();
@@ -55,8 +57,13 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
+  const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
-  const minAmount = minimums[selectedCurrency.toUpperCase() as SupportedCurrency] ?? minimums.PLN;
+  const checkoutMinAmount = minimums[selectedCurrency.toUpperCase() as SupportedCurrency] ?? minimums.PLN;
+  const patronThreshold = patronThresholds[selectedCurrency.toUpperCase() as SupportedCurrency] ?? checkoutMinAmount;
+  // Non-patrons must clear the patron threshold so a successful tip always grants access, as promised in the copy.
+  // Existing patrons already have access, so they may support with any amount down to the checkout floor.
+  const minAmount = viewerIsPatron ? checkoutMinAmount : Math.max(checkoutMinAmount, patronThreshold);
   const availableCurrencies = [...SUPPORTED_CURRENCIES].filter(
     (currency) => !(language === "en" && currency === "PLN"),
   );
@@ -76,6 +83,13 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           if (Number.isFinite(min) && min > 0) nextMinimums[currency] = min;
         }
         setMinimums(nextMinimums);
+
+        const nextThresholds = { ...nextMinimums } as Record<SupportedCurrency, number>;
+        for (const currency of SUPPORTED_CURRENCIES) {
+          const threshold = Number(data.patronThresholds?.[currency]?.threshold);
+          if (Number.isFinite(threshold) && threshold > 0) nextThresholds[currency] = threshold;
+        }
+        setPatronThresholds(nextThresholds);
       })
       .catch((error) => logger.warn("[DonationBox] Failed to fetch payment minimums:", error))
       .finally(() => setIsInitialLoading(false));
@@ -219,19 +233,64 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     <div id="donations" className="relative my-[10px] scroll-mt-20 p-[18px] mb-3">
       <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="#ffffff" />
       <div className="relative z-10">
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-1 flex items-center gap-2">
           <Heart size={17} className="shrink-0 text-primary" />
           <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)" }}>
-              {isPl ? "Wspieraj rozwój POLUTEK.PL" : "Support POLUTEK.PL"}
+              {isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL"}
             </span>
           </h4>
         </div>
-        <p className="m-[0_0_14px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
-          {isPl
-            ? "Jednorazowe wsparcie odblokowuje wszystkie materiały bonusowe — na zawsze. Bez subskrypcji."
-            : "A one-time tip unlocks every bonus video — forever. No subscription."}
+        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
+          {viewerIsPatron
+            ? (isPl ? "Masz już dostęp do Strefy Thank You" : "You already have Thank You Zone access")
+            : (isPl ? "Dostęp do Strefy Thank You" : "Access to the Thank You Zone")}
         </p>
+        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">
+          {viewerIsPatron
+            ? (isPl
+                ? "Twój dostęp do Strefy Thank You jest już zapewniony i ta wpłata niczego nowego nie odblokowuje. To czysty gest wsparcia — dowolna kwota, dla samego wspierania."
+                : "Your access to the Thank You Zone is already secured, and this tip doesn't unlock anything new. It's a pure show of support — any amount, just for the sake of it.")
+            : (isPl
+                ? "Jednorazowa wpłata odblokowuje dożywotni dostęp do Strefy Thank You — wszystkich obecnych i przyszłych materiałów dodatkowych. Bez subskrypcji i ukrytych kosztów."
+                : "A one-time tip unlocks lifetime access to the Thank You Zone — all current and future bonus materials. No subscription, no hidden costs.")}
+        </p>
+
+        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[#171717]/15 pt-[10px] text-[12.5px]">
+          {viewerIsPatron ? (
+            <>
+              <li className="flex items-start gap-[7px] text-[#171717]">
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                {isPl ? "Masz już pełny dostęp do Strefy Thank You" : "You already have full Thank You Zone access"}
+              </li>
+              <li className="flex items-start gap-[7px] text-[#171717]">
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                {isPl ? "Dowolna kwota — bez nowych korzyści" : "Any amount — no new benefits"}
+              </li>
+              <li className="flex items-start gap-[7px] italic text-[#7a7a7a]">
+                <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
+                {isPl ? "Bezpośrednio wspiera dalszy rozwój kanału" : "Directly supports the channel's continued growth"}
+              </li>
+            </>
+          ) : (
+            <>
+              <li className="flex items-start gap-[7px] text-[#171717]">
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                {isPl ? "Dożywotni dostęp do Strefy Thank You" : "Lifetime access to the Thank You Zone"}
+              </li>
+              <li className="flex items-start gap-[7px] text-[#171717]">
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                {isPl ? "Jedna wpłata, bez subskrypcji" : "One payment, no subscription"}
+              </li>
+              <li className="flex items-start gap-[7px] italic text-[#7a7a7a]">
+                <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
+                {isPl
+                  ? "Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej"
+                  : "Not much there yet, but thanks to you it'll keep growing"}
+              </li>
+            </>
+          )}
+        </ul>
 
         {showTermsError && (
           <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
@@ -246,7 +305,9 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
               htmlFor={amountInputId}
               className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a7a7a]"
             >
-              {isPl ? `Kwota (min. ${minAmount} ${selectedCurrency})` : `Amount (min. ${minAmount} ${selectedCurrency})`}
+              {viewerIsPatron
+                ? (isPl ? `Dowolna kwota (min. ${minAmount} ${selectedCurrency})` : `Any amount (min. ${minAmount} ${selectedCurrency})`)
+                : (isPl ? `Kwota (min. ${minAmount} ${selectedCurrency})` : `Amount (min. ${minAmount} ${selectedCurrency})`)}
             </label>
             <div className="relative flex items-center">
               <input

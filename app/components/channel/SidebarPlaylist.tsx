@@ -276,7 +276,7 @@ export function SidebarPlaylist({
 
   const PatronBox = () => {
     if (!supportItem?.creatorId) return null;
-    return <DonationBox videoTitle={supportItem?.title} />;
+    return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
   };
 
   if (loading) {
