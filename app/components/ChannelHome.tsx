@@ -130,7 +130,7 @@ export default function ChannelHome({
                         i === 0 && "border-r-[1.5px] border-[#171717]/12",
                         isActive
                           ? "bg-[#26231d] text-[#f7f1e4]"
-                          : "bg-[#e7e0d0] text-[#171717]/55 hover:bg-[#ded6c4] hover:text-[#171717]/80",
+                          : "bg-[#ebe1cb] text-[#171717]/55 hover:bg-[#e2d6bb] hover:text-[#171717]/80",
                       )}
                     >
                       {tab === "comments" ? t.comments : t.videosTab}
