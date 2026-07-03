@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getPaymentCurrencyLimits } from '@/lib/payments/currency-settings';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getPaymentCurrencyLimits, resolvePatronThresholdMinor } from '@/lib/payments/currency-settings';
 import { PaymentPolicy } from '@/lib/modules/payments/domain/payment.policy';
 import { PaymentStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -62,6 +62,44 @@ describe('Currency Threshold Defaults and Eligibility', () => {
     expect(limits.PLN.minAmountMinor).toBe(5000);
 
     // Other defaults should remain 10
+    expect(limits.EUR.minAmount).toBe(10);
+  });
+});
+
+describe('Patron eligibility threshold (PATRON_MIN_TIP env)', () => {
+  const OLD_ENV = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.PATRON_MIN_TIP_AMOUNT;
+    delete process.env.PATRON_MIN_TIP_CURRENCY;
+  });
+
+  afterEach(() => {
+    process.env = { ...OLD_ENV };
+  });
+
+  it('falls back to the checkout minimum when env is unset', () => {
+    expect(resolvePatronThresholdMinor('EUR', 1000)).toBe(1000);
+  });
+
+  it('raises the threshold only for the configured currency, never below the checkout minimum', () => {
+    process.env.PATRON_MIN_TIP_AMOUNT = '500';
+    process.env.PATRON_MIN_TIP_CURRENCY = 'EUR';
+
+    // Configured currency: threshold rises to 500 * 100 minor units …
+    expect(resolvePatronThresholdMinor('EUR', 1000)).toBe(50000);
+    // … but never drops below the checkout minimum.
+    expect(resolvePatronThresholdMinor('EUR', 60000)).toBe(60000);
+    // Other currencies keep the checkout minimum as their threshold.
+    expect(resolvePatronThresholdMinor('PLN', 1000)).toBe(1000);
+  });
+
+  it('does not touch the checkout minimum returned by getPaymentCurrencyLimits', async () => {
+    process.env.PATRON_MIN_TIP_AMOUNT = '500';
+    process.env.PATRON_MIN_TIP_CURRENCY = 'EUR';
+    vi.mocked(prisma.paymentCurrencySetting.findMany).mockResolvedValue([]);
+
+    const limits = await getPaymentCurrencyLimits();
     expect(limits.EUR.minAmount).toBe(10);
   });
 });

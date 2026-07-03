@@ -35,6 +35,7 @@ vi.mock('@/lib/payments/currency-settings', () => ({
       maxAmount: 1000,
     },
   }),
+  resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
 }));
 
 vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
