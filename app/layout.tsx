@@ -7,6 +7,7 @@ import "./globals.css";
 import { APP_NAME } from '@/lib/constants';
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { ServiceWorkerRegistration } from "@/app/components/ServiceWorkerRegistration";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: APP_NAME,
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </ClerkLocalizationProvider>
           </Providers>
         </Suspense>
+        <Analytics />
       </body>
     </html>
   );
