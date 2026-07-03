@@ -71,23 +71,26 @@ const Navbar = () => {
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
               <div className="relative flex-1 flex items-center min-w-0 h-[38px]">
-                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="relative w-full h-full bg-transparent pl-4 pr-12 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                  className="relative w-full h-full bg-transparent pl-4 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
                   style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                 />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center"
-                  aria-label={searchLabel}
-                >
-                  <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
-                </button>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <span className="h-5 w-px bg-[#171717]" />
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center"
+                    aria-label={searchLabel}
+                  >
+                    <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -119,23 +122,26 @@ const Navbar = () => {
             <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
                 <div className="relative flex-1 flex items-center min-w-0 h-[42px]">
-                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="relative w-full h-full bg-transparent pl-5 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                    className="relative w-full h-full bg-transparent pl-5 pr-16 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
                     style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                   />
-                  <button
-                    type="submit"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center"
-                    title={searchLabel}
-                    aria-label={searchLabel}
-                  >
-                    <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
-                  </button>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="h-5 w-px bg-[#171717]" />
+                    <button
+                      type="submit"
+                      className="flex items-center justify-center"
+                      title={searchLabel}
+                      aria-label={searchLabel}
+                    >
+                      <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
