@@ -185,7 +185,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             size="sm"
             onClick={onClose}
           >
-            <span>Wróć</span>
+            <span>{language === 'pl' ? 'Wróć' : 'Back'}</span>
             <X className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -237,7 +237,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <div className="flex flex-col pt-10">
                 <div className="hidden md:block mb-6">
                   <h2 className="text-2xl font-brand font-black uppercase tracking-tight leading-none">{language === 'pl' ? 'Przekaż jednorazowy napiwek' : 'Send a one-time tip'}</h2>
-                  <p className="text-sm text-muted-foreground">Bezpieczna transakcja obsługiwana przez Stripe.</p>
+                  <p className="text-sm text-muted-foreground">{language === 'pl' ? 'Bezpieczna transakcja obsługiwana przez Stripe.' : 'Secure transaction handled by Stripe.'}</p>
                 </div>
 
                 <div className="bg-white border border-neutral-200 p-8 shadow-md rounded-[2.5rem] mb-6 ring-8 ring-neutral-50 relative overflow-hidden">
@@ -247,6 +247,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   {stripePromise && clientSecret ? (
                     <Elements stripe={stripePromise} options={{
                       clientSecret,
+                      // Localize Stripe's own field labels ("Card number", etc.) to the site language.
+                      locale: language === 'pl' ? 'pl' : 'en',
                       appearance: {
                         theme: 'flat',
                         variables: {
@@ -263,7 +265,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24 space-y-8">
                       <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
-                      <p className="text-sm font-mono text-muted-foreground tracking-widest">Inicjalizacja systemu...</p>
+                      <p className="text-sm font-mono text-muted-foreground tracking-widest">{language === 'pl' ? 'Inicjalizacja systemu...' : 'Initializing system...'}</p>
                     </div>
                   )}
                 </div>

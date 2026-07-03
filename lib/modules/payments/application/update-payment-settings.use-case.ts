@@ -11,7 +11,16 @@ export interface UpdatePaymentSettingsInput {
   limits: Array<{
     currency: SupportedCurrency;
     minAmount: number;
+    // Optional: patron gate price and free-amount patron-box minimum (major units).
+    patronThreshold?: number | null;
+    patronBoxMin?: number | null;
   }>;
+}
+
+function toMinorOrNull(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.round(value * 100);
 }
 
 export async function updatePaymentSettings(
@@ -26,7 +35,15 @@ export async function updatePaymentSettings(
 
   await ctx.db.writeTransaction(async (tx) => {
     for (const limit of input.limits) {
-      await repo.upsertCurrencySetting(limit.currency, Math.round(limit.minAmount * 100), tx);
+      await repo.upsertCurrencySetting(
+        limit.currency,
+        {
+          minAmountMinor: Math.round(limit.minAmount * 100),
+          patronThresholdMinor: toMinorOrNull(limit.patronThreshold),
+          patronBoxMinMinor: toMinorOrNull(limit.patronBoxMin),
+        },
+        tx,
+      );
     }
 
     await recordAuditEvent(ctx, {

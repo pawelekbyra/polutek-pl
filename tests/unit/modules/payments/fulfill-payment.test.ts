@@ -33,6 +33,8 @@ vi.mock('@/lib/payments/currency-settings', () => ({
       minAmount: 10,
       maxAmountMinor: 100000,
       maxAmount: 1000,
+      patronThresholdMinor: 1000,
+      patronBoxMinMinor: 1000,
     },
   }),
   resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,

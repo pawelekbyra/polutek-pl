@@ -13,7 +13,7 @@ vi.mock('@/lib/modules/audit');
 // Mock getPaymentCurrencyLimits to control thresholds for smoke test
 vi.mock('@/lib/payments/currency-settings', () => ({
   getPaymentCurrencyLimits: vi.fn().mockResolvedValue({
-    PLN: { minAmountMinor: 1000 }, // 10 PLN
+    PLN: { minAmountMinor: 1000, patronThresholdMinor: 1000, patronBoxMinMinor: 1000 }, // 10 PLN
   }),
   resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
 }));
