@@ -409,9 +409,11 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         title={isPl ? "Regulamin serwisu" : "Terms of Service"}
         body={
           isPl
-            ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Wsparcie ma charakter jednorazowego, dobrowolnego napiwku i nie jest subskrypcją."
-            : "Polutek.pl is a private, independent video channel. Support is a one-time, voluntary tip and not a subscription."
+            ? "Serwis Polutek.pl jest prywatnym, autorskim kanałem wideo. Jednorazowa wpłata daje dożywotni dostęp do Strefy Fenkju — bez subskrypcji. Dostęp uruchamiamy od razu, dlatego po jego uruchomieniu nie przysługuje odstąpienie od umowy."
+            : "Polutek.pl is a private, independent video channel. A one-time tip grants lifetime access to the Thank You Zone — no subscription. Access starts immediately, so the right of withdrawal expires once it is activated."
         }
+        href="/regulamin"
+        hrefLabel={isPl ? "Przeczytaj pełny regulamin" : "Read the full terms (Polish)"}
       />
 
       <DonationLegalDialog
@@ -420,9 +422,11 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         title={isPl ? "Polityka Prywatności" : "Privacy Policy"}
         body={
           isPl
-            ? "Dla bezpieczeństwa i wygody użytkowników serwis korzysta z zewnętrznego systemu uwierzytelniania Clerk oraz Stripe do obsługi płatności."
-            : "For security and convenience, the service uses the Clerk authentication system and Stripe for payment processing."
+            ? "Zbieramy tylko dane potrzebne do działania serwisu (konto, płatności, komentarze). Logowanie obsługuje Clerk, płatności Stripe — nie widzimy danych Twojej karty. Bez cookies reklamowych."
+            : "We only collect data needed to run the service (account, payments, comments). Sign-in is handled by Clerk and payments by Stripe — we never see your card details. No advertising cookies."
         }
+        href="/polityka-prywatnosci"
+        hrefLabel={isPl ? "Przeczytaj pełną politykę prywatności" : "Read the full privacy policy (Polish)"}
       />
     </div>
   );

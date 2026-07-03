@@ -97,6 +97,8 @@ export async function fulfillPayment(
         ? undefined
         : resolvePatronThresholdMinor(currency, checkoutMinimumMinor);
 
+      const alreadyPatron = user.patronGrants.length > 0;
+
       const eligibility = PaymentPolicy.evaluatePaymentPatronEligibility({
         status: PaymentStatus.SUCCEEDED,
         amountMinor: payment.amountMinor,
@@ -104,11 +106,17 @@ export async function fulfillPayment(
         thresholdMinor,
       });
 
-      let isPatron = user.patronGrants.length > 0;
+      // A user with an active grant is already a permanent patron — PatronGrant has no
+      // per-user uniqueness constraint (only per-paymentId), so without this guard a second
+      // qualifying tip (e.g. an existing patron's optional extra support) would create a
+      // redundant PatronGrant row and re-trigger the "become a patron" welcome email.
+      const shouldGrant = eligibility.eligible && !alreadyPatron;
+
+      let isPatron = alreadyPatron;
       let normalizedTotal = normalizePaymentTotals(user.paymentTotals);
       let becamePatronNow = false;
 
-      if (eligibility.eligible) {
+      if (shouldGrant) {
         const grantResult = await grantPatron({
           userId: payment.userId,
           source: 'stripe_tip',
@@ -124,7 +132,8 @@ export async function fulfillPayment(
         normalizedTotal = grantResult.data.normalizedTotal;
         becamePatronNow = true;
       } else {
-        logger.info(`[FulfillPayment] Payment ${payment.id} not eligible for PatronGrant: ${eligibility.code}`);
+        const reason = alreadyPatron ? 'ALREADY_PATRON' : eligibility.code;
+        logger.info(`[FulfillPayment] Payment ${payment.id} did not trigger a new PatronGrant: ${reason}`);
         const updatedUser = await repo.findUserWithPaymentTotalsAndActivePatronGrants(payment.userId, tx);
         if (updatedUser) {
           normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
@@ -140,7 +149,7 @@ export async function fulfillPayment(
         normalizedTotal,
         becamePatronNow,
         isFirstFulfillment: count > 0,
-        wasEligible: eligibility.eligible
+        wasEligible: shouldGrant
       };
     });
 
