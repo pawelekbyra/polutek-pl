@@ -150,16 +150,25 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 
 `app/components/channel/DonationBox.tsx` is the single tip widget (rendered via `SidebarPlaylist.tsx`'s `PatronBox`), but it renders **two different copy/threshold variants** depending on the `viewerIsPatron` prop (already computed in `ChannelHome.tsx` from `userProfile?.isPatronDecorative` / `role === 'ADMIN'`, threaded through `SidebarPlaylist`):
 
-- **Non-patron viewer** (`viewerIsPatron` false/undefined): copy promises that a successful tip grants lifetime Thank You Zone access. The input minimum is therefore `Math.max(checkout floor, patron threshold)` — never let a non-patron submit an amount that would take payment without crossing the patron eligibility threshold, or the "this grants access" copy becomes false.
-- **Existing patron** (`viewerIsPatron` true): copy explicitly states access is already secured and this tip unlocks nothing new — free-form additional support. The input minimum relaxes to the checkout floor only (`/api/payment-settings` → `limits`), since no reward is being promised.
+- **Non-patron viewer** (`viewerIsPatron` false/undefined): copy promises that a successful tip grants lifetime Thank You Zone access. The amount is therefore **fixed** to the patron threshold — a non-patron can never submit an amount that would take payment without crossing the patron eligibility threshold, or the "this grants access" copy becomes false. A currency switcher lets them pick the currency (each currency has its own admin-configured threshold, not a conversion).
+- **Existing patron** (`viewerIsPatron` true): copy explicitly states access is already secured and this tip unlocks nothing new — free-form additional support. The input minimum is the **patron-box minimum** (`/api/payment-settings` → `patronBoxMinimums`), a value independent of the patron threshold.
 
-Two distinct minimums are involved and must not be conflated:
-- **Checkout floor** — `getPaymentCurrencyLimits()` / `MIN_PAYMENT_BY_CURRENCY`, the smallest amount Stripe/the checkout will accept at all.
-- **Patron threshold** — `resolvePatronThresholdMinor()` / `PATRON_MIN_TIP_AMOUNT`, the amount a tip must reach to actually grant a `PatronGrant`. This can be higher than the checkout floor.
+`PatronBox` only renders for **signed-in** users (gated on `userProfile` in `SidebarPlaylist.tsx`) — logged-out visitors never see the tip widget.
 
-`GET /api/payment-settings` returns both (`limits` and `patronThresholds`) so the client can compute the correct minimum for each variant without duplicating the threshold-resolution logic.
+Three distinct per-currency minimums are involved and must not be conflated (all admin-editable at `/admin/payments`, stored on `PaymentCurrencySetting`):
+- **Checkout floor** — `minAmountMinor` / `getPaymentCurrencyLimits()` / `MIN_PAYMENT_BY_CURRENCY`, the smallest amount Stripe/the checkout will accept at all.
+- **Patron threshold** — `patronThresholdMinor`, resolved by `resolvePatronThresholdMinor()` (admin value → `PATRON_MIN_TIP_AMOUNT` env fallback → floor). The amount a tip must reach to grant a `PatronGrant`; also the fixed non-patron amount. `fulfillPayment()` uses `getPaymentCurrencyLimits()[currency].patronThresholdMinor` so UI and granting stay in lockstep.
+- **Patron-box minimum** — `patronBoxMinMinor`, the smallest free-form amount an existing patron may tip. Falls back to the checkout floor when unset.
 
-The left column of `app/components/playlist/CheckoutModal.tsx` (desktop payment modal) carries matching copy for the same reason — keep it in sync with `DonationBox.tsx` when either changes.
+`GET /api/payment-settings` returns all three (`limits`, `patronThresholds`, `patronBoxMinimums`) so the client can compute the correct minimum for each variant without duplicating the threshold-resolution logic.
+
+Stripe Elements render in the viewer's language (`locale` on `<Elements>` in `CheckoutModal.tsx`). The left column of `app/components/playlist/CheckoutModal.tsx` (desktop payment modal) carries matching copy for the same reason — keep it in sync with `DonationBox.tsx` when either changes.
+
+### 4.11 Language Resolution (pl/en)
+
+- Initial UI language is resolved **server-side** in `lib/i18n/server-language.ts` (`resolveInitialLanguage()`), called from `app/layout.tsx` and threaded through `Providers` → `LanguageProvider`. Priority: signed-in user's DB `User.language` → `app-language` cookie → Vercel geolocation header (`x-vercel-ip-country`) → `Accept-Language` → `en`. This makes the first paint correct with no hydration flash.
+- `LanguageContext.tsx` seeds state from that server value (never a lazy localStorage initializer) and mirrors every change to **both** `localStorage` and a one-year `app-language` cookie, so a logged-out choice survives reloads and stays consistent with SSR.
+- Logged-in changes additionally persist to the database via `PATCH /api/user/language` (authoritative on next load) and to Clerk metadata. Transactional and broadcast emails send in the recipient's stored `User.language`.
 
 ---
 
