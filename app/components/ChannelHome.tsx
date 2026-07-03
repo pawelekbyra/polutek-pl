@@ -11,7 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
-import { Frame, NajsSeparator, INK, PAPER } from "./najs/primitives";
+import { Frame, NajsSeparator, INK, BLUE } from "./najs/primitives";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -117,7 +117,7 @@ export default function ChannelHome({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex items-stretch gap-2 font-sans">
+              <div className="flex font-sans">
                 {(["comments", "videos"] as const).map((tab) => {
                   const isActive = activeTab === tab;
                   return (
@@ -126,23 +126,30 @@ export default function ChannelHome({
                       onClick={() => setActiveTab(tab)}
                       aria-pressed={isActive}
                       className={cn(
-                        "relative flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
+                        "flex-1 pt-1 pb-2 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
                         isActive
-                          ? "text-[#171717] -translate-y-px"
+                          ? "text-[#171717]"
                           : "text-[#171717]/35 hover:text-[#171717]/60",
                       )}
                     >
-                      {isActive && (
-                        <Frame
-                          radius={12}
-                          seed={tab === "comments" ? 7 : 13}
-                          fill={PAPER}
-                          stroke={INK}
-                          showShadow
-                        />
-                      )}
-                      <span className="relative">
+                      <span className="relative inline-block px-1">
                         {tab === "comments" ? t.comments : t.videosTab}
+                        {isActive && (
+                          <svg
+                            className="absolute -bottom-1.5 left-0 h-[6px] w-full"
+                            viewBox="0 0 100 6"
+                            preserveAspectRatio="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M1 3.5 Q 25 1.2 50 3 T 99 2.6"
+                              fill="none"
+                              stroke={BLUE}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        )}
                       </span>
                     </button>
                   );
