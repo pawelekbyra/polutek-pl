@@ -93,6 +93,13 @@ export default function ClerkLocalizationProvider({ children }: { children: Reac
     );
   }
 
+  // NOTE: sign-in/up run as Clerk *modals*, so we must NOT force a post-auth redirect.
+  // A forced navigation to "/" (the PWA start_url/scope) is captured by Android/Chrome
+  // into the installed standalone app — i.e. "the PWA launched itself just because I
+  // logged in". Launching the installed app must stay a deliberate choice via the
+  // home-screen icon. The *fallback* URLs below only apply when Clerk has no return
+  // destination; a fresh session's data is refreshed in-place by the queryClient.clear()
+  // + router.refresh() effect above, so no hard navigation is needed.
   return (
     <ClerkProvider
       publishableKey={publishableKey}
@@ -100,8 +107,6 @@ export default function ClerkLocalizationProvider({ children }: { children: Reac
       afterSignOutUrl="/"
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
-      signInForceRedirectUrl="/"
-      signUpForceRedirectUrl="/"
     >
       <LocalizationLogic>
         {children}

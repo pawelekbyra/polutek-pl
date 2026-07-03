@@ -11,7 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
-import { Frame, NajsSeparator, INK } from "./najs/primitives";
+import { Frame, NajsSeparator, INK, PAPER } from "./najs/primitives";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -117,23 +117,38 @@ export default function ChannelHome({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex font-sans">
-                {(["comments", "videos"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={cn(
-                      "flex-1 py-3 text-[13px] font-bold not-italic uppercase tracking-widest transition-all",
-                      activeTab === tab
-                        ? "text-[#171717]"
-                        : "text-[#171717]/35",
-                    )}
-                  >
-                    {tab === "comments" ? t.comments : t.videosTab}
-                  </button>
-                ))}
+              <div className="flex items-stretch gap-2 font-sans">
+                {(["comments", "videos"] as const).map((tab) => {
+                  const isActive = activeTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      aria-pressed={isActive}
+                      className={cn(
+                        "relative flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
+                        isActive
+                          ? "text-[#171717] -translate-y-px"
+                          : "text-[#171717]/35 hover:text-[#171717]/60",
+                      )}
+                    >
+                      {isActive && (
+                        <Frame
+                          radius={12}
+                          seed={tab === "comments" ? 7 : 13}
+                          fill={PAPER}
+                          stroke={INK}
+                          showShadow
+                        />
+                      )}
+                      <span className="relative">
+                        {tab === "comments" ? t.comments : t.videosTab}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <NajsSeparator className="px-0" />
+              <NajsSeparator className="mt-2 px-0" />
             </div>
             <div className="lg:hidden mt-2">
               {activeTab === "comments" ? (
