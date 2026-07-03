@@ -129,8 +129,8 @@ export default function ChannelHome({
                         "flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
                         i === 0 && "border-r-[1.5px] border-[#171717]/12",
                         isActive
-                          ? "bg-[#838180] text-white"
-                          : "bg-[#e7e4df] text-[#171717]/55 hover:bg-[#dcd8d1] hover:text-[#171717]/80",
+                          ? "bg-[#26231d] text-[#f7f1e4]"
+                          : "bg-[#ebe1cb] text-[#171717]/55 hover:bg-[#e2d6bb] hover:text-[#171717]/80",
                       )}
                     >
                       {tab === "comments" ? t.comments : t.videosTab}
