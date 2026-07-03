@@ -8,6 +8,7 @@ import { APP_NAME } from '@/lib/constants';
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { ServiceWorkerRegistration } from "@/app/components/ServiceWorkerRegistration";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: APP_NAME,
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </ClerkLocalizationProvider>
           </Providers>
         </Suspense>
+        <Analytics />
       </body>
     </html>
   );
