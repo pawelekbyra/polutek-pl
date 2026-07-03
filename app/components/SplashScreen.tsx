@@ -2,27 +2,61 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Frame, INK as FRAME_INK } from "./najs/primitives";
 
 type Phase = "skip" | "showing" | "ready" | "exiting" | "done";
 
 const PAPER = "#f7f1e4";
 const INK = "#121212";
 const INK_FAINT = "rgba(18,18,18,0.13)";
+const ENTER_FILL_READY = "#2563eb";
+const ENTER_FILL_WAITING = "#dce8ff";
 const FONT = "var(--font-patrick, 'Patrick Hand', cursive)";
 const MIN_MS = 1600;
 
-// Same square hand-drawn mark rendered by app/icon.tsx / app/icon-512 (the OS
-// launch icon). Showing it here too — instantly, unanimated — is what makes the
-// handoff from the native splash to this screen read as a single continuous splash.
-function AppIconMark() {
+// Same centered ENTER mark rendered by app/icon.tsx / app/icon-512 (the OS
+// launch icon). It intentionally has no lettermark, so the PWA splash can hand
+// off directly into this clickable splash without a visible jump.
+function EnterMark({ active = true, size = 156 }: { active?: boolean; size?: number }) {
+  const fill = active ? ENTER_FILL_READY : ENTER_FILL_WAITING;
+  const stroke = active ? INK : "rgba(18,18,18,0.48)";
+
   return (
-    <div style={{ position: "relative", width: 64, height: 64 }}>
-      <Frame radius={16} seed={7} stroke={FRAME_INK} strokeWidth={2.2} fill={PAPER} />
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontFamily: FONT, fontSize: 34, color: INK, lineHeight: 1 }}>P</span>
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" style={{ display: "block" }}>
+      <path
+        d="M 108 164 C 107 125, 136 94, 176 94 L 350 94 C 391 94, 421 125, 421 166 L 421 250 C 421 291, 391 322, 350 322 L 270 322 L 270 379 C 270 397, 249 407, 235 395 L 94 279 C 82 269, 82 250, 94 240 L 133 207 C 119 198, 108 183, 108 164 Z"
+        fill={fill}
+        stroke={stroke}
+        strokeWidth="15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 173 166 L 347 166 C 361 166, 371 176, 371 190 L 371 231 C 371 245, 361 255, 347 255 L 236 255"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="12"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.78"
+      />
+      <path
+        d="M 242 222 L 199 258 L 242 294"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="12"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.78"
+      />
+      <path
+        d="M 123 174 C 149 158, 209 153, 278 155 C 338 157, 386 154, 407 169"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="0.2"
+      />
+    </svg>
   );
 }
 
@@ -100,18 +134,18 @@ export function SplashScreen() {
 
   const isReady = phase === "ready";
   const isExiting = phase === "exiting";
-  const inkColor = isReady ? INK : "rgba(18,18,18,0.35)";
-
   // Reduced motion: skip all animations, show ENTER immediately active
   if (reduced) {
     return (
       <div
         style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: PAPER, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
       >
-        <AppIconMark />
-        <button onClick={handleEnter} style={{ marginTop: 28, fontFamily: FONT, fontSize: 22, letterSpacing: 10, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, padding: "24px 48px", background: "transparent", cursor: "pointer" }}>
-          ENTER
+        <button onClick={handleEnter} style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer" }} aria-label="Wejdź na stronę">
+          <EnterMark active size={176} />
         </button>
+        <span style={{ marginTop: 18, fontFamily: FONT, fontSize: 26, color: INK, textAlign: "center", lineHeight: 1.1 }}>
+          Nie masz psychy se tu kliknąć
+        </span>
       </div>
     );
   }
@@ -138,70 +172,17 @@ export function SplashScreen() {
           />
 
           {/* Main content */}
-          <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
-
-            {/* App icon mark — present at the same spot/size as the OS launch icon it hands off
-                from, with no entrance animation, so the transition is imperceptible. */}
-            <div style={{ marginBottom: 20 }}>
-              <AppIconMark />
-            </div>
-
-            {/* Handwritten text */}
-            <motion.div
-              style={{ marginBottom: 28, textAlign: "center", overflow: "hidden" }}
-              initial={{ clipPath: "inset(0 100% 0 0)" }}
-              animate={{ clipPath: "inset(0 0% 0 0)" }}
-              transition={{ duration: 0.8, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              <span style={{ fontFamily: FONT, fontSize: "clamp(17px, 3.5vw, 26px)", color: INK, lineHeight: 1.3 }}>
-                Nie masz psychy se tu kliknąć
-              </span>
-            </motion.div>
-
-            {/* Hand-drawn arrow (SVG path draw-on) */}
-            <motion.svg
-              width="56" height="72" viewBox="0 0 56 72"
-              style={{ marginBottom: 12 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.05 }}
-            >
-              {/* Arrow shaft */}
-              <motion.path
-                d="M 30 2 C 28 14, 26 28, 24 44 C 23 52, 21 60, 20 68"
-                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5, delay: 1.1, ease: "easeInOut" }}
-              />
-              {/* Arrow head left */}
-              <motion.path
-                d="M 20 68 L 10 56"
-                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.22, delay: 1.62, ease: "easeOut" }}
-              />
-              {/* Arrow head right */}
-              <motion.path
-                d="M 20 68 L 32 58"
-                fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.22, delay: 1.62, ease: "easeOut" }}
-              />
-            </motion.svg>
-
-            {/* ENTER button */}
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", transform: "translateY(-10px)" }}>
             <motion.button
               onClick={handleEnter}
               disabled={!isReady}
+              aria-label="Wejdź na stronę"
               animate={isReady ? {
-                scale: [1, 0.96, 1.03, 1],
+                scale: [1, 0.97, 1.025, 1],
                 transition: { duration: 0.45, ease: "easeOut", delay: 0.05 }
               } : {}}
-              whileHover={isReady ? { scale: 1.03 } : {}}
-              whileTap={isReady ? { scale: 0.97 } : {}}
+              whileHover={isReady ? { scale: 1.025 } : {}}
+              whileTap={isReady ? { scale: 0.96 } : {}}
               style={{
                 position: "relative",
                 background: "transparent",
@@ -209,58 +190,21 @@ export function SplashScreen() {
                 padding: 0,
                 cursor: isReady ? "pointer" : "default",
                 outline: "none",
-                width: 240,
-                height: 80,
               }}
             >
-              {/* Hand-drawn border — draws itself edge by edge */}
-              <svg width="240" height="80" viewBox="0 0 240 80" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-                {/* Top */}
-                <motion.path d="M 10 12 C 70 9, 150 7, 215 10 C 228 11, 234 10, 234 11"
-                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
-                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.38, delay: 1.82, ease: "easeOut" }}
-                  style={{ transition: "stroke 0.3s ease" }}
-                />
-                {/* Right */}
-                <motion.path d="M 233 11 C 235 28, 236 52, 234 66 C 234 71, 233 70, 233 70"
-                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
-                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.22, delay: 2.2, ease: "easeOut" }}
-                  style={{ transition: "stroke 0.3s ease" }}
-                />
-                {/* Bottom */}
-                <motion.path d="M 234 69 C 180 72, 100 74, 30 71 C 16 70, 8 71, 7 70"
-                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
-                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.38, delay: 2.42, ease: "easeOut" }}
-                  style={{ transition: "stroke 0.3s ease" }}
-                />
-                {/* Left */}
-                <motion.path d="M 8 70 C 6 55, 7 32, 8 18 C 8 14, 10 12, 10 12"
-                  fill="none" stroke={inkColor} strokeWidth="1.5" strokeLinecap="round"
-                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.22, delay: 2.8, ease: "easeOut" }}
-                  style={{ transition: "stroke 0.3s ease" }}
-                />
-              </svg>
-
-              {/* ENTER text */}
-              <motion.span
-                style={{
-                  display: "block", width: "100%", height: "100%",
-                  lineHeight: "80px", textAlign: "center",
-                  fontFamily: FONT, fontSize: 20, letterSpacing: 10,
-                  color: inkColor, userSelect: "none",
-                  transition: "color 0.35s ease",
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.9 }}
-              >
-                ENTER
-              </motion.span>
+              <EnterMark active={isReady} size={176} />
             </motion.button>
+
+            <motion.div
+              style={{ marginTop: 18, textAlign: "center", maxWidth: 300, padding: "0 18px" }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.25, ease: "easeOut" }}
+            >
+              <span style={{ fontFamily: FONT, fontSize: "clamp(19px, 4.2vw, 29px)", color: INK, lineHeight: 1.1 }}>
+                Nie masz psychy se tu kliknąć
+              </span>
+            </motion.div>
           </div>
 
           {/* Loading bar — pencil line across bottom */}

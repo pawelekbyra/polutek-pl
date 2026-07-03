@@ -161,12 +161,12 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
 
             <div className="lg:flex-1">
               <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 mb-6">
-                  <TabsTrigger value="summary" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Podsumowanie</TabsTrigger>
-                  <TabsTrigger value="payments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Wpłaty</TabsTrigger>
-                  <TabsTrigger value="grants" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Granty</TabsTrigger>
-                  <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Aktywność</TabsTrigger>
-                  <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Historia zmian</TabsTrigger>
+                <TabsList className="w-full justify-start gap-2 bg-transparent rounded-none h-auto p-0 mb-6 flex-wrap">
+                  <TabsTrigger value="summary" className="rounded-xl border-0 bg-[#dbeafe] text-[#1748b8] data-active:bg-[#2563eb] data-active:text-white px-4 py-3">Podsumowanie</TabsTrigger>
+                  <TabsTrigger value="payments" className="rounded-xl border-0 bg-[#dbeafe] text-[#1748b8] data-active:bg-[#2563eb] data-active:text-white px-4 py-3">Wpłaty</TabsTrigger>
+                  <TabsTrigger value="grants" className="rounded-xl border-0 bg-[#dbeafe] text-[#1748b8] data-active:bg-[#2563eb] data-active:text-white px-4 py-3">Granty</TabsTrigger>
+                  <TabsTrigger value="activity" className="rounded-xl border-0 bg-[#dbeafe] text-[#1748b8] data-active:bg-[#2563eb] data-active:text-white px-4 py-3">Aktywność</TabsTrigger>
+                  <TabsTrigger value="audit" className="rounded-xl border-0 bg-[#dbeafe] text-[#1748b8] data-active:bg-[#2563eb] data-active:text-white px-4 py-3">Historia zmian</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="summary" className="space-y-6">
