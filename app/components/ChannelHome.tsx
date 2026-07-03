@@ -128,7 +128,7 @@ export default function ChannelHome({
                       className={cn(
                         "flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
                         isActive
-                          ? "bg-[#6f6555] text-[#f7f2e7]"
+                          ? "bg-[#2f3b52] text-[#eef1f6]"
                           : "bg-[#f1ebdb] text-[#171717]/55 hover:bg-[#eae2ce] hover:text-[#171717]/80",
                       )}
                     >
