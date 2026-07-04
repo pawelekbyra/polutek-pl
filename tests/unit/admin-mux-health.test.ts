@@ -10,6 +10,7 @@ vi.mock("@/lib/auth-utils", () => ({
 const ORIGINAL_ENV = process.env;
 const TOKEN_ID = "mux_test_token_id";
 const TOKEN_SECRET = "mux_test_token_secret_value";
+const WEBHOOK_SECRET = "mux-webhook-secret";
 
 const VALID_PEM = Buffer.from(
   "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAfake==\n-----END RSA PRIVATE KEY-----",
@@ -22,9 +23,10 @@ function adminAllowed() {
 function setMuxEnv(overrides: Partial<NodeJS.ProcessEnv> = {}) {
   process.env = {
     ...ORIGINAL_ENV,
+    NEXT_PUBLIC_APP_URL: "https://polutek.pl",
     MUX_TOKEN_ID: TOKEN_ID,
     MUX_TOKEN_SECRET: TOKEN_SECRET,
-    MUX_WEBHOOK_SECRET: "mux-webhook-secret",
+    MUX_WEBHOOK_SECRET: WEBHOOK_SECRET,
     MUX_SIGNING_KEY_ID: "signing-key-id",
     MUX_SIGNING_PRIVATE_KEY: VALID_PEM,
     ...overrides,
@@ -56,7 +58,7 @@ describe("admin Mux health route", () => {
     vi.unstubAllGlobals();
   });
 
-  it("returns configured=true and runtime diagnostics for plain GET", async () => {
+  it("returns configured=true with runtime, signing, and webhook diagnostics for plain GET", async () => {
     const response = await GET(getRequest("/api/admin/health/mux"));
     const data = await response.json();
 
@@ -64,6 +66,16 @@ describe("admin Mux health route", () => {
     expect(data.runtime).toBeTruthy();
     expect(data.signing.configured).toBe(true);
     expect(data.signing.keyFormatValid).toBe(true);
+    expect(data.webhook).toMatchObject({
+      endpointPath: "/api/webhooks/mux",
+      expectedUrl: "https://polutek.pl/api/webhooks/mux",
+      appOriginPresent: true,
+      secretConfigured: true,
+      signatureHeader: "mux-signature",
+      signatureToleranceSeconds: 300,
+      handledEvents: ["video.asset.ready", "video.asset.errored", "video.upload.asset_created"],
+    });
+    expect(JSON.stringify(data)).not.toContain(WEBHOOK_SECRET);
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -116,7 +128,45 @@ describe("admin Mux health route", () => {
 
     expect(data.ok).toBe(true);
     expect(data.diagnosis).toBe("MUX_READ_OK");
+    expect(data.webhook.expectedUrl).toBe("https://polutek.pl/api/webhooks/mux");
     expect(JSON.stringify(data)).not.toContain(TOKEN_SECRET);
+  });
+
+  it("returns WEBHOOK_SIGNATURE_OK when local webhook signing verification works", async () => {
+    const response = await GET(getRequest("/api/admin/health/mux?probe=webhook-signature"));
+    const data = await response.json();
+
+    expect(data).toMatchObject({
+      ok: true,
+      configured: true,
+      diagnosis: "WEBHOOK_SIGNATURE_OK",
+      webhook: {
+        endpointPath: "/api/webhooks/mux",
+        expectedUrl: "https://polutek.pl/api/webhooks/mux",
+        secretConfigured: true,
+      },
+      proof: {
+        syntheticPayloadVerified: true,
+        signatureHeaderFormat: "t=<unix_timestamp>,v1=<hmac_sha256>",
+        noExternalMuxRequest: true,
+      },
+    });
+    expect(data.ageSeconds).toBeGreaterThanOrEqual(0);
+    expect(JSON.stringify(data)).not.toContain(WEBHOOK_SECRET);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("returns MISSING_ENV for webhook signature probe when webhook secret is absent", async () => {
+    setMuxEnv({ MUX_WEBHOOK_SECRET: "" });
+
+    const response = await GET(getRequest("/api/admin/health/mux?probe=webhook-signature"));
+    const data = await response.json();
+
+    expect(data.ok).toBe(false);
+    expect(data.diagnosis).toBe("MISSING_ENV");
+    expect(data.missing).toEqual(["MUX_WEBHOOK_SECRET"]);
+    expect(data.webhook.secretConfigured).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("returns AUTH_FAILED on 401 from Mux auth probe", async () => {
@@ -179,6 +229,9 @@ describe("admin Mux health route", () => {
       diagnosis: "DIRECT_UPLOAD_OK",
       uploadIdPresent: true,
       uploadIdPrefix: "abcdef12",
+      webhook: {
+        expectedUrl: "https://polutek.pl/api/webhooks/mux",
+      },
     });
     expect(JSON.stringify(data)).not.toContain("storage.googleapis.com");
     expect(JSON.stringify(data)).not.toContain(TOKEN_SECRET);
