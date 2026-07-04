@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import Hero from "./Hero";
 import EmbeddedComments from "./comments/EmbeddedComments";
 import { PublicVideoDTO } from "../types/video";
@@ -12,7 +13,6 @@ import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, INK } from "./najs/primitives";
-import { useIrisTransition } from "./channel/IrisTransition";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
 
 interface ChannelHomeProps {
@@ -70,19 +70,24 @@ function ChannelHomeContent({
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
   const [mounted, setMounted] = useState(false);
   const queryClient = useQueryClient();
-  const iris = useIrisTransition();
   const preloader = useAppPreload();
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);
-    if (selectedVideo?.id) {
-      setActiveTab("comments");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      // The newly selected video is committed to the screen — open the iris over it.
-      iris.contentReady();
+    if (!selectedVideo?.id) return;
+
+    setActiveTab("comments");
+
+    // Keep desktop stable when switching sidebar items. On mobile, the videos list replaces
+    // comments below the player, so bring the viewer back to the newly selected media.
+    if (typeof window !== "undefined") {
+      const isMobileLayout = window.matchMedia?.("(max-width: 1023px)").matches ?? true;
+      if (isMobileLayout) {
+        window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVideo?.id]);
+  }, [selectedVideo?.id, shouldReduceMotion]);
 
   if (!selectedVideo)
     return (
@@ -139,28 +144,35 @@ function ChannelHomeContent({
     mounted,
     onVideoMouseEnter: prefetchComments,
     onVideoSelect: (clickedId?: string) => {
-      // Cinematic iris wipe: close over the current scene, reveal the next once it's in place.
-      // Skipped when re-clicking the already-active video — there is no scene change to reveal.
+      // Keep switching lightweight: warm the next video, but do not cover the entire page.
       if (clickedId && clickedId !== selectedVideo.id) {
         void preloader?.warmVideo(clickedId, { includeComments: true, includePoster: true, priority: "intent" });
-        iris.trigger();
       }
       setActiveTab("comments");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     },
   };
 
   return (
     <main className="bg-transparent min-h-screen">
-      {iris.element}
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
-            <Hero
-              video={selectedVideo}
-              initialInteraction={userProfile?.initialInteraction}
-              initialIsSubscribed={userProfile?.initialIsSubscribed}
-            />
+            <motion.div
+              key={selectedVideo.id}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
+              }
+            >
+              <Hero
+                video={selectedVideo}
+                initialInteraction={userProfile?.initialInteraction}
+                initialIsSubscribed={userProfile?.initialIsSubscribed}
+              />
+            </motion.div>
             <div className="lg:hidden mt-4">
               <div className="flex overflow-hidden rounded-xl font-sans">
                 {(["comments", "videos"] as const).map((tab) => {
