@@ -155,6 +155,31 @@
     border-color: var(--najs-paper-line);
   }
 
+  .paper-shadow-soft {
+    box-shadow: 0 1px 2px rgba(23, 23, 23, 0.04), 0 8px 22px rgba(23, 23, 23, 0.045);
+  }
+
+  .paper-shadow-card {
+    box-shadow: 0 8px 28px rgba(23, 23, 23, 0.08);
+  }
+
+  .paper-radius-card {
+    border-radius: 0.875rem;
+  }
+
+  .paper-radius-panel {
+    border-radius: 1.5rem;
+  }
+
+  .paper-focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  .paper-focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  }
+
   .ink-text {
     color: var(--najs-ink);
   }

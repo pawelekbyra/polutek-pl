@@ -70,18 +70,18 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-[#d8d0bd]/90 bg-[#f8f3e7]/98 p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] paper-radius-panel border paper-border paper-surface p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {installed ? (
-            <div className="px-3 py-2.5 text-[13px] font-bold text-[#171717]">
+            <div className="px-3 py-2.5 text-[13px] font-bold ink-text">
               {isPl ? "Przecież już masz ściągniętą apkę 😎" : "You've already got the app 😎"}
             </div>
           ) : showIosInstructions ? (
-            <div className="px-3 py-2.5 text-[12.5px] leading-relaxed text-[#171717]">
+            <div className="px-3 py-2.5 text-[12.5px] leading-relaxed ink-text">
               <p className="mb-1 font-bold">
                 {isPl ? "Zainstaluj na iPhonie/iPadzie" : "Install on iPhone/iPad"}
               </p>
-              <p className="text-[#6b665d]">
+              <p className="muted-text">
                 {isPl
                   ? 'Stuknij ikonę Udostępnij w Safari, a potem "Dodaj do ekranu początkowego".'
                   : 'Tap the Share icon in Safari, then "Add to Home Screen".'}
@@ -92,13 +92,13 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               type="button"
               role="menuitem"
               onClick={handleInstallClick}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[#171717] transition-colors hover:bg-[#f1ead9]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold ink-text transition-colors hover:bg-[var(--najs-paper-soft)]"
             >
               <NajsIcon name="download" className="h-[16px] w-[16px]" stroke={INK} />
               {isPl ? "Zainstaluj aplikację" : "Install app"}
             </button>
           ) : (
-            <div className="px-3 py-2.5 text-[12px] font-bold text-[#6b665d]">
+            <div className="px-3 py-2.5 text-[12px] font-bold muted-text">
               {isPl
                 ? "Instalacja niedostępna w tej przeglądarce"
                 : "Installation isn't available in this browser"}

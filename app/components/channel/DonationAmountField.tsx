@@ -67,7 +67,7 @@ export default function DonationAmountField({
               aria-invalid={amountTooLow}
               aria-describedby={amountTooLow ? errorId : undefined}
               placeholder={String(minAmount)}
-              className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[#0f0f0f] outline-none placeholder:text-[#c9c4b8]"
+              className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums ink-text outline-none placeholder:text-[#c9c4b8]"
               style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
             />
             <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
@@ -77,7 +77,7 @@ export default function DonationAmountField({
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2 py-1">
-            <span className="text-[26px] font-extrabold tabular-nums text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <span className="text-[26px] font-extrabold tabular-nums ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {minAmount}
             </span>
             {currencySelect("cursor-pointer appearance-none bg-transparent text-[14px] font-bold text-[#4a4a4a] outline-none")}

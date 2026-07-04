@@ -174,7 +174,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               />
             </div>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black tracking-tight text-[#0f0f0f]">{title}</DialogTitle>
+              <DialogTitle className="text-2xl font-black tracking-tight ink-text">{title}</DialogTitle>
             </DialogHeader>
 
             {error && (
@@ -194,10 +194,10 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Zaloguj się" : "Sign in"} />
                 <div className="flex items-center justify-between pt-1 text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[#0f0f0f]" onClick={() => switchView("forgot")}>
+                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("forgot")}>
                     {isPl ? "Nie pamiętam hasła" : "Forgot password"}
                   </button>
-                  <button type="button" className="underline hover:text-[#0f0f0f]" onClick={() => switchView("sign-up")}>
+                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-up")}>
                     {isPl ? "Załóż konto" : "Create account"}
                   </button>
                 </div>
@@ -215,7 +215,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <div id="clerk-captcha" />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Załóż konto" : "Create account"} />
                 <div className="pt-1 text-center text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[#0f0f0f]" onClick={() => switchView("sign-in")}>
+                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}
                   </button>
                 </div>
@@ -240,7 +240,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Wyślij kod" : "Send code"} />
                 <div className="pt-1 text-center text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[#0f0f0f]" onClick={() => switchView("sign-in")}>
+                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Wróć do logowania" : "Back to sign in"}
                   </button>
                 </div>
@@ -288,7 +288,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#171717]/25 bg-[#f8f3e7] px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
+        className="w-full rounded-lg border border-[#171717]/25 paper-surface px-3 py-2 text-[15px] ink-text outline-none transition-colors focus:border-[var(--najs-blue)]"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
         {...rest}
       />
@@ -328,7 +328,7 @@ function OAuthButtons({
           type="button"
           onClick={() => onSelect(strategy)}
           disabled={disabled}
-          className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] transition-all active:scale-[0.98] disabled:opacity-60"
+          className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold ink-text transition-all active:scale-[0.98] disabled:opacity-60"
         >
           <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#f1ead9" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
@@ -342,9 +342,9 @@ function OAuthButtons({
 function Divider({ isPl }: { isPl: boolean }) {
   return (
     <div className="flex items-center gap-3 py-1">
-      <span className="h-px flex-1 bg-[#171717]/15" />
+      <span className="h-px flex-1 bg-[rgba(23,23,23,0.15)]" />
       <span className="text-[11px] font-bold uppercase tracking-wide text-[#9a958b]">{isPl ? "lub" : "or"}</span>
-      <span className="h-px flex-1 bg-[#171717]/15" />
+      <span className="h-px flex-1 bg-[rgba(23,23,23,0.15)]" />
     </div>
   );
 }

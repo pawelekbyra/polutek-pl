@@ -291,25 +291,25 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
       <div className="relative z-10">
         <div className="mb-1 flex items-center gap-2">
           <Heart size={17} className="shrink-0 text-primary" />
-          <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+          <h4 className="m-0 text-[16px] font-bold ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
             <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, rgba(251,224,138,0.72) 55%, rgba(251,224,138,0.72) 94%, transparent 94%)" }}>
               {title}
             </span>
           </h4>
         </div>
-        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide text-[#6b665d]">{subtitle}</p>
-        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] text-[#3f3a33]">{bodyCopy}</p>
+        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide muted-text">{subtitle}</p>
+        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] body-text">{bodyCopy}</p>
 
-        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[#d8d0bd] pt-[10px] text-[12.5px]">
+        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed paper-border pt-[10px] text-[12.5px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? "flex items-start gap-[7px] italic text-[#6b665d]" : "flex items-start gap-[7px] text-[#171717]"}
+              className={bullet.soft ? "flex items-start gap-[7px] italic muted-text" : "flex items-start gap-[7px] ink-text"}
             >
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
               ) : (
-                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full ink-button text-[9px] font-bold text-[var(--najs-paper)]">✓</span>
               )}
               {bullet.text}
             </li>
@@ -367,26 +367,26 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             aria-describedby={showTermsError ? termsErrorId : undefined}
             className="mt-[2px] shrink-0"
           />
-          <span className="text-[11px] leading-[1.4] text-[#6b665d]">
+          <span className="text-[11px] leading-[1.4] muted-text">
             {isPl ? (
               <>
                 Akceptuję{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[#0f0f0f]">
+                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--najs-ink)]">
                   Regulamin
                 </button>{" "}
                 i{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[#0f0f0f]">
+                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--najs-ink)]">
                   Politykę Prywatności
                 </button>
               </>
             ) : (
               <>
                 I accept the{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[#0f0f0f]">
+                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--najs-ink)]">
                   Terms
                 </button>{" "}
                 and{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[#0f0f0f]">
+                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--najs-ink)]">
                   Privacy Policy
                 </button>
               </>

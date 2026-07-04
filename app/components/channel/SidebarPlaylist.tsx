@@ -173,16 +173,16 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-1 flex gap-[11px] overflow-hidden rounded-[13px] border p-[6px] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "group relative mb-1 flex gap-[11px] overflow-hidden paper-radius-card border p-[6px] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
             isCurrent
-              ? "border-[#d8d0bd]/90 bg-[#f8f3e7]/88 shadow-[0_1px_2px_rgba(23,23,23,0.04),0_8px_22px_rgba(23,23,23,0.045)]"
-              : "border-transparent hover:border-[#d8d0bd]/70 hover:bg-[#f1ead9]/58 hover:shadow-[0_1px_2px_rgba(23,23,23,0.035)]",
+              ? "paper-border paper-panel paper-shadow-soft"
+              : "border-transparent hover:border-[var(--najs-paper-line)] hover:bg-[rgba(241,234,217,0.86)] hover:shadow-[0_1px_2px_rgba(23,23,23,0.035)]",
           )}
         >
           {isCurrent && (
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+              className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--najs-blue)] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
             />
           )}
           <div className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb">
@@ -225,11 +225,11 @@ export function SidebarPlaylist({
                       className={cn(
                         "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full border px-[6px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.14em] pointer-events-none shadow-[0_2px_7px_rgba(0,0,0,0.24)]",
                         badge.variant === "public" &&
-                          "border-[#171717]/65 bg-[#f8f3e7] text-[#171717] shadow-[0_0_0_1px_rgba(248,243,231,0.65),0_2px_8px_rgba(23,23,23,0.24)]",
+                          "border-[#171717]/65 paper-surface ink-text shadow-[0_0_0_1px_rgba(248,243,231,0.65),0_2px_8px_rgba(23,23,23,0.24)]",
                         badge.variant === "unlocked" &&
-                          "border-[#2563eb]/35 bg-[#eff3fe] text-[#2563eb]",
+                          "border-[#2563eb]/35 blue-surface blue-text",
                         badge.variant === "locked" &&
-                          "border-[#171717]/25 bg-[#171717] text-[#f8f3e7]",
+                          "border-[#171717]/25 ink-button text-[var(--najs-paper)]",
                       )}
                     >
                       {badge.text}
@@ -240,7 +240,7 @@ export function SidebarPlaylist({
             </div>
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-start pt-[1px] gap-0 z-10 relative">
-            <h4 className="text-[14px] font-semibold text-[#0f0f0f] line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <h4 className="text-[14px] font-semibold ink-text line-clamp-2 leading-[1.25] mb-[5px] group-hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
               {displayTitle}
             </h4>
             <div className="text-[12px] text-muted-foreground flex flex-col mt-0">
@@ -329,7 +329,7 @@ export function SidebarPlaylist({
 
     if (fallbackItems.length === 0) {
       return (
-        <div className="p-8 text-center border-2 border-dashed border-neutral-100 rounded-2xl">
+        <div className="p-8 text-center border-2 border-dashed border-neutral-100 paper-radius-panel">
           <p className="text-sm text-neutral-500">
             {language === "pl"
               ? "Brak filmów do wyświetlenia."

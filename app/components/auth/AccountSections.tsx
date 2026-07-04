@@ -82,7 +82,7 @@ export function ProfileSection({ isPl }: { isPl: boolean }) {
           alt=""
           className="h-14 w-14 shrink-0 rounded-full border border-[#171717]/20 object-cover"
         />
-        <label className="cursor-pointer text-[13px] font-bold text-[#0f0f0f] underline hover:opacity-70">
+        <label className="cursor-pointer text-[13px] font-bold ink-text underline hover:opacity-70">
           {avatarLoading ? (isPl ? "Wgrywanie..." : "Uploading...") : (isPl ? "Zmień zdjęcie" : "Change photo")}
           <input type="file" accept="image/*" className="hidden" onChange={onAvatar} disabled={avatarLoading} />
         </label>
@@ -178,7 +178,7 @@ export function EmailSection({ isPl }: { isPl: boolean }) {
               </div>
               <div className="flex shrink-0 items-center gap-2 text-[12px]">
                 {!isPrimary && verified && (
-                  <button type="button" onClick={() => makePrimary(addr.id)} className="font-bold underline hover:text-[#0f0f0f]">
+                  <button type="button" onClick={() => makePrimary(addr.id)} className="font-bold underline hover:text-[var(--najs-ink)]">
                     {isPl ? "Ustaw główny" : "Make primary"}
                   </button>
                 )}
@@ -267,7 +267,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
           key={strategy}
           type="button"
           onClick={() => connect(strategy)}
-          className="relative flex h-[42px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] active:scale-[0.98]"
+          className="relative flex h-[42px] w-full items-center justify-center gap-2 text-[14px] font-bold ink-text active:scale-[0.98]"
         >
           <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#f1ead9" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
@@ -376,7 +376,7 @@ function Field({
         value={value}
         inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#171717]/25 bg-[#f8f3e7] px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
+        className="w-full rounded-lg border border-[#171717]/25 paper-surface px-3 py-2 text-[15px] ink-text outline-none transition-colors focus:border-[var(--najs-blue)]"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
       />
     </label>

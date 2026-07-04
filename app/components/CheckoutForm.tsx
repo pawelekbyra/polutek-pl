@@ -72,7 +72,7 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
       <button
         type="submit"
         disabled={isLoading || !stripe || !elements}
-        className="group relative w-full overflow-hidden rounded-2xl bg-[#171717] py-5 text-[13px] font-black uppercase tracking-[0.2em] text-[#f8f3e7] transition-all duration-500 hover:bg-[#171717]/90 hover:shadow-2xl hover:shadow-blue-500/20 disabled:opacity-50 active:scale-[0.98]"
+        className="group relative w-full overflow-hidden rounded-2xl ink-button py-5 text-[13px] font-black uppercase tracking-[0.2em] text-[var(--najs-paper)] transition-all duration-500 hover:bg-[rgba(23,23,23,0.9)] hover:shadow-2xl hover:shadow-blue-500/20 disabled:opacity-50 active:scale-[0.98]"
       >
         <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-600/0 transition-transform duration-1000 ease-in-out group-hover:translate-x-[100%]" />
 
@@ -91,7 +91,7 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
         </div>
       </button>
 
-      <p className="text-center text-[10px] font-medium uppercase tracking-widest text-[#6b665d]">
+      <p className="text-center text-[10px] font-medium uppercase tracking-widest muted-text">
         Secure SSL Encrypted Connection
       </p>
     </form>
