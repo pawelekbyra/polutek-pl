@@ -57,6 +57,8 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(sidebar).toContain("/?v=${video.slug || video.id}");
     expect(sidebar).toContain('aria-current={isCurrent ? "page" : undefined}');
     expect(sidebar).toContain('className="pointer-events-none"');
-    expect(sidebar).toContain("onMouseEnter={() => onVideoMouseEnter(video.id)}");
+    expect(sidebar).toContain("onMouseEnter={() => {");
+    expect(sidebar).toContain("onVideoMouseEnter(video.id);");
+    expect(sidebar).toContain("void preloader?.warmVideo(video.id");
   });
 });
