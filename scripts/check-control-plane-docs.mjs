@@ -41,14 +41,14 @@ if (checks.some((check) => !check.ok)) {
   process.exit(1);
 }
 
-// CLAUDE.md must keep its critical-invariants anchor sections.
+// CLAUDE.md must keep its current-state and critical-invariants anchor sections.
 const claude = read('CLAUDE.md');
 for (const needle of [
+  'Current State for Agents',
   'Critical Invariants',
   'PatronGrant',
   'fulfillPayment',
   'Never CDN-cache `/api/media-source`',
-  'What NOT To Do',
 ]) requireIncludes('CLAUDE.md', claude, needle);
 
 // AGENTS.md stays a pointer, not a resurrected process document.
