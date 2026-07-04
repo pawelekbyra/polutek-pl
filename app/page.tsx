@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import React from 'react';
 import Footer from './components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
-import { loadHomeContent } from '@/lib/modules/channel/application/home-content.loader';
+import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/modules/users/domain/payment-totals';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser } from '@clerk/nextjs/server';
@@ -16,7 +16,7 @@ import Navbar from './components/Navbar';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const content = await loadHomeContent();
+  const content = await getHomeContentCached();
   if (content.status !== 'ready') return { title: APP_NAME };
 
   const { creator, mainVideo } = content;
@@ -44,7 +44,7 @@ export default async function Home(props: { searchParams: Promise<{ v?: string, 
 
   const [authData, content, user] = await Promise.all([
     getSafeAuth(),
-    loadHomeContent(),
+    getHomeContentCached(),
     currentUser().catch((e) => {
       logger.error("[HOME_CURRENT_USER_ERROR]", e);
       return null;
