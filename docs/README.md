@@ -8,6 +8,19 @@ Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
 **Punkt wejścia dla agentów AI i deweloperów: [`CLAUDE.md`](../CLAUDE.md)**
 (stack, mapa modułów, krytyczne inwarianty, czego nie robić).
 
+## Stan obecny
+
+- Runtime jest po stabilizacji wokół `PatronGrant` jako jedynego źródła prawdy
+  dla patron access; legacy pola `User.isPatron`, `User.patronSince` i
+  `User.patronSource` zostały usunięte ze schematu.
+- Production launch nie jest certyfikowany samą dokumentacją ani zielonym CI;
+  wymaga owner/legal/operator evidence, manualnego smoke testu i finalnej
+  decyzji właściciela.
+- Wykonywalne zadania kodowe żyją w `tickets/ready/`. Zakres legal/operator/
+  evidence jest śledzony w GitHub issue #1269 i nie powinien być traktowany
+  jako gotowa kolejka implementacyjna bez osobnych, małych ticketów.
+- Historia prac żyje w git/PR/issue. Dokumenty żywe opisują stan obecny.
+
 ## Mapa dokumentacji
 
 | Co | Gdzie |
@@ -25,7 +38,7 @@ Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
 | Dowody produkcyjne przed launch | [`launch/production-evidence-runbook.md`](launch/production-evidence-runbook.md) |
 | Polityki produktowe (np. usuwanie konta) | [`policies/`](policies/) |
 | Aktualne audyty | [`audit/`](audit/) |
-| Otwarte zadania | [`tickets/ready/`](tickets/ready/) |
+| Otwarte zadania kodowe | [`tickets/ready/`](tickets/ready/) |
 | Archiwum (materiały historyczne) | [`archive/`](archive/) |
 
 ## Higiena dokumentacji
