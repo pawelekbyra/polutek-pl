@@ -7,7 +7,7 @@ import { createScopedLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { adminUserId, response } = await requireAdminForApi("ADMIN_DISPUTE_SYNC");
   if (response) return response;
 
@@ -15,8 +15,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const scopedLogger = createScopedLogger(requestId);
 
   try {
+    const { id } = await params;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! } });
-    const result = await adminDisputeSync({ paymentId: params.id }, ctx);
+    const result = await adminDisputeSync({ paymentId: id }, ctx);
 
     if (!result.ok) {
       return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode ?? 400 });
