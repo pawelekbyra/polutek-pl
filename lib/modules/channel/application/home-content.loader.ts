@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { PublicCreatorPageDTO, PublicVideoDTO } from "@/app/types/video";
 import { CreatorContentService } from "@/lib/modules/channel/infrastructure/creator-content.service";
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
@@ -89,3 +90,12 @@ export async function loadHomeContent(): Promise<HomeContent> {
     };
   }
 }
+
+export const getHomeContentCached = unstable_cache(
+  async () => loadHomeContent(),
+  ["home-content"],
+  {
+    revalidate: 60,
+    tags: ["home-content"],
+  },
+);
