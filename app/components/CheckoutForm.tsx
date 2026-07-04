@@ -72,15 +72,15 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
       <button
         type="submit"
         disabled={isLoading || !stripe || !elements}
-        className="group relative w-full bg-neutral-900 text-white py-5 rounded-2xl font-black text-[13px] tracking-[0.2em] uppercase transition-all duration-500 hover:bg-black hover:shadow-2xl hover:shadow-blue-500/20 disabled:opacity-50 active:scale-[0.98] overflow-hidden"
+        className="group relative w-full overflow-hidden rounded-2xl bg-[#171717] py-5 text-[13px] font-black uppercase tracking-[0.2em] text-[#f8f3e7] transition-all duration-500 hover:bg-[#171717]/90 hover:shadow-2xl hover:shadow-blue-500/20 disabled:opacity-50 active:scale-[0.98]"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+        <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-600/0 transition-transform duration-1000 ease-in-out group-hover:translate-x-[100%]" />
 
         <div className="relative flex items-center justify-center gap-3">
           {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
           ) : (
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
           )}
           <span>
             {isLoading
@@ -91,7 +91,7 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
         </div>
       </button>
 
-      <p className="text-[10px] text-neutral-400 text-center uppercase tracking-widest font-medium">
+      <p className="text-center text-[10px] font-medium uppercase tracking-widest text-[#6b665d]">
         Secure SSL Encrypted Connection
       </p>
     </form>
