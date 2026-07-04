@@ -81,33 +81,3 @@
     justify-content: flex-end;
   }
 }
-
-:global(#donations) {
-  margin-top: 8px !important;
-  margin-bottom: 12px !important;
-  padding: 14px !important;
-  border-radius: 20px;
-}
-
-:global(#donations h4) {
-  font-size: 15px !important;
-  line-height: 1.15;
-}
-
-:global(#donations p:first-of-type) {
-  margin-bottom: 8px !important;
-  color: var(--najs-muted) !important;
-  font-size: 10.5px !important;
-  letter-spacing: 0.12em !important;
-}
-
-:global(#donations ul) {
-  margin-bottom: 12px !important;
-  gap: 6px !important;
-  border-top-style: dashed !important;
-}
-
-:global(#donations li) {
-  font-size: 12px !important;
-  line-height: 1.35 !important;
-}
