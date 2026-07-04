@@ -45,8 +45,8 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg overflow-hidden border-none bg-transparent p-0 shadow-none">
-        <div className="relative p-6 sm:p-7" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <Frame radius={18} seed={17} stroke={INK} strokeWidth={1.4} fill="rgba(248,243,231,.97)" />
+        <div className="relative p-6 sm:p-7">
+          <Frame radius={18} seed={17} stroke={INK} strokeWidth={1.4} fill="#f1ead9" />
           <div className="relative z-10">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black tracking-tight text-[#0f0f0f]">

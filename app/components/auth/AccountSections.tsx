@@ -269,7 +269,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
           onClick={() => connect(strategy)}
           className="relative flex h-[42px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] active:scale-[0.98]"
         >
-          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.97)" />
+          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#f1ead9" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
           <span className="relative z-10">{isPl ? `Połącz z ${label}` : `Connect ${label}`}</span>
         </button>
