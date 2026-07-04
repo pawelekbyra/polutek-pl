@@ -48,7 +48,10 @@ export default function ChannelHome({
 
   useEffect(() => {
     setMounted(true);
-    if (selectedVideo?.id) window.scrollTo({ top: 0, behavior: "smooth" });
+    if (selectedVideo?.id) {
+      setActiveTab("comments");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, [selectedVideo?.id]);
 
   if (!selectedVideo)
@@ -104,6 +107,10 @@ export default function ChannelHome({
     language,
     mounted,
     onVideoMouseEnter: prefetchComments,
+    onVideoSelect: () => {
+      setActiveTab("comments");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
   };
 
   return (

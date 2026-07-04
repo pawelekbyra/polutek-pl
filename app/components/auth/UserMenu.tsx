@@ -77,7 +77,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
           className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-60 p-2 text-[#171717]"
           style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
         >
-          <Frame radius={14} seed={23} stroke={INK} strokeWidth={1.3} fill="#ffffff" showShadow />
+          <Frame radius={14} seed={23} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" showShadow />
           <div className="relative z-10">
             <div className="border-b border-[#171717]/10 px-2 pb-2 pt-1">
               <p className="truncate text-[14px] font-bold">{displayName}</p>
@@ -115,7 +115,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
                 setMenuOpen(false);
                 void signOut();
               }}
-              className="mt-1 w-full rounded-lg border-t border-[#171717]/10 px-2 py-2 text-left text-[14px] font-semibold text-red-600 hover:bg-red-50"
+              className="mt-1 w-full rounded-lg border-t border-[#171717]/10 px-2 py-2 text-left text-[14px] font-semibold text-red-600 hover:bg-red-100/70"
             >
               {isPl ? "Wyloguj się" : "Sign out"}
             </button>

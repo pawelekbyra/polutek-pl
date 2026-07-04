@@ -49,14 +49,14 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("PROGRESS_PLAYED_COLOR");
     expect(player).not.toContain("remote.seeking(clampedTime");
     expect(player).toContain("event.stopPropagation()");
-    expect(player).toContain("bg-white/85");
-    expect(player).toContain("group-hover/tslider:h-[5px]");
+    expect(player).toContain("bg-[#2563eb]");
+    expect(player).toContain("group-hover/slider:h-[6px]");
     expect(player).not.toContain("group-data-[active]/slider:h-2.5");
     expect(player).not.toContain("before:-inset-3");
     expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
     // Compact, YouTube-sized control buttons in a tight row under the bar.
-    expect(player).toContain("grid h-8 w-8 shrink-0 place-items-center");
-    expect(player).toContain("sm:h-9 sm:w-9");
+    expect(player).toContain("grid h-9 w-9 shrink-0 place-items-center");
+    expect(player).toContain("sm:h-10 sm:w-10");
     expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');
     expect(player).toContain('aria-label="Wycisz / włącz dźwięk"');
     expect(player).toContain('aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}');
