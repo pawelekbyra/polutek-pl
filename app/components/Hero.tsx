@@ -272,8 +272,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           </div>
         </div>
 
-        {/* DESCRIPTION BOX — płaski papierowy panel (metadane), bez rysowanej ramki */}
-        <div className="mt-[16px] rounded-xl bg-[#f1ead9] p-[14px] px-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        {/* DESCRIPTION BOX — neutralny papierowy panel (metadane), nadal bez rysowanej ramki */}
+        <div
+          className="mt-[16px] cursor-pointer rounded-2xl border border-[#d8d0bd]/85 bg-[#f8f3e7]/80 p-[14px] px-4 shadow-[0_1px_2px_rgba(23,23,23,0.04),0_8px_22px_rgba(23,23,23,0.045)] transition-colors hover:bg-[#faf6ed]/90"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
            <div>
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
                 <span className="font-sans text-[13.5px] font-bold not-italic text-[#0f0f0f]">
