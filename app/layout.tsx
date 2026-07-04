@@ -3,6 +3,7 @@ import ClerkLocalizationProvider from "@/app/components/ClerkLocalizationProvide
 import { Suspense } from 'react';
 import { jakarta, outfit, spaceGrotesk, bebasNeue, kalam, patrickHand, caveat } from "./fonts";
 import "./globals.css";
+import "./vidstack-player.css";
 
 import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
