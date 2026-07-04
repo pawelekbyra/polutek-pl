@@ -114,13 +114,13 @@ export default function ChannelVideoCard({
             {badge && (
               <div
                 className={cn(
-                  "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full border px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] shadow-[0_1px_5px_rgba(23,23,23,0.16)] backdrop-blur-[2px] pointer-events-none",
+                  "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full border px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] shadow-[0_2px_7px_rgba(0,0,0,0.24)] pointer-events-none",
                   badge.variant === "public" &&
-                    "border-[#d8d0bd]/85 bg-[#f8f3e7]/92 text-[#171717]",
+                    "border-[#171717]/20 bg-[#f8f3e7] text-[#171717]",
                   badge.variant === "unlocked" &&
-                    "border-[#2563eb]/30 bg-[#f8f3e7]/92 text-[#2563eb]",
+                    "border-[#2563eb]/35 bg-[#eff3fe] text-[#2563eb]",
                   badge.variant === "locked" &&
-                    "border-[#171717]/25 bg-[#171717]/88 text-[#f8f3e7]",
+                    "border-[#171717]/25 bg-[#171717] text-[#f8f3e7]",
                 )}
               >
                 {badge.text}
