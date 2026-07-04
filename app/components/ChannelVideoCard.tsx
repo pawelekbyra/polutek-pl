@@ -116,7 +116,7 @@ export default function ChannelVideoCard({
                 className={cn(
                   "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full border px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] shadow-[0_2px_7px_rgba(0,0,0,0.24)] pointer-events-none",
                   badge.variant === "public" &&
-                    "border-[#171717]/20 bg-[#f8f3e7] text-[#171717]",
+                    "border-[#171717]/65 bg-[#f8f3e7] text-[#171717] shadow-[0_0_0_1px_rgba(248,243,231,0.65),0_2px_8px_rgba(23,23,23,0.24)]",
                   badge.variant === "unlocked" &&
                     "border-[#2563eb]/35 bg-[#eff3fe] text-[#2563eb]",
                   badge.variant === "locked" &&
