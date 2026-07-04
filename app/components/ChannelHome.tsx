@@ -21,7 +21,7 @@ const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
 
 function CommentsShellSkeleton() {
   return (
-    <div className="py-10 space-y-4" role="status" aria-live="polite" aria-label="Ładowanie komentarzy">
+    <div className="py-10 space-y-4" role="status" aria-live="polite" aria-label="Loading comments">
       <div className="flex items-center justify-between gap-3">
         <div className="h-4 w-32 rounded-full bg-[#d8d0bd]/70 motion-reduce:animate-none animate-pulse" />
         <div className="h-4 w-24 rounded-full bg-[#d8d0bd]/60 motion-reduce:animate-none animate-pulse" />
