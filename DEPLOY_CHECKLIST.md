@@ -1,5 +1,9 @@
 # Deploy checklist
 
+This checklist is for release/deploy verification. Passing it does **not** by itself
+certify public launch: legal/operator/evidence work and the final owner launch
+decision are tracked separately in GitHub issue #1269.
+
 ## Build
 
 - [ ] Node runtime is 22.x (`.nvmrc` / `package.json#engines`; Vercel and CI must use the same major)
@@ -9,21 +13,25 @@
 - [ ] `npx prisma generate`
 - [ ] `npm run quality:strict-escapes`
 - [ ] `npm run quality:hotspots`
-- [ ] `npm run typecheck`
+- [ ] `npm run quality:architecture-boundaries`
+- [ ] `npx tsc -p tsconfig.typecheck.json --noEmit`
 - [ ] `npm test -- --run`
 - [ ] `npm run lint`
 - [ ] `npm run build`
 
 ## Release candidate status
-- [ ] Documentation updated (`BETA_RELEASE_CHECKLIST.md`, `KNOWN_LIMITATIONS.md`)
-- [ ] Code quality gates pass (`strict-escapes`, `hotspots`)
+
+- [ ] Documentation updated (`README.md`, `CLAUDE.md`, `docs/README.md`, `KNOWN_LIMITATIONS.md`, active ticket files)
+- [ ] GitHub issues reconciled: stale issues closed or updated, active work points to current files/code
+- [ ] Code quality gates pass (`strict-escapes`, `hotspots`, `architecture-boundaries`)
 - [ ] Regression tests for login/comments/subscriptions pass
+- [ ] Launch/legal/operator evidence items are tracked in #1269 or in focused implementation tickets spawned from it
 
 ## Review guardrails
 
 - [ ] No new `@ts-ignore` or `@ts-nocheck` comments in production source files. If TypeScript cannot model an edge case, narrow types explicitly or document the exception outside production code.
 - [ ] No new unjustified `any` escape hatches in production source files. Use `unknown`, generated Prisma types, DTOs, or local type guards instead.
-- [ ] `npm run quality:strict-escapes` and `npm run quality:hotspots` pass before review/merge.
+- [ ] `npm run quality:strict-escapes`, `npm run quality:hotspots`, and `npm run quality:architecture-boundaries` pass before review/merge.
 
 ## Required env variables
 
@@ -43,7 +51,7 @@
 - [ ] writable rate-limit Redis/KV pair: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` + `KV_REST_API_TOKEN`
 - [ ] exact media host allowlist: `MEDIA_BUCKET_HOST`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, or `ALLOWED_MEDIA_HOSTS`
 - [ ] Production media security: confirm direct files and HLS/DASH manifest URLs load only from exact allowed media hosts.
-- [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts ("lock not acquired") and verify that retries are succeeding correctly.
+- [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts (`lock not acquired`) and verify that retries are succeeding correctly.
 - [ ] `HEALTHCHECK_TOKEN`
 
 ## Konfiguracja webhooka Clerk (wymagana dla emaili)
@@ -63,23 +71,27 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 
 - [ ] `npx prisma generate`
 - [ ] dev: `npx prisma db push`
-- [ ] production: `npm run predeploy:prod` (generates client, deploys migrations, and runs `db:smoke`)
+- [ ] production: migrations are run by the `Production DB Migrations` GitHub Actions workflow from the `production` environment, not by preview builds
+- [ ] production smoke: `npm run db:smoke` against the production database after deploy
 - [ ] seed if database is empty: `npx prisma db seed`
 
 ## Content
 
 - [ ] At least one approved creator exists; production must not depend on `INITIAL_VIDEOS`/`DEFAULT_CREATOR` demo fallback data
 - [ ] One video has `isMainFeatured=true`
-- [ ] Public video plays through `/api/media/:videoId`
+- [ ] Public video plays through the current playback path
 - [ ] Patron video is blocked for non-patron users
 - [ ] Patron video plays for patron users
+- [ ] Public legal/privacy/cookie/refund/support copy has owner/legal approval before launch traffic is invited
 
 ## Payments
 
 - [ ] Stripe webhook endpoint configured
 - [ ] Test payment creates/updates Payment
-- [ ] Qualifying donation grants patron
+- [ ] Qualifying donation grants patron through `fulfillPayment()` and creates/keeps the canonical `PatronGrant`
 - [ ] Failed payment does not grant patron
+- [ ] Full refund or lost dispute revokes/suspends Patron access according to the active policy
+- [ ] Below-threshold payment does not create Patron access
 
 ## E2E staging configuration
 
@@ -105,10 +117,12 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 - [ ] Patron without subscription still can access Patron-only videos
 - [ ] Regular logged-in user can comment on a public/logged-in video but cannot comment on a Patron-only video.
 - [ ] Guest checkout/create-intent requests are rejected; logged-in Stripe test-mode success creates `Payment` and qualifying Patron access.
-- [ ] Full refund or lost dispute revokes Patron access (verified via `recalculateUserPatronStatus`).
+- [ ] Full refund or lost dispute revokes Patron access (verified via `recalculateUserPatronStatus` / patron read model).
 - [ ] Webhook idempotency protects against duplicate Stripe events.
 - [ ] Admin page is blocked for non-admin
 - [ ] Admin can manage videos
+- [ ] Admin can diagnose paid-but-locked, failed webhook, access decision, and provider failure without direct DB edits
+- [ ] Public unsubscribe works for logged-out recipients when using a signed token
 
 ## Vercel production migration checklist
 
@@ -116,18 +130,14 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 - [ ] Before or alongside each production deploy that includes Prisma migrations, manually run the GitHub Actions workflow `Production DB Migrations` from the `production` environment. The workflow runs `npm ci`, `npx prisma migrate deploy`, and `npx prisma generate` against the production database.
 - [ ] Confirm GitHub Actions production secrets `DATABASE_URL` and `DATABASE_URL_UNPOOLED` point to the same Postgres/Neon database used by production traffic.
 - [ ] Do not run production migrations from Vercel preview deployments; preview builds must not mutate the production database.
-- [ ] If Vercel reports `P3009` for `20260603140000_add_video_presentation_columns`, inspect the failed row and resolve it only after confirming the two columns exist or after rolling back the failed attempt:
-  ```bash
-  npx prisma migrate resolve --rolled-back 20260603140000_add_video_presentation_columns
-  npm run vercel-build
-  ```
+- [ ] If Vercel reports `P3009` for an old migration, inspect the failed row and resolve it only after confirming the schema state or after rolling back the failed attempt.
 - [ ] Confirm recent migrations on the production database:
   ```sql
   SELECT migration_name, finished_at
   FROM "_prisma_migrations"
   ORDER BY finished_at DESC;
   ```
-- [ ] Confirm the migration adding `User.patronSource`, `Video.titleEn`, and `Video.descriptionEn` is listed with a non-null `finished_at`.
+- [ ] Confirm the migration `20260630000000_remove_legacy_user_patron_cache` is listed with a non-null `finished_at`.
 - [ ] Run one of the production preflight options before deploy:
   ```bash
   npm run predeploy:prod
@@ -140,12 +150,15 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 - [ ] After deploy: `/` works without `[HOME_CONTENT_LOAD_ERROR]`.
 - [ ] After deploy: `/admin` works as admin.
 - [ ] After deploy: `/admin/videos` works.
-- [ ] After deploy: Vercel logs contain no Prisma `P2022`, especially no missing `User.patronSource` or `Video.titleEn` columns.
+- [ ] After deploy: Vercel logs contain no Prisma missing-column errors for current schema fields.
 - [ ] After deploy: `npm run db:smoke` passes against the production database.
 
 ## CI/CD
 
-- [ ] GitHub Actions `quality` job passes.
+- [ ] GitHub Actions `environment validation` passes.
+- [ ] GitHub Actions `Prisma validation/generation` passes.
+- [ ] GitHub Actions `strict escapes`, `hotspots`, `architecture boundaries`, and `control-plane docs` pass.
+- [ ] GitHub Actions `typecheck`, `tests/coverage`, `lint`, and `build` pass.
 - [ ] GitHub Actions `integration-postgres` job passes with Postgres service, migrations, and `db:smoke`.
-- [ ] GitHub Actions `security` job has been reviewed; `npm audit --audit-level=high` is currently non-blocking.
+- [ ] GitHub Actions `security` job has been reviewed; `npm audit --audit-level=high` is currently non-blocking unless policy changes in `docs/SECURITY_GATES.md`.
 - [ ] Secret scanning with push protection and CodeQL/SAST evidence is attached or linked according to `docs/SECURITY_GATES.md`.
