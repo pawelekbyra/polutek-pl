@@ -16,6 +16,16 @@ Do not infer launch readiness from green CI or documentation alone. Public launc
 
 The executable coding queue is `docs/tickets/ready/`. If a GitHub issue or doc says work is still open but the code/schema/docs already prove it is done, update or close that issue instead of re-implementing old work.
 
+Current UI/runtime baseline as of the 2026-07-04 reconciliation:
+
+- Next.js 15 App Router is the framework target.
+- Clerk remains the identity backend, but public auth/account UI is custom/headless (`AuthModalProvider`, `AuthModal`, `UserMenu`, `AccountModal`) rather than default Clerk widgets.
+- Public entry is a progressive app shell. Do not reintroduce a blocking splash/ENTER gate.
+- Video switching uses a local CSS fade/slide around the player area. Do not reintroduce fullscreen iris/wipe transitions.
+- `AppPreloadProvider` warms playback plans, posters and comments on intent. Keep this in-memory; do not add persistent service-worker caching without a cache-safety design.
+- `InstallAppMenu` provides install/add-to-home-screen affordances where the browser/platform supports them.
+- Public UI uses the paper/ink/rare-blue visual token system in `app/globals.css`.
+
 ---
 
 ## 1. What This Product Is
@@ -35,48 +45,50 @@ Polutek.pl is a **single-channel VOD platform** for one creator. It is not a mar
 |---|---|
 | Framework | Next.js 15 App Router (deployed on Vercel) |
 | Database | Neon PostgreSQL via Prisma ORM |
-| Auth/Identity | Clerk (identity only — NOT patron authority) |
+| Auth/Identity | Clerk identity backend with custom/headless app UI — NOT patron authority |
 | Payments | Stripe (webhooks → fulfillPayment → PatronGrant) |
-| Video delivery | Cloudflare Stream (primary) |
+| Video delivery | Cloudflare Stream primary; Mux/YouTube/Vimeo foundation exists where supported |
 | Email | Resend |
-| Storage | Vercel Blob (legacy thumbnails/media), Cloudflare R2 (planned/current migration target) |
+| Storage | Vercel Blob legacy thumbnails/media; Cloudflare R2 planned/current migration target |
 | Rate limiting | Upstash Redis / Vercel KV |
-| Crons | Vercel Crons (`vercel.json` `"crons"` array) |
-| UI | Tailwind CSS + shadcn/ui components in `components/ui/` |
-| Tests | Vitest |
+| Crons | Vercel Crons (`vercel.json` `crons` array) |
+| UI | Tailwind CSS + shadcn/ui + paper/ink token utilities in `app/globals.css` |
+| Tests | Vitest; Playwright scaffolding for E2E smoke where browsers/env are available |
 
 ---
 
 ## 3. Module Map
 
-```
+```txt
 lib/modules/
   access/           # Video access policy (checkVideoAccess, PlaybackPlan)
   audit/            # Audit event recording
+  channel/          # Home/channel content loading
   email/            # Email repository, broadcast use cases, Resend adapter
   media/            # Thumbnail resolution, storage (S3/R2 presigned URLs), thumbnail HTTP response
   patron/
     application/    # grant-patron, revoke-patron, recalculate-patron-status use cases
-    domain/         # patron.dto, patron.errors, patron.policy
+    domain/         # patron DTOs, errors, policy
     infrastructure/ # PatronRepository (listActiveGrants, createGrant, revokeActiveGrants…)
   payments/         # Payment recording, fulfillPayment (canonical replay-safe path)
   playback/
     application/    # playback.service — resolves playable sources for a video
-    domain/         # playback.dto, playback-policy, primary-playable-asset
-    infrastructure/ # cloudflare-signed-playback-token.service
+    domain/         # playback DTOs, playback policy, primary playable asset
+    infrastructure/ # cloudflare signed playback token service
   users/
-    application/    # get-admin-user-details, patron-read-model, sync-user use cases
+    application/    # admin user details, patron read model, sync-user use cases
     domain/         # user DTOs, errors, policies
     infrastructure/ # UserRepository
-  shared/           # AppContext, Actor, result types (ok/failure), db helpers
+  shared/           # AppContext, Actor, result types, db helpers
 
 app/                # Next.js App Router pages and API routes
+app/components/     # Public app shell, player, auth UI, comments, preload and channel UI
 app/api/            # API routes
 app/admin/          # Admin panel pages and components
 app/api/admin/      # Admin API routes
 app/api/cron/       # Vercel Cron handlers (auth via CRON_SECRET bearer token)
 app/api/media/      # Media proxy — only safe playback path for blob/legacy video
-app/api/webhooks/   # Stripe and Cloudflare webhook handlers
+app/api/webhooks/   # Stripe, Clerk, Resend, Cloudflare/Mux webhook handlers
 
 prisma/
   schema.prisma     # Single source of schema truth
@@ -98,10 +110,11 @@ patronGrants: { some: { revokedAt: null } }
 - `User.isPatron`, `User.patronSince`, `User.patronSource` fields **do not exist** (removed in migration `20260630000000_remove_legacy_user_patron_cache`).
 - Never write patron status to the `User` table. Never read it from there.
 - `recalculatePatronStatus()` is a pure read — it computes status from active grants, no writes.
+- DTO/UI fields named `isPatron` may exist only as derived/decorative values computed from grants or admin role.
 
 ### 4.2 Patron Grant Lifecycle
 
-```
+```txt
 Stripe webhook (signature verified)
   → record StripeEvent
   → record Payment (financial fact)
@@ -112,15 +125,16 @@ Stripe webhook (signature verified)
       → sends confirmation email
 ```
 
-`fulfillPayment()` in `lib/modules/payments/` is idempotent and replay-safe. Always use it for payment fulfillment, never issue `updateMany({ status: 'SUCCEEDED' })` manually.
+`fulfillPayment()` in `lib/modules/payments/` is idempotent and replay-safe. Always use it for payment fulfillment, never issue manual `updateMany({ status: 'SUCCEEDED' })` shortcuts.
 
 ### 4.3 Video Playback Security
 
 - **Never expose `videoUrl` to the public frontend.** Use `PublicVideoDTO` for all public-facing data.
 - `/api/media/[...path]` is the only public playback path for blob/legacy videos.
-- `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder. Never mount a player, fetch streams, request tokens, or log views for a denied plan.
+- `PlaybackPlan` from the access module gates all player mounting: `READY` → mount player, any denied state → locked placeholder.
+- Never mount a player, fetch streams, request tokens, resolve provider playback, or log views for a denied plan.
 - `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/modules/playback/domain/playback-policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
-- **Never CDN-cache `/api/media-source` responses** (no `s-maxage`/`public` Cache-Control). The response carries a per-viewer `playbackSessionId` bound to the requester's IP/UA fingerprint; a shared cached copy hands one viewer's session to others and all their playback events fail with 403.
+- **Never CDN-cache `/api/media-source` responses** (no `s-maxage`/`public` Cache-Control). The response carries a per-viewer `playbackSessionId` bound to the requester fingerprint.
 
 ### 4.4 Access Checks
 
@@ -128,7 +142,7 @@ Access is checked via `checkVideoAccess()` in `lib/modules/access/`. It reads `P
 
 ### 4.5 Clerk Is Identity Only
 
-Clerk provides user identity (userId, email, name). It does not control patron access. Clerk metadata is a sync cache — the database is always authoritative.
+Clerk provides user identity (userId, email, name). It does not control patron access. Clerk metadata is a sync cache/UI hint — the database is always authoritative.
 
 ### 4.6 Email Audience
 
@@ -138,47 +152,60 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 
 - `Video.subtitleUrlPl` and `Video.subtitleUrlEn` are optional URL fields for WebVTT subtitle files.
 - The playback service builds `textTracks` in the `PlaybackPlan.player` from these fields automatically.
-- Set them via the admin video edit form or API. The `VideoPlayer` component already consumes `textTracks`.
+- Set them via the admin video create/edit form or API. The `VideoPlayer` component consumes `textTracks`.
+- Managed subtitle upload/validation/hosting is not complete; see issue #1219 before expanding this.
 
 ### 4.8 Thumbnail Display Path
 
-- All video thumbnails are served through `/api/videos/[id]/thumbnail`, which streams the blob server-side (private Vercel Blob supported) and enforces its own policy: published videos are public, drafts are admin-only.
-- The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`. The Next image optimizer (`/_next/image`) fetches URLs without auth cookies, so gating the proxy behind Clerk breaks every thumbnail on the site.
-- Admin components render this proxy with `unoptimized` on `next/image` (the browser then sends admin cookies directly, so draft thumbnails stay visible in the panel).
+- All video thumbnails are served through `/api/videos/[id]/thumbnail`, which streams the blob/server-side source and enforces its own policy: published videos are public, drafts are admin-only.
+- The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`.
+- Admin components render this proxy with `unoptimized` on `next/image` so draft thumbnails stay visible in the panel with admin cookies.
 - `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming — never a relative proxy path.
-- Cache policy: published-video thumbnails are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL` — a CDN-cached draft thumbnail would leak to anonymous visitors. External origins' Cache-Control headers are ignored on purpose.
-- Planned: thumbnail storage moves from Vercel Blob to Cloudflare R2 (free egress) — see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
-- The default-thumbnail preview in `/admin/settings` uses `/api/admin/settings/media/default-video-thumbnail/proxy` (admin-only streaming route).
+- Published-video thumbnails are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL`.
+- Planned: custom thumbnail storage moves from Vercel Blob to Cloudflare R2 (free egress) — see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
 
 ### 4.9 Comment Reactions
 
 - `CommentReactionType` enum is `LIKE | DISLIKE` (one reaction per user per comment via `@@unique([userId, commentId])`).
 - Dislike has **no public counter** — only `likesCount` is aggregated; deleting/replacing a DISLIKE must never touch `likesCount`.
-- `toggleCommentLike` use case handles `LIKE`/`DISLIKE`/`UNLIKE` (clear). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }` (no body = LIKE), `DELETE` clears any reaction.
+- `toggleCommentLike` handles `LIKE`/`DISLIKE`/`UNLIKE` (clear). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }`, `DELETE` clears any reaction.
 
 ### 4.10 Donation/Tip Widget — Two Copy Variants, One Payment Path
 
-`app/components/channel/DonationBox.tsx` is the single tip widget (rendered via `SidebarPlaylist.tsx`'s `PatronBox`), but it renders **two different copy/threshold variants** depending on the `viewerIsPatron` prop (already computed in `ChannelHome.tsx` from `userProfile?.isPatronDecorative` / `role === 'ADMIN'`, threaded through `SidebarPlaylist`):
+`app/components/channel/DonationBox.tsx` is the single tip widget rendered by `SidebarPlaylist.tsx`'s `PatronBox`. It renders two copy/threshold variants depending on `viewerIsPatron`, computed from `userProfile?.isPatronDecorative` / admin role and threaded through `SidebarPlaylist`.
 
-- **Non-patron viewer** (`viewerIsPatron` false/undefined): copy promises that a successful tip grants lifetime Thank You Zone access. The amount is therefore **fixed** to the patron threshold — a non-patron can never submit an amount that would take payment without crossing the patron eligibility threshold, or the "this grants access" copy becomes false. A currency switcher lets them pick the currency (each currency has its own admin-configured threshold, not a conversion).
-- **Existing patron** (`viewerIsPatron` true): copy explicitly states access is already secured and this tip unlocks nothing new — free-form additional support. The input minimum is the **patron-box minimum** (`/api/payment-settings` → `patronBoxMinimums`), a value independent of the patron threshold.
+- **Non-patron viewer** (`viewerIsPatron` false/undefined): copy promises that a successful tip grants lifetime Thank You Zone access. The amount is fixed to the patron threshold.
+- **Existing patron** (`viewerIsPatron` true): copy states access is already secured and this tip unlocks nothing new — free-form additional support. The minimum is `patronBoxMinimums` from `/api/payment-settings`.
+- `PatronBox` only renders for **signed-in** users. The render gate uses Clerk's live client auth (`useAuth().isSignedIn`) in `SidebarPlaylist.tsx`, not the server-threaded `userProfile` prop.
 
-`PatronBox` only renders for **signed-in** users (gated on `userProfile` in `SidebarPlaylist.tsx`) — logged-out visitors never see the tip widget.
+Three distinct per-currency minimums must not be conflated:
 
-Three distinct per-currency minimums are involved and must not be conflated (all admin-editable at `/admin/payments`, stored on `PaymentCurrencySetting`):
-- **Checkout floor** — `minAmountMinor` / `getPaymentCurrencyLimits()` / `MIN_PAYMENT_BY_CURRENCY`, the smallest amount Stripe/the checkout will accept at all.
-- **Patron threshold** — `patronThresholdMinor`, resolved by `resolvePatronThresholdMinor()` (admin value → `PATRON_MIN_TIP_AMOUNT` env fallback → floor). The amount a tip must reach to grant a `PatronGrant`; also the fixed non-patron amount. `fulfillPayment()` uses `getPaymentCurrencyLimits()[currency].patronThresholdMinor` so UI and granting stay in lockstep.
-- **Patron-box minimum** — `patronBoxMinMinor`, the smallest free-form amount an existing patron may tip. Falls back to the checkout floor when unset.
+- **Checkout floor** — `minAmountMinor` / `getPaymentCurrencyLimits()` / `MIN_PAYMENT_BY_CURRENCY`.
+- **Patron threshold** — `patronThresholdMinor`, resolved by `resolvePatronThresholdMinor()`.
+- **Patron-box minimum** — `patronBoxMinMinor`, the smallest free-form amount an existing patron may tip.
 
-`GET /api/payment-settings` returns all three (`limits`, `patronThresholds`, `patronBoxMinimums`) so the client can compute the correct minimum for each variant without duplicating the threshold-resolution logic.
-
-Stripe Elements render in the viewer's language (`locale` on `<Elements>` in `CheckoutModal.tsx`). The left column of `app/components/playlist/CheckoutModal.tsx` (desktop payment modal) carries matching copy for the same reason — keep it in sync with `DonationBox.tsx` when either changes.
+`GET /api/payment-settings` returns all three (`limits`, `patronThresholds`, `patronBoxMinimums`). Stripe Elements render in the viewer's language; keep `DonationBox.tsx` and `CheckoutModal.tsx` copy synchronized.
 
 ### 4.11 Language Resolution (pl/en)
 
-- Initial UI language is resolved **server-side** in `lib/i18n/server-language.ts` (`resolveInitialLanguage()`), called from `app/layout.tsx` and threaded through `Providers` → `LanguageProvider`. Priority: signed-in user's DB `User.language` → `app-language` cookie → Vercel geolocation header (`x-vercel-ip-country`) → `Accept-Language` → `en`. This makes the first paint correct with no hydration flash.
-- `LanguageContext.tsx` seeds state from that server value (never a lazy localStorage initializer) and mirrors every change to **both** `localStorage` and a one-year `app-language` cookie, so a logged-out choice survives reloads and stays consistent with SSR.
-- Logged-in changes additionally persist to the database via `PATCH /api/user/language` (authoritative on next load) and to Clerk metadata. Transactional and broadcast emails send in the recipient's stored `User.language`.
+- Initial UI language is resolved server-side in `lib/i18n/server-language.ts` (`resolveInitialLanguage()`), called from `app/layout.tsx` and threaded through `Providers` → `LanguageProvider`.
+- Priority: signed-in user's DB `User.language` → `app-language` cookie → Vercel geolocation header → `Accept-Language` → `en`.
+- `LanguageContext.tsx` mirrors every change to both `localStorage` and a one-year `app-language` cookie.
+- Logged-in changes additionally persist to DB via `PATCH /api/user/language` and to Clerk metadata. Transactional/broadcast emails send in stored `User.language`.
+
+### 4.12 Auth UI
+
+- Clerk remains the backend and session authority.
+- Public auth/account UI is custom/headless: `AuthModalProvider`, `AuthModal`, `UserMenu`, `AccountModal`, and related OAuth helpers.
+- Do not replace the current custom UI with default Clerk widgets unless owner explicitly asks for a rollback.
+- Do not implement a custom auth backend; use Clerk headless APIs/hooks.
+
+### 4.13 Public App Shell, Preload and Install UX
+
+- The root public experience should render app shell immediately; no blocking splash/ENTER gate.
+- `AppPreloadProvider` is the current in-memory preload layer for playback plans, posters and comments.
+- `ServiceWorkerCleanup` disables persistent service-worker interception/caches. Do not add offline/persistent caching for auth, payments, media-source, playback, or user-specific data without a focused design.
+- `InstallAppMenu` handles add-to-home-screen/install affordances, including iOS instructions.
 
 ---
 
@@ -203,11 +230,9 @@ Located in `app/admin/`. Key areas:
 
 `AdminLayoutShell` wraps all admin pages. `AdminNavigation` provides breadcrumb back-navigation.
 
-### Default Thumbnail Resolution
+Default thumbnail fallback priority:
 
-`lib/modules/media/application/default-thumbnail.service.ts` resolves the fallback thumbnail with this priority:
-
-1. `Creator.defaultThumbnailUrl` — URL field set via `/admin/channel`. Direct URL, no proxy.
+1. `Creator.defaultThumbnailUrl` — URL field set via `/admin/channel`.
 2. `AppSetting` key `default_video_thumbnail` — Vercel Blob URL set via `/admin/settings` file upload.
 3. `null` — no fallback.
 
@@ -215,9 +240,9 @@ Located in `app/admin/`. Key areas:
 
 ## 6. Cron Jobs
 
-Registered in `vercel.json` under `"crons"`. All cron routes live in `app/api/cron/`. Auth via `Authorization: Bearer <CRON_SECRET>` header.
+Registered in `vercel.json` under `crons`. All cron routes live in `app/api/cron/`. Auth via `Authorization: Bearer <CRON_SECRET>` header.
 
-**Uwaga:** Cron `stripe-reconciliation` został usunięty z `vercel.json` ponieważ konto Hobby na Vercel nie obsługuje harmonogramów częstszych niż raz dziennie (wyrażenie `*/15 * * * *` blokuje deployment). Trasa API `/api/cron/stripe-reconciliation` nadal istnieje i działa — przy upgrade na plan Pro wystarczy dodać poniższy wpis z powrotem do `vercel.json`:
+**Uwaga:** Cron `stripe-reconciliation` został usunięty z `vercel.json`, ponieważ konto Hobby na Vercel nie obsługuje harmonogramów częstszych niż raz dziennie. Trasa API `/api/cron/stripe-reconciliation` nadal istnieje i działa — przy upgrade na plan Pro wystarczy dodać:
 
 ```json
 { "path": "/api/cron/stripe-reconciliation", "schedule": "*/15 * * * *" }
@@ -227,7 +252,7 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 
 | Route | Schedule (Pro) | Purpose |
 |---|---|---|
-| `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers PENDING payments stuck 15min–7d by re-running `fulfillPayment()` or marking as FAILED |
+| `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
 
 ---
 
@@ -235,21 +260,31 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 
 | File | Role |
 |---|---|
-| `lib/modules/patron/application/grant-patron.use-case.ts` | Grant patron status (admin/system only) |
+| `app/page.tsx` | Public home/channel entry; dynamic page with cached/loaded public content and per-user state |
+| `app/components/ChannelHome.tsx` | Public app shell composition, selected video state, local player transition |
+| `app/components/preload/AppPreloadProvider.tsx` | In-memory preload/warm layer for playback plans/posters/comments |
+| `app/components/VideoPlayer.tsx` | Vidstack player, text tracks, telemetry, custom controls |
+| `app/components/PremiumWrapper.tsx` | Access/playback plan fetch and locked/loading states |
+| `app/components/auth/AuthModalProvider.tsx` | Custom/headless Clerk modal provider |
+| `app/components/auth/AuthModal.tsx` | Custom sign-in/sign-up/password reset UI over Clerk headless APIs |
+| `app/components/auth/UserMenu.tsx` / `AccountModal.tsx` | Custom account UI over Clerk user APIs |
+| `app/components/channel/SidebarPlaylist.tsx` | Sidebar sections, lock badges, support box signed-in gate |
+| `app/components/channel/DonationBox.tsx` | Support/patron tip widget and Stripe checkout entry |
+| `app/components/InstallAppMenu.tsx` | Install/add-to-home-screen affordance |
+| `lib/modules/patron/application/grant-patron.use-case.ts` | Grant patron status |
 | `lib/modules/patron/application/revoke-patron.use-case.ts` | Revoke patron status |
 | `lib/modules/patron/application/recalculate-patron-status.use-case.ts` | Pure read — derive status from active grants |
 | `lib/modules/payments/application/fulfill-payment.use-case.ts` | Canonical, replay-safe payment fulfillment |
-| `lib/modules/access/application/check-video-access.use-case.ts` | Gate keeper for video access |
-| `lib/modules/playback/domain/playback-policy.ts` | Always returns false; controls legacy blob playback |
-| `app/api/media/[...path]/route.ts` | Media proxy (uses the policy above) |
+| `lib/modules/access/application/check-video-access.use-case.ts` | Gatekeeper for video access |
+| `lib/modules/playback/application/playback.service.ts` | Resolves playable video source based on access plan |
+| `lib/modules/playback/domain/playback-policy.ts` | Policy gates for legacy private playback fallback (always false) |
+| `app/api/media/[...path]/route.ts` | Media proxy using playback policy |
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
-| `lib/modules/users/application/patron-read-model.ts` | `buildPatronDiagnosticsReadModel(grants[])` — diagnostics only |
-| `lib/modules/media/application/default-thumbnail.service.ts` | Resolves fallback thumbnail URL (Creator.defaultThumbnailUrl → AppSetting blob) |
-| `lib/modules/media/infrastructure/thumbnail-response.service.ts` | Fetches thumbnail blob and returns HTTP response with proper caching headers |
-| `lib/modules/playback/application/playback.service.ts` | Resolves playable video source (Cloudflare/Mux/YouTube/legacy) based on access plan |
-| `lib/modules/playback/domain/playback-policy.ts` | Policy gates for legacy private playback fallback (always returns false) |
-| `lib/services/payment.service.ts` | Deprecated bridge — exports `PaymentService.handleWebhook` used only in tests; production uses `handleStripeWebhook` use case |
+| `lib/modules/users/application/patron-read-model.ts` | Patron diagnostics read model |
+| `lib/modules/media/application/default-thumbnail.service.ts` | Resolves fallback thumbnail URL |
+| `lib/modules/media/infrastructure/thumbnail-response.service.ts` | Streams thumbnails with correct cache policy |
+| `lib/services/payment.service.ts` | Deprecated bridge used only in tests; production uses modular use cases |
 | `prisma/schema.prisma` | Database schema (single-writer) |
 
 ---
@@ -265,6 +300,17 @@ See `.env.example` for all variables. Critical ones:
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_WEBHOOK_SECRET` | Cloudflare Stream |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Email |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob (legacy media) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob legacy media/thumbnail support |
 | `CRON_SECRET` | Authenticates cron API routes (≥32 random chars) |
 | `ADMIN_CLERK_USER_IDS` | Comma-separated Clerk user IDs with admin access |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Production rate limiting |
+
+---
+
+## 9. Documentation and Issue Hygiene
+
+- `docs/tickets/ready/` is the only executable file-based ticket queue.
+- Legal/operator/evidence scope belongs to issue #1269 unless split into a small implementation ticket.
+- Closed/history work belongs in git, PRs and issues, not in living roadmap files.
+- If a PR changes behavior that agents must preserve, update this file in the same PR.
+- Do not overwrite historical PR bodies unless explicitly asked; update open issues or living docs instead.
