@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
+import { AnimatePresence } from "framer-motion";
+import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -296,7 +298,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           <div className="flex items-center gap-2">
             <MessageSquare size={16} className="text-primary" />
             <span className="text-xs font-black uppercase">
-              {totalCount} {getCommentsLabel(totalCount)}
+              <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
             </span>
           </div>
           <button
@@ -315,7 +317,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <Skeleton className="h-7 w-48" />
           ) : (
             <h3 className="font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate">
-              {totalCount} {getCommentsLabel(totalCount)}
+              <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
             </h3>
           )}
         </div>
@@ -470,8 +472,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </div>
           </div>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="space-y-[22px]">
+          <AnimatePresence initial={false}>
+          {comments.map((comment) => (
+            <CommentMotionItem key={comment.id} className="space-y-[22px]">
               <CommentItem
                 comment={comment}
                 userProfile={userProfile}
@@ -527,8 +530,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   ))}
                 </div>
               )}
-            </div>
-          ))
+            </CommentMotionItem>
+          ))}
+          </AnimatePresence>
         )}
 
         <div ref={loadMoreRef} className="h-4" />

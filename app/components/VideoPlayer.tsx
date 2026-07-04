@@ -22,6 +22,7 @@ import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
 import { NajsIcon, INK } from './najs/primitives';
+import { PlayIcon, PauseIcon, VolumeIcon, MuteIcon, CaptionsIcon, FullscreenIcon } from './VideoPlayerIcons';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -103,7 +104,7 @@ function PlayerPlayButton({ className }: { className: string }) {
                 togglePlayback(event);
             }}
         >
-            {paused ? <NajsIcon name="play" className={playerIconClass} stroke="currentColor" /> : <NajsIcon name="pause" className={playerIconClass} stroke="currentColor" />}
+            {paused ? <PlayIcon className={playerIconClass} /> : <PauseIcon className={playerIconClass} />}
         </button>
     );
 }
@@ -125,7 +126,7 @@ function PlayerTapTarget() {
                 togglePlayback(event);
             }}
         >
-            {paused ? <NajsIcon name="play" className={centerPauseIconClass} stroke="currentColor" /> : null}
+            {paused ? <PlayIcon className={centerPauseIconClass} /> : null}
         </button>
     );
 }
@@ -133,9 +134,9 @@ function PlayerTapTarget() {
 function PlayerMuteIcon() {
     const muted = useMediaState('muted');
     const volume = useMediaState('volume');
-    const iconName = muted || volume === 0 ? "mute" : "volume";
+    const isMuted = muted || volume === 0;
 
-    return <NajsIcon name={iconName} className={playerIconClass} stroke="currentColor" />;
+    return isMuted ? <MuteIcon className={playerIconClass} /> : <VolumeIcon className={playerIconClass} />;
 }
 
 function PlayerCaptionButton({ className, disabled = false }: { className: string; disabled?: boolean }) {
@@ -150,7 +151,7 @@ function PlayerCaptionButton({ className, disabled = false }: { className: strin
             disabled={disabled}
             title={disabled ? "Brak napisów dla tego filmu" : undefined}
         >
-            <NajsIcon name="subtitles" className={playerIconClass} stroke="currentColor" />
+            <CaptionsIcon className={playerIconClass} />
         </CaptionButton>
     );
 }
@@ -184,19 +185,25 @@ function PlayerTimeReadout() {
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
     const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-10";
     const sliderTrackClass = "relative h-[4px] w-full rounded-full bg-white/30 ring-1 ring-black/30 transition-[height] duration-150 group-hover/slider:h-[6px] group-data-[dragging]/slider:h-[6px]";
-    const sliderThumbClass = "absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/75 bg-white opacity-0 shadow-[1px_1px_0_rgba(0,0,0,0.38)] transition-[opacity,transform] duration-150 will-change-[left] group-hover/slider:opacity-100 group-focus-within/slider:opacity-100 group-data-[dragging]/slider:scale-110 group-data-[dragging]/slider:opacity-100";
+    // Always-visible grab handle (touch devices have no hover); grows while dragging.
+    const sliderThumbClass = "absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/75 bg-white shadow-[1px_1px_0_rgba(0,0,0,0.38)] transition-transform duration-150 will-change-[left] group-data-[dragging]/slider:scale-125";
+    // We ship our own slider chrome instead of Vidstack's stylesheet, so fill width and thumb
+    // position must be driven by Vidstack's --slider-fill / --slider-progress CSS variables —
+    // the exact contract its own default CSS uses. Without these the thumb never moves.
+    const fillStyle: React.CSSProperties = { width: "var(--slider-fill)" };
+    const thumbStyle: React.CSSProperties = { left: "var(--slider-fill)" };
 
     return (
         <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2 pb-2 pt-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-3 sm:pb-3 sm:pt-7">
             {/* Progress bar: thin brand-styled line pinned just above the controls row (YouTube layout).
                 Built on Vidstack's TimeSlider so seeking — including seeking after the video has ended —
                 behaves correctly out of the box. */}
-            <TimeSlider.Root className="group/slider relative mb-2 flex h-5 w-full cursor-pointer touch-none select-none items-center outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            <TimeSlider.Root className="group/slider relative mb-2 flex h-5 w-full cursor-pointer touch-none select-none items-center px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                 <TimeSlider.Track className={sliderTrackClass}>
-                    <TimeSlider.Progress className="absolute h-full rounded-full bg-white/40" />
-                    <TimeSlider.TrackFill className="absolute h-full rounded-full" style={{ backgroundColor: PROGRESS_PLAYED_COLOR }} />
+                    <TimeSlider.Progress className="absolute left-0 h-full rounded-full bg-white/40" style={{ width: "var(--slider-progress)" }} />
+                    <TimeSlider.TrackFill className="absolute left-0 h-full rounded-full bg-[#2563eb]" style={fillStyle} />
                 </TimeSlider.Track>
-                <TimeSlider.Thumb className={sliderThumbClass} />
+                <TimeSlider.Thumb className={sliderThumbClass} style={thumbStyle} />
             </TimeSlider.Root>
 
             <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
@@ -206,13 +213,13 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
                     <div className="group/vol flex shrink-0 items-center">
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
                         <VolumeSlider.Root
-                            className="group/slider relative hidden h-10 w-0 shrink-0 origin-left cursor-pointer touch-none select-none items-center overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/vol:w-20 group-hover/vol:opacity-100 group-focus-within/vol:w-20 group-focus-within/vol:opacity-100 md:flex"
+                            className="group/slider invisible relative hidden h-10 w-0 shrink-0 cursor-pointer touch-none select-none items-center px-1.5 opacity-0 outline-none transition-[width,opacity] duration-200 ease-out group-hover/vol:visible group-hover/vol:w-20 group-hover/vol:opacity-100 group-focus-within/vol:visible group-focus-within/vol:w-20 group-focus-within/vol:opacity-100 md:flex"
                             aria-label="Głośność"
                         >
                             <VolumeSlider.Track className={sliderTrackClass}>
-                                <VolumeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
+                                <VolumeSlider.TrackFill className={`pointer-events-none absolute left-0 h-full rounded-full ${sliderAccentClass}`} style={fillStyle} />
                             </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className={sliderThumbClass} />
+                            <VolumeSlider.Thumb className={sliderThumbClass} style={thumbStyle} />
                         </VolumeSlider.Root>
                     </div>
 
@@ -221,7 +228,7 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
 
                 <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
                     <PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />
-                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><NajsIcon name="maximize" className={playerIconClass} stroke="currentColor" /></FullscreenButton>
+                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><FullscreenIcon className={playerIconClass} /></FullscreenButton>
                 </div>
             </Controls.Group>
         </Controls.Root>
@@ -401,7 +408,16 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     playsInline
                     controls={false}
                     aspectRatio="16/9"
-                    onCanPlay={() => sendEvent('PLAYER_READY')}
+                    onCanPlay={() => {
+                        // A video chosen after the viewer has already interacted with the page
+                        // (sticky user activation) may play with sound — browsers only force
+                        // muted autoplay before the first interaction. So switching videos
+                        // starts audible instead of silently muted.
+                        if (player.current?.muted && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
+                            player.current.muted = false;
+                        }
+                        sendEvent('PLAYER_READY');
+                    }}
                     onPlay={() => {
                         if (!hasStartedPlayback) {
                             setHasStartedPlayback(true);

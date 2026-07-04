@@ -11,6 +11,7 @@ import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
 import { NajsIcon } from "../../najs/primitives";
+import { AnimatedCount, LikePop } from "./comment-motion";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -316,14 +317,14 @@ export function CommentItem({
                 : "text-[#606060] hover:text-[#0f0f0f]",
             )}
           >
-            <NajsIcon
-              name="like"
-              className="h-[15px] w-[15px]"
-              stroke={isLiked ? "#2563eb" : "currentColor"}
-            />
-            <span className={cn("font-semibold text-[13px]")}>
-              {comment.likesCount || 0}
-            </span>
+            <LikePop active={isLiked}>
+              <NajsIcon
+                name="like"
+                className="h-[15px] w-[15px]"
+                stroke={isLiked ? "#2563eb" : "currentColor"}
+              />
+            </LikePop>
+            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[13px]" />
           </button>
 
           <button

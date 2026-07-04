@@ -75,9 +75,8 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         <div
           role="menu"
           className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-60 p-2 text-[#171717]"
-          style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
         >
-          <Frame radius={14} seed={23} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" showShadow />
+          <Frame radius={14} seed={23} stroke={INK} strokeWidth={1.3} fill="#f1ead9" showShadow />
           <div className="relative z-10">
             <div className="border-b border-[#171717]/10 px-2 pb-2 pt-1">
               <p className="truncate text-[14px] font-bold">{displayName}</p>

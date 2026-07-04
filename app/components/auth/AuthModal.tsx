@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2 } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
+import BrandName from "../BrandName";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 
@@ -161,9 +162,17 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md overflow-hidden border-none bg-transparent p-0 shadow-none">
-        <div className="relative p-6 sm:p-7" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <Frame radius={18} seed={11} stroke={INK} strokeWidth={1.4} fill="rgba(248,243,231,.97)" />
+        <div className="relative p-6 sm:p-7">
+          <Frame radius={18} seed={11} stroke={INK} strokeWidth={1.4} fill="#f1ead9" />
           <div className="relative z-10">
+            {/* Brand header — same POLUTEK.PL logo mark and size as the topbar. */}
+            <div className="mb-3 flex items-center justify-center border-b border-[#171717]/10 pb-3">
+              <BrandName
+                className="text-[22px] leading-none"
+                variant="classic"
+                style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+              />
+            </div>
             <DialogHeader>
               <DialogTitle className="text-2xl font-black tracking-tight text-[#0f0f0f]">{title}</DialogTitle>
             </DialogHeader>
@@ -321,7 +330,7 @@ function OAuthButtons({
           disabled={disabled}
           className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] transition-all active:scale-[0.98] disabled:opacity-60"
         >
-          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.97)" />
+          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#f1ead9" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
           <span className="relative z-10">{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
         </button>

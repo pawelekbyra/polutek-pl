@@ -60,7 +60,7 @@ interface SidebarPlaylistProps {
   mounted: boolean;
   premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
-  onVideoSelect?: () => void;
+  onVideoSelect?: (videoId?: string) => void;
 }
 
 export function SidebarPlaylist({
@@ -163,7 +163,7 @@ export function SidebarPlaylist({
           href={`/?v=${video.slug || video.id}`}
           scroll={false}
           onClick={() => {
-            onVideoSelect?.();
+            onVideoSelect?.(video.id);
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
@@ -352,8 +352,6 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      <PatronBox />
-
       {patronSection && (
         <div className="mb-3">
           {renderSectionHeader(
@@ -362,6 +360,9 @@ export function SidebarPlaylist({
           {patronSection.items.map(renderVideoItem)}
         </div>
       )}
+
+      {/* Support box always renders last — after every video section, never between them. */}
+      <PatronBox />
     </>
   );
 }

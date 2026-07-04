@@ -12,6 +12,7 @@ import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, INK } from "./najs/primitives";
+import { useIrisTransition } from "./channel/IrisTransition";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -45,13 +46,17 @@ export default function ChannelHome({
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
   const [mounted, setMounted] = useState(false);
   const queryClient = useQueryClient();
+  const iris = useIrisTransition();
 
   useEffect(() => {
     setMounted(true);
     if (selectedVideo?.id) {
       setActiveTab("comments");
       window.scrollTo({ top: 0, behavior: "smooth" });
+      // The newly selected video is committed to the screen — open the iris over it.
+      iris.contentReady();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVideo?.id]);
 
   if (!selectedVideo)
@@ -107,7 +112,10 @@ export default function ChannelHome({
     language,
     mounted,
     onVideoMouseEnter: prefetchComments,
-    onVideoSelect: () => {
+    onVideoSelect: (clickedId?: string) => {
+      // Cinematic iris wipe: close over the current scene, reveal the next once it's in place.
+      // Skipped when re-clicking the already-active video — there is no scene change to reveal.
+      if (clickedId && clickedId !== selectedVideo.id) iris.trigger();
       setActiveTab("comments");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -115,6 +123,7 @@ export default function ChannelHome({
 
   return (
     <main className="bg-transparent min-h-screen">
+      {iris.element}
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">

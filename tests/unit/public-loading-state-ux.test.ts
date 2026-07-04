@@ -45,7 +45,10 @@ describe("public loading/access state UX contracts", () => {
     expect(player).not.toContain("function PlayerTimeScrubber");
     expect(player).not.toContain("optimisticSeekTime");
     expect(player).not.toContain("pendingSeekTime");
-    expect(player).not.toContain("--slider-fill");
+    // We render custom slider chrome without Vidstack's stylesheet, so fill width and thumb
+    // position MUST bind Vidstack's --slider-fill var or the thumb never moves.
+    expect(player).toContain('width: "var(--slider-fill)"');
+    expect(player).toContain('left: "var(--slider-fill)"');
     expect(player).toContain("PROGRESS_PLAYED_COLOR");
     expect(player).not.toContain("remote.seeking(clampedTime");
     expect(player).toContain("event.stopPropagation()");
