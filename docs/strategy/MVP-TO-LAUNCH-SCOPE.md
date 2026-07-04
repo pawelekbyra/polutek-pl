@@ -1,143 +1,108 @@
 # MVP to Launch Scope
 
-Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
+Status: ACTIVE CURRENT STATE — living launch scope, not historical control-plane backlog.
 
 ## Executive summary
 
-Launch Polutek.pl jest publiczny, nie private beta. MVP-to-launch nie oznacza „quick minimum”; oznacza najmniejszy publicznie bezpieczny, supportowalny i excellent-enough zakres, który respektuje product DNA i aktywne owner decisions.
+Launch Polutek.pl jest publiczny, nie private beta. MVP-to-launch oznacza
+najmniejszy publicznie bezpieczny, supportowalny i excellent-enough zakres,
+który respektuje product DNA:
 
-Launch-critical obejmuje bezpieczeństwo pieniędzy, PatronGrant, access, playback, Cloudflare Stream baseline, admin diagnostics, komentarze, email consent, observability i X7 gates. Should-have wzmacnia jakość, ale nie może blokować launchu, jeśli launch-critical safety jest spełnione. Post-launch obejmuje wygodę, richer community, zaawansowaną analitykę i rozbudowę providerów. Owner-question nie może zostać rozstrzygnięte przez agenta bez jawnej decyzji właściciela.
+- single-channel VOD jednego twórcy;
+- brak marketplace/multi-tenant;
+- brak subskrypcji cyklicznych;
+- dożywotni patron access przez kwalifikujący jednorazowy tip Stripe;
+- `PatronGrant` jako jedyne źródło prawdy dla patron access.
 
-## Launch-critical
+Runtime foundations są po stabilizacji. Dokumentacja, zielone CI ani preview
+nie certyfikują jednak launchu same w sobie. Public launch wymaga jeszcze
+owner/legal/operator evidence, manualnego smoke proof i finalnej decyzji
+właściciela. Ten zakres jest śledzony w GitHub issue #1269 i powinien być
+rozbijany na małe tickety tylko wtedy, gdy wymaga zmian w kodzie.
 
-| Obszar | Wymaganie | Dlaczego blokuje launch | Faza/ticket |
-| --- | --- | --- | --- |
-| Payments / PatronGrant safety | Stripe one-time support zapisuje `Payment` jako fakt finansowy i tworzy `PatronGrant` tylko przez eligibility policy. | Bez tego patron może nie dostać dostępu albo dostać dostęp bez kwalifikującej płatności. | X1 / `docs/tickets/ready/X1-READY-001-payment-patron-current-state-inventory.md` |
-| Stripe webhook idempotency | Raw body signature verification, idempotent `StripeEvent` ledger i brak duplicate grant na retry. | Webhook retry albo fałszywy event może zepsuć pieniądze, granty i support. | X1 / `docs/tickets/ready/X1-READY-001-payment-patron-current-state-inventory.md` |
-| Minimum amount threshold | Server-side threshold per currency, admin-configurable; default launch: 10 PLN, 10 USD, 10 EUR, 10 CHF, 10 GBP. | Client-side kwota albo below-threshold payment nie może tworzyć patron access. | X1 / `docs/tickets/ready/X1-READY-001-payment-patron-current-state-inventory.md` |
-| Refund/dispute lifecycle | Full refund revokes linked grant; dispute suspends; dispute won reactivates; dispute lost/chargeback revokes; partial refund ma policy/manual review. | Launch nie może zostawić dostępu po cofniętej lub spornej płatności. | X1 / `docs/tickets/ready/X1-READY-001-payment-patron-current-state-inventory.md` |
-| Access source of truth | Backend access czyta aktywny `PatronGrant`; nie ufa `User.isPatron`, Clerk metadata, `Subscription`, Payment alone ani frontend state. | To centralny warunek braku access leak i spójności paid-but-locked diagnostics. | X2 / `docs/tickets/ready/X2-READY-001-access-truth-inventory.md` |
-| Locked playback denied-state | Denied `PlaybackPlan` nie zawiera URL/tokenu, nie mountuje playera, nie fetchuje streamu, nie robi provider call i nie liczy view. | Patron-only media nie mogą wyciec przez frontend, overlay, analytics albo provider request. | X4 / `docs/tickets/ready/X4-READY-001-playbackplan-current-state-inventory.md` |
-| Cloudflare Stream baseline | Cloudflare Stream first provider path, processing state, primary READY asset, signed/private playback po Access allow. | Publiczny VOD potrzebuje bezpiecznego, operacyjnego playback path. | X3 / `docs/tickets/ready/X3-READY-001-video-provider-current-state-inventory.md` |
-| Thin Mux-ready design | Provider per `VideoAsset` i minimalna abstrakcja kompatybilna z Mux, bez enterprise frameworka. | Zapobiega przepisywaniu fundamentu po launchu bez budowania overengineeringu. | X3 / `docs/tickets/ready/X3-READY-001-video-provider-current-state-inventory.md` |
-| Admin access diagnostics | Owner widzi identity, payments, refunds, disputes, PatronGrant history, subscription, Clerk/User mismatch, final access decision i video asset state. | Paid-but-locked musi być rozwiązywalne bez DB/Stripe/Clerk console. | X5 / `docs/tickets/ready/X5-READY-001-admin-cockpit-current-state-inventory.md` |
-| Manual access actions audit | Manual grant/suspend/reactivate/revoke ma reason, audit i confirmation dla działań niebezpiecznych. | Support nie może naprawiać dostępu bez śladu i kontroli. | X5 / `docs/tickets/ready/X5-READY-001-admin-cockpit-current-state-inventory.md` |
-| Comments visibility vs write permissions | Komentarze pod patron-only video są publicznie czytelne; pisanie/reagowanie wymaga patrona albo admina; gość nie pisze/reportuje. | Community UX i polityka dostępu nie mogą mieszać read visibility z write permission. | X6 / future comments ticket or X7 gap analysis |
-| Comments moderation safety | Report abuse, rate limiting, duplicate detection, moderation queue, audit dla hide/delete/restore/dismiss; no shadow bans. | Publiczny launch wymaga minimalnej ochrony przed spamem i nadużyciami. | X6 / future comments ticket or X7 gap analysis |
-| Email unsubscribe/subscription separation | `Subscription` jest zgodą mailingową; unsubscribe nie cofa `PatronGrant`; Patron nie oznacza marketing consent. | Email consent nie może przypadkowo zmieniać patron access ani łamać zgód. | X6/X7 / future email ticket or `docs/tickets/ready/X7-READY-001-launch-readiness-gap-analysis.md` |
-| Email delivery safety | Broadcast preview/test-send + audit, delivery webhooks, bounce/complaint suppression. | Publiczne maile wymagają minimalnej deliverability, consent i support safety. | X6/X7 / future email ticket or `docs/tickets/ready/X7-READY-001-launch-readiness-gap-analysis.md` |
-| Observability/support essentials | Widoczne failed/stuck webhooks, payment/access/video/email/comments health, playback errors, no secrets/tokens in logs. | Owner musi wykrywać i diagnozować krytyczne awarie bez przecieków. | X5/X7 / `docs/tickets/ready/X5-READY-001-admin-cockpit-current-state-inventory.md`, `docs/tickets/ready/X7-READY-001-launch-readiness-gap-analysis.md` |
-| Manual QA / X7 launch gates | Legal/privacy/cookie/email consent, accessibility, mobile, performance, security, backups/recovery, owner runbook, final certification. | Public launch nie może opierać się wyłącznie na roadmapie ani niewykonanej deklaracji. | X7 / `docs/tickets/ready/X7-READY-001-launch-readiness-gap-analysis.md` |
+## Launch-critical — current scope
 
-## Should-have
+| Obszar | Wymaganie | Status |
+|---|---|---|
+| Patron source of truth | Backend access/status czyta aktywne `PatronGrant`; legacy `User.isPatron`, `User.patronSince`, `User.patronSource` nie istnieją. | IMPLEMENTED — keep regression tests and docs current |
+| Payment fulfillment | Stripe success path przechodzi przez `fulfillPayment()`; duplicate webhook/retry nie tworzy duplicate grant. | IMPLEMENTED — verify in release smoke |
+| Refund/dispute lifecycle | Full refund/lost dispute cofa lub zawiesza access zgodnie z aktywną polityką; partial refund wymaga świadomej decyzji/policy. | NEEDS OWNER/LEGAL CONFIRMATION before final launch evidence |
+| Playback security | Denied `PlaybackPlan` nie zawiera playable URL/token/provider secret i nie montuje playera. | IMPLEMENTED — launch blocker if regressed |
+| Cloudflare Stream baseline | Cloudflare Stream jest primary managed video providerem; signed playback fail-closed for private/patron sources. | IMPLEMENTED — verify provider/live webhook evidence |
+| Admin diagnostics | Owner/admin może zdiagnozować paid-but-locked, access decision, provider failure i payment/webhook state bez ręcznej edycji DB. | IMPLEMENTED/PARTIAL — verify manually in production/staging |
+| Comments safety | Public read; write/react/report gated and rate-limited according to current product policy. | IMPLEMENTED/PARTIAL — verify abuse/rate-limit smoke |
+| Email consent | Subscription/follow nie daje patron access; unsubscribe nie cofa `PatronGrant`; signed unsubscribe must work without login. | IMPLEMENTED/PARTIAL — legal/suppression evidence still required |
+| Observability/support | Critical failures for billing/access/video/email/comments are diagnosable without leaking secrets/tokens. | PARTIAL — evidence tracked in #1269 |
+| Legal/privacy/cookie/refund/support copy | Public copy approved by owner/legal before launch traffic is invited. | OWNER/LEGAL REQUIRED — tracked in #1269 |
+| Backup/restore/ops | RPO/RTO decision, restore drill, alert channels/thresholds, production evidence. | OWNER/OPERATOR REQUIRED — tracked in #1269 |
+| Manual QA / X6/X7 proof | Mobile, accessibility, performance, security, smoke and representative validation evidence. | REQUIRED BEFORE FINAL LAUNCH DECISION — tracked in #1269 |
 
-| Obszar | Wymaganie | Dlaczego warto | Czy blokuje launch? |
-| --- | --- | --- | --- |
-| Player UX | Lepsze copy locked states, captions/subtitles readiness, mobile polish, accessibility polish. | Zwiększa zrozumiałość i jakość konsumpcji VOD. | Nie, jeśli denied-state safety i podstawowe accessibility/mobile przechodzą. |
-| Admin media cockpit | Wygodniejsze widoki upload/processing/provider failures. | Ułatwia support i operacje contentowe. | Nie, jeśli launch-critical diagnostics są wystarczające. |
-| Broadcast UX | Lepszy flow preview/test-send i copy PL/EN ponad minimalny audit. | Zmniejsza ryzyko błędów w komunikacji. | Nie, jeśli minimalny preview/test-send/audit działa. |
-| Moderation ergonomics | Lepszy spoiler flow, szybsza queue, wygodniejsze narzędzia moderatora. | Ułatwia operacje społeczności. | Nie, jeśli minimalne report/rate limit/audit istnieją. |
-| Privacy-safe analytics | Podstawowe metryki bez admin preview i bez prywatnych tokenów/URL. | Pomaga ownerowi rozumieć produkt. | Nie, jeśli brak analytics nie wpływa na bezpieczeństwo i support. |
-| Negative/contract test depth | Dodatkowe testy dla forbidden shortcuts poza minimalnym ryzykiem ticketu. | Zwiększa pewność i zmniejsza regresje. | Nie samo w sobie, chyba że dotyczy launch-critical gap. |
-| Performance budgets | Budżety i checklisty perf dla kluczowych ścieżek. | Pomaga utrzymać public launch quality. | Nie, jeśli X7 performance gate przechodzi. |
+## Should-have before or shortly after launch
+
+| Obszar | Wymaganie | Czy blokuje launch? |
+|---|---|---|
+| Cache/ISR for anonymous home/watch | Biggest scalability lever; must not mix user-specific access into static output. | Not if expected launch traffic is small and owner accepts current capacity |
+| R2 thumbnail migration | Reduce Vercel Blob/function/egress cost for custom thumbnails. | No — active executable ticket is `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md` |
+| Admin video studio polish | Better single place for status, sources, thumbnail, subtitles, SEO, diagnostics and publication. | No, unless a missing state blocks support-critical operations |
+| Caption workflow polish | Current baseline is WebVTT URL fields; managed upload/validation can be added later. | No, unless owner/legal requires captions for launch |
+| External embed UX polish | YouTube/Vimeo should keep provider-specific UX and preserve patron safety constraints. | No for Cloudflare-first launch |
+| SEO/video metadata polish | Better `VideoObject`, sitemap, provider-aware metadata. | No, unless launch acquisition depends on SEO immediately |
+| Performance budgets | Keep budgets for launch-critical flows; do not weaken access correctness for performance. | Only if manual performance gate fails |
 
 ## Post-launch
 
-| Obszar | Wymaganie | Dlaczego po launchu |
-| --- | --- | --- |
-| Playback progress | Resume/progress enhancements, jeśli nie są już stabilne i certyfikowalne. | Nie jest konieczne do bezpiecznego public launchu VOD. |
-| Advanced video | Zaawansowane Mux analytics, 4K, DRM, deep provider workflows. | Wymaga dodatkowej decyzji/kosztu i nie jest minimalnym Cloudflare baseline. |
-| Email preferences | Preference center polish, segmentacja, richer campaigns. | Po launchu można iterować bez ryzyka access truth. |
-| Community features | Edycja komentarzy, richer reactions/hearts, deeper threads, profile społecznościowe. | Może rozszerzać scope w kierunku social network; wymaga kontroli. |
-| Owner dashboards | Zaawansowane dashboardy, retrospektywy i richer analytics. | Access Diagnostics są ważniejsze przed launchem. |
-| Alert escalation | Bardziej rozbudowane kanały, on-call i retrospektywy. | Minimalne critical alerts blokują launch; zaawansowany workflow może poczekać. |
-| Legacy cleanup | Stopniowe usuwanie legacy bridges i allowlist po domain migrations. | Nie powinno blokować launchu, jeśli nie tworzy security/access gap. |
+| Obszar | Dlaczego po launchu |
+|---|---|
+| Watch history / continue watching | Useful product layer, not required for safe first public launch. |
+| Advanced analytics | Needs real traffic and clear privacy stance. |
+| Advanced provider orchestration | R2 original/master + multi-provider mirroring is valuable, but not required for Cloudflare-first launch. |
+| Community expansion | Edit comments, richer reactions, deeper profiles/threads can expand scope and should be controlled. |
+| Advanced dashboards | Admin diagnostics and critical health matter more before launch than richer analytics. |
 
-## Owner questions before launch
+## Owner questions before final launch decision
 
-| ID | Pytanie | Najpóźniej przed | Powiązana faza |
-| --- | --- | --- | --- |
-| OQ-001 | Polityka partial refund: czy częściowy refund redukuje/oznacza grant, czy pozostaje manual review? | X1 Payments / Patron Safety | X1 |
-| OQ-002 | Czy reakcje/hearts w komentarzach są launch-critical, jeśli obecny runtime je posiada? | X6 Product Excellence Passes | X6 |
-| OQ-003 | Jakie dokładnie PL/EN legal/cookie copy ma być użyte przed X7? | X7 Launch Readiness | X7 |
-| OQ-004 | Jakie limity rate limiting dla komentarzy i broadcastów są akceptowalne na launch? | X6/X7 Launch Readiness | X6/X7 |
-| OQ-005 | Jakie dokładne alert channels i thresholds są akceptowalne na launch dla billing/access/video/email failures? | X7 Launch Readiness | X7 |
-| OQ-006 | Czy owner wymaga dodatkowej polityki preservation/migration dla oryginalnych plików wideo poza aktywną specyfikacją Video Provider? | X3 Video Provider Foundation | X3 |
-| OQ-007 | Czy istnieją dodatkowe wymogi prawne/UX/accessibility, których nie ma jeszcze w aktywnych specs? | X7 Launch Readiness | X7 |
+| ID | Question | Required before |
+|---|---|---|
+| OQ-001 | What exact partial refund policy applies to patron access? | Payment/legal proof |
+| OQ-002 | What exact PL/EN legal/privacy/cookie/refund/support/community copy is approved? | Legal launch proof |
+| OQ-003 | What alert channels, owners and thresholds are approved for billing/access/video/email/comments failures? | Observability proof |
+| OQ-004 | What owner-approved RPO/RTO applies to production data and media-supporting state? | Backup/recovery proof |
+| OQ-005 | What captions/subtitles scope is required for launch VOD? | Accessibility/legal proof |
+| OQ-006 | What physical device/browser baseline must pass manual QA? | Mobile/browser proof |
+| OQ-007 | Is the proposed stabilization window accepted after launch, and who owns incidents? | Post-launch operations |
+| OQ-008 | What level of risk-based security verification is required beyond current CI/security gates? | Security proof |
 
 ## Launch blockers
 
-- Access leak albo playable URL/token w denied `PlaybackPlan`.
-- Player mounted under overlay dla locked content.
-- Provider call, token request lub stream fetch przed backendowym Access allow.
-- Patron access oparty o `User.isPatron`, Clerk metadata, `Subscription`, Payment alone, Stripe state alone albo frontend state.
-- Stripe webhook bez raw-body signature verification albo bez idempotency ledger.
-- Duplicate grant na webhook retry.
-- Below-threshold payment tworzy access.
-- Full refund/dispute lifecycle nie cofa/zawiesza/reactivates/revokes zgodnie z policy.
-- Brak rozstrzygniętej partial refund policy albo manual-review path przed X1 certyfikacją.
-- Brak paid-but-locked diagnostics w admin cockpit przed public launch.
-- Unsubscribe cofa `PatronGrant` albo Patron automatycznie zapisuje się na marketing.
-- Brak bounce/complaint suppression przed publicznym broadcastem.
-- Brak minimalnej moderation/report/rate-limit ochrony dla publicznych komentarzy.
-- Logowanie sekretów, playback tokenów albo prywatnych URL-i.
-- Brak X7 manual QA, owner runbook, legal/privacy/cookie/email consent review, security, backup/recovery, accessibility, mobile lub performance gate.
+- Access leak or playable URL/token/provider secret in denied `PlaybackPlan`.
+- Player mounted under overlay for locked content.
+- Provider call, token request or stream fetch before backend Access allow.
+- Patron access based on `User.isPatron`, Clerk metadata, `Subscription`, Payment alone, Stripe state alone or frontend state.
+- Stripe webhook without raw-body signature verification or idempotent event ledger.
+- Duplicate grant on webhook retry.
+- Below-threshold payment creates access.
+- Full refund/lost dispute does not revoke/suspend access according to the active policy.
+- Unsubscribe revokes `PatronGrant` or patron status creates marketing consent automatically.
+- Missing logged-out signed unsubscribe path before broadcast.
+- Missing owner/legal approval for public legal/privacy/cookie/refund/support copy.
+- Logging secrets, playback tokens or private media URLs.
+- Missing production/manual evidence for smoke, backup/recovery, observability, accessibility/mobile/performance/security before final launch decision.
 
 ## Non-blockers
 
-- Brak marketplace/multi-creator/tenant features, bo to nie jest produktowy cel.
-- Brak recurring patron subscription, bo patronat jest jednorazowym wsparciem.
-- Brak heavy enterprise video provider frameworka, jeśli Cloudflare baseline i cienki Mux-ready design są spełnione.
-- Brak aktywnego R2/S3/Vercel Blob secure patron playback fallback.
-- Brak zaawansowanych Mux analytics/4K/DRM.
-- Brak resume/progress enhancements, jeśli podstawowy playback jest bezpieczny.
-- Brak edit comments, deep threads, profiles i rozbudowanych reactions, chyba że owner oznaczy je jako launch-critical.
-- Brak generic owner dashboard, jeśli Access Diagnostics i critical health są spełnione.
-- Brak pełnego preference center polish, jeśli consent, unsubscribe i suppression są bezpieczne.
+- No marketplace/multi-creator/multi-tenant features.
+- No recurring patron subscription.
+- No heavy enterprise video provider framework if Cloudflare baseline is stable.
+- No full R2 original/master mirroring architecture before first launch.
+- No advanced Mux analytics/4K/DRM.
+- No resume/progress product layer.
+- No edit comments, deep threads, profiles or richer reactions unless owner marks them launch-critical.
+- No generic owner dashboard if critical diagnostics and health checks are enough for support.
 
-## Product Excellence and Launch Proof scope mapping
+## Documentation rule
 
-This mapping extends the existing launch-critical / should-have / post-launch / owner questions split. It is a planning standard, not evidence that runtime has passed X6 or X7. Target architecture != current implementation.
-
-### Truth statuses for scope evidence
-
-Use the shared Product Excellence classification when mapping current state: `IMPLEMENTED_VERIFIED`, `IMPLEMENTED_UNVERIFIED`, `PARTIAL`, `MISSING`, `BLOCKED`, `OWNER_DECISION_REQUIRED`, `DEFERRED_POST_LAUNCH`, `NOT_APPLICABLE`. Plain `DONE` is not precise enough for launch proof.
-
-### Scope rules
-
-- Basic safety for accessibility, mobile and performance is launch-critical where failure prevents use of checkout, access, playback, comments, newsletter, support diagnostics, admin recovery or legal/privacy flows.
-- Full polish can be should-have when lack of polish does not block safe use, comprehension, support or legal obligations.
-- Bugs that make a launch-critical flow unusable MUST NOT be moved to post-launch.
-- Cosmetic perfection MUST NOT block safe launch.
-- Security, access integrity, payment integrity, token/source secrecy, privacy and supportability take priority over vanity polish.
-- Should-have może zostać odłożone tylko z zapisanym uzasadnieniem, właścicielem follow-upu i potwierdzeniem braku launch-critical wpływu.
-
-### X6 pass mapping
-
-| X6 pass | Launch-critical | Should-have | Post-launch | Owner questions |
-| --- | --- | --- | --- | --- |
-| X6.1 Design System Consistency | Destructive actions, status names, confirmations and mobile/desktop patterns that affect payments/access/video/support. | Visual consolidation where safe behavior is already clear. | Redesign, animation and non-critical brand polish. | `OWNER_DECISION_REQUIRED` for intentional design exceptions. |
-| X6.2 State Completeness | Loading/error/locked/processing/unauthorized/forbidden/retry/destructive states for launch-critical screens and admin diagnostics. | Better illustrations and tone for non-critical states. | Personalization or advanced state variants. | `OWNER_DECISION_REQUIRED` for legal-sensitive or product-tone copy not covered elsewhere. |
-| X6.3 Responsive and Browser | Minimum matrix for flows required to pay, access, play, comment, subscribe, moderate and support. | Minor layout improvements that do not block use. | Broader device matrix from real traffic. | `OWNER_DECISION_REQUIRED` for minimum physical-device set beyond baseline. |
-| X6.4 Accessibility | WCAG 2.2 AA target for launch-critical public/admin flows; no keyboard traps or inaccessible critical actions. | Non-critical accessibility refinements. | Broader assistive technology coverage and media accessibility enhancements beyond launch scope. | `OWNER_DECISION_REQUIRED` for captions/subtitles scope and accepted exceptions. |
-| X6.5 Performance | Budgets for launch-critical pages/flows; no denied playback stream/token request; no performance fix that weakens correctness. | Non-critical page optimizations. | Field-data tuning after real traffic exists. | `OWNER_DECISION_REQUIRED` for performance exceptions and representative device/network baseline. |
-| X6.6 Copy, Trust and Comprehension | Patronat, threshold, access timing, lifetime/no-expiry, newsletter distinction, locked reason, paid-but-locked and irreversible actions are clear. | Tone/brand refinement. | Copy updates from user questions. | `OWNER_DECISION_REQUIRED` for legal-sensitive wording and waiver of validation findings. |
-| X6.7 Owner and Admin Usability | Owner can diagnose paid-but-locked, failed webhook, access decision, provider failure and recovery without DB/developer help. | Admin ergonomics after support-critical flows work. | Dashboard refinements based on real support load. | `OWNER_DECISION_REQUIRED` for rollback/recovery acceptance and escalation ownership. |
-| X6.8 Representative User Validation | Unresolved `BLOCKER` findings in patronat/payment/access/playback/mobile comprehension block launch unless owner waiver explicitly accepts non-critical scope. | Medium/low findings with follow-up owner. | Broader validation after launch. | `OWNER_DECISION_REQUIRED` for waiver, recruitment constraints and minimum validation panel changes. |
-
-### X7 proof relationship
-
-X6 creates excellence evidence per pass. X7 collects the final Launch Evidence Pack and cannot certify launch from local tests, documentation, green preview deploy or agent recommendation alone. Missing production/manual evidence is `IMPLEMENTED_UNVERIFIED`, `PARTIAL`, `MISSING` or `BLOCKED`, not `LAUNCH_READY`.
-
-### Additional owner questions before launch
-
-| ID | Question | Status | Required before |
-| --- | --- | --- | --- |
-| OQ-008 | What owner-approved RPO and RTO apply to production data and media-supporting state? | `OWNER_DECISION_REQUIRED` | X7 backup/recovery proof |
-| OQ-009 | What captions/subtitles scope is required for launch VOD by owner/legal decision? | `OWNER_DECISION_REQUIRED` | X6.4 / X7 accessibility proof |
-| OQ-010 | What physical devices are required beyond the baseline viewport/browser matrix? | `OWNER_DECISION_REQUIRED` | X6.3 / X7 mobile proof |
-| OQ-011 | Is the proposed 72h/14d/30d stabilization model accepted or adjusted? | `OWNER_DECISION_REQUIRED` | Post-launch stabilization |
-| OQ-012 | Is the minimum representative user validation set accepted, or does owner waive/adjust it? | `OWNER_DECISION_REQUIRED` | X6.8 |
-| OQ-013 | Which performance exceptions, if any, may be accepted without blocking launch? | `OWNER_DECISION_REQUIRED` | X6.5 / X7 performance proof |
-| OQ-014 | Which alert channels, owners and thresholds are approved for critical billing/access/video/email/comments events? | `OWNER_DECISION_REQUIRED` | X7 observability proof |
-| OQ-015 | What depth of risk-based OWASP ASVS 5.0.0 security verification is required for launch-critical areas? | `OWNER_DECISION_REQUIRED` | X7 security proof |
+Do not reintroduce historical control-plane roadmaps, reconciliation reports or
+large multi-agent queues. If a current-state conclusion belongs in docs, update
+`CLAUDE.md`, `KNOWN_LIMITATIONS.md`, this file or `docs/audit/`. If it is work
+to execute now, create one small file in `docs/tickets/ready/` or update the
+matching GitHub issue.
