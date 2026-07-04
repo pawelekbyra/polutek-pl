@@ -19,6 +19,7 @@ import ShareButton from './ShareButton';
 import InstallAppMenu from './InstallAppMenu';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Frame, NajsIcon, INK } from './najs/primitives';
+import styles from './watch-actions.module.css';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -189,8 +190,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              {displayTitle}
           </h1>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-[14px]">
-            <div className="flex w-full items-center gap-[13px] min-w-0 lg:w-auto">
+          <div className={cn("flex flex-col justify-between gap-[14px] lg:flex-row lg:items-center", styles.metaRow)}>
+            <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
                  href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
                  className="w-[46px] h-[46px] rounded-full bg-gradient-to-br from-[#2f2c27] to-[#4a463f] border border-input overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
@@ -220,6 +221,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     creatorSlug={video.creator?.slug}
                     creatorName={video.creator?.name}
                     variant="compact"
+                    className={styles.subscribeAction}
                     initialIsSubscribed={localSubState.isSubscribed}
                     onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
                         setLocalSubState(prev => ({
@@ -231,43 +233,48 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </div>
             </div>
 
-            <div className="flex w-full items-center gap-[9px] lg:w-auto">
-               <div className="relative flex h-[38px] shrink-0 items-center">
+            <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
+               <div className={cn("relative flex h-[38px] shrink-0 items-center", styles.actionCluster)}>
                   <Frame radius={20} seed={23} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
                         "relative flex h-full items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:pl-5 lg:pr-4",
+                        styles.actionButton,
                         interactionState.isLiked ? "text-primary" : "ink-text",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
+                    aria-label="Lubię to"
                   >
                      <NajsIcon name="like" className="h-[18px] w-[18px]" stroke={interactionState.isLiked ? "#2563eb" : INK} />
-                     <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.likesCount.toLocaleString('pl-PL')}</span>
+                     <span className="text-[14px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
-                  <span className="relative h-5 w-px bg-[rgba(23,23,23,0.35)]" />
+                  <span className="relative h-5 w-px bg-[rgba(23,23,23,0.28)]" />
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
                         "relative flex h-full items-center justify-center px-4 transition-colors active:opacity-70",
+                        styles.actionButton,
                         interactionState.isDisliked ? "text-primary" : "ink-text",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
+                    aria-label="Nie lubię"
                   >
                      <NajsIcon name="dislike" className="h-[18px] w-[18px]" stroke={interactionState.isDisliked ? "#2563eb" : INK} />
                   </button>
                </div>
-                  <ShareButton
-                    url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
-                    title={displayTitle}
-                    text={video.description || undefined}
-                    fill
-                  />
-               <InstallAppMenu />
+               <ShareButton
+                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
+                 title={displayTitle}
+                 text={video.description || undefined}
+                 className={styles.secondaryAction}
+                 fill
+               />
+               <InstallAppMenu className={styles.installAction} />
             </div>
           </div>
         </div>
