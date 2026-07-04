@@ -75,6 +75,8 @@ export function CommentComposer({
   const limitId = `${textareaId}-limit`;
   const errorId = `${textareaId}-error`;
 
+  const fieldClassName = "relative min-h-[2.75rem] rounded-2xl border border-[#0f0f0f] bg-white shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] transition-shadow focus-within:shadow-[0_1px_0_rgba(15,15,15,0.14),0_10px_22px_rgba(15,15,15,0.10)]";
+
   const insertEmoji = (emoji: string) => {
     if (!textareaRef.current) return;
     const start = textareaRef.current.selectionStart;
@@ -121,13 +123,13 @@ export function CommentComposer({
           alt={userProfile.name || "Avatar"}
           size={40}
           fallbackSeed={userProfile.id}
-          className="mt-1 border border-[#e9eef6]"
+          className="mt-1 border border-[#0f0f0f]"
         />
       )}
       <div className="flex-1 min-w-0">
         <form className="relative" onSubmit={handleSubmit} noValidate>
           {replyTo && userProfile && (
-            <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#e9eef6]">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#0f0f0f] shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)]">
               <CornerDownRight size={12} />
               {language === "pl" ? (
                 <>
@@ -153,7 +155,7 @@ export function CommentComposer({
             </div>
           )}
           {isViewerLoading ? (
-            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
+            <div className={fieldClassName}>
               <div
                 className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5 text-[13px] font-bold text-neutral-500"
                 role="status"
@@ -165,7 +167,7 @@ export function CommentComposer({
               </div>
             </div>
           ) : !canComment ? (
-            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
+            <div className={fieldClassName}>
               <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
@@ -188,7 +190,7 @@ export function CommentComposer({
               </div>
             </div>
           ) : (
-            <div className="relative min-h-[2.75rem] rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)]">
+            <div className={fieldClassName}>
               <label htmlFor={textareaId} className="sr-only">
                 {replyTo ? t.addReply : t.addComment}
               </label>
@@ -243,7 +245,7 @@ export function CommentComposer({
                     {showEmojiPanel ? "✕" : "więcej"}
                   </button>
                   {showEmojiPanel && (
-                    <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-neutral-200 rounded-xl shadow-xl p-2 w-[300px] max-h-[200px] overflow-y-auto">
+                    <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-[#0f0f0f] rounded-xl shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] p-2 w-[300px] max-h-[200px] overflow-y-auto">
                       <div className="flex flex-wrap gap-0.5">
                         {EXTENDED_EMOJIS.map((emoji) => (
                           <button
@@ -303,11 +305,11 @@ export function CommentComposer({
 
               {uploadedImageUrl && (
                 <div className="relative inline-block mb-2">
-                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-neutral-200 object-contain" />
+                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-[#0f0f0f] object-contain" />
                   <button
                     type="button"
                     onClick={() => setUploadedImageUrl(null)}
-                    className="absolute -top-1 -right-1 bg-white border border-neutral-200 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
+                    className="absolute -top-1 -right-1 bg-white border border-[#0f0f0f] rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
                   >✕</button>
                 </div>
               )}
