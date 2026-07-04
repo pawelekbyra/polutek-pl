@@ -60,7 +60,7 @@ interface SidebarPlaylistProps {
   mounted: boolean;
   premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
-  onVideoSelect?: () => void;
+  onVideoSelect?: (videoId?: string) => void;
 }
 
 export function SidebarPlaylist({
@@ -163,7 +163,7 @@ export function SidebarPlaylist({
           href={`/?v=${video.slug || video.id}`}
           scroll={false}
           onClick={() => {
-            onVideoSelect?.();
+            onVideoSelect?.(video.id);
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
