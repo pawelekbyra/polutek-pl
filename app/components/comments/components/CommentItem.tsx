@@ -116,7 +116,7 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "relative flex items-start gap-[13px] rounded-2xl bg-white p-[16px_14px] shadow-[0_1px_2px_rgba(23,23,23,0.05),0_8px_20px_rgba(23,23,23,0.06)] transition-colors duration-1000",
+        "relative flex items-start gap-[13px] rounded-2xl border border-[#0f0f0f] bg-white p-[16px_14px] shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] transition-colors duration-1000",
         isReply ? "group/reply" : "group/comment",
         isHighlighted && "ring-2 ring-blue-100",
       )}
@@ -128,7 +128,7 @@ export function CommentItem({
         </span>
       )}
       <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
-        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-border relative">
+        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-[#0f0f0f] relative">
             <SafeAvatar
             src={comment.author?.imageUrl}
             alt={comment.author?.displayName || "Avatar"}
@@ -138,7 +138,7 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-accent-ring tracking-wider uppercase whitespace-nowrap">
+          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[#0f0f0f] tracking-wider uppercase whitespace-nowrap">
             6-7
           </span>
         )}
@@ -181,7 +181,7 @@ export function CommentItem({
             )}
 
             {userProfile && showMenu && (
-              <div className="absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-xl z-50 py-1 animate-in fade-in zoom-in duration-150">
+              <div className="absolute right-0 mt-1 w-48 bg-white border border-[#0f0f0f] rounded-lg shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] z-50 py-1 animate-in fade-in zoom-in duration-150">
                 <button
                   onClick={() => {
                     const url = new URL(window.location.href);
@@ -275,7 +275,7 @@ export function CommentItem({
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-secondary border border-border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-white border border-[#0f0f0f] rounded-md p-2 text-sm shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[#0f0f0f]/20"
               autoFocus
             />
             <div className="flex gap-2">
