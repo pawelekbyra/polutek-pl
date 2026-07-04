@@ -13,6 +13,7 @@ import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, INK } from "./najs/primitives";
 import { useIrisTransition } from "./channel/IrisTransition";
+import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -37,6 +38,29 @@ export default function ChannelHome({
   currentVideoId,
   userProfile,
 }: ChannelHomeProps) {
+  const selectedVideo =
+    (allVideos || []).find(
+      (v) => v.id === currentVideoId || v.slug === currentVideoId,
+    ) || mainVideo;
+
+  return (
+    <AppPreloadProvider selectedVideo={selectedVideo} allVideos={allVideos}>
+      <ChannelHomeContent
+        mainVideo={mainVideo}
+        allVideos={allVideos}
+        currentVideoId={currentVideoId}
+        userProfile={userProfile}
+      />
+    </AppPreloadProvider>
+  );
+}
+
+function ChannelHomeContent({
+  mainVideo,
+  allVideos = [],
+  currentVideoId,
+  userProfile,
+}: ChannelHomeProps) {
   const { t, language } = useLanguage();
   const selectedVideo =
     (allVideos || []).find(
@@ -47,6 +71,7 @@ export default function ChannelHome({
   const [mounted, setMounted] = useState(false);
   const queryClient = useQueryClient();
   const iris = useIrisTransition();
+  const preloader = useAppPreload();
 
   useEffect(() => {
     setMounted(true);
@@ -91,6 +116,7 @@ export default function ChannelHome({
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
   const prefetchComments = (vidId: string) => {
+    void preloader?.warmVideo(vidId, { includeComments: true, includePoster: true, priority: "intent" });
     queryClient.prefetchInfiniteQuery({
       queryKey: ["comments", vidId],
       queryFn: async () => {
@@ -115,7 +141,10 @@ export default function ChannelHome({
     onVideoSelect: (clickedId?: string) => {
       // Cinematic iris wipe: close over the current scene, reveal the next once it's in place.
       // Skipped when re-clicking the already-active video — there is no scene change to reveal.
-      if (clickedId && clickedId !== selectedVideo.id) iris.trigger();
+      if (clickedId && clickedId !== selectedVideo.id) {
+        void preloader?.warmVideo(clickedId, { includeComments: true, includePoster: true, priority: "intent" });
+        iris.trigger();
+      }
       setActiveTab("comments");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },

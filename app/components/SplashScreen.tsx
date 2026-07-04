@@ -68,39 +68,35 @@ export function SplashScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // Skip if already shown this session
-    try {
-      if (sessionStorage.getItem("polutek_splash")) {
-        setPhase("skip");
-        return;
-      }
-    } catch {}
-
     // Min time gate
     const minTimer = setTimeout(() => setMinPassed(true), MIN_MS);
 
-    // App ready gate
-    if (document.readyState === "complete") {
-      setAppReady(true);
-    } else {
-      const onLoad = () => setAppReady(true);
-      window.addEventListener("load", onLoad, { once: true });
-    }
+    const hardFallback = setTimeout(() => setAppReady(true), 7000);
+    const onPreloadProgress = (event: Event) => {
+      const detail = (event as CustomEvent<{ progress?: number; ready?: boolean }>).detail;
+      if (typeof detail?.progress === "number") {
+        setProgress(Math.max(0, Math.min(100, Math.round(detail.progress))));
+      }
+      if (detail?.ready) setAppReady(true);
+    };
+    window.addEventListener("polutek:app-preload-progress", onPreloadProgress);
 
-    // Animate progress to ~80%, then wait for both gates
+    // Advance gently while the real app preloader reports concrete milestones.
     let prog = 0;
     intervalRef.current = setInterval(() => {
-      prog += Math.random() * 6 + 2;
-      if (prog >= 78) {
+      prog += Math.random() * 3 + 1;
+      if (prog >= 88) {
         clearInterval(intervalRef.current!);
-        setProgress(78);
+        setProgress((current) => Math.max(current, 88));
       } else {
-        setProgress(Math.round(prog));
+        setProgress((current) => Math.max(current, Math.round(prog)));
       }
-    }, 120);
+    }, 180);
 
     return () => {
       clearTimeout(minTimer);
+      clearTimeout(hardFallback);
+      window.removeEventListener("polutek:app-preload-progress", onPreloadProgress);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
@@ -115,10 +111,15 @@ export function SplashScreen() {
 
   const handleEnter = useCallback(() => {
     if (phase !== "ready") return;
-    try { sessionStorage.setItem("polutek_splash", "1"); } catch {}
     setPhase("exiting");
     setTimeout(() => setPhase("done"), 500);
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "ready") return;
+    const timer = setTimeout(() => handleEnter(), 280);
+    return () => clearTimeout(timer);
+  }, [handleEnter, phase]);
 
   if (phase === "skip" || phase === "done") return null;
 

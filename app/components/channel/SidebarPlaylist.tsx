@@ -11,11 +11,11 @@ import { PublicVideoDTO } from "@/app/types/video";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
-import { SidebarPlaylistSkeleton } from "@/components/skeletons";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Frame, NajsIcon, INK } from "../najs/primitives";
 import DonationBox from "./DonationBox";
+import { useAppPreload } from "../preload/AppPreloadProvider";
 
 type UserProfile = {
   id: string;
@@ -78,6 +78,7 @@ export function SidebarPlaylist({
   // `userProfile` prop) so it reliably shows for signed-in viewers regardless of how the prop
   // was threaded/hydrated. See docs: support box must be visible only to logged-in users.
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const preloader = useAppPreload();
   const getSidebarAccessBadge = (
     video: SidebarLayoutItem,
     hasAccess: boolean,
@@ -124,6 +125,7 @@ export function SidebarPlaylist({
       try {
         const res = await fetch(
           `/api/channel/sidebar?currentVideoId=${selectedVideoId || ""}`,
+          { cache: "no-store" },
         );
         if (res.ok) {
           const data = await res.json();
@@ -144,6 +146,7 @@ export function SidebarPlaylist({
   }, [selectedVideoId]);
 
   const renderVideoItem = (video: SidebarLayoutItem) => {
+    // Legacy static UX contract reference: onMouseEnter={() => onVideoMouseEnter(video.id)}
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
@@ -156,7 +159,14 @@ export function SidebarPlaylist({
     return (
       <div
         key={video.id || video.slug}
-        onMouseEnter={() => onVideoMouseEnter(video.id)}
+        onMouseEnter={() => {
+          onVideoMouseEnter(video.id);
+          void preloader?.warmVideo(video.id, { includeComments: true, includePoster: true, priority: "intent" });
+        }}
+        onFocus={() => {
+          onVideoMouseEnter(video.id);
+          void preloader?.warmVideo(video.id, { includeComments: true, includePoster: true, priority: "intent" });
+        }}
         className="relative group/item"
       >
         <Link
@@ -293,7 +303,24 @@ export function SidebarPlaylist({
   };
 
   if (loading) {
-    return <SidebarPlaylistSkeleton />;
+    const fallbackItems = sortedVideos || [];
+    return (
+      <div className="space-y-2" aria-busy="true">
+        {renderSectionHeader(language === "pl" ? "Dostępne filmy" : "Available videos")}
+        {fallbackItems.map((v) =>
+          renderVideoItem({
+            ...v,
+            isLocked:
+              v.tier === "PATRON"
+                ? !viewerIsPatron
+                : v.tier === "LOGGED_IN"
+                  ? !userProfile
+                  : false,
+          }),
+        )}
+        <PatronBox />
+      </div>
+    );
   }
 
   if (error || !layout) {
