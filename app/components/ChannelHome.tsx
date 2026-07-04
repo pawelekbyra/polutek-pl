@@ -12,7 +12,6 @@ import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, INK } from "./najs/primitives";
-import { useIrisTransition } from "./channel/IrisTransition";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
 
 interface ChannelHomeProps {
@@ -55,6 +54,16 @@ export default function ChannelHome({
   );
 }
 
+function scrollToMediaOnMobile() {
+  if (typeof window === "undefined") return;
+
+  const isMobileLayout = window.matchMedia?.("(max-width: 1023px)").matches ?? true;
+  if (!isMobileLayout) return;
+
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+}
+
 function ChannelHomeContent({
   mainVideo,
   allVideos = [],
@@ -70,18 +79,14 @@ function ChannelHomeContent({
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
   const [mounted, setMounted] = useState(false);
   const queryClient = useQueryClient();
-  const iris = useIrisTransition();
   const preloader = useAppPreload();
 
   useEffect(() => {
     setMounted(true);
-    if (selectedVideo?.id) {
-      setActiveTab("comments");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      // The newly selected video is committed to the screen — open the iris over it.
-      iris.contentReady();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!selectedVideo?.id) return;
+
+    setActiveTab("comments");
+    scrollToMediaOnMobile();
   }, [selectedVideo?.id]);
 
   if (!selectedVideo)
@@ -139,28 +144,29 @@ function ChannelHomeContent({
     mounted,
     onVideoMouseEnter: prefetchComments,
     onVideoSelect: (clickedId?: string) => {
-      // Cinematic iris wipe: close over the current scene, reveal the next once it's in place.
-      // Skipped when re-clicking the already-active video — there is no scene change to reveal.
+      // Keep switching lightweight: warm the next video, but do not cover the entire page.
       if (clickedId && clickedId !== selectedVideo.id) {
         void preloader?.warmVideo(clickedId, { includeComments: true, includePoster: true, priority: "intent" });
-        iris.trigger();
       }
       setActiveTab("comments");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     },
   };
 
   return (
     <main className="bg-transparent min-h-screen">
-      {iris.element}
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
-            <Hero
-              video={selectedVideo}
-              initialInteraction={userProfile?.initialInteraction}
-              initialIsSubscribed={userProfile?.initialIsSubscribed}
-            />
+            <div
+              key={selectedVideo.id}
+              className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
+            >
+              <Hero
+                video={selectedVideo}
+                initialInteraction={userProfile?.initialInteraction}
+                initialIsSubscribed={userProfile?.initialIsSubscribed}
+              />
+            </div>
             <div className="lg:hidden mt-4">
               <div className="relative flex overflow-hidden rounded-2xl border border-[#e4dcc8] bg-[#f1ebdd]/80 p-1 font-sans shadow-[0_2px_8px_rgba(23,23,23,0.05)]">
                 {(["comments", "videos"] as const).map((tab) => {
