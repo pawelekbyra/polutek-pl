@@ -70,7 +70,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-[#d8d0bd]/90 bg-[#f8f3e7]/98 p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {installed ? (
             <div className="px-3 py-2.5 text-[13px] font-bold text-[#171717]">
@@ -81,7 +81,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               <p className="mb-1 font-bold">
                 {isPl ? "Zainstaluj na iPhonie/iPadzie" : "Install on iPhone/iPad"}
               </p>
-              <p>
+              <p className="text-[#6b665d]">
                 {isPl
                   ? 'Stuknij ikonę Udostępnij w Safari, a potem "Dodaj do ekranu początkowego".'
                   : 'Tap the Share icon in Safari, then "Add to Home Screen".'}
@@ -92,13 +92,13 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               type="button"
               role="menuitem"
               onClick={handleInstallClick}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[#171717] transition-colors hover:bg-secondary"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[#171717] transition-colors hover:bg-[#f1ead9]"
             >
               <NajsIcon name="download" className="h-[16px] w-[16px]" stroke={INK} />
               {isPl ? "Zainstaluj aplikację" : "Install app"}
             </button>
           ) : (
-            <div className="px-3 py-2.5 text-[12px] font-bold text-neutral-500">
+            <div className="px-3 py-2.5 text-[12px] font-bold text-[#6b665d]">
               {isPl
                 ? "Instalacja niedostępna w tej przeglądarce"
                 : "Installation isn't available in this browser"}
