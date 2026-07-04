@@ -287,7 +287,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       ref={commentsTopRef}
       className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent rounded-none border-none shadow-none mb-[30px] relative"
     >
-      {/* Back to comments top */}
+      {/* Sticky Header */}
       {showStickyHeader && (
         <div className="fixed right-4 bottom-4 lg:bottom-auto lg:top-24 lg:right-6 z-40 animate-in slide-in-from-bottom-4 lg:slide-in-from-top-4 duration-300">
           <button
@@ -298,7 +298,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           >
             <ChevronUp size={15} className="blue-text" aria-hidden="true" />
             <span className="hidden sm:inline">
-              {language === "pl" ? "Komentarze" : "Comments"}
+              {language === "pl" ? "Do początku" : "To top"}
             </span>
           </button>
         </div>
