@@ -345,3 +345,73 @@
     animation: pl-glow 2.4s ease-out infinite;
   }
 }
+
+@layer utilities {
+  .rough-ui-page {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
+      radial-gradient(circle at 78% 8%, rgba(245, 196, 81, 0.13), transparent 22%),
+      linear-gradient(rgba(23,23,23,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23,23,23,.045) 1px, transparent 1px);
+    background-size: auto, auto, 42px 42px, 42px 42px;
+  }
+
+  .rough-ui-page :is(h1, h2, h3, nav, button, a, .rough-chip) {
+    letter-spacing: -0.025em;
+  }
+
+  .rough-box,
+  .rough-card,
+  .rough-btn,
+  .rough-chip {
+    position: relative;
+    border-color: rgba(23, 23, 23, 0.92) !important;
+    box-shadow: none !important;
+  }
+
+  .rough-box::after,
+  .rough-card::after,
+  .rough-btn::after,
+  .rough-chip::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 2px -2px -2px 2px;
+    border: 1px solid rgba(23, 23, 23, 0.22);
+    border-radius: inherit;
+    transform: rotate(-0.25deg);
+  }
+
+  .rough-card:nth-child(even)::after,
+  .rough-ui-page article:nth-child(even)::after {
+    transform: rotate(0.35deg);
+  }
+
+  .rough-btn {
+    border: 2px solid rgba(23, 23, 23, 0.92);
+    transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .rough-btn:hover {
+    transform: translateY(-1px) rotate(-0.25deg);
+  }
+
+  .rough-btn-filled,
+  .rough-btn-blue {
+    color: #f8f3e7;
+  }
+
+  .rough-copy {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.28em;
+    text-decoration-color: rgba(23, 23, 23, 0.18);
+  }
+
+  .rough-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.22em;
+    text-decoration-color: rgba(23, 23, 23, 0.85);
+  }
+}
