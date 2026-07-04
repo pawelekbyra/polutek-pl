@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAuth, useClerk } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
+import { useAuthModal } from "../auth/AuthModalProvider";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
@@ -38,7 +39,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   const isPl = language === "pl";
   const toast = useToast();
   const { userId } = useAuth();
-  const { openSignIn } = useClerk();
+  const { open: openAuthModal } = useAuthModal();
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -177,7 +178,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
   const onSupport = useCallback(async () => {
     if (!userId) {
-      openSignIn();
+      openAuthModal("sign-in");
       return;
     }
     if (!isTermsAccepted) {
@@ -232,7 +233,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
       } else if (data?.error) {
         if (response.status === 401 || String(data.error).includes("AUTH_REQUIRED")) {
           toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
-          openSignIn();
+          openAuthModal("sign-in");
         } else {
           toast(isPl ? `Błąd: ${data.message || data.error}` : `Error: ${data.message || data.error}`, "error");
         }
@@ -248,7 +249,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     } finally {
       setIsLoading(false);
     }
-  }, [userId, openSignIn, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
+  }, [userId, openAuthModal, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
 
   const title = viewerIsPatron
     ? (isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL")

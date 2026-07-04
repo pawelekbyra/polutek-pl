@@ -18,6 +18,10 @@ vi.mock('@clerk/nextjs', () => ({
   useClerk: () => ({ openSignIn: vi.fn() }),
 }));
 
+vi.mock('@/app/components/auth/AuthModalProvider', () => ({
+  useAuthModal: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
+}));
+
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),

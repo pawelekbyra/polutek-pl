@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { useAuthModal } from "./auth/AuthModalProvider";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck } from "./icons";
@@ -18,6 +19,7 @@ type NavbarMetadata = {
 
 const Navbar = () => {
   const { language, setLanguage, t } = useLanguage();
+  const { open: openAuthModal } = useAuthModal();
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -186,18 +188,17 @@ const Navbar = () => {
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (
-                <SignInButton mode="modal">
-                  <button
-                    className="relative flex h-9 items-center justify-center gap-2 px-2 sm:px-4 shrink-0"
-                    aria-label={t.signIn}
-                    title={t.signIn}
-                    style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-                  >
-                    <Frame radius={18} seed={39} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-                    <NajsIcon name="login" className="relative h-4 w-4" stroke={INK} />
-                    <span className="hidden sm:inline relative text-[13px] font-bold uppercase tracking-wide">{t.signIn}</span>
-                  </button>
-                </SignInButton>
+                <button
+                  onClick={() => openAuthModal("sign-in")}
+                  className="relative flex h-9 items-center justify-center gap-2 px-2 sm:px-4 shrink-0"
+                  aria-label={t.signIn}
+                  title={t.signIn}
+                  style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+                >
+                  <Frame radius={18} seed={39} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
+                  <NajsIcon name="login" className="relative h-4 w-4" stroke={INK} />
+                  <span className="hidden sm:inline relative text-[13px] font-bold uppercase tracking-wide">{t.signIn}</span>
+                </button>
               )}
 
               {isLoaded && isSignedIn && (

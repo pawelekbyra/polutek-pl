@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import { motion } from "framer-motion";
-import { useAuth, useClerk } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
+import { useAuthModal } from "./auth/AuthModalProvider";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
@@ -74,7 +75,7 @@ export default function SubscribeButton({
 }: SubscribeButtonProps) {
   const { t, language } = useLanguage();
   const { userId } = useAuth();
-  const { openSignIn } = useClerk();
+  const { open: openAuthModal } = useAuthModal();
   const [isSubscribed, setIsSubscribed] = useState(
     initialIsSubscribed ?? false,
   );
@@ -116,7 +117,7 @@ export default function SubscribeButton({
 
   const handleSubscribe = async () => {
     if (!userId) {
-      openSignIn();
+      openAuthModal("sign-in");
       return;
     }
     if (isPending) return;

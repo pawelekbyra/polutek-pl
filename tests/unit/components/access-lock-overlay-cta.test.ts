@@ -8,7 +8,7 @@ const component = (path: string) =>
 describe("AccessLockOverlay CTA and accessibility verification", () => {
   it("has visible login button in LOGIN_REQUIRED state", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain("SignInButton");
+    expect(source).toContain('openAuthModal("sign-in")');
     expect(source).toContain('type="button"');
     expect(source).toContain("Zaloguj się");
   });

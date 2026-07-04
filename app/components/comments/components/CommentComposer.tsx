@@ -3,7 +3,7 @@
 import React from "react";
 import { CornerDownRight, Loader2 } from "../../icons";
 import { Button } from "@/components/ui/button";
-import { SignInButton } from "@clerk/nextjs";
+import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
 import { SafeAvatar } from "../../SafeAvatar";
 import { countGraphemes } from "@/lib/utils/graphemes";
@@ -63,6 +63,7 @@ export function CommentComposer({
   t,
   language,
 }: CommentComposerProps) {
+  const { open: openAuthModal } = useAuthModal();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [showEmojiPanel, setShowEmojiPanel] = React.useState(false);
@@ -176,14 +177,13 @@ export function CommentComposer({
                       : "Leave a tip to comment"}
                   </a>
                 ) : (
-                  <SignInButton mode="modal">
-                    <button
-                      type="button"
-                      className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
-                    >
-                      {t.signInToComment}
-                    </button>
-                  </SignInButton>
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal("sign-in")}
+                    className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                  >
+                    {t.signInToComment}
+                  </button>
                 )}
               </div>
             </div>

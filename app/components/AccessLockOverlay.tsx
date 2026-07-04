@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton } from "@clerk/nextjs";
+import { useAuthModal } from "./auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { PlayerStateFrame } from "./PlayerStateFrame";
@@ -40,6 +40,7 @@ function StarSvg({ size = 24 }: { size?: number }) {
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const { language } = useLanguage();
+  const { open: openAuthModal } = useAuthModal();
   const isPatron = state === "PATRON_REQUIRED";
   const isPl = language === "pl";
   const isCompact = variant !== "default";
@@ -135,18 +136,17 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
               </span>
             </a>
           ) : (
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="relative flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all"
-                style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-              >
-                <Frame radius={24} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
-                <span className="relative z-10 whitespace-nowrap">
-                  {isPl ? "Zaloguj się" : "Sign In"}
-                </span>
-              </button>
-            </SignInButton>
+            <button
+              type="button"
+              onClick={() => openAuthModal("sign-in")}
+              className="relative flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all"
+              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+            >
+              <Frame radius={24} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
+              <span className="relative z-10 whitespace-nowrap">
+                {isPl ? "Zaloguj się" : "Sign In"}
+              </span>
+            </button>
           )}
         </div>
       </div>

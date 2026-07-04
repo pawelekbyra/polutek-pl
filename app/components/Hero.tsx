@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
-import { useAuth, useClerk } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
+import { useAuthModal } from './auth/AuthModalProvider';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
@@ -29,7 +30,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const { t, language } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
-  const { openSignIn } = useClerk();
+  const { open: openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -74,7 +75,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   }, [video.id, userId, initialInteraction?.liked, initialInteraction?.disliked, video.likesCount, video.dislikesCount]);
 
   const handleLike = async () => {
-    if (!userId) return openSignIn();
+    if (!userId) return openAuthModal("sign-in");
     if (isPending) return;
 
     const previousState = interactionState;
@@ -96,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                 logger.error("[Hero] LIKE Action failed:", result.error, result.message);
                 setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
-                    openSignIn();
+                    openAuthModal("sign-in");
                 } else if (result.error === 'CLERK_ERROR') {
                     toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {
@@ -122,7 +123,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   };
 
   const handleDislike = async () => {
-    if (!userId) return openSignIn();
+    if (!userId) return openAuthModal("sign-in");
     if (isPending) return;
 
     const previousState = interactionState;
@@ -144,7 +145,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                 logger.error("[Hero] DISLIKE Action failed:", result.error, result.message);
                 setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
-                    openSignIn();
+                    openAuthModal("sign-in");
                 } else if (result.error === 'CLERK_ERROR') {
                     toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {

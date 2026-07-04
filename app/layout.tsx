@@ -8,6 +8,7 @@ import { APP_NAME } from '@/lib/constants';
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { ServiceWorkerRegistration } from "@/app/components/ServiceWorkerRegistration";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
+import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
@@ -58,7 +59,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>
-              {children}
+              <AuthModalProvider>
+                {children}
+              </AuthModalProvider>
             </ClerkLocalizationProvider>
           </Providers>
         </Suspense>
