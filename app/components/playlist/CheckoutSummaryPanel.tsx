@@ -91,13 +91,13 @@ export default function CheckoutSummaryPanel({
       ];
 
   return (
-    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[#171717]/10 bg-[#f7f1e4] px-10 py-10 text-[#171717] md:flex md:w-[45%] lg:px-14">
+    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[#d8d0bd] bg-[#f1ead9] px-10 py-10 text-[#171717] md:flex md:w-[45%] lg:px-14">
       {/* faint grid, same as the splash screen */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(90deg, rgba(18,18,18,0.07) 1px, transparent 1px), linear-gradient(rgba(18,18,18,0.07) 1px, transparent 1px)',
+            'linear-gradient(90deg, rgba(18,18,18,0.06) 1px, transparent 1px), linear-gradient(rgba(18,18,18,0.06) 1px, transparent 1px)',
           backgroundSize: '42px 42px',
         }}
       />
@@ -122,14 +122,14 @@ export default function CheckoutSummaryPanel({
           >
             <span
               className="px-[4px]"
-              style={{ background: 'linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)' }}
+              style={{ background: 'linear-gradient(180deg, transparent 55%, rgba(251,224,138,0.72) 55%, rgba(251,224,138,0.72) 94%, transparent 94%)' }}
             >
               {heading}
             </span>
           </h1>
-          <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[#4a4a4a]">{lead}</p>
+          <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[#3f3a33]">{lead}</p>
           {videoTitle && (
-            <p className="mt-2 max-w-md truncate text-[12px] italic text-[#8a857b]">
+            <p className="mt-2 max-w-md truncate text-[12px] italic text-[#6b665d]">
               {isPl ? 'Wspierasz przy: ' : 'Supporting from: '}&bdquo;{videoTitle}&rdquo;
             </p>
           )}
@@ -137,7 +137,7 @@ export default function CheckoutSummaryPanel({
 
         {/* amount card */}
         <div className="relative w-fit min-w-[220px] px-7 py-4">
-          <Frame radius={14} seed={21} stroke={INK} strokeWidth={1.4} fill="#ffffff" showShadow />
+          <Frame radius={14} seed={21} stroke={INK} strokeWidth={1.4} fill="rgba(248,243,231,.94)" showShadow />
           <div className="relative z-10 flex items-baseline gap-2">
             <span
               className="text-[44px] font-bold leading-none tabular-nums"
@@ -145,18 +145,18 @@ export default function CheckoutSummaryPanel({
             >
               {amount === '' ? '—' : amount}
             </span>
-            <span className="text-[18px] font-bold text-[#7a7a7a]">{selectedCurrency}</span>
+            <span className="text-[18px] font-bold text-[#6b665d]">{selectedCurrency}</span>
           </div>
-          <p className="relative z-10 mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#9a958b]">
+          <p className="relative z-10 mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#6b665d]">
             {isPl ? 'Wpłata jednorazowa' : 'One-time payment'}
           </p>
         </div>
 
-        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed border-[#171717]/15 pt-[12px] text-[13px]">
+        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed border-[#d8d0bd] pt-[12px] text-[13px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? 'flex items-start gap-[8px] italic text-[#7a7a7a]' : 'flex items-start gap-[8px]'}
+              className={bullet.soft ? 'flex items-start gap-[8px] italic text-[#6b665d]' : 'flex items-start gap-[8px]'}
             >
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[10px] text-primary">◆</span>
@@ -170,7 +170,7 @@ export default function CheckoutSummaryPanel({
       </div>
 
       {/* footer */}
-      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#9a958b]">
+      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#6b665d]">
         <span>{MAIN_CREATOR_NAME} &copy; {new Date().getFullYear()}</span>
         <span>{isPl ? 'Bezpieczna płatność · Stripe' : 'Secure payment · Stripe'}</span>
       </div>
