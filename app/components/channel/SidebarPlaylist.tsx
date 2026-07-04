@@ -162,7 +162,10 @@ export function SidebarPlaylist({
     return (
       <div
         key={video.id || video.slug}
-        onMouseEnter={() => onVideoMouseEnter(video.id)}
+        onMouseEnter={() => {
+          onVideoMouseEnter(video.id);
+          warmVideoOnIntent();
+        }}
         onPointerEnter={warmVideoOnIntent}
         onFocus={() => {
           onVideoMouseEnter(video.id);
