@@ -92,16 +92,16 @@ export function SidebarPlaylist({
     if (video.tier === "LOGGED_IN") {
       if (!hasAccess)
         return {
-          text: isPl ? "Zaloguj się" : "Login required",
+          text: "Login",
           variant: "locked",
         };
-      return { text: isPl ? "Odblokowane" : "Unlocked", variant: "unlocked" };
+      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
     if (video.tier === "PATRON") {
       if (!hasAccess)
         return { text: isPl ? "Patron" : "Patron", variant: "locked" };
-      return { text: isPl ? "Odblokowane" : "Unlocked", variant: "unlocked" };
+      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
     return null;
@@ -229,13 +229,13 @@ export function SidebarPlaylist({
                   return (
                     <div
                       className={cn(
-                        "absolute top-[5px] right-[5px] text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[6px] border tracking-widest z-30 pointer-events-none shadow-[0_1px_4px_rgba(0,0,0,0.18)] backdrop-blur-[1px]",
+                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full border px-[6px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.14em] pointer-events-none shadow-[0_1px_5px_rgba(23,23,23,0.16)] backdrop-blur-[2px]",
                         badge.variant === "public" &&
-                          "border-[#d8d0bd]/75 bg-[#f8f3e7]/92 text-[#171717]",
+                          "border-[#d8d0bd]/85 bg-[#f8f3e7]/92 text-[#171717]",
                         badge.variant === "unlocked" &&
-                          "border-[#2563eb]/20 bg-[#eff3fe]/95 text-[#2563eb]",
+                          "border-[#2563eb]/30 bg-[#f8f3e7]/92 text-[#2563eb]",
                         badge.variant === "locked" &&
-                          "border-[#171717]/15 bg-[#171717]/88 text-[#f8f3e7]",
+                          "border-[#171717]/25 bg-[#171717]/88 text-[#f8f3e7]",
                       )}
                     >
                       {badge.text}
