@@ -56,17 +56,17 @@ export default function ChannelVideoCard({
     const isPl = language === "pl";
 
     if (video.tier === "PUBLIC") {
-      return { text: t.public, variant: "public" };
+      return { text: isPl ? "Publiczne" : "Public", variant: "public" };
     }
 
     if (video.tier === "LOGGED_IN") {
-      if (!hasAccess) return { text: t.loginReq, variant: "locked" };
-      return { text: isPl ? "Odblokowane" : "Unlocked", variant: "unlocked" };
+      if (!hasAccess) return { text: isPl ? "Login" : "Login", variant: "locked" };
+      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
     if (video.tier === "PATRON") {
       if (!hasAccess) return { text: t.patronOnly, variant: "locked" };
-      return { text: isPl ? "Odblokowane" : "Unlocked", variant: "unlocked" };
+      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
     return null;
@@ -114,9 +114,13 @@ export default function ChannelVideoCard({
             {badge && (
               <div
                 className={cn(
-                  "absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase px-2 py-1 rounded-md border border-[#1a1a1a] tracking-widest z-30 pointer-events-none",
+                  "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full border px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] shadow-[0_1px_5px_rgba(23,23,23,0.16)] backdrop-blur-[2px] pointer-events-none",
+                  badge.variant === "public" &&
+                    "border-[#d8d0bd]/85 bg-[#f8f3e7]/92 text-[#171717]",
                   badge.variant === "unlocked" &&
-                    "bg-primary/80 border-primary/20",
+                    "border-[#2563eb]/30 bg-[#f8f3e7]/92 text-[#2563eb]",
+                  badge.variant === "locked" &&
+                    "border-[#171717]/25 bg-[#171717]/88 text-[#f8f3e7]",
                 )}
               >
                 {badge.text}
