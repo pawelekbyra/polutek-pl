@@ -13,9 +13,22 @@ Widzowie oglądają filmy w trzech poziomach dostępu (PUBLIC / LOGGED_IN /
 PATRON), a jednorazowy napiwek Stripe powyżej progu nadaje dożywotni status
 patrona (`PatronGrant`). Brak subskrypcji cyklicznych, brak multi-tenant.
 
+## Aktualny stan
+
+Fundamenty runtime są po stabilizacji: `PatronGrant` jest jedynym źródłem
+prawdy dla statusu patrona, payment fulfillment idzie przez kanoniczny
+`fulfillPayment()`, a playback prywatny/patroński jest bramkowany przez
+backendowy `PlaybackPlan`. Produkcyjny launch nadal wymaga dowodów
+operacyjnych, decyzji owner/legal i manualnego smoke testu zgodnie z
+`DEPLOY_CHECKLIST.md` oraz issue #1269.
+
+Wykonywalna kolejka kodowa żyje w `docs/tickets/ready/`. Zamknięte lub
+zdezaktualizowane tickety/issue należy zamykać albo aktualizować przy każdej
+większej zmianie stanu — dokumentacja ma opisywać stan obecny, nie historię.
+
 ## Stack
 
-Next.js 14 (App Router, Vercel) · Neon PostgreSQL + Prisma · Clerk
+Next.js 15 (App Router, Vercel) · Neon PostgreSQL + Prisma · Clerk
 (tożsamość) · Stripe (płatności) · Cloudflare Stream (wideo) · Resend
 (email) · Upstash Redis (rate limiting).
 
