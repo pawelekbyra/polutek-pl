@@ -177,10 +177,18 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group flex gap-[11px] p-[6px] rounded-[11px] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mb-1",
-            isCurrent ? "bg-[#f1ead9]" : "hover:bg-[#f1ead9]/60",
+            "group relative mb-1 flex gap-[11px] overflow-hidden rounded-[13px] border p-[6px] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            isCurrent
+              ? "border-[#d8d0bd]/90 bg-[#f8f3e7]/88 shadow-[0_1px_2px_rgba(23,23,23,0.04),0_8px_22px_rgba(23,23,23,0.045)]"
+              : "border-transparent hover:border-[#d8d0bd]/70 hover:bg-[#f1ead9]/58 hover:shadow-[0_1px_2px_rgba(23,23,23,0.035)]",
           )}
         >
+          {isCurrent && (
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+            />
+          )}
           <div className="w-[158px] h-[90px] shrink-0 rounded-[9px] bg-black relative group/thumb">
             <Frame radius={9} seed={33} stroke={INK} strokeWidth={1} />
             <div className="absolute inset-0 overflow-hidden rounded-[8px]">
@@ -221,12 +229,13 @@ export function SidebarPlaylist({
                   return (
                     <div
                       className={cn(
-                        "absolute top-[5px] right-[5px] bg-black/62 text-white text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[5px] border border-white/15 tracking-widest z-30 pointer-events-none",
+                        "absolute top-[5px] right-[5px] text-[8px] font-extrabold uppercase px-[6px] py-[2px] rounded-[6px] border tracking-widest z-30 pointer-events-none shadow-[0_1px_4px_rgba(0,0,0,0.18)] backdrop-blur-[1px]",
+                        badge.variant === "public" &&
+                          "border-[#d8d0bd]/75 bg-[#f8f3e7]/92 text-[#171717]",
                         badge.variant === "unlocked" &&
-                          "bg-primary border-transparent",
+                          "border-[#2563eb]/20 bg-[#eff3fe]/95 text-[#2563eb]",
                         badge.variant === "locked" &&
-                          video.tier === "PATRON" &&
-                          "bg-neutral-800 border-border",
+                          "border-[#171717]/15 bg-[#171717]/88 text-[#f8f3e7]",
                       )}
                     >
                       {badge.text}
