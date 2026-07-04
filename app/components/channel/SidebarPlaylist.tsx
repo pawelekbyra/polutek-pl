@@ -352,8 +352,6 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      <PatronBox />
-
       {patronSection && (
         <div className="mb-3">
           {renderSectionHeader(
@@ -362,6 +360,9 @@ export function SidebarPlaylist({
           {patronSection.items.map(renderVideoItem)}
         </div>
       )}
+
+      {/* Support box always renders last — after every video section, never between them. */}
+      <PatronBox />
     </>
   );
 }

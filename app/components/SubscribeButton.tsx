@@ -194,7 +194,7 @@ export default function SubscribeButton({
           seed={37}
           stroke={INK}
           strokeWidth={1.2}
-          fill={isSubscribed ? "rgba(248,243,231,.88)" : colorScheme === "v2" ? BLUE : "#171717"}
+          fill={isSubscribed ? "rgba(248,243,231,.88)" : BLUE}
           showShadow={colorScheme === "v2"}
         />
         <SubscribeBellIcon size={16} className="relative shrink-0" filled={isSubscribed} />
