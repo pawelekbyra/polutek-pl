@@ -6,7 +6,7 @@ jedna lista mailingowa oraz jeden kokpit admina.
 
 ```txt
 Polutek.pl is not a platform.
-Polutek.pl is a place.
+Polutek.pl is a home.
 ```
 
 Widzowie oglądają filmy w trzech poziomach dostępu (PUBLIC / LOGGED_IN /
