@@ -44,20 +44,38 @@ Provider stays `app/components/ClerkLocalizationProvider.tsx` (`<ClerkProvider>`
 - Wired into `Providers`; replaced call sites: Navbar, DonationBox,
   SubscribeButton, Hero, AccessLockOverlay, CommentComposer.
 
-### Phase 2 — Custom user menu + account panel — **TODO**
-- Replace `<UserButton>` in `app/components/Navbar.tsx` with our own avatar
-  button + dropdown (patron ring styling preserved) and an "account" modal.
-- Account panel sections (all via headless `useUser` / `user.update`, `useClerk`):
-  profile (name, username), email address change + verification, connected
-  accounts (Google) management, security (password change), sign out, delete
-  account. Admin "Zarządzaj kanałem" link stays for admins.
+### Phase 2 — Custom user menu + account panel — **DONE**
+- `app/components/auth/UserMenu.tsx` replaces `<UserButton>` in
+  `app/components/Navbar.tsx`: avatar trigger (patron ring preserved) + our own
+  dropdown ("Moje konto", admin "Zarządzaj kanałem", "Wyloguj").
+- `app/components/auth/AccountModal.tsx` — account panel (headless `useUser` /
+  `user.*`): profile (name, username), email management (add + email-code
+  verification, set primary, remove), connected accounts (Google connect via
+  `createExternalAccount` / disconnect), security (password change), delete
+  account (typed confirmation), sign out. Admin channel link kept.
 
-### Phase 3 — Cleanup & guardrails — **TODO**
-- Remove any remaining default Clerk UI imports across the app.
-- Add a lightweight test that greps `app/` for forbidden Clerk UI symbols
-  (`SignInButton`, `UserButton`, `openSignIn`, `SignUpButton`) so regressions
-  are caught.
-- Confirm no "Secured by Clerk" / Clerk branding renders anywhere.
+### Phase 3 — Cleanup & guardrails — **DONE**
+- No default Clerk UI imports remain in `app/` (headless hooks only).
+- `tests/unit/clerk-ui-guard.test.ts` fails if any default Clerk UI symbol
+  (`<SignInButton>`, `<UserButton>`, `openSignIn()`, `<SignUp>`, …) or
+  "Secured by Clerk" is reintroduced under `app/`.
+
+### Phase 4 — multi-provider OAuth + polish — **DONE**
+- OAuth providers are driven by a single config, `app/components/auth/oauth-providers.tsx`
+  (`OAUTH_PROVIDERS`). Both the auth modal and the account "connected accounts" panel render a
+  button per entry. **Google and Apple are live.**
+- Avatar upload in the account panel Profile section (`user.setProfileImage`).
+- Google One Tap prompt wired for logged-out visitors (`<GoogleOneTap />` in AuthModalProvider).
+
+> **Microsoft (planned) — remember for the future:** the owner already has Apple enabled and
+> intends to add **Microsoft** later. When Microsoft is enabled in the Clerk dashboard, just
+> **uncomment the `oauth_microsoft` entry** in `app/components/auth/oauth-providers.tsx` (its icon
+> is already defined) — no other code changes needed; the modal and account panel pick it up
+> automatically. The same one-line pattern applies to any future provider.
+
+### Still advised before production
+- Live smoke test of every flow (email-code verification, each OAuth provider connect/sign-in,
+  password/email changes, account deletion, One Tap) against a real Clerk instance.
 
 ## Invariants that must survive
 

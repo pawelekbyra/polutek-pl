@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
+import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck } from "./icons";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
@@ -202,37 +202,7 @@ const Navbar = () => {
               )}
 
               {isLoaded && isSignedIn && (
-                <div
-                  className={cn(
-                    "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
-                    isPatron
-                      ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-                      : ""
-                  )}
-                  title={isPatron ? "Patron" : undefined}
-                >
-                  <UserButton
-                    appearance={{
-                      elements: {
-                        userButtonBox: isPatron ? "overflow-visible" : undefined,
-                        userButtonTrigger: isPatron ? "overflow-visible" : undefined,
-                        userButtonAvatarBox: isPatron
-                          ? "h-9 w-9 border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-                          : undefined,
-                      },
-                    }}
-                  >
-                    {isAdmin && (
-                      <UserButton.MenuItems>
-                        <UserButton.Link
-                          href="/admin"
-                          label="Zarządzaj kanałem"
-                          labelIcon={<ShieldCheck size={16} />}
-                        />
-                      </UserButton.MenuItems>
-                    )}
-                  </UserButton>
-                </div>
+                <UserMenu isAdmin={isAdmin} isPatron={isPatron} />
               )}
             </div>
           </>
