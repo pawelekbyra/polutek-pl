@@ -83,34 +83,34 @@ export default function ShareButton({
           ref={popoverRef}
           className={cn(
             "absolute bottom-[calc(100%+8px)] right-0 min-w-[240px] z-[1100]",
-            "bg-card border border-border rounded-xl shadow-xl p-1.5",
+            "rounded-2xl border border-[#d8d0bd]/90 bg-[#f8f3e7]/98 p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
             "animate-in fade-in-0 zoom-in-95 duration-150 slide-in-from-bottom-2"
           )}
         >
           <div
             onClick={() => copyToClipboard(url)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider",
-              copied ? "bg-green-50 text-green-600" : "hover:bg-muted text-primary"
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider",
+              copied ? "bg-[#eff3fe] text-primary" : "hover:bg-[#f1ead9] text-primary"
             )}
           >
-            {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-primary" />}
+            {copied ? <Check size={16} className="text-primary" /> : <Copy size={16} className="text-primary" />}
             <span>{copied ? "Skopiowano!" : "Kopiuj link"}</span>
           </div>
 
-          <div className="my-1 h-px bg-border" />
+          <div className="my-1 h-px bg-[#d8d0bd]/80" />
 
           <div
             onClick={() => openWindow(`https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[#f1ead9] cursor-pointer transition-colors duration-100 font-medium text-[#171717]"
           >
-            <XIcon className="text-foreground" />
+            <XIcon className="text-[#171717]" />
             <span>Szeruj na X</span>
           </div>
 
           <div
             onClick={() => openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[#f1ead9] cursor-pointer transition-colors duration-100 font-medium text-[#171717]"
           >
             <Facebook size={16} className="text-[#1877F2]" />
             <span>Szeruj na Facebook</span>
@@ -118,7 +118,7 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[#f1ead9] cursor-pointer transition-colors duration-100 font-medium text-[#171717]"
           >
             <MessageCircle size={16} className="text-[#25D366]" />
             <span>Wyślij przez WhatsApp</span>
@@ -126,9 +126,9 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted cursor-pointer transition-colors duration-100 font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[#f1ead9] cursor-pointer transition-colors duration-100 font-medium text-[#171717]"
           >
-            <Mail size={16} className="text-muted-foreground" />
+            <Mail size={16} className="text-[#6b665d]" />
             <span>Wyślij emailem</span>
           </div>
         </div>
