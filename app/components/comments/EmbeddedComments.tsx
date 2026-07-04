@@ -289,19 +289,17 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     >
       {/* Sticky Header */}
       {showStickyHeader && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 backdrop-blur-md border border-neutral-200 rounded-full py-2 px-6 shadow-lg flex items-center gap-6 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-primary" />
-            <span className="text-xs font-black uppercase">
-              <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
-            </span>
-          </div>
+        <div className="fixed right-4 bottom-4 lg:bottom-auto lg:top-24 lg:right-6 z-40 animate-in slide-in-from-bottom-4 lg:slide-in-from-top-4 duration-300">
           <button
+            type="button"
             onClick={scrollToTop}
-            className="text-[10px] font-black uppercase flex items-center gap-1 hover:text-primary transition-colors"
+            aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
+            className="paper-panel paper-border paper-shadow-soft paper-focus-ring inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[0px] font-black uppercase tracking-[0.14em] ink-text backdrop-blur-md transition hover:bg-[var(--najs-paper-soft)] active:scale-[0.98] sm:px-3 sm:text-[11px]"
           >
-            <ChevronUp size={14} />
-            {language === "pl" ? "Do początku" : "To top"}
+            <ChevronUp size={15} className="blue-text" aria-hidden="true" />
+            <span className="hidden sm:inline">
+              {language === "pl" ? "Do początku" : "To top"}
+            </span>
           </button>
         </div>
       )}
