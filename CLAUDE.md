@@ -300,6 +300,7 @@ npx tsc --noEmit
 - Do not add new cron jobs without registering them in `vercel.json`.
 - Do not create new database migrations by editing existing migration files.
 - Do not add multi-channel, multi-creator, or SaaS-style features.
+- **Do not re-introduce default Clerk UI** (`<SignInButton>`, `<SignUpButton>`, `<UserButton>`, `openSignIn()`, the Clerk account portal, "Secured by Clerk"). We are actively replacing all Clerk UI with our own design-system components while keeping Clerk as the backend (headless hooks only). Use `useAuthModal()` to open the custom auth modal. See **`docs/tickets/active/CLERK-CUSTOM-AUTH-UI-001.md`** for scope, phases, and current status before touching anything auth-related.
 
 ---
 

@@ -89,7 +89,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('focus-visible:outline');
     expect(source).toContain('onClick={onRetry}');
 
-    expect(accessLockOverlaySource).toContain('<SignInButton mode="modal">');
+    expect(accessLockOverlaySource).toContain('openAuthModal("sign-in")');
     expect(accessLockOverlaySource).toContain('<button');
     expect(accessLockOverlaySource).toContain('type="button"');
     expect(accessLockOverlaySource).toContain('Zaloguj się');

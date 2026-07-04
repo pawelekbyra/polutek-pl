@@ -21,7 +21,7 @@ describe('comments UI production contract', () => {
   it('keeps guest sign-in CTA and provides a real Patron CTA link for non-patrons', () => {
     const source = composer();
 
-    expect(source).toContain('<SignInButton mode="modal">');
+    expect(source).toContain('openAuthModal("sign-in")');
     expect(source).toContain('isPatronGated && userProfile');
     expect(source).toContain('href="#donations"');
     expect(source).toContain('Zostaw napiwek, aby komentować');

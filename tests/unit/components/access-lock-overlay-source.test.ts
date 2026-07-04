@@ -11,7 +11,7 @@ describe("access lock overlay source contract", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('LOGIN_REQUIRED');
-    expect(source).toContain("SignInButton");
+    expect(source).toContain('openAuthModal("sign-in")');
     expect(source).toContain("<button");
     expect(source).toContain('type="button"');
     expect(source).toContain("Zaloguj się");
