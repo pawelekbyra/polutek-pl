@@ -60,7 +60,7 @@ const Navbar = () => {
   return (
     <div
       className="sticky top-0 z-[1000] w-full flex flex-col"
-      style={{ background: "var(--clone-nav-bg, rgba(248,243,231,.95))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      style={{ background: "linear-gradient(180deg, rgba(248,243,231,.96), rgba(248,243,231,.88))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 1px 0 rgba(23,23,23,.04)" }}
     >
       <div className="flex items-center px-4 lg:px-6 h-[44px] min-h-[44px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
@@ -73,14 +73,14 @@ const Navbar = () => {
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
               <div className="relative flex-1 flex items-center min-w-0 h-[38px]">
-                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(255,252,244,.82)" />
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="relative w-full h-full bg-transparent pl-4 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                  className="najs-sketch-input relative w-full h-full bg-transparent pl-4 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#7b7469]"
                   style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -124,13 +124,13 @@ const Navbar = () => {
             <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
                 <div className="relative flex-1 flex items-center min-w-0 h-[42px]">
-                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="rgba(255,252,244,.82)" />
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="relative w-full h-full bg-transparent pl-5 pr-16 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
+                    className="najs-sketch-input relative w-full h-full bg-transparent pl-5 pr-16 text-sm outline-none text-[#171717] placeholder:text-[#7b7469]"
                     style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
