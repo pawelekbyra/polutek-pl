@@ -151,17 +151,22 @@ export function SidebarPlaylist({
         ? "PATRON_REQUIRED"
         : "LOGIN_REQUIRED"
       : null;
+    const warmVideoOnIntent = () => {
+      void preloader?.warmVideo(video.id, {
+        includeComments: true,
+        includePoster: true,
+        priority: "intent",
+      });
+    };
 
     return (
       <div
         key={video.id || video.slug}
-        onMouseEnter={() => {
-          onVideoMouseEnter(video.id);
-          void preloader?.warmVideo(video.id, { includeComments: true, includePoster: true, priority: "intent" });
-        }}
+        onMouseEnter={() => onVideoMouseEnter(video.id)}
+        onPointerEnter={warmVideoOnIntent}
         onFocus={() => {
           onVideoMouseEnter(video.id);
-          void preloader?.warmVideo(video.id, { includeComments: true, includePoster: true, priority: "intent" });
+          warmVideoOnIntent();
         }}
         className="relative group/item"
       >

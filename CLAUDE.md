@@ -207,6 +207,15 @@ Three distinct per-currency minimums must not be conflated:
 - `ServiceWorkerCleanup` disables persistent service-worker interception/caches. Do not add offline/persistent caching for auth, payments, media-source, playback, or user-specific data without a focused design.
 - `InstallAppMenu` handles add-to-home-screen/install affordances, including iOS instructions.
 
+### 4.14 What NOT To Do
+
+- Do not recreate retired control-plane docs (`docs/reports`, `docs/roadmap`, `docs/templates`, or governance operating-mode files); durable guidance belongs in this file, `KNOWN_LIMITATIONS.md`, or `docs/audit/`.
+- Do not reintroduce legacy patron cache fields on `User` or treat Clerk metadata as patron authority.
+- Do not bypass `fulfillPayment()` for Stripe success, replay, or reconciliation flows.
+- Do not expose playable video URLs/tokens/provider IDs, mount players, or log views for denied playback plans.
+- Do not replace the custom/headless Clerk UI with default widgets or a custom auth backend unless explicitly asked.
+- Do not add persistent/offline caches for auth, payments, media-source, playback, or user-specific data without a focused cache-safety design.
+
 ---
 
 ## 5. Admin Panel
