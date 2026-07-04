@@ -91,7 +91,7 @@ export default function CheckoutSummaryPanel({
       ];
 
   return (
-    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[#d8d0bd] bg-[#f1ead9] px-10 py-10 text-[#171717] md:flex md:w-[45%] lg:px-14">
+    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r paper-border paper-surface-soft px-10 py-10 ink-text md:flex md:w-[45%] lg:px-14">
       {/* faint grid, same as the splash screen */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -127,9 +127,9 @@ export default function CheckoutSummaryPanel({
               {heading}
             </span>
           </h1>
-          <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[#3f3a33]">{lead}</p>
+          <p className="mt-3 max-w-md text-[14px] leading-[1.65] body-text">{lead}</p>
           {videoTitle && (
-            <p className="mt-2 max-w-md truncate text-[12px] italic text-[#6b665d]">
+            <p className="mt-2 max-w-md truncate text-[12px] italic muted-text">
               {isPl ? 'Wspierasz przy: ' : 'Supporting from: '}&bdquo;{videoTitle}&rdquo;
             </p>
           )}
@@ -145,23 +145,23 @@ export default function CheckoutSummaryPanel({
             >
               {amount === '' ? '—' : amount}
             </span>
-            <span className="text-[18px] font-bold text-[#6b665d]">{selectedCurrency}</span>
+            <span className="text-[18px] font-bold muted-text">{selectedCurrency}</span>
           </div>
-          <p className="relative z-10 mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#6b665d]">
+          <p className="relative z-10 mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] muted-text">
             {isPl ? 'Wpłata jednorazowa' : 'One-time payment'}
           </p>
         </div>
 
-        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed border-[#d8d0bd] pt-[12px] text-[13px]">
+        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed paper-border pt-[12px] text-[13px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? 'flex items-start gap-[8px] italic text-[#6b665d]' : 'flex items-start gap-[8px]'}
+              className={bullet.soft ? 'flex items-start gap-[8px] italic muted-text' : 'flex items-start gap-[8px]'}
             >
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[10px] text-primary">◆</span>
               ) : (
-                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] font-bold text-[#f8f3e7]">✓</span>
+                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full ink-button text-[9px] font-bold text-[var(--najs-paper)]">✓</span>
               )}
               {bullet.text}
             </li>
@@ -170,7 +170,7 @@ export default function CheckoutSummaryPanel({
       </div>
 
       {/* footer */}
-      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#6b665d]">
+      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] muted-text">
         <span>{MAIN_CREATOR_NAME} &copy; {new Date().getFullYear()}</span>
         <span>{isPl ? 'Bezpieczna płatność · Stripe' : 'Secure payment · Stripe'}</span>
       </div>

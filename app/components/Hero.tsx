@@ -185,7 +185,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3">
-          <h1 className="font-sans font-bold not-italic text-[23px] text-[#0f0f0f] leading-[1.25] mb-[14px]">
+          <h1 className="font-sans font-bold not-italic text-[23px] ink-text leading-[1.25] mb-[14px]">
              {displayTitle}
           </h1>
 
@@ -206,7 +206,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <div className="min-w-0 flex flex-col">
                   <Link
                     href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
-                    className="font-bold text-[#0f0f0f] text-[15.5px] leading-[1.2] truncate block"
+                    className="font-bold ink-text text-[15.5px] leading-[1.2] truncate block"
                   >
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
@@ -239,7 +239,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     disabled={isPending}
                     className={cn(
                         "relative flex h-full items-center justify-center gap-2 px-4 transition-colors active:opacity-70 lg:pl-5 lg:pr-4",
-                        interactionState.isLiked ? "text-primary" : "text-[#171717]",
+                        interactionState.isLiked ? "text-primary" : "ink-text",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
@@ -247,13 +247,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      <NajsIcon name="like" className="h-[18px] w-[18px]" stroke={interactionState.isLiked ? "#2563eb" : INK} />
                      <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
-                  <span className="relative h-5 w-px bg-[#171717]/35" />
+                  <span className="relative h-5 w-px bg-[rgba(23,23,23,0.35)]" />
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
                     className={cn(
                         "relative flex h-full items-center justify-center px-4 transition-colors active:opacity-70",
-                        interactionState.isDisliked ? "text-primary" : "text-[#171717]",
+                        interactionState.isDisliked ? "text-primary" : "ink-text",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
@@ -274,20 +274,20 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION BOX — neutralny papierowy panel (metadane), nadal bez rysowanej ramki */}
         <div
-          className="mt-[16px] cursor-pointer rounded-2xl border border-[#d8d0bd]/85 bg-[#f8f3e7]/80 p-[14px] px-4 shadow-[0_1px_2px_rgba(23,23,23,0.04),0_8px_22px_rgba(23,23,23,0.045)] transition-colors hover:bg-[#faf6ed]/90"
+          className="mt-[16px] cursor-pointer paper-radius-panel border paper-border paper-surface p-[14px] px-4 paper-shadow-soft transition-colors hover:bg-[var(--najs-paper-soft)]"
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
-                <span className="font-sans text-[13.5px] font-bold not-italic text-[#0f0f0f]">
+                <span className="font-sans text-[13.5px] font-bold not-italic ink-text">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
-                <span className="font-sans text-[13.5px] font-bold not-italic text-[#0f0f0f]">
+                <span className="font-sans text-[13.5px] font-bold not-italic ink-text">
                    · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>
 
-             <div className="text-[13.5px] text-[#0f0f0f] leading-[1.6] whitespace-pre-wrap">
+             <div className="text-[13.5px] ink-text leading-[1.6] whitespace-pre-wrap">
                 {isExpanded ? (
                   displayDescription
                 ) : (
@@ -295,7 +295,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {displayDescription.slice(0, 160).trim()}
                     {displayDescription.length > 160 && (
                       <span
-                        className="text-[13.5px] font-bold text-[#0f0f0f] ml-1 hover:underline cursor-pointer inline"
+                        className="text-[13.5px] font-bold ink-text ml-1 hover:underline cursor-pointer inline"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(true);
@@ -310,7 +310,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
              {isExpanded && (
                <button
-                 className="text-[13.5px] font-bold text-[#0f0f0f] mt-1 hover:underline inline-block"
+                 className="text-[13.5px] font-bold ink-text mt-1 hover:underline inline-block"
                  onClick={(e) => {
                    e.stopPropagation();
                    setIsExpanded(false);

@@ -11,7 +11,7 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f8f3e7] px-6 font-sans text-[#171717]">
+    <main className="flex min-h-screen items-center justify-center paper-surface px-6 font-sans ink-text">
       <div className="w-full max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
@@ -22,29 +22,29 @@ export default function Error({
             </svg>
           </div>
         </div>
-        <h1 className="mb-3 text-2xl font-black uppercase tracking-tight text-[#171717]">Coś poszło nie tak</h1>
-        <p className="mb-8 text-[#6b665d]">
+        <h1 className="mb-3 text-2xl font-black uppercase tracking-tight ink-text">Coś poszło nie tak</h1>
+        <p className="mb-8 muted-text">
           Wystąpił nieoczekiwany błąd aplikacji. Nasz zespół został powiadomiony.
           Spróbuj odświeżyć stronę lub wrócić później.
         </p>
 
         {error.digest && (
-          <div className="mb-8 rounded-2xl border border-[#d8d0bd]/90 bg-[#f1ead9]/70 p-3">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-[#6b665d]">Kod błędu (Digest)</p>
-            <p className="break-all font-mono text-sm text-[#3f3a33]">{error.digest}</p>
+          <div className="mb-8 rounded-2xl border paper-border paper-panel-soft p-3">
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-widest muted-text">Kod błędu (Digest)</p>
+            <p className="break-all font-mono text-sm body-text">{error.digest}</p>
           </div>
         )}
 
         <div className="flex flex-col gap-3">
           <button
             onClick={() => reset()}
-            className="w-full rounded-full bg-[#171717] py-3 text-xs font-bold uppercase tracking-widest text-[#f8f3e7] transition-all hover:bg-[#171717]/90 active:scale-[0.98]"
+            className="w-full rounded-full ink-button py-3 text-xs font-bold uppercase tracking-widest text-[var(--najs-paper)] transition-all hover:bg-[rgba(23,23,23,0.9)] active:scale-[0.98]"
           >
             Spróbuj ponownie
           </button>
           <Link
             href="/"
-            className="w-full rounded-full border border-[#d8d0bd]/90 bg-[#f8f3e7] py-3 text-xs font-bold uppercase tracking-widest text-[#171717] transition-all hover:bg-[#f1ead9] active:scale-[0.98]"
+            className="w-full rounded-full border paper-border paper-surface py-3 text-xs font-bold uppercase tracking-widest ink-text transition-all hover:bg-[var(--najs-paper-soft)] active:scale-[0.98]"
           >
             Wróć do strony głównej
           </Link>
