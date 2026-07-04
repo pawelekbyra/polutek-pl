@@ -167,12 +167,12 @@ export function NajsIcon({
       {name === "video" && <><path d="M2 8 h12 v8 H2 Z" {...c} /><path d="M14 10 l6 -3 v10 l -6 -3" {...c} /></>}
       {name === "alert" && <><circle cx="12" cy="12" r="9" {...c} /><path d="M12 8 v4" {...c} /><circle cx="12" cy="16" r="0.5" fill={stroke} stroke="none" /></>}
       {name === "heart" && <path d="M12 21 C12 21 3 14 3 8 c0 -3 2 -5 5 -5 c2 0 3.5 1 4 2.5 C12.5 4 14 3 16 3 c3 0 5 2 5 5 C21 14 12 21 12 21 Z" {...c} />}
-      {name === "pause" && <path d="M8 6 v12 M16 6 v12" fill="none" stroke={stroke} strokeWidth={4} strokeLinecap="round" />}
-      {name === "play" && <path d="M7 5 L20 12 L7 19 Z" fill={stroke} stroke="none" />}
-      {name === "maximize" && <><path d="M4 10 V4 H10" {...c} /><path d="M14 4 H20 V10" {...c} /><path d="M4 14 V20 H10" {...c} /><path d="M14 20 H20 V14" {...c} /></>}
-      {name === "volume" && <><path d="M11 5 L6 9 H2 v6 h4 l5 4 Z" {...c} /><path d="M15.5 9 c2 1.8 2 5.2 0 7" {...c} /></>}
-      {name === "mute" && <><path d="M11 5 L6 9 H2 v6 h4 l5 4 Z" {...c} /><path d="M15 10 L21 16 M21 10 L15 16" {...c} /></>}
-      {name === "subtitles" && <><path d="M3 7 Q3 6 4 6 h16 Q21 6 21 7 v11 Q21 19 20 19 H4 Q3 19 3 18 Z" {...c} /><path d="M6 12 h4 M12 12 h3 M17 12 h1" {...c} /><path d="M6 16 h2 M10 16 h3 M15 16 h4" {...c} /></>}
+      {name === "pause" && <><path d="M8.2 6.2 C8 9.8 8.1 14.4 8 18" fill="none" stroke={stroke} strokeWidth={3.2} strokeLinecap="round" /><path d="M15.8 6 C16.1 10 15.9 14.2 16 18.1" fill="none" stroke={stroke} strokeWidth={3.2} strokeLinecap="round" /></>}
+      {name === "play" && <><path d="M7.2 5.4 C11.4 7.1 16 9.8 19.5 12 C15.9 14.5 11.5 17 7.1 18.7 Z" fill="rgba(255,255,255,.12)" stroke={stroke} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" /><path d="M9.1 8.2 C11.8 9.3 14.4 10.8 16.6 12.1" fill="none" stroke={stroke} strokeWidth={0.8} strokeLinecap="round" opacity=".5" /></>}
+      {name === "maximize" && <><path d="M4.5 9.8 C4.2 7.8 4.2 6 4.5 4.4 C6.2 4.1 8.1 4.2 10 4.4" {...c} /><path d="M14.2 4.3 C16.1 4 18.1 4.1 19.7 4.5 C20 6.2 19.9 8.1 19.6 10" {...c} /><path d="M4.4 14.2 C4.2 16 4.2 18 4.6 19.6 C6.2 19.9 8.1 19.8 10 19.6" {...c} /><path d="M14.1 19.7 C16 20 18 19.9 19.6 19.5 C19.9 17.8 19.8 15.9 19.6 14" {...c} /></>}
+      {name === "volume" && <><path d="M10.8 5.2 C9.3 6.5 7.8 8 6.2 9 H2.8 c-.3 1.7-.3 3.5 0 5.9 h3.4 c1.5 1.2 3.1 2.6 4.7 3.8 C11.3 14.3 11.3 9.5 10.8 5.2 Z" {...c} /><path d="M15 8.7 c2.1 1.8 2.1 5.4 0 7.3" {...c} /><path d="M17.8 6.6 c3.3 3.2 3.3 7.7 0 10.8" {...c} opacity=".75" /></>}
+      {name === "mute" && <><path d="M10.8 5.2 C9.3 6.5 7.8 8 6.2 9 H2.8 c-.3 1.7-.3 3.5 0 5.9 h3.4 c1.5 1.2 3.1 2.6 4.7 3.8 C11.3 14.3 11.3 9.5 10.8 5.2 Z" {...c} /><path d="M15.2 9.8 C17.1 11.7 19 13.8 20.8 16.1" {...c} /><path d="M20.6 9.7 C18.7 11.8 16.8 13.8 15.1 16.2" {...c} /></>}
+      {name === "subtitles" && <><path d="M3.4 7.1 C3.2 10.6 3.2 14.5 3.5 18 C8.7 18.5 15.4 18.4 20.5 18 C20.9 14.3 20.8 10.3 20.5 6.9 C15.3 6.4 8.8 6.5 3.4 7.1 Z" {...c} /><path d="M6.4 12.1 h3.8 M12 12 h3.3 M17.2 12 h1" {...c} /><path d="M6.2 15.6 h2.2 M10.2 15.6 h3.1 M15.2 15.6 h3.3" {...c} /></>}
       {name === "check" && <path d="M4 12 L10 18 L20 7" {...c} />}
       {name === "refresh" && <><path d="M19.5 12 A7.5 7.5 0 1 1 16.9 6.4" {...c} /><path d="M19.5 4.5 L19.5 9.5 L14.5 9.5" {...c} /></>}
     </svg>

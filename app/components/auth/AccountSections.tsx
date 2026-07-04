@@ -5,10 +5,9 @@
 
 import React, { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import type { OAuthStrategy } from "@clerk/shared/types";
 import { Loader2 } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
-import { OAUTH_PROVIDERS } from "./oauth-providers";
+import { OAUTH_PROVIDERS, useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 
 function clerkErr(e: unknown, isPl: boolean): string {
   if (e && typeof e === "object" && "errors" in e) {
@@ -236,7 +235,8 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
     }
   }
 
-  const connectable = OAUTH_PROVIDERS.filter(
+  const visibleProviders = useVisibleOAuthProviders();
+  const connectable = visibleProviders.filter(
     (p) => !user.externalAccounts.some((a) => a.provider === p.provider),
   );
 
@@ -269,7 +269,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
           onClick={() => connect(strategy)}
           className="relative flex h-[42px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] active:scale-[0.98]"
         >
-          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.97)" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
           <span className="relative z-10">{isPl ? `Połącz z ${label}` : `Connect ${label}`}</span>
         </button>
@@ -376,7 +376,7 @@ function Field({
         value={value}
         inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#171717]/25 bg-white px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
+        className="w-full rounded-lg border border-[#171717]/25 bg-[#f8f3e7] px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
       />
     </label>

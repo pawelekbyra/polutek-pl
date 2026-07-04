@@ -60,6 +60,7 @@ interface SidebarPlaylistProps {
   mounted: boolean;
   premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
+  onVideoSelect?: () => void;
 }
 
 export function SidebarPlaylist({
@@ -71,6 +72,7 @@ export function SidebarPlaylist({
   language,
   mounted,
   onVideoMouseEnter,
+  onVideoSelect,
 }: SidebarPlaylistProps) {
   // Live client-side auth state. We gate the support widget on this (not the server-derived
   // `userProfile` prop) so it reliably shows for signed-in viewers regardless of how the prop
@@ -160,6 +162,9 @@ export function SidebarPlaylist({
         <Link
           href={`/?v=${video.slug || video.id}`}
           scroll={false}
+          onClick={() => {
+            onVideoSelect?.();
+          }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
             "group flex gap-[11px] p-[6px] rounded-[11px] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 mb-1",

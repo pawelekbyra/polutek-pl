@@ -1,5 +1,6 @@
 import React from "react";
-import type { OAuthStrategy } from "@clerk/shared/types";
+
+export type OAuthStrategy = "oauth_google" | "oauth_apple" | "oauth_microsoft";
 
 // Single source of truth for the social sign-in providers the site offers. This must match the
 // providers enabled in the Clerk dashboard — rendering a button for a provider Clerk doesn't have
@@ -11,6 +12,7 @@ export type OAuthProviderConfig = {
   provider: string;
   label: string;
   Icon: React.FC<{ className?: string }>;
+  appleOnly?: boolean;
 };
 
 const GoogleIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -41,9 +43,35 @@ const MicrosoftIcon: React.FC<{ className?: string }> = ({ className }) => (
 // to enable — uncomment its entry once it's turned on in the Clerk dashboard.
 export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
   { strategy: "oauth_google", provider: "google", label: "Google", Icon: GoogleIcon },
-  { strategy: "oauth_apple", provider: "apple", label: "Apple", Icon: AppleIcon },
+  { strategy: "oauth_apple", provider: "apple", label: "Apple", Icon: AppleIcon, appleOnly: true },
   // { strategy: "oauth_microsoft", provider: "microsoft", label: "Microsoft", Icon: MicrosoftIcon },
 ];
 
 // Exported so a provider added to OAUTH_PROVIDERS later can reuse the icon without redefining it.
 export const PROVIDER_ICONS = { GoogleIcon, AppleIcon, MicrosoftIcon };
+
+
+export function isAppleDevice() {
+  if (typeof window === "undefined") return false;
+  const navigatorLike = window.navigator;
+  const ua = navigatorLike.userAgent || "";
+  const platform = navigatorLike.platform || "";
+  const vendor = navigatorLike.vendor || "";
+  return /iPad|iPhone|iPod|Macintosh|MacIntel|MacPPC|Mac68K/.test(platform)
+    || /iPad|iPhone|iPod|Mac OS X/.test(ua)
+    || (vendor === "Apple Computer, Inc." && navigatorLike.maxTouchPoints > 0);
+}
+
+export function getVisibleOAuthProviders() {
+  return OAUTH_PROVIDERS.filter((provider) => !provider.appleOnly || isAppleDevice());
+}
+
+export function useVisibleOAuthProviders() {
+  const [appleDevice, setAppleDevice] = React.useState(false);
+
+  React.useEffect(() => {
+    setAppleDevice(isAppleDevice());
+  }, []);
+
+  return OAUTH_PROVIDERS.filter((provider) => !provider.appleOnly || appleDevice);
+}

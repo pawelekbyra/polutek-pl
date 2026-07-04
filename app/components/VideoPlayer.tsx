@@ -36,7 +36,7 @@ interface VideoPlayerProps {
 
 const playerIconClass = "h-[1.25rem] w-[1.25rem]";
 const centerPauseIconClass = "h-14 w-14 drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
-const sliderAccentClass = "bg-white/85";
+const sliderAccentClass = "bg-[#2563eb]";
 // Played portion of the progress bar — site blue accent, matching the brand.
 const PROGRESS_PLAYED_COLOR = "#2563eb";
 
@@ -182,23 +182,21 @@ function PlayerTimeReadout() {
 }
 
 function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    // Small, YouTube-sized control buttons that sit in a tight row under the progress bar.
-    const buttonClass = "grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9";
-    // Compact volume slider (revealed on hover of the mute button, YouTube-style).
-    const volTrackClass = "relative h-[3px] w-full rounded-full bg-white/30 ring-1 ring-black/25";
-    const volThumbClass = "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[1.5px] border-[#171717]/70 shadow-[1px_1px_0_rgba(0,0,0,0.3)]";
+    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-10";
+    const sliderTrackClass = "relative h-[4px] w-full rounded-full bg-white/30 ring-1 ring-black/30 transition-[height] duration-150 group-hover/slider:h-[6px] group-data-[dragging]/slider:h-[6px]";
+    const sliderThumbClass = "absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/75 bg-white opacity-0 shadow-[1px_1px_0_rgba(0,0,0,0.38)] transition-[opacity,transform] duration-150 will-change-[left] group-hover/slider:opacity-100 group-focus-within/slider:opacity-100 group-data-[dragging]/slider:scale-110 group-data-[dragging]/slider:opacity-100";
 
     return (
-        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2 pb-1 pt-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-3 sm:pb-1.5 sm:pt-10">
+        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2 pb-2 pt-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-3 sm:pb-3 sm:pt-7">
             {/* Progress bar: thin brand-styled line pinned just above the controls row (YouTube layout).
                 Built on Vidstack's TimeSlider so seeking — including seeking after the video has ended —
                 behaves correctly out of the box. */}
-            <TimeSlider.Root className="group/tslider relative mb-0.5 flex h-4 w-full cursor-pointer touch-none select-none items-center outline-none">
-                <TimeSlider.Track className="relative h-[3px] w-full rounded-full bg-white/30 ring-1 ring-black/25 transition-[height] duration-150 group-hover/tslider:h-[5px] group-data-[dragging]/tslider:h-[5px]">
+            <TimeSlider.Root className="group/slider relative mb-2 flex h-5 w-full cursor-pointer touch-none select-none items-center outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                <TimeSlider.Track className={sliderTrackClass}>
                     <TimeSlider.Progress className="absolute h-full rounded-full bg-white/40" />
                     <TimeSlider.TrackFill className="absolute h-full rounded-full" style={{ backgroundColor: PROGRESS_PLAYED_COLOR }} />
                 </TimeSlider.Track>
-                <TimeSlider.Thumb className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/70 bg-white opacity-0 shadow-[1px_1px_0_rgba(0,0,0,0.35)] transition-opacity duration-150 will-change-[left] group-hover/tslider:opacity-100 group-data-[dragging]/tslider:scale-110 group-data-[dragging]/tslider:opacity-100" />
+                <TimeSlider.Thumb className={sliderThumbClass} />
             </TimeSlider.Root>
 
             <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
@@ -208,13 +206,13 @@ function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
                     <div className="group/vol flex shrink-0 items-center">
                         <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
                         <VolumeSlider.Root
-                            className="group/slider relative hidden h-9 w-0 shrink-0 origin-left cursor-pointer touch-none select-none items-center overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/vol:w-16 group-hover/vol:opacity-100 group-focus-within/vol:w-16 group-focus-within/vol:opacity-100 md:flex"
+                            className="group/slider relative hidden h-10 w-0 shrink-0 origin-left cursor-pointer touch-none select-none items-center overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/vol:w-20 group-hover/vol:opacity-100 group-focus-within/vol:w-20 group-focus-within/vol:opacity-100 md:flex"
                             aria-label="Głośność"
                         >
-                            <VolumeSlider.Track className={volTrackClass}>
+                            <VolumeSlider.Track className={sliderTrackClass}>
                                 <VolumeSlider.TrackFill className={`pointer-events-none absolute h-full rounded-full ${sliderAccentClass}`} />
                             </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className={volThumbClass} />
+                            <VolumeSlider.Thumb className={sliderThumbClass} />
                         </VolumeSlider.Root>
                     </div>
 

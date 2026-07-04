@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
-import type { OAuthStrategy } from "@clerk/shared/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
-import { OAUTH_PROVIDERS } from "./oauth-providers";
+import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
@@ -163,7 +162,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md overflow-hidden border-none bg-transparent p-0 shadow-none">
         <div className="relative p-6 sm:p-7" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-          <Frame radius={18} seed={11} stroke={INK} strokeWidth={1.4} fill="#ffffff" />
+          <Frame radius={18} seed={11} stroke={INK} strokeWidth={1.4} fill="rgba(248,243,231,.97)" />
           <div className="relative z-10">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black tracking-tight text-[#0f0f0f]">{title}</DialogTitle>
@@ -280,7 +279,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#171717]/25 bg-white px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
+        className="w-full rounded-lg border border-[#171717]/25 bg-[#f8f3e7] px-3 py-2 text-[15px] text-[#0f0f0f] outline-none transition-colors focus:border-[#2563eb]"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
         {...rest}
       />
@@ -310,9 +309,11 @@ function OAuthButtons({
   isPl: boolean;
   disabled?: boolean;
 }) {
+  const providers = useVisibleOAuthProviders();
+
   return (
     <div className="space-y-2">
-      {OAUTH_PROVIDERS.map(({ strategy, label, Icon }) => (
+      {providers.map(({ strategy, label, Icon }) => (
         <button
           key={strategy}
           type="button"
@@ -320,7 +321,7 @@ function OAuthButtons({
           disabled={disabled}
           className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] transition-all active:scale-[0.98] disabled:opacity-60"
         >
-          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.97)" />
           <Icon className="relative z-10 h-[18px] w-[18px]" />
           <span className="relative z-10">{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
         </button>
