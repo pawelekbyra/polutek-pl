@@ -147,7 +147,7 @@ export function AppPreloadProvider({
 
   const markVideoActive = useCallback((videoId: string) => {
     activeVideoIdRef.current = videoId;
-    void warmVideo(videoId, { includeComments: true, includePoster: true, priority: "critical" });
+    void warmVideo(videoId, { includeComments: false, includePoster: true, priority: "critical" });
   }, [warmVideo]);
 
   useEffect(() => {
@@ -163,20 +163,16 @@ export function AppPreloadProvider({
         return;
       }
 
-      updateProgress(12);
+      updateProgress(18);
       await Promise.resolve(document.fonts?.ready).catch(() => undefined);
       if (cancelled) return;
-      updateProgress(25);
+      updateProgress(34);
 
       await loadImage(selectedVideo.thumbnailUrl);
       if (cancelled) return;
-      updateProgress(42);
+      updateProgress(58);
 
       await warmVideo(selectedVideo.id, { includeComments: false, includePoster: false, priority: "critical" });
-      if (cancelled) return;
-      updateProgress(68);
-
-      await warmComments(selectedVideo.id).catch(() => undefined);
       if (cancelled) return;
       updateProgress(82);
 
@@ -193,7 +189,7 @@ export function AppPreloadProvider({
 
     void boot();
     return () => { cancelled = true; };
-  }, [allVideos, selectedVideo?.id, selectedVideo?.thumbnailUrl, updateProgress, warmComments, warmVideo]);
+  }, [allVideos, selectedVideo?.id, selectedVideo?.thumbnailUrl, updateProgress, warmVideo]);
 
   const value = useMemo<AppPreloadContextValue>(() => ({
     getPlaybackPlan,
