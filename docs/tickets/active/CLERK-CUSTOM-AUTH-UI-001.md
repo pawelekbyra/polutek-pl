@@ -60,11 +60,22 @@ Provider stays `app/components/ClerkLocalizationProvider.tsx` (`<ClerkProvider>`
   (`<SignInButton>`, `<UserButton>`, `openSignIn()`, `<SignUp>`, …) or
   "Secured by Clerk" is reintroduced under `app/`.
 
-### Remaining polish (optional, not blocking)
-- Avatar upload (`user.setProfileImage`) is not yet in the account panel.
-- Google One Tap prompt is not wired (separate from the "Continue with Google"
-  button).
-- Live smoke test of every flow against a real Clerk instance is still advised.
+### Phase 4 — multi-provider OAuth + polish — **DONE**
+- OAuth providers are driven by a single config, `app/components/auth/oauth-providers.tsx`
+  (`OAUTH_PROVIDERS`). Both the auth modal and the account "connected accounts" panel render a
+  button per entry. **Google and Apple are live.**
+- Avatar upload in the account panel Profile section (`user.setProfileImage`).
+- Google One Tap prompt wired for logged-out visitors (`<GoogleOneTap />` in AuthModalProvider).
+
+> **Microsoft (planned) — remember for the future:** the owner already has Apple enabled and
+> intends to add **Microsoft** later. When Microsoft is enabled in the Clerk dashboard, just
+> **uncomment the `oauth_microsoft` entry** in `app/components/auth/oauth-providers.tsx` (its icon
+> is already defined) — no other code changes needed; the modal and account panel pick it up
+> automatically. The same one-line pattern applies to any future provider.
+
+### Still advised before production
+- Live smoke test of every flow (email-code verification, each OAuth provider connect/sign-in,
+  password/email changes, account deletion, One Tap) against a real Clerk instance.
 
 ## Invariants that must survive
 

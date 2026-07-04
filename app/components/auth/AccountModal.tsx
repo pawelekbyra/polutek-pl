@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import type { OAuthStrategy } from "@clerk/shared/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
+import { OAUTH_PROVIDERS } from "./oauth-providers";
 
 interface AccountModalProps {
   open: boolean;
@@ -123,6 +125,7 @@ function ProfileSection({ isPl }: { isPl: boolean }) {
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [username, setUsername] = useState(user.username ?? "");
   const [loading, setLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -141,9 +144,40 @@ function ProfileSection({ isPl }: { isPl: boolean }) {
     }
   }
 
+  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    setAvatarLoading(true);
+    setError(null);
+    setInfo(null);
+    try {
+      await user.setProfileImage({ file });
+      await user.reload();
+      setInfo(isPl ? "Zdjęcie zaktualizowane." : "Photo updated.");
+    } catch (err) {
+      setError(clerkErr(err, isPl));
+    } finally {
+      setAvatarLoading(false);
+    }
+  }
+
   return (
     <form onSubmit={save} className="space-y-3">
       <Feedback error={error} info={info} />
+      <div className="flex items-center gap-3">
+        {/* Clerk-hosted avatar; plain img avoids next/image host config for the account panel. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={user.imageUrl}
+          alt=""
+          className="h-14 w-14 shrink-0 rounded-full border border-[#171717]/20 object-cover"
+        />
+        <label className="cursor-pointer text-[13px] font-bold text-[#0f0f0f] underline hover:opacity-70">
+          {avatarLoading ? (isPl ? "Wgrywanie..." : "Uploading...") : (isPl ? "Zmień zdjęcie" : "Change photo")}
+          <input type="file" accept="image/*" className="hidden" onChange={onAvatar} disabled={avatarLoading} />
+        </label>
+      </div>
       <Field label={isPl ? "Nazwa" : "Name"} value={firstName} onChange={setFirstName} />
       <Field label={isPl ? "Nazwa użytkownika" : "Username"} value={username} onChange={setUsername} />
       <Primary loading={loading} label={isPl ? "Zapisz" : "Save"} />
@@ -269,11 +303,11 @@ function ConnectionsSection({ isPl }: { isPl: boolean }) {
   const user = useAccountUser();
   const [error, setError] = useState<string | null>(null);
 
-  async function connectGoogle() {
+  async function connect(strategy: OAuthStrategy) {
     setError(null);
     try {
       const returnTo = window.location.pathname + window.location.search;
-      const ext = await user.createExternalAccount({ strategy: "oauth_google", redirectUrl: returnTo });
+      const ext = await user.createExternalAccount({ strategy, redirectUrl: returnTo });
       const url = ext.verification?.externalVerificationRedirectURL;
       if (url) window.location.href = url.toString();
     } catch (err) {
@@ -292,34 +326,44 @@ function ConnectionsSection({ isPl }: { isPl: boolean }) {
     }
   }
 
-  const hasGoogle = user.externalAccounts.some((a) => a.provider === "google");
+  const connectable = OAUTH_PROVIDERS.filter(
+    (p) => !user.externalAccounts.some((a) => a.provider === p.provider),
+  );
 
   return (
     <div className="space-y-3">
       <Feedback error={error} info={null} />
       <ul className="space-y-2">
-        {user.externalAccounts.map((acc) => (
-          <li key={acc.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#171717]/15 px-3 py-2">
-            <p className="text-[14px] font-semibold capitalize">{acc.provider}</p>
-            <button type="button" onClick={() => disconnect(acc.id)} className="text-[12px] font-bold text-red-600 hover:underline">
-              {isPl ? "Odłącz" : "Disconnect"}
-            </button>
-          </li>
-        ))}
+        {user.externalAccounts.map((acc) => {
+          const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.provider);
+          return (
+            <li key={acc.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#171717]/15 px-3 py-2">
+              <div className="flex items-center gap-2">
+                {known && <known.Icon className="h-[18px] w-[18px]" />}
+                <p className="text-[14px] font-semibold capitalize">{known?.label ?? acc.provider}</p>
+              </div>
+              <button type="button" onClick={() => disconnect(acc.id)} className="text-[12px] font-bold text-red-600 hover:underline">
+                {isPl ? "Odłącz" : "Disconnect"}
+              </button>
+            </li>
+          );
+        })}
         {user.externalAccounts.length === 0 && (
           <li className="text-[13px] text-[#7a7a7a]">{isPl ? "Brak połączonych kont." : "No connected accounts."}</li>
         )}
       </ul>
-      {!hasGoogle && (
+      {connectable.map(({ strategy, label, Icon }) => (
         <button
+          key={strategy}
           type="button"
-          onClick={connectGoogle}
-          className="relative flex h-[42px] w-full items-center justify-center text-[14px] font-bold text-[#0f0f0f] active:scale-[0.98]"
+          onClick={() => connect(strategy)}
+          className="relative flex h-[42px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] active:scale-[0.98]"
         >
           <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
-          <span className="relative z-10">{isPl ? "Połącz z Google" : "Connect Google"}</span>
+          <Icon className="relative z-10 h-[18px] w-[18px]" />
+          <span className="relative z-10">{isPl ? `Połącz z ${label}` : `Connect ${label}`}</span>
         </button>
-      )}
+      ))}
     </div>
   );
 }

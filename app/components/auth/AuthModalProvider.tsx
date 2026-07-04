@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { GoogleOneTap } from "@clerk/nextjs";
 import AuthModal from "./AuthModal";
 
 export type AuthView = "sign-in" | "sign-up";
@@ -31,6 +32,9 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     <AuthModalContext.Provider value={value}>
       {children}
       <AuthModal open={isOpen} initialView={view} onOpenChange={setIsOpen} />
+      {/* Google's native One Tap prompt for logged-out visitors (auto-hides when signed in).
+          Renders Google's own UI, not Clerk-branded UI. */}
+      <GoogleOneTap />
     </AuthModalContext.Provider>
   );
 }

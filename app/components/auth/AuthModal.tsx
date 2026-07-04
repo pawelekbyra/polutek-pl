@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
+import type { OAuthStrategy } from "@clerk/shared/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
 import { Frame, INK, BLUE } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
+import { OAUTH_PROVIDERS } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
@@ -131,12 +133,12 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     onOpenChange(false);
   }
 
-  async function handleGoogle() {
+  async function handleOAuth(strategy: OAuthStrategy) {
     if (!signIn) return;
     setError(null);
     const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
     const { error: ssoError } = await signIn.sso({
-      strategy: "oauth_google",
+      strategy,
       redirectUrl: returnTo,
       redirectCallbackUrl: "/sso-callback",
     });
@@ -178,7 +180,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-4 space-y-3">
-                <GoogleButton onClick={handleGoogle} isPl={isPl} disabled={!ready} />
+                <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
@@ -196,7 +198,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "sign-up" && (
               <form onSubmit={handleSignUp} className="mt-4 space-y-3">
-                <GoogleButton onClick={handleGoogle} isPl={isPl} disabled={!ready} />
+                <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
                 <Field label={isPl ? "Nazwa (opcjonalnie)" : "Name (optional)"} type="text" value={name} onChange={setName} autoComplete="name" />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
@@ -299,23 +301,31 @@ function PrimaryButton({ loading, disabled, label }: { loading: boolean; disable
   );
 }
 
-function GoogleButton({ onClick, isPl, disabled }: { onClick: () => void; isPl: boolean; disabled?: boolean }) {
+function OAuthButtons({
+  onSelect,
+  isPl,
+  disabled,
+}: {
+  onSelect: (strategy: OAuthStrategy) => void;
+  isPl: boolean;
+  disabled?: boolean;
+}) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] transition-all active:scale-[0.98] disabled:opacity-60"
-    >
-      <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
-      <svg className="relative z-10 h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z" />
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
-        <path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84Z" />
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z" />
-      </svg>
-      <span className="relative z-10">{isPl ? "Kontynuuj z Google" : "Continue with Google"}</span>
-    </button>
+    <div className="space-y-2">
+      {OAUTH_PROVIDERS.map(({ strategy, label, Icon }) => (
+        <button
+          key={strategy}
+          type="button"
+          onClick={() => onSelect(strategy)}
+          disabled={disabled}
+          className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold text-[#0f0f0f] transition-all active:scale-[0.98] disabled:opacity-60"
+        >
+          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+          <Icon className="relative z-10 h-[18px] w-[18px]" />
+          <span className="relative z-10">{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
