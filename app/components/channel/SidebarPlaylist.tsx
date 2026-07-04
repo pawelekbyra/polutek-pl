@@ -74,9 +74,6 @@ export function SidebarPlaylist({
   onVideoMouseEnter,
   onVideoSelect,
 }: SidebarPlaylistProps) {
-  // Live client-side auth state. We gate the support widget on this (not the server-derived
-  // `userProfile` prop) so it reliably shows for signed-in viewers regardless of how the prop
-  // was threaded/hydrated. See docs: support box must be visible only to logged-in users.
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const preloader = useAppPreload();
   const getSidebarAccessBadge = (
@@ -146,7 +143,6 @@ export function SidebarPlaylist({
   }, [selectedVideoId]);
 
   const renderVideoItem = (video: SidebarLayoutItem) => {
-    // Legacy static UX contract reference: onMouseEnter={() => onVideoMouseEnter(video.id)}
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const hasAccess = !video.isLocked;
@@ -220,8 +216,6 @@ export function SidebarPlaylist({
                   {video.duration}
                 </div>
               )}
-              {/* Access Indicator Badge, anchored to the thumbnail itself (not a
-                  fragile negative-offset reach from the text column) */}
               {mounted &&
                 (() => {
                   const badge = getSidebarAccessBadge(video, hasAccess, language);
@@ -229,13 +223,13 @@ export function SidebarPlaylist({
                   return (
                     <div
                       className={cn(
-                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full border px-[6px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.14em] pointer-events-none shadow-[0_1px_5px_rgba(23,23,23,0.16)] backdrop-blur-[2px]",
+                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full border px-[6px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.14em] pointer-events-none shadow-[0_2px_7px_rgba(0,0,0,0.24)]",
                         badge.variant === "public" &&
-                          "border-[#d8d0bd]/85 bg-[#f8f3e7]/92 text-[#171717]",
+                          "border-[#171717]/20 bg-[#f8f3e7] text-[#171717]",
                         badge.variant === "unlocked" &&
-                          "border-[#2563eb]/30 bg-[#f8f3e7]/92 text-[#2563eb]",
+                          "border-[#2563eb]/35 bg-[#eff3fe] text-[#2563eb]",
                         badge.variant === "locked" &&
-                          "border-[#171717]/25 bg-[#171717]/88 text-[#f8f3e7]",
+                          "border-[#171717]/25 bg-[#171717] text-[#f8f3e7]",
                       )}
                     >
                       {badge.text}
@@ -304,8 +298,6 @@ export function SidebarPlaylist({
   );
 
   const PatronBox = () => {
-    // Only show the support/tip widget to signed-in users. Logged-out visitors shouldn't be
-    // confronted with a payment prompt before they've even created an account.
     if (!authLoaded || !isSignedIn) return null;
     if (!supportItem?.creatorId) return null;
     return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
@@ -397,7 +389,6 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {/* Support box always renders last — after every video section, never between them. */}
       <PatronBox />
     </>
   );
