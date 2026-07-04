@@ -1,16 +1,19 @@
 # Known limitations
 
-- Polutek is now strict single-channel: the app is a private creator hub. Multi-creator marketplace support has been removed.
-- HLS/DASH transcoding/packaging is not implemented yet; admin-provided HLS (.m3u8) and DASH (.mpd) manifests must come from exact allowed media hosts.
-- The upload pipeline is not fully finalized and still depends on administrator-provided media/thumbnail URLs from trusted hosts rather than a complete managed upload/transcoding flow.
-- Patron status is currently granted by a qualifying one-time donation or another explicit `PatronGrant` source unless this is changed later.
-- `Subscription` is implemented as email notifications / channel follow only. It does not grant premium access and must remain separate from patron status (active `PatronGrant` rows; `User.isPatron` no longer exists).
-- Automated unit tests, typecheck and lint pass locally; full E2E smoke coverage still depends on installing Playwright browsers in the environment, and production build requires real Clerk public env.
+- Polutek is strict single-channel: the app is a private creator hub. Multi-creator marketplace support has been removed.
+- Patron status is granted by a qualifying one-time donation or another explicit `PatronGrant` source unless this is changed later. `PatronGrant` is the sole source of truth; legacy `User.isPatron`, `User.patronSince`, and `User.patronSource` columns no longer exist.
+- `Subscription` is implemented as email notifications / channel follow only. It does not grant premium access and must remain separate from patron status (active `PatronGrant` rows).
+- HLS/DASH transcoding/packaging is not implemented by the app itself. Cloudflare Stream is the primary managed video provider; admin-provided HLS (.m3u8) and DASH (.mpd) manifests must come from exact allowed media hosts.
+- The upload pipeline is partially managed but not a complete single-upload, multi-provider orchestration yet. Current create/edit/admin flows support Cloudflare Stream, existing provider IDs/URLs, and the multi-source foundation; the R2 original/master and provider mirroring architecture remains future work.
+- Captions/subtitles are optional WebVTT URL fields (`Video.subtitleUrlPl`, `Video.subtitleUrlEn`) editable in the admin video form. File upload/validation/hosting for subtitle files is not a complete managed workflow.
+- Automated unit tests, typecheck and lint pass locally when environment prerequisites are present; full E2E smoke coverage still depends on installing Playwright browsers in the environment, and production build requires real Clerk public env.
 - Vitest coverage is configured with minimum thresholds (30% Statements/Lines, 25% Branches, 40% Functions) in `vitest.config.ts`.
 - Playwright smoke scaffolding exists, but local attempts to install Playwright Chromium can fail when the CDN returns 403; full E2E/screenshot checks must be run in CI/Vercel/staging or another environment with browser access and `E2E_*` state.
 - `db:smoke` and `db:migrate:deploy` require real `DATABASE_URL` and `DATABASE_URL_UNPOOLED`; without them local results are environment failures, not release PASS.
 - Production rate limiting requires writable Upstash Redis or Vercel KV REST credentials. Memory fallback is allowed only outside production.
-- CI (13 gates including `integration-postgres` and security jobs) runs on every PR and has a proven track record on GitHub-hosted runners.
-- Demo fallback content is now fail-closed in production: `ENABLE_DEMO_FALLBACKS=true` is honored only outside `NODE_ENV=production`, so real production content must come from the database.
-- Scalability ceiling on the current plans (Vercel Hobby + Neon Free) is roughly hundreds of concurrent viewers: `/` and `/watch/[slug]` are `force-dynamic` (every anonymous page view hits a function and the database) and the thumbnail proxy has no CDN cache (`s-maxage`). Video delivery itself scales independently via Cloudflare Stream. Details and the remediation order: `docs/audit/POST-DEPLOY-AUDIT-2026-07-02.md`.
+- CI includes environment validation, Prisma validation/generation, strict escapes, hotspots, architecture boundaries, control-plane docs, typecheck, test coverage, lint, build, integration Postgres, and security audit jobs.
+- Demo fallback content is fail-closed in production: `ENABLE_DEMO_FALLBACKS=true` is honored only outside `NODE_ENV=production`, so real production content must come from the database.
+- Scalability ceiling on the current plans (Vercel Hobby + Neon Free) is roughly hundreds of concurrent viewers: `/` and `/watch/[slug]` are `force-dynamic` (every anonymous page view hits a function and the database). Video delivery itself scales independently via Cloudflare Stream. Details and the remediation order: `docs/audit/POST-DEPLOY-AUDIT-2026-07-02.md`.
+- Published-video thumbnails are CDN-cacheable through the existing proxy, but Vercel function/egress cost is still a reason to move custom thumbnails from Vercel Blob to Cloudflare R2. The active executable ticket is `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
 - The `stripe-reconciliation` cron is disabled on the Vercel Hobby plan (see CLAUDE.md §6); stuck PENDING payments need manual re-fulfillment or a Stripe webhook retry until the project moves to Pro.
+- Public launch readiness is not proven by docs or CI alone. Legal/cookie/privacy/refund/support copy, backup/restore evidence, alerting evidence, live provider evidence, representative manual QA, and the final owner launch decision remain tracked as non-current-coding launch evidence in GitHub issue #1269.
