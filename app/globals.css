@@ -136,20 +136,20 @@
   }
 
   .comments-paper-shell {
-    --comments-paper: #fffaf0;
-    --comments-paper-soft: #f8f3e7;
-    --comments-paper-line: #e4dcc8;
+    --comments-paper: #f8f3e7;
+    --comments-paper-soft: #f1ead9;
+    --comments-paper-line: #d8d0bd;
     --comments-ink: #171717;
-    --comments-muted: #6f685b;
+    --comments-muted: #6b665d;
   }
 
   .comments-paper-shell > div {
     padding: 14px;
     border-radius: 22px;
-    border: 1px solid rgba(228, 220, 200, 0.78);
+    border: 1px solid rgba(216, 208, 189, 0.86);
     background:
-      radial-gradient(circle at 18% 0%, rgba(255,255,255,0.66), transparent 34%),
-      linear-gradient(180deg, rgba(255,250,240,0.72), rgba(248,243,231,0.42));
+      radial-gradient(circle at 18% 0%, rgba(248,243,231,0.72), transparent 34%),
+      linear-gradient(180deg, rgba(248,243,231,0.78), rgba(241,234,217,0.46));
     box-shadow: 0 2px 8px rgba(23,23,23,0.04), 0 18px 42px rgba(23,23,23,0.05);
   }
 
@@ -160,14 +160,14 @@
 
   .comments-paper-shell form > div.relative,
   .comments-paper-shell div[id^="comment-"] {
-    background-color: rgba(255, 250, 240, 0.9) !important;
-    border: 1px solid rgba(228, 220, 200, 0.92) !important;
+    background-color: rgba(248, 243, 231, 0.88) !important;
+    border: 1px solid rgba(216, 208, 189, 0.92) !important;
     box-shadow: 0 1px 2px rgba(23,23,23,0.05), 0 8px 24px rgba(23,23,23,0.055) !important;
   }
 
   .comments-paper-shell div[id^="comment-"]:hover {
-    background-color: rgba(255, 252, 246, 0.95) !important;
-    border-color: rgba(216, 205, 182, 0.98) !important;
+    background-color: rgba(250, 246, 237, 0.94) !important;
+    border-color: rgba(199, 190, 170, 0.98) !important;
   }
 
   .comments-paper-shell textarea {
@@ -175,11 +175,11 @@
   }
 
   .comments-paper-shell textarea::placeholder {
-    color: rgba(111,104,91,0.72) !important;
+    color: rgba(107,102,93,0.74) !important;
   }
 
   .comments-paper-shell .border-l.border-border {
-    border-color: #d8cdb6 !important;
+    border-color: #cfc5ad !important;
   }
 
   .comments-paper-shell div[id^="comment-"] > span.absolute {
@@ -195,25 +195,25 @@
   }
 
   .comments-paper-shell .bg-white {
-    background-color: rgba(255,250,240,0.96) !important;
+    background-color: rgba(248,243,231,0.96) !important;
   }
 
   .comments-paper-shell .border-neutral-200,
   .comments-paper-shell .border-\[\#e9eef6\] {
-    border-color: rgba(228,220,200,0.92) !important;
+    border-color: rgba(216,208,189,0.92) !important;
   }
 
   .comments-paper-shell .hover\:bg-neutral-100:hover,
   .comments-paper-shell .hover\:bg-neutral-50:hover,
   .comments-paper-shell .hover\:bg-secondary:hover {
-    background-color: rgba(241,235,219,0.9) !important;
+    background-color: rgba(241,234,217,0.9) !important;
   }
 
   .comments-paper-shell [role="menu"],
   .comments-paper-shell .w-48.bg-white,
   .comments-paper-shell .w-\[300px\].bg-white {
-    background-color: rgba(255,250,240,0.98) !important;
-    border-color: rgba(228,220,200,0.95) !important;
+    background-color: rgba(248,243,231,0.98) !important;
+    border-color: rgba(216,208,189,0.95) !important;
     box-shadow: 0 8px 26px rgba(23,23,23,0.12) !important;
   }
 
