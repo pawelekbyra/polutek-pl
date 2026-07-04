@@ -543,3 +543,195 @@ describe('PlaybackService Safety', () => {
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 });
+
+const assertDeniedPlanHasNoPrivatePlaybackLeak = (plan: Awaited<ReturnType<typeof PlaybackService.createPlaybackPlanWithContext>>, forbidden: string[]) => {
+  const serialized = JSON.stringify(plan);
+
+  expect(plan.canPlay).toBe(false);
+  expect(plan.access.allowed).toBe(false);
+  expect(plan.source).toBeUndefined();
+  expect((plan as any).playbackUrl).toBeUndefined();
+  expect((plan as any).embedUrl).toBeUndefined();
+  expect(plan.tracking.playbackSessionId).toBe('');
+  expect(plan.tracking.heartbeatIntervalSeconds).toBe(0);
+  expect(plan.player.controls).toBe(false);
+  expect(plan.diagnostics.providerResolutionAllowed).toBe(false);
+  expect(plan.diagnostics.providerResolutionAttempted).toBe(false);
+  expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+  expect(mockCreateSignedPlaybackToken).not.toHaveBeenCalled();
+  expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+
+  for (const secret of forbidden) {
+    expect(serialized).not.toContain(secret);
+  }
+};
+
+describe('PlaybackService private playback leakage regression coverage', () => {
+  const guestCtx = createAppContext({ actor: { type: 'guest' } });
+  const loggedInCtx = createAppContext({ actor: { type: 'user', userId: 'non-patron-user' } });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    {
+      name: 'guest denied on LOGGED_IN Cloudflare video',
+      ctx: guestCtx,
+      tier: 'LOGGED_IN',
+      decision: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'LOGGED_IN' },
+      expectedStatus: 'LOGIN_REQUIRED',
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/logged-in-legacy-secret.mp4?token=legacy-login',
+    },
+    {
+      name: 'guest denied on PATRON Cloudflare video',
+      ctx: guestCtx,
+      tier: 'PATRON',
+      decision: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
+      expectedStatus: 'PATRON_REQUIRED',
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/patron-legacy-secret.mp4?token=legacy-guest',
+    },
+    {
+      name: 'logged-in non-patron denied on PATRON Cloudflare video',
+      ctx: loggedInCtx,
+      tier: 'PATRON',
+      decision: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
+      expectedStatus: 'PATRON_REQUIRED',
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/patron-user-legacy-secret.mp4?token=legacy-user',
+    },
+  ])('$name never receives private playback fields, tokens, provider IDs, or fallback sources', async ({ ctx, tier, decision, expectedStatus, videoUrl }) => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      tier,
+      videoUrl,
+      assets: [cloudflareAsset],
+      asset: undefined,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: decision as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
+
+    expect(plan.status).toBe(expectedStatus);
+    assertDeniedPlanHasNoPrivatePlaybackLeak(plan, [
+      'playbackUrl',
+      'embedUrl',
+      'cf-playback-id',
+      'cf-asset-id',
+      'cf-signed-token',
+      'videodelivery.net',
+      'iframe.videodelivery.net',
+      'kraufanding-media.s3.amazonaws.com',
+      'legacy-secret.mp4',
+      'token=legacy',
+    ]);
+  });
+
+  it('does not leak external YouTube embed data when a guest is denied on a LOGGED_IN video', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      tier: 'LOGGED_IN',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      assets: [{
+        ...cloudflareAsset,
+        provider: 'YOUTUBE',
+        providerAssetId: null,
+        providerPlaybackId: null,
+        externalVideoId: 'dQw4w9WgXcQ',
+        externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      }],
+      asset: undefined,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'LOGGED_IN' } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', guestCtx);
+
+    expect(plan.status).toBe('LOGIN_REQUIRED');
+    assertDeniedPlanHasNoPrivatePlaybackLeak(plan, [
+      'youtube.com',
+      'youtube-nocookie.com',
+      'dQw4w9WgXcQ',
+      'watch?v=',
+    ]);
+  });
+
+  it('allows PUBLIC Cloudflare playback only through the signed private path and redacts raw provider IDs from the contract', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      tier: 'PUBLIC',
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/public-legacy-should-not-win.mp4',
+      assets: [cloudflareAsset],
+      asset: undefined,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true, reason: 'ALLOWED' } as any });
+    mockCreateSignedPlaybackToken.mockReturnValue({ token: 'cf-public-signed-token', expiresAt: new Date('2026-06-26T01:00:00.000Z'), expiresInSeconds: 3600 });
+    vi.mocked(prisma.videoPlaybackSession.create).mockResolvedValue({ id: 'public-session' } as any);
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', guestCtx);
+    const serialized = JSON.stringify(plan);
+
+    expect(plan.status).toBe('READY');
+    expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
+    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/cf-public-signed-token/manifest/video.m3u8');
+    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/cf-public-signed-token');
+    expect(plan.source?.isSignedUrl).toBe(true);
+    expect(plan.source?.needsProxy).toBe(false);
+    expect(plan.source?.asset?.providerAssetId).toBeNull();
+    expect(plan.source?.asset?.providerPlaybackId).toBeNull();
+    expect(serialized).not.toContain('cf-playback-id');
+    expect(serialized).not.toContain('cf-asset-id');
+    expect(serialized).not.toContain('public-legacy-should-not-win.mp4');
+    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when a PATRON video has YouTube as the primary source', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      tier: 'PATRON',
+      videoUrl: null,
+      assets: [{
+        ...cloudflareAsset,
+        provider: 'YOUTUBE',
+        providerAssetId: null,
+        providerPlaybackId: null,
+        externalVideoId: 'dQw4w9WgXcQ',
+        externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      }],
+      asset: undefined,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true, reason: 'ALLOWED' } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', loggedInCtx);
+    const serialized = JSON.stringify(plan);
+
+    expect(plan.status).toBe('UNAVAILABLE');
+    expect(plan.canPlay).toBe(false);
+    expect(plan.access.allowed).toBe(true);
+    expect(plan.source).toBeUndefined();
+    expect(plan.tracking.playbackSessionId).toBe('');
+    expect(plan.diagnostics.warnings).toContain('YouTube playback is not permitted for PATRON-tier videos');
+    expect(serialized).not.toContain('youtube-nocookie.com');
+    expect(serialized).not.toContain('watch?v=dQw4w9WgXcQ');
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('fails closed for legacy private fallback and does not bypass the patron paywall or sign storage URLs', async () => {
+    vi.mocked(prisma.video.findUnique).mockResolvedValue({
+      ...baseVideo,
+      tier: 'PATRON',
+      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/private-fallback.mp4?signature=legacy-secret',
+      assets: [],
+      asset: undefined,
+    } as any);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any });
+
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', loggedInCtx);
+
+    expect(plan.status).toBe('PATRON_REQUIRED');
+    assertDeniedPlanHasNoPrivatePlaybackLeak(plan, [
+      'private-fallback.mp4',
+      'signature=legacy-secret',
+      'kraufanding-media.s3.amazonaws.com',
+      '/api/media/v1',
+    ]);
+  });
+});
