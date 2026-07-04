@@ -39,6 +39,12 @@
     --font-najs: Kalam, "Comic Sans MS", cursive;
     --najs-ink: #171717;
     --najs-paper: #f8f3e7;
+    --najs-paper-soft: #f1ead9;
+    --najs-paper-line: #d8d0bd;
+    --najs-muted: #6b665d;
+    --najs-body: #3f3a33;
+    --najs-blue: #2563eb;
+    --najs-blue-soft: #eff3fe;
   }
 }
 
@@ -135,12 +141,79 @@
     stroke-linejoin: round !important;
   }
 
+  .paper-surface {
+    background-color: var(--najs-paper);
+    color: var(--najs-ink);
+  }
+
+  .paper-surface-soft {
+    background-color: var(--najs-paper-soft);
+    color: var(--najs-ink);
+  }
+
+  .paper-border {
+    border-color: var(--najs-paper-line);
+  }
+
+  .ink-text {
+    color: var(--najs-ink);
+  }
+
+  .body-text {
+    color: var(--najs-body);
+  }
+
+  .muted-text {
+    color: var(--najs-muted);
+  }
+
+  .blue-text {
+    color: var(--najs-blue);
+  }
+
+  .blue-surface {
+    background-color: var(--najs-blue-soft);
+    color: var(--najs-blue);
+  }
+
+  .ink-button {
+    background-color: var(--najs-ink);
+    color: var(--najs-paper);
+    border-color: var(--najs-ink);
+  }
+
+  .ink-button:hover {
+    background-color: rgba(23, 23, 23, 0.9);
+  }
+
+  .paper-button {
+    background-color: rgba(248, 243, 231, 0.88);
+    color: var(--najs-ink);
+    border-color: var(--najs-paper-line);
+  }
+
+  .paper-button:hover {
+    background-color: var(--najs-paper-soft);
+  }
+
+  .paper-panel {
+    background-color: rgba(248, 243, 231, 0.88);
+    border-color: rgba(216, 208, 189, 0.86);
+    color: var(--najs-ink);
+  }
+
+  .paper-panel-soft {
+    background-color: rgba(241, 234, 217, 0.86);
+    border-color: rgba(216, 208, 189, 0.9);
+    color: var(--najs-ink);
+  }
+
   .comments-paper-shell {
-    --comments-paper: #f8f3e7;
-    --comments-paper-soft: #f1ead9;
-    --comments-paper-line: #d8d0bd;
-    --comments-ink: #171717;
-    --comments-muted: #6b665d;
+    --comments-paper: var(--najs-paper);
+    --comments-paper-soft: var(--najs-paper-soft);
+    --comments-paper-line: var(--najs-paper-line);
+    --comments-ink: var(--najs-ink);
+    --comments-muted: var(--najs-muted);
   }
 
   .comments-paper-shell > div {
