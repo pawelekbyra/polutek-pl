@@ -162,7 +162,7 @@ function ChannelHomeContent({
               initialIsSubscribed={userProfile?.initialIsSubscribed}
             />
             <div className="lg:hidden mt-4">
-              <div className="flex overflow-hidden rounded-xl font-sans">
+              <div className="relative flex overflow-hidden rounded-2xl border border-[#e4dcc8] bg-[#f1ebdd]/80 p-1 font-sans shadow-[0_2px_8px_rgba(23,23,23,0.05)]">
                 {(["comments", "videos"] as const).map((tab) => {
                   const isActive = activeTab === tab;
                   return (
@@ -171,19 +171,25 @@ function ChannelHomeContent({
                       onClick={() => setActiveTab(tab)}
                       aria-pressed={isActive}
                       className={cn(
-                        "flex-1 py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-colors duration-200",
+                        "relative flex-1 rounded-xl py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
                         isActive
-                          ? "bg-[#2f3b52] text-[#eef1f6]"
-                          : "bg-[#f1ebdb] text-[#171717]/55 hover:bg-[#eae2ce] hover:text-[#171717]/80",
+                          ? "bg-[#171717] text-[#f8f3e7] shadow-[0_6px_20px_rgba(0,0,0,0.18)]"
+                          : "text-[#171717]/55 hover:bg-[#fffaf0]/70 hover:text-[#171717]/80",
                       )}
                     >
                       {tab === "comments" ? t.comments : t.videosTab}
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                        />
+                      )}
                     </button>
                   );
                 })}
               </div>
             </div>
-            <div className="lg:hidden mt-2">
+            <div className="comments-paper-shell lg:hidden mt-2">
               {activeTab === "comments" ? (
                 <EmbeddedComments
                   videoId={selectedVideo.id}
@@ -196,7 +202,7 @@ function ChannelHomeContent({
                 </div>
               )}
             </div>
-            <div className="hidden lg:block mt-4">
+            <div className="comments-paper-shell hidden lg:block mt-4">
               <EmbeddedComments
                 videoId={selectedVideo.id}
                 userProfile={userProfile}
