@@ -5,7 +5,6 @@ import { jakarta, outfit, spaceGrotesk, bebasNeue, kalam, patrickHand, caveat } 
 import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
-import { SplashScreen } from "@/app/components/SplashScreen";
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
@@ -54,7 +53,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="apple-touch-icon" href="/icon" />
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
-        <SplashScreen />
         <ServiceWorkerCleanup />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
