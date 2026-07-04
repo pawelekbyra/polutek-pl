@@ -12,6 +12,7 @@ import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { Frame, INK } from "./najs/primitives";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
+import styles from "./ChannelHome.module.css";
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
@@ -120,7 +121,7 @@ function ChannelHomeContent({
 
   if (!selectedVideo)
     return (
-      <main className="bg-transparent min-h-screen flex items-center justify-center p-6">
+      <main className={cn("bg-transparent min-h-screen flex items-center justify-center p-6", styles.blackEdgeSurface)}>
         <div className="max-w-md w-full relative p-10 text-center animate-in fade-in zoom-in duration-500">
           <Frame radius={16} seed={9} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
           <div className="relative z-10">
@@ -179,7 +180,7 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="bg-transparent min-h-screen">
+    <main className={cn("bg-transparent min-h-screen", styles.blackEdgeSurface)}>
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
