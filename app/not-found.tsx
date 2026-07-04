@@ -3,21 +3,21 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-50 px-6 font-sans">
-      <div className="max-w-md w-full text-center">
-        <div className="mb-6 flex justify-center text-neutral-200">
-            <span className="text-[120px] font-black leading-none select-none">404</span>
+    <main className="flex min-h-screen items-center justify-center bg-[#f8f3e7] px-6 font-sans text-[#171717]">
+      <div className="w-full max-w-md text-center">
+        <div className="mb-6 flex justify-center text-[#d8d0bd]">
+          <span className="select-none text-[120px] font-black leading-none">404</span>
         </div>
-        <h1 className="text-2xl font-black uppercase tracking-tight mb-3">Nie znaleziono strony</h1>
-        <p className="text-neutral-600 mb-8">
+        <h1 className="mb-3 text-2xl font-black uppercase tracking-tight text-[#171717]">Nie znaleziono strony</h1>
+        <p className="mb-8 text-[#6b665d]">
           Przepraszamy, ale strona której szukasz nie istnieje lub została przeniesiona pod inny adres.
         </p>
 
         <Link
-            href="/"
-            className="inline-block bg-[#1a1a1a] text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-black transition-all active:scale-[0.98]"
+          href="/"
+          className="inline-block rounded-full bg-[#171717] px-8 py-3 text-xs font-bold uppercase tracking-widest text-[#f8f3e7] transition-all hover:bg-[#171717]/90 active:scale-[0.98]"
         >
-            Wróć na stronę główną
+          Wróć na stronę główną
         </Link>
       </div>
     </main>
