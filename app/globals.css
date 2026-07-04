@@ -415,3 +415,120 @@
     text-decoration-color: rgba(23, 23, 23, 0.85);
   }
 }
+
+@layer utilities {
+  .ui-clone-skin {
+    min-height: 100dvh;
+    color: var(--najs-ink);
+    background-color: var(--clone-paper);
+    background-image: var(--clone-page-texture);
+    background-size: var(--clone-texture-size, auto);
+  }
+
+  .ui-clone-skin > .min-h-screen,
+  .ui-clone-skin main,
+  .ui-clone-skin .paper-surface,
+  .ui-clone-skin .paper-panel,
+  .ui-clone-skin .paper-panel-soft,
+  .ui-clone-skin .comments-paper-shell > div,
+  .ui-clone-skin .comments-paper-shell form > div.relative,
+  .ui-clone-skin .comments-paper-shell div[id^="comment-"] {
+    background-color: var(--clone-paper) !important;
+    color: var(--najs-ink) !important;
+  }
+
+  .ui-clone-skin .paper-panel,
+  .ui-clone-skin .paper-panel-soft,
+  .ui-clone-skin .comments-paper-shell > div,
+  .ui-clone-skin .comments-paper-shell form > div.relative,
+  .ui-clone-skin .comments-paper-shell div[id^="comment-"] {
+    border-color: var(--clone-line) !important;
+    box-shadow: var(--clone-card-shadow) !important;
+  }
+
+  .ui-clone-skin svg path,
+  .ui-clone-skin svg rect,
+  .ui-clone-skin svg circle,
+  .ui-clone-skin svg line,
+  .ui-clone-skin svg polyline,
+  .ui-clone-skin svg polygon {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ui-clone-skin .ink-button {
+    background-color: var(--clone-ink-button) !important;
+    border-color: var(--clone-ink-button) !important;
+    color: var(--clone-button-text) !important;
+  }
+
+  .ui-clone-skin .blue-text,
+  .ui-clone-skin .text-blue-600,
+  .ui-clone-skin .text-primary {
+    color: var(--clone-accent) !important;
+  }
+
+  .ui-clone-skin .blue-surface {
+    background-color: var(--clone-accent-soft) !important;
+    color: var(--clone-accent) !important;
+  }
+
+  .ui-clone-skin-t1 {
+    --clone-paper: #fff8e8;
+    --clone-paper-soft: #f8edcf;
+    --clone-line: rgba(21, 19, 16, 0.88);
+    --clone-accent: #1d4ed8;
+    --clone-accent-soft: #dce8ff;
+    --clone-ink-button: #11100e;
+    --clone-button-text: #fff8e8;
+    --clone-nav-bg: rgba(255, 248, 232, 0.95);
+    --clone-card-shadow: 0 2px 0 rgba(17,16,14,.18), 0 14px 28px rgba(17,16,14,.06);
+    --clone-page-texture:
+      radial-gradient(circle at 20% 12%, rgba(251, 224, 138, .22), transparent 26%),
+      radial-gradient(circle at 86% 10%, rgba(29, 78, 216, .10), transparent 22%),
+      linear-gradient(rgba(21,19,16,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(21,19,16,.055) 1px, transparent 1px);
+    --clone-texture-size: auto, auto, 38px 38px, 38px 38px;
+  }
+
+  .ui-clone-skin-t2 {
+    --clone-paper: #f4fbf5;
+    --clone-paper-soft: #e3f2e6;
+    --clone-line: rgba(13, 42, 26, 0.86);
+    --clone-accent: #15803d;
+    --clone-accent-soft: #dff7e7;
+    --clone-ink-button: #0d2a1a;
+    --clone-button-text: #f4fbf5;
+    --clone-nav-bg: rgba(244, 251, 245, 0.95);
+    --clone-card-shadow: 0 1px 0 rgba(13,42,26,.22), 0 18px 34px rgba(13,42,26,.07);
+    --clone-page-texture:
+      radial-gradient(circle at 14% 16%, rgba(34, 197, 94, .13), transparent 28%),
+      radial-gradient(circle at 78% 6%, rgba(180, 83, 9, .10), transparent 24%),
+      repeating-linear-gradient(-2deg, rgba(13,42,26,.045) 0 1px, transparent 1px 34px);
+    --clone-texture-size: auto;
+  }
+
+  .ui-clone-skin-t3 {
+    --clone-paper: #f7f2ff;
+    --clone-paper-soft: #ece1ff;
+    --clone-line: rgba(34, 21, 55, 0.86);
+    --clone-accent: #7c3aed;
+    --clone-accent-soft: #ede4ff;
+    --clone-ink-button: #221537;
+    --clone-button-text: #f7f2ff;
+    --clone-nav-bg: rgba(247, 242, 255, 0.95);
+    --clone-card-shadow: 0 2px 0 rgba(34,21,55,.16), 0 18px 38px rgba(34,21,55,.075);
+    --clone-page-texture:
+      radial-gradient(circle at 18% 8%, rgba(124, 58, 237, .12), transparent 27%),
+      radial-gradient(circle at 88% 14%, rgba(251, 191, 36, .15), transparent 22%),
+      linear-gradient(rgba(34,21,55,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,21,55,.04) 1px, transparent 1px);
+    --clone-texture-size: auto, auto, 46px 46px, 46px 46px;
+  }
+
+  .ui-clone-skin-t1 :is(h1, h2, h3, button, a),
+  .ui-clone-skin-t2 :is(h1, h2, h3, button, a),
+  .ui-clone-skin-t3 :is(h1, h2, h3, button, a) {
+    text-decoration-color: color-mix(in srgb, var(--clone-accent) 38%, transparent);
+  }
+}
