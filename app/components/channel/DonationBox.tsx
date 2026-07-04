@@ -287,24 +287,24 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
   return (
     <div id="donations" className="relative my-[10px] scroll-mt-20 p-[18px] mb-3">
-      <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="#ffffff" />
+      <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.94)" />
       <div className="relative z-10">
         <div className="mb-1 flex items-center gap-2">
           <Heart size={17} className="shrink-0 text-primary" />
           <h4 className="m-0 text-[16px] font-bold text-[#0f0f0f]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #FBE08A 55%, #FBE08A 94%, transparent 94%)" }}>
+            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, rgba(251,224,138,0.72) 55%, rgba(251,224,138,0.72) 94%, transparent 94%)" }}>
               {title}
             </span>
           </h4>
         </div>
-        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide text-[#7a7a7a]">{subtitle}</p>
-        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] text-[#4a4a4a]">{bodyCopy}</p>
+        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide text-[#6b665d]">{subtitle}</p>
+        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] text-[#3f3a33]">{bodyCopy}</p>
 
-        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[#171717]/15 pt-[10px] text-[12.5px]">
+        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[#d8d0bd] pt-[10px] text-[12.5px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? "flex items-start gap-[7px] italic text-[#7a7a7a]" : "flex items-start gap-[7px] text-[#171717]"}
+              className={bullet.soft ? "flex items-start gap-[7px] italic text-[#6b665d]" : "flex items-start gap-[7px] text-[#171717]"}
             >
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
@@ -367,7 +367,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             aria-describedby={showTermsError ? termsErrorId : undefined}
             className="mt-[2px] shrink-0"
           />
-          <span className="text-[11px] leading-[1.4] text-[#7a7a7a]">
+          <span className="text-[11px] leading-[1.4] text-[#6b665d]">
             {isPl ? (
               <>
                 Akceptuję{" "}
