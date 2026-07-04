@@ -247,7 +247,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      <NajsIcon name="like" className="h-[18px] w-[18px]" stroke={interactionState.isLiked ? "#2563eb" : INK} />
                      <span className="text-[14px] font-bold" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{interactionState.likesCount.toLocaleString('pl-PL')}</span>
                   </button>
-                  <span className="relative h-5 w-px bg-[#171717]" />
+                  <span className="relative h-5 w-px bg-[#171717]/35" />
                   <button
                     onClick={handleDislike}
                     disabled={isPending}
