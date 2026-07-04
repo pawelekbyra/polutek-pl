@@ -42,7 +42,7 @@ decision are tracked separately in GitHub issue #1269.
 - [ ] `CLERK_WEBHOOK_SECRET`
 - [ ] `STRIPE_SECRET_KEY`
 - [ ] `STRIPE_WEBHOOK_SECRET`
-- [ ] `NEXT_PUBLIC_APP_URL`
+- [ ] `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - [ ] `RESEND_API_KEY`
 - [ ] `EMAIL_FROM`
 - [ ] `ENABLE_DEMO_FALLBACKS=false` in production; demo fallback code is ignored under `NODE_ENV=production` and must not be used as production resilience
@@ -53,6 +53,7 @@ decision are tracked separately in GitHub issue #1269.
 - [ ] Production media security: confirm direct files and HLS/DASH manifest URLs load only from exact allowed media hosts.
 - [ ] Webhook health: check dashboard/metrics/logs for webhook lock conflicts (`lock not acquired`) and verify that retries are succeeding correctly.
 - [ ] `HEALTHCHECK_TOKEN`
+- [ ] Mux env when Mux is enabled: `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `MUX_WEBHOOK_SECRET`, `MUX_SIGNING_KEY_ID`, `MUX_SIGNING_PRIVATE_KEY`
 
 ## Konfiguracja webhooka Clerk (wymagana dla emaili)
 
@@ -66,6 +67,17 @@ decision are tracked separately in GitHub issue #1269.
 
 Aby przetestować bez rejestracji nowego użytkownika:
 W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → user.created
+
+## Mux video verification
+
+- [ ] `GET /api/admin/health/mux` returns `configured=true`, `webhook.expectedUrl`, and `webhook.secretConfigured=true`.
+- [ ] `GET /api/admin/health/mux?probe=webhook-signature` returns `WEBHOOK_SIGNATURE_OK`.
+- [ ] `GET /api/admin/health/mux?probe=auth` returns `MUX_READ_OK`.
+- [ ] `POST /api/admin/health/mux` with `{ "probe": "direct-upload" }` returns `DIRECT_UPLOAD_OK`.
+- [ ] Mux Dashboard webhook URL is exactly `https://twojadomena.pl/api/webhooks/mux` for production.
+- [ ] Mux Dashboard sends at least: `video.upload.asset_created`, `video.asset.ready`, `video.asset.errored`.
+- [ ] Mux Dashboard test event or a real upload produces a Vercel runtime log containing `Mux webhook accepted`, not `Invalid signature`.
+- [ ] No response body or log output exposes `MUX_TOKEN_SECRET`, `MUX_WEBHOOK_SECRET`, upload URLs, or signing private keys.
 
 ## Database
 
