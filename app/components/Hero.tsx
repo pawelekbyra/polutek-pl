@@ -173,7 +173,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="najs-paper-card w-full rounded-[24px] p-3 sm:p-4">
+      <div className="w-full">
         {/* FEATURED MEDIA */}
         <div className="relative aspect-video w-full mb-[18px] group">
           <Frame radius={14} seed={7} stroke={INK} strokeWidth={1.5} />
@@ -186,7 +186,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3">
-          <h1 className="font-bold not-italic text-[26px] ink-text leading-[1.18] mb-[14px]" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+          <h1 className="font-sans font-bold not-italic text-[23px] ink-text leading-[1.25] mb-[14px]">
              {displayTitle}
           </h1>
 
@@ -281,15 +281,15 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION BOX — neutralny papierowy panel (metadane), nadal bez rysowanej ramki */}
         <div
-          className="najs-paper-card mt-[16px] cursor-pointer rounded-[20px] p-[14px] px-4 transition-transform hover:-rotate-[0.15deg]"
+          className="mt-[16px] cursor-pointer paper-radius-panel border paper-border paper-surface p-[14px] px-4 paper-shadow-soft transition-colors hover:bg-[var(--najs-paper-soft)]"
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[7px] items-baseline">
-                <span className="text-[13.5px] font-bold not-italic ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                <span className="font-sans text-[13.5px] font-bold not-italic ink-text">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
-                <span className="text-[13.5px] font-bold not-italic ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+                <span className="font-sans text-[13.5px] font-bold not-italic ink-text">
                    · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>

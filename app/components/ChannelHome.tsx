@@ -179,9 +179,9 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="najs-page-shell bg-transparent min-h-screen">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6 lg:py-7">
-        <div className="grid grid-cols-12 gap-4 lg:gap-5">
+    <main className="bg-transparent min-h-screen">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
+        <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8">
             <div
               key={selectedVideo.id}
@@ -205,7 +205,7 @@ function ChannelHomeContent({
             ) : (
               <>
                 <div className="lg:hidden mt-4">
-                  <div className="najs-paper-card relative flex overflow-hidden rounded-2xl p-1 font-sans">
+                  <div className="relative flex overflow-hidden rounded-2xl border border-[#e4dcc8] bg-[#f1ebdd]/80 p-1 font-sans shadow-[0_2px_8px_rgba(23,23,23,0.05)]">
                     {(["comments", "videos"] as const).map((tab) => {
                       const isActive = activeTab === tab;
                       return (
@@ -242,7 +242,7 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <aside className="hidden lg:block lg:col-span-4 space-y-2 rounded-[22px] p-3 najs-paper-card">
+          <aside className="hidden lg:block lg:col-span-4 space-y-2">
             <SidebarPlaylist {...commonSidebarProps} />
           </aside>
         </div>
