@@ -18,6 +18,7 @@ import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dt
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";
+import { useAppPreload } from "./preload/AppPreloadProvider";
 
 interface VideoAccessContextType {
   hasAccess: boolean;
@@ -62,6 +63,7 @@ export default function PremiumWrapper({
   const [playbackState, setPlaybackState] = useState<PlaybackPlanStatus | null>(
     null,
   );
+  const preloader = useAppPreload();
   const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
   const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
@@ -82,11 +84,31 @@ export default function PremiumWrapper({
     if (!isLoaded && !isPublic) return;
 
     try {
-      const response = await fetch(`/api/media-source/${videoId}`);
-      const data = await response.json();
+      const warmedPlan = preloader?.getPlaybackPlan(videoId);
+      const data = warmedPlan ?? await preloader?.warmVideo(videoId, { includePoster: true, priority: "critical" });
+
+      if (data) {
+        const warmedData = data as any;
+        const nextState = getSafePlaybackState(
+          warmedData,
+          !userId ? deniedState : false,
+        );
+        const nextHasAccess = Boolean(warmedData.hasAccess || warmedData.access?.allowed);
+        setHasAccess(nextHasAccess);
+        onAccessLoad?.(nextHasAccess);
+        setPlaybackState(nextState);
+        setPlaybackPlan(nextHasAccess ? warmedData : null);
+        if (warmedData.requiredTier || warmedData.access?.requiredTier)
+          setDbTier(warmedData.requiredTier || warmedData.access.requiredTier);
+        setFetchError(null);
+        return;
+      }
+
+      const response = await fetch(`/api/media-source/${videoId}`, { cache: "no-store" });
+      const fetchedData = await response.json();
 
       const nextState = getSafePlaybackState(
-        data,
+        fetchedData,
         !userId ? deniedState : false,
       );
 
@@ -94,23 +116,23 @@ export default function PremiumWrapper({
         setHasAccess(false);
         setPlaybackPlan(null);
         setPlaybackState(nextState);
-        if (data.requiredTier || data.access?.requiredTier)
-          setDbTier(data.requiredTier || data.access.requiredTier);
+        if (fetchedData.requiredTier || fetchedData.access?.requiredTier)
+          setDbTier(fetchedData.requiredTier || fetchedData.access.requiredTier);
         setFetchError(null);
         return;
       }
 
-      const nextHasAccess = Boolean(data.hasAccess || data.access?.allowed);
+      const nextHasAccess = Boolean(fetchedData.hasAccess || fetchedData.access?.allowed);
       setHasAccess(nextHasAccess);
       onAccessLoad?.(nextHasAccess);
       setPlaybackState(nextState);
       if (nextHasAccess) {
-        setPlaybackPlan(data);
+        setPlaybackPlan(fetchedData);
       } else {
         setPlaybackPlan(null);
       }
-      if (data.requiredTier || data.access?.requiredTier)
-        setDbTier(data.requiredTier || data.access.requiredTier);
+      if (fetchedData.requiredTier || fetchedData.access?.requiredTier)
+        setDbTier(fetchedData.requiredTier || fetchedData.access.requiredTier);
       setFetchError(null);
     } catch (error) {
       logger.error("Error checking video access:", error);
@@ -121,7 +143,7 @@ export default function PremiumWrapper({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, userId, isPublic, videoId, onAccessLoad, deniedState]);
+  }, [isLoaded, userId, isPublic, videoId, onAccessLoad, deniedState, preloader]);
 
   useEffect(() => {
     checkAccess();
@@ -136,16 +158,18 @@ export default function PremiumWrapper({
     const msToRefresh = expiresAt - now - refreshThresholdMs;
 
     if (msToRefresh <= 0) {
+      preloader?.invalidatePlaybackPlan(videoId);
       checkAccess();
       return;
     }
 
     const timer = setTimeout(() => {
+      preloader?.invalidatePlaybackPlan(videoId);
       checkAccess();
     }, msToRefresh);
 
     return () => clearTimeout(timer);
-  }, [playbackPlan, checkAccess]);
+  }, [playbackPlan, checkAccess, preloader, videoId]);
 
   const contextValue = {
     hasAccess: isPublic || isUnlockedByAuth || hasAccess,

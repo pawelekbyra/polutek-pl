@@ -9,6 +9,15 @@ import { logger } from "@/lib/logger";
 export const PUBLIC_THUMBNAIL_CACHE_CONTROL =
   "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400";
 export const PRIVATE_THUMBNAIL_CACHE_CONTROL = "private, max-age=300";
+export const DISABLED_THUMBNAIL_CACHE_CONTROL = "private, no-store";
+
+function resolveThumbnailCacheControl(cacheControl: string) {
+  if (process.env.DISABLE_PUBLIC_MEDIA_CACHE === "true") {
+    return DISABLED_THUMBNAIL_CACHE_CONTROL;
+  }
+
+  return cacheControl;
+}
 
 export class ThumbnailResponseService {
   static async getThumbnailResponse(
@@ -16,6 +25,7 @@ export class ThumbnailResponseService {
     thumbnailUrl: string,
     cacheControl: string = PRIVATE_THUMBNAIL_CACHE_CONTROL
   ): Promise<NextResponse> {
+    const effectiveCacheControl = resolveThumbnailCacheControl(cacheControl);
     try {
       // 1. Vercel Blob URLs (our own storage) are always trusted — no MediaPolicy needed
       if (this.isVercelBlobUrl(thumbnailUrl)) {
@@ -33,7 +43,7 @@ export class ThumbnailResponseService {
           result.headers.forEach((value, key) => {
             resHeaders.set(key, value);
           });
-          resHeaders.set("Cache-Control", cacheControl);
+          resHeaders.set("Cache-Control", effectiveCacheControl);
 
           if (result.statusCode === 304) {
             return new NextResponse(null, {
@@ -83,7 +93,7 @@ export class ThumbnailResponseService {
         });
         // Always enforce our own caching policy — the external origin's
         // Cache-Control must not decide whether the CDN may cache a draft.
-        resHeaders.set("Cache-Control", cacheControl);
+        resHeaders.set("Cache-Control", effectiveCacheControl);
 
         return new NextResponse(response.body, {
           status: 200,

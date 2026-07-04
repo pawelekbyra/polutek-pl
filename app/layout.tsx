@@ -6,7 +6,7 @@ import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
 import { SplashScreen } from "@/app/components/SplashScreen";
-import { ServiceWorkerRegistration } from "@/app/components/ServiceWorkerRegistration";
+import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <SplashScreen />
-        <ServiceWorkerRegistration />
+        <ServiceWorkerCleanup />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>

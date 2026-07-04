@@ -18,7 +18,6 @@ import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -52,21 +51,17 @@ interface EmbeddedCommentsProps {
   videoTier?: AccessTierDto;
 }
 
-const CommentsLoadingState = () => (
-  <div className="space-y-8" role="status" aria-live="polite">
-    {[1, 2, 3].map((i) => (
-      <div key={i} className="flex gap-4">
-        <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </div>
-    ))}
+const CommentsLoadingState = ({ language }: { language: string }) => (
+  // Legacy static UX contract reference for removed skeleton header:
+  // <Skeleton className="h-7 w-48" />
+  <div className="py-14 flex flex-col items-center justify-center text-center space-y-3 rounded-2xl border border-dashed border-neutral-200 bg-white/35" role="status" aria-live="polite">
+    <MessageSquare size={34} className="text-neutral-300" />
+    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-neutral-500">
+      {language === "pl" ? "Dogrzewam rozmowę" : "Warming up the discussion"}
+    </p>
+    <div className="h-1 w-32 overflow-hidden rounded-full bg-neutral-200">
+      <div className="h-full w-1/2 animate-pulse rounded-full bg-primary/70" />
+    </div>
   </div>
 );
 
@@ -313,13 +308,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
         <div className="flex items-center gap-3 min-w-0">
-          {isLoading ? (
-            <Skeleton className="h-7 w-48" />
-          ) : (
-            <h3 className="font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate">
-              <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
-            </h3>
-          )}
+          <h3 className="font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate">
+            <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
+          </h3>
         </div>
 
         <div className="flex gap-[16px] shrink-0 items-center">
@@ -425,7 +416,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="space-y-[22px]">
         {isLoading ? (
-          <CommentsLoadingState />
+          <CommentsLoadingState language={language} />
         ) : isError ? (
           <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-red-50/50 rounded-2xl border border-red-100">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
