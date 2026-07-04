@@ -7,7 +7,7 @@ import { createScopedLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { adminUserId, response } = await requireAdminForApi("ADMIN_REFUND_PAYMENT");
   if (response) return response;
 
@@ -22,9 +22,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       // empty body = full refund
     }
 
+    const { id } = await params;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! } });
     const result = await adminRefund(
-      { paymentId: params.id, amountMinor: body.amountMinor, reason: body.reason },
+      { paymentId: id, amountMinor: body.amountMinor, reason: body.reason },
       ctx
     );
 

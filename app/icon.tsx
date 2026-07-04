@@ -8,11 +8,11 @@ import {
 } from '@/lib/icons/app-icon';
 
 export const runtime = 'edge';
-export const size = {
+
+const size = {
   width: 192,
   height: 192,
 };
-export const contentType = 'image/png';
 
 export default async function Icon() {
   const borderPath = roundedSquarePath(size.width, 30, 7, 6);
