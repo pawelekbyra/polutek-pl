@@ -73,7 +73,7 @@ const Navbar = () => {
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
               <div className="relative flex-1 flex items-center min-w-0 h-[38px]">
-                <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+                <Frame radius={20} seed={18} stroke={INK} strokeWidth={0.8} fill="#ffffff" />
                 <input
                   type="text"
                   autoFocus
@@ -124,7 +124,7 @@ const Navbar = () => {
             <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
                 <div className="relative flex-1 flex items-center min-w-0 h-[42px]">
-                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={1.2} fill="#ffffff" />
+                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={0.8} fill="#ffffff" />
                   <input
                     type="text"
                     placeholder={searchLabel}
