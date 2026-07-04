@@ -8,6 +8,16 @@ The full product documentation index lives at `docs/README.md` (architecture, sp
 
 ---
 
+## 0. Current State for Agents
+
+Runtime foundations are stabilized around the current invariants in §4: `PatronGrant` is the source of truth, legacy `User.isPatron` cache fields no longer exist, payment success must route through `fulfillPayment()`, and denied playback plans must not expose playable URLs, tokens, provider IDs, or mounted players.
+
+Do not infer launch readiness from green CI or documentation alone. Public launch still depends on owner/legal/operator evidence, production smoke proof, and the final launch decision tracked outside the executable coding queue, especially GitHub issue #1269.
+
+The executable coding queue is `docs/tickets/ready/`. If a GitHub issue or doc says work is still open but the code/schema/docs already prove it is done, update or close that issue instead of re-implementing old work.
+
+---
+
 ## 1. What This Product Is
 
 Polutek.pl is a **single-channel VOD platform** for one creator. It is not a marketplace, not a multi-tenant SaaS, not a subscription service. Core facts:
@@ -23,13 +33,13 @@ Polutek.pl is a **single-channel VOD platform** for one creator. It is not a mar
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 14 App Router (deployed on Vercel) |
+| Framework | Next.js 15 App Router (deployed on Vercel) |
 | Database | Neon PostgreSQL via Prisma ORM |
 | Auth/Identity | Clerk (identity only — NOT patron authority) |
 | Payments | Stripe (webhooks → fulfillPayment → PatronGrant) |
 | Video delivery | Cloudflare Stream (primary) |
 | Email | Resend |
-| Storage | Vercel Blob (legacy thumbnails/media), Cloudflare R2 (future) |
+| Storage | Vercel Blob (legacy thumbnails/media), Cloudflare R2 (planned/current migration target) |
 | Rate limiting | Upstash Redis / Vercel KV |
 | Crons | Vercel Crons (`vercel.json` `"crons"` array) |
 | UI | Tailwind CSS + shadcn/ui components in `components/ui/` |
@@ -258,52 +268,3 @@ See `.env.example` for all variables. Critical ones:
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob (legacy media) |
 | `CRON_SECRET` | Authenticates cron API routes (≥32 random chars) |
 | `ADMIN_CLERK_USER_IDS` | Comma-separated Clerk user IDs with admin access |
-| `MAIN_CREATOR_SLUG` | Required; identifies the single channel |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Rate limiting (required in production) |
-| `MEDIA_BUCKET_HOST` / `NEXT_PUBLIC_R2_PUBLIC_HOST` | Allowlisted media hosts |
-| `ALLOWED_THUMBNAIL_HOSTS` | Comma-separated allowed thumbnail image hosts |
-| `PATRON_MIN_TIP_AMOUNT` / `PATRON_MIN_TIP_CURRENCY` | Patron qualification threshold |
-| `HEALTHCHECK_TOKEN` | `/api/health` auth |
-| `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` | Signs unsubscribe tokens |
-
----
-
-## 9. Testing
-
-Tests live in `tests/unit/`. Run with:
-
-```bash
-npx vitest run
-```
-
-Key test areas:
-- `tests/unit/modules/patron/` — grant, revoke, recalculate, repository logic
-- `tests/unit/modules/users/patron-read-model.test.ts` — `buildPatronDiagnosticsReadModel`
-- `tests/unit/api/media-proxy-route.test.ts` — media proxy security
-- `tests/unit/media-source-safety.test.ts` — playback plan safety
-
-Typecheck:
-```bash
-npx tsc --noEmit
-```
-
----
-
-## 10. What NOT To Do
-
-- Do not write to `User.isPatron`, `User.patronSince`, or `User.patronSource` — these fields do not exist.
-- Do not read patron status from Clerk metadata as an access gate.
-- Do not expose `videoUrl` in any public-facing API response.
-- Do not mount a video player without a `READY` PlaybackPlan.
-- Do not manually set payment status to `SUCCEEDED` — always go through `fulfillPayment()`.
-- Do not check `process.env.ALLOW_LEGACY_PRIVATE_FALLBACK` directly; use the policy function.
-- Do not add new cron jobs without registering them in `vercel.json`.
-- Do not create new database migrations by editing existing migration files.
-- Do not add multi-channel, multi-creator, or SaaS-style features.
-- **Do not re-introduce default Clerk UI** (`<SignInButton>`, `<SignUpButton>`, `<UserButton>`, `openSignIn()`, the Clerk account portal, "Secured by Clerk"). We are actively replacing all Clerk UI with our own design-system components while keeping Clerk as the backend (headless hooks only). Use `useAuthModal()` to open the custom auth modal. See **`docs/tickets/active/CLERK-CUSTOM-AUTH-UI-001.md`** for scope, phases, and current status before touching anything auth-related.
-
----
-
-## 11. Documentation Maintenance
-
-When you make a change that materially affects how agents navigate this codebase — a new module, a renamed canonical pattern, a removed invariant, a new cron, a new critical env var, a new mandatory security rule — update this file in the same PR. Stale documentation misleads future agents and creates silent bugs.
