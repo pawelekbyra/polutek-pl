@@ -5,7 +5,7 @@ filmy (poziomy dostępu: PUBLIC / LOGGED_IN / PATRON), a jednorazowy napiwek
 Stripe powyżej progu nadaje **dożywotni status patrona** (`PatronGrant`).
 Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
 
-**Punkt wejścia dla agentów AI i deweloperów: [`CLAUDE.md`](../CLAUDE.md)**
+**Punkt wejścia dla agentów i deweloperów: [`CLAUDE.md`](../CLAUDE.md)**
 (stack, mapa modułów, krytyczne inwarianty, czego nie robić).
 
 ## Stan obecny
@@ -13,6 +13,10 @@ Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
 - Runtime jest po stabilizacji wokół `PatronGrant` jako jedynego źródła prawdy
   dla patron access; legacy pola `User.isPatron`, `User.patronSince` i
   `User.patronSource` zostały usunięte ze schematu.
+- Publiczny frontend jest na Next.js 15, używa custom/headless Clerk auth UI,
+  progressive app shell, in-memory preloadu (`AppPreloadProvider`) i paper/ink
+  visual system. Nie ma już blokującego splash/ENTER gate ani fullscreen iris
+  transition przy zmianie filmu.
 - Production launch nie jest certyfikowany samą dokumentacją ani zielonym CI;
   wymaga owner/legal/operator evidence, manualnego smoke testu i finalnej
   decyzji właściciela.
@@ -49,9 +53,11 @@ protokoły ról). Historia jest w git — nie odtwarzaj tych struktur.
 Zasady:
 
 - Dokumentacja opisuje **stan obecny**, nie przebieg prac. Raporty z sesji
-  AI nie trafiają do repo; trwałe wnioski trafiają do CLAUDE.md,
+  agentów nie trafiają do repo; trwałe wnioski trafiają do CLAUDE.md,
   KNOWN_LIMITATIONS.md albo audytu.
 - Nowe zadanie = jeden plik w `tickets/ready/`; po wdrożeniu ticket się
   **usuwa** (commit message i PR są zapisem historii).
+- GitHub issue, które nie jest już aktualne po zmianach w kodzie, należy
+  zaktualizować albo zamknąć zamiast trzymać jako pseudo-backlog.
 - Audyty starsze niż bieżący kwartał można usuwać, gdy ich wnioski są
   wchłonięte przez dokumenty żywe.
