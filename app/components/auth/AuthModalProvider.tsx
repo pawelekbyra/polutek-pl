@@ -37,7 +37,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
 
 /**
  * Opens our own POLUTEK-styled auth modal (Clerk headless underneath). Use this everywhere
- * instead of Clerk's `openSignIn()` / `<SignInButton>`. See
+ * instead of Clerk's built-in sign-in modal/button. See
  * docs/tickets/active/CLERK-CUSTOM-AUTH-UI-001.md.
  */
 export function useAuthModal(): AuthModalContextValue {

@@ -44,20 +44,27 @@ Provider stays `app/components/ClerkLocalizationProvider.tsx` (`<ClerkProvider>`
 - Wired into `Providers`; replaced call sites: Navbar, DonationBox,
   SubscribeButton, Hero, AccessLockOverlay, CommentComposer.
 
-### Phase 2 — Custom user menu + account panel — **TODO**
-- Replace `<UserButton>` in `app/components/Navbar.tsx` with our own avatar
-  button + dropdown (patron ring styling preserved) and an "account" modal.
-- Account panel sections (all via headless `useUser` / `user.update`, `useClerk`):
-  profile (name, username), email address change + verification, connected
-  accounts (Google) management, security (password change), sign out, delete
-  account. Admin "Zarządzaj kanałem" link stays for admins.
+### Phase 2 — Custom user menu + account panel — **DONE**
+- `app/components/auth/UserMenu.tsx` replaces `<UserButton>` in
+  `app/components/Navbar.tsx`: avatar trigger (patron ring preserved) + our own
+  dropdown ("Moje konto", admin "Zarządzaj kanałem", "Wyloguj").
+- `app/components/auth/AccountModal.tsx` — account panel (headless `useUser` /
+  `user.*`): profile (name, username), email management (add + email-code
+  verification, set primary, remove), connected accounts (Google connect via
+  `createExternalAccount` / disconnect), security (password change), delete
+  account (typed confirmation), sign out. Admin channel link kept.
 
-### Phase 3 — Cleanup & guardrails — **TODO**
-- Remove any remaining default Clerk UI imports across the app.
-- Add a lightweight test that greps `app/` for forbidden Clerk UI symbols
-  (`SignInButton`, `UserButton`, `openSignIn`, `SignUpButton`) so regressions
-  are caught.
-- Confirm no "Secured by Clerk" / Clerk branding renders anywhere.
+### Phase 3 — Cleanup & guardrails — **DONE**
+- No default Clerk UI imports remain in `app/` (headless hooks only).
+- `tests/unit/clerk-ui-guard.test.ts` fails if any default Clerk UI symbol
+  (`<SignInButton>`, `<UserButton>`, `openSignIn()`, `<SignUp>`, …) or
+  "Secured by Clerk" is reintroduced under `app/`.
+
+### Remaining polish (optional, not blocking)
+- Avatar upload (`user.setProfileImage`) is not yet in the account panel.
+- Google One Tap prompt is not wired (separate from the "Continue with Google"
+  button).
+- Live smoke test of every flow against a real Clerk instance is still advised.
 
 ## Invariants that must survive
 
