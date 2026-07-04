@@ -60,7 +60,7 @@ const Navbar = () => {
   return (
     <div
       className="sticky top-0 z-[1000] w-full flex flex-col"
-      style={{ background: "rgba(248,243,231,.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      style={{ background: "var(--clone-nav-bg, rgba(248,243,231,.95))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
     >
       <div className="flex items-center px-4 lg:px-6 h-[44px] min-h-[44px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
