@@ -45,3 +45,11 @@ The domain model should not need provider-specific tables for each playback vend
 ## Later phases
 
 Later phases should implement provider job execution, original upload completion refactoring, admin UI, webhook refactoring, playback route activation, reconciler/orchestrator logic and cron scheduling. Those concerns are intentionally out of scope for this foundation layer.
+
+## Executable import pipeline foundation
+
+Upload completion now creates or replaces an active `VideoDistributionPlan` from either the new `strategy` body or legacy `mirrorPlan` body. Automatic file targets enqueue `VideoProviderJob` rows and start each job synchronously enough to persist clear state before the API returns.
+
+Provider adapters are selected through `PlaybackProviderRegistry`. If an adapter is missing or a provider is not configured, the job and target are marked `FAILED` with a clear error instead of creating a fake successful asset. Signed R2 source URLs are generated per attempt and are not returned in admin DTOs or stored in job metadata/errors.
+
+Current executable adapters cover Cloudflare Stream and Mux only. Bunny.net/Bunny Stream remains a documented future extension path: add enum value, capability metadata, adapter, then opt into strategy/UI when ready.

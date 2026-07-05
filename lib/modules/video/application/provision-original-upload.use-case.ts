@@ -19,6 +19,8 @@ export interface OriginalUploadProvisionDto {
   originalId: string;
   objectKey: string;
   bucket: string;
+  version: number;
+  expiresAt: string;
 }
 
 type Failure = VideoNotFoundError | AppError;
@@ -64,10 +66,11 @@ export async function provisionOriginalUpload(
   });
 
   const r2 = new R2OriginalStorageClient();
+  const uploadExpiresInSeconds = 7200;
   const { uploadUrl } = await r2.createPresignedUploadUrl({
     objectKey,
     contentType: input.contentType,
-    expiresInSeconds: 7200,
+    expiresInSeconds: uploadExpiresInSeconds,
   });
 
   await recordAuditEvent(ctx, {
@@ -82,5 +85,7 @@ export async function provisionOriginalUpload(
     originalId: original.id,
     objectKey,
     bucket,
+    version: original.version,
+    expiresAt: new Date(Date.now() + uploadExpiresInSeconds * 1000).toISOString(),
   });
 }

@@ -48,7 +48,9 @@ const AUTOMATIC_FILE_PROVIDERS = new Set<string>([
 ]);
 
 function toStorageProvider(provider: AutomaticFilePlaybackProvider): StorageProvider {
-  return provider === "MUX" ? StorageProvider.MUX : StorageProvider.CLOUDFLARE_STREAM;
+  if (provider === "MUX") return StorageProvider.MUX;
+  if (provider === "CLOUDFLARE_STREAM") return StorageProvider.CLOUDFLARE_STREAM;
+  return provider as StorageProvider;
 }
 
 function toAutomaticFilePlaybackProvider(value: string | null | undefined): AutomaticFilePlaybackProvider | null {

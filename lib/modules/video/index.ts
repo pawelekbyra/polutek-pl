@@ -42,3 +42,10 @@ export type { CreateVideoInput, UpdateVideoInput } from './infrastructure/video.
 export * from './domain/video-asset-selection';
 export * from './domain/video-asset.constants';
 export * from './infrastructure/mux.client';
+export * from './application/original-source-url.service';
+export * from './application/video-distribution-plan.service';
+export * from './application/video-provider-job.service';
+export * from './infrastructure/playback-provider-adapter';
+export * from './infrastructure/playback-provider-registry';
+export * from './infrastructure/cloudflare-stream.provider';
+export * from './infrastructure/mux.provider';
