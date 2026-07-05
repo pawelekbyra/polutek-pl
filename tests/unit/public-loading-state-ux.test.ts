@@ -21,54 +21,33 @@ describe("public loading/access state UX contracts", () => {
     expect(player).not.toContain("<PlayerLoadingState");
   });
 
-  it("keeps the public player controls clean, accessible, and compact", () => {
+  it("uses the Vidstack default layout instead of custom public player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(player).toContain("function PlayerCaptionButton");
-    expect(player).toContain("function PolutekVideoControls({ hasTextTracks }");
-    expect(player).toContain("<PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />");
-    expect(player).not.toContain("Settings");
-    expect(player).toContain("const playerIconClass = \"h-[1.25rem] w-[1.25rem]\";");
-    expect(player).not.toContain("const doodleIconClass");
-    expect(player).not.toContain("drop-shadow-[1.5px_1.5px_0_rgba(14,165,233,0.45)]");
-    expect(player).not.toContain("bg-gradient-to-r from-sky-400 via-blue-500 to-amber-300");
-    expect(player).not.toContain("rounded-full border border-white/15 bg-black/35");
-    expect(player).toContain("inline-flex min-w-[5.75rem] shrink-0 items-center gap-1 whitespace-nowrap");
-    expect(player).toContain("text-[12px] font-semibold");
-    expect(player).toContain("sm:min-w-[8.5rem] sm:text-[15px]");
-    // Progress bar now uses Vidstack's built-in TimeSlider, which handles seeking correctly —
-    // including seeking after the video has ended — instead of the hand-rolled scrubber.
-    expect(player).toContain("<TimeSlider.Root");
-    expect(player).toContain("<TimeSlider.Track");
-    expect(player).toContain("<TimeSlider.TrackFill");
-    expect(player).toContain("<TimeSlider.Thumb");
-    expect(player).not.toContain("function PlayerTimeScrubber");
-    expect(player).not.toContain("optimisticSeekTime");
-    expect(player).not.toContain("pendingSeekTime");
-    // We render custom slider chrome without Vidstack's stylesheet, so fill width and thumb
-    // position MUST bind Vidstack's --slider-fill var or the thumb never moves.
-    expect(player).toContain('width: "var(--slider-fill)"');
-    expect(player).toContain('left: "var(--slider-fill)"');
-    expect(player).toContain("PROGRESS_PLAYED_COLOR");
-    expect(player).not.toContain("remote.seeking(clampedTime");
-    expect(player).toContain("event.stopPropagation()");
-    expect(player).toContain("bg-[#2563eb]");
-    expect(player).toContain("group-hover/slider:h-[6px]");
-    expect(player).not.toContain("group-data-[active]/slider:h-2.5");
-    expect(player).not.toContain("before:-inset-3");
-    expect(player).not.toContain("hidden h-10 w-24 shrink-0 items-center md:flex");
-    // Compact, YouTube-sized control buttons in a tight row under the bar.
-    expect(player).toContain("grid h-9 w-9 shrink-0 place-items-center");
-    expect(player).toContain("sm:h-10 sm:w-10");
-    expect(player).toContain('aria-label={paused ? "Odtwórz" : "Pauza"}');
-    expect(player).toContain('aria-label="Wycisz / włącz dźwięk"');
-    expect(player).toContain('aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}');
-    expect(player).toContain('aria-label="Pełny ekran"');
+    expect(player).toContain("DefaultVideoLayout");
+    expect(player).toContain("defaultLayoutIcons");
+
+    for (const forbidden of [
+      "TimeSlider",
+      "VolumeSlider",
+      "Controls.Root",
+      "CaptionButton",
+      "MuteButton",
+      "FullscreenButton",
+      "useMediaRemote",
+      "useMediaState",
+    ]) {
+      expect(player).not.toContain(forbidden);
+    }
+
+    expect(player).toContain("<MediaProvider>");
+    expect(player).toContain('<Poster');
+    expect(player).toContain('className="vds-poster"');
+    expect(player).toContain('<DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />');
 
     const videoTypes = read("app/types/video.ts");
     expect(player).toContain("type VideoTextTrackDTO");
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
-    expect(player).toContain("<Captions className=");
   });
 
   it("renders channel grid thumbnails from safe summary data without mounting PremiumWrapper or VideoPlayer", () => {

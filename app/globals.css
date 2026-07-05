@@ -5,6 +5,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .polutek-vidstack-player {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    color: #fff;
+    --video-brand: #2563eb;
+    --video-focus-ring-color: #2563eb;
+  }
+
+  .polutek-vidstack-player .vds-poster {
+    object-fit: cover;
+  }
+}
+
 @layer base {
   :root {
     /* ===== Akcent (niebieski — jedyny kolor akcentowy) ===== */
