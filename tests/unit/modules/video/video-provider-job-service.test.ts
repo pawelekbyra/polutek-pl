@@ -40,7 +40,7 @@ function registry(configured = true, createImpl?: any) {
 describe('VideoProviderJobService', () => {
   it('marks job and target failed without fake asset when provider is not configured', async () => {
     const { ctx, state } = makeCtx();
-    await new VideoProviderJobService(registry(false), {} as any).startQueuedJob({ jobId: 'job-1' }, ctx);
+    await new VideoProviderJobService(registry(false), {} as any, { reconcileVideoDistribution: vi.fn() } as any).startQueuedJob({ jobId: 'job-1' }, ctx);
     expect(state.assetCreates).toEqual([]);
     expect(state.jobUpdates.at(-1)).toMatchObject({ status: 'FAILED', lastError: 'MUX not configured' });
     expect(state.targetUpdates.at(-1)).toMatchObject({ status: 'FAILED', lastError: 'MUX not configured' });
@@ -49,7 +49,7 @@ describe('VideoProviderJobService', () => {
   it('starts an import job and creates a linked VideoAsset without storing signed URL', async () => {
     const { ctx, state } = makeCtx();
     const sourceUrls = { createProviderImportUrl: vi.fn(async () => ({ url: 'https://r2.example/video.mp4?X-Amz-Signature=secret', expiresAt: new Date(), objectKey: 'originals/video.mp4' })) };
-    await new VideoProviderJobService(registry(true), sourceUrls as any).startQueuedJob({ jobId: 'job-1' }, ctx);
+    await new VideoProviderJobService(registry(true), sourceUrls as any, { reconcileVideoDistribution: vi.fn() } as any).startQueuedJob({ jobId: 'job-1' }, ctx);
     expect(state.assetCreates[0]).toMatchObject({ distributionTargetId: 'target-1', provider: StorageProvider.MUX, processingState: 'PENDING' });
     expect(JSON.stringify(state.jobUpdates)).not.toContain('X-Amz-Signature=secret');
   });
@@ -58,13 +58,13 @@ describe('VideoProviderJobService', () => {
     const { ctx, state } = makeCtx();
     const sourceUrls = { createProviderImportUrl: vi.fn(async () => ({ url: 'https://r2.example/video.mp4?X-Amz-Signature=secret', expiresAt: new Date(), objectKey: 'originals/video.mp4' })) };
     const failingCreate = vi.fn(async () => { throw new Error('failed https://r2.example/video.mp4?X-Amz-Signature=secret'); });
-    await new VideoProviderJobService(registry(true, failingCreate), sourceUrls as any).startQueuedJob({ jobId: 'job-1' }, ctx);
+    await new VideoProviderJobService(registry(true, failingCreate), sourceUrls as any, { reconcileVideoDistribution: vi.fn() } as any).startQueuedJob({ jobId: 'job-1' }, ctx);
     expect(state.jobUpdates.at(-1).lastError).toContain('X-Amz-Signature=[REDACTED]');
     expect(state.jobUpdates.at(-1).lastError).not.toContain('secret');
   });
 
   it('respects max attempts unless force', async () => {
     const { ctx } = makeCtx({ job: { status: VideoProviderJobStatus.FAILED, attemptCount: 3, maxAttempts: 3 } });
-    await expect(new VideoProviderJobService(registry(true), {} as any).retryJob({ jobId: 'job-1' }, ctx)).rejects.toThrow(/max attempts/);
+    await expect(new VideoProviderJobService(registry(true), {} as any, { reconcileVideoDistribution: vi.fn() } as any).retryJob({ jobId: 'job-1' }, ctx)).rejects.toThrow(/max attempts/);
   });
 });

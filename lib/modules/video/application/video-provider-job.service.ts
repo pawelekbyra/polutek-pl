@@ -4,6 +4,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { isAutomaticFilePlaybackProvider } from "../domain/video-provider-capabilities";
 import { OriginalSourceUrlService, redactSignedUrl } from "./original-source-url.service";
 import { createDefaultPlaybackProviderRegistry, PlaybackProviderRegistry } from "../infrastructure/playback-provider-registry";
+import { VideoDistributionOrchestratorService } from "./video-distribution-orchestrator.service";
 
 const PROCESSING_JOB_STATES = new Set<VideoProviderJobStatus>([
   VideoProviderJobStatus.QUEUED,
@@ -30,6 +31,7 @@ export class VideoProviderJobService {
   constructor(
     private readonly registry: PlaybackProviderRegistry = createDefaultPlaybackProviderRegistry(),
     private readonly sourceUrls = new OriginalSourceUrlService(),
+    private readonly orchestrator = new VideoDistributionOrchestratorService(),
   ) {}
 
   async enqueueImportJobsForPlan(input: { planId: string }, ctx: AppContext): Promise<VideoProviderJob[]> {
@@ -78,9 +80,18 @@ export class VideoProviderJobService {
       return;
     }
 
-    const adapter = this.registry.get(job.provider);
+    let adapter;
+    try {
+      adapter = this.registry.get(job.provider);
+    } catch (error) {
+      const safeMessage = redactSignedUrl(error instanceof Error ? error.message : String(error));
+      await this.failJob(ctx, job.id, job.target.id, safeMessage);
+      await this.reconcile(job.videoId, job.planId, ctx);
+      return;
+    }
     if (!adapter.isConfigured()) {
       await this.failJob(ctx, job.id, job.target.id, `${job.provider} not configured`);
+      await this.reconcile(job.videoId, job.planId, ctx);
       return;
     }
 
@@ -155,12 +166,14 @@ export class VideoProviderJobService {
         where: { id: job.target.id },
         data: { status: jobState === VideoProviderJobStatus.READY ? "READY" : "WAITING_PROVIDER", lastError: null, lastStatusAt: new Date() },
       });
+      await this.reconcile(job.videoId, job.planId, ctx);
     } catch (error) {
       const safeMessage = redactSignedUrl(error instanceof Error ? error.message : String(error));
       if (assetId) {
         await ctx.prisma.videoAsset.update({ where: { id: assetId }, data: { processingState: VideoAssetProcessingState.FAILED, failureReason: safeMessage, processingEndedAt: new Date() } });
       }
       await this.failJob(ctx, job.id, job.target.id, safeMessage);
+      await this.reconcile(job.videoId, job.planId, ctx);
     }
   }
 
@@ -181,6 +194,10 @@ export class VideoProviderJobService {
       await ctx.prisma.videoDistributionTarget.update({ where: { id: job.targetId }, data: { status: "QUEUED", lastError: null, lastStatusAt: new Date() } });
     }
     await this.startQueuedJob({ jobId: job.id }, ctx);
+  }
+
+  private async reconcile(videoId: string, planId: string | null, ctx: AppContext) {
+    await this.orchestrator.reconcileVideoDistribution({ videoId, planId: planId ?? undefined, reason: "JOB_UPDATED" }, ctx);
   }
 
   private async failJob(ctx: AppContext, jobId: string, targetId: string | null, message: string) {

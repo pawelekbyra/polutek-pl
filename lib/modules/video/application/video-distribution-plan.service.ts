@@ -71,7 +71,7 @@ export class VideoDistributionPlanService {
           originalId: input.originalId ?? null,
           mode: normalized.mode,
           selectionPolicy: normalized.selectionPolicy,
-          autopublishPolicy: input.publishAfterReady ? normalized.autopublishPolicy : normalized.autopublishPolicy,
+          autopublishPolicy: input.publishAfterReady === false ? "NEVER" : normalized.autopublishPolicy,
           preferredProvider: normalized.preferredProvider,
           isActive: true,
           createdByAdminId: input.createdByAdminId,

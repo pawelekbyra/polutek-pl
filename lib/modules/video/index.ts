@@ -49,3 +49,5 @@ export * from './infrastructure/playback-provider-adapter';
 export * from './infrastructure/playback-provider-registry';
 export * from './infrastructure/cloudflare-stream.provider';
 export * from './infrastructure/mux.provider';
+export * from './application/video-playback-route.service';
+export * from './application/video-distribution-orchestrator.service';
