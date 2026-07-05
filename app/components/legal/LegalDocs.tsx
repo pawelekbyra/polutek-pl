@@ -94,8 +94,10 @@ export function RegulaminContent() {
             dodatkowych dopiero rośnie i nie gwarantujemy częstotliwości publikacji nowych materiałów.
           </p>
           <p>
-            Osoby, które mają już dostęp, mogą dodatkowo wspierać kanał dowolną kwotą. Takie wpłaty są dobrowolne
-            i nie wiążą się z żadnymi dodatkowymi świadczeniami.
+            Osoby, które mają już aktywny dostęp do Strefy Fenkju, mogą dodatkowo wspierać kanał dowolną kwotą.
+            Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi zapłaty za nowe treści cyfrowe,
+            dodatkowy dostęp ani inne świadczenie wzajemne i nie daje żadnych dodatkowych korzyści poza tymi,
+            które użytkownik już posiada.
           </p>
         </LegalSection>
 
