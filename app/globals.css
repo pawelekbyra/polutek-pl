@@ -14,10 +14,37 @@
     color: #fff;
     --video-brand: #2563eb;
     --video-focus-ring-color: #2563eb;
+    --media-slider-height: 24px;
+    --media-slider-track-height: 2px;
+    --media-slider-thumb-size: 10px;
+    --media-controls-padding: 0px;
+    --media-captions-padding: 0.75%;
+    --media-cue-font-size: clamp(14px, 3.8vw, 22px);
+    --video-captions-offset: 56px;
+    --video-sm-captions-offset: 40px;
   }
 
   .polutek-vidstack-player .vds-poster {
     object-fit: cover;
+  }
+
+  .polutek-vidstack-player .vds-time-slider {
+    --media-slider-height: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .polutek-vidstack-player {
+      --media-slider-height: 20px;
+      --media-slider-track-height: 2px;
+      --media-slider-thumb-size: 9px;
+      --media-captions-padding: 0.5%;
+      --media-cue-font-size: clamp(13px, 4vw, 18px);
+      --video-sm-captions-offset: 34px;
+    }
+
+    .polutek-vidstack-player .vds-time-slider {
+      --media-slider-height: 20px;
+    }
   }
 }
 
