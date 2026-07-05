@@ -14,7 +14,7 @@ Playback providers are materialized through `VideoDistributionPlan`, `VideoDistr
 
 Cloudflare Stream and Mux are the first implemented automatic playback providers, but the architecture is intentionally open to more providers such as Bunny Stream later. Provider decisions should be based on capability metadata rather than branches that assume only Cloudflare and Mux exist.
 
-Webhook events update provider state, but distribution policy should be evaluated by orchestrator/reconciler in later phases. Phase 1/2 foundation code is read-only for media state and does not execute jobs, activate routes, or call providers.
+Webhook events update provider state, but distribution policy should be evaluated by orchestrator/reconciler in later phases. The current foundation can enqueue/start provider import jobs and activate playback routes through provider-neutral policy. Webhook ingestion and provider status reconciliation update jobs/assets/targets and then invoke the orchestrator; admin React UI remains a later milestone.
 
 Public playback must never resolve provider sources before access is allowed. Patron-only video requires private/signed provider playback and blocks YouTube/Vimeo because embed-only providers cannot enforce Polutek patron access.
 
@@ -44,7 +44,7 @@ The domain model should not need provider-specific tables for each playback vend
 
 ## Later phases
 
-Later phases should implement provider job execution, original upload completion refactoring, admin UI, webhook refactoring, playback route activation, reconciler/orchestrator logic and cron scheduling. Those concerns are intentionally out of scope for this foundation layer.
+Later phases should implement the admin React UI and deeper operational tooling. Provider job execution, webhook ingestion, playback route activation, reconciliation and admin/cron control endpoints now exist as backend foundations.
 
 ## Executable import pipeline foundation
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleMuxWebhook } from "@/lib/modules/video";
-import type { MuxWebhookPayload } from "@/lib/modules/video";
+import { normalizeMuxWebhook } from "@/lib/modules/video/infrastructure/provider-webhook-mappers";
+import { VideoProviderWebhookService } from "@/lib/modules/video/application/video-provider-webhook.service";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { createScopedLogger } from "@/lib/logger";
 import { createHmac, timingSafeEqual } from "crypto";
@@ -50,33 +50,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let payload: MuxWebhookPayload;
+  let payload: unknown;
   try {
-    payload = JSON.parse(rawBody) as MuxWebhookPayload;
+    payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const HANDLED_EVENTS = new Set([
-    "video.asset.ready",
-    "video.asset.errored",
-    "video.upload.asset_created",
-  ]);
-
-  if (!HANDLED_EVENTS.has(payload.type)) {
-    return NextResponse.json({ ok: true, status: "ignored" });
-  }
-
   try {
     const ctx = createAppContext({ actor: { type: "system", reason: "Mux Webhook" } });
-    const result = await handleMuxWebhook(payload, ctx);
-
-    if (!result.ok) {
-      logger.error("Mux webhook handling failed", { error: result.error });
-      return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true, ...result.data });
+    const normalized = normalizeMuxWebhook(payload);
+    const result = await new VideoProviderWebhookService().ingestProviderWebhook({ ...normalized, payload: normalized.raw }, ctx);
+    return NextResponse.json({ ok: true, ...result });
   } catch (error: unknown) {
     logger.error("Unexpected error in Mux webhook", { error });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

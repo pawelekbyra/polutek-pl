@@ -40,4 +40,16 @@ describe('VideoDistributionOrchestratorService', () => {
     await new VideoDistributionOrchestratorService(routeService).reconcileVideoDistribution({ videoId: 'video-1', reason: 'JOB_UPDATED' }, ctxWithPlan(plan, { assetId: 'cf-asset', activatedBy: 'ADMIN', asset: readyAsset('cf-asset', StorageProvider.CLOUDFLARE_STREAM) }));
     expect(routeService.activateRoute).not.toHaveBeenCalled();
   });
+
+  it('uses deterministic FIRST_READY ordering by asset and target timestamps', async () => {
+    const routeService = { activateRoute: vi.fn(async (input) => ({ id: 'route-1', assetId: input.assetId, provider: StorageProvider.MUX })) } as any;
+    const early = new Date('2026-07-05T00:00:01.000Z');
+    const late = new Date('2026-07-05T00:00:10.000Z');
+    const cfTarget = { ...target(StorageProvider.CLOUDFLARE_STREAM, [readyAsset('cf-asset', StorageProvider.CLOUDFLARE_STREAM, late)]), updatedAt: early };
+    const muxTarget = { ...target(StorageProvider.MUX, [readyAsset('mux-asset', StorageProvider.MUX, early)]), updatedAt: late };
+    const plan = { id: 'plan-1', selectionPolicy: 'FIRST_READY', preferredProvider: null, autopublishPolicy: 'NEVER', targets: [cfTarget, muxTarget] };
+    await new VideoDistributionOrchestratorService(routeService).reconcileVideoDistribution({ videoId: 'video-1', reason: 'JOB_UPDATED' }, ctxWithPlan(plan));
+    expect(routeService.activateRoute).toHaveBeenCalledWith(expect.objectContaining({ assetId: 'mux-asset' }), expect.anything());
+  });
+
 });

@@ -2,18 +2,19 @@ import { createHmac } from 'node:crypto';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/webhooks/cloudflare-stream/route';
-import { handleCloudflareStreamWebhook } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { ok } from '@/lib/modules/shared/result';
 
 const loggerMocks = vi.hoisted(() => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
 }));
+const webhookServiceMocks = vi.hoisted(() => ({
+  ingestProviderWebhook: vi.fn(),
+}));
 
-vi.mock('@/lib/modules/video', () => ({
-  handleCloudflareStreamWebhook: vi.fn(),
+vi.mock('@/lib/modules/video/application/video-provider-webhook.service', () => ({
+  VideoProviderWebhookService: vi.fn(function () { return webhookServiceMocks; }),
 }));
 
 vi.mock('@/lib/modules/shared/app-context', () => ({
@@ -64,7 +65,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     vi.setSystemTime(new Date(NOW_SECONDS * 1000));
     vi.stubEnv('CLOUDFLARE_WEBHOOK_SECRET', SECRET);
     vi.stubEnv('NODE_ENV', 'test');
-    vi.mocked(handleCloudflareStreamWebhook).mockResolvedValue(ok({ assetId: 'asset-1', status: 'READY' }));
+    webhookServiceMocks.ingestProviderWebhook.mockResolvedValue({ eventId: 'event-1', deduped: false, matchedAssetId: 'asset-1', matchedJobId: 'job-1', videoId: 'video-1', planId: 'plan-1', action: 'PROCESSED' });
   });
 
   afterEach(() => {
@@ -82,7 +83,7 @@ describe('Cloudflare Stream Webhook Route', () => {
 
     expect(response.status).toBe(500);
     expect(await responseText(response)).not.toContain('CLOUDFLARE_WEBHOOK_SECRET');
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
     expect(createAppContext).not.toHaveBeenCalled();
   });
 
@@ -90,7 +91,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     const response = await POST(request(VALID_BODY));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
     expect(createAppContext).not.toHaveBeenCalled();
   });
 
@@ -100,7 +101,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('malformed signature is rejected', async () => {
@@ -109,7 +110,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('missing time is rejected', async () => {
@@ -168,7 +169,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('payload altered after signing is rejected', async () => {
@@ -180,7 +181,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('whitespace and newline changes affect verification', async () => {
@@ -191,7 +192,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(401);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('exact valid raw body succeeds', async () => {
@@ -202,7 +203,7 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ assetId: 'asset-1', status: 'READY' });
+    expect(await response.json()).toEqual({ ok: true, eventId: 'event-1', deduped: false, matchedAssetId: 'asset-1', matchedJobId: 'job-1', videoId: 'video-1', planId: 'plan-1', action: 'PROCESSED' });
   });
 
   it('valid signed payload calls the use case exactly once after creating system context', async () => {
@@ -212,9 +213,9 @@ describe('Cloudflare Stream Webhook Route', () => {
 
     expect(response.status).toBe(200);
     expect(createAppContext).toHaveBeenCalledTimes(1);
-    expect(handleCloudflareStreamWebhook).toHaveBeenCalledTimes(1);
-    expect(handleCloudflareStreamWebhook).toHaveBeenCalledWith(
-      { uid: 'cf-uid-123', status: { state: 'ready' } },
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenCalledTimes(1);
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ providerAssetId: 'cf-uid-123', state: 'READY', eventType: 'ready' }),
       expect.any(Object),
     );
   });
@@ -225,7 +226,7 @@ describe('Cloudflare Stream Webhook Route', () => {
       'Webhook-Signature': `time=${NOW_SECONDS},sig1=${'b'.repeat(64)}`,
     }));
 
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
   it('authenticated invalid JSON returns 400', async () => {
@@ -235,20 +236,20 @@ describe('Cloudflare Stream Webhook Route', () => {
     }));
 
     expect(response.status).toBe(400);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(webhookServiceMocks.ingestProviderWebhook).not.toHaveBeenCalled();
   });
 
-  it('authenticated payload missing uid returns 400', async () => {
+  it('authenticated payload missing uid is stored as ignored provider event', async () => {
     const rawBody = '{"status":{"state":"ready"}}';
     const response = await POST(request(rawBody, {
       'Webhook-Signature': webhookSignature(rawBody),
     }));
 
-    expect(response.status).toBe(400);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenCalledWith(expect.objectContaining({ providerAssetId: null, state: 'READY' }), expect.any(Object));
   });
 
-  it('authenticated payload missing valid status returns 400', async () => {
+  it('authenticated payload missing valid status is accepted for provider-neutral ingestion', async () => {
     const missingStatus = '{"uid":"cf-uid-123"}';
     const unsupportedStatus = '{"uid":"cf-uid-123","status":{"state":"unsupported"}}';
 
@@ -259,9 +260,9 @@ describe('Cloudflare Stream Webhook Route', () => {
       'Webhook-Signature': webhookSignature(unsupportedStatus),
     }));
 
-    expect(missingResponse.status).toBe(400);
-    expect(unsupportedResponse.status).toBe(400);
-    expect(handleCloudflareStreamWebhook).not.toHaveBeenCalled();
+    expect(missingResponse.status).toBe(200);
+    expect(unsupportedResponse.status).toBe(200);
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenCalledTimes(2);
   });
 
   it('responses do not expose secret, signature, HMAC, or raw body', async () => {
@@ -309,8 +310,8 @@ describe('Cloudflare Stream Webhook Route', () => {
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
-    expect(handleCloudflareStreamWebhook).toHaveBeenCalledTimes(2);
-    expect(handleCloudflareStreamWebhook).toHaveBeenNthCalledWith(1, { uid: 'cf-uid-123', status: { state: 'ready' } }, expect.any(Object));
-    expect(handleCloudflareStreamWebhook).toHaveBeenNthCalledWith(2, { uid: 'cf-uid-123', status: { state: 'ready' } }, expect.any(Object));
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenCalledTimes(2);
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenNthCalledWith(1, expect.objectContaining({ providerAssetId: 'cf-uid-123', state: 'READY' }), expect.any(Object));
+    expect(webhookServiceMocks.ingestProviderWebhook).toHaveBeenNthCalledWith(2, expect.objectContaining({ providerAssetId: 'cf-uid-123', state: 'READY' }), expect.any(Object));
   });
 });

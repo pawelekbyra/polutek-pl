@@ -18,20 +18,23 @@ export type VideoDistributionDecision = {
 type ReconcileReason = "UPLOAD_COMPLETED" | "JOB_UPDATED" | "WEBHOOK" | "ADMIN_RETRY" | "CRON_RECONCILE" | "MANUAL";
 type ReadyTarget = { target: any; asset: VideoAsset };
 
+function assetReadyTime(asset: VideoAsset): number {
+  return (asset.processingEndedAt ?? asset.updatedAt).getTime();
+}
+
+function stableReadyCompare(a: ReadyTarget, b: ReadyTarget): number {
+  return assetReadyTime(a.asset) - assetReadyTime(b.asset)
+    || a.asset.updatedAt.getTime() - b.asset.updatedAt.getTime()
+    || a.target.updatedAt.getTime() - b.target.updatedAt.getTime()
+    || String(a.target.provider).localeCompare(String(b.target.provider))
+    || String(a.asset.id).localeCompare(String(b.asset.id));
+}
+
 function readyAssetForTarget(target: any): VideoAsset | null {
   return (target.providerAssets ?? [])
     .filter((asset: VideoAsset) => asset.processingState === "READY")
-    .sort((a: VideoAsset, b: VideoAsset) => {
-      const aTime = (a.processingEndedAt ?? a.updatedAt).getTime();
-      const bTime = (b.processingEndedAt ?? b.updatedAt).getTime();
-      return aTime - bTime || a.updatedAt.getTime() - b.updatedAt.getTime() || target.updatedAt.getTime() - target.updatedAt.getTime();
-    })[0] ?? null;
-}
-
-function sortFirstReady(a: ReadyTarget, b: ReadyTarget): number {
-  const aTime = (a.asset.processingEndedAt ?? a.asset.updatedAt).getTime();
-  const bTime = (b.asset.processingEndedAt ?? b.asset.updatedAt).getTime();
-  return aTime - bTime || a.asset.updatedAt.getTime() - b.asset.updatedAt.getTime() || a.target.updatedAt.getTime() - b.target.updatedAt.getTime();
+    .map((asset: VideoAsset) => ({ target, asset }))
+    .sort(stableReadyCompare)[0]?.asset ?? null;
 }
 
 export class VideoDistributionOrchestratorService {
@@ -82,18 +85,18 @@ export class VideoDistributionOrchestratorService {
     } else if (plan.selectionPolicy === "PREFER_SELECTED") {
       const preferredReady = plan.preferredProvider ? readyTargets.find((item) => item.target.provider === plan.preferredProvider) ?? null : null;
       if (preferredReady && !currentRouteIsAdmin && video.activePlaybackRoute?.assetId !== preferredReady.asset.id) selected = preferredReady;
-      else if (!currentRouteReady) selected = readyTargets.sort(sortFirstReady)[0] ?? null;
+      else if (!currentRouteReady) selected = readyTargets.sort(stableReadyCompare)[0] ?? null;
     } else if (plan.selectionPolicy === "LOWEST_COST") {
       const order = getProviderCostOrder();
       selected = readyTargets.sort((a, b) => {
         const ai = order.indexOf(a.target.provider as StorageProvider);
         const bi = order.indexOf(b.target.provider as StorageProvider);
-        return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi) || sortFirstReady(a, b);
+        return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi) || stableReadyCompare(a, b);
       })[0] ?? null;
       if (currentRouteReady && selected && video.activePlaybackRoute?.assetId === selected.asset.id) selected = null;
     } else {
       // BEST_HEALTH currently behaves like FIRST_READY. Future health scoring belongs here.
-      if (!currentRouteReady) selected = readyTargets.sort(sortFirstReady)[0] ?? null;
+      if (!currentRouteReady) selected = readyTargets.sort(stableReadyCompare)[0] ?? null;
     }
 
     let activeRouteChanged = false;

@@ -51,3 +51,7 @@ export * from './infrastructure/cloudflare-stream.provider';
 export * from './infrastructure/mux.provider';
 export * from './application/video-playback-route.service';
 export * from './application/video-distribution-orchestrator.service';
+export * from './application/video-provider-webhook.service';
+export * from './application/video-provider-reconciler.service';
+export * from './application/video-distribution-backfill.service';
+export * from './infrastructure/provider-webhook-mappers';
