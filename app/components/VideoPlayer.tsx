@@ -3,26 +3,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import {
-    CaptionButton,
-    Captions,
-    Controls,
-    FullscreenButton,
     MediaPlayer,
     MediaProvider,
-    MuteButton,
-    TimeSlider,
-    VolumeSlider,
-    useMediaRemote,
-    isTrackCaptionKind,
-    useMediaState,
+    Poster,
     type MediaPlayerInstance,
 } from '@vidstack/react';
+import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { NajsIcon, INK } from './najs/primitives';
-import { PlayIcon, PauseIcon, VolumeIcon, MuteIcon, CaptionsIcon, FullscreenIcon } from './VideoPlayerIcons';
+import { INK } from './najs/primitives';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { resolvePlaybackSource } from './playback-source';
@@ -35,12 +26,6 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-const playerIconClass = "h-[1.25rem] w-[1.25rem]";
-const centerPauseIconClass = "h-14 w-14 drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]";
-const sliderAccentClass = "bg-[#2563eb]";
-// Played portion of the progress bar — site blue accent, matching the brand.
-const PROGRESS_PLAYED_COLOR = "#2563eb";
-
 function PolutekWatermark() {
     return (
         <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
@@ -52,186 +37,6 @@ function PolutekWatermark() {
                 <span className="relative text-[17px] font-bold text-[#171717]" style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>P</span>
             </div>
         </div>
-    );
-}
-
-function getPlayerEvent(event: React.SyntheticEvent | PointerEvent | KeyboardEvent) {
-    return 'nativeEvent' in event ? event.nativeEvent : event;
-}
-
-function useTogglePlayback() {
-    const remote = useMediaRemote();
-    const paused = useMediaState('paused');
-    const ended = useMediaState('ended');
-    const currentTime = useMediaState('currentTime');
-    const duration = useMediaState('duration');
-
-    return useCallback((event: React.SyntheticEvent | PointerEvent | KeyboardEvent) => {
-        const playerEvent = getPlayerEvent(event);
-
-        if (paused) {
-            const shouldResumeFromSeekedEndedState = ended
-                && Number.isFinite(currentTime)
-                && Number.isFinite(duration)
-                && duration > 0
-                && currentTime < duration - 0.25;
-
-            if (shouldResumeFromSeekedEndedState) {
-                remote.seek(currentTime, playerEvent);
-                requestAnimationFrame(() => remote.play(playerEvent));
-                return;
-            }
-
-            remote.play(playerEvent);
-            return;
-        }
-
-        remote.pause(playerEvent);
-    }, [currentTime, duration, ended, paused, remote]);
-}
-
-function PlayerPlayButton({ className }: { className: string }) {
-    const paused = useMediaState('paused');
-    const togglePlayback = useTogglePlayback();
-
-    return (
-        <button
-            type="button"
-            className={className}
-            aria-label={paused ? "Odtwórz" : "Pauza"}
-            onClick={(event) => {
-                event.stopPropagation();
-                togglePlayback(event);
-            }}
-        >
-            {paused ? <PlayIcon className={playerIconClass} /> : <PauseIcon className={playerIconClass} />}
-        </button>
-    );
-}
-
-function PlayerTapTarget() {
-    const paused = useMediaState('paused');
-    const togglePlayback = useTogglePlayback();
-
-    return (
-        <button
-            type="button"
-            className={cn(
-                "absolute inset-0 z-10 grid place-items-center text-white transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/85",
-                paused ? "opacity-100" : "opacity-0"
-            )}
-            aria-label={paused ? "Odtwórz film" : "Pauza"}
-            onClick={(event) => {
-                event.stopPropagation();
-                togglePlayback(event);
-            }}
-        >
-            {paused ? <PlayIcon className={centerPauseIconClass} /> : null}
-        </button>
-    );
-}
-
-function PlayerMuteIcon() {
-    const muted = useMediaState('muted');
-    const volume = useMediaState('volume');
-    const isMuted = muted || volume === 0;
-
-    return isMuted ? <MuteIcon className={playerIconClass} /> : <VolumeIcon className={playerIconClass} />;
-}
-
-function PlayerCaptionButton({ className, disabled = false }: { className: string; disabled?: boolean }) {
-    const textTrack = useMediaState('textTrack');
-    const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
-
-    return (
-        <CaptionButton
-            className={cn(className, captionsOn && "bg-[#1F7A88] text-white hover:bg-[#1F7A88]/90 active:bg-[#1F7A88]/85")}
-            aria-label={captionsOn ? "Wyłącz napisy" : "Włącz napisy"}
-            aria-pressed={captionsOn}
-            disabled={disabled}
-            title={disabled ? "Brak napisów dla tego filmu" : undefined}
-        >
-            <CaptionsIcon className={playerIconClass} />
-        </CaptionButton>
-    );
-}
-
-function formatPlayerTime(value: number | null | undefined) {
-    if (!Number.isFinite(value) || !value || value < 0) return '0:00';
-
-    const totalSeconds = Math.floor(value);
-    const seconds = totalSeconds % 60;
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const hours = Math.floor(totalSeconds / 3600);
-
-    if (hours > 0) {
-        return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
-function PlayerTimeReadout() {
-    const currentTime = useMediaState('currentTime');
-    const duration = useMediaState('duration');
-
-    return (
-        <span className="inline-flex min-w-[5.75rem] shrink-0 items-center gap-1 whitespace-nowrap text-left text-[12px] font-semibold leading-none tabular-nums text-white/90 sm:min-w-[8.5rem] sm:text-[15px]">
-            <span>{formatPlayerTime(currentTime)}</span><span className="text-white/60">/</span><span className="text-white/75">{formatPlayerTime(duration)}</span>
-        </span>
-    );
-}
-
-function PolutekVideoControls({ hasTextTracks }: { hasTextTracks: boolean }) {
-    const buttonClass = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:w-10";
-    const sliderTrackClass = "relative h-[4px] w-full rounded-full bg-white/30 ring-1 ring-black/30 transition-[height] duration-150 group-hover/slider:h-[6px] group-data-[dragging]/slider:h-[6px]";
-    // Always-visible grab handle (touch devices have no hover); grows while dragging.
-    const sliderThumbClass = "absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-[#171717]/75 bg-white shadow-[1px_1px_0_rgba(0,0,0,0.38)] transition-transform duration-150 will-change-[left] group-data-[dragging]/slider:scale-125";
-    // We ship our own slider chrome instead of Vidstack's stylesheet, so fill width and thumb
-    // position must be driven by Vidstack's --slider-fill / --slider-progress CSS variables —
-    // the exact contract its own default CSS uses. Without these the thumb never moves.
-    const fillStyle: React.CSSProperties = { width: "var(--slider-fill)" };
-    const thumbStyle: React.CSSProperties = { left: "var(--slider-fill)" };
-
-    return (
-        <Controls.Root className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2 pb-2 pt-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 data-[visible]:opacity-100 sm:px-3 sm:pb-3 sm:pt-7">
-            {/* Progress bar: thin brand-styled line pinned just above the controls row (YouTube layout).
-                Built on Vidstack's TimeSlider so seeking — including seeking after the video has ended —
-                behaves correctly out of the box. */}
-            <TimeSlider.Root className="group/slider relative mb-2 flex h-5 w-full cursor-pointer touch-none select-none items-center px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-                <TimeSlider.Track className={sliderTrackClass}>
-                    <TimeSlider.Progress className="absolute left-0 h-full rounded-full bg-white/40" style={{ width: "var(--slider-progress)" }} />
-                    <TimeSlider.TrackFill className="absolute left-0 h-full rounded-full bg-[#2563eb]" style={fillStyle} />
-                </TimeSlider.Track>
-                <TimeSlider.Thumb className={sliderThumbClass} style={thumbStyle} />
-            </TimeSlider.Root>
-
-            <Controls.Group className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-0.5 sm:gap-1.5">
-                    <PlayerPlayButton className={buttonClass} />
-
-                    <div className="group/vol flex shrink-0 items-center">
-                        <MuteButton className={buttonClass} aria-label="Wycisz / włącz dźwięk"><PlayerMuteIcon /></MuteButton>
-                        <VolumeSlider.Root
-                            className="group/slider invisible relative hidden h-10 w-0 shrink-0 cursor-pointer touch-none select-none items-center px-1.5 opacity-0 outline-none transition-[width,opacity] duration-200 ease-out group-hover/vol:visible group-hover/vol:w-20 group-hover/vol:opacity-100 group-focus-within/vol:visible group-focus-within/vol:w-20 group-focus-within/vol:opacity-100 md:flex"
-                            aria-label="Głośność"
-                        >
-                            <VolumeSlider.Track className={sliderTrackClass}>
-                                <VolumeSlider.TrackFill className={`pointer-events-none absolute left-0 h-full rounded-full ${sliderAccentClass}`} style={fillStyle} />
-                            </VolumeSlider.Track>
-                            <VolumeSlider.Thumb className={sliderThumbClass} style={thumbStyle} />
-                        </VolumeSlider.Root>
-                    </div>
-
-                    <PlayerTimeReadout />
-                </div>
-
-                <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
-                    <PlayerCaptionButton className={buttonClass} disabled={!hasTextTracks} />
-                    <FullscreenButton className={buttonClass} aria-label="Pełny ekran"><FullscreenIcon className={playerIconClass} /></FullscreenButton>
-                </div>
-            </Controls.Group>
-        </Controls.Root>
     );
 }
 
@@ -256,7 +61,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const videoSourceKind = source?.kind;
     const videoEmbedUrl = source?.embedUrl;
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
-    const hasTextTracks = textTracks.length > 0;
 
     const player = useRef<MediaPlayerInstance>(null);
     const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
@@ -400,13 +204,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                 <MediaPlayer
                     key={playerKey}
                     ref={player}
-                    className="h-full w-full bg-black text-white [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_iframe]:h-full [&_iframe]:w-full"
+                    className="polutek-vidstack-player h-full w-full"
                     title={playerConfig?.title || video.title || 'Video'}
                     src={src}
                     muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
                     autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
                     playsInline
-                    controls={false}
                     aspectRatio="16/9"
                     onCanPlay={() => {
                         // A video chosen after the viewer has already interacted with the page
@@ -472,6 +275,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     }}
                 >
                     <MediaProvider>
+                        <Poster
+                            className="vds-poster"
+                            src={posterUrl}
+                            alt={video.title || 'Video poster'}
+                        />
                         {textTracks.map((track) => (
                             <track
                                 key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
@@ -483,9 +291,10 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                             />
                         ))}
                     </MediaProvider>
-                    <PlayerTapTarget />
-                    <Captions className="pointer-events-none absolute inset-x-4 bottom-24 z-20 select-none text-center text-base font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9)] sm:bottom-28 sm:text-lg" />
-                    {(playerConfig ? playerConfig.controls : true) && <PolutekVideoControls hasTextTracks={hasTextTracks} />}
+                    <PolutekWatermark />
+                    {(playerConfig ? playerConfig.controls : true) && (
+                        <DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />
+                    )}
                 </MediaPlayer>
             )}
         </div>
