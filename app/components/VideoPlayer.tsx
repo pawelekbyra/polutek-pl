@@ -63,7 +63,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
 
     const player = useRef<MediaPlayerInstance>(null);
-    const posterUrl = playerConfig?.poster || video.thumbnailUrl || '/logo.png';
+    const posterUrl = playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -188,7 +188,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const src = resolvedSource.src;
 
     return (
-        <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl group">
+        <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"
