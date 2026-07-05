@@ -46,8 +46,8 @@ export function RegulaminContent() {
       <LegalSummary
         items={[
           'Oglądanie publicznych filmów jest darmowe i nie wymaga konta.',
-          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje dożywotni dostęp do Strefy Fenkju. Bez subskrypcji.',
-          'Dostęp dostajesz od razu, dlatego — za Twoją zgodą — nie przysługuje odstąpienie od umowy po jego uruchomieniu.',
+          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkju na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
+          'Dostęp dostajesz od razu, dlatego — za Twoją wyraźną zgodą — po jego pełnym uruchomieniu nie przysługuje odstąpienie od umowy.',
           <>Reklamacje: napisz na {OWNER.email}, odpowiadamy do 14 dni.</>,
         ]}
       />
@@ -61,15 +61,19 @@ export function RegulaminContent() {
           </p>
         </LegalSection>
 
-        <LegalSection nr="2" title="Co znajdziesz w serwisie">
+        <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
           <p>
             {APP_NAME} to autorski kanał wideo jednego twórcy. Publiczne filmy oglądasz za darmo i bez konta.
             Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
             Strefa Fenkju to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
           </p>
           <p>
-            Do korzystania z serwisu wystarczy urządzenie z aktualną przeglądarką internetową i dostęp do internetu,
-            a do założenia konta — adres e-mail. Logowanie obsługuje zewnętrzny dostawca Clerk.
+            Do korzystania z serwisu wystarczy urządzenie z aktualną przeglądarką internetową, włączoną obsługą
+            JavaScript i dostępem do internetu. Do założenia konta potrzebny jest adres e-mail. Logowanie obsługuje
+            zewnętrzny dostawca Clerk, a materiały wideo mogą być dostarczane z wykorzystaniem zewnętrznej
+            infrastruktury hostingowej i streamingowej. Nie gwarantujemy poprawnego działania serwisu na nieaktualnych
+            przeglądarkach, urządzeniach bez obsługi współczesnych standardów wideo ani przy blokowaniu skryptów,
+            logowania lub elementów niezbędnych do odtworzenia materiałów.
           </p>
         </LegalSection>
 
@@ -84,9 +88,10 @@ export function RegulaminContent() {
 
         <LegalSection nr="4" title="Wsparcie i dostęp do Strefy Fenkju">
           <p>
-            Jednorazowa wpłata w kwocie wskazanej w serwisie w momencie wpłaty daje Ci <strong>dożywotni dostęp
-            do Strefy Fenkju</strong> — wszystkich obecnych i przyszłych materiałów dodatkowych. To umowa o dostarczanie
-            treści cyfrowych: dostęp uruchamiamy niezwłocznie po zaksięgowaniu płatności, na koncie, z którego dokonano wpłaty.
+            Jednorazowa wpłata w kwocie wskazanej w serwisie w momencie wpłaty stanowi cenę za zawarcie umowy
+            o dostarczanie treści cyfrowych i daje Ci <strong>bezterminowy dostęp do Strefy Fenkju</strong> — wszystkich
+            obecnych i przyszłych materiałów dodatkowych — na czas funkcjonowania serwisu lub tej części serwisu.
+            Dostęp uruchamiamy niezwłocznie po zaksięgowaniu płatności, na koncie, z którego dokonano wpłaty.
           </p>
           <p>
             Nie ma subskrypcji, płatności cyklicznych ani ukrytych kosztów. Jeżeli w przyszłości kwota wsparcia się zmieni,
@@ -95,37 +100,72 @@ export function RegulaminContent() {
           </p>
           <p>
             Osoby, które mają już aktywny dostęp do Strefy Fenkju, mogą dodatkowo wspierać kanał dowolną kwotą.
-            Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi zapłaty za nowe treści cyfrowe,
-            dodatkowy dostęp ani inne świadczenie wzajemne i nie daje żadnych dodatkowych korzyści poza tymi,
-            które użytkownik już posiada.
+            Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi ceny ani wynagrodzenia za nowe
+            treści cyfrowe, dodatkowy dostęp, wydłużenie dostępu ani inne świadczenie wzajemne i nie daje żadnych
+            dodatkowych korzyści poza tymi, które użytkownik już posiada. Wpłata jest realizowana jako transakcja
+            płatnicza przez operatora płatności, ale nie zwiększa zakresu praw użytkownika w serwisie.
           </p>
         </LegalSection>
 
-        <LegalSection nr="5" title="Płatności">
+        <LegalSection nr="5" title="Płatności, ceny i faktury">
           <p>
-            Płatności obsługuje Stripe. Kwoty podawane w serwisie są kwotami całkowitymi (brutto).
+            Płatności obsługuje Stripe. Kwoty podawane w serwisie są cenami całkowitymi do zapłaty przez konsumenta.
             Po udanej płatności otrzymasz potwierdzenie e-mailem. Nie przechowujemy danych Twojej karty.
+          </p>
+          <p>
+            Potwierdzenie zakupu dostępu może obejmować w szczególności: nazwę świadczenia, kwotę płatności,
+            informację o jednorazowym charakterze płatności, datę płatności, identyfikator płatności, informację
+            o uruchomieniu dostępu oraz potwierdzenie zgód dotyczących natychmiastowego dostarczenia treści cyfrowych.
+          </p>
+          <p>
+            Na żądanie nabywcy wystawiamy fakturę zgodnie z obowiązującymi przepisami prawa podatkowego.
+            Żądanie wystawienia faktury może zostać zgłoszone w terminie i na zasadach wynikających z tych przepisów.
+            Status VAT, sposób dokumentowania sprzedaży oraz ewentualne rozliczenia transgraniczne zależą od
+            obowiązujących przepisów podatkowych i statusu sprzedawcy w chwili sprzedaży.
+          </p>
+          <p>
+            Dodatkowe dobrowolne wpłaty osób, które mają już dostęp do Strefy Fenkju, nie są dokumentowane jako cena
+            za dostęp do treści cyfrowych, jeżeli nie wiążą się z żadnym świadczeniem wzajemnym po stronie sprzedawcy.
+            Ich kwalifikacja podatkowa i sposób dokumentowania zależą od charakteru danej wpłaty oraz obowiązujących
+            przepisów podatkowych.
           </p>
         </LegalSection>
 
         <LegalSection nr="6" title="Odstąpienie od umowy">
           <p>
             Konsumentowi przysługuje 14 dni na odstąpienie od umowy zawartej na odległość. Ponieważ jednak dostęp
-            do Strefy Fenkju uruchamiamy natychmiast po płatności, przed wpłatą wyrażasz zgodę na natychmiastowe
-            dostarczenie treści cyfrowych i przyjmujesz do wiadomości, że z chwilą uruchomienia dostępu tracisz
-            prawo odstąpienia (art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta).
+            do Strefy Fenkju uruchamiamy natychmiast po płatności, przed wpłatą prosimy Cię o wyraźną zgodę na
+            rozpoczęcie dostarczania treści cyfrowych przed upływem terminu do odstąpienia od umowy oraz o potwierdzenie,
+            że przyjmujesz do wiadomości utratę prawa odstąpienia po pełnym uruchomieniu dostępu.
+          </p>
+          <p>
+            Jeżeli wyrazisz te zgody i dostęp zostanie w pełni uruchomiony, tracisz prawo odstąpienia od umowy
+            o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym (art. 38 ust. 1 pkt 13 ustawy
+            o prawach konsumenta). Informację o zawarciu umowy i udzielonych zgodach możemy potwierdzić e-mailem.
           </p>
           <p>
             Jeżeli zapłaciłeś, a dostęp nie został uruchomiony — napisz do nas; naprawimy to albo zwrócimy pieniądze.
           </p>
         </LegalSection>
 
-        <LegalSection nr="7" title="Reklamacje">
+        <LegalSection nr="7" title="Reklamacje i pozasądowe rozwiązywanie sporów">
           <p>
             Coś nie działa? Napisz na <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
             opisz problem i podaj e-mail konta. Odpowiemy najpóźniej w ciągu 14 dni. Odpowiadamy za zgodność treści
-            cyfrowych z umową na zasadach ustawy o prawach konsumenta. Konsument może też skorzystać z bezpłatnej
-            pomocy miejskiego lub powiatowego rzecznika konsumentów.
+            cyfrowych z umową na zasadach ustawy o prawach konsumenta.
+          </p>
+          <p>
+            Jeżeli treści cyfrowe są niezgodne z umową, konsument może żądać doprowadzenia ich do zgodności z umową.
+            W przypadkach przewidzianych prawem konsument może również złożyć oświadczenie o obniżeniu ceny albo
+            odstąpieniu od umowy.
+          </p>
+          <p>
+            Konsument może skorzystać z pozasądowych sposobów rozpatrywania reklamacji i dochodzenia roszczeń,
+            w szczególności z pomocy miejskiego lub powiatowego rzecznika konsumentów oraz właściwego Wojewódzkiego
+            Inspektoratu Inspekcji Handlowej. Informacje o zasadach dostępu do tych procedur oraz wykazie podmiotów
+            uprawnionych są dostępne w serwisie UOKiK dotyczącym polubownego rozwiązywania sporów konsumenckich.
+            Sprzedawca nie zobowiązuje się z góry do udziału w postępowaniu ADR; decyzję podejmujemy po zapoznaniu się
+            z konkretną sprawą.
           </p>
         </LegalSection>
 
@@ -143,10 +183,11 @@ export function RegulaminContent() {
 }
 
 const DATA_ROWS = [
-  { what: 'Konto i logowanie', data: 'e-mail, nazwa, avatar', why: 'prowadzenie konta (obsługuje Clerk)' },
-  { what: 'Płatności', data: 'kwota, data, identyfikator transakcji', why: 'realizacja wsparcia i obowiązki podatkowe (obsługuje Stripe; nie widzimy danych karty)' },
-  { what: 'Komentarze', data: 'treść, nazwa, data', why: 'publiczna dyskusja pod filmami' },
-  { what: 'E-maile', data: 'adres e-mail', why: 'potwierdzenia wpłat i powiadomienia (obsługuje Resend); z powiadomień możesz się wypisać jednym kliknięciem' },
+  { what: 'Konto i logowanie', data: 'e-mail, nazwa, avatar', why: 'prowadzenie konta i zapewnienie dostępu do funkcji serwisu' },
+  { what: 'Płatności', data: 'kwota, data, identyfikator płatności, e-mail, status dostępu', why: 'realizacja płatności, nadanie dostępu, potwierdzenia i obowiązki podatkowe' },
+  { what: 'Komentarze', data: 'treść, nazwa, data', why: 'publiczna dyskusja pod filmami i moderacja' },
+  { what: 'E-maile transakcyjne', data: 'adres e-mail', why: 'potwierdzenia wpłat, dostępu, reklamacji i istotnych informacji o usłudze' },
+  { what: 'Powiadomienia marketingowe', data: 'adres e-mail', why: 'wysyłka newslettera lub informacji marketingowych, wyłącznie gdy udzielisz odrębnej zgody' },
   { what: 'Bezpieczeństwo', data: 'adres IP, logi techniczne', why: 'ochrona serwisu przed nadużyciami i limity zapytań' },
 ];
 
@@ -156,7 +197,7 @@ export function PolitykaContent() {
     <>
       <LegalSummary
         items={[
-          'Zbieramy tylko to, co potrzebne do działania serwisu: konto, płatności, komentarze, logi bezpieczeństwa.',
+          'Zbieramy tylko to, co potrzebne do działania serwisu: konto, płatności, komentarze, e-maile transakcyjne i logi bezpieczeństwa.',
           'Niczego nie sprzedajemy i nie profilujemy Cię reklamowo. Brak cookies reklamowych.',
           <>Zawsze możesz poprosić o dostęp do swoich danych albo ich usunięcie: {OWNER.email}.</>,
         ]}
@@ -165,7 +206,7 @@ export function PolitykaContent() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
           <p>
-            Administratorem Twoich danych jest {OWNER.name}, {OWNER.address}.
+            Administratorem Twoich danych jest {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
             W sprawach danych osobowych pisz na{' '}
             <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.
           </p>
@@ -193,47 +234,71 @@ export function PolitykaContent() {
             </table>
           </div>
           <p>
-            Podstawy prawne: wykonanie umowy (konto, dostęp, płatności), obowiązki prawne (podatki i księgowość)
-            oraz nasz uzasadniony interes (bezpieczeństwo serwisu).
+            Podstawy prawne przetwarzania danych zależą od celu: prowadzenie konta, obsługa dostępu i płatności —
+            wykonanie umowy lub działania przed jej zawarciem (art. 6 ust. 1 lit. b RODO); rozliczenia podatkowe
+            i księgowe — obowiązek prawny (art. 6 ust. 1 lit. c RODO); bezpieczeństwo serwisu, zapobieganie nadużyciom,
+            obsługa reklamacji oraz ustalenie, obrona i dochodzenie roszczeń — nasz prawnie uzasadniony interes
+            (art. 6 ust. 1 lit. f RODO); newsletter lub informacje marketingowe — Twoja odrębna zgoda
+            (art. 6 ust. 1 lit. a RODO), jeżeli jej udzielisz.
           </p>
         </LegalSection>
 
         <LegalSection nr="3" title="Komu powierzamy dane">
           <p>
             Korzystamy z zaufanych dostawców technologii: Clerk (logowanie), Stripe (płatności), Resend (e-maile),
-            Vercel (hosting), Neon (baza danych), Cloudflare (wideo) i Upstash (ochrona przed nadużyciami).
-            Przetwarzają oni dane wyłącznie na nasze polecenie. Część z nich działa w USA — transfer odbywa się
-            na podstawie unijnych mechanizmów (Data Privacy Framework lub standardowe klauzule umowne).
-            Nikomu nie sprzedajemy Twoich danych.
+            Vercel (hosting), Neon (baza danych), Cloudflare (wideo i infrastruktura) i Upstash (ochrona przed nadużyciami).
+            W zależności od rodzaju usługi dostawcy mogą działać jako podmioty przetwarzające dane na nasze polecenie
+            albo jako odrębni administratorzy danych w zakresie niezbędnym do realizacji własnych obowiązków prawnych,
+            bezpieczeństwa i działania infrastruktury — w szczególności dotyczy to operatora płatności Stripe.
+          </p>
+          <p>
+            Część dostawców może przetwarzać dane poza Europejskim Obszarem Gospodarczym. Transfer odbywa się na podstawie
+            dostępnych mechanizmów przewidzianych przez prawo, takich jak Data Privacy Framework, standardowe klauzule
+            umowne lub inne właściwe zabezpieczenia. Nikomu nie sprzedajemy Twoich danych.
           </p>
         </LegalSection>
 
         <LegalSection nr="4" title="Jak długo przechowujemy dane">
           <p>
-            Dane konta — do czasu jego usunięcia. Dane płatności — 5 lat od końca roku podatkowego (wymóg prawa).
-            Logi techniczne — do 90 dni. Komentarze — do czasu ich usunięcia przez Ciebie lub moderację.
+            Dane konta przechowujemy do czasu jego usunięcia, a następnie przez okres niezbędny do rozliczeń,
+            obrony roszczeń i realizacji obowiązków prawnych. Dane płatności i rozliczeń przechowujemy przez okres
+            wymagany przez przepisy podatkowe i rachunkowe. Logi techniczne przechowujemy co do zasady do 90 dni,
+            chyba że dłuższe przechowywanie jest potrzebne do wyjaśnienia nadużyć, awarii, reklamacji lub roszczeń.
+            Komentarze przechowujemy do czasu ich usunięcia przez Ciebie lub moderację.
           </p>
         </LegalSection>
 
         <LegalSection nr="5" title="Twoje prawa">
           <p>
             Masz prawo do: dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania,
-            przenoszenia oraz sprzeciwu. Wystarczy e-mail na{' '}
+            przenoszenia oraz sprzeciwu. Jeżeli dane przetwarzamy na podstawie zgody, możesz ją w każdej chwili wycofać,
+            co nie wpływa na zgodność z prawem przetwarzania sprzed jej wycofania. Wystarczy e-mail na{' '}
             <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
             w ten sposób usuniesz też konto. Możesz również złożyć skargę do Prezesa Urzędu Ochrony Danych
             Osobowych (uodo.gov.pl).
           </p>
         </LegalSection>
 
-        <LegalSection nr="6" title="Cookies">
+        <LegalSection nr="6" title="E-maile i powiadomienia">
           <p>
-            Używamy wyłącznie plików cookies niezbędnych do działania serwisu: utrzymania sesji po zalogowaniu
-            i bezpieczeństwa. Nie używamy cookies reklamowych ani śledzących. Cookies możesz usunąć
-            w ustawieniach przeglądarki — serwis bez zalogowania będzie działał normalnie.
+            E-maile transakcyjne, takie jak potwierdzenia płatności, dostępu, reklamacji lub istotnych zmian usługi,
+            wysyłamy w związku z wykonaniem umowy albo naszym obowiązkiem informacyjnym. Newsletter, informacje
+            marketingowe lub promocyjne wysyłamy wyłącznie wtedy, gdy udzielisz odrębnej zgody. Z takich wiadomości
+            możesz wypisać się w każdej chwili.
           </p>
         </LegalSection>
 
-        <LegalSection nr="7" title="Zmiany polityki">
+        <LegalSection nr="7" title="Cookies">
+          <p>
+            Używamy wyłącznie plików cookies i podobnych technologii niezbędnych do działania serwisu: utrzymania sesji
+            po zalogowaniu, bezpieczeństwa, ochrony przed nadużyciami i odtwarzania materiałów. Nie używamy cookies
+            reklamowych ani śledzących. Jeżeli w przyszłości dodamy narzędzia analityczne lub marketingowe wymagające zgody,
+            poprosimy o nią przed ich użyciem. Cookies możesz usunąć w ustawieniach przeglądarki — serwis bez zalogowania
+            będzie działał normalnie, ale część funkcji konta może wymagać cookies niezbędnych.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="8" title="Zmiany polityki">
           <p>
             Jeśli polityka się zmieni (np. dojdzie nowy dostawca), zaktualizujemy ten dokument i datę na górze strony.
             Istotne zmiany zakomunikujemy w serwisie.
