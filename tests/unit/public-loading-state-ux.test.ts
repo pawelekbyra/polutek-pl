@@ -23,6 +23,7 @@ describe("public loading/access state UX contracts", () => {
 
   it("uses the Vidstack default layout instead of custom public player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
+    const globals = read("app/globals.css");
 
     expect(player).toContain("DefaultVideoLayout");
     expect(player).toContain("defaultLayoutIcons");
@@ -44,6 +45,18 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain('<Poster');
     expect(player).toContain('className="vds-poster"');
     expect(player).toContain('<DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />');
+
+    expect(globals).toContain(".polutek-vidstack-player {");
+    for (const cssVariable of [
+      "--media-slider-height: 24px;",
+      "--media-slider-track-height: 2px;",
+      "--media-slider-thumb-size: 10px;",
+      "--media-controls-padding: 0px;",
+      "--media-captions-padding",
+      "--media-cue-font-size",
+    ]) {
+      expect(globals).toContain(cssVariable);
+    }
 
     const videoTypes = read("app/types/video.ts");
     expect(player).toContain("type VideoTextTrackDTO");
