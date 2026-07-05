@@ -7,6 +7,7 @@ function asset(overrides: Partial<VideoAsset> = {}): VideoAsset {
   return {
     id: overrides.id ?? 'asset-1',
     videoId: overrides.videoId ?? 'video-1',
+    distributionTargetId: overrides.distributionTargetId ?? null,
     provider: overrides.provider ?? StorageProvider.CLOUDFLARE_STREAM,
     objectKey: overrides.objectKey ?? 'cloudflare/asset-1',
     bucket: overrides.bucket ?? null,

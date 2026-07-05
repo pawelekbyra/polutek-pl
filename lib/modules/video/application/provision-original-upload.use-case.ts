@@ -41,11 +41,18 @@ export async function provisionOriginalUpload(
   const objectKey = `originals/${video.id}/${Date.now()}.${ext}`;
   const bucket = process.env.CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS!;
 
-  // Create DB record first — if presign fails after, no orphaned URL exists
-  const original = await ctx.prisma.videoOriginal.upsert({
+  const latestOriginal = await ctx.prisma.videoOriginal.findFirst({
     where: { videoId: video.id },
-    create: {
+    orderBy: { version: "desc" },
+    select: { version: true },
+  });
+
+  // Create DB record first — if presign fails after, no orphaned URL exists.
+  // Phase 1 allows multiple neutral originals per video, so new uploads create a new version.
+  const original = await ctx.prisma.videoOriginal.create({
+    data: {
       videoId: video.id,
+      version: (latestOriginal?.version ?? 0) + 1,
       bucket,
       objectKey,
       originalFileName: input.fileName,
@@ -53,17 +60,6 @@ export async function provisionOriginalUpload(
       sizeBytes: input.fileSize ? BigInt(input.fileSize) : null,
       status: "UPLOADING",
       uploadStartedAt: new Date(),
-    },
-    update: {
-      bucket,
-      objectKey,
-      originalFileName: input.fileName,
-      mimeType: input.contentType,
-      sizeBytes: input.fileSize ? BigInt(input.fileSize) : null,
-      status: "UPLOADING",
-      uploadStartedAt: new Date(),
-      uploadCompletedAt: null,
-      failureReason: null,
     },
   });
 

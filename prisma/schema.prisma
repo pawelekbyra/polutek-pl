@@ -71,8 +71,8 @@ model Payment {
   user    User     @relation(fields: [userId], references: [id])
   creator Creator? @relation(fields: [creatorId], references: [id])
 
-  @@index([userId, status])
   @@unique([userId, requestId])
+  @@index([userId, status])
   @@index([userId])
   @@index([creatorId])
   @@index([status])
@@ -155,25 +155,25 @@ model AppSetting {
 }
 
 model Creator {
-  id               String         @id @default(uuid())
-  userId           String
-  slug             String         @unique
-  name             String
-  bio              String?
-  bannerUrl           String?
-  defaultThumbnailUrl String?
-  subscribersCount Int            @default(0)
+  id                      String         @id @default(uuid())
+  userId                  String
+  slug                    String         @unique
+  name                    String
+  bio                     String?
+  bannerUrl               String?
+  defaultThumbnailUrl     String?
+  subscribersCount        Int            @default(0)
   displaySubscribersCount Int?
-  isApproved       Boolean        @default(false)
-  isPrimary        Boolean        @default(false)
-  stripeConnectId  String?        @unique
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  user             User           @relation(fields: [userId], references: [id])
-  videos           Video[]
-  payments         Payment[]
-  comments         Comment[]
-  subscriptions    Subscription[]
+  isApproved              Boolean        @default(false)
+  isPrimary               Boolean        @default(false)
+  stripeConnectId         String?        @unique
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  user                    User           @relation(fields: [userId], references: [id])
+  videos                  Video[]
+  payments                Payment[]
+  comments                Comment[]
+  subscriptions           Subscription[]
 }
 
 model Subscription {
@@ -193,49 +193,57 @@ model Subscription {
 }
 
 model Video {
-  id             String      @id @default(uuid())
-  creatorId      String
-  title          String
-  titleEn        String?
-  slug           String      @unique
-  description    String?
-  descriptionEn  String?
-  videoUrl       String? // Legacy field
-  thumbnailUrl   String
-  subtitleUrlPl  String?
-  subtitleUrlEn  String?
-  duration       String? // e.g. "12:45"
-  tier           AccessTier  @default(PUBLIC)
-  views          Int         @default(0)
-  likesCount     Int         @default(0)
-  dislikesCount  Int         @default(0)
-  isMainFeatured Boolean     @default(false) // This video is the "One Hero Video" on homepage
-  showInSidebar  Boolean     @default(true)
-  sidebarOrder   Int         @default(0)
-  status         VideoStatus @default(DRAFT)
-  publishedAt    DateTime?
-  publishAfterAssetReady Boolean @default(false)
-  publishAfterAssetReadyProvider String?
+  id                                String      @id @default(uuid())
+  creatorId                         String
+  title                             String
+  titleEn                           String?
+  slug                              String      @unique
+  description                       String?
+  descriptionEn                     String?
+  videoUrl                          String? // Legacy field
+  thumbnailUrl                      String
+  subtitleUrlPl                     String?
+  subtitleUrlEn                     String?
+  duration                          String? // e.g. "12:45"
+  tier                              AccessTier  @default(PUBLIC)
+  views                             Int         @default(0)
+  likesCount                        Int         @default(0)
+  dislikesCount                     Int         @default(0)
+  isMainFeatured                    Boolean     @default(false) // This video is the "One Hero Video" on homepage
+  showInSidebar                     Boolean     @default(true)
+  sidebarOrder                      Int         @default(0)
+  status                            VideoStatus @default(DRAFT)
+  publishedAt                       DateTime?
+  publishAfterAssetReady            Boolean     @default(false)
+  publishAfterAssetReadyProvider    String?
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?
-  publishAfterAssetReadyError String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  publishAfterAssetReadyError       String?
+  activeOriginalId                  String?     @unique
+  activePlaybackRouteId             String?     @unique
+  createdAt                         DateTime    @default(now())
+  updatedAt                         DateTime    @updatedAt
 
-  creator       Creator        @relation(fields: [creatorId], references: [id])
-  comments      Comment[]
-  videoLikes    VideoLike[]
-  videoDislikes VideoDislike[]
-  assets        VideoAsset[]
-  original      VideoOriginal?
-  videoViews    VideoView[]
-  playbackSessions VideoPlaybackSession[]
-  playbackEvents   VideoPlaybackEvent[]
+  creator             Creator                 @relation(fields: [creatorId], references: [id])
+  comments            Comment[]
+  videoLikes          VideoLike[]
+  videoDislikes       VideoDislike[]
+  assets              VideoAsset[]
+  distributionPlans   VideoDistributionPlan[] @relation("VideoDistributionPlans")
+  originals           VideoOriginal[]         @relation("VideoOriginals")
+  playbackRoutes      VideoPlaybackRoute[]    @relation("VideoPlaybackRoutes")
+  activeOriginal      VideoOriginal?          @relation("ActiveVideoOriginal", fields: [activeOriginalId], references: [id], onDelete: SetNull)
+  activePlaybackRoute VideoPlaybackRoute?     @relation("ActivePlaybackRoute", fields: [activePlaybackRouteId], references: [id], onDelete: SetNull)
+  videoViews          VideoView[]
+  playbackSessions    VideoPlaybackSession[]
+  playbackEvents      VideoPlaybackEvent[]
 
   @@index([status, publishedAt])
   @@index([status, createdAt])
   @@index([creatorId, status])
   @@index([publishAfterAssetReady])
+  @@index([activeOriginalId])
+  @@index([activePlaybackRouteId])
   @@index([creatorId])
   @@index([slug])
 }
@@ -257,6 +265,96 @@ enum StorageProvider {
   VIMEO
 }
 
+enum VideoOriginalStatus {
+  PROVISIONING
+  UPLOADING
+  UPLOADED
+  VERIFYING
+  READY
+  FAILED
+  SUPERSEDED
+  ABANDONED
+}
+
+enum VideoDistributionMode {
+  SINGLE_PROVIDER
+  MULTI_PROVIDER
+  AUTO
+  MANUAL
+}
+
+enum VideoPlaybackSelectionPolicy {
+  MANUAL
+  FIRST_READY
+  PREFER_SELECTED
+  BEST_HEALTH
+  LOWEST_COST
+}
+
+enum VideoAutopublishPolicy {
+  NEVER
+  WHEN_ANY_TARGET_READY
+  WHEN_ALL_REQUIRED_TARGETS_READY
+  WHEN_ACTIVE_ROUTE_READY
+}
+
+enum VideoDistributionTargetStatus {
+  REQUESTED
+  QUEUED
+  STARTING
+  WAITING_PROVIDER
+  READY
+  FAILED
+  DISABLED
+  CANCELLED
+}
+
+enum VideoDistributionTargetRole {
+  PRIMARY
+  BACKUP
+  CANDIDATE
+}
+
+enum VideoProviderJobType {
+  IMPORT_FROM_ORIGINAL
+  DIRECT_UPLOAD
+  ATTACH_EXISTING
+  SYNC_STATUS
+  DELETE_PROVIDER_ASSET
+}
+
+enum VideoProviderJobStatus {
+  QUEUED
+  RUNNING
+  WAITING_PROVIDER
+  READY
+  FAILED
+  CANCELLED
+  ABANDONED
+}
+
+enum VideoPlaybackRouteStatus {
+  ACTIVE
+  PREVIOUS
+  DISABLED
+  FAILED
+}
+
+enum VideoPlaybackRouteActivatedBy {
+  ADMIN
+  POLICY
+  FALLBACK
+  MIGRATION
+  RECONCILER
+}
+
+enum VideoProviderWebhookStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
 enum VideoAssetProcessingState {
   PENDING
   UPLOADING
@@ -266,37 +364,42 @@ enum VideoAssetProcessingState {
 }
 
 model VideoAsset {
-  id                    String                    @id @default(uuid())
-  videoId               String
-  provider              StorageProvider
-  objectKey             String
-  bucket                String?
-  providerAssetId       String?
-  providerPlaybackId    String?
-  externalVideoId       String?
-  externalUrl           String?
-  processingState       VideoAssetProcessingState @default(READY)
-  isPrimary             Boolean                   @default(true)
-  pendingPrimaryIntent  Boolean                   @default(false)
-  muxUploadId           String?
-  failureReason         String?
-  providerSyncedAt      DateTime?
-  processingStartedAt   DateTime?
-  processingEndedAt     DateTime?
-  mimeType              String?
-  sizeBytes             Int?
+  id                     String                    @id @default(uuid())
+  videoId                String
+  distributionTargetId   String?
+  provider               StorageProvider
+  objectKey              String
+  bucket                 String?
+  providerAssetId        String?
+  providerPlaybackId     String?
+  externalVideoId        String?
+  externalUrl            String?
+  processingState        VideoAssetProcessingState @default(READY)
+  isPrimary              Boolean                   @default(true)
+  pendingPrimaryIntent   Boolean                   @default(false)
+  muxUploadId            String?
+  failureReason          String?
+  providerSyncedAt       DateTime?
+  processingStartedAt    DateTime?
+  processingEndedAt      DateTime?
+  mimeType               String?
+  sizeBytes              Int?
   // Mirror metadata
-  fallbackPriority      Int                       @default(100)
+  fallbackPriority       Int                       @default(100)
   mirrorSourceOriginalId String?
-  mirrorRequestedAt     DateTime?
-  mirrorCompletedAt     DateTime?
-  mirrorFailureReason   String?
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
+  mirrorRequestedAt      DateTime?
+  mirrorCompletedAt      DateTime?
+  mirrorFailureReason    String?
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
 
-  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video              Video                    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  distributionTarget VideoDistributionTarget? @relation(fields: [distributionTargetId], references: [id], onDelete: SetNull)
+  providerJobs       VideoProviderJob[]
+  playbackRoutes     VideoPlaybackRoute[]
 
   @@index([videoId])
+  @@index([distributionTargetId])
   @@index([videoId, isPrimary])
   @@index([provider])
   @@index([processingState])
@@ -304,27 +407,175 @@ model VideoAsset {
 }
 
 model VideoOriginal {
-  id                  String    @id @default(uuid())
-  videoId             String    @unique
-  bucket              String
-  objectKey           String
-  originalFileName    String?
-  mimeType            String?
-  sizeBytes           BigInt?
-  checksumSha256      String?
-  status              String    @default("UPLOADING")
-  failureReason       String?
-  uploadStartedAt     DateTime?
-  uploadCompletedAt   DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                String              @id @default(uuid())
+  videoId           String
+  storageProvider   StorageProvider     @default(R2)
+  bucket            String
+  objectKey         String
+  originalFileName  String?
+  mimeType          String?
+  sizeBytes         BigInt?
+  checksumSha256    String?
+  status            VideoOriginalStatus @default(UPLOADING)
+  failureReason     String?
+  version           Int                 @default(1)
+  uploadStartedAt   DateTime?
+  uploadCompletedAt DateTime?
+  verifiedAt        DateTime?
+  supersededAt      DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
-  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video             Video                   @relation("VideoOriginals", fields: [videoId], references: [id], onDelete: Cascade)
+  activeForVideo    Video?                  @relation("ActiveVideoOriginal")
+  distributionPlans VideoDistributionPlan[]
+  providerJobs      VideoProviderJob[]
 
+  @@unique([videoId, version])
   @@index([videoId])
+  @@index([videoId, version])
   @@index([status])
 }
 
+model VideoDistributionPlan {
+  id                 String                       @id @default(uuid())
+  videoId            String
+  originalId         String?
+  mode               VideoDistributionMode        @default(SINGLE_PROVIDER)
+  selectionPolicy    VideoPlaybackSelectionPolicy @default(PREFER_SELECTED)
+  autopublishPolicy  VideoAutopublishPolicy       @default(NEVER)
+  preferredProvider  StorageProvider?
+  isActive           Boolean                      @default(true)
+  publishRequestedAt DateTime?
+  publishCompletedAt DateTime?
+  publishError       String?
+  createdByAdminId   String?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  video          Video                     @relation("VideoDistributionPlans", fields: [videoId], references: [id], onDelete: Cascade)
+  original       VideoOriginal?            @relation(fields: [originalId], references: [id], onDelete: SetNull)
+  targets        VideoDistributionTarget[]
+  providerJobs   VideoProviderJob[]
+  playbackRoutes VideoPlaybackRoute[]
+
+  @@index([videoId, isActive])
+  @@index([originalId])
+  @@index([preferredProvider])
+}
+
+model VideoDistributionTarget {
+  id             String                        @id @default(uuid())
+  planId         String
+  videoId        String
+  provider       StorageProvider
+  role           VideoDistributionTargetRole   @default(CANDIDATE)
+  required       Boolean                       @default(true)
+  status         VideoDistributionTargetStatus @default(REQUESTED)
+  desiredPrimary Boolean                       @default(false)
+  lastError      String?
+  lastStatusAt   DateTime?
+  createdAt      DateTime                      @default(now())
+  updatedAt      DateTime                      @updatedAt
+
+  plan           VideoDistributionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  providerJobs   VideoProviderJob[]
+  providerAssets VideoAsset[]
+
+  @@unique([planId, provider])
+  @@index([planId])
+  @@index([videoId])
+  @@index([provider])
+  @@index([status])
+}
+
+model VideoProviderJob {
+  id                 String                 @id @default(uuid())
+  videoId            String
+  planId             String?
+  targetId           String?
+  originalId         String?
+  assetId            String?
+  provider           StorageProvider
+  type               VideoProviderJobType
+  status             VideoProviderJobStatus @default(QUEUED)
+  attemptCount       Int                    @default(0)
+  maxAttempts        Int                    @default(3)
+  idempotencyKey     String?
+  providerAssetId    String?
+  providerPlaybackId String?
+  providerUploadId   String?
+  lastError          String?
+  lastErrorCode      String?
+  nextAttemptAt      DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  lastReconciledAt   DateTime?
+  lastWebhookAt      DateTime?
+  metadata           Json?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  plan     VideoDistributionPlan?   @relation(fields: [planId], references: [id], onDelete: SetNull)
+  target   VideoDistributionTarget? @relation(fields: [targetId], references: [id], onDelete: SetNull)
+  original VideoOriginal?           @relation(fields: [originalId], references: [id], onDelete: SetNull)
+  asset    VideoAsset?              @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@unique([idempotencyKey])
+  @@index([videoId])
+  @@index([planId])
+  @@index([targetId])
+  @@index([originalId])
+  @@index([assetId])
+  @@index([provider, providerAssetId])
+  @@index([providerUploadId])
+  @@index([status, nextAttemptAt])
+}
+
+model VideoPlaybackRoute {
+  id               String                        @id @default(uuid())
+  videoId          String
+  planId           String?
+  assetId          String
+  provider         StorageProvider
+  status           VideoPlaybackRouteStatus      @default(ACTIVE)
+  activatedBy      VideoPlaybackRouteActivatedBy @default(POLICY)
+  activationReason String?
+  activatedAt      DateTime                      @default(now())
+  deactivatedAt    DateTime?
+  createdAt        DateTime                      @default(now())
+  updatedAt        DateTime                      @updatedAt
+
+  video          Video                  @relation("VideoPlaybackRoutes", fields: [videoId], references: [id], onDelete: Cascade)
+  activeForVideo Video?                 @relation("ActivePlaybackRoute")
+  plan           VideoDistributionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  asset          VideoAsset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([videoId, status])
+  @@index([assetId])
+  @@index([provider])
+}
+
+model VideoProviderWebhookEvent {
+  id               String                     @id @default(uuid())
+  provider         StorageProvider
+  externalEventId  String?
+  eventType        String
+  providerAssetId  String?
+  providerUploadId String?
+  status           VideoProviderWebhookStatus @default(RECEIVED)
+  receivedAt       DateTime                   @default(now())
+  processedAt      DateTime?
+  error            String?
+  payload          Json
+
+  @@unique([provider, externalEventId])
+  @@index([provider])
+  @@index([eventType])
+  @@index([providerAssetId])
+  @@index([providerUploadId])
+  @@index([status])
+}
 
 model VideoLike {
   id        String   @id @default(uuid())
@@ -370,31 +621,31 @@ model Comment {
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
-  status        CommentStatus        @default(VISIBLE)
-  likesCount    Int                  @default(0)
-  repliesCount  Int                  @default(0)
-  reportsCount  Int                  @default(0)
-  score         Int                  @default(0)
-  isHearted     Boolean              @default(false)
+  status       CommentStatus @default(VISIBLE)
+  likesCount   Int           @default(0)
+  repliesCount Int           @default(0)
+  reportsCount Int           @default(0)
+  score        Int           @default(0)
+  isHearted    Boolean       @default(false)
 
   pinnedAt   DateTime?
   pinnedById String?
 
-  editedAt    DateTime?
-  deletedAt   DateTime?
-  deletedById String?
+  editedAt      DateTime?
+  deletedAt     DateTime?
+  deletedById   String?
   deletedReason CommentDeletedReason?
 
   moderatedAt   DateTime?
   moderatedById String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  likes         CommentLike[]
-  dislikes      CommentDislike[]
-  reactions     CommentReaction[]
-  reports       CommentReport[]
+  likes     CommentLike[]
+  dislikes  CommentDislike[]
+  reactions CommentReaction[]
+  reports   CommentReport[]
 
   @@index([videoId, pinnedAt, createdAt])
   @@index([videoId, createdAt])
@@ -406,11 +657,11 @@ model Comment {
 }
 
 model CommentReaction {
-  id        String @id @default(uuid())
+  id        String              @id @default(uuid())
   userId    String
   commentId String
   type      CommentReactionType @default(LIKE)
-  createdAt DateTime @default(now())
+  createdAt DateTime            @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
@@ -421,13 +672,13 @@ model CommentReaction {
 }
 
 model CommentReport {
-  id           String @id @default(uuid())
-  commentId   String
-  reporterId  String
+  id           String              @id @default(uuid())
+  commentId    String
+  reporterId   String
   reason       CommentReportReason
   note         String?
   status       CommentReportStatus @default(PENDING)
-  createdAt    DateTime @default(now())
+  createdAt    DateTime            @default(now())
   resolvedAt   DateTime?
   resolvedById String?
 
@@ -644,7 +895,7 @@ model BroadcastEmail {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 
-  template   EmailTemplate?           @relation(fields: [templateId], references: [id])
+  template   EmailTemplate?            @relation(fields: [templateId], references: [id])
   recipients BroadcastEmailRecipient[]
 
   @@index([status])
@@ -751,7 +1002,7 @@ model EmailEvent {
 }
 
 model VideoPlaybackSession {
-  id              String   @id @default(uuid())
+  id              String     @id @default(uuid())
   videoId         String
   userId          String?
   ipHash          String?
@@ -759,19 +1010,19 @@ model VideoPlaybackSession {
   sourceKind      String?
   provider        String?
   accessTier      AccessTier
-  startedAt       DateTime @default(now())
+  startedAt       DateTime   @default(now())
   firstPlayAt     DateTime?
-  lastHeartbeatAt DateTime? @default(now())
+  lastHeartbeatAt DateTime?  @default(now())
   endedAt         DateTime?
-  totalWatchMs    Int      @default(0)
-  maxProgressMs   Int      @default(0)
+  totalWatchMs    Int        @default(0)
+  maxProgressMs   Int        @default(0)
   durationMs      Int?
-  countedAsView   Boolean  @default(false)
-  isAdminPreview  Boolean  @default(false)
+  countedAsView   Boolean    @default(false)
+  isAdminPreview  Boolean    @default(false)
   errorCode       String?
   errorMessage    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   video  Video                @relation(fields: [videoId], references: [id], onDelete: Cascade)
   events VideoPlaybackEvent[]

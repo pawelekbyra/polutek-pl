@@ -83,9 +83,12 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
-            original: true,
+            originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });
+    if (video) {
+        (video as any).original = (video as any).originals?.[0] ?? null;
+    }
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
 
@@ -99,9 +102,12 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
-            original: true,
+            originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });
+    if (video) {
+        (video as any).original = (video as any).originals?.[0] ?? null;
+    }
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
 
