@@ -6,6 +6,12 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, 
 import { VideoPolicy } from "../domain/video.policy";
 import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset-selection";
 
+type VideoWithAssetsAndOriginal = Video & {
+  assets: VideoAsset[];
+  originals?: unknown[];
+  original?: unknown;
+};
+
 export interface CreateVideoInput {
   title: string;
   slug: string;
@@ -83,10 +89,14 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
-            original: true,
+            originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });
-    return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
+    const videoWithOriginal: VideoWithAssetsAndOriginal | null = video ? {
+        ...video,
+        original: video.originals?.[0] ?? null,
+    } : null;
+    return withPrimaryAsset(videoWithOriginal);
   }
 
   async findByIdForMainChannelWithAssets(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
@@ -99,10 +109,14 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
-            original: true,
+            originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });
-    return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
+    const videoWithOriginal: VideoWithAssetsAndOriginal | null = video ? {
+        ...video,
+        original: video.originals?.[0] ?? null,
+    } : null;
+    return withPrimaryAsset(videoWithOriginal);
   }
 
   async findBySlugForMainChannelWithAssets(slug: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {

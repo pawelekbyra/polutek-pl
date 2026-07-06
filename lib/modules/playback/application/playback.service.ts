@@ -27,6 +27,7 @@ export type PlaybackErrorCode =
 type VideoWithAssets = Awaited<ReturnType<AppContext['prisma']['video']['findUnique']>> & {
   assets?: VideoAsset[] | null;
   asset?: VideoAsset | null;
+  activePlaybackRoute?: { asset?: VideoAsset | null } | null;
 };
 
 type PlayerDefaults = Pick<PlaybackPlan, 'player' | 'tracking'>;
@@ -143,6 +144,7 @@ export class PlaybackService {
       where: { id: videoId },
       include: {
         assets: true,
+        activePlaybackRoute: { include: { asset: true } },
       }
     }) as VideoWithAssets;
 
@@ -198,7 +200,10 @@ export class PlaybackService {
         }
     }
 
-    const asset = selectPrimaryVideoAsset(video?.assets) ?? video?.asset;
+    const routeAsset = video?.activePlaybackRoute?.asset?.processingState === 'READY' ? video.activePlaybackRoute.asset : null;
+    const legacyAsset = selectPrimaryVideoAsset(video?.assets) ?? video?.asset;
+    const asset = routeAsset ?? legacyAsset;
+    const legacyRouteWarning = !routeAsset && legacyAsset?.processingState === 'READY' ? 'No active playback route found; using legacy primary asset selection.' : null;
     const safeAsset = toSafeAssetContract(asset);
 
     if (asset) {
@@ -210,7 +215,7 @@ export class PlaybackService {
           status: primaryAsset.state === 'FAILED' ? 'UNAVAILABLE' : primaryAsset.state,
           video: { thumbnailUrl, title },
           accessAllowed: true,
-          warnings: primaryAsset.warnings,
+          warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), ...primaryAsset.warnings],
           sourceMode: 'PROVIDER_ASSET',
           asset: safeAsset,
         });
@@ -230,7 +235,7 @@ export class PlaybackService {
                     status: 'ERROR',
                     video: { thumbnailUrl, title },
                     accessAllowed: true,
-                    warnings: ['Cloudflare Stream signing is not configured'],
+                    warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Cloudflare Stream signing is not configured'],
                     providerResolutionAllowed: true,
                     providerResolutionAttempted: true,
                     sourceMode: 'PROVIDER_ASSET',
@@ -278,10 +283,10 @@ export class PlaybackService {
                 },
                 player: playerFor({ thumbnailUrl, title }, true),
                 diagnostics: {
-                    warnings: [],
+                    warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
                     sourceConfidence: 'HIGH',
                     providerResolutionAllowed: true,
-                    providerResolutionAttempted: false,
+                    providerResolutionAttempted: true,
                     sourceMode: 'PROVIDER_ASSET',
                     asset: safeAsset,
                 },
@@ -297,7 +302,7 @@ export class PlaybackService {
                 status: 'ERROR',
                 video: { thumbnailUrl, title },
                 accessAllowed: true,
-                warnings: ['Failed to resolve secure playback source'],
+                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Failed to resolve secure playback source'],
                 providerResolutionAllowed: true,
                 providerResolutionAttempted: true,
                 sourceMode: 'PROVIDER_ASSET',
@@ -316,7 +321,7 @@ export class PlaybackService {
             status: 'UNAVAILABLE',
             video: { thumbnailUrl, title },
             accessAllowed: true,
-            warnings: ['YouTube asset is missing a valid video ID'],
+            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'YouTube asset is missing a valid video ID'],
             sourceMode: 'PROVIDER_ASSET',
             asset: safeAsset,
           });
@@ -328,7 +333,7 @@ export class PlaybackService {
             status: 'UNAVAILABLE',
             video: { thumbnailUrl, title },
             accessAllowed: true,
-            warnings: ['YouTube playback is not permitted for PATRON-tier videos'],
+            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'YouTube playback is not permitted for PATRON-tier videos'],
             sourceMode: 'PROVIDER_ASSET',
             asset: safeAsset,
           });
@@ -365,7 +370,7 @@ export class PlaybackService {
           },
           player: playerFor({ thumbnailUrl, title }, true),
           diagnostics: {
-            warnings: [],
+            warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
             sourceConfidence: 'HIGH',
             providerResolutionAllowed: true,
             providerResolutionAttempted: false,
@@ -400,7 +405,7 @@ export class PlaybackService {
               access: { allowed: true },
               player: playerFor({ thumbnailUrl, title }, false),
               diagnostics: {
-                warnings: ['Mux signing is not configured; patron-only playback is blocked to avoid public URL exposure.'],
+                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Mux signing is not configured; patron-only playback is blocked to avoid public URL exposure.'],
                 sourceConfidence: 'HIGH',
                 providerResolutionAllowed: true,
                 providerResolutionAttempted: true,
@@ -446,7 +451,7 @@ export class PlaybackService {
             },
             player: playerFor({ thumbnailUrl, title }, true),
             diagnostics: {
-              warnings: [],
+              warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
               sourceConfidence: 'HIGH',
               providerResolutionAllowed: true,
               providerResolutionAttempted: true,
@@ -462,7 +467,7 @@ export class PlaybackService {
             status: 'ERROR',
             video: { thumbnailUrl, title },
             accessAllowed: true,
-            warnings: ['Failed to resolve Mux playback source'],
+            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Failed to resolve Mux playback source'],
             providerResolutionAllowed: true,
             providerResolutionAttempted: true,
             sourceMode: 'PROVIDER_ASSET',
@@ -481,7 +486,7 @@ export class PlaybackService {
             status: 'UNAVAILABLE',
             video: { thumbnailUrl, title },
             accessAllowed: true,
-            warnings: ['Vimeo asset is missing a valid video ID'],
+            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Vimeo asset is missing a valid video ID'],
             sourceMode: 'PROVIDER_ASSET',
             asset: safeAsset,
           });
@@ -493,7 +498,7 @@ export class PlaybackService {
             status: 'UNAVAILABLE',
             video: { thumbnailUrl, title },
             accessAllowed: true,
-            warnings: ['Vimeo playback is not permitted for PATRON-tier videos'],
+            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Vimeo playback is not permitted for PATRON-tier videos'],
             sourceMode: 'PROVIDER_ASSET',
             asset: safeAsset,
           });
@@ -528,7 +533,7 @@ export class PlaybackService {
           },
           player: playerFor({ thumbnailUrl, title }, true),
           diagnostics: {
-            warnings: [],
+            warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
             sourceConfidence: 'HIGH',
             providerResolutionAllowed: true,
             providerResolutionAttempted: false,
@@ -546,7 +551,7 @@ export class PlaybackService {
           status: 'NO_PRIMARY_ASSET',
           video: { thumbnailUrl, title },
           accessAllowed: true,
-          warnings: ['Patron-only legacy playback fallback is disabled until a READY provider-backed asset is available'],
+          warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Patron-only legacy playback fallback is disabled until a READY provider-backed asset is available'],
           sourceMode: asset ? 'PROVIDER_ASSET' : 'LEGACY_URL',
           asset: safeAsset,
         });

@@ -1,0 +1,145 @@
+import { StorageProvider, VideoAsset, VideoPlaybackRouteActivatedBy } from "@prisma/client";
+import { AppContext } from "@/lib/modules/shared/app-context";
+import { getProviderCostOrder } from "../domain/video-distribution.constants";
+import { VideoPlaybackRouteService } from "./video-playback-route.service";
+import { publishAdminVideo } from "./publish-admin-video.use-case";
+
+export type VideoDistributionDecision = {
+  videoId: string;
+  planId: string | null;
+  reason: string;
+  activeRouteChanged: boolean;
+  activatedAssetId: string | null;
+  activatedProvider: string | null;
+  publishAttempted: boolean;
+  publishCompleted: boolean;
+  warnings: string[];
+};
+
+type ReconcileReason = "UPLOAD_COMPLETED" | "JOB_UPDATED" | "WEBHOOK" | "ADMIN_RETRY" | "CRON_RECONCILE" | "MANUAL";
+type ReadyTarget = { target: any; asset: VideoAsset };
+
+function assetReadyTime(asset: VideoAsset): number {
+  return (asset.processingEndedAt ?? asset.updatedAt).getTime();
+}
+
+function stableReadyCompare(a: ReadyTarget, b: ReadyTarget): number {
+  return assetReadyTime(a.asset) - assetReadyTime(b.asset)
+    || a.asset.updatedAt.getTime() - b.asset.updatedAt.getTime()
+    || a.target.updatedAt.getTime() - b.target.updatedAt.getTime()
+    || String(a.target.provider).localeCompare(String(b.target.provider))
+    || String(a.asset.id).localeCompare(String(b.asset.id));
+}
+
+function readyAssetForTarget(target: any): VideoAsset | null {
+  return (target.providerAssets ?? [])
+    .filter((asset: VideoAsset) => asset.processingState === "READY")
+    .map((asset: VideoAsset) => ({ target, asset }))
+    .sort(stableReadyCompare)[0]?.asset ?? null;
+}
+
+export class VideoDistributionOrchestratorService {
+  constructor(private readonly routeService = new VideoPlaybackRouteService()) {}
+
+  async reconcileVideoDistribution(input: { videoId: string; planId?: string; reason: ReconcileReason }, ctx: AppContext): Promise<VideoDistributionDecision> {
+    const video = await ctx.prisma.video.findUnique({
+      where: { id: input.videoId },
+      include: {
+        activePlaybackRoute: { include: { asset: true } },
+        distributionPlans: {
+          where: input.planId ? { id: input.planId } : { isActive: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: {
+            targets: {
+              include: {
+                providerAssets: { orderBy: [{ isPrimary: "desc" }, { updatedAt: "desc" }] },
+                providerJobs: { orderBy: { updatedAt: "desc" } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const plan = video?.distributionPlans[0] ?? null;
+    const warnings: string[] = [];
+    if (!video || !plan) return { videoId: input.videoId, planId: plan?.id ?? null, reason: input.reason, activeRouteChanged: false, activatedAssetId: null, activatedProvider: null, publishAttempted: false, publishCompleted: false, warnings: video ? ["No active distribution plan found."] : ["Video not found."] };
+
+    const readyTargets: ReadyTarget[] = [];
+    for (const target of plan.targets) {
+      const readyAsset = readyAssetForTarget(target);
+      if (readyAsset) {
+        readyTargets.push({ target, asset: readyAsset });
+        if (target.status !== "READY") await ctx.prisma.videoDistributionTarget.update({ where: { id: target.id }, data: { status: "READY", lastStatusAt: new Date() } });
+      } else if ((target.providerJobs ?? []).length > 0 && target.providerJobs.every((job: any) => job.status === "FAILED" || job.status === "ABANDONED" || job.status === "CANCELLED") && target.status !== "DISABLED" && target.status !== "CANCELLED") {
+        await ctx.prisma.videoDistributionTarget.update({ where: { id: target.id }, data: { status: "FAILED", lastError: target.providerJobs[0]?.lastError ?? target.lastError, lastStatusAt: new Date() } });
+      }
+    }
+
+    const currentRouteReady = Boolean(video.activePlaybackRoute?.asset?.processingState === "READY");
+    const currentRouteIsAdmin = video.activePlaybackRoute?.activatedBy === "ADMIN";
+    let selected: ReadyTarget | null = null;
+
+    if (plan.selectionPolicy === "MANUAL") {
+      warnings.push("Manual selection policy: no automatic playback route activation.");
+    } else if (plan.selectionPolicy === "PREFER_SELECTED") {
+      const preferredReady = plan.preferredProvider ? readyTargets.find((item) => item.target.provider === plan.preferredProvider) ?? null : null;
+      if (preferredReady && !currentRouteIsAdmin && video.activePlaybackRoute?.assetId !== preferredReady.asset.id) selected = preferredReady;
+      else if (!currentRouteReady) selected = readyTargets.sort(stableReadyCompare)[0] ?? null;
+    } else if (plan.selectionPolicy === "LOWEST_COST") {
+      const order = getProviderCostOrder();
+      selected = readyTargets.sort((a, b) => {
+        const ai = order.indexOf(a.target.provider as StorageProvider);
+        const bi = order.indexOf(b.target.provider as StorageProvider);
+        return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi) || stableReadyCompare(a, b);
+      })[0] ?? null;
+      if (currentRouteReady && selected && video.activePlaybackRoute?.assetId === selected.asset.id) selected = null;
+    } else {
+      // BEST_HEALTH currently behaves like FIRST_READY. Future health scoring belongs here.
+      if (!currentRouteReady) selected = readyTargets.sort(stableReadyCompare)[0] ?? null;
+    }
+
+    let activeRouteChanged = false;
+    let activatedAssetId: string | null = null;
+    let activatedProvider: string | null = null;
+    if (selected) {
+      const activatedBy = input.reason === "ADMIN_RETRY" ? "RECONCILER" : "POLICY";
+      const route = await this.routeService.activateRoute({ videoId: video.id, assetId: selected.asset.id, planId: plan.id, activatedBy: activatedBy as VideoPlaybackRouteActivatedBy, reason: `distribution-${input.reason.toLowerCase()}` }, ctx);
+      activeRouteChanged = true;
+      activatedAssetId = route.assetId;
+      activatedProvider = route.provider;
+    }
+
+    const hasReadyActiveRoute = activeRouteChanged || currentRouteReady;
+    const requiredTargets = plan.targets.filter((target) => target.required);
+    const allRequiredTargetsReady = requiredTargets.length === 0
+      ? readyTargets.length > 0
+      : requiredTargets.every((target) => readyTargets.some((readyTarget) => readyTarget.target.id === target.id));
+    const shouldAutopublish = plan.autopublishPolicy === "WHEN_ACTIVE_ROUTE_READY"
+      ? hasReadyActiveRoute
+      : plan.autopublishPolicy === "WHEN_ANY_TARGET_READY"
+        ? hasReadyActiveRoute && readyTargets.length > 0
+        : plan.autopublishPolicy === "WHEN_ALL_REQUIRED_TARGETS_READY"
+          ? hasReadyActiveRoute && allRequiredTargetsReady
+          : false;
+
+    let publishAttempted = false;
+    let publishCompleted = false;
+    if (shouldAutopublish) {
+      publishAttempted = true;
+      const publishResult = await publishAdminVideo(video.id, ctx);
+      if (publishResult.ok) {
+        publishCompleted = true;
+        await ctx.prisma.videoDistributionPlan.update({ where: { id: plan.id }, data: { publishCompletedAt: new Date(), publishError: null } });
+      } else {
+        const message = publishResult.error instanceof Error ? publishResult.error.message : "Autopublish failed.";
+        warnings.push(message);
+        await ctx.prisma.videoDistributionPlan.update({ where: { id: plan.id }, data: { publishError: message } });
+        await ctx.prisma.video.update({ where: { id: video.id }, data: { publishAfterAssetReadyError: message } });
+      }
+    }
+
+    return { videoId: video.id, planId: plan.id, reason: input.reason, activeRouteChanged, activatedAssetId, activatedProvider, publishAttempted, publishCompleted, warnings };
+  }
+}

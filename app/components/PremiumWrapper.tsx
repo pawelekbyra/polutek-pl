@@ -38,6 +38,10 @@ const VideoAccessContext = createContext<VideoAccessContextType>({
 
 export const useVideoAccess = () => useContext(VideoAccessContext);
 
+function isAccessTierDto(value: unknown): value is AccessTierDto {
+  return value === "PUBLIC" || value === "LOGGED_IN" || value === "PATRON";
+}
+
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
@@ -88,7 +92,7 @@ export default function PremiumWrapper({
       const data = warmedPlan ?? await preloader?.warmVideo(videoId, { includePoster: true, priority: "critical" });
 
       if (data) {
-        const warmedData = data as any;
+        const warmedData: Partial<PlaybackPlan> & { access?: { allowed?: unknown; reason?: unknown; requiredTier?: string }; hasAccess?: unknown; requiredTier?: string } = data;
         const nextState = getSafePlaybackState(
           warmedData,
           !userId ? deniedState : false,
@@ -97,9 +101,9 @@ export default function PremiumWrapper({
         setHasAccess(nextHasAccess);
         onAccessLoad?.(nextHasAccess);
         setPlaybackState(nextState);
-        setPlaybackPlan(nextHasAccess ? warmedData : null);
-        if (warmedData.requiredTier || warmedData.access?.requiredTier)
-          setDbTier(warmedData.requiredTier || warmedData.access.requiredTier);
+        setPlaybackPlan(nextHasAccess ? (warmedData as PlaybackPlan) : null);
+        const requiredTier = warmedData.requiredTier ?? warmedData.access?.requiredTier;
+        if (isAccessTierDto(requiredTier)) setDbTier(requiredTier);
         setFetchError(null);
         return;
       }

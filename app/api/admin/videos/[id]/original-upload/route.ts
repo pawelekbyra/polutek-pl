@@ -40,6 +40,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     {
       videoId,
       originalId: body.originalId,
+      strategy: body.strategy,
+      publishAfterReady: typeof body.publishAfterReady === "boolean" ? body.publishAfterReady : undefined,
       mirrorPlan: body.mirrorPlan,
       preferredProvider: typeof body.preferredProvider === "string" ? body.preferredProvider : undefined,
     },
