@@ -116,13 +116,13 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "relative flex items-start gap-[13px] border-t border-[#e3ddc9] px-1 py-[18px] transition-colors duration-1000 first:border-t-0 first:pt-0",
+        "relative flex items-start gap-[13px] rounded-2xl border border-[#0f0f0f] bg-white p-[16px_14px] shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] transition-colors duration-1000",
         isReply ? "group/reply" : "group/comment",
-        isHighlighted && "-mx-1 rounded-lg bg-blue-50/60 px-2",
+        isHighlighted && "ring-2 ring-blue-100",
       )}
     >
       {!isReply && comment.isPinned && (
-        <span className="absolute right-1 top-[18px] z-[6] inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-blue-600">
+        <span className="absolute right-0 top-0 z-[6] inline-flex items-center gap-1 rounded-bl-lg rounded-tr-2xl bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-blue-600">
           <Star size={10} className="fill-blue-600" />
           {language === "pl" ? "Przypięty" : "Pinned"}
         </span>
