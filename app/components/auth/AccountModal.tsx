@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Frame, INK } from "../najs/primitives";
@@ -80,9 +81,9 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
 
             <div className="mt-5 flex items-center justify-between border-t border-[#171717]/10 pt-4">
               {isAdmin ? (
-                <a href="/admin" className="text-[13px] font-bold underline hover:text-[#0f0f0f]">
+                <Link href="/admin" className="text-[13px] font-bold underline hover:text-[#0f0f0f]">
                   {isPl ? "Zarządzaj kanałem" : "Manage channel"}
-                </a>
+                </Link>
               ) : (
                 <span />
               )}
