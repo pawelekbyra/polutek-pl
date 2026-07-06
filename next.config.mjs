@@ -1,7 +1,4 @@
 /** @type {import('next').NextConfig} */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
 const parseHosts = (value) => {
   if (!value) return [];
   return value
@@ -27,10 +24,6 @@ const configuredImageHosts = Array.from(new Set([
 
 const nextConfig = {
   productionBrowserSourceMaps: false,
-  webpack(config) {
-    config.resolve.alias["@tanstack/react-query"] = require.resolve("@tanstack/react-query");
-    return config;
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
