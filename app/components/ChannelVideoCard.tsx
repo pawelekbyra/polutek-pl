@@ -11,7 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
 import { Frame, NajsIcon, INK } from "./najs/primitives";
-import { getLocalizedHref } from "@/lib/i18n/routing";
+import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -83,7 +83,7 @@ export default function ChannelVideoCard({
   return (
     <div className="group cursor-pointer flex flex-col">
       <div className="block relative">
-        <Link href={getLocalizedHref(language, "watch", { slug: video.slug || video.id })} className="absolute inset-0 z-0" />
+        <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)} className="absolute inset-0 z-0" />
         <div className="relative aspect-video rounded-md bg-black mb-2.5 z-10">
           <Frame radius={8} seed={22} stroke={INK} strokeWidth={1} />
           <div className="absolute inset-0 overflow-hidden rounded-md">
@@ -132,7 +132,7 @@ export default function ChannelVideoCard({
         </div>
         <div className="flex gap-2 relative z-10">
           <div className="flex-1 min-w-0">
-            <Link href={getLocalizedHref(language, "watch", { slug: video.slug || video.id })}>
+            <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)}>
               <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 {displayTitle}
               </h3>

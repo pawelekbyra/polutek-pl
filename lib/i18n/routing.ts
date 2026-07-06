@@ -3,13 +3,13 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "pl";
 
 export const ROUTES = {
-  home: { pl: "/pl", en: "/en" },
-  search: { pl: "/pl/search", en: "/en/search" },
-  watch: { pl: "/pl/watch/:slug", en: "/en/watch/:slug" },
-  channel: { pl: "/pl/channel/:slug", en: "/en/channel/:slug" },
-  terms: { pl: "/pl/regulamin", en: "/en/terms" },
-  privacy: { pl: "/pl/polityka-prywatnosci", en: "/en/privacy-policy" },
-  shop: { pl: "/pl/sklep", en: "/en/shop" },
+  home: { pl: "", en: "/en" },
+  search: { pl: "/search", en: "/en/search" },
+  watch: { pl: "/watch/:slug", en: "/en/watch/:slug" },
+  channel: { pl: "/channel/:slug", en: "/en/channel/:slug" },
+  terms: { pl: "/regulamin", en: "/en/terms" },
+  privacy: { pl: "/polityka-prywatnosci", en: "/en/privacy-policy" },
+  shop: { pl: "/sklep", en: "/en/shop" },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
@@ -32,7 +32,7 @@ export function getLocalizedHref(locale: Locale, routeKey: RouteKey, params: Rou
     if (!params.slug) throw new Error(`Missing slug for localized route ${routeKey}`);
     href = href.replace(":slug", encodeURIComponent(params.slug));
   }
-  return href;
+  return href || "/";
 }
 
 export function appendQueryString(path: string, queryString?: string | URLSearchParams | null) {

@@ -1,25 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { generateCSP } from "@/lib/utils/security";
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/pl',
   '/en',
-  '/pl/search',
   '/en/search',
-  '/pl/watch/(.*)',
   '/en/watch/(.*)',
-  '/pl/channel/(.*)',
   '/en/channel/(.*)',
-  '/pl/regulamin',
   '/en/terms',
-  '/pl/polityka-prywatnosci',
   '/en/privacy-policy',
-  '/pl/sklep',
   '/en/shop',
-  '/sklep',
-  '/shop',
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
@@ -51,7 +42,39 @@ const isPublicRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
+function shouldRewriteForPolish(pathname: string): boolean {
+  // Check if pathname is a non-localized route (starts with /en, /admin, /api, etc.)
+  const startsWithLocale = /^\/(?:en|admin|api|\.)(?:\/|$)/.test(pathname);
+  if (startsWithLocale) return false;
+
+  // All other paths should be rewritten (including "/")
+  return true;
+}
+
+function rewriteForPolish(pathname: string, _search: string): string {
+  return pathname === "/" ? "/pl" : `/pl${pathname}`;
+}
+
+function clerkMiddlewareWrapper(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+
+  // Rewrite non-prefixed Polish routes to localized versions
+  if (shouldRewriteForPolish(pathname)) {
+    const rewriteUrl = new URL(req.nextUrl);
+    rewriteUrl.pathname = rewriteForPolish(pathname, "");
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  return null;
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  // Handle Polish URL rewriting (non-prefixed to /pl-prefixed)
+  const rewriteResponse = clerkMiddlewareWrapper(req);
+  if (rewriteResponse) {
+    return rewriteResponse;
+  }
+
   // Specific GET exception for comments (if product needs public comments).
   // Mutations are protected but still flow through the shared response setup
   // below so request IDs and security headers are attached consistently.
