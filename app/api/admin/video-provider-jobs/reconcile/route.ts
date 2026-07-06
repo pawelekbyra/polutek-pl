@@ -3,7 +3,7 @@ import { StorageProvider } from "@prisma/client";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { VideoProviderReconcilerService } from "@/lib/modules/video/application/video-provider-reconciler.service";
+import { VideoProviderReconcilerService } from "@/lib/modules/video";
 
 export async function POST(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEO_PROVIDER_JOBS_RECONCILE");

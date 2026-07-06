@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { normalizeMuxWebhook } from "@/lib/modules/video/infrastructure/provider-webhook-mappers";
-import { VideoProviderWebhookService } from "@/lib/modules/video/application/video-provider-webhook.service";
+import { normalizeMuxWebhook } from "@/lib/modules/video";
+import { VideoProviderWebhookService } from "@/lib/modules/video";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { createScopedLogger } from "@/lib/logger";
 import { createHmac, timingSafeEqual } from "crypto";

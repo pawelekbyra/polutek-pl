@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { VideoDistributionBackfillService } from "@/lib/modules/video/application/video-distribution-backfill.service";
+import { VideoDistributionBackfillService } from "@/lib/modules/video";
 
 export async function POST(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_VIDEO_DISTRIBUTION_BACKFILL");

@@ -3,8 +3,8 @@ import { requireAdminForApi } from "@/lib/auth-utils";
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getAdminVideoMediaState } from "@/lib/modules/video";
-import { VideoDistributionPlanService } from "@/lib/modules/video/application/video-distribution-plan.service";
-import { VideoProviderJobService } from "@/lib/modules/video/application/video-provider-job.service";
+import { VideoDistributionPlanService } from "@/lib/modules/video";
+import { VideoProviderJobService } from "@/lib/modules/video";
 import { getCorrelationId } from "@/lib/utils/correlation";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {

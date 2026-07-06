@@ -2,6 +2,7 @@ import { StorageProvider, VideoAsset, VideoPlaybackRouteActivatedBy } from "@pri
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { getProviderCostOrder } from "../domain/video-distribution.constants";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
+import { publishAdminVideo } from "./publish-admin-video.use-case";
 
 export type VideoDistributionDecision = {
   videoId: string;
@@ -110,10 +111,35 @@ export class VideoDistributionOrchestratorService {
       activatedProvider = route.provider;
     }
 
-    const hasRoute = activeRouteChanged || currentRouteReady;
-    const publishAttempted = plan.autopublishPolicy !== "NEVER";
-    if (publishAttempted) warnings.push("Autopublish policy evaluated as no-op in this milestone; publishing remains handled by existing admin/publish flows.");
+    const hasReadyActiveRoute = activeRouteChanged || currentRouteReady;
+    const requiredTargets = plan.targets.filter((target) => target.required);
+    const allRequiredTargetsReady = requiredTargets.length === 0
+      ? readyTargets.length > 0
+      : requiredTargets.every((target) => readyTargets.some((readyTarget) => readyTarget.target.id === target.id));
+    const shouldAutopublish = plan.autopublishPolicy === "WHEN_ACTIVE_ROUTE_READY"
+      ? hasReadyActiveRoute
+      : plan.autopublishPolicy === "WHEN_ANY_TARGET_READY"
+        ? hasReadyActiveRoute && readyTargets.length > 0
+        : plan.autopublishPolicy === "WHEN_ALL_REQUIRED_TARGETS_READY"
+          ? hasReadyActiveRoute && allRequiredTargetsReady
+          : false;
 
-    return { videoId: video.id, planId: plan.id, reason: input.reason, activeRouteChanged, activatedAssetId, activatedProvider, publishAttempted, publishCompleted: false, warnings: hasRoute ? warnings : warnings };
+    let publishAttempted = false;
+    let publishCompleted = false;
+    if (shouldAutopublish) {
+      publishAttempted = true;
+      const publishResult = await publishAdminVideo(video.id, ctx);
+      if (publishResult.ok) {
+        publishCompleted = true;
+        await ctx.prisma.videoDistributionPlan.update({ where: { id: plan.id }, data: { publishCompletedAt: new Date(), publishError: null } });
+      } else {
+        const message = publishResult.error instanceof Error ? publishResult.error.message : "Autopublish failed.";
+        warnings.push(message);
+        await ctx.prisma.videoDistributionPlan.update({ where: { id: plan.id }, data: { publishError: message } });
+        await ctx.prisma.video.update({ where: { id: video.id }, data: { publishAfterAssetReadyError: message } });
+      }
+    }
+
+    return { videoId: video.id, planId: plan.id, reason: input.reason, activeRouteChanged, activatedAssetId, activatedProvider, publishAttempted, publishCompleted, warnings };
   }
 }

@@ -4,8 +4,8 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { handleApiError } from '@/lib/errors';
 import { getCorrelationId } from '@/lib/utils/correlation';
 import { verifyCloudflareStreamWebhookSignature } from '@/lib/security/cloudflare-stream-webhook';
-import { normalizeCloudflareStreamWebhook } from '@/lib/modules/video/infrastructure/provider-webhook-mappers';
-import { VideoProviderWebhookService } from '@/lib/modules/video/application/video-provider-webhook.service';
+import { normalizeCloudflareStreamWebhook } from '@/lib/modules/video';
+import { VideoProviderWebhookService } from '@/lib/modules/video';
 
 const ROUTE_NAME = 'CloudflareStreamWebhookRoute';
 

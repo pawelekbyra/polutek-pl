@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { VideoProviderReconcilerService } from "@/lib/modules/video/application/video-provider-reconciler.service";
+import { VideoProviderReconcilerService } from "@/lib/modules/video";
 
 export const dynamic = "force-dynamic";
 

@@ -3,16 +3,35 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { isAutomaticFilePlaybackProvider } from "../domain/video-provider-capabilities";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
 import { VideoDistributionPlanService } from "./video-distribution-plan.service";
-import type { VideoDistributionStrategyInput } from "../domain/video-distribution.types";
+import type { AutomaticFilePlaybackProvider, VideoDistributionStrategyInput } from "../domain/video-distribution.types";
 
 export type BackfillVideoDistributionResult = { scannedVideos: number; updatedVideos: number; createdPlans: number; createdTargets: number; createdRoutes: number; skippedVideos: number; errors: Array<{ videoId: string; error: string }> };
 
-function inferStrategy(assets: any[]): VideoDistributionStrategyInput | null {
-  const providers = Array.from(new Set(assets.filter((asset) => asset.processingState === "READY" && isAutomaticFilePlaybackProvider(asset.provider)).map((asset) => asset.provider)));
+type BackfillAssetCandidate = {
+  provider: StorageProvider;
+  processingState: string;
+  isPrimary: boolean;
+};
+
+function toAutomaticFileProvider(provider: StorageProvider): AutomaticFilePlaybackProvider | null {
+  if (provider === StorageProvider.CLOUDFLARE_STREAM) return "CLOUDFLARE_STREAM";
+  if (provider === StorageProvider.MUX) return "MUX";
+  return null;
+}
+
+function inferStrategy(assets: BackfillAssetCandidate[]): VideoDistributionStrategyInput | null {
+  const providers = Array.from(new Set(assets
+    .filter((asset) => asset.processingState === "READY" && isAutomaticFilePlaybackProvider(asset.provider))
+    .map((asset) => toAutomaticFileProvider(asset.provider))
+    .filter((provider): provider is AutomaticFilePlaybackProvider => provider !== null)));
   if (providers.length === 0) return null;
-  if (providers.length === 1) return { mode: "SINGLE_PROVIDER", provider: providers[0] as any };
-  const preferred = assets.find((asset) => asset.isPrimary && providers.includes(asset.provider))?.provider;
-  return { mode: "MULTI_PROVIDER", providers: providers as any, ...(preferred ? { preferredProvider: preferred as any } : { selectionPolicy: "FIRST_READY" as const }) };
+  if (providers.length === 1) return { mode: "SINGLE_PROVIDER", provider: providers[0] };
+  const preferredAsset = assets.find((asset) => {
+    const provider = toAutomaticFileProvider(asset.provider);
+    return asset.isPrimary && provider !== null && providers.includes(provider);
+  });
+  const preferred = preferredAsset ? toAutomaticFileProvider(preferredAsset.provider) : null;
+  return { mode: "MULTI_PROVIDER", providers, ...(preferred ? { preferredProvider: preferred } : { selectionPolicy: "FIRST_READY" as const }) };
 }
 
 export class VideoDistributionBackfillService {

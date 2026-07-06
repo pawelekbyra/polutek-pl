@@ -1,55 +1,54 @@
 # Video Distribution Pipeline
 
-Polutek video architecture is master-first and provider-neutral.
+Polutek video architecture is master-first and provider-neutral. Cloudflare Stream and Mux are peers: they are the first automatic file playback providers, not a permanent architectural assumption. R2 is the current original-storage implementation.
 
-Originals are stored as versioned `VideoOriginal` records in original storage, currently R2. A `Video` may point at an active original while retaining previous original/master versions for audit, retry and future replacement workflows.
+Originals are stored as versioned `VideoOriginal` records. Playback providers are materialized through `VideoDistributionPlan`, `VideoDistributionTarget` and `VideoProviderJob`; the active source used by public playback is `VideoPlaybackRoute`. `VideoAsset.isPrimary` remains legacy compatibility state derived from route activation.
 
-Playback providers are materialized through `VideoDistributionPlan`, `VideoDistributionTarget` and `VideoProviderJob`:
+## Implemented flow
 
-- `VideoDistributionPlan` describes the desired distribution strategy for a video.
-- `VideoDistributionTarget` describes a requested provider target such as Mux or Cloudflare Stream.
-- `VideoProviderJob` describes work needed to create, attach, sync or delete provider-side playback assets.
-- `VideoAsset` remains the real provider-side asset record.
-- `VideoPlaybackRoute` is the single active playback source selected for playback.
+1. Admin chooses a distribution strategy per video: Auto, Cloudflare Stream, Mux, Cloudflare + Mux, or Manual / advanced.
+2. Upload writes the original to R2, marks that `VideoOriginal` ready, and sets `Video.activeOriginalId`.
+3. The selected strategy creates only the requested targets and provider import jobs. Mux-only does not create Cloudflare work, Cloudflare-only does not create Mux work, and Manual creates no provider jobs.
+4. Provider jobs generate fresh signed R2 import URLs per attempt. Signed source URLs are never returned in admin DTOs and are redacted from persisted errors.
+5. Webhook events update asset/job/target state, then call the provider-neutral orchestrator. Webhooks never choose the active source directly.
+6. The reconciler can repair missed webhooks by polling provider status through the adapter registry and invoking the orchestrator.
+7. The orchestrator owns policy: FIRST_READY, PREFER_SELECTED, LOWEST_COST, MANUAL, and current BEST_HEALTH-as-FIRST_READY behavior.
+8. Autopublish policies are evaluated after route/target readiness and use the existing admin publish use case.
+9. Public playback checks access before resolving provider sources, prefers `Video.activePlaybackRouteId`, and only falls back to legacy primary assets during migration.
 
-Cloudflare Stream and Mux are the first implemented automatic playback providers, but the architecture is intentionally open to more providers such as Bunny Stream later. Provider decisions should be based on capability metadata rather than branches that assume only Cloudflare and Mux exist.
+## Admin media state and UI
 
-Webhook events update provider state, but distribution policy should be evaluated by orchestrator/reconciler in later phases. The current foundation can enqueue/start provider import jobs and activate playback routes through provider-neutral policy. Webhook ingestion and provider status reconciliation update jobs/assets/targets and then invoke the orchestrator; admin React UI remains a later milestone.
-
-Public playback must never resolve provider sources before access is allowed. Patron-only video requires private/signed provider playback and blocks YouTube/Vimeo because embed-only providers cannot enforce Polutek patron access.
-
-## Admin media state
-
-The admin media-state use case reads the new schema and returns a DTO that describes:
+`GET /api/admin/videos/[id]/media` returns the full pipeline state for the admin UI:
 
 - selected original/master state,
-- active distribution plan and target/job summaries,
+- active distribution plan,
+- targets and latest jobs,
 - active playback route,
-- legacy primary asset fallback,
-- safe summary state for admin UI.
+- legacy asset fallback,
+- summary state and warnings.
 
-The read-only admin API endpoint is `GET /api/admin/videos/[id]/media`. It does not mutate state, start provider jobs, trigger webhooks, activate playback routes, return signed playback URLs, or call provider APIs.
+The default media tab uses product-level labels such as `Strategia źródeł`, `Oryginał zapisany`, `Tworzę źródło`, `Gotowe`, `Wymaga interwencji` and `Aktywne źródło`. Provider IDs stay in advanced technical flows, not the default UI.
+
+## Operations
+
+- `POST /api/admin/videos/[id]/distribution-plan` creates/replaces the active plan.
+- `POST /api/admin/videos/[id]/provider-jobs/[jobId]/retry` retries a provider job and returns media state.
+- `POST /api/admin/videos/[id]/reconcile` re-evaluates route policy for one video.
+- `POST /api/admin/video-provider-jobs/reconcile` and `POST /api/cron/video-provider-jobs/reconcile` sync stale provider jobs.
+- `POST /api/admin/videos/distribution-backfill` backfills legacy videos. It defaults to dry-run and does not enqueue provider jobs.
+
+## Security invariants
+
+Public playback must never resolve provider sources before access is allowed. Denied access returns no provider URLs and creates no playback session. Patron-only video requires private/signed provider playback; YouTube/Vimeo are blocked for patron-only content because embed-only providers cannot enforce Polutek patron access.
 
 ## Adding a future provider
 
-Bunny.net/Bunny Stream is not implemented yet. A future provider should be added by:
+Bunny.net/Bunny Stream is not implemented. A future provider should be added by:
 
 1. adding a `StorageProvider` enum value such as `BUNNY_STREAM`,
-2. adding provider capability metadata in `video-provider-capabilities.ts`,
+2. adding provider capability metadata,
 3. implementing a playback provider adapter,
 4. optionally enabling it in strategy/admin UI configuration,
-5. extending webhook handling and reconciliation as needed.
+5. extending webhook mapping/reconciliation as needed.
 
-The domain model should not need provider-specific tables for each playback vendor. New providers should fit the existing `VideoDistributionTarget`, `VideoProviderJob`, `VideoAsset` and `VideoPlaybackRoute` model unless they require new genuinely provider-neutral concepts.
-
-## Later phases
-
-Later phases should implement the admin React UI and deeper operational tooling. Provider job execution, webhook ingestion, playback route activation, reconciliation and admin/cron control endpoints now exist as backend foundations.
-
-## Executable import pipeline foundation
-
-Upload completion now creates or replaces an active `VideoDistributionPlan` from either the new `strategy` body or legacy `mirrorPlan` body. Automatic file targets enqueue `VideoProviderJob` rows and start each job synchronously enough to persist clear state before the API returns.
-
-Provider adapters are selected through `PlaybackProviderRegistry`. If an adapter is missing or a provider is not configured, the job and target are marked `FAILED` with a clear error instead of creating a fake successful asset. Signed R2 source URLs are generated per attempt and are not returned in admin DTOs or stored in job metadata/errors.
-
-Current executable adapters cover Cloudflare Stream and Mux only. Bunny.net/Bunny Stream remains a documented future extension path: add enum value, capability metadata, adapter, then opt into strategy/UI when ready.
+The domain model should not need provider-specific tables for each playback vendor. New providers should fit `VideoDistributionTarget`, `VideoProviderJob`, `VideoAsset` and `VideoPlaybackRoute` unless they require a genuinely provider-neutral concept that is missing today.

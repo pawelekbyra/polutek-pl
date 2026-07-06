@@ -9,6 +9,9 @@ export type IngestProviderWebhookInput = {
   eventType: string;
   providerAssetId?: string | null;
   providerUploadId?: string | null;
+  providerPlaybackId?: string | null;
+  durationSeconds?: number | null;
+  sizeBytes?: number | null;
   state?: "PENDING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | "IGNORED";
   failureReason?: string | null;
   payload: unknown;
@@ -61,8 +64,10 @@ export class VideoProviderWebhookService {
       where: { provider: input.provider, OR: jobMatchers },
     }) : null;
     const matchedAsset = asset ?? (job?.assetId ? await ctx.prisma.videoAsset.findUnique({ where: { id: job.assetId } }) : null);
+    const targetId = job?.targetId ?? matchedAsset?.distributionTargetId ?? null;
+    const target = !job?.planId && targetId ? await ctx.prisma.videoDistributionTarget.findUnique({ where: { id: targetId }, select: { planId: true } }) : null;
     const videoId = matchedAsset?.videoId ?? job?.videoId ?? null;
-    const planId = job?.planId ?? null;
+    const planId = job?.planId ?? target?.planId ?? null;
 
     if (input.state === "IGNORED" || (!matchedAsset && !job)) {
       await ctx.prisma.videoProviderWebhookEvent.update({ where: { id: event.id }, data: { status: VideoProviderWebhookStatus.IGNORED, processedAt: new Date() } });
@@ -73,13 +78,27 @@ export class VideoProviderWebhookService {
     const assetState = toAssetState(input.state);
     const jobState = toJobState(input.state);
     if (matchedAsset && assetState) {
-      await ctx.prisma.videoAsset.update({ where: { id: matchedAsset.id }, data: { processingState: assetState, providerSyncedAt: new Date(), processingEndedAt: assetState === "READY" || assetState === "FAILED" ? new Date() : matchedAsset.processingEndedAt, failureReason: assetState === "FAILED" ? safeError : null } });
+      const currentReady = matchedAsset.processingState === VideoAssetProcessingState.READY;
+      const nextAssetState = currentReady && assetState !== VideoAssetProcessingState.FAILED ? VideoAssetProcessingState.READY : assetState;
+      await ctx.prisma.videoAsset.update({
+        where: { id: matchedAsset.id },
+        data: {
+          processingState: nextAssetState,
+          providerAssetId: input.providerAssetId ?? matchedAsset.providerAssetId,
+          providerPlaybackId: input.providerPlaybackId ?? matchedAsset.providerPlaybackId,
+          sizeBytes: input.sizeBytes ?? matchedAsset.sizeBytes,
+          providerSyncedAt: new Date(),
+          processingEndedAt: nextAssetState === "READY" || nextAssetState === "FAILED" ? new Date() : matchedAsset.processingEndedAt,
+          failureReason: nextAssetState === "FAILED" ? safeError : null,
+        },
+      });
     }
     if (job && jobState) {
-      await ctx.prisma.videoProviderJob.update({ where: { id: job.id }, data: { status: jobState, lastWebhookAt: new Date(), completedAt: jobState === "READY" || jobState === "FAILED" ? new Date() : job.completedAt, lastError: jobState === "FAILED" ? safeError : null, metadata: Prisma.DbNull } });
+      const nextJobState = job.status === VideoProviderJobStatus.READY && jobState !== VideoProviderJobStatus.FAILED ? VideoProviderJobStatus.READY : jobState;
+      await ctx.prisma.videoProviderJob.update({ where: { id: job.id }, data: { status: nextJobState, providerAssetId: input.providerAssetId ?? job.providerAssetId, providerPlaybackId: input.providerPlaybackId ?? job.providerPlaybackId, lastWebhookAt: new Date(), completedAt: nextJobState === "READY" || nextJobState === "FAILED" ? new Date() : job.completedAt, lastError: nextJobState === "FAILED" ? safeError : null, metadata: Prisma.DbNull } });
     }
-    if (job?.targetId && input.state) {
-      await ctx.prisma.videoDistributionTarget.update({ where: { id: job.targetId }, data: { status: input.state === "READY" ? "READY" : input.state === "FAILED" ? "FAILED" : "WAITING_PROVIDER", lastError: input.state === "FAILED" ? safeError : null, lastStatusAt: new Date() } });
+    if (targetId && input.state) {
+      await ctx.prisma.videoDistributionTarget.update({ where: { id: targetId }, data: { status: input.state === "READY" ? "READY" : input.state === "FAILED" ? "FAILED" : "WAITING_PROVIDER", lastError: input.state === "FAILED" ? safeError : null, lastStatusAt: new Date() } });
     }
     await ctx.prisma.videoProviderWebhookEvent.update({ where: { id: event.id }, data: { status: VideoProviderWebhookStatus.PROCESSED, processedAt: new Date() } });
     if (videoId) await this.orchestrator.reconcileVideoDistribution({ videoId, planId: planId ?? undefined, reason: "WEBHOOK" }, ctx);

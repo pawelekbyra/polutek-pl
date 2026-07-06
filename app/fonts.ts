@@ -1,47 +1,16 @@
-import { Plus_Jakarta_Sans, Outfit, Space_Grotesk, Bebas_Neue, Kalam, Patrick_Hand, Caveat } from "next/font/google";
+type FontVariable = { variable: string };
 
-export const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jakarta",
-  display: "swap",
-});
+function fontVariable(variable: string): FontVariable {
+  return { variable };
+}
 
-export const outfit = Outfit({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-outfit",
-  display: "swap",
-});
-
-export const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-export const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-brand",
-  display: "swap",
-});
-
-export const kalam = Kalam({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "700"],
-  variable: "--font-najs",
-  display: "swap",
-});
-
-export const patrickHand = Patrick_Hand({
-  subsets: ["latin", "latin-ext"],
-  weight: "400",
-  variable: "--font-patrick",
-  display: "swap",
-});
-
-export const caveat = Caveat({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-caveat",
-  display: "swap",
-});
+// Keep font CSS variable hooks stable without making production builds depend on
+// Google Fonts fetches at compile time. The actual font stacks and fallbacks are
+// defined in app/globals.css.
+export const jakarta = fontVariable("font-jakarta");
+export const outfit = fontVariable("font-outfit");
+export const spaceGrotesk = fontVariable("font-space-grotesk");
+export const bebasNeue = fontVariable("font-brand");
+export const kalam = fontVariable("font-najs");
+export const patrickHand = fontVariable("font-patrick");
+export const caveat = fontVariable("font-caveat");
