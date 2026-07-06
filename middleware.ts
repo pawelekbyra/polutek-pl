@@ -16,6 +16,7 @@ const isPublicRoute = createRouteMatcher([
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
+  '/sklep',
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
