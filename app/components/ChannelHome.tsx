@@ -6,6 +6,7 @@ import Hero from "./Hero";
 import { PublicVideoDTO } from "../types/video";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
@@ -137,7 +138,7 @@ function ChannelHomeContent({
                 : "The selected video could not be found. It might have been archived or moved."}
             </p>
             <Link
-              href="/"
+              href={getLocalizedHref(language, "home")}
               className="relative inline-flex items-center justify-center h-[44px] px-10 text-white font-bold text-[14px] transition-all active:scale-95 overflow-hidden rounded-[22px] ink-button"
               style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
             >

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
+import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
@@ -193,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           <div className={cn("flex flex-col justify-between gap-[14px] lg:flex-row lg:items-center", styles.metaRow)}>
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
-                 href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
+                 href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
                  className="w-[46px] h-[46px] rounded-full bg-gradient-to-br from-[#2f2c27] to-[#4a463f] border border-input overflow-hidden shrink-0 hover:opacity-80 transition-opacity relative"
                >
                   <Image
@@ -206,7 +207,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </Link>
                <div className="min-w-0 flex flex-col">
                   <Link
-                    href={video.creator?.slug ? `/channel/${video.creator.slug}` : "#"}
+                    href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
                     className="font-bold ink-text text-[15.5px] leading-[1.2] truncate block"
                   >
                     {video.creator?.name || MAIN_CREATOR_NAME}
@@ -268,7 +269,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </button>
                </div>
                <ShareButton
-                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}/channel/${video.creator?.slug || ''}?v=${video.slug}`}
+                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}${video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : ""}?v=${video.slug}`}
                  title={displayTitle}
                  text={video.description || undefined}
                  className={styles.secondaryAction}

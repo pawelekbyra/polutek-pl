@@ -5,12 +5,13 @@ import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -23,16 +24,17 @@ const Navbar = () => {
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchValue.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+      router.push(`${getLocalizedHref(language, "search")}?q=${encodeURIComponent(searchValue.trim())}`);
       setIsMobileSearchOpen(false);
     } else {
-      router.push("/");
+      router.push(getLocalizedHref(language, "home"));
       setIsMobileSearchOpen(false);
     }
   };
@@ -56,6 +58,10 @@ const Navbar = () => {
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
+  const switchLanguage = (locale: Locale) => {
+    setLanguage(locale);
+    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
+  };
 
   return (
     <div
@@ -101,7 +107,7 @@ const Navbar = () => {
             {/* Logo */}
             <div className="flex items-center shrink-0">
               <Link
-                href="/"
+                href={getLocalizedHref(language, "home")}
                 className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
               >
                 <div className="flex items-start gap-[2px]">
@@ -164,7 +170,7 @@ const Navbar = () => {
               <div className="relative flex h-9 items-center px-1 text-sm font-black" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
                 <Frame radius={18} seed={52} stroke={INK} strokeWidth={1.1} fill="rgba(248,243,231,.8)" />
                 <button
-                  onClick={() => { if (setLanguage) setLanguage("pl"); }}
+                  onClick={() => switchLanguage("pl")}
                   className={cn(
                     "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
                     language === "pl" ? "text-[#171717]" : "text-neutral-500"
@@ -174,7 +180,7 @@ const Navbar = () => {
                 </button>
                 <span className="relative h-5 w-px bg-[#171717]" />
                 <button
-                  onClick={() => { if (setLanguage) setLanguage("en"); }}
+                  onClick={() => switchLanguage("en")}
                   className={cn(
                     "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
                     language === "en" ? "text-[#171717]" : "text-neutral-500"

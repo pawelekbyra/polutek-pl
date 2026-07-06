@@ -120,7 +120,7 @@ describe("public loading/access state UX contracts", () => {
     const content = read("app/components/LanguageContext.tsx");
     // Initial state must come from a static/server-provided value, never a lazy initializer that
     // reads localStorage during render (which would diverge from the server-rendered markup).
-    expect(content).toContain('useState<Language>(initialLanguage ?? "pl")');
+    expect(content).toContain('useState<Language>(forcedLanguage ?? initialLanguage ?? "pl")');
     expect(content).not.toMatch(/useState<Language>\(\(\) =>/);
     expect(content).toContain("useEffect(() => {");
     expect(content).toContain("localStorage.getItem('app-language')");

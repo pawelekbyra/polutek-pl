@@ -16,6 +16,7 @@ import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Frame, NajsIcon, INK } from "../najs/primitives";
 import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
+import { getLocalizedHref } from "@/lib/i18n/routing";
 
 type UserProfile = {
   id: string;
@@ -174,7 +175,7 @@ export function SidebarPlaylist({
         className="relative group/item"
       >
         <Link
-          href={`/?v=${video.slug || video.id}`}
+          href={getLocalizedHref(language === "pl" ? "pl" : "en", "watch", { slug: video.slug || video.id })}
           scroll={false}
           onClick={() => {
             onVideoSelect?.(video.id);
