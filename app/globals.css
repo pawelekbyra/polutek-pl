@@ -1,9 +1,10 @@
 @import '@vidstack/react/player/styles/default/theme.css';
 @import '@vidstack/react/player/styles/default/layouts/video.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@config '../tailwind.config.ts';
 
 @layer components {
   .polutek-vidstack-player {
