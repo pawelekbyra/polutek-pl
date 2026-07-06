@@ -75,7 +75,7 @@ export function CommentComposer({
   const limitId = `${textareaId}-limit`;
   const errorId = `${textareaId}-error`;
 
-  const fieldClassName = "relative min-h-[2.75rem] rounded-2xl border border-[#0f0f0f] bg-white shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] transition-shadow focus-within:shadow-[0_1px_0_rgba(15,15,15,0.14),0_10px_22px_rgba(15,15,15,0.10)]";
+  const fieldClassName = "relative min-h-[2.75rem] border-b-2 border-[#e3ddc9] bg-transparent transition-colors focus-within:border-[#171717]";
 
   const insertEmoji = (emoji: string) => {
     if (!textareaRef.current) return;
@@ -129,7 +129,7 @@ export function CommentComposer({
       <div className="flex-1 min-w-0">
         <form className="relative" onSubmit={handleSubmit} noValidate>
           {replyTo && userProfile && (
-            <div className="flex items-center gap-2 text-[11px] font-bold text-[#0f0f0f] bg-[#eff6ff] px-3 py-1 rounded-md w-fit mb-2 border border-[#0f0f0f] shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)]">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-blue-600 w-fit mb-2">
               <CornerDownRight size={12} />
               {language === "pl" ? (
                 <>
@@ -157,7 +157,7 @@ export function CommentComposer({
           {isViewerLoading ? (
             <div className={fieldClassName}>
               <div
-                className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5 text-[13px] font-bold text-neutral-500"
+                className="relative flex min-h-[2.75rem] w-full items-center justify-center px-0 py-2.5 text-[13px] font-bold text-neutral-500"
                 role="status"
                 aria-live="polite"
               >
@@ -168,7 +168,7 @@ export function CommentComposer({
             </div>
           ) : !canComment ? (
             <div className={fieldClassName}>
-              <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-3.5 py-2.5">
+              <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-0 py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
                     href="#donations"
@@ -216,7 +216,7 @@ export function CommentComposer({
                 aria-invalid={Boolean(errorMessage || isTooLong)}
                 aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
                 disabled={isPending}
-                className="relative w-full bg-transparent text-[#0f0f0f] placeholder:text-neutral-500 focus:outline-none text-[14px] leading-5 transition-all resize-none px-3.5 py-2.5 min-h-[2.75rem]"
+                className="relative w-full bg-transparent text-[#0f0f0f] placeholder:text-neutral-500 focus:outline-none text-[14px] leading-5 transition-all resize-none px-0 py-2.5 min-h-[2.75rem]"
               />
             </div>
           )}
