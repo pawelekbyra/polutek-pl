@@ -163,14 +163,13 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="!max-w-[calc(100vw-1rem)] overflow-visible border-none bg-transparent p-0 shadow-none sm:!max-w-[520px]"
+        className="!w-[calc(100vw-1rem)] !max-w-[430px] overflow-visible !rounded-none !border-0 !bg-transparent !p-0 !shadow-none !ring-0 sm:!w-[430px] sm:!max-w-[430px]"
       >
-        <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto px-6 py-7 sm:px-8 sm:py-8">
-          <Frame radius={24} seed={11} stroke={INK} strokeWidth={1.7} fill="#f1ead9" showShadow />
+        <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border-2 border-[#171717] bg-[#f1ead9] px-5 py-6 shadow-[0_14px_34px_rgba(23,23,23,0.18)] sm:px-6 sm:py-7">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="absolute right-5 top-5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#171717]/20 bg-white/70 text-[18px] font-black leading-none text-[#171717] transition-colors hover:bg-white"
+            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#171717]/20 bg-white/70 text-[18px] font-black leading-none text-[#171717] transition-colors hover:bg-white"
             aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
           >
             ×
