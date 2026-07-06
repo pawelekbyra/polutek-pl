@@ -16,7 +16,6 @@ import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { Frame, NajsIcon, INK } from "../najs/primitives";
 import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
-import { getLocalizedHref } from "@/lib/i18n/routing";
 
 type UserProfile = {
   id: string;
@@ -159,6 +158,7 @@ export function SidebarPlaylist({
         priority: "intent",
       });
     };
+    const homeHref = `${language === "pl" ? "/" : "/en"}?${new URLSearchParams({ v: video.slug || video.id }).toString()}`;
 
     return (
       <div
@@ -175,7 +175,7 @@ export function SidebarPlaylist({
         className="relative group/item"
       >
         <Link
-          href={getLocalizedHref(language === "pl" ? "pl" : "en", "watch", { slug: video.slug || video.id })}
+          href={homeHref}
           scroll={false}
           onClick={() => {
             onVideoSelect?.(video.id);

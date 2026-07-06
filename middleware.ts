@@ -4,27 +4,28 @@ import { generateCSP } from "@/lib/utils/security";
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/pl',
   '/en',
-  '/pl/search',
-  '/en/search',
-  '/pl/watch/(.*)',
-  '/en/watch/(.*)',
-  '/pl/channel/(.*)',
-  '/en/channel/(.*)',
-  '/pl/regulamin',
-  '/en/terms',
-  '/pl/polityka-prywatnosci',
-  '/en/privacy-policy',
-  '/pl/sklep',
-  '/en/shop',
-  '/sklep',
-  '/shop',
   '/search',
+  '/en/search',
   '/watch/(.*)',
+  '/en/watch/(.*)',
   '/channel/(.*)',
+  '/en/channel/(.*)',
   '/regulamin',
+  '/en/terms',
   '/polityka-prywatnosci',
+  '/en/privacy-policy',
+  '/sklep',
+  '/en/shop',
+  // Legacy Polish-prefixed URLs are public so they can redirect without login.
+  '/pl',
+  '/pl/search',
+  '/pl/watch/(.*)',
+  '/pl/channel/(.*)',
+  '/pl/regulamin',
+  '/pl/polityka-prywatnosci',
+  '/pl/sklep',
+  '/shop',
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
@@ -51,7 +52,27 @@ const isPublicRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
+function getLegacyPolishRedirectPath(pathname: string): string | null {
+  if (pathname === '/pl') return '/';
+  if (pathname === '/pl/search') return '/search';
+  if (pathname === '/pl/regulamin') return '/regulamin';
+  if (pathname === '/pl/polityka-prywatnosci') return '/polityka-prywatnosci';
+  if (pathname === '/pl/sklep') return '/sklep';
+  const watch = pathname.match(/^\/pl\/watch\/(.+)$/);
+  if (watch) return `/watch/${watch[1]}`;
+  const channel = pathname.match(/^\/pl\/channel\/(.+)$/);
+  if (channel) return `/channel/${channel[1]}`;
+  return null;
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  const legacyRedirectPath = getLegacyPolishRedirectPath(req.nextUrl.pathname);
+  if (legacyRedirectPath) {
+    const targetUrl = req.nextUrl.clone();
+    targetUrl.pathname = legacyRedirectPath;
+    return NextResponse.redirect(targetUrl, 308);
+  }
+
   // Specific GET exception for comments (if product needs public comments).
   // Mutations are protected but still flow through the shared response setup
   // below so request IDs and security headers are attached consistently.

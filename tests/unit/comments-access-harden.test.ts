@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 const embedded = () => readFileSync('app/components/comments/EmbeddedComments.tsx', 'utf8');
 const hook = () => readFileSync('app/components/comments/hooks/useComments.ts', 'utf8');
 const channelHome = () => readFileSync('app/components/ChannelHome.tsx', 'utf8');
-const page = () => readFileSync('app/[locale]/page.tsx', 'utf8');
+const page = () => readFileSync('app/home-page.tsx', 'utf8');
 
 describe('comments access hardening', () => {
   it('EmbeddedComments: derives canComment strictly from viewer state and isPatron is renamed to isPatronDecorative', () => {

@@ -54,7 +54,8 @@ describe("#1104 search/sidebar cleanup contracts", () => {
   it("playlist items use one slug-first link with aria-current and non-blocking lock overlay", () => {
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect((sidebar.match(/<Link/g) ?? []).length).toBe(1);
-    expect(sidebar).toContain("getLocalizedHref(language === \"pl\" ? \"pl\" : \"en\", \"watch\", { slug: video.slug || video.id })");
+    expect(sidebar).toContain('const homeHref = `${language === "pl" ? "/" : "/en"}?${new URLSearchParams({ v: video.slug || video.id }).toString()}`');
+    expect(sidebar).toContain("href={homeHref}");
     expect(sidebar).toContain('aria-current={isCurrent ? "page" : undefined}');
     expect(sidebar).toContain('className="pointer-events-none"');
     expect(sidebar).toContain("onMouseEnter={() => {");

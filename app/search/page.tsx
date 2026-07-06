@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
+import SearchPage from "@/app/[locale]/search/page";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { appendQueryString, getLocalizedHref } from "@/lib/i18n/routing";
+
 export const dynamic = "force-dynamic";
-export default async function LegacySearchRedirect(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+
+export default async function RootSearchPage(props: { searchParams: Promise<{ q?: string }> }) {
   const [searchParams, locale] = await Promise.all([props.searchParams, resolveInitialLanguage()]);
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (Array.isArray(value)) value.forEach((item) => query.append(key, item));
-    else if (value) query.set(key, value);
+  if (locale === "en") {
+    const query = new URLSearchParams();
+    if (searchParams.q) query.set("q", searchParams.q);
+    redirect(appendQueryString(getLocalizedHref("en", "search"), query));
   }
-  redirect(appendQueryString(getLocalizedHref(locale, "search"), query));
+  return <SearchPage params={Promise.resolve({ locale: "pl" })} searchParams={Promise.resolve(searchParams)} />;
 }

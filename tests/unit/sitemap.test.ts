@@ -38,13 +38,13 @@ describe('sitemap', () => {
     const result = await sitemap();
 
     expect(result).toEqual(expect.arrayContaining([
-      expect.objectContaining({ url: 'https://test.local/pl' }),
+      expect.objectContaining({ url: 'https://test.local/' }),
       expect.objectContaining({ url: 'https://test.local/en' }),
-      expect.objectContaining({ url: 'https://test.local/pl/channel/main' }),
+      expect.objectContaining({ url: 'https://test.local/channel/main' }),
       expect.objectContaining({ url: 'https://test.local/en/channel/main' }),
-      expect.objectContaining({ url: 'https://test.local/pl/watch/my-video' }),
+      expect.objectContaining({ url: 'https://test.local/watch/my-video' }),
       expect.objectContaining({ url: 'https://test.local/en/watch/my-video' }),
-      expect.objectContaining({ url: 'https://test.local/pl/sklep' }),
+      expect.objectContaining({ url: 'https://test.local/sklep' }),
       expect.objectContaining({ url: 'https://test.local/en/shop' }),
     ]));
   });

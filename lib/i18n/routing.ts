@@ -3,13 +3,13 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "pl";
 
 export const ROUTES = {
-  home: { pl: "/pl", en: "/en" },
-  search: { pl: "/pl/search", en: "/en/search" },
-  watch: { pl: "/pl/watch/:slug", en: "/en/watch/:slug" },
-  channel: { pl: "/pl/channel/:slug", en: "/en/channel/:slug" },
-  terms: { pl: "/pl/regulamin", en: "/en/terms" },
-  privacy: { pl: "/pl/polityka-prywatnosci", en: "/en/privacy-policy" },
-  shop: { pl: "/pl/sklep", en: "/en/shop" },
+  home: { pl: "/", en: "/en" },
+  search: { pl: "/search", en: "/en/search" },
+  watch: { pl: "/watch/:slug", en: "/en/watch/:slug" },
+  channel: { pl: "/channel/:slug", en: "/en/channel/:slug" },
+  terms: { pl: "/regulamin", en: "/en/terms" },
+  privacy: { pl: "/polityka-prywatnosci", en: "/en/privacy-policy" },
+  shop: { pl: "/sklep", en: "/en/shop" },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
@@ -40,33 +40,35 @@ export function appendQueryString(path: string, queryString?: string | URLSearch
   return query ? `${path}?${query}` : path;
 }
 
-export function localizedPathFromLegacyPath(pathname: string, locale: Locale): string | null {
+function pathFromUnprefixedPath(pathname: string, locale: Locale): string | null {
   if (pathname === "/") return getLocalizedHref(locale, "home");
   if (pathname === "/search") return getLocalizedHref(locale, "search");
   const watch = pathname.match(/^\/watch\/([^/]+)\/?$/);
   if (watch) return getLocalizedHref(locale, "watch", { slug: decodeURIComponent(watch[1] ?? "") });
   const channel = pathname.match(/^\/channel\/([^/]+)\/?$/);
   if (channel) return getLocalizedHref(locale, "channel", { slug: decodeURIComponent(channel[1] ?? "") });
-  if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
-  if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
+  if (pathname === "/regulamin" || pathname === "/terms") return getLocalizedHref(locale, "terms");
+  if (pathname === "/polityka-prywatnosci" || pathname === "/privacy-policy") return getLocalizedHref(locale, "privacy");
   if (pathname === "/sklep" || pathname === "/shop") return getLocalizedHref(locale, "shop");
   return null;
+}
+
+export function localizedPathFromLegacyPath(pathname: string, locale: Locale): string | null {
+  if (pathname === "/pl") return getLocalizedHref(locale, "home");
+  if (pathname.startsWith("/pl/")) {
+    const unprefixed = pathname.slice(3) || "/";
+    return pathFromUnprefixedPath(unprefixed, locale);
+  }
+  return pathFromUnprefixedPath(pathname, locale);
 }
 
 export function switchLocalePath(pathname: string, targetLocale: Locale): string {
   const parts = pathname.split("/").filter(Boolean);
   const currentLocale = normalizeLocale(parts[0]);
-  if (!currentLocale) return localizedPathFromLegacyPath(pathname, targetLocale) ?? getLocalizedHref(targetLocale, "home");
+  if (!currentLocale) return pathFromUnprefixedPath(pathname, targetLocale) ?? getLocalizedHref(targetLocale, "home");
   const rest = parts.slice(1);
   if (rest.length === 0) return getLocalizedHref(targetLocale, "home");
-  const [segment, slug] = rest;
-  if (segment === "watch" && slug) return getLocalizedHref(targetLocale, "watch", { slug: decodeURIComponent(slug) });
-  if (segment === "channel" && slug) return getLocalizedHref(targetLocale, "channel", { slug: decodeURIComponent(slug) });
-  if (segment === "search") return getLocalizedHref(targetLocale, "search");
-  if (segment === "regulamin" || segment === "terms") return getLocalizedHref(targetLocale, "terms");
-  if (segment === "polityka-prywatnosci" || segment === "privacy-policy") return getLocalizedHref(targetLocale, "privacy");
-  if (segment === "sklep" || segment === "shop") return getLocalizedHref(targetLocale, "shop");
-  return getLocalizedHref(targetLocale, "home");
+  return pathFromUnprefixedPath(`/${rest.join("/")}`, targetLocale) ?? getLocalizedHref(targetLocale, "home");
 }
 
 export function getRouteLocaleFromPathname(pathname: string): Locale | null {
