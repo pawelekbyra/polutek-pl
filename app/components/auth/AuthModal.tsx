@@ -161,19 +161,30 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden border-none bg-transparent p-0 shadow-none">
-        <div className="relative p-6 sm:p-7">
-          <Frame radius={18} seed={11} stroke={INK} strokeWidth={1.4} fill="#f1ead9" />
+      <DialogContent
+        showCloseButton={false}
+        className="!max-w-[calc(100vw-1rem)] overflow-visible border-none bg-transparent p-0 shadow-none sm:!max-w-[520px]"
+      >
+        <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto px-6 py-7 sm:px-8 sm:py-8">
+          <Frame radius={24} seed={11} stroke={INK} strokeWidth={1.7} fill="#f1ead9" showShadow />
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-5 top-5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#171717]/20 bg-white/70 text-[18px] font-black leading-none text-[#171717] transition-colors hover:bg-white"
+            aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
+          >
+            ×
+          </button>
           <div className="relative z-10">
             {/* Brand header — same POLUTEK.PL logo mark and size as the topbar. */}
-            <div className="mb-3 flex items-center justify-center border-b border-[#171717]/10 pb-3">
+            <div className="mb-4 flex items-center justify-center border-b border-[#171717]/10 pb-4 pr-8">
               <BrandName
-                className="text-[22px] leading-none"
+                className="text-[23px] leading-none"
                 variant="classic"
                 style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
               />
             </div>
-            <DialogHeader>
+            <DialogHeader className="text-center">
               <DialogTitle className="text-2xl font-black tracking-tight ink-text">{title}</DialogTitle>
             </DialogHeader>
 
@@ -187,7 +198,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "sign-in" && (
-              <form onSubmit={handlePasswordSignIn} className="mt-4 space-y-3">
+              <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
@@ -205,7 +216,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "sign-up" && (
-              <form onSubmit={handleSignUp} className="mt-4 space-y-3">
+              <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
                 <Field label={isPl ? "Nazwa (opcjonalnie)" : "Name (optional)"} type="text" value={name} onChange={setName} autoComplete="name" />
@@ -223,7 +234,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "verify-email" && (
-              <form onSubmit={handleVerifyEmail} className="mt-4 space-y-3">
+              <form onSubmit={handleVerifyEmail} className="mt-5 space-y-3.5">
                 <p className="text-[13px] text-[#4a4a4a]">
                   {isPl ? "Wpisz kod, który wysłaliśmy na " : "Enter the code we sent to "}<strong>{email}</strong>.
                 </p>
@@ -233,7 +244,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "forgot" && (
-              <form onSubmit={handleForgot} className="mt-4 space-y-3">
+              <form onSubmit={handleForgot} className="mt-5 space-y-3.5">
                 <p className="text-[13px] text-[#4a4a4a]">
                   {isPl ? "Podaj e-mail — wyślemy kod do zresetowania hasła." : "Enter your email — we'll send a reset code."}
                 </p>
@@ -248,7 +259,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "reset" && (
-              <form onSubmit={handleReset} className="mt-4 space-y-3">
+              <form onSubmit={handleReset} className="mt-5 space-y-3.5">
                 <Field label={isPl ? "Kod z e-maila" : "Email code"} type="text" value={code} onChange={setCode} inputMode="numeric" required />
                 <Field label={isPl ? "Nowe hasło" : "New password"} type="password" value={newPassword} onChange={setNewPassword} autoComplete="new-password" required />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Ustaw hasło" : "Set password"} />
