@@ -6,10 +6,10 @@ const source = (path: string) => readFileSync(path, "utf8");
 
 describe("#1104 search/sidebar cleanup contracts", () => {
   it("search page uses the dedicated search service and slug-first result links", () => {
-    const page = source("app/search/page.tsx");
+    const page = source("app/[locale]/search/page.tsx");
     expect(page).toContain("VideoSearchService.searchPublicVideos");
     expect(page).not.toContain("getSitemapVideos");
-    expect(page).toContain("/?v=${video.slug || video.id}");
+    expect(page).toContain("getLocalizedHref(locale, \"watch\", { slug: video.slug || video.id })");
   });
 
   it("normalizes sidebar order consistently", () => {
@@ -54,7 +54,7 @@ describe("#1104 search/sidebar cleanup contracts", () => {
   it("playlist items use one slug-first link with aria-current and non-blocking lock overlay", () => {
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect((sidebar.match(/<Link/g) ?? []).length).toBe(1);
-    expect(sidebar).toContain("/?v=${video.slug || video.id}");
+    expect(sidebar).toContain("getLocalizedHref(language === \"pl\" ? \"pl\" : \"en\", \"watch\", { slug: video.slug || video.id })");
     expect(sidebar).toContain('aria-current={isCurrent ? "page" : undefined}');
     expect(sidebar).toContain('className="pointer-events-none"');
     expect(sidebar).toContain("onMouseEnter={() => {");

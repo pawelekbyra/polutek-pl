@@ -13,13 +13,13 @@ const FORBIDDEN_STRINGS = [
 ];
 
 const FILES_TO_CHECK = [
-  'app/page.tsx',
-  'app/channel/[slug]/page.tsx',
+  'app/[locale]/page.tsx',
+  'app/[locale]/channel/[slug]/page.tsx',
   'app/layout.tsx',
   'app/components/LanguageContext.tsx',
   'app/components/Hero.tsx',
-  'app/regulamin/page.tsx',
-  'app/polityka-prywatnosci/page.tsx',
+  'app/[locale]/regulamin/page.tsx',
+  'app/[locale]/polityka-prywatnosci/page.tsx',
   'app/components/channel/DonationBox.tsx',
   'app/admin/users/payments/page.tsx',
   'app/admin/users/[userId]/page.tsx',
@@ -43,7 +43,7 @@ describe('Single-Channel Copy Consistency', () => {
   });
 
   it('should use single-channel terminology', () => {
-    const pageContent = fs.readFileSync(path.resolve(process.cwd(), 'app/page.tsx'), 'utf8');
+    const pageContent = fs.readFileSync(path.resolve(process.cwd(), 'app/[locale]/page.tsx'), 'utf8');
     expect(pageContent).toContain('kanał wideo');
 
     const layoutContent = fs.readFileSync(path.resolve(process.cwd(), 'app/layout.tsx'), 'utf8');

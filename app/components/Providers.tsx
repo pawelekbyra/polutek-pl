@@ -1,10 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LanguageProvider } from "./LanguageContext";
 import { ToastProvider } from "@/app/hooks/useToast";
 import { MotionConfig } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { getRouteLocaleFromPathname } from "@/lib/i18n/routing";
 
 const CLIENT_API_GET_TIMEOUT_MS = 15_000;
 const TIMEOUT_PATHS = [
@@ -90,6 +92,10 @@ export default function Providers({
     installClientApiFetchTimeout();
   }
 
+  const pathname = usePathname();
+  const routeLocale = useMemo(() => getRouteLocaleFromPathname(pathname || "/"), [pathname]);
+  const effectiveInitialLanguage = routeLocale ?? initialLanguage;
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -105,7 +111,7 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider initialLanguage={initialLanguage}>
+      <LanguageProvider initialLanguage={effectiveInitialLanguage} forcedLanguage={routeLocale ?? undefined}>
         <MotionConfig reducedMotion="user">
           <ToastProvider>{children}</ToastProvider>
         </MotionConfig>

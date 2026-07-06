@@ -26,20 +26,24 @@ function persistLanguage(lang: Language) {
   document.cookie = `app-language=${lang}; path=/; max-age=31536000; samesite=lax`;
 }
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLanguage?: Language }> = ({
+export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLanguage?: Language; forcedLanguage?: Language }> = ({
   children,
   initialLanguage,
+  forcedLanguage,
 }) => {
   // The server already resolved the language (DB → cookie → geolocation → Accept-Language),
   // so we start from that value: correct first paint, no hydration mismatch.
-  const [language, setLanguageState] = useState<Language>(initialLanguage ?? "pl");
+  const [language, setLanguageState] = useState<Language>(forcedLanguage ?? initialLanguage ?? "pl");
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (initialLanguage) {
+    const routeOrInitialLanguage = forcedLanguage ?? initialLanguage;
+    if (routeOrInitialLanguage) {
       // Mirror the server decision into cookie + localStorage so client reads and the next
       // SSR pass agree, and so a logged-out choice survives future visits.
-      persistLanguage(initialLanguage);
+      persistLanguage(routeOrInitialLanguage);
+      setLanguageState(routeOrInitialLanguage);
+      document.documentElement.lang = routeOrInitialLanguage;
       setIsInitialized(true);
       return;
     }
@@ -54,7 +58,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLang
       setLanguageState('en');
     }
     setIsInitialized(true);
-  }, [initialLanguage]);
+  }, [initialLanguage, forcedLanguage]);
 
   const setLanguage = useCallback(async (lang: Language, skipSync: boolean = false) => {
     const prevLang = language;

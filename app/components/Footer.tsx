@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from './LanguageContext';
+import { getLocalizedHref } from '@/lib/i18n/routing';
 import { NajsSeparator } from './najs/primitives';
 
 const Footer = () => {
@@ -20,10 +21,10 @@ const Footer = () => {
         </span>
 
         <div className="order-1 flex justify-center gap-[22px] text-center text-[12.5px] text-muted-foreground font-medium md:order-none">
-          <Link href="/regulamin" className="hover:text-foreground transition-colors">
+          <Link href={getLocalizedHref(language, "terms")} className="hover:text-foreground transition-colors">
             {isPl ? "Regulamin" : "Terms"}
           </Link>
-          <Link href="/polityka-prywatnosci" className="hover:text-foreground transition-colors">
+          <Link href={getLocalizedHref(language, "privacy")} className="hover:text-foreground transition-colors">
             {isPl ? "Polityka prywatności" : "Privacy Policy"}
           </Link>
         </div>
