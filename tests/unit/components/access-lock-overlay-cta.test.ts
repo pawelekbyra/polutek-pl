@@ -20,9 +20,9 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
     expect(source).toContain("Wesprzyj kanał");
   });
 
-  it("uses najs paper style overlay", () => {
+  it("uses the flat channel card design tokens", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain("rgba(248,243,231");
-    expect(source).toContain("Frame");
+    expect(source).toContain("var(--chan-card)");
+    expect(source).toContain("var(--chan-ink)");
   });
 });
