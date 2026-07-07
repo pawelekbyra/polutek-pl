@@ -54,7 +54,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SPAM">{language === "pl" ? "Spam" : "Spam"}</SelectItem>
+                <SelectItem value="SPAM">{language === "pl" ? "Kijowy Komentarz" : "Spam"}</SelectItem>
                 <SelectItem value="HARASSMENT">{language === "pl" ? "Nękanie" : "Harassment"}</SelectItem>
                 <SelectItem value="HATE">{language === "pl" ? "Mowa nienawiści" : "Hate speech"}</SelectItem>
                 <SelectItem value="NSFW">{language === "pl" ? "Treści nieodpowiednie" : "NSFW"}</SelectItem>
