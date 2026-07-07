@@ -174,8 +174,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             ×
           </button>
           <div>
-            {/* Brand header — same POLUTEK.PL logo mark and size as the topbar. */}
-            <div className="mb-4 flex items-center justify-center border-b border-[var(--chan-line)] pb-4 pr-8">
+            {/* Brand header — centered against the modal itself, not balanced against the close button. */}
+            <div className="mb-4 grid place-items-center border-b border-[var(--chan-line)] pb-4">
               <BrandName className="text-[23px] leading-none" variant="classic" />
             </div>
             <DialogHeader className="text-center">
