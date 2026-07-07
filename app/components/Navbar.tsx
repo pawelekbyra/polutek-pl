@@ -5,10 +5,11 @@ import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
-import BrandName from "./BrandName";
+import logoPerfect from "@/logoperfect.png";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -102,12 +103,15 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex items-start gap-1.5 hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex h-8 items-center hover:opacity-85 transition-all active:scale-95"
+                aria-label="POLUTEK.PL"
               >
-                <BrandName className="text-[19px] md:text-[21px] leading-none tracking-[0.04em]" variant="classic" />
-                <span className="relative -top-2.5 text-[8px] font-extrabold uppercase tracking-[0.05em] leading-none text-[#2563EB] bg-[#EFF3FE] rounded-[5px] px-[5px] py-[3px] select-none">
-                  Beta
-                </span>
+                <Image
+                  src={logoPerfect}
+                  alt="POLUTEK.PL"
+                  priority
+                  className="h-[24px] w-auto object-contain md:h-[26px]"
+                />
               </Link>
             </div>
 
