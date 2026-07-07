@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { Frame, INK, BLUE } from '../najs/primitives';
 import BrandName from '../BrandName';
+
+const INK = '#211d18';
+const BLUE = '#2563eb';
 
 interface CheckoutSummaryPanelProps {
   language: string;
@@ -36,7 +38,7 @@ function SupportHandDrawing() {
           strokeLinejoin="round"
         />
         {/* highlight stroke inside the heart */}
-        <path d="M 76 40 C 74 44 74 49 77 54" fill="none" stroke="#f7f1e4" strokeWidth="3" strokeLinecap="round" opacity=".85" />
+        <path d="M 76 40 C 74 44 74 49 77 54" fill="none" stroke="#eff3fe" strokeWidth="3" strokeLinecap="round" opacity=".85" />
       </g>
       {/* open hand cradling the heart */}
       <g fill="none" stroke={INK} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
@@ -54,8 +56,7 @@ function SupportHandDrawing() {
 }
 
 /**
- * Left-hand summary panel of the desktop checkout — designed from scratch in the site's
- * paper + fineliner language (replaces the old dark gradient billboard).
+ * Left-hand summary panel of the desktop checkout, in the flat --chan-* design language.
  */
 export default function CheckoutSummaryPanel({
   language,
@@ -91,24 +92,10 @@ export default function CheckoutSummaryPanel({
       ];
 
   return (
-    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r paper-border paper-surface-soft px-10 py-10 ink-text md:flex md:w-[45%] lg:px-14">
-      {/* faint grid, same as the splash screen */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'linear-gradient(90deg, rgba(18,18,18,0.06) 1px, transparent 1px), linear-gradient(rgba(18,18,18,0.06) 1px, transparent 1px)',
-          backgroundSize: '42px 42px',
-        }}
-      />
-
+    <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[var(--chan-line)] bg-[var(--chan-surface)] px-10 py-10 text-[var(--chan-ink)] md:flex md:w-[45%] lg:px-14">
       {/* brand */}
       <div className="relative z-10">
-        <BrandName
-          className="text-[22px] leading-none"
-          variant="classic"
-          style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
-        />
+        <BrandName className="text-[22px] leading-none" variant="classic" />
       </div>
 
       {/* centre: drawing + message + amount */}
@@ -116,52 +103,45 @@ export default function CheckoutSummaryPanel({
         <SupportHandDrawing />
 
         <div>
-          <h1
-            className="m-0 text-[30px] font-bold leading-[1.15] lg:text-[34px]"
-            style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-          >
+          <h1 className="font-brand m-0 text-[30px] font-bold leading-[1.15] lg:text-[34px]">
             <span
               className="px-[4px]"
-              style={{ background: 'linear-gradient(180deg, transparent 55%, rgba(251,224,138,0.72) 55%, rgba(251,224,138,0.72) 94%, transparent 94%)' }}
+              style={{ background: 'linear-gradient(180deg, transparent 55%, #EFF3FE 55%, #EFF3FE 94%, transparent 94%)' }}
             >
               {heading}
             </span>
           </h1>
-          <p className="mt-3 max-w-md text-[14px] leading-[1.65] body-text">{lead}</p>
+          <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[var(--chan-body)]">{lead}</p>
           {videoTitle && (
-            <p className="mt-2 max-w-md truncate text-[12px] italic muted-text">
+            <p className="mt-2 max-w-md truncate text-[12px] italic text-[var(--chan-muted)]">
               {isPl ? 'Wspierasz przy: ' : 'Supporting from: '}&bdquo;{videoTitle}&rdquo;
             </p>
           )}
         </div>
 
         {/* amount card */}
-        <div className="relative w-fit min-w-[220px] px-7 py-4">
-          <Frame radius={14} seed={21} stroke={INK} strokeWidth={1.4} fill="rgba(248,243,231,.94)" showShadow />
-          <div className="relative z-10 flex items-baseline gap-2">
-            <span
-              className="text-[44px] font-bold leading-none tabular-nums"
-              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-            >
+        <div className="w-fit min-w-[220px] rounded-2xl border border-[var(--chan-line)] bg-white px-7 py-4 shadow-[0_4px_18px_rgba(23,23,23,0.05)]">
+          <div className="flex items-baseline gap-2">
+            <span className="font-brand text-[44px] font-bold leading-none tabular-nums text-[var(--chan-ink)]">
               {amount === '' ? '—' : amount}
             </span>
-            <span className="text-[18px] font-bold muted-text">{selectedCurrency}</span>
+            <span className="text-[18px] font-bold text-[var(--chan-muted)]">{selectedCurrency}</span>
           </div>
-          <p className="relative z-10 mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] muted-text">
+          <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--chan-muted)]">
             {isPl ? 'Wpłata jednorazowa' : 'One-time payment'}
           </p>
         </div>
 
-        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed paper-border pt-[12px] text-[13px]">
+        <ul className="m-0 flex max-w-md flex-col gap-[8px] border-t border-dashed border-[var(--chan-line-soft)] pt-[12px] text-[13px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? 'flex items-start gap-[8px] italic muted-text' : 'flex items-start gap-[8px]'}
+              className={bullet.soft ? 'flex items-start gap-[8px] italic text-[var(--chan-muted)]' : 'flex items-start gap-[8px]'}
             >
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[10px] text-primary">◆</span>
               ) : (
-                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full ink-button text-[9px] font-bold text-[var(--najs-paper)]">✓</span>
+                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-ink)] text-[9px] font-bold text-white">✓</span>
               )}
               {bullet.text}
             </li>
@@ -170,7 +150,7 @@ export default function CheckoutSummaryPanel({
       </div>
 
       {/* footer */}
-      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] muted-text">
+      <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] text-[var(--chan-muted)]">
         <span>{MAIN_CREATOR_NAME} &copy; {new Date().getFullYear()}</span>
         <span>{isPl ? 'Bezpieczna płatność · Stripe' : 'Secure payment · Stripe'}</span>
       </div>

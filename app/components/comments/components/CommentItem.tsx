@@ -116,19 +116,19 @@ export function CommentItem({
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "relative flex items-start gap-[13px] border-t border-[#e3ddc9] px-1 py-[18px] transition-colors duration-1000 first:border-t-0 first:pt-0",
+        "relative flex items-start gap-[13px] border-t border-[var(--chan-line)] px-1 py-[18px] transition-colors duration-1000 first:border-t-0 first:pt-0",
         isReply ? "group/reply" : "group/comment",
-        isHighlighted && "-mx-1 rounded-lg bg-blue-50/60 px-2",
+        isHighlighted && "-mx-1 rounded-lg bg-[#EFF3FE]/60 px-2",
       )}
     >
       {!isReply && comment.isPinned && (
-        <span className="absolute right-1 top-[18px] z-[6] inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-blue-600">
-          <Star size={10} className="fill-blue-600" />
+        <span className="absolute right-1 top-[18px] z-[6] inline-flex items-center gap-1 rounded-full bg-[#EFF3FE] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#2563EB]">
+          <Star size={10} className="fill-[#2563EB]" />
           {language === "pl" ? "Przypięty" : "Pinned"}
         </span>
       )}
       <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
-        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-[#0f0f0f] relative">
+        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-[var(--chan-line)] relative">
             <SafeAvatar
             src={comment.author?.imageUrl}
             alt={comment.author?.displayName || "Avatar"}
@@ -138,7 +138,7 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[#0f0f0f] tracking-wider uppercase whitespace-nowrap">
+          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[var(--chan-line)] tracking-wider uppercase whitespace-nowrap">
             6-7
           </span>
         )}
@@ -148,13 +148,13 @@ export function CommentItem({
           <div className="flex items-center gap-1.5 leading-none">
             <span
               className={cn(
-                "font-bold text-[#0f0f0f] leading-tight text-[13px]",
+                "font-bold text-[var(--chan-ink)] leading-tight text-[13px]",
               )}
             >
               {comment.author?.displayName || "Użytkownik"}
             </span>
 
-            <span className={cn("text-[#8A857B] leading-none text-[12px]")}>
+            <span className={cn("text-[var(--chan-muted)] leading-none text-[12px]")}>
               {isClient &&
               comment.createdAt &&
               !isNaN(new Date(comment.createdAt).getTime())
@@ -181,7 +181,7 @@ export function CommentItem({
             )}
 
             {userProfile && showMenu && (
-              <div className="absolute right-0 mt-1 w-48 bg-white border border-[#0f0f0f] rounded-lg shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] z-50 py-1 animate-in fade-in zoom-in duration-150">
+              <div className="absolute right-0 mt-1 w-48 bg-white border border-[var(--chan-line)] rounded-lg shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] z-50 py-1 animate-in fade-in zoom-in duration-150">
                 <button
                   onClick={() => {
                     const url = new URL(window.location.href);
@@ -275,7 +275,7 @@ export function CommentItem({
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-white border border-[#0f0f0f] rounded-md p-2 text-sm shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[#0f0f0f]/20"
+              className="w-full bg-white border border-[var(--chan-line)] rounded-md p-2 text-sm shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[var(--chan-ink)]/20"
               autoFocus
             />
             <div className="flex gap-2">
@@ -295,7 +295,7 @@ export function CommentItem({
             </div>
           </div>
         ) : (
-          <p className="text-[#0f0f0f] text-[14px] leading-[1.5]">
+          <p className="text-[var(--chan-ink)] text-[14px] leading-[1.5]">
             {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
           </p>
         )}
@@ -314,7 +314,7 @@ export function CommentItem({
               "inline-flex h-6 shrink-0 items-center justify-center gap-1.5 transition-all group",
               isLiked
                 ? "text-primary"
-                : "text-[#606060] hover:text-[#0f0f0f]",
+                : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
             )}
           >
             <LikePop active={isLiked}>
@@ -331,7 +331,7 @@ export function CommentItem({
             onClick={() => userProfile && onDislike(comment.id)}
             className={cn(
               "inline-flex h-6 shrink-0 items-center justify-center transition-all",
-              comment.viewerReaction === "DISLIKE" ? "text-primary" : "text-[#606060] hover:text-[#0f0f0f]",
+              comment.viewerReaction === "DISLIKE" ? "text-primary" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
             )}
             aria-label={language === "pl" ? "Nie lubię" : "Dislike"}
           >
@@ -351,7 +351,7 @@ export function CommentItem({
           {!isReply && canComment && (
             <button
               onClick={() => userProfile && onReply(comment.id)}
-              className="text-[12px] font-bold text-[#0f0f0f] hover:bg-secondary px-2.5 py-0.5 rounded-md transition-all"
+              className="text-[12px] font-bold text-[var(--chan-ink)] hover:bg-secondary px-2.5 py-0.5 rounded-md transition-all"
             >
               {t.reply || "Odpowiedz"}
             </button>

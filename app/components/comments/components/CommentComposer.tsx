@@ -75,7 +75,7 @@ export function CommentComposer({
   const limitId = `${textareaId}-limit`;
   const errorId = `${textareaId}-error`;
 
-  const fieldClassName = "relative min-h-[2.75rem] border-b-2 border-[#e3ddc9] bg-transparent transition-colors focus-within:border-[#171717]";
+  const fieldClassName = "relative min-h-[2.75rem] rounded-2xl bg-[var(--chan-surface)] px-4 transition-colors focus-within:bg-[var(--chan-line)]";
 
   const insertEmoji = (emoji: string) => {
     if (!textareaRef.current) return;
@@ -123,13 +123,13 @@ export function CommentComposer({
           alt={userProfile.name || "Avatar"}
           size={40}
           fallbackSeed={userProfile.id}
-          className="mt-1 border border-[#0f0f0f]"
+          className="mt-1 border border-[var(--chan-line)]"
         />
       )}
       <div className="flex-1 min-w-0">
         <form className="relative" onSubmit={handleSubmit} noValidate>
           {replyTo && userProfile && (
-            <div className="flex items-center gap-2 text-[11px] font-bold text-blue-600 w-fit mb-2">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-[#2563EB] w-fit mb-2">
               <CornerDownRight size={12} />
               {language === "pl" ? (
                 <>
@@ -157,7 +157,7 @@ export function CommentComposer({
           {isViewerLoading ? (
             <div className={fieldClassName}>
               <div
-                className="relative flex min-h-[2.75rem] w-full items-center justify-center px-0 py-2.5 text-[13px] font-bold text-neutral-500"
+                className="relative flex min-h-[2.75rem] w-full items-center justify-center py-2.5 text-[13px] font-bold text-[var(--chan-muted)]"
                 role="status"
                 aria-live="polite"
               >
@@ -168,11 +168,11 @@ export function CommentComposer({
             </div>
           ) : !canComment ? (
             <div className={fieldClassName}>
-              <div className="relative flex min-h-[2.75rem] w-full items-center justify-center px-0 py-2.5">
+              <div className="relative flex min-h-[2.75rem] w-full items-center justify-center py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
                     href="#donations"
-                    className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                    className="text-[14px] font-bold text-[#2563EB] underline underline-offset-4 hover:opacity-80 transition-all text-center"
                   >
                     {language === "pl"
                       ? "Zostaw napiwek, aby komentować"
@@ -182,7 +182,7 @@ export function CommentComposer({
                   <button
                     type="button"
                     onClick={() => openAuthModal("sign-in")}
-                    className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                    className="text-[14px] font-bold text-[#2563EB] underline underline-offset-4 hover:opacity-80 transition-all text-center"
                   >
                     {t.signInToComment}
                   </button>
@@ -216,7 +216,7 @@ export function CommentComposer({
                 aria-invalid={Boolean(errorMessage || isTooLong)}
                 aria-describedby={`${limitId}${errorMessage || isTooLong ? ` ${errorId}` : ""}`}
                 disabled={isPending}
-                className="relative w-full bg-transparent text-[#0f0f0f] placeholder:text-neutral-500 focus:outline-none text-[14px] leading-5 transition-all resize-none px-0 py-2.5 min-h-[2.75rem]"
+                className="relative w-full bg-transparent text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)] focus:outline-none text-[14px] leading-5 transition-all resize-none py-2.5 min-h-[2.75rem]"
               />
             </div>
           )}
@@ -245,7 +245,7 @@ export function CommentComposer({
                     {showEmojiPanel ? "✕" : "więcej"}
                   </button>
                   {showEmojiPanel && (
-                    <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-[#0f0f0f] rounded-xl shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)] p-2 w-[300px] max-h-[200px] overflow-y-auto">
+                    <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-[var(--chan-line)] rounded-xl shadow-[0_8px_26px_rgba(23,23,23,0.12)] p-2 w-[300px] max-h-[200px] overflow-y-auto">
                       <div className="flex flex-wrap gap-0.5">
                         {EXTENDED_EMOJIS.map((emoji) => (
                           <button
@@ -305,11 +305,11 @@ export function CommentComposer({
 
               {uploadedImageUrl && (
                 <div className="relative inline-block mb-2">
-                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-[#0f0f0f] object-contain" />
+                  <img src={uploadedImageUrl} alt="upload preview" className="max-h-[120px] max-w-[200px] rounded-lg border border-[var(--chan-line)] object-contain" />
                   <button
                     type="button"
                     onClick={() => setUploadedImageUrl(null)}
-                    className="absolute -top-1 -right-1 bg-white border border-[#0f0f0f] rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
+                    className="absolute -top-1 -right-1 bg-white border border-[var(--chan-line)] rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-red-50 hover:text-red-500"
                   >✕</button>
                 </div>
               )}

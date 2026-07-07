@@ -72,15 +72,13 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
       <button
         type="submit"
         disabled={isLoading || !stripe || !elements}
-        className="group relative w-full overflow-hidden rounded-2xl ink-button py-5 text-[13px] font-black uppercase tracking-[0.2em] text-[var(--najs-paper)] transition-all duration-500 hover:bg-[rgba(23,23,23,0.9)] hover:shadow-2xl hover:shadow-blue-500/20 disabled:opacity-50 active:scale-[0.98]"
+        className="group relative w-full overflow-hidden rounded-[16px] bg-[#2563EB] py-5 font-brand text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:-translate-y-px hover:shadow-xl disabled:opacity-50 active:scale-[0.98]"
       >
-        <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-600/0 transition-transform duration-1000 ease-in-out group-hover:translate-x-[100%]" />
-
         <div className="relative flex items-center justify-center gap-3">
           {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+            <div className="h-2 w-2 animate-pulse rounded-full bg-white" />
           )}
           <span>
             {isLoading
@@ -91,7 +89,7 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
         </div>
       </button>
 
-      <p className="text-center text-[10px] font-medium uppercase tracking-widest muted-text">
+      <p className="text-center text-[10px] font-medium uppercase tracking-widest text-[var(--chan-muted)]">
         Secure SSL Encrypted Connection
       </p>
     </form>

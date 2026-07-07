@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Frame, INK } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
 import {
   ProfileSection,
@@ -46,24 +45,23 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg overflow-hidden border-none bg-transparent p-0 shadow-none">
-        <div className="relative p-6 sm:p-7">
-          <Frame radius={18} seed={17} stroke={INK} strokeWidth={1.4} fill="#f1ead9" />
-          <div className="relative z-10">
+        <div className="rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-6 shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:p-7">
+          <div>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black tracking-tight text-[#0f0f0f]">
+              <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">
                 {isPl ? "Moje konto" : "My account"}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="mt-4 flex flex-wrap gap-1.5 border-b border-[#171717]/10 pb-3">
+            <div className="mt-4 flex flex-wrap gap-1.5 border-b border-[var(--chan-line)] pb-3">
               {sections.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => setSection(s.id)}
                   className={
-                    "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
-                    (section === s.id ? "bg-[#171717] text-white" : "text-[#7a7a7a] hover:bg-[#171717]/5")
+                    "rounded-full px-3 py-1 font-sans text-[12px] font-bold uppercase tracking-wide transition-colors " +
+                    (section === s.id ? "bg-[var(--chan-ink)] text-white" : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
                   }
                 >
                   {s.label}
@@ -79,9 +77,9 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
               {section === "danger" && <DangerSection isPl={isPl} onDeleted={() => onOpenChange(false)} />}
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-[#171717]/10 pt-4">
+            <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">
               {isAdmin ? (
-                <Link href="/admin" className="text-[13px] font-bold underline hover:text-[#0f0f0f]">
+                <Link href="/admin" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[#2563EB]">
                   {isPl ? "Zarządzaj kanałem" : "Manage channel"}
                 </Link>
               ) : (
@@ -93,7 +91,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
                   onOpenChange(false);
                   void signOut();
                 }}
-                className="text-[13px] font-bold text-red-600 hover:underline"
+                className="font-sans text-[13px] font-bold text-red-600 hover:underline"
               >
                 {isPl ? "Wyloguj się" : "Sign out"}
               </button>

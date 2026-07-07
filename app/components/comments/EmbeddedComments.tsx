@@ -294,9 +294,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             type="button"
             onClick={scrollToTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="paper-panel paper-border paper-shadow-soft paper-focus-ring inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[0px] font-black uppercase tracking-[0.14em] ink-text backdrop-blur-md transition hover:bg-[var(--najs-paper-soft)] active:scale-[0.98] sm:px-3 sm:text-[11px]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border border-[var(--chan-line)] bg-[var(--chan-card)] px-2.5 py-2 text-[0px] font-black uppercase tracking-[0.14em] text-[var(--chan-ink)] backdrop-blur-md transition hover:bg-[var(--chan-surface)] active:scale-[0.98] sm:px-3 sm:text-[11px]"
           >
-            <ChevronUp size={15} className="blue-text" aria-hidden="true" />
+            <ChevronUp size={15} className="text-[#2563EB]" aria-hidden="true" />
             <span className="hidden sm:inline">
               {language === "pl" ? "Komentarze" : "Comments"}
             </span>
@@ -306,7 +306,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
         <div className="flex items-center gap-3 min-w-0">
-          <h3 className="font-sans text-[14px] sm:text-[15px] font-black uppercase not-italic tracking-wide text-[#0f0f0f] truncate">
+          <h3 className="font-brand text-[15px] font-bold text-[var(--chan-ink)] truncate">
             <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
           </h3>
         </div>
@@ -318,7 +318,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               onClick={() => setIsSortMenuOpen((open) => !open)}
               aria-haspopup="menu"
               aria-expanded={isSortMenuOpen}
-              className="flex items-center gap-2 text-[#5B5B5B] hover:text-[#0f0f0f] transition-colors"
+              className="flex items-center gap-2 text-[var(--chan-muted)] hover:text-[var(--chan-ink)] transition-colors"
             >
               <svg
                 width="14"
@@ -359,8 +359,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   className={cn(
                     "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
                     sortBy === "newest"
-                      ? "bg-[#f1f1f1] text-[#0f0f0f]"
-                      : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
+                      ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
+                      : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]",
                   )}
                 >
                   {language === "pl" ? "Najnowsze" : "Newest"}
@@ -374,8 +374,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   className={cn(
                     "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
                     sortBy === "top"
-                      ? "bg-[#f1f1f1] text-[#0f0f0f]"
-                      : "text-[#5B5B5B] hover:bg-secondary hover:text-[#0f0f0f]",
+                      ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
+                      : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]",
                   )}
                 >
                   {language === "pl" ? "Najlepsze" : "Top"}
