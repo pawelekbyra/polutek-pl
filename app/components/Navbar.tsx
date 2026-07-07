@@ -175,12 +175,11 @@ const Navbar = () => {
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[var(--chan-line)] bg-white px-0 font-sans text-[var(--chan-ink)] shadow-sm transition-transform hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95 lg:w-auto lg:px-3"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border border-[var(--chan-line)] bg-white px-0 font-sans text-[var(--chan-ink)] shadow-sm transition-transform hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
                 <NajsIcon name="mail" className="h-4 w-4 shrink-0" stroke="currentColor" />
-                <span className="hidden text-[13px] font-bold lg:inline">{messagesLabel}</span>
               </button>
 
               {/* Auth */}
