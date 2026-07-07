@@ -371,14 +371,14 @@ export function SidebarPlaylist({
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-3 border-t border-[var(--chan-line)] pt-3">
+        <div className="mb-3 border-t border-[var(--chan-line)]">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
 
       {patronSection && (
-        <div className="mb-3 border-t border-[var(--chan-line)] pt-3">
+        <div className="mb-3 border-t border-[var(--chan-line)]">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
