@@ -286,7 +286,7 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-2 flex items-center gap-2 border-b border-[var(--chan-line)] pb-2">
+    <div className="mb-1.5 flex items-center gap-2 border-b border-[var(--chan-line)] pb-1.5">
       {icon}
       <h3 className="font-brand text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--chan-muted-2)]">
         {title}
@@ -365,20 +365,20 @@ export function SidebarPlaylist({
   return (
     <>
       {publicSection && (
-        <div className="mb-3">
+        <div className="mb-2 last:mb-0">
           {renderSectionHeader(publicSection.title)}
           {publicSection.items.map((v) => renderVideoItem(v, true))}
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-3">
+        <div className="mb-2 last:mb-0">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
 
       {patronSection && (
-        <div className="mb-3">
+        <div className="mb-2 last:mb-0">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
