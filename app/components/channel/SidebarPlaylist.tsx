@@ -182,7 +182,7 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-1 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
             isCurrent
               ? "bg-[var(--chan-surface)]"
               : isPublicSection
@@ -286,7 +286,7 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-1 flex items-center gap-2 border-b border-[var(--chan-line)] pb-1">
+    <div className="mb-0.5 flex items-center gap-2 border-b border-[var(--chan-line)] pb-0.5">
       {icon}
       <h3 className="font-brand text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--chan-muted-2)]">
         {title}
@@ -365,20 +365,20 @@ export function SidebarPlaylist({
   return (
     <>
       {publicSection && (
-        <div className="mb-1 last:mb-0">
+        <div className="mb-0.5 last:mb-0">
           {renderSectionHeader(publicSection.title)}
           {publicSection.items.map((v) => renderVideoItem(v, true))}
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-1 last:mb-0">
+        <div className="mb-0.5 last:mb-0">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
 
       {patronSection && (
-        <div className="mb-1 last:mb-0">
+        <div className="mb-0.5 last:mb-0">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
