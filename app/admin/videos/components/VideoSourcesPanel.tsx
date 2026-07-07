@@ -50,20 +50,20 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
     setAddMode(prev => prev === mode ? null : mode);
   }
 
-  async function handleSetPrimary(assetId: string) {
-    setLoading(`primary-${assetId}`);
+  async function handleSetActiveSource(assetId: string) {
+    setLoading(`active-${assetId}`);
     try {
-      const res = await fetch(`/api/admin/videos/${videoId}/sources/${assetId}`, {
+      const res = await fetch(`/api/admin/videos/${videoId}/playback-route`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set_primary" }),
+        body: JSON.stringify({ assetId }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast((err as Record<string, string>).error || "Nie udało się zmienić źródła głównego.", "error");
+        toast((err as Record<string, string>).error || "Nie udało się zmienić aktywnego źródła.", "error");
         return;
       }
-      toast("Źródło główne zostało zmienione.", "success");
+      toast("Aktywne źródło na stronie zostało zmienione.", "success");
       onChanged();
     } finally {
       setLoading(null);
@@ -143,7 +143,7 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">Źródła wideo</CardTitle>
-        <CardDescription>Zarządzaj źródłami odtwarzania. Tylko jedno źródło może być główne (primary).</CardDescription>
+        <CardDescription>Zarządzaj źródłami odtwarzania. Tylko jedno źródło jest aktywne na stronie.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {assets.length === 0 && (
@@ -178,7 +178,7 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
               <div className="flex flex-wrap items-center gap-2">
                 <ProviderBadge provider={asset.provider} />
                 <StateBadge state={asset.processingState} isPlayable={asset.isPlayable} />
-                {asset.isPrimary && <Badge className="gap-1 bg-amber-100 text-amber-800"><Star className="h-3 w-3" />Primary</Badge>}
+                {asset.isPrimary && <Badge className="gap-1 bg-amber-100 text-amber-800"><Star className="h-3 w-3" />Aktywne</Badge>}
               </div>
               {asset.provider === "YOUTUBE" && asset.externalVideoId && (
                 <p className="text-xs text-muted-foreground font-mono truncate">youtube.com/watch?v={asset.externalVideoId}</p>
@@ -204,11 +204,11 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handleSetPrimary(asset.id)}
+                  onClick={() => handleSetActiveSource(asset.id)}
                   disabled={loading !== null}
                 >
-                  {loading === `primary-${asset.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
-                  <span className="ml-1 hidden sm:inline">Ustaw primary</span>
+                  {loading === `active-${asset.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+                  <span className="ml-1 hidden sm:inline">Ustaw aktywne</span>
                 </Button>
               )}
               {!asset.isPrimary && (

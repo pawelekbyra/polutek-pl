@@ -14,15 +14,15 @@ export function strategyFromChoice(choice: StrategyChoice): VideoDistributionStr
 
 export function VideoDistributionStrategySelect({ value, onChange, disabled }: { value: StrategyChoice; onChange: (value: StrategyChoice) => void; disabled?: boolean }) {
   return <div className="space-y-2">
-    <Label className="text-sm font-semibold">Strategia źródeł</Label>
+    <Label className="text-sm font-semibold">Aktywne źródło po przetworzeniu</Label>
     <Select value={value} onValueChange={(next) => onChange(next as StrategyChoice)} disabled={disabled}>
       <SelectTrigger><SelectValue placeholder="Gdzie chcesz odtwarzać?" /></SelectTrigger>
       <SelectContent>
-        <SelectItem value="AUTO">Auto</SelectItem>
+        <SelectItem value="AUTO">Pierwsze gotowe / najniższy koszt</SelectItem>
         <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
         <SelectItem value="MUX">Mux</SelectItem>
-        <SelectItem value="CLOUDFLARE_MUX">Cloudflare + Mux</SelectItem>
-        <SelectItem value="MANUAL">Manualnie / zaawansowane</SelectItem>
+        <SelectItem value="CLOUDFLARE_MUX">Mux aktywny + Cloudflare zapasowo</SelectItem>
+        <SelectItem value="MANUAL">Zaawansowane — bez automatycznego wyboru</SelectItem>
       </SelectContent>
     </Select>
   </div>;

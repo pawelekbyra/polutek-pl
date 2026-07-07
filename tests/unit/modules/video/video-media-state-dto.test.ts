@@ -58,6 +58,17 @@ describe('buildAdminVideoMediaDto', () => {
     });
     expect(dto.summary.state).toBe('READY');
     expect(dto.summary.canPlay).toBe(true);
+    expect(dto.summary.canPublish).toBe(true);
+  });
+
+  it('does not allow publishing from an original alone without an active playback route', () => {
+    const dto = buildAdminVideoMediaDto({
+      videoId: 'video-1',
+      activeOriginal: original(),
+    });
+    expect(dto.summary.state).toBe('ORIGINAL_READY');
+    expect(dto.summary.canPlay).toBe(false);
+    expect(dto.summary.canPublish).toBe(false);
   });
 
   it('returns MANUAL_ACTION_REQUIRED for manual plan without route', () => {
@@ -81,7 +92,9 @@ describe('buildAdminVideoMediaDto', () => {
       activeOriginal: original(),
       legacyAssets: [asset({ isPrimary: true })],
     });
+    expect(dto.summary.state).toBe('LEGACY_FALLBACK');
     expect(dto.summary.canPlay).toBe(true);
+    expect(dto.summary.canPublish).toBe(false);
     expect(dto.summary.warnings).toContain('No active playback route found; using legacy primary asset selection.');
   });
 });

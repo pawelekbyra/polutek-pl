@@ -88,7 +88,8 @@ describe('updateAdminVideo hero/sidebar contract', () => {
   it('allows hero only when public published video has READY primary Cloudflare asset', async () => {
     const existing = {
       id: 'v1', creatorId: 'c1', title: 'Hero', slug: 'hero', tier: AccessTier.PUBLIC, status: VideoStatus.PUBLISHED,
-      asset: { isPrimary: true, provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' }
+      asset: { isPrimary: true, provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' },
+      activePlaybackRoute: { asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' } }
     };
     mockPrisma.video.findUnique.mockResolvedValue(existing);
     mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });

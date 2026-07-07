@@ -7,6 +7,7 @@ import { VideoNotFoundError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { VideoPlaybackRouteService } from "./video-playback-route.service";
 
 export interface MakeSourcePrimaryInput {
   videoId: string;
@@ -62,26 +63,18 @@ export async function makeSourcePrimary(
     return ok(toAdminVideoDto(video));
   }
 
-  const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
-    // Demote all other primary assets
-    await (tx as any).videoAsset.updateMany({
-      where: { videoId: video.id, isPrimary: true, id: { not: input.assetId } },
-      data: { isPrimary: false },
-    });
-
-    // Promote the target
-    await (tx as any).videoAsset.update({
-      where: { id: input.assetId },
-      data: { isPrimary: true },
-    });
-
+  const updatedVideo = await new VideoPlaybackRouteService().activateRoute({
+    videoId: video.id,
+    assetId: input.assetId,
+    activatedBy: "ADMIN",
+    reason: "legacy-set-primary-compat",
+  }, ctx).then(async () => {
     await recordAuditEvent(ctx, {
       action: "VIDEO_SOURCE_MADE_PRIMARY",
       targetType: "Video",
       targetId: video.id,
-      metadata: { assetId: input.assetId, provider: target.provider },
-    }, tx);
-
+      metadata: { assetId: input.assetId, provider: target.provider, compatibilityRouteActivation: true },
+    });
     return repository.findByIdForMainChannel(video.id, mainChannel.id);
   }).catch((error: unknown) => {
     if (error instanceof AppError) return error;

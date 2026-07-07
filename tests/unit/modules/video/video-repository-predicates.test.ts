@@ -126,7 +126,7 @@ describe('VideoRepository asset foundation queries', () => {
 
     expect(db.video.findUnique).toHaveBeenCalledWith({
       where: { id: 'v1' },
-      include: { assets: true },
+      include: { assets: true, activePlaybackRoute: { include: { asset: true } } },
     });
     expect(result?.asset?.provider).toBe('CLOUDFLARE_STREAM');
     expect(result?.asset?.providerAssetId).toBe('cf-video-uid');

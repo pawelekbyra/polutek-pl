@@ -23,7 +23,8 @@ export type AdminVideoMediaSummaryState =
   | "PARTIALLY_READY"
   | "READY"
   | "FAILED"
-  | "MANUAL_ACTION_REQUIRED";
+  | "MANUAL_ACTION_REQUIRED"
+  | "LEGACY_FALLBACK";
 
 export type AdminVideoMediaDto = {
   videoId: string;
@@ -282,6 +283,8 @@ export function buildAdminVideoMediaDto(input: BuildAdminVideoMediaDtoInput): Ad
     state = "WAITING_UPLOAD";
   } else if (activeRouteReady) {
     state = "READY";
+  } else if (legacyPrimaryAsset) {
+    state = "LEGACY_FALLBACK";
   } else if (activePlan?.mode === "MANUAL") {
     state = "MANUAL_ACTION_REQUIRED";
   } else if (hasInProgressWork) {
@@ -304,7 +307,7 @@ export function buildAdminVideoMediaDto(input: BuildAdminVideoMediaDtoInput): Ad
     legacyAssets: legacyAssets.map(toAssetDto),
     summary: {
       state,
-      canPublish: canPlay || state === "ORIGINAL_READY" || state === "READY",
+      canPublish: activeRouteReady,
       canPlay,
       warnings,
     },

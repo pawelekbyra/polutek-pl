@@ -191,15 +191,15 @@ export function VideoForm({
               {isCreate ? (
                 <>
                   <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
-                    <p className="font-semibold">Wybierz źródło główne</p>
-                    <p className="mt-1 text-xs">Pierwsze źródło stanie się primary. Kolejne źródła alternatywne możesz dodać po zapisie w zakładce Media.</p>
+                    <p className="font-semibold">Wybierz aktywne źródło po przetworzeniu</p>
+                    <p className="mt-1 text-xs">Plik trafi do R2, a system przygotuje źródła odtwarzania. Aktywne źródło możesz później przełączyć w zakładce Media.</p>
                   </div>
                   <div className="space-y-2">
                     <Label>Typ źródła</Label>
                     <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting || isSourceLocked}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="UPLOAD">Cloudflare Stream — upload pliku</SelectItem>
+                        <SelectItem value="UPLOAD">Upload pliku do R2</SelectItem>
                         <SelectItem value="EXISTING_CLOUDFLARE">Cloudflare Stream — istniejący UID</SelectItem>
                         {!isPatron && <SelectItem value="YOUTUBE">YouTube — URL lub ID</SelectItem>}
                         {!isPatron && <SelectItem value="VIMEO">Vimeo — URL lub ID</SelectItem>}
@@ -228,7 +228,7 @@ export function VideoForm({
 
                   {createSourceMode === "UPLOAD" && (
                     <div className="space-y-2">
-                      <Label>Primary provider</Label>
+                      <Label>Aktywne źródło po przetworzeniu</Label>
                       <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting || isSourceLocked}>
                         <SelectTrigger><SelectValue placeholder="Wybierz provider..." /></SelectTrigger>
                         <SelectContent>
@@ -237,7 +237,7 @@ export function VideoForm({
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Plik trafi na R2, następnie zostanie zmirrorowany na oba providery. Wybrany stanie się primary — z niego będzie serwowane wideo.
+                        Plik trafi na R2, następnie system przygotuje Cloudflare Stream i Mux. Wybrane źródło stanie się aktywne na stronie.
                       </p>
                     </div>
                   )}

@@ -8,6 +8,14 @@ type ContractVideo = {
   slug?: string | null;
   tier: AccessTier;
   status: VideoStatus;
+  activePlaybackRoute?: {
+    asset?: {
+      provider?: string | null;
+      processingState?: string | null;
+      providerAssetId?: string | null;
+      externalVideoId?: string | null;
+    } | null;
+  } | null;
   asset?: {
     isPrimary?: boolean | null;
     provider?: string | null;
@@ -33,40 +41,40 @@ export class VideoPolicy {
     if (!video.tier) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_TIER', message: 'Wybierz tier dostępu przed publikacją filmu.', field: 'tier' });
     if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_PUBLICATION_ARCHIVED', message: 'Zarchiwizowany film trzeba najpierw przywrócić do szkicu.', field: 'status' });
 
-    const asset = video.asset;
-    if (!asset) {
-      blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_ASSET', message: 'Publikacja wymaga primary assetu w stanie READY.', field: 'asset' });
-    } else {
-      if (!asset.isPrimary) blockers.push({ code: 'VIDEO_PUBLICATION_NON_PRIMARY_ASSET', message: 'Publikacja wymaga primary assetu.', field: 'asset' });
+    const routeAsset = video.activePlaybackRoute?.asset ?? null;
+    if (!routeAsset) {
+      blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_ACTIVE_ROUTE', message: 'Publikacja wymaga aktywnego źródła odtwarzania w stanie READY.', field: 'activePlaybackRoute' });
+      return blockers;
+    }
 
-      const isYoutube = asset.provider === VIDEO_PROVIDER.YOUTUBE;
-      const isVimeo = asset.provider === VIDEO_PROVIDER.VIMEO;
-      const isCfStream = asset.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
-      const isMux = asset.provider === VIDEO_PROVIDER.MUX;
+    const asset = routeAsset;
+    const isYoutube = asset.provider === VIDEO_PROVIDER.YOUTUBE;
+    const isVimeo = asset.provider === VIDEO_PROVIDER.VIMEO;
+    const isCfStream = asset.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
+    const isMux = asset.provider === VIDEO_PROVIDER.MUX;
 
-      if (!isCfStream && !isMux && !isYoutube && !isVimeo) {
-        blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Primary asset musi pochodzić z Cloudflare Stream, Mux, YouTube lub Vimeo.', field: 'asset' });
-      }
+    if (!isCfStream && !isMux && !isYoutube && !isVimeo) {
+      blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Aktywne źródło musi pochodzić z Cloudflare Stream, Mux, YouTube lub Vimeo.', field: 'activePlaybackRoute' });
+    }
 
-      if (isCfStream) {
-        if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Cloudflare Stream nie jest jeszcze READY.', field: 'asset' });
-        if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Cloudflare Stream.', field: 'asset' });
-      }
+    if (isCfStream) {
+      if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Aktywne źródło Cloudflare Stream nie jest jeszcze gotowe.', field: 'activePlaybackRoute' });
+      if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora aktywnego źródła Cloudflare Stream.', field: 'activePlaybackRoute' });
+    }
 
-      if (isMux) {
-        if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Asset Mux nie jest jeszcze READY.', field: 'asset' });
-        if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora assetu Mux.', field: 'asset' });
-      }
+    if (isMux) {
+      if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Aktywne źródło Mux nie jest jeszcze gotowe.', field: 'activePlaybackRoute' });
+      if (!asset.providerAssetId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje identyfikatora aktywnego źródła Mux.', field: 'activePlaybackRoute' });
+    }
 
-      if (isYoutube) {
-        if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_YOUTUBE_PATRON_FORBIDDEN', message: 'YouTube nie może być źródłem dla filmów PATRON.', field: 'asset' });
-        if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_YOUTUBE_VIDEO_ID', message: 'Brakuje identyfikatora YouTube.', field: 'asset' });
-      }
+    if (isYoutube) {
+      if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_YOUTUBE_PATRON_FORBIDDEN', message: 'YouTube nie może być aktywnym źródłem dla filmów PATRON.', field: 'activePlaybackRoute' });
+      if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_YOUTUBE_VIDEO_ID', message: 'Brakuje identyfikatora aktywnego źródła YouTube.', field: 'activePlaybackRoute' });
+    }
 
-      if (isVimeo) {
-        if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_VIMEO_PATRON_FORBIDDEN', message: 'Vimeo nie może być źródłem dla filmów PATRON — brak bezpiecznego prywatnego playbacku.', field: 'asset' });
-        if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_VIMEO_VIDEO_ID', message: 'Brakuje identyfikatora Vimeo.', field: 'asset' });
-      }
+    if (isVimeo) {
+      if (video.tier === 'PATRON') blockers.push({ code: 'VIDEO_PUBLICATION_VIMEO_PATRON_FORBIDDEN', message: 'Vimeo nie może być aktywnym źródłem dla filmów PATRON — brak bezpiecznego prywatnego playbacku.', field: 'activePlaybackRoute' });
+      if (!asset.externalVideoId) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_VIMEO_VIDEO_ID', message: 'Brakuje identyfikatora aktywnego źródła Vimeo.', field: 'activePlaybackRoute' });
     }
     return blockers;
   }

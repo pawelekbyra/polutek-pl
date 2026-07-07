@@ -8,6 +8,7 @@ import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset
 
 type VideoWithAssetsAndOriginal = Video & {
   assets: VideoAsset[];
+  activePlaybackRoute?: { asset?: VideoAsset | null } | null;
   originals?: unknown[];
   original?: unknown;
 };
@@ -74,7 +75,7 @@ export class VideoRepository {
   async findByIdWithAsset(id: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
     const video = await this.db.video.findUnique({
         where: { id },
-        include: { assets: true }
+        include: { assets: true, activePlaybackRoute: { include: { asset: true } } }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
@@ -89,6 +90,7 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
+            activePlaybackRoute: { include: { asset: true } },
             originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });
@@ -109,6 +111,7 @@ export class VideoRepository {
         include: {
             _count: { select: { comments: true } },
             assets: true,
+            activePlaybackRoute: { include: { asset: true } },
             originals: { orderBy: { version: "desc" }, take: 1 },
         }
     });

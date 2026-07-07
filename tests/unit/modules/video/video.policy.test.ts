@@ -10,6 +10,54 @@ describe('VideoPolicy', () => {
     providerAssetId: 'v123'
   };
 
+  const activeRoute = { asset: validAsset };
+
+  describe('getPublicationBlockers', () => {
+    it('requires an active playback route instead of accepting only a legacy primary asset', () => {
+      const blockers = VideoPolicy.getPublicationBlockers({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        asset: validAsset,
+      });
+
+      expect(blockers).toContainEqual({
+        code: 'VIDEO_PUBLICATION_MISSING_ACTIVE_ROUTE',
+        message: 'Publikacja wymaga aktywnego źródła odtwarzania w stanie READY.',
+        field: 'activePlaybackRoute',
+      });
+    });
+
+    it('allows publication when the active playback route points to a ready playable asset', () => {
+      expect(VideoPolicy.getPublicationBlockers({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        asset: validAsset,
+        activePlaybackRoute: activeRoute,
+      })).toEqual([]);
+    });
+
+    it('blocks publication when the active route asset is still processing', () => {
+      const blockers = VideoPolicy.getPublicationBlockers({
+        title: 'Title',
+        slug: 'slug',
+        tier: AccessTier.PUBLIC,
+        status: VideoStatus.DRAFT,
+        asset: validAsset,
+        activePlaybackRoute: { asset: { ...validAsset, processingState: 'PROCESSING' } },
+      });
+
+      expect(blockers).toContainEqual({
+        code: 'VIDEO_PUBLICATION_ASSET_NOT_READY',
+        message: 'Aktywne źródło Cloudflare Stream nie jest jeszcze gotowe.',
+        field: 'activePlaybackRoute',
+      });
+    });
+  });
+
   describe('canBeHero', () => {
     it('returns true for PUBLIC and PUBLISHED with required fields', () => {
       expect(VideoPolicy.canBeHero({
@@ -17,7 +65,8 @@ describe('VideoPolicy', () => {
         slug: 'slug',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.PUBLISHED,
-        asset: validAsset
+        asset: validAsset,
+        activePlaybackRoute: activeRoute
       })).toBe(true);
     });
 
@@ -27,7 +76,8 @@ describe('VideoPolicy', () => {
         slug: 'slug',
         tier: AccessTier.PATRON,
         status: VideoStatus.PUBLISHED,
-        asset: validAsset
+        asset: validAsset,
+        activePlaybackRoute: activeRoute
       })).toBe(false);
     });
 
@@ -37,7 +87,8 @@ describe('VideoPolicy', () => {
         slug: 'slug',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.DRAFT,
-        asset: validAsset
+        asset: validAsset,
+        activePlaybackRoute: activeRoute
       })).toBe(false);
     });
 
@@ -47,7 +98,8 @@ describe('VideoPolicy', () => {
         slug: 'slug',
         tier: AccessTier.PATRON,
         status: VideoStatus.DRAFT,
-        asset: validAsset
+        asset: validAsset,
+        activePlaybackRoute: activeRoute
       };
       const blockers = VideoPolicy.getHeroBlockers(video);
       expect(blockers).toContainEqual({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Film Hero musi być OPUBLIKOWANY.', field: 'status' });
@@ -60,7 +112,8 @@ describe('VideoPolicy', () => {
           slug: 'slug',
           tier: AccessTier.PUBLIC,
           status: VideoStatus.ARCHIVED,
-          asset: validAsset
+          asset: validAsset,
+          activePlaybackRoute: activeRoute
         };
         const blockers = VideoPolicy.getHeroBlockers(video);
         expect(blockers).toContainEqual({ code: 'VIDEO_HERO_ARCHIVED', message: 'Zarchiwizowany film nie może być filmem Hero.', field: 'status' });
