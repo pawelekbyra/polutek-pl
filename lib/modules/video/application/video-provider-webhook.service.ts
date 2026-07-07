@@ -2,6 +2,11 @@ import { Prisma, StorageProvider, VideoAssetProcessingState, VideoProviderJobSta
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { redactSignedUrl } from "./original-source-url.service";
 import { VideoDistributionOrchestratorService } from "./video-distribution-orchestrator.service";
+import { VideoPlaybackRouteService } from "./video-playback-route.service";
+import { attemptPublishAfterAssetReady } from "./publish-after-asset-ready.use-case";
+import { createScopedLogger } from "@/lib/logger";
+
+const logger = createScopedLogger("VideoProviderWebhookService");
 
 export type IngestProviderWebhookInput = {
   provider: StorageProvider;
@@ -43,7 +48,10 @@ function toJobState(state: string | undefined): VideoProviderJobStatus | null {
 }
 
 export class VideoProviderWebhookService {
-  constructor(private readonly orchestrator = new VideoDistributionOrchestratorService()) {}
+  constructor(
+    private readonly orchestrator = new VideoDistributionOrchestratorService(),
+    private readonly routeService = new VideoPlaybackRouteService(),
+  ) {}
 
   async ingestProviderWebhook(input: IngestProviderWebhookInput, ctx: AppContext): Promise<IngestProviderWebhookResult> {
     let event;
@@ -101,6 +109,36 @@ export class VideoProviderWebhookService {
       await ctx.prisma.videoDistributionTarget.update({ where: { id: targetId }, data: { status: input.state === "READY" ? "READY" : input.state === "FAILED" ? "FAILED" : "WAITING_PROVIDER", lastError: input.state === "FAILED" ? safeError : null, lastStatusAt: new Date() } });
     }
     await ctx.prisma.videoProviderWebhookEvent.update({ where: { id: event.id }, data: { status: VideoProviderWebhookStatus.PROCESSED, processedAt: new Date() } });
+
+    // Plan-less (single-asset, legacy-style) ingestion never goes through the
+    // distribution orchestrator below — reconcileVideoDistribution() no-ops when there's
+    // no active distribution plan for the video. Without this, an asset attached via
+    // add-video-source/attach-cloudflare-asset/provision-*-upload could sit READY forever
+    // without ever becoming the video's playback source or getting a VideoPlaybackRoute,
+    // which would also block publication (VideoPolicy.getPublicationBlockers requires an
+    // isPrimary READY asset). Only act when this webhook resolved to a target-less asset;
+    // planned/multi-provider distributions keep going through the orchestrator's own
+    // selection policy further down.
+    if (matchedAsset && assetState === VideoAssetProcessingState.READY && !targetId) {
+      let becamePrimary = false;
+      try {
+        const route = await this.routeService.activateFirstReadyAssetIfNoneActive(
+          { videoId: matchedAsset.videoId, assetId: matchedAsset.id, reason: `webhook-${input.provider.toLowerCase()}-ready` },
+          ctx,
+        );
+        becamePrimary = Boolean(route);
+      } catch (error) {
+        logger.warn("Failed to activate playback route for plan-less asset webhook", {
+          assetId: matchedAsset.id,
+          videoId: matchedAsset.videoId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      if (becamePrimary) {
+        await attemptPublishAfterAssetReady(matchedAsset.videoId, ctx, input.provider).catch(() => undefined);
+      }
+    }
+
     if (videoId) await this.orchestrator.reconcileVideoDistribution({ videoId, planId: planId ?? undefined, reason: "WEBHOOK" }, ctx);
     return { eventId: event.id, deduped, matchedAssetId: matchedAsset?.id ?? null, matchedJobId: job?.id ?? null, videoId, planId, action: "PROCESSED" };
   }

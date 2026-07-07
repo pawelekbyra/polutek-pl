@@ -78,4 +78,42 @@ export class VideoPlaybackRouteService {
       await tx.videoAsset.update({ where: { id: video.activePlaybackRoute!.assetId }, data: { isPrimary: true } });
     });
   }
+
+  /**
+   * Ingestion/webhook entry point for "a single-asset (plan-less) video's asset just
+   * became READY — should it become the playback source?" This is the guarded on-ramp
+   * that keeps `activateRoute()` the sole write path for `isPrimary`/`activePlaybackRouteId`
+   * outside admin- or plan-driven activation: it only activates when the video has no
+   * active route yet AND no other asset is already the READY primary, mirroring the
+   * legacy "first ready asset wins" rule. Returns the created route, or null if a route/
+   * primary already exists (no-op) or the asset turns out not to be eligible.
+   */
+  async activateFirstReadyAssetIfNoneActive(
+    input: { videoId: string; assetId: string; reason?: string },
+    ctx: AppContext,
+  ): Promise<VideoPlaybackRoute | null> {
+    const [existingActiveRoute, existingReadyPrimary] = await Promise.all([
+      this.getActiveRoute(input.videoId, ctx),
+      ctx.prisma.videoAsset.findFirst({
+        where: {
+          videoId: input.videoId,
+          isPrimary: true,
+          processingState: VideoAssetProcessingState.READY,
+          id: { not: input.assetId },
+        },
+      }),
+    ]);
+    if (existingActiveRoute || existingReadyPrimary) return null;
+
+    try {
+      return await this.activateRoute(
+        { videoId: input.videoId, assetId: input.assetId, activatedBy: "POLICY", reason: input.reason ?? "first-ready-asset" },
+        ctx,
+      );
+    } catch {
+      // Not eligible (e.g. provider can't serve this video's tier, or the asset
+      // turned out not to be READY) — legacy primary-asset fallback still covers playback.
+      return null;
+    }
+  }
 }

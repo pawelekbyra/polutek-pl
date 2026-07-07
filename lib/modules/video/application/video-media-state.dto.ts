@@ -22,6 +22,7 @@ export type AdminVideoMediaSummaryState =
   | "CREATING_SOURCES"
   | "PARTIALLY_READY"
   | "READY"
+  | "LEGACY_FALLBACK"
   | "FAILED"
   | "MANUAL_ACTION_REQUIRED";
 
@@ -282,6 +283,10 @@ export function buildAdminVideoMediaDto(input: BuildAdminVideoMediaDtoInput): Ad
     state = "WAITING_UPLOAD";
   } else if (activeRouteReady) {
     state = "READY";
+  } else if (legacyPrimaryAsset) {
+    // Playable, but only via the legacy primary-asset fallback (no VideoPlaybackRoute).
+    // Surfaced distinctly so admins can find and fix these videos.
+    state = "LEGACY_FALLBACK";
   } else if (activePlan?.mode === "MANUAL") {
     state = "MANUAL_ACTION_REQUIRED";
   } else if (hasInProgressWork) {
@@ -304,7 +309,11 @@ export function buildAdminVideoMediaDto(input: BuildAdminVideoMediaDtoInput): Ad
     legacyAssets: legacyAssets.map(toAssetDto),
     summary: {
       state,
-      canPublish: canPlay || state === "ORIGINAL_READY" || state === "READY",
+      // A genuine active READY playback route is required to consider a video
+      // "cleanly" publishable from this admin diagnostics view. Legacy-fallback
+      // playback still works (canPlay), but should be fixed by activating a
+      // real route rather than relied on going forward.
+      canPublish: activeRouteReady,
       canPlay,
       warnings,
     },

@@ -25,7 +25,29 @@ type AdminWhereFilters = {
   showInSidebar?: string | null;
 };
 
+// Blocker codes from getPublicationBlockers() that are purely about the asset not being
+// playable *yet* (still uploading/processing, no primary asset selected yet, provider
+// identifiers not synced yet). Auto-publish (publish-after-asset-ready.use-case.ts) treats
+// these as "keep waiting, don't record an error" while any other blocker (missing
+// title/slug/tier, archived status) is a real, structural problem worth surfacing. Keeping
+// this list next to getPublicationBlockers() ensures it stays in sync with the actual codes.
+export const ASSET_READINESS_BLOCKER_CODES = new Set<string>([
+  'VIDEO_PUBLICATION_MISSING_ASSET',
+  'VIDEO_PUBLICATION_NON_PRIMARY_ASSET',
+  'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER',
+  'VIDEO_PUBLICATION_ASSET_NOT_READY',
+  'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID',
+  'VIDEO_PUBLICATION_MISSING_YOUTUBE_VIDEO_ID',
+  'VIDEO_PUBLICATION_YOUTUBE_PATRON_FORBIDDEN',
+  'VIDEO_PUBLICATION_MISSING_VIMEO_VIDEO_ID',
+  'VIDEO_PUBLICATION_VIMEO_PATRON_FORBIDDEN',
+]);
+
 export class VideoPolicy {
+  static isAssetReadinessBlocker(code: string): boolean {
+    return ASSET_READINESS_BLOCKER_CODES.has(code);
+  }
+
   static getPublicationBlockers(video: ContractVideo): VideoStateBlocker[] {
     const blockers: VideoStateBlocker[] = [];
     if (!video.title?.trim()) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_TITLE', message: 'Podaj tytuł przed publikacją filmu.', field: 'title' });

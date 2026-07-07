@@ -81,7 +81,27 @@ describe('buildAdminVideoMediaDto', () => {
       activeOriginal: original(),
       legacyAssets: [asset({ isPrimary: true })],
     });
+    expect(dto.summary.state).toBe('LEGACY_FALLBACK');
     expect(dto.summary.canPlay).toBe(true);
+    expect(dto.summary.canPublish).toBe(false);
     expect(dto.summary.warnings).toContain('No active playback route found; using legacy primary asset selection.');
+  });
+
+  it('canPublish is only true when there is a genuine ready active route', () => {
+    const readyAsset = asset({ id: 'route-asset' });
+    const dto = buildAdminVideoMediaDto({
+      videoId: 'video-1',
+      activeOriginal: original(),
+      activeRoute: {
+        id: 'route-1',
+        provider: 'CLOUDFLARE_STREAM',
+        assetId: readyAsset.id,
+        activatedBy: 'POLICY',
+        activatedAt: now,
+        asset: readyAsset,
+      },
+    });
+    expect(dto.summary.state).toBe('READY');
+    expect(dto.summary.canPublish).toBe(true);
   });
 });
