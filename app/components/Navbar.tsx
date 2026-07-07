@@ -106,10 +106,15 @@ const Navbar = () => {
                 className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
-                <BrandName
-                  className="text-[1.05rem] leading-none sm:text-[1.15rem] md:text-[1.3rem]"
-                  variant="classic"
-                />
+                <div className="flex items-center">
+                  <BrandName
+                    className="text-[1.1rem] leading-none md:text-[1.3rem]"
+                    variant="handwriting"
+                  />
+                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-neutral-900 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-white shadow-sm">
+                    Beta
+                  </span>
+                </div>
               </Link>
             </div>
 
@@ -172,11 +177,11 @@ const Navbar = () => {
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border border-[var(--chan-line)] bg-white px-0 font-sans text-[var(--chan-ink)] shadow-sm transition-transform hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
+                className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:text-[#2563EB] active:scale-95"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
-                <NajsIcon name="mail" className="h-4 w-4 shrink-0" stroke="currentColor" />
+                <NajsIcon name="mail" className="h-5 w-5 shrink-0" stroke="currentColor" />
               </button>
 
               {/* Auth */}
