@@ -39,6 +39,10 @@ html[lang="pl"] div[class*="md:w-[45%]"][class*="bg-[var(--chan-surface)]"] ul >
   line-height: 1.4;
 }
 
+a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
+  margin-left: -0.25rem !important;
+}
+
 @media (min-width: 768px) {
   div[class*="md:w-[45%]"][class*="bg-[var(--chan-surface)]"] {
     justify-content: flex-start !important;
