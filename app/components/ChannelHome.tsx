@@ -191,11 +191,11 @@ function ChannelHomeContent({
             </div>
 
             {!mounted ? (
-              <div className="comments-flat-shell mt-4">
+              <div className="mt-4">
                 <CommentsShellSkeleton />
               </div>
             ) : isDesktop ? (
-              <div className="comments-flat-shell hidden lg:block mt-4">
+              <div className="hidden lg:block mt-4">
                 {comments}
               </div>
             ) : (
@@ -222,7 +222,7 @@ function ChannelHomeContent({
                     })}
                   </div>
                 </div>
-                <div className="comments-flat-shell lg:hidden mt-2">
+                <div className="lg:hidden mt-2">
                   {activeTab === "comments" ? comments : (
                     <div className="space-y-2">
                       <SidebarPlaylist {...commonSidebarProps} />

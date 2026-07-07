@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { ShieldCheck } from "../icons";
-import { Frame, INK } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
 import AccountModal from "./AccountModal";
 
@@ -57,30 +56,29 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         aria-expanded={menuOpen}
         aria-label={isPl ? "Menu konta" : "Account menu"}
         className={cn(
-          "relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95",
+          "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95",
           isPatron
             ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-            : "border border-[#171717]/25",
+            : "border border-[var(--chan-line)]",
         )}
         title={isPatron ? "Patron" : undefined}
       >
         {avatar ? (
           <Image src={avatar} alt="" width={36} height={36} className="h-full w-full object-cover" unoptimized />
         ) : (
-          <span className="text-sm font-bold text-[#171717]">{(displayName[0] || "?").toUpperCase()}</span>
+          <span className="text-sm font-bold text-[var(--chan-ink)]">{(displayName[0] || "?").toUpperCase()}</span>
         )}
       </button>
 
       {menuOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-60 p-2 text-[#171717]"
+          className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-60 rounded-2xl border border-[var(--chan-line)] bg-white p-2 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)]"
         >
-          <Frame radius={14} seed={23} stroke={INK} strokeWidth={1.3} fill="#f1ead9" showShadow />
-          <div className="relative z-10">
-            <div className="border-b border-[#171717]/10 px-2 pb-2 pt-1">
+          <div>
+            <div className="border-b border-[var(--chan-line)] px-2 pb-2 pt-1">
               <p className="truncate text-[14px] font-bold">{displayName}</p>
-              {email && <p className="truncate text-[12px] text-[#7a7a7a]">{email}</p>}
+              {email && <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p>}
             </div>
 
             <button
@@ -90,7 +88,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
                 setMenuOpen(false);
                 setAccountOpen(true);
               }}
-              className="mt-1 w-full rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[#171717]/5"
+              className="mt-1 w-full rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[var(--chan-surface)]"
             >
               {isPl ? "Moje konto" : "My account"}
             </button>
@@ -100,7 +98,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
                 href="/admin"
                 role="menuitem"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[#171717]/5"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[var(--chan-surface)]"
               >
                 <ShieldCheck size={16} />
                 {isPl ? "Zarządzaj kanałem" : "Manage channel"}
@@ -114,7 +112,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
                 setMenuOpen(false);
                 void signOut();
               }}
-              className="mt-1 w-full rounded-lg border-t border-[#171717]/10 px-2 py-2 text-left text-[14px] font-semibold text-red-600 hover:bg-red-100/70"
+              className="mt-1 w-full rounded-lg border-t border-[var(--chan-line)] px-2 py-2 text-left text-[14px] font-semibold text-red-600 hover:bg-red-50"
             >
               {isPl ? "Wyloguj się" : "Sign out"}
             </button>

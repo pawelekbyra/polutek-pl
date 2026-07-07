@@ -394,42 +394,6 @@
     color: #2563eb !important;
   }
 
-  .comments-flat-shell h3 {
-    color: var(--chan-ink) !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-    font-weight: 700 !important;
-  }
-
-  .comments-flat-shell form > div.relative {
-    border-bottom: none !important;
-    border-radius: 14px !important;
-    background-color: var(--chan-surface) !important;
-    padding: 0 16px !important;
-    transition: background-color 160ms ease;
-  }
-
-  .comments-flat-shell form > div.relative:focus-within {
-    background-color: var(--chan-line) !important;
-  }
-
-  .comments-flat-shell form > div.relative textarea {
-    color: var(--chan-ink) !important;
-  }
-
-  .comments-flat-shell form > div.relative textarea::placeholder {
-    color: var(--chan-muted) !important;
-  }
-
-  .comments-flat-shell div[id^="comment-"] {
-    border-top-color: var(--chan-line) !important;
-  }
-
-  .comments-flat-shell div[id^="comment-"] p,
-  .comments-flat-shell div[id^="comment-"] span:first-child {
-    color: var(--chan-ink);
-  }
-
   @keyframes pl-glow {
     0% {
       box-shadow: 0 0 0 0 var(--accent-ring), 0 10px 30px rgba(0,0,0,.35);
@@ -628,5 +592,86 @@
   .ui-clone-skin-t2 :is(h1, h2, h3, button, a),
   .ui-clone-skin-t3 :is(h1, h2, h3, button, a) {
     text-decoration-color: color-mix(in srgb, var(--clone-accent) 38%, transparent);
+  }
+}
+
+@layer utilities {
+  /*
+   * /testujemy — an elegant "maison française" re-skin of the exact same
+   * homepage components (Navbar/ChannelHome/Footer), not a parallel set of
+   * components. Redefining the --chan-* tokens here re-themes every surface
+   * that already reads them; the rules below only need to catch the handful
+   * of spots in those files that hardcode #2563EB/#2563eb/#EFF3FE instead of
+   * a token, so this whole block is additive and scoped to .testujemy-page —
+   * it never touches the real homepage's tokens or markup.
+   */
+  .testujemy-page {
+    --fr-accent: #7a2331;
+    --fr-accent-soft: #f0e0dc;
+    --fr-gold: #ad8a4c;
+
+    --chan-nav: #fbf8f2;
+    --chan-card: #f7f1e6;
+    --chan-surface: #efe7d8;
+    --chan-line: #e1d4be;
+    --chan-line-soft: #eae0cb;
+    --chan-ink: #211d18;
+    --chan-muted: #7c7264;
+    --chan-muted-2: #6b6152;
+    --chan-body: #46403a;
+    --chan-blue: var(--fr-accent);
+    --chan-blue-soft: var(--fr-accent-soft);
+    --chan-avatar-gradient: linear-gradient(135deg, #c9a063, #7a2331);
+    --chan-support-shadow: 0 1px 0 rgba(33, 29, 24, 0.08);
+
+    --primary: 350 55% 31%;
+    --primary-foreground: 40 40% 97%;
+    --ring: 350 55% 31%;
+    --accent-soft: 350 35% 92%;
+
+    background: var(--chan-card);
+    color: var(--chan-ink);
+    min-height: 100vh;
+  }
+
+  .testujemy-page .font-brand {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em;
+  }
+
+  .testujemy-page .bg-\[\#2563EB\] {
+    background-color: var(--fr-accent) !important;
+  }
+
+  .testujemy-page .text-\[\#2563EB\],
+  .testujemy-page .text-\[\#2563eb\] {
+    color: var(--fr-accent) !important;
+  }
+
+  .testujemy-page .bg-\[\#EFF3FE\],
+  .testujemy-page .bg-\[\#EFF3FE\]\/60 {
+    background-color: var(--fr-accent-soft) !important;
+  }
+
+  .testujemy-page .fill-\[\#2563EB\],
+  .testujemy-page .fill-\[\#2563eb\] {
+    fill: var(--fr-accent) !important;
+  }
+
+  .testujemy-page .from-\[\#EAF0FF\].to-\[\#DBE7FB\] {
+    background-image: linear-gradient(135deg, var(--fr-accent-soft), #fbf6ef) !important;
+  }
+
+  .testujemy-page svg[stroke="#2563eb" i] {
+    stroke: var(--fr-accent) !important;
+  }
+
+  .testujemy-page svg[fill="#2563eb" i] {
+    fill: var(--fr-accent) !important;
+  }
+
+  .testujemy-page [style*="rgba(37,99,235"] {
+    background: linear-gradient(135deg, var(--fr-accent) 0%, rgba(20, 16, 12, 0.78) 100%) !important;
   }
 }

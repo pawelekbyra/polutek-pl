@@ -24,23 +24,23 @@ export default async function SearchPage(props: SearchPageProps) {
     : [];
 
   return (
-    <div className="min-h-screen paper-surface font-sans ink-text">
+    <div className="min-h-screen bg-[var(--chan-nav)] font-sans text-[var(--chan-ink)]">
       <Navbar />
       <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 border-b paper-border pb-6">
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.25em] muted-text">
+        <div className="mb-8 border-b border-[var(--chan-line)] pb-6">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-[var(--chan-muted)]">
             Polutek.pl
           </p>
-          <h1 className="text-3xl font-black tracking-tight ink-text sm:text-4xl">
+          <h1 className="font-brand text-3xl font-bold tracking-tight text-[var(--chan-ink)] sm:text-4xl">
             {locale === "pl" ? "Wyniki wyszukiwania" : "Search results"}
           </h1>
           {normalizedQuery ? (
-            <p className="mt-3 text-sm muted-text">
+            <p className="mt-3 text-sm text-[var(--chan-muted)]">
               {locale === "pl" ? `Znaleziono ${results.length} ${results.length === 1 ? "materiał" : "materiałów"} dla „` : `Found ${results.length} ${results.length === 1 ? "result" : "results"} for “`}
               {rawQuery.trim()}{locale === "pl" ? "”." : ".”"}
             </p>
           ) : (
-            <p className="mt-3 text-sm muted-text">
+            <p className="mt-3 text-sm text-[var(--chan-muted)]">
               {locale === "pl" ? "Wpisz frazę w wyszukiwarce, aby znaleźć publiczne materiały." : "Enter a phrase to find public videos."}
             </p>
           )}
@@ -56,9 +56,9 @@ export default async function SearchPage(props: SearchPageProps) {
               <Link
                 key={video.id}
                 href={getLocalizedHref(locale, "watch", { slug: video.slug || video.id })}
-                className="group flex gap-4 paper-radius-panel border paper-border paper-panel p-3 shadow-[0_1px_2px_rgba(23,23,23,0.04)] transition hover:border-[var(--najs-paper-line)] hover:bg-[rgba(241,234,217,0.86)] hover:shadow-[0_8px_22px_rgba(23,23,23,0.06)]"
+                className="group flex gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-3 transition hover:bg-[var(--chan-surface)]"
               >
-                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl ink-button sm:h-32 sm:w-56">
+                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl bg-[var(--chan-ink)] sm:h-32 sm:w-56">
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}
@@ -70,15 +70,15 @@ export default async function SearchPage(props: SearchPageProps) {
                   ) : null}
                 </div>
                 <div className="min-w-0 py-1">
-                  <h2 className="line-clamp-2 text-lg font-black tracking-tight ink-text group-hover:underline">
+                  <h2 className="line-clamp-2 font-brand text-lg font-bold text-[var(--chan-ink)] group-hover:underline">
                     {locale === "en" ? (video.titleEn || video.title) : video.title}
                   </h2>
                   {video.description ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 muted-text">
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--chan-body)]">
                       {locale === "en" ? (video.descriptionEn || video.description) : video.description}
                     </p>
                   ) : null}
-                  <p className="mt-3 text-xs font-bold uppercase tracking-widest muted-text">
+                  <p className="mt-3 text-xs font-bold uppercase tracking-widest text-[var(--chan-muted)]">
                     {video.creator?.name ?? "Polutek"} ·{" "}
                     {video.views.toLocaleString(locale === "pl" ? "pl-PL" : "en-US")} {locale === "pl" ? "wyświetleń" : "views"}
                   </p>
@@ -95,11 +95,11 @@ export default async function SearchPage(props: SearchPageProps) {
 
 function EmptySearchState({ message, locale }: { message: string; locale: Locale }) {
   return (
-    <div className="rounded-3xl border border-dashed paper-border paper-panel p-10 text-center shadow-[0_1px_2px_rgba(23,23,23,0.04)]">
-      <p className="mb-6 text-sm muted-text">{message}</p>
+    <div className="rounded-3xl border border-dashed border-[var(--chan-line)] bg-[var(--chan-card)] p-10 text-center">
+      <p className="mb-6 text-sm text-[var(--chan-muted)]">{message}</p>
       <Link
         href={getLocalizedHref(locale, "home")}
-        className="inline-flex rounded-full ink-button px-6 py-3 text-xs font-black uppercase tracking-widest text-[var(--najs-paper)] transition hover:bg-[rgba(23,23,23,0.9)]"
+        className="inline-flex rounded-full bg-[var(--chan-ink)] px-6 py-3 font-brand text-xs font-bold uppercase tracking-widest text-white transition hover:opacity-90"
       >
         {locale === "pl" ? "Wróć na kanał" : "Back to channel"}
       </Link>

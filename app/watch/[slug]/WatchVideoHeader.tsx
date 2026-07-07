@@ -18,12 +18,12 @@ export function WatchVideoHeader({ video }: WatchVideoHeaderProps) {
 
   return (
     <div className="mb-6 space-y-3">
-      <h1 className="text-3xl font-black tracking-tight text-neutral-950">
+      <h1 className="font-brand text-3xl font-bold tracking-tight text-[var(--chan-ink)]">
         {displayTitle}
       </h1>
       {displayDescription ? (
-        <div className="max-w-3xl rounded-2xl border border-[#0f0f0f] bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,15,15,0.10),0_8px_18px_rgba(15,15,15,0.08)]">
-          <p className="text-sm leading-6 text-neutral-700">{displayDescription}</p>
+        <div className="max-w-3xl rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-3">
+          <p className="text-sm leading-6 text-[var(--chan-body)]">{displayDescription}</p>
         </div>
       ) : null}
     </div>

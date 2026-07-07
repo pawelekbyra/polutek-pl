@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
-import { Frame, INK, BLUE } from "../najs/primitives";
 import { useLanguage } from "../LanguageContext";
 import BrandName from "../BrandName";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
@@ -165,26 +164,22 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
         showCloseButton={false}
         className="!w-[calc(100vw-1rem)] !max-w-[430px] overflow-visible !rounded-none !border-0 !bg-transparent !p-0 !shadow-none !ring-0 sm:!w-[430px] sm:!max-w-[430px]"
       >
-        <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border-2 border-[#171717] bg-[#f1ead9] px-5 py-6 shadow-[0_14px_34px_rgba(23,23,23,0.18)] sm:px-6 sm:py-7">
+        <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:px-6 sm:py-7">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#171717]/20 bg-white/70 text-[18px] font-black leading-none text-[#171717] transition-colors hover:bg-white"
+            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[18px] font-black leading-none text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-line)]"
             aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
           >
             ×
           </button>
-          <div className="relative z-10">
+          <div>
             {/* Brand header — same POLUTEK.PL logo mark and size as the topbar. */}
-            <div className="mb-4 flex items-center justify-center border-b border-[#171717]/10 pb-4 pr-8">
-              <BrandName
-                className="text-[23px] leading-none"
-                variant="classic"
-                style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
-              />
+            <div className="mb-4 flex items-center justify-center border-b border-[var(--chan-line)] pb-4 pr-8">
+              <BrandName className="text-[23px] leading-none" variant="classic" />
             </div>
             <DialogHeader className="text-center">
-              <DialogTitle className="text-2xl font-black tracking-tight ink-text">{title}</DialogTitle>
+              <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
             </DialogHeader>
 
             {error && (
@@ -193,7 +188,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               </p>
             )}
             {info && !error && (
-              <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-[13px] font-semibold text-blue-700">{info}</p>
+              <p className="mt-3 rounded-lg bg-[#EFF3FE] px-3 py-2 text-[13px] font-semibold text-[#2563EB]">{info}</p>
             )}
 
             {view === "sign-in" && (
@@ -203,11 +198,11 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Zaloguj się" : "Sign in"} />
-                <div className="flex items-center justify-between pt-1 text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("forgot")}>
+                <div className="flex items-center justify-between pt-1 text-[12px] text-[var(--chan-muted)]">
+                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
                     {isPl ? "Nie pamiętam hasła" : "Forgot password"}
                   </button>
-                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-up")}>
+                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-up")}>
                     {isPl ? "Załóż konto" : "Create account"}
                   </button>
                 </div>
@@ -224,8 +219,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 {/* Clerk bot protection renders into this element when Smart CAPTCHA is enabled. */}
                 <div id="clerk-captcha" />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Załóż konto" : "Create account"} />
-                <div className="pt-1 text-center text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-in")}>
+                <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
+                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}
                   </button>
                 </div>
@@ -249,8 +244,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Wyślij kod" : "Send code"} />
-                <div className="pt-1 text-center text-[12px] text-[#7a7a7a]">
-                  <button type="button" className="underline hover:text-[var(--najs-ink)]" onClick={() => switchView("sign-in")}>
+                <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
+                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Wróć do logowania" : "Back to sign in"}
                   </button>
                 </div>
@@ -293,13 +288,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">{label}</span>
+      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#171717]/25 paper-surface px-3 py-2 text-[15px] ink-text outline-none transition-colors focus:border-[var(--najs-blue)]"
-        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[#2563EB]"
         {...rest}
       />
     </label>
@@ -311,10 +305,9 @@ function PrimaryButton({ loading, disabled, label }: { loading: boolean; disable
     <button
       type="submit"
       disabled={loading || disabled}
-      className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[15px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+      className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[#2563EB] font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
     >
-      <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
-      {loading ? <Loader2 className="relative z-10 h-4 w-4 animate-spin" aria-hidden="true" /> : <span className="relative z-10">{label}</span>}
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <span>{label}</span>}
     </button>
   );
 }
@@ -338,11 +331,10 @@ function OAuthButtons({
           type="button"
           onClick={() => onSelect(strategy)}
           disabled={disabled}
-          className="relative flex h-[44px] w-full items-center justify-center gap-2 text-[14px] font-bold ink-text transition-all active:scale-[0.98] disabled:opacity-60"
+          className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-60"
         >
-          <Frame radius={11} seed={9} stroke={INK} strokeWidth={1.2} fill="#f1ead9" />
-          <Icon className="relative z-10 h-[18px] w-[18px]" />
-          <span className="relative z-10">{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
+          <Icon className="h-[18px] w-[18px]" />
+          <span>{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
         </button>
       ))}
     </div>
@@ -352,9 +344,9 @@ function OAuthButtons({
 function Divider({ isPl }: { isPl: boolean }) {
   return (
     <div className="flex items-center gap-3 py-1">
-      <span className="h-px flex-1 bg-[rgba(23,23,23,0.15)]" />
-      <span className="text-[11px] font-bold uppercase tracking-wide text-[#9a958b]">{isPl ? "lub" : "or"}</span>
-      <span className="h-px flex-1 bg-[rgba(23,23,23,0.15)]" />
+      <span className="h-px flex-1 bg-[var(--chan-line)]" />
+      <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{isPl ? "lub" : "or"}</span>
+      <span className="h-px flex-1 bg-[var(--chan-line)]" />
     </div>
   );
 }
