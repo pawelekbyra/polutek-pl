@@ -105,7 +105,7 @@ const Navbar = () => {
                 className="shrink-0 flex items-start gap-1.5 hover:opacity-85 transition-all active:scale-95"
               >
                 <BrandName className="text-[19px] md:text-[21px] leading-none tracking-[0.04em]" variant="classic" />
-                <span className="-mt-2 text-[8px] font-extrabold uppercase tracking-[0.05em] leading-none text-[#2563EB] bg-[#EFF3FE] rounded-[5px] px-[5px] py-[3px] select-none">
+                <span className="relative -top-3 text-[8px] font-extrabold uppercase tracking-[0.05em] leading-none text-[#2563EB] bg-[#EFF3FE] rounded-[5px] px-[5px] py-[3px] select-none">
                   Beta
                 </span>
               </Link>
