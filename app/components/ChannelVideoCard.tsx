@@ -10,7 +10,7 @@ import { pl } from "date-fns/locale";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
-import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { NajsIcon } from "./najs/primitives";
 import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 
 interface ChannelVideoCardProps {
@@ -84,9 +84,7 @@ export default function ChannelVideoCard({
     <div className="group cursor-pointer flex flex-col">
       <div className="block relative">
         <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)} className="absolute inset-0 z-0" />
-        <div className="relative aspect-video rounded-md bg-black mb-2.5 z-10">
-          <Frame radius={8} seed={22} stroke={INK} strokeWidth={1} />
-          <div className="absolute inset-0 overflow-hidden rounded-md">
+        <div className="relative aspect-video rounded-[10px] bg-black mb-2.5 z-10 overflow-hidden">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
               <Image
@@ -115,29 +113,25 @@ export default function ChannelVideoCard({
             {badge && (
               <div
                 className={cn(
-                  "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full border px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] shadow-[0_2px_7px_rgba(0,0,0,0.24)] pointer-events-none",
-                  badge.variant === "public" &&
-                    "border-[#171717]/65 bg-[#f8f3e7] text-[#171717] shadow-[0_0_0_1px_rgba(248,243,231,0.65),0_2px_8px_rgba(23,23,23,0.24)]",
-                  badge.variant === "unlocked" &&
-                    "border-[#2563eb]/35 bg-[#eff3fe] text-[#2563eb]",
-                  badge.variant === "locked" &&
-                    "border-[#171717]/25 bg-[#171717] text-[#f8f3e7]",
+                  "absolute right-2 top-2 z-30 max-w-[92px] truncate rounded-full px-2 py-[3px] text-[9px] font-black uppercase leading-none tracking-[0.14em] pointer-events-none",
+                  badge.variant === "public" && "bg-white/92 text-[var(--chan-ink)]",
+                  badge.variant === "unlocked" && "bg-[#EFF3FE] text-[#2563EB]",
+                  badge.variant === "locked" && "bg-[var(--chan-ink)] text-white",
                 )}
               >
                 {badge.text}
               </div>
             )}
           </div>
-          </div>
         </div>
         <div className="flex gap-2 relative z-10">
           <div className="flex-1 min-w-0">
             <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)}>
-              <h3 className="text-[14px] font-bold text-[#0f0f0f] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+              <h3 className="font-sans text-[14px] font-bold text-[var(--chan-ink)] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity">
                 {displayTitle}
               </h3>
             </Link>
-            <div className="text-[12px] text-[#606060] leading-relaxed" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <div className="font-sans text-[12px] text-[var(--chan-muted)] leading-relaxed">
               <div className="flex items-center gap-1">
                 <span>
                   {mounted
@@ -163,9 +157,8 @@ export default function ChannelVideoCard({
               </div>
             </div>
           </div>
-          <button className="relative h-[28px] w-[28px] flex items-center justify-center opacity-0 group-hover:opacity-100 shrink-0 active:scale-95 transition-opacity">
-            <Frame radius={8} seed={55} stroke={INK} strokeWidth={1} fill="rgba(248,243,231,.88)" />
-            <NajsIcon name="more-vertical" className="relative h-[16px] w-[16px]" stroke={INK} />
+          <button className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--chan-surface)] opacity-0 shrink-0 transition-opacity active:scale-95 group-hover:opacity-100">
+            <NajsIcon name="more-vertical" className="h-[16px] w-[16px]" stroke="var(--chan-ink)" />
           </button>
         </div>
       </div>

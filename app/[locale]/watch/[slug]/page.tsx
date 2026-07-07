@@ -145,7 +145,7 @@ export default async function WatchPage(props: WatchPageProps) {
   if (!video) notFound();
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+    <div className="min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <WatchVideoHeader video={video} />

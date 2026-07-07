@@ -83,12 +83,12 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   const mainSlug = getConfiguredSlugSafe();
   if (mainSlug && params.slug !== mainSlug) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-serif">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-            <h1 className="text-4xl font-black uppercase">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
-            <p className="text-[#606060] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
-            <Link href={getLocalizedHref(locale, "home")} className="bg-[#0f0f0f] text-white px-8 py-3 rounded-md uppercase font-bold tracking-widest hover:bg-[#272727] transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
+            <h1 className="font-brand text-4xl font-bold">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
+            <p className="text-[var(--chan-muted)] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
+            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
         </div>
         <Footer />
       </div>
@@ -107,12 +107,12 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
 
   if (!creator) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-serif">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-            <h1 className="text-4xl font-black uppercase">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
-            <p className="text-[#606060] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
-            <Link href={getLocalizedHref(locale, "home")} className="bg-[#0f0f0f] text-white px-8 py-3 rounded-md uppercase font-bold tracking-widest hover:bg-[#272727] transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
+            <h1 className="font-brand text-4xl font-bold">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
+            <p className="text-[var(--chan-muted)] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
+            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
         </div>
         <Footer />
       </div>
@@ -158,18 +158,18 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   const displayBio = creator.bio || (locale === "pl" ? "Witamy na oficjalnym kanale." : "Welcome to the official channel.");
 
   return (
-    <div className="min-h-screen bg-background text-[#0f0f0f] font-serif">
+    <div className="min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
       <Navbar />
 
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
-        <div className="w-full aspect-[6/1] bg-neutral-200 relative overflow-hidden rounded-none md:rounded-xl border border-black/5">
+        <div className="w-full aspect-[6/1] bg-[var(--chan-surface)] relative overflow-hidden rounded-none md:rounded-xl border border-[var(--chan-line)]">
            {creator.bannerUrl ? (
              <Image src={creator.bannerUrl} alt={displayName} fill sizes="(max-width: 768px) 100vw, 1284px" className="object-cover" unoptimized />
            ) : (
              <>
-               <div className="absolute inset-0 bg-gradient-to-r from-neutral-300 to-neutral-400 opacity-50" />
+               <div className="absolute inset-0 bg-[var(--chan-avatar-gradient)] opacity-25" />
                <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                  <span className="text-[10vw] font-black uppercase tracking-tighter rotate-2">{displayName}</span>
+                  <span className="font-brand text-[10vw] font-bold uppercase tracking-tighter rotate-2">{displayName}</span>
                </div>
              </>
            )}
@@ -178,7 +178,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
 
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <div className="relative w-24 h-24 md:w-40 md:h-40 rounded-full border border-neutral-200 overflow-hidden bg-[#1a1a1a]/5 shrink-0 shadow-sm">
+          <div className="relative w-24 h-24 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] overflow-hidden bg-[var(--chan-avatar-gradient)] shrink-0">
              <Image
                src={channelAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
                alt={displayName}
@@ -189,15 +189,15 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="text-[36px] font-semibold leading-tight mb-1" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <h1 className="font-brand text-[36px] font-bold leading-tight mb-1">
               {displayName}
             </h1>
-            <div className="text-[14px] text-[#606060] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
-               <span className="font-bold text-[#0f0f0f]">@{creator.slug}</span>
+            <div className="text-[14px] text-[var(--chan-muted)] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
+               <span className="font-bold text-[var(--chan-ink)]">@{creator.slug}</span>
                <span>•</span>
                <span>{formatCount(allVideos.length)} {getVideoCountLabel(allVideos.length)}</span>
             </div>
-            <p className="text-[14px] text-[#606060] line-clamp-1 max-w-2xl font-sans mt-1">
+            <p className="text-[14px] text-[var(--chan-muted)] line-clamp-1 max-w-2xl font-sans mt-1">
                {displayBio}
             </p>
             <div className="mt-4 flex justify-center md:justify-start">
@@ -205,19 +205,20 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
                 creatorId={creator.id}
                 creatorSlug={creator.slug}
                 creatorName={creator.name}
+                colorScheme="flat"
                 initialIsSubscribed={initialSubscribed}
               />
             </div>
           </div>
         </div>
 
-        <div className="flex border-b border-neutral-200/60 mt-6 overflow-x-auto no-scrollbar gap-8">
-           <button className="pb-3 border-b-2 border-[#171717] text-[14px] font-bold uppercase tracking-widest" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{locale === "pl" ? "Wideo" : "Videos"}</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{locale === "pl" ? "Playlisty" : "Playlists"}</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{locale === "pl" ? "Społeczność" : "Community"}</button>
-           <button className="pb-3 text-[#606060] text-[14px] font-bold uppercase tracking-widest hover:text-[#0f0f0f] transition-colors" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>{locale === "pl" ? "Informacje" : "About"}</button>
+        <div className="flex border-b border-[var(--chan-line)] mt-6 overflow-x-auto no-scrollbar gap-8">
+           <button className="pb-3 border-b-2 border-[var(--chan-ink)] text-[14px] font-bold uppercase tracking-widest font-sans">{locale === "pl" ? "Wideo" : "Videos"}</button>
+           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Playlisty" : "Playlists"}</button>
+           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Społeczność" : "Community"}</button>
+           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Informacje" : "About"}</button>
            <div className="ml-auto pb-3 flex items-center gap-4">
-              <Search size={20} className="text-[#606060] cursor-pointer" />
+              <Search size={20} className="text-[var(--chan-muted)] cursor-pointer" />
            </div>
         </div>
 
@@ -236,9 +237,9 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
         ) : (
           <div className="py-20 text-center space-y-4">
              <div className="text-4xl opacity-20">🎬</div>
-             <h3 className="text-xl font-bold uppercase tracking-tight text-[#0f0f0f]">{locale === "pl" ? "Brak publicznych materiałów" : "No public videos"}</h3>
-             <p className="text-[#606060] max-w-md mx-auto">{locale === "pl" ? "Na kanale nie ma jeszcze opublikowanych materiałów. Wróć tu później." : "This channel has no published videos yet. Check back later."}</p>
-             <Link href={getLocalizedHref(locale, "home")} className="inline-block mt-4 text-[14px] font-bold uppercase tracking-widest border-b-2 border-[#0f0f0f] pb-1 hover:opacity-70 transition-opacity">
+             <h3 className="font-brand text-xl font-bold uppercase tracking-tight text-[var(--chan-ink)]">{locale === "pl" ? "Brak publicznych materiałów" : "No public videos"}</h3>
+             <p className="text-[var(--chan-muted)] max-w-md mx-auto">{locale === "pl" ? "Na kanale nie ma jeszcze opublikowanych materiałów. Wróć tu później." : "This channel has no published videos yet. Check back later."}</p>
+             <Link href={getLocalizedHref(locale, "home")} className="inline-block mt-4 text-[14px] font-bold uppercase tracking-widest border-b-2 border-[var(--chan-ink)] pb-1 hover:opacity-70 transition-opacity">
                 {locale === "pl" ? "Przejdź do strony głównej" : "Go to home"}
              </Link>
           </div>
