@@ -174,7 +174,7 @@ export function SidebarPlaylist({
           onVideoMouseEnter(video.id);
           warmVideoOnIntent();
         }}
-        className="relative group/item lg:flex-1 lg:min-h-0"
+        className="relative group/item lg:flex-1"
       >
         <Link
           href={feedVideoHref}
@@ -365,22 +365,22 @@ export function SidebarPlaylist({
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
 
   return (
-    <div className="flex flex-col gap-1 lg:h-full lg:min-h-0 lg:gap-1.5">
+    <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5">
       {publicSection && (
-        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(publicSection.title)}
           {publicSection.items.map((v) => renderVideoItem(v, true))}
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
 
       {patronSection && (
-        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
