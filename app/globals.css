@@ -94,7 +94,6 @@
     --najs-blue-soft: #eff3fe;
 
     /* ===== Channel homepage flat card skin (Navbar/Hero/ChannelHome/Sidebar/Donation/Footer) ===== */
-    --chan-canvas: oklch(23% 0.014 260);
     --chan-card: oklch(98% 0.006 75);
     --chan-nav: oklch(99% 0.004 75);
     --chan-surface: oklch(95% 0.006 75);
@@ -107,7 +106,6 @@
     --chan-blue: #2563eb;
     --chan-blue-soft: #eff3fe;
     --chan-avatar-gradient: linear-gradient(135deg, #4f7df0, #2563eb);
-    --chan-card-shadow: 0 30px 80px rgba(30, 25, 15, 0.18);
     --chan-support-shadow: 0 4px 18px rgba(23, 23, 23, 0.05);
   }
 }
@@ -424,7 +422,7 @@
   }
 
   .comments-flat-shell div[id^="comment-"] {
-    border-top: 1px solid var(--chan-line) !important;
+    border-top-color: var(--chan-line) !important;
   }
 
   .comments-flat-shell div[id^="comment-"] p,

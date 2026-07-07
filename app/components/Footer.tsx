@@ -10,7 +10,7 @@ const Footer = () => {
   const isPl = language === 'pl';
 
   return (
-    <footer className="mt-12 border-t border-[var(--chan-line)] bg-[var(--chan-nav)]">
+    <footer className="border-t border-[var(--chan-line)] bg-[var(--chan-nav)]">
       <div className="max-w-[1180px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
         <div className="hidden w-32 md:block" />
 

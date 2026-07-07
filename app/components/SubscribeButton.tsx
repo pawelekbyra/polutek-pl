@@ -45,22 +45,27 @@ const SubscribeBellIcon = ({
     className={className}
     aria-hidden="true"
   >
-    <path
-      d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M10 20 c1.3 1 2.7 1 4 0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    {/* The bell glyph's visible ink sits lower than the 24x24 viewBox's geometric
+        center, so it reads as vertically offset next to the button label — nudge
+        it up by 1 unit to optically re-center it on the same axis as the text. */}
+    <g transform="translate(0,-1)">
+      <path
+        d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 20 c1.3 1 2.7 1 4 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
   </svg>
 );
 

@@ -120,8 +120,8 @@ function ChannelHomeContent({
 
   if (!selectedVideo)
     return (
-      <main className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--chan-canvas)" }}>
-        <div className="max-w-md w-full rounded-[22px] bg-[var(--chan-card)] p-10 text-center shadow-[var(--chan-card-shadow)] animate-in fade-in zoom-in duration-500">
+      <main className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
+        <div className="max-w-md w-full rounded-[22px] border border-[var(--chan-line)] bg-white p-10 text-center animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-full bg-[var(--chan-surface)]">
             <AlertCircle size={36} className="text-[var(--chan-muted)]" />
           </div>
@@ -175,10 +175,10 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="min-h-screen py-4 px-2 md:py-8 md:px-4 lg:py-10 lg:px-6" style={{ background: "var(--chan-canvas)" }}>
-      <div className="mx-auto w-full max-w-[1512px] overflow-hidden rounded-[22px] bg-[var(--chan-card)] shadow-[var(--chan-card-shadow)]">
-        <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[2fr_1fr] lg:gap-7 lg:p-8 lg:items-start">
-          <div>
+    <main className="min-h-screen bg-[var(--chan-nav)]">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
+        <div className="grid grid-cols-12 gap-4 lg:items-start">
+          <div className="col-span-12 lg:col-span-8">
             <div
               key={selectedVideo.id}
               className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
@@ -232,7 +232,7 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <aside className="hidden lg:flex lg:flex-col lg:gap-5">
+          <aside className="hidden lg:flex lg:col-span-4 lg:flex-col lg:gap-5">
             <SidebarPlaylist {...commonSidebarProps} />
           </aside>
         </div>
