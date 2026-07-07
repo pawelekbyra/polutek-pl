@@ -84,11 +84,11 @@ const Navbar = () => {
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-4 pr-12 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                  className="w-full h-full bg-transparent pl-4 pr-16 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                 />
                 <button
                   type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center"
+                  className="absolute right-0 top-1/2 flex h-7 -translate-y-1/2 items-center justify-center border-l border-[var(--chan-line)] pl-3 pr-4"
                   aria-label={searchLabel}
                 >
                   <NajsIcon name="search" className="h-4 w-4" stroke="var(--chan-muted)" />
@@ -102,9 +102,8 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex items-center gap-2.5 hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex items-center gap-2 hover:opacity-85 transition-all active:scale-95"
               >
-                <span className="h-[34px] w-[34px] rounded-[10px] bg-[#2563EB] inline-block shrink-0" aria-hidden="true" />
                 <BrandName className="text-[19px] md:text-[21px] leading-none tracking-[0.04em]" variant="classic" />
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.06em] leading-none text-[#2563EB] bg-[#EFF3FE] rounded-[6px] px-[7px] py-[4px] select-none">
                   Beta
@@ -116,14 +115,20 @@ const Navbar = () => {
             <div className="flex-1 max-w-[480px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
                 <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-[var(--chan-surface)]">
-                  <NajsIcon name="search" className="absolute left-4 h-4 w-4" stroke="var(--chan-muted)" />
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-11 pr-4 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                    className="w-full h-full bg-transparent pl-4 pr-16 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                   />
+                  <button
+                    type="submit"
+                    className="absolute right-0 top-1/2 flex h-7 -translate-y-1/2 items-center justify-center border-l border-[var(--chan-line)] pl-3 pr-4"
+                    aria-label={searchLabel}
+                  >
+                    <NajsIcon name="search" className="h-4 w-4" stroke="var(--chan-muted)" />
+                  </button>
                 </div>
               </form>
             </div>
