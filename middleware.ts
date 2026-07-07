@@ -4,6 +4,16 @@ import { generateCSP } from "@/lib/utils/security";
 
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/pl',
+  '/pl/search',
+  '/pl/watch/(.*)',
+  '/pl/channel/(.*)',
+  '/pl/regulamin',
+  '/pl/polityka-prywatnosci',
+  '/pl/sklep',
+  '/pl/testujemy',
+  '/pl/testowy1',
+  '/pl/testowy2',
   '/en',
   '/en/search',
   '/en/watch/(.*)',
@@ -11,12 +21,18 @@ const isPublicRoute = createRouteMatcher([
   '/en/terms',
   '/en/privacy-policy',
   '/en/shop',
+  '/en/testujemy',
+  '/en/testowy1',
+  '/en/testowy2',
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
   '/sklep',
+  '/testujemy',
+  '/testowy1',
+  '/testowy2',
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
@@ -44,9 +60,9 @@ const isPublicRoute = createRouteMatcher([
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
 function shouldRewriteForPolish(pathname: string): boolean {
-  // Check if pathname is a non-localized route (starts with /en, /admin, /api, etc.)
-  const startsWithLocale = /^\/(?:en|admin|api|\.)(?:\/|$)/.test(pathname);
-  if (startsWithLocale) return false;
+  // Check if pathname is already localized or is a route that should not be locale-prefixed.
+  const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);
+  if (startsWithLocaleOrSystemRoute) return false;
 
   // All other paths should be rewritten (including "/")
   return true;
