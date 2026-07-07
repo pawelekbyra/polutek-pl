@@ -147,11 +147,15 @@ export function VideoSourcesPanel({ videoId, assets, tier, onChanged }: VideoSou
       </CardHeader>
       <CardContent className="space-y-4">
         {assets.length === 0 && (
-          <p className="text-sm text-muted-foreground">Brak przypisanych źródeł wideo.</p>
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
+            <Globe className="h-6 w-6 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">Brak przypisanych źródeł wideo.</p>
+            <p className="text-xs text-muted-foreground/70">Dodaj źródło jednym z przycisków poniżej.</p>
+          </div>
         )}
 
         {assets.map((asset) => (
-          <div key={asset.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+          <div key={asset.id} className={`flex items-center gap-3 p-3 rounded-lg border bg-muted/30 shadow-sm ${asset.isPrimary ? "border-amber-200" : ""}`}>
             {asset.provider === "YOUTUBE" && asset.externalVideoId && (
               <div className="h-12 w-20 rounded overflow-hidden shrink-0 bg-black">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
