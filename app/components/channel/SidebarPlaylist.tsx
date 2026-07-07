@@ -159,6 +159,8 @@ export function SidebarPlaylist({
         priority: "intent",
       });
     };
+    const routeLocale = language === "pl" ? "pl" : "en";
+    const feedVideoHref = `${getLocalizedHref(routeLocale, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
 
     return (
       <div
@@ -175,7 +177,7 @@ export function SidebarPlaylist({
         className="relative group/item"
       >
         <Link
-          href={getLocalizedHref(language === "pl" ? "pl" : "en", "watch", { slug: video.slug || video.id })}
+          href={feedVideoHref}
           scroll={false}
           onClick={() => {
             onVideoSelect?.(video.id);
