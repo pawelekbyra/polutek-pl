@@ -159,8 +159,7 @@ export function SidebarPlaylist({
         priority: "intent",
       });
     };
-    const routeLocale = language === "pl" ? "pl" : "en";
-    const feedVideoHref = `${getLocalizedHref(routeLocale, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
+    const feedVideoHref = getLocalizedHref(language === "pl" ? "pl" : "en", "watch", { slug: video.slug || video.id });
 
     return (
       <div
