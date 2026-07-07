@@ -11,7 +11,7 @@ import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { APP_NAME } from '@/lib/constants';
 import { isLocale, type Locale, getLocalizedHref } from '@/lib/i18n/routing';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ChannelHome from '@/app/components/ChannelHome';
 import Navbar from '@/app/components/Navbar';
 
@@ -61,6 +61,19 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
   const { mainVideo, allVideos } = content.status !== 'error'
     ? content
     : { mainVideo: null, allVideos: [] as PublicVideoDTO[] };
+
+  // Canonical URL: a video's ?v= param should always be its slug, never its raw id. Old/
+  // shared links using the id still resolve (see the id-or-slug match below), but redirect
+  // to the slug form so there is exactly one canonical URL per video going forward.
+  if (videoId) {
+    const matchedById = allVideos.find(v => v.id === videoId);
+    if (matchedById?.slug && matchedById.slug !== videoId) {
+      const canonicalParams = new URLSearchParams();
+      if (searchParams.q) canonicalParams.set('q', searchParams.q);
+      canonicalParams.set('v', matchedById.slug);
+      redirect(`${getLocalizedHref(locale, 'home')}?${canonicalParams.toString()}`);
+    }
+  }
 
   let userDb = null;
   let hasActivePatronGrant = false;

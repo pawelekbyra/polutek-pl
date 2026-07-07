@@ -11,14 +11,40 @@ vi.mock('../../lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue({})
 }));
 
+vi.mock('../../lib/modules/channel', () => ({
+  MainChannelService: {
+    getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' }),
+  },
+}));
+
+const readyRouteVideo = {
+  id: 'placeholder',
+  title: 'Placeholder',
+  slug: 'placeholder',
+  tier: 'PUBLIC',
+  status: 'DRAFT',
+  activePlaybackRoute: {
+    asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' },
+  },
+};
+
+const noRouteVideo = {
+  id: 'placeholder',
+  title: 'Placeholder',
+  slug: 'placeholder',
+  tier: 'PUBLIC',
+  status: 'DRAFT',
+  activePlaybackRoute: null,
+};
+
 const mockPrisma: any = {
   video: {
     findUnique: vi.fn(),
+    // Backs VideoRepository.findByIdForMainChannel(), consulted by
+    // VideoPolicy.getPublicationBlockers() to decide readiness. Default: a ready active
+    // playback route exists, so publication is allowed to proceed.
+    findFirst: vi.fn().mockResolvedValue(readyRouteVideo),
     update: vi.fn()
-  },
-  videoAsset: {
-    // Default: a READY primary asset exists, so publication is allowed to proceed.
-    findFirst: vi.fn().mockResolvedValue({ id: 'asset-ready' })
   },
   $transaction: vi.fn((cb) => cb(mockPrisma))
 };
@@ -31,6 +57,7 @@ const mockCtx: any = {
 describe('attemptPublishAfterAssetReady Idempotency', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.video.findFirst.mockResolvedValue(readyRouteVideo);
   });
 
   it('should not record redundant audit logs for the same failure', async () => {
@@ -66,6 +93,7 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
 
     // Second call: same error
     vi.clearAllMocks();
+    mockPrisma.video.findFirst.mockResolvedValue(readyRouteVideo);
 
     mockPrisma.video.findUnique.mockResolvedValueOnce({
       id: videoId,
@@ -126,10 +154,10 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
 describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-ready' });
+    mockPrisma.video.findFirst.mockResolvedValue(readyRouteVideo);
   });
 
-  it('publishes as soon as a READY primary asset exists, regardless of which provider triggered', async () => {
+  it('publishes as soon as a READY active playback route exists, regardless of which provider triggered', async () => {
     const videoId = 'video-xyz';
     mockPrisma.video.findUnique.mockResolvedValue({
       id: videoId,
@@ -150,7 +178,7 @@ describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)'
     }));
   });
 
-  it('does NOT publish while no READY primary asset exists yet', async () => {
+  it('does NOT publish while no active playback route is ready yet', async () => {
     const videoId = 'video-not-ready';
     mockPrisma.video.findUnique.mockResolvedValue({
       id: videoId,
@@ -158,7 +186,7 @@ describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)'
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
     });
-    mockPrisma.videoAsset.findFirst.mockResolvedValue(null); // nothing playable yet
+    mockPrisma.video.findFirst.mockResolvedValue(noRouteVideo); // nothing playable yet
 
     await attemptPublishAfterAssetReady(videoId, mockCtx, 'mux');
 

@@ -28,6 +28,13 @@ vi.mock("@/lib/modules/video/application/publish-after-asset-ready.use-case", ()
   attemptPublishAfterAssetReady: vi.fn().mockResolvedValue(undefined),
 }));
 
+const activateFirstReadyAssetIfNoneActive = vi.fn().mockResolvedValue({ id: "route-id" });
+vi.mock("@/lib/modules/video/application/video-playback-route.service", () => ({
+  VideoPlaybackRouteService: vi.fn().mockImplementation(function (this: any) {
+    this.activateFirstReadyAssetIfNoneActive = activateFirstReadyAssetIfNoneActive;
+  }),
+}));
+
 describe("Cloudflare Lifecycle Hardening", () => {
   let mockPrisma: any;
   let mockCtx: any;
@@ -169,14 +176,15 @@ describe("Cloudflare Lifecycle Hardening", () => {
 
   describe("handleCloudflareStreamWebhook", () => {
     it("should set asset as primary and trigger auto-publish on READY", async () => {
-      mockPrisma.videoAsset.findFirst
-        .mockResolvedValueOnce({
-          id: "asset-id",
-          videoId: "video-id",
-          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
-        })
-        .mockResolvedValueOnce(null); // no existing primary
+      // Only one findFirst call happens now: findAssetByProviderId. The "is there already a
+      // READY primary" check moved into VideoPlaybackRouteService.activateFirstReadyAssetIfNoneActive
+      // (mocked above).
+      mockPrisma.videoAsset.findFirst.mockResolvedValueOnce({
+        id: "asset-id",
+        videoId: "video-id",
+        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
+        processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
+      });
 
       mockPrisma.videoAsset.update.mockResolvedValue({
         id: "asset-id",
@@ -197,9 +205,15 @@ describe("Cloudflare Lifecycle Hardening", () => {
         where: { id: "asset-id" },
         data: expect.objectContaining({
           processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
-          isPrimary: true,
         }),
       }));
+
+      // Primary promotion now happens via VideoPlaybackRouteService.activateFirstReadyAssetIfNoneActive(),
+      // the single write path for isPrimary/activePlaybackRouteId, not inline in the update above.
+      expect(activateFirstReadyAssetIfNoneActive).toHaveBeenCalledWith(
+        { videoId: "video-id", assetId: "asset-id", reason: "cloudflare-sync-ready" },
+        mockCtx,
+      );
 
       const { attemptPublishAfterAssetReady } = await import("@/lib/modules/video/application/publish-after-asset-ready.use-case");
       expect(attemptPublishAfterAssetReady).toHaveBeenCalledWith("video-id", mockCtx, VIDEO_PROVIDER.CLOUDFLARE_STREAM);

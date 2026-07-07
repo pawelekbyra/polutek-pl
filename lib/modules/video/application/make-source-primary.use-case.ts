@@ -2,11 +2,11 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { MainChannelService } from "@/lib/modules/channel";
-import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError } from "../domain/video.errors";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
+import { VideoPlaybackRouteService } from "./video-playback-route.service";
 
 export interface MakeSourcePrimaryInput {
   videoId: string;
@@ -62,33 +62,21 @@ export async function makeSourcePrimary(
     return ok(toAdminVideoDto(video));
   }
 
-  const updatedVideo = await (ctx.prisma as any).$transaction(async (tx: any) => {
-    // Demote all other primary assets
-    await (tx as any).videoAsset.updateMany({
-      where: { videoId: video.id, isPrimary: true, id: { not: input.assetId } },
-      data: { isPrimary: false },
-    });
-
-    // Promote the target
-    await (tx as any).videoAsset.update({
-      where: { id: input.assetId },
-      data: { isPrimary: true },
-    });
-
-    await recordAuditEvent(ctx, {
-      action: "VIDEO_SOURCE_MADE_PRIMARY",
-      targetType: "Video",
-      targetId: video.id,
-      metadata: { assetId: input.assetId, provider: target.provider },
-    }, tx);
-
-    return repository.findByIdForMainChannel(video.id, mainChannel.id);
-  }).catch((error: unknown) => {
-    if (error instanceof AppError) return error;
+  // Delegate the actual write to VideoPlaybackRouteService.activateRoute() — the single
+  // write path for isPrimary/activePlaybackRouteId — instead of duplicating the primary
+  // swap here. All the provider/tier/readiness validation above still applies first, so
+  // this call is expected to succeed; activateRoute() re-validates READY state defensively.
+  try {
+    await new VideoPlaybackRouteService().activateRoute(
+      { videoId: video.id, assetId: input.assetId, activatedBy: "ADMIN", reason: "admin-set-primary" },
+      ctx,
+    );
+  } catch (error) {
+    if (error instanceof AppError) return fail(error);
     throw error;
-  });
+  }
 
-  if (updatedVideo instanceof AppError) return fail(updatedVideo);
+  const updatedVideo = await repository.findByIdForMainChannel(video.id, mainChannel.id);
   if (!updatedVideo) return fail(new VideoNotFoundError(input.videoId));
   return ok(toAdminVideoDto(updatedVideo));
 }

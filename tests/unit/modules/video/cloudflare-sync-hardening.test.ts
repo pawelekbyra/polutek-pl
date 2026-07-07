@@ -14,6 +14,13 @@ vi.mock('@/lib/modules/video/application/publish-after-asset-ready.use-case', ()
   attemptPublishAfterAssetReady: vi.fn().mockResolvedValue({})
 }));
 
+const activateFirstReadyAssetIfNoneActive = vi.fn().mockResolvedValue({ id: 'route-id' });
+vi.mock('@/lib/modules/video/application/video-playback-route.service', () => ({
+  VideoPlaybackRouteService: vi.fn().mockImplementation(function (this: any) {
+    this.activateFirstReadyAssetIfNoneActive = activateFirstReadyAssetIfNoneActive;
+  }),
+}));
+
 describe('Cloudflare Sync Hardening', () => {
   const mockPrisma: any = {
     videoAsset: {
@@ -92,9 +99,10 @@ describe('Cloudflare Sync Hardening', () => {
         videoId: 'video-1',
         processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
       };
-      mockPrisma.videoAsset.findFirst
-        .mockResolvedValueOnce(asset) // findAssetByProviderId
-        .mockResolvedValueOnce(null); // no existing primary
+      // Only one findFirst call happens now: findAssetByProviderId. The "is there already a
+      // READY primary" check moved into VideoPlaybackRouteService.activateFirstReadyAssetIfNoneActive
+      // (mocked above), so no second queued value is consumed here.
+      mockPrisma.videoAsset.findFirst.mockResolvedValueOnce(asset);
       mockPrisma.videoAsset.update.mockResolvedValue({ ...asset, processingState: 'READY' });
       mockPrisma.video.update.mockResolvedValue({});
 
@@ -105,10 +113,13 @@ describe('Cloudflare Sync Hardening', () => {
 
       await handleCloudflareStreamWebhook(payload, ctx);
 
-      expect(mockPrisma.videoAsset.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { videoId: 'video-1', id: { not: 'asset-1' } },
-        data: { isPrimary: false }
-      }));
+      // Primary/sibling demotion now happens inside VideoPlaybackRouteService.activateRoute(),
+      // reached via activateFirstReadyAssetIfNoneActive() — the single write path for
+      // isPrimary/activePlaybackRouteId — not via a raw updateMany in the webhook handler.
+      expect(activateFirstReadyAssetIfNoneActive).toHaveBeenCalledWith(
+        { videoId: 'video-1', assetId: 'asset-1', reason: 'cloudflare-sync-ready' },
+        ctx,
+      );
     });
   });
 

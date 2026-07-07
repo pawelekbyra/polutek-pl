@@ -1,7 +1,9 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
-import { VIDEO_ASSET_PROCESSING_STATE } from "../domain/video-asset.constants";
+import { MainChannelService } from "@/lib/modules/channel";
+import { VideoRepository } from "../infrastructure/video.repository";
+import { VideoPolicy } from "../domain/video.policy";
 
 export async function requestPublishAfterAssetReady(videoId: string, ctx: AppContext): Promise<void> {
   const now = new Date();
@@ -43,11 +45,23 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
   // preferred provider. This keeps publication resilient to a broken/lost webhook on a
   // *different* provider (e.g. Cloudflare succeeded while Mux never delivered): the
   // triggerProvider is now informational only and never blocks publication.
-  const primaryReady = await ctx.prisma.videoAsset.findFirst({
-    where: { videoId, isPrimary: true, processingState: VIDEO_ASSET_PROCESSING_STATE.READY },
-    select: { id: true },
-  });
-  if (!primaryReady) return;
+  //
+  // Auto-publish and manual publish (publish-admin-video.use-case.ts) must never diverge on
+  // what counts as "ready to publish" — both go through VideoPolicy.getPublicationBlockers
+  // against the exact same video shape here. If the only outstanding blockers are about the
+  // asset not being playable yet, keep waiting quietly for the next webhook/sync instead of
+  // recording an error; any other (structural) blocker is treated as a real failure below.
+  const mainChannel = await MainChannelService.getRequired(ctx);
+  const repository = new VideoRepository(ctx.prisma);
+  const video = await repository.findByIdForMainChannel(videoId, mainChannel.id);
+  if (!video) return;
+
+  const blockers = VideoPolicy.getPublicationBlockers(video);
+  const structuralBlockers = blockers.filter((blocker) => !VideoPolicy.isAssetReadinessBlocker(blocker.code));
+  if (blockers.length > 0 && structuralBlockers.length === 0) {
+    // Still waiting for the asset to finish processing/become primary — not an error yet.
+    return;
+  }
 
   const result = await publishAdminVideo(videoId, ctx);
   if (result.ok) {
