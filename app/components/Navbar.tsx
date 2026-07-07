@@ -9,7 +9,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
-import logoPerfect from "@/logo1.png";
+import logoPerfect from "@/logo1.svg";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
