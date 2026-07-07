@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
-import { Share2 } from './icons';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
 import { NajsIcon } from './najs/primitives';
@@ -73,7 +72,7 @@ export default function ShareButton({
         )}
       >
         <NajsIcon name="send" className="h-4 w-4" stroke="var(--chan-ink)" />
-        <span>Udostępnij</span>
+        <span>Szeruj</span>
       </button>
 
       {isOpen && !isMobile && (
