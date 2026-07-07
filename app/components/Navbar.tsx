@@ -69,7 +69,7 @@ const Navbar = () => {
     <div
       className="sticky top-0 z-[1000] w-full flex flex-col bg-[var(--chan-nav)]/95 border-b border-[var(--chan-line)] backdrop-blur-md"
     >
-      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-x-clip overflow-y-visible">
+      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -139,7 +139,7 @@ const Navbar = () => {
             </div>
 
             {/* Right controls */}
-            <div className="flex min-w-0 items-center justify-end gap-1.5 md:gap-2.5">
+            <div className="flex shrink-0 items-center justify-end gap-1.5 md:gap-2.5">
               {/* Mobile search trigger */}
               <div className="flex items-center sm:hidden">
                 <button
@@ -175,11 +175,12 @@ const Navbar = () => {
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--chan-surface)] font-sans text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:bg-[var(--chan-line)] active:scale-95"
+                className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[var(--chan-line)] bg-white px-0 font-sans text-[var(--chan-ink)] shadow-sm transition-transform hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95 lg:w-auto lg:px-3"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
-                <NajsIcon name="mail" className="h-4 w-4" stroke="currentColor" />
+                <NajsIcon name="mail" className="h-4 w-4 shrink-0" stroke="currentColor" />
+                <span className="hidden text-[13px] font-bold lg:inline">{messagesLabel}</span>
               </button>
 
               {/* Auth */}
