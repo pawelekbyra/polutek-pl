@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { NajsIcon } from "./najs/primitives";
 import { usePwaInstall } from "@/app/hooks/usePwaInstall";
 import { useLanguage } from "./LanguageContext";
 
@@ -56,32 +56,32 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           setShowIosInstructions(false);
         }}
         className={cn(
-          "relative w-[38px] h-[38px] flex items-center justify-center shrink-0 active:scale-95",
+          "flex h-[42px] items-center gap-2 rounded-[12px] bg-[#EFF3FE] px-4 shrink-0 font-sans text-[13px] font-bold text-[#2563EB] transition-transform hover:-translate-y-px active:scale-95",
           !installed && !canOfferInstall && "opacity-50",
         )}
         aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        <Frame radius={20} seed={31} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-        <NajsIcon name="download" className="relative h-[18px] w-[18px]" stroke={INK} />
+        <NajsIcon name="download" className="h-4 w-4" stroke="#2563EB" />
+        <span className="hidden sm:inline">{isPl ? "Pobierz appkę" : "Get the app"}</span>
       </button>
 
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] paper-radius-panel border paper-border paper-surface p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {installed ? (
-            <div className="px-3 py-2.5 text-[13px] font-bold ink-text">
+            <div className="px-3 py-2.5 text-[13px] font-bold text-[var(--chan-ink)]">
               {isPl ? "Przecież już masz ściągniętą apkę 😎" : "You've already got the app 😎"}
             </div>
           ) : showIosInstructions ? (
-            <div className="px-3 py-2.5 text-[12.5px] leading-relaxed ink-text">
+            <div className="px-3 py-2.5 text-[12.5px] leading-relaxed text-[var(--chan-ink)]">
               <p className="mb-1 font-bold">
                 {isPl ? "Zainstaluj na iPhonie/iPadzie" : "Install on iPhone/iPad"}
               </p>
-              <p className="muted-text">
+              <p className="text-[var(--chan-muted)]">
                 {isPl
                   ? 'Stuknij ikonę Udostępnij w Safari, a potem "Dodaj do ekranu początkowego".'
                   : 'Tap the Share icon in Safari, then "Add to Home Screen".'}
@@ -92,13 +92,13 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               type="button"
               role="menuitem"
               onClick={handleInstallClick}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold ink-text transition-colors hover:bg-[var(--najs-paper-soft)]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)]"
             >
-              <NajsIcon name="download" className="h-[16px] w-[16px]" stroke={INK} />
+              <NajsIcon name="download" className="h-4 w-4" stroke="var(--chan-ink)" />
               {isPl ? "Zainstaluj aplikację" : "Install app"}
             </button>
           ) : (
-            <div className="px-3 py-2.5 text-[12px] font-bold muted-text">
+            <div className="px-3 py-2.5 text-[12px] font-bold text-[var(--chan-muted)]">
               {isPl
                 ? "Instalacja niedostępna w tej przeglądarce"
                 : "Installation isn't available in this browser"}

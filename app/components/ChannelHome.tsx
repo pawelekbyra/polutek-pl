@@ -11,9 +11,7 @@ import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
-import { Frame, INK } from "./najs/primitives";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
-import styles from "./ChannelHome.module.css";
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
@@ -24,13 +22,13 @@ function CommentsShellSkeleton() {
   return (
     <div className="py-10 space-y-4" role="status" aria-live="polite" aria-label="Loading comments">
       <div className="flex items-center justify-between gap-3">
-        <div className="h-4 w-32 rounded-full bg-[rgba(216,208,189,0.7)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-4 w-24 rounded-full bg-[rgba(216,208,189,0.6)] motion-reduce:animate-none animate-pulse" />
+        <div className="h-4 w-32 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
+        <div className="h-4 w-24 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
       </div>
-      <div className="rounded-2xl border border-dashed paper-border paper-panel p-4 space-y-3">
-        <div className="h-3 w-2/3 rounded-full bg-[rgba(216,208,189,0.65)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-3 w-full rounded-full bg-[rgba(216,208,189,0.55)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-3 w-5/6 rounded-full bg-[rgba(216,208,189,0.55)] motion-reduce:animate-none animate-pulse" />
+      <div className="rounded-2xl border border-dashed border-[var(--chan-line-soft)] bg-[var(--chan-surface)] p-4 space-y-3">
+        <div className="h-3 w-2/3 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
+        <div className="h-3 w-full rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
+        <div className="h-3 w-5/6 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
       </div>
     </div>
   );
@@ -122,29 +120,25 @@ function ChannelHomeContent({
 
   if (!selectedVideo)
     return (
-      <main className={cn("bg-transparent min-h-screen flex items-center justify-center p-6", styles.blackEdgeSurface)}>
-        <div className="max-w-md w-full relative p-10 text-center animate-in fade-in zoom-in duration-500">
-          <Frame radius={16} seed={9} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.97)" />
-          <div className="relative z-10">
-            <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6">
-              <AlertCircle size={40} className="muted-text" />
-            </div>
-            <h1 className="text-2xl font-bold mb-4 ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-              {language === "pl" ? "Brak zeznań" : "No evidence found"}
-            </h1>
-            <p className="muted-text leading-relaxed mb-8" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-              {language === "pl"
-                ? "Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony."
-                : "The selected video could not be found. It might have been archived or moved."}
-            </p>
-            <Link
-              href={getLocalizedHref(language, "home")}
-              className="relative inline-flex items-center justify-center h-[44px] px-10 text-white font-bold text-[14px] transition-all active:scale-95 overflow-hidden rounded-[22px] ink-button"
-              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
-            >
-              {language === "pl" ? "Wróć do bazy" : "Back to database"}
-            </Link>
+      <main className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
+        <div className="max-w-md w-full rounded-[22px] border border-[var(--chan-line)] bg-white p-10 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-full bg-[var(--chan-surface)]">
+            <AlertCircle size={36} className="text-[var(--chan-muted)]" />
           </div>
+          <h1 className="font-brand text-2xl font-bold mb-4 text-[var(--chan-ink)]">
+            {language === "pl" ? "Brak zeznań" : "No evidence found"}
+          </h1>
+          <p className="font-sans text-[var(--chan-muted)] leading-relaxed mb-8">
+            {language === "pl"
+              ? "Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony."
+              : "The selected video could not be found. It might have been archived or moved."}
+          </p>
+          <Link
+            href={getLocalizedHref(language, "home")}
+            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
+          >
+            {language === "pl" ? "Wróć do bazy" : "Back to database"}
+          </Link>
         </div>
       </main>
     );
@@ -181,9 +175,9 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className={cn("bg-transparent min-h-screen", styles.blackEdgeSurface)}>
+    <main className="min-h-screen bg-[var(--chan-nav)]">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 lg:items-start">
           <div className="col-span-12 lg:col-span-8">
             <div
               key={selectedVideo.id}
@@ -197,17 +191,17 @@ function ChannelHomeContent({
             </div>
 
             {!mounted ? (
-              <div className="comments-paper-shell mt-4">
+              <div className="comments-flat-shell mt-4">
                 <CommentsShellSkeleton />
               </div>
             ) : isDesktop ? (
-              <div className="comments-paper-shell hidden lg:block mt-4">
+              <div className="comments-flat-shell hidden lg:block mt-4">
                 {comments}
               </div>
             ) : (
               <>
                 <div className="lg:hidden mt-4">
-                  <div className="relative flex overflow-hidden rounded-2xl border border-[#e4dcc8] bg-[#f1ebdd]/80 p-1 font-sans shadow-[0_2px_8px_rgba(23,23,23,0.05)]">
+                  <div className="relative flex overflow-hidden rounded-2xl bg-[var(--chan-surface)] p-1 font-sans">
                     {(["comments", "videos"] as const).map((tab) => {
                       const isActive = activeTab === tab;
                       return (
@@ -216,25 +210,19 @@ function ChannelHomeContent({
                           onClick={() => setActiveTab(tab)}
                           aria-pressed={isActive}
                           className={cn(
-                            "relative flex-1 rounded-xl py-2.5 text-[13px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
+                            "relative flex-1 rounded-xl py-2.5 text-[12px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
                             isActive
-                              ? "ink-button text-[var(--najs-paper)] shadow-[0_6px_20px_rgba(0,0,0,0.18)]"
-                              : "text-[color:rgb(23_23_23_/_0.55)] hover:bg-[rgba(248,243,231,0.7)] hover:text-[var(--najs-ink)]",
+                              ? "bg-white text-[#2563EB] shadow-sm"
+                              : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
                           )}
                         >
                           {tab === "comments" ? t.comments : t.videosTab}
-                          {isActive && (
-                            <span
-                              aria-hidden="true"
-                              className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[var(--najs-blue)] shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
-                            />
-                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-                <div className="comments-paper-shell lg:hidden mt-2">
+                <div className="comments-flat-shell lg:hidden mt-2">
                   {activeTab === "comments" ? comments : (
                     <div className="space-y-2">
                       <SidebarPlaylist {...commonSidebarProps} />
@@ -244,7 +232,7 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <aside className="hidden lg:block lg:col-span-4 space-y-2">
+          <aside className="hidden lg:flex lg:col-span-4 lg:flex-col lg:gap-5">
             <SidebarPlaylist {...commonSidebarProps} />
           </aside>
         </div>

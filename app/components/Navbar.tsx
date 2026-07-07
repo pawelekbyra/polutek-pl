@@ -10,7 +10,7 @@ import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
-import { Frame, NajsIcon, INK } from "./najs/primitives";
+import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
@@ -65,40 +65,34 @@ const Navbar = () => {
 
   return (
     <div
-      className="sticky top-0 z-[1000] w-full flex flex-col"
-      style={{ background: "var(--clone-nav-bg, rgba(248,243,231,.95))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      className="sticky top-0 z-[1000] w-full flex flex-col bg-[var(--chan-nav)]/95 border-b border-[var(--chan-line)] backdrop-blur-md"
     >
-      <div className="flex items-center px-4 lg:px-6 h-[44px] min-h-[44px] justify-between gap-2 md:gap-4 w-full max-w-full overflow-x-clip overflow-y-visible">
+      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-x-clip overflow-y-visible">
         {isMobileSearchOpen ? (
-          <div className="flex-1 flex items-center gap-2 px-2 animate-in slide-in-from-top-4 duration-200">
+          <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
               onClick={() => setIsMobileSearchOpen(false)}
-              className="relative p-2 shrink-0 flex items-center justify-center"
+              className="relative p-2 shrink-0 flex items-center justify-center rounded-full hover:bg-[var(--chan-surface)]"
             >
-              <NajsIcon name="close" className="h-5 w-5" stroke={INK} />
+              <NajsIcon name="close" className="h-5 w-5" stroke="var(--chan-ink)" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[38px]">
-                <Frame radius={20} seed={18} stroke={INK} strokeWidth={0.8} fill="#ffffff" />
+              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-[var(--chan-surface)]">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="relative w-full h-full bg-transparent pl-4 pr-14 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
-                  style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                  className="w-full h-full bg-transparent pl-4 pr-12 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <span className="h-5 w-px bg-[#171717]" />
-                  <button
-                    type="submit"
-                    className="flex items-center justify-center"
-                    aria-label={searchLabel}
-                  >
-                    <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center"
+                  aria-label={searchLabel}
+                >
+                  <NajsIcon name="search" className="h-4 w-4" stroke="var(--chan-muted)" />
+                </button>
               </div>
             </form>
           </div>
@@ -108,102 +102,76 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 px-1 md:px-2 flex items-center gap-0 hover:opacity-80 transition-all active:scale-95"
+                className="shrink-0 flex items-center gap-2.5 hover:opacity-85 transition-all active:scale-95"
               >
-                <div className="flex items-start gap-[2px]">
-                  <BrandName
-                    className="text-[22px] leading-none"
-                    variant="classic"
-                    style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
-                  />
-                  <span
-                    className="text-[7px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#171717] select-none mt-[1px] px-[2px]"
-                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-                  >
-                    Beta
-                  </span>
-                </div>
+                <span className="h-[34px] w-[34px] rounded-[10px] bg-[#2563EB] inline-block shrink-0" aria-hidden="true" />
+                <BrandName className="text-[19px] md:text-[21px] leading-none tracking-[0.04em]" variant="classic" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.06em] leading-none text-[#2563EB] bg-[#EFF3FE] rounded-[6px] px-[7px] py-[4px] select-none">
+                  Beta
+                </span>
               </Link>
             </div>
 
             {/* Desktop search */}
-            <div className="flex-1 max-w-[520px] hidden md:flex mx-4 min-w-0">
+            <div className="flex-1 max-w-[480px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[42px]">
-                  <Frame radius={20} seed={18} stroke={INK} strokeWidth={0.8} fill="#ffffff" />
+                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-[var(--chan-surface)]">
+                  <NajsIcon name="search" className="absolute left-4 h-4 w-4" stroke="var(--chan-muted)" />
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="relative w-full h-full bg-transparent pl-5 pr-16 text-sm outline-none text-[#171717] placeholder:text-[#9a9a9a]"
-                    style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                    className="w-full h-full bg-transparent pl-11 pr-4 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <span className="h-5 w-px bg-[#171717]" />
-                    <button
-                      type="submit"
-                      className="flex items-center justify-center"
-                      title={searchLabel}
-                      aria-label={searchLabel}
-                    >
-                      <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
-                    </button>
-                  </div>
                 </div>
               </form>
             </div>
 
             {/* Right controls */}
-            <div className="flex min-w-0 items-center justify-end gap-1 md:gap-[10px]">
+            <div className="flex min-w-0 items-center justify-end gap-1.5 md:gap-2.5">
               {/* Mobile search trigger */}
-              <div className="flex items-center gap-1 sm:hidden">
+              <div className="flex items-center sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2"
+                  className="p-2 rounded-full hover:bg-[var(--chan-surface)]"
                 >
-                  <NajsIcon name="search" className="h-5 w-5" stroke={INK} />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="var(--chan-ink)" />
                 </button>
               </div>
 
               {/* Language switcher */}
-              <div className="relative flex h-9 items-center px-1 text-sm font-black" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-                <Frame radius={18} seed={52} stroke={INK} strokeWidth={1.1} fill="rgba(248,243,231,.8)" />
+              <div className="hidden sm:flex h-9 items-center rounded-[12px] bg-[var(--chan-surface)] p-[3px] font-sans">
                 <button
                   onClick={() => switchLanguage("pl")}
                   className={cn(
-                    "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
-                    language === "pl" ? "text-[#171717]" : "text-neutral-500"
+                    "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
+                    language === "pl" ? "bg-white text-[#2563EB] shadow-sm" : "text-[var(--chan-muted)]"
                   )}
                 >
                   PL
                 </button>
-                <span className="relative h-5 w-px bg-[#171717]" />
                 <button
                   onClick={() => switchLanguage("en")}
                   className={cn(
-                    "relative px-3 py-1.5 text-[12px] font-bold uppercase tracking-widest transition-colors",
-                    language === "en" ? "text-[#171717]" : "text-neutral-500"
+                    "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
+                    language === "en" ? "bg-white text-[#2563EB] shadow-sm" : "text-[var(--chan-muted)]"
                   )}
                 >
                   EN
                 </button>
               </div>
 
-              <span className="hidden h-6 w-px bg-[#DAD6CC] sm:block" />
-
               {/* Auth */}
               {isLoaded && !isSignedIn && (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="relative flex h-9 items-center justify-center gap-2 px-2 sm:px-4 shrink-0"
+                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-ink)] px-3 sm:px-4 shrink-0 font-sans transition-transform hover:-translate-y-px active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
-                  style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
                 >
-                  <Frame radius={18} seed={39} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-                  <NajsIcon name="login" className="relative h-4 w-4" stroke={INK} />
-                  <span className="hidden sm:inline relative text-[13px] font-bold uppercase tracking-wide">{t.signIn}</span>
+                  <NajsIcon name="login" className="h-4 w-4" stroke="#ffffff" />
+                  <span className="hidden sm:inline text-[13px] font-bold text-white">{t.signIn}</span>
                 </button>
               )}
 
@@ -213,13 +181,6 @@ const Navbar = () => {
             </div>
           </>
         )}
-      </div>
-
-      {/* Separator pod navbarem — hugs the row, no trailing dead space below the line */}
-      <div className="relative h-[3px] w-full px-4">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 600 3" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M 0 1.5 Q 300 1 600 1.5" fill="none" stroke={INK} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
-        </svg>
       </div>
     </div>
   );

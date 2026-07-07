@@ -24,7 +24,8 @@ Current UI/runtime baseline as of the 2026-07-04 reconciliation:
 - Video switching uses a local CSS fade/slide around the player area. Do not reintroduce fullscreen iris/wipe transitions.
 - `AppPreloadProvider` warms playback plans, posters and comments on intent. Keep this in-memory; do not add persistent service-worker caching without a cache-safety design.
 - `InstallAppMenu` provides install/add-to-home-screen affordances where the browser/platform supports them.
-- Public UI uses the paper/ink/rare-blue visual token system in `app/globals.css`.
+- The legacy paper/ink/rare-blue hand-drawn (rough.js `Frame`, Kalam/Patrick Hand fonts) visual system in `app/globals.css` still exists and is still used by non-homepage surfaces (auth modals, admin, comments internals, legal pages, etc.) — do not remove those tokens/utility classes.
+- The homepage channel surface (`Navbar.tsx`, `Hero.tsx`, `ChannelHome.tsx`, `SidebarPlaylist.tsx`, `DonationBox.tsx`/`DonationAmountField.tsx`, `AccessLockOverlay.tsx`, `Footer.tsx`) uses a separate flat, card-based, blue-accent (`#2563EB`) design skin — Space Grotesk (`font-brand`) headings, Plus Jakarta Sans (`font-sans`) body, `--chan-*` CSS tokens in `app/globals.css`, dark canvas page background behind a white rounded card. Do not reintroduce the hand-drawn `Frame`/rough.js borders or paper tokens into these files. `.comments-flat-shell` (globals.css) re-skins the shared comments module for this surface the same way `.comments-paper-shell` does for the paper skin — keep both in sync if the comments module's DOM structure changes.
 
 ---
 
