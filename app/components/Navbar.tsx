@@ -9,7 +9,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
-import logoPerfect from "@/logoperfect.png";
+import logoPerfect from "@/logo1.png";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -103,14 +103,14 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex h-8 items-center hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex h-14 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
                 <Image
                   src={logoPerfect}
                   alt="POLUTEK.PL"
                   priority
-                  className="h-[24px] w-auto object-contain md:h-[26px]"
+                  className="h-[48px] w-auto object-contain md:h-[52px]"
                 />
               </Link>
             </div>
