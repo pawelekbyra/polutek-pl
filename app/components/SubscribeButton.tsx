@@ -10,6 +10,8 @@ import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { Frame, INK, BLUE } from "./najs/primitives";
 
+export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
+
 interface SubscribeButtonProps {
   creatorId?: string;
   creatorSlug?: string | null;
@@ -18,7 +20,7 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: "default" | "compact";
-  colorScheme?: "default" | "v2";
+  colorScheme?: SubscribeButtonColorScheme;
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
@@ -174,6 +176,8 @@ export default function SubscribeButton({
     });
   };
 
+  const isFlat = colorScheme === "flat";
+
   return (
     <>
       <motion.button
@@ -182,21 +186,28 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-[13.5px] font-bold h-[38px] px-[20px] flex items-center justify-center gap-2 transition-all active:scale-95",
-          isSubscribed ? "text-[#171717]" : "text-white",
+          "relative text-[13px] font-bold h-[38px] px-[18px] flex items-center justify-center gap-2 transition-all active:scale-95",
+          isFlat
+            ? cn(
+                "rounded-[12px] font-sans",
+                isSubscribed ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]" : "bg-[var(--chan-ink)] text-white",
+              )
+            : cn(isSubscribed ? "text-[#171717]" : "text-white"),
           isPending && "opacity-50 cursor-wait",
           className,
         )}
-        style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+        style={isFlat ? undefined : { fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
-        <Frame
-          radius={20}
-          seed={37}
-          stroke={INK}
-          strokeWidth={1.2}
-          fill={isSubscribed ? "rgba(248,243,231,.88)" : BLUE}
-          showShadow={colorScheme === "v2"}
-        />
+        {!isFlat && (
+          <Frame
+            radius={20}
+            seed={37}
+            stroke={INK}
+            strokeWidth={1.2}
+            fill={isSubscribed ? "rgba(248,243,231,.88)" : BLUE}
+            showShadow={colorScheme === "v2"}
+          />
+        )}
         <SubscribeBellIcon size={16} className="relative shrink-0" filled={isSubscribed} />
         <span className="relative leading-none">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>

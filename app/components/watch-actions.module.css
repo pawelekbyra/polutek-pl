@@ -25,7 +25,6 @@
 }
 
 .actionButton {
-  font-family: var(--font-najs, Kalam, cursive);
   letter-spacing: 0.005em;
   transition: transform 160ms ease, opacity 160ms ease, color 160ms ease, filter 160ms ease;
 }

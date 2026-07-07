@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown } from "../icons";
-import { Frame, INK } from "../najs/primitives";
 import type { SupportedCurrency } from "@/lib/constants";
 
 interface DonationAmountFieldProps {
@@ -46,10 +45,9 @@ export default function DonationAmountField({
   );
 
   return (
-    <div className="relative mb-[12px] p-[10px_12px]">
-      <Frame radius={11} seed={14} stroke={INK} strokeWidth={1} fill="#f8f3e7" />
-      <div className="relative z-10 space-y-1.5">
-        <label htmlFor={viewerIsPatron ? inputId : undefined} className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#7a7a7a]">
+    <div className="mb-3 rounded-[11px] bg-[var(--chan-surface)] p-[10px_12px]">
+      <div className="space-y-1.5">
+        <label htmlFor={viewerIsPatron ? inputId : undefined} className="block font-sans text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--chan-muted)]">
           {viewerIsPatron
             ? (isPl ? `Dowolna kwota (min. ${minAmount} ${selectedCurrency})` : `Any amount (min. ${minAmount} ${selectedCurrency})`)
             : (isPl ? "Kwota wsparcia" : "Support amount")}
@@ -67,20 +65,19 @@ export default function DonationAmountField({
               aria-invalid={amountTooLow}
               aria-describedby={amountTooLow ? errorId : undefined}
               placeholder={String(minAmount)}
-              className="w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums ink-text outline-none placeholder:text-[#c9c4b8]"
-              style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+              className="font-brand w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)]"
             />
             <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
-              {currencySelect("cursor-pointer appearance-none bg-transparent pr-5 text-[14px] font-bold text-[#4a4a4a] outline-none")}
-              <ChevronDown size={13} className="pointer-events-none absolute right-0 text-[#9a958b]" />
+              {currencySelect("cursor-pointer appearance-none bg-transparent pr-5 font-sans text-[14px] font-bold text-[var(--chan-body)] outline-none")}
+              <ChevronDown size={13} className="pointer-events-none absolute right-0 text-[var(--chan-muted)]" />
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2 py-1">
-            <span className="text-[26px] font-extrabold tabular-nums ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
+            <span className="font-brand text-[26px] font-extrabold tabular-nums text-[var(--chan-ink)]">
               {minAmount}
             </span>
-            {currencySelect("cursor-pointer appearance-none bg-transparent text-[14px] font-bold text-[#4a4a4a] outline-none")}
+            {currencySelect("cursor-pointer appearance-none bg-transparent font-sans text-[14px] font-bold text-[var(--chan-body)] outline-none")}
           </div>
         )}
 

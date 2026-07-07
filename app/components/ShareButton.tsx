@@ -5,7 +5,7 @@ import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
 import { Share2 } from './icons';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
-import { Frame, NajsIcon, INK } from './najs/primitives';
+import { NajsIcon } from './najs/primitives';
 
 interface ShareButtonProps {
   url?: string;
@@ -67,15 +67,13 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "relative flex items-center justify-center gap-2 h-[38px] px-5 active:scale-95 ink-text font-bold text-[13.5px]",
+          "relative flex items-center justify-center gap-2 h-[42px] px-4 rounded-[12px] bg-[var(--chan-surface)] active:scale-95 text-[var(--chan-ink)] font-bold text-[13px] font-sans transition-transform hover:-translate-y-px",
           fill && "w-full",
           className
         )}
-        style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
-        <Frame radius={20} seed={41} stroke={INK} strokeWidth={1.2} fill="rgba(248,243,231,.88)" />
-        <NajsIcon name="send" className="relative h-[17px] w-[17px]" stroke={INK} />
-        <span className="relative">Szeruj</span>
+        <NajsIcon name="send" className="h-4 w-4" stroke="var(--chan-ink)" />
+        <span>Udostępnij</span>
       </button>
 
       {isOpen && !isMobile && (
@@ -83,42 +81,42 @@ export default function ShareButton({
           ref={popoverRef}
           className={cn(
             "absolute bottom-[calc(100%+8px)] right-0 min-w-[240px] z-[1100]",
-            "paper-radius-panel border paper-border paper-surface p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
+            "rounded-2xl border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
             "animate-in fade-in-0 zoom-in-95 duration-150 slide-in-from-bottom-2"
           )}
         >
           <div
             onClick={() => copyToClipboard(url)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider",
-              copied ? "blue-surface text-primary" : "hover:bg-[var(--najs-paper-soft)] text-primary"
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider text-[#2563eb]",
+              copied ? "bg-[#EFF3FE]" : "hover:bg-[var(--chan-surface)]"
             )}
           >
-            {copied ? <Check size={16} className="text-primary" /> : <Copy size={16} className="text-primary" />}
+            {copied ? <Check size={16} /> : <Copy size={16} />}
             <span>{copied ? "Skopiowano!" : "Kopiuj link"}</span>
           </div>
 
-          <div className="my-1 h-px bg-[rgba(216,208,189,0.8)]" />
+          <div className="my-1 h-px bg-[var(--chan-line)]" />
 
           <div
             onClick={() => openWindow(`https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--najs-paper-soft)] cursor-pointer transition-colors duration-100 font-medium ink-text"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-ink)]"
           >
-            <XIcon className="ink-text" />
-            <span>Szeruj na X</span>
+            <XIcon className="text-[var(--chan-ink)]" />
+            <span>Udostępnij na X</span>
           </div>
 
           <div
             onClick={() => openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--najs-paper-soft)] cursor-pointer transition-colors duration-100 font-medium ink-text"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-ink)]"
           >
             <Facebook size={16} className="text-[#1877F2]" />
-            <span>Szeruj na Facebook</span>
+            <span>Udostępnij na Facebook</span>
           </div>
 
           <div
             onClick={() => openWindow(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--najs-paper-soft)] cursor-pointer transition-colors duration-100 font-medium ink-text"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-ink)]"
           >
             <MessageCircle size={16} className="text-[#25D366]" />
             <span>Wyślij przez WhatsApp</span>
@@ -126,9 +124,9 @@ export default function ShareButton({
 
           <div
             onClick={() => openWindow(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--najs-paper-soft)] cursor-pointer transition-colors duration-100 font-medium ink-text"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-muted)]"
           >
-            <Mail size={16} className="muted-text" />
+            <Mail size={16} />
             <span>Wyślij emailem</span>
           </div>
         </div>

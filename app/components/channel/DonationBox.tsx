@@ -14,7 +14,6 @@ import { useLanguage } from "../LanguageContext";
 import { useToast } from "@/app/hooks/useToast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Heart } from "../icons";
-import { Frame, INK, BLUE } from "../najs/primitives";
 import CheckoutModal from "../playlist/CheckoutModal";
 import DonationAmountField from "./DonationAmountField";
 import DonationLegalDialog from "./DonationLegalDialog";
@@ -286,30 +285,32 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
       ];
 
   return (
-    <div id="donations" className="relative my-[10px] scroll-mt-20 p-[18px] mb-3">
-      <Frame radius={16} seed={8} stroke={INK} strokeWidth={1.3} fill="rgba(248,243,231,.94)" />
-      <div className="relative z-10">
+    <div
+      id="donations"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-2xl border border-[var(--chan-line)] bg-white p-[18px] shadow-[var(--chan-support-shadow)]"
+    >
+      <div>
         <div className="mb-1 flex items-center gap-2">
-          <Heart size={17} className="shrink-0 text-primary" />
-          <h4 className="m-0 text-[16px] font-bold ink-text" style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}>
-            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, rgba(251,224,138,0.72) 55%, rgba(251,224,138,0.72) 94%, transparent 94%)" }}>
+          <Heart size={17} className="shrink-0 text-[#2563eb]" />
+          <h4 className="font-brand m-0 text-[16px] font-bold text-[var(--chan-ink)]">
+            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #EFF3FE 55%, #EFF3FE 94%, transparent 94%)" }}>
               {title}
             </span>
           </h4>
         </div>
-        <p className="m-[0_0_10px] text-[11.5px] font-semibold uppercase tracking-wide muted-text">{subtitle}</p>
-        <p className="m-[0_0_12px] text-[12.5px] leading-[1.55] body-text">{bodyCopy}</p>
+        <p className="m-[0_0_10px] font-sans text-[11.5px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{subtitle}</p>
+        <p className="m-[0_0_12px] font-sans text-[12.5px] leading-[1.55] text-[var(--chan-body)]">{bodyCopy}</p>
 
-        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed paper-border pt-[10px] text-[12.5px]">
+        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[var(--chan-line-soft)] pt-[10px] font-sans text-[12.5px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? "flex items-start gap-[7px] italic muted-text" : "flex items-start gap-[7px] ink-text"}
+              className={bullet.soft ? "flex items-start gap-[7px] italic text-[var(--chan-muted)]" : "flex items-start gap-[7px] text-[var(--chan-ink)]"}
             >
               {bullet.soft ? (
-                <span className="mt-[3px] shrink-0 text-[9px] text-primary">◆</span>
+                <span className="mt-[3px] shrink-0 text-[9px] text-[#2563eb]">◆</span>
               ) : (
-                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full ink-button text-[9px] font-bold text-[var(--najs-paper)]">✓</span>
+                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-ink)] text-[9px] font-bold text-white">✓</span>
               )}
               {bullet.text}
             </li>
@@ -339,19 +340,17 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="relative flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 text-[14px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
-          style={{ fontFamily: "var(--font-najs, Kalam, cursive)" }}
+          className="font-brand flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#2563EB] text-[14px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
         >
-          <Frame radius={11} seed={5} stroke={INK} strokeWidth={1.4} fill={BLUE} showShadow />
           {isLoading ? (
-            <span className="relative z-10 inline-flex items-center gap-2">
+            <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               <span role="status" aria-live="polite">
                 {isPl ? "Przetwarzanie..." : "Processing..."}
               </span>
             </span>
           ) : (
-            <span className="relative z-10">{t.tipTheGuy}</span>
+            <span>{t.tipTheGuy}</span>
           )}
         </button>
 
@@ -367,26 +366,26 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             aria-describedby={showTermsError ? termsErrorId : undefined}
             className="mt-[2px] shrink-0"
           />
-          <span className="text-[11px] leading-[1.4] muted-text">
+          <span className="font-sans text-[11px] leading-[1.4] text-[var(--chan-muted)]">
             {isPl ? (
               <>
                 Akceptuję{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--najs-ink)]">
+                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
                   Regulamin
                 </button>{" "}
                 i{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--najs-ink)]">
+                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
                   Politykę Prywatności
                 </button>
               </>
             ) : (
               <>
                 I accept the{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--najs-ink)]">
+                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
                   Terms
                 </button>{" "}
                 and{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--najs-ink)]">
+                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
                   Privacy Policy
                 </button>
               </>
