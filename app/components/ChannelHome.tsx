@@ -232,7 +232,7 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <aside className="hidden lg:flex lg:col-span-4 lg:flex-col lg:gap-5">
+          <aside className="hidden lg:flex lg:col-span-4 lg:h-[clamp(356px,35.6vw,412px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
             <SidebarPlaylist {...commonSidebarProps} />
           </aside>
         </div>
