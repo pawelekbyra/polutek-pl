@@ -5,11 +5,10 @@ import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
-import logoPerfect from "@/logo1.svg";
+import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -107,11 +106,9 @@ const Navbar = () => {
                 className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
-                <Image
-                  src={logoPerfect}
-                  alt="POLUTEK.PL"
-                  priority
-                  className="h-[36px] w-auto object-contain md:h-[39px]"
+                <BrandName
+                  className="text-[1.05rem] leading-none sm:text-[1.15rem] md:text-[1.3rem]"
+                  variant="classic"
                 />
               </Link>
             </div>
