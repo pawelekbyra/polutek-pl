@@ -104,14 +104,14 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex h-8 items-center hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
                 <Image
                   src={logoPerfect}
                   alt="POLUTEK.PL"
                   priority
-                  className="h-[25.2px] w-auto object-contain md:h-[27.3px]"
+                  className="h-[36px] w-auto object-contain md:h-[39px]"
                 />
               </Link>
             </div>
