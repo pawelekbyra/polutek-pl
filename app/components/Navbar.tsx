@@ -59,6 +59,7 @@ const Navbar = () => {
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
+  const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
     router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
@@ -170,6 +171,16 @@ const Navbar = () => {
                   EN
                 </button>
               </div>
+
+              {/* Messages */}
+              <button
+                type="button"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--chan-surface)] font-sans text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:bg-[var(--chan-line)] active:scale-95"
+                aria-label={messagesLabel}
+                title={messagesLabel}
+              >
+                <NajsIcon name="mail" className="h-4 w-4" stroke="currentColor" />
+              </button>
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (
