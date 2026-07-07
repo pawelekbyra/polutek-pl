@@ -1,6 +1,15 @@
 import { execFileSync } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 
+if (!process.env.DATABASE_URL) {
+  console.error(
+    '[MIGRATION_REPAIR] DATABASE_URL is not set in this build environment. This is a Vercel project ' +
+      'configuration issue (Project Settings → Environment Variables), not a code bug — verify DATABASE_URL ' +
+      'is present and scoped to the environment this deployment is building for (Production/Preview) before retrying.',
+  );
+  process.exit(1);
+}
+
 const ROLLBACK_SAFE_FAILED_MIGRATIONS = new Set([
   // This migration is idempotent in the repository. Some production deployments
   // failed while applying its original non-idempotent form, which leaves Prisma in
@@ -79,6 +88,16 @@ async function main() {
 
 main().catch(async (error) => {
   await prisma.$disconnect().catch(() => undefined);
+
+  if (String(error?.message || '').includes('Environment variable not found: DATABASE_URL')) {
+    console.error(
+      '[MIGRATION_REPAIR] DATABASE_URL is not set in this build environment. This is a Vercel project ' +
+        'configuration issue (Project Settings → Environment Variables), not a code bug — verify DATABASE_URL ' +
+        'is present and scoped to the environment this deployment is building for (Production/Preview) before retrying.',
+    );
+    process.exit(1);
+  }
+
   console.error('[MIGRATION_REPAIR] Failed to inspect or repair Prisma migration state.');
   console.error(error);
   process.exit(1);
