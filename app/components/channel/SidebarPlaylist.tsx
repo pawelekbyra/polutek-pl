@@ -159,7 +159,8 @@ export function SidebarPlaylist({
         priority: "intent",
       });
     };
-    const feedVideoHref = getLocalizedHref(language === "pl" ? "pl" : "en", "watch", { slug: video.slug || video.id });
+    const locale = language === "pl" ? "pl" : "en";
+    const feedVideoHref = `${getLocalizedHref(locale, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
 
     return (
       <div
@@ -173,7 +174,7 @@ export function SidebarPlaylist({
           onVideoMouseEnter(video.id);
           warmVideoOnIntent();
         }}
-        className="relative group/item"
+        className="relative group/item lg:flex-1 lg:min-h-0"
       >
         <Link
           href={feedVideoHref}
@@ -183,7 +184,7 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[104px] lg:items-center lg:gap-3.5 lg:p-2.5",
             isCurrent
               ? "bg-[var(--chan-surface)]"
               : isPublicSection
@@ -197,13 +198,13 @@ export function SidebarPlaylist({
               className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[#2563EB]"
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[150px] lg:h-[84px] xl:w-[158px] xl:h-[89px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
                   alt={displayTitle}
                   fill
-                  sizes="130px"
+                  sizes="(min-width: 1280px) 158px, (min-width: 1024px) 150px, 130px"
                   className="object-cover transition duration-700 group-hover/thumb:scale-105"
                 />
               ) : (
@@ -246,8 +247,8 @@ export function SidebarPlaylist({
                   );
                 })()}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-start pt-[1px] gap-1 z-10 relative">
-            <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.3] group-hover:opacity-80 transition-opacity">
+          <div className="flex-1 min-w-0 flex flex-col justify-center pt-[1px] gap-1 z-10 relative">
+            <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.3] group-hover:opacity-80 transition-opacity lg:text-[13.5px]">
               {displayTitle}
             </h4>
             <div className="text-[12px] text-[var(--chan-muted)] flex flex-col mt-0">
@@ -287,7 +288,7 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-0.5 flex items-center gap-2 border-b border-[var(--chan-line)] pb-0.5">
+    <div className="mb-1 flex shrink-0 items-center gap-2 border-b border-[var(--chan-line)] pb-1">
       {icon}
       <h3 className="font-brand text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--chan-muted-2)]">
         {title}
@@ -304,7 +305,7 @@ export function SidebarPlaylist({
   if (loading) {
     const fallbackItems = sortedVideos || [];
     return (
-      <div className="space-y-2" aria-busy="true">
+      <div className="space-y-1.5 lg:h-full lg:min-h-0" aria-busy="true">
         {renderSectionHeader(language === "pl" ? "Dostępne filmy" : "Available videos")}
         {fallbackItems.map((v) =>
           renderVideoItem({
@@ -338,7 +339,7 @@ export function SidebarPlaylist({
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5 lg:h-full lg:min-h-0">
         {renderSectionHeader(
           language === "pl" ? "Dostępne filmy" : "Available videos",
           <AlertCircle size={14} className="text-amber-500" />,
@@ -364,22 +365,22 @@ export function SidebarPlaylist({
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
 
   return (
-    <>
+    <div className="flex flex-col gap-1 lg:h-full lg:min-h-0 lg:gap-1.5">
       {publicSection && (
-        <div className="mb-0.5 last:mb-0">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
           {renderSectionHeader(publicSection.title)}
           {publicSection.items.map((v) => renderVideoItem(v, true))}
         </div>
       )}
       {loggedInSection && (
-        <div className="mb-0.5 last:mb-0">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
           {renderSectionHeader(loggedInSection.title)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
 
       {patronSection && (
-        <div className="mb-0.5 last:mb-0">
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:min-h-0 lg:flex-col">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
@@ -387,7 +388,9 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      <PatronBox />
-    </>
+      <div className="shrink-0">
+        <PatronBox />
+      </div>
+    </div>
   );
 }
