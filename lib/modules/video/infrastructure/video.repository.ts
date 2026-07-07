@@ -8,9 +8,12 @@ import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset
 
 type VideoWithAssetsAndOriginal = Video & {
   assets: VideoAsset[];
+  activePlaybackRoute?: { asset?: VideoAsset | null } | null;
   originals?: unknown[];
   original?: unknown;
 };
+
+const ACTIVE_PLAYBACK_ROUTE_INCLUDE = { activePlaybackRoute: { include: { asset: true } } } as const;
 
 export interface CreateVideoInput {
   title: string;
@@ -74,7 +77,7 @@ export class VideoRepository {
   async findByIdWithAsset(id: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
     const video = await this.db.video.findUnique({
         where: { id },
-        include: { assets: true }
+        include: { assets: true, ...ACTIVE_PLAYBACK_ROUTE_INCLUDE }
     });
     return withPrimaryAsset(video as (Video & { assets: VideoAsset[] }) | null);
   }
@@ -90,6 +93,7 @@ export class VideoRepository {
             _count: { select: { comments: true } },
             assets: true,
             originals: { orderBy: { version: "desc" }, take: 1 },
+            ...ACTIVE_PLAYBACK_ROUTE_INCLUDE,
         }
     });
     const videoWithOriginal: VideoWithAssetsAndOriginal | null = video ? {
@@ -110,6 +114,7 @@ export class VideoRepository {
             _count: { select: { comments: true } },
             assets: true,
             originals: { orderBy: { version: "desc" }, take: 1 },
+            ...ACTIVE_PLAYBACK_ROUTE_INCLUDE,
         }
     });
     const videoWithOriginal: VideoWithAssetsAndOriginal | null = video ? {
@@ -358,7 +363,7 @@ export class VideoRepository {
   }
 
   async setHero(id: string, mainChannelId: string, tx: WriteTx): Promise<void> {
-    const loaded = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { assets: true } });
+    const loaded = await tx.video.findFirst({ where: { id, creatorId: mainChannelId }, include: { assets: true, ...ACTIVE_PLAYBACK_ROUTE_INCLUDE } });
     const video = withPrimaryAsset(loaded as (Video & { assets: VideoAsset[] }) | null);
     if (!video) throw new VideoNotOnMainChannelError(id);
 
