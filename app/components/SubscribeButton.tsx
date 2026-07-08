@@ -186,16 +186,26 @@ export default function SubscribeButton({
   return (
     <>
       <motion.button
-        whileHover={{ y: -1 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.95 }}
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
           "relative text-[13px] font-bold h-[38px] px-[18px] flex items-center justify-center gap-2 transition-all active:scale-95",
           isFlat
             ? cn(
-                "rounded-[12px] font-sans",
-                isSubscribed ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]" : "bg-[var(--chan-ink)] text-white",
+                "rounded-[12px] font-sans overflow-hidden",
+                "before:absolute before:inset-0 before:rounded-[12px]",
+                "before:border before:border-white/[0.12] before:pointer-events-none",
+                "before:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_20px_rgba(255,255,255,0.04)]",
+                "before:backdrop-blur-xl before:transition-all before:duration-300",
+                "hover:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_30px_rgba(255,255,255,0.12)]",
+                "hover:before:border-white/[0.2]",
+                "focus-visible:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_0_40px_rgba(255,255,255,0.16)]",
+                isSubscribed
+                  ? "bg-gradient-to-br from-[var(--chan-surface)]/95 to-[var(--chan-surface)]/85 text-[var(--chan-ink)]"
+                  : "bg-gradient-to-br from-black/95 to-black/85 text-white shadow-[0_0_24px_rgba(0,0,0,0.4)]",
+                "hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]",
               )
             : cn(isSubscribed ? "text-[#171717]" : "text-white"),
           isPending && "opacity-50 cursor-wait",
@@ -213,8 +223,8 @@ export default function SubscribeButton({
             showShadow={colorScheme === "v2"}
           />
         )}
-        <SubscribeBellIcon size={16} className="relative shrink-0" filled={isSubscribed} />
-        <span className="relative leading-none">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
+        <SubscribeBellIcon size={16} className="relative shrink-0 z-10" filled={isSubscribed} />
+        <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">
