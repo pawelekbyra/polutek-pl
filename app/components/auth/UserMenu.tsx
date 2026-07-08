@@ -56,7 +56,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         aria-expanded={menuOpen}
         aria-label={isPl ? "Menu konta" : "Account menu"}
         className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95",
+          "flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95",
           isPatron
             ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
             : "border border-white/25",
@@ -64,7 +64,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         title={isPatron ? "Patron" : undefined}
       >
         {avatar ? (
-          <Image src={avatar} alt="" width={36} height={36} className="h-full w-full object-cover" unoptimized />
+          <Image src={avatar} alt="" width={40} height={40} className="h-full w-full object-cover" unoptimized />
         ) : (
           <span className="text-sm font-bold text-[var(--chan-ink)]">{(displayName[0] || "?").toUpperCase()}</span>
         )}

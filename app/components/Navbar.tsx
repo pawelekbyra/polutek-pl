@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
@@ -10,6 +10,8 @@ import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
+import NotificationsMenu from "./notifications/NotificationsMenu";
+import { getMockNotifications } from "../data/mock-notifications";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
@@ -58,8 +60,7 @@ const Navbar = () => {
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
-  // Placeholder until a real messages/inbox feature exists.
-  const unreadMessagesCount = 2;
+  const mockNotifications = useMemo(() => getMockNotifications(), []);
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
     router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
@@ -69,7 +70,7 @@ const Navbar = () => {
     <div
       className="polutek-watch-nav sticky top-0 z-[1000] w-full flex flex-col border-b border-white/10"
     >
-      <div className="flex items-center px-4 md:px-6 lg:px-11 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-[1536px] mx-auto overflow-visible">
+      <div className="flex items-center px-4 md:px-6 lg:px-11 h-[52px] min-h-[52px] justify-between gap-3 md:gap-6 w-full max-w-[1240px] mx-auto overflow-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -79,7 +80,7 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[10px] border border-white/[0.05] bg-white/[0.13] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl focus-within:bg-white/[0.18] transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.05] bg-white/[0.13] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl focus-within:bg-white/[0.18] transition-colors">
                 <input
                   type="text"
                   autoFocus
@@ -117,7 +118,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[46px] rounded-[10px] border border-white/[0.035] bg-white/[0.115] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_26px_rgba(0,0,0,.22)] backdrop-blur-xl focus-within:bg-white/[0.16] transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.035] bg-white/[0.115] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_26px_rgba(0,0,0,.22)] backdrop-blur-xl focus-within:bg-white/[0.16] transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -173,19 +174,11 @@ const Navbar = () => {
               </button>
 
               {/* Messages */}
-              <button
-                type="button"
-                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                aria-label={messagesLabel}
-                title={messagesLabel}
-              >
-                <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
-                {unreadMessagesCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#1f1f1f]">
-                    {unreadMessagesCount}
-                  </span>
-                )}
-              </button>
+              <NotificationsMenu
+                notifications={mockNotifications}
+                language={language}
+                messagesLabel={messagesLabel}
+              />
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (

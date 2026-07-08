@@ -11,7 +11,7 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-[var(--chan-line)] bg-[var(--chan-nav)]">
-      <div className="max-w-[1180px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
+      <div className="max-w-[1240px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
         <div className="hidden w-32 md:block" />
 
         <span className="font-brand order-2 text-center text-[12px] font-bold tracking-[0.1em] uppercase text-[var(--chan-muted-2)] md:order-none">
