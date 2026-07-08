@@ -59,7 +59,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
           "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95",
           isPatron
             ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
-            : "border border-[var(--chan-line)]",
+            : "border border-white/25",
         )}
         title={isPatron ? "Patron" : undefined}
       >

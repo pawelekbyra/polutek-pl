@@ -62,6 +62,30 @@ interface SidebarPlaylistProps {
   premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
+  showSupportBox?: boolean;
+}
+
+function useSupportItem(sortedVideos: PublicVideoDTO[], layoutItems?: SidebarLayoutItem[]) {
+  return (layoutItems ?? sortedVideos).find((item) => item.creatorId);
+}
+
+/**
+ * Renders the patron/donation support widget on its own, outside the
+ * height-clamped desktop playlist box — it must live in normal document
+ * flow below the video list, not compete with it for the fixed height.
+ */
+export function SidebarSupportBox({
+  sortedVideos,
+  viewerIsPatron,
+}: {
+  sortedVideos: PublicVideoDTO[];
+  viewerIsPatron: boolean;
+}) {
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const supportItem = useSupportItem(sortedVideos);
+  if (!authLoaded || !isSignedIn) return null;
+  if (!supportItem?.creatorId) return null;
+  return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
 }
 
 export function SidebarPlaylist({
@@ -74,6 +98,7 @@ export function SidebarPlaylist({
   mounted,
   onVideoMouseEnter,
   onVideoSelect,
+  showSupportBox = true,
 }: SidebarPlaylistProps) {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const preloader = useAppPreload();
@@ -181,6 +206,9 @@ export function SidebarPlaylist({
           scroll={false}
           onClick={() => {
             onVideoSelect?.(video.id);
+            if (typeof window !== "undefined") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
@@ -318,7 +346,7 @@ export function SidebarPlaylist({
                   : false,
           }),
         )}
-        <PatronBox />
+        {showSupportBox && <PatronBox />}
       </div>
     );
   }
@@ -355,7 +383,7 @@ export function SidebarPlaylist({
                   : false,
           }),
         )}
-        <PatronBox />
+        {showSupportBox && <PatronBox />}
       </div>
     );
   }
@@ -388,9 +416,11 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      <div className="shrink-0">
-        <PatronBox />
-      </div>
+      {showSupportBox && (
+        <div className="shrink-0">
+          <PatronBox />
+        </div>
+      )}
     </div>
   );
 }

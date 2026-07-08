@@ -8,7 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
-import { SidebarPlaylist } from "./channel/SidebarPlaylist";
+import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
@@ -232,9 +232,12 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <aside className="hidden lg:flex lg:col-span-4 lg:h-[clamp(356px,35.6vw,412px)] lg:flex-col lg:gap-0 lg:overflow-y-auto">
-            <SidebarPlaylist {...commonSidebarProps} />
-          </aside>
+          <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-3">
+            <aside className="lg:flex lg:h-[clamp(356px,35.6vw,412px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
+              <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
+            </aside>
+            <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
+          </div>
         </div>
       </div>
     </main>
