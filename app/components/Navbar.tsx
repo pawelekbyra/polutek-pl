@@ -79,21 +79,21 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[10px] border border-white/[0.05] bg-white/[0.13] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl focus-within:bg-white/[0.18] transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/58"
+                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
                 />
                 <button
                   type="submit"
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.78)" />
+                  <NajsIcon name="search" className="h-4 w-4" stroke="#6b7280" />
                 </button>
               </div>
             </form>
@@ -117,20 +117,20 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[46px] rounded-[10px] border border-white/[0.035] bg-white/[0.115] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_26px_rgba(0,0,0,.22)] backdrop-blur-xl focus-within:bg-white/[0.16] transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-[46px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/58"
+                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
                   />
                   <button
                     type="submit"
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.78)" />
+                    <NajsIcon name="search" className="h-4 w-4" stroke="#6b7280" />
                   </button>
                 </div>
               </form>
@@ -181,7 +181,7 @@ const Navbar = () => {
               >
                 <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
                 {unreadMessagesCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#1f1f1f]">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
                     {unreadMessagesCount}
                   </span>
                 )}

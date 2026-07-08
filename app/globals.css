@@ -679,9 +679,9 @@
 @layer components {
   .polutek-watch-nav {
     background:
-      radial-gradient(900px 120px at 50% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
-      linear-gradient(180deg, #1f1f1f 0%, #111111 100%);
-    box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 14px 34px rgba(3, 9, 18, .18);
+      radial-gradient(900px 120px at 50% 0%, rgba(255, 255, 255, 0.09), transparent 60%),
+      linear-gradient(180deg, #050505 0%, #000000 100%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.05), 0 14px 34px rgba(0, 0, 0, .3);
     backdrop-filter: blur(18px);
   }
 
