@@ -81,21 +81,21 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.08] bg-white/[0.09] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl focus-within:bg-white/[0.14] transition-colors">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/50"
                 />
                 <button
                   type="submit"
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <Search size={16} className="text-[#6b7280]" />
+                  <Search size={16} className="text-white/70" />
                 </button>
               </div>
             </form>
@@ -119,20 +119,20 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.08] bg-white/[0.09] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl focus-within:bg-white/[0.14] transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/50"
                   />
                   <button
                     type="submit"
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <Search size={16} className="text-[#6b7280]" />
+                    <Search size={16} className="text-white/70" />
                   </button>
                 </div>
               </form>
@@ -150,32 +150,30 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Language switcher — only shown to signed-out visitors; signed-in users change
-                  language in account settings instead (see AccountSections ProfileSection). */}
-              {isLoaded && !isSignedIn && (
-                <button
-                  type="button"
-                  onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                  aria-label={language === "pl" ? "Zmień język" : "Change language"}
-                  title={language === "pl" ? "Zmień język" : "Change language"}
-                >
-                  {language === "pl" ? (
-                    <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                      <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
-                      <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
-                    </svg>
-                  ) : (
-                    <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                      <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
-                      <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
-                      <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
-                      <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
-                      <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
-                    </svg>
-                  )}
-                </button>
-              )}
+              {/* Language switcher — always visible in the topbar. Signed-in users also have
+                  the same toggle in account settings (see AccountSections ProfileSection). */}
+              <button
+                type="button"
+                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                aria-label={language === "pl" ? "Zmień język" : "Change language"}
+                title={language === "pl" ? "Zmień język" : "Change language"}
+              >
+                {language === "pl" ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                    <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
+                    <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                    <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
+                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
+                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
+                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
+                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
+                  </svg>
+                )}
+              </button>
 
               {/* Messages — only relevant once you have an account. */}
               {isLoaded && isSignedIn && (
