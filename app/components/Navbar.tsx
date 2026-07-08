@@ -105,13 +105,10 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex h-10 items-center transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
-                <BrandName
-                  className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
-                  variant="classic"
-                />
+                <BrandName variant="glass" />
               </Link>
             </div>
 
@@ -149,25 +146,37 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Language switcher — single globe icon + current-language caption, always
-                  visible. Signed-in users also have the same toggle in account settings
-                  (see AccountSections ProfileSection). */}
-              <button
-                type="button"
-                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[1px] rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                aria-label={language === "pl" ? "Zmień język" : "Change language"}
-                title={language === "pl" ? "Zmień język" : "Change language"}
+              {/* Language switcher — compact segmented pill, no globe icon. */}
+              <div
+                role="radiogroup"
+                aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
+                className="relative flex h-9 w-[74px] shrink-0 items-center rounded-full border border-white/[0.08] bg-black/95 p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M3 12h18" />
-                  <path d="M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9s1.3-6.5 3.8-9Z" />
-                </svg>
-                <span className="text-[8px] font-extrabold tracking-wide text-white/75">
-                  {language.toUpperCase()}
-                </span>
-              </button>
+                <span
+                  aria-hidden="true"
+                  className={
+                    "absolute bottom-[3px] left-[3px] top-[3px] w-[34px] rounded-full bg-white/[0.14] shadow-[0_1px_8px_rgba(255,255,255,0.08)] transition-transform duration-200 ease-out " +
+                    (language === "en" ? "translate-x-[34px]" : "translate-x-0")
+                  }
+                />
+                {(["pl", "en"] as const).map((locale) => (
+                  <button
+                    key={locale}
+                    type="button"
+                    role="radio"
+                    aria-checked={language === locale}
+                    aria-label={locale === "pl" ? "Polski" : "English"}
+                    title={locale === "pl" ? "Polski" : "English"}
+                    onClick={() => switchLanguage(locale)}
+                    className={
+                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
+                      (language === locale ? "text-white" : "text-white/45 hover:text-white/75")
+                    }
+                  >
+                    {locale.toUpperCase()}
+                  </button>
+                ))}
+              </div>
 
               {/* Messages — only relevant once you have an account. */}
               {isLoaded && isSignedIn && (
