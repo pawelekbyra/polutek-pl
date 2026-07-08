@@ -160,12 +160,12 @@ const Navbar = () => {
                 title={language === "pl" ? "Zmień język" : "Change language"}
               >
                 {language === "pl" ? (
-                  <svg width="22" height="15.4" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                  <svg width="18" height="12.6" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
                     <rect width="20" height="7" y="0" fill="#fff" />
                     <rect width="20" height="7" y="7" fill="#dc143c" />
                   </svg>
                 ) : (
-                  <svg width="22" height="15.4" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                  <svg width="18" height="12.6" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
                     <rect width="20" height="14" fill="#00247d" />
                     <path d="M0 0 L20 14 M20 0 L0 14" stroke="#fff" strokeWidth="3" />
                     <path d="M0 0 L20 14 M20 0 L0 14" stroke="#cf142b" strokeWidth="1.2" />
