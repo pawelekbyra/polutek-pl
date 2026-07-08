@@ -138,28 +138,28 @@ const Navbar = () => {
             </div>
 
             {/* Right controls */}
-            <div className="flex shrink-0 items-center justify-end gap-0.5 md:gap-1.5">
+            <div className="flex shrink-0 items-center justify-end gap-1.5 md:gap-2">
               {/* Mobile search trigger */}
               <div className="flex items-center sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 rounded-full text-white hover:bg-white/10"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
                 >
-                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
+                  <NajsIcon name="search" className="h-[22px] w-[22px]" stroke="currentColor" />
                 </button>
               </div>
 
-              {/* Language switcher — compact segmented pill, no globe icon. */}
+              {/* Language switcher — compact segmented pill, sized to align with the account actions. */}
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-9 w-[74px] shrink-0 items-center rounded-full border border-white/[0.08] bg-black/95 p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                className="relative flex h-10 w-[82px] shrink-0 items-center rounded-full border border-white/[0.1] bg-black/95 p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
               >
                 <span
                   aria-hidden="true"
                   className={
-                    "absolute bottom-[3px] left-[3px] top-[3px] w-[34px] rounded-full bg-white/[0.14] shadow-[0_1px_8px_rgba(255,255,255,0.08)] transition-transform duration-200 ease-out " +
-                    (language === "en" ? "translate-x-[34px]" : "translate-x-0")
+                    "absolute bottom-[3px] left-[3px] top-[3px] w-[38px] rounded-full bg-white/[0.15] shadow-[0_1px_10px_rgba(255,255,255,0.1)] transition-transform duration-200 ease-out " +
+                    (language === "en" ? "translate-x-[38px]" : "translate-x-0")
                   }
                 />
                 {(["pl", "en"] as const).map((locale) => (
@@ -172,7 +172,7 @@ const Navbar = () => {
                     title={locale === "pl" ? "Polski" : "English"}
                     onClick={() => switchLanguage(locale)}
                     className={
-                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
+                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[11px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
                       (language === locale ? "text-white" : "text-white/45 hover:text-white/75")
                     }
                   >
