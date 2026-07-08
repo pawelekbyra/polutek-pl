@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
@@ -10,6 +10,8 @@ import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
+import NotificationsMenu from "./notifications/NotificationsMenu";
+import { getMockNotifications } from "../data/mock-notifications";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
@@ -58,8 +60,7 @@ const Navbar = () => {
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
-  // Placeholder until a real messages/inbox feature exists.
-  const unreadMessagesCount = 2;
+  const mockNotifications = useMemo(() => getMockNotifications(), []);
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
     router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
@@ -173,19 +174,11 @@ const Navbar = () => {
               </button>
 
               {/* Messages */}
-              <button
-                type="button"
-                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                aria-label={messagesLabel}
-                title={messagesLabel}
-              >
-                <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
-                {unreadMessagesCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#1f1f1f]">
-                    {unreadMessagesCount}
-                  </span>
-                )}
-              </button>
+              <NotificationsMenu
+                notifications={mockNotifications}
+                language={language}
+                messagesLabel={messagesLabel}
+              />
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (
