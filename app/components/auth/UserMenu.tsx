@@ -55,19 +55,19 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         aria-label={isPl ? "Menu konta" : "Account menu"}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all active:scale-95"
+        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all active:scale-95"
         title={isPatron ? "Patron" : undefined}
       >
         <span
           className={cn(
-            "flex h-8 w-8 items-center justify-center overflow-hidden rounded-full",
+            "flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full",
             isPatron
               ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
               : "border border-white/25",
           )}
         >
           {avatar ? (
-            <Image src={avatar} alt="" width={32} height={32} className="h-full w-full object-cover" unoptimized />
+            <Image src={avatar} alt="" width={30} height={30} className="h-full w-full object-cover" unoptimized />
           ) : (
             <span className="text-sm font-bold text-[var(--chan-ink)]">{(displayName[0] || "?").toUpperCase()}</span>
           )}
