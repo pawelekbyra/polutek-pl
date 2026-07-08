@@ -5,11 +5,10 @@ import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
-import logoPerfect from "@/logo1.svg";
+import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -59,6 +58,7 @@ const Navbar = () => {
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
+  const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
     router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
@@ -68,7 +68,7 @@ const Navbar = () => {
     <div
       className="sticky top-0 z-[1000] w-full flex flex-col bg-[var(--chan-nav)]/95 border-b border-[var(--chan-line)] backdrop-blur-md"
     >
-      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-x-clip overflow-y-visible">
+      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -103,15 +103,18 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="shrink-0 flex h-8 items-center hover:opacity-85 transition-all active:scale-95"
+                className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
-                <Image
-                  src={logoPerfect}
-                  alt="POLUTEK.PL"
-                  priority
-                  className="h-[25.2px] w-auto object-contain md:h-[27.3px]"
-                />
+                <div className="flex items-center">
+                  <BrandName
+                    className="text-[1.1rem] leading-none md:text-[1.3rem]"
+                    variant="handwriting"
+                  />
+                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-neutral-900 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-white shadow-sm">
+                    Beta
+                  </span>
+                </div>
               </Link>
             </div>
 
@@ -138,7 +141,7 @@ const Navbar = () => {
             </div>
 
             {/* Right controls */}
-            <div className="flex min-w-0 items-center justify-end gap-1.5 md:gap-2.5">
+            <div className="flex shrink-0 items-center justify-end gap-1.5 md:gap-2.5">
               {/* Mobile search trigger */}
               <div className="flex items-center sm:hidden">
                 <button
@@ -170,6 +173,16 @@ const Navbar = () => {
                   EN
                 </button>
               </div>
+
+              {/* Messages */}
+              <button
+                type="button"
+                className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:text-[#2563EB] active:scale-95"
+                aria-label={messagesLabel}
+                title={messagesLabel}
+              >
+                <NajsIcon name="mail" className="h-5 w-5 shrink-0" stroke="currentColor" />
+              </button>
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (

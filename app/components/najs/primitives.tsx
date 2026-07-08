@@ -134,7 +134,7 @@ export function NajsSeparator({ label, className = "" }: { label?: string; class
 }
 
 export type NajsIconName =
-  | "search" | "login" | "bell" | "like" | "dislike" | "send"
+  | "search" | "login" | "bell" | "mail" | "like" | "dislike" | "send"
   | "more" | "more-vertical" | "lock" | "close" | "shield"
   | "download" | "video" | "alert" | "heart" | "pause"
   | "play" | "maximize" | "volume" | "mute" | "subtitles" | "check"
@@ -155,6 +155,7 @@ export function NajsIcon({
       {name === "search" && <><circle cx="10" cy="10" r="6.3" {...c} /><path d="M15 15.5 L21 21" {...c} /></>}
       {name === "login" && <><path d="M4 5 h8 M4 19 h8 M12 5 v4 M12 15 v4" {...c} /><path d="M10 12 h10 M16 8 l4 4 -4 4" {...c} /></>}
       {name === "bell" && <><path d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z" {...c} /><path d="M10 20 c1.3 1 2.7 1 4 0" {...c} /></>}
+      {name === "mail" && <><path d="M4 6.5 h16 v11 H4 Z" {...c} /><path d="M4.5 7 L12 13 l7.5 -6" {...c} /><path d="M4.5 17 l5.1 -5.1" {...c} /><path d="M19.5 17 l-5.1 -5.1" {...c} /></>}
       {name === "like" && <><path d="M7 20 H4 V10 h3 Z" {...c} /><path d="M7 10 l4 -6 c1 -1 2 .2 1.6 1.6 L12 9 h6 c1.4 0 2.2 1.1 1.8 2.4 l-1.2 5.2 C18.3 18.3 17.3 20 15 20 H7" {...c} /></>}
       {name === "dislike" && <><path d="M7 4 H4 v10 h3 Z" {...c} /><path d="M7 14 l4 6 c1 1 2 -.2 1.6 -1.6 L12 15 h6 c1.4 0 2.2 -1.1 1.8 -2.4 L18.6 7.4 C18.3 5.7 17.3 4 15 4 H7" {...c} /></>}
       {name === "send" && <><path d="M3 12 L21 4 L16 21 L11 14 Z" {...c} /><path d="M11 14 L21 4" {...c} /></>}
