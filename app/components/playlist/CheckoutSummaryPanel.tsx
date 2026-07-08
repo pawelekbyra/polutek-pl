@@ -73,10 +73,10 @@ export default function CheckoutSummaryPanel({
 
   const lead = viewerIsPatron
     ? (isPl
-        ? 'Masz już dożywotni dostęp do Strefy Fenkju — ta wpłata niczego nie odblokowuje. To czysty gest wsparcia i realne paliwo dla kanału.'
+        ? 'Masz już dożywotni dostęp do Strefy Fenkjuu — ta wpłata niczego nie odblokowuje. To czysty gest wsparcia i realne paliwo dla kanału.'
         : 'You already hold lifetime access to the Thank You Zone — this tip unlocks nothing new. It is pure support and real fuel for the channel.')
     : (isPl
-        ? 'Jedna wpłata — i Strefa Fenkju jest Twoja na zawsze: wszystkie obecne i przyszłe materiały dodatkowe. Bez subskrypcji, bez ukrytych kosztów.'
+        ? 'Jedna wpłata — i Strefa Fenkjuu jest Twoja na zawsze: wszystkie obecne i przyszłe materiały dodatkowe. Bez subskrypcji, bez ukrytych kosztów.'
         : 'One payment — and the Thank You Zone is yours for good: every current and future bonus. No subscription, no hidden costs.');
 
   const bullets: { text: string; soft?: boolean }[] = viewerIsPatron
@@ -86,7 +86,7 @@ export default function CheckoutSummaryPanel({
         { text: isPl ? 'Całość idzie w rozwój kanału' : 'Everything goes into the channel', soft: true },
       ]
     : [
-        { text: isPl ? 'Dożywotni dostęp do Strefy Fenkju' : 'Lifetime access to the Thank You Zone' },
+        { text: isPl ? 'Dożywotni dostęp do Strefy Fenkjuu' : 'Lifetime access to the Thank You Zone' },
         { text: isPl ? 'Jedna wpłata, zero subskrypcji' : 'One payment, zero subscriptions' },
         { text: isPl ? 'Napędzasz kolejne materiały' : 'You power the next videos', soft: true },
       ];
