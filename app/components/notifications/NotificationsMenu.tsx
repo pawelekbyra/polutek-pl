@@ -69,21 +69,21 @@ export default function NotificationsMenu({ notifications, language, messagesLab
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
         aria-label={messagesLabel}
         title={messagesLabel}
       >
         <span
           className={
             unreadCount > 0
-              ? "flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/[0.07]"
-              : "flex h-[34px] w-[34px] items-center justify-center"
+              ? "flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.07]"
+              : "flex h-9 w-9 items-center justify-center"
           }
         >
-          <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
+          <NajsIcon name="mail" className="h-[23px] w-[23px] shrink-0" stroke="currentColor" />
         </span>
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex h-[13px] min-w-[13px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
+          <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
             {unreadCount}
           </span>
         )}
@@ -129,7 +129,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
                           <span className="truncate text-[13.5px] font-bold">
                             {isPl ? n.titlePl : n.titleEn}
                           </span>
-                          {!n.read && <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#2563EB]" />}
+                          {!n.read && <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#2563EB] />}
                         </span>
                         <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--chan-body)] line-clamp-2">
                           {isPl ? n.bodyPl : n.bodyEn}
