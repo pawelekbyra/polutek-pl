@@ -7,7 +7,6 @@ import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
-import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
@@ -150,29 +149,25 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Language switcher — always visible in the topbar. Signed-in users also have
-                  the same toggle in account settings (see AccountSections ProfileSection). */}
-              <div className="flex h-10 shrink-0 items-center gap-0.5 rounded-[12px] px-0.5 font-sans">
-                {(["pl", "en"] as const).map((locale, i) => (
-                  <React.Fragment key={locale}>
-                    {i === 1 && <span aria-hidden="true" className="h-4 w-px bg-white/15" />}
-                    <button
-                      type="button"
-                      onClick={() => switchLanguage(locale)}
-                      className={cn(
-                        "h-8 rounded-[9px] px-2.5 text-[12px] font-extrabold tracking-wide transition-colors",
-                        language === locale
-                          ? "bg-white/10 text-white"
-                          : "text-white/40 hover:text-white/70",
-                      )}
-                      aria-label={locale === "pl" ? "Zmień język na polski" : "Switch language to English"}
-                      title={locale === "pl" ? "Polski" : "English"}
-                    >
-                      {locale.toUpperCase()}
-                    </button>
-                  </React.Fragment>
-                ))}
-              </div>
+              {/* Language switcher — single globe icon + current-language caption, always
+                  visible. Signed-in users also have the same toggle in account settings
+                  (see AccountSections ProfileSection). */}
+              <button
+                type="button"
+                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
+                className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[1px] rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                aria-label={language === "pl" ? "Zmień język" : "Change language"}
+                title={language === "pl" ? "Zmień język" : "Change language"}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9s1.3-6.5 3.8-9Z" />
+                </svg>
+                <span className="text-[8px] font-extrabold tracking-wide text-white/75">
+                  {language.toUpperCase()}
+                </span>
+              </button>
 
               {/* Messages — only relevant once you have an account. */}
               {isLoaded && isSignedIn && (
