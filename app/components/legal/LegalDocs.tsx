@@ -46,7 +46,7 @@ export function RegulaminContent() {
       <LegalSummary
         items={[
           'Oglądanie publicznych filmów jest darmowe i nie wymaga konta.',
-          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkju na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
+          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkjuu na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
           'Dostęp dostajesz od razu, dlatego — za Twoją wyraźną zgodą — po jego pełnym uruchomieniu nie przysługuje odstąpienie od umowy.',
           <>Reklamacje: napisz na {OWNER.email}, odpowiadamy do 14 dni.</>,
         ]}
@@ -65,7 +65,7 @@ export function RegulaminContent() {
           <p>
             {APP_NAME} to autorski kanał wideo jednego twórcy. Publiczne filmy oglądasz za darmo i bez konta.
             Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
-            Strefa Fenkju to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
+            Strefa Fenkjuu to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
           </p>
           <p>
             Do korzystania z serwisu wystarczy urządzenie z aktualną przeglądarką internetową, włączoną obsługą
@@ -86,10 +86,10 @@ export function RegulaminContent() {
           </p>
         </LegalSection>
 
-        <LegalSection nr="4" title="Wsparcie i dostęp do Strefy Fenkju">
+        <LegalSection nr="4" title="Wsparcie i dostęp do Strefy Fenkjuu">
           <p>
             Jednorazowa wpłata w kwocie wskazanej w serwisie w momencie wpłaty stanowi cenę za zawarcie umowy
-            o dostarczanie treści cyfrowych i daje Ci <strong>bezterminowy dostęp do Strefy Fenkju</strong> — wszystkich
+            o dostarczanie treści cyfrowych i daje Ci <strong>bezterminowy dostęp do Strefy Fenkjuu</strong> — wszystkich
             obecnych i przyszłych materiałów dodatkowych — na czas funkcjonowania serwisu lub tej części serwisu.
             Dostęp uruchamiamy niezwłocznie po zaksięgowaniu płatności, na koncie, z którego dokonano wpłaty.
           </p>
@@ -99,7 +99,7 @@ export function RegulaminContent() {
             dodatkowych dopiero rośnie i nie gwarantujemy częstotliwości publikacji nowych materiałów.
           </p>
           <p>
-            Osoby, które mają już aktywny dostęp do Strefy Fenkju, mogą dodatkowo wspierać kanał dowolną kwotą.
+            Osoby, które mają już aktywny dostęp do Strefy Fenkjuu, mogą dodatkowo wspierać kanał dowolną kwotą.
             Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi ceny ani wynagrodzenia za nowe
             treści cyfrowe, dodatkowy dostęp, wydłużenie dostępu ani inne świadczenie wzajemne i nie daje żadnych
             dodatkowych korzyści poza tymi, które użytkownik już posiada. Wpłata jest realizowana jako transakcja
@@ -124,7 +124,7 @@ export function RegulaminContent() {
             obowiązujących przepisów podatkowych i statusu sprzedawcy w chwili sprzedaży.
           </p>
           <p>
-            Dodatkowe dobrowolne wpłaty osób, które mają już dostęp do Strefy Fenkju, nie są dokumentowane jako cena
+            Dodatkowe dobrowolne wpłaty osób, które mają już dostęp do Strefy Fenkjuu, nie są dokumentowane jako cena
             za dostęp do treści cyfrowych, jeżeli nie wiążą się z żadnym świadczeniem wzajemnym po stronie sprzedawcy.
             Ich kwalifikacja podatkowa i sposób dokumentowania zależą od charakteru danej wpłaty oraz obowiązujących
             przepisów podatkowych.
@@ -134,7 +134,7 @@ export function RegulaminContent() {
         <LegalSection nr="6" title="Odstąpienie od umowy">
           <p>
             Konsumentowi przysługuje 14 dni na odstąpienie od umowy zawartej na odległość. Ponieważ jednak dostęp
-            do Strefy Fenkju uruchamiamy natychmiast po płatności, przed wpłatą prosimy Cię o wyraźną zgodę na
+            do Strefy Fenkjuu uruchamiamy natychmiast po płatności, przed wpłatą prosimy Cię o wyraźną zgodę na
             rozpoczęcie dostarczania treści cyfrowych przed upływem terminu do odstąpienia od umowy oraz o potwierdzenie,
             że przyjmujesz do wiadomości utratę prawa odstąpienia po pełnym uruchomieniu dostępu.
           </p>
@@ -173,7 +173,7 @@ export function RegulaminContent() {
           <p>
             Regulamin możemy zmienić z ważnych powodów (np. zmiana prawa lub funkcji serwisu). O zmianach poinformujemy
             w serwisie z wyprzedzeniem, a zmiany nie odbierają praw już nabytych — w szczególności przyznanego dostępu
-            do Strefy Fenkju. Umowy podlegają prawu polskiemu, co nie pozbawia konsumenta ochrony wynikającej
+            do Strefy Fenkjuu. Umowy podlegają prawu polskiemu, co nie pozbawia konsumenta ochrony wynikającej
             z przepisów bezwzględnie obowiązujących.
           </p>
         </LegalSection>
