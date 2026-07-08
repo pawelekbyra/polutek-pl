@@ -7,6 +7,7 @@ import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
+import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
@@ -152,28 +153,27 @@ const Navbar = () => {
 
               {/* Language switcher — always visible in the topbar. Signed-in users also have
                   the same toggle in account settings (see AccountSections ProfileSection). */}
-              <button
-                type="button"
-                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                aria-label={language === "pl" ? "Zmień język" : "Change language"}
-                title={language === "pl" ? "Zmień język" : "Change language"}
-              >
-                {language === "pl" ? (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
-                    <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
-                  </svg>
-                )}
-              </button>
+              <div className="flex h-10 shrink-0 items-center gap-0.5 rounded-[12px] px-0.5 font-sans">
+                {(["pl", "en"] as const).map((locale, i) => (
+                  <React.Fragment key={locale}>
+                    {i === 1 && <span aria-hidden="true" className="h-4 w-px bg-white/15" />}
+                    <button
+                      type="button"
+                      onClick={() => switchLanguage(locale)}
+                      className={cn(
+                        "h-8 rounded-[9px] px-2.5 text-[12px] font-extrabold tracking-wide transition-colors",
+                        language === locale
+                          ? "bg-white/10 text-white"
+                          : "text-white/40 hover:text-white/70",
+                      )}
+                      aria-label={locale === "pl" ? "Zmień język na polski" : "Switch language to English"}
+                      title={locale === "pl" ? "Polski" : "English"}
+                    >
+                      {locale.toUpperCase()}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
 
               {/* Messages — only relevant once you have an account. */}
               {isLoaded && isSignedIn && (
