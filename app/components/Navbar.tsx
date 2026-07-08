@@ -105,15 +105,10 @@ const Navbar = () => {
                 className="shrink-0 flex h-10 items-center hover:opacity-85 transition-all active:scale-95"
                 aria-label="POLUTEK.PL"
               >
-                <div className="flex items-center">
-                  <BrandName
-                    className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
-                    variant="classic"
-                  />
-                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-white/90 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-[#0F172A] shadow-sm">
-                    Beta
-                  </span>
-                </div>
+                <BrandName
+                  className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
+                  variant="classic"
+                />
               </Link>
             </div>
 
@@ -140,7 +135,7 @@ const Navbar = () => {
             </div>
 
             {/* Right controls */}
-            <div className="flex shrink-0 items-center justify-end gap-1 md:gap-2.5">
+            <div className="flex shrink-0 items-center justify-end gap-0.5 md:gap-1.5">
               {/* Mobile search trigger */}
               <div className="flex items-center sm:hidden">
                 <button
