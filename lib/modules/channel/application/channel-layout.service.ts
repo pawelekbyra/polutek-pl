@@ -127,7 +127,7 @@ export class ChannelLayoutService {
             sections.push({
                 id: 'section-patron',
                 type: 'PATRON',
-                title: 'Strefa Fenkju',
+                title: 'Strefa Fenkjuu',
                 items: patronVideos.map(mapItem)
             });
         }
