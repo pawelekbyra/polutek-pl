@@ -94,6 +94,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
+                  <span aria-hidden="true" className="mr-3 h-4 w-px rounded-full bg-white/[0.16]" />
                   <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                 </button>
               </div>
@@ -131,6 +132,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
+                    <span aria-hidden="true" className="mr-3 h-4 w-px rounded-full bg-white/[0.16]" />
                     <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                   </button>
                 </div>
