@@ -78,7 +78,7 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-white shadow-sm">
+              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.1)] focus-within:bg-white transition-colors">
                 <input
                   type="text"
                   autoFocus
@@ -111,7 +111,7 @@ const Navbar = () => {
                     className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
                     variant="handwriting"
                   />
-                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-white px-1 py-0 text-[7px] font-black uppercase tracking-wider text-[#0F172A] shadow-sm">
+                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-white/90 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-[#0F172A] shadow-sm">
                     Beta
                   </span>
                 </div>
@@ -121,7 +121,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[480px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-white shadow-sm">
+                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.1)] focus-within:bg-white transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -158,7 +158,7 @@ const Navbar = () => {
                   onClick={() => switchLanguage("pl")}
                   className={cn(
                     "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "pl" ? "bg-white text-[#2563EB] shadow-sm" : "text-white/60"
+                    language === "pl" ? "bg-white/90 text-[#2563EB] shadow-sm" : "text-white/55"
                   )}
                 >
                   PL
@@ -167,7 +167,7 @@ const Navbar = () => {
                   onClick={() => switchLanguage("en")}
                   className={cn(
                     "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "en" ? "bg-white text-[#2563EB] shadow-sm" : "text-white/60"
+                    language === "en" ? "bg-white/90 text-[#2563EB] shadow-sm" : "text-white/55"
                   )}
                 >
                   EN
@@ -188,7 +188,7 @@ const Navbar = () => {
               {isLoaded && !isSignedIn && (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white px-3 sm:px-4 shrink-0 font-sans transition-transform hover:-translate-y-px active:scale-95"
+                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white/90 px-3 sm:px-4 shrink-0 font-sans transition-all hover:-translate-y-px hover:bg-white active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
