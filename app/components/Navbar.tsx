@@ -88,14 +88,13 @@ const Navbar = () => {
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
                 />
                 <button
                   type="submit"
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <span aria-hidden="true" className="mr-3 h-5 w-px bg-[#e5e7eb]" />
                   <Search size={16} className="text-[#6b7280]" />
                 </button>
               </div>
@@ -126,14 +125,13 @@ const Navbar = () => {
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
                   />
                   <button
                     type="submit"
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <span aria-hidden="true" className="mr-3 h-5 w-px bg-[#e5e7eb]" />
                     <Search size={16} className="text-[#6b7280]" />
                   </button>
                 </div>
