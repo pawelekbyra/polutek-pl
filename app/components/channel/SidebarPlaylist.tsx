@@ -410,7 +410,7 @@ export function SidebarPlaylist({
       {patronSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
-            language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
+            language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone",
           )}
           {patronSection.items.map((v) => renderVideoItem(v))}
         </div>
