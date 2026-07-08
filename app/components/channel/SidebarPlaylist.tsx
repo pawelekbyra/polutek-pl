@@ -206,6 +206,9 @@ export function SidebarPlaylist({
           scroll={false}
           onClick={() => {
             onVideoSelect?.(video.id);
+            if (typeof window !== "undefined") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
