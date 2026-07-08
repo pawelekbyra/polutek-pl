@@ -5,8 +5,11 @@
 
 import React, { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS, useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
+import { useLanguage } from "../LanguageContext";
+import { appendQueryString, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 function clerkErr(e: unknown, isPl: boolean): string {
   if (e && typeof e === "object" && "errors" in e) {
@@ -26,6 +29,42 @@ function Feedback({ error, info }: { error: string | null; info: string | null }
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
   if (info) return <p className="rounded-lg bg-[#EFF3FE] px-3 py-2 text-[13px] font-semibold text-[#2563EB]">{info}</p>;
   return null;
+}
+
+function LanguageField({ isPl }: { isPl: boolean }) {
+  const { language, setLanguage } = useLanguage();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const switchLanguage = (locale: Locale) => {
+    if (locale === language) return;
+    setLanguage(locale);
+    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
+  };
+
+  return (
+    <div className="flex items-center justify-between rounded-[12px] border border-[var(--chan-line)] px-3 py-2.5">
+      <span className="text-[13px] font-bold text-[var(--chan-ink)]">{isPl ? "Język" : "Language"}</span>
+      <div className="flex gap-1">
+        {(["pl", "en"] as const).map((locale) => (
+          <button
+            key={locale}
+            type="button"
+            onClick={() => switchLanguage(locale)}
+            className={
+              "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
+              (language === locale
+                ? "bg-[var(--chan-ink)] text-white"
+                : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
+            }
+          >
+            {locale}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ProfileSection({ isPl }: { isPl: boolean }) {
@@ -73,6 +112,7 @@ export function ProfileSection({ isPl }: { isPl: boolean }) {
   return (
     <form onSubmit={save} className="space-y-3">
       <Feedback error={error} info={info} />
+      <LanguageField isPl={isPl} />
       <div className="flex items-center gap-3">
         {/* Clerk-hosted avatar; plain img avoids next/image host config for the account panel. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}

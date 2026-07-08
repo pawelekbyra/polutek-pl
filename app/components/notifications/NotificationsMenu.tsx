@@ -75,7 +75,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
       >
         <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
+          <span className="absolute top-0.5 right-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
             {unreadCount}
           </span>
         )}
@@ -84,7 +84,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[340px] max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)]"
+          className="fixed inset-x-3 top-[60px] z-[1100] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:absolute sm:inset-x-auto sm:top-[calc(100%+8px)] sm:right-0 sm:w-[340px]"
         >
           <div className="flex items-center justify-between border-b border-[var(--chan-line)] px-4 py-3">
             <p className="text-[14px] font-bold">{isPl ? "Powiadomienia" : "Notifications"}</p>
