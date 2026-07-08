@@ -675,3 +675,34 @@
     background: linear-gradient(135deg, var(--fr-accent) 0%, rgba(20, 16, 12, 0.78) 100%) !important;
   }
 }
+
+@layer components {
+  .polutek-watch-nav {
+    background:
+      radial-gradient(900px 120px at 50% 0%, rgba(37, 99, 235, 0.12), transparent 60%),
+      linear-gradient(180deg, #06111f 0%, #030912 100%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 14px 34px rgba(3, 9, 18, .18);
+    backdrop-filter: blur(18px);
+  }
+
+  .polutek-watch-nav input::placeholder {
+    font-weight: 400;
+  }
+
+  .polutek-watch-nav .font-brand {
+    letter-spacing: -0.055em;
+    filter: drop-shadow(0 1px 0 rgba(255,255,255,.08));
+  }
+
+  .polutek-vidstack-player {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .10);
+  }
+
+  @media (min-width: 1024px) {
+    .comments-flat-shell {
+      padding-top: 4px;
+    }
+  }
+}

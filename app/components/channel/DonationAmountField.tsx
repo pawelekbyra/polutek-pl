@@ -45,9 +45,9 @@ export default function DonationAmountField({
   );
 
   return (
-    <div className="mb-3 rounded-[11px] bg-[var(--chan-surface)] p-[10px_12px]">
+    <div className="mb-3 rounded-[10px] bg-white/72 p-[8px_12px] shadow-[inset_0_0_0_1px_rgba(229,214,185,.85)]">
       <div className="space-y-1.5">
-        <label htmlFor={viewerIsPatron ? inputId : undefined} className="block font-sans text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--chan-muted)]">
+        <label htmlFor={viewerIsPatron ? inputId : undefined} className="sr-only">
           {viewerIsPatron
             ? (isPl ? `Dowolna kwota (min. ${minAmount} ${selectedCurrency})` : `Any amount (min. ${minAmount} ${selectedCurrency})`)
             : (isPl ? "Kwota wsparcia" : "Support amount")}
@@ -65,7 +65,7 @@ export default function DonationAmountField({
               aria-invalid={amountTooLow}
               aria-describedby={amountTooLow ? errorId : undefined}
               placeholder={String(minAmount)}
-              className="font-brand w-full bg-transparent px-16 text-center text-[26px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)]"
+              className="font-sans w-full bg-transparent px-16 text-left text-[18px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)]"
             />
             <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
               {currencySelect("cursor-pointer appearance-none bg-transparent pr-5 font-sans text-[14px] font-bold text-[var(--chan-body)] outline-none")}
@@ -74,7 +74,7 @@ export default function DonationAmountField({
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2 py-1">
-            <span className="font-brand text-[26px] font-extrabold tabular-nums text-[var(--chan-ink)]">
+            <span className="font-sans text-[18px] font-extrabold tabular-nums text-[var(--chan-ink)]">
               {minAmount}
             </span>
             {currencySelect("cursor-pointer appearance-none bg-transparent font-sans text-[14px] font-bold text-[var(--chan-body)] outline-none")}

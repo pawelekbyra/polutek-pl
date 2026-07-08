@@ -250,68 +250,51 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     }
   }, [userId, openAuthModal, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
 
-  const title = viewerIsPatron
-    ? (isPl ? "Wspieraj POLUTEK.PL" : "Support POLUTEK.PL")
-    : (isPl ? "Zostań Patronem Projektu" : "Become a Project Patron");
+  const title = isPl ? "Strefa Fenkjuu 👑" : "Thank You Zone 👑";
 
-  const subtitle = viewerIsPatron
-    ? (isPl ? "Masz już dostęp do Strefy Fenkju" : "You already have Thank You Zone access")
-    : (isPl ? "Wspieraj POLUTEK.PL i wbijaj do Strefy Fenkju" : "Support POLUTEK.PL and get into the Thank You Zone");
+  const subtitle = isPl
+    ? "Wspieraj tworzenie wartościowych treści"
+    : "Support valuable independent content";
 
   const bodyCopy = viewerIsPatron
     ? (isPl
-        ? "Twój dostęp do Strefy Fenkju jest już zapewniony i ta wpłata niczego nowego nie odblokowuje. To czysty gest wsparcia — dowolna kwota, dla samego wspierania."
-        : "Your access to the Thank You Zone is already secured, and this tip doesn't unlock anything new. It's a pure show of support — any amount, just for the sake of it.")
+        ? "Dziękujemy — masz już dostęp do strefy wspierających. Ta wpłata jest dodatkowym gestem wsparcia."
+        : "Thank you — your supporter access is already active. This tip is an extra show of support.")
     : (isPl
-        ? "Jednorazowa wpłata sfinansuje rozwój kanału POLUTEK.PL i odblokuje wieczny dostęp do Strefy Fenkju: wszystkich obecnych i przyszłych materiałów dodatkowych. Bez subskrypcji i ukrytych kosztów."
-        : "A one-time tip funds the growth of the POLUTEK.PL channel and unlocks lifetime access to the Thank You Zone: all current and future bonus materials. No subscription, no hidden costs.");
+        ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkjuu."
+        : "A one-time tip helps grow the channel and unlocks lifetime Thank You Zone access.");
 
-  const bullets: { text: string; soft?: boolean }[] = viewerIsPatron
-    ? [
-        { text: isPl ? "Masz już pełny dostęp do Strefy Fenkju" : "You already have full Thank You Zone access" },
-        { text: isPl ? "Dowolna kwota — bez nowych korzyści" : "Any amount — no new benefits" },
-        { text: isPl ? "Bezpośrednio wspiera dalszy rozwój kanału" : "Directly supports the channel's continued growth", soft: true },
-      ]
-    : [
-        { text: isPl ? "Rozwój kanału POLUTEK.PL" : "Grow the POLUTEK.PL channel" },
-        { text: isPl ? "Dożywotni dostęp do Strefy Fenkju" : "Lifetime access to the Thank You Zone" },
-        { text: isPl ? "Jedna wpłata, bez subskrypcji" : "One payment, no subscription" },
-        {
-          text: isPl
-            ? "Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej."
-            : "Not much there yet, but thanks to you it'll keep growing.",
-          soft: true,
-        },
-      ];
+  const bullets: { text: string }[] = [
+    { text: isPl ? "Twoje wsparcie pomaga w rozwoju kanału" : "Your support helps the channel grow" },
+    { text: isPl ? "Dostęp do specjalnych materiałów" : "Access to special materials" },
+    { text: isPl ? "Wcześniejszy dostęp do nowych filmów" : "Early access to new videos" },
+    { text: isPl ? "Twoje imię w odcinkach dla wspierających" : "Your name in supporter episodes" },
+  ];
 
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-2xl border border-[var(--chan-line)] bg-white p-[18px] shadow-[var(--chan-support-shadow)]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-[linear-gradient(135deg,#fffaf0_0%,#fff_58%,#fff7e7_100%)] p-[22px_26px_18px] shadow-[0_18px_42px_rgba(154,105,28,.08)]"
     >
       <div>
-        <div className="mb-1 flex items-center gap-2">
-          <Heart size={17} className="shrink-0 text-[#2563eb]" />
-          <h4 className="font-brand m-0 text-[16px] font-bold text-[var(--chan-ink)]">
-            <span className="px-[3px]" style={{ background: "linear-gradient(180deg, transparent 55%, #EFF3FE 55%, #EFF3FE 94%, transparent 94%)" }}>
-              {title}
-            </span>
+        <div className="mb-1.5 flex items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#ff5e7a_0%,#f43f5e_52%,#fb7185_100%)] shadow-[0_12px_24px_rgba(244,63,94,.25)]">
+            <Heart size={25} className="fill-white text-white" />
+          </span>
+          <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
+            <span>{title}</span>
           </h4>
         </div>
-        <p className="m-[0_0_10px] font-sans text-[11.5px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{subtitle}</p>
-        <p className="m-[0_0_12px] font-sans text-[12.5px] leading-[1.55] text-[var(--chan-body)]">{bodyCopy}</p>
+        <p className="m-[-22px_0_16px_64px] font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
+        <p className="sr-only">{bodyCopy}</p>
 
-        <ul className="m-[0_0_14px] flex flex-col gap-[7px] border-t border-dashed border-[var(--chan-line-soft)] pt-[10px] font-sans text-[12.5px]">
+        <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className={bullet.soft ? "flex items-start gap-[7px] italic text-[var(--chan-muted)]" : "flex items-start gap-[7px] text-[var(--chan-ink)]"}
+              className="flex items-start gap-[8px] text-[var(--chan-ink)]"
             >
-              {bullet.soft ? (
-                <span className="mt-[3px] shrink-0 text-[9px] text-[#2563eb]">◆</span>
-              ) : (
-                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-ink)] text-[9px] font-bold text-white">✓</span>
-              )}
+              <span className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-[#58a65c] text-[9px] font-black text-white">✓</span>
               {bullet.text}
             </li>
           ))}
@@ -340,7 +323,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-brand flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#2563EB] text-[14px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2457f5] text-[16px] font-extrabold tracking-[-0.025em] text-white shadow-[0_10px_24px_rgba(36,87,245,.22)] transition-all hover:-translate-y-px hover:bg-[#1748e8] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">
@@ -354,7 +337,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           )}
         </button>
 
-        <label className="mt-3 flex cursor-pointer items-start gap-2 px-1 text-left">
+        <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
           <Checkbox
             id="donation-accept-terms"
             checked={isTermsAccepted}
