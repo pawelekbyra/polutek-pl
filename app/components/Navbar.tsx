@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
-import { Search, LogIn } from "./icons";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { getMockNotifications } from "../data/mock-notifications";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -96,7 +95,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <Search size={16} className="text-white/70" />
+                  <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                 </button>
               </div>
             </form>
@@ -133,7 +132,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <Search size={16} className="text-white/70" />
+                    <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                   </button>
                 </div>
               </form>
@@ -147,7 +146,7 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="p-2 rounded-full text-white hover:bg-white/10"
                 >
-                  <Search size={20} className="text-white" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
 
@@ -192,7 +191,10 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <LogIn size={22} className="text-white" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white shrink-0" aria-hidden="true">
+                    <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
+                    <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
+                  </svg>
                   <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
