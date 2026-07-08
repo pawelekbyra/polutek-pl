@@ -58,6 +58,8 @@ const Navbar = () => {
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
+  // Placeholder until a real messages/inbox feature exists.
+  const unreadMessagesCount = 2;
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
     router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
@@ -155,17 +157,17 @@ const Navbar = () => {
                 title={language === "pl" ? "Zmień język" : "Change language"}
               >
                 {language === "pl" ? (
-                  <svg width="18" height="12.6" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
-                    <rect width="20" height="7" y="0" fill="#fff" />
-                    <rect width="20" height="7" y="7" fill="#dc143c" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                    <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
+                    <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
                   </svg>
                 ) : (
-                  <svg width="18" height="12.6" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
-                    <rect width="20" height="14" fill="#00247d" />
-                    <path d="M0 0 L20 14 M20 0 L0 14" stroke="#fff" strokeWidth="3" />
-                    <path d="M0 0 L20 14 M20 0 L0 14" stroke="#cf142b" strokeWidth="1.2" />
-                    <path d="M10 0 V14 M0 7 H20" stroke="#fff" strokeWidth="5" />
-                    <path d="M10 0 V14 M0 7 H20" stroke="#cf142b" strokeWidth="2.4" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                    <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
+                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
+                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
+                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
+                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
                   </svg>
                 )}
               </button>
@@ -173,11 +175,16 @@ const Navbar = () => {
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
                 <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
+                {unreadMessagesCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_0_2px_#1f1f1f]">
+                    {unreadMessagesCount}
+                  </span>
+                )}
               </button>
 
               {/* Auth */}
