@@ -66,19 +66,19 @@ const Navbar = () => {
 
   return (
     <div
-      className="sticky top-0 z-[1000] w-full flex flex-col bg-[var(--chan-nav)]/95 border-b border-[var(--chan-line)] backdrop-blur-md"
+      className="sticky top-0 z-[1000] w-full flex flex-col bg-[#0F172A]/95 border-b border-white/10 backdrop-blur-md"
     >
       <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
               onClick={() => setIsMobileSearchOpen(false)}
-              className="relative p-2 shrink-0 flex items-center justify-center rounded-full hover:bg-[var(--chan-surface)]"
+              className="relative p-2 shrink-0 flex items-center justify-center rounded-full text-white hover:bg-white/10"
             >
-              <NajsIcon name="close" className="h-5 w-5" stroke="var(--chan-ink)" />
+              <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-[var(--chan-surface)]">
+              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-white shadow-sm">
                 <input
                   type="text"
                   autoFocus
@@ -108,10 +108,10 @@ const Navbar = () => {
               >
                 <div className="flex items-center">
                   <BrandName
-                    className="text-[1.1rem] leading-none md:text-[1.3rem]"
+                    className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
                     variant="handwriting"
                   />
-                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-neutral-900 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-white shadow-sm">
+                  <span className="ml-0.5 select-none self-start rounded-[2px] bg-white px-1 py-0 text-[7px] font-black uppercase tracking-wider text-[#0F172A] shadow-sm">
                     Beta
                   </span>
                 </div>
@@ -121,7 +121,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[480px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-[var(--chan-surface)]">
+                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-white shadow-sm">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -146,19 +146,19 @@ const Navbar = () => {
               <div className="flex items-center sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="p-2 rounded-full hover:bg-[var(--chan-surface)]"
+                  className="p-2 rounded-full text-white hover:bg-white/10"
                 >
-                  <NajsIcon name="search" className="h-5 w-5" stroke="var(--chan-ink)" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
 
               {/* Language switcher */}
-              <div className="hidden sm:flex h-9 items-center rounded-[12px] bg-[var(--chan-surface)] p-[3px] font-sans">
+              <div className="hidden sm:flex h-9 items-center rounded-[12px] bg-white/10 p-[3px] font-sans">
                 <button
                   onClick={() => switchLanguage("pl")}
                   className={cn(
                     "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "pl" ? "bg-white text-[#2563EB] shadow-sm" : "text-[var(--chan-muted)]"
+                    language === "pl" ? "bg-white text-[#2563EB] shadow-sm" : "text-white/60"
                   )}
                 >
                   PL
@@ -167,7 +167,7 @@ const Navbar = () => {
                   onClick={() => switchLanguage("en")}
                   className={cn(
                     "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "en" ? "bg-white text-[#2563EB] shadow-sm" : "text-[var(--chan-muted)]"
+                    language === "en" ? "bg-white text-[#2563EB] shadow-sm" : "text-white/60"
                   )}
                 >
                   EN
@@ -177,7 +177,7 @@ const Navbar = () => {
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:text-[#2563EB] active:scale-95"
+                className="flex h-10 w-10 shrink-0 items-center justify-center text-white transition-transform hover:-translate-y-px hover:text-[#60A5FA] active:scale-95"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
@@ -188,12 +188,12 @@ const Navbar = () => {
               {isLoaded && !isSignedIn && (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-ink)] px-3 sm:px-4 shrink-0 font-sans transition-transform hover:-translate-y-px active:scale-95"
+                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white px-3 sm:px-4 shrink-0 font-sans transition-transform hover:-translate-y-px active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <NajsIcon name="login" className="h-4 w-4" stroke="#ffffff" />
-                  <span className="hidden sm:inline text-[13px] font-bold text-white">{t.signIn}</span>
+                  <NajsIcon name="login" className="h-4 w-4" stroke="#0F172A" />
+                  <span className="hidden sm:inline text-[13px] font-bold text-[#0F172A]">{t.signIn}</span>
                 </button>
               )}
 
