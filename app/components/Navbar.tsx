@@ -10,7 +10,6 @@ import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
-import { Search, LogIn } from "./icons";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { getMockNotifications } from "../data/mock-notifications";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -95,7 +94,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <Search size={16} className="text-white/70" />
+                  <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                 </button>
               </div>
             </form>
@@ -132,7 +131,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <Search size={16} className="text-white/70" />
+                    <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.7)" />
                   </button>
                 </div>
               </form>
@@ -146,33 +145,28 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="p-2 rounded-full text-white hover:bg-white/10"
                 >
-                  <Search size={20} className="text-white" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
 
-              {/* Language switcher — always visible in the topbar. Signed-in users also have
-                  the same toggle in account settings (see AccountSections ProfileSection). */}
+              {/* Language switcher — single globe icon + current-language caption, always
+                  visible. Signed-in users also have the same toggle in account settings
+                  (see AccountSections ProfileSection). */}
               <button
                 type="button"
                 onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[1px] rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
                 aria-label={language === "pl" ? "Zmień język" : "Change language"}
                 title={language === "pl" ? "Zmień język" : "Change language"}
               >
-                {language === "pl" ? (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
-                    <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
-                  </svg>
-                )}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9s1.3-6.5 3.8-9Z" />
+                </svg>
+                <span className="text-[8px] font-extrabold tracking-wide text-white/75">
+                  {language.toUpperCase()}
+                </span>
               </button>
 
               {/* Messages — only relevant once you have an account. */}
@@ -192,7 +186,10 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <LogIn size={22} className="text-white" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white shrink-0" aria-hidden="true">
+                    <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
+                    <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
+                  </svg>
                   <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
