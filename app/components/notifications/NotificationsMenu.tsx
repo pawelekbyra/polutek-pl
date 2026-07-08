@@ -80,10 +80,10 @@ export default function NotificationsMenu({ notifications, language, messagesLab
               : "flex h-[30px] w-[30px] items-center justify-center"
           }
         >
-          <NajsIcon name="mail" className="h-[18px] w-[18px] shrink-0" stroke="currentColor" />
+          <NajsIcon name="mail" className="h-[20px] w-[20px] shrink-0" stroke="currentColor" />
         </span>
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
+          <span className="absolute top-0.5 right-0.5 flex h-[13px] min-w-[13px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
             {unreadCount}
           </span>
         )}
