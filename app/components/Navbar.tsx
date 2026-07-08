@@ -10,6 +10,7 @@ import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
+import { Search, LogIn } from "./icons";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { getMockNotifications } from "../data/mock-notifications";
 import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -94,7 +95,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-4 w-4" stroke="#6b7280" />
+                  <Search size={16} className="text-[#6b7280]" />
                 </button>
               </div>
             </form>
@@ -131,7 +132,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-4 w-4" stroke="#6b7280" />
+                    <Search size={16} className="text-[#6b7280]" />
                   </button>
                 </div>
               </form>
@@ -145,40 +146,45 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="p-2 rounded-full text-white hover:bg-white/10"
                 >
-                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
+                  <Search size={20} className="text-white" />
                 </button>
               </div>
 
-              {/* Language switcher */}
-              <button
-                type="button"
-                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
-                aria-label={language === "pl" ? "Zmień język" : "Change language"}
-                title={language === "pl" ? "Zmień język" : "Change language"}
-              >
-                {language === "pl" ? (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
-                    <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                    <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
-                    <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
-                    <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
-                  </svg>
-                )}
-              </button>
+              {/* Language switcher — only shown to signed-out visitors; signed-in users change
+                  language in account settings instead (see AccountSections ProfileSection). */}
+              {isLoaded && !isSignedIn && (
+                <button
+                  type="button"
+                  onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                  aria-label={language === "pl" ? "Zmień język" : "Change language"}
+                  title={language === "pl" ? "Zmień język" : "Change language"}
+                >
+                  {language === "pl" ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                      <rect x="3" y="5.7" width="18" height="6.3" fill="#fff" />
+                      <rect x="3" y="12" width="18" height="6.3" fill="#dc143c" />
+                    </svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+                      <rect x="3" y="5.7" width="18" height="12.6" fill="#00247d" />
+                      <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#fff" strokeWidth="2.7" />
+                      <path d="M3 5.7 L21 18.3 M21 5.7 L3 18.3" stroke="#cf142b" strokeWidth="1.08" />
+                      <path d="M12 5.7 V18.3 M3 12 H21" stroke="#fff" strokeWidth="4.5" />
+                      <path d="M12 5.7 V18.3 M3 12 H21" stroke="#cf142b" strokeWidth="2.16" />
+                    </svg>
+                  )}
+                </button>
+              )}
 
-              {/* Messages */}
-              <NotificationsMenu
-                notifications={mockNotifications}
-                language={language}
-                messagesLabel={messagesLabel}
-              />
+              {/* Messages — only relevant once you have an account. */}
+              {isLoaded && isSignedIn && (
+                <NotificationsMenu
+                  notifications={mockNotifications}
+                  language={language}
+                  messagesLabel={messagesLabel}
+                />
+              )}
 
               {/* Auth */}
               {isLoaded && !isSignedIn && (
@@ -188,7 +194,7 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <NajsIcon name="login" className="h-[22px] w-[22px]" stroke="currentColor" />
+                  <LogIn size={22} className="text-white" />
                   <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
