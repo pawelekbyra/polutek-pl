@@ -140,7 +140,7 @@ const Navbar = () => {
             </div>
 
             {/* Right controls */}
-            <div className="flex shrink-0 items-center justify-end gap-1.5 md:gap-2.5">
+            <div className="flex shrink-0 items-center justify-end gap-1 md:gap-2.5">
               {/* Mobile search trigger */}
               <div className="flex items-center sm:hidden">
                 <button
@@ -160,12 +160,12 @@ const Navbar = () => {
                 title={language === "pl" ? "Zmień język" : "Change language"}
               >
                 {language === "pl" ? (
-                  <svg width="20" height="14" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                  <svg width="22" height="15.4" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
                     <rect width="20" height="7" y="0" fill="#fff" />
                     <rect width="20" height="7" y="7" fill="#dc143c" />
                   </svg>
                 ) : (
-                  <svg width="20" height="14" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                  <svg width="22" height="15.4" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
                     <rect width="20" height="14" fill="#00247d" />
                     <path d="M0 0 L20 14 M20 0 L0 14" stroke="#fff" strokeWidth="3" />
                     <path d="M0 0 L20 14 M20 0 L0 14" stroke="#cf142b" strokeWidth="1.2" />
@@ -182,7 +182,7 @@ const Navbar = () => {
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
-                <NajsIcon name="mail" className="h-5 w-5 shrink-0" stroke="currentColor" />
+                <NajsIcon name="mail" className="h-[22px] w-[22px] shrink-0" stroke="currentColor" />
               </button>
 
               {/* Auth */}
@@ -193,7 +193,7 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <NajsIcon name="login" className="h-4 w-4" stroke="currentColor" />
+                  <NajsIcon name="login" className="h-[22px] w-[22px]" stroke="currentColor" />
                   <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
