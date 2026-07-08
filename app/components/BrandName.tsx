@@ -86,29 +86,13 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic', s
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: UI_COPY_AND_LAYOUT_TWEAKS }} />
-      <span
-        className={cn(
-          isClassic
-            ? 'inline-flex items-center font-brand font-black uppercase tracking-[0.12em]'
-            : 'font-handwriting font-bold uppercase text-neutral-950',
-          className,
-        )}
-        style={style}
-      >
-        {isClassic ? (
-          <>
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/72 drop-shadow-[0_1px_10px_rgba(255,255,255,0.12)]">
-              {baseName.toUpperCase()}
-            </span>
-            <span className="text-[#60A5FA] drop-shadow-[0_0_12px_rgba(37,99,235,0.34)]">
-              {suffix}
-            </span>
-          </>
-        ) : (
-          <>
-            {baseName.toUpperCase()}<span className="text-primary">{suffix}</span>
-          </>
-        )}
+      <span className={cn(
+        isClassic
+          ? "font-brand font-black tracking-[0.12em] uppercase text-[#171717] drop-shadow-[0_1px_8px_rgba(255,255,255,0.12)]"
+          : "font-handwriting font-bold uppercase text-neutral-950",
+        className
+      )} style={style}>
+        {baseName.toUpperCase()}<span className={isClassic ? "text-[#60A5FA] drop-shadow-[0_0_10px_rgba(37,99,235,0.45)]" : "text-primary"}>{suffix}</span>
       </span>
     </>
   );
