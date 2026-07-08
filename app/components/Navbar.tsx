@@ -66,9 +66,9 @@ const Navbar = () => {
 
   return (
     <div
-      className="sticky top-0 z-[1000] w-full flex flex-col bg-[#0F172A]/95 border-b border-white/10 backdrop-blur-md"
+      className="polutek-watch-nav sticky top-0 z-[1000] w-full flex flex-col border-b border-white/10"
     >
-      <div className="flex items-center px-4 lg:px-8 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-full overflow-visible">
+      <div className="flex items-center px-4 md:px-6 lg:px-11 h-[64px] min-h-[64px] justify-between gap-3 md:gap-6 w-full max-w-[1536px] mx-auto overflow-visible">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -78,21 +78,21 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[14px] bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.1)] focus-within:bg-white transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-[42px] rounded-[10px] border border-white/[0.05] bg-white/[0.13] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl focus-within:bg-white/[0.18] transition-colors">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-4 pr-16 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                  className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/58"
                 />
                 <button
                   type="submit"
-                  className="absolute right-0 top-1/2 flex h-7 -translate-y-1/2 items-center justify-center border-l border-[var(--chan-line)] pl-3 pr-4"
+                  className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-4 w-4" stroke="var(--chan-muted)" />
+                  <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.78)" />
                 </button>
               </div>
             </form>
@@ -119,22 +119,22 @@ const Navbar = () => {
             </div>
 
             {/* Desktop search */}
-            <div className="flex-1 max-w-[480px] hidden md:flex mx-2 min-w-0">
+            <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[44px] rounded-[14px] bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.1)] focus-within:bg-white transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-[46px] rounded-[10px] border border-white/[0.035] bg-white/[0.115] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_26px_rgba(0,0,0,.22)] backdrop-blur-xl focus-within:bg-white/[0.16] transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-4 pr-16 text-sm font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                    className="w-full h-full bg-transparent pl-5 pr-14 text-[15px] font-sans outline-none text-white placeholder:text-white/58"
                   />
                   <button
                     type="submit"
-                    className="absolute right-0 top-1/2 flex h-7 -translate-y-1/2 items-center justify-center border-l border-[var(--chan-line)] pl-3 pr-4"
+                    className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-4 w-4" stroke="var(--chan-muted)" />
+                    <NajsIcon name="search" className="h-4 w-4" stroke="rgba(255,255,255,.78)" />
                   </button>
                 </div>
               </form>
@@ -153,24 +153,19 @@ const Navbar = () => {
               </div>
 
               {/* Language switcher */}
-              <div className="hidden sm:flex h-9 items-center rounded-[12px] bg-white/10 p-[3px] font-sans">
+              <div className="hidden sm:flex h-10 items-center gap-2 rounded-full px-2 font-sans text-white">
                 <button
-                  onClick={() => switchLanguage("pl")}
-                  className={cn(
-                    "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "pl" ? "bg-white/90 text-[#2563EB] shadow-sm" : "text-white/55"
-                  )}
+                  onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
+                  className="group inline-flex h-9 items-center gap-2 rounded-full px-2.5 text-[14px] font-semibold tracking-[-0.01em] text-white/92 transition-colors hover:bg-white/10"
+                  aria-label={language === "pl" ? "Zmień język" : "Change language"}
                 >
-                  PL
-                </button>
-                <button
-                  onClick={() => switchLanguage("en")}
-                  className={cn(
-                    "rounded-[9px] px-3 py-[5px] text-[11px] font-bold uppercase tracking-widest transition-colors",
-                    language === "en" ? "bg-white/90 text-[#2563EB] shadow-sm" : "text-white/55"
-                  )}
-                >
-                  EN
+                  <span className="relative h-[11px] w-[16px] overflow-hidden rounded-[2px] bg-white shadow-[0_0_0_1px_rgba(255,255,255,.2)]">
+                    <span className={cn("absolute inset-x-0", language === "pl" ? "bottom-0 h-1/2 bg-[#dc143c]" : "inset-y-0 left-0 w-[45%] bg-[#0a5eb8]")} />
+                    {language === "en" && <span className="absolute inset-y-0 left-[45%] w-[10%] bg-white" />}
+                    {language === "en" && <span className="absolute inset-y-0 right-0 w-[45%] bg-[#c8102e]" />}
+                  </span>
+                  <span>{language.toUpperCase()}</span>
+                  <span className="text-[12px] leading-none opacity-80 transition-transform group-hover:translate-y-px">⌄</span>
                 </button>
               </div>
 
@@ -188,12 +183,12 @@ const Navbar = () => {
               {isLoaded && !isSignedIn && (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white/90 px-3 sm:px-4 shrink-0 font-sans transition-all hover:-translate-y-px hover:bg-white active:scale-95"
+                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <NajsIcon name="login" className="h-4 w-4" stroke="#0F172A" />
-                  <span className="hidden sm:inline text-[13px] font-bold text-[#0F172A]">{t.signIn}</span>
+                  <NajsIcon name="login" className="h-4 w-4" stroke="currentColor" />
+                  <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
 

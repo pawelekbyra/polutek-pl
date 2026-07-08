@@ -176,8 +176,8 @@ function ChannelHomeContent({
 
   return (
     <main className="min-h-screen bg-[var(--chan-nav)]">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-6 py-6">
-        <div className="grid grid-cols-12 gap-4 lg:items-start">
+      <div className="mx-auto max-w-[1426px] px-4 md:px-8 lg:px-14 py-5">
+        <div className="grid grid-cols-12 gap-6 lg:items-start">
           <div className="col-span-12 lg:col-span-8">
             <div
               key={selectedVideo.id}
@@ -233,7 +233,7 @@ function ChannelHomeContent({
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-3">
-            <aside className="lg:flex lg:h-[clamp(356px,35.6vw,412px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
+            <aside className="lg:flex lg:h-[clamp(420px,31.3vw,480px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
