@@ -84,7 +84,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[340px] max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)]"
+          className="fixed inset-x-3 top-[60px] z-[1100] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:absolute sm:inset-x-auto sm:top-[calc(100%+8px)] sm:right-0 sm:w-[340px]"
         >
           <div className="flex items-center justify-between border-b border-[var(--chan-line)] px-4 py-3">
             <p className="text-[14px] font-bold">{isPl ? "Powiadomienia" : "Notifications"}</p>
