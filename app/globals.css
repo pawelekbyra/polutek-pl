@@ -94,15 +94,15 @@
     --najs-blue-soft: #eff3fe;
 
     /* ===== Channel homepage flat card skin (Navbar/Hero/ChannelHome/Sidebar/Donation/Footer) ===== */
-    --chan-card: oklch(98% 0.006 75);
-    --chan-nav: oklch(99% 0.004 75);
-    --chan-surface: oklch(95% 0.006 75);
-    --chan-line: oklch(91% 0.01 75);
-    --chan-line-soft: oklch(88% 0.01 75);
-    --chan-ink: oklch(20% 0.01 75);
-    --chan-muted: oklch(52% 0.01 75);
-    --chan-muted-2: oklch(45% 0.01 75);
-    --chan-body: oklch(33% 0.01 75);
+    --chan-card: oklch(98% 0.01 250);
+    --chan-nav: #c7dffb;
+    --chan-surface: oklch(95% 0.02 250);
+    --chan-line: oklch(90% 0.02 250);
+    --chan-line-soft: oklch(87% 0.02 250);
+    --chan-ink: oklch(20% 0.01 250);
+    --chan-muted: oklch(52% 0.02 250);
+    --chan-muted-2: oklch(45% 0.02 250);
+    --chan-body: oklch(33% 0.02 250);
     --chan-blue: #2563eb;
     --chan-blue-soft: #eff3fe;
     --chan-avatar-gradient: linear-gradient(135deg, #4f7df0, #2563eb);

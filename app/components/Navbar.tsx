@@ -7,7 +7,6 @@ import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
-import { cn } from "@/lib/utils";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
@@ -109,7 +108,7 @@ const Navbar = () => {
                 <div className="flex items-center">
                   <BrandName
                     className="text-[1.1rem] leading-none text-white md:text-[1.3rem]"
-                    variant="handwriting"
+                    variant="classic"
                   />
                   <span className="ml-0.5 select-none self-start rounded-[2px] bg-white/90 px-1 py-0 text-[7px] font-black uppercase tracking-wider text-[#0F172A] shadow-sm">
                     Beta
@@ -153,26 +152,33 @@ const Navbar = () => {
               </div>
 
               {/* Language switcher */}
-              <div className="hidden sm:flex h-10 items-center gap-2 rounded-full px-2 font-sans text-white">
-                <button
-                  onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
-                  className="group inline-flex h-9 items-center gap-2 rounded-full px-2.5 text-[14px] font-semibold tracking-[-0.01em] text-white/92 transition-colors hover:bg-white/10"
-                  aria-label={language === "pl" ? "Zmień język" : "Change language"}
-                >
-                  <span className="relative h-[11px] w-[16px] overflow-hidden rounded-[2px] bg-white shadow-[0_0_0_1px_rgba(255,255,255,.2)]">
-                    <span className={cn("absolute inset-x-0", language === "pl" ? "bottom-0 h-1/2 bg-[#dc143c]" : "inset-y-0 left-0 w-[45%] bg-[#0a5eb8]")} />
-                    {language === "en" && <span className="absolute inset-y-0 left-[45%] w-[10%] bg-white" />}
-                    {language === "en" && <span className="absolute inset-y-0 right-0 w-[45%] bg-[#c8102e]" />}
-                  </span>
-                  <span>{language.toUpperCase()}</span>
-                  <span className="text-[12px] leading-none opacity-80 transition-transform group-hover:translate-y-px">⌄</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => switchLanguage(language === "pl" ? "en" : "pl")}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+                aria-label={language === "pl" ? "Zmień język" : "Change language"}
+                title={language === "pl" ? "Zmień język" : "Change language"}
+              >
+                {language === "pl" ? (
+                  <svg width="20" height="14" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                    <rect width="20" height="7" y="0" fill="#fff" />
+                    <rect width="20" height="7" y="7" fill="#dc143c" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="14" viewBox="0 0 20 14" className="shrink-0" aria-hidden="true">
+                    <rect width="20" height="14" fill="#00247d" />
+                    <path d="M0 0 L20 14 M20 0 L0 14" stroke="#fff" strokeWidth="3" />
+                    <path d="M0 0 L20 14 M20 0 L0 14" stroke="#cf142b" strokeWidth="1.2" />
+                    <path d="M10 0 V14 M0 7 H20" stroke="#fff" strokeWidth="5" />
+                    <path d="M10 0 V14 M0 7 H20" stroke="#cf142b" strokeWidth="2.4" />
+                  </svg>
+                )}
+              </button>
 
               {/* Messages */}
               <button
                 type="button"
-                className="flex h-10 w-10 shrink-0 items-center justify-center text-white transition-transform hover:-translate-y-px hover:text-[#60A5FA] active:scale-95"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
                 aria-label={messagesLabel}
                 title={messagesLabel}
               >
