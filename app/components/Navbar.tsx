@@ -81,22 +81,22 @@ const Navbar = () => {
               <NajsIcon name="close" className="h-5 w-5" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.08] bg-white/[0.09] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl focus-within:bg-white/[0.14] transition-colors">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                  className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-white placeholder:text-white/50"
                 />
                 <button
                   type="submit"
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                   aria-label={searchLabel}
                 >
-                  <span aria-hidden="true" className="mr-3 h-5 w-px bg-[#e5e7eb]" />
-                  <Search size={16} className="text-[#6b7280]" />
+                  <span aria-hidden="true" className="mr-3 h-5 w-px bg-white/15" />
+                  <Search size={16} className="text-white/70" />
                 </button>
               </div>
             </form>
@@ -120,21 +120,21 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] bg-[#fdfdfd] shadow-[0_1px_2px_rgba(0,0,0,.15),0_10px_26px_rgba(0,0,0,.22)] focus-within:bg-white transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-[38px] rounded-[10px] border border-white/[0.08] bg-white/[0.09] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl focus-within:bg-white/[0.14] transition-colors">
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-[#111827] placeholder:text-[#9ca3af]"
+                    className="w-full h-full bg-transparent pl-5 pr-16 text-[15px] font-sans outline-none text-white placeholder:text-white/50"
                   />
                   <button
                     type="submit"
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4"
                     aria-label={searchLabel}
                   >
-                    <span aria-hidden="true" className="mr-3 h-5 w-px bg-[#e5e7eb]" />
-                    <Search size={16} className="text-[#6b7280]" />
+                    <span aria-hidden="true" className="mr-3 h-5 w-px bg-white/15" />
+                    <Search size={16} className="text-white/70" />
                   </button>
                 </div>
               </form>
