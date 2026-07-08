@@ -73,7 +73,13 @@ export default function NotificationsMenu({ notifications, language, messagesLab
         aria-label={messagesLabel}
         title={messagesLabel}
       >
-        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/[0.07]">
+        <span
+          className={
+            unreadCount > 0
+              ? "flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/[0.07]"
+              : "flex h-[30px] w-[30px] items-center justify-center"
+          }
+        >
           <NajsIcon name="mail" className="h-[18px] w-[18px] shrink-0" stroke="currentColor" />
         </span>
         {unreadCount > 0 && (
