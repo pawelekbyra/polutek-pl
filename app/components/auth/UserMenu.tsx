@@ -60,14 +60,14 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
       >
         <span
           className={cn(
-            "flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full",
+            "flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full",
             isPatron
               ? "border-2 border-amber-300 shadow-[0_0_0_3px_rgba(251,191,36,0.2),0_8px_18px_rgba(180,83,9,0.16)]"
               : "border border-white/25",
           )}
         >
           {avatar ? (
-            <Image src={avatar} alt="" width={30} height={30} className="h-full w-full object-cover" unoptimized />
+            <Image src={avatar} alt="" width={34} height={34} className="h-full w-full object-cover" unoptimized />
           ) : (
             <span className="text-sm font-bold text-[var(--chan-ink)]">{(displayName[0] || "?").toUpperCase()}</span>
           )}
