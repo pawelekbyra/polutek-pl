@@ -5,7 +5,6 @@ import Image from 'next/image';
 import {
     MediaPlayer,
     MediaProvider,
-    Poster,
     type MediaPlayerInstance,
 } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
@@ -16,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { INK } from './najs/primitives';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
+import { PlayerLoadingIndicator } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -67,6 +67,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
+    const [bufferingOverlayTimedOut, setBufferingOverlayTimedOut] = useState(false);
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
@@ -111,6 +112,15 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
     }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
+
+    // Safety valve: if the first frame never fires (stalled network, silent
+    // provider hiccup with no onError), stop covering the native player after
+    // a while instead of leaving the branded overlay up forever.
+    useEffect(() => {
+        setBufferingOverlayTimedOut(false);
+        const timer = setTimeout(() => setBufferingOverlayTimedOut(true), 15000);
+        return () => clearTimeout(timer);
+    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -201,6 +211,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     isAdmin={isAdmin}
                 />
             ) : (
+                <div className="relative h-full w-full">
                 <MediaPlayer
                     key={playerKey}
                     ref={player}
@@ -291,6 +302,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                         <DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />
                     )}
                 </MediaPlayer>
+                {!hasStartedPlayback && !bufferingOverlayTimedOut && (
+                    <div className="absolute inset-0 z-10 pointer-events-none">
+                        <PlayerLoadingIndicator />
+                    </div>
+                )}
+                </div>
             )}
         </div>
     );
