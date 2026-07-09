@@ -49,23 +49,23 @@ a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
   display: inline-flex;
   align-items: baseline;
   overflow: visible;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
 }
 
 .polutek-brand-premium::before {
   content: "";
   position: absolute;
   z-index: -2;
-  inset: -0.72em -1.05em -0.62em;
+  inset: -0.38em -0.58em -0.34em;
   border-radius: 999px;
   background:
-    radial-gradient(ellipse at 50% 48%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.56) 18%, rgba(191, 219, 254, 0.26) 38%, rgba(96, 165, 250, 0.09) 58%, rgba(255, 255, 255, 0) 76%);
-  filter: blur(11px);
-  opacity: 0.88;
-  transform: scale(0.96);
+    radial-gradient(ellipse at 50% 52%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.24) 22%, rgba(191, 219, 254, 0.1) 42%, rgba(255, 255, 255, 0) 68%);
+  filter: blur(4px);
+  opacity: 0.46;
+  transform: scale(0.98);
   transform-origin: center;
   pointer-events: none;
-  animation: polutek-premium-bloom 4.8s ease-in-out infinite;
+  animation: polutek-premium-bloom 5.6s ease-in-out infinite;
 }
 
 .polutek-brand-premium::after {
@@ -74,55 +74,52 @@ a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
   z-index: -1;
   left: 50%;
   top: 50%;
-  width: 132%;
-  height: 0.2em;
+  width: 112%;
+  height: 0.1em;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 14%, rgba(255, 255, 255, 0.88) 48%, rgba(255, 255, 255, 0.12) 72%, transparent 100%);
-  filter: blur(0.6px);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 18%, rgba(255, 255, 255, 0.42) 50%, rgba(255, 255, 255, 0.08) 74%, transparent 100%);
   mix-blend-mode: screen;
-  opacity: 0.78;
-  transform: translate(-50%, -50%) rotate(-7deg) scaleX(0.92);
+  opacity: 0.36;
+  transform: translate(-50%, -50%) rotate(-7deg) scaleX(0.88);
   pointer-events: none;
-  animation: polutek-premium-sweep 5.6s ease-in-out infinite;
+  animation: polutek-premium-sweep 6.4s ease-in-out infinite;
 }
 
 .polutek-brand-copy {
   position: relative;
   z-index: 1;
   text-shadow:
-    0 0 8px rgba(255, 255, 255, 0.34),
-    0 0 18px rgba(255, 255, 255, 0.25),
-    0 0 32px rgba(147, 197, 253, 0.14);
+    0 0 5px rgba(255, 255, 255, 0.18),
+    0 0 12px rgba(255, 255, 255, 0.1);
 }
 
 .polutek-brand-dot {
   text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.62),
-    0 0 22px rgba(96, 165, 250, 0.55),
-    0 0 44px rgba(255, 255, 255, 0.22);
+    0 0 8px rgba(255, 255, 255, 0.34),
+    0 0 16px rgba(96, 165, 250, 0.34);
 }
 
 @keyframes polutek-premium-bloom {
   0%, 100% {
-    opacity: 0.66;
-    transform: scale(0.92);
+    opacity: 0.34;
+    transform: scale(0.96);
   }
 
   48% {
-    opacity: 0.96;
-    transform: scale(1.04);
+    opacity: 0.54;
+    transform: scale(1.01);
   }
 }
 
 @keyframes polutek-premium-sweep {
   0%, 100% {
-    opacity: 0.34;
-    transform: translate(-52%, -50%) rotate(-7deg) scaleX(0.78);
+    opacity: 0.18;
+    transform: translate(-51%, -50%) rotate(-7deg) scaleX(0.82);
   }
 
   46% {
-    opacity: 0.92;
-    transform: translate(-48%, -50%) rotate(-7deg) scaleX(1.04);
+    opacity: 0.42;
+    transform: translate(-49%, -50%) rotate(-7deg) scaleX(0.98);
   }
 }
 
