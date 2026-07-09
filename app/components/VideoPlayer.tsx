@@ -108,6 +108,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
     useEffect(() => {
         setHasStartedPlayback(false);
+        setLoadError(null);
+        setPlayerKey((k) => k + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
