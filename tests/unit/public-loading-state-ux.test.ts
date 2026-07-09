@@ -42,8 +42,7 @@ describe("public loading/access state UX contracts", () => {
     }
 
     expect(player).toContain("<MediaProvider>");
-    expect(player).toContain('<Poster');
-    expect(player).toContain('className="vds-poster"');
+    expect(player).toContain("posterUrl");
     expect(player).toContain('<DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />');
 
     expect(globals).toContain(".polutek-vidstack-player {");

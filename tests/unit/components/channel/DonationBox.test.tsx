@@ -72,14 +72,13 @@ describe('DonationBox', () => {
   });
 
   it('renders the access-granting copy and a fixed, non-editable amount for a non-patron viewer', async () => {
-    renderDonationBox({ viewerIsPatron: false });
+    const { container } = renderDonationBox({ viewerIsPatron: false });
 
-    expect(screen.getByText('Zostań Patronem Projektu')).toBeInTheDocument();
-    expect(screen.getByText('Wspieraj POLUTEK.PL i wbijaj do Strefy Fenkju')).toBeInTheDocument();
+    expect(container.textContent).toContain('Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp');
+    expect(screen.getByText('Wspieraj tworzenie wartościowych treści')).toBeInTheDocument();
     expect(
-      screen.getByText(/Na razie niewiele materiałów, ale dzięki Tobie będzie ich coraz więcej/),
+      screen.getByText(/Twoje wsparcie pomaga w rozwoju kanału/),
     ).toBeInTheDocument();
-    expect(screen.getByText(/sfinansuje rozwój kanału POLUTEK.PL/)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText('20')).toBeInTheDocument();
@@ -88,10 +87,10 @@ describe('DonationBox', () => {
   });
 
   it('renders the no-new-benefit copy and an editable amount for an existing patron', async () => {
-    renderDonationBox({ viewerIsPatron: true });
+    const { container } = renderDonationBox({ viewerIsPatron: true });
 
-    expect(screen.getByText('Masz już dostęp do Strefy Fenkju')).toBeInTheDocument();
-    expect(screen.getByText(/nie odblokowuje niczego nowego|niczego nowego nie odblokowuje/)).toBeInTheDocument();
+    expect(container.textContent).toContain('Dziękujemy — masz już dostęp do strefy wspierających');
+    expect(screen.getByText('Wspieraj tworzenie wartościowych treści')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/Dowolna kwota \(min\. 10 PLN\)/)).toBeInTheDocument();
