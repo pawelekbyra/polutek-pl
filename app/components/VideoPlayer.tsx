@@ -63,7 +63,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
 
     const player = useRef<MediaPlayerInstance>(null);
-    const posterUrl = playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png';
+    const posterUrl = variant === 'thumbnail' ? (playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png') : undefined;
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -275,11 +275,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     }}
                 >
                     <MediaProvider>
-                        <Poster
-                            className="vds-poster"
-                            src={posterUrl}
-                            alt={video.title || 'Video poster'}
-                        />
                         {textTracks.map((track) => (
                             <track
                                 key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
