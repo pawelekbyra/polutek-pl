@@ -43,6 +43,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/subscriptions/unsubscribe',
   '/api/webhooks(.*)',
   '/api/health',
+  '/api/__version',
   '/api/access(.*)',
   '/api/media-source/(.*)',
   '/api/videos/(.*)/playback-event',
