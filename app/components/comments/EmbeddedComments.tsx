@@ -205,7 +205,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const scrollToTop = () => {
     if (commentsTopRef.current) {
-      const yOffset = -160; // Scroll even higher above the box
+      const yOffset = -360; // Scroll higher, around the video title area
       const y =
         commentsTopRef.current.getBoundingClientRect().top +
         window.pageYOffset +
