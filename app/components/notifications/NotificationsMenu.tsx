@@ -97,7 +97,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
           <div className="flex items-center justify-between border-b border-[var(--chan-line)] px-4 py-3">
             <p className="text-[14px] font-bold">{isPl ? "Powiadomienia" : "Notifications"}</p>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-[#EFF3FE] px-2 py-0.5 text-[11px] font-bold text-[#2563EB]">
+              <span className="rounded-full bg-[#EFF3FE] px-2 py-[2px] text-[11px] font-bold text-[#2563EB]">
                 {isPl ? `${unreadCount} nowe` : `${unreadCount} new`}
               </span>
             )}
@@ -125,13 +125,13 @@ export default function NotificationsMenu({ notifications, language, messagesLab
                         <Icon size={16} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-[13.5px] font-bold">
+                        <span className="flex items-center gap-[6px]">
+                          <span className="truncate text-[13px] font-bold">
                             {isPl ? n.titlePl : n.titleEn}
                           </span>
-                          {!n.read && <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#2563EB] />}
+                          {!n.read && <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#2563EB]" />}
                         </span>
-                        <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--chan-body)] line-clamp-2">
+                        <span className="mt-[2px] block text-[12px] leading-snug text-[var(--chan-body)] line-clamp-2">
                           {isPl ? n.bodyPl : n.bodyEn}
                         </span>
                         <span className="mt-1 block text-[11px] text-[var(--chan-muted)]">
