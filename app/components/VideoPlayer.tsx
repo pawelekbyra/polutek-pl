@@ -63,7 +63,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
 
     const player = useRef<MediaPlayerInstance>(null);
-    const posterUrl = variant === 'thumbnail' ? (playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png') : undefined;
+    const posterUrl = playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png';
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
