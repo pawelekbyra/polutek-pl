@@ -49,77 +49,93 @@ a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
   display: inline-flex;
   align-items: baseline;
   overflow: visible;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+  filter:
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.34))
+    drop-shadow(0 0 7px rgba(96, 165, 250, 0.12));
 }
 
-.polutek-brand-premium::before {
-  content: "";
-  position: absolute;
-  z-index: -2;
-  inset: -0.38em -0.58em -0.34em;
-  border-radius: 999px;
-  background:
-    radial-gradient(ellipse at 50% 52%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.24) 22%, rgba(191, 219, 254, 0.1) 42%, rgba(255, 255, 255, 0) 68%);
-  filter: blur(4px);
-  opacity: 0.46;
-  transform: scale(0.98);
-  transform-origin: center;
-  pointer-events: none;
-  animation: polutek-premium-bloom 5.6s ease-in-out infinite;
-}
-
+.polutek-brand-premium::before,
 .polutek-brand-premium::after {
   content: "";
   position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 50%;
-  width: 112%;
-  height: 0.1em;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 18%, rgba(255, 255, 255, 0.42) 50%, rgba(255, 255, 255, 0.08) 74%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0.36;
-  transform: translate(-50%, -50%) rotate(-7deg) scaleX(0.88);
   pointer-events: none;
-  animation: polutek-premium-sweep 6.4s ease-in-out infinite;
+}
+
+.polutek-brand-premium::before {
+  z-index: -2;
+  inset: -0.44em -0.66em -0.38em;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse 58% 72% at 50% 54%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.16) 21%, rgba(147, 197, 253, 0.08) 43%, transparent 68%),
+    radial-gradient(ellipse 86% 52% at 50% 52%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 36%, transparent 72%);
+  filter: blur(2.5px);
+  opacity: 0.62;
+  transform: scale3d(0.98, 0.96, 1);
+  transform-origin: center;
+  animation: polutek-premium-breathe 7.2s ease-in-out infinite;
+}
+
+.polutek-brand-premium::after {
+  z-index: -1;
+  left: 0;
+  top: 50%;
+  width: 32%;
+  height: 175%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 28%, rgba(255, 255, 255, 0.44) 48%, rgba(191, 219, 254, 0.18) 58%, transparent 100%);
+  opacity: 0;
+  filter: blur(0.35px);
+  mix-blend-mode: screen;
+  transform: translate3d(-145%, -50%, 0) skewX(-18deg) rotate(8deg);
+  transform-origin: center;
+  animation: polutek-premium-glint 6.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .polutek-brand-copy {
   position: relative;
   z-index: 1;
   text-shadow:
-    0 0 5px rgba(255, 255, 255, 0.18),
-    0 0 12px rgba(255, 255, 255, 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 7px rgba(255, 255, 255, 0.13);
 }
 
 .polutek-brand-dot {
   text-shadow:
-    0 0 8px rgba(255, 255, 255, 0.34),
-    0 0 16px rgba(96, 165, 250, 0.34);
+    0 0 7px rgba(255, 255, 255, 0.34),
+    0 0 15px rgba(96, 165, 250, 0.34),
+    0 0 1px rgba(255, 255, 255, 0.72);
 }
 
-@keyframes polutek-premium-bloom {
+@keyframes polutek-premium-breathe {
   0%, 100% {
-    opacity: 0.34;
-    transform: scale(0.96);
+    opacity: 0.46;
+    transform: scale3d(0.96, 0.94, 1);
   }
 
-  48% {
-    opacity: 0.54;
-    transform: scale(1.01);
+  45% {
+    opacity: 0.7;
+    transform: scale3d(1.02, 1, 1);
   }
 }
 
-@keyframes polutek-premium-sweep {
-  0%, 100% {
+@keyframes polutek-premium-glint {
+  0%, 18%, 100% {
+    opacity: 0;
+    transform: translate3d(-145%, -50%, 0) skewX(-18deg) rotate(8deg);
+  }
+
+  34% {
+    opacity: 0.5;
+  }
+
+  52% {
     opacity: 0.18;
-    transform: translate(-51%, -50%) rotate(-7deg) scaleX(0.82);
+    transform: translate3d(330%, -50%, 0) skewX(-18deg) rotate(8deg);
   }
 
-  46% {
-    opacity: 0.42;
-    transform: translate(-49%, -50%) rotate(-7deg) scaleX(0.98);
+  58% {
+    opacity: 0;
+    transform: translate3d(365%, -50%, 0) skewX(-18deg) rotate(8deg);
   }
 }
 
@@ -127,6 +143,11 @@ a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
   .polutek-brand-premium::before,
   .polutek-brand-premium::after {
     animation: none;
+  }
+
+  .polutek-brand-premium::after {
+    opacity: 0.12;
+    transform: translate3d(110%, -50%, 0) skewX(-18deg) rotate(8deg);
   }
 }
 
