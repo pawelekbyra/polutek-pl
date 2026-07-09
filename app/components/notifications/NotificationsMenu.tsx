@@ -69,21 +69,21 @@ export default function NotificationsMenu({ notifications, language, messagesLab
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
         aria-label={messagesLabel}
         title={messagesLabel}
       >
         <span
           className={
             unreadCount > 0
-              ? "flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.07]"
+              ? "flex h-9 w-9 items-center justify-center rounded-full bg-[var(--chan-surface)]"
               : "flex h-9 w-9 items-center justify-center"
           }
         >
           <NajsIcon name="mail" className="h-[23px] w-[23px] shrink-0" stroke="currentColor" />
         </span>
         {unreadCount > 0 && (
-          <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_#000000]">
+          <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">
             {unreadCount}
           </span>
         )}

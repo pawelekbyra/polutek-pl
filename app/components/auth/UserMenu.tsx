@@ -55,15 +55,15 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         aria-label={isPl ? "Menu konta" : "Account menu"}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all hover:-translate-y-px hover:bg-white/10 active:scale-95"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
         title={isPatron ? "Patron" : undefined}
       >
         <span
           className={cn(
             "flex h-9 w-9 items-center justify-center overflow-hidden rounded-full",
             isPatron
-              ? "border-2 border-white shadow-[0_0_0_3px_rgba(255,255,255,0.16),0_0_18px_rgba(255,255,255,0.34),0_8px_20px_rgba(255,255,255,0.12)]"
-              : "border border-white/25",
+              ? "chan-patron-ring border-2"
+              : "border border-[var(--chan-line)]",
           )}
         >
           {avatar ? (
