@@ -43,6 +43,96 @@ a > span[class*="tracking-[0.04em]"] + span[class*="bg-[#EFF3FE]"] {
   margin-left: -0.25rem !important;
 }
 
+.polutek-brand-premium {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: baseline;
+  overflow: visible;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
+}
+
+.polutek-brand-premium::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -0.72em -1.05em -0.62em;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.56) 18%, rgba(191, 219, 254, 0.26) 38%, rgba(96, 165, 250, 0.09) 58%, rgba(255, 255, 255, 0) 76%);
+  filter: blur(11px);
+  opacity: 0.88;
+  transform: scale(0.96);
+  transform-origin: center;
+  pointer-events: none;
+  animation: polutek-premium-bloom 4.8s ease-in-out infinite;
+}
+
+.polutek-brand-premium::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 132%;
+  height: 0.2em;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 14%, rgba(255, 255, 255, 0.88) 48%, rgba(255, 255, 255, 0.12) 72%, transparent 100%);
+  filter: blur(0.6px);
+  mix-blend-mode: screen;
+  opacity: 0.78;
+  transform: translate(-50%, -50%) rotate(-7deg) scaleX(0.92);
+  pointer-events: none;
+  animation: polutek-premium-sweep 5.6s ease-in-out infinite;
+}
+
+.polutek-brand-copy {
+  position: relative;
+  z-index: 1;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.34),
+    0 0 18px rgba(255, 255, 255, 0.25),
+    0 0 32px rgba(147, 197, 253, 0.14);
+}
+
+.polutek-brand-dot {
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.62),
+    0 0 22px rgba(96, 165, 250, 0.55),
+    0 0 44px rgba(255, 255, 255, 0.22);
+}
+
+@keyframes polutek-premium-bloom {
+  0%, 100% {
+    opacity: 0.66;
+    transform: scale(0.92);
+  }
+
+  48% {
+    opacity: 0.96;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes polutek-premium-sweep {
+  0%, 100% {
+    opacity: 0.34;
+    transform: translate(-52%, -50%) rotate(-7deg) scaleX(0.78);
+  }
+
+  46% {
+    opacity: 0.92;
+    transform: translate(-48%, -50%) rotate(-7deg) scaleX(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .polutek-brand-premium::before,
+  .polutek-brand-premium::after {
+    animation: none;
+  }
+}
+
 @media (min-width: 768px) {
   div[class*="md:w-[45%]"][class*="bg-[var(--chan-surface)]"] {
     justify-content: flex-start !important;
@@ -88,11 +178,13 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic', s
       <style dangerouslySetInnerHTML={{ __html: UI_COPY_AND_LAYOUT_TWEAKS }} />
       <span className={cn(
         isClassic
-          ? "font-brand font-black tracking-[0.12em] uppercase text-[#171717] drop-shadow-[0_1px_8px_rgba(255,255,255,0.12)]"
+          ? "polutek-brand-premium font-brand font-black tracking-[0.12em] uppercase text-[#171717] drop-shadow-[0_1px_8px_rgba(255,255,255,0.12)]"
           : "font-handwriting font-bold uppercase text-neutral-950",
         className
       )} style={style}>
-        {baseName.toUpperCase()}<span className={isClassic ? "text-[#60A5FA] drop-shadow-[0_0_10px_rgba(37,99,235,0.45)]" : "text-primary"}>{suffix}</span>
+        <span className={isClassic ? "polutek-brand-copy" : undefined}>
+          {baseName.toUpperCase()}<span className={isClassic ? "polutek-brand-dot text-[#60A5FA] drop-shadow-[0_0_10px_rgba(37,99,235,0.45)]" : "text-primary"}>{suffix}</span>
+        </span>
       </span>
     </>
   );
