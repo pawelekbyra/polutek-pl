@@ -691,10 +691,9 @@
 
 @layer components {
   .polutek-watch-nav {
-    background:
-      radial-gradient(900px 120px at 50% 0%, rgba(255, 255, 255, 0.09), transparent 60%),
-      linear-gradient(180deg, #050505 0%, #000000 100%);
-    box-shadow: 0 1px 0 rgba(255,255,255,.05), 0 14px 34px rgba(0, 0, 0, .3);
+    background: var(--chan-nav);
+    border-bottom: 1px solid var(--chan-line);
+    box-shadow: 0 1px 0 rgba(20, 16, 10, .02);
     backdrop-filter: blur(18px);
   }
 
@@ -704,7 +703,24 @@
 
   .polutek-watch-nav .font-brand {
     letter-spacing: -0.055em;
-    filter: drop-shadow(0 1px 0 rgba(255,255,255,.08));
+  }
+
+  .polutek-watch-nav .chan-brand-suffix {
+    color: var(--chan-blue);
+    filter: none;
+  }
+
+  .chan-patron-ring {
+    border-color: var(--chan-blue);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--chan-blue) 16%, transparent),
+      0 0 18px color-mix(in srgb, var(--chan-blue) 34%, transparent),
+      0 8px 20px color-mix(in srgb, var(--chan-blue) 12%, transparent);
+  }
+
+  .chan-lang-pill-active {
+    background: var(--chan-blue);
+    box-shadow: 0 1px 10px color-mix(in srgb, var(--chan-blue) 35%, transparent);
   }
 
   .polutek-vidstack-player {
