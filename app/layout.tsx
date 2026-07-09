@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
+import { AppVersionCheck } from "@/app/components/AppVersionCheck";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
@@ -35,10 +36,12 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialLanguage = await resolveInitialLanguage();
+  const buildId = process.env.VERCEL_GIT_COMMIT_SHA || 'development';
   return (
     <html
       lang={initialLanguage}
       suppressHydrationWarning
+      data-build-id={buildId}
       className={`${jakarta.variable} ${outfit.variable} ${spaceGrotesk.variable} ${bebasNeue.variable} ${kalam.variable} ${patrickHand.variable} ${caveat.variable}`}
     >
       <head>
@@ -54,6 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
+        <AppVersionCheck />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>
