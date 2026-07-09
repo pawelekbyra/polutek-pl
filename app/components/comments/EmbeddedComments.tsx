@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MessageSquare,
   Loader2,
-  ChevronUp,
   AlertCircle,
   RefreshCcw,
 } from "../icons";
@@ -289,17 +288,27 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     >
       {/* Back to comments top */}
       {showStickyHeader && (
-        <div className="fixed right-4 bottom-4 lg:bottom-auto lg:top-24 lg:right-6 z-40 animate-in slide-in-from-bottom-4 lg:slide-in-from-top-4 duration-300">
+        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200 sm:bottom-6 sm:right-6">
           <button
             type="button"
             onClick={scrollToTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border border-[var(--chan-line)] bg-[var(--chan-card)] px-2.5 py-2 text-[0px] font-black uppercase tracking-[0.14em] text-[var(--chan-ink)] backdrop-blur-md transition hover:bg-[var(--chan-surface)] active:scale-[0.98] sm:px-3 sm:text-[11px]"
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[#2563EB] text-white shadow-[0_10px_30px_rgba(37,99,235,0.35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-[0_14px_36px_rgba(37,99,235,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#93C5FD] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
           >
-            <ChevronUp size={15} className="text-[#2563EB]" aria-hidden="true" />
-            <span className="hidden sm:inline">
-              {language === "pl" ? "Komentarze" : "Comments"}
-            </span>
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="-translate-y-px transition-transform group-hover:-translate-y-1"
+            >
+              <path d="M6 14l6-6 6 6" />
+            </svg>
           </button>
         </div>
       )}
