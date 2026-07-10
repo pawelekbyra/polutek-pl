@@ -182,16 +182,13 @@ const Navbar = () => {
               </div>
 
               {/* Messages — only relevant once you have an account. */}
-              {isLoaded && isSignedIn && (
+              {isSignedIn ? (
                 <NotificationsMenu
                   notifications={mockNotifications}
                   language={language}
                   messagesLabel={messagesLabel}
                 />
-              )}
-
-              {/* Auth */}
-              {isLoaded && !isSignedIn && (
+              ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
                   className="flex h-10 items-center justify-center gap-1.5 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
@@ -204,6 +201,8 @@ const Navbar = () => {
                   </svg>
                   <span className="hidden sm:inline leading-none text-base font-semibold text-white">{t.signIn}</span>
                 </button>
+              ) : (
+                <div className="h-10 w-[100px] rounded-[12px] bg-black animate-pulse shrink-0" />
               )}
 
               {isLoaded && isSignedIn && (
