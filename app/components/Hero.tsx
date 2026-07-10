@@ -246,7 +246,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Lubię to"
                     aria-label="Lubię to"
                   >
-                     <NajsIcon name="like" className="h-[17px] w-[17px]" stroke={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
+                     <NajsIcon name="like" className="h-6 w-6" stroke={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
                      <span className="text-[13px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
                   <span className="h-5 w-px bg-[var(--chan-line-soft)]" />
@@ -262,7 +262,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Nie lubię"
                     aria-label="Nie lubię"
                   >
-                     <NajsIcon name="dislike" className="h-[17px] w-[17px]" stroke={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
+                     <NajsIcon name="dislike" className="h-6 w-6" stroke={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
                   </button>
                </div>
                <ShareButton
