@@ -17,17 +17,27 @@ import Navbar from '@/app/components/Navbar';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(props: { searchParams: Promise<{ v?: string }> }): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   const content = await getHomeContentCached();
   if (content.status !== 'ready') return { title: APP_NAME };
 
-  const { creator, mainVideo } = content;
+  const { creator, mainVideo, allVideos } = content;
+
+  // If a specific video is selected via ?v=, use it for OG tags
+  const selectedVideoId = searchParams.v;
+  let selectedVideo = mainVideo;
+  if (selectedVideoId && allVideos) {
+    selectedVideo = allVideos.find(v => v.id === selectedVideoId || v.slug === selectedVideoId) || mainVideo;
+  }
+
   return {
-    title: APP_NAME,
-    description: creator?.bio ?? `${APP_NAME} — kanał wideo`,
+    title: selectedVideo?.title ?? APP_NAME,
+    description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
     openGraph: {
-      title: mainVideo?.title ?? APP_NAME,
-      images: mainVideo?.thumbnailUrl ? [{ url: mainVideo.thumbnailUrl }] : [],
+      title: selectedVideo?.title ?? APP_NAME,
+      description: selectedVideo?.title ?? creator?.bio,
+      images: selectedVideo?.thumbnailUrl ? [{ url: selectedVideo.thumbnailUrl }] : [],
       type: 'video.other',
     },
   };
