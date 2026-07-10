@@ -10,6 +10,7 @@ import { SyncUserFromWebhookUseCase } from '@/lib/modules/users';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 import { safeErrorMessage } from '@/lib/errors';
+import { sendNotification, notificationTemplates } from '@/lib/modules/notifications';
 
 type SupportedLanguage = 'pl' | 'en';
 type ClerkPublicMetadata = {
@@ -145,6 +146,23 @@ export async function POST(req: Request) {
             language: userLanguage
         }, eventType);
         scopedLogger.info(`User ${id} synced via webhook. Type: ${eventType}`);
+
+        // Send welcome notification for new users
+        if (eventType === 'user.created') {
+          try {
+            await sendNotification({
+              userId: id,
+              kind: notificationTemplates.welcome.kind,
+              titlePl: notificationTemplates.welcome.titlePl,
+              titleEn: notificationTemplates.welcome.titleEn,
+              bodyPl: notificationTemplates.welcome.bodyPl,
+              bodyEn: notificationTemplates.welcome.bodyEn,
+            });
+            scopedLogger.info(`Welcome notification sent to user ${id}`);
+          } catch (err) {
+            scopedLogger.error(`Failed to send welcome notification to user ${id}:`, err);
+          }
+        }
       }
     }
 

@@ -5,6 +5,7 @@ import { CommentPolicy } from "../domain/comment.policy";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { PrismaClient } from "@prisma/client";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
 
 export interface ToggleCommentLikeInput {
   commentId: string;
@@ -46,13 +47,18 @@ export async function toggleCommentLike(
   }
 
   try {
+    let isNewLike = false;
+
     const result = await (prisma as PrismaClient).$transaction(async (tx) => {
       const txRepo = new CommentRepository(tx);
       const existing = await txRepo.findCommentReaction(userId, commentId);
 
       if (action === 'LIKE') {
         if (existing && existing.type !== 'LIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
-        if (!existing || existing.type !== 'LIKE') await txRepo.createCommentLike(userId, commentId);
+        if (!existing || existing.type !== 'LIKE') {
+          await txRepo.createCommentLike(userId, commentId);
+          isNewLike = true;
+        }
       } else if (action === 'DISLIKE') {
         if (existing && existing.type !== 'DISLIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
         if (!existing || existing.type !== 'DISLIKE') await txRepo.createCommentDislike(userId, commentId);
@@ -63,6 +69,25 @@ export async function toggleCommentLike(
       const snapshot = await txRepo.getCommentReactionSnapshot(userId, commentId);
       return { ...snapshot, liked: action === 'LIKE' };
     });
+
+    // Best-effort side effect, kept outside the transaction: a notification failure
+    // must never roll back or fail the like/unlike action itself.
+    if (isNewLike && comment.authorId !== userId) {
+      try {
+        const video = await (prisma as PrismaClient).video.findUnique({ where: { id: comment.videoId }, select: { slug: true } });
+        await sendNotification({
+          userId: comment.authorId,
+          kind: notificationTemplates.commentLike.kind,
+          titlePl: notificationTemplates.commentLike.titlePl,
+          titleEn: notificationTemplates.commentLike.titleEn,
+          bodyPl: notificationTemplates.commentLike.bodyPl,
+          bodyEn: notificationTemplates.commentLike.bodyEn,
+          href: video ? `/?v=${encodeURIComponent(video.slug)}#comment-${commentId}` : undefined,
+        });
+      } catch (notificationError) {
+        console.error("[COMMENT_LIKE_NOTIFICATION_ERROR]", notificationError);
+      }
+    }
 
     return ok(result);
   } catch (error: any) {

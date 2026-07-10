@@ -25,7 +25,7 @@ function useAccountUser() {
   return user!;
 }
 
-function Feedback({ error, info }: { error: string | null; info: string | null }) {
+export function Feedback({ error, info }: { error: string | null; info: string | null }) {
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
   if (info) return <p className="rounded-lg bg-[#EFF3FE] px-3 py-2 text-[13px] font-semibold text-[#2563EB]">{info}</p>;
   return null;

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Heart } from "../icons";
 import { NotificationDTO, NotificationKind } from "../../types/notification";
 
@@ -31,6 +32,7 @@ function formatRelativeTime(iso: string, isPl: boolean): string {
 
 export default function NotificationsMenu({ notifications, language, messagesLabel }: NotificationsMenuProps) {
   const isPl = language === "pl";
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(notifications);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,6 +61,17 @@ export default function NotificationsMenu({ notifications, language, messagesLab
 
   const markAsRead = (id: string) => {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    fetch("/api/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, read: true }),
+    }).catch((err) => console.error("Failed to mark notification as read:", err));
+  };
+
+  const handleSelect = (n: NotificationDTO) => {
+    markAsRead(n.id);
+    setOpen(false);
+    if (n.href) router.push(n.href);
   };
 
   return (
@@ -117,7 +130,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
                     <button
                       type="button"
                       role="menuitem"
-                      onClick={() => markAsRead(n.id)}
+                      onClick={() => handleSelect(n)}
                       className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--chan-surface)]"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EFF3FE] text-[#2563EB]">

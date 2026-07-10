@@ -12,6 +12,7 @@ import {
   SecuritySection,
   DangerSection,
 } from "./AccountSections";
+import { NotificationsSection } from "./NotificationsAccountSection";
 
 interface AccountModalProps {
   open: boolean;
@@ -19,7 +20,7 @@ interface AccountModalProps {
   isAdmin: boolean;
 }
 
-type Section = "profile" | "email" | "connections" | "security" | "danger";
+type Section = "profile" | "email" | "connections" | "security" | "notifications" | "danger";
 
 export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
   const { user } = useUser();
@@ -39,6 +40,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
     { id: "email", label: "E-mail" },
     { id: "connections", label: isPl ? "Konta" : "Connections" },
     { id: "security", label: isPl ? "Hasło" : "Security" },
+    { id: "notifications", label: isPl ? "Powiadomienia" : "Notifications" },
     { id: "danger", label: isPl ? "Usuń" : "Delete" },
   ];
 
@@ -74,6 +76,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
               {section === "email" && <EmailSection isPl={isPl} />}
               {section === "connections" && <ConnectionsSection isPl={isPl} />}
               {section === "security" && <SecuritySection isPl={isPl} />}
+              {section === "notifications" && <NotificationsSection isPl={isPl} />}
               {section === "danger" && <DangerSection isPl={isPl} onDeleted={() => onOpenChange(false)} />}
             </div>
 

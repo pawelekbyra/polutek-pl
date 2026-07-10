@@ -36,8 +36,10 @@ model User {
   videoDislikes    VideoDislike[]
   payments         Payment[]
   paymentTotals    UserPaymentTotal[]
-  patronGrants     PatronGrant[]
-  subscriptions    Subscription[]
+  patronGrants          PatronGrant[]
+  subscriptions         Subscription[]
+  notifications         Notification[]
+  notificationPreference NotificationPreference?
 
   @@index([email])
 }
@@ -190,6 +192,58 @@ model Subscription {
   @@unique([userId, creatorId])
   @@index([userId])
   @@index([creatorId])
+}
+
+enum NotificationKind {
+  WELCOME
+  SYSTEM
+  COMMENT
+  SUPPORT
+  PATRON
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  kind      NotificationKind
+  titlePl   String
+  titleEn   String
+  bodyPl    String           @db.Text
+  bodyEn    String           @db.Text
+  href      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+}
+
+/// Per-user opt-out toggles for non-essential notification categories.
+/// WELCOME is a one-time onboarding message and is never gated by preferences.
+model NotificationPreference {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  patronEnabled    Boolean  @default(true)
+  commentEnabled   Boolean  @default(true)
+  systemEnabled    Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Admin-editable overrides for the standard notification copy. When a row exists
+/// for a given `kind`, it replaces the hardcoded default in notificationTemplates;
+/// otherwise the hardcoded default is used. Mirrors EmailTemplate's override pattern.
+model NotificationTemplate {
+  kind      NotificationKind @id
+  titlePl   String
+  titleEn   String
+  bodyPl    String           @db.Text
+  bodyEn    String           @db.Text
+  updatedAt DateTime         @updatedAt
+  updatedBy String?
 }
 
 model Video {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Mail, Settings, Video, ShieldCheck, Trophy, MessageSquare } from "@/app/components/icons";
+import { ArrowRight, Mail, Settings, Video, ShieldCheck, Trophy, MessageSquare, Bell } from "@/app/components/icons";
 
 const adminSections = [
   {
@@ -41,6 +41,12 @@ const adminSections = [
     description: "Moderacja komentarzy i zarządzanie dyskusjami pod filmami.",
     href: "/admin/comments",
     icon: MessageSquare,
+  },
+  {
+    title: "Powiadomienia",
+    description: "Powiadomienia użytkowników, szablony i broadcast do wybranych grup.",
+    href: "/admin/notifications",
+    icon: Bell,
   },
 ];
 

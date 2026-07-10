@@ -9,6 +9,7 @@ import { normalizePaymentTotals } from "@/lib/modules/users";
 import { Prisma } from "@prisma/client";
 import { WriteTx } from "@/lib/modules/shared/db";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
 
 const SOURCE_MAP: Record<string, PatronGrantSource> = {
   stripe_tip: PatronGrantSource.STRIPE_TIP,
@@ -86,6 +87,15 @@ export async function grantPatron(
         grantedByUserId: input.grantedByUserId,
         note: input.note,
       },
+    }, currentTx);
+
+    await sendNotification({
+      userId: input.userId,
+      kind: notificationTemplates.patronAccess.kind,
+      titlePl: notificationTemplates.patronAccess.titlePl,
+      titleEn: notificationTemplates.patronAccess.titleEn,
+      bodyPl: notificationTemplates.patronAccess.bodyPl,
+      bodyEn: notificationTemplates.patronAccess.bodyEn,
     }, currentTx);
 
     const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
