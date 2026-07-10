@@ -20,7 +20,7 @@ export function VideoMediaManager({ videoId, assets, tier, onChanged }: { videoI
   const [file, setFile] = useState<File | null>(null);
   const [strategyChoice, setStrategyChoice] = useState<StrategyChoice>("AUTO");
   const [publishAfterReady, setPublishAfterReady] = useState(false);
-  const { mediaState, setMediaState, loading, error, refresh } = useVideoMediaState(videoId);
+  const { mediaState, setMediaState, loading, error, refresh, syncWithProviders } = useVideoMediaState(videoId);
   const uploadState = useVideoOriginalUpload(videoId);
 
   const submit = async () => {
@@ -56,7 +56,7 @@ export function VideoMediaManager({ videoId, assets, tier, onChanged }: { videoI
     <div className="rounded-xl border bg-background p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">Status</h3>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => void syncWithProviders().catch(() => undefined)} disabled={loading}>
           {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="mr-2 h-3.5 w-3.5" />}
           Odśwież
         </Button>

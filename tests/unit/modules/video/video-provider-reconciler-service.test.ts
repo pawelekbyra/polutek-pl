@@ -57,4 +57,45 @@ describe('VideoProviderReconcilerService', () => {
     expect(result.retriedJobs).toBe(1);
     expect(jobService.retryJob).toHaveBeenCalledWith({ jobId: 'job-1' }, ctx);
   });
+
+  it('restarts a stale pending job that never reached the provider', async () => {
+    const job = makeJob({ status: 'RUNNING', providerAssetId: null, providerUploadId: null, attemptCount: 1 });
+    const { ctx, state } = makeCtx(job);
+    const jobService = { startQueuedJob: vi.fn(), retryJob: vi.fn() } as any;
+    const adapter = registry({ state: 'READY' });
+    const result = await new VideoProviderReconcilerService(adapter, { reconcileVideoDistribution: vi.fn() } as any, jobService).reconcilePendingProviderJobs({}, ctx);
+    expect(result.retriedJobs).toBe(1);
+    expect(state.jobUpdates.at(-1)).toMatchObject({ status: 'QUEUED' });
+    expect(jobService.startQueuedJob).toHaveBeenCalledWith({ jobId: 'job-1' }, ctx);
+  });
+
+  it('fails a never-started job with a clear reason once attempts are exhausted', async () => {
+    const job = makeJob({ status: 'WAITING_PROVIDER', providerAssetId: null, providerUploadId: null, attemptCount: 3, maxAttempts: 3 });
+    const { ctx, state } = makeCtx(job);
+    const orchestrator = { reconcileVideoDistribution: vi.fn() } as any;
+    const jobService = { startQueuedJob: vi.fn(), retryJob: vi.fn() } as any;
+    const result = await new VideoProviderReconcilerService(registry({ state: 'READY' }), orchestrator, jobService).reconcilePendingProviderJobs({}, ctx);
+    expect(result.failedJobs).toBe(1);
+    expect(jobService.startQueuedJob).not.toHaveBeenCalled();
+    expect(state.jobUpdates.at(-1)).toMatchObject({ status: 'FAILED' });
+    expect(String(state.jobUpdates.at(-1).lastError)).toContain('nie dotarł do dostawcy');
+    expect(state.targetUpdates.at(-1)).toMatchObject({ status: 'FAILED' });
+    expect(orchestrator.reconcileVideoDistribution).toHaveBeenCalledWith({ videoId: 'video-1', planId: 'plan-1', reason: 'CRON_RECONCILE' }, ctx);
+  });
+
+  it('skips a fresh never-started job to avoid duplicating an in-flight import', async () => {
+    const job = makeJob({ status: 'RUNNING', providerAssetId: null, providerUploadId: null, updatedAt: new Date() });
+    const { ctx, state } = makeCtx(job);
+    const jobService = { startQueuedJob: vi.fn(), retryJob: vi.fn() } as any;
+    const result = await new VideoProviderReconcilerService(registry({ state: 'READY' }), { reconcileVideoDistribution: vi.fn() } as any, jobService).reconcilePendingProviderJobs({}, ctx);
+    expect(result.skippedJobs).toBe(1);
+    expect(jobService.startQueuedJob).not.toHaveBeenCalled();
+    expect(state.jobUpdates).toEqual([]);
+  });
+
+  it('passes the videoId filter to the job query', async () => {
+    const { ctx } = makeCtx(makeJob());
+    await new VideoProviderReconcilerService(registry({ state: 'READY' }), { reconcileVideoDistribution: vi.fn() } as any, {} as any).reconcilePendingProviderJobs({ videoId: 'video-1' }, ctx);
+    expect(ctx.prisma.videoProviderJob.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ videoId: 'video-1' }) }));
+  });
 });

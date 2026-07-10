@@ -15,7 +15,7 @@ export function AppVersionCheck() {
 
     const checkInterval = setInterval(async () => {
       try {
-        const res = await fetch('/__version', {
+        const res = await fetch('/api/__version', {
           method: 'GET',
           headers: { 'Cache-Control': 'no-cache' },
         });
