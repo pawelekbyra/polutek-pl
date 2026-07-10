@@ -138,8 +138,8 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[var(--chan-line)] tracking-wider uppercase whitespace-nowrap">
-            6-7
+          <span className="bg-black text-white text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[var(--chan-line)] tracking-wider uppercase whitespace-nowrap">
+            PATRON
           </span>
         )}
       </div>
