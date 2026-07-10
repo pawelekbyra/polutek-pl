@@ -311,7 +311,7 @@ export function CommentItem({
           <button
             onClick={() => userProfile && onLike(comment.id)}
             className={cn(
-              "inline-flex h-6 shrink-0 items-center justify-center gap-1.5 transition-all group",
+              "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 transition-all group",
               isLiked
                 ? "text-primary"
                 : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
@@ -324,13 +324,13 @@ export function CommentItem({
                 stroke={isLiked ? "#2563eb" : "currentColor"}
               />
             </LikePop>
-            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-base" />
+            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-base leading-none" />
           </button>
 
           <button
             onClick={() => userProfile && onDislike(comment.id)}
             className={cn(
-              "inline-flex h-6 shrink-0 items-center justify-center transition-all",
+              "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 transition-all",
               comment.viewerReaction === "DISLIKE" ? "text-primary" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
             )}
             aria-label={language === "pl" ? "Nie lubię" : "Dislike"}

@@ -191,7 +191,7 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-base font-bold h-10 px-3 flex items-center justify-center gap-1.5 transition-all active:scale-95 rounded-[12px] font-sans text-[var(--chan-ink)] hover:-translate-y-px",
+          "relative text-base font-bold h-10 px-3 flex items-center justify-center gap-1.5 transition-all active:scale-95 rounded-[12px] font-sans text-[var(--chan-ink)] hover:-translate-y-px bg-[var(--chan-surface)]",
           isPending && "opacity-50 cursor-wait",
           className,
         )}
