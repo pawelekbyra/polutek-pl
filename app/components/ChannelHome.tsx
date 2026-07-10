@@ -154,12 +154,6 @@ function ChannelHomeContent({
     if (clickedId && clickedId !== selectedVideo.id) {
       void preloader?.warmVideo(clickedId, { includeComments: false, includePoster: true, priority: "intent" });
       setClientSelectedVideoId(clickedId);
-
-      // Update URL without full page reload using history.replaceState
-      if (typeof window !== "undefined") {
-        const newUrl = clickedId ? `/?v=${encodeURIComponent(clickedId)}` : "/";
-        window.history.replaceState({ videoId: clickedId }, "", newUrl);
-      }
     }
     setActiveTab("comments");
   };
