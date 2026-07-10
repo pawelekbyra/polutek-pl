@@ -238,7 +238,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
-                        "flex h-full items-center justify-center gap-2 px-4 font-sans transition-colors active:opacity-70 lg:pl-5 lg:pr-4",
+                        "flex h-full items-center justify-center gap-1.5 px-3 font-sans transition-colors active:opacity-70 lg:px-4",
                         styles.actionButton,
                         interactionState.isLiked ? "text-[#2563eb]" : "text-[var(--chan-ink)]",
                         isPending && "opacity-50"
@@ -246,8 +246,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Lubię to"
                     aria-label="Lubię to"
                   >
-                     <NajsIcon name="like" className="h-6 w-6" stroke={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
-                     <span className="text-[13px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
+                     <NajsIcon name="like" className="h-5 w-5" stroke={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
+                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
                   <span className="h-5 w-px bg-[var(--chan-line-soft)]" />
                   <button

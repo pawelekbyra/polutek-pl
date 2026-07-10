@@ -191,12 +191,12 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-base font-bold h-10 px-3 flex items-center justify-center gap-1.5 transition-all active:scale-95 rounded-[12px] font-sans text-[var(--chan-ink)] hover:-translate-y-px bg-[var(--chan-surface)]",
+          "relative text-sm font-bold h-10 px-3 flex items-center justify-center gap-1.5 transition-all active:scale-95 rounded-[12px] font-sans text-[var(--chan-ink)] hover:-translate-y-px bg-[var(--chan-surface)]",
           isPending && "opacity-50 cursor-wait",
           className,
         )}
       >
-        <SubscribeBellIcon size={20} className="relative shrink-0 z-10" filled={isSubscribed} />
+        <SubscribeBellIcon size={18} className="relative shrink-0 z-10" filled={isSubscribed} />
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
