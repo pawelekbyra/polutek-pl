@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Heart } from "../icons";
-import { NajsIcon } from "../najs/primitives";
 import { NotificationDTO, NotificationKind } from "../../types/notification";
 
 interface NotificationsMenuProps {
@@ -80,7 +79,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
               : "flex h-9 w-9 items-center justify-center"
           }
         >
-          <NajsIcon name="mail" className="h-[20px] w-[20px] shrink-0" stroke="currentColor" />
+          <Bell className="h-5 w-5 shrink-0" />
         </span>
         {unreadCount > 0 && (
           <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">
