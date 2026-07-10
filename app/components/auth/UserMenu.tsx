@@ -59,12 +59,7 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
         title={isPatron ? "Patron" : undefined}
       >
         <span
-          className={cn(
-            "flex h-9 w-9 items-center justify-center overflow-hidden rounded-full",
-            isPatron
-              ? "chan-patron-ring border-2"
-              : "border border-[var(--chan-line)]",
-          )}
+          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]"
         >
           {avatar ? (
             <Image src={avatar} alt="" width={36} height={36} className="h-full w-full object-cover" unoptimized />

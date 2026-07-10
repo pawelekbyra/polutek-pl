@@ -138,8 +138,8 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="bg-accent-soft text-primary text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[var(--chan-line)] tracking-wider uppercase whitespace-nowrap">
-            6-7
+          <span className="bg-black text-white text-[8px] font-extrabold px-[5px] py-[1px] rounded-full border border-[var(--chan-line)] tracking-wider uppercase whitespace-nowrap">
+            PATRON
           </span>
         )}
       </div>
@@ -320,11 +320,11 @@ export function CommentItem({
             <LikePop active={isLiked}>
               <NajsIcon
                 name="like"
-                className="h-[15px] w-[15px]"
+                className="h-5 w-5"
                 stroke={isLiked ? "#2563eb" : "currentColor"}
               />
             </LikePop>
-            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[13px]" />
+            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-base" />
           </button>
 
           <button
@@ -337,7 +337,7 @@ export function CommentItem({
           >
             <NajsIcon
               name="dislike"
-              className="h-[15px] w-[15px]"
+              className="h-5 w-5"
               stroke={comment.viewerReaction === "DISLIKE" ? "#2563eb" : "currentColor"}
             />
           </button>

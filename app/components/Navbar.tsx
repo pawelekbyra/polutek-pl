@@ -94,7 +94,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4 text-[var(--chan-muted)]"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-4 w-4" stroke="currentColor" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
             </form>
@@ -131,7 +131,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4 text-[var(--chan-muted)]"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-4 w-4" stroke="currentColor" />
+                    <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                   </button>
                 </div>
               </form>
@@ -145,7 +145,7 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
                 >
-                  <NajsIcon name="search" className="h-[22px] w-[22px]" stroke="currentColor" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
 
@@ -182,19 +182,16 @@ const Navbar = () => {
               </div>
 
               {/* Messages — only relevant once you have an account. */}
-              {isLoaded && isSignedIn && (
+              {isSignedIn ? (
                 <NotificationsMenu
                   notifications={mockNotifications}
                   language={language}
                   messagesLabel={messagesLabel}
                 />
-              )}
-
-              {/* Auth */}
-              {isLoaded && !isSignedIn && (
+              ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
@@ -202,8 +199,10 @@ const Navbar = () => {
                     <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
                     <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
                   </svg>
-                  <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
+                  <span className="hidden sm:inline leading-none text-base font-semibold text-white">{t.signIn}</span>
                 </button>
+              ) : (
+                <div className="h-10 w-[100px] rounded-[12px] bg-black animate-pulse shrink-0" />
               )}
 
               {isLoaded && isSignedIn && (
