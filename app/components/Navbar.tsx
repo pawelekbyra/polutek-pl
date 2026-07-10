@@ -11,7 +11,7 @@ import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import NotificationsMenu from "./notifications/NotificationsMenu";
-import { getMockNotifications } from "../data/mock-notifications";
+import { NotificationDTO } from "@/app/types/notification";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
@@ -59,7 +59,17 @@ const Navbar = () => {
   const isPatron = isAdmin || metadata.isPatron === true;
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
-  const mockNotifications = useMemo(() => getMockNotifications(), []);
+  const [notifications, setNotifications] = React.useState<NotificationDTO[]>([]);
+
+  React.useEffect(() => {
+    if (isSignedIn) {
+      fetch("/api/notifications")
+        .then((res) => res.ok ? res.json() : [])
+        .then((data) => setNotifications(Array.isArray(data) ? data : []))
+        .catch(() => setNotifications([]));
+    }
+  }, [isSignedIn]);
+
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
   };
@@ -182,10 +192,10 @@ const Navbar = () => {
               {/* Messages — only relevant once you have an account. */}
               {isSignedIn ? (
                 <NotificationsMenu
-                  notifications={mockNotifications}
+                  notifications={notifications}
                   language={language}
                   messagesLabel={messagesLabel}
-                />
+                />{" "}
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}

@@ -38,6 +38,7 @@ model User {
   paymentTotals    UserPaymentTotal[]
   patronGrants     PatronGrant[]
   subscriptions    Subscription[]
+  notifications    Notification[]
 
   @@index([email])
 }
@@ -190,6 +191,32 @@ model Subscription {
   @@unique([userId, creatorId])
   @@index([userId])
   @@index([creatorId])
+}
+
+enum NotificationKind {
+  WELCOME
+  SYSTEM
+  COMMENT
+  SUPPORT
+  PATRON
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  kind      NotificationKind
+  titlePl   String
+  titleEn   String
+  bodyPl    String           @db.Text
+  bodyEn    String           @db.Text
+  href      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
 }
 
 model Video {

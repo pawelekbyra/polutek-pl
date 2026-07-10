@@ -59,6 +59,11 @@ export default function NotificationsMenu({ notifications, language, messagesLab
 
   const markAsRead = (id: string) => {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    fetch("/api/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, read: true }),
+    }).catch((err) => console.error("Failed to mark notification as read:", err));
   };
 
   return (
