@@ -266,7 +266,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </button>
                </div>
                <ShareButton
-                 url={`${typeof window !== 'undefined' ? window.location.origin : ''}${video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : ""}?v=${video.slug}`}
+                 url={typeof window !== 'undefined' ? `${window.location.origin}/?v=${encodeURIComponent(video.slug)}` : ''}
                  title={displayTitle}
                  text={video.description || undefined}
                  className={styles.secondaryAction}
