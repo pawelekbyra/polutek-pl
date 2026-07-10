@@ -5,6 +5,7 @@ import { CommentPolicy } from "../domain/comment.policy";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { PrismaClient } from "@prisma/client";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications/application/send-notification.use-case";
 
 export interface ToggleCommentLikeInput {
   commentId: string;
@@ -46,13 +47,18 @@ export async function toggleCommentLike(
   }
 
   try {
+    let isNewLike = false;
+
     const result = await (prisma as PrismaClient).$transaction(async (tx) => {
       const txRepo = new CommentRepository(tx);
       const existing = await txRepo.findCommentReaction(userId, commentId);
 
       if (action === 'LIKE') {
         if (existing && existing.type !== 'LIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
-        if (!existing || existing.type !== 'LIKE') await txRepo.createCommentLike(userId, commentId);
+        if (!existing || existing.type !== 'LIKE') {
+          await txRepo.createCommentLike(userId, commentId);
+          isNewLike = true;
+        }
       } else if (action === 'DISLIKE') {
         if (existing && existing.type !== 'DISLIKE') await txRepo.deleteCommentReaction(existing.id, commentId, existing.type);
         if (!existing || existing.type !== 'DISLIKE') await txRepo.createCommentDislike(userId, commentId);
@@ -61,6 +67,20 @@ export async function toggleCommentLike(
       }
 
       const snapshot = await txRepo.getCommentReactionSnapshot(userId, commentId);
+
+      if (isNewLike && comment.authorId !== userId) {
+        const video = await tx.video.findUnique({ where: { id: comment.videoId }, select: { slug: true } });
+        await sendNotification({
+          userId: comment.authorId,
+          kind: notificationTemplates.commentLike.kind,
+          titlePl: notificationTemplates.commentLike.titlePl,
+          titleEn: notificationTemplates.commentLike.titleEn,
+          bodyPl: notificationTemplates.commentLike.bodyPl,
+          bodyEn: notificationTemplates.commentLike.bodyEn,
+          href: video ? `/?v=${encodeURIComponent(video.slug)}#comment-${commentId}` : undefined,
+        }, tx);
+      }
+
       return { ...snapshot, liked: action === 'LIKE' };
     });
 
