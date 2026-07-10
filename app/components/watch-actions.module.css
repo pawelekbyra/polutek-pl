@@ -29,6 +29,39 @@
   transition: transform 160ms ease, opacity 160ms ease, color 160ms ease, filter 160ms ease;
 }
 
+.actionButton,
+.secondaryAction,
+.installAction button,
+.subscribeAction {
+  align-items: center;
+  line-height: 1;
+}
+
+.actionButton > svg,
+.secondaryAction > svg,
+.installAction button > svg,
+.subscribeAction > svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex: 0 0 20px;
+  align-self: center;
+  vertical-align: middle;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  shape-rendering: geometricPrecision;
+}
+
+.actionButton > span,
+.secondaryAction > span,
+.installAction button > span,
+.subscribeAction > span {
+  line-height: 1;
+}
+
 .secondaryAction,
 .installAction button,
 .subscribeAction {
@@ -80,4 +113,3 @@
     justify-content: flex-end;
   }
 }
-
