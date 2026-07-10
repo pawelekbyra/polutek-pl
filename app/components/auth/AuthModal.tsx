@@ -5,7 +5,6 @@ import { useSignIn, useSignUp } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
 import { useLanguage } from "../LanguageContext";
-import BrandName from "../BrandName";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 
@@ -174,10 +173,6 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             ×
           </button>
           <div>
-            {/* Brand header — centered against the modal itself, not balanced against the close button. */}
-            <div className="mb-4 grid place-items-center border-b border-[var(--chan-line)] pb-4">
-              <BrandName className="text-[23px] leading-none" variant="classic" />
-            </div>
             <DialogHeader className="text-center">
               <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
             </DialogHeader>
