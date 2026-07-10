@@ -154,7 +154,7 @@ export function NajsIcon({
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
       {name === "search" && <><circle cx="10" cy="10" r="6.3" {...c} /><path d="M15 15.5 L21 21" {...c} /></>}
       {name === "login" && <><path d="M3 5 h4.5 M3 19 h4.5 M12 5 v4 M12 15 v4" {...c} /><path d="M10 12 h11 M16.5 8 l4.5 4 -4.5 4" {...c} /></>}
-      {name === "bell" && <><path d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z" {...c} /><path d="M10 20 c1.3 1 2.7 1 4 0" {...c} /></>}
+      {name === "bell" && <><path d="M9.5 4.5 L9.5 4 M14.5 4.5 L14.5 4" {...c} /><path d="M12 3 C9 3 7 5.5 7 8 v4 l-1.5 2 h19 l-1.5 -2 v-4 c0 -2.5 -2 -5 -5 -5" {...c} /><circle cx="12" cy="20" r="0.8" fill={stroke} stroke="none" /></>}
       {name === "mail" && <><rect x="3" y="5.5" width="18" height="13" rx="2.5" {...c} /><path d="M4 7 L12 13 L20 7" {...c} /></>}
       {name === "like" && <><path d="M7 20 H4 V10 h3 Z" {...c} /><path d="M7 10 l4 -6 c1 -1 2 .2 1.6 1.6 L12 9 h6 c1.4 0 2.2 1.1 1.8 2.4 l-1.2 5.2 C18.3 18.3 17.3 20 15 20 H7" {...c} /></>}
       {name === "dislike" && <><path d="M7 4 H4 v10 h3 Z" {...c} /><path d="M7 14 l4 6 c1 1 2 -.2 1.6 -1.6 L12 15 h6 c1.4 0 2.2 -1.1 1.8 -2.4 L18.6 7.4 C18.3 5.7 17.3 4 15 4 H7" {...c} /></>}
