@@ -66,13 +66,13 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "relative flex items-center justify-center gap-2 h-[42px] px-4 rounded-[12px] bg-[var(--chan-surface)] active:scale-95 text-[var(--chan-ink)] font-bold text-[13px] font-sans transition-transform hover:-translate-y-px",
+          "relative flex items-center justify-center gap-1.5 h-10 px-3 rounded-[12px] active:scale-95 text-[var(--chan-ink)] font-bold text-[13px] font-sans transition-transform hover:-translate-y-px",
           fill && "w-full",
           className
         )}
       >
-        <NajsIcon name="send" className="h-4 w-4" stroke="var(--chan-ink)" />
-        <span>Szeruj</span>
+        <NajsIcon name="send" className="h-5 w-5" stroke="var(--chan-ink)" />
+        <span className="leading-none">Szeruj</span>
       </button>
 
       {isOpen && !isMobile && (

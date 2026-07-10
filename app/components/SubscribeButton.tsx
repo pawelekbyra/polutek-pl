@@ -191,39 +191,12 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-[13px] font-bold h-[38px] px-[18px] flex items-center justify-center gap-2 transition-all active:scale-95",
-          isFlat
-            ? cn(
-                "rounded-[12px] font-sans overflow-hidden",
-                "before:absolute before:inset-0 before:rounded-[12px]",
-                "before:border before:border-white/[0.12] before:pointer-events-none",
-                "before:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_20px_rgba(255,255,255,0.04)]",
-                "before:backdrop-blur-xl before:transition-all before:duration-300",
-                "hover:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_30px_rgba(255,255,255,0.12)]",
-                "hover:before:border-white/[0.2]",
-                "focus-visible:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_0_40px_rgba(255,255,255,0.16)]",
-                isSubscribed
-                  ? "bg-gradient-to-br from-[var(--chan-surface)]/95 to-[var(--chan-surface)]/85 text-[var(--chan-ink)]"
-                  : "bg-gradient-to-br from-black/95 to-black/85 text-white shadow-[0_0_24px_rgba(0,0,0,0.4)]",
-                "hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]",
-              )
-            : cn(isSubscribed ? "text-[#171717]" : "text-white"),
+          "relative text-[13px] font-bold h-10 px-3 flex items-center justify-center gap-1.5 transition-all active:scale-95 rounded-[12px] font-sans text-[var(--chan-ink)] hover:-translate-y-px",
           isPending && "opacity-50 cursor-wait",
           className,
         )}
-        style={isFlat ? undefined : { fontFamily: "var(--font-najs, Kalam, cursive)" }}
       >
-        {!isFlat && (
-          <Frame
-            radius={20}
-            seed={37}
-            stroke={INK}
-            strokeWidth={1.2}
-            fill={isSubscribed ? "rgba(248,243,231,.88)" : BLUE}
-            showShadow={colorScheme === "v2"}
-          />
-        )}
-        <SubscribeBellIcon size={16} className="relative shrink-0 z-10" filled={isSubscribed} />
+        <SubscribeBellIcon size={20} className="relative shrink-0 z-10" filled={isSubscribed} />
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (

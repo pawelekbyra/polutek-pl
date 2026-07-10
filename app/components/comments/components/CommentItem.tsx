@@ -320,7 +320,7 @@ export function CommentItem({
             <LikePop active={isLiked}>
               <NajsIcon
                 name="like"
-                className="h-[15px] w-[15px]"
+                className="h-5 w-5"
                 stroke={isLiked ? "#2563eb" : "currentColor"}
               />
             </LikePop>
@@ -337,7 +337,7 @@ export function CommentItem({
           >
             <NajsIcon
               name="dislike"
-              className="h-[15px] w-[15px]"
+              className="h-5 w-5"
               stroke={comment.viewerReaction === "DISLIKE" ? "#2563eb" : "currentColor"}
             />
           </button>
