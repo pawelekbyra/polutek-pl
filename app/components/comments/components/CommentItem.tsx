@@ -123,7 +123,7 @@ export function CommentItem({
     >
       {!isReply && comment.isPinned && (
         <span className="absolute right-1 top-[18px] z-[6] inline-flex items-center gap-1 rounded-full bg-[#EFF3FE] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#2563EB]">
-          <Star size={10} className="fill-[#2563EB]" />
+          <Star size={14} className="fill-[#2563EB]" />
           {language === "pl" ? "Przypięty" : "Pinned"}
         </span>
       )}
@@ -226,7 +226,7 @@ export function CommentItem({
                     onClick={() => { onPin(comment.id, !comment.isPinned); setShowMenu(false); }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
                   >
-                    <Star size={14} /> {comment.isPinned ? (language === "pl" ? "Odepnij" : "Unpin") : (language === "pl" ? "Przypnij" : "Pin")}
+                    <Star size={16} /> {comment.isPinned ? (language === "pl" ? "Odepnij" : "Unpin") : (language === "pl" ? "Przypnij" : "Pin")}
                   </button>
                 )}
 
@@ -262,7 +262,7 @@ export function CommentItem({
                     }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 text-primary"
                   >
-                    <Star size={14} className={isHearted ? "fill-primary" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
+                    <Star size={16} className={isHearted ? "fill-primary" : ""} /> {isHearted ? (language === "pl" ? "Usuń serce" : "Remove heart") : (language === "pl" ? "Daj serce" : "Give heart")}
                   </button>
                 )}
               </div>
@@ -320,7 +320,7 @@ export function CommentItem({
             <LikePop active={isLiked}>
               <NajsIcon
                 name="like"
-                className="h-6 w-6"
+                className="h-5 w-5"
                 stroke={isLiked ? "#2563eb" : "currentColor"}
               />
             </LikePop>
@@ -337,14 +337,14 @@ export function CommentItem({
           >
             <NajsIcon
               name="dislike"
-              className="h-6 w-6"
+              className="h-5 w-5"
               stroke={comment.viewerReaction === "DISLIKE" ? "#2563eb" : "currentColor"}
             />
           </button>
 
           {isHearted && (
             <span title={language === "pl" ? "Serce twórcy" : "Creator heart"} className="inline-flex items-center">
-              <Heart size={14} className="fill-primary text-primary" />
+              <Heart size={16} className="fill-primary text-primary" />
             </span>
           )}
 

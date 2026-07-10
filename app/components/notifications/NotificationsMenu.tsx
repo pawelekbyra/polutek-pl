@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Heart } from "../icons";
+import { BellSimple, Heart } from "../icons";
 import { NotificationDTO, NotificationKind } from "../../types/notification";
 
 interface NotificationsMenuProps {
@@ -12,9 +12,9 @@ interface NotificationsMenuProps {
 }
 
 const KIND_ICON: Record<NotificationKind, React.ComponentType<{ size?: number; className?: string }>> = {
-  welcome: Bell,
-  system: Bell,
-  comment: Bell,
+  welcome: BellSimple,
+  system: BellSimple,
+  comment: BellSimple,
   support: Heart,
   patron: Heart,
 };
@@ -92,7 +92,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
               : "flex h-9 w-9 items-center justify-center"
           }
         >
-          <Bell className="h-5 w-5 shrink-0" />
+          <BellSimple className="h-5 w-5 shrink-0" />
         </span>
         {unreadCount > 0 && (
           <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">
