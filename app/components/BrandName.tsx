@@ -92,7 +92,7 @@ const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic', s
           : "font-handwriting font-bold uppercase text-neutral-950",
         className
       )} style={style}>
-        {baseName.toUpperCase()}<span className={cn("chan-brand-suffix", isClassic ? "text-[#60A5FA] drop-shadow-[0_0_10px_rgba(37,99,235,0.45)]" : "text-primary")}>{suffix}</span>
+        {baseName.toUpperCase()}<span className={cn("chan-brand-suffix", isClassic ? "text-[#2563eb]" : "text-primary")}>{suffix}</span>
       </span>
     </>
   );

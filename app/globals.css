@@ -33,6 +33,12 @@
     --media-slider-height: 24px;
   }
 
+  /* Progress bar fill color */
+  .polutek-vidstack-player [class*="vds-slider-fill"],
+  .polutek-vidstack-player .vds-slider-fill {
+    background-color: #2563eb !important;
+  }
+
   @media (max-width: 640px) {
     .polutek-vidstack-player {
       --media-slider-height: 20px;

@@ -94,7 +94,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4 text-[var(--chan-muted)]"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-4 w-4" stroke="currentColor" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
             </form>
@@ -131,7 +131,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-4 text-[var(--chan-muted)]"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-4 w-4" stroke="currentColor" />
+                    <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                   </button>
                 </div>
               </form>
@@ -145,7 +145,7 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
                 >
-                  <NajsIcon name="search" className="h-[22px] w-[22px]" stroke="currentColor" />
+                  <NajsIcon name="search" className="h-5 w-5" stroke="currentColor" />
                 </button>
               </div>
 
