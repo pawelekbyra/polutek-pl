@@ -53,8 +53,14 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden: Video is not public" }, { status: 403 });
     }
 
+    // A stored thumbnailUrl that points back at this same proxy path (bad legacy
+    // data, or a manual paste) would redirect to itself forever below. Treat it
+    // as absent so it falls back to the global default instead of looping.
+    const isSelfReferentialProxyPath = new RegExp(`^/api/videos/${video.id}/thumbnail(?:[/?].*)?$`).test(video.thumbnailUrl ?? "");
+    const rawThumbnailUrl = isSelfReferentialProxyPath ? null : video.thumbnailUrl;
+
     // 3. Resolve thumbnail URL, falling back to global default if not set
-    const resolvedUrl = await resolveVideoThumbnailUrl(video.thumbnailUrl);
+    const resolvedUrl = await resolveVideoThumbnailUrl(rawThumbnailUrl);
     if (!resolvedUrl) {
       return NextResponse.json({ error: "Thumbnail not found" }, { status: 404 });
     }

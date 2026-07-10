@@ -3,7 +3,7 @@ import { GET } from '@/app/api/videos/[id]/thumbnail/route';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { ThumbnailResponseService } from '@/lib/modules/media';
+import { ThumbnailResponseService, resolveVideoThumbnailUrl } from '@/lib/modules/media';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
@@ -96,5 +96,19 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
     const res = await GET(req, { params: Promise.resolve({ id: 'v1' }) });
 
     expect(res.status).toBe(404);
+  });
+
+  it('treats a self-referential stored thumbnailUrl as absent instead of redirect-looping', async () => {
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'guest' } as any);
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: 'v1',
+      thumbnailUrl: '/api/videos/v1/thumbnail',
+      status: 'PUBLISHED',
+    });
+
+    const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
+    await GET(req, { params: Promise.resolve({ id: 'v1' }) });
+
+    expect(resolveVideoThumbnailUrl).toHaveBeenCalledWith(null);
   });
 });
