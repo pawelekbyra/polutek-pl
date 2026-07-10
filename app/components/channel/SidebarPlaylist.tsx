@@ -331,22 +331,32 @@ export function SidebarPlaylist({
   };
 
   if (loading) {
-    const fallbackItems = sortedVideos || [];
+    const renderSkeletonSection = (title: string, items: number = 2) => (
+      <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
+        {renderSectionHeader(title)}
+        {[...Array(items)].map((_, i) => (
+          <div key={`skeleton-${i}`} className="mb-0.5 flex gap-3 p-2 rounded-[14px] animate-pulse">
+            <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-[var(--chan-line)]" />
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+              <div className="h-4 bg-[var(--chan-line)] rounded w-3/4" />
+              <div className="h-3 bg-[var(--chan-line)] rounded w-1/2" />
+              <div className="h-3 bg-[var(--chan-line)] rounded w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
     return (
-      <div className="space-y-1.5 lg:h-full lg:min-h-0" aria-busy="true">
-        {renderSectionHeader(language === "pl" ? "Dostępne filmy" : "Available videos")}
-        {fallbackItems.map((v) =>
-          renderVideoItem({
-            ...v,
-            isLocked:
-              v.tier === "PATRON"
-                ? !viewerIsPatron
-                : v.tier === "LOGGED_IN"
-                  ? !userProfile
-                  : false,
-          }),
+      <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5" aria-busy="true">
+        {renderSkeletonSection(language === "pl" ? "Dostępne filmy" : "Available videos", 2)}
+        {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in", 2)}
+        {renderSkeletonSection(language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone", 1)}
+        {showSupportBox && (
+          <div className="shrink-0 mt-2 p-4 rounded-lg bg-[var(--chan-surface)] animate-pulse">
+            <div className="h-8 bg-[var(--chan-line)] rounded w-full" />
+          </div>
         )}
-        {showSupportBox && <PatronBox />}
       </div>
     );
   }
