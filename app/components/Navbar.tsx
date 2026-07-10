@@ -193,11 +193,11 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white shrink-0" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white shrink-0" aria-hidden="true">
                     <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
                     <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
                   </svg>
-                  <span className="hidden sm:inline leading-none text-base font-semibold text-white">{t.signIn}</span>
+                  <span className="hidden sm:inline leading-none text-sm font-semibold text-white">{t.signIn}</span>
                 </button>
               ) : (
                 <div className="h-10 w-[100px] rounded-[12px] bg-black animate-pulse shrink-0" />
