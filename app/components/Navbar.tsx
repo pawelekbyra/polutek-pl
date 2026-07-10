@@ -195,7 +195,7 @@ const Navbar = () => {
                   notifications={notifications}
                   language={language}
                   messagesLabel={messagesLabel}
-                />{" "}
+                />
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}

@@ -5,7 +5,7 @@ import { CommentPolicy } from "../domain/comment.policy";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { PrismaClient } from "@prisma/client";
-import { sendNotification, notificationTemplates } from "@/lib/modules/notifications/application/send-notification.use-case";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
 
 export interface ToggleCommentLikeInput {
   commentId: string;
@@ -67,9 +67,14 @@ export async function toggleCommentLike(
       }
 
       const snapshot = await txRepo.getCommentReactionSnapshot(userId, commentId);
+      return { ...snapshot, liked: action === 'LIKE' };
+    });
 
-      if (isNewLike && comment.authorId !== userId) {
-        const video = await tx.video.findUnique({ where: { id: comment.videoId }, select: { slug: true } });
+    // Best-effort side effect, kept outside the transaction: a notification failure
+    // must never roll back or fail the like/unlike action itself.
+    if (isNewLike && comment.authorId !== userId) {
+      try {
+        const video = await (prisma as PrismaClient).video.findUnique({ where: { id: comment.videoId }, select: { slug: true } });
         await sendNotification({
           userId: comment.authorId,
           kind: notificationTemplates.commentLike.kind,
@@ -78,11 +83,11 @@ export async function toggleCommentLike(
           bodyPl: notificationTemplates.commentLike.bodyPl,
           bodyEn: notificationTemplates.commentLike.bodyEn,
           href: video ? `/?v=${encodeURIComponent(video.slug)}#comment-${commentId}` : undefined,
-        }, tx);
+        });
+      } catch (notificationError) {
+        console.error("[COMMENT_LIKE_NOTIFICATION_ERROR]", notificationError);
       }
-
-      return { ...snapshot, liked: action === 'LIKE' };
-    });
+    }
 
     return ok(result);
   } catch (error: any) {

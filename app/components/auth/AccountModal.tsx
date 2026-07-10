@@ -10,9 +10,9 @@ import {
   EmailSection,
   ConnectionsSection,
   SecuritySection,
-  NotificationsSection,
   DangerSection,
 } from "./AccountSections";
+import { NotificationsSection } from "./NotificationsAccountSection";
 
 interface AccountModalProps {
   open: boolean;

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { NotificationKind } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 

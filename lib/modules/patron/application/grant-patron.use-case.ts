@@ -9,7 +9,7 @@ import { normalizePaymentTotals } from "@/lib/modules/users";
 import { Prisma } from "@prisma/client";
 import { WriteTx } from "@/lib/modules/shared/db";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { sendNotification, notificationTemplates } from "@/lib/modules/notifications/application/send-notification.use-case";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
 
 const SOURCE_MAP: Record<string, PatronGrantSource> = {
   stripe_tip: PatronGrantSource.STRIPE_TIP,

@@ -36,7 +36,7 @@ export async function generateMetadata(props: { searchParams: Promise<{ v?: stri
     description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
     openGraph: {
       title: selectedVideo?.title ?? APP_NAME,
-      description: selectedVideo?.title ?? creator?.bio,
+      description: selectedVideo?.title ?? creator?.bio ?? undefined,
       images: selectedVideo?.thumbnailUrl ? [{ url: selectedVideo.thumbnailUrl }] : [],
       type: 'video.other',
     },

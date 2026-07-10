@@ -10,7 +10,7 @@ import { SyncUserFromWebhookUseCase } from '@/lib/modules/users';
 import { acquireClerkEventLock } from '@/lib/webhooks/clerk-idempotency';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
 import { safeErrorMessage } from '@/lib/errors';
-import { sendNotification, notificationTemplates } from '@/lib/modules/notifications/application/send-notification.use-case';
+import { sendNotification, notificationTemplates } from '@/lib/modules/notifications';
 
 type SupportedLanguage = 'pl' | 'en';
 type ClerkPublicMetadata = {
