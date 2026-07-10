@@ -274,11 +274,11 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-[linear-gradient(135deg,#fffaf0_0%,#fff_58%,#fff7e7_100%)] p-[22px_26px_18px] shadow-[0_18px_42px_rgba(154,105,28,.08)]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
     >
       <div>
         <div className="mb-1.5 flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#ff5e7a_0%,#f43f5e_52%,#fb7185_100%)] shadow-[0_12px_24px_rgba(244,63,94,.25)]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-red-500">
             <Heart size={25} className="fill-white text-white" />
           </span>
           <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
@@ -323,7 +323,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2457f5] text-[16px] font-extrabold tracking-[-0.025em] text-white shadow-[0_10px_24px_rgba(36,87,245,.22)] transition-all hover:-translate-y-px hover:bg-[#1748e8] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-all hover:bg-[#1e4fc1] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">

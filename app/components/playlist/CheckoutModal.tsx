@@ -56,7 +56,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <Button
           variant="ghost"
           onClick={onClose}
-          className="absolute right-4 top-4 z-30 hidden h-12 w-12 rounded-xl border border-[var(--chan-line)] bg-white shadow-[0_6px_18px_rgba(23,23,23,0.10)] hover:bg-[var(--chan-surface)] md:flex"
+          className="absolute right-4 top-4 z-30 hidden h-12 w-12 rounded-xl border border-[var(--chan-line)] bg-white hover:bg-[var(--chan-surface)] md:flex"
         >
           <X className="h-6 w-6" />
         </Button>
@@ -90,7 +90,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="relative mx-auto h-24 w-24">
                   <div className="absolute inset-0 rotate-12 animate-pulse rounded-3xl bg-green-500 opacity-20" />
                   <div className="absolute inset-0 -rotate-12 animate-pulse rounded-3xl bg-green-500 opacity-20 delay-75" />
-                  <div className="relative flex h-full w-full items-center justify-center rounded-[24px] bg-green-500 text-4xl font-black text-white shadow-2xl shadow-green-500/40">
+                  <div className="relative flex h-full w-full items-center justify-center rounded-[24px] bg-green-500 text-4xl font-black text-white">
                     ✓
                   </div>
                 </div>
@@ -117,7 +117,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="pt-4">
                   <Button
                     onClick={onBackToSite}
-                    className="h-16 w-full rounded-[16px] bg-[var(--chan-ink)] font-brand text-xs font-bold uppercase tracking-[0.2em] text-white shadow-xl transition-all duration-300 hover:opacity-90"
+                    className="h-16 w-full rounded-[16px] bg-[var(--chan-ink)] font-brand text-xs font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:opacity-90"
                   >
                     {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
                   </Button>
@@ -133,7 +133,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <p className="text-sm text-[var(--chan-muted)]">{language === 'pl' ? 'Bezpieczna transakcja obsługiwana przez Stripe.' : 'Secure transaction handled by Stripe.'}</p>
                 </div>
 
-                <div className="relative mb-6 overflow-hidden rounded-[24px] border border-[var(--chan-line)] bg-[var(--chan-card)] p-8 shadow-[0_20px_50px_rgba(23,23,23,0.10)]">
+                <div className="relative mb-6 overflow-hidden rounded-[24px] border border-[var(--chan-line)] bg-[var(--chan-card)] p-8">
                   <div className="pointer-events-none absolute right-0 top-0 p-4 opacity-[0.06]">
                     <Shield size={120} />
                   </div>
