@@ -194,7 +194,7 @@ const Navbar = () => {
               {isLoaded && !isSignedIn && (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-[12px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
@@ -202,7 +202,7 @@ const Navbar = () => {
                     <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
                     <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
                   </svg>
-                  <span className="hidden sm:inline text-[14px] font-semibold text-white">{t.signIn}</span>
+                  <span className="hidden sm:inline leading-none text-[14px] font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
 
