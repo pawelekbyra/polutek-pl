@@ -56,7 +56,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           setShowIosInstructions(false);
         }}
         className={cn(
-          "flex h-10 items-center gap-1.5 rounded-[12px] px-3 shrink-0 font-sans text-[13px] font-bold text-[var(--chan-ink)] transition-transform hover:-translate-y-px active:scale-95",
+          "flex h-10 items-center gap-1.5 rounded-[12px] px-3 shrink-0 font-sans text-base font-bold text-[var(--chan-ink)] transition-transform hover:-translate-y-px active:scale-95",
           !installed && !canOfferInstall && "opacity-50",
         )}
         aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}

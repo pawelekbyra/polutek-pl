@@ -202,7 +202,7 @@ const Navbar = () => {
                     <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
                     <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
                   </svg>
-                  <span className="hidden sm:inline leading-none text-[14px] font-semibold text-white">{t.signIn}</span>
+                  <span className="hidden sm:inline leading-none text-base font-semibold text-white">{t.signIn}</span>
                 </button>
               )}
 

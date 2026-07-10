@@ -324,7 +324,7 @@ export function CommentItem({
                 stroke={isLiked ? "#2563eb" : "currentColor"}
               />
             </LikePop>
-            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[13px]" />
+            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-base" />
           </button>
 
           <button
