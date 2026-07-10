@@ -91,9 +91,10 @@ function ChannelHomeContent({
   userProfile,
 }: ChannelHomeProps) {
   const { t, language } = useLanguage();
+  const [clientSelectedVideoId, setClientSelectedVideoId] = useState(currentVideoId);
   const selectedVideo =
     (allVideos || []).find(
-      (v) => v.id === currentVideoId || v.slug === currentVideoId,
+      (v) => v.id === clientSelectedVideoId || v.slug === clientSelectedVideoId,
     ) || mainVideo;
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
@@ -149,6 +150,20 @@ function ChannelHomeContent({
     void preloader?.warmVideo(vidId, { includeComments: false, includePoster: true, priority: "intent" });
   };
 
+  const handleVideoSelect = (clickedId?: string) => {
+    if (clickedId && clickedId !== selectedVideo.id) {
+      void preloader?.warmVideo(clickedId, { includeComments: false, includePoster: true, priority: "intent" });
+      setClientSelectedVideoId(clickedId);
+
+      // Update URL without full page reload using history.replaceState
+      if (typeof window !== "undefined") {
+        const newUrl = clickedId ? `/?v=${encodeURIComponent(clickedId)}` : "/";
+        window.history.replaceState({ videoId: clickedId }, "", newUrl);
+      }
+    }
+    setActiveTab("comments");
+  };
+
   const commonSidebarProps = {
     sortedVideos,
     selectedVideoId: selectedVideo.id,
@@ -158,12 +173,7 @@ function ChannelHomeContent({
     language,
     mounted,
     onVideoMouseEnter: prefetchVideoIntent,
-    onVideoSelect: (clickedId?: string) => {
-      if (clickedId && clickedId !== selectedVideo.id) {
-        void preloader?.warmVideo(clickedId, { includeComments: false, includePoster: true, priority: "intent" });
-      }
-      setActiveTab("comments");
-    },
+    onVideoSelect: handleVideoSelect,
   };
 
   const comments = (

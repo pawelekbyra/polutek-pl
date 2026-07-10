@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
@@ -29,6 +30,7 @@ function errorMessage(error: ClerkOpError, isPl: boolean): string {
 }
 
 export default function AuthModal({ open, initialView, onOpenChange }: AuthModalProps) {
+  const router = useRouter();
   const { isPl } = useLanguageFlags();
   // Clerk's signals API: these hooks return the future resources directly.
   const { signIn } = useSignIn();
@@ -74,6 +76,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     const { error: finalizeError } = await signIn.finalize();
     if (finalizeError) return showError(finalizeError as ClerkOpError);
     onOpenChange(false);
+    router.refresh();
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -88,6 +91,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     setInfo(isPl ? "Wysłaliśmy kod na Twój e-mail." : "We sent a code to your email.");
     setView("verify-email");
     setLoading(false);
+    router.refresh();
   }
 
   async function handleVerifyEmail(e: React.FormEvent) {
@@ -100,6 +104,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     const { error: finalizeError } = await signUp.finalize();
     if (finalizeError) return showError(finalizeError as ClerkOpError);
     onOpenChange(false);
+    router.refresh();
   }
 
   async function handleForgot(e: React.FormEvent) {
@@ -129,6 +134,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     const { error: finalizeError } = await signIn.finalize();
     if (finalizeError) return showError(finalizeError as ClerkOpError);
     onOpenChange(false);
+    router.refresh();
   }
 
   async function handleOAuth(strategy: OAuthStrategy) {

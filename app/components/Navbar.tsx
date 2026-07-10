@@ -5,14 +5,14 @@ import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { NajsIcon } from "./najs/primitives";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { getMockNotifications } from "../data/mock-notifications";
-import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
+import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -25,7 +25,6 @@ const Navbar = () => {
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
@@ -63,7 +62,6 @@ const Navbar = () => {
   const mockNotifications = useMemo(() => getMockNotifications(), []);
   const switchLanguage = (locale: Locale) => {
     setLanguage(locale);
-    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
   };
 
   return (
