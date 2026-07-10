@@ -60,7 +60,14 @@ const isPublicRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
+// Static root files served from /public that must never get a /pl or /en
+// prefix. The matcher's static-extension exclusion skips most file types but
+// not .json, so /manifest.json falls through to this rewrite check.
+const LOCALE_EXEMPT_STATIC_PATHS = new Set(['/manifest.json']);
+
 function shouldRewriteForPolish(pathname: string): boolean {
+  if (LOCALE_EXEMPT_STATIC_PATHS.has(pathname)) return false;
+
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
   const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);
   if (startsWithLocaleOrSystemRoute) return false;
