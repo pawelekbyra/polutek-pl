@@ -11,7 +11,7 @@ Originals are stored as versioned `VideoOriginal` records. Playback providers ar
 3. The selected strategy creates only the requested targets and provider import jobs. Mux-only does not create Cloudflare work, Cloudflare-only does not create Mux work, and Manual creates no provider jobs.
 4. Provider jobs generate fresh signed R2 import URLs per attempt. Signed source URLs are never returned in admin DTOs and are redacted from persisted errors.
 5. Webhook events update asset/job/target state, then call the provider-neutral orchestrator. Webhooks never choose the active source directly.
-6. The reconciler can repair missed webhooks by polling provider status through the adapter registry and invoking the orchestrator.
+6. The reconciler can repair missed webhooks by polling provider status through the adapter registry and invoking the orchestrator. It also restarts pending jobs that never received a provider asset/upload ID (an import interrupted before the provider accepted it), and marks them FAILED with an explicit reason once max attempts are exhausted.
 7. The orchestrator owns policy: FIRST_READY, PREFER_SELECTED, LOWEST_COST, MANUAL, and current BEST_HEALTH-as-FIRST_READY behavior.
 8. Autopublish policies are evaluated after route/target readiness and use the existing admin publish use case.
 9. Public playback checks access before resolving provider sources, prefers `Video.activePlaybackRouteId`, and only falls back to legacy primary assets during migration.
@@ -33,7 +33,7 @@ The default media tab uses product-level labels such as `Strategia źródeł`, `
 
 - `POST /api/admin/videos/[id]/distribution-plan` creates/replaces the active plan.
 - `POST /api/admin/videos/[id]/provider-jobs/[jobId]/retry` retries a provider job and returns media state.
-- `POST /api/admin/videos/[id]/reconcile` re-evaluates route policy for one video.
+- `POST /api/admin/videos/[id]/reconcile` first syncs that video's stale provider jobs against real provider state, then re-evaluates route policy. The admin media panel's "Odśwież" button and its automatic pending-pipeline poll call this endpoint.
 - `POST /api/admin/video-provider-jobs/reconcile` and `POST /api/cron/video-provider-jobs/reconcile` sync stale provider jobs.
 - `POST /api/admin/videos/distribution-backfill` backfills legacy videos. It defaults to dry-run and does not enqueue provider jobs.
 

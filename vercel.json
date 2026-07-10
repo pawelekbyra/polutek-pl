@@ -1,4 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
-  "crons": []
+  "crons": [
+    { "path": "/api/cron/video-provider-jobs/reconcile", "schedule": "0 4 * * *" }
+  ]
 }

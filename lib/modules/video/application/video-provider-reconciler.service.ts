@@ -12,11 +12,11 @@ function toJobState(state: string): VideoProviderJobStatus { return state === "R
 export class VideoProviderReconcilerService {
   constructor(private readonly registry: PlaybackProviderRegistry = createDefaultPlaybackProviderRegistry(), private readonly orchestrator = new VideoDistributionOrchestratorService(), private readonly jobService = new VideoProviderJobService(registry)) {}
 
-  async reconcilePendingProviderJobs(input: { limit?: number; olderThanSeconds?: number; provider?: StorageProvider; dryRun?: boolean }, ctx: AppContext): Promise<ReconcileProviderJobsResult> {
+  async reconcilePendingProviderJobs(input: { limit?: number; olderThanSeconds?: number; provider?: StorageProvider; videoId?: string; dryRun?: boolean }, ctx: AppContext): Promise<ReconcileProviderJobsResult> {
     const result: ReconcileProviderJobsResult = { scannedJobs: 0, syncedJobs: 0, readyJobs: 0, failedJobs: 0, retriedJobs: 0, skippedJobs: 0, errors: [] };
     const olderThan = new Date(Date.now() - (input.olderThanSeconds ?? 60) * 1000);
     const jobs = await ctx.prisma.videoProviderJob.findMany({
-      where: { provider: input.provider, OR: [{ status: "WAITING_PROVIDER" }, { status: "RUNNING" }, { status: "QUEUED", updatedAt: { lte: olderThan } }, { status: "FAILED", nextAttemptAt: { lte: new Date() } }] },
+      where: { provider: input.provider, videoId: input.videoId, OR: [{ status: "WAITING_PROVIDER" }, { status: "RUNNING" }, { status: "QUEUED", updatedAt: { lte: olderThan } }, { status: "FAILED", nextAttemptAt: { lte: new Date() } }] },
       take: input.limit ?? 50,
       orderBy: { updatedAt: "asc" },
       include: { asset: true, target: true, plan: true },
@@ -27,6 +27,26 @@ export class VideoProviderReconcilerService {
         if (job.status === "FAILED") {
           if (job.attemptCount < job.maxAttempts && job.plan?.isActive && !input.dryRun) { await this.jobService.retryJob({ jobId: job.id }, ctx); result.retriedJobs++; }
           else result.skippedJobs++;
+          continue;
+        }
+        // A pending job without any provider-side identifier never reached the provider
+        // (e.g. the upload request timed out mid-start). Polling getAssetStatus can never
+        // resolve it, so restart the import instead — or surface a terminal error once
+        // attempts are exhausted, so the admin UI stops showing an endless "Tworzę źródło".
+        if (!job.providerAssetId && !job.providerUploadId) {
+          if (input.dryRun || job.updatedAt > olderThan || !job.plan?.isActive) { result.skippedJobs++; continue; }
+          if (job.attemptCount >= job.maxAttempts) {
+            const message = `Import do ${job.provider} nie dotarł do dostawcy po ${job.attemptCount} próbach — żądanie było przerywane zanim dostawca je przyjął. Sprawdź konfigurację dostawcy i spróbuj ponownie.`;
+            await ctx.prisma.videoProviderJob.update({ where: { id: job.id }, data: { status: VideoProviderJobStatus.FAILED, lastError: message, completedAt: new Date(), lastReconciledAt: new Date(), metadata: Prisma.DbNull } });
+            if (job.assetId) await ctx.prisma.videoAsset.update({ where: { id: job.assetId }, data: { processingState: VideoAssetProcessingState.FAILED, failureReason: message, processingEndedAt: new Date() } });
+            if (job.targetId) await ctx.prisma.videoDistributionTarget.update({ where: { id: job.targetId }, data: { status: "FAILED", lastError: message, lastStatusAt: new Date() } });
+            result.failedJobs++;
+            await this.orchestrator.reconcileVideoDistribution({ videoId: job.videoId, planId: job.planId ?? undefined, reason: "CRON_RECONCILE" }, ctx);
+            continue;
+          }
+          await ctx.prisma.videoProviderJob.update({ where: { id: job.id }, data: { status: VideoProviderJobStatus.QUEUED, lastReconciledAt: new Date() } });
+          await this.jobService.startQueuedJob({ jobId: job.id }, ctx);
+          result.retriedJobs++;
           continue;
         }
         const adapter = this.registry.get(job.provider);

@@ -264,6 +264,9 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 | Route | Schedule (Pro) | Purpose |
 |---|---|---|
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
+| `/api/cron/video-provider-jobs/reconcile` | `0 4 * * *` (registered; daily works on Hobby) | Polls provider status for stuck import jobs (missed webhooks), restarts imports that never reached the provider, fails them with a clear reason after max attempts |
+
+The daily cron is only the safety net for video provider jobs. The primary recovery path is on-demand: `POST /api/admin/videos/[id]/reconcile` now runs the provider-job reconciler scoped to that video before route policy, and the admin media panel calls it from the "Odśwież" button plus an automatic 15s poll while the pipeline is in `CREATING_SOURCES`/`PARTIALLY_READY`. Do not revert the media panel to a passive DB-state read — without provider polling, a missed webhook leaves targets in "Tworzę źródło" forever.
 
 ---
 

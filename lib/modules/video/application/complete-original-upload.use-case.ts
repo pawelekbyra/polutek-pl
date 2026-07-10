@@ -83,7 +83,14 @@ export async function completeOriginalUpload(
   const jobService = new VideoProviderJobService();
   const jobs = await jobService.enqueueImportJobsForPlan({ planId: plan.id }, ctx);
   for (const job of jobs) {
-    await jobService.startQueuedJob({ jobId: job.id }, ctx);
+    // Isolate per-provider start failures: one provider crashing/timing out must not
+    // leave the remaining jobs stuck in QUEUED. Anything skipped here is picked up by
+    // the provider-job reconciler (admin refresh / cron).
+    try {
+      await jobService.startQueuedJob({ jobId: job.id }, ctx);
+    } catch {
+      // startQueuedJob persists its own failure state; keep starting the other jobs.
+    }
   }
 
   await recordAuditEvent(ctx, {
