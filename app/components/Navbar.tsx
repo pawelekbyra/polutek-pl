@@ -210,7 +210,10 @@ const Navbar = () => {
                   <span className="hidden sm:inline leading-none text-sm font-semibold text-white">{t.signIn}</span>
                 </button>
               ) : (
-                <div className="h-10 w-[100px] rounded-[12px] bg-black animate-pulse shrink-0" />
+                <div className="flex gap-2">
+                  <div className="h-10 w-10 rounded-full bg-[var(--chan-line)] animate-pulse shrink-0 motion-reduce:animate-none" />
+                  <div className="h-10 w-10 rounded-full bg-[var(--chan-line)] animate-pulse shrink-0 motion-reduce:animate-none" />
+                </div>
               )}
 
               {isLoaded && isSignedIn && (
