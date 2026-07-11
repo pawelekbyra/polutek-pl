@@ -227,7 +227,7 @@
   line-height: 1.65;
 }
 
-/* Playlist cards keep their own borders, without an outer container frame. */
+/* Playlist sections are intentionally frameless. */
 :global(main aside:has(a[href*="?v="]) > div) {
   gap: 8px !important;
 }
@@ -238,42 +238,34 @@
 }
 
 :global(main aside:has(a[href*="?v="]) a[href*="?v="]) {
-  border: 1px solid color-mix(in srgb, var(--chan-line) 82%, var(--chan-ink) 18%);
-  background: color-mix(in srgb, var(--chan-card) 94%, white) !important;
-  box-shadow:
-    0 1px 2px rgba(23, 23, 23, 0.035),
-    0 5px 13px rgba(23, 23, 23, 0.035);
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   transition:
     transform 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease;
+    background 160ms ease;
 }
 
 :global(main aside:has(a[href*="?v="]) a[href*="?v="]:hover) {
   transform: translateX(2px);
-  border-color: color-mix(in srgb, var(--chan-blue) 24%, var(--chan-line));
-  background: color-mix(in srgb, var(--chan-blue-soft) 38%, white) !important;
-  box-shadow:
-    0 2px 4px rgba(23, 23, 23, 0.04),
-    0 8px 18px rgba(23, 23, 23, 0.055);
+  border-color: transparent !important;
+  background: color-mix(in srgb, var(--chan-blue-soft) 30%, transparent) !important;
+  box-shadow: none !important;
 }
 
 :global(main aside:has(a[href*="?v="]) a[href*="?v="] > div:first-of-type) {
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 11px rgba(23, 23, 23, 0.09);
+  border: 0;
+  box-shadow: none;
 }
 
 :global(main a[href*="?v="][aria-current="page"]) {
-  border-color: color-mix(in srgb, var(--chan-blue) 55%, var(--chan-line)) !important;
+  border: 0 !important;
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--chan-blue-soft) 88%, white) 0%,
     color-mix(in srgb, var(--chan-blue-soft) 68%, #dbeafe) 100%
   ) !important;
-  box-shadow:
-    0 8px 22px color-mix(in srgb, var(--chan-blue) 12%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--chan-blue) 12%, transparent) !important;
+  box-shadow: none !important;
 }
 
 :global(main a[href*="?v="][aria-current="page"] h4) {
