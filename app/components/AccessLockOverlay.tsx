@@ -15,11 +15,10 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const LOCKED_OVERLAY_DARK = "rgba(23,23,23,0.72)";
+const LOGIN_OVERLAY_DARK = "rgba(23,23,23,0.72)";
 const LOGIN_OVERLAY_ACCENT = "rgba(37,99,235,0.92)";
-// #856A03 keeps the hue and saturation of the brand yellow (#FACC15),
-// while matching the relative luminance of the blue accent (#2563EB).
-const PATRON_OVERLAY_ACCENT = "rgba(133,106,3,0.92)";
+const PATRON_OVERLAY_START = "rgba(250,204,21,0.98)";
+const PATRON_OVERLAY_END = "rgba(234,179,8,0.96)";
 
 function LockSvg({ size = 24 }: { size?: number }) {
   return (
@@ -60,11 +59,15 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[6px] [container-type:inline-size]"
           style={{
-            background: `linear-gradient(135deg, ${isPatron ? PATRON_OVERLAY_ACCENT : LOGIN_OVERLAY_ACCENT}, ${LOCKED_OVERLAY_DARK})`,
+            background: isPatron
+              ? `linear-gradient(135deg, ${PATRON_OVERLAY_START}, ${PATRON_OVERLAY_END})`
+              : `linear-gradient(135deg, ${LOGIN_OVERLAY_ACCENT}, ${LOGIN_OVERLAY_DARK})`,
           }}
         >
-          <span>{isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}</span>
-          <span className="text-[clamp(9px,8cqi,11px)] font-extrabold uppercase tracking-[0.05em] text-white leading-tight px-1 text-center font-sans">
+          <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+            {isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}
+          </span>
+          <span className="px-1 text-center font-sans text-[clamp(9px,8cqi,11px)] font-extrabold uppercase leading-tight tracking-[0.05em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
             {label}
           </span>
         </div>
