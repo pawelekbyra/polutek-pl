@@ -323,7 +323,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-all hover:bg-[#1e4fc1] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">
