@@ -237,7 +237,7 @@ function ChannelHomeContent({
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col">
-            <aside className="lg:flex lg:h-[clamp(380px,25vw,500px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
+            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto lg:pr-2">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <div className="lg:mt-3 lg:shrink-0">
