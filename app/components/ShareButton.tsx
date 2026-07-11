@@ -66,7 +66,7 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "relative flex items-center justify-center gap-1.5 h-10 px-3 rounded-[12px] active:scale-95 text-[var(--chan-ink)] font-bold text-sm font-sans transition-transform hover:-translate-y-px bg-[var(--chan-surface)]",
+          "relative flex items-center justify-center gap-1.5 h-10 px-3 rounded-[12px] active:scale-95 text-[var(--chan-ink)] font-bold text-sm font-sans transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] bg-[var(--chan-surface)]",
           fill && "w-full",
           className
         )}
