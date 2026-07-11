@@ -85,33 +85,14 @@
   position: relative;
   min-height: 42px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--chan-blue) 78%, black);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--chan-blue) 80%, white) 0%,
-    var(--chan-blue) 52%,
-    color-mix(in srgb, var(--chan-blue) 82%, black) 100%
-  ) !important;
-  color: white !important;
+  border: 1px solid var(--watch-control-border);
+  background: var(--watch-control-bg) !important;
+  color: var(--chan-ink) !important;
   box-shadow:
-    0 8px 18px color-mix(in srgb, var(--chan-blue) 24%, transparent),
-    0 2px 5px rgba(23, 23, 23, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 1px 2px rgba(23, 23, 23, 0.04),
+    0 5px 14px rgba(23, 23, 23, 0.045);
 }
 
-.subscribeAction::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  pointer-events: none;
-  background: linear-gradient(
-    115deg,
-    rgba(255, 255, 255, 0.24) 0%,
-    rgba(255, 255, 255, 0.08) 38%,
-    transparent 39%,
-    transparent 100%
-  );
-}
 
 .secondaryAction,
 .installAction button,
@@ -144,11 +125,12 @@
 }
 
 .subscribeAction:hover {
+  border-color: color-mix(in srgb, var(--chan-blue) 28%, var(--watch-control-border));
+  background: var(--watch-control-hover) !important;
   box-shadow:
-    0 11px 24px color-mix(in srgb, var(--chan-blue) 30%, transparent),
-    0 3px 7px rgba(23, 23, 23, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
-  filter: saturate(1.04) brightness(1.025);
+    0 2px 4px rgba(23, 23, 23, 0.05),
+    0 9px 20px rgba(23, 23, 23, 0.07);
+  filter: none;
 }
 
 .actionButton:focus-visible,
