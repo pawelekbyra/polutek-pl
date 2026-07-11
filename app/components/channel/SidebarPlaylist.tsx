@@ -212,7 +212,7 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[104px] lg:items-center lg:gap-3.5 lg:p-2.5",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
               ? "bg-[var(--chan-surface)]"
               : isPublicSection
@@ -226,7 +226,7 @@ export function SidebarPlaylist({
               className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[#2563EB]"
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[150px] lg:h-[84px] xl:w-[158px] xl:h-[89px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -275,8 +275,8 @@ export function SidebarPlaylist({
                   );
                 })()}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-center pt-[1px] gap-1 z-10 relative">
-            <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.3] group-hover:opacity-80 transition-opacity lg:text-[13.5px]">
+          <div className="flex-1 min-w-0 flex flex-col justify-center pt-[1px] gap-0.5 z-10 relative">
+            <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.2] group-hover:opacity-80 transition-opacity lg:text-[12px]">
               {displayTitle}
             </h4>
             <div className="text-[12px] text-[var(--chan-muted)] flex flex-col mt-0">
@@ -401,7 +401,7 @@ export function SidebarPlaylist({
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
 
   return (
-    <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5">
+    <div className="flex flex-col gap-1 lg:h-full lg:gap-0.5">
       {publicSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(publicSection.title)}
