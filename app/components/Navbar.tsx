@@ -83,12 +83,12 @@ const Navbar = () => {
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
               onClick={() => setIsMobileSearchOpen(false)}
-              className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] hover:bg-[var(--chan-surface)]"
+              className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
             >
               <NajsIcon name="close" className="h-[18px] w-[18px]" stroke="currentColor" />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] transition-colors">
+              <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
                 <input
                   type="text"
                   autoFocus
@@ -126,7 +126,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] transition-colors">
+                <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -151,7 +151,7 @@ const Navbar = () => {
               <div className="flex items-center sm:hidden">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
+                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
                   <NajsIcon name="search" className="h-[18px] w-[18px]" stroke="currentColor" />
                 </button>
@@ -161,7 +161,7 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] p-[3px] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] p-[3px] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(20,16,10,0.03),0_4px_12px_rgba(37,99,235,0.08)]"
               >
                 <span
                   aria-hidden="true"
@@ -199,7 +199,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] items-center justify-center gap-1.5 rounded-[11px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white transition-all hover:-translate-y-px hover:bg-[#1a1a1a] active:scale-95"
+                  className="flex h-[38px] items-center justify-center gap-1.5 rounded-[11px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white border border-[#333] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[#1a1a1a] hover:border-[#555] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
