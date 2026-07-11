@@ -81,18 +81,18 @@ export default function NotificationsMenu({ notifications, language, messagesLab
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
+        className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-all hover:-translate-y-px hover:bg-[var(--chan-surface)] active:scale-95"
         aria-label={messagesLabel}
         title={messagesLabel}
       >
         <span
           className={
             unreadCount > 0
-              ? "flex h-9 w-9 items-center justify-center rounded-full bg-[var(--chan-surface)]"
-              : "flex h-9 w-9 items-center justify-center"
+              ? "flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--chan-surface)]"
+              : "flex h-[34px] w-[34px] items-center justify-center"
           }
         >
-          <BellSimple className="h-5 w-5 shrink-0" />
+          <BellSimple className="h-[18px] w-[18px] shrink-0" />
         </span>
         {unreadCount > 0 && (
           <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">
@@ -104,7 +104,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
       {open && (
         <div
           role="menu"
-          className="fixed inset-x-3 top-[60px] z-[1100] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:absolute sm:inset-x-auto sm:top-[calc(100%+8px)] sm:right-0 sm:w-[340px]"
+          className="fixed inset-x-3 top-[56px] z-[1100] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-white font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:absolute sm:inset-x-auto sm:top-[calc(100%+8px)] sm:right-0 sm:w-[340px]"
         >
           <div className="flex items-center justify-between border-b border-[var(--chan-line)] px-4 py-3">
             <p className="text-[14px] font-bold">{isPl ? "Powiadomienia" : "Notifications"}</p>
