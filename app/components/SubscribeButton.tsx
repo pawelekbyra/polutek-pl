@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { Frame, INK, BLUE } from "./najs/primitives";
+import { Bell } from "lucide-react";
 
 export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
 
@@ -23,51 +24,6 @@ interface SubscribeButtonProps {
   colorScheme?: SubscribeButtonColorScheme;
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
-
-// Hand-drawn bell in the same "najs" sketch style as the like/share/download icons
-// (app/components/najs/primitives.tsx). Uses the shared bell silhouette so the subscribe
-// control matches the rest of the UI; fills the body when the viewer is subscribed.
-const SubscribeBellIcon = ({
-  size = 16,
-  filled = false,
-  className,
-}: {
-  size?: number;
-  filled?: boolean;
-  className?: string;
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    aria-hidden="true"
-  >
-    {/* The bell glyph's visible ink sits lower than the 24x24 viewBox's geometric
-        center, so it reads as vertically offset next to the button label — nudge
-        it up by 1 unit to optically re-center it on the same axis as the text. */}
-    <g transform="translate(0,-1)">
-      <path
-        d="M7 10 c0 -4 2 -6 5 -6 s5 2 5 6 v4 l2 3 H5 l2 -3 Z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 20 c1.3 1 2.7 1 4 0"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </g>
-  </svg>
-);
 
 export default function SubscribeButton({
   creatorId,
@@ -196,7 +152,7 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <SubscribeBellIcon size={18} className="relative shrink-0 z-10" filled={isSubscribed} />
+        <Bell size={20} className="relative shrink-0 z-10" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} />
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (
