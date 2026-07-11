@@ -212,18 +212,18 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-[var(--chan-surface)]"
+              ? "bg-gradient-to-br from-[#2563EB]/12 to-[#2563EB]/8 shadow-[inset_0_1px_2px_rgba(37,99,235,0.1)]"
               : isPublicSection
-                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] hover:brightness-[1.03]"
-                : "hover:bg-[var(--chan-surface)]",
+                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
+                : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
           )}
         >
           {isCurrent && (
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1/2 h-10 w-[3px] -translate-y-1/2 rounded-r-full bg-[#2563EB]"
+              className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-gradient-to-b from-[#2563EB] to-[#1e40af] shadow-[0_0_12px_rgba(37,99,235,0.4)] transition-all duration-200"
             />
           )}
           <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
