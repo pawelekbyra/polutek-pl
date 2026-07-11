@@ -4,6 +4,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Google Fonts for font variants testing */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Lora:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&family=Poppins:wght@400;600;700&family=Raleway:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap');
+
 @config '../tailwind.config.ts';
 
 @layer components {
@@ -187,6 +190,49 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #bfbab0;
   }
+}
+
+/* Font variant theme overrides for testing different font pairings */
+[data-font-variant="1"] {
+  /* Elegant Serif: Playfair Display + Lora */
+  --font-space-grotesk: "Playfair Display", Georgia, serif;
+  --font-jakarta: "Lora", Georgia, serif;
+  --font-outfit: "Playfair Display", Georgia, serif;
+}
+
+[data-font-variant="2"] {
+  /* Tech Forward: IBM Plex Mono + IBM Plex Sans */
+  --font-space-grotesk: "IBM Plex Mono", monospace;
+  --font-jakarta: "IBM Plex Sans", sans-serif;
+  --font-outfit: "IBM Plex Mono", monospace;
+}
+
+[data-font-variant="3"] {
+  /* Friendly Casual: Poppins + Raleway */
+  --font-space-grotesk: "Poppins", sans-serif;
+  --font-jakarta: "Raleway", sans-serif;
+  --font-outfit: "Poppins", sans-serif;
+}
+
+[data-font-variant="4"] {
+  /* Professional Business: Montserrat + Open Sans */
+  --font-space-grotesk: "Montserrat", sans-serif;
+  --font-jakarta: "Open Sans", sans-serif;
+  --font-outfit: "Montserrat", sans-serif;
+}
+
+[data-font-variant="5"] {
+  /* Artistic Premium: Cormorant Garamond + Crimson Text */
+  --font-space-grotesk: "Cormorant Garamond", Georgia, serif;
+  --font-jakarta: "Crimson Text", Georgia, serif;
+  --font-outfit: "Cormorant Garamond", Georgia, serif;
+}
+
+[data-font-variant="6"] {
+  /* Modern & Clean: Space Grotesk + Plus Jakarta Sans (current/default) */
+  --font-space-grotesk: "Space Grotesk", sans-serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-outfit: "Space Grotesk", sans-serif;
 }
 
 @layer utilities {

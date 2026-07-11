@@ -262,7 +262,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Nie lubię"
                     aria-label="Nie lubię"
                   >
-                     <NajsIcon name="dislike" className="h-6 w-6" stroke={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
+                     <NajsIcon name="dislike" className="h-5 w-5" stroke={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
                   </button>
                </div>
                <ShareButton
