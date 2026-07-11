@@ -57,7 +57,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           setShowIosInstructions(false);
         }}
         className={cn(
-          "flex h-10 items-center gap-1.5 rounded-[12px] px-3 shrink-0 font-sans text-sm font-bold text-[var(--chan-ink)] bg-[var(--chan-surface)] transition-transform hover:-translate-y-px hover:brightness-110 active:scale-95",
+          "flex h-10 w-10 items-center justify-center rounded-[12px] shrink-0 font-sans text-sm font-bold text-[var(--chan-ink)] bg-[var(--chan-surface)] transition-transform hover:-translate-y-px hover:brightness-110 active:scale-95",
           !installed && !canOfferInstall && "opacity-50",
         )}
         aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}
@@ -65,7 +65,6 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
         aria-expanded={isOpen}
       >
         <NajsIcon name="download" className="h-5 w-5" stroke="currentColor" />
-        <span className="hidden sm:inline leading-none">{isPl ? "Pobierz appkę" : "Get the app"}</span>
       </button>
 
       {isOpen && (
