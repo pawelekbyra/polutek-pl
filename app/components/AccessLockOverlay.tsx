@@ -78,7 +78,14 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   // Default — full player overlay
   return (
     <PlayerStateFrame className="rounded-[18px]">
-      <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden rounded-[18px] bg-[var(--chan-card)]/97 [container-type:inline-size]">
+      <div
+        className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden rounded-[18px] [container-type:inline-size]"
+        style={{
+          background: isPatron
+            ? `linear-gradient(135deg, ${PATRON_OVERLAY_START}, ${PATRON_OVERLAY_END})`
+            : `linear-gradient(135deg, ${LOGIN_OVERLAY_ACCENT}, ${LOGIN_OVERLAY_DARK})`,
+        }}
+      >
         <div className="relative z-10 flex flex-col items-center text-center gap-[clamp(12px,2.5cqi,22px)] px-4 w-full max-w-[380px]">
           {/* Icon */}
           <div className="flex items-center justify-center w-[clamp(56px,11cqi,80px)] h-[clamp(56px,11cqi,80px)] rounded-full bg-[var(--chan-surface)]">
