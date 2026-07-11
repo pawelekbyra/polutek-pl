@@ -180,7 +180,7 @@ function ChannelHomeContent({
 
   return (
     <main className="min-h-screen bg-[var(--chan-nav)]">
-      <div className="mx-auto max-w-[1080px] px-4 md:px-6 lg:px-6 py-6">
+      <div className="mx-auto max-w-[1080px] px-4 md:px-6 lg:px-6 py-3">
         <div className="grid grid-cols-12 gap-4 lg:items-start">
           <div className="col-span-12 lg:col-span-8 flex flex-col">
             <div
@@ -195,11 +195,11 @@ function ChannelHomeContent({
             </div>
 
             {!mounted ? (
-              <div className="mt-4">
+              <div className="mt-2">
                 <CommentsShellSkeleton />
               </div>
             ) : isDesktop ? (
-              <div className="hidden lg:block mt-4">
+              <div className="hidden lg:block mt-2">
                 {comments}
               </div>
             ) : (
