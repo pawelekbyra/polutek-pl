@@ -113,7 +113,7 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="flex h-[38px] shrink-0 items-center gap-1.5 transition-all hover:opacity-85 active:scale-95 md:gap-2"
+                className="flex h-[38px] shrink-0 items-center gap-0.5 transition-all hover:opacity-85 active:scale-95 md:gap-1"
                 aria-label="POLUTEK.PL"
               >
                 <svg

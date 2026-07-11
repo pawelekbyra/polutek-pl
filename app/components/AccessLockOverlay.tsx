@@ -15,6 +15,12 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
+const LOCKED_OVERLAY_DARK = "rgba(23,23,23,0.72)";
+const LOGIN_OVERLAY_ACCENT = "rgba(37,99,235,0.92)";
+// #856A03 keeps the hue and saturation of the brand yellow (#FACC15),
+// while matching the relative luminance of the blue accent (#2563EB).
+const PATRON_OVERLAY_ACCENT = "rgba(133,106,3,0.92)";
+
 function LockSvg({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#ffffff"
@@ -54,9 +60,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[6px] [container-type:inline-size]"
           style={{
-            background: isPatron
-              ? "linear-gradient(135deg, rgba(180,83,9,0.9), rgba(23,23,23,0.72))"
-              : "linear-gradient(135deg, rgba(37,99,235,0.92), rgba(23,23,23,0.72))",
+            background: `linear-gradient(135deg, ${isPatron ? PATRON_OVERLAY_ACCENT : LOGIN_OVERLAY_ACCENT}, ${LOCKED_OVERLAY_DARK})`,
           }}
         >
           <span>{isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}</span>
