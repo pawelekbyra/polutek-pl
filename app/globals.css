@@ -5,7 +5,7 @@
 @import 'tw-animate-css';
 
 /* Google Fonts for font variants testing */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Lora:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&family=Poppins:wght@400;600;700&family=Raleway:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Lora:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&family=Poppins:wght@400;600;700&family=Raleway:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:wght@400;600&family=Abril+Fatface:wght@400&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Nunito:wght@400;600;700&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=EB+Garamond:wght@400;700&family=Source+Sans+Pro:wght@400;600;700&family=Syne:wght@400;600;700&family=Commissioner:wght@400;600;700&family=Fredoka:wght@400;600;700&family=Ubuntu:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Libre+Franklin:wght@400;600;700&family=Courier+Prime:wght@400;700&family=Bitter:wght@400;700&family=Merriweather+Sans:wght@400;600;700&display=swap');
 
 @config '../tailwind.config.ts';
 
@@ -233,6 +233,76 @@
   --font-space-grotesk: "Space Grotesk", sans-serif;
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
   --font-outfit: "Space Grotesk", sans-serif;
+}
+
+[data-font-variant="7"] {
+  /* Classic Luxury: Abril Fatface + Merriweather */
+  --font-space-grotesk: "Abril Fatface", Georgia, serif;
+  --font-jakarta: "Merriweather", Georgia, serif;
+  --font-outfit: "Abril Fatface", Georgia, serif;
+}
+
+[data-font-variant="8"] {
+  /* Developer Friendly: JetBrains Mono + Inter */
+  --font-space-grotesk: "JetBrains Mono", monospace;
+  --font-jakarta: "Inter", sans-serif;
+  --font-outfit: "JetBrains Mono", monospace;
+}
+
+[data-font-variant="9"] {
+  /* Friendly Modern: Quicksand + Nunito */
+  --font-space-grotesk: "Quicksand", sans-serif;
+  --font-jakarta: "Nunito", sans-serif;
+  --font-outfit: "Quicksand", sans-serif;
+}
+
+[data-font-variant="10"] {
+  /* Bold Statement: Barlow + Barlow Condensed */
+  --font-space-grotesk: "Barlow", sans-serif;
+  --font-jakarta: "Barlow Condensed", sans-serif;
+  --font-outfit: "Barlow", sans-serif;
+}
+
+[data-font-variant="11"] {
+  /* Academic Elegance: EB Garamond + Source Sans Pro */
+  --font-space-grotesk: "EB Garamond", Georgia, serif;
+  --font-jakarta: "Source Sans Pro", sans-serif;
+  --font-outfit: "EB Garamond", Georgia, serif;
+}
+
+[data-font-variant="12"] {
+  /* Contemporary Creative: Syne + Commissioner */
+  --font-space-grotesk: "Syne", sans-serif;
+  --font-jakarta: "Commissioner", sans-serif;
+  --font-outfit: "Syne", sans-serif;
+}
+
+[data-font-variant="13"] {
+  /* Playful & Bold: Fredoka + Ubuntu */
+  --font-space-grotesk: "Fredoka", sans-serif;
+  --font-jakarta: "Ubuntu", sans-serif;
+  --font-outfit: "Fredoka", sans-serif;
+}
+
+[data-font-variant="14"] {
+  /* Editorial: Libre Baskerville + Libre Franklin */
+  --font-space-grotesk: "Libre Baskerville", Georgia, serif;
+  --font-jakarta: "Libre Franklin", sans-serif;
+  --font-outfit: "Libre Baskerville", Georgia, serif;
+}
+
+[data-font-variant="15"] {
+  /* Monospace Brutalist: Courier Prime */
+  --font-space-grotesk: "Courier Prime", monospace;
+  --font-jakarta: "Courier Prime", monospace;
+  --font-outfit: "Courier Prime", monospace;
+}
+
+[data-font-variant="16"] {
+  /* Balanced Serif & Sans: Bitter + Merriweather Sans */
+  --font-space-grotesk: "Bitter", Georgia, serif;
+  --font-jakarta: "Merriweather Sans", sans-serif;
+  --font-outfit: "Bitter", Georgia, serif;
 }
 
 @layer utilities {
