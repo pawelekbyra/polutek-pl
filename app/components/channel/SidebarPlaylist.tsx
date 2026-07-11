@@ -212,12 +212,12 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-[var(--chan-surface)] border-[var(--chan-line)] shadow-sm"
+              ? "bg-[var(--chan-surface)]"
               : isPublicSection
-                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] hover:brightness-[1.03] border-[#2563EB]/20 shadow-sm"
-                : "bg-white border-[var(--chan-line)] hover:bg-[var(--chan-surface)] shadow-sm",
+                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] hover:brightness-[1.03]"
+                : "hover:bg-[var(--chan-surface)]",
           )}
         >
           {isCurrent && (
