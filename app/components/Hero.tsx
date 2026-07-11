@@ -176,19 +176,19 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     <section className="bg-transparent">
       <div className="w-full">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full mb-[18px] overflow-hidden rounded-[18px] bg-black">
+        <div className="relative aspect-video w-full mb-3 overflow-hidden rounded-[18px] bg-black">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
         </div>
 
         {/* INFO SECTION */}
-        <div className="space-y-3">
-          <h1 className="font-brand font-bold not-italic text-[21px] md:text-[25px] text-[var(--chan-ink)] leading-[1.25] mb-[14px]">
+        <div className="space-y-2">
+          <h1 className="font-brand font-bold not-italic text-[21px] md:text-[25px] text-[var(--chan-ink)] leading-[1.25] mb-2">
              {displayTitle}
           </h1>
 
-          <div className={cn("flex flex-col justify-between gap-[14px] lg:flex-row lg:items-center", styles.metaRow)}>
+          <div className={cn("flex flex-col justify-between gap-2 lg:flex-row lg:items-center", styles.metaRow)}>
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
                  href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
