@@ -214,7 +214,7 @@ export function SidebarPlaylist({
           className={cn(
             "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-gradient-to-br from-[#2563EB]/12 to-[#2563EB]/8 shadow-[inset_0_1px_2px_rgba(37,99,235,0.1)]"
+              ? "bg-gradient-to-br from-[#2563EB]/28 to-[#2563EB]/18 shadow-[inset_0_1px_3px_rgba(37,99,235,0.2),0_0_8px_rgba(37,99,235,0.15)]"
               : isPublicSection
                 ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
