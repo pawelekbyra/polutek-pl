@@ -235,11 +235,11 @@
   line-height: 1.65;
 }
 
-/* Desktop playlist: white cards, subtle depth and an unmistakable blue active item. */
+/* Desktop playlist: compact cards that fit inside the framed rail. */
 :global(main aside:has(a[href*="?v="])) {
-  padding: 10px;
+  padding: 7px;
   border: 1px solid color-mix(in srgb, var(--chan-line) 80%, var(--chan-ink) 20%);
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--chan-card) 96%, white) 0%,
@@ -252,20 +252,36 @@
 }
 
 :global(main aside:has(a[href*="?v="]) > div) {
-  gap: 8px !important;
+  gap: 4px !important;
+  min-height: 0;
+}
+
+:global(main aside:has(a[href*="?v="]) > div > div) {
+  min-height: 0;
+}
+
+:global(main aside:has(a[href*="?v="]) div:has(> h3)) {
+  margin-bottom: 2px !important;
+  padding-bottom: 2px !important;
 }
 
 :global(main aside:has(a[href*="?v="]) h3) {
   color: var(--chan-ink);
-  letter-spacing: 0.09em;
+  font-size: 10.5px;
+  line-height: 1.1;
+  letter-spacing: 0.075em;
 }
 
 :global(main aside:has(a[href*="?v="]) a[href*="?v="]) {
+  min-height: 70px !important;
+  padding: 6px !important;
+  gap: 8px !important;
   border: 1px solid color-mix(in srgb, var(--chan-line) 82%, var(--chan-ink) 18%);
+  border-radius: 12px !important;
   background: color-mix(in srgb, var(--chan-card) 94%, white) !important;
   box-shadow:
     0 1px 2px rgba(23, 23, 23, 0.035),
-    0 5px 13px rgba(23, 23, 23, 0.035);
+    0 4px 11px rgba(23, 23, 23, 0.032);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -279,24 +295,42 @@
   background: color-mix(in srgb, var(--chan-blue-soft) 38%, white) !important;
   box-shadow:
     0 2px 4px rgba(23, 23, 23, 0.04),
-    0 8px 18px rgba(23, 23, 23, 0.055);
+    0 7px 16px rgba(23, 23, 23, 0.05);
 }
 
 :global(main aside:has(a[href*="?v="]) a[href*="?v="] > div:first-of-type) {
+  width: 110px !important;
+  height: 62px !important;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 11px rgba(23, 23, 23, 0.09);
+  border-radius: 9px !important;
+  box-shadow: 0 3px 9px rgba(23, 23, 23, 0.085);
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="] h4) {
+  font-size: 11.5px !important;
+  line-height: 1.16 !important;
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="] > div:last-child) {
+  gap: 0 !important;
+  padding-top: 0 !important;
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="] > div:last-child > div) {
+  font-size: 10.5px !important;
+  line-height: 1.25 !important;
 }
 
 :global(main a[href*="?v="][aria-current="page"]) {
-  border-color: color-mix(in srgb, var(--chan-blue) 55%, var(--chan-line)) !important;
+  border-color: color-mix(in srgb, var(--chan-blue) 48%, var(--chan-line)) !important;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--chan-blue-soft) 88%, white) 0%,
-    color-mix(in srgb, var(--chan-blue-soft) 68%, #dbeafe) 100%
+    color-mix(in srgb, var(--chan-blue-soft) 82%, white) 0%,
+    color-mix(in srgb, var(--chan-blue-soft) 62%, #dbeafe) 100%
   ) !important;
   box-shadow:
-    0 8px 22px color-mix(in srgb, var(--chan-blue) 12%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--chan-blue) 12%, transparent) !important;
+    0 5px 14px color-mix(in srgb, var(--chan-blue) 10%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--chan-blue) 10%, transparent) !important;
 }
 
 :global(main a[href*="?v="][aria-current="page"] h4) {
