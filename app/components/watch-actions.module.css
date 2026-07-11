@@ -74,6 +74,13 @@
   filter: none;
 }
 
+.installAction button {
+  width: 42px;
+  min-width: 42px;
+  padding-inline: 0 !important;
+  justify-content: center;
+}
+
 .subscribeAction {
   position: relative;
   min-height: 42px;
@@ -157,6 +164,145 @@
   letter-spacing: 0.01em;
 }
 
+/* Keep the media, action rail and description visually in the same card family. */
+:global(main section:has(.polutek-vidstack-player) > div > div:first-child) {
+  border: 1px solid color-mix(in srgb, var(--chan-line) 68%, var(--chan-ink) 32%);
+  outline: 1px solid color-mix(in srgb, white 72%, transparent);
+  outline-offset: -2px;
+  background: #050505;
+  box-shadow:
+    0 24px 54px rgba(23, 23, 23, 0.16),
+    0 8px 20px rgba(23, 23, 23, 0.09),
+    0 2px 5px rgba(23, 23, 23, 0.08);
+}
+
+:global(main section:has(.polutek-vidstack-player) > div > div:last-child) {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--chan-line) 78%, var(--chan-ink) 22%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--chan-card) 96%, white) 0%,
+    var(--chan-card) 100%
+  ) !important;
+  box-shadow:
+    0 14px 34px rgba(23, 23, 23, 0.05),
+    0 3px 9px rgba(23, 23, 23, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+:global(main section:has(.polutek-vidstack-player) > div > div:last-child)::before {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  content: "";
+  background: linear-gradient(180deg, #60a5fa 0%, var(--chan-blue) 100%);
+  opacity: 0.88;
+}
+
+:global(main section:has(.polutek-vidstack-player) > div > div:last-child:hover) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--chan-blue) 24%, var(--chan-line));
+  background: linear-gradient(
+    180deg,
+    white 0%,
+    color-mix(in srgb, var(--chan-card) 96%, var(--chan-blue-soft)) 100%
+  ) !important;
+  box-shadow:
+    0 18px 40px rgba(23, 23, 23, 0.065),
+    0 4px 11px rgba(23, 23, 23, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+:global(main section:has(.polutek-vidstack-player) > div > div:last-child > div > div:first-child) {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--chan-blue) 15%, var(--chan-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chan-blue-soft) 72%, white);
+}
+
+:global(main section:has(.polutek-vidstack-player) > div > div:last-child > div > div:nth-child(2)) {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* Desktop playlist: white cards, subtle depth and an unmistakable blue active item. */
+:global(main aside:has(a[href*="?v="])) {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--chan-line) 80%, var(--chan-ink) 20%);
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--chan-card) 96%, white) 0%,
+    var(--chan-card) 100%
+  );
+  box-shadow:
+    0 18px 42px rgba(23, 23, 23, 0.055),
+    0 3px 10px rgba(23, 23, 23, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:global(main aside:has(a[href*="?v="]) > div) {
+  gap: 8px !important;
+}
+
+:global(main aside:has(a[href*="?v="]) h3) {
+  color: var(--chan-ink);
+  letter-spacing: 0.09em;
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="]) {
+  border: 1px solid color-mix(in srgb, var(--chan-line) 82%, var(--chan-ink) 18%);
+  background: color-mix(in srgb, var(--chan-card) 94%, white) !important;
+  box-shadow:
+    0 1px 2px rgba(23, 23, 23, 0.035),
+    0 5px 13px rgba(23, 23, 23, 0.035);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="]:hover) {
+  transform: translateX(2px);
+  border-color: color-mix(in srgb, var(--chan-blue) 24%, var(--chan-line));
+  background: color-mix(in srgb, var(--chan-blue-soft) 38%, white) !important;
+  box-shadow:
+    0 2px 4px rgba(23, 23, 23, 0.04),
+    0 8px 18px rgba(23, 23, 23, 0.055);
+}
+
+:global(main aside:has(a[href*="?v="]) a[href*="?v="] > div:first-of-type) {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 11px rgba(23, 23, 23, 0.09);
+}
+
+:global(main a[href*="?v="][aria-current="page"]) {
+  border-color: color-mix(in srgb, var(--chan-blue) 55%, var(--chan-line)) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--chan-blue-soft) 88%, white) 0%,
+    color-mix(in srgb, var(--chan-blue-soft) 68%, #dbeafe) 100%
+  ) !important;
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--chan-blue) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--chan-blue) 12%, transparent) !important;
+}
+
+:global(main a[href*="?v="][aria-current="page"] h4) {
+  color: color-mix(in srgb, var(--chan-blue) 78%, var(--chan-ink));
+}
+
 @media (max-width: 1023px) {
   .creatorStrip {
     padding-bottom: 11px;
@@ -199,6 +345,12 @@
     padding-left: 14px !important;
     padding-right: 14px !important;
   }
+
+  :global(main section:has(.polutek-vidstack-player) > div > div:first-child) {
+    box-shadow:
+      0 15px 34px rgba(23, 23, 23, 0.14),
+      0 5px 14px rgba(23, 23, 23, 0.08);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -221,6 +373,11 @@
   .secondaryAction,
   .installAction button,
   .subscribeAction {
+    transition: none;
+  }
+
+  :global(main section:has(.polutek-vidstack-player) > div > div:last-child),
+  :global(main aside:has(a[href*="?v="]) a[href*="?v="]) {
     transition: none;
   }
 }
