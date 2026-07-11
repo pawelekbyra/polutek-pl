@@ -182,7 +182,7 @@ function ChannelHomeContent({
     <main className="min-h-screen bg-[var(--chan-nav)]">
       <div className="mx-auto max-w-[1080px] px-4 md:px-6 lg:px-6 py-6">
         <div className="grid grid-cols-12 gap-4 lg:items-start">
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 lg:col-span-8 flex flex-col">
             <div
               key={selectedVideo.id}
               className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
@@ -236,11 +236,13 @@ function ChannelHomeContent({
               </>
             )}
           </div>
-          <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-3">
-            <aside className="lg:flex lg:h-[clamp(420px,31.3vw,480px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
+          <div className="hidden lg:col-span-4 lg:flex lg:flex-col">
+            <aside className="lg:flex lg:h-[clamp(450px,37.5vw,550px)] lg:flex-col lg:gap-0 lg:overflow-hidden">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
-            <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
+            <div className="lg:mt-3 lg:shrink-0">
+              <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
+            </div>
           </div>
         </div>
       </div>
