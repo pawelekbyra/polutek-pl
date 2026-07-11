@@ -8,8 +8,7 @@ import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
-import { Frame, INK, BLUE } from "./najs/primitives";
-import { Bell } from "lucide-react";
+import { Frame, INK, BLUE, NajsIcon } from "./najs/primitives";
 
 export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
 
@@ -152,7 +151,7 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <Bell size={20} className="relative shrink-0 z-10" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} />
+        <NajsIcon name="bell" className="relative h-5 w-5 shrink-0 z-10" stroke={isSubscribed ? BLUE : "currentColor"} />
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (

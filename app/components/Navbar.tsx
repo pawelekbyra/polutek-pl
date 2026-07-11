@@ -78,7 +78,7 @@ const Navbar = () => {
     <div
       className="polutek-watch-nav sticky top-0 z-[1000] w-full flex flex-col"
     >
-      <div className="flex min-h-[46px] items-center justify-between gap-3 overflow-visible px-3 py-1 md:gap-5 md:px-4 lg:px-5 w-full">
+      <div className="mx-auto flex min-h-[46px] w-full max-w-[1080px] items-center justify-between gap-3 overflow-visible px-4 py-1 md:gap-5 md:px-6 lg:px-6">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button

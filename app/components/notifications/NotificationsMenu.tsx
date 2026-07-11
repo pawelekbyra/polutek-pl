@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Heart } from "lucide-react";
+import { NajsIcon, type NajsIconName } from "../najs/primitives";
 import { NotificationDTO, NotificationKind } from "../../types/notification";
 
 interface NotificationsMenuProps {
@@ -11,12 +11,12 @@ interface NotificationsMenuProps {
   messagesLabel: string;
 }
 
-const KIND_ICON: Record<NotificationKind, React.ComponentType<{ size?: number; className?: string }>> = {
-  welcome: Bell,
-  system: Bell,
-  comment: Bell,
-  support: Heart,
-  patron: Heart,
+const KIND_ICON: Record<NotificationKind, NajsIconName> = {
+  welcome: "bell",
+  system: "bell",
+  comment: "bell",
+  support: "heart",
+  patron: "heart",
 };
 
 function formatRelativeTime(iso: string, isPl: boolean): string {
@@ -92,7 +92,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
               : "flex h-[34px] w-[34px] items-center justify-center"
           }
         >
-          <Bell size={18} className="shrink-0" />
+          <NajsIcon name="bell" className="h-[18px] w-[18px] shrink-0" stroke="currentColor" />
         </span>
         {unreadCount > 0 && (
           <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">
@@ -124,7 +124,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
           ) : (
             <ul className="max-h-[360px] overflow-y-auto py-1">
               {items.map((n) => {
-                const Icon = KIND_ICON[n.kind];
+                const iconName = KIND_ICON[n.kind];
                 return (
                   <li key={n.id}>
                     <button
@@ -134,7 +134,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
                       className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--chan-surface)]"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EFF3FE] text-[#2563EB]">
-                        <Icon size={16} />
+                        <NajsIcon name={iconName} className="h-4 w-4" stroke="currentColor" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-[6px]">

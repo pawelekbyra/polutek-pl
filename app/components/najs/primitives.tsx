@@ -138,7 +138,7 @@ export type NajsIconName =
   | "more" | "more-vertical" | "lock" | "close" | "shield"
   | "download" | "video" | "alert" | "heart" | "pause"
   | "play" | "maximize" | "volume" | "mute" | "subtitles" | "check"
-  | "refresh";
+  | "refresh" | "copy";
 
 export function NajsIcon({
   name,
@@ -176,6 +176,7 @@ export function NajsIcon({
       {name === "subtitles" && <><path d="M3.4 7.1 C3.2 10.6 3.2 14.5 3.5 18 C8.7 18.5 15.4 18.4 20.5 18 C20.9 14.3 20.8 10.3 20.5 6.9 C15.3 6.4 8.8 6.5 3.4 7.1 Z" {...c} /><path d="M6.4 12.1 h3.8 M12 12 h3.3 M17.2 12 h1" {...c} /><path d="M6.2 15.6 h2.2 M10.2 15.6 h3.1 M15.2 15.6 h3.3" {...c} /></>}
       {name === "check" && <path d="M4 12 L10 18 L20 7" {...c} />}
       {name === "refresh" && <><path d="M19.5 12 A7.5 7.5 0 1 1 16.9 6.4" {...c} /><path d="M19.5 4.5 L19.5 9.5 L14.5 9.5" {...c} /></>}
+      {name === "copy" && <><rect x="9" y="9" width="11" height="12" rx="2" {...c} /><path d="M15 9 V6.5 A2 2 0 0 0 13 4.5 H6 A2 2 0 0 0 4 6.5 V16 A2 2 0 0 0 6 18 H9" {...c} /></>}
     </svg>
   );
 }

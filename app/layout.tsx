@@ -15,7 +15,7 @@ export const metadata = {
   title: APP_NAME,
   description: `${APP_NAME} — niezależny kanał wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`,
   manifest: "/manifest.json",
-  themeColor: "#f7f1e4",
+  themeColor: "#ffffff",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -51,14 +51,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-        <meta name="theme-color" content="#f7f1e4" />
+        <meta name="theme-color" content="#ffffff" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon" />
       </head>
-      <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
+      <body className="font-sans bg-white text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
         <AppVersionCheck />
-        <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
+        <Suspense fallback={<div className="min-h-[100dvh] bg-white" />}>
           <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>
               <AuthModalProvider>

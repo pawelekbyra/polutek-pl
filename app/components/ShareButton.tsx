@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, Facebook, Mail, MessageCircle } from 'lucide-react';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
 import { NajsIcon } from './najs/primitives';
@@ -15,9 +14,26 @@ interface ShareButtonProps {
   fill?: boolean;
 }
 
+/**
+ * Third-party brand marks, kept as dedicated fill-based glyphs (same 24x24
+ * viewBox as NajsIcon) rather than a generic icon library — brand logos need
+ * to stay recognizable, unlike the rest of the UI chrome.
+ */
 const XIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={cn("h-4 w-4 fill-current", className)}>
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
+const FacebookIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={cn("h-4 w-4 fill-current", className)}>
+    <path d="M13.5 21v-8.06h2.71l.4-3.15h-3.11V7.83c0-.91.25-1.53 1.56-1.53h1.67V3.48A22.6 22.6 0 0 0 14.1 3.3c-2.36 0-3.98 1.44-3.98 4.08v2.41H7.4v3.15h2.72V21Z"/>
+  </svg>
+);
+
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={cn("h-4 w-4 fill-current", className)}>
+    <path d="M12.03 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.45 1.33 4.95L2 22l5.24-1.37a9.9 9.9 0 0 0 4.79 1.22h.01c5.5 0 9.96-4.46 9.96-9.96S17.53 2 12.03 2Zm5.83 14.24c-.24.68-1.4 1.31-1.93 1.35-.5.05-1 .25-3.38-.7-2.86-1.14-4.67-4.06-4.81-4.25-.14-.19-1.15-1.53-1.15-2.92 0-1.39.73-2.07.99-2.35.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.42-.07.65.5.24.58.81 2 .88 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.13.57.17.28.75 1.24 1.61 2.01 1.11.99 2.04 1.3 2.32 1.44.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.19-.28.38-.24.63-.14.26.09 1.64.78 1.92.92.28.14.47.21.54.33.07.12.07.71-.17 1.39Z"/>
   </svg>
 );
 
@@ -91,7 +107,7 @@ export default function ShareButton({
               copied ? "bg-[#EFF3FE]" : "hover:bg-[var(--chan-surface)]"
             )}
           >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
+            <NajsIcon name={copied ? "check" : "copy"} className="h-4 w-4" stroke="currentColor" />
             <span>{copied ? "Skopiowano!" : "Kopiuj link"}</span>
           </div>
 
@@ -109,7 +125,7 @@ export default function ShareButton({
             onClick={() => openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-ink)]"
           >
-            <Facebook size={16} className="text-[#1877F2]" />
+            <FacebookIcon className="text-[#1877F2]" />
             <span>Udostępnij na Facebook</span>
           </div>
 
@@ -117,7 +133,7 @@ export default function ShareButton({
             onClick={() => openWindow(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-ink)]"
           >
-            <MessageCircle size={16} className="text-[#25D366]" />
+            <WhatsAppIcon className="text-[#25D366]" />
             <span>Wyślij przez WhatsApp</span>
           </div>
 
@@ -125,7 +141,7 @@ export default function ShareButton({
             onClick={() => openWindow(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-[var(--chan-surface)] cursor-pointer transition-colors duration-100 font-medium text-[var(--chan-muted)]"
           >
-            <Mail size={16} />
+            <NajsIcon name="mail" className="h-4 w-4" stroke="currentColor" />
             <span>Wyślij emailem</span>
           </div>
         </div>
