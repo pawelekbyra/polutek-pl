@@ -15,10 +15,8 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const LOGIN_OVERLAY_DARK = "rgba(23,23,23,0.72)";
-const LOGIN_OVERLAY_ACCENT = "rgba(37,99,235,0.92)";
-const PATRON_OVERLAY_START = "rgba(250,204,21,0.98)";
-const PATRON_OVERLAY_END = "rgba(234,179,8,0.96)";
+const LOGIN_OVERLAY_COLOR = "#2563EB";
+const PATRON_OVERLAY_COLOR = "#FACC15";
 
 function LockSvg({ size = 24 }: { size?: number }) {
   return (
@@ -59,9 +57,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[6px] [container-type:inline-size]"
           style={{
-            background: isPatron
-              ? `linear-gradient(135deg, ${PATRON_OVERLAY_START}, ${PATRON_OVERLAY_END})`
-              : `linear-gradient(135deg, ${LOGIN_OVERLAY_ACCENT}, ${LOGIN_OVERLAY_DARK})`,
+            background: isPatron ? PATRON_OVERLAY_COLOR : LOGIN_OVERLAY_COLOR,
           }}
         >
           <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
