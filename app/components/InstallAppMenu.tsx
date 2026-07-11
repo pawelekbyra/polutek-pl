@@ -6,6 +6,7 @@ import { NajsIcon } from "./najs/primitives";
 import { usePwaInstall } from "@/app/hooks/usePwaInstall";
 import { useLanguage } from "./LanguageContext";
 
+// No functional change: this commit redeploys the rolled-back main state.
 interface InstallAppMenuProps {
   className?: string;
 }
