@@ -279,20 +279,20 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className="mt-[16px] cursor-pointer rounded-[18px] bg-[var(--chan-surface)] p-[16px] px-5 transition-colors hover:bg-[var(--chan-line)]"
+          className="mt-2 cursor-pointer rounded-[18px] bg-[var(--chan-surface)] p-3 px-4 transition-colors hover:bg-[var(--chan-line)]"
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
-             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-[6px] items-baseline">
-                <span className="font-sans text-[13.5px] font-bold not-italic text-[var(--chan-ink)]">
+             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1.5 items-baseline">
+                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
-                <span className="font-sans text-[13.5px] font-bold not-italic text-[var(--chan-ink)]">
+                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
                    · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>
 
-             <div className="text-[13.5px] text-[var(--chan-body)] leading-[1.6] whitespace-pre-wrap">
+             <div className="text-[12px] text-[var(--chan-body)] leading-[1.5] whitespace-pre-wrap">
                 {isExpanded ? (
                   displayDescription
                 ) : (
@@ -300,7 +300,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {displayDescription.slice(0, 160).trim()}
                     {displayDescription.length > 160 && (
                       <span
-                        className="text-[13.5px] font-bold text-[var(--chan-ink)] ml-1 hover:underline cursor-pointer inline"
+                        className="text-[12px] font-bold text-[var(--chan-ink)] ml-1 hover:underline cursor-pointer inline"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(true);
@@ -315,7 +315,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
              {isExpanded && (
                <button
-                 className="text-[13.5px] font-bold text-[var(--chan-ink)] mt-1 hover:underline inline-block"
+                 className="text-[12px] font-bold text-[var(--chan-ink)] mt-1 hover:underline inline-block"
                  onClick={(e) => {
                    e.stopPropagation();
                    setIsExpanded(false);
