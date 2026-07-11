@@ -180,8 +180,8 @@ function ChannelHomeContent({
 
   return (
     <main className="min-h-screen bg-[var(--chan-nav)]">
-      <div className="mx-auto max-w-[1240px] px-4 md:px-8 lg:px-14 py-5">
-        <div className="grid grid-cols-12 gap-6 lg:items-start">
+      <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-6 py-6">
+        <div className="grid grid-cols-12 gap-4 lg:items-start">
           <div className="col-span-12 lg:col-span-8">
             <div
               key={selectedVideo.id}
