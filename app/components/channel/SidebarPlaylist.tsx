@@ -199,7 +199,7 @@ export function SidebarPlaylist({
           onVideoMouseEnter(video.id);
           warmVideoOnIntent();
         }}
-        className="relative group/item lg:flex-1"
+        className="relative group/item lg:flex-1 lg:h-full"
       >
         <Link
           href={feedVideoHref}
