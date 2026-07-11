@@ -24,6 +24,8 @@ const isPublicRoute = createRouteMatcher([
   '/en/testujemy',
   '/en/testowy1',
   '/en/testowy2',
+  '/pl/czcionka(.*)',
+  '/en/czcionka(.*)',
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
