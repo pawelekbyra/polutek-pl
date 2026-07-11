@@ -222,35 +222,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.94);
 }
 
-:global(main section:has(.polutek-vidstack-player) > div > div:last-child > div > div:first-child) {
-  width: fit-content;
-  padding: 4px 8px;
-  border: 1px solid color-mix(in srgb, var(--chan-blue) 15%, var(--chan-line));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--chan-blue-soft) 72%, white);
-}
-
 :global(main section:has(.polutek-vidstack-player) > div > div:last-child > div > div:nth-child(2)) {
   font-size: 13px;
   line-height: 1.65;
 }
 
-/* Desktop playlist: white cards, subtle depth and an unmistakable blue active item. */
-:global(main aside:has(a[href*="?v="])) {
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--chan-line) 80%, var(--chan-ink) 20%);
-  border-radius: 18px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--chan-card) 96%, white) 0%,
-    var(--chan-card) 100%
-  );
-  box-shadow:
-    0 18px 42px rgba(23, 23, 23, 0.055),
-    0 3px 10px rgba(23, 23, 23, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
+/* Playlist cards keep their own borders, without an outer container frame. */
 :global(main aside:has(a[href*="?v="]) > div) {
   gap: 8px !important;
 }
