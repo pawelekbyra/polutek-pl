@@ -117,7 +117,7 @@ const Navbar = () => {
                 aria-label="POLUTEK.PL"
               >
                 <BrandName
-                  className="text-[1.05rem] leading-none text-[var(--chan-ink)] md:text-[1.2rem]"
+                  className="text-[1.15rem] leading-none text-[var(--chan-ink)] md:text-[1.3rem]"
                   variant="classic"
                 />
               </Link>
