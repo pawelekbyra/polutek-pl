@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { Frame, INK, BLUE } from "./najs/primitives";
-import { Popcorn } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
 
@@ -153,7 +153,7 @@ export default function SubscribeButton({
         )}
       >
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
-        <Popcorn size={20} className="relative shrink-0 z-10 ml-1" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} />
+        <Rocket size={20} className="relative shrink-0 z-10 ml-1" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} />
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">
