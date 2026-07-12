@@ -1,14 +1,14 @@
 .metaRow {
-  --watch-control-bg: color-mix(in srgb, var(--chan-card) 94%, white);
+  --watch-control-bg: #ffffff;
   --watch-control-border: color-mix(in srgb, var(--chan-line) 78%, var(--chan-ink) 22%);
   --watch-control-hover: color-mix(in srgb, var(--chan-blue-soft) 48%, var(--watch-control-bg));
   position: relative;
   isolation: isolate;
   align-items: stretch;
   padding: 12px;
-  border: 1px solid var(--chan-line);
+  border: 1px solid #d9d5d1;
   border-radius: 18px;
-  background: #ffffff;
+  background: #e5e1dd;
 }
 
 .creatorStrip {
@@ -166,10 +166,10 @@
   line-height: 1.65;
 }
 
-/* Description panel: a soft, light warm-gray surface. */
+/* Description panel: a clean white surface below the warm-gray creator/actions card. */
 .descPanel {
-  background-color: #e5e1dd;
-  border-color: #d9d5d1;
+  background-color: #ffffff;
+  border-color: var(--chan-line);
 }
 
 /* Playlist sections are intentionally frameless. */
