@@ -15,27 +15,27 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const LOGIN_OVERLAY_DARK = "rgba(23,23,23,0.72)";
-const LOGIN_OVERLAY_ACCENT = "rgba(37,99,235,0.92)";
-const PATRON_OVERLAY_START = "rgba(250,204,21,0.98)";
-const PATRON_OVERLAY_END = "rgba(234,179,8,0.96)";
+// Elegant, high-contrast color overlays
+const LOGIN_OVERLAY_DARK = "rgba(15, 23, 42, 0.88)";
+const LOGIN_OVERLAY_ACCENT = "rgba(37, 99, 235, 1)";
+const PATRON_OVERLAY_START = "rgba(37, 99, 235, 0.92)";
+const PATRON_OVERLAY_END = "rgba(59, 130, 246, 0.88)";
 
 function LockSvg({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 11 V8 c0 -3 2 -5 5 -5 s5 2 5 5 v3" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="5" y="11" width="14" height="10" rx="2" />
-      <circle cx="12" cy="16.5" r="1.3" fill="#ffffff" stroke="none" />
+      <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+      <circle cx="12" cy="16" r="1" fill="currentColor" />
     </svg>
   );
 }
 
 function StarSvg({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)" stroke="#ffffff"
-      strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2 L14.8 9 L22 9 L16.2 13.8 L18.5 21 L12 16.8 L5.5 21 L7.8 13.8 L2 9 L9.2 9 Z" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   );
 }
@@ -57,17 +57,17 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
     return (
       <PlayerStateFrame fill className={isTiny ? "rounded-md" : "rounded-lg"}>
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[6px] [container-type:inline-size]"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[8px] [container-type:inline-size]"
           style={{
             background: isPatron
               ? `linear-gradient(135deg, ${PATRON_OVERLAY_START}, ${PATRON_OVERLAY_END})`
               : `linear-gradient(135deg, ${LOGIN_OVERLAY_ACCENT}, ${LOGIN_OVERLAY_DARK})`,
           }}
         >
-          <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+          <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
             {isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}
           </span>
-          <span className="px-1 text-center font-sans text-[clamp(9px,8cqi,11px)] font-extrabold uppercase leading-tight tracking-[0.05em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+          <span className="px-2 text-center font-sans text-[clamp(9px,8cqi,11px)] font-bold uppercase leading-tight tracking-[0.08em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
             {label}
           </span>
         </div>
@@ -86,29 +86,35 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             : `linear-gradient(135deg, ${LOGIN_OVERLAY_ACCENT}, ${LOGIN_OVERLAY_DARK})`,
         }}
       >
-        <div className="relative z-10 flex flex-col items-center text-center gap-[clamp(12px,2.5cqi,22px)] px-4 w-full max-w-[380px]">
-          {/* Icon */}
-          <div className="flex items-center justify-center w-[clamp(56px,11cqi,80px)] h-[clamp(56px,11cqi,80px)] rounded-full bg-[var(--chan-surface)]">
-            <span className={isPatron ? "text-[#b45309]" : "text-[#2563eb]"}>
-              {isPatron ? <StarSvg size={32} /> : <LockSvg size={32} />}
+        {/* Subtle noise/grain texture overlay */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,.03) 2px, rgba(255,255,255,.03) 4px)",
+          pointerEvents: "none"
+        }} />
+
+        <div className="relative z-10 flex flex-col items-center text-center gap-[clamp(16px,3cqi,28px)] px-6 w-full max-w-[420px]">
+          {/* Icon Circle */}
+          <div className="flex items-center justify-center w-[clamp(64px,12cqi,88px)] h-[clamp(64px,12cqi,88px)] rounded-full bg-white/15 border border-white/20 backdrop-blur-sm shadow-2xl">
+            <span className="text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+              {isPatron ? <StarSvg size={36} /> : <LockSvg size={36} />}
             </span>
           </div>
 
-          {/* Heading */}
-          <div className="flex flex-col gap-[clamp(4px,1cqi,8px)]">
-            <h2 className="font-brand text-[clamp(20px,5cqi,32px)] font-bold text-[var(--chan-ink)] leading-tight">
+          {/* Heading & Description */}
+          <div className="flex flex-col gap-[clamp(8px,1.5cqi,14px)]">
+            <h2 className="font-brand text-[clamp(24px,6cqi,36px)] font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
               {isPatron
                 ? (isPl ? "Strefa Patronów" : "Patron Zone")
                 : (isPl ? "Zaloguj się" : "Sign In")}
             </h2>
-            <p className="font-sans text-[clamp(11px,2.2cqi,15px)] text-[var(--chan-muted)] leading-snug">
+            <p className="font-sans text-[clamp(13px,2.4cqi,16px)] text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
               {isPatron
                 ? (isPl ? "Jednorazowe wsparcie odblokowuje dostęp na zawsze" : "One-time support unlocks access forever")
                 : (isPl ? "aby obejrzeć ten materiał" : "to watch this video")}
             </p>
           </div>
 
-          {/* CTA */}
+          {/* CTA Button */}
           {isPatron ? (
             <a
               href="#donations"
@@ -118,9 +124,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   .getElementById("donations")
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] rounded-[14px] bg-[var(--chan-ink)] font-brand font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all hover:-translate-y-px"
+              className="flex h-[clamp(44px,8cqi,52px)] items-center justify-center px-[clamp(24px,6cqi,40px)] rounded-[16px] bg-white/25 hover:bg-white/35 font-brand font-bold text-[clamp(13px,2.6cqi,16px)] text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg border border-white/30"
             >
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
                 {isPl ? "Wesprzyj kanał" : "Support Channel"}
               </span>
             </a>
@@ -128,7 +134,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <button
               type="button"
               onClick={() => openAuthModal("sign-in")}
-              className="flex h-[clamp(38px,7cqi,48px)] items-center justify-center px-[clamp(20px,5cqi,32px)] rounded-[14px] bg-[#2563EB] font-brand font-bold text-[clamp(12px,2.4cqi,15px)] text-white active:scale-95 transition-all hover:-translate-y-px"
+              className="flex h-[clamp(44px,8cqi,52px)] items-center justify-center px-[clamp(24px,6cqi,40px)] rounded-[16px] bg-white hover:bg-white/95 font-brand font-bold text-[clamp(13px,2.6cqi,16px)] text-[#2563EB] transition-all duration-200 active:scale-95 hover:shadow-lg"
             >
               <span className="whitespace-nowrap">
                 {isPl ? "Zaloguj się" : "Sign In"}
