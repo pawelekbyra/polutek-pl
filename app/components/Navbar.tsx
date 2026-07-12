@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color-mix(in_srgb,var(--chan-blue)_88%,black)] bg-[var(--chan-blue)] px-2 font-sans text-white shadow-[0_8px_18px_color-mix(in_srgb,var(--chan-blue)_18%,transparent)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--chan-blue)_78%,black)] hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_10px_22px_color-mix(in_srgb,var(--chan-blue)_24%,transparent)] active:scale-95 sm:px-3"
+                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[11px] border border-[#333] bg-black px-2 font-sans text-white transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[#555] hover:bg-[#1a1a1a] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95 sm:px-3"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
