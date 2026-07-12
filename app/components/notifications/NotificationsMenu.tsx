@@ -92,7 +92,7 @@ export default function NotificationsMenu({ notifications, language, messagesLab
               : "flex h-[34px] w-[34px] items-center justify-center"
           }
         >
-          <Bell size={18} className="shrink-0" />
+          <Bell size={20} className="shrink-0" />
         </span>
         {unreadCount > 0 && (
           <span className="absolute right-0 top-0 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-bold leading-none text-white shadow-[0_0_0_2px_var(--chan-nav)]">

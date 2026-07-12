@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
-import { NajsIcon } from "./najs/primitives";
+import { Search, X, LogIn } from "lucide-react";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { NotificationDTO } from "@/app/types/notification";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
@@ -85,7 +85,7 @@ const Navbar = () => {
               onClick={() => setIsMobileSearchOpen(false)}
               className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
             >
-              <NajsIcon name="close" className="h-[18px] w-[18px]" stroke="currentColor" />
+              <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
               <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
@@ -102,7 +102,7 @@ const Navbar = () => {
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-muted)]"
                   aria-label={searchLabel}
                 >
-                  <NajsIcon name="search" className="h-[18px] w-[18px]" stroke="currentColor" />
+                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                 </button>
               </div>
             </form>
@@ -140,7 +140,7 @@ const Navbar = () => {
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-muted)]"
                     aria-label={searchLabel}
                   >
-                    <NajsIcon name="search" className="h-[18px] w-[18px]" stroke="currentColor" />
+                    <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                   </button>
                 </div>
               </form>
@@ -154,7 +154,7 @@ const Navbar = () => {
                   onClick={() => setIsMobileSearchOpen(true)}
                   className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
-                  <NajsIcon name="search" className="h-[18px] w-[18px]" stroke="currentColor" />
+                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                 </button>
               </div>
 
@@ -204,10 +204,7 @@ const Navbar = () => {
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white shrink-0" aria-hidden="true">
-                    <path d="M15 4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" />
-                    <path d="M11 12h9m0 0-3.5-3.5M20 12l-3.5 3.5" />
-                  </svg>
+                  <LogIn className="h-5 w-5 shrink-0 text-white" strokeWidth={1.8} aria-hidden="true" />
                   <span className="hidden sm:inline leading-none text-[13px] font-semibold text-white">{t.signIn}</span>
                 </button>
               ) : (
