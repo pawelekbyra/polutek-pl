@@ -135,7 +135,7 @@ function ChannelHomeContent({
           </p>
           <Link
             href={getLocalizedHref(language, "home")}
-            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
+            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[var(--chan-blue)] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
           >
             {language === "pl" ? "Wróć do bazy" : "Back to database"}
           </Link>
@@ -178,13 +178,15 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="min-h-screen bg-[var(--chan-nav)]">
-      <div className="mx-auto max-w-[1080px] px-4 md:px-6 lg:px-6 pt-[13px] pb-2">
-        <div className="grid grid-cols-12 gap-4 lg:items-start">
+    <main className="channel-home-shell min-h-screen bg-[var(--chan-nav)]">
+      <div className="channel-home-orb channel-home-orb--primary" aria-hidden="true" />
+      <div className="channel-home-orb channel-home-orb--secondary" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1160px] px-4 md:px-6 lg:px-6 pt-[18px] pb-8">
+        <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 lg:col-span-8 flex flex-col">
             <div
               key={selectedVideo.id}
-              className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
+              className="channel-feature-card motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-300"
             >
               <Hero
                 video={selectedVideo}
@@ -200,7 +202,7 @@ function ChannelHomeContent({
             ) : mounted ? (
               <>
                 <div className="lg:hidden mt-4">
-                  <div className="relative flex overflow-hidden rounded-2xl bg-[var(--chan-surface)] p-1 font-sans">
+                  <div className="channel-mobile-tabs relative flex overflow-hidden rounded-2xl bg-[var(--chan-surface)] p-1 font-sans">
                     {(["comments", "videos"] as const).map((tab) => {
                       const isActive = activeTab === tab;
                       return (
@@ -211,7 +213,7 @@ function ChannelHomeContent({
                           className={cn(
                             "relative flex-1 rounded-xl py-2.5 text-[12px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
                             isActive
-                              ? "bg-white text-[#2563EB] shadow-sm"
+                              ? "bg-white text-[var(--chan-blue)] shadow-sm"
                               : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
                           )}
                         >
@@ -236,7 +238,7 @@ function ChannelHomeContent({
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col">
-            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto lg:pr-2">
+            <aside className="channel-sidebar-panel lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <div className="lg:mt-3 lg:shrink-0">

@@ -176,7 +176,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     <section className="bg-transparent">
       <div className="w-full">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full mb-3 overflow-hidden rounded-[18px] bg-black">
+        <div className="channel-media-frame relative aspect-video w-full mb-4 overflow-hidden rounded-[24px] bg-black">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
@@ -184,7 +184,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-2">
-          <h1 className="font-brand font-bold not-italic text-[21px] md:text-[25px] text-[var(--chan-ink)] leading-[1.25] mb-2">
+          <h1 className="font-brand font-bold not-italic text-[24px] md:text-[30px] text-[var(--chan-ink)] leading-[1.12] tracking-[-0.04em] mb-3">
              {displayTitle}
           </h1>
 
@@ -192,7 +192,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
                  href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
-                 className="w-[46px] h-[46px] rounded-full bg-[var(--chan-avatar-gradient)] overflow-hidden shrink-0 hover:opacity-85 transition-opacity relative"
+                    className="channel-creator-avatar w-[48px] h-[48px] rounded-full bg-[var(--chan-avatar-gradient)] overflow-hidden shrink-0 hover:opacity-90 transition-opacity relative"
                >
                   <Image
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
@@ -233,20 +233,20 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
-               <div className={cn("relative flex h-[42px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>
+               <div className={cn("relative flex h-[44px] shrink-0 items-center rounded-[14px] bg-[var(--chan-surface)]", styles.actionCluster)}>
                   <button
                     onClick={handleLike}
                     disabled={isPending}
                     className={cn(
                         "flex h-full items-center justify-center gap-1.5 px-3 font-sans transition-colors active:opacity-70 lg:px-4",
                         styles.actionButton,
-                        interactionState.isLiked ? "text-[#2563eb]" : "text-[var(--chan-ink)]",
+                        interactionState.isLiked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
                         isPending && "opacity-50"
                     )}
                     title="Lubię to"
                     aria-label="Lubię to"
                   >
-                     <ThumbsUp className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
+                     <ThumbsUp className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"} />
                      <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
                   <span className="h-5 w-px bg-[var(--chan-line-soft)]" />
@@ -256,13 +256,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     className={cn(
                         "flex h-full items-center justify-center px-4 transition-colors active:opacity-70",
                         styles.actionButton,
-                        interactionState.isDisliked ? "text-[#2563eb]" : "text-[var(--chan-ink)]",
+                        interactionState.isDisliked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
                         isPending && "opacity-50"
                     )}
                     title="Nie lubię"
                     aria-label="Nie lubię"
                   >
-                     <ThumbsDown className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
+                     <ThumbsDown className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "var(--chan-blue)" : "var(--chan-ink)"} />
                   </button>
                </div>
                <ShareButton
@@ -279,7 +279,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40", styles.descPanel)}
+          className={cn("mt-3 cursor-pointer rounded-[22px] border px-5 pt-4 pb-4 transition-colors hover:border-[var(--chan-blue)]", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>

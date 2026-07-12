@@ -908,10 +908,106 @@
 
 @layer components {
   .polutek-watch-nav {
-    background: var(--chan-nav);
-    border-bottom: 1px solid var(--chan-line);
-    box-shadow: 0 1px 0 rgba(20, 16, 10, .02);
-    backdrop-filter: blur(18px);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-nav) 92%, white), color-mix(in srgb, var(--chan-nav) 96%, transparent));
+    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 74%, transparent);
+    box-shadow:
+      0 1px 0 rgba(20, 16, 10, .02),
+      0 14px 34px rgba(15, 23, 42, .045);
+    backdrop-filter: blur(22px) saturate(140%);
+  }
+
+  .nav-brand-chip,
+  .nav-search-field,
+  .nav-control-pill {
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
+      0 8px 22px rgba(15, 23, 42, .045);
+  }
+
+  .nav-search-field:focus-within,
+  .nav-control-pill:hover {
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--chan-blue) 10%, transparent),
+      0 10px 26px rgba(15, 23, 42, .06);
+  }
+
+  .channel-home-shell {
+    position: relative;
+    overflow: clip;
+    background:
+      radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--chan-blue-soft) 72%, transparent) 0, transparent 34rem),
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-nav) 88%, white), var(--chan-nav) 42%);
+  }
+
+  .channel-home-orb {
+    pointer-events: none;
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(18px);
+    opacity: .56;
+  }
+
+  .channel-home-orb--primary {
+    right: max(-8rem, -10vw);
+    top: 5rem;
+    width: 18rem;
+    height: 18rem;
+    background: color-mix(in srgb, var(--chan-blue) 14%, transparent);
+  }
+
+  .channel-home-orb--secondary {
+    left: -10rem;
+    bottom: 14rem;
+    width: 20rem;
+    height: 20rem;
+    background: color-mix(in srgb, var(--chan-line) 55%, transparent);
+  }
+
+  .channel-feature-card,
+  .channel-sidebar-panel,
+  .channel-mobile-tabs {
+    border: 1px solid color-mix(in srgb, var(--chan-line) 78%, transparent);
+    background: color-mix(in srgb, var(--chan-card) 78%, white);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 78%, transparent),
+      0 20px 50px rgba(15, 23, 42, .07);
+  }
+
+  .channel-feature-card {
+    border-radius: 28px;
+    padding: clamp(10px, 1.45vw, 16px);
+  }
+
+  .channel-sidebar-panel {
+    border-radius: 28px;
+    max-height: calc(100vh - 92px);
+    padding: 12px;
+  }
+
+  .channel-mobile-tabs {
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 78%, transparent),
+      0 12px 30px rgba(15, 23, 42, .06);
+  }
+
+  .channel-media-frame::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, white 12%, transparent),
+      inset 0 -40px 80px rgba(0, 0, 0, .16);
+  }
+
+  .channel-creator-avatar {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--chan-card) 92%, white),
+      0 0 0 5px color-mix(in srgb, var(--chan-blue) 16%, var(--chan-line)),
+      0 10px 26px rgba(15, 23, 42, .10);
   }
 
   .polutek-watch-nav input::placeholder {

@@ -78,7 +78,7 @@ const Navbar = () => {
     <div
       className="polutek-watch-nav sticky top-0 z-[1000] w-full flex flex-col"
     >
-      <div className="flex min-h-[46px] items-center justify-between gap-3 overflow-visible px-3 py-1 md:gap-5 md:px-4 lg:px-5 w-full">
+      <div className="mx-auto flex min-h-[58px] w-full max-w-[1180px] items-center justify-between gap-3 overflow-visible px-3 py-2 md:gap-5 md:px-6 lg:px-6">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -113,7 +113,7 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="flex h-[38px] shrink-0 items-center gap-0 transition-all hover:opacity-85 active:scale-95"
+                className="nav-brand-chip flex h-[42px] shrink-0 items-center gap-0 rounded-full px-2.5 transition-all hover:opacity-90 active:scale-95"
                 aria-label="POLUTEK.PL"
               >
                 <BrandName
@@ -125,9 +125,9 @@ const Navbar = () => {
             </div>
 
             {/* Desktop search */}
-            <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
+            <div className="flex-1 max-w-[560px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
+                <div className="nav-search-field relative flex-1 flex items-center min-w-0 h-10 rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -162,7 +162,7 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] p-[3px] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(20,16,10,0.03),0_4px_12px_rgba(37,99,235,0.08)]"
+                className="nav-control-pill relative flex h-[40px] w-[80px] shrink-0 items-center rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] p-[3px] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)]"
               >
                 <span
                   aria-hidden="true"
@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] items-center justify-center gap-1.5 rounded-[11px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white border border-[#333] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[#1a1a1a] hover:border-[#555] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95"
+                  className="flex h-[40px] items-center justify-center gap-1.5 rounded-full px-2.5 sm:px-4 shrink-0 font-sans bg-[var(--chan-ink)] text-white border border-[var(--chan-ink)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_8px_18px_rgba(0,0,0,0.18)] active:scale-95"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
