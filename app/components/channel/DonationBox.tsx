@@ -250,7 +250,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     }
   }, [userId, openAuthModal, isTermsAccepted, amount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId, videoTitle]);
 
-  const title = isPl ? "Strefa Fenkjuu 👑" : "Thank You Zone 👑";
+  const title = isPl ? "Strefa Fenkju 👑" : "Thank You Zone 👑";
 
   const subtitle = isPl
     ? "Wspieraj tworzenie wartościowych treści"
@@ -261,7 +261,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         ? "Dziękujemy — masz już dostęp do strefy wspierających. Ta wpłata jest dodatkowym gestem wsparcia."
         : "Thank you — your supporter access is already active. This tip is an extra show of support.")
     : (isPl
-        ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkjuu."
+        ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkju."
         : "A one-time tip helps grow the channel and unlocks lifetime Thank You Zone access.");
 
   const bullets: { text: string }[] = [
