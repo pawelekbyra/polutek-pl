@@ -279,7 +279,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className="mt-2 cursor-pointer rounded-[18px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40"
+          className="mt-2 cursor-pointer rounded-[18px] border border-[var(--chan-line-soft)] bg-[var(--chan-line)] px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40"
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>

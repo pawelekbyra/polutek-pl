@@ -119,6 +119,7 @@ const Navbar = () => {
                 <BrandName
                   className="text-[1.3rem] leading-none text-[var(--chan-ink)] md:text-[1.65rem]"
                   variant="classic"
+                  style={{ fontFamily: "'Bitter', Georgia, serif" }}
                 />
               </Link>
             </div>
