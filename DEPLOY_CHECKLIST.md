@@ -93,7 +93,7 @@ W Clerk Dashboard → Webhooks → kliknij endpoint → "Send test event" → us
 - [ ] Full refund or lost dispute revokes/suspends Patron access according to the active policy
 - [ ] Below-threshold payment does not create Patron access
 - [ ] Stripe PaymentIntent metadata and local `Payment` metadata clearly distinguish the two legal/payment flows:
-  - `paymentPurpose=ACCESS_PURCHASE`, `grantsAccess=true`, `alreadyHadAccess=false` for a non-patron buying Strefa Fenkjuu access.
+  - `paymentPurpose=ACCESS_PURCHASE`, `grantsAccess=true`, `alreadyHadAccess=false` for a non-patron buying Strefa Fenkju access.
   - `paymentPurpose=PATRON_SUPPORT`, `grantsAccess=false`, `alreadyHadAccess=true` for an existing Patron making an extra support-box payment.
 - [ ] The backend determines `paymentPurpose`, `grantsAccess`, and `alreadyHadAccess` from the server-side access state; do **not** trust a client-sent `viewerIsPatron` flag for this classification.
 - [ ] Stripe Dashboard descriptions/receipts make the same split visible: access purchase = payment for digital content access; existing-Patron support = voluntary support with no new benefits, no extra access, and no access extension.
