@@ -908,9 +908,12 @@
 
 @layer components {
   .polutek-watch-nav {
-    background: color-mix(in srgb, var(--chan-nav) 88%, white 12%);
-    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 86%, transparent);
-    box-shadow: 0 8px 24px rgba(23, 23, 23, .035);
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--chan-blue) 7%, transparent), transparent 34%),
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 70%, transparent), transparent 95%),
+      var(--chan-nav);
+    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 72%, transparent);
+    box-shadow: 0 1px 0 rgba(23, 23, 23, .025);
     backdrop-filter: blur(18px);
   }
 
