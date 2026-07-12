@@ -83,7 +83,7 @@ const BrandName: React.FC<BrandNameProps> = ({ className, style }) => {
       <img
         src="/logo-glasses.svg"
         alt="POLUTEK.PL"
-        className={cn("h-[1em] w-auto", className)}
+        className={cn("h-[1.6em] w-auto", className)}
         style={style}
       />
     </>
