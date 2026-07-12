@@ -34,7 +34,7 @@ const THEME = {
   },
 } as const;
 
-type Theme = (typeof THEME)["login"];
+type Theme = (typeof THEME)[keyof typeof THEME];
 
 function LockSvg({ size = 24, animated = false }: { size?: number; animated?: boolean }) {
   return (

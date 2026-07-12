@@ -178,10 +178,10 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="min-h-screen bg-[var(--chan-nav)]">
-      <div className="mx-auto max-w-[1080px] px-4 md:px-6 lg:px-6 pt-[13px] pb-2">
-        <div className="grid grid-cols-12 gap-4 lg:items-start">
-          <div className="col-span-12 lg:col-span-8 flex flex-col">
+    <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
+      <div className="mx-auto max-w-[1180px] px-4 pb-8 pt-4 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
+        <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
+          <div className="col-span-12 flex flex-col lg:col-span-8">
             <div
               key={selectedVideo.id}
               className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
@@ -194,13 +194,13 @@ function ChannelHomeContent({
             </div>
 
             {isDesktop ? (
-              <div className="hidden lg:block mt-2">
+              <div className="mt-5 hidden rounded-[24px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] px-5 py-2 shadow-[0_12px_30px_rgba(23,23,23,0.045)] lg:block">
                 {mounted ? comments : <CommentsShellSkeleton />}
               </div>
             ) : mounted ? (
               <>
-                <div className="lg:hidden mt-4">
-                  <div className="relative flex overflow-hidden rounded-2xl bg-[var(--chan-surface)] p-1 font-sans">
+                <div className="mt-5 lg:hidden">
+                  <div className="relative flex overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-1 font-sans shadow-[0_8px_20px_rgba(23,23,23,0.045)]">
                     {(["comments", "videos"] as const).map((tab) => {
                       const isActive = activeTab === tab;
                       return (
@@ -221,9 +221,11 @@ function ChannelHomeContent({
                     })}
                   </div>
                 </div>
-                <div className="lg:hidden mt-2">
-                  {activeTab === "comments" ? comments : (
-                    <div className="space-y-2">
+                <div className="mt-3 lg:hidden">
+                  {activeTab === "comments" ? (
+                    <div className="rounded-[22px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] px-4 py-2 shadow-[0_10px_26px_rgba(23,23,23,0.045)]">{comments}</div>
+                  ) : (
+                    <div className="rounded-[22px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] p-3 shadow-[0_10px_26px_rgba(23,23,23,0.045)]">
                       <SidebarPlaylist {...commonSidebarProps} />
                     </div>
                   )}
@@ -235,11 +237,11 @@ function ChannelHomeContent({
               </div>
             )}
           </div>
-          <div className="hidden lg:col-span-4 lg:flex lg:flex-col">
-            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto lg:pr-2">
+          <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
+            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-3 shadow-[0_16px_38px_rgba(23,23,23,0.055)]">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
-            <div className="lg:mt-3 lg:shrink-0">
+            <div className="lg:shrink-0">
               <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
             </div>
           </div>

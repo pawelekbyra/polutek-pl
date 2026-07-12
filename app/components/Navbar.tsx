@@ -76,9 +76,9 @@ const Navbar = () => {
 
   return (
     <div
-      className="polutek-watch-nav sticky top-0 z-[1000] w-full flex flex-col"
+      className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col"
     >
-      <div className="flex min-h-[46px] items-center justify-between gap-3 overflow-visible px-3 py-1 md:gap-5 md:px-4 lg:px-5 w-full">
+      <div className="mx-auto flex min-h-[54px] w-full max-w-[1180px] items-center justify-between gap-3 overflow-visible px-4 py-2 md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -88,7 +88,7 @@ const Navbar = () => {
               <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
+              <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
                 <input
                   type="text"
                   autoFocus
@@ -127,7 +127,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex-1 flex items-center min-w-0 h-9 rounded-[9px] border border-[var(--chan-line)] bg-[var(--chan-surface)] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] focus-within:bg-[var(--chan-line-soft)] focus-within:border-[var(--chan-blue)] transition-[border-color,background-color,box-shadow] duration-160">
+                <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -162,7 +162,7 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--chan-line)] bg-[var(--chan-surface)] p-[3px] shadow-[inset_0_1px_0_rgba(20,16,10,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(20,16,10,0.03),0_4px_12px_rgba(37,99,235,0.08)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]"
               >
                 <span
                   aria-hidden="true"
@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] items-center justify-center gap-1.5 rounded-[11px] px-2 sm:px-3 shrink-0 font-sans bg-black text-white border border-[#333] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[#1a1a1a] hover:border-[#555] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95"
+                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color-mix(in_srgb,var(--chan-blue)_88%,black)] bg-[var(--chan-blue)] px-2 font-sans text-white shadow-[0_8px_18px_color-mix(in_srgb,var(--chan-blue)_18%,transparent)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--chan-blue)_78%,black)] hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_10px_22px_color-mix(in_srgb,var(--chan-blue)_24%,transparent)] active:scale-95 sm:px-3"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
