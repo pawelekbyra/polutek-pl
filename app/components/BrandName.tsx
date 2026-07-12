@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { APP_NAME } from '@/lib/constants';
 
 interface BrandNameProps {
   className?: string;
@@ -77,23 +76,16 @@ div[id^="comment-"] .absolute.right-0.mt-1.w-48.bg-white > button:first-child {
 }
 `;
 
-const BrandName: React.FC<BrandNameProps> = ({ className, variant = 'classic', style }) => {
-  const isClassic = variant === 'classic';
-  const dotSuffixMatch = APP_NAME.match(/\.pl$/i);
-  const baseName = dotSuffixMatch ? APP_NAME.slice(0, -dotSuffixMatch[0].length) : APP_NAME;
-  const suffix = (dotSuffixMatch?.[0] ?? '').toUpperCase();
-
+const BrandName: React.FC<BrandNameProps> = ({ className, style }) => {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: UI_COPY_AND_LAYOUT_TWEAKS }} />
-      <span className={cn(
-        isClassic
-          ? "font-brand font-black tracking-[0.12em] uppercase text-[#171717] drop-shadow-[0_1px_8px_rgba(255,255,255,0.12)]"
-          : "font-handwriting font-bold uppercase text-neutral-950",
-        className
-      )} style={style}>
-        {baseName.toUpperCase()}<span className={cn("chan-brand-suffix", isClassic ? "text-[#2563eb]" : "text-primary")}>{suffix}</span>
-      </span>
+      <img
+        src="/logo-glasses.svg"
+        alt="POLUTEK.PL"
+        className={cn("h-[1em] w-auto", className)}
+        style={style}
+      />
     </>
   );
 };
