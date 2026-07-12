@@ -16,8 +16,9 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-// Deep, near-black base so the accent color reads as a glow, not a flat wash.
-const BASE_BG = "#0a0b10";
+// Confident, on-brand gradients — no black. Blue for sign-in, gold for patrons.
+const LOGIN_GRADIENT = "linear-gradient(135deg, #2563EB 0%, #1846C4 100%)";
+const PATRON_GRADIENT = "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)";
 
 function LockSvg({ size = 24 }: { size?: number }) {
   return (
@@ -38,20 +39,33 @@ function StarSvg({ size = 24 }: { size?: number }) {
   );
 }
 
+/** Soft light/dark highlight blobs that give the gradient depth without darkening it toward black. */
+function GradientDepth() {
+  return (
+    <>
+      <div
+        className="absolute -top-[30%] -left-[15%] h-[70%] w-[70%] rounded-full blur-2xl"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)" }}
+      />
+      <div
+        className="absolute -bottom-[35%] -right-[20%] h-[60%] w-[60%] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0) 70%)" }}
+      />
+    </>
+  );
+}
+
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const { language } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
   const isPatron = state === "PATRON_REQUIRED";
   const isPl = language === "pl";
   const isCompact = variant !== "default";
-
-  const glowBackground = isPatron
-    ? "radial-gradient(120% 90% at 50% 0%, rgba(234,179,8,0.40) 0%, rgba(10,11,16,0) 62%)"
-    : "radial-gradient(120% 90% at 50% 0%, rgba(37,99,235,0.38) 0%, rgba(10,11,16,0) 62%)";
+  const gradient = isPatron ? PATRON_GRADIENT : LOGIN_GRADIENT;
 
   if (isCompact) {
     const isTiny = variant === "thumbnailCompact";
-    const iconSize = isTiny ? 22 : 26;
+    const iconSize = isTiny ? 16 : 18;
     const label = isPatron
       ? (isPl ? "Patroni" : "Patrons")
       : (isPl ? "Zaloguj się" : "Sign in");
@@ -60,25 +74,21 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
       <PlayerStateFrame fill className={isTiny ? "rounded-md" : "rounded-lg"}>
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-[7px] overflow-hidden [container-type:inline-size]"
-          style={{ background: BASE_BG }}
+          style={{ background: gradient }}
         >
-          <div className="absolute inset-0" style={{ background: glowBackground }} />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
+          <GradientDepth />
 
           <div
             className={cn(
-              "relative flex items-center justify-center rounded-full border backdrop-blur-sm",
-              isTiny ? "h-8 w-8" : "h-10 w-10",
-              isPatron
-                ? "border-yellow-400/50 bg-yellow-400/15"
-                : "border-blue-400/50 bg-blue-500/15",
+              "relative flex items-center justify-center rounded-full border border-white/40 bg-white/25",
+              isTiny ? "h-7 w-7" : "h-9 w-9",
             )}
           >
-            <span className={isPatron ? "text-yellow-300" : "text-blue-300"}>
+            <span className="text-white">
               {isPatron ? <StarSvg size={iconSize} /> : <LockSvg size={iconSize} />}
             </span>
           </div>
-          <span className="relative px-2 text-center font-sans text-[clamp(9px,8cqi,11px)] font-bold uppercase leading-tight tracking-[0.08em] text-white">
+          <span className="relative px-2 text-center font-sans text-[clamp(9px,8cqi,11px)] font-bold uppercase leading-tight tracking-[0.08em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
             {label}
           </span>
         </div>
@@ -86,49 +96,34 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
     );
   }
 
-  // Default — full player overlay
+  // Default — full player overlay: colored gradient backdrop + a clean, elevated white card.
   return (
     <PlayerStateFrame className="rounded-[18px]">
       <div
         className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden rounded-[18px] [container-type:inline-size]"
-        style={{ background: BASE_BG }}
+        style={{ background: gradient }}
       >
-        {/* Accent glow from the top */}
-        <div className="absolute inset-0" style={{ background: glowBackground }} />
-        {/* Bottom vignette for text legibility */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <GradientDepth />
 
-        <div className="relative z-10 flex flex-col items-center text-center gap-[clamp(16px,3cqi,26px)] px-6 w-full max-w-[420px]">
-          {/* Icon badge with soft glow */}
-          <div className="relative flex items-center justify-center">
-            <div
-              className="absolute inset-0 rounded-full blur-xl"
-              style={{
-                background: isPatron ? "rgba(234,179,8,0.45)" : "rgba(37,99,235,0.45)",
-              }}
-            />
-            <div
-              className={cn(
-                "relative flex items-center justify-center w-[clamp(60px,11cqi,80px)] h-[clamp(60px,11cqi,80px)] rounded-full border backdrop-blur-sm",
-                isPatron
-                  ? "border-yellow-400/50 bg-yellow-400/15"
-                  : "border-blue-400/50 bg-blue-500/15",
-              )}
-            >
-              <span className={isPatron ? "text-yellow-300" : "text-blue-300"}>
-                {isPatron ? <StarSvg size={34} /> : <LockSvg size={34} />}
-              </span>
-            </div>
+        <div className="relative z-10 mx-6 flex w-full max-w-[340px] flex-col items-center gap-[clamp(12px,2.2cqi,16px)] rounded-[20px] border border-white/50 bg-white/97 px-[clamp(22px,5cqi,34px)] py-[clamp(24px,5cqi,34px)] text-center shadow-[0_24px_48px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          {/* Icon */}
+          <div
+            className={cn(
+              "flex items-center justify-center rounded-full w-[clamp(52px,10cqi,68px)] h-[clamp(52px,10cqi,68px)]",
+              isPatron ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600",
+            )}
+          >
+            {isPatron ? <StarSvg size={30} /> : <LockSvg size={30} />}
           </div>
 
           {/* Heading & Description */}
-          <div className="flex flex-col gap-[clamp(6px,1.2cqi,10px)]">
-            <h2 className="font-brand text-[clamp(22px,5.5cqi,34px)] font-bold text-white leading-tight">
+          <div className="flex flex-col gap-[clamp(4px,0.8cqi,7px)]">
+            <h2 className="font-brand text-[clamp(19px,4.6cqi,26px)] font-bold text-neutral-900 leading-tight">
               {isPatron
                 ? (isPl ? "Strefa Patronów" : "Patron Zone")
                 : (isPl ? "Zaloguj się" : "Sign In")}
             </h2>
-            <p className="font-sans text-[clamp(12px,2.2cqi,15px)] text-white/60 leading-relaxed">
+            <p className="font-sans text-[clamp(12px,2.2cqi,14px)] text-neutral-500 leading-relaxed">
               {isPatron
                 ? (isPl ? "Jednorazowe wsparcie odblokowuje dostęp na zawsze" : "One-time support unlocks access forever")
                 : (isPl ? "aby obejrzeć ten materiał" : "to watch this video")}
@@ -145,7 +140,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   .getElementById("donations")
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="flex h-[clamp(42px,8cqi,50px)] items-center justify-center px-[clamp(24px,6cqi,38px)] rounded-[14px] bg-gradient-to-b from-yellow-300 to-yellow-500 font-brand font-bold text-[clamp(13px,2.6cqi,16px)] text-[#241a00] shadow-[0_8px_22px_rgba(234,179,8,0.35)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_10px_26px_rgba(234,179,8,0.5)]"
+              className="mt-[2px] flex h-[clamp(42px,8cqi,48px)] items-center justify-center px-[clamp(22px,5.5cqi,32px)] rounded-[14px] bg-gradient-to-b from-amber-300 to-amber-500 font-brand font-bold text-[clamp(13px,2.4cqi,15px)] text-amber-950 shadow-[0_10px_24px_-6px_rgba(217,119,6,0.45)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_12px_28px_-6px_rgba(217,119,6,0.55)]"
             >
               <span className="whitespace-nowrap">
                 {isPl ? "Wesprzyj kanał" : "Support Channel"}
@@ -155,7 +150,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <button
               type="button"
               onClick={() => openAuthModal("sign-in")}
-              className="flex h-[clamp(42px,8cqi,50px)] items-center justify-center px-[clamp(24px,6cqi,38px)] rounded-[14px] bg-[#2563EB] font-brand font-bold text-[clamp(13px,2.6cqi,16px)] text-white shadow-[0_8px_22px_rgba(37,99,235,0.4)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_10px_26px_rgba(37,99,235,0.55)] hover:bg-[#3B76F0]"
+              className="mt-[2px] flex h-[clamp(42px,8cqi,48px)] items-center justify-center px-[clamp(22px,5.5cqi,32px)] rounded-[14px] bg-[#2563EB] font-brand font-bold text-[clamp(13px,2.4cqi,15px)] text-white shadow-[0_10px_24px_-6px_rgba(37,99,235,0.5)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:bg-[#1d4ed8] hover:shadow-[0_12px_28px_-6px_rgba(37,99,235,0.6)]"
             >
               <span className="whitespace-nowrap">
                 {isPl ? "Zaloguj się" : "Sign In"}
