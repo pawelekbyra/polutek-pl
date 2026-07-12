@@ -169,12 +169,12 @@
    with a :has-gated !important twin so it wins over the info-container reset
    once the player mounts — same colour before/after mount, so no flash. */
 .descPanel {
-  background-color: oklch(90% 0.011 75);
-  border-color: oklch(84% 0.014 75);
+  background-color: #e5e1dd;
+  border-color: #d9d5d1;
 }
 
 :global(main section:has(.polutek-vidstack-player)) .descPanel {
-  background-color: oklch(90% 0.011 75) !important;
+  background-color: #e5e1dd !important;
 }
 
 /* Playlist sections are intentionally frameless. */
