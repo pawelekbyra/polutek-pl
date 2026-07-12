@@ -165,6 +165,18 @@
   line-height: 1.65;
 }
 
+/* Description panel: a soft, light warm-gray surface. Set here (not inline)
+   with a :has-gated !important twin so it wins over the info-container reset
+   once the player mounts — same colour before/after mount, so no flash. */
+.descPanel {
+  background-color: oklch(90% 0.011 75);
+  border-color: oklch(84% 0.014 75);
+}
+
+:global(main section:has(.polutek-vidstack-player)) .descPanel {
+  background-color: oklch(90% 0.011 75) !important;
+}
+
 /* Playlist sections are intentionally frameless. */
 :global(main aside:has(a[href*="?v="]) > div) {
   gap: 8px !important;
