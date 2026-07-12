@@ -15,7 +15,6 @@ import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider"
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
-  loading: () => <CommentsShellSkeleton />,
 });
 
 function CommentsShellSkeleton() {
@@ -194,15 +193,11 @@ function ChannelHomeContent({
               />
             </div>
 
-            {!mounted ? (
-              <div className="mt-2">
-                <CommentsShellSkeleton />
-              </div>
-            ) : isDesktop ? (
+            {isDesktop ? (
               <div className="hidden lg:block mt-2">
-                {comments}
+                {mounted ? comments : <CommentsShellSkeleton />}
               </div>
-            ) : (
+            ) : mounted ? (
               <>
                 <div className="lg:hidden mt-4">
                   <div className="relative flex overflow-hidden rounded-2xl bg-[var(--chan-surface)] p-1 font-sans">
@@ -234,6 +229,10 @@ function ChannelHomeContent({
                   )}
                 </div>
               </>
+            ) : (
+              <div className="mt-2">
+                <CommentsShellSkeleton />
+              </div>
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col">

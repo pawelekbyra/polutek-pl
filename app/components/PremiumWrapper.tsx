@@ -398,26 +398,34 @@ function PlaybackPlanStateOverlay({
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
-      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] p-6 text-center text-white [container-type:inline-size]">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-950 opacity-60" />
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 text-center text-white [container-type:inline-size]">
+        {/* Subtle accent gradient accent in background */}
+        <div className="absolute inset-0 z-0 opacity-30">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent" />
+        </div>
 
-        <div className="relative z-10 flex max-w-md flex-col items-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <AlertCircle className="h-8 w-8 text-neutral-200" />
+        <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)]">
+          {/* Icon Circle */}
+          <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-sm shadow-lg">
+            <AlertCircle className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)] text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]" />
           </div>
 
-          <h3 className="mb-2 text-[min(1.2rem,6cqi)] font-black uppercase tracking-tight">
-            {content.title}
-          </h3>
+          {/* Heading & Description */}
+          <div className="flex flex-col gap-[clamp(8px,1.5cqi,12px)]">
+            <h3 className="text-[clamp(18px,5cqi,28px)] font-bold tracking-tight leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
+              {content.title}
+            </h3>
 
-          <p className="mb-6 max-w-sm text-[min(0.875rem,4cqi)] leading-relaxed text-neutral-300">
-            {content.description}
-          </p>
+            <p className="text-[clamp(12px,2.2cqi,15px)] leading-relaxed text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+              {content.description}
+            </p>
+          </div>
 
+          {/* Action Button */}
           {content.action === "support" && (
             <a
               href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ''}?subject=Problem%20z%20dost%C4%99pem%20do%20wideo`}
-              className="rounded-full border border-white/10 bg-white/5 px-8 py-3 text-[min(11px,3cqi)] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
+              className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
             >
               {content.actionLabel}
             </a>
@@ -427,10 +435,10 @@ function PlaybackPlanStateOverlay({
             <button
               type="button"
               onClick={onRetry}
-              className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-8 py-3 text-[min(11px,3cqi)] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95"
+              className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
             >
-              <RefreshCcw size={14} className="mr-2" aria-hidden="true" />
-              {content.actionLabel}
+              <RefreshCcw size={16} className="flex-shrink-0" aria-hidden="true" />
+              <span>{content.actionLabel}</span>
             </button>
           )}
         </div>
