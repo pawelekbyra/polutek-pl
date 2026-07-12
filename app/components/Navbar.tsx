@@ -78,7 +78,7 @@ const Navbar = () => {
     <div
       className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col"
     >
-      <div className="mx-auto flex min-h-[54px] w-full max-w-[1180px] items-center justify-between gap-3 overflow-visible px-4 py-2 md:gap-5 md:px-6 lg:px-8">
+      <div className="flex min-h-[54px] w-full items-center justify-between gap-3 overflow-visible px-4 py-2 md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color-mix(in_srgb,var(--chan-blue)_88%,black)] bg-[var(--chan-blue)] px-2 font-sans text-white shadow-[0_8px_18px_color-mix(in_srgb,var(--chan-blue)_18%,transparent)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--chan-blue)_78%,black)] hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_10px_22px_color-mix(in_srgb,var(--chan-blue)_24%,transparent)] active:scale-95 sm:px-3"
+                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[11px] border border-[#333] bg-black px-2 font-sans text-white transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[#555] hover:bg-[#1a1a1a] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95 sm:px-3"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
