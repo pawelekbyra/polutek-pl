@@ -349,7 +349,7 @@ export function SidebarPlaylist({
       <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5" aria-busy="true">
         {renderSkeletonSection(language === "pl" ? "Publiczne" : "Public")}
         {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
-        {renderSkeletonSection(language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone")}
+        {renderSkeletonSection(language === "pl" ? "Strefa Fenkju" : "Thank You Zone")}
         {showSupportBox && (
           <div className="shrink-0 mt-2 p-4 rounded-lg bg-[var(--chan-surface)] animate-pulse motion-reduce:animate-none">
             <div className="h-8 bg-[var(--chan-line)] rounded w-full" />
@@ -418,7 +418,7 @@ export function SidebarPlaylist({
       {patronSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
-            language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone",
+            language === "pl" ? "Strefa Fenkju" : "Thank You Zone",
           )}
           {patronSection.items.map((v) => renderVideoItem(v))}
         </div>
