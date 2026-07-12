@@ -174,17 +174,17 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full">
+      <div className="w-full rounded-[28px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-2.5 shadow-[0_18px_44px_rgba(23,23,23,0.06)] md:p-3">
         {/* FEATURED MEDIA */}
-        <div className="relative aspect-video w-full mb-3 overflow-hidden rounded-[18px] bg-black">
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[22px] bg-black md:rounded-[24px]">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
         </div>
 
         {/* INFO SECTION */}
-        <div className="space-y-2">
-          <h1 className="font-brand font-bold not-italic text-[21px] md:text-[25px] text-[var(--chan-ink)] leading-[1.25] mb-2">
+        <div className="space-y-3 px-1 pb-1 md:px-2">
+          <h1 className="font-brand font-bold not-italic text-[22px] md:text-[28px] text-[var(--chan-ink)] leading-[1.25] mb-2">
              {displayTitle}
           </h1>
 
@@ -279,7 +279,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40", styles.descPanel)}
+          className={cn("mt-2 cursor-pointer rounded-[20px] border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40 md:px-5", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
