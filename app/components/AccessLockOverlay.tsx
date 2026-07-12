@@ -26,15 +26,11 @@ const THEME = {
     deep: "#1E40AF",
     mid: "#3B82F6",
     light: "#93C5FD",
-    ring: "rgba(37,99,235,0.4)",
-    sparkle: "#DBEAFE",
   },
   patron: {
     deep: "#B45309",
     mid: "#F59E0B",
     light: "#FDE68A",
-    ring: "rgba(217,119,6,0.4)",
-    sparkle: "#FEF3C7",
   },
 } as const;
 
@@ -184,7 +180,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
     );
   }
 
-  // Default — full player overlay: living aurora backdrop + a clean, elevated white card.
+  // Default — full player overlay: content floats directly on the living aurora, no boxed card.
   return (
     <PlayerStateFrame className="rounded-[18px]">
       <div
@@ -192,35 +188,39 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         style={{ background: gradient }}
       >
         <AuroraBackground theme={theme} uid={uid} />
-        <SparkleField color={theme.sparkle} />
+        {/* Soft radial dimming behind the text zone — legibility without a hard card edge */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "radial-gradient(60% 55% at 50% 50%, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 70%)" }}
+        />
+        <SparkleField color="rgba(255,255,255,0.9)" />
 
-        <div className="card-enter relative z-10 mx-6 flex w-full max-w-[340px] flex-col items-center gap-[clamp(12px,2.2cqi,16px)] rounded-[20px] border border-white/50 bg-white/97 px-[clamp(22px,5cqi,34px)] py-[clamp(24px,5cqi,34px)] text-center shadow-[0_24px_48px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          {/* Icon */}
+        <div className="card-enter relative z-10 flex w-full max-w-[380px] flex-col items-center gap-[clamp(14px,2.6cqi,20px)] px-8 text-center">
+          {/* Icon — glass badge floating on the aurora */}
           <div
-            className={cn(
-              "badge-float-glow flex items-center justify-center rounded-full w-[clamp(52px,10cqi,68px)] h-[clamp(52px,10cqi,68px)]",
-              isPatron ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600",
-            )}
-            style={{ "--breathe-ring": theme.ring } as CSSProperties}
+            className="badge-float-glow flex items-center justify-center rounded-full w-[clamp(56px,10.5cqi,72px)] h-[clamp(56px,10.5cqi,72px)] bg-white/18 border border-white/35 backdrop-blur-md text-white"
+            style={{ "--breathe-ring": "rgba(255,255,255,0.35)" } as CSSProperties}
           >
-            {isPatron ? <StarSvg size={30} animated /> : <LockSvg size={30} animated />}
+            <span className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
+              {isPatron ? <StarSvg size={30} animated /> : <LockSvg size={30} animated />}
+            </span>
           </div>
 
           {/* Heading & Description */}
-          <div className="flex flex-col gap-[clamp(4px,0.8cqi,7px)]">
-            <h2 className="font-brand text-[clamp(19px,4.6cqi,26px)] font-bold text-neutral-900 leading-tight">
+          <div className="flex flex-col gap-[clamp(4px,0.8cqi,8px)]">
+            <h2 className="font-brand text-[clamp(21px,5cqi,30px)] font-bold text-white leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
               {isPatron
                 ? (isPl ? "Strefa Patronów" : "Patron Zone")
                 : (isPl ? "Zaloguj się" : "Sign In")}
             </h2>
-            <p className="font-sans text-[clamp(12px,2.2cqi,14px)] text-neutral-500 leading-relaxed">
+            <p className="font-sans text-[clamp(12.5px,2.3cqi,15px)] text-white/90 leading-relaxed drop-shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
               {isPatron
                 ? (isPl ? "Jednorazowe wsparcie odblokowuje dostęp na zawsze" : "One-time support unlocks access forever")
                 : (isPl ? "aby obejrzeć ten materiał" : "to watch this video")}
             </p>
           </div>
 
-          {/* CTA */}
+          {/* CTA — a white pill floating on the color, not another slab */}
           {isPatron ? (
             <a
               href="#donations"
@@ -230,9 +230,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   .getElementById("donations")
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="relative mt-[2px] flex h-[clamp(42px,8cqi,48px)] items-center justify-center overflow-hidden px-[clamp(22px,5.5cqi,32px)] rounded-[14px] bg-gradient-to-b from-amber-300 to-amber-500 font-brand font-bold text-[clamp(13px,2.4cqi,15px)] text-amber-950 shadow-[0_10px_24px_-6px_rgba(217,119,6,0.45)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_12px_28px_-6px_rgba(217,119,6,0.55)]"
+              className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full bg-white font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-amber-800 shadow-[0_14px_30px_-8px_rgba(0,0,0,0.4)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_16px_34px_-8px_rgba(0,0,0,0.45)]"
             >
-              <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+              <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-black/[0.06] to-transparent" />
               <span className="relative whitespace-nowrap">
                 {isPl ? "Wesprzyj kanał" : "Support Channel"}
               </span>
@@ -241,9 +241,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <button
               type="button"
               onClick={() => openAuthModal("sign-in")}
-              className="relative mt-[2px] flex h-[clamp(42px,8cqi,48px)] items-center justify-center overflow-hidden px-[clamp(22px,5.5cqi,32px)] rounded-[14px] bg-[#2563EB] font-brand font-bold text-[clamp(13px,2.4cqi,15px)] text-white shadow-[0_10px_24px_-6px_rgba(37,99,235,0.5)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:bg-[#1d4ed8] hover:shadow-[0_12px_28px_-6px_rgba(37,99,235,0.6)]"
+              className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full bg-white font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-[#1846C4] shadow-[0_14px_30px_-8px_rgba(0,0,0,0.4)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_16px_34px_-8px_rgba(0,0,0,0.45)]"
             >
-              <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+              <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-black/[0.06] to-transparent" />
               <span className="relative whitespace-nowrap">
                 {isPl ? "Zaloguj się" : "Sign In"}
               </span>
