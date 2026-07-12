@@ -150,31 +150,26 @@
     0 2px 5px rgba(23, 23, 23, 0.08);
 }
 
-/* The info section is a plain container; the meta row and description
-   panel each carry their own flat surface. No wrapping card, blue bar or
-   page-bleed shadows. */
-:global(main section:has(.polutek-vidstack-player) > div > div:last-child) {
+/* The info section (title + meta row) is a plain container; the meta row and
+   description panel each carry their own flat surface. No wrapping card, blue
+   bar or page-bleed shadows. Targeted by position (nth-child(2): media is 1,
+   description panel is 3/last) so it never catches the description panel. */
+:global(main section:has(.polutek-vidstack-player) > div > div:nth-child(2)) {
   position: relative;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-:global(main section:has(.polutek-vidstack-player) > div > div:last-child > div > div:nth-child(2)) {
+:global(main section:has(.polutek-vidstack-player) > div > div:nth-child(2) > div > div:nth-child(2)) {
   font-size: 13px;
   line-height: 1.65;
 }
 
-/* Description panel: a soft, light warm-gray surface. Set here (not inline)
-   with a :has-gated !important twin so it wins over the info-container reset
-   once the player mounts — same colour before/after mount, so no flash. */
+/* Description panel: a soft, light warm-gray surface. */
 .descPanel {
   background-color: #e5e1dd;
   border-color: #d9d5d1;
-}
-
-:global(main section:has(.polutek-vidstack-player)) .descPanel {
-  background-color: #e5e1dd !important;
 }
 
 /* Playlist sections are intentionally frameless. */
